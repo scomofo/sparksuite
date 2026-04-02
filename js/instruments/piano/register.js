@@ -97,6 +97,16 @@
         if (S.drillCount === undefined) S.drillCount = 0;
         if (S._inPlacement === undefined) S._inPlacement = false;
         if (S.onboardingStep === undefined) S.onboardingStep = 0;
+        if (S.chordProg === undefined) S.chordProg = {};
+        if (S.fingerBadges === undefined) S.fingerBadges = [];
+        if (S.fingerStats === undefined) S.fingerStats = {};
+        if (S.songIdx === undefined) S.songIdx = null;
+        if (S.styleIdx === undefined) S.styleIdx = 0;
+        if (S.bpm === undefined) S.bpm = 72;
+        if (S.volume === undefined) S.volume = 80;
+        if (S.reverbAmount === undefined) S.reverbAmount = 0.3;
+        if (S.tone === undefined) S.tone = "grand";
+        if (S.metronomeSound === undefined) S.metronomeSound = "click";
       }
     }
   });
