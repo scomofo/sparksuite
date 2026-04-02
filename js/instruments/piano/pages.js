@@ -4,19 +4,35 @@
 // Wraps piano page renderers with context swapping (piano data globals).
 (function() {
 
-  // Piano rendering context — temporarily swap in piano-specific data globals
+  // Piano rendering context — temporarily swap in piano-specific data AND function globals
   function _enterPianoContext() {
-    var d = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : null;
-    if (!d) return;
+    if (window._pctx) return; // already in piano context
     window._pctx = {};
-    var keys = ["CHORDS","SONGS","LC","LN","CHORD_COLORS","CHORD_NOTES","CURRICULUM",
-                "LH_PATTERNS","SESSION_PLANS","BADGES","SCALES","FINGER_EXERCISES",
-                "FINGER_BADGES","INJURY_TIPS","DAILY_TYPES","PLAY_STYLES",
-                "TRANSITION_TIPS","REWARD_PHASES"];
-    for (var i = 0; i < keys.length; i++) {
-      var k = keys[i];
-      window._pctx[k] = window[k];
-      if (d[k] !== undefined) window[k] = d[k];
+
+    // Swap data globals
+    var d = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : null;
+    if (d) {
+      var keys = ["CHORDS","SONGS","LC","LN","CHORD_COLORS","CHORD_NOTES","CURRICULUM",
+                  "LH_PATTERNS","SESSION_PLANS","BADGES","SCALES","FINGER_EXERCISES",
+                  "FINGER_BADGES","INJURY_TIPS","DAILY_TYPES","PLAY_STYLES",
+                  "TRANSITION_TIPS","REWARD_PHASES"];
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        window._pctx[k] = window[k];
+        if (d[k] !== undefined) window[k] = d[k];
+      }
+    }
+
+    // Swap UI/page functions to piano versions
+    var ns = window._PianoPageNS && window._PianoPageNS.piano ? window._PianoPageNS.piano : {};
+    var fnKeys = ["clickableDiv","escHTML","ifThenCard","fireMicro","checkBadges",
+                  "tierBadgeHTML","pianoSVG","showConfetti","levelColor","tabNavHTML","headerHTML"];
+    for (var j = 0; j < fnKeys.length; j++) {
+      var fk = fnKeys[j];
+      if (ns[fk]) {
+        window._pctx["_fn_" + fk] = window[fk];
+        window[fk] = ns[fk];
+      }
     }
   }
 

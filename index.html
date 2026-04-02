@@ -61,6 +61,7 @@
 <script src="js/instruments/guitar/register.js"></script>
 <script src="js/instruments/piano/data.js"></script>
 <script src="js/instruments/piano/helpers.js"></script>
+<script src="js/instruments/piano/ui.js"></script>
 <script src="js/instruments/piano/pages.js"></script>
 <script src="js/instruments/piano/register.js"></script>
 <script src="js/instruments/piano/app.js"></script>
@@ -259,7 +260,12 @@ window._PianoPageNS._shared = {
   songsTab: typeof songsTab === "function" ? songsTab : null,
   toolsTab: typeof toolsTab === "function" ? toolsTab : null,
   headerHTML: typeof headerHTML === "function" ? headerHTML : null,
-  editorPage: typeof editorPage === "function" ? editorPage : null
+  editorPage: typeof editorPage === "function" ? editorPage : null,
+  escHTML: typeof escHTML === "function" ? escHTML : null,
+  clickableDiv: typeof clickableDiv === "function" ? clickableDiv : null,
+  checkBadges: typeof checkBadges === "function" ? checkBadges : null,
+  fireMicro: typeof fireMicro === "function" ? fireMicro : null,
+  ifThenCard: typeof ifThenCard === "function" ? ifThenCard : null
 };
 </script>
 <script src="js/instruments/piano/pages/shared.js"></script>
@@ -292,7 +298,16 @@ window._PianoPageNS.piano = {
   headerHTML: typeof headerHTML === "function" ? headerHTML : null,
   editorPage: typeof editorPage === "function" ? editorPage : null,
   stemsPlayerPage: typeof stemsPlayerPage === "function" ? stemsPlayerPage : null,
-  tabNavHTML: typeof tabNavHTML === "function" ? tabNavHTML : null
+  tabNavHTML: typeof tabNavHTML === "function" ? tabNavHTML : null,
+  pianoSVG: typeof pianoSVG === "function" ? pianoSVG : null,
+  tierBadgeHTML: typeof tierBadgeHTML === "function" ? tierBadgeHTML : null,
+  clickableDiv: typeof clickableDiv === "function" ? clickableDiv : null,
+  checkBadges: typeof checkBadges === "function" ? checkBadges : null,
+  escHTML: typeof escHTML === "function" ? escHTML : null,
+  ifThenCard: typeof ifThenCard === "function" ? ifThenCard : null,
+  fireMicro: typeof fireMicro === "function" ? fireMicro : null,
+  showConfetti: typeof showConfetti === "function" ? showConfetti : null,
+  levelColor: typeof levelColor === "function" ? levelColor : null
 };
 // Restore shared (guitar) functions
 for (var k in window._PianoPageNS._shared) {
