@@ -59,7 +59,19 @@
 
     pages: {},
 
-    tabs: ["practice", "songs", "games", "tools"],
+    tabs: [
+      { id: "practice", label: "Practice", icon: "\uD83C\uDFB9" },
+      { id: "games",    label: "Games",    icon: "\u26A1" },
+      { id: "songs",    label: "Songs",    icon: "\uD83C\uDFB6" },
+      { id: "tools",    label: "Tools",    icon: "\uD83D\uDD27" }
+    ],
+
+    tabRenderers: {
+      practice: function() { return typeof pianoPracticeTab === "function" ? pianoPracticeTab() : ""; },
+      games:    function() { return typeof pianoGamesTab === "function" ? pianoGamesTab() : ""; },
+      songs:    function() { return typeof pianoSongsTab === "function" ? pianoSongsTab() : ""; },
+      tools:    function() { return typeof pianoToolsTab === "function" ? pianoToolsTab() : ""; }
+    },
 
     stemMutePreset: {
       piano: false, vocals: true, drums: true,

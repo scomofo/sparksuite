@@ -50,7 +50,22 @@
 
     pages: typeof GUITAR_PAGES !== "undefined" ? GUITAR_PAGES : {},
 
-    tabs: ["practice", "drill", "songs", "guide"],
+    tabs: [
+      { id: "practice", label: "Practice", icon: "\uD83C\uDFB6" },
+      { id: "drill",    label: "Drill",    icon: "\u26A1" },
+      { id: "daily",    label: "Daily",    icon: "\uD83C\uDFC5" },
+      { id: "quiz",     label: "Quiz",     icon: "\uD83E\uDDE0" },
+      { id: "ear",      label: "Ear",      icon: "\uD83D\uDC42" },
+      { id: "strum",    label: "Strum",    icon: "\uD83C\uDFBC" },
+      { id: "songs",    label: "Songs",    icon: "\uD83C\uDFB5" },
+      { id: "rhythm",   label: "Rhythm",   icon: "\uD83E\uDD41" },
+      { id: "runner",   label: "Runner",   icon: "\uD83C\uDFAE" },
+      { id: "build",    label: "Build",    icon: "\uD83D\uDD27" },
+      { id: "tuner",    label: "Tuner",    icon: "\uD83C\uDFA4" },
+      { id: "dual",     label: "Dual",     icon: "\uD83C\uDFB9" },
+      { id: "stats",    label: "Stats",    icon: "\uD83D\uDCCA" },
+      { id: "guide",    label: "Guide",    icon: "\uD83D\uDCD6" }
+    ],
 
     stemMutePreset: {
       guitar: false, vocals: true, drums: true,

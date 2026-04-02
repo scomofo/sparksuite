@@ -46,7 +46,13 @@
 
     pages: {},
 
-    tabs: ["practice", "drill", "songs", "guide"],
+    tabs: [
+      { id: "practice", label: "Practice", icon: "\uD83C\uDFB5" },
+      { id: "drill",    label: "Drill",    icon: "\u26A1" },
+      { id: "songs",    label: "Songs",    icon: "\uD83C\uDFB6" },
+      { id: "stats",    label: "Stats",    icon: "\uD83D\uDCCA" },
+      { id: "guide",    label: "Guide",    icon: "\uD83D\uDCD6" }
+    ],
 
     stemMutePreset: {
       bass: false, vocals: true, drums: true,
