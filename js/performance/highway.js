@@ -6,6 +6,7 @@ function ensureSparkHighway(canvasEl) {
   if (_sparkHighway && _sparkHighway.canvas === canvasEl) return _sparkHighway;
   if (_sparkHighway) _sparkHighway.destroy();
   _sparkHighway = new SparkHighway(canvasEl, SparkHighway.GUITAR_SKIN);
+  _sparkHighway._initPromise = _sparkHighway.init();
   return _sparkHighway;
 }
 
@@ -19,7 +20,7 @@ function feedChartToHighway(chart) {
 }
 
 function updateSparkHighway(nowSec, combo) {
-  if (!_sparkHighway) return;
+  if (!_sparkHighway || !_sparkHighway._ready) return;
   _sparkHighway.update(nowSec, combo);
 }
 
