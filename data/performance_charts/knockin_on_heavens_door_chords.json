@@ -1,0 +1,369 @@
+{
+  "id": "knockin_on_heavens_door_chords",
+  "title": "Knockin on Heavens Door",
+  "artist": "Bob Dylan",
+  "bpm": 68,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 28.235
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 28.235,
+      "endSec": 56.471
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 56.471,
+      "endSec": 84.706
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 3.529,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 7.059,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "up"
+    },
+    {
+      "id": 4,
+      "t": 10.588,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "up"
+    },
+    {
+      "id": 5,
+      "t": 14.118,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 6,
+      "t": 17.647,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 7,
+      "t": 21.176,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 24.706,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 9,
+      "t": 28.235,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 10,
+      "t": 31.765,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 11,
+      "t": 35.294,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 12,
+      "t": 38.824,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "up"
+    },
+    {
+      "id": 13,
+      "t": 42.353,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 14,
+      "t": 45.882,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "down"
+    },
+    {
+      "id": 15,
+      "t": 49.412,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 16,
+      "t": 52.941,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 56.471,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 60,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 19,
+      "t": 63.529,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 20,
+      "t": 67.059,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 21,
+      "t": 70.588,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 22,
+      "t": 74.118,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 23,
+      "t": 77.647,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 81.176,
+      "dur": 3.529,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    }
+  ]
+}

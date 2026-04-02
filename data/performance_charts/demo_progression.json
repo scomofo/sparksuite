@@ -1,0 +1,25 @@
+{
+  "id": "demo_progression",
+  "title": "Demo Progression",
+  "artist": "ChordSpark",
+  "bpm": 90,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    { "id": 0, "name": "Phrase 1", "startSec": 0, "endSec": 8 },
+    { "id": 1, "name": "Phrase 2", "startSec": 8, "endSec": 16 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 2, "type": "chord", "chord": "E Minor", "notes": ["E","G","B"], "laneLabel": "Em", "strum": "down" },
+    { "id": 2, "t": 2, "dur": 2, "type": "chord", "chord": "G Major", "notes": ["G","B","D"], "laneLabel": "G", "strum": "down" },
+    { "id": 3, "t": 4, "dur": 2, "type": "chord", "chord": "D Major", "notes": ["D","F#","A"], "laneLabel": "D", "strum": "down" },
+    { "id": 4, "t": 6, "dur": 2, "type": "chord", "chord": "A Minor", "notes": ["A","C","E"], "laneLabel": "Am", "strum": "down" },
+    { "id": 5, "t": 8, "dur": 2, "type": "chord", "chord": "C Major", "notes": ["C","E","G"], "laneLabel": "C", "strum": "down" },
+    { "id": 6, "t": 10, "dur": 2, "type": "chord", "chord": "G Major", "notes": ["G","B","D"], "laneLabel": "G", "strum": "down" },
+    { "id": 7, "t": 12, "dur": 2, "type": "chord", "chord": "A Minor", "notes": ["A","C","E"], "laneLabel": "Am", "strum": "down" },
+    { "id": 8, "t": 14, "dur": 2, "type": "chord", "chord": "E Minor", "notes": ["E","G","B"], "laneLabel": "Em", "strum": "down" }
+  ]
+}

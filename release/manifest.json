@@ -1,0 +1,9 @@
+{
+  "appId": "chordspark",
+  "version": "0.9.0",
+  "contentVersion": "0.9.0",
+  "buildNumber": 1,
+  "contentManifest": "content/manifests/default.json",
+  "releaseDate": "2026-04-01",
+  "notes": "release/notes.md"
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+www/
+resources/
+.freesound_token.json
+.claude/
+nul
+nul
+*.zip

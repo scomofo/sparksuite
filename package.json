@@ -1,0 +1,70 @@
+{
+  "name": "sparksuite",
+  "version": "1.0.0",
+  "description": "Multi-instrument music learning suite",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:portable": "electron-builder --win portable",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "build:mobile": "node -e \"const fs=require('fs');const p=require('path');function cp(s,d){fs.mkdirSync(d,{recursive:true});fs.readdirSync(s).forEach(f=>{const sp=p.join(s,f),dp=p.join(d,f);fs.statSync(sp).isDirectory()?cp(sp,dp):fs.copyFileSync(sp,dp)});}['index.html','styles.css','icon.png'].forEach(f=>fs.copyFileSync(f,p.join('www',f)));cp('js',p.join('www','js'));console.log('Assets copied to www/')\"",
+    "cap:sync": "npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "test": "node tests/test_core.js"
+  },
+  "author": "SparkSuite",
+  "license": "MIT",
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@tauri-apps/cli": "^2.0.0",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.0.0",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.sparksuite.app",
+    "productName": "SparkSuite",
+    "mac": {
+      "target": [
+        "zip"
+      ],
+      "icon": "icon.png",
+      "category": "public.app-category.music",
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "icon.png",
+      "styles.css",
+      "js/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/",
+        "to": "resources/",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}

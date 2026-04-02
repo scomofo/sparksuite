@@ -1,0 +1,369 @@
+{
+  "id": "let_it_be_chords",
+  "title": "Let It Be",
+  "artist": "The Beatles",
+  "bpm": 72,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 26.667
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 26.667,
+      "endSec": 53.333
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 53.333,
+      "endSec": 80
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 3.333,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 6.667,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "up"
+    },
+    {
+      "id": 4,
+      "t": 10,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 5,
+      "t": 13.333,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 6,
+      "t": 16.667,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 7,
+      "t": 20,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 23.333,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 9,
+      "t": 26.667,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 10,
+      "t": 30,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 11,
+      "t": 33.333,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 12,
+      "t": 36.667,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 13,
+      "t": 40,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 14,
+      "t": 43.333,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 15,
+      "t": 46.667,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 16,
+      "t": 50,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 53.333,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 56.667,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 19,
+      "t": 60,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 20,
+      "t": 63.333,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 21,
+      "t": 66.667,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 22,
+      "t": 70,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 23,
+      "t": 73.333,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 76.667,
+      "dur": 3.333,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    }
+  ]
+}

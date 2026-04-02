@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "appId": "pianospark",
+  "instrument": "piano",
+  "title": "PianoSpark Content",
+  "units": [
+    {
+      "id": "unit_basic_chords",
+      "title": "Basic Piano Chords",
+      "lessons": [
+        {
+          "id": "lesson_c_f_g",
+          "type": "guided",
+          "title": "C, F, and G Major",
+          "objectives": ["Play C major triad", "Switch between C and F"],
+          "skills": ["recognition", "switching", "timing"],
+          "difficulty": 1,
+          "instrumentData": {
+            "piano": {
+              "chords": ["C", "F", "G"],
+              "voicings": [],
+              "keyboardHighlights": []
+            }
+          },
+          "performanceData": {
+            "chartId": "lesson_c_f_g_chart",
+            "rendererMode": "highway"
+          },
+          "rewards": {
+            "xp": 25,
+            "unlockIds": ["drill_basic_chords_1"]
+          }
+        }
+      ]
+    }
+  ]
+}

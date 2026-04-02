@@ -1,0 +1,28 @@
+{
+  "name": "chordspark-desktop",
+  "version": "0.1.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build-win": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.spark.chordspark",
+    "productName": "ChordSpark",
+    "files": [
+      "../**/*",
+      "!../node_modules/*/.cache/**"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    }
+  }
+}

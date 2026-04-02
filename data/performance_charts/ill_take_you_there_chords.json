@@ -1,0 +1,369 @@
+{
+  "id": "ill_take_you_there_chords",
+  "title": "Ill Take You There",
+  "artist": "The Staple Singers",
+  "bpm": 108,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 17.778
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 17.778,
+      "endSec": 35.556
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 35.556,
+      "endSec": 53.333
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 2.222,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 4.444,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 4,
+      "t": 6.667,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 5,
+      "t": 8.889,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 6,
+      "t": 11.111,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 7,
+      "t": 13.333,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 15.556,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 9,
+      "t": 17.778,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 10,
+      "t": 20,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 11,
+      "t": 22.222,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 12,
+      "t": 24.444,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 13,
+      "t": 26.667,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 14,
+      "t": 28.889,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 15,
+      "t": 31.111,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 16,
+      "t": 33.333,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 35.556,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 37.778,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 19,
+      "t": 40,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 20,
+      "t": 42.222,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 21,
+      "t": 44.444,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 22,
+      "t": 46.667,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 23,
+      "t": 48.889,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 51.111,
+      "dur": 2.222,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    }
+  ]
+}

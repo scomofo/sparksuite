@@ -1,0 +1,369 @@
+{
+  "id": "wonderful_tonight_chords",
+  "title": "Wonderful Tonight",
+  "artist": "Eric Clapton",
+  "bpm": 95,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 20.211
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 20.211,
+      "endSec": 40.421
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 40.421,
+      "endSec": 60.632
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 2.526,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 5.053,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 4,
+      "t": 7.579,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 5,
+      "t": 10.105,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 6,
+      "t": 12.632,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 7,
+      "t": 15.158,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 17.684,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 9,
+      "t": 20.211,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 10,
+      "t": 22.737,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "down"
+    },
+    {
+      "id": 11,
+      "t": 25.263,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 12,
+      "t": 27.789,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 13,
+      "t": 30.316,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 14,
+      "t": 32.842,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 15,
+      "t": 35.368,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 16,
+      "t": 37.895,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 40.421,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 42.947,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "down"
+    },
+    {
+      "id": 19,
+      "t": 45.474,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 20,
+      "t": 48,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 21,
+      "t": 50.526,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 22,
+      "t": 53.053,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    },
+    {
+      "id": 23,
+      "t": 55.579,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 58.105,
+      "dur": 2.526,
+      "type": "chord",
+      "chord": "D",
+      "notes": [
+        "D",
+        "F#",
+        "A"
+      ],
+      "laneLabel": "D",
+      "strum": "up"
+    }
+  ]
+}

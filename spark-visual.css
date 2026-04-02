@@ -1,0 +1,264 @@
+/* ═══════════════════════════════════════════════════════════════
+   SparkVisual — Visual Enhancement Layer for ChordSpark
+   Adds depth, atmosphere, and ADHD-friendly engagement
+   Load AFTER styles.css
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Atmospheric Background ── */
+body {
+  background-image:
+    radial-gradient(ellipse 120% 60% at 20% -10%, rgba(255,123,58,.06), transparent 50%),
+    radial-gradient(ellipse 80% 80% at 80% 110%, rgba(255,123,58,.04), transparent 50%),
+    radial-gradient(circle at 50% 50%, var(--bg), var(--bg));
+}
+
+/* ── Glass-morphism Cards ── */
+.card, .stat-card, .set-card {
+  background: linear-gradient(145deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,.15),
+    inset 0 1px 0 rgba(255,255,255,.04);
+  transition: transform .2s, box-shadow .2s, background .3s;
+}
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.06);
+}
+body.light .card, body.light .stat-card, body.light .set-card {
+  background: rgba(255,255,255,.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,.06);
+  box-shadow: 0 2px 16px rgba(0,0,0,.04), inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+/* ── Header with Frosted Glass ── */
+.header {
+  background: rgba(18,16,14,.85);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border-bottom: 1px solid rgba(255,123,58,.1);
+}
+body.light .header {
+  background: rgba(245,240,234,.85);
+  border-bottom: 1px solid rgba(192,112,64,.1);
+}
+
+/* ── Logo Glow ── */
+.logo-text {
+  background: linear-gradient(135deg, #ff7b3a, #ffaa6a, #ff6030);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(255,123,58,.3));
+}
+
+/* ── XP/Streak Badges ── */
+.stat-xp {
+  background: linear-gradient(135deg, rgba(255,123,58,.15), rgba(255,123,58,.05));
+  border: 1px solid rgba(255,123,58,.2);
+  box-shadow: 0 0 12px rgba(255,123,58,.08);
+}
+.stat-str {
+  background: linear-gradient(135deg, rgba(255,80,60,.15), rgba(255,80,60,.05));
+  border: 1px solid rgba(255,80,60,.2);
+  box-shadow: 0 0 12px rgba(255,80,60,.08);
+}
+
+/* ── Tabs with Depth ── */
+.tabs {
+  background: rgba(0,0,0,.2);
+  border: 1px solid rgba(255,255,255,.04);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.15);
+}
+.tab {
+  border-radius: 6px;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+}
+.tab.active {
+  box-shadow: 0 2px 12px rgba(255,123,58,.2);
+  transform: translateY(-1px);
+}
+body.light .tabs {
+  background: rgba(0,0,0,.03);
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+/* ── Buttons with Gradient + Depth ── */
+.btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(255,123,58,.2), inset 0 1px 0 rgba(255,255,255,.15);
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+  font-family: var(--font-display);
+  letter-spacing: .03em;
+}
+.btn:hover {
+  box-shadow: 0 6px 20px rgba(255,123,58,.3), inset 0 1px 0 rgba(255,255,255,.2);
+  transform: translateY(-2px);
+}
+.btn:active {
+  transform: translateY(0) scale(.98);
+  box-shadow: 0 2px 8px rgba(255,123,58,.15);
+}
+.btn-sm {
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
+.btn-sm:hover {
+  background: var(--raised-bg);
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.btn-sm.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255,123,58,.2);
+}
+
+/* ── Progress Bars with Glow ── */
+.prog-fill {
+  box-shadow: 0 0 8px rgba(255,123,58,.3);
+  border-radius: 4px;
+}
+.prog-bar {
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(0,0,0,.2);
+}
+
+/* ── Chord Cards with Hover ── */
+.chord-card {
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  transition: all .2s;
+}
+.chord-card:hover {
+  background: rgba(255,123,58,.04);
+}
+
+/* ── Chord Chips with Pop ── */
+.chord-chip {
+  border-radius: 10px;
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+}
+.chord-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+.chord-chip.selected {
+  box-shadow: 0 0 12px rgba(76,217,100,.2);
+  transform: scale(1.05);
+}
+
+/* ── Level Tabs with Gradient ── */
+.lvl-tab {
+  border-radius: 10px;
+  transition: all .25s;
+}
+.lvl-tab.active, .lvl-tab[style*="background"] {
+  box-shadow: 0 2px 12px rgba(0,0,0,.15);
+  transform: translateY(-1px);
+}
+
+/* ── Inputs with Glow Focus ── */
+.set-input, .import-textarea {
+  border-radius: 10px;
+  transition: all .2s;
+}
+.set-input:focus, .import-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,123,58,.1);
+}
+
+/* ── Performance Highway Container ── */
+.perform-highway {
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,.3), inset 0 0 60px rgba(0,0,0,.2);
+  border: 1px solid rgba(255,255,255,.05);
+}
+
+/* ── Performance Score Strip ── */
+.perform-score-strip {
+  background: linear-gradient(135deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+/* ── Rhythm Game Lane ── */
+.rhythm-lane, .runner-lane {
+  border-radius: 16px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.2);
+  border: 1px solid rgba(255,255,255,.04);
+}
+.rhythm-beat {
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+
+/* ── Progression Builder ── */
+.prog-blocks {
+  border-radius: 16px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.15);
+}
+.prog-block {
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+}
+.prog-block.active {
+  box-shadow: 0 4px 16px rgba(255,123,58,.2);
+}
+
+/* ── Undo Toast ── */
+.undo-toast {
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  border-left: 4px solid var(--accent);
+}
+
+/* ── Shortcut Modal ── */
+.shortcut-overlay {
+  backdrop-filter: blur(8px);
+}
+.shortcut-modal {
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.4);
+}
+
+/* ── Metronome Dot ── */
+.metro-dot.active {
+  box-shadow: 0 0 16px var(--accent), 0 0 32px rgba(255,123,58,.2);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,123,58,.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,123,58,.3); }
+
+/* ── Selection Color ── */
+::selection {
+  background: rgba(255,123,58,.3);
+  color: #fff;
+}
+
+/* ── Text Shadow for Headings ── */
+h2, h3 {
+  text-shadow: 0 1px 2px rgba(0,0,0,.1);
+}
+
+/* ── Performance Hit Feedback ── */
+.perform-hit-feedback {
+  text-shadow: 0 2px 12px rgba(255,230,100,.5);
+}
+
+/* ── Smooth All Transitions ── */
+*, *::before, *::after {
+  transition-timing-function: cubic-bezier(.4,0,.2,1);
+}

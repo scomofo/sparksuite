@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "appId": "chordspark",
+  "instrument": "guitar",
+  "title": "ChordSpark Content",
+  "units": [
+    {
+      "id": "unit_open_chords",
+      "title": "Open Chords",
+      "lessons": [
+        {
+          "id": "lesson_c_g_d",
+          "type": "guided",
+          "title": "C, G, and D",
+          "objectives": ["Recognize C major", "Switch between C and G"],
+          "skills": ["recognition", "switching", "timing"],
+          "difficulty": 1,
+          "instrumentData": {
+            "guitar": {
+              "chords": ["C", "G", "D"],
+              "diagrams": [],
+              "audioKeys": []
+            }
+          },
+          "performanceData": {
+            "chartId": "lesson_c_g_d_chart",
+            "rendererMode": "highway"
+          },
+          "rewards": {
+            "xp": 25,
+            "unlockIds": ["drill_open_chords_1"]
+          }
+        }
+      ]
+    }
+  ]
+}

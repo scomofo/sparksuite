@@ -1,0 +1,14 @@
+[
+  {
+    "version": "0.9.0",
+    "date": "2026-04-01",
+    "channel": "beta",
+    "notes": [
+      "Added MIDI device mapping and profile system",
+      "Added MIDI import chart seed pipeline",
+      "Added desktop packaging with Electron",
+      "Added cloud sync and account system",
+      "Added content registry and curriculum engine"
+    ]
+  }
+]

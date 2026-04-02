@@ -1,0 +1,369 @@
+{
+  "id": "love_me_do_chords",
+  "title": "Love Me Do",
+  "artist": "The Beatles",
+  "bpm": 148,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 12.973
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 12.973,
+      "endSec": 25.946
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 25.946,
+      "endSec": 38.919
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 1.622,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 3.243,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 4,
+      "t": 4.865,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 5,
+      "t": 6.486,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 6,
+      "t": 8.108,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 7,
+      "t": 9.73,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 11.351,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 9,
+      "t": 12.973,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 10,
+      "t": 14.595,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 11,
+      "t": 16.216,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 12,
+      "t": 17.838,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 13,
+      "t": 19.459,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 14,
+      "t": 21.081,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 15,
+      "t": 22.703,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 16,
+      "t": 24.324,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 25.946,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 27.568,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 19,
+      "t": 29.189,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 20,
+      "t": 30.811,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 21,
+      "t": 32.432,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 22,
+      "t": 34.054,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 23,
+      "t": 35.676,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 37.297,
+      "dur": 1.622,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    }
+  ]
+}

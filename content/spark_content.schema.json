@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Spark Suite Content",
+  "type": "object",
+  "required": ["schemaVersion", "appId", "instrument", "title", "units"],
+  "properties": {
+    "schemaVersion": { "type": "integer" },
+    "appId": { "type": "string" },
+    "instrument": { "type": "string", "enum": ["guitar", "piano"] },
+    "title": { "type": "string" },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "lessons"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "lessons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "type", "title"],
+              "properties": {
+                "id": { "type": "string" },
+                "type": { "type": "string" },
+                "title": { "type": "string" },
+                "objectives": { "type": "array", "items": { "type": "string" } },
+                "skills": { "type": "array", "items": { "type": "string" } },
+                "difficulty": { "type": "integer" },
+                "instrumentData": { "type": "object" },
+                "performanceData": { "type": "object" },
+                "rewards": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "lessons": "content/lessons/index.json",
+  "songs": "content/songs/index.json",
+  "drills": "content/drills/index.json",
+  "templates": "content/templates/index.json",
+  "packs": "content/packs/index.json"
+}

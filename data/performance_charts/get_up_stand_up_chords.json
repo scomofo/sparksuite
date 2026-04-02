@@ -1,0 +1,369 @@
+{
+  "id": "get_up_stand_up_chords",
+  "title": "Get Up Stand Up",
+  "artist": "Bob Marley",
+  "bpm": 100,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 19.2
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 19.2,
+      "endSec": 38.4
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 38.4,
+      "endSec": 57.6
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 2.4,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 4.8,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    },
+    {
+      "id": 4,
+      "t": 7.2,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 5,
+      "t": 9.6,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    },
+    {
+      "id": 6,
+      "t": 12,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 7,
+      "t": 14.4,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 16.8,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    },
+    {
+      "id": 9,
+      "t": 19.2,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 10,
+      "t": 21.6,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 11,
+      "t": 24,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    },
+    {
+      "id": 12,
+      "t": 26.4,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 13,
+      "t": 28.8,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    },
+    {
+      "id": 14,
+      "t": 31.2,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 15,
+      "t": 33.6,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 16,
+      "t": 36,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 38.4,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 40.8,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 19,
+      "t": 43.2,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    },
+    {
+      "id": 20,
+      "t": 45.6,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 21,
+      "t": 48,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    },
+    {
+      "id": 22,
+      "t": 50.4,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 23,
+      "t": 52.8,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 55.2,
+      "dur": 2.4,
+      "type": "chord",
+      "chord": "Cm",
+      "notes": [
+        "C",
+        "Eb",
+        "G"
+      ],
+      "laneLabel": "Cm",
+      "strum": "up"
+    }
+  ]
+}

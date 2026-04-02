@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicedoc/tauri-docs/main/tooling/bundler/schema.json",
+  "productName": "ChordSpark",
+  "version": "3.1.0",
+  "identifier": "com.chordspark.app",
+  "build": {
+    "frontendDist": "../",
+    "devUrl": "http://localhost:1420"
+  },
+  "app": {
+    "title": "ChordSpark",
+    "windows": [
+      {
+        "title": "ChordSpark",
+        "width": 500,
+        "height": 850,
+        "minWidth": 400,
+        "minHeight": 700,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "../icon.png"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

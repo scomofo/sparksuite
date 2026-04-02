@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Spark Suite Profile",
+  "type": "object",
+  "required": ["schemaVersion", "suite", "userId", "apps", "suiteRewards"],
+  "properties": {
+    "schemaVersion": { "type": "integer" },
+    "suite": { "type": "string", "const": "spark" },
+    "userId": { "type": "string" },
+    "apps": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["instrument", "stats"],
+        "properties": {
+          "instrument": { "type": "string" },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "xp": { "type": "integer" },
+              "level": { "type": "integer" },
+              "streakDays": { "type": "integer" },
+              "sessionsCompleted": { "type": "integer" },
+              "lessonsCompleted": { "type": "integer" }
+            }
+          },
+          "mastery": { "type": "object" },
+          "completedLessonIds": { "type": "array", "items": { "type": "string" } },
+          "unlockedIds": { "type": "array", "items": { "type": "string" } },
+          "settings": { "type": "object" },
+          "songAudioData": { "type": "object" }
+        }
+      }
+    },
+    "suiteRewards": {
+      "type": "object",
+      "properties": {
+        "badges": { "type": "array", "items": { "type": "string" } },
+        "cosmetics": { "type": "array", "items": { "type": "string" } },
+        "challengeProgress": { "type": "object" }
+      }
+    }
+  }
+}

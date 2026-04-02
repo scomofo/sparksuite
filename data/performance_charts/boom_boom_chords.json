@@ -1,0 +1,369 @@
+{
+  "id": "boom_boom_chords",
+  "title": "Boom Boom",
+  "artist": "John Lee Hooker",
+  "bpm": 135,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 14.222
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 14.222,
+      "endSec": 28.444
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 28.444,
+      "endSec": 42.667
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 1.778,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 3,
+      "t": 3.556,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 4,
+      "t": 5.333,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 5,
+      "t": 7.111,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 6,
+      "t": 8.889,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 7,
+      "t": 10.667,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 12.444,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 9,
+      "t": 14.222,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 10,
+      "t": 16,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 11,
+      "t": 17.778,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 12,
+      "t": 19.556,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 13,
+      "t": 21.333,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 14,
+      "t": 23.111,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 15,
+      "t": 24.889,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 16,
+      "t": 26.667,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 28.444,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 30.222,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 19,
+      "t": 32,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 20,
+      "t": 33.778,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 21,
+      "t": 35.556,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 22,
+      "t": 37.333,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    },
+    {
+      "id": 23,
+      "t": 39.111,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 40.889,
+      "dur": 1.778,
+      "type": "chord",
+      "chord": "E",
+      "notes": [
+        "E",
+        "G#",
+        "B"
+      ],
+      "laneLabel": "E",
+      "strum": "up"
+    }
+  ]
+}

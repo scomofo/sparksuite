@@ -1,0 +1,369 @@
+{
+  "id": "hallelujah_chords",
+  "title": "Hallelujah",
+  "artist": "Leonard Cohen",
+  "bpm": 56,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 34.286
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 34.286,
+      "endSec": 68.571
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 68.571,
+      "endSec": 102.857
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 4.286,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 8.571,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 4,
+      "t": 12.857,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 5,
+      "t": 17.143,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 6,
+      "t": 21.429,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 7,
+      "t": 25.714,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 30,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 9,
+      "t": 34.286,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 10,
+      "t": 38.571,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 11,
+      "t": 42.857,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 12,
+      "t": 47.143,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 13,
+      "t": 51.429,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 14,
+      "t": 55.714,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 15,
+      "t": 60,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 16,
+      "t": 64.286,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 68.571,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 72.857,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 19,
+      "t": 77.143,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "up"
+    },
+    {
+      "id": 20,
+      "t": 81.429,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A",
+        "C",
+        "E"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 21,
+      "t": 85.714,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F",
+        "A",
+        "C"
+      ],
+      "laneLabel": "F",
+      "strum": "up"
+    },
+    {
+      "id": 22,
+      "t": 90,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 23,
+      "t": 94.286,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C",
+        "E",
+        "G"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 98.571,
+      "dur": 4.286,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G",
+        "B",
+        "D"
+      ],
+      "laneLabel": "G",
+      "strum": "up"
+    }
+  ]
+}
