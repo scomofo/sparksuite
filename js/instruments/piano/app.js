@@ -645,10 +645,7 @@ function act(action, param) {
   var _handled = true;
   switch (action) {
     case "tab":
-      var _tabMap = { practice: 0, games: 1, songs: 2, tools: 3 };
-      var t = (typeof param === "string" && _tabMap[param] !== undefined) ? _tabMap[param] : parseInt(param);
-      if (!isNaN(t) && t >= TAB.PRACTICE && t <= TAB.TOOLS) {
-        S.tab = t;
+      S.tab = param;
         if (S.songPlaying) {
           S.songPlaying = false;
           if (T.song) { clearInterval(T.song); T.song = null; }

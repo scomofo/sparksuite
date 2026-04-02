@@ -306,9 +306,7 @@ window.act=function(a,v){
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
   if(a==="tab"){
-    var _tm={practice:0,games:1,songs:2,tools:3};
-    S.tab=(typeof v==="string"&&_tm[v]!==undefined)?_tm[v]:v;
-    S.screen=SCR.HOME;
+    S.tab=v;S.screen=SCR.HOME;
     stopAllTimers();
     S.earTrainQ=null;S.earTrainAns=null;S.selectedVoicing=0;
     if(v===TAB.SONGS&&S.songsSubTab==="community")fetchCommunity();
