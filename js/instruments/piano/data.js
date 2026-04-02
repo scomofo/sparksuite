@@ -1583,6 +1583,17 @@ window.PIANO_CHORD_COLORS = CHORD_COLORS;
 window.PIANO_LC = LC;
 window.PIANO_LN = LN;
 
+// Direct globals needed by piano pages (IIFE hides vars, pages reference them bare)
+var _exports = {
+  DAILY_TYPES:DAILY_TYPES, FINGER_BADGES:FINGER_BADGES, KEYBOARD_SIZES:KEYBOARD_SIZES,
+  BADGES:BADGES, REWARD_PHASES:REWARD_PHASES, SCALES:SCALES, FINGER_EXERCISES:FINGER_EXERCISES,
+  CHORDS:CHORDS, SONGS:SONGS, SESSION_PLANS:SESSION_PLANS, CURRICULUM:CURRICULUM,
+  LC:LC, LN:LN, PLAY_STYLES:PLAY_STYLES, CHORD_COLORS:CHORD_COLORS, INJURY_TIPS:INJURY_TIPS,
+  LH_PATTERNS:LH_PATTERNS, TRANSITION_TIPS:TRANSITION_TIPS, PLACEMENT_TESTS:PLACEMENT_TESTS,
+  STYLE_PREFS:STYLE_PREFS, CHORD_NOTES:CHORD_NOTES, NOTE_NAMES:NOTE_NAMES, FLAT_NAMES:FLAT_NAMES
+};
+for (var _k in _exports) { if (_exports.hasOwnProperty(_k) && typeof window[_k] === "undefined") window[_k] = _exports[_k]; }
+
 // Chord/data helper functions needed by piano pages and app engine
 window.allChordKeys = allChordKeys;
 window.allChords = allChords;
