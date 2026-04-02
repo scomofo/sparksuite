@@ -9,11 +9,12 @@ function _isStemSolo(name){
 
 // ===== STRUM TAB =====
 function strumTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Strum Patterns &#127932;</h2></div><div class="flex-col">';
   for(var i=0;i<STRUM_PATTERNS.length;i++){
     var sp=STRUM_PATTERNS[i],lk=sp.level>S.level;
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openStrum\',\'"+sp.name+"\')"))+'">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+sp.name+'</h3><p style="margin:4px 0 0;font-size:12px;color:var(--text-dim)">'+sp.desc+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+LC[sp.level]+'">Lvl '+sp.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+sp.bpm+' BPM</div></div></div>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+sp.name+'</h3><p style="margin:4px 0 0;font-size:12px;color:var(--text-dim)">'+sp.desc+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+D.LC[sp.level]+'">Lvl '+sp.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+sp.bpm+' BPM</div></div></div>';
     h+='<div style="display:flex;gap:4px;margin-top:10px">';
     for(var j=0;j<sp.pattern.length;j++){
       var p=sp.pattern[j],isD=p==="D",isU=p==="U";
@@ -27,6 +28,7 @@ function strumTab(){
 
 // ===== SONGS TAB =====
 function songsTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Song Library &#127925;</h2></div>';
   // Sub-tabs: Built-in | Community
   h+='<div class="community-tabs">';
@@ -69,7 +71,7 @@ function songsTab(){
   h+='</div>';
 
   // Filter songs
-  var filtered=SONGS.slice();
+  var filtered=D.SONGS.slice();
   if(S.songFilter){
     var q=S.songFilter.toLowerCase();
     filtered=filtered.filter(function(s){
@@ -100,7 +102,7 @@ function songsTab(){
   for(var i=0;i<filtered.length;i++){
     var s=filtered[i],lk=s.level>S.level;
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(s.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(s.artist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+LC[s.level]+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+s.bpm+' BPM &bull; '+s.chords.length+' chords</div>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(s.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(s.artist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+D.LC[s.level]+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+s.bpm+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
       var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",S.performDifficulty);
       if(_ps.mastery!=="none"){
@@ -113,7 +115,7 @@ function songsTab(){
       h+='<span style="background:var(--chip-bg);padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--chip-color)">'+escHTML(s.chords[j])+'</span>';
     h+='</div>';
     if(s.progression&&s.progression.length>0&&!lk){
-      h+='<div style="margin-top:6px"><button class="btn btn-sm" onclick="event.stopPropagation();act(\'openPerformSong\','+SONGS.indexOf(s)+')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:11px;padding:4px 10px">&#127918; Perform</button></div>';
+      h+='<div style="margin-top:6px"><button class="btn btn-sm" onclick="event.stopPropagation();act(\'openPerformSong\','+D.SONGS.indexOf(s)+')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:11px;padding:4px 10px">&#127918; Perform</button></div>';
     }
     h+='</div>';
   }
@@ -161,6 +163,7 @@ function communitySection(){
 }
 
 function communitySubmitForm(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var ss=S.submitSong;
   var h='<div class="card"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">Submit a Song</h3>';
   h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(ss.title)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
@@ -169,8 +172,8 @@ function communitySubmitForm(){
   h+='<div style="display:flex;gap:8px;margin-bottom:12px"><label style="font-size:12px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+ss.bpm+'" oninput="act(\'submitField\',\'bpm:\'+this.value)" aria-label="BPM" min="40" max="200"/></div>';
   h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Chords used:</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
-  for(var i=0;i<ALL_CHORDS.length;i++){
-    var c=ALL_CHORDS[i],sel=ss.chords.indexOf(c.short)!==-1;
+  for(var i=0;i<D.ALL_CHORDS.length;i++){
+    var c=D.ALL_CHORDS[i],sel=ss.chords.indexOf(c.short)!==-1;
     h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'submitToggleChord\',\'"+c.short+"\')")+'>'+c.short+'</span>';
   }
   h+='</div>';
@@ -190,6 +193,7 @@ function communitySubmitForm(){
 
 // ===== IMPORT CHORD SHEET SECTION =====
 function importSection(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var h='<div class="card mb16">';
   h+='<h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128196; Import Chord Sheet</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Paste a chord sheet using [Am] [G] bracket notation or chord names on their own lines.</p>';
@@ -212,7 +216,7 @@ function importSection(){
     for(var i=0;i<S.importedSong.chords.length;i++){
       var cn=S.importedSong.chords[i];
       var known=false;
-      for(var j=0;j<ALL_CHORDS.length;j++)if(ALL_CHORDS[j].name===cn||ALL_CHORDS[j].short===cn){known=true;break;}
+      for(var j=0;j<D.ALL_CHORDS.length;j++)if(D.ALL_CHORDS[j].name===cn||D.ALL_CHORDS[j].short===cn){known=true;break;}
       h+='<span style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;background:'+(known?"#4ECDC422":"#FF6B6B22")+';color:'+(known?"#4ECDC4":"#FF6B6B")+';border:1px solid '+(known?"#4ECDC4":"#FF6B6B")+'">'+escHTML(cn)+'</span>';
     }
     h+='</div>';

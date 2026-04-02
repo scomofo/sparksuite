@@ -2,6 +2,8 @@
 
 // ===== SESSION PAGES =====
 function sessionPage(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   var c=S.currentChord;if(!c)return '';
   // Check if voicings are available
   var voicings=VOICINGS[c.name];
@@ -27,7 +29,7 @@ function sessionPage(){
   var morphClass=(chordChanged&&_prevChordKey)?" chord-morph":"";
   // Only animate on first appearance or chord/voicing change, not every timer tick
   var shouldAnimate=chordChanged;
-  h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px">'+chordSVG(displayChord,220,c.name,shouldAnimate)+'</div>';
+  h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px">'+UI.chord(displayChord,220,c.name,shouldAnimate)+'</div>';
   _prevChordKey=chordKey;
   h+='<button onclick="act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:8px" aria-label="Preview chord sound">&#128264; Listen to this chord</button>';
 
@@ -65,6 +67,8 @@ function completePage(){
 }
 
 function drillPage(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   if(S.drillChords.length<2)return '';
   var c=S.drillChords[S.drillIdx],nx=S.drillChords[(S.drillIdx+1)%2];
   var drillChanged=_prevChordKey!==c.name;
@@ -74,8 +78,8 @@ function drillPage(){
   h+='<div style="display:flex;justify-content:center;gap:20px;align-items:center;margin-bottom:12px"><span id="drill-timer-ring">'+ringHTML((1-S.drillTimer/60)*100,70,6,"#FF6B6B",'<div style="font-size:18px;font-weight:900;color:var(--text-primary)">'+S.drillTimer+'s</div>',"Drill timer")+'</span>';
   h+='<div><div id="drill-switch-count" style="font-size:32px;font-weight:900;color:#4ECDC4">'+S.drillSwitches+'</div><div style="font-size:11px;color:var(--text-muted)">switches</div></div>';
   h+='<div style="text-align:center"><div id="drill-adaptive-bpm" style="font-size:18px;font-weight:900;color:#FFE66D">'+S.drillAdaptiveBpm+'</div><div style="font-size:11px;color:var(--text-muted)">target BPM</div></div></div>';
-  h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+LC[S.level]+'">';
-  h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+LC[S.level]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+chordSVG(c,180,null,drillChanged)+'</div>';
+  h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
+  h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+D.LC[S.level]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+UI.chord(c,180,null,drillChanged)+'</div>';
   _prevChordKey=c.name;
   // Transition tip
   var tip=getTransitionTip(c.name,nx.name);
@@ -105,13 +109,14 @@ function dailyPage(){
 }
 
 function quizPage(){
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   if(!S.quizQ)return '';
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'quiz\')">&#8592; Back</button><div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+S.quizScore+'/'+S.quizTotal+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+S.quizStreak+'</span></div></div>';
   h+='<h2 style="font-size:28px;font-weight:900;color:var(--text-primary);margin:8px 0 4px">Which is...</h2><div style="font-size:36px;font-weight:900;color:#FF6B6B;margin-bottom:16px">'+S.quizQ.name+'?</div>';
   h+='<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">';
   for(var i=0;i<S.quizOpts.length;i++){
     var c=S.quizOpts[i],isA=S.quizAns!==null,isC=c.name===S.quizQ.name,isP=S.quizAns===c.name;
-    h+='<div class="card"'+clickableDiv("act(\'answerQuiz\',\'"+c.name+"\')")+' style="cursor:'+(isA?"default":"pointer")+';padding:10px;border:3px solid '+(isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--border)")):"var(--border)")+';background:'+(isA&&isC?"#4ECDC411":isA&&isP&&!isC?"#FF6B6B11":"var(--card-bg)")+';transition:all .2s;transform:'+(isA&&isC?"scale(1.05)":"scale(1)")+'">'+chordSVG(c,100)+'</div>';
+    h+='<div class="card"'+clickableDiv("act(\'answerQuiz\',\'"+c.name+"\')")+' style="cursor:'+(isA?"default":"pointer")+';padding:10px;border:3px solid '+(isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--border)")):"var(--border)")+';background:'+(isA&&isC?"#4ECDC411":isA&&isP&&!isC?"#FF6B6B11":"var(--card-bg)")+';transition:all .2s;transform:'+(isA&&isC?"scale(1.05)":"scale(1)")+'">'+UI.chord(c,100)+'</div>';
   }
   h+='</div>';
   if(S.quizAns){
@@ -146,6 +151,8 @@ function strumDetailPage(){
 }
 
 function songDetailPage(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   var sg=S.selectedSong;if(!sg)return '';
   var patBeat=S.songPlaying?(S.songBeat%sg.pattern.length):-1;
   var curDir=patBeat>=0?sg.pattern[patBeat]:"x";
@@ -162,8 +169,8 @@ function songDetailPage(){
   h+='</div></div>';
   if(S.songPlaying){
     var cn=sg.progression[S.songBeat],ch=null;
-    for(var i=0;i<ALL_CHORDS.length;i++)if(ALL_CHORDS[i].short===cn||ALL_CHORDS[i].name===cn)ch=ALL_CHORDS[i];
-    if(ch)h+='<div class="card mb16"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+chordSVG(ch,160)+'</div></div>';
+    for(var i=0;i<D.ALL_CHORDS.length;i++)if(D.ALL_CHORDS[i].short===cn||D.ALL_CHORDS[i].name===cn)ch=D.ALL_CHORDS[i];
+    if(ch)h+='<div class="card mb16"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
   }
   // Strum hand + pattern
   h+='<div class="card mb16" style="padding:16px"><h4 style="margin:0 0 8px;font-size:14px;color:var(--text-primary)">Strum Pattern</h4>';
