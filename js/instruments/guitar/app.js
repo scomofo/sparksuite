@@ -23,29 +23,57 @@ function guitarAct(a, v) {
   }
 
   if (a === "resumeSession") {
-    var ch = null;
-    for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === S.lastChordName) ch = D.ALL_CHORDS[i];
-    if (!ch) { act("quickStart"); return true; }
+    var session = SparkSession.buildSession({ mode: "chord", chordName: S.lastChordName });
+    if (!session) { act("quickStart"); return true; }
     S.sessionMicros = [];
-    snd("start"); S.currentChord = ch; S.timer = 120; S.timerActive = true; S.selectedVoicing = 0; _prevChordKey = ch.name; S.screen = SCR.SESSION; render(); clearTimeout(T.session); T.session = setTimeout(tickS, 1000);
+    snd("start");
+    S.currentChord = session.chord;
+    S.timer = session.duration;
+    S.timerActive = true;
+    S.selectedVoicing = 0;
+    if (typeof _prevChordKey !== "undefined") _prevChordKey = session.chordName;
+    S.screen = SCR.SESSION;
+    render();
+    clearTimeout(T.session);
+    T.session = setTimeout(tickS, 1000);
     return true;
   }
 
   if (a === "startSession") {
-    var ch;
-    for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === v) ch = D.ALL_CHORDS[i];
-    if (ch) { S.sessionMicros = []; S.lastChordName = ch.name; snd("start"); S.currentChord = ch; S.timer = 120; S.timerActive = true; S.selectedVoicing = 0; _prevChordKey = ch.name; S.screen = SCR.SESSION; render(); clearTimeout(T.session); T.session = setTimeout(tickS, 1000); saveState(); }
+    var session = SparkSession.buildSession({ mode: "chord", chordName: v });
+    if (!session) return true;
+    S.sessionMicros = [];
+    S.lastChordName = session.chordName;
+    snd("start");
+    S.currentChord = session.chord;
+    S.timer = session.duration;
+    S.timerActive = true;
+    S.selectedVoicing = 0;
+    if (typeof _prevChordKey !== "undefined") _prevChordKey = session.chordName;
+    S.screen = SCR.SESSION;
+    render();
+    clearTimeout(T.session);
+    T.session = setTimeout(tickS, 1000);
+    saveState();
     return true;
   }
 
   if (a === "startDrill") {
-    var av = D.CHORDS[S.level] || D.CHORDS[1];
-    var c1 = av[Math.floor(Math.random() * av.length)], c2 = c1, n = 0;
-    while (c2.name === c1.name && av.length > 1 && n < 20) { c2 = av[Math.floor(Math.random() * av.length)]; n++; }
-    S.drillChords = [c1, c2]; S.drillIdx = 0; S.drillTimer = 60; S.drillSwitches = 0; S.drillLastSwitchTime = Date.now();
-    S.drillAdaptiveBpm = 60; S.drillConsecutiveFast = 0; S.drillConsecutiveSlow = 0;
-    _prevChordKey = c1.name;
-    snd("start"); S.screen = SCR.DRILL; render(); T.drill = setTimeout(tickD, 1000);
+    var session = SparkSession.buildSession({ mode: "drill", level: S.level });
+    if (!session) return true;
+    S.drillChords = session.chords;
+    S.drillIdx = 0;
+    S.drillTimer = session.duration;
+    S.drillSwitches = 0;
+    S.drillLastSwitchTime = Date.now();
+    S.drillAdaptiveBpm = 60;
+    S.drillConsecutiveFast = 0;
+    S.drillConsecutiveSlow = 0;
+    if (typeof _prevChordKey !== "undefined") _prevChordKey = session.chords[0].name;
+    snd("start");
+    S.screen = SCR.DRILL;
+    render();
+    T.drill = setTimeout(tickD, 1000);
     return true;
   }
 
