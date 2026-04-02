@@ -14,6 +14,7 @@
     // Core engines (v0.2.0)
     Session: window.SparkSession,
     Psychology: window.SparkPsychology,
-    InstrumentAdapter: window.SparkInstrumentAdapter
+    InstrumentAdapter: window.SparkInstrumentAdapter,
+    ProgressOrchestrator: window.SparkProgressOrchestrator
   };
 })();
