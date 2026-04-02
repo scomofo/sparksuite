@@ -169,7 +169,7 @@ function adaptiveBpmDisplay(current, personalBest) {
 }
 
 // ── If-Then intention card (stickiness #2) ──
-function ifThenCard(intention) {
+function pianoIfThenCard(intention) {
   if (!intention) return "";
   return '<div class="intention-card"><span class="intention-icon">\u{1F3AF}</span> <strong>Your intention:</strong> ' + escHTML(intention) + '</div>';
 }
@@ -245,7 +245,7 @@ function styleHTML(styleObj) {
 }
 
 // ── Badge checking (expanded for 8 levels) ──
-function checkBadges() {
+function pianoCheckBadges() {
   var newBadges = [];
   for (var i = 0; i < BADGES.length; i++) {
     var b = BADGES[i];
@@ -269,13 +269,13 @@ function getChordTier(pct) {
   return { tier: "none", icon: "", color: "" };
 }
 
-function tierBadgeHTML(pct) {
+function pianoTierBadgeHTML(pct) {
   var t = getChordTier(pct);
   return t.icon ? '<span class="tier-badge" title="' + t.tier + '">' + t.icon + '</span>' : "";
 }
 
 // ── Micro achievements during session ──
-function fireMicro(elapsed, total) {
+function pianoFireMicro(elapsed, total) {
   if (Math.abs(elapsed - Math.floor(total * 0.5)) < 1) return "Halfway there!";
   if (Math.abs(elapsed - Math.floor(total * 0.75)) < 1) return "Almost done!";
   if (Math.abs(elapsed - 30) < 1) return "Great start!";
@@ -283,7 +283,7 @@ function fireMicro(elapsed, total) {
 }
 
 // ── Confetti ──
-function showConfetti() {
+function pianoShowConfetti() {
   var container = document.createElement("div");
   container.className = "confetti-container";
   document.body.appendChild(container);
@@ -330,12 +330,12 @@ function escHTML(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function clickableDiv(onclick, content, cls) {
+function pianoClickableDiv(onclick, content, cls) {
   if (!cls) cls = "";
   return '<div class="' + cls + '" role="button" tabindex="0" onclick="' + onclick + '" onkeydown="if(event.key===\'Enter\')' + onclick + '">' + content + '</div>';
 }
 
-function formatTime(s) {
+function pianoFormatTime(s) {
   var m = Math.floor(s / 60);
   var sec = s % 60;
   return m + ":" + (sec < 10 ? "0" : "") + sec;

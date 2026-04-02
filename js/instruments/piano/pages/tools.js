@@ -64,7 +64,7 @@ function statsTab() {
     var prog = S.chordProg[c.short] || 0;
     html += '<div class="mastery-row">';
     html += '<span class="mastery-name" style="color:' + (c.color || '#888') + '">' + escHTML(c.short) + '</span>';
-    html += tierBadgeHTML(prog);
+    html += pianoTierBadgeHTML(prog);
     html += '<div class="mastery-bar"><div class="mastery-fill" style="width:' + prog + '%"></div></div>';
     html += '<span class="mastery-pct">' + prog + '%</span>';
     html += '</div>';
