@@ -1504,12 +1504,30 @@ function render(){
   }
 }
 function _renderInner(){
+  var app=document.getElementById("app");
+
+  // Launcher gate — if no instrument active, show clean launcher
+  if (!S.activeInstrument) {
+    document.getElementById("header").style.display = "none";
+    app.innerHTML = SparkInstruments.renderLauncher();
+    return;
+  }
+
+  document.getElementById("header").style.display = "";
+  var backBtn = document.getElementById("launcher-back");
+  if (backBtn) backBtn.style.display = "";
+  var logoText = document.querySelector(".logo-text");
+  if (logoText) {
+    var _inst = SparkInstruments.getActive();
+    logoText.textContent = _inst ? _inst.name + "Spark" : "SparkSuite";
+  }
+
   document.getElementById("hdr-xp").textContent=S.xp;
   document.getElementById("hdr-str").textContent=S.streak;
   document.getElementById("snd-btn").textContent=S.soundOn?"\uD83D\uDD0A":"\uD83D\uDD07";
   document.getElementById("snd-btn").style.opacity=S.soundOn?1:0.4;
   document.getElementById("dark-btn").textContent=S.darkMode?"\uD83C\uDF19":"\u2600\uFE0F";
-  var app=document.getElementById("app"),h="";
+  var h="";
   if(S.showConfetti){
     var cols=["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
     h+='<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
@@ -1553,23 +1571,6 @@ function _renderInner(){
     h+='<button class="btn" onclick="act(\'completeOnboarding\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:14px 40px;font-size:17px;font-weight:800">Let\'s Go!</button>';
     h+='<button onclick="act(\'completeOnboarding\')" style="margin-top:14px;background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer">Skip for now</button>';
     h+='</div>';
-  }
-
-  // Launcher gate — if no instrument active, show launcher
-  if (!S.activeInstrument) {
-    h += SparkInstruments.renderLauncher();
-    app.innerHTML = h;
-    document.getElementById("header").style.display = "none";
-    return;
-  } else {
-    document.getElementById("header").style.display = "";
-  }
-  var backBtn = document.getElementById("launcher-back");
-  if (backBtn) backBtn.style.display = S.activeInstrument ? "" : "none";
-  var logoText = document.querySelector(".logo-text");
-  if (logoText) {
-    var _inst = SparkInstruments.getActive();
-    logoText.textContent = _inst ? _inst.name + "Spark" : "SparkSuite";
   }
 
   var screenKey=S.screen+S.tab;
