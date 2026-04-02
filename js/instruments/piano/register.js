@@ -9,14 +9,32 @@
     available: true,
 
     getData: function() {
+      var d = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : {};
       return {
-        songs: typeof PIANO_SONGS !== "undefined" ? PIANO_SONGS : [],
-        voicings: typeof PIANO_VOICINGS !== "undefined" ? PIANO_VOICINGS : {},
-        chords: typeof PIANO_CHORDS_FULL !== "undefined" ? PIANO_CHORDS_FULL : {},
-        sessions: typeof PIANO_SESSIONS !== "undefined" ? PIANO_SESSIONS : [],
-        curriculum: typeof PIANO_CURRICULUM !== "undefined" ? PIANO_CURRICULUM : [],
-        lhPatterns: typeof PIANO_LH_PATTERNS !== "undefined" ? PIANO_LH_PATTERNS : [],
-        data: typeof PIANO_DATA !== "undefined" ? PIANO_DATA : null
+        CHORDS: d.CHORDS || {},
+        ALL_CHORDS: d.ALL_CHORDS || [],
+        SESSIONS: typeof PIANO_SESSIONS !== "undefined" ? PIANO_SESSIONS : (d.SESSION_PLANS || []),
+        SONGS: d.SONGS || (typeof PIANO_SONGS !== "undefined" ? PIANO_SONGS : []),
+        LC: d.LC || {},
+        LN: d.LN || {},
+        CHORD_NOTES: d.CHORD_NOTES || {},
+        CHORD_COLORS: d.CHORD_COLORS || {},
+        STRINGS: [],
+        STRUM_PATTERNS: [],
+        FINGER_EXERCISES: d.FINGER_EXERCISES || [],
+        // Piano extras
+        CURRICULUM: d.CURRICULUM || (typeof PIANO_CURRICULUM !== "undefined" ? PIANO_CURRICULUM : []),
+        LH_PATTERNS: d.LH_PATTERNS || [],
+        BADGES: d.BADGES || [],
+        SCALES: d.SCALES || [],
+        FINGER_BADGES: d.FINGER_BADGES || [],
+        DAILY_TYPES: d.DAILY_TYPES || [],
+        PLAY_STYLES: d.PLAY_STYLES || [],
+        TRANSITION_TIPS: d.TRANSITION_TIPS || [],
+        REWARD_PHASES: d.REWARD_PHASES || [],
+        VOICINGS: typeof PIANO_VOICINGS !== "undefined" ? PIANO_VOICINGS : {},
+        CHORDS_FULL: typeof PIANO_CHORDS_FULL !== "undefined" ? PIANO_CHORDS_FULL : {},
+        data: d
       };
     },
 
