@@ -319,6 +319,11 @@ function _sparkEmit(type, payload) {
 
 // ===== ACTION DISPATCHER =====
 window.act=function(a,v){
+  // Route to piano act() when piano is active
+  if (S.activeInstrument === "pianospark" && typeof pianoAct === "function") {
+    pianoAct(a, v);
+    return;
+  }
   if(a==="tab"){
     S.tab=v;S.screen=SCR.HOME;
     stopAllTimers();
