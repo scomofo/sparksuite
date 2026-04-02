@@ -19,7 +19,8 @@
         CHORD_NOTES: typeof CHORD_NOTES !== "undefined" ? CHORD_NOTES : {},
         STRINGS: typeof GUITAR_STRINGS !== "undefined" ? GUITAR_STRINGS : [],
         STRUM_PATTERNS: typeof STRUM_PATTERNS !== "undefined" ? STRUM_PATTERNS : [],
-        FINGER_EXERCISES: typeof FINGER_EXERCISES !== "undefined" ? FINGER_EXERCISES : []
+        FINGER_EXERCISES: typeof FINGER_EXERCISES !== "undefined" ? FINGER_EXERCISES : [],
+        CURRICULUM: typeof CURRICULUM !== "undefined" ? CURRICULUM : []
       };
     },
 
