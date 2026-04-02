@@ -162,12 +162,8 @@
         }
       }
 
-      // --- Save state ---
-      if (typeof saveState === "function") {
-        saveState();
-      }
-
-      return {
+      // --- Run full progression cascade ---
+      var outcome = {
         xpEarned:      xpEarned,
         jackpot:       jackpot,
         leveledUp:     leveledUp,
@@ -175,6 +171,31 @@
         newBadges:     newBadges,
         streakUpdated: streakUpdated
       };
+      if (typeof SparkProgressOrchestrator !== "undefined") {
+        var progressResult = SparkProgressOrchestrator.evaluateAll({
+          type: results.type || "session",
+          chordName: chordName,
+          accuracy: results.accuracy,
+          xpAwarded: xpEarned,
+          duration: results.duration,
+          songId: results.songId,
+          streakUpdated: streakUpdated
+        });
+        if (progressResult.leveledUp) {
+          outcome.playerLeveledUp = true;
+          outcome.newPlayerLevel = progressResult.newLevel;
+        }
+        if (progressResult.newAchievements.length) {
+          outcome.newAchievements = progressResult.newAchievements;
+        }
+      }
+
+      // --- Save state ---
+      if (typeof saveState === "function") {
+        saveState();
+      }
+
+      return outcome;
     }
   };
 
