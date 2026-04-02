@@ -275,26 +275,8 @@
   }
   if (!piano) return;
 
-  // Piano's HOME page routes to piano-specific tabs
+  // Piano uses shared homePage() with its own tabs + tabRenderers
   piano.pages = {};
-  piano.pages[SCR.HOME] = function() {
-    var html = '';
-    html += (typeof pianoHeaderHTML === "function") ? pianoHeaderHTML() : '';
-    html += (typeof pianoTabNavHTML === "function") ? pianoTabNavHTML() : '';
-    var tab = S.tab;
-    if (tab === "practice" || tab === TAB.PRACTICE) {
-      html += typeof pianoPracticeTab === "function" ? pianoPracticeTab() : '';
-    } else if (tab === "games") {
-      html += typeof pianoGamesTab === "function" ? pianoGamesTab() : '';
-    } else if (tab === "songs" || tab === TAB.SONGS) {
-      html += typeof pianoSongsTab === "function" ? pianoSongsTab() : '';
-    } else if (tab === "tools") {
-      html += typeof pianoToolsTab === "function" ? pianoToolsTab() : '';
-    } else {
-      html += typeof pianoPracticeTab === "function" ? pianoPracticeTab() : '';
-    }
-    return html;
-  };
   if (typeof pianoSessionPage === "function") piano.pages[SCR.SESSION] = pianoSessionPage;
   if (typeof pianoPerformPage === "function") piano.pages[SCR.PERFORM] = pianoPerformPage;
   if (typeof pianoPerformDonePage === "function") piano.pages[SCR.PERFORM_DONE] = pianoPerformDonePage;

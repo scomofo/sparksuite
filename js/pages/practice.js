@@ -1,30 +1,41 @@
 // ===== ChordSpark: Home page and practice-related tabs =====
 
 function homePage(){
+  // Build tab bar from active instrument's tabs array
+  var inst = SparkInstruments.getActive();
+  var instTabs = inst && inst.tabs ? inst.tabs : [];
   var h='<div class="tabs" role="tablist">';
-  var allTabs=[[TAB.PRACTICE,"\uD83C\uDFB6"],[TAB.DRILL,"\u26A1"],[TAB.DAILY,"\uD83C\uDFC5"],[TAB.QUIZ,"\uD83E\uDDE0"],[TAB.EAR,"\uD83D\uDC42"],[TAB.STRUM,"\uD83C\uDFBC"],[TAB.SONGS,"\uD83C\uDFB5"],[TAB.RHYTHM,"\uD83E\uDD41"],[TAB.RUNNER,"\uD83C\uDFAE"],[TAB.BUILD,"\uD83D\uDD27"],[TAB.TUNER,"\uD83C\uDFA4"],[TAB.DUAL,"\uD83C\uDFB9"],[TAB.STATS,"\uD83D\uDCCA"],[TAB.GUIDE,"\uD83D\uDCD6"]];
-  var focusTabs=[TAB.PRACTICE,TAB.DRILL,TAB.DAILY,TAB.STATS,TAB.GUIDE];
-  var tabs=S.focusMode?allTabs.filter(function(t){return focusTabs.indexOf(t[0])!==-1;}):allTabs;
-  for(var i=0;i<tabs.length;i++){
-    var t=tabs[i];
-    h+='<button class="tab'+(S.tab===t[0]?" active":"")+'" onclick="act(\'tab\',\''+t[0]+'\')" role="tab" aria-selected="'+(S.tab===t[0])+'" aria-label="'+t[0].charAt(0).toUpperCase()+t[0].slice(1)+' tab"><span class="tab-icon">'+t[1]+'</span><span class="tab-label">'+t[0].charAt(0).toUpperCase()+t[0].slice(1)+'</span></button>';
+  for(var i=0;i<instTabs.length;i++){
+    var t=instTabs[i];
+    var tid = typeof t === "string" ? t : t.id;
+    var ticon = typeof t === "object" && t.icon ? t.icon : "";
+    var tlabel = typeof t === "object" && t.label ? t.label : tid.charAt(0).toUpperCase()+tid.slice(1);
+    h+='<button class="tab'+(S.tab===tid?" active":"")+'" onclick="act(\'tab\',\''+tid+'\')" role="tab" aria-selected="'+(S.tab===tid)+'" aria-label="'+tlabel+' tab"><span class="tab-icon">'+ticon+'</span><span class="tab-label">'+tlabel+'</span></button>';
   }
   h+='</div>';
 
-  if(S.tab===TAB.PRACTICE) h+=practiceTab();
-  else if(S.tab===TAB.DRILL) h+=drillTab();
-  else if(S.tab===TAB.DAILY) h+=dailyTab();
-  else if(S.tab===TAB.QUIZ) h+=quizTab();
-  else if(S.tab===TAB.EAR) h+=earTrainTab();
-  else if(S.tab===TAB.STRUM) h+=strumTab();
-  else if(S.tab===TAB.SONGS) h+=songsTab();
-  else if(S.tab===TAB.RHYTHM) h+=rhythmTab();
-  else if(S.tab===TAB.RUNNER) h+=runnerTab();
-  else if(S.tab===TAB.BUILD) h+=buildTab();
-  else if(S.tab===TAB.TUNER) h+=tunerTab();
-  else if(S.tab===TAB.DUAL) h+=dualTab();
-  else if(S.tab===TAB.STATS) h+=statsTab();
-  else if(S.tab===TAB.GUIDE) h+=guideTab();
+  // Route to tab content — check instrument-specific renderer first, then shared
+  var _tabRenderers = (inst && inst.tabRenderers) ? inst.tabRenderers : {};
+  var _sharedTabRenderers = {
+    practice: typeof practiceTab === "function" ? practiceTab : null,
+    drill: typeof drillTab === "function" ? drillTab : null,
+    daily: typeof dailyTab === "function" ? dailyTab : null,
+    quiz: typeof quizTab === "function" ? quizTab : null,
+    ear: typeof earTrainTab === "function" ? earTrainTab : null,
+    strum: typeof strumTab === "function" ? strumTab : null,
+    songs: typeof songsTab === "function" ? songsTab : null,
+    rhythm: typeof rhythmTab === "function" ? rhythmTab : null,
+    runner: typeof runnerTab === "function" ? runnerTab : null,
+    build: typeof buildTab === "function" ? buildTab : null,
+    tuner: typeof tunerTab === "function" ? tunerTab : null,
+    dual: typeof dualTab === "function" ? dualTab : null,
+    stats: typeof statsTab === "function" ? statsTab : null,
+    guide: typeof guideTab === "function" ? guideTab : null,
+    games: typeof gamesTab === "function" ? gamesTab : null,
+    tools: typeof toolsTab === "function" ? toolsTab : null
+  };
+  var _renderer = _tabRenderers[S.tab] || _sharedTabRenderers[S.tab] || null;
+  if (_renderer) h += _renderer();
   return h;
 }
 
