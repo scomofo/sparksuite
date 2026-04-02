@@ -43,12 +43,10 @@
         return typeof pianoSVG === "function" ? pianoSVG(chordObj, { width: size, animate: animate }) : "";
       },
       header: function() {
-        var ns = window._PianoPageNS && window._PianoPageNS.piano ? window._PianoPageNS.piano : {};
-        return ns.headerHTML ? ns.headerHTML() : (typeof headerHTML === "function" ? headerHTML() : "");
+        return typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : (typeof headerHTML === "function" ? headerHTML() : "");
       },
       tabNav: function() {
-        var ns = window._PianoPageNS && window._PianoPageNS.piano ? window._PianoPageNS.piano : {};
-        return ns.tabNavHTML ? ns.tabNavHTML() : (typeof tabNavHTML === "function" ? tabNavHTML() : "");
+        return typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : (typeof tabNavHTML === "function" ? tabNavHTML() : "");
       },
       ring: function(pct, size, color) {
         return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";

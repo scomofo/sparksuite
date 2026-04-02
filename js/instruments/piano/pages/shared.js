@@ -67,3 +67,7 @@ function chordTypeTag(chord) {
   var color = chord.color || CHORD_COLORS[chord.type] || "#888";
   return '<span class="song-chord-tag" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + escHTML(chord.short) + '</span>';
 }
+
+// ── Direct global exports for ui bag ──
+window.pianoHeaderHTML = headerHTML;
+window.pianoTabNavHTML = tabNavHTML;
