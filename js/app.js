@@ -1574,38 +1574,48 @@ function _renderInner(){
 
   var screenKey=S.screen+S.tab;
   var content="";
-  if(S.screen===SCR.HOME)content=homePage();
-  else if(S.screen===SCR.SESSION)content=sessionPage();
-  else if(S.screen===SCR.COMPLETE)content=completePage();
-  else if(S.screen===SCR.DRILL)content=drillPage();
-  else if(S.screen===SCR.DRILL_DONE)content=drillDonePage();
-  else if(S.screen===SCR.DAILY)content=dailyPage();
-  else if(S.screen===SCR.QUIZ)content=quizPage();
-  else if(S.screen===SCR.STRUM)content=strumDetailPage();
-  else if(S.screen===SCR.SONG)content=songDetailPage();
-  else if(S.screen===SCR.SONG_DONE)content=songDonePage();
-  else if(S.screen===SCR.STEMS)content=stemsPage();
-  else if(S.screen===SCR.GUIDED)content=guidedSessionPage();
-  else if(S.screen===SCR.GUIDED_DONE)content=guidedDonePage();
-  else if(S.screen===SCR.PERFORM)content=performPage();
-  else if(S.screen===SCR.PERFORM_DONE)content=performDonePage();
-  else if(S.screen===SCR.PERFORM_SONG)content=performSongPage();
-  else if(S.screen===SCR.PERF_STATS)content=performanceStatsPage();
-  else if(S.screen===SCR.PERF_EDITOR)content=performanceEditorPage();
-  else if(S.screen===SCR.SKILL_TREE)content=skillTreePage();
-  else if(S.screen===SCR.PERFORM_CALIBRATE)content=performCalibrationPage();
-  else if(S.screen===SCR.PLAN)content=planPage();
-  else if(S.screen===SCR.RECOMMENDATIONS)content=typeof recommendationsPage==="function"?recommendationsPage():"";
-  else if(S.screen===SCR.CAREER)content=typeof careerPage==="function"?careerPage():"";
-  else if(S.screen===SCR.INSIGHTS)content=typeof insightsDashboardPage==="function"?insightsDashboardPage():"";
-  else if(S.screen===SCR.CHALLENGES)content=typeof challengeHubPage==="function"?challengeHubPage():"";
-  else if(S.screen===SCR.HOME_DASH)content=typeof homeDashboardPage==="function"?homeDashboardPage():"";
-  else if(S.screen===SCR.SETTINGS)content=typeof settingsPage==="function"?settingsPage():"";
-  else if(S.screen===SCR.ONBOARDING)content=typeof onboardingPage==="function"?onboardingPage():"";
-  else if(S.screen===SCR.MIDI_SETTINGS)content=typeof midiSettingsPage==="function"?midiSettingsPage():"";
-  else if(S.screen===SCR.MIDI_IMPORT)content=typeof midiImportPage==="function"?midiImportPage():"";
-  else if(S.screen===SCR.CLOUD_SETTINGS)content=typeof cloudSettingsPage==="function"?cloudSettingsPage():"";
-  else if(S.screen===SCR.CURRICULUM)content=typeof curriculumPage==="function"?curriculumPage():"";
+
+  // Shared page registry — instrument pages can override any of these
+  var _sharedPages = {};
+  _sharedPages[SCR.HOME] = typeof homePage === "function" ? homePage : null;
+  _sharedPages[SCR.SESSION] = typeof sessionPage === "function" ? sessionPage : null;
+  _sharedPages[SCR.COMPLETE] = typeof completePage === "function" ? completePage : null;
+  _sharedPages[SCR.DRILL] = typeof drillPage === "function" ? drillPage : null;
+  _sharedPages[SCR.DRILL_DONE] = typeof drillDonePage === "function" ? drillDonePage : null;
+  _sharedPages[SCR.DAILY] = typeof dailyPage === "function" ? dailyPage : null;
+  _sharedPages[SCR.QUIZ] = typeof quizPage === "function" ? quizPage : null;
+  _sharedPages[SCR.STRUM] = typeof strumDetailPage === "function" ? strumDetailPage : null;
+  _sharedPages[SCR.SONG] = typeof songDetailPage === "function" ? songDetailPage : null;
+  _sharedPages[SCR.SONG_DONE] = typeof songDonePage === "function" ? songDonePage : null;
+  _sharedPages[SCR.STEMS] = typeof stemsPage === "function" ? stemsPage : null;
+  _sharedPages[SCR.GUIDED] = typeof guidedSessionPage === "function" ? guidedSessionPage : null;
+  _sharedPages[SCR.GUIDED_DONE] = typeof guidedDonePage === "function" ? guidedDonePage : null;
+  _sharedPages[SCR.PERFORM] = typeof performPage === "function" ? performPage : null;
+  _sharedPages[SCR.PERFORM_DONE] = typeof performDonePage === "function" ? performDonePage : null;
+  _sharedPages[SCR.PERFORM_SONG] = typeof performSongPage === "function" ? performSongPage : null;
+  _sharedPages[SCR.PERF_STATS] = typeof performanceStatsPage === "function" ? performanceStatsPage : null;
+  _sharedPages[SCR.PERF_EDITOR] = typeof performanceEditorPage === "function" ? performanceEditorPage : null;
+  _sharedPages[SCR.SKILL_TREE] = typeof skillTreePage === "function" ? skillTreePage : null;
+  _sharedPages[SCR.PERFORM_CALIBRATE] = typeof performCalibrationPage === "function" ? performCalibrationPage : null;
+  _sharedPages[SCR.PLAN] = typeof planPage === "function" ? planPage : null;
+  _sharedPages[SCR.RECOMMENDATIONS] = typeof recommendationsPage === "function" ? recommendationsPage : null;
+  _sharedPages[SCR.CAREER] = typeof careerPage === "function" ? careerPage : null;
+  _sharedPages[SCR.INSIGHTS] = typeof insightsDashboardPage === "function" ? insightsDashboardPage : null;
+  _sharedPages[SCR.CHALLENGES] = typeof challengeHubPage === "function" ? challengeHubPage : null;
+  _sharedPages[SCR.HOME_DASH] = typeof homeDashboardPage === "function" ? homeDashboardPage : null;
+  _sharedPages[SCR.SETTINGS] = typeof settingsPage === "function" ? settingsPage : null;
+  _sharedPages[SCR.ONBOARDING] = typeof onboardingPage === "function" ? onboardingPage : null;
+  _sharedPages[SCR.MIDI_SETTINGS] = typeof midiSettingsPage === "function" ? midiSettingsPage : null;
+  _sharedPages[SCR.MIDI_IMPORT] = typeof midiImportPage === "function" ? midiImportPage : null;
+  _sharedPages[SCR.CLOUD_SETTINGS] = typeof cloudSettingsPage === "function" ? cloudSettingsPage : null;
+  _sharedPages[SCR.CURRICULUM] = typeof curriculumPage === "function" ? curriculumPage : null;
+
+  // Instrument override: if active instrument provides a page for this screen, use it
+  var _instrumentPage = SparkInstruments.getPage(S.screen);
+  var _renderer = _instrumentPage || _sharedPages[S.screen] || null;
+  if (_renderer) {
+    content = _renderer();
+  }
 
   if(screenKey!==_lastScreen){
     h+='<div class="page-transition">'+content+'</div>';
