@@ -75,8 +75,9 @@ function pianoSVG(pianoChord,sz){
 
 // Guitar SVG with Sticky Anchor overlay
 function dualGuitarSVG(chord,sz,anchorOn){
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   // Render the base guitar SVG
-  var base=chordSVG(chord,sz,chord.name,false);
+  var base=UI.chord(chord,sz,chord.name,false);
   if(!anchorOn)return base;
 
   // Check if this chord is in the anchor set
@@ -98,11 +99,13 @@ function dualGuitarSVG(chord,sz,anchorOn){
 
 // Main dual tab page
 function dualTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   var chordName=S.dualChord||"G Major";
   // Find the guitar chord object
   var guitarChord=null;
-  for(var i=0;i<ALL_CHORDS.length;i++){
-    if(ALL_CHORDS[i].name===chordName){guitarChord=ALL_CHORDS[i];break;}
+  for(var i=0;i<D.ALL_CHORDS.length;i++){
+    if(D.ALL_CHORDS[i].name===chordName){guitarChord=D.ALL_CHORDS[i];break;}
   }
   // Get piano chord (from data or dynamically)
   var pianoChord=PIANO_CHORDS[chordName]||null;

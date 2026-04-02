@@ -30,6 +30,8 @@ function homePage(){
 
 // ===== PRACTICE TAB =====
 function practiceTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   // Daily goal progress at top
   var goalPct=Math.min(100,Math.round((S.todayPracticeSeconds/(S.dailyGoalMinutes*60))*100));
   var goalMins=Math.floor(S.todayPracticeSeconds/60);
@@ -46,13 +48,13 @@ function practiceTab(){
   h+='</div>';
 
   // Guided Session CTA
-  var gs=GUITAR_SESSIONS[S.guidedSession-1];
+  var gs=D.SESSIONS[S.guidedSession-1];
   if(gs){
     var gsDone=S.completedGuidedSessions?S.completedGuidedSessions.length:0;
     h+='<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
     h+='<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
     h+='<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
-    h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+GUITAR_SESSIONS.length+' done</div>';
+    h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+D.SESSIONS.length+' done</div>';
     h+='<button onclick="act(\'guidedStart\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Start Session &#9654;</button>';
     h+='</div>';
   }
@@ -102,20 +104,20 @@ function practiceTab(){
   h+='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Pick a Chord &#9889;</h2></div><div class="lvl-tabs">';
   for(var l=1;l<=8;l++){
     var sel=S.selectedLevel===l,lk=l>S.level;
-    h+='<button class="lvl-tab" onclick="act(\'selLevel\',\''+l+'\')" style="background:'+(sel?LC[l]:"var(--tab-bg)")+';color:'+(sel?"#fff":"var(--tab-inactive)")+';opacity:'+(lk?0.4:1)+'" aria-label="Level '+l+' '+LN[l]+'">'+(lk?"&#128274; ":"")+l+'</button>';
+    h+='<button class="lvl-tab" onclick="act(\'selLevel\',\''+l+'\')" style="background:'+(sel?D.LC[l]:"var(--tab-bg)")+';color:'+(sel?"#fff":"var(--tab-inactive)")+';opacity:'+(lk?0.4:1)+'" aria-label="Level '+l+' '+D.LN[l]+'">'+(lk?"&#128274; ":"")+l+'</button>';
   }
   h+='</div>';
-  h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+LC[S.selectedLevel]+'">'+LN[S.selectedLevel]+'</span>';
+  h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+D.LC[S.selectedLevel]+'">'+D.LN[S.selectedLevel]+'</span>';
   if(CURRICULUM[S.selectedLevel-1])h+='<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+CURRICULUM[S.selectedLevel-1].sub+'</span>';
   h+='</div>';
   h+='<div class="flex-col">';
-  var cs=CHORDS[S.selectedLevel]||[];
+  var cs=D.CHORDS[S.selectedLevel]||[];
   for(var i=0;i<cs.length;i++){
     var c=cs[i],p=S.chordProgress[c.name]||0,lk=S.selectedLevel>S.level;
     var tier=getChordTier(c.name);
     var tierStyle=tier.tier!=="none"?";border-left:4px solid "+tier.color:"";
-    h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+chordSVG(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+LC[S.selectedLevel]+','+LC[S.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
-    if(!lk)h+='<button onclick="event.stopPropagation();act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:18px;padding:6px" aria-label="Preview '+c.name+' sound">&#128264;</button><div style="font-size:22px;color:'+LC[S.selectedLevel]+'">&#9654;</div>';
+    h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+UI.chord(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+D.LC[S.selectedLevel]+','+D.LC[S.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
+    if(!lk)h+='<button onclick="event.stopPropagation();act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:18px;padding:6px" aria-label="Preview '+c.name+' sound">&#128264;</button><div style="font-size:22px;color:'+D.LC[S.selectedLevel]+'">&#9654;</div>';
     h+='</div>';
   }
   h+='</div>';
@@ -153,6 +155,7 @@ function practiceTab(){
 
 // ===== CUSTOM PRACTICE SETS =====
 function customSetsSection(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
   if(S.editingSet){
@@ -160,7 +163,7 @@ function customSetsSection(){
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Select chords (min 2):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
     for(var l=1;l<=S.level;l++){
-      var cs=CHORDS[l]||[];
+      var cs=D.CHORDS[l]||[];
       for(var i=0;i<cs.length;i++){
         var c=cs[i],sel=S.customSetChords.indexOf(c.name)!==-1;
         h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'toggleSetChord\',\'"+c.name+"\')")+'>'+c.short+'</span>';

@@ -42,6 +42,7 @@ function updateChordCheckUI(){
 
 // Targeted tuner UI update (avoids full DOM rebuild at ~30fps)
 function updateTunerUI(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var noteEl=document.getElementById("tuner-note-display");
   var freqEl=document.getElementById("tuner-freq-display");
   var needleEl=document.getElementById("tuner-needle");
@@ -72,8 +73,8 @@ function updateTunerUI(){
   // Update string highlights
   if(stringsEl){
     var btns=stringsEl.children;
-    for(var i=0;i<btns.length&&i<GUITAR_STRINGS.length;i++){
-      var gs=GUITAR_STRINGS[i];
+    for(var i=0;i<btns.length&&i<D.STRINGS.length;i++){
+      var gs=D.STRINGS[i];
       var mt=S.tunerNote===gs.note;
       var sInT=mt&&Math.abs(S.tunerCents)<5;
       var sC=sInT?"#4ECDC4":mt&&Math.abs(S.tunerCents)<15?"#FFE66D":"#FF6B6B";
