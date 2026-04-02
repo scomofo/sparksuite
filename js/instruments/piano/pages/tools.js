@@ -34,7 +34,7 @@ function statsTab() {
   html += '<div class="stats-grid">';
   html += '<div class="stat-item"><div class="stat-val">' + S.xp + '</div><div class="stat-label">XP</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + S.streak + '</div><div class="stat-label">Streak</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.completedSessions.length + '</div><div class="stat-label">Sessions</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (S.completedSessions ? S.completedSessions.length : 0) + '</div><div class="stat-label">Sessions</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + S.level + '/8</div><div class="stat-label">Level</div></div>';
   html += '</div>';
 
