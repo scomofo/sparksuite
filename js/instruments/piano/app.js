@@ -141,7 +141,7 @@ function tickSession() {
   addPracticeSecond();
   if (S.timer % 30 === 0 && S.timer > 0) addXP(5);
   var elapsed = S.practiceLen - S.timer;
-  var msg = fireMicro(elapsed, S.practiceLen);
+  var msg = pianoFireMicro(elapsed, S.practiceLen);
   if (msg) showToast(msg);
   if (S.timer <= 0) { completeLegacySession(); return; }
   render();
@@ -158,7 +158,7 @@ function completeLegacySession() {
   checkPracticeDate();
   checkLevelUp();
   checkReward("session_complete");
-  var badges = checkBadges();
+  var badges = pianoCheckBadges();
   if (badges.length) showToast("Badge earned! " + badges.map(function(b) { return BADGES.find(function(x) { return x.id === b; }).icon; }).join(" "));
   else playSound("complete");
   if (S.detecting) stopDetection();
@@ -182,7 +182,7 @@ function completeDrill() {
   addHistory("drill", { chords: S.drillChords.join(",") });
   checkPracticeDate();
   checkReward("drill_complete");
-  checkBadges();
+  pianoCheckBadges();
   playSound("complete");
   saveState();
   render();
@@ -204,7 +204,7 @@ function completeDaily() {
   addHistory("daily", { score: S.dailyScore });
   checkPracticeDate();
   checkReward("daily_complete");
-  checkBadges();
+  pianoCheckBadges();
   playSound("complete");
   saveState();
   render();
@@ -234,8 +234,8 @@ function checkLevelUp() {
     S.level = Math.min(8, S.level + 1);
     playSound("levelup");
     showToast("Level Up! You're now Level " + S.level + ": " + LN[S.level] + "!");
-    showConfetti();
-    checkBadges();
+    pianoShowConfetti();
+    pianoCheckBadges();
     saveState();
   }
 }
@@ -388,7 +388,7 @@ function songTick() {
     if (S.songsDone.indexOf(song.title) < 0) {
       S.songsDone.push(song.title);
       addXP(15);
-      checkBadges();
+      pianoCheckBadges();
     }
   }
   var chord = song.progression[S.songChordIdx];
@@ -502,9 +502,9 @@ function completeGuidedSession() {
   checkPracticeDate();
   checkLevelUp();
   checkReward("session_complete");
-  var badges = checkBadges();
+  var badges = pianoCheckBadges();
 
-  showConfetti();
+  pianoShowConfetti();
   if (badges.length) {
     showToast("Session complete! Badge earned! " + badges.map(function(b) {
       var badge = BADGES.find(function(x) { return x.id === b; });
@@ -964,7 +964,7 @@ function act(action, param) {
       } else {
         playSound("wrong");
       }
-      checkBadges();
+      pianoCheckBadges();
       saveState();
       break;
 
