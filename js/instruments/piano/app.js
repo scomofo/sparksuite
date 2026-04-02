@@ -645,8 +645,9 @@ function act(action, param) {
   var _handled = true;
   switch (action) {
     case "tab":
-      var t = parseInt(param);
-      if (t >= TAB.PRACTICE && t <= TAB.TOOLS) {
+      var _tabMap = { practice: 0, games: 1, songs: 2, tools: 3 };
+      var t = (typeof param === "string" && _tabMap[param] !== undefined) ? _tabMap[param] : parseInt(param);
+      if (!isNaN(t) && t >= TAB.PRACTICE && t <= TAB.TOOLS) {
         S.tab = t;
         if (S.songPlaying) {
           S.songPlaying = false;
