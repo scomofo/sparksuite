@@ -5,10 +5,20 @@ function guitarAct(a, v) {
   var D = SparkInstruments.getActive().getData();
 
   if (a === "quickStart") {
-    var avail = D.CHORDS[S.level] || D.CHORDS[1];
-    var ch = avail[Math.floor(Math.random() * avail.length)];
-    S.sessionMicros = []; S.lastChordName = ch.name;
-    snd("start"); S.currentChord = ch; S.timer = 120; S.timerActive = true; S.selectedVoicing = 0; S.screen = SCR.SESSION; render(); clearTimeout(T.session); T.session = setTimeout(tickS, 1000); saveState();
+    var session = SparkSession.buildSession({ mode: "quickStart", level: S.level });
+    if (!session) return true;
+    S.sessionMicros = [];
+    S.lastChordName = session.chordName;
+    snd("start");
+    S.currentChord = session.chord;
+    S.timer = session.duration;
+    S.timerActive = true;
+    S.selectedVoicing = 0;
+    S.screen = SCR.SESSION;
+    render();
+    clearTimeout(T.session);
+    T.session = setTimeout(tickS, 1000);
+    saveState();
     return true;
   }
 
