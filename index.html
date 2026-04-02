@@ -240,5 +240,64 @@
 <script src="js/onboarding/actions.js"></script>
 <script src="js/onboarding/ui.js"></script>
 <script src="js/app.js"></script>
+<!-- Piano page renderers — loaded into _PianoPageNS namespace to avoid clobbering shared pages -->
+<script>window._PianoPageNS = {};</script>
+<script>
+// Capture shared functions before piano overrides them
+window._PianoPageNS._shared = {
+  sessionPage: typeof sessionPage === "function" ? sessionPage : null,
+  performPage: typeof performPage === "function" ? performPage : null,
+  performDonePage: typeof performDonePage === "function" ? performDonePage : null,
+  performSongPage: typeof performSongPage === "function" ? performSongPage : null,
+  planPage: typeof planPage === "function" ? planPage : null,
+  analyticsPage: typeof analyticsPage === "function" ? analyticsPage : null,
+  onboardingPage: typeof onboardingPage === "function" ? onboardingPage : null,
+  practiceTab: typeof practiceTab === "function" ? practiceTab : null,
+  gamesTab: typeof gamesTab === "function" ? gamesTab : null,
+  songsTab: typeof songsTab === "function" ? songsTab : null,
+  toolsTab: typeof toolsTab === "function" ? toolsTab : null,
+  headerHTML: typeof headerHTML === "function" ? headerHTML : null,
+  editorPage: typeof editorPage === "function" ? editorPage : null
+};
+</script>
+<script src="js/instruments/piano/pages/shared.js"></script>
+<script src="js/instruments/piano/pages/practice.js"></script>
+<script src="js/instruments/piano/pages/session.js"></script>
+<script src="js/instruments/piano/pages/games.js"></script>
+<script src="js/instruments/piano/pages/songs.js"></script>
+<script src="js/instruments/piano/pages/tools.js"></script>
+<script src="js/instruments/piano/pages/perform.js"></script>
+<script src="js/instruments/piano/pages/perform_song.js"></script>
+<script src="js/instruments/piano/pages/perform_results.js"></script>
+<script src="js/instruments/piano/pages/plan.js"></script>
+<script src="js/instruments/piano/pages/analytics.js"></script>
+<script src="js/instruments/piano/pages/editor.js"></script>
+<script src="js/instruments/piano/pages/onboarding.js"></script>
+<script>
+// Capture piano function references, then restore shared functions
+window._PianoPageNS.piano = {
+  sessionPage: typeof sessionPage === "function" ? sessionPage : null,
+  performPage: typeof performPage === "function" ? performPage : null,
+  performDonePage: typeof performDonePage === "function" ? performDonePage : null,
+  performSongPage: typeof performSongPage === "function" ? performSongPage : null,
+  planPage: typeof planPage === "function" ? planPage : null,
+  analyticsPage: typeof analyticsPage === "function" ? analyticsPage : null,
+  onboardingPage: typeof onboardingPage === "function" ? onboardingPage : null,
+  practiceTab: typeof practiceTab === "function" ? practiceTab : null,
+  gamesTab: typeof gamesTab === "function" ? gamesTab : null,
+  songsTab: typeof songsTab === "function" ? songsTab : null,
+  toolsTab: typeof toolsTab === "function" ? toolsTab : null,
+  headerHTML: typeof headerHTML === "function" ? headerHTML : null,
+  editorPage: typeof editorPage === "function" ? editorPage : null,
+  stemsPlayerPage: typeof stemsPlayerPage === "function" ? stemsPlayerPage : null,
+  tabNavHTML: typeof tabNavHTML === "function" ? tabNavHTML : null
+};
+// Restore shared (guitar) functions
+for (var k in window._PianoPageNS._shared) {
+  if (window._PianoPageNS._shared[k]) window[k] = window._PianoPageNS._shared[k];
+}
+// Register piano pages
+if (typeof _registerPianoPages === "function") _registerPianoPages();
+</script>
 </body>
 </html>
