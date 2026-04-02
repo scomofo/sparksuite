@@ -57,6 +57,7 @@ function statsTab() {
   }
 
   // Chord mastery
+  if (!S.chordProg) S.chordProg = {};
   html += '<h3>Chord Mastery</h3><div class="mastery-list">';
   var unlocked = chordsUpToLevel(S.level);
   unlocked.forEach(function(c) {
