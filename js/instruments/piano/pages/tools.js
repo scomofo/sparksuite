@@ -92,6 +92,8 @@ function statsTab() {
   html += '</div>';
 
   // Badges
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var BADGES = D.BADGES || [];
   html += '<h3>Badges</h3><div class="badges-grid">';
   BADGES.forEach(function(b) {
     var earned = S.earned.indexOf(b.id) >= 0;

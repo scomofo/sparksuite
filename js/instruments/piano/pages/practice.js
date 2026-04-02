@@ -1,6 +1,9 @@
 /* PianoSpark - Practice tab (home page) */
 
 function pianoPracticeTab() {
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var CURRICULUM = D.CURRICULUM || [];
+  var BADGES = D.BADGES || [];
   var html = '';
 
   // If-then intention reminder (stickiness #2)
