@@ -319,7 +319,18 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "challengeRegistry","activeChallenges","seasonalEvents","activeEventId",
   "packCompletion","challengeRewards",
   "settings","sparkProfile","tutorialProgress",
-  "onboarding","firstRun","dailyPracticePlan"];
+  "onboarding","firstRun","dailyPracticePlan",
+  // Piano-specific persistence
+  "lastPractice","chordProg","earned","dailyGoal","dailyPracticed","songsDone","volume","tone",
+  "currentSession","lhLevel","keyboardSize","stylePrefs","onboardingComplete",
+  "adaptiveBpm","personalBests","completedSessions",
+  "rewardPhase","totalActions","jackpotsHit","actionsSinceReward","nextRewardAt",
+  "fingerExercisesDone","fingerDaysLogged","fingerBadges",
+  "bpm","quizTotal",
+  "performanceHistory","performanceMastery",
+  "reverbAmount","metronomeSound","a4Tuning","pitchDetectionMode",
+  "completedCurriculumLessons","editorLibrary",
+  "releaseInfo","profile","onboardingFlow"];
 
 // Debounced save — prevents localStorage thrashing on rapid actions (drills, quizzes)
 var _saveTimer=null;
