@@ -28,6 +28,10 @@
     delete window._pctx;
   }
 
+  // Expose context swap for use by act() dispatcher
+  window._enterPianoCtx = _enterPianoContext;
+  window._exitPianoCtx = _exitPianoContext;
+
   function _pianoPage(fn) {
     return function() {
       _enterPianoContext();
