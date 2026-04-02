@@ -21,23 +21,16 @@ function tickS(){
     S.timerActive=false;clearTimeout(T.session);
     if(S.metronomeOn)stopMetronome();
     if(S.chordDetectOn)stopChordDetect();
-    var today=new Date().toISOString().slice(0,10);
-    if(S.lastSessionDate!==today){S.streak++;S.lastSessionDate=today;}
-    S.sessions++;
-    // Jackpot: 1-in-15 chance of surprise XP bonus (RPE optimisation)
-    var jackpot=Math.random()<(1/15);
-    var xpEarned=jackpot?50:10;
-    S.xp+=xpEarned;
-    S.xpToast={amount:xpEarned,time:Date.now(),jackpot:jackpot};
-    if(jackpot){snd("levelup");}else{snd("complete");}
-    var k=S.currentChord.name;
-    S.chordProgress[k]=Math.min((S.chordProgress[k]||0)+34,100);
-    var a=true;var ch=CHORDS[S.level]||[];
-    for(var i=0;i<ch.length;i++)if((S.chordProgress[ch[i].name]||0)<100)a=false;
-    if(a&&S.level<8){S.level++;snd("levelup");}
-    logHistory("session",k,xpEarned);
-    _sparkEmit("practice_session_completed", { appId: "chordspark", type: "session", xp: xpEarned, chord: k });
-    checkBadges();saveState();trigC();S.screen=SCR.COMPLETE;render();
+    // Delegate all completion logic to SparkSession
+    var outcome=SparkSession.processResults({
+      type:"session",
+      chordName:S.currentChord?S.currentChord.name:null,
+      duration:120
+    });
+    S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
+    if(outcome.jackpot){snd("levelup");}else{snd("complete");}
+    if(outcome.leveledUp)snd("levelup");
+    trigC();S.screen=SCR.COMPLETE;render();
   }
 }
 
