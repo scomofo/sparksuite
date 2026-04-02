@@ -11,7 +11,9 @@
         console.error("PerfHighwayAdapter: SparkHighway not loaded");
         return null;
       }
-      return new SparkHighway(canvasEl, skinConfig || SparkHighway.GUITAR_SKIN);
+      var renderer = new SparkHighway(canvasEl, skinConfig || SparkHighway.GUITAR_SKIN);
+      renderer._initPromise = renderer.init();
+      return renderer;
     },
 
     // TODO(pianospark): When PianoSpark adopts performance-core, pass
@@ -23,7 +25,7 @@
     },
 
     update: function(renderer, currentTimeSec, combo) {
-      if (renderer && renderer.update) renderer.update(currentTimeSec, combo);
+      if (renderer && renderer._ready && renderer.update) renderer.update(currentTimeSec, combo);
     },
 
     notifyHit: function(renderer, x, y, color) {
