@@ -23,6 +23,10 @@
       };
     },
 
+    act: function(a, v) {
+      return guitarAct(a, v);
+    },
+
     ui: {
       chord: function(chordObj, size, label, animate) {
         return typeof chordSVG === "function" ? chordSVG(chordObj, size, label, animate) : "";
