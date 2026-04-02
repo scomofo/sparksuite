@@ -1570,4 +1570,18 @@ window.midiToOctave = typeof window.midiToOctave === "undefined" ? midiToOctave 
 window.midiToFreq = typeof window.midiToFreq === "undefined" ? midiToFreq : window.midiToFreq;
 window.noteToMidi = typeof window.noteToMidi === "undefined" ? noteToMidi : window.noteToMidi;
 
+// Chord/data helper functions needed by piano pages and app engine
+window.allChordKeys = allChordKeys;
+window.allChords = allChords;
+window.findChord = findChord;
+window.chordsForLevel = chordsForLevel;
+window.chordsUpToLevel = chordsUpToLevel;
+window.chordMidi = chordMidi;
+window.chordFingers = chordFingers;
+window.chordNoteNames = chordNoteNames;
+window.getAvailableExercises = getAvailableExercises;
+window.getExercisesByTier = getExercisesByTier;
+window.getWarmUpExercise = getWarmUpExercise;
+window.getSessionExercise = getSessionExercise;
+
 })();

@@ -41,6 +41,17 @@ var saveState = window.saveState;
 var showToast = window.showToast || function() {};
 var checkPracticeDate = window.checkPracticeDate || function() {};
 var getRewardPhase = window.getRewardPhase || function() { return null; };
+var allChordKeys = window.allChordKeys || function() { return []; };
+var allChords = window.allChords || function() { return []; };
+var findChord = window.findChord || function() { return null; };
+var chordsForLevel = window.chordsForLevel || function() { return []; };
+var chordsUpToLevel = window.chordsUpToLevel || function() { return []; };
+var chordMidi = window.chordMidi || function() { return []; };
+var chordFingers = window.chordFingers || function() { return []; };
+var chordNoteNames = window.chordNoteNames || function() { return []; };
+var getAvailableExercises = window.getAvailableExercises || function() { return []; };
+var getSessionExercise = window.getSessionExercise || function() { return null; };
+var getWarmUpExercise = window.getWarmUpExercise || function() { return null; };
 var render = window.render;
 
 // ── Utility ──
