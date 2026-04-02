@@ -1,5 +1,27 @@
-/* ───────── PianoSpark – app.js ───────── */
-/* Major refactor: guided sessions, reward engine, adaptive difficulty */
+/* ───────── PianoSpark – app.js (instrument module) ───────── */
+/* Wrapped for SparkSuite: helpers exposed globally, act/render namespaced */
+(function() {
+
+// Map piano numeric SCR to SparkSuite string SCR for act() compatibility
+var _pianoSCR = typeof PIANO_SCR !== "undefined" ? PIANO_SCR : {};
+// Override local SCR/TAB references to use SparkSuite's string constants
+// Piano act() does S.screen = SCR.SESSION etc, which needs to produce the
+// string value that SparkSuite's router understands
+var SCR = {
+  HOME: "home", SESSION: "session", ONBOARDING: "onboarding",
+  STEM_PLAYER: "stems", PERFORM: "perform", PERFORM_DONE: "performDone",
+  PERFORM_SONG: "performSong", PLAN: "practicePlan",
+  MIDI_SETTINGS: "midi_settings", MIDI_IMPORT: "midi_import",
+  CLOUD_SETTINGS: "cloud_settings", CALIBRATION: "perfCalibrate",
+  CURRICULUM: "curriculum", RECOMMENDATIONS: "recommendations",
+  CAREER: "career", INSIGHTS: "insights", CHALLENGES: "challenges",
+  HOME_DASH: "homeDash", ONBOARDING_FLOW: "onboarding", SETTINGS: "settings"
+};
+var TAB = { PRACTICE: "practice", GAMES: "games", SONGS: "songs", TOOLS: "tools" };
+
+// Timer holder (piano uses T.session, T.drill, etc.)
+if (typeof window.T === "undefined") window.T = {};
+var T = window.T;
 
 // ── Utility ──
 function shuffleArray(arr) {
@@ -1473,10 +1495,11 @@ function act(action, param) {
       break;
   }
 
-  render();
+  // Call SparkSuite's global render, not piano's local render
+  if (typeof window.render === "function") window.render();
 }
 
-// ── Render ──
+// ── Render (piano-specific, NOT used by SparkSuite — kept for reference) ──
 function render() {
   var root = document.getElementById("app");
   if (!root) return;
@@ -1682,11 +1705,27 @@ document.addEventListener("keydown", function(e) {
   }
 });
 
-// ── Init ──
-window.addEventListener("DOMContentLoaded", function() {
-  loadState();
-  recoverFromCrash();
-  if (S.darkMode) document.body.classList.add("dark");
-  if (S.focusMode) document.body.classList.add("focus-mode");
-  render();
-});
+// ── SparkSuite Exports ──
+// Expose piano helper functions that piano pages depend on
+window.pianoAct = act;
+window.pianoRender = render;
+
+// Expose helper functions needed by piano pages
+window.getCurrentSessionPlan = typeof getCurrentSessionPlan !== "undefined" ? getCurrentSessionPlan : window.getCurrentSessionPlan;
+window.clickableDiv = typeof clickableDiv !== "undefined" ? clickableDiv : window.clickableDiv;
+window.ifThenCard = typeof ifThenCard !== "undefined" ? ifThenCard : window.ifThenCard;
+window.getChordMatch = typeof getChordMatch !== "undefined" ? getChordMatch : window.getChordMatch;
+window.addXP = typeof addXP !== "undefined" ? addXP : window.addXP;
+window.addPracticeSecond = typeof addPracticeSecond !== "undefined" ? addPracticeSecond : window.addPracticeSecond;
+window.fireMicro = typeof fireMicro !== "undefined" ? fireMicro : window.fireMicro;
+window.shuffleArray = typeof shuffleArray !== "undefined" ? shuffleArray : window.shuffleArray;
+window.startGuidedSession = typeof startGuidedSession !== "undefined" ? startGuidedSession : window.startGuidedSession;
+window.advanceSessionStep = typeof advanceSessionStep !== "undefined" ? advanceSessionStep : window.advanceSessionStep;
+window.adaptBpm = typeof adaptBpm !== "undefined" ? adaptBpm : window.adaptBpm;
+window.checkLevelUp = typeof checkLevelUp !== "undefined" ? checkLevelUp : window.checkLevelUp;
+window.checkReward = typeof checkReward !== "undefined" ? checkReward : window.checkReward;
+window.pickReviewChords = typeof pickReviewChords !== "undefined" ? pickReviewChords : window.pickReviewChords;
+window.genQuiz = typeof genQuiz !== "undefined" ? genQuiz : window.genQuiz;
+
+// Do NOT call loadState() or render() — SparkSuite manages that
+})();

@@ -35,6 +35,23 @@
         SparkProfile.ensureApp(profile, "pianospark", "piano");
         SparkStorage.save(profile);
       }
+      // Ensure piano-specific state fields exist on shared S
+      if (typeof S !== "undefined") {
+        if (S.currentSession === undefined) S.currentSession = 1;
+        if (S.onboardingComplete === undefined) S.onboardingComplete = false;
+        if (S.practiceLen === undefined) S.practiceLen = 60;
+        if (S.sessionPlan === undefined) S.sessionPlan = null;
+        if (S.lhLevel === undefined) S.lhLevel = 1;
+        if (S.keyboardSize === undefined) S.keyboardSize = 61;
+        if (S.stylePrefs === undefined) S.stylePrefs = [];
+        if (S.focusMode === undefined) S.focusMode = false;
+        if (S.dailyGoal === undefined) S.dailyGoal = 15;
+        if (S.dailyPracticed === undefined) S.dailyPracticed = 0;
+        if (S.a4Tuning === undefined) S.a4Tuning = 440;
+        if (S.chord === undefined) S.chord = null;
+        if (S.active === undefined) S.active = false;
+        if (S.paused === undefined) S.paused = false;
+      }
     }
   });
 })();
