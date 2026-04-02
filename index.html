@@ -47,6 +47,10 @@
 <script src="js/spark-core/achievements.js"></script>
 <script src="js/spark-core/content-schema.js"></script>
 <script src="js/spark-core/content-normalizer.js"></script>
+<script src="js/spark-core/psychology-engine.js"></script>
+<script src="js/spark-core/progress-orchestrator.js"></script>
+<script src="js/spark-core/instrument-adapter.js"></script>
+<script src="js/spark-core/session-engine.js"></script>
 <script src="js/spark-core/index.js"></script>
 <!-- Performance Core Contracts -->
 <script src="js/performance-core/chart-contract.js"></script>
@@ -58,13 +62,18 @@
 <script src="js/launcher.js"></script>
 <!-- Instrument Modules -->
 <script src="js/instruments/guitar/pages.js"></script>
+<script src="js/instruments/guitar/capo.js"></script>
 <script src="js/instruments/guitar/register.js"></script>
+<script src="js/instruments/guitar/app.js"></script>
 <script src="js/instruments/piano/data.js"></script>
-<script src="js/instruments/piano/helpers.js"></script>
 <script src="js/instruments/piano/ui.js"></script>
-<script src="js/instruments/piano/pages.js"></script>
 <script src="js/instruments/piano/register.js"></script>
 <script src="js/instruments/piano/app.js"></script>
+<!-- Bass instrument -->
+<script src="js/instruments/bass/data.js"></script>
+<script src="js/instruments/bass/ui.js"></script>
+<script src="js/instruments/bass/register.js"></script>
+<script src="js/instruments/bass/app.js"></script>
 <script src="js/instruments/drums/register.js"></script>
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>
@@ -243,31 +252,7 @@
 <script src="js/onboarding/actions.js"></script>
 <script src="js/onboarding/ui.js"></script>
 <script src="js/app.js"></script>
-<!-- Piano page renderers — loaded into _PianoPageNS namespace to avoid clobbering shared pages -->
-<script>window._PianoPageNS = {};</script>
-<script>
-// Capture shared functions before piano overrides them
-window._PianoPageNS._shared = {
-  sessionPage: typeof sessionPage === "function" ? sessionPage : null,
-  performPage: typeof performPage === "function" ? performPage : null,
-  performDonePage: typeof performDonePage === "function" ? performDonePage : null,
-  performSongPage: typeof performSongPage === "function" ? performSongPage : null,
-  planPage: typeof planPage === "function" ? planPage : null,
-  analyticsPage: typeof analyticsPage === "function" ? analyticsPage : null,
-  onboardingPage: typeof onboardingPage === "function" ? onboardingPage : null,
-  practiceTab: typeof practiceTab === "function" ? practiceTab : null,
-  gamesTab: typeof gamesTab === "function" ? gamesTab : null,
-  songsTab: typeof songsTab === "function" ? songsTab : null,
-  toolsTab: typeof toolsTab === "function" ? toolsTab : null,
-  headerHTML: typeof headerHTML === "function" ? headerHTML : null,
-  editorPage: typeof editorPage === "function" ? editorPage : null,
-  escHTML: typeof escHTML === "function" ? escHTML : null,
-  clickableDiv: typeof clickableDiv === "function" ? clickableDiv : null,
-  checkBadges: typeof checkBadges === "function" ? checkBadges : null,
-  fireMicro: typeof fireMicro === "function" ? fireMicro : null,
-  ifThenCard: typeof ifThenCard === "function" ? ifThenCard : null
-};
-</script>
+<!-- Piano page renderers — loaded with unique names to avoid clobbering shared pages -->
 <script src="js/instruments/piano/pages/shared.js"></script>
 <script src="js/instruments/piano/pages/practice.js"></script>
 <script src="js/instruments/piano/pages/session.js"></script>
@@ -282,39 +267,27 @@ window._PianoPageNS._shared = {
 <script src="js/instruments/piano/pages/editor.js"></script>
 <script src="js/instruments/piano/pages/onboarding.js"></script>
 <script>
-// Capture piano function references, then restore shared functions
-window._PianoPageNS.piano = {
-  sessionPage: typeof sessionPage === "function" ? sessionPage : null,
-  performPage: typeof performPage === "function" ? performPage : null,
-  performDonePage: typeof performDonePage === "function" ? performDonePage : null,
-  performSongPage: typeof performSongPage === "function" ? performSongPage : null,
-  planPage: typeof planPage === "function" ? planPage : null,
-  analyticsPage: typeof analyticsPage === "function" ? analyticsPage : null,
-  onboardingPage: typeof onboardingPage === "function" ? onboardingPage : null,
-  practiceTab: typeof practiceTab === "function" ? practiceTab : null,
-  gamesTab: typeof gamesTab === "function" ? gamesTab : null,
-  songsTab: typeof songsTab === "function" ? songsTab : null,
-  toolsTab: typeof toolsTab === "function" ? toolsTab : null,
-  headerHTML: typeof headerHTML === "function" ? headerHTML : null,
-  editorPage: typeof editorPage === "function" ? editorPage : null,
-  stemsPlayerPage: typeof stemsPlayerPage === "function" ? stemsPlayerPage : null,
-  tabNavHTML: typeof tabNavHTML === "function" ? tabNavHTML : null,
-  pianoSVG: typeof pianoSVG === "function" ? pianoSVG : null,
-  tierBadgeHTML: typeof tierBadgeHTML === "function" ? tierBadgeHTML : null,
-  clickableDiv: typeof clickableDiv === "function" ? clickableDiv : null,
-  checkBadges: typeof checkBadges === "function" ? checkBadges : null,
-  escHTML: typeof escHTML === "function" ? escHTML : null,
-  ifThenCard: typeof ifThenCard === "function" ? ifThenCard : null,
-  fireMicro: typeof fireMicro === "function" ? fireMicro : null,
-  showConfetti: typeof showConfetti === "function" ? showConfetti : null,
-  levelColor: typeof levelColor === "function" ? levelColor : null
-};
-// Restore shared (guitar) functions
-for (var k in window._PianoPageNS._shared) {
-  if (window._PianoPageNS._shared[k]) window[k] = window._PianoPageNS._shared[k];
-}
-// Register piano pages
-if (typeof _registerPianoPages === "function") _registerPianoPages();
+// Register piano pages directly on instrument
+(function() {
+  var inst = SparkInstruments.getAll();
+  var piano = null;
+  for (var i = 0; i < inst.length; i++) {
+    if (inst[i].id === "pianospark") { piano = inst[i]; break; }
+  }
+  if (!piano) return;
+
+  // Piano uses shared homePage() with its own tabs + tabRenderers
+  piano.pages = {};
+  if (typeof pianoSessionPage === "function") piano.pages[SCR.SESSION] = pianoSessionPage;
+  if (typeof pianoPerformPage === "function") piano.pages[SCR.PERFORM] = pianoPerformPage;
+  if (typeof pianoPerformDonePage === "function") piano.pages[SCR.PERFORM_DONE] = pianoPerformDonePage;
+  if (typeof pianoPerformSongPage === "function") piano.pages[SCR.PERFORM_SONG] = pianoPerformSongPage;
+  if (typeof pianoPlanPage === "function") piano.pages[SCR.PLAN] = pianoPlanPage;
+  if (typeof pianoAnalyticsPage === "function") piano.pages[SCR.INSIGHTS] = pianoAnalyticsPage;
+  if (typeof pianoEditorPage === "function") piano.pages[SCR.PERF_EDITOR] = pianoEditorPage;
+  if (typeof pianoOnboardingPage === "function") piano.pages[SCR.ONBOARDING] = pianoOnboardingPage;
+  if (typeof pianoStemsPlayerPage === "function") piano.pages[SCR.STEMS] = pianoStemsPlayerPage;
+})();
 </script>
 </body>
 </html>

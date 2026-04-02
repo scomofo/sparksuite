@@ -1,4 +1,4 @@
-function performSongPage(){
+function pianoPerformSongPage(){
   if(!S.performSongData) return '<div class="card">No song selected</div>';
 
   var sid = S.performSongId;

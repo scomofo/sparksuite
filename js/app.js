@@ -1,18 +1,8 @@
 // ===== TIMERS =====
-// Variable reinforcement schedule: reward density thins as sessions accumulate
-// (Stretching the Ratios — builds extinction-resistant practice habits)
-function shouldFireReward(){
-  var n=S.sessions;
-  if(n<=5)return true;          // Phase 1: continuous (sessions 1-5)
-  if(n<=14)return Math.random()<0.33; // Phase 2: VR-3 (sessions 6-14)
-  if(n<=30)return Math.random()<0.14; // Phase 3: VR-7 (sessions 15-30)
-  return Math.random()<0.10;    // Phase 4: VR-10 (sessions 30+)
-}
-
 function tickS(){
   if(S.timerActive&&S.timer>0){
     S.timer--;
-    if(S.timer%30===0&&S.timer>0&&shouldFireReward()){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
+    if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
     else if(S.timer%30===0&&S.timer>0){S.xp+=5;} // silent XP accrual when toast skipped
     if(S.timer===60)fireMicro("halfway","Halfway there!","&#128170;");
     addPracticeSecond();
@@ -21,30 +11,23 @@ function tickS(){
     S.timerActive=false;clearTimeout(T.session);
     if(S.metronomeOn)stopMetronome();
     if(S.chordDetectOn)stopChordDetect();
-    var today=new Date().toISOString().slice(0,10);
-    if(S.lastSessionDate!==today){S.streak++;S.lastSessionDate=today;}
-    S.sessions++;
-    // Jackpot: 1-in-15 chance of surprise XP bonus (RPE optimisation)
-    var jackpot=Math.random()<(1/15);
-    var xpEarned=jackpot?50:10;
-    S.xp+=xpEarned;
-    S.xpToast={amount:xpEarned,time:Date.now(),jackpot:jackpot};
-    if(jackpot){snd("levelup");}else{snd("complete");}
-    var k=S.currentChord.name;
-    S.chordProgress[k]=Math.min((S.chordProgress[k]||0)+34,100);
-    var a=true;var ch=CHORDS[S.level]||[];
-    for(var i=0;i<ch.length;i++)if((S.chordProgress[ch[i].name]||0)<100)a=false;
-    if(a&&S.level<8){S.level++;snd("levelup");}
-    logHistory("session",k,xpEarned);
-    _sparkEmit("practice_session_completed", { appId: "chordspark", type: "session", xp: xpEarned, chord: k });
-    checkBadges();saveState();trigC();S.screen=SCR.COMPLETE;render();
+    // Delegate all completion logic to SparkSession
+    var outcome=SparkSession.processResults({
+      type:"session",
+      chordName:S.currentChord?S.currentChord.name:null,
+      duration:120
+    });
+    S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
+    if(outcome.jackpot){snd("levelup");}else{snd("complete");}
+    if(outcome.leveledUp)snd("levelup");
+    trigC();S.screen=SCR.COMPLETE;render();
   }
 }
 
 function tickD(){
   if(S.screen===SCR.DRILL&&S.drillTimer>0){
     S.drillTimer--;
-    if(S.drillTimer%30===0&&S.drillTimer>0&&shouldFireReward()){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
+    if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
     else if(S.drillTimer%30===0&&S.drillTimer>0){S.xp+=5;}
     addPracticeSecond();
     if(!updateDrillTimerUI())render(); // partial update if elements exist
@@ -319,13 +302,9 @@ function _sparkEmit(type, payload) {
 
 // ===== ACTION DISPATCHER =====
 window.act=function(a,v){
-  // Route to piano act() when piano is active, with context swap
-  if (S.activeInstrument === "pianospark" && typeof pianoAct === "function") {
-    if (typeof _enterPianoCtx === "function") _enterPianoCtx();
-    try { pianoAct(a, v); }
-    finally { if (typeof _exitPianoCtx === "function") _exitPianoCtx(); }
-    return;
-  }
+  // Delegate to active instrument's handler first
+  var _inst = SparkInstruments.getActive();
+  if (_inst && _inst.act && _inst.act(a, v)) return;
   if(a==="tab"){
     S.tab=v;S.screen=SCR.HOME;
     stopAllTimers();
@@ -334,25 +313,6 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="selLevel"&&parseInt(v)<=S.level){S.selectedLevel=parseInt(v);render();return;}
-  if(a==="quickStart"){
-    var avail=CHORDS[S.level]||CHORDS[1];
-    var ch=avail[Math.floor(Math.random()*avail.length)];
-    S.sessionMicros=[];S.lastChordName=ch.name;
-    snd("start");S.currentChord=ch;S.timer=120;S.timerActive=true;S.selectedVoicing=0;S.screen=SCR.SESSION;render();clearTimeout(T.session);T.session=setTimeout(tickS,1000);saveState();
-    return;
-  }
-  if(a==="resumeSession"){
-    var ch=null;for(var i=0;i<ALL_CHORDS.length;i++)if(ALL_CHORDS[i].name===S.lastChordName)ch=ALL_CHORDS[i];
-    if(!ch){act("quickStart");return;}
-    S.sessionMicros=[];
-    snd("start");S.currentChord=ch;S.timer=120;S.timerActive=true;S.selectedVoicing=0;_prevChordKey=ch.name;S.screen=SCR.SESSION;render();clearTimeout(T.session);T.session=setTimeout(tickS,1000);
-    return;
-  }
-  if(a==="startSession"){
-    var ch;for(var i=0;i<ALL_CHORDS.length;i++)if(ALL_CHORDS[i].name===v)ch=ALL_CHORDS[i];
-    if(ch){S.sessionMicros=[];S.lastChordName=ch.name;snd("start");S.currentChord=ch;S.timer=120;S.timerActive=true;S.selectedVoicing=0;_prevChordKey=ch.name;S.screen=SCR.SESSION;render();clearTimeout(T.session);T.session=setTimeout(tickS,1000);saveState();}
-    return;
-  }
   if(a==="toggleTimer"){
     S.timerActive=!S.timerActive;
     if(S.timerActive)T.session=setTimeout(tickS,1000);else clearTimeout(T.session);
@@ -361,66 +321,6 @@ window.act=function(a,v){
   if(a==="doneSession"){
     clearTimeout(T.session);if(S.metronomeOn)stopMetronome();if(S.chordDetectOn)stopChordDetect();
     S.timerActive=true;S.timer=0;tickS();return;
-  }
-  if(a==="startDrill"){
-    var av=CHORDS[S.level]||CHORDS[1];
-    var c1=av[Math.floor(Math.random()*av.length)],c2=c1,n=0;
-    while(c2.name===c1.name&&av.length>1&&n<20){c2=av[Math.floor(Math.random()*av.length)];n++;}
-    S.drillChords=[c1,c2];S.drillIdx=0;S.drillTimer=60;S.drillSwitches=0;S.drillLastSwitchTime=Date.now();
-    S.drillAdaptiveBpm=60;S.drillConsecutiveFast=0;S.drillConsecutiveSlow=0;
-    _prevChordKey=c1.name;
-    snd("start");S.screen=SCR.DRILL;render();T.drill=setTimeout(tickD,1000);return;
-  }
-  if(a==="drillSwitch"){
-    snd("click");
-    var now=Date.now();
-    var fromChord=S.drillChords[S.drillIdx].name;
-    var toChord=S.drillChords[(S.drillIdx+1)%2].name;
-    var elapsed=(now-S.drillLastSwitchTime)/1000;
-    S.drillLastSwitchTime=now;
-    if(elapsed<15){
-      var key=fromChord+"->"+toChord;
-      if(!S.transitionStats[key])S.transitionStats[key]={attempts:0,avgTime:0,best:999};
-      var ts=S.transitionStats[key];
-      ts.avgTime=(ts.avgTime*ts.attempts+elapsed)/(ts.attempts+1);
-      ts.attempts++;
-      if(elapsed<ts.best)ts.best=elapsed;
-      // Adaptive BPM: adjust target tempo based on switch speed performance
-      var targetSecs=60/S.drillAdaptiveBpm;
-      if(elapsed<targetSecs*0.8){
-        S.drillConsecutiveFast++;S.drillConsecutiveSlow=0;
-        if(S.drillConsecutiveFast>=3){
-          S.drillAdaptiveBpm=Math.min(S.drillAdaptiveBpm+3,160);
-          S.drillConsecutiveFast=0;
-          fireMicro("speed_up","Speeding up!","&#9654;&#65039;");
-        }
-      }else if(elapsed>targetSecs*1.5){
-        S.drillConsecutiveSlow++;S.drillConsecutiveFast=0;
-        if(S.drillConsecutiveSlow>=2){
-          S.drillAdaptiveBpm=Math.max(S.drillAdaptiveBpm-5,40);
-          S.drillConsecutiveSlow=0;
-        }
-      }else{S.drillConsecutiveFast=0;S.drillConsecutiveSlow=0;}
-    }
-    _prevChordKey=fromChord;
-    S.drillIdx=(S.drillIdx+1)%2;S.drillSwitches++;
-    if(S.drillSwitches===1)fireMicro("clean_switch","Smooth switch!","&#9889;");
-    if(S.drillSwitches===3)fireMicro("three_switches","On fire!","&#128293;");
-    render();return;
-  }
-  if(a==="drillTransition"){
-    var parts=v.split("|");
-    var c1=null,c2=null;
-    for(var i=0;i<ALL_CHORDS.length;i++){
-      if(ALL_CHORDS[i].name===parts[0])c1=ALL_CHORDS[i];
-      if(ALL_CHORDS[i].name===parts[1])c2=ALL_CHORDS[i];
-    }
-    if(c1&&c2){
-      S.drillChords=[c1,c2];S.drillIdx=0;S.drillTimer=60;S.drillSwitches=0;S.drillLastSwitchTime=Date.now();
-      S.drillAdaptiveBpm=60;S.drillConsecutiveFast=0;S.drillConsecutiveSlow=0;
-      _prevChordKey=c1.name;
-      snd("start");S.screen=SCR.DRILL;render();T.drill=setTimeout(tickD,1000);
-    }return;
   }
   if(a==="startDaily"&&S.dailyChallenge){
     var t=S.dailyChallenge.id==="hold"?30:S.dailyChallenge.id==="marathon"?180:60;
@@ -432,32 +332,6 @@ window.act=function(a,v){
     S.xp+=xp;
     logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
     checkBadges();saveState();trigC();render();return;
-  }
-  if(a==="startQuiz"){S.quizScore=0;S.quizTotal=0;S.quizStreak=0;genQ();S.screen=SCR.QUIZ;return;}
-  if(a==="answerQuiz"&&S.quizAns===null){
-    var ch;for(var i=0;i<ALL_CHORDS.length;i++)if(ALL_CHORDS[i].name===v)ch=ALL_CHORDS[i];
-    if(ch){
-      var ok=ch.name===S.quizQ.name;S.quizAns=ch.name;
-      if(ok){snd("correct");S.quizCorrect++;S.quizScore++;S.quizStreak++;S.xp+=10;logHistory("quiz",S.quizQ.name,10);_sparkEmit("drill_answered", { appId: "chordspark", skillId: S.quizQ.name, correct: true, xp: 10 });checkBadges();saveState();if(S.quizStreak===3)fireMicro("quiz_streak","Hat trick!","&#127913;");}
-      else{snd("wrong");S.quizStreak=0;}
-      S.quizTotal++;render();setTimeout(genQ,1200);
-    }return;
-  }
-  // === Ear Training ===
-  if(a==="startEarTrain"){
-    var av=[];for(var _l=1;_l<=S.level;_l++)av=av.concat(CHORDS[_l]||[]);if(!av.length)av=CHORDS[1];
-    var q=av[Math.floor(Math.random()*av.length)];
-    var opts=[q.name];
-    var attempts=0;
-    while(opts.length<4&&attempts<100){
-      var r=ALL_CHORDS[Math.floor(Math.random()*ALL_CHORDS.length)];
-      if(opts.indexOf(r.name)===-1)opts.push(r.name);
-      attempts++;
-    }
-    opts=shuffle(opts);
-    S.earTrainQ=q.name;S.earTrainOpts=opts;S.earTrainAns=null;
-    S.earTrainScore=S.earTrainScore||0;S.earTrainTotal=S.earTrainTotal||0;S.earTrainStreak=S.earTrainStreak||0;
-    strumChord(q.name);render();return;
   }
   if(a==="replayEarTrain"&&S.earTrainQ){strumChord(S.earTrainQ);return;}
   if(a==="answerEarTrain"&&S.earTrainAns===null){
@@ -492,11 +366,6 @@ window.act=function(a,v){
     S.songsSubTab=v;
     if(v==="community")fetchCommunity();
     render();return;
-  }
-  if(a==="openSong"){
-    var sg=typeof v==="number"?SONGS[v]:null;
-    if(!sg){for(var i=0;i<SONGS.length;i++)if(SONGS[i].title===v){sg=SONGS[i];break;}}
-    if(sg&&sg.level<=S.level){S.selectedSong=sg;S.songPlaying=false;S.songBeat=0;clearInterval(T.song);S.screen=SCR.SONG;render();}return;
   }
   if(a==="toggleSong"){
     snd("click");S.songPlaying=!S.songPlaying;
@@ -607,40 +476,6 @@ window.act=function(a,v){
     for(var sk in S.stemToggles){S.stemToggles[sk]=true;setStemMuted(sk,false);}
     render();return;
   }
-  // Finger exercises
-  if(a==="startFingerEx"){
-    var ex=null;
-    for(var fi=0;fi<FINGER_EXERCISES.length;fi++)if(FINGER_EXERCISES[fi].id===v){ex=FINGER_EXERCISES[fi];break;}
-    if(!ex)return;
-    S.fingerExId=v;S.fingerExTimer=ex.duration;S.fingerExActive=true;S.fingerExCount=0;
-    snd("start");
-    clearInterval(T.fingerEx);
-    T.fingerEx=setInterval(function(){
-      if(!S.fingerExActive)return;
-      S.fingerExTimer--;
-      addPracticeSecond();
-      if(S.fingerExTimer<=0){
-        clearInterval(T.fingerEx);S.fingerExActive=false;
-        snd("complete");S.xp+=10;
-        if(typeof S.fingerStats!=="object"||S.fingerStats===null)S.fingerStats={};
-        S.fingerStats[v]=(S.fingerStats[v]||0)+1;
-        S.xpToast={amount:10,time:Date.now()};
-        saveState();
-      }
-      render();
-    },1000);
-    render();return;
-  }
-  if(a==="stopFingerEx"){
-    clearInterval(T.fingerEx);S.fingerExActive=false;S.fingerExId=null;render();return;
-  }
-  // Guided sessions
-  if(a==="guidedStart"){
-    var plan=GUITAR_SESSIONS[S.guidedSession-1];
-    if(!plan){S.guidedSession=1;plan=GUITAR_SESSIONS[0];}
-    S.guidedPlan=plan;S.guidedStep="spark";S.newMovePhase=null;S.guidedPaused=false;
-    S.screen=SCR.GUIDED;snd("start");render();return;
-  }
   if(a==="guidedNext"){
     var steps=["spark","review","newMove","songSlice","victoryLap"];
     var idx=steps.indexOf(S.guidedStep);
@@ -656,27 +491,6 @@ window.act=function(a,v){
     if(pi<phases.length-1){S.newMovePhase=phases[pi+1];}
     else{act("guidedNext");return;} // refine done → advance to songSlice
     render();return;
-  }
-  if(a==="guidedComplete"){
-    if(S.metronomeOn)stopMetronome();
-    var plan=S.guidedPlan;
-    if(plan){
-      if(!Array.isArray(S.completedGuidedSessions))S.completedGuidedSessions=[];
-      if(S.completedGuidedSessions.indexOf(plan.num)<0)S.completedGuidedSessions.push(plan.num);
-      S.xp+=30;S.sessions++;
-      var today=new Date().toISOString().split("T")[0];
-      if(S.lastSessionDate!==today){S.streak++;S.lastSessionDate=today;}
-      if(plan.newMove&&plan.newMove.chord){
-        var k=plan.newMove.chord;
-        S.chordProgress[k]=Math.min((S.chordProgress[k]||0)+25,100);
-      }
-      S.guidedSession=Math.min(GUITAR_SESSIONS.length,plan.num+1);
-      logHistory("guided","Session "+plan.num+": "+plan.title,30);
-      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "guided_" + plan.num, xp: 30 });
-      checkBadges();
-    }
-    S.xpToast={amount:30,time:Date.now()};
-    saveState();trigC();S.screen=SCR.GUIDED_DONE;render();return;
   }
   if(a==="guidedStop"){
     if(S.metronomeOn)stopMetronome();
@@ -728,25 +542,6 @@ window.act=function(a,v){
     var idx=parseInt(v);
     if(idx>=0&&idx<S.customSets.length){
       S.customSets.splice(idx,1);saveState();render();
-    }return;
-  }
-  if(a==="drillCustomSet"){
-    var idx=parseInt(v);
-    if(idx>=0&&idx<S.customSets.length){
-      var cs=S.customSets[idx];
-      var pool=[];
-      for(var i=0;i<cs.chords.length;i++){
-        for(var j=0;j<ALL_CHORDS.length;j++){
-          if(ALL_CHORDS[j].name===cs.chords[i]){pool.push(ALL_CHORDS[j]);break;}
-        }
-      }
-      if(pool.length<2)return;
-      var c1=pool[Math.floor(Math.random()*pool.length)],c2=c1,n=0;
-      while(c2.name===c1.name&&pool.length>1&&n<20){c2=pool[Math.floor(Math.random()*pool.length)];n++;}
-      S.drillChords=[c1,c2];S.drillIdx=0;S.drillTimer=60;S.drillSwitches=0;S.drillLastSwitchTime=Date.now();
-      S.drillAdaptiveBpm=60;S.drillConsecutiveFast=0;S.drillConsecutiveSlow=0;
-      _prevChordKey=c1.name;
-      snd("start");S.screen=SCR.DRILL;render();T.drill=setTimeout(tickD,1000);
     }return;
   }
   // === Rhythm Game ===

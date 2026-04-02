@@ -85,6 +85,8 @@ function _guidedSpark(plan) {
 }
 
 function _guidedReview(plan) {
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   if (!plan.review) {
     return '<div class="card mb16"><h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>' +
       '<p style="color:var(--text-muted)">No review for this session \u2014 it\'s your first!</p>' +
@@ -98,10 +100,10 @@ function _guidedReview(plan) {
     h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">';
     for (var i = 0; i < plan.review.chords.length; i++) {
       var ch = null;
-      for (var j = 0; j < ALL_CHORDS.length; j++) if (ALL_CHORDS[j].name === plan.review.chords[i]) { ch = ALL_CHORDS[j]; break; }
+      for (var j = 0; j < D.ALL_CHORDS.length; j++) if (D.ALL_CHORDS[j].name === plan.review.chords[i]) { ch = D.ALL_CHORDS[j]; break; }
       if (ch) {
         h += '<div style="text-align:center"><div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:4px">' + ch.short + '</div>';
-        h += chordSVG(ch, 100) + '</div>';
+        h += UI.chord(ch, 100) + '</div>';
       }
     }
     h += '</div>';
@@ -112,6 +114,8 @@ function _guidedReview(plan) {
 }
 
 function _guidedNewMove(plan) {
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   if (!plan.newMove) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FF6B6B;font-weight:800">&#127919; New Move</h3>';
@@ -119,7 +123,7 @@ function _guidedNewMove(plan) {
 
   // Find chord
   var ch = null;
-  for (var i = 0; i < ALL_CHORDS.length; i++) if (ALL_CHORDS[i].name === plan.newMove.chord) { ch = ALL_CHORDS[i]; break; }
+  for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
 
   switch (S.newMovePhase) {
     case "watch":
@@ -128,7 +132,7 @@ function _guidedNewMove(plan) {
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Observe the chord shape and finger placement. Don\'t play yet.</p>';
       h += '</div>';
       if (ch) {
-        h += '<div class="flex-center" style="margin-bottom:12px">' + chordSVG(ch, 200, ch.name, true) + '</div>';
+        h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200, ch.name, true) + '</div>';
         h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
       }
       h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#FF6B6B;color:#fff;padding:12px 28px;font-weight:800">I\'ve Watched &#8594;</button>';
@@ -139,14 +143,14 @@ function _guidedNewMove(plan) {
       h += '<div style="font-size:14px;font-weight:800;color:#45B7D1;margin-bottom:6px">&#129306; Shadow \u2014 Mirror Slowly</div>';
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Copy what you saw. Place your fingers on the strings. No pressure to be perfect.</p>';
       h += '</div>';
-      if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + chordSVG(ch, 200) + '</div>';
+      if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200) + '</div>';
       h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">I\'ve Shadowed &#8594;</button>';
       break;
 
     case "try":
       h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(plan.newMove.text) + '</p>';
       if (ch) {
-        h += '<div class="flex-center" style="margin-bottom:12px">' + chordSVG(ch, 180) + '</div>';
+        h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 180) + '</div>';
         h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:8px">&#128264; Listen</button><br>';
       }
       if (plan.newMove.strum) {
@@ -160,7 +164,7 @@ function _guidedNewMove(plan) {
       h += '<div style="font-size:14px;font-weight:800;color:#A78BFA;margin-bottom:6px">&#128161; Refine</div>';
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Focus on clean transitions and consistent finger placement.</p>';
       h += '</div>';
-      if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + chordSVG(ch, 160) + '</div>';
+      if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 160) + '</div>';
       // Transition tip
       var tipKey = plan.review && plan.review.chords ? plan.review.chords[0] + "->" + plan.newMove.chord : null;
       var tip = tipKey ? TRANSITION_TIPS[tipKey] : null;
@@ -192,6 +196,8 @@ function _guidedSongSlice(plan) {
 }
 
 function _guidedVictoryLap(plan) {
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D;background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#127942; Victory Lap!</h3>';
@@ -199,10 +205,10 @@ function _guidedVictoryLap(plan) {
   // Show the session's main chord
   var ch = null;
   if (plan.newMove) {
-    for (var i = 0; i < ALL_CHORDS.length; i++) if (ALL_CHORDS[i].name === plan.newMove.chord) { ch = ALL_CHORDS[i]; break; }
+    for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
   }
   if (ch) {
-    h += '<div class="flex-center" style="margin-bottom:12px">' + chordSVG(ch, 160) + '</div>';
+    h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 160) + '</div>';
     h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
   }
   h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">&#127881; Complete Session!</button>';

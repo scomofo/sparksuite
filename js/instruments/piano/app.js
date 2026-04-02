@@ -23,15 +23,86 @@ var TAB = { PRACTICE: "practice", GAMES: "games", SONGS: "songs", TOOLS: "tools"
 if (typeof window.T === "undefined") window.T = {};
 var T = window.T;
 
-// Import helpers from piano/helpers.js (loaded before this file)
-var getCurrentSessionPlan = window.getCurrentSessionPlan;
-var getCurrentLevel = window.getCurrentLevel;
-var levelForSession = window.levelForSession;
-var addPracticeSecond = window.addPracticeSecond;
-var addXP = window.addXP;
-var addHistory = window.addHistory;
-var checkStreak = window.checkStreak;
-var recordTransition = window.recordTransition;
+// ── Piano data aliases (resolve from PIANO_DATA to avoid stale shared globals) ──
+var _pd = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : {};
+var CHORDS = _pd.CHORDS || {};
+var CURRICULUM = _pd.CURRICULUM || [];
+var SESSION_PLANS = _pd.SESSION_PLANS || [];
+var SONGS = _pd.SONGS || (typeof PIANO_SONGS !== "undefined" ? PIANO_SONGS : []);
+var BADGES = _pd.BADGES || [];
+var LH_PATTERNS = _pd.LH_PATTERNS || [];
+var FINGER_EXERCISES = _pd.FINGER_EXERCISES || [];
+var FINGER_BADGES = _pd.FINGER_BADGES || [];
+var DAILY_TYPES = _pd.DAILY_TYPES || [];
+var PLAY_STYLES = _pd.PLAY_STYLES || [];
+var REWARD_PHASES = _pd.REWARD_PHASES || [];
+var CHORD_COLORS = _pd.CHORD_COLORS || {};
+var LC = _pd.LC || {};
+var LN = _pd.LN || {};
+var SCALES = _pd.SCALES || [];
+
+// ── Piano helper functions (formerly in helpers.js) ──
+function getCurrentSessionPlan() {
+  var plans = typeof PIANO_SESSIONS !== "undefined" ? PIANO_SESSIONS : [];
+  if (!S || S.currentSession < 1 || S.currentSession > plans.length) return null;
+  return plans[S.currentSession - 1];
+}
+
+function getCurrentLevel() {
+  var curriculum = typeof PIANO_CURRICULUM !== "undefined" ? PIANO_CURRICULUM : [];
+  for (var i = 0; i < curriculum.length; i++) {
+    if (curriculum[i].num === S.level) return curriculum[i];
+  }
+  return curriculum[0] || null;
+}
+
+function levelForSession(sessionNum) {
+  var curriculum = typeof PIANO_CURRICULUM !== "undefined" ? PIANO_CURRICULUM : [];
+  for (var i = 0; i < curriculum.length; i++) {
+    var parts = curriculum[i].sessions.split("-");
+    var start = parseInt(parts[0]);
+    var end = parseInt(parts[1]);
+    if (sessionNum >= start && sessionNum <= end) return curriculum[i].num;
+  }
+  return 8;
+}
+
+function addXP(n) {
+  if (typeof S !== "undefined") {
+    S.xp = (S.xp || 0) + n;
+    if (typeof saveState === "function") saveState();
+  }
+}
+
+function addHistory(type, detail) {
+  if (typeof S === "undefined") return;
+  if (!Array.isArray(S.history)) S.history = [];
+  var entry = { type: type, ts: Date.now() };
+  if (detail && detail.chord !== undefined) entry.chord = detail.chord;
+  if (detail && detail.dur !== undefined) entry.dur = detail.dur;
+  if (detail && detail.chords !== undefined) entry.chords = detail.chords;
+  if (detail && detail.score !== undefined) entry.score = detail.score;
+  if (detail && detail.session !== undefined) entry.session = detail.session;
+  S.history.push(entry);
+  if (typeof saveState === "function") saveState();
+}
+
+function recordTransition(fromChord, toChord, wasClean, timeMs) {
+  if (typeof S === "undefined") return;
+  if (!S.transitionStats) S.transitionStats = {};
+  var key = fromChord + "_" + toChord;
+  if (!S.transitionStats[key]) {
+    S.transitionStats[key] = { attempts: 0, clean: 0, avgMs: 0 };
+  }
+  var stat = S.transitionStats[key];
+  stat.attempts++;
+  if (wasClean) stat.clean++;
+  stat.avgMs = Math.round((stat.avgMs * (stat.attempts - 1) + timeMs) / stat.attempts);
+}
+
+// Import shared globals
+var addPracticeSecond = window.addPracticeSecond || function() {};
+var checkStreak = window.checkStreak || function() {};
 var clickableDiv = window.clickableDiv;
 var ifThenCard = window.ifThenCard;
 var getChordMatch = window.getChordMatch;
@@ -70,7 +141,7 @@ function tickSession() {
   addPracticeSecond();
   if (S.timer % 30 === 0 && S.timer > 0) addXP(5);
   var elapsed = S.practiceLen - S.timer;
-  var msg = fireMicro(elapsed, S.practiceLen);
+  var msg = pianoFireMicro(elapsed, S.practiceLen);
   if (msg) showToast(msg);
   if (S.timer <= 0) { completeLegacySession(); return; }
   render();
@@ -87,7 +158,7 @@ function completeLegacySession() {
   checkPracticeDate();
   checkLevelUp();
   checkReward("session_complete");
-  var badges = checkBadges();
+  var badges = pianoCheckBadges();
   if (badges.length) showToast("Badge earned! " + badges.map(function(b) { return BADGES.find(function(x) { return x.id === b; }).icon; }).join(" "));
   else playSound("complete");
   if (S.detecting) stopDetection();
@@ -111,7 +182,7 @@ function completeDrill() {
   addHistory("drill", { chords: S.drillChords.join(",") });
   checkPracticeDate();
   checkReward("drill_complete");
-  checkBadges();
+  pianoCheckBadges();
   playSound("complete");
   saveState();
   render();
@@ -133,7 +204,7 @@ function completeDaily() {
   addHistory("daily", { score: S.dailyScore });
   checkPracticeDate();
   checkReward("daily_complete");
-  checkBadges();
+  pianoCheckBadges();
   playSound("complete");
   saveState();
   render();
@@ -163,8 +234,8 @@ function checkLevelUp() {
     S.level = Math.min(8, S.level + 1);
     playSound("levelup");
     showToast("Level Up! You're now Level " + S.level + ": " + LN[S.level] + "!");
-    showConfetti();
-    checkBadges();
+    pianoShowConfetti();
+    pianoCheckBadges();
     saveState();
   }
 }
@@ -317,7 +388,7 @@ function songTick() {
     if (S.songsDone.indexOf(song.title) < 0) {
       S.songsDone.push(song.title);
       addXP(15);
-      checkBadges();
+      pianoCheckBadges();
     }
   }
   var chord = song.progression[S.songChordIdx];
@@ -431,9 +502,9 @@ function completeGuidedSession() {
   checkPracticeDate();
   checkLevelUp();
   checkReward("session_complete");
-  var badges = checkBadges();
+  var badges = pianoCheckBadges();
 
-  showConfetti();
+  pianoShowConfetti();
   if (badges.length) {
     showToast("Session complete! Badge earned! " + badges.map(function(b) {
       var badge = BADGES.find(function(x) { return x.id === b; });
@@ -571,6 +642,7 @@ function checkFingerBadges() {
 
 // ── Action dispatcher ──
 function act(action, param) {
+  var _handled = true;
   switch (action) {
     case "tab":
       var t = parseInt(param);
@@ -892,7 +964,7 @@ function act(action, param) {
       } else {
         playSound("wrong");
       }
-      checkBadges();
+      pianoCheckBadges();
       saveState();
       break;
 
@@ -1524,10 +1596,15 @@ function act(action, param) {
     case "openSettings":
       S.screen = SCR.SETTINGS;
       break;
+
+    default:
+      _handled = false;
+      break;
   }
 
   // Call SparkSuite's global render, not piano's local render
   if (typeof window.render === "function") window.render();
+  return _handled;
 }
 
 // ── Render (piano-specific, NOT used by SparkSuite — kept for reference) ──
@@ -1540,70 +1617,70 @@ function render() {
     if (S._inPlacement) {
       root.innerHTML = placementTestPage();
     } else {
-      root.innerHTML = onboardingPage();
+      root.innerHTML = (typeof pianoOnboardingPage === "function" ? pianoOnboardingPage() : "");
     }
     return;
   }
 
   // Session screen
   if (S.screen === SCR.SESSION && S.sessionPlan) {
-    root.innerHTML = headerHTML() + sessionPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoSessionPage === "function" ? pianoSessionPage() : "");
     return;
   }
 
   // Stem player screen
   if (S.screen === SCR.STEM_PLAYER) {
-    root.innerHTML = headerHTML() + stemsPlayerPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoStemsPlayerPage === "function" ? pianoStemsPlayerPage() : "");
     return;
   }
 
   // Practice plan screen
   if (S.screen === SCR.PLAN) {
-    root.innerHTML = headerHTML() + planPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPlanPage === "function" ? pianoPlanPage() : "");
     return;
   }
 
   // MIDI settings screen
   if (S.screen === SCR.MIDI_SETTINGS && typeof midiSettingsPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiSettingsPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiSettingsPage();
     return;
   }
 
   // MIDI import screen
   if (S.screen === SCR.MIDI_IMPORT && typeof midiImportPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiImportPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiImportPage();
     return;
   }
 
   // Cloud settings screen
   if (S.screen === SCR.CLOUD_SETTINGS && typeof cloudSettingsPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + cloudSettingsPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + cloudSettingsPage();
     return;
   }
 
   // Curriculum screen
   if (S.screen === SCR.CURRICULUM && typeof curriculumPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + curriculumPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + curriculumPage();
     return;
   }
 
   // Performance mode screens
   if (S.screen === SCR.PERFORM_SONG) {
-    root.innerHTML = headerHTML() + performSongPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformSongPage === "function" ? pianoPerformSongPage() : "");
     return;
   }
   if (S.screen === SCR.PERFORM) {
-    root.innerHTML = headerHTML() + performPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformPage === "function" ? pianoPerformPage() : "");
     return;
   }
   if (S.screen === SCR.PERFORM_DONE) {
-    root.innerHTML = headerHTML() + performDonePage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformDonePage === "function" ? pianoPerformDonePage() : "");
     return;
   }
 
   // Calibration screen
   if (S.screen === SCR.CALIBRATION && typeof calibrationPage === "function") {
-    root.innerHTML = headerHTML() + '<div style="padding:8px"><button class="btn" onclick="act(\'go_home\')">Back</button></div>' + calibrationPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<div style="padding:8px"><button class="btn" onclick="act(\'go_home\')">Back</button></div>' + calibrationPage();
     return;
   }
 
@@ -1615,54 +1692,54 @@ function render() {
 
   // Home dashboard screen
   if (S.screen === SCR.HOME_DASH && typeof homeDashboardPage === "function") {
-    root.innerHTML = headerHTML() + homeDashboardPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + homeDashboardPage();
     return;
   }
 
   // Recommendations screen
   if (S.screen === SCR.RECOMMENDATIONS && typeof recommendationsPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + recommendationsPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + recommendationsPage();
     return;
   }
 
   // Career mode screen
   if (S.screen === SCR.CAREER && typeof careerPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + careerPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + careerPage();
     return;
   }
 
   // Insights dashboard screen
   if (S.screen === SCR.INSIGHTS && typeof insightsDashboardPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + insightsDashboardPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + insightsDashboardPage();
     return;
   }
 
   // Challenge hub screen
   if (S.screen === SCR.CHALLENGES && typeof challengeHubPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + challengeHubPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + challengeHubPage();
     return;
   }
 
   // Settings screen
   if (S.screen === SCR.SETTINGS && typeof settingsPage === "function") {
-    root.innerHTML = headerHTML() + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + settingsPage();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + settingsPage();
     return;
   }
 
   // Legacy active session
   if (S.active && S.chord) {
-    root.innerHTML = headerHTML() + tabNavHTML() + legacySessionHTML();
+    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "") + legacySessionHTML();
     return;
   }
 
   // Home screen with tabs
-  var html = headerHTML() + tabNavHTML();
+  var html = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "");
   html += '<main class="tab-content">';
   switch (S.tab) {
-    case TAB.PRACTICE: html += practiceTab(); break;
-    case TAB.GAMES:    html += gamesTab(); break;
-    case TAB.SONGS:    html += songsTab(); break;
-    case TAB.TOOLS:    html += toolsTab(); break;
+    case TAB.PRACTICE: html += typeof pianoPracticeTab === "function" ? pianoPracticeTab() : ""; break;
+    case TAB.GAMES:    html += typeof pianoGamesTab === "function" ? pianoGamesTab() : ""; break;
+    case TAB.SONGS:    html += typeof pianoSongsTab === "function" ? pianoSongsTab() : ""; break;
+    case TAB.TOOLS:    html += typeof pianoToolsTab === "function" ? pianoToolsTab() : ""; break;
   }
   html += '</main>';
   root.innerHTML = html;
@@ -1742,11 +1819,15 @@ window.pianoAct = act;
 window.pianoRender = render;
 
 // Expose helper functions needed by piano pages
-window.getCurrentSessionPlan = typeof getCurrentSessionPlan !== "undefined" ? getCurrentSessionPlan : window.getCurrentSessionPlan;
+window.getCurrentSessionPlan = getCurrentSessionPlan;
+window.getCurrentLevel = getCurrentLevel;
+window.levelForSession = levelForSession;
+window.addXP = addXP;
+window.addHistory = addHistory;
+window.recordTransition = recordTransition;
 window.clickableDiv = typeof clickableDiv !== "undefined" ? clickableDiv : window.clickableDiv;
 window.ifThenCard = typeof ifThenCard !== "undefined" ? ifThenCard : window.ifThenCard;
 window.getChordMatch = typeof getChordMatch !== "undefined" ? getChordMatch : window.getChordMatch;
-window.addXP = typeof addXP !== "undefined" ? addXP : window.addXP;
 window.addPracticeSecond = typeof addPracticeSecond !== "undefined" ? addPracticeSecond : window.addPracticeSecond;
 window.fireMicro = typeof fireMicro !== "undefined" ? fireMicro : window.fireMicro;
 window.shuffleArray = typeof shuffleArray !== "undefined" ? shuffleArray : window.shuffleArray;

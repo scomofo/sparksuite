@@ -1,6 +1,9 @@
 /* PianoSpark - Songs tab */
 
-function songsTab() {
+function pianoSongsTab() {
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var CURRICULUM = D.CURRICULUM || [];
+  var SONGS = D.SONGS || [];
   var html = '';
 
   // Sub-tabs
@@ -120,7 +123,7 @@ function songLibrary() {
         lvlSongs.forEach(function(item) {
           var s = item.song, idx = item.origIdx;
           var done = S.songsDone && S.songsDone.indexOf(s.title) >= 0;
-          html += clickableDiv(
+          html += pianoClickableDiv(
             locked ? '' : "act('select_song'," + idx + ")",
             '<div class="song-row-inner"><span>' + (done ? "\u2705 " : "") + escHTML(s.title) + '</span><span class="text-muted">' + escHTML(s.artist) + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
             "song-row" + (locked ? " locked" : "")
@@ -135,7 +138,7 @@ function songLibrary() {
         var s = item.song, idx = item.origIdx;
         var locked = s.level > S.level + 1;
         var done = S.songsDone && S.songsDone.indexOf(s.title) >= 0;
-        html += clickableDiv(
+        html += pianoClickableDiv(
           locked ? '' : "act('select_song'," + idx + ")",
           '<div class="song-row-inner"><span style="' + (locked ? 'opacity:0.4' : '') + '">' + (done ? "\u2705 " : "") + escHTML(s.title) + '</span><span class="text-muted">' + escHTML(s.artist) + ' \u2022 Lvl ' + s.level + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
           "song-row" + (locked ? " locked" : "")
@@ -263,7 +266,7 @@ function stemsSection() {
   return html;
 }
 
-function stemsPlayerPage() {
+function pianoStemsPlayerPage() {
   var html = '<div style="padding:8px 0">';
   html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
   html += '<button class="btn btn-sm" onclick="act(\'stemBack\')">\u2190</button>';
@@ -291,7 +294,7 @@ function stemsPlayerPage() {
   html += '</div>';
 
   html += '<div class="card" style="text-align:center">';
-  html += '<div class="text-muted" style="margin-bottom:8px">' + formatTime(S.stemCurrentTime) + ' / ' + formatTime(S.stemDuration) + '</div>';
+  html += '<div class="text-muted" style="margin-bottom:8px">' + pianoFormatTime(S.stemCurrentTime) + ' / ' + pianoFormatTime(S.stemDuration) + '</div>';
   html += '<input type="range" min="0" max="' + (S.stemDuration || 100) + '" step="0.5" value="' + S.stemCurrentTime + '" oninput="act(\'stemSeek\',this.value)" style="width:100%;margin-bottom:12px;accent-color:var(--accent)"/>';
   html += '<button class="btn btn-accent" onclick="act(\'stemPlay\')" style="padding:14px 40px;font-size:1.1rem">' + (S.stemPlaying ? '\u23F8 Pause' : '\u25B6 Play') + '</button>';
   html += '</div>';

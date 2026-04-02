@@ -1,6 +1,10 @@
 /* PianoSpark - Games tab (drill, daily, quiz, ear, rhythm, runner) */
 
-function gamesTab() {
+function pianoGamesTab() {
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var DAILY_TYPES = D.DAILY_TYPES || [];
+  var FINGER_EXERCISES = D.FINGER_EXERCISES || [];
+  var FINGER_BADGES = D.FINGER_BADGES || [];
   var html = '';
   // Sub-tab selector
   var subtabs = [
@@ -40,7 +44,7 @@ function drillTab() {
     var c = S.drillChords[S.drillIdx];
     var chordObj = findChord(c);
     html += '<h2>Drill: ' + escHTML(c) + '</h2>';
-    html += '<div class="timer-display">' + formatTime(S.drillTimer) + '</div>';
+    html += '<div class="timer-display">' + pianoFormatTime(S.drillTimer) + '</div>';
     html += '<div class="drill-progress">' + (S.drillIdx + 1) + ' / ' + S.drillChords.length + '</div>';
     if (chordObj) html += pianoSVG(chordObj);
     html += '<div class="drill-dots">';
@@ -76,7 +80,7 @@ function dailyTab() {
   if (S.dailyActive && S.dailyType) {
     var dt = DAILY_TYPES.find(function(d) { return d.id === S.dailyType; });
     html += '<h2>' + (dt ? dt.name : "Challenge") + '</h2>';
-    html += '<div class="timer-display">' + formatTime(S.dailyTimer) + '</div>';
+    html += '<div class="timer-display">' + pianoFormatTime(S.dailyTimer) + '</div>';
     html += '<div class="daily-score">Score: ' + S.dailyScore + '</div>';
     if (S.dailyType === "blind") {
       html += pianoSVG(findChord(S.chord), { hideKeys: true });
@@ -88,7 +92,7 @@ function dailyTab() {
   } else {
     html += '<h2>Daily Challenges</h2><p>Push yourself with special missions!</p>';
     DAILY_TYPES.forEach(function(dt) {
-      html += clickableDiv("act('start_daily','" + dt.id + "')",
+      html += pianoClickableDiv("act('start_daily','" + dt.id + "')",
         '<strong>' + dt.name + '</strong><br><span class="text-muted">' + dt.desc + '</span>', "daily-card");
     });
     html += '<div class="text-muted">Completed: ' + S.dailiesDone + '</div>';
@@ -209,7 +213,7 @@ function fingersTab() {
   // 60-Second Chord Change Challenge
   if (S.chordChangeActive) {
     html += '<h2>60-Second Challenge</h2>';
-    html += '<div class="timer-display">' + formatTime(S.chordChangeTimer) + '</div>';
+    html += '<div class="timer-display">' + pianoFormatTime(S.chordChangeTimer) + '</div>';
     html += '<div style="font-size:2rem;font-weight:800;color:var(--accent);margin:8px 0">' + S.chordChangeCount + '</div>';
     html += '<div class="text-muted">clean changes</div>';
     if (S.chordChangePair.length === 2) {

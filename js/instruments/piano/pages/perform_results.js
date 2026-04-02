@@ -1,7 +1,7 @@
 /* ───────── PianoSpark – pages/perform_results.js ───────── */
 /* Performance results page with phrase breakdown and retry options */
 
-function performanceResultsPage(){
+function pianoPerformanceResultsPage(){
   var r = S.performResults || S.performanceResult;
   if(!r) return '<div class="card">No result</div>';
 

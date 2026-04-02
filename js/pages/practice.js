@@ -1,35 +1,48 @@
 // ===== ChordSpark: Home page and practice-related tabs =====
 
 function homePage(){
+  // Build tab bar from active instrument's tabs array
+  var inst = SparkInstruments.getActive();
+  var instTabs = inst && inst.tabs ? inst.tabs : [];
   var h='<div class="tabs" role="tablist">';
-  var allTabs=[[TAB.PRACTICE,"\uD83C\uDFB6"],[TAB.DRILL,"\u26A1"],[TAB.DAILY,"\uD83C\uDFC5"],[TAB.QUIZ,"\uD83E\uDDE0"],[TAB.EAR,"\uD83D\uDC42"],[TAB.STRUM,"\uD83C\uDFBC"],[TAB.SONGS,"\uD83C\uDFB5"],[TAB.RHYTHM,"\uD83E\uDD41"],[TAB.RUNNER,"\uD83C\uDFAE"],[TAB.BUILD,"\uD83D\uDD27"],[TAB.TUNER,"\uD83C\uDFA4"],[TAB.DUAL,"\uD83C\uDFB9"],[TAB.STATS,"\uD83D\uDCCA"],[TAB.GUIDE,"\uD83D\uDCD6"]];
-  var focusTabs=[TAB.PRACTICE,TAB.DRILL,TAB.DAILY,TAB.STATS,TAB.GUIDE];
-  var tabs=S.focusMode?allTabs.filter(function(t){return focusTabs.indexOf(t[0])!==-1;}):allTabs;
-  for(var i=0;i<tabs.length;i++){
-    var t=tabs[i];
-    h+='<button class="tab'+(S.tab===t[0]?" active":"")+'" onclick="act(\'tab\',\''+t[0]+'\')" role="tab" aria-selected="'+(S.tab===t[0])+'" aria-label="'+t[0].charAt(0).toUpperCase()+t[0].slice(1)+' tab"><span class="tab-icon">'+t[1]+'</span><span class="tab-label">'+t[0].charAt(0).toUpperCase()+t[0].slice(1)+'</span></button>';
+  for(var i=0;i<instTabs.length;i++){
+    var t=instTabs[i];
+    var tid = typeof t === "string" ? t : t.id;
+    var ticon = typeof t === "object" && t.icon ? t.icon : "";
+    var tlabel = typeof t === "object" && t.label ? t.label : tid.charAt(0).toUpperCase()+tid.slice(1);
+    h+='<button class="tab'+(S.tab===tid?" active":"")+'" onclick="act(\'tab\',\''+tid+'\')" role="tab" aria-selected="'+(S.tab===tid)+'" aria-label="'+tlabel+' tab"><span class="tab-icon">'+ticon+'</span><span class="tab-label">'+tlabel+'</span></button>';
   }
   h+='</div>';
 
-  if(S.tab===TAB.PRACTICE) h+=practiceTab();
-  else if(S.tab===TAB.DRILL) h+=drillTab();
-  else if(S.tab===TAB.DAILY) h+=dailyTab();
-  else if(S.tab===TAB.QUIZ) h+=quizTab();
-  else if(S.tab===TAB.EAR) h+=earTrainTab();
-  else if(S.tab===TAB.STRUM) h+=strumTab();
-  else if(S.tab===TAB.SONGS) h+=songsTab();
-  else if(S.tab===TAB.RHYTHM) h+=rhythmTab();
-  else if(S.tab===TAB.RUNNER) h+=runnerTab();
-  else if(S.tab===TAB.BUILD) h+=buildTab();
-  else if(S.tab===TAB.TUNER) h+=tunerTab();
-  else if(S.tab===TAB.DUAL) h+=dualTab();
-  else if(S.tab===TAB.STATS) h+=statsTab();
-  else if(S.tab===TAB.GUIDE) h+=guideTab();
+  // Route to tab content — check instrument-specific renderer first, then shared
+  var _tabRenderers = (inst && inst.tabRenderers) ? inst.tabRenderers : {};
+  var _sharedTabRenderers = {
+    practice: typeof practiceTab === "function" ? practiceTab : null,
+    drill: typeof drillTab === "function" ? drillTab : null,
+    daily: typeof dailyTab === "function" ? dailyTab : null,
+    quiz: typeof quizTab === "function" ? quizTab : null,
+    ear: typeof earTrainTab === "function" ? earTrainTab : null,
+    strum: typeof strumTab === "function" ? strumTab : null,
+    songs: typeof songsTab === "function" ? songsTab : null,
+    rhythm: typeof rhythmTab === "function" ? rhythmTab : null,
+    runner: typeof runnerTab === "function" ? runnerTab : null,
+    build: typeof buildTab === "function" ? buildTab : null,
+    tuner: typeof tunerTab === "function" ? tunerTab : null,
+    dual: typeof dualTab === "function" ? dualTab : null,
+    stats: typeof statsTab === "function" ? statsTab : null,
+    guide: typeof guideTab === "function" ? guideTab : null,
+    games: typeof gamesTab === "function" ? gamesTab : null,
+    tools: typeof toolsTab === "function" ? toolsTab : null
+  };
+  var _renderer = _tabRenderers[S.tab] || _sharedTabRenderers[S.tab] || null;
+  if (_renderer) h += _renderer();
   return h;
 }
 
 // ===== PRACTICE TAB =====
 function practiceTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   // Daily goal progress at top
   var goalPct=Math.min(100,Math.round((S.todayPracticeSeconds/(S.dailyGoalMinutes*60))*100));
   var goalMins=Math.floor(S.todayPracticeSeconds/60);
@@ -46,13 +59,13 @@ function practiceTab(){
   h+='</div>';
 
   // Guided Session CTA
-  var gs=GUITAR_SESSIONS[S.guidedSession-1];
+  var gs=D.SESSIONS[S.guidedSession-1];
   if(gs){
     var gsDone=S.completedGuidedSessions?S.completedGuidedSessions.length:0;
     h+='<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
     h+='<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
     h+='<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
-    h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+GUITAR_SESSIONS.length+' done</div>';
+    h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+D.SESSIONS.length+' done</div>';
     h+='<button onclick="act(\'guidedStart\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Start Session &#9654;</button>';
     h+='</div>';
   }
@@ -102,20 +115,20 @@ function practiceTab(){
   h+='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Pick a Chord &#9889;</h2></div><div class="lvl-tabs">';
   for(var l=1;l<=8;l++){
     var sel=S.selectedLevel===l,lk=l>S.level;
-    h+='<button class="lvl-tab" onclick="act(\'selLevel\',\''+l+'\')" style="background:'+(sel?LC[l]:"var(--tab-bg)")+';color:'+(sel?"#fff":"var(--tab-inactive)")+';opacity:'+(lk?0.4:1)+'" aria-label="Level '+l+' '+LN[l]+'">'+(lk?"&#128274; ":"")+l+'</button>';
+    h+='<button class="lvl-tab" onclick="act(\'selLevel\',\''+l+'\')" style="background:'+(sel?D.LC[l]:"var(--tab-bg)")+';color:'+(sel?"#fff":"var(--tab-inactive)")+';opacity:'+(lk?0.4:1)+'" aria-label="Level '+l+' '+D.LN[l]+'">'+(lk?"&#128274; ":"")+l+'</button>';
   }
   h+='</div>';
-  h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+LC[S.selectedLevel]+'">'+LN[S.selectedLevel]+'</span>';
-  if(CURRICULUM[S.selectedLevel-1])h+='<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+CURRICULUM[S.selectedLevel-1].sub+'</span>';
+  h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+D.LC[S.selectedLevel]+'">'+D.LN[S.selectedLevel]+'</span>';
+  if(D.CURRICULUM&&D.CURRICULUM[S.selectedLevel-1])h+='<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+D.CURRICULUM[S.selectedLevel-1].sub+'</span>';
   h+='</div>';
   h+='<div class="flex-col">';
-  var cs=CHORDS[S.selectedLevel]||[];
+  var cs=D.CHORDS[S.selectedLevel]||[];
   for(var i=0;i<cs.length;i++){
     var c=cs[i],p=S.chordProgress[c.name]||0,lk=S.selectedLevel>S.level;
     var tier=getChordTier(c.name);
     var tierStyle=tier.tier!=="none"?";border-left:4px solid "+tier.color:"";
-    h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+chordSVG(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+LC[S.selectedLevel]+','+LC[S.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
-    if(!lk)h+='<button onclick="event.stopPropagation();act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:18px;padding:6px" aria-label="Preview '+c.name+' sound">&#128264;</button><div style="font-size:22px;color:'+LC[S.selectedLevel]+'">&#9654;</div>';
+    h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+UI.chord(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+D.LC[S.selectedLevel]+','+D.LC[S.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
+    if(!lk)h+='<button onclick="event.stopPropagation();act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:18px;padding:6px" aria-label="Preview '+c.name+' sound">&#128264;</button><div style="font-size:22px;color:'+D.LC[S.selectedLevel]+'">&#9654;</div>';
     h+='</div>';
   }
   h+='</div>';
@@ -153,6 +166,7 @@ function practiceTab(){
 
 // ===== CUSTOM PRACTICE SETS =====
 function customSetsSection(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
   if(S.editingSet){
@@ -160,7 +174,7 @@ function customSetsSection(){
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Select chords (min 2):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
     for(var l=1;l<=S.level;l++){
-      var cs=CHORDS[l]||[];
+      var cs=D.CHORDS[l]||[];
       for(var i=0;i<cs.length;i++){
         var c=cs[i],sel=S.customSetChords.indexOf(c.name)!==-1;
         h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'toggleSetChord\',\'"+c.name+"\')")+'>'+c.short+'</span>';

@@ -1,7 +1,7 @@
 /* PianoSpark - Guided session flow */
 /* Heart of the overhaul: Spark > Review > New Move > Song Slice > Victory Lap */
 
-function sessionPage() {
+function pianoSessionPage() {
   var plan = S.sessionPlan;
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
 
@@ -16,7 +16,7 @@ function sessionPage() {
 
   // Timer
   if (S.sessionTimer > 0) {
-    html += '<div class="timer-display">' + formatTime(S.sessionTimer) + '</div>';
+    html += '<div class="timer-display">' + pianoFormatTime(S.sessionTimer) + '</div>';
   }
 
   // Render current step
@@ -258,7 +258,7 @@ function legacySessionHTML() {
   var c = findChord(S.chord);
   var html = '<div class="session-active card">';
   html += '<h2>' + (c ? escHTML(c.name) : escHTML(S.chord)) + '</h2>';
-  html += '<div class="timer-display">' + formatTime(S.timer) + '</div>';
+  html += '<div class="timer-display">' + pianoFormatTime(S.timer) + '</div>';
   if (c) html += pianoSVG(c);
   html += '<div class="session-btns">';
   html += '<button class="btn" onclick="act(\'pause\')">' + (S.paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';

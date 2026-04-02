@@ -1,7 +1,7 @@
 /* PianoSpark - Shared page components */
 
 // ── Header ──
-function headerHTML() {
+function pianoHeaderHTML() {
   var html = '<header class="app-header" role="banner">';
   html += '<h1 class="logo">PianoSpark</h1>';
   html += '<div class="header-actions">';
@@ -16,7 +16,7 @@ function headerHTML() {
 }
 
 // ── Tab navigation (4 tabs) ──
-function tabNavHTML() {
+function pianoTabNavHTML() {
   var tabs = [
     { id: TAB.PRACTICE, label: "Practice", icon: "\u{1F3B9}" },
     { id: TAB.GAMES,    label: "Games",    icon: "\u{26A1}" },
@@ -58,12 +58,18 @@ function backBtnHTML(action) {
 
 // ── Level color helper ──
 function levelColor(lvl) {
-  return LC[lvl] || "#7c3aed";
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  return (D.LC && D.LC[lvl]) ? D.LC[lvl] : "#7c3aed";
 }
 
 // ── Chord type color tag ──
 function chordTypeTag(chord) {
   if (!chord) return "";
-  var color = chord.color || CHORD_COLORS[chord.type] || "#888";
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var color = chord.color || (D.CHORD_COLORS && D.CHORD_COLORS[chord.type]) || "#888";
   return '<span class="song-chord-tag" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + escHTML(chord.short) + '</span>';
 }
+
+// ── Direct global exports for ui bag ──
+window.pianoHeaderHTML = pianoHeaderHTML;
+window.pianoTabNavHTML = pianoTabNavHTML;

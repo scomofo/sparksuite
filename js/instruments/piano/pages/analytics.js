@@ -1,4 +1,4 @@
-function analyticsPage(){
+function pianoAnalyticsPage(){
   var summary = typeof buildAnalyticsSummary === "function" ? buildAnalyticsSummary() : null;
   var h = '';
   h += '<div class="card mb16">';

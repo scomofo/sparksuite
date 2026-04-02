@@ -2,10 +2,11 @@
 
 // ===== TUNER TAB =====
 function tunerTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; Guitar Tuner</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Standard tuning: E A D G B e</p>';
   h+='<div id="tuner-strings" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
-  for(var i=0;i<GUITAR_STRINGS.length;i++){
-    var gs=GUITAR_STRINGS[i],mt=S.tunerNote===gs.note,inT=mt&&Math.abs(S.tunerCents)<5,tC=inT?"#4ECDC4":mt&&Math.abs(S.tunerCents)<15?"#FFE66D":"#FF6B6B";
+  for(var i=0;i<D.STRINGS.length;i++){
+    var gs=D.STRINGS[i],mt=S.tunerNote===gs.note,inT=mt&&Math.abs(S.tunerCents)<5,tC=inT?"#4ECDC4":mt&&Math.abs(S.tunerCents)<15?"#FFE66D":"#FF6B6B";
     h+='<div style="background:'+(mt?tC+"22":"var(--chip-bg)")+';border:2px solid '+(mt?tC:"var(--border)")+';border-radius:12px;padding:8px 14px;text-align:center;min-width:44px"><div style="font-size:18px;font-weight:800;color:'+(mt?tC:"var(--text-muted)")+'">'+gs.note+'</div><div style="font-size:9px;color:var(--text-muted)">'+gs.freq+'Hz</div></div>';
   }
   h+='</div>';
@@ -63,6 +64,7 @@ function tunerTab(){
 
 // ===== STATS TAB =====
 function statsTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats</h2></div>';
   var hist=S.history||[];
 
@@ -86,7 +88,7 @@ function statsTab(){
 
   // Mastery tiers summary
   var tiers={gold:0,silver:0,bronze:0};
-  for(var i=0;i<ALL_CHORDS.length;i++){var ct=getChordTier(ALL_CHORDS[i].name);if(ct.tier!=="none")tiers[ct.tier]++;}
+  for(var i=0;i<D.ALL_CHORDS.length;i++){var ct=getChordTier(D.ALL_CHORDS[i].name);if(ct.tier!=="none")tiers[ct.tier]++;}
   if(tiers.gold+tiers.silver+tiers.bronze>0){
     h+='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127942; Mastery Tiers</h3>';
     h+='<div style="display:flex;justify-content:space-around;text-align:center">';
@@ -227,8 +229,10 @@ function crossAppProgressCard(){
 
 // ===== GUIDE TAB =====
 function guideTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128214; How to Read Chord Charts</h2></div>';
-  h+='<div class="card mb16"><div class="flex-center mb12">'+chordSVG(CHORDS[1][0],200)+'</div><div style="text-align:center;font-size:13px;color:var(--text-dim);font-weight:600">Example: E Major</div></div>';
+  h+='<div class="card mb16"><div class="flex-center mb12">'+UI.chord(D.CHORDS[1][0],200)+'</div><div style="text-align:center;font-size:13px;color:var(--text-dim);font-weight:600">Example: E Major</div></div>';
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127912; Chart Legend</h3>';
   h+='<div style="display:flex;flex-direction:column;gap:12px">';
   h+='<div style="display:flex;align-items:flex-start;gap:12px"><div style="min-width:36px;height:36px;border-radius:10px;background:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--text-muted)">|</div><div><div style="font-weight:700;color:var(--text-primary);font-size:14px">Vertical Lines = Strings</div><div style="font-size:12px;color:var(--text-dim);line-height:1.5">6 strings from left to right: E A D G B e (thickest to thinnest)</div></div></div>';
