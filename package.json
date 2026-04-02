@@ -14,7 +14,7 @@
     "cap:sync": "npx cap sync",
     "cap:android": "npx cap open android",
     "cap:ios": "npx cap open ios",
-    "test": "node tests/test_core.js"
+    "test": "node tests/test_core.js && node tests/test_spark_core.js && node tests/test_performance_core.js && node tests/test_launcher.js"
   },
   "author": "SparkSuite",
   "license": "MIT",
@@ -55,7 +55,14 @@
       "index.html",
       "icon.png",
       "styles.css",
-      "js/**/*"
+      "spark-visual.css",
+      "js/**/*",
+      "sounds/**/*",
+      "data/**/*",
+      "content/**/*",
+      "sparkgame/**/*",
+      "desktop/**/*",
+      "server/**/*"
     ],
     "extraResources": [
       {
