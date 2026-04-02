@@ -20,7 +20,10 @@
         STRINGS: typeof GUITAR_STRINGS !== "undefined" ? GUITAR_STRINGS : [],
         STRUM_PATTERNS: typeof STRUM_PATTERNS !== "undefined" ? STRUM_PATTERNS : [],
         FINGER_EXERCISES: typeof FINGER_EXERCISES !== "undefined" ? FINGER_EXERCISES : [],
-        CURRICULUM: typeof CURRICULUM !== "undefined" ? CURRICULUM : []
+        CURRICULUM: typeof CURRICULUM !== "undefined" ? CURRICULUM : [],
+        CAPO_CHART: typeof CapoHelpers !== "undefined" ? CapoHelpers.CAPO_CHART : {},
+        CAPO_SKILLS: typeof CapoHelpers !== "undefined" ? CapoHelpers.CAPO_SKILLS : [],
+        CAPO_LESSONS: typeof CapoHelpers !== "undefined" ? CapoHelpers.CAPO_LESSONS : []
       };
     },
 
@@ -84,8 +87,23 @@
     // ── InstrumentModule interface ──
 
     getSkillTree: function() {
-      if (typeof buildSkillTree === "function") return buildSkillTree();
-      return { branches: [] };
+      var tree = typeof buildSkillTree === "function" ? buildSkillTree() : { branches: [] };
+      if (typeof CapoHelpers !== "undefined") {
+        var capoNodes = [];
+        var skills = CapoHelpers.CAPO_SKILLS;
+        for (var i = 0; i < skills.length; i++) {
+          var sk = skills[i];
+          var mastery = S.mastery && S.mastery.capo ? (S.mastery.capo[sk.id] || 0) : 0;
+          capoNodes.push({
+            id: sk.id, branch: "capo", label: sk.name,
+            status: mastery > 0 ? (mastery >= 90 ? "mastered" : "developing") : "available",
+            progress: mastery,
+            meta: { category: "capo", desc: sk.desc }
+          });
+        }
+        tree.branches.push({ id: "capo", label: "Capo & Transposition", nodes: capoNodes });
+      }
+      return tree;
     },
 
     getCurriculumMap: function() {
