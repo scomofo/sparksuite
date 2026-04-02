@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════
-   ChordSpark — "Warm Ember" Guitar Learning App
-   Part of the Spark family: warm, woody, grounded
+   SparkSuite — Multi-Instrument Music Learning Suite
+   Guitar: Warm Ember | Piano: Cool Midnight | Drums: Coming Soon
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ===== CSS Variables (Dark Default — Warm Ember) ===== */
@@ -558,3 +558,26 @@ h1, h2, h3, [style*="font-weight:900"], [style*="font-weight:800"] {
 .home-grid-item{min-height:140px}
 .mb16{margin-bottom:16px}
 .muted{color:var(--text-muted,#888)}
+
+/* ===== SparkSuite Launcher ===== */
+.launcher-card{
+  background:var(--card-bg);border-radius:var(--radius-lg);padding:24px 16px;
+  text-align:center;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease;
+  border:1px solid var(--border);min-width:140px;max-width:200px;flex:1
+}
+.launcher-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.launcher-card.disabled{opacity:0.45;cursor:default;pointer-events:none}
+.launcher-card .instrument-icon{font-size:48px;margin-bottom:8px;display:block}
+.launcher-card .instrument-name{font-weight:800;font-size:18px;color:var(--text-primary)}
+.launcher-card .instrument-stats{color:var(--text-muted);font-size:13px;margin-top:4px}
+.launcher-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;padding:20px;max-width:500px;margin:0 auto}
+.launcher-header{text-align:center;padding:40px 20px 20px}
+.launcher-header h1{font-size:28px;font-weight:900;margin:0;color:var(--text-primary);font-family:var(--font-display)}
+.launcher-stats{color:var(--text-muted);font-size:14px;margin-top:6px}
+
+/* Songs subtab fix */
+.songs-subtab{
+  background:var(--chip-bg);border:1px solid var(--border);border-radius:16px;
+  padding:6px 14px;font-size:12px;font-weight:700;color:var(--text-muted);cursor:pointer
+}
+.songs-subtab.active{border-color:var(--accent);background:rgba(212,132,90,.08);color:var(--accent)}
