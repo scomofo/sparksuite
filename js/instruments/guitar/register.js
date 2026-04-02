@@ -10,9 +10,16 @@
 
     getData: function() {
       return {
-        chords: typeof GUITAR_CHORDS !== "undefined" ? GUITAR_CHORDS : {},
-        sessions: typeof GUITAR_SESSIONS !== "undefined" ? GUITAR_SESSIONS : [],
-        songs: typeof SONGS !== "undefined" ? SONGS : []
+        CHORDS: typeof CHORDS !== "undefined" ? CHORDS : {},
+        ALL_CHORDS: typeof ALL_CHORDS !== "undefined" ? ALL_CHORDS : [],
+        SESSIONS: typeof GUITAR_SESSIONS !== "undefined" ? GUITAR_SESSIONS : [],
+        SONGS: typeof SONGS !== "undefined" ? SONGS : [],
+        LC: typeof LC !== "undefined" ? LC : {},
+        LN: typeof LN !== "undefined" ? LN : {},
+        CHORD_NOTES: typeof CHORD_NOTES !== "undefined" ? CHORD_NOTES : {},
+        STRINGS: typeof GUITAR_STRINGS !== "undefined" ? GUITAR_STRINGS : [],
+        STRUM_PATTERNS: typeof STRUM_PATTERNS !== "undefined" ? STRUM_PATTERNS : [],
+        FINGER_EXERCISES: typeof FINGER_EXERCISES !== "undefined" ? FINGER_EXERCISES : []
       };
     },
 
