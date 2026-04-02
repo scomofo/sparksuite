@@ -1,6 +1,6 @@
 /* pages/editor.js — Editor shell page (handoffs 6-9) */
 
-function editorPage(){
+function pianoEditorPage(){
   var obj = S.editorObject;
   var h = '';
   h += '<div class="card mb16">';

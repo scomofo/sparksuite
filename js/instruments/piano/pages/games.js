@@ -1,6 +1,6 @@
 /* PianoSpark - Games tab (drill, daily, quiz, ear, rhythm, runner) */
 
-function gamesTab() {
+function pianoGamesTab() {
   var html = '';
   // Sub-tab selector
   var subtabs = [

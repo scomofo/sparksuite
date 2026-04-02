@@ -1,6 +1,6 @@
 /* PianoSpark - Onboarding (5 screens) */
 
-function onboardingPage() {
+function pianoOnboardingPage() {
   var step = S.onboardingStep || 0;
 
   // Step dots

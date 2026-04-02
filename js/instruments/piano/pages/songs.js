@@ -1,6 +1,6 @@
 /* PianoSpark - Songs tab */
 
-function songsTab() {
+function pianoSongsTab() {
   var html = '';
 
   // Sub-tabs
@@ -263,7 +263,7 @@ function stemsSection() {
   return html;
 }
 
-function stemsPlayerPage() {
+function pianoStemsPlayerPage() {
   var html = '<div style="padding:8px 0">';
   html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
   html += '<button class="btn btn-sm" onclick="act(\'stemBack\')">\u2190</button>';

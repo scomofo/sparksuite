@@ -1,4 +1,4 @@
-function planPage(){
+function pianoPlanPage(){
   var plan = ensurePracticePlan();
   var h = '';
 
