@@ -38,6 +38,23 @@
       };
     },
 
+    ui: {
+      chord: function(chordObj, size, label, animate) {
+        return typeof pianoSVG === "function" ? pianoSVG(chordObj, { width: size, animate: animate }) : "";
+      },
+      header: function() {
+        var ns = window._PianoPageNS && window._PianoPageNS.piano ? window._PianoPageNS.piano : {};
+        return ns.headerHTML ? ns.headerHTML() : (typeof headerHTML === "function" ? headerHTML() : "");
+      },
+      tabNav: function() {
+        var ns = window._PianoPageNS && window._PianoPageNS.piano ? window._PianoPageNS.piano : {};
+        return ns.tabNavHTML ? ns.tabNavHTML() : (typeof tabNavHTML === "function" ? tabNavHTML() : "");
+      },
+      ring: function(pct, size, color) {
+        return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
+      }
+    },
+
     pages: typeof PIANO_PAGES !== "undefined" ? PIANO_PAGES : {},
 
     tabs: ["practice", "songs", "games", "tools"],

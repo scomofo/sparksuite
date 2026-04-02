@@ -23,6 +23,27 @@
       };
     },
 
+    ui: {
+      chord: function(chordObj, size, label, animate) {
+        return typeof chordSVG === "function" ? chordSVG(chordObj, size, label, animate) : "";
+      },
+      header: function() {
+        return typeof headerHTML === "function" ? headerHTML() : "";
+      },
+      tabNav: function() {
+        return typeof tabNavHTML === "function" ? tabNavHTML() : "";
+      },
+      ring: function(pct, size, color) {
+        return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
+      },
+      strum: function(pattern) {
+        return typeof strumHTML === "function" ? strumHTML(pattern) : "";
+      },
+      scale: function(scale, opts) {
+        return typeof scaleSVG === "function" ? scaleSVG(scale, opts) : "";
+      }
+    },
+
     pages: typeof GUITAR_PAGES !== "undefined" ? GUITAR_PAGES : {},
 
     tabs: ["practice", "drill", "songs", "guide"],
