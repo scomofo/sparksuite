@@ -93,16 +93,19 @@
       if (plan) {
         if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
         if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
-        S.xp += 30;
-        S.sessions++;
-        var today = new Date().toISOString().split("T")[0];
-        if (S.lastSessionDate !== today) { S.streak++; S.lastSessionDate = today; }
         S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
-        logHistory("guided", "Session " + plan.num + ": " + plan.title, 30);
-        checkBadges();
+        var outcome = SparkSession.processResults({
+          type: "guided",
+          chordName: plan.newMove ? plan.newMove.chord : null,
+          duration: 300
+        });
+        S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
+        if (outcome.jackpot) snd("levelup"); else snd("complete");
+        if (outcome.leveledUp) snd("levelup");
+      } else {
+        S.xpToast = { amount: 30, time: Date.now() };
+        snd("complete");
       }
-      S.xpToast = { amount: 30, time: Date.now() };
-      saveState();
       trigC();
       S.screen = SCR.GUIDED_DONE;
       render();

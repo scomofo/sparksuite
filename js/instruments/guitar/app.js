@@ -189,20 +189,24 @@ function guitarAct(a, v) {
     if (plan) {
       if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
       if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
-      S.xp += 30; S.sessions++;
-      var today = new Date().toISOString().split("T")[0];
-      if (S.lastSessionDate !== today) { S.streak++; S.lastSessionDate = today; }
       if (plan.newMove && plan.newMove.chord) {
-        var k = plan.newMove.chord;
-        S.chordProgress[k] = Math.min((S.chordProgress[k] || 0) + 25, 100);
+        S.chordProgress[plan.newMove.chord] = Math.min((S.chordProgress[plan.newMove.chord] || 0) + 25, 100);
       }
       S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
-      logHistory("guided", "Session " + plan.num + ": " + plan.title, 30);
-      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "guided_" + plan.num, xp: 30 });
-      checkBadges();
+      // Route through SparkSession for full progression cascade
+      var outcome = SparkSession.processResults({
+        type: "guided",
+        chordName: plan.newMove ? plan.newMove.chord : null,
+        duration: 300
+      });
+      S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
+      if (outcome.jackpot) snd("levelup"); else snd("complete");
+      if (outcome.leveledUp) snd("levelup");
+    } else {
+      S.xpToast = { amount: 30, time: Date.now() };
+      snd("complete");
     }
-    S.xpToast = { amount: 30, time: Date.now() };
-    saveState(); trigC(); S.screen = SCR.GUIDED_DONE; render();
+    trigC(); S.screen = SCR.GUIDED_DONE; render();
     return true;
   }
 

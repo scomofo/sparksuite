@@ -119,7 +119,7 @@ function practiceTab(){
   }
   h+='</div>';
   h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+D.LC[S.selectedLevel]+'">'+D.LN[S.selectedLevel]+'</span>';
-  if(CURRICULUM[S.selectedLevel-1])h+='<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+CURRICULUM[S.selectedLevel-1].sub+'</span>';
+  if(D.CURRICULUM&&D.CURRICULUM[S.selectedLevel-1])h+='<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+D.CURRICULUM[S.selectedLevel-1].sub+'</span>';
   h+='</div>';
   h+='<div class="flex-col">';
   var cs=D.CHORDS[S.selectedLevel]||[];
