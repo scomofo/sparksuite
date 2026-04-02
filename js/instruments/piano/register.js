@@ -11,7 +11,12 @@
     getData: function() {
       return {
         songs: typeof PIANO_SONGS !== "undefined" ? PIANO_SONGS : [],
-        voicings: typeof PIANO_VOICINGS !== "undefined" ? PIANO_VOICINGS : {}
+        voicings: typeof PIANO_VOICINGS !== "undefined" ? PIANO_VOICINGS : {},
+        chords: typeof PIANO_CHORDS_FULL !== "undefined" ? PIANO_CHORDS_FULL : {},
+        sessions: typeof PIANO_SESSIONS !== "undefined" ? PIANO_SESSIONS : [],
+        curriculum: typeof PIANO_CURRICULUM !== "undefined" ? PIANO_CURRICULUM : [],
+        lhPatterns: typeof PIANO_LH_PATTERNS !== "undefined" ? PIANO_LH_PATTERNS : [],
+        data: typeof PIANO_DATA !== "undefined" ? PIANO_DATA : null
       };
     },
 
