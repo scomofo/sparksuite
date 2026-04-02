@@ -108,6 +108,32 @@
     return null;
   }
 
+  function checkPracticeDate() {
+    if (typeof S === "undefined") return;
+    var today = new Date().toDateString();
+    if (S.lastPractice !== today) {
+      var yesterday = new Date(Date.now() - 86400000).toDateString();
+      if (S.lastPractice === yesterday) {
+        S.streak = (S.streak || 0) + 1;
+      } else {
+        S.streak = 1;
+      }
+      S.dailyPracticed = 0;
+    }
+    S.lastPractice = today;
+    if (!S.personalBests) S.personalBests = { streak: 0 };
+    if (S.streak > S.personalBests.streak) S.personalBests.streak = S.streak;
+  }
+
+  // Get reward phase for current session
+  function getRewardPhase(sessionNum) {
+    var phases = typeof PIANO_DATA !== "undefined" && PIANO_DATA.REWARD_PHASES ? PIANO_DATA.REWARD_PHASES : [];
+    for (var i = phases.length - 1; i >= 0; i--) {
+      if (sessionNum >= phases[i].after) return phases[i];
+    }
+    return null;
+  }
+
   // Expose all as globals
   window.getCurrentSessionPlan = getCurrentSessionPlan;
   window.getCurrentLevel = getCurrentLevel;
@@ -121,5 +147,7 @@
   window.ifThenCard = typeof window.ifThenCard === "undefined" ? ifThenCard : window.ifThenCard;
   window.getChordMatch = typeof window.getChordMatch === "undefined" ? getChordMatch : window.getChordMatch;
   window.fireMicro = typeof window.fireMicro === "undefined" ? fireMicro : window.fireMicro;
+  window.checkPracticeDate = checkPracticeDate;
+  window.getRewardPhase = getRewardPhase;
 
 })();

@@ -23,6 +23,26 @@ var TAB = { PRACTICE: "practice", GAMES: "games", SONGS: "songs", TOOLS: "tools"
 if (typeof window.T === "undefined") window.T = {};
 var T = window.T;
 
+// Import helpers from piano/helpers.js (loaded before this file)
+var getCurrentSessionPlan = window.getCurrentSessionPlan;
+var getCurrentLevel = window.getCurrentLevel;
+var levelForSession = window.levelForSession;
+var addPracticeSecond = window.addPracticeSecond;
+var addXP = window.addXP;
+var addHistory = window.addHistory;
+var checkStreak = window.checkStreak;
+var recordTransition = window.recordTransition;
+var clickableDiv = window.clickableDiv;
+var ifThenCard = window.ifThenCard;
+var getChordMatch = window.getChordMatch;
+var fireMicro = window.fireMicro;
+var escHTML = window.escHTML;
+var saveState = window.saveState;
+var showToast = window.showToast || function() {};
+var checkPracticeDate = window.checkPracticeDate || function() {};
+var getRewardPhase = window.getRewardPhase || function() { return null; };
+var render = window.render;
+
 // ── Utility ──
 function shuffleArray(arr) {
   for (var i = arr.length - 1; i > 0; i--) {
