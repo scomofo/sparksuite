@@ -58,13 +58,15 @@ function backBtnHTML(action) {
 
 // ── Level color helper ──
 function levelColor(lvl) {
-  return LC[lvl] || "#7c3aed";
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  return (D.LC && D.LC[lvl]) ? D.LC[lvl] : "#7c3aed";
 }
 
 // ── Chord type color tag ──
 function chordTypeTag(chord) {
   if (!chord) return "";
-  var color = chord.color || CHORD_COLORS[chord.type] || "#888";
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var color = chord.color || (D.CHORD_COLORS && D.CHORD_COLORS[chord.type]) || "#888";
   return '<span class="song-chord-tag" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + escHTML(chord.short) + '</span>';
 }
 

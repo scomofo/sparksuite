@@ -1,6 +1,9 @@
 /* PianoSpark - Songs tab */
 
 function pianoSongsTab() {
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var CURRICULUM = D.CURRICULUM || [];
+  var SONGS = D.SONGS || [];
   var html = '';
 
   // Sub-tabs

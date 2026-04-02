@@ -23,6 +23,24 @@ var TAB = { PRACTICE: "practice", GAMES: "games", SONGS: "songs", TOOLS: "tools"
 if (typeof window.T === "undefined") window.T = {};
 var T = window.T;
 
+// ── Piano data aliases (resolve from PIANO_DATA to avoid stale shared globals) ──
+var _pd = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : {};
+var CHORDS = _pd.CHORDS || {};
+var CURRICULUM = _pd.CURRICULUM || [];
+var SESSION_PLANS = _pd.SESSION_PLANS || [];
+var SONGS = _pd.SONGS || (typeof PIANO_SONGS !== "undefined" ? PIANO_SONGS : []);
+var BADGES = _pd.BADGES || [];
+var LH_PATTERNS = _pd.LH_PATTERNS || [];
+var FINGER_EXERCISES = _pd.FINGER_EXERCISES || [];
+var FINGER_BADGES = _pd.FINGER_BADGES || [];
+var DAILY_TYPES = _pd.DAILY_TYPES || [];
+var PLAY_STYLES = _pd.PLAY_STYLES || [];
+var REWARD_PHASES = _pd.REWARD_PHASES || [];
+var CHORD_COLORS = _pd.CHORD_COLORS || {};
+var LC = _pd.LC || {};
+var LN = _pd.LN || {};
+var SCALES = _pd.SCALES || [];
+
 // ── Piano helper functions (formerly in helpers.js) ──
 function getCurrentSessionPlan() {
   var plans = typeof PIANO_SESSIONS !== "undefined" ? PIANO_SESSIONS : [];
