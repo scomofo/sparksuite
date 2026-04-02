@@ -16,7 +16,7 @@
       };
     },
 
-    pages: {},
+    pages: typeof GUITAR_PAGES !== "undefined" ? GUITAR_PAGES : {},
 
     tabs: ["practice", "drill", "songs", "guide"],
 
