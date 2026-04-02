@@ -319,9 +319,11 @@ function _sparkEmit(type, payload) {
 
 // ===== ACTION DISPATCHER =====
 window.act=function(a,v){
-  // Route to piano act() when piano is active
+  // Route to piano act() when piano is active, with context swap
   if (S.activeInstrument === "pianospark" && typeof pianoAct === "function") {
-    pianoAct(a, v);
+    if (typeof _enterPianoCtx === "function") _enterPianoCtx();
+    try { pianoAct(a, v); }
+    finally { if (typeof _exitPianoCtx === "function") _exitPianoCtx(); }
     return;
   }
   if(a==="tab"){

@@ -1570,6 +1570,19 @@ window.midiToOctave = typeof window.midiToOctave === "undefined" ? midiToOctave 
 window.midiToFreq = typeof window.midiToFreq === "undefined" ? midiToFreq : window.midiToFreq;
 window.noteToMidi = typeof window.noteToMidi === "undefined" ? noteToMidi : window.noteToMidi;
 
+// Core data exposed globally for piano (namespaced where possible, direct where needed)
+// Piano pages and app.js reference CHORDS, SONGS, SESSION_PLANS, CURRICULUM, LC, LN etc directly
+window.PIANO_REWARD_PHASES = REWARD_PHASES;
+window.PIANO_BADGES = BADGES;
+window.PIANO_DAILY_TYPES = DAILY_TYPES;
+window.PIANO_SCALES = SCALES;
+window.PIANO_FINGER_EXERCISES = FINGER_EXERCISES;
+window.PIANO_FINGER_BADGES = FINGER_BADGES;
+window.PIANO_INJURY_TIPS = INJURY_TIPS;
+window.PIANO_CHORD_COLORS = CHORD_COLORS;
+window.PIANO_LC = LC;
+window.PIANO_LN = LN;
+
 // Chord/data helper functions needed by piano pages and app engine
 window.allChordKeys = allChordKeys;
 window.allChords = allChords;
