@@ -1,18 +1,8 @@
 // ===== TIMERS =====
-// Variable reinforcement schedule: reward density thins as sessions accumulate
-// (Stretching the Ratios — builds extinction-resistant practice habits)
-function shouldFireReward(){
-  var n=S.sessions;
-  if(n<=5)return true;          // Phase 1: continuous (sessions 1-5)
-  if(n<=14)return Math.random()<0.33; // Phase 2: VR-3 (sessions 6-14)
-  if(n<=30)return Math.random()<0.14; // Phase 3: VR-7 (sessions 15-30)
-  return Math.random()<0.10;    // Phase 4: VR-10 (sessions 30+)
-}
-
 function tickS(){
   if(S.timerActive&&S.timer>0){
     S.timer--;
-    if(S.timer%30===0&&S.timer>0&&shouldFireReward()){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
+    if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
     else if(S.timer%30===0&&S.timer>0){S.xp+=5;} // silent XP accrual when toast skipped
     if(S.timer===60)fireMicro("halfway","Halfway there!","&#128170;");
     addPracticeSecond();
@@ -37,7 +27,7 @@ function tickS(){
 function tickD(){
   if(S.screen===SCR.DRILL&&S.drillTimer>0){
     S.drillTimer--;
-    if(S.drillTimer%30===0&&S.drillTimer>0&&shouldFireReward()){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
+    if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
     else if(S.drillTimer%30===0&&S.drillTimer>0){S.xp+=5;}
     addPracticeSecond();
     if(!updateDrillTimerUI())render(); // partial update if elements exist
