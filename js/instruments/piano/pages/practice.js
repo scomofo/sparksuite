@@ -1,11 +1,14 @@
 /* PianoSpark - Practice tab (home page) */
 
-function practiceTab() {
+function pianoPracticeTab() {
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var CURRICULUM = D.CURRICULUM || [];
+  var BADGES = D.BADGES || [];
   var html = '';
 
   // If-then intention reminder (stickiness #2)
   if (S.practiceIntention && !S.focusMode) {
-    html += ifThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
+    html += pianoIfThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
   }
 
   // Daily goal progress
@@ -26,7 +29,7 @@ function practiceTab() {
   // Quick start / Resume session card
   var plan = getCurrentSessionPlan();
   if (plan) {
-    html += clickableDiv(
+    html += pianoClickableDiv(
       "act('start_guided_session')",
       '<h3>Session ' + plan.num + ': ' + escHTML(plan.title) + '</h3>' +
       '<p>Level ' + plan.level + ' \u2022 ' + escHTML(CURRICULUM[plan.level - 1].title) + '</p>',
@@ -66,12 +69,13 @@ function practiceTab() {
 
   // Chord cards for the viewed level (or all unlocked when viewing current level)
   var unlocked = (viewLvlNum === S.level) ? chordsUpToLevel(S.level) : chordsForLevel(viewLvlNum);
+  if (!S.chordProg) S.chordProg = {};
   html += '<div class="chord-grid">';
   unlocked.forEach(function(c) {
     var prog = S.chordProg[c.short] || 0;
-    var tier = tierBadgeHTML(prog);
+    var tier = pianoTierBadgeHTML(prog);
     var color = c.color || "#888";
-    html += clickableDiv(
+    html += pianoClickableDiv(
       "act('start_session','" + c.short + "')",
       '<div class="chord-card-inner">' +
         '<span class="chord-name" style="color:' + color + '">' + escHTML(c.short) + '</span>' +

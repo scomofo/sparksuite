@@ -68,6 +68,7 @@ function runnerTab(){
 }
 
 function runnerGamePage(){
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   var h='<div>';
   // Lives, Score, Combo row
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px">';
@@ -81,7 +82,7 @@ function runnerGamePage(){
   // Target chord card
   h+='<div class="card mb12" style="padding:10px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(69,183,209,.12));border:2px solid rgba(78,205,196,.3)">';
   if(S.runnerTarget){
-    h+=chordSVG(S.runnerTarget,55);
+    h+=UI.chord(S.runnerTarget,55);
     h+='<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Target Chord</div>';
     h+='<div style="font-size:22px;font-weight:900;color:var(--text-primary)">'+escHTML(S.runnerTarget.short)+'</div>';
     h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(S.runnerTarget.name)+'</div></div>';
@@ -137,6 +138,8 @@ function runnerResultsPage(){
 
 // ===== BUILD (PROGRESSION BUILDER) TAB =====
 function buildTab(){
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Progression Builder &#128295;</h2><p style="color:var(--text-dim);font-size:13px">Build and play chord progressions</p></div>';
 
   // Progression display
@@ -146,7 +149,7 @@ function buildTab(){
   } else {
     for(var i=0;i<S.progChords.length;i++){
       var cn=S.progChords[i];
-      var ch=null;for(var j=0;j<ALL_CHORDS.length;j++)if(ALL_CHORDS[j].name===cn)ch=ALL_CHORDS[j];
+      var ch=null;for(var j=0;j<D.ALL_CHORDS.length;j++)if(D.ALL_CHORDS[j].name===cn)ch=D.ALL_CHORDS[j];
       var short=ch?ch.short:cn;
       h+='<div class="prog-block'+(S.progPlaying&&S.progBeat===i?" active":"")+'"><div class="del-btn" onclick="act(\'progRemove\',\''+i+'\')">&times;</div>';
       h+='<div class="chord-label">'+short+'</div>';
@@ -163,7 +166,7 @@ function buildTab(){
   if(S.progPickerOpen){
     h+='<div class="card mb12"><h4 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">Add Chord</h4><div class="chord-picker">';
     for(var l=1;l<=S.level;l++){
-      var cs=CHORDS[l]||[];
+      var cs=D.CHORDS[l]||[];
       for(var i=0;i<cs.length;i++){
         h+='<button class="chord-pick-btn" onclick="act(\'progAdd\',\''+cs[i].name+'\')">'+cs[i].short+'</button>';
       }
@@ -184,9 +187,9 @@ function buildTab(){
     // Detect key from first chord
     var firstChord=S.progChords[0];
     var scaleKey=null;
-    for(var i=0;i<ALL_CHORDS.length;i++){
-      if(ALL_CHORDS[i].name===firstChord||ALL_CHORDS[i].short===firstChord){
-        var nm=ALL_CHORDS[i].name.replace(/ (Major|Minor)$/,"");
+    for(var i=0;i<D.ALL_CHORDS.length;i++){
+      if(D.ALL_CHORDS[i].name===firstChord||D.ALL_CHORDS[i].short===firstChord){
+        var nm=D.ALL_CHORDS[i].name.replace(/ (Major|Minor)$/,"");
         if(nm.length<=2)scaleKey=nm;
         else scaleKey=nm.charAt(0);
         break;
@@ -210,9 +213,9 @@ function buildTab(){
   // Current chord diagram when playing
   if(S.progPlaying&&S.progChords.length>0){
     var cn=S.progChords[S.progBeat];
-    var ch=null;for(var i=0;i<ALL_CHORDS.length;i++)if(ALL_CHORDS[i].name===cn)ch=ALL_CHORDS[i];
+    var ch=null;for(var i=0;i<D.ALL_CHORDS.length;i++)if(D.ALL_CHORDS[i].name===cn)ch=D.ALL_CHORDS[i];
     if(ch){
-      h+='<div class="card mb12 text-center"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+chordSVG(ch,160)+'</div></div>';
+      h+='<div class="card mb12 text-center"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
     }
   }
 

@@ -1284,7 +1284,7 @@ var SONGS = [
 ];
 
 // ── BADGES (expanded 15+) ──
-// Each badge has a check() function so checkBadges() in ui.js is data-driven.
+// Each badge has a check() function so pianoCheckBadges() in ui.js is data-driven.
 // To add a badge: add it here only — no other file needs updating.
 var BADGES = [
   { id:"first_chord",  label:"First Note",     icon:"\u{1F3B9}", desc:"Complete Session 1", check:function(){return S.sessions>=1||S.completedSessions.length>=1;} },

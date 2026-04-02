@@ -1,6 +1,6 @@
 /* PianoSpark - Tools tab (stats, settings, guide) */
 
-function toolsTab() {
+function pianoToolsTab() {
   var html = '';
   var subtabs = [
     { id:"stats",    label:"Stats" },
@@ -57,13 +57,14 @@ function statsTab() {
   }
 
   // Chord mastery
+  if (!S.chordProg) S.chordProg = {};
   html += '<h3>Chord Mastery</h3><div class="mastery-list">';
   var unlocked = chordsUpToLevel(S.level);
   unlocked.forEach(function(c) {
     var prog = S.chordProg[c.short] || 0;
     html += '<div class="mastery-row">';
     html += '<span class="mastery-name" style="color:' + (c.color || '#888') + '">' + escHTML(c.short) + '</span>';
-    html += tierBadgeHTML(prog);
+    html += pianoTierBadgeHTML(prog);
     html += '<div class="mastery-bar"><div class="mastery-fill" style="width:' + prog + '%"></div></div>';
     html += '<span class="mastery-pct">' + prog + '%</span>';
     html += '</div>';
@@ -92,6 +93,8 @@ function statsTab() {
   html += '</div>';
 
   // Badges
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var BADGES = D.BADGES || [];
   html += '<h3>Badges</h3><div class="badges-grid">';
   BADGES.forEach(function(b) {
     var earned = S.earned.indexOf(b.id) >= 0;

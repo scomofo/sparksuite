@@ -1,6 +1,6 @@
 /* PianoSpark - Onboarding (5 screens) */
 
-function onboardingPage() {
+function pianoOnboardingPage() {
   var step = S.onboardingStep || 0;
 
   // Step dots
@@ -69,7 +69,7 @@ function onboardingPage() {
       html += '<p>Session 1 awaits. You\'ll learn your first chord in under 2 minutes.</p>';
       html += dots;
       if (S.practiceIntention) {
-        html += ifThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
+        html += pianoIfThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
       }
       html += '<div style="margin-top:16px"><button class="btn btn-lg btn-accent" onclick="act(\'onboard_complete\')">Start Your First Session</button></div>';
       break;
