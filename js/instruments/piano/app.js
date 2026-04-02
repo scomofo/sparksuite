@@ -571,6 +571,7 @@ function checkFingerBadges() {
 
 // ── Action dispatcher ──
 function act(action, param) {
+  var _handled = true;
   switch (action) {
     case "tab":
       var t = parseInt(param);
@@ -1524,10 +1525,15 @@ function act(action, param) {
     case "openSettings":
       S.screen = SCR.SETTINGS;
       break;
+
+    default:
+      _handled = false;
+      break;
   }
 
   // Call SparkSuite's global render, not piano's local render
   if (typeof window.render === "function") window.render();
+  return _handled;
 }
 
 // ── Render (piano-specific, NOT used by SparkSuite — kept for reference) ──
