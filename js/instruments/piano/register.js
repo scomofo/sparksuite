@@ -51,6 +51,15 @@
         if (S.chord === undefined) S.chord = null;
         if (S.active === undefined) S.active = false;
         if (S.paused === undefined) S.paused = false;
+        if (S.lastPractice === undefined) S.lastPractice = null;
+        if (S.personalBests === undefined) S.personalBests = { streak: 0 };
+        if (S.earned === undefined) S.earned = [];
+        if (S.transitionStats === undefined) S.transitionStats = {};
+        if (S.drillChord === undefined) S.drillChord = null;
+        if (S.drillTimer === undefined) S.drillTimer = 0;
+        if (S.drillCount === undefined) S.drillCount = 0;
+        if (S._inPlacement === undefined) S._inPlacement = false;
+        if (S.onboardingStep === undefined) S.onboardingStep = 0;
       }
     }
   });
