@@ -1,7 +1,7 @@
 /* PianoSpark - Shared page components */
 
 // ── Header ──
-function headerHTML() {
+function pianoHeaderHTML() {
   var html = '<header class="app-header" role="banner">';
   html += '<h1 class="logo">PianoSpark</h1>';
   html += '<div class="header-actions">';
@@ -16,7 +16,7 @@ function headerHTML() {
 }
 
 // ── Tab navigation (4 tabs) ──
-function tabNavHTML() {
+function pianoTabNavHTML() {
   var tabs = [
     { id: TAB.PRACTICE, label: "Practice", icon: "\u{1F3B9}" },
     { id: TAB.GAMES,    label: "Games",    icon: "\u{26A1}" },
@@ -69,5 +69,5 @@ function chordTypeTag(chord) {
 }
 
 // ── Direct global exports for ui bag ──
-window.pianoHeaderHTML = headerHTML;
-window.pianoTabNavHTML = tabNavHTML;
+window.pianoHeaderHTML = pianoHeaderHTML;
+window.pianoTabNavHTML = pianoTabNavHTML;

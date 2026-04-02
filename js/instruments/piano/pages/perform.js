@@ -1,4 +1,4 @@
-function performPage(){
+function pianoPerformPage(){
   var chart = S.performChart;
   var phrase = chart ? getPerformancePhraseForTime(chart, S.performCurrentSec) : null;
   var h = '<div class="card mb16">';
@@ -43,7 +43,7 @@ function updatePerformanceDOM(){
   if(mi) mi.textContent = 'Held MIDI: '+(S.performInputMidi||[]).join(', ');
 }
 
-function performDonePage(){
+function pianoPerformDonePage(){
   var r = S.performResults || {};
   var best = getPerformanceBest(r.songId, r.arrangementType || "block_chords", r.difficultyId || "normal");
   var mastery = getPerformanceMasteryLabel(best);

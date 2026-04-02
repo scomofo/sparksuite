@@ -1,6 +1,6 @@
 /* PianoSpark - Practice tab (home page) */
 
-function practiceTab() {
+function pianoPracticeTab() {
   var html = '';
 
   // If-then intention reminder (stickiness #2)

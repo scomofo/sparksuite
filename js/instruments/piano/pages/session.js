@@ -1,7 +1,7 @@
 /* PianoSpark - Guided session flow */
 /* Heart of the overhaul: Spark > Review > New Move > Song Slice > Victory Lap */
 
-function sessionPage() {
+function pianoSessionPage() {
   var plan = S.sessionPlan;
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
 

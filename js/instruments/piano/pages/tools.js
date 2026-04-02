@@ -1,6 +1,6 @@
 /* PianoSpark - Tools tab (stats, settings, guide) */
 
-function toolsTab() {
+function pianoToolsTab() {
   var html = '';
   var subtabs = [
     { id:"stats",    label:"Stats" },
