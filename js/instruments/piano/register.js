@@ -108,6 +108,61 @@
         if (S.tone === undefined) S.tone = "grand";
         if (S.metronomeSound === undefined) S.metronomeSound = "click";
       }
+    },
+
+    // ── InstrumentModule interface ──
+
+    getSkillTree: function() {
+      var D = this.getData();
+      var curriculum = D.CURRICULUM || [];
+      var branches = [];
+      for (var i = 0; i < curriculum.length; i++) {
+        var lvl = curriculum[i];
+        branches.push({
+          id: "level_" + lvl.num,
+          label: lvl.title,
+          level: lvl.num,
+          status: (S.level || 1) >= lvl.num ? "available" : "locked",
+          progress: (S.level || 1) > lvl.num ? 100 : ((S.level || 1) === lvl.num ? 50 : 0)
+        });
+      }
+      return { branches: branches };
+    },
+
+    getCurriculumMap: function() {
+      var D = this.getData();
+      return D.CURRICULUM || [];
+    },
+
+    getExercises: function() {
+      var D = this.getData();
+      return D.FINGER_EXERCISES || [];
+    },
+
+    getSongs: function() {
+      var D = this.getData();
+      return D.SONGS || [];
+    },
+
+    getDifficultyRules: function(context) {
+      if (typeof buildAdaptiveDecision === "function") return buildAdaptiveDecision(context);
+      return { targetType: "generic", difficultyAction: "keep", currentValue: 0, nextValue: 0, reason: "No adaptive engine" };
+    },
+
+    analyzePerformance: function(sessionData) {
+      if (typeof finalizePerformanceResults === "function" && sessionData.chart && sessionData.phraseStats) {
+        return finalizePerformanceResults(sessionData.chart, sessionData.phraseStats);
+      }
+      return { accuracy: 0, avgScore: 0, stars: 0 };
+    },
+
+    generateDrills: function(skill, level) {
+      var D = this.getData();
+      if (typeof chordsForLevel === "function") {
+        var chords = chordsForLevel(level);
+        if (chords.length > 0) return chords.slice(0, 2);
+      }
+      return [];
     }
   });
 })();
