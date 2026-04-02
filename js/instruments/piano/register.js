@@ -55,6 +55,10 @@
       }
     },
 
+    act: function(a, v) {
+      return typeof pianoAct === "function" ? pianoAct(a, v) : false;
+    },
+
     pages: typeof PIANO_PAGES !== "undefined" ? PIANO_PAGES : {},
 
     tabs: ["practice", "songs", "games", "tools"],
