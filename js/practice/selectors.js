@@ -172,6 +172,36 @@
     return weakest;
   }
 
+  function selectImportedTechniqueCandidate(){
+    var perf = S.performanceStats || {};
+    var buckets = normalizePerformanceBuckets(perf);
+    var strongestNeed = null;
+    for(var i=0;i<buckets.length;i++){
+      var bucket = buckets[i];
+      var weakTechnique = getWeakestTechniqueFromBucket(bucket);
+      if(!weakTechnique) continue;
+      var priority = 120 - weakTechnique.accuracy;
+      if((bucket.runs || bucket.attempts || 0) < 3) priority += 6;
+      if(!strongestNeed || priority > strongestNeed.priority){
+        strongestNeed = {
+          id:"imported_technique_" + bucket.songId + "_" + weakTechnique.key,
+          type:"performance_technique",
+          priority:priority,
+          label:"Fix " + weakTechnique.label + " timing in " + prettySongId(bucket.songId),
+          reason:"Imported " + weakTechnique.label + " accuracy is at " + weakTechnique.accuracy + "%",
+          meta:{
+            songId:bucket.songId,
+            arrangementType:bucket.arrangementType,
+            difficultyId:bucket.difficultyId,
+            techniqueKey:weakTechnique.key,
+            techniqueAccuracy:weakTechnique.accuracy
+          }
+        };
+      }
+    }
+    return strongestNeed;
+  }
+
   function selectRhythmCandidate(){
     if(!S.rhythmResults || typeof S.rhythmResults.accuracy!=="number") return null;
     if(S.rhythmResults.accuracy >= 75) return null;
@@ -221,6 +251,7 @@
       selectInstrumentModuleCandidate,
       selectWarmupCandidate,
       selectWeakTransitionCandidate,
+      selectImportedTechniqueCandidate,
       selectWeakPerformanceCandidate,
       selectRhythmCandidate,
       selectFingerCandidate
@@ -356,6 +387,7 @@
   window.selectInstrumentModuleCandidate = selectInstrumentModuleCandidate;
   window.selectWeakTransitionCandidate = selectWeakTransitionCandidate;
   window.selectWeakPerformanceCandidate = selectWeakPerformanceCandidate;
+  window.selectImportedTechniqueCandidate = selectImportedTechniqueCandidate;
   window.selectRhythmCandidate = selectRhythmCandidate;
   window.selectFingerCandidate = selectFingerCandidate;
   window.buildPracticeCandidates = buildPracticeCandidates;
