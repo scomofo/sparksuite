@@ -66,6 +66,9 @@ Primary source plans:
   - `js/sparksuite/instruments/bass/bass_module.js`
   - `js/sparksuite/instruments/bass/bass_adapter.js`
   - `tests/test_sparksuite_core_migration.js`
+- Bass rhythm content now extends into ghost-note and funk/slap chart variants instead of topping out at the first groove and walking slices.
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `tests/test_sparksuite_core_migration.js`
 - Bass module-driven practice recommendations now carry module-owned exercise filtering, focus hints, and progress summaries instead of behaving like a flat legacy exercise list.
   - `js/sparksuite/instruments/bass/bass_module.js`
   - `js/practice/selectors.js`
@@ -202,6 +205,9 @@ Primary source plans:
   - `data/performance_charts/ukulele_moonlit_picking_package.json`
   - `js/performance/chart_manifest.js`
   - `js/instruments/ukulele/register.js`
+- Ukulele rhythm content now extends into melody and performance-focused chart variants instead of stopping at early strum and fingerpick patterns.
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `tests/test_sparksuite_core_migration.js`
 - Ukulele authored lesson depth now extends beyond the first strum/chord slice into fingerpicking, melody, and performance lessons, and the practice selector path can advance into those deeper module lessons.
   - `js/sparksuite/instruments/ukulele/ukulele_lessons.js`
   - `js/sparksuite/instruments/ukulele/ukulele_exercises.js`

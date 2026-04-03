@@ -77,6 +77,68 @@
         { id: 0, name: "Walk 1", startBeat: 0, endBeat: 8, flags: { special: true } },
         { id: 1, name: "Walk 2", startBeat: 8, endBeat: 16, flags: { special: true } }
       ]
+    },
+    bass_ghost_grid_01: {
+      id: "bass_ghost_grid_01",
+      title: "Ghost Grid 01",
+      bpm: 88,
+      enginePreset: "spark_balanced",
+      totalBeats: 16,
+      notes: [
+        { beat: 0, laneMask: 8, label: "E", skillId: "ghost_notes" },
+        { beat: 1, laneMask: 8, label: "x", skillId: "ghost_notes", flags: { tap: true } },
+        { beat: 2, laneMask: 4, label: "A", skillId: "groove_accents" },
+        { beat: 3, laneMask: 4, label: "x", skillId: "ghost_notes", flags: { tap: true } },
+        { beat: 4, laneMask: 8, label: "E", skillId: "ghost_notes" },
+        { beat: 5, laneMask: 2, label: "B", skillId: "groove_accents" },
+        { beat: 6, laneMask: 4, label: "A", skillId: "ghost_notes", flags: { tap: true } },
+        { beat: 7, laneMask: 1, label: "D", skillId: "groove_accents", flags: { specialPhrase: true } },
+        { beat: 8, laneMask: 8, label: "E", skillId: "ghost_notes" },
+        { beat: 9, laneMask: 8, label: "x", skillId: "ghost_notes", flags: { tap: true } },
+        { beat: 10, laneMask: 4, label: "A", skillId: "groove_accents" },
+        { beat: 11, laneMask: 2, label: "x", skillId: "ghost_notes", flags: { tap: true } },
+        { beat: 12, laneMask: 8, label: "E", skillId: "ghost_notes" },
+        { beat: 13, laneMask: 2, label: "B", skillId: "groove_accents" },
+        { beat: 14, laneMask: 4, label: "A", skillId: "ghost_notes", flags: { tap: true } },
+        { beat: 15, laneMask: 1, label: "D", skillId: "groove_accents", flags: { specialPhrase: true } }
+      ],
+      phrases: [
+        { id: 0, name: "Ghost Grid A", startBeat: 0, endBeat: 8, flags: { special: true } },
+        { id: 1, name: "Ghost Grid B", startBeat: 8, endBeat: 16, flags: { special: true } }
+      ]
+    },
+    bass_funk_push_01: {
+      id: "bass_funk_push_01",
+      title: "Funk Push 01",
+      bpm: 96,
+      enginePreset: "spark_challenge",
+      totalBeats: 16,
+      notes: [
+        { beat: 0, laneMask: 8, label: "E", skillId: "funk_grooves" },
+        { beat: 0.5, laneMask: 2, label: "B", skillId: "slap", flags: { tap: true } },
+        { beat: 1.5, laneMask: 4, label: "A", skillId: "pop", flags: { forced: true } },
+        { beat: 2, laneMask: 8, label: "E", skillId: "funk_grooves" },
+        { beat: 3, laneMask: 1, label: "D", skillId: "slap", flags: { tap: true } },
+        { beat: 4, laneMask: 4, label: "A", skillId: "funk_grooves" },
+        { beat: 4.5, laneMask: 2, label: "E", skillId: "pop", flags: { forced: true } },
+        { beat: 5.5, laneMask: 8, label: "E", skillId: "slap", flags: { tap: true } },
+        { beat: 6, laneMask: 4, label: "A", skillId: "funk_grooves" },
+        { beat: 7, laneMask: 1, label: "D", skillId: "pop", flags: { specialPhrase: true } },
+        { beat: 8, laneMask: 8, label: "E", skillId: "funk_grooves" },
+        { beat: 8.5, laneMask: 2, label: "B", skillId: "slap", flags: { tap: true } },
+        { beat: 9.5, laneMask: 4, label: "A", skillId: "pop", flags: { forced: true } },
+        { beat: 10, laneMask: 8, label: "E", skillId: "funk_grooves" },
+        { beat: 11, laneMask: 1, label: "D", skillId: "slap", flags: { tap: true } },
+        { beat: 12, laneMask: 4, label: "A", skillId: "funk_grooves" },
+        { beat: 12.5, laneMask: 2, label: "E", skillId: "pop", flags: { forced: true } },
+        { beat: 13.5, laneMask: 8, label: "E", skillId: "slap", flags: { tap: true } },
+        { beat: 14, laneMask: 4, label: "A", skillId: "funk_grooves" },
+        { beat: 15, laneMask: 1, label: "D", skillId: "pop", flags: { specialPhrase: true } }
+      ],
+      phrases: [
+        { id: 0, name: "Funk Push A", startBeat: 0, endBeat: 8, flags: { special: true } },
+        { id: 1, name: "Funk Push B", startBeat: 8, endBeat: 16, flags: { special: true } }
+      ]
     }
   };
   var BASS_SKILL_EXERCISE_MAP = {
@@ -169,9 +231,13 @@
     var sessionNum = parseBassSessionNum(lessonId);
     if (context.segment && context.segment.meta && context.segment.meta.skill) {
       var skillId = String(context.segment.meta.skill);
+      if (skillId.indexOf("ghost") >= 0 || skillId.indexOf("accent") >= 0) return BASS_RHYTHM_LIBRARY.bass_ghost_grid_01;
+      if (skillId.indexOf("slap") >= 0 || skillId.indexOf("funk") >= 0 || skillId.indexOf("pop") >= 0) return BASS_RHYTHM_LIBRARY.bass_funk_push_01;
       if (skillId.indexOf("walk") >= 0 || skillId.indexOf("arp") >= 0) return BASS_RHYTHM_LIBRARY.bass_walk_intro_01;
       if (skillId.indexOf("fifth") >= 0 || skillId.indexOf("octave") >= 0) return BASS_RHYTHM_LIBRARY.bass_fifth_drive_01;
     }
+    if (sessionNum >= 27) return BASS_RHYTHM_LIBRARY.bass_funk_push_01;
+    if (sessionNum >= 21) return BASS_RHYTHM_LIBRARY.bass_ghost_grid_01;
     if (sessionNum >= 16) return BASS_RHYTHM_LIBRARY.bass_walk_intro_01;
     if (sessionNum >= 11) return BASS_RHYTHM_LIBRARY.bass_fifth_drive_01;
     return BASS_RHYTHM_LIBRARY.bass_root_pulse_01;
