@@ -2,8 +2,8 @@
 function tickS(){
   if(S.timerActive&&S.timer>0){
     S.timer--;
-    if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
-    else if(S.timer%30===0&&S.timer>0){S.xp+=5;} // silent XP accrual when toast skipped
+    if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
+    else if(S.timer%30===0&&S.timer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}} // silent XP accrual when toast skipped
     if(S.timer===60)fireMicro("halfway","Halfway there!","&#128170;");
     addPracticeSecond();
     render();T.session=setTimeout(tickS,1000);
@@ -17,7 +17,8 @@ function tickS(){
       chordName:S.currentChord?S.currentChord.name:null,
       duration:120
     });
-    S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
+    if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
+    else S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
     if(outcome.jackpot){snd("levelup");}else{snd("complete");}
     if(outcome.leveledUp)snd("levelup");
     trigC();S.screen=SCR.COMPLETE;render();
@@ -27,18 +28,30 @@ function tickS(){
 function tickD(){
   if(S.screen===SCR.DRILL&&S.drillTimer>0){
     S.drillTimer--;
-    if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
-    else if(S.drillTimer%30===0&&S.drillTimer>0){S.xp+=5;}
+    if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
+    else if(S.drillTimer%30===0&&S.drillTimer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}}
     addPracticeSecond();
     if(!updateDrillTimerUI())render(); // partial update if elements exist
     T.drill=setTimeout(tickD,1000);
   } else if(S.screen===SCR.DRILL&&S.drillTimer<=0){
-    clearTimeout(T.drill);snd("complete");S.drillCount++;S.xp+=20;
-    S.xpToast={amount:20,time:Date.now()};
+    clearTimeout(T.drill);snd("complete");
     var detail=S.drillChords.map(function(c){return c.name;}).join(" / ");
-    logHistory("drill",detail,20);
-    _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
-    checkBadges();saveState();trigC();S.screen=SCR.DRILL_DONE;render();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:20,
+        toastAmount:20,
+        incrementFields:{drillCount:1},
+        history:{type:"drill",detail:detail,xp:20},
+        emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
+        checkBadges:true
+      });
+    }else{
+      S.drillCount++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{S.xp+=20;S.xpToast={amount:20,time:Date.now()};}
+      logHistory("drill",detail,20);
+      _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
+      checkBadges();saveState();
+    }
+    trigC();S.screen=SCR.DRILL_DONE;render();
   }
 }
 
@@ -48,11 +61,24 @@ function tickDy(){
     if(!updateDailyTimerUI())render(); // partial update if elements exist
     T.daily=setTimeout(tickDy,1000);
   } else if(S.screen===SCR.DAILY&&S.dailyTimer<=0&&!S.dailyComplete){
-    clearTimeout(T.daily);snd("complete");S.dailyComplete=true;S.dailyDone++;
+    clearTimeout(T.daily);snd("complete");
     var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
-    S.xp+=xp;S.xpToast={amount:xp,time:Date.now()};
-    logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
-    checkBadges();saveState();trigC();render();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:xp,
+        toastAmount:xp,
+        setFlags:{dailyComplete:true},
+        incrementFields:{dailyDone:1},
+        history:{type:"daily",detail:S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp:xp},
+        checkBadges:true
+      });
+    }else{
+      S.dailyComplete=true;S.dailyDone++;
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp,toastAmount:xp});else{S.xp+=xp;S.xpToast={amount:xp,time:Date.now()};}
+      logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
+      checkBadges();saveState();
+    }
+    trigC();render();
   }
 }
 
@@ -94,14 +120,32 @@ function rhythmTick(){
 }
 
 function finishRhythm(){
-  S.rhythmActive=false;
-  if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);
   var total=S.rhythmBeats.length,hits=0;
   for(var i=0;i<total;i++)if(S.rhythmBeats[i].result==="perfect"||S.rhythmBeats[i].result==="good")hits++;
   var acc=total>0?Math.round((hits/total)*100):0;
-  S.rhythmResults={score:S.rhythmScore,accuracy:acc,maxCombo:S.rhythmMaxCombo,total:total,hits:hits};
+  var rhythmResult={score:S.rhythmScore,accuracy:acc,maxCombo:S.rhythmMaxCombo,total:total,hits:hits};
+  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+    SparkProgressBridge.applyLegacyActivityRuntime({
+      setFields:{rhythmActive:false,rhythmResults:rhythmResult},
+      cancelAnimationFrames:_rhythmAnim?[_rhythmAnim]:[]
+    });
+  }else{
+    S.rhythmActive=false;
+    if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);
+    S.rhythmResults=rhythmResult;
+  }
+  _rhythmAnim=null;
   var xp=Math.round(S.rhythmScore/10);
-  if(xp>0){S.xp+=xp;logHistory("rhythm","Score: "+S.rhythmScore,xp);saveState();}
+  if(xp>0){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:xp,
+        history:{type:"rhythm",detail:"Score: "+S.rhythmScore,xp:xp}
+      });
+    }else{
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("rhythm","Score: "+S.rhythmScore,xp);saveState();
+    }
+  }
   render();
 }
 
@@ -145,12 +189,31 @@ function changeRunnerTarget(){
 }
 
 function finishRunner(){
-  S.runnerActive=false;
-  if(_runnerAnim)cancelAnimationFrame(_runnerAnim);
-  if(S.runnerScore>S.runnerHighScore)S.runnerHighScore=S.runnerScore;
-  S.runnerResults={score:S.runnerScore,maxCombo:S.runnerMaxCombo,distance:Math.floor(S.runnerDistance/100)};
+  var runnerResult={score:S.runnerScore,maxCombo:S.runnerMaxCombo,distance:Math.floor(S.runnerDistance/100)};
+  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+    SparkProgressBridge.applyLegacyActivityRuntime({
+      setFields:{runnerActive:false,runnerResults:runnerResult},
+      cancelAnimationFrames:_runnerAnim?[_runnerAnim]:[]
+    });
+  }else{
+    S.runnerActive=false;
+    if(_runnerAnim)cancelAnimationFrame(_runnerAnim);
+    S.runnerResults=runnerResult;
+  }
+  _runnerAnim=null;
   var xp=Math.round(S.runnerScore/20);
-  if(xp>0){S.xp+=xp;logHistory("runner","Score: "+S.runnerScore,xp);saveState();}
+  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+    SparkProgressBridge.applyLegacyActivityCompletion({
+      xpDelta:xp>0?xp:0,
+      maxFields:{runnerHighScore:S.runnerScore},
+      resultFields:{runnerResults:runnerResult},
+      history:xp>0?{type:"runner",detail:"Score: "+S.runnerScore,xp:xp}:null
+    });
+  }else{
+    if(S.runnerScore>S.runnerHighScore)S.runnerHighScore=S.runnerScore;
+    S.runnerResults=runnerResult;
+    if(xp>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("runner","Score: "+S.runnerScore,xp);saveState();}
+  }
   snd("complete");
   render();
 }
@@ -287,12 +350,30 @@ function stopAllTimers(){
   clearInterval(T.strum);clearInterval(T.song);clearInterval(T.metro);clearInterval(T.prog);
   if(S.metronomeOn){stopMetronome();S.metronomeOn=false;}
   if(S.chordDetectOn)stopChordDetect();
-  if(S.rhythmActive){S.rhythmActive=false;if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);}
-  if(S.runnerActive){S.runnerActive=false;if(_runnerAnim)cancelAnimationFrame(_runnerAnim);}
-  if(S.progPlaying){S.progPlaying=false;}
-  cleanupStems();S.stemPlaying=false;
-  S.timerActive=false;S.strumActive=false;S.songPlaying=false;
+  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+    SparkProgressBridge.applyLegacyActivityRuntime({
+      setFields:{
+        rhythmActive:false,
+        runnerActive:false,
+        progPlaying:false,
+        stemPlaying:false,
+        timerActive:false,
+        strumActive:false,
+        songPlaying:false
+      },
+      cancelAnimationFrames:[_rhythmAnim,_runnerAnim]
+    });
+  }else{
+    if(S.rhythmActive){S.rhythmActive=false;if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);}
+    if(S.runnerActive){S.runnerActive=false;if(_runnerAnim)cancelAnimationFrame(_runnerAnim);}
+    if(S.progPlaying){S.progPlaying=false;}
+    S.timerActive=false;S.strumActive=false;S.songPlaying=false;
+    S.stemPlaying=false;
+  }
+  _rhythmAnim=null;_runnerAnim=null;
+  cleanupStems();
   if(!_performStopping&&(S.performPlaying||S.performPaused)){stopPerformance();}
+  if(typeof stopSparkRhythmHighway==="function")stopSparkRhythmHighway();
 }
 
 // Helper to emit suite events safely
@@ -306,9 +387,15 @@ window.act=function(a,v){
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
   if(a==="tab"){
-    S.tab=v;S.screen=SCR.HOME;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{tab:v,screen:SCR.HOME,earTrainQ:null,earTrainAns:null,selectedVoicing:0}
+      });
+    }else{
+      S.tab=v;S.screen=SCR.HOME;
+      S.earTrainQ=null;S.earTrainAns=null;S.selectedVoicing=0;
+    }
     stopAllTimers();
-    S.earTrainQ=null;S.earTrainAns=null;S.selectedVoicing=0;
     if(v===TAB.SONGS&&S.songsSubTab==="community")fetchCommunity();
     render();return;
   }
@@ -320,26 +407,82 @@ window.act=function(a,v){
   }
   if(a==="doneSession"){
     clearTimeout(T.session);if(S.metronomeOn)stopMetronome();if(S.chordDetectOn)stopChordDetect();
-    S.timerActive=true;S.timer=0;tickS();return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{timerActive:true,timer:0}
+      });
+    }else{
+      S.timerActive=true;S.timer=0;
+    }
+    tickS();return;
   }
   if(a==="startDaily"&&S.dailyChallenge){
     var t=S.dailyChallenge.id==="hold"?30:S.dailyChallenge.id==="marathon"?180:60;
-    S.dailyTimer=t;S.dailyComplete=false;snd("start");S.screen=SCR.DAILY;render();T.daily=setTimeout(tickDy,1000);return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{dailyTimer:t,dailyComplete:false,screen:SCR.DAILY}
+      });
+    }else{
+      S.dailyTimer=t;S.dailyComplete=false;S.screen=SCR.DAILY;
+    }
+    snd("start");render();T.daily=setTimeout(tickDy,1000);return;
   }
   if(a==="completeDaily"){
-    clearTimeout(T.daily);snd("complete");S.dailyComplete=true;S.dailyDone++;
+    clearTimeout(T.daily);snd("complete");
     var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
-    S.xp+=xp;
-    logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
-    checkBadges();saveState();trigC();render();return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:xp,
+        setFlags:{dailyComplete:true},
+        incrementFields:{dailyDone:1},
+        history:{type:"daily",detail:S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp:xp},
+        checkBadges:true
+      });
+    }else{
+      S.dailyComplete=true;S.dailyDone++;
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;
+      logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
+      checkBadges();saveState();
+    }
+    trigC();render();return;
   }
   if(a==="replayEarTrain"&&S.earTrainQ){strumChord(S.earTrainQ);return;}
   if(a==="answerEarTrain"&&S.earTrainAns===null){
-    S.earTrainAns=v;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{earTrainAns:v},
+        incrementFields:{earTrainTotal:1}
+      });
+    }else{
+      S.earTrainAns=v;
+      S.earTrainTotal++;
+    }
     var ok=v===S.earTrainQ;
-    if(ok){snd("correct");S.earTrainScore++;S.earTrainStreak++;S.xp+=15;logHistory("ear",S.earTrainQ,15);checkBadges();saveState();}
-    else{snd("wrong");S.earTrainStreak=0;}
-    S.earTrainTotal++;render();
+    if(ok){
+      snd("correct");
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+        SparkProgressBridge.applyLegacyActivityCompletion({
+          xpDelta:15,
+          incrementFields:{earTrainScore:1,earTrainStreak:1},
+          history:{type:"ear",detail:S.earTrainQ,xp:15},
+          checkBadges:true
+        });
+      }else{
+        S.earTrainScore++;S.earTrainStreak++;
+        if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:15});else S.xp+=15;logHistory("ear",S.earTrainQ,15);checkBadges();saveState();
+      }
+    }
+    else{
+      snd("wrong");
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({
+          setFields:{earTrainStreak:0}
+        });
+      }else{
+        S.earTrainStreak=0;
+      }
+    }
+    render();
     setTimeout(function(){act("startEarTrain");},1500);
     return;
   }
@@ -350,14 +493,34 @@ window.act=function(a,v){
   // === Strum ===
   if(a==="openStrum"){
     var sp;for(var i=0;i<STRUM_PATTERNS.length;i++)if(STRUM_PATTERNS[i].name===v)sp=STRUM_PATTERNS[i];
-    if(sp&&sp.level<=S.level){S.selectedStrum=sp;S.strumActive=false;S._strumBeat=-1;clearInterval(T.strum);S.screen=SCR.STRUM;render();}return;
+    if(sp&&sp.level<=S.level){
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({
+          setFields:{selectedStrum:sp,strumActive:false,_strumBeat:-1,screen:SCR.STRUM},
+          clearIntervals:["strum"]
+        });
+      }else{
+        S.selectedStrum=sp;S.strumActive=false;S._strumBeat=-1;clearInterval(T.strum);S.screen=SCR.STRUM;
+      }
+      render();
+    }return;
   }
   if(a==="toggleStrum"){
-    snd("click");S.strumActive=!S.strumActive;
+    snd("click");
+    var nextStrumActive=!S.strumActive;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:nextStrumActive?{strumActive:true,_strumBeat:0}:{strumActive:false,_strumBeat:-1},
+        clearIntervals:nextStrumActive?[]:["strum"]
+      });
+    }else{
+      S.strumActive=nextStrumActive;
+      if(!S.strumActive){clearInterval(T.strum);S._strumBeat=-1;}
+    }
     if(S.strumActive){
       var p=S.selectedStrum.pattern,ms=60000/S.selectedStrum.bpm/(p.length>4?2:1);
       var _strumChordName=S.currentChord?S.currentChord.name:"E Major";
-      S._strumBeat=0;if(p[0]!=="x")strumChord(_strumChordName);render();
+      if(p[0]!=="x")strumChord(_strumChordName);render();
       T.strum=setInterval(function(){S._strumBeat=(S._strumBeat+1)%p.length;if(p[S._strumBeat]!=="x")strumChord(_strumChordName);render();},ms);
     }else{clearInterval(T.strum);S._strumBeat=-1;render();}return;
   }
@@ -368,28 +531,71 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="toggleSong"){
-    snd("click");S.songPlaying=!S.songPlaying;
+    snd("click");
+    var nextSongPlaying=!S.songPlaying;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:nextSongPlaying?{songPlaying:true,songBeat:0}:{songPlaying:false},
+        clearIntervals:nextSongPlaying?[]:["song"]
+      });
+    }else{
+      S.songPlaying=nextSongPlaying;
+      if(S.songPlaying)S.songBeat=0;
+      else clearInterval(T.song);
+    }
     if(S.songPlaying){
-      var ms=60000/S.selectedSong.bpm;S.songBeat=0;
+      var ms=60000/S.selectedSong.bpm;
       var cn=S.selectedSong.progression[0];strumChord(CHORD_NAME_MAP[cn]||cn);
       render();
       T.song=setInterval(function(){S.songBeat=(S.songBeat+1)%S.selectedSong.progression.length;var cn=S.selectedSong.progression[S.songBeat];strumChord(CHORD_NAME_MAP[cn]||cn);render();},ms);
-    }else{clearInterval(T.song);render();}return;
+    }else{render();}return;
   }
   if(a==="completeSong"){
-    S.songPlaying=false;clearInterval(T.song);snd("complete");S.songsPlayed++;S.xp+=40;
-    logHistory("song",S.selectedSong?S.selectedSong.title:"Song",40);
-    _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{songPlaying:false},
+        clearIntervals:["song"]
+      });
+    }else{
+      S.songPlaying=false;clearInterval(T.song);
+    }
+    snd("complete");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:40,
+        incrementFields:{songsPlayed:1},
+        history:{type:"song",detail:S.selectedSong?S.selectedSong.title:"Song",xp:40},
+        emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 }},
+        checkBadges:true
+      });
+    }else{
+      S.songsPlayed++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:40});else S.xp+=40;
+      logHistory("song",S.selectedSong?S.selectedSong.title:"Song",40);
+      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
+      checkBadges();saveState();
+    }
     fireMicro("full_song","Rockstar!","&#127908;");
-    checkBadges();saveState();trigC();S.screen=SCR.SONG_DONE;render();return;
+    trigC();S.screen=SCR.SONG_DONE;render();return;
   }
   // === Tuner ===
   if(a==="startTuner"){
-    if(!AC){S.tunerErr="Audio not supported";render();return;}
+    if(!AC){
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Audio not supported"}});
+      }else{
+        S.tunerErr="Audio not supported";
+      }
+      render();return;
+    }
     navigator.mediaDevices.getUserMedia(getAudioConstraint()).then(function(st){
       tunerR.stream=st;var ctx=new AC(),src=ctx.createMediaStreamSource(st),an=ctx.createAnalyser();
       an.fftSize=8192;src.connect(an); // Larger buffer for better low-freq accuracy
-      tunerR.ctx=ctx;tunerR.analyser=an;S.tunerActive=true;S.tunerErr=null;
+      tunerR.ctx=ctx;tunerR.analyser=an;
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerActive:true,tunerErr:null}});
+      }else{
+        S.tunerActive=true;S.tunerErr=null;
+      }
       _tunerHistory=[];_tunerStableCount=0;_tunerLastStableNote="";
       render();
       var buf=new Float32Array(an.fftSize);
@@ -412,14 +618,28 @@ window.act=function(a,v){
         }
         tunerR.anim=requestAnimationFrame(det);
       }det();
-    }).catch(function(){S.tunerErr="Microphone access denied";render();});return;
+    }).catch(function(){
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Microphone access denied"}});
+      }else{
+        S.tunerErr="Microphone access denied";
+      }
+      render();
+    });return;
   }
   if(a==="stopTuner"){
-    S.tunerActive=false;
     if(tunerR.anim)cancelAnimationFrame(tunerR.anim);
     if(tunerR.stream)tunerR.stream.getTracks().forEach(function(t){t.stop();});
     if(tunerR.ctx)tunerR.ctx.close();
-    S.tunerNote=null;S.tunerFreq=0;S.tunerCents=0;render();return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0}
+      });
+    }else{
+      S.tunerActive=false;
+      S.tunerNote=null;S.tunerFreq=0;S.tunerCents=0;
+    }
+    render();return;
   }
   if(a==="toggleMetro"){if(S.metronomeOn)stopMetronome();else startMetronome();return;}
   if(a==="metroBpm"){
@@ -432,21 +652,66 @@ window.act=function(a,v){
   }
   if(a==="toggleChordDetect"){if(S.chordDetectOn)stopChordDetect();else startChordDetect();return;}
   // Dark mode toggle
-  if(a==="toggleDark"){S.darkMode=!S.darkMode;saveState();applyTheme();render();return;}
+  if(a==="toggleDark"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{darkMode:!S.darkMode},save:false});
+    }else{
+      S.darkMode=!S.darkMode;
+    }
+    saveState();applyTheme();render();return;
+  }
   // Onboarding
   if(a==="setIntention"){S.practiceIntention=v||"";return;}
-  if(a==="completeOnboarding"){S.onboardingDone=true;saveState();render();return;}
-  // New system screens
-  if(a==="openRecommendations"){S.screen=SCR.RECOMMENDATIONS;render();return;}
-  if(a==="openCareer"){S.screen=SCR.CAREER;render();return;}
-  if(a==="openCareerSong"){
-    if(typeof getContent==="function")S.currentSong=getContent("songs",v);
-    S.screen=SCR.PERFORM_SONG;render();return;
+  if(a==="completeOnboarding"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{onboardingDone:true},save:false});
+    }else{
+      S.onboardingDone=true;
+    }
+    saveState();render();return;
   }
-  if(a==="openInsights"){S.screen=SCR.INSIGHTS;render();return;}
-  if(a==="openChallengeHub"){S.screen=SCR.CHALLENGES;render();return;}
-  if(a==="openHomeDash"){S.screen=SCR.HOME_DASH;render();return;}
-  if(a==="openSettings"){S.screen=SCR.SETTINGS;render();return;}
+  // New system screens
+  if(a==="openRecommendations"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.RECOMMENDATIONS}});
+    else S.screen=SCR.RECOMMENDATIONS;
+    render();return;
+  }
+  if(a==="openCareer"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CAREER}});
+    else S.screen=SCR.CAREER;
+    render();return;
+  }
+  if(a==="openCareerSong"){
+    var nextSong=null;
+    if(typeof getContent==="function")nextSong=getContent("songs",v);
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{currentSong:nextSong,screen:SCR.PERFORM_SONG}});
+    }else{
+      if(typeof getContent==="function")S.currentSong=nextSong;
+      S.screen=SCR.PERFORM_SONG;
+    }
+    render();return;
+  }
+  if(a==="openInsights"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.INSIGHTS}});
+    else S.screen=SCR.INSIGHTS;
+    render();return;
+  }
+  if(a==="openChallengeHub"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CHALLENGES}});
+    else S.screen=SCR.CHALLENGES;
+    render();return;
+  }
+  if(a==="openHomeDash"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME_DASH}});
+    else S.screen=SCR.HOME_DASH;
+    render();return;
+  }
+  if(a==="openSettings"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SETTINGS}});
+    else S.screen=SCR.SETTINGS;
+    render();return;
+  }
   if(a==="openOnboarding"){if(typeof startOnboarding==="function")startOnboarding();return;}
   if(a==="resumeOnboarding"){if(typeof continueOnboarding==="function")continueOnboarding();return;}
   if(a==="refreshHome"){
@@ -457,7 +722,11 @@ window.act=function(a,v){
   if(a==="launchRecommendation"){if(typeof launchRecommendationById==="function")launchRecommendationById(v);return;}
   if(a==="claimChallengeReward"){if(typeof claimChallengeReward==="function")claimChallengeReward(v);render();return;}
   if(a==="initChallenges"){if(typeof initializeChallengesForCurrentCycle==="function")initializeChallengesForCurrentCycle();render();return;}
-  if(a==="openPracticePlan"){S.screen=SCR.PLAN;render();return;}
+  if(a==="openPracticePlan"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PLAN}});
+    else S.screen=SCR.PLAN;
+    render();return;
+  }
   if(a==="setTheme"){if(S.settings)S.settings.theme=v;if(typeof applyThemeSetting==="function")applyThemeSetting();saveState();render();return;}
   // Song sorting
   if(a==="songSort"){
@@ -560,8 +829,22 @@ window.act=function(a,v){
         beats.push({time:(r*pat.length+i)*ms/2,type:pat[i],hit:false,result:null});
       }
     }
-    S.rhythmBeats=beats;S.rhythmScore=0;S.rhythmCombo=0;S.rhythmMaxCombo=0;
-    S.rhythmActive=true;S.rhythmResults=null;S.rhythmStartTime=performance.now();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{
+          rhythmBeats:beats,
+          rhythmScore:0,
+          rhythmCombo:0,
+          rhythmMaxCombo:0,
+          rhythmActive:true,
+          rhythmResults:null,
+          rhythmStartTime:performance.now()
+        }
+      });
+    }else{
+      S.rhythmBeats=beats;S.rhythmScore=0;S.rhythmCombo=0;S.rhythmMaxCombo=0;
+      S.rhythmActive=true;S.rhythmResults=null;S.rhythmStartTime=performance.now();
+    }
     render();_rhythmAnim=requestAnimationFrame(rhythmTick);
     return;
   }
@@ -739,8 +1022,16 @@ window.act=function(a,v){
   if(a==="playImport"){
     var idx=parseInt(v);
     if(idx>=0&&idx<S.importedSongs.length){
-      S.selectedSong=S.importedSongs[idx];S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
-      S.screen=SCR.SONG;render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({
+          setFields:{selectedSong:S.importedSongs[idx],songPlaying:false,songBeat:0,screen:SCR.SONG},
+          clearIntervals:["song"]
+        });
+      }else{
+        S.selectedSong=S.importedSongs[idx];S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
+        S.screen=SCR.SONG;
+      }
+      render();
     }return;
   }
   // === Community ===
@@ -763,8 +1054,16 @@ window.act=function(a,v){
         pattern:JSON.parse(song.pattern||'["D","D","U","U","D","U"]')
       };
       if(!Array.isArray(parsed.chords)||!Array.isArray(parsed.progression)){throw new Error("Invalid song data");}
-      S.selectedSong=parsed;S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
-      S.screen=SCR.SONG;render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({
+          setFields:{selectedSong:parsed,songPlaying:false,songBeat:0,screen:SCR.SONG},
+          clearIntervals:["song"]
+        });
+      }else{
+        S.selectedSong=parsed;S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
+        S.screen=SCR.SONG;
+      }
+      render();
     }catch(e){
       console.warn("ChordSpark: Failed to parse community song:",e.message);
       S.communityError="Could not load song: invalid data";render();
@@ -812,10 +1111,30 @@ window.act=function(a,v){
   // === Chord Runner ===
   if(a==="startRunner"){
     var av=CHORDS[S.level]||CHORDS[1];
-    S.runnerTarget=av[Math.floor(Math.random()*av.length)];
-    S.runnerActive=true;S.runnerScore=0;S.runnerCombo=0;S.runnerMaxCombo=0;
-    S.runnerLives=3;S.runnerObstacles=[];S.runnerSpeed=2;S.runnerDistance=0;
-    S.runnerResults=null;S.runnerStartTime=Date.now();S.runnerLastSpawn=0;
+    var runnerTarget=av[Math.floor(Math.random()*av.length)];
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{
+          runnerTarget:runnerTarget,
+          runnerActive:true,
+          runnerScore:0,
+          runnerCombo:0,
+          runnerMaxCombo:0,
+          runnerLives:3,
+          runnerObstacles:[],
+          runnerSpeed:2,
+          runnerDistance:0,
+          runnerResults:null,
+          runnerStartTime:Date.now(),
+          runnerLastSpawn:0
+        }
+      });
+    }else{
+      S.runnerTarget=runnerTarget;
+      S.runnerActive=true;S.runnerScore=0;S.runnerCombo=0;S.runnerMaxCombo=0;
+      S.runnerLives=3;S.runnerObstacles=[];S.runnerSpeed=2;S.runnerDistance=0;
+      S.runnerResults=null;S.runnerStartTime=Date.now();S.runnerLastSpawn=0;
+    }
     _runnerObstId=0;
     snd("start");render();_runnerAnim=requestAnimationFrame(runnerTick);
     return;
@@ -969,17 +1288,71 @@ window.act=function(a,v){
   if(a==="openPerformSong"){
     var sgIdx=parseInt(v);
     if(!isNaN(sgIdx)&&SONGS[sgIdx]){
-      S.performSongData=SONGS[sgIdx];
-      S.performSongId=SONGS[sgIdx].title.toLowerCase().replace(/[^a-z0-9]+/g,"_");
+      if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+        window.sparkCore.startSession({
+          flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+          songIndex: sgIdx,
+          arrangementType: S.performArrangementType || "chords",
+          difficultyId: S.performDifficulty || "normal"
+        });
+      } else {
+        S.performSongData=SONGS[sgIdx];
+        S.performSongId=SONGS[sgIdx].title.toLowerCase().replace(/[^a-z0-9]+/g,"_");
+      }
       S.screen=SCR.PERFORM_SONG;render();
     }
+    return;
+  }
+  if(a==="planStartPerformanceSong"){
+    var parts=String(v||"").split("|");
+    var songId=parts[0]||"";
+    var arrangementType=parts[1]||"chords";
+    var difficultyId=parts[2]||"normal";
+    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+      window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+        songId: songId,
+        arrangementType: arrangementType,
+        difficultyId: difficultyId
+      });
+      S.screen=SCR.PERFORM_SONG;render();return;
+    }
+    for(var psi=0;psi<SONGS.length;psi++){
+      var planSongId=(SONGS[psi].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
+      if(planSongId===songId){
+        S.performSongData=SONGS[psi];
+        S.performSongId=songId;
+        S.performArrangementType=arrangementType;
+        S.performDifficulty=difficultyId;
+        S.screen=SCR.PERFORM_SONG;render();return;
+      }
+    }
+    return;
+  }
+  if(a==="planStartPerformancePhrase"){
+    var phraseParts=String(v||"").split("|");
+    var phraseSongId=phraseParts[0]||"";
+    var phraseArrangementType=phraseParts[1]||"chords";
+    var phraseDifficultyId=phraseParts[2]||"normal";
+    var phraseId=phraseParts[3];
+    S.performTargetPhrase=phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null;
+    act("planStartPerformanceSong", phraseSongId + "|" + phraseArrangementType + "|" + phraseDifficultyId);
     return;
   }
   if(a==="openPerfStats"){S.screen=SCR.PERF_STATS;render();return;}
   if(a==="openEditor"){S.performEditorChart=null;S.performEditorDirty=false;S.screen=SCR.PERF_EDITOR;render();return;}
   if(a==="openSkillTree"){S.screen=SCR.SKILL_TREE;render();return;}
+  if(a==="planStartRhythmHighway"){
+    if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v))return;
+    render();return;
+  }
   if(a==="skillTreeFocus"){S.skillTreeFocus=v||"overview";render();return;}
-  if(a==="openPlan"){S.screen=SCR.PLAN;render();return;}
+  if(a==="openPlan"){
+    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+      window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+    }
+    S.screen=SCR.PLAN;render();return;
+  }
   if(a==="openPerformCalibration"){S.screen=SCR.PERFORM_CALIBRATE;render();return;}
   if(a==="performCalibrateSource"){S.performCalibrationSource=v||"midi";render();return;}
   if(a==="performCalibrationStart"){startPerformanceCalibrationRun();render();return;}
@@ -998,8 +1371,22 @@ window.act=function(a,v){
     var targetMs=startMs+(beatIdx*interval);
     recordCalibrationHit(targetMs,nowMs);render();return;
   }
-  if(a==="completePlan"){completePracticePlan();render();return;}
-  if(a==="regeneratePlan"){buildPracticePlan();render();return;}
+  if(a==="completePlan"){
+    if(window.sparkCore && typeof window.sparkCore.completeSession==="function"){
+      window.sparkCore.completeSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, markPlanComplete: true });
+    } else {
+      completePracticePlan();
+    }
+    render();return;
+  }
+  if(a==="regeneratePlan"){
+    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+      window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, forceRebuild: true });
+    } else {
+      buildPracticePlan();
+    }
+    render();return;
+  }
   if(a==="editorBack"){S.screen=SCR.HOME;S.tab=TAB.SONGS;render();return;}
   if(a==="editorMode"){S.performEditorMode=v;render();return;}
   if(a==="editorSnap"){S.performEditorSnap=v;render();return;}
@@ -1243,7 +1630,27 @@ window.act=function(a,v){
     }
     return;
   }
-  if(a==="completePlanItem"){if(typeof markPracticePlanItem==="function")markPracticePlanItem(v);render();return;}
+  if(a==="completePlanItem"){
+    if(window.sparkCore && typeof window.sparkCore.completeSession==="function"){
+      window.sparkCore.completeSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, itemId: v });
+    } else if(typeof markPracticePlanItem==="function"){
+      markPracticePlanItem(v);
+    }
+    render();return;
+  }
+  if(a==="rhythmHighwayLane"){
+    var laneMask=(1<<parseInt(v,10));
+    S.rhythmHighwayHeldMask=(S.rhythmHighwayHeldMask&laneMask)?(S.rhythmHighwayHeldMask&~laneMask):(S.rhythmHighwayHeldMask|laneMask);
+    render();return;
+  }
+  if(a==="rhythmHighwayStrum"){
+    if(typeof _sparkRhythmHighwayStrum==="function")_sparkRhythmHighwayStrum();
+    render();return;
+  }
+  if(a==="restartRhythmHighway"){
+    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(S.activeCoreSegmentId);
+    return;
+  }
   // === MIDI Device/Profile Actions ===
   if(a==="setMidiDevice"){S.activeMidiDeviceId=v;saveState();render();return;}
   if(a==="setMidiProfile"){if(typeof setActiveMidiProfile==="function")setActiveMidiProfile(v);render();return;}
@@ -1283,11 +1690,20 @@ window.act=function(a,v){
   if(a==="exportBackup"){if(typeof exportFullBackupDesktopAware==="function")exportFullBackupDesktopAware();return;}
   if(a==="exportFeedback"){if(typeof exportFeedbackDesktopAware==="function")exportFeedbackDesktopAware();return;}
   // === Curriculum ===
-  if(a==="openCurriculum"){S.screen=SCR.CURRICULUM;render();return;}
+  if(a==="openCurriculum"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CURRICULUM}});
+    else S.screen=SCR.CURRICULUM;
+    render();return;
+  }
   // === Back ===
   if(a==="back"){
     stopAllTimers();
-    S.selectedVoicing=0;S.screen=SCR.HOME;render();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:SCR.HOME}});
+    }else{
+      S.selectedVoicing=0;S.screen=SCR.HOME;
+    }
+    render();
   }
 };
 
@@ -1395,6 +1811,7 @@ function _renderInner(){
   _sharedPages[SCR.GUIDED_DONE] = typeof guidedDonePage === "function" ? guidedDonePage : null;
   _sharedPages[SCR.PERFORM] = typeof performPage === "function" ? performPage : null;
   _sharedPages[SCR.PERFORM_DONE] = typeof performDonePage === "function" ? performDonePage : null;
+  _sharedPages[SCR.RHYTHM_HIGHWAY] = typeof rhythmHighwayPage === "function" ? rhythmHighwayPage : null;
   _sharedPages[SCR.PERFORM_SONG] = typeof performSongPage === "function" ? performSongPage : null;
   _sharedPages[SCR.PERF_STATS] = typeof performanceStatsPage === "function" ? performanceStatsPage : null;
   _sharedPages[SCR.PERF_EDITOR] = typeof performanceEditorPage === "function" ? performanceEditorPage : null;
@@ -1452,6 +1869,7 @@ document.addEventListener("keydown",function(e){
   // Space - pause/resume
   if(key===" "){
     e.preventDefault();
+    if(S.screen===SCR.RHYTHM_HIGHWAY){act("rhythmHighwayStrum");return;}
     if(S.screen===SCR.SESSION){act("toggleTimer");return;}
     if(S.screen===SCR.STRUM){act("toggleStrum");return;}
     if(S.screen===SCR.SONG){act("toggleSong");return;}
@@ -1492,7 +1910,13 @@ document.addEventListener("keydown",function(e){
 
   // Enter - context-sensitive confirm
   if(key==="Enter"){
+    if(S.screen===SCR.RHYTHM_HIGHWAY){act("rhythmHighwayStrum");return;}
     if(S.screen===SCR.DRILL){act("drillSwitch");return;}
+    return;
+  }
+
+  if(S.screen===SCR.RHYTHM_HIGHWAY&&key>="1"&&key<="5"){
+    act("rhythmHighwayLane", String(parseInt(key,10)-1));
     return;
   }
 

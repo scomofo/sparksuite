@@ -1,5 +1,43 @@
 (function(){
 
+  function getTechniqueAccuracy(bucket){
+    if(!bucket||!bucket.total)return 100;
+    return Math.round(((bucket.hits||0)/bucket.total)*100);
+  }
+
+  function getImportedTechniqueRecommendation(songId, st){
+    if(!st||!st.importedTechniqueTotals)return null;
+    var weakestKey=null;
+    var weakestAccuracy=101;
+    for(var key in st.importedTechniqueTotals){
+      if(!Object.prototype.hasOwnProperty.call(st.importedTechniqueTotals,key))continue;
+      var bucket=st.importedTechniqueTotals[key];
+      if(!bucket||!bucket.total)continue;
+      var acc=getTechniqueAccuracy(bucket);
+      if(acc<weakestAccuracy){
+        weakestAccuracy=acc;
+        weakestKey=key;
+      }
+    }
+    if(!weakestKey||weakestAccuracy>=85)return null;
+    var labels={
+      open:"Open-note timing",
+      tap:"Tap-note consistency",
+      forced:"Forced-note transitions",
+      specialPhrase:"Phrase section control"
+    };
+    return {
+      type:"imported_technique_focus",
+      priority:140-Math.min(weakestAccuracy,100),
+      songId:songId,
+      arrangementType:st.arrangement,
+      difficultyId:st.difficulty,
+      techniqueKey:weakestKey,
+      label:"Focus " + (labels[weakestKey]||"imported technique"),
+      reason:(labels[weakestKey]||"Imported technique") + " is at " + weakestAccuracy + "% accuracy"
+    };
+  }
+
   function getTodayPerfDateKey(){
     return new Date().toISOString().split("T")[0];
   }
@@ -22,6 +60,8 @@
       if(key.indexOf(songId)!==0)continue;
       var st=S.performanceStats[key];
       if(!st||!st.runs)continue;
+      var techniqueRec=getImportedTechniqueRecommendation(songId,st);
+      if(techniqueRec)recs.push(techniqueRec);
       if(st.bestAccuracy<70){
         recs.push({type:"retry_run",priority:90,songId:songId,arrangementType:st.arrangement,difficultyId:st.difficulty,label:"Retry this run",reason:"Accuracy below 70%"});
       }else if(st.bestAccuracy<90){
@@ -81,5 +121,7 @@
   window.buildGlobalPerformanceRecommendations=buildGlobalPerformanceRecommendations;
   window.choosePerformanceDailyChallenge=choosePerformanceDailyChallenge;
   window.markPerformanceDailyComplete=markPerformanceDailyComplete;
+  window.getImportedTechniqueRecommendation=getImportedTechniqueRecommendation;
+  window.getTechniqueAccuracy=getTechniqueAccuracy;
 
 })();

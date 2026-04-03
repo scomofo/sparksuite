@@ -176,34 +176,78 @@ function guitarAct(a, v) {
   }
 
   if (a === "guidedStart") {
-    var plan = D.SESSIONS[S.guidedSession - 1];
+    var sessionNum = parseInt(v, 10);
+    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+      var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
+      var corePlan = window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+        sessionNum: guidedSession
+      });
+      if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+        S.screen = SCR.GUIDED; snd("start"); render(); saveState();
+        return true;
+      }
+    }
+    var plan = D.SESSIONS[(isNaN(sessionNum) ? S.guidedSession || 1 : sessionNum) - 1];
     if (!plan) { S.guidedSession = 1; plan = D.SESSIONS[0]; }
-    S.guidedPlan = plan; S.guidedStep = "spark"; S.newMovePhase = null; S.guidedPaused = false;
+    if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
+      SparkProgressBridge.syncGuidedSessionToState({
+        context: {
+          guidedPlan: plan,
+          guidedSession: plan && plan.num ? plan.num : (S.guidedSession || 1)
+        }
+      });
+    } else {
+      S.guidedPlan = plan; S.guidedStep = "spark"; S.newMovePhase = null; S.guidedPaused = false;
+    }
     S.screen = SCR.GUIDED; snd("start"); render();
     return true;
   }
 
   if (a === "guidedComplete") {
     if (S.metronomeOn) stopMetronome();
+    if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+      var guidedResult = window.sparkCore.completeSession({
+        flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+        markPlanComplete: true
+      });
+      snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
+      trigC(); S.screen = SCR.GUIDED_DONE; render();
+      return true;
+    }
     var plan = S.guidedPlan;
     if (plan) {
-      if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
-      if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
-      if (plan.newMove && plan.newMove.chord) {
-        S.chordProgress[plan.newMove.chord] = Math.min((S.chordProgress[plan.newMove.chord] || 0) + 25, 100);
+      if (window.SparkProgressBridge && typeof SparkProgressBridge.applySessionStatePatch === "function") {
+        var guidedPatch = {
+          guided: {
+            completedSessionNums: [plan.num],
+            nextGuidedSession: Math.min(D.SESSIONS.length, plan.num + 1),
+            chordProgress: {}
+          }
+        };
+        if (plan.newMove && plan.newMove.chord) guidedPatch.guided.chordProgress[plan.newMove.chord] = 25;
+        SparkProgressBridge.applySessionStatePatch(guidedPatch);
+      } else {
+        if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
+        if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
+        if (plan.newMove && plan.newMove.chord) {
+          S.chordProgress[plan.newMove.chord] = Math.min((S.chordProgress[plan.newMove.chord] || 0) + 25, 100);
+        }
+        S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
       }
-      S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
       // Route through SparkSession for full progression cascade
       var outcome = SparkSession.processResults({
         type: "guided",
         chordName: plan.newMove ? plan.newMove.chord : null,
         duration: 300
       });
-      S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
+      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ toastAmount: outcome.xpEarned, jackpot: outcome.jackpot });
+      else S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
       if (outcome.jackpot) snd("levelup"); else snd("complete");
       if (outcome.leveledUp) snd("levelup");
     } else {
-      S.xpToast = { amount: 30, time: Date.now() };
+      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ toastAmount: 30 });
+      else S.xpToast = { amount: 30, time: Date.now() };
       snd("complete");
     }
     trigC(); S.screen = SCR.GUIDED_DONE; render();
@@ -223,10 +267,9 @@ function guitarAct(a, v) {
       addPracticeSecond();
       if (S.fingerExTimer <= 0) {
         clearInterval(T.fingerEx); S.fingerExActive = false;
-        snd("complete"); S.xp += 10;
+        snd("complete"); if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ xpDelta: 10, toastAmount: 10 }); else { S.xp += 10; S.xpToast = { amount: 10, time: Date.now() }; }
         if (typeof S.fingerStats !== "object" || S.fingerStats === null) S.fingerStats = {};
         S.fingerStats[v] = (S.fingerStats[v] || 0) + 1;
-        S.xpToast = { amount: 10, time: Date.now() };
         saveState();
       }
       render();

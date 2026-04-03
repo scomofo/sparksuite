@@ -1,0 +1,30 @@
+{
+  "id": "demo_imported_package",
+  "title": "Imported MIDI Demo",
+  "artist": "SparkSuite Import",
+  "packageFormat": "sparksuite_import_v1",
+  "arrangementType": "imported_chart",
+  "chartImport": {
+    "files": {
+      "notes.mid": {
+        "bytes": [
+          77, 84, 104, 100, 0, 0, 0, 6, 0, 1, 0, 2, 0, 96,
+          77, 84, 114, 107, 0, 0, 0, 11, 0, 255, 81, 3, 7, 161, 32, 0, 255, 47, 0,
+          77, 84, 114, 107, 0, 0, 0, 40,
+          0, 255, 3, 11, 80, 65, 82, 84, 32, 71, 85, 73, 84, 65, 82,
+          0, 144, 60, 100,
+          0, 145, 67, 100,
+          96, 128, 60, 64,
+          0, 129, 67, 64,
+          0, 144, 64, 100,
+          96, 128, 64, 64,
+          0, 255, 47, 0
+        ]
+      },
+      "song.ini": "[song]\nname = Imported MIDI Demo\nartist = SparkSuite Import"
+    }
+  },
+  "importOptions": {
+    "trackName": "PART GUITAR"
+  }
+}

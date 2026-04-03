@@ -17,17 +17,38 @@ function scoreStrumDirection(expectedDir, actualDir, diff) {
   return expectedDir === actualDir ? 1 : 0;
 }
 
+function performanceSnapshotHasActivity(snapshot, event, mode) {
+  snapshot = snapshot || {};
+  event = event || {};
+  if ((snapshot.pitchClasses || []).length > 0) return true;
+  if (mode === "midi") {
+    if (event.type === "open" || event.type === "tap") {
+      return !!_getClosestCluster(event.t, snapshot.attackClusters || []);
+    }
+    return (snapshot.heldMidiNotes || []).length > 0 || (snapshot.recentAttacks || []).length > 0;
+  }
+  return false;
+}
+
 function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
   var targetNotes = event.notes || [];
   var inputNotes = snapshot.pitchClasses || [];
+  var cluster = null;
+
+  if (mode === "midi" && snapshot.attackClusters && snapshot.attackClusters.length > 0) {
+    cluster = _getClosestCluster(event.t, snapshot.attackClusters);
+  }
+
+  if (event.type === "open") {
+    return scoreOpenPerformanceEvent(event, cluster, hitDeltaMs, difficulty);
+  }
 
   if (targetNotes.length === 0) return { score: 0, grade: "miss", noteScore: 0, timingScore: 0 };
 
   // For MIDI mode, prefer closest attack cluster for note matching
   var matchNotes = inputNotes;
-  if (mode === "midi" && snapshot.attackClusters && snapshot.attackClusters.length > 0) {
-    var cluster = _getClosestCluster(event.t, snapshot.attackClusters);
-    if (cluster && cluster.pitchClasses.length > 0) {
+  if (mode === "midi" && cluster) {
+    if (cluster.pitchClasses.length > 0) {
       matchNotes = cluster.pitchClasses;
     }
   }
@@ -52,6 +73,15 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
   else if (absDelta <= missMs) timingScore = 0.3;
   else timingScore = 0;
 
+  if (event.type === "tap" && mode === "midi" && !cluster) {
+    return {
+      score: 0,
+      grade: "miss",
+      noteScore: 0,
+      timingScore: timingScore
+    };
+  }
+
   var total;
   if (event.type === "strum" && event.rhythm && diff) {
     var dirScore = scoreStrumDirection(event.rhythm.dir, snapshot.strumDir || null, diff);
@@ -63,6 +93,30 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
     total = noteScore * nw + timingScore * tw;
   }
 
+  return {
+    score: Math.round(total * 100) / 100,
+    grade: gradePerformanceScore(total),
+    noteScore: noteScore,
+    timingScore: timingScore
+  };
+}
+
+function scoreOpenPerformanceEvent(event, cluster, hitDeltaMs, difficulty) {
+  var diff = typeof getPerformanceDifficulty === "function" ? getPerformanceDifficulty(difficulty) : null;
+  var perfectMs = diff ? diff.perfectMs : S.performWindowPerfectMs;
+  var goodMs = diff ? diff.goodMs : S.performWindowGoodMs;
+  var missMs = diff ? diff.missMs : S.performWindowMissMs;
+  var nw = diff ? diff.noteWeight : 0.75;
+  var tw = diff ? diff.timingWeight : 0.25;
+  var absDelta = Math.abs(hitDeltaMs);
+  var timingScore = 0;
+  if (absDelta <= perfectMs) timingScore = 1.0;
+  else if (absDelta <= goodMs) timingScore = 0.7;
+  else if (absDelta <= missMs) timingScore = 0.3;
+  else timingScore = 0;
+
+  var noteScore = cluster ? 1 : 0;
+  var total = noteScore * nw + timingScore * tw;
   return {
     score: Math.round(total * 100) / 100,
     grade: gradePerformanceScore(total),
@@ -146,6 +200,8 @@ function finalizePerformanceResults(chart, phraseStats) {
   else if (avgScore >= 0.5) stars = 2;
   else if (avgScore >= 0.3) stars = 1;
 
+  var importedTechniqueSummary = summarizeImportedTechniqueResults(chart);
+
   return {
     title: chart.title,
     artist: chart.artist,
@@ -154,6 +210,52 @@ function finalizePerformanceResults(chart, phraseStats) {
     maxCombo: maxCombo,
     stars: stars,
     phraseStats: phraseStats,
-    totalEvents: totalEvents
+    totalEvents: totalEvents,
+    importedTechniqueSummary: importedTechniqueSummary
   };
+}
+
+function summarizeImportedTechniqueResults(chart) {
+  var summary = {
+    open: createImportedTechniqueBucket("Open"),
+    tap: createImportedTechniqueBucket("Tap"),
+    forced: createImportedTechniqueBucket("Forced"),
+    specialPhrase: createImportedTechniqueBucket("Phrase")
+  };
+  if (!chart || !Array.isArray(chart.events)) return summary;
+
+  for (var i = 0; i < chart.events.length; i++) {
+    var evt = chart.events[i];
+    if (!evt || !evt.sourceFlags) continue;
+    if (evt.sourceFlags.open) updateImportedTechniqueBucket(summary.open, evt);
+    if (evt.sourceFlags.tap) updateImportedTechniqueBucket(summary.tap, evt);
+    if (evt.sourceFlags.forced) updateImportedTechniqueBucket(summary.forced, evt);
+    if (evt.sourceFlags.specialPhrase) updateImportedTechniqueBucket(summary.specialPhrase, evt);
+  }
+
+  finalizeImportedTechniqueBucket(summary.open);
+  finalizeImportedTechniqueBucket(summary.tap);
+  finalizeImportedTechniqueBucket(summary.forced);
+  finalizeImportedTechniqueBucket(summary.specialPhrase);
+  return summary;
+}
+
+function createImportedTechniqueBucket(label) {
+  return {
+    label: label,
+    total: 0,
+    hits: 0,
+    misses: 0,
+    accuracy: 0
+  };
+}
+
+function updateImportedTechniqueBucket(bucket, evt) {
+  bucket.total++;
+  if (evt._hit) bucket.hits++;
+  else if (evt._miss) bucket.misses++;
+}
+
+function finalizeImportedTechniqueBucket(bucket) {
+  bucket.accuracy = bucket.total > 0 ? Math.round((bucket.hits / bucket.total) * 100) : 0;
 }

@@ -4,7 +4,7 @@ var SCR={
   DRILL:"drill",DRILL_DONE:"drillDone",DAILY:"daily",
   QUIZ:"quiz",STRUM:"strumDetail",SONG:"songDetail",
   SONG_DONE:"songDone",STEMS:"stems",GUIDED:"guided",GUIDED_DONE:"guidedDone",
-  PERFORM:"perform",PERFORM_DONE:"performDone",
+  PERFORM:"perform",PERFORM_DONE:"performDone",RHYTHM_HIGHWAY:"rhythmHighway",
   PERFORM_SONG:"performSong",
   PERF_STATS:"perfStats",
   PERF_EDITOR:"perfEditor",

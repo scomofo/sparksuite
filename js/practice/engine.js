@@ -1,12 +1,29 @@
 (function(){
 
-  function ensurePracticePlan(){
+  function ensurePracticePlan(opts){
+    opts = opts || {};
+    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+      var plan = window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+        forceRebuild: !!opts.forceRebuild
+      });
+      return plan ? plan.toLegacyPracticePlan() : null;
+    }
+
     var today = new Date().toISOString().slice(0,10);
     if(S.practicePlan && S.practicePlanDate===today) return S.practicePlan;
     return buildPracticePlan();
   }
 
   function buildPracticePlan(){
+    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+      var plan = window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+        forceRebuild: true
+      });
+      return plan ? plan.toLegacyPracticePlan() : null;
+    }
+
     var today = new Date().toISOString().slice(0,10);
     var items = [];
 
@@ -62,6 +79,14 @@
   }
 
   function completePracticePlan(){
+    if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
+      window.sparkCore.completeSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+        markPlanComplete: true
+      });
+      return;
+    }
+
     S.practicePlanComplete = true;
     if(!Array.isArray(S.practicePlanHistory)) S.practicePlanHistory = [];
     S.practicePlanHistory.push({

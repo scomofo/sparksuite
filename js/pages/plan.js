@@ -18,7 +18,7 @@ function planPage(){
     h += '<div style="font-weight:700;font-size:14px">'+escHTML(item.label)+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(item.type)+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
-    h += '<button class="btn btn-sm" onclick="launchPracticePlanItem(S.practicePlan.items['+i+'])" style="background:var(--accent);color:#fff">Go</button>';
+    h += '<button class="btn btn-sm" onclick="launchPracticeItem(S.practicePlan.items['+i+'])" style="background:var(--accent);color:#fff">Go</button>';
     h += '</div>';
     h += '</div>';
   }
@@ -40,6 +40,7 @@ function planPage(){
 function planItemColor(type){
   if(type==="warmup" || type==="finger") return "#f59e0b";
   if(type==="transition") return "#3b82f6";
+  if(type==="rhythm_highway") return "#ec4899";
   if(type==="performance_song" || type==="performance_phrase") return "#22c55e";
   if(type==="rhythm") return "#ec4899";
   if(type==="lead") return "#8b5cf6";

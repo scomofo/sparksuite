@@ -4,6 +4,7 @@
     if(!item) return false;
     if(item.type==="warmup") return launchWarmupItem(item);
     if(item.type==="transition") return launchTransitionItem(item);
+    if(item.type==="rhythm_highway") return launchRhythmHighwayItem(item);
     if(item.type==="performance_song") return launchPerformanceSongItem(item);
     if(item.type==="performance_phrase") return launchPerformancePhraseItem(item);
     if(item.type==="rhythm") return launchRhythmItem(item);
@@ -77,13 +78,21 @@
     return true;
   }
 
+  function launchRhythmHighwayItem(item){
+    if(typeof act!=="function") return false;
+    act("planStartRhythmHighway", item.id);
+    return true;
+  }
+
   window.launchPracticeItem = launchPracticeItem;
   window.launchWarmupItem = launchWarmupItem;
   window.launchTransitionItem = launchTransitionItem;
   window.launchPerformanceSongItem = launchPerformanceSongItem;
   window.launchPerformancePhraseItem = launchPerformancePhraseItem;
   window.launchRhythmItem = launchRhythmItem;
+  window.launchRhythmHighwayItem = launchRhythmHighwayItem;
   window.launchFingerItem = launchFingerItem;
+  window.launchPracticePlanItem = launchPracticeItem;
 
 })();
 
@@ -92,8 +101,13 @@
 
   function launchGuidedSessionItem(item){
     if(typeof act!=="function") return false;
-    act("tab", TAB.PRACTICE);
-    act("start_guided_session", item && item.meta && item.meta.guidedSession || S.guidedSession || 1);
+    var sessionNum = item && item.meta && item.meta.guidedSession || S.guidedSession || 1;
+    if(typeof SparkInstrumentAdapter!=="undefined" && SparkInstrumentAdapter.getInstrumentType && SparkInstrumentAdapter.getInstrumentType()==="piano"){
+      act("tab", TAB.PRACTICE);
+      act("start_guided_session", sessionNum);
+      return true;
+    }
+    act("guidedStart", sessionNum);
     return true;
   }
 

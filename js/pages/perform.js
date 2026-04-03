@@ -83,6 +83,10 @@ function performPage() {
   var nowSec = S.performCurrentSec;
   var phrase = getPerformancePhraseForTime(chart, nowSec);
   var phraseName = phrase ? phrase.name : "";
+  var previewEvent = getNextPerformEvent(chart, nowSec);
+  var techniquePreview = typeof getImportedTechniquePreview === "function"
+    ? getImportedTechniquePreview(chart, nowSec, 3)
+    : [];
 
   var h = '<div class="perform-page">';
 
@@ -117,6 +121,21 @@ function performPage() {
 
   // Highway
   h += renderPerformanceHighway(chart, nowSec);
+
+  if (techniquePreview.length) {
+    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:6px 12px 0">';
+    for (var ti = 0; ti < techniquePreview.length; ti++) {
+      h += '<span style="background:' + techniquePreview[ti].color + ';color:#fff;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em">'
+        + escHTML(techniquePreview[ti].label) + '</span>';
+    }
+    h += '</div>';
+  }
+
+  if (previewEvent && previewEvent.sourceFlags && hasImportedTechniqueFlags(previewEvent.sourceFlags)) {
+    h += '<div style="text-align:center;padding:4px 12px;margin:4px 12px 0">';
+    h += '<span style="font-size:11px;font-weight:700;color:var(--text-muted)">Technique: ' + escHTML(renderImportedTechniqueFlags(previewEvent.sourceFlags)) + '</span>';
+    h += '</div>';
+  }
 
   // Input source badge + detected notes
   h += '<div class="perform-input-badge">' + (S.performInputSource === "midi" ? "MIDI" : "MIC");
@@ -291,6 +310,12 @@ function performDonePage() {
     h += '</div>';
   }
 
+  if (r.importedTechniqueSummary && hasImportedTechniqueResultData(r.importedTechniqueSummary)) {
+    h += '<div class="card mb20" style="text-align:left"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Technique Summary</h3>';
+    h += renderImportedTechniqueSummaryRows(r.importedTechniqueSummary);
+    h += '</div>';
+  }
+
   // Best and weakest phrases
   if (r.phraseStats && r.phraseStats.length > 1) {
     var bestIdx = 0, worstIdx = 0;
@@ -327,4 +352,48 @@ function performDonePage() {
 
   h += '</div>';
   return h;
+}
+
+function getNextPerformEvent(chart, nowSec) {
+  if (!chart || !chart.events) return null;
+  for (var i = 0; i < chart.events.length; i++) {
+    if (chart.events[i].t + (chart.events[i].dur || 0) >= nowSec) return chart.events[i];
+  }
+  return chart.events.length ? chart.events[chart.events.length - 1] : null;
+}
+
+function hasImportedTechniqueFlags(flags) {
+  return !!(flags && (flags.open || flags.tap || flags.forced || flags.specialPhrase));
+}
+
+function hasImportedTechniqueResultData(summary) {
+  if (!summary) return false;
+  for (var key in summary) {
+    if (summary[key] && summary[key].total > 0) return true;
+  }
+  return false;
+}
+
+function renderImportedTechniqueSummaryRows(summary) {
+  var order = ["open", "tap", "forced", "specialPhrase"];
+  var h = "";
+  for (var i = 0; i < order.length; i++) {
+    var row = summary[order[i]];
+    if (!row || !row.total) continue;
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
+    h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(row.label) + '</span>';
+    h += '<span style="font-size:12px;color:var(--text-muted)">' + row.hits + '/' + row.total + ' hit &mdash; ' + row.accuracy + '%</span>';
+    h += '</div>';
+  }
+  return h;
+}
+
+function renderImportedTechniqueFlags(flags) {
+  var labels = [];
+  if (!flags) return "";
+  if (flags.open) labels.push("Open");
+  if (flags.tap) labels.push("Tap");
+  if (flags.forced) labels.push("Forced");
+  if (flags.specialPhrase) labels.push("Phrase");
+  return labels.join(" • ");
 }

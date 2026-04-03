@@ -275,8 +275,8 @@ test('badge check functions return boolean', function() {
 // ===== Tests: GUITAR_SESSIONS =====
 console.log('\n--- GUITAR_SESSIONS ---');
 
-test('has 22 session plans', function() {
-  assert.strictEqual(GUITAR_SESSIONS.length, 22);
+test('has 25 session plans', function() {
+  assert.strictEqual(GUITAR_SESSIONS.length, 25);
 });
 
 test('all sessions have required fields', function() {
