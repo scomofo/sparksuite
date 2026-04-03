@@ -215,9 +215,10 @@ test('getPerformanceChartLibrary can filter the manifest by instrument', functio
 
 test('getPerformanceChartLibrary can filter the manifest by bass instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'bass' });
-  assert.strictEqual(library.length, 1);
+  assert.strictEqual(library.length, 2);
   assert.strictEqual(library[0].instrument, 'bass');
   assert.strictEqual(library[0].id, 'bass_midnight_lock_package');
+  assert.strictEqual(library[1].id, 'bass_afterglow_walk_package');
 });
 
 test('normalizePerformanceChartDefinition supports ukulele package charts through manifest adapter metadata', function() {
@@ -365,6 +366,47 @@ test('normalizePerformanceChartDefinition supports bass package charts through m
 
   assert.strictEqual(performanceChart.id, 'bass_midnight_lock_package');
   assert.strictEqual(performanceChart.title, 'Midnight Lock');
+  assert.strictEqual(performanceChart.events.length, 4);
+});
+
+test('normalizePerformanceChartDefinition supports the second bass walking package chart', function() {
+  var performanceChart = normalizePerformanceChartDefinition({
+    id: 'bass_afterglow_walk_package',
+    title: 'Afterglow Walk',
+    artist: 'SparkSuite Bass',
+    packageFormat: 'sparksuite_import_v1',
+    arrangementType: 'bass_walk',
+    adapterType: 'bass',
+    instrument: 'bass',
+    chartImport: {
+      files: {
+        'notes.chart': [
+          '[Song]',
+          '{',
+          '  Resolution = 192',
+          '}',
+          '[SyncTrack]',
+          '{',
+          '  0 = B 84507',
+          '}',
+          '[ExpertSingle]',
+          '{',
+          '  0 = N 1 0',
+          '  96 = N 2 0',
+          '  192 = N 3 0',
+          '  288 = N 2 0',
+          '}'
+        ].join('\n'),
+        'song.ini': '[song]\nname = Afterglow Walk\nartist = SparkSuite Bass'
+      }
+    },
+    importOptions: {
+      trackName: 'ExpertSingle'
+    }
+  });
+
+  assert.strictEqual(performanceChart.id, 'bass_afterglow_walk_package');
+  assert.strictEqual(performanceChart.title, 'Afterglow Walk');
   assert.strictEqual(performanceChart.events.length, 4);
 });
 
