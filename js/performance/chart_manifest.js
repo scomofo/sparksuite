@@ -89,6 +89,17 @@
         accentColor: "#2563eb",
         badge: "Bass",
         instrument: "bass"
+      },
+      {
+        id: "bass_afterglow_walk_package",
+        title: "Afterglow Walk",
+        artist: "SparkSuite Bass",
+        bpm: 71,
+        description: "Bass package-backed walking chart with a more melodic 4-string line.",
+        sourceType: "imported_package",
+        accentColor: "#1d4ed8",
+        badge: "Bass",
+        instrument: "bass"
       }
     ]
   };
