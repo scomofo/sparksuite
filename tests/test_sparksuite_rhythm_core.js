@@ -430,6 +430,35 @@ test("rhythm highway can launch directly from an authored bass module payload", 
   assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["E", "A", "D", "G"]);
 });
 
+test("bass module can provide rhythm guidance for focused authored drills", function() {
+  var guidance = SparkBassModule.getRhythmGuidance("walking_bass", {
+    gameplay: { accuracy: 71 / 100 },
+    learning: { weakAreas: ["late"] }
+  });
+
+  assert.strictEqual(guidance.title, "Bass Walking Checkpoint");
+  assert.ok(guidance.summary.indexOf("late") >= 0);
+  assert.ok(guidance.nextStep.indexOf("walking line") >= 0);
+});
+
+test("rhythm highway results render module-owned bass guidance when available", function() {
+  S.rhythmHighwayResult = {
+    gameplay: { score: 1200, accuracy: 0.74, maxCombo: 12 },
+    learning: { weakAreas: ["wrong_fret"], skills: [] }
+  };
+  S.rhythmHighwayLaunchContext = {
+    instrument: "bass",
+    exerciseFocus: "slap",
+    label: "Slap Pop 01"
+  };
+
+  var html = rhythmHighwayPage();
+
+  assert.ok(html.indexOf("Slap Technique") >= 0);
+  assert.ok(html.indexOf("thumb") >= 0 || html.indexOf("slap") >= 0);
+  assert.ok(html.indexOf("Next:") >= 0);
+});
+
 test("rhythm gameplay engine produces deterministic results for the same input stream", function() {
   var adapter = new SparkGuitarRhythmAdapter();
   var payload = adapter.createPayload({});
