@@ -596,6 +596,14 @@ function completeGuidedSession() {
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       markPlanComplete: true
     });
+    if (typeof window.sparkCore.syncGuidedRuntimeState === "function") {
+      window.sparkCore.syncGuidedRuntimeState({
+        activeScreen: "guided_done",
+        guidedStep: null,
+        guidedNewMovePhase: null,
+        transport: { status: "completed", positionMs: 0 }
+      });
+    }
     syncPianoGuidedCompletionFromCore(guidedResult, plan);
     checkPracticeDate();
     checkLevelUp();

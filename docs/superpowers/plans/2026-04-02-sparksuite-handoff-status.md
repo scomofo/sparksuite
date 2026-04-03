@@ -169,11 +169,57 @@ Primary source plans:
   - `js/pages/practice.js`
   - `js/sparksuite/bridges/practice_bridge.js`
   - `tests/test_sparksuite_core_migration.js`
+- The guided-session page can now prefer the active guided plan from SparkCore instead of relying only on `S.guidedPlan`.
+  - `js/pages/guided.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Guided step progression and new-move phase state can now be tracked in SparkCore runtime state instead of living only in legacy shell fields.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/pages/guided.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance session runtime state now mirrors start/pause/resume/seek/loop/finish into SparkCore, and the perform page can prefer those core-backed transport/control values.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/performance/session.js`
+  - `js/pages/perform.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance control changes in `app.js` now also mirror mode, difficulty, speed, and practice-preset updates into SparkCore runtime state.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `js/pages/perform.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance-song selection and guided-session completion now also mirror their screen/session transitions into SparkCore runtime state.
+  - `js/app.js`
+  - `js/instruments/guitar/app.js`
+  - `js/instruments/bass/app.js`
+  - `js/instruments/piano/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Result screens can now prefer more core-backed outcome data instead of relying only on legacy result fields.
+  - `js/pages/guided.js`
+  - `js/pages/perform.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- The performance-song detail flow can now prefer core-backed selection/runtime state instead of relying only on legacy `S.performSong*` fields.
+  - `js/pages/perform_song.js`
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Global tab/back navigation now also mirrors home/tab runtime state into SparkCore instead of leaving those result-screen exits entirely shell-owned.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Result-screen exit actions now use explicit app actions that mirror guided/performance home transitions into SparkCore runtime state.
+  - `js/app.js`
+  - `js/pages/guided.js`
+  - `js/pages/perform.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
 
 ## Partial
 
 - SparkSuite core owns major entry and completion flows, but not every runtime path in the app is fully migrated.
-- SparkCore now exposes an explicit runtime-state API, and the plan screen has started consuming it, but pages and live loops still mostly read from legacy shell state first.
+- SparkCore now exposes an explicit runtime-state API, and some major session screens now consume it, but pages and live loops still partly mirror legacy shell state while the convergence continues.
 - SparkSuite core now owns more of the piano runtime too, but broader piano gameplay/runtime and other legacy instrument flows still have local orchestration paths.
 - Performance session orchestration is much thinner now, but the live transport/game loop still lives outside SparkCore.
 - Rhythm-highway architecture exists and is playable, but later-phase gameplay features are still partial.

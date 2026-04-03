@@ -22,6 +22,17 @@
       activePlanId: null,
       activeSegmentId: null,
       activeScreen: null,
+      activeTab: null,
+      guidedStep: null,
+      guidedNewMovePhase: null,
+      performanceChartId: null,
+      performanceDifficultyId: null,
+      performanceArrangementType: null,
+      performanceSpeed: null,
+      performancePracticePreset: null,
+      performanceLoop: null,
+      performanceInputMode: null,
+      performanceResults: null,
       transport: {
         status: "idle",
         positionMs: 0
@@ -90,8 +101,19 @@
         activePlanId: this.currentPlan.id,
         activeSegmentId: this.currentPlan.segments && this.currentPlan.segments.length ? this.currentPlan.segments[0].id : null,
         activeScreen: this.deriveRuntimeScreen(this.currentPlan.flow),
-        transport: { status: "ready", positionMs: 0 }
-      });
+        activeTab: this.runtimeState.activeTab,
+        guidedStep: this.currentPlan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION ? "spark" : null,
+      guidedNewMovePhase: null,
+      performanceChartId: this.runtimeState.performanceChartId,
+      performanceDifficultyId: this.runtimeState.performanceDifficultyId,
+      performanceArrangementType: this.runtimeState.performanceArrangementType,
+      performanceSpeed: this.runtimeState.performanceSpeed,
+      performancePracticePreset: this.runtimeState.performancePracticePreset,
+      performanceLoop: this.runtimeState.performanceLoop,
+      performanceInputMode: this.runtimeState.performanceInputMode,
+      performanceResults: this.runtimeState.performanceResults,
+      transport: { status: "ready", positionMs: 0 }
+    });
       SparkProgressBridge.syncPlanToState(this.currentPlan);
       return this.currentPlan;
     }
@@ -115,6 +137,17 @@
       activePlanId: plan.id,
       activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
       activeScreen: this.deriveRuntimeScreen(plan.flow),
+      activeTab: this.runtimeState.activeTab,
+      guidedStep: plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION ? "spark" : null,
+      guidedNewMovePhase: null,
+      performanceChartId: null,
+      performanceDifficultyId: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.difficultyId || null) : null,
+      performanceArrangementType: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.arrangementType || null) : null,
+      performanceSpeed: null,
+      performancePracticePreset: null,
+      performanceLoop: null,
+      performanceInputMode: null,
+      performanceResults: null,
       transport: { status: "ready", positionMs: 0 }
     });
     SparkProgressBridge.syncPlanToState(plan);
@@ -138,6 +171,17 @@
       activePlanId: this.currentPlan ? this.currentPlan.id : this.runtimeState.activePlanId,
       activeSegmentId: payload.itemId || this.runtimeState.activeSegmentId,
       activeScreen: this.currentPlan ? this.deriveRuntimeScreen(this.currentPlan.flow) : this.runtimeState.activeScreen,
+      activeTab: this.runtimeState.activeTab,
+      guidedStep: result.planCompleted ? null : this.runtimeState.guidedStep,
+      guidedNewMovePhase: result.planCompleted ? null : this.runtimeState.guidedNewMovePhase,
+      performanceChartId: result.planCompleted ? this.runtimeState.performanceChartId : this.runtimeState.performanceChartId,
+      performanceDifficultyId: this.runtimeState.performanceDifficultyId,
+      performanceArrangementType: this.runtimeState.performanceArrangementType,
+      performanceSpeed: this.runtimeState.performanceSpeed,
+      performancePracticePreset: this.runtimeState.performancePracticePreset,
+      performanceLoop: result.planCompleted ? null : this.runtimeState.performanceLoop,
+      performanceInputMode: this.runtimeState.performanceInputMode,
+      performanceResults: result.performanceSummary ? this.runtimeState.performanceResults : this.runtimeState.performanceResults,
       transport: { status: result.planCompleted ? "completed" : "ready" },
       lastCompletedSessionId: result.planCompleted && this.currentPlan ? this.currentPlan.id : this.runtimeState.lastCompletedSessionId,
       lastCompletedFlow: result.planCompleted && this.currentPlan ? this.currentPlan.flow : this.runtimeState.lastCompletedFlow,
@@ -169,6 +213,90 @@
       runtimeState: this.getRuntimeState(),
       lastSessionOutcome: this.getLastSessionOutcome()
     };
+  };
+
+  SparkCore.prototype.syncGuidedRuntimeState = function(patch) {
+    patch = patch || {};
+    return this.updateRuntimeState({
+      activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
+      activeScreen: patch.activeScreen || this.runtimeState.activeScreen || "guided_session",
+      guidedStep: Object.prototype.hasOwnProperty.call(patch, "guidedStep")
+        ? patch.guidedStep
+        : this.runtimeState.guidedStep,
+      guidedNewMovePhase: Object.prototype.hasOwnProperty.call(patch, "guidedNewMovePhase")
+        ? patch.guidedNewMovePhase
+        : this.runtimeState.guidedNewMovePhase,
+      transport: patch.transport || this.runtimeState.transport
+    });
+  };
+
+  SparkCore.prototype.syncPerformanceRuntimeState = function(action, payload) {
+    payload = payload || {};
+    var next = {
+      activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+      activeScreen: this.runtimeState.activeScreen,
+      performanceChartId: this.runtimeState.performanceChartId,
+      performanceDifficultyId: this.runtimeState.performanceDifficultyId,
+      performanceArrangementType: this.runtimeState.performanceArrangementType,
+      performanceSpeed: this.runtimeState.performanceSpeed,
+      performancePracticePreset: this.runtimeState.performancePracticePreset,
+      performanceLoop: this.runtimeState.performanceLoop,
+      performanceInputMode: this.runtimeState.performanceInputMode,
+      performanceResults: this.runtimeState.performanceResults,
+      transport: this.runtimeState.transport
+    };
+
+    if (action === "start") {
+      next.activeFlow = SparkSessionTypes.FLOW_PERFORMANCE_SONG;
+      next.activeScreen = "perform";
+      next.performanceChartId = payload.chartId || this.runtimeState.performanceChartId;
+      next.performanceDifficultyId = payload.difficulty || this.runtimeState.performanceDifficultyId;
+      next.performanceArrangementType = payload.arrangementType || this.runtimeState.performanceArrangementType;
+      next.performanceSpeed = payload.speed || this.runtimeState.performanceSpeed || 1;
+      next.performancePracticePreset = payload.preset || this.runtimeState.performancePracticePreset;
+      next.performanceLoop = null;
+      next.performanceInputMode = payload.mode || this.runtimeState.performanceInputMode;
+      next.performanceResults = null;
+      next.transport = { status: payload.countIn ? "count_in" : "running", positionMs: 0 };
+    } else if (action === "select_song") {
+      next.activeFlow = SparkSessionTypes.FLOW_PERFORMANCE_SONG;
+      next.activeScreen = "performance_song";
+      if (Object.prototype.hasOwnProperty.call(payload, "chartId")) next.performanceChartId = payload.chartId;
+      if (Object.prototype.hasOwnProperty.call(payload, "difficulty")) next.performanceDifficultyId = payload.difficulty;
+      if (Object.prototype.hasOwnProperty.call(payload, "arrangementType")) next.performanceArrangementType = payload.arrangementType;
+      next.performanceResults = null;
+      next.transport = { status: "ready", positionMs: 0 };
+    } else if (action === "pause") {
+      next.transport = { status: "paused" };
+    } else if (action === "resume") {
+      next.transport = { status: "running" };
+    } else if (action === "seek") {
+      next.transport = { positionMs: Math.max(0, Math.round((payload.sec || 0) * 1000)) };
+    } else if (action === "tick") {
+      next.transport = { status: payload.status || "running", positionMs: Math.max(0, Math.round((payload.sec || 0) * 1000)) };
+    } else if (action === "set_loop") {
+      next.performanceLoop = payload.loop || null;
+    } else if (action === "clear_loop") {
+      next.performanceLoop = null;
+    } else if (action === "configure") {
+      if (Object.prototype.hasOwnProperty.call(payload, "difficulty")) next.performanceDifficultyId = payload.difficulty;
+      if (Object.prototype.hasOwnProperty.call(payload, "speed")) next.performanceSpeed = payload.speed;
+      if (Object.prototype.hasOwnProperty.call(payload, "mode")) next.performanceInputMode = payload.mode;
+      if (Object.prototype.hasOwnProperty.call(payload, "preset")) next.performancePracticePreset = payload.preset;
+    } else if (action === "stop") {
+      next.activeScreen = payload.screen || "performance_song";
+      next.transport = { status: "idle", positionMs: this.runtimeState.transport.positionMs || 0 };
+    } else if (action === "finish") {
+      next.activeScreen = payload.screen || "perform_done";
+      next.performanceLoop = null;
+      next.performanceResults = payload.results || this.runtimeState.performanceResults;
+      next.transport = { status: "completed", positionMs: this.runtimeState.transport.positionMs || 0 };
+    } else if (action === "start_failed") {
+      next.activeScreen = payload.screen || "home";
+      next.transport = { status: "idle", positionMs: 0 };
+    }
+
+    return this.updateRuntimeState(next);
   };
 
   function createDefaultSparkCore() {

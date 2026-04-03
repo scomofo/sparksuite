@@ -79,8 +79,14 @@ function cancelCalibration() {
 function performPage() {
   var chart = S.performChart;
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
 
-  var nowSec = S.performCurrentSec;
+  var nowSec = runtimeState && typeof runtimeState.transport.positionMs === "number"
+    ? runtimeState.transport.positionMs / 1000
+    : S.performCurrentSec;
   var phrase = getPerformancePhraseForTime(chart, nowSec);
   var phraseName = phrase ? phrase.name : "";
   var previewEvent = getNextPerformEvent(chart, nowSec);
@@ -175,7 +181,8 @@ function performPage() {
   h += '<div class="perform-controls">';
 
   // Pause/Resume
-  if (S.performPaused) {
+  var performPaused = runtimeState && runtimeState.transport ? runtimeState.transport.status === "paused" : S.performPaused;
+  if (performPaused) {
     h += '<button class="btn perform-ctrl-btn" onclick="act(\'resumePerform\')" style="background:#4ECDC4;color:#fff">&#9654; Resume</button>';
   } else {
     h += '<button class="btn perform-ctrl-btn" onclick="act(\'pausePerform\')" style="background:#FFE66D;color:#333">&#9208; Pause</button>';
@@ -183,23 +190,26 @@ function performPage() {
 
   // Mode toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Input</span>';
-  h += '<button class="btn btn-sm' + (S.performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
-  h += '<button class="btn btn-sm' + (S.performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
+  var performMode = runtimeState && runtimeState.performanceInputMode ? runtimeState.performanceInputMode : S.performMode;
+  h += '<button class="btn btn-sm' + (performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
+  h += '<button class="btn btn-sm' + (performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
   h += '</div>';
 
   // Difficulty toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Difficulty</span>';
   var diffs = ["easy", "normal", "pro"];
+  var performDifficulty = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
   for (var d = 0; d < diffs.length; d++) {
-    h += '<button class="btn btn-sm' + (S.performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
+    h += '<button class="btn btn-sm' + (performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
   }
   h += '</div>';
 
   // Speed toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Speed</span>';
   var speeds = [0.5, 0.75, 1.0];
+  var performSpeed = runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed;
   for (var sp = 0; sp < speeds.length; sp++) {
-    h += '<button class="btn btn-sm' + (S.performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
+    h += '<button class="btn btn-sm' + (performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
   }
   h += '</div>';
 
@@ -211,13 +221,17 @@ function performPage() {
     { id: "guitar_quiet", label: "Quiet Guitar" },
     { id: "guitar_solo", label: "Solo Guitar" }
   ];
+  var performPracticePreset = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : S.performPracticePreset;
   for (var pr = 0; pr < presets.length; pr++) {
-    h += '<button class="btn btn-sm' + (S.performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
+    h += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
   }
   h += '</div>';
 
   // Loop phrase
-  if (S.performLoop) {
+  var performLoop = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceLoop")
+    ? runtimeState.performanceLoop
+    : S.performLoop;
+  if (performLoop) {
     h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performClearLoop\')" style="background:#FF6B6B;color:#fff">&#128260; Clear Loop</button>';
   } else {
     h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performLoopPhrase\')" style="background:#4ECDC4;color:#fff">&#128257; Loop Phrase</button>';
@@ -248,7 +262,11 @@ function performPage() {
 }
 
 function performDonePage() {
-  var r = S.performResults;
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var r = runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults;
   if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
   var h = '<div class="perform-page text-center" style="padding-top:20px">';
@@ -264,7 +282,7 @@ function performDonePage() {
   h += '</div>';
 
   // Previous best
-  var songKey = S.performChartId || "unknown";
+  var songKey = runtimeState && runtimeState.performanceChartId ? runtimeState.performanceChartId : (S.performChartId || "unknown");
   var prevBest = S.performSongStats[songKey];
   if (prevBest && prevBest.runs > 1) {
     h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Previous best: ' + prevBest.bestScore + ' pts / ' + prevBest.bestAccuracy + '% / ' + prevBest.bestStars + ' stars (' + prevBest.runs + ' runs)</div>';
@@ -275,8 +293,11 @@ function performDonePage() {
 
   // Mastery badge
   if (typeof getPerformanceStats === "function") {
-    var arrType = (S.performChart && S.performChart.arrangementType) || "chords";
-    var pStats = getPerformanceStats(S.performChartId || "unknown", arrType, S.performDifficulty);
+    var arrType = (S.performChart && S.performChart.arrangementType)
+      || (runtimeState && runtimeState.performanceArrangementType)
+      || "chords";
+    var difficultyId = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
+    var pStats = getPerformanceStats(songKey, arrType, difficultyId);
     if (pStats.mastery !== "none") {
       h += '<div style="margin-bottom:12px"><span style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + ';padding:6px 16px;border-radius:12px;font-size:13px;font-weight:800">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
     }
@@ -336,7 +357,7 @@ function performDonePage() {
   h += '<div class="flex-col">';
   h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; Retry</button>';
   h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; Retry Weakest</button>';
-  h += '<button class="btn" onclick="act(\'tab\',\'songs\')" style="background:#4ECDC4;color:#fff">&#127968; Songs</button>';
+  h += '<button class="btn" onclick="act(\'performDoneSongs\')" style="background:#4ECDC4;color:#fff">&#127968; Songs</button>';
   h += '</div>';
 
   // Next step recommendation
