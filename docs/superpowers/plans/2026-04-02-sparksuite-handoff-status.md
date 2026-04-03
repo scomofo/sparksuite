@@ -513,6 +513,9 @@ Primary source plans:
   - `js/insights/ui.js`
   - `js/home/home_cards.js`
   - `tests/test_insights.js`
+- Home recommendation cards now preserve module-progress and focused-technique detail instead of flattening everything back to generic titles.
+  - `js/home/home_cards.js`
+  - `tests/test_insights.js`
 - Ukulele launcher support is live, but deeper performance/song-library parity is still early.
   - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
   - Broader dedicated song/chart coverage, richer module-specific screens, and deeper gameplay parity can still expand

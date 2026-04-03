@@ -131,5 +131,39 @@ test("renderHomeInsightCard surfaces focused imported-technique continuity on th
   assert.ok(html.indexOf("Practice more to see insights.") < 0);
 });
 
+test("renderHomeRecommendationCard surfaces module-progress recommendation details", function() {
+  var html = renderHomeRecommendationCard([{
+    id: "module_bass_level_4",
+    title: "Bass: Walking Lines - Walking (Turnaround Steps)",
+    source: "module_progress",
+    meta: {
+      recommendationFocus: "walking",
+      progressSummary: {
+        weakestMetric: "timing",
+        timing: 0.48
+      }
+    }
+  }]);
+
+  assert.ok(html.indexOf("Focus: walking") >= 0);
+  assert.ok(html.indexOf("Weakest: timing 48%") >= 0);
+});
+
+test("renderHomeRecommendationCard surfaces focused imported-technique recommendation details", function() {
+  var html = renderHomeRecommendationCard([{
+    id: "imported_technique_song_x_tap",
+    title: "Stay on tap-note timing in song x",
+    type: "performance_technique",
+    source: "weakspot",
+    meta: {
+      techniqueKey: "tap",
+      techniqueAccuracy: 38
+    }
+  }]);
+
+  assert.ok(html.indexOf("Technique: tap") >= 0);
+  assert.ok(html.indexOf("Accuracy: 38%") >= 0);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);
