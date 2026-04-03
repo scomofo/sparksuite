@@ -347,6 +347,37 @@ test("SparkCore can open legacy practice session and drill runtime explicitly", 
   assert.deepStrictEqual(repeatedDrillState.legacyDrillChordNames, ["C", "G"]);
 });
 
+test("SparkCore can sync legacy practice runtime countdown and pause state explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  core.openLegacyPracticeSession({
+    mode: "chord",
+    chordName: "C",
+    durationSec: 120
+  });
+
+  var tickState = core.syncLegacyPracticeRuntimeState("tick", {
+    remainingSec: 91,
+    timerActive: true
+  });
+  assert.strictEqual(tickState.legacyPracticeRemainingSec, 91);
+  assert.strictEqual(tickState.legacyPracticeTimerActive, true);
+  assert.strictEqual(tickState.transport.status, "running");
+
+  var pauseState = core.syncLegacyPracticeRuntimeState("pause", {
+    remainingSec: 91
+  });
+  assert.strictEqual(pauseState.legacyPracticeRemainingSec, 91);
+  assert.strictEqual(pauseState.legacyPracticeTimerActive, false);
+  assert.strictEqual(pauseState.transport.status, "paused");
+
+  var resumeState = core.syncLegacyPracticeRuntimeState("resume", {
+    remainingSec: 91
+  });
+  assert.strictEqual(resumeState.legacyPracticeTimerActive, true);
+  assert.strictEqual(resumeState.transport.status, "running");
+});
+
 test("legacy session and drill pages can fall back to SparkCore practice runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
@@ -403,6 +434,13 @@ test("legacy session and drill pages can fall back to SparkCore practice runtime
   var sessionHtml = sessionPage();
   assert.ok(sessionHtml.indexOf(">C<") >= 0);
   assert.ok(sessionHtml.indexOf("2:00") >= 0);
+
+  S.timer = undefined;
+  S.timerActive = undefined;
+  core.syncLegacyPracticeRuntimeState("pause", { remainingSec: 91 });
+  sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf("1:31") >= 0);
+  assert.ok(sessionHtml.indexOf("Resume") >= 0);
 
   core.openLegacyPracticeDrill({ durationSec: 60, chordNames: ["C", "G"] });
   var drillHtml = drillPage();

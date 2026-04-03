@@ -20,7 +20,8 @@ function getLegacySessionRuntime(D){
   var runtime = getSparkCoreRuntimeState();
   return {
     chord: S.currentChord || findInstrumentChordByName(D, runtime && runtime.legacyPracticeChordName),
-    timer: typeof S.timer === "number" ? S.timer : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0)
+    timer: typeof S.timer === "number" ? S.timer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0)),
+    timerActive: typeof S.timerActive === "boolean" ? S.timerActive : !!(runtime && runtime.legacyPracticeTimerActive)
   };
 }
 
@@ -99,7 +100,7 @@ function sessionPage(){
   if(S.practiceIntention){
     h+='<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(S.practiceIntention)+', I open ChordSpark.&#8221;</div>';
   }
-  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(S.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(S.timerActive?"var(--text-primary)":"#fff")+'">'+(S.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div></div>';
+  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div></div>';
   return h;
 }
 
