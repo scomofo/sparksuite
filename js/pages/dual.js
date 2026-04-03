@@ -2,7 +2,7 @@
 
 // Piano keyboard SVG renderer
 // Draws a 2-octave keyboard (C3-B4) with highlighted notes and finger numbers
-function pianoSVG(pianoChord,sz){
+function dualPianoSVG(pianoChord,sz){
   sz=sz||300;
   var w=sz,h=sz*0.45;
   // White keys: C D E F G A B (x2 octaves = 14 keys)
@@ -153,7 +153,7 @@ function dualTab(){
   h+='<div class="card" style="flex:1;min-width:260px;max-width:360px;text-align:center">';
   h+='<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127929; Piano</h3>';
   if(pianoChord){
-    h+='<div class="flex-center" style="overflow-x:auto">'+pianoSVG(pianoChord,300)+'</div>';
+    h+='<div class="flex-center" style="overflow-x:auto">'+dualPianoSVG(pianoChord,300)+'</div>';
     h+='<div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
     for(var i=0;i<pianoChord.notes.length;i++){
       h+='<span style="background:var(--chip-bg);padding:4px 12px;border-radius:10px;font-size:13px;font-weight:700;color:var(--chip-color)">'+pianoChord.notes[i]+' <span style="opacity:0.6">('+pianoChord.fingers[i]+')</span></span>';

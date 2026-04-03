@@ -1,5 +1,7 @@
 /* ───────── PianoSpark – audio.js ───────── */
 /* Enhanced: LH playback, split practice, reward sounds, watch demos, verbal */
+/* Wrapped in IIFE to avoid clobbering shared audio.js globals */
+(function(){
 
 var audioCtx = null;
 var masterGain = null;
@@ -1174,3 +1176,67 @@ function cleanupStems() {
   S.stemCurrentTime = 0;
   S.stemDuration = 0;
 }
+
+// ── Expose as PianoAudio namespace (avoids clobbering shared audio.js) ──
+window.PianoAudio = {
+  ensureAudio: ensureAudio,
+  setReverb: setReverb,
+  setVolume: setVolume,
+  preloadWavs: preloadWavs,
+  playWavChord: playWavChord,
+  playNote: playNote,
+  playChord: playChord,
+  playChordByName: playChordByName,
+  playBassNote: playBassNote,
+  playLHPattern: playLHPattern,
+  stopLHPattern: stopLHPattern,
+  playSplitPractice: playSplitPractice,
+  playWatchDemo: playWatchDemo,
+  stopWatchDemo: stopWatchDemo,
+  playChordWithVerbal: playChordWithVerbal,
+  playSound: playSound,
+  startMetronome: startMetronome,
+  stopMetronome: stopMetronome,
+  recordDetectionScore: recordDetectionScore,
+  getDetectionConfidence: getDetectionConfidence,
+  resetDetectionConfidence: resetDetectionConfidence,
+  startDetection: startDetection,
+  stopDetection: stopDetection,
+  getChordMatch: getChordMatch,
+  getCoachFeedback: getCoachFeedback,
+  startYinDetection: startYinDetection,
+  stopYinDetection: stopYinDetection,
+  startRecording: startRecording,
+  stopRecording: stopRecording,
+  isRecording: isRecording,
+  playClip: playClip,
+  deleteClip: deleteClip,
+  startMidi: startMidi,
+  stopMidi: stopMidi,
+  getMidiInputNames: getMidiInputNames,
+  loadStemUrls: loadStemUrls,
+  playStems: playStems,
+  pauseStems: pauseStems,
+  seekStems: seekStems,
+  setStemMuted: setStemMuted,
+  setStemVolume: setStemVolume,
+  setStemPlaybackRate: setStemPlaybackRate,
+  getFirstStemAudio: getFirstStemAudio,
+  cleanupStems: cleanupStems
+};
+
+// Expose piano-unique functions globally for piano pages/ui loaded outside app.js IIFE
+// (these don't collide with shared audio.js)
+window.playSound = playSound;
+window.playChordByName = playChordByName;
+window.playChordWithVerbal = playChordWithVerbal;
+window.playWavChord = playWavChord;
+window.playLHPattern = playLHPattern;
+window.stopLHPattern = stopLHPattern;
+window.playSplitPractice = playSplitPractice;
+window.playWatchDemo = playWatchDemo;
+window.stopWatchDemo = stopWatchDemo;
+window.getMidiInputNames = getMidiInputNames;
+window.isRecording = isRecording;
+
+})();

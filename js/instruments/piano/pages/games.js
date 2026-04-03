@@ -106,7 +106,8 @@ function quizTab() {
   var html = '<div class="card"><h2>Chord Quiz</h2>';
   if (S.quizQ) {
     html += '<p>Which chord is shown below?</p>';
-    html += pianoSVG(findChord(S.quizQ.answer), { showFingers: false });
+    var _quizChord = findChord(S.quizQ.answer);
+    html += _quizChord ? pianoSVG(_quizChord, { showFingers: false }) : '<div class="text-muted">(' + escHTML(S.quizQ.answer) + ')</div>';
     html += '<div class="quiz-options">';
     S.quizQ.options.forEach(function(opt) {
       var cls = "btn quiz-btn";

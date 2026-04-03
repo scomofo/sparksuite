@@ -139,8 +139,15 @@ function startPerformance(chartIdOrChart, opts) {
       }
     }
 
+    // Load MIDI backing track if chart specifies one
+    var hasMidiBacking = chart.audio && chart.audio.type === "midi" && chart.audio.src;
+    var midiReady = hasMidiBacking
+      ? (typeof loadMidiBacking === "function" ? loadMidiBacking(chart.audio.src) : Promise.resolve())
+      : Promise.resolve();
+
     S.screen = SCR.PERFORM;
 
+    midiReady.then(function(){
     if (S.performCountIn) {
       startPerformanceCountIn(chart, S.performSpeed, function() {
         PerformanceTransport.start(0, S.performSpeed);
@@ -149,6 +156,7 @@ function startPerformance(chartIdOrChart, opts) {
           var firstStem = typeof getFirstStemAudio === "function" ? getFirstStemAudio() : null;
           if (firstStem) PerformanceTransport.setAudioSource(firstStem);
         }
+        if (hasMidiBacking && typeof playMidiBacking === "function") playMidiBacking(0, S.performSpeed);
         render();
         _performRAF = requestAnimationFrame(updatePerformanceFrame);
       });
@@ -159,9 +167,11 @@ function startPerformance(chartIdOrChart, opts) {
         var firstStem = typeof getFirstStemAudio === "function" ? getFirstStemAudio() : null;
         if (firstStem) PerformanceTransport.setAudioSource(firstStem);
       }
+      if (hasMidiBacking && typeof playMidiBacking === "function") playMidiBacking(0, S.performSpeed);
       render();
       _performRAF = requestAnimationFrame(updatePerformanceFrame);
     }
+    }).catch(function(e){ console.warn("MIDI backing load failed:", e); });
   }).catch(function(err) {
     console.error("ChordSpark: Failed to start performance:", err);
     S.screen = SCR.HOME;
@@ -173,6 +183,7 @@ function startPerformance(chartIdOrChart, opts) {
 function stopPerformance() {
   destroySparkHighway();
   if (typeof cleanupStems === "function") cleanupStems();
+  if (typeof stopMidiBacking === "function") stopMidiBacking();
   PerformanceTransport.stop();
   _performStopping = true;
   if (_performRAF) { cancelAnimationFrame(_performRAF); _performRAF = null; }
@@ -199,6 +210,7 @@ function resetPerformanceEvents(chart, rangeStartSec, rangeEndSec) {
 function pausePerformance() {
   PerformanceTransport.pause();
   if (typeof pauseStems === "function") pauseStems();
+  if (typeof pauseMidiBacking === "function") pauseMidiBacking();
   S.performPaused = true;
   S.performPlaying = false;
   if (_performRAF) { cancelAnimationFrame(_performRAF); _performRAF = null; }
@@ -210,6 +222,9 @@ function resumePerformance() {
   S.performPaused = false;
   S.performPlaying = true;
   if (typeof playStems === "function") playStems();
+  if (typeof playMidiBacking === "function" && S.performChart && S.performChart.audio && S.performChart.audio.type === "midi") {
+    playMidiBacking(S.performCurrentSec, S.performSpeed);
+  }
   _performRAF = requestAnimationFrame(updatePerformanceFrame);
   render();
 }
@@ -218,6 +233,7 @@ function seekPerformance(sec) {
   PerformanceTransport.seek(sec);
   S.performCurrentSec = sec;
   if (typeof seekStems === "function") seekStems(sec);
+  if (typeof seekMidiBacking === "function") seekMidiBacking(sec, S.performSpeed);
   render();
 }
 

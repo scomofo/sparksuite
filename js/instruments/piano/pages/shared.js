@@ -1,5 +1,21 @@
 /* PianoSpark - Shared page components */
 
+// ── Performance helpers ──
+function getPerformanceBest(songId, arrangementType, difficulty) {
+  var key = (songId || "") + "_" + (arrangementType || "chords") + "_" + (difficulty || "normal");
+  var stats = S.performanceStats && S.performanceStats[key];
+  if (!stats) return { bestScore: 0, bestAccuracy: 0, bestStars: 0, runs: 0 };
+  return stats;
+}
+
+function getPerformanceMasteryLabel(best) {
+  if (!best || !best.runs) return "New";
+  if (best.bestStars >= 5) return "Mastered";
+  if (best.bestStars >= 3) return "Proficient";
+  if (best.bestAccuracy >= 70) return "Developing";
+  return "Beginner";
+}
+
 // ── Header ──
 function pianoHeaderHTML() {
   var html = '<header class="app-header" role="banner">';

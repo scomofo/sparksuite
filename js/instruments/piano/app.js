@@ -2,6 +2,25 @@
 /* Wrapped for SparkSuite: helpers exposed globally, act/render namespaced */
 (function() {
 
+// ── EARLY EXPORTS: hoisted function declarations are available immediately ──
+// These must run before anything else to guarantee piano pages can access them.
+window.pianoAct = function(a, v) { return act(a, v); };
+window.pianoRender = function() { return render(); };
+window.getCurrentSessionPlan = function() { return getCurrentSessionPlan(); };
+window.getCurrentLevel = function() { return getCurrentLevel(); };
+window.levelForSession = function(s) { return levelForSession(s); };
+window.addXP = function(n) { return addXP(n); };
+window.addHistory = function(t, d) { return addHistory(t, d); };
+window.recordTransition = function(a, b) { return recordTransition(a, b); };
+window.genQuiz = function() { return genQuiz(); };
+window.shuffleArray = function(arr) { return shuffleArray(arr); };
+window.startGuidedSession = function() { return startGuidedSession(); };
+window.advanceSessionStep = function() { return advanceSessionStep(); };
+window.adaptBpm = function() { return adaptBpm(); };
+window.checkLevelUp = function() { return checkLevelUp(); };
+window.checkReward = function(t) { return checkReward(t); };
+window.pickReviewChords = function() { return pickReviewChords(); };
+
 // Map piano numeric SCR to SparkSuite string SCR for act() compatibility
 var _pianoSCR = typeof PIANO_SCR !== "undefined" ? PIANO_SCR : {};
 // Override local SCR/TAB references to use SparkSuite's string constants
@@ -22,6 +41,53 @@ var TAB = { PRACTICE: "practice", GAMES: "games", SONGS: "songs", TOOLS: "tools"
 // Timer holder (piano uses T.session, T.drill, etc.)
 if (typeof window.T === "undefined") window.T = {};
 var T = window.T;
+
+// ── Piano audio aliases (from PianoAudio namespace to avoid clobbering shared audio.js) ──
+var _pa = typeof PianoAudio !== "undefined" ? PianoAudio : {};
+var playSound = _pa.playSound || function(){};
+var startMetronome = _pa.startMetronome || function(){};
+var stopMetronome = _pa.stopMetronome || function(){};
+var playNote = _pa.playNote || function(){};
+var playChord = _pa.playChord || function(){};
+var playChordByName = _pa.playChordByName || function(){};
+var playBassNote = _pa.playBassNote || function(){};
+var playLHPattern = _pa.playLHPattern || function(){};
+var stopLHPattern = _pa.stopLHPattern || function(){};
+var playSplitPractice = _pa.playSplitPractice || function(){};
+var playWatchDemo = _pa.playWatchDemo || function(){};
+var stopWatchDemo = _pa.stopWatchDemo || function(){};
+var playChordWithVerbal = _pa.playChordWithVerbal || function(){};
+var playWavChord = _pa.playWavChord || function(){};
+var startDetection = _pa.startDetection || function(){};
+var stopDetection = _pa.stopDetection || function(){};
+var getChordMatch = _pa.getChordMatch || function(){ return null; };
+var getCoachFeedback = _pa.getCoachFeedback || function(){ return ""; };
+var recordDetectionScore = _pa.recordDetectionScore || function(){};
+var getDetectionConfidence = _pa.getDetectionConfidence || function(){ return 0; };
+var resetDetectionConfidence = _pa.resetDetectionConfidence || function(){};
+var startYinDetection = _pa.startYinDetection || function(){};
+var stopYinDetection = _pa.stopYinDetection || function(){};
+var startRecording = _pa.startRecording || function(){};
+var stopRecording = _pa.stopRecording || function(){};
+var isRecording = _pa.isRecording || function(){ return false; };
+var playClip = _pa.playClip || function(){};
+var deleteClip = _pa.deleteClip || function(){};
+var startMidi = _pa.startMidi || function(){};
+var stopMidi = _pa.stopMidi || function(){};
+var getMidiInputNames = _pa.getMidiInputNames || function(){ return []; };
+var loadStemUrls = _pa.loadStemUrls || function(){};
+var playStems = _pa.playStems || function(){};
+var pauseStems = _pa.pauseStems || function(){};
+var seekStems = _pa.seekStems || function(){};
+var setStemMuted = _pa.setStemMuted || function(){};
+var setStemVolume = _pa.setStemVolume || function(){};
+var setStemPlaybackRate = _pa.setStemPlaybackRate || function(){};
+var getFirstStemAudio = _pa.getFirstStemAudio || function(){ return null; };
+var cleanupStems = _pa.cleanupStems || function(){};
+var ensureAudio = _pa.ensureAudio || function(){};
+var setReverb = _pa.setReverb || function(){};
+var setVolume = _pa.setVolume || function(){};
+var preloadWavs = _pa.preloadWavs || function(){};
 
 // ── Piano data aliases (resolve from PIANO_DATA to avoid stale shared globals) ──
 var _pd = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : {};
@@ -105,7 +171,7 @@ var addPracticeSecond = window.addPracticeSecond || function() {};
 var checkStreak = window.checkStreak || function() {};
 var clickableDiv = window.clickableDiv;
 var ifThenCard = window.ifThenCard;
-var getChordMatch = window.getChordMatch;
+// getChordMatch aliased from PianoAudio above
 var fireMicro = window.fireMicro;
 var escHTML = window.escHTML;
 var saveState = window.saveState;
@@ -349,8 +415,9 @@ function pickReviewChords() {
 
 // ── Quiz generation ──
 function genQuiz() {
-  var pool = chordsUpToLevel(Math.min(S.level + 1, 8));
-  if (pool.length < 4) pool = chordsUpToLevel(3);
+  var pool = typeof chordsUpToLevel === "function" ? chordsUpToLevel(Math.min((S.level || 1) + 1, 8)) : [];
+  if (pool.length < 4) pool = typeof chordsUpToLevel === "function" ? chordsUpToLevel(3) : [];
+  if (!pool.length) return { answer: "C", options: ["C", "F", "G", "Am"] };
   var answer = pool[Math.floor(Math.random() * pool.length)].short;
   // Shuffle pool then pick up to 3 distractors — avoids infinite loop if pool is small
   var shuffled = shuffleArray(pool.slice());
@@ -646,15 +713,14 @@ function act(action, param) {
   switch (action) {
     case "tab":
       S.tab = param;
-        if (S.songPlaying) {
-          S.songPlaying = false;
-          if (T.song) { clearInterval(T.song); T.song = null; }
-        }
-        if (S.buildPlaying) {
-          S.buildPlaying = false;
-          if (T.build) { clearInterval(T.build); T.build = null; }
-          buildIdx = 0;
-        }
+      if (S.songPlaying) {
+        S.songPlaying = false;
+        if (T.song) { clearInterval(T.song); T.song = null; }
+      }
+      if (S.buildPlaying) {
+        S.buildPlaying = false;
+        if (T.build) { clearInterval(T.build); T.build = null; }
+        buildIdx = 0;
       }
       break;
 
@@ -1046,6 +1112,7 @@ function act(action, param) {
         S.songPlaying = false;
         if (T.song) { clearInterval(T.song); T.song = null; }
         stopMetronome();
+        if (typeof stopMidiBacking === "function") stopMidiBacking();
       } else {
         S.songPlaying = true;
         var song = SONGS[S.songIdx];
@@ -1054,6 +1121,12 @@ function act(action, param) {
           playChordByName(song.progression[0], song.style || "block");
           T.song = setInterval(songTick, interval);
           startMetronome(S.bpm);
+          // Play MIDI backing track if available
+          if (song.midi && typeof loadMidiBacking === "function") {
+            loadMidiBacking(song.midi).then(function() {
+              if (S.songPlaying) playMidiBacking(0, 1);
+            }).catch(function() {});
+          }
         }
       }
       break;
@@ -1743,6 +1816,14 @@ function render() {
   root.innerHTML = html;
 }
 
+// ── Additional exports (non-hoisted helpers) ──
+window.clickableDiv = typeof clickableDiv !== "undefined" ? clickableDiv : window.clickableDiv;
+window.ifThenCard = typeof ifThenCard !== "undefined" ? ifThenCard : window.ifThenCard;
+window.getChordMatch = typeof getChordMatch !== "undefined" ? getChordMatch : window.getChordMatch;
+window.getCoachFeedback = typeof getCoachFeedback !== "undefined" ? getCoachFeedback : window.getCoachFeedback;
+window.addPracticeSecond = typeof addPracticeSecond !== "undefined" ? addPracticeSecond : window.addPracticeSecond;
+window.fireMicro = typeof fireMicro !== "undefined" ? fireMicro : window.fireMicro;
+
 // ── Keyboard shortcuts ──
 document.addEventListener("keydown", function(e) {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
@@ -1810,32 +1891,6 @@ document.addEventListener("keydown", function(e) {
     case "4": act("tab", TAB.TOOLS); break;
   }
 });
-
-// ── SparkSuite Exports ──
-// Expose piano helper functions that piano pages depend on
-window.pianoAct = act;
-window.pianoRender = render;
-
-// Expose helper functions needed by piano pages
-window.getCurrentSessionPlan = getCurrentSessionPlan;
-window.getCurrentLevel = getCurrentLevel;
-window.levelForSession = levelForSession;
-window.addXP = addXP;
-window.addHistory = addHistory;
-window.recordTransition = recordTransition;
-window.clickableDiv = typeof clickableDiv !== "undefined" ? clickableDiv : window.clickableDiv;
-window.ifThenCard = typeof ifThenCard !== "undefined" ? ifThenCard : window.ifThenCard;
-window.getChordMatch = typeof getChordMatch !== "undefined" ? getChordMatch : window.getChordMatch;
-window.addPracticeSecond = typeof addPracticeSecond !== "undefined" ? addPracticeSecond : window.addPracticeSecond;
-window.fireMicro = typeof fireMicro !== "undefined" ? fireMicro : window.fireMicro;
-window.shuffleArray = typeof shuffleArray !== "undefined" ? shuffleArray : window.shuffleArray;
-window.startGuidedSession = typeof startGuidedSession !== "undefined" ? startGuidedSession : window.startGuidedSession;
-window.advanceSessionStep = typeof advanceSessionStep !== "undefined" ? advanceSessionStep : window.advanceSessionStep;
-window.adaptBpm = typeof adaptBpm !== "undefined" ? adaptBpm : window.adaptBpm;
-window.checkLevelUp = typeof checkLevelUp !== "undefined" ? checkLevelUp : window.checkLevelUp;
-window.checkReward = typeof checkReward !== "undefined" ? checkReward : window.checkReward;
-window.pickReviewChords = typeof pickReviewChords !== "undefined" ? pickReviewChords : window.pickReviewChords;
-window.genQuiz = typeof genQuiz !== "undefined" ? genQuiz : window.genQuiz;
 
 // Do NOT call loadState() or render() — SparkSuite manages that
 })();
