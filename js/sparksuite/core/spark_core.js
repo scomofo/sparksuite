@@ -58,6 +58,10 @@
       midiActiveProfileName: null,
       midiDeviceOptions: [],
       midiProfileOptions: [],
+      midiImportSummary: null,
+      midiImportAssignments: {},
+      midiImportSeedMode: null,
+      midiImportSeedTitle: null,
       cloudLoggedIn: false,
       cloudEmail: null,
       cloudLastSyncStatus: "idle",
@@ -723,6 +727,24 @@
       midiProfileOptions: Object.prototype.hasOwnProperty.call(options, "profileOptions")
         ? this.cloneValue(options.profileOptions || [])
         : this.cloneValue(this.runtimeState.midiProfileOptions || [])
+    });
+  };
+
+  SparkCore.prototype.syncMidiImportState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      midiImportSummary: Object.prototype.hasOwnProperty.call(options, "summary")
+        ? this.cloneValue(options.summary || null)
+        : this.cloneValue(this.runtimeState.midiImportSummary),
+      midiImportAssignments: Object.prototype.hasOwnProperty.call(options, "assignments")
+        ? this.cloneValue(options.assignments || {})
+        : this.cloneValue(this.runtimeState.midiImportAssignments || {}),
+      midiImportSeedMode: Object.prototype.hasOwnProperty.call(options, "seedMode")
+        ? options.seedMode
+        : this.runtimeState.midiImportSeedMode,
+      midiImportSeedTitle: Object.prototype.hasOwnProperty.call(options, "seedTitle")
+        ? options.seedTitle
+        : this.runtimeState.midiImportSeedTitle
     });
   };
 

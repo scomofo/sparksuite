@@ -1839,6 +1839,7 @@ function act(action, param) {
       if (typeof openUtilityScreenRequest === "function") {
         openUtilityScreenRequest("midi_import");
       }
+      if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest();
       S.screen = SCR.MIDI_IMPORT;
       break;
 
@@ -1850,6 +1851,7 @@ function act(action, param) {
     case "assignMidiTrack": {
       var atParts = String(param).split("|");
       if(typeof setMidiTrackAssignment === "function") setMidiTrackAssignment(atParts[0], atParts[1]);
+      if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest();
       break;
     }
 
@@ -1858,6 +1860,7 @@ function act(action, param) {
         ? buildSeedChartFromImportedMidi(S.importedMidi, S.importedMidiAssignments, param)
         : null;
       S.importedMidiSeedPreview = seedChart;
+      if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest({ seedMode: param, seedChart: seedChart });
       if(seedChart && typeof openEditor === "function"){
         openEditor("chart", seedChart);
       }

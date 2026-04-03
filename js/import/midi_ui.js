@@ -1,19 +1,31 @@
 (function(){
 
   function midiImportPage(){
+    var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
+      ? window.sparkCore.getRuntimeState()
+      : null;
+    var importSummary = runtimeState && runtimeState.midiImportSummary
+      ? runtimeState.midiImportSummary
+      : null;
+    var runtimeTracks = importSummary && Array.isArray(importSummary.tracks)
+      ? importSummary.tracks
+      : null;
+    var assignments = runtimeState && runtimeState.midiImportAssignments
+      ? runtimeState.midiImportAssignments
+      : S.importedMidiAssignments;
     var h = '<div class="card">';
     h += '<div><b>MIDI Import</b></div>';
     h += '<input type="file" accept=".mid,.midi" onchange="act(\'importMidiFile\', this.files[0])" />';
     h += '</div>';
 
-    if(S.importedMidi){
+    if((runtimeTracks && runtimeTracks.length) || S.importedMidi){
       h += '<div class="card">';
       h += '<div><b>Imported Tracks</b></div>';
-      var tracks = S.importedMidi.tracks || [];
+      var tracks = runtimeTracks || (S.importedMidi.tracks || []);
       for(var i=0;i<tracks.length;i++){
-        var assignment = (S.importedMidiAssignments && S.importedMidiAssignments[tracks[i].id]) || "unassigned";
+        var assignment = (assignments && assignments[tracks[i].id]) || "unassigned";
         h += '<div style="margin-bottom:8px">';
-        h += '<div>' + escHTML(tracks[i].name) + ' (' + (tracks[i].notes || []).length + ' notes) [' + assignment + ']</div>';
+        h += '<div>' + escHTML(tracks[i].name) + ' (' + (tracks[i].noteCount != null ? tracks[i].noteCount : ((tracks[i].notes || []).length)) + ' notes) [' + assignment + ']</div>';
         h += '<button onclick="act(\'assignMidiTrack\', \''+tracks[i].id+'|block_chords\')">Block Chords</button> ';
         h += '<button onclick="act(\'assignMidiTrack\', \''+tracks[i].id+'|left_hand\')">Left Hand</button> ';
         h += '<button onclick="act(\'assignMidiTrack\', \''+tracks[i].id+'|melody\')">Melody</button> ';
@@ -29,6 +41,16 @@
       h += '</div>';
 
       h += '</div>';
+
+      if(runtimeState && runtimeState.midiImportSeedMode){
+        h += '<div class="card">';
+        h += '<div><b>Latest Seed</b></div>';
+        h += '<div>Mode: ' + escHTML(runtimeState.midiImportSeedMode) + '</div>';
+        if(runtimeState.midiImportSeedTitle){
+          h += '<div>Title: ' + escHTML(runtimeState.midiImportSeedTitle) + '</div>';
+        }
+        h += '</div>';
+      }
     }
 
     return h;
@@ -42,6 +64,14 @@
     S.importedMidiTracks = normalized.tracks || [];
     var appType = "guitar"; // ChordSpark default
     S.importedMidiAssignments = autoAssignMidiTracks(normalized, appType);
+    if(typeof syncMidiImportStateRequest === "function"){
+      syncMidiImportStateRequest({
+        normalizedMidi: normalized,
+        assignments: S.importedMidiAssignments,
+        seedMode: null,
+        seedChart: null
+      });
+    }
     render();
   }
 

@@ -955,6 +955,43 @@ function syncCurriculumStateRequest(options) {
   return null;
 }
 
+function buildMidiImportRuntimePayload(options) {
+  var normalizedMidi = (options && Object.prototype.hasOwnProperty.call(options, "normalizedMidi"))
+    ? options.normalizedMidi
+    : S.importedMidi;
+  var assignments = (options && Object.prototype.hasOwnProperty.call(options, "assignments"))
+    ? options.assignments
+    : S.importedMidiAssignments;
+  var seedChart = (options && Object.prototype.hasOwnProperty.call(options, "seedChart"))
+    ? options.seedChart
+    : S.importedMidiSeedPreview;
+  var tracks = normalizedMidi && Array.isArray(normalizedMidi.tracks) ? normalizedMidi.tracks : [];
+  return {
+    summary: normalizedMidi ? {
+      sourceName: normalizedMidi.sourceName || null,
+      trackCount: tracks.length,
+      tracks: tracks.map(function(track) {
+        return {
+          id: track.id,
+          name: track.name || track.id || "Track",
+          noteCount: Array.isArray(track.notes) ? track.notes.length : 0
+        };
+      })
+    } : null,
+    assignments: assignments || {},
+    seedMode: (options && Object.prototype.hasOwnProperty.call(options, "seedMode")) ? options.seedMode : null,
+    seedTitle: seedChart && seedChart.title ? seedChart.title : null
+  };
+}
+
+function syncMidiImportStateRequest(options) {
+  var payload = buildMidiImportRuntimePayload(options || {});
+  if (window.sparkCore && typeof window.sparkCore.syncMidiImportState === "function") {
+    return window.sparkCore.syncMidiImportState(payload);
+  }
+  return null;
+}
+
 function openSkillTreeRequest() {
   if (window.sparkCore && typeof window.sparkCore.openSkillTree === "function") {
     return window.sparkCore.openSkillTree();
@@ -2994,18 +3031,21 @@ window.act=function(a,v){
   // === MIDI Import Actions ===
   if(a==="openMidiImport"){
     openUtilityScreenRequest("midi_import");
+    syncMidiImportStateRequest();
     S.screen=SCR.MIDI_IMPORT;render();return;
   }
   if(a==="importMidiFile"){if(typeof handleMidiImport==="function")handleMidiImport(v);return;}
   if(a==="assignMidiTrack"){
     var parts=String(v).split("|");
     if(typeof setMidiTrackAssignment==="function")setMidiTrackAssignment(parts[0],parts[1]);
+    syncMidiImportStateRequest();
     render();return;
   }
   if(a==="buildMidiSeedChart"){
     if(typeof buildSeedChartFromImportedMidi==="function"){
       var chart=buildSeedChartFromImportedMidi(S.importedMidi,S.importedMidiAssignments,v);
       S.importedMidiSeedPreview=chart;
+      syncMidiImportStateRequest({ seedMode: v, seedChart: chart });
       if(chart&&typeof openEditor==="function"){openEditor("chart",chart);}
       else{render();}
     }return;
