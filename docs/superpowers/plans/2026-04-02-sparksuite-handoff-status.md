@@ -184,6 +184,11 @@ Primary source plans:
   - `js/sparksuite/instruments/ukulele/ukulele_module.js`
   - `js/practice/selectors.js`
   - `tests/test_practice_selectors.js`
+- Ukulele progression helpers now feed module-owned progress summaries back into recommendation metadata, so deeper lesson suggestions can reflect weak timing/speed/consistency instead of only lesson order.
+  - `js/sparksuite/instruments/ukulele/ukulele_progression.js`
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
 - Legacy practice selectors now understand the current flat performance stats shape and module-driven instrument candidates.
   - `js/practice/selectors.js`
   - `tests/test_practice_selectors.js`
