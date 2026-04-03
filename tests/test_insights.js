@@ -42,6 +42,7 @@ resetState();
 eval(loadJS("js/insights/recommendations.js"));
 eval(loadJS("js/insights/engine.js"));
 eval(loadJS("js/insights/ui.js"));
+eval(loadJS("js/home/home_cards.js"));
 
 console.log("\n--- Insights ---");
 
@@ -112,6 +113,22 @@ test("insightsDashboardPage renders focused imported-technique continuity", func
 
   assert.ok(html.indexOf("Focused Technique") >= 0);
   assert.ok(html.indexOf("tap-note consistency is still at 40% in imported song") >= 0);
+});
+
+test("renderHomeInsightCard surfaces focused imported-technique continuity on the home dashboard", function() {
+  var html = renderHomeInsightCard({
+    weakestSkills: [],
+    recommendationQuality: {
+      focusedTechnique: {
+        songId: "imported_song",
+        techniqueLabel: "tap-note consistency",
+        accuracy: 40
+      }
+    }
+  });
+
+  assert.ok(html.indexOf("Focus: tap-note consistency 40% in imported song") >= 0);
+  assert.ok(html.indexOf("Practice more to see insights.") < 0);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);
