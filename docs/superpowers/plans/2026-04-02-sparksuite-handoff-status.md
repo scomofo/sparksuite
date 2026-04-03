@@ -125,6 +125,7 @@ Primary source plans:
   - Progression stats now remember the currently focused imported technique, and recommendations can continue that focus block when it is still below target
   - Practice selectors now continue the same focused technique block when planning the next imported-technique drill instead of jumping to a different weak spot too early
   - Performance daily challenges can now preserve and complete focused imported-technique targets instead of flattening those runs into generic song challenges
+  - The Songs tab performance-daily card now reads that focused challenge from SparkCore runtime and shows the active technique focus, target accuracy, and reason instead of only generic daily copy
   - `js/practice/launchers.js`
   - `js/app.js`
   - `js/performance/session.js`

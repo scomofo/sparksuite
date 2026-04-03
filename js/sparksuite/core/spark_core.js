@@ -105,6 +105,8 @@
       performanceEditorPhraseCount: 0,
       skillTreeFocus: "overview",
       performanceStatsFocus: null,
+      performanceDailyChallenge: null,
+      performanceDailyComplete: false,
       performanceCalibrationSource: null,
       performanceCalibrationMode: false,
       performanceTimingOffsetMs: 0,
@@ -1468,6 +1470,13 @@
       activeScreen: "home",
       activeTab: "songs",
       transport: { status: "idle", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.syncPerformanceDailyChallengeState = function(challenge, isComplete) {
+    return this.updateRuntimeState({
+      performanceDailyChallenge: challenge ? this.cloneValue(challenge) : null,
+      performanceDailyComplete: !!isComplete
     });
   };
 
