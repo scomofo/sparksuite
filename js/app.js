@@ -2781,7 +2781,8 @@ window.act=function(a,v){
             songTitle: SONGS[di].title || null,
             arrangementType: ch.arrangementType||"chords",
             difficultyId: ch.difficultyId||"normal",
-            songIndex: di
+            songIndex: di,
+            targetTechnique: ch.techniqueKey||null
           });
           S.performSongData=SONGS[di];S.performSongId=ch.songId;
           S.performArrangementType=ch.arrangementType||"chords";

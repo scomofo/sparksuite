@@ -116,7 +116,20 @@
     var challenge;
     if(recs.length){
       var top=recs[0];
-      challenge={id:"perf_"+today,date:today,type:top.type,songId:top.songId,arrangementType:top.arrangementType||"chords",difficultyId:top.difficultyId||"normal",phraseId:null,target:{accuracy:85,stars:3},label:top.label,xp:35,reason:top.reason};
+      challenge={
+        id:"perf_"+today,
+        date:today,
+        type:top.type,
+        songId:top.songId,
+        arrangementType:top.arrangementType||"chords",
+        difficultyId:top.difficultyId||"normal",
+        phraseId:null,
+        techniqueKey:top.techniqueKey||null,
+        target:{accuracy:top.type==="imported_technique_focus"?90:85,stars:3},
+        label:top.label,
+        xp:35,
+        reason:top.reason
+      };
     }else{
       challenge={id:"perf_"+today,date:today,type:"full_run",songId:null,arrangementType:"chords",difficultyId:"easy",phraseId:null,target:{accuracy:75,stars:2},label:"Complete a performance run today",xp:25,reason:"Build consistency"};
     }
