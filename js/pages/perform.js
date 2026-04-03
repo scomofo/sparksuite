@@ -44,6 +44,12 @@ function formatTechniqueFocusLabel(key) {
   return labels[key] || String(key || "Technique");
 }
 
+function eventMatchesTechniqueFocus(evt, key) {
+  var flags = evt && evt.sourceFlags ? evt.sourceFlags : null;
+  if (!flags || !key) return false;
+  return !!flags[key];
+}
+
 function recordCalibrationTap() {
   if (!S._calibrating) return;
   var expected = S._calibExpectedTime - S._calibBeatMs;
@@ -93,6 +99,9 @@ function performPage() {
     ? window.sparkCore.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+    ? runtimeState.performanceTargetTechnique
+    : S.performTargetTechnique;
 
   var nowSec = runtimeState && typeof runtimeState.transport.positionMs === "number"
     ? runtimeState.transport.positionMs / 1000
@@ -115,6 +124,12 @@ function performPage() {
   h += '</div>';
   h += '<div class="perform-phrase-name">' + escHTML(phraseName) + '</div>';
   h += '</div>';
+
+  if (targetTechnique) {
+    h += '<div style="display:flex;justify-content:center;padding:4px 12px 0">';
+    h += '<span style="background:linear-gradient(135deg,#FF8A5C,#FFE66D);color:#3a2b00;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:900;letter-spacing:.03em">FOCUS: ' + escHTML(formatTechniqueFocusLabel(targetTechnique).toUpperCase()) + '</span>';
+    h += '</div>';
+  }
 
   // Score strip
   h += '<div class="perform-score-strip">';
@@ -150,6 +165,12 @@ function performPage() {
   if (previewEvent && previewEvent.sourceFlags && hasImportedTechniqueFlags(previewEvent.sourceFlags)) {
     h += '<div style="text-align:center;padding:4px 12px;margin:4px 12px 0">';
     h += '<span style="font-size:11px;font-weight:700;color:var(--text-muted)">Technique: ' + escHTML(renderImportedTechniqueFlags(previewEvent.sourceFlags)) + '</span>';
+    h += '</div>';
+  }
+
+  if (targetTechnique && previewEvent && eventMatchesTechniqueFocus(previewEvent, targetTechnique)) {
+    h += '<div style="text-align:center;padding:4px 12px;margin:0 12px 0">';
+    h += '<span style="font-size:11px;font-weight:800;color:#FF8A5C">Focused technique note incoming</span>';
     h += '</div>';
   }
 
