@@ -141,6 +141,31 @@ test("selectWeakPerformanceCandidate uses imported technique weakness from flat 
   assert.ok(candidate.reason.indexOf("open-note") >= 0);
 });
 
+test("selectImportedTechniqueCandidate creates a focused imported-technique practice candidate", function() {
+  S.performanceStats = {
+    song_b_imported_chart_hard: {
+      songId: "song_b",
+      arrangement: "imported_chart",
+      difficulty: "hard",
+      bestAccuracy: 79,
+      runs: 2,
+      importedTechniqueTotals: {
+        tap: { total: 8, hits: 3, misses: 5 },
+        open: { total: 4, hits: 3, misses: 1 }
+      }
+    }
+  };
+
+  var candidate = selectImportedTechniqueCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.type, "performance_technique");
+  assert.strictEqual(candidate.meta.songId, "song_b");
+  assert.strictEqual(candidate.meta.techniqueKey, "tap");
+  assert.strictEqual(candidate.meta.techniqueAccuracy, 38);
+  assert.ok(candidate.label.indexOf("tap-note") >= 0);
+});
+
 test("selectInstrumentModuleCandidate returns the next ukulele lesson focus", function() {
   var candidate = selectInstrumentModuleCandidate();
 
@@ -157,6 +182,34 @@ test("buildPracticeCandidates includes the module-driven ukulele candidate", fun
 
   assert.ok(candidates.length > 0);
   assert.strictEqual(candidates[0].id, "module_uke_01");
+});
+
+test("buildPracticeCandidates includes imported-technique focus when imported chart weakness is present", function() {
+  S.performanceStats = {
+    imported_song_imported_chart_normal: {
+      songId: "imported_song",
+      arrangement: "imported_chart",
+      difficulty: "normal",
+      bestAccuracy: 81,
+      runs: 4,
+      importedTechniqueTotals: {
+        forced: { total: 10, hits: 5, misses: 5 }
+      }
+    }
+  };
+
+  var candidates = buildPracticeCandidates();
+  var found = null;
+  for (var i = 0; i < candidates.length; i++) {
+    if (candidates[i].type === "performance_technique") {
+      found = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(found);
+  assert.strictEqual(found.meta.techniqueKey, "forced");
+  assert.ok(found.reason.indexOf("50%") >= 0);
 });
 
 test("selectInstrumentModuleCandidate advances into deeper ukulele lessons after early completions", function() {

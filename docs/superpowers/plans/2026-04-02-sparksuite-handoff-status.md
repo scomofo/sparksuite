@@ -224,6 +224,9 @@ Primary source plans:
 - Legacy practice selectors now understand the current flat performance stats shape and module-driven instrument candidates.
   - `js/practice/selectors.js`
   - `tests/test_practice_selectors.js`
+- Practice selectors now also emit explicit imported-technique focus candidates instead of turning imported chart weak spots only into generic replay advice.
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
 - More legacy practice wrappers now defer to the shared practice engine path instead of duplicating plan ownership.
   - `js/practice/plan.js`
   - `js/performance/practice_engine.js`
