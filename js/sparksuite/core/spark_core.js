@@ -62,6 +62,8 @@
       cloudEmail: null,
       cloudLastSyncStatus: "idle",
       cloudLastSyncAt: null,
+      curriculumSummaries: [],
+      curriculumPackSummaries: [],
       guidedStep: null,
       guidedNewMovePhase: null,
       performanceChartId: null,
@@ -739,6 +741,18 @@
       cloudLastSyncAt: Object.prototype.hasOwnProperty.call(options, "lastSyncAt")
         ? options.lastSyncAt
         : this.runtimeState.cloudLastSyncAt
+    });
+  };
+
+  SparkCore.prototype.syncCurriculumState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      curriculumSummaries: Object.prototype.hasOwnProperty.call(options, "curriculums")
+        ? this.cloneValue(options.curriculums || [])
+        : this.cloneValue(this.runtimeState.curriculumSummaries || []),
+      curriculumPackSummaries: Object.prototype.hasOwnProperty.call(options, "packs")
+        ? this.cloneValue(options.packs || [])
+        : this.cloneValue(this.runtimeState.curriculumPackSummaries || [])
     });
   };
 

@@ -101,6 +101,7 @@ function resetState() {
   global.utilityScreenCalls = [];
   global.utilityReturnCalls = [];
   global.midiSettingsSyncCalls = [];
+  global.curriculumSyncCalls = [];
   global.stemPlayerCalls = [];
   global.dashboardRequestCalls = [];
   global.dashboardRefreshCalls = [];
@@ -338,6 +339,10 @@ function resetState() {
   };
   global.syncMidiSettingsStateRequest = function(payload) {
     midiSettingsSyncCalls.push(payload || {});
+    return payload || {};
+  };
+  global.syncCurriculumStateRequest = function(payload) {
+    curriculumSyncCalls.push(payload || {});
     return payload || {};
   };
   global.openStemPlayerRequest = function() {
@@ -603,6 +608,7 @@ test("utility screen entry actions mirror piano navigation into shared utility h
   pianoAct("openMidiImport");
 
   assert.deepStrictEqual(utilityScreenCalls, ["settings", "curriculum", "cloud_settings", "midi_settings", "midi_import"]);
+  assert.strictEqual(curriculumSyncCalls.length, 1);
   assert.strictEqual(S.screen, "midi_import");
 });
 
