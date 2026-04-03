@@ -13,13 +13,28 @@ function recommendationsPage(){
   for(var i=0;i<arr.length;i++){
     h += '<div style="margin-bottom:12px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:8px">';
     h += '<div><b>' + escHTML(arr[i].title) + '</b></div>';
-    h += '<div style="font-size:12px;color:#aaa">Type: ' + escHTML(arr[i].type) + ' · Source: ' + escHTML(arr[i].source) + '</div>';
+    h += '<div style="font-size:12px;color:#aaa">Type: ' + escHTML(arr[i].type) + ' | Source: ' + escHTML(arr[i].source) + '</div>';
     h += '<div style="font-size:12px;color:#aaa">Reason: ' + escHTML((arr[i].reasons || []).join(", ")) + '</div>';
+    h += renderRecommendationModuleProgress(arr[i]);
     h += '<button onclick="act(\'launchRecommendation\', \''+arr[i].id+'\')">Start</button>';
     h += '</div>';
   }
   h += '</div>';
   return h;
+}
+
+function renderRecommendationModuleProgress(recommendation){
+  if(!recommendation || recommendation.source !== "module_progress" || !recommendation.meta) return "";
+  var bits = [];
+  if(recommendation.meta.recommendationFocus){
+    bits.push("Focus: " + recommendation.meta.recommendationFocus.replace(/_/g, " "));
+  }
+  var summary = recommendation.meta.progressSummary;
+  if(summary && summary.weakestMetric && typeof summary[summary.weakestMetric] === "number"){
+    bits.push("Weakest: " + summary.weakestMetric.replace(/_/g, " ") + " " + Math.round(summary[summary.weakestMetric] * 100) + "%");
+  }
+  if(!bits.length) return "";
+  return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
 }
 
 function launchRecommendationById(id){
