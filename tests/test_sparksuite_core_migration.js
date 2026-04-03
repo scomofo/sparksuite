@@ -741,6 +741,34 @@ test("SparkCore can track settings, midi, cloud, and midi-import utility snapsho
   assert.strictEqual(curriculumState.curriculumSummaries[0].id, "starter");
   assert.strictEqual(curriculumState.curriculumSummaries[0].trackCount, 2);
   assert.strictEqual(curriculumState.curriculumPackSummaries[0].title, "Road Pack");
+
+  var curriculumLoadingState = core.applyCurriculumWorkflowRequest("curriculum_load_start", {
+    manifestPath: "/data/curriculum.json"
+  });
+  assert.strictEqual(curriculumLoadingState.curriculumLoading, true);
+  assert.strictEqual(curriculumLoadingState.curriculumLastManifestPath, "/data/curriculum.json");
+  assert.strictEqual(curriculumLoadingState.curriculumLastLoadStatus, "loading");
+
+  var curriculumDoneState = core.applyCurriculumWorkflowRequest("curriculum_load_done", {
+    manifestPath: "/data/curriculum.json",
+    status: "ok"
+  });
+  assert.strictEqual(curriculumDoneState.curriculumLoading, false);
+  assert.strictEqual(curriculumDoneState.curriculumLastLoadStatus, "ok");
+
+  var contentLoadingState = core.applyCurriculumWorkflowRequest("content_load_start", {
+    manifestPath: "/data/content.json"
+  });
+  assert.strictEqual(contentLoadingState.contentLoading, true);
+  assert.strictEqual(contentLoadingState.contentLastManifestPath, "/data/content.json");
+  assert.strictEqual(contentLoadingState.contentLastLoadStatus, "loading");
+
+  var contentDoneState = core.applyCurriculumWorkflowRequest("content_load_done", {
+    manifestPath: "/data/content.json",
+    status: "ok"
+  });
+  assert.strictEqual(contentDoneState.contentLoading, false);
+  assert.strictEqual(contentDoneState.contentLastLoadStatus, "ok");
 });
 
 test("SparkCore can build and apply dashboard recommendation launch requests", function() {

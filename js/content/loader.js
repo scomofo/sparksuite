@@ -11,23 +11,36 @@
   }
 
   async function loadAllContent(manifestPath){
-    var manifest = await loadContentManifest(manifestPath);
-    if(manifest.lessons){
-      registerContent("lessons", await loadContentFile(manifest.lessons));
+    if(typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.applyCurriculumWorkflowRequest === "function"){
+      window.sparkCore.applyCurriculumWorkflowRequest("content_load_start", { manifestPath: manifestPath });
     }
-    if(manifest.songs){
-      registerContent("songs", await loadContentFile(manifest.songs));
+    try{
+      var manifest = await loadContentManifest(manifestPath);
+      if(manifest.lessons){
+        registerContent("lessons", await loadContentFile(manifest.lessons));
+      }
+      if(manifest.songs){
+        registerContent("songs", await loadContentFile(manifest.songs));
+      }
+      if(manifest.drills){
+        registerContent("drills", await loadContentFile(manifest.drills));
+      }
+      if(manifest.templates){
+        registerContent("templates", await loadContentFile(manifest.templates));
+      }
+      if(manifest.packs){
+        registerContent("packs", await loadContentFile(manifest.packs));
+      }
+      if(typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.applyCurriculumWorkflowRequest === "function"){
+        window.sparkCore.applyCurriculumWorkflowRequest("content_load_done", { manifestPath: manifestPath, status: "ok" });
+      }
+      return manifest;
+    }catch(err){
+      if(typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.applyCurriculumWorkflowRequest === "function"){
+        window.sparkCore.applyCurriculumWorkflowRequest("content_load_error", { manifestPath: manifestPath, status: "error" });
+      }
+      throw err;
     }
-    if(manifest.drills){
-      registerContent("drills", await loadContentFile(manifest.drills));
-    }
-    if(manifest.templates){
-      registerContent("templates", await loadContentFile(manifest.templates));
-    }
-    if(manifest.packs){
-      registerContent("packs", await loadContentFile(manifest.packs));
-    }
-    return manifest;
   }
 
   window.loadAllContent = loadAllContent;

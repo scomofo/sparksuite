@@ -6,6 +6,11 @@
       : null;
     var h = '<div class="card">';
     h += '<div><b>Curriculum</b></div>';
+    if(runtimeState && runtimeState.curriculumLoading){
+      h += '<div>Loading curriculum...</div>';
+    } else if(runtimeState && runtimeState.curriculumLastManifestPath){
+      h += '<div style="font-size:12px;color:var(--text-muted)">Manifest: ' + escHTML(runtimeState.curriculumLastManifestPath) + ' [' + escHTML(runtimeState.curriculumLastLoadStatus || "idle") + ']</div>';
+    }
 
     var runtimeCurriculums = runtimeState && Array.isArray(runtimeState.curriculumSummaries) && runtimeState.curriculumSummaries.length
       ? runtimeState.curriculumSummaries
@@ -62,6 +67,11 @@
     if((runtimePacks && runtimePacks.length) || packIds.length){
       h += '<div class="card">';
       h += '<div><b>Content Packs</b></div>';
+      if(runtimeState && runtimeState.contentLoading){
+        h += '<div>Loading content...</div>';
+      } else if(runtimeState && runtimeState.contentLastManifestPath){
+        h += '<div style="font-size:12px;color:var(--text-muted)">Content Manifest: ' + escHTML(runtimeState.contentLastManifestPath) + ' [' + escHTML(runtimeState.contentLastLoadStatus || "idle") + ']</div>';
+      }
       if(runtimePacks && runtimePacks.length){
         for(var rp=0;rp<runtimePacks.length;rp++){
           var packSummary = runtimePacks[rp];
