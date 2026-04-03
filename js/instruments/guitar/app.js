@@ -177,7 +177,16 @@ function guitarAct(a, v) {
 
   if (a === "guidedStart") {
     var sessionNum = parseInt(v, 10);
-    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+    if (typeof window.openGuidedSessionRequest === "function") {
+      var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
+      var corePlan = window.openGuidedSessionRequest({
+        sessionNum: guidedSession
+      });
+      if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+        S.screen = SCR.GUIDED; snd("start"); render(); saveState();
+        return true;
+      }
+    } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
       var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
       var corePlan = window.sparkCore.startSession({
         flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
@@ -206,7 +215,12 @@ function guitarAct(a, v) {
 
   if (a === "guidedComplete") {
     if (S.metronomeOn) stopMetronome();
-    if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+    if (typeof window.completeGuidedSessionRequest === "function") {
+      var guidedResult = window.completeGuidedSessionRequest();
+      snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
+      trigC(); S.screen = SCR.GUIDED_DONE; render();
+      return true;
+    } else if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
       var guidedResult = window.sparkCore.completeSession({
         flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
         markPlanComplete: true

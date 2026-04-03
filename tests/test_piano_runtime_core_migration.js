@@ -91,6 +91,8 @@ function resetState() {
   global.toasts = [];
   global.playedSounds = [];
   global.sparkCoreCalls = [];
+  global.performanceStarts = [];
+  global.performanceNavigationCalls = [];
 
   global.saveState = function() { saveStateCalls++; };
   global.render = function() { renderCalls++; };
@@ -104,6 +106,23 @@ function resetState() {
   global.stopWatchDemo = function() {};
   global.stopDetection = function() {};
   global.addPracticeSecond = function() {};
+  global.applyPerformanceDifficultyToState = function(value) { S.performDifficulty = value || "normal"; };
+  global.normalizeSongId = function(song) {
+    var title = song && song.title ? song.title : "";
+    return title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  };
+  global.buildPerformanceChartFromSong = function(song, arrangementType) {
+    return {
+      id: (song && song.title ? song.title.toLowerCase().replace(/[^a-z0-9]+/g, "_") : "generated"),
+      title: song && song.title ? song.title : "Generated",
+      arrangementType: arrangementType || "block_chords",
+      events: [{ id: 1, t: 0, dur: 1, laneLabel: "C" }]
+    };
+  };
+  global.startPerformance = function(chart, options) {
+    performanceStarts.push({ chart: chart, options: options });
+  };
+  global.stopPerformance = function() {};
   global.clickableDiv = function() {};
   global.ifThenCard = function() {};
   global.fireMicro = function() {};
@@ -174,6 +193,83 @@ function resetState() {
       };
     }
   };
+  global.sparkCore.openGuidedSession = function(payload) {
+    sparkCoreCalls.push({ fn: "openGuidedSession", payload: payload });
+    return {
+      context: {
+        guidedSession: 2,
+        guidedPlan: {
+          num: 2,
+          title: "Session 2",
+          bpm: 84,
+          spark: { text: "next" },
+          newMove: { chord: "G" }
+        }
+      }
+    };
+  };
+  global.sparkCore.completeGuidedSession = function(payload) {
+    sparkCoreCalls.push({ fn: "completeGuidedSession", payload: payload || {} });
+    return {
+      audioCue: "levelup",
+      sessionStatePatch: {
+        guided: {
+          completedSessionNums: [2],
+          nextGuidedSession: 3,
+          chordProgress: { G: 25 }
+        }
+      }
+    };
+  };
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        context: {
+          performanceSong: {
+            songData: global.PIANO_DATA.SONGS[1],
+            songId: "river_walk",
+            arrangementType: "block_chords",
+            difficultyId: "normal"
+          }
+        }
+      }
+    };
+  };
+  global.sparkCore.openPerformanceSongSelection = function(payload) {
+    sparkCoreCalls.push({ fn: "openPerformanceSongSelection", payload: payload });
+    return payload;
+  };
+  global.sparkCore.startSelectedPerformanceSong = function(payload) {
+    sparkCoreCalls.push({ fn: "startSelectedPerformanceSong", payload: payload });
+    return payload;
+  };
+  global.sparkCore.syncPerformanceRuntimeState = function(action, payload) {
+    sparkCoreCalls.push({ fn: "syncPerformanceRuntimeState", action: action, payload: payload });
+    return payload;
+  };
+  global.sparkCore.applyPerformanceNavigationRequest = function(target) {
+    performanceNavigationCalls.push(target);
+    return { activeScreen: "home", activeTab: "songs" };
+  };
+  global.openPerformanceSongSelectionRequest = function(payload) {
+    return global.sparkCore.openPerformanceSongSelection(payload);
+  };
+  global.openGuidedSessionRequest = function(payload) {
+    return global.sparkCore.openGuidedSession(payload);
+  };
+  global.completeGuidedSessionRequest = function(payload) {
+    return global.sparkCore.completeGuidedSession(payload);
+  };
+  global.startSelectedPerformanceSongRequest = function(payload) {
+    return global.sparkCore.startSelectedPerformanceSong(payload);
+  };
+  global.applyPerformanceNavigationRequest = function(target) {
+    return global.sparkCore.applyPerformanceNavigationRequest(target);
+  };
+  global.getPerformanceRetryRequest = function(payload) {
+    sparkCoreCalls.push({ fn: "getPerformanceRetryRequest", payload: payload });
+    return payload;
+  };
 }
 
 resetState();
@@ -185,8 +281,7 @@ test("start_guided_session delegates to sparkCore and syncs piano session aliase
   pianoAct("start_guided_session");
 
   assert.strictEqual(sparkCoreCalls.length, 1);
-  assert.strictEqual(sparkCoreCalls[0].fn, "startSession");
-  assert.strictEqual(sparkCoreCalls[0].payload.flow, "guided_session");
+  assert.strictEqual(sparkCoreCalls[0].fn, "openGuidedSession");
   assert.strictEqual(S.currentSession, 2);
   assert.strictEqual(S.sessionPlan.title, "Session 2");
   assert.strictEqual(S.sessionStep, "spark");
@@ -207,8 +302,7 @@ test("complete_victory_lap delegates to sparkCore and syncs piano completion ali
   pianoAct("complete_victory_lap");
 
   assert.strictEqual(sparkCoreCalls.length, 1);
-  assert.strictEqual(sparkCoreCalls[0].fn, "completeSession");
-  assert.strictEqual(sparkCoreCalls[0].payload.flow, "guided_session");
+  assert.strictEqual(sparkCoreCalls[0].fn, "completeGuidedSession");
   assert.deepStrictEqual(S.completedSessions, [2]);
   assert.strictEqual(S.currentSession, 3);
   assert.strictEqual(S.guidedSession, 3);
@@ -223,14 +317,32 @@ test("open_perform_song delegates to sparkCore and syncs piano performance alias
   pianoAct("open_perform_song", "1");
 
   assert.strictEqual(sparkCoreCalls.length, 1);
-  assert.strictEqual(sparkCoreCalls[0].fn, "startSession");
-  assert.strictEqual(sparkCoreCalls[0].payload.flow, "performance_song");
+  assert.strictEqual(sparkCoreCalls[0].fn, "openPerformanceSongSelection");
   assert.strictEqual(sparkCoreCalls[0].payload.songIndex, 1);
   assert.strictEqual(S.performSongData.title, "River Walk");
   assert.strictEqual(S.performSongId, "river_walk");
   assert.strictEqual(S.performArrangementType, "block_chords");
   assert.strictEqual(S.performDifficulty, "normal");
   assert.strictEqual(S.screen, "performSong");
+});
+
+test("performStart delegates launch request construction to sparkCore helpers", function() {
+  S.performSongData = { title: "River Walk", artist: "Piano Suite" };
+  S.performArrangementType = "block_chords";
+  S.performDifficulty = "hard";
+  S.performSpeed = 0.8;
+  S.performMode = "mic";
+
+  pianoAct("performStart");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].fn, "startSelectedPerformanceSong");
+  assert.strictEqual(sparkCoreCalls[0].payload.difficulty, "hard");
+  assert.strictEqual(sparkCoreCalls[0].payload.speed, 0.8);
+  assert.strictEqual(performanceStarts.length, 1);
+  assert.strictEqual(performanceStarts[0].options.difficulty, "hard");
+  assert.strictEqual(performanceStarts[0].options.speed, 0.8);
+  assert.strictEqual(performanceStarts[0].options.mode, "mic");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

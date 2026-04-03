@@ -381,6 +381,276 @@ function _sparkEmit(type, payload) {
   if (typeof SparkEvents !== "undefined") SparkEvents.emit(type, payload);
 }
 
+function syncPerformanceEditorDocumentState(chart, options) {
+  if (!window.sparkCore) return;
+  if (typeof window.sparkCore.syncPerformanceEditorDocument === "function") {
+    window.sparkCore.syncPerformanceEditorDocument(chart, options || {});
+    return;
+  }
+  if (typeof window.sparkCore.syncPerformanceRuntimeState !== "function") return;
+
+  options = options || {};
+  var events = chart && Array.isArray(chart.events) ? chart.events : [];
+  var phrases = chart && Array.isArray(chart.phrases) ? chart.phrases : [];
+  var selectedEvent = options.selectedEvent || null;
+  var selectedPhrase = options.selectedPhrase || null;
+  var selectedEventId = Object.prototype.hasOwnProperty.call(options, "selectedEventId")
+    ? options.selectedEventId
+    : (selectedEvent ? selectedEvent.id : (S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null));
+  var selectedPhraseId = Object.prototype.hasOwnProperty.call(options, "selectedPhraseId")
+    ? options.selectedPhraseId
+    : (selectedPhrase ? selectedPhrase.id : null);
+
+  window.sparkCore.syncPerformanceRuntimeState(options.action || "configure_editor", {
+    mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : S.performEditorMode,
+    snap: Object.prototype.hasOwnProperty.call(options, "snap") ? options.snap : S.performEditorSnap,
+    chartId: chart && chart.id ? chart.id : null,
+    chartTitle: chart && chart.title ? chart.title : null,
+    source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (chart ? "existing" : "blank"),
+    dirty: Object.prototype.hasOwnProperty.call(options, "dirty") ? !!options.dirty : !!S.performEditorDirty,
+    selectedEventId: selectedEventId,
+    selectedEventLabel: Object.prototype.hasOwnProperty.call(options, "selectedEventLabel")
+      ? options.selectedEventLabel
+      : (selectedEvent ? (selectedEvent.laneLabel || selectedEvent.chord || selectedEvent.note || "?") : null),
+    selectedEventTime: Object.prototype.hasOwnProperty.call(options, "selectedEventTime")
+      ? options.selectedEventTime
+      : (selectedEvent ? (selectedEvent.t || 0) : null),
+    selectedEventDuration: Object.prototype.hasOwnProperty.call(options, "selectedEventDuration")
+      ? options.selectedEventDuration
+      : (selectedEvent ? (selectedEvent.dur || 0) : null),
+    selectedPhraseId: selectedPhraseId,
+    selectedPhraseName: Object.prototype.hasOwnProperty.call(options, "selectedPhraseName")
+      ? options.selectedPhraseName
+      : (selectedPhrase ? selectedPhrase.name : null),
+    selectedPhraseStart: Object.prototype.hasOwnProperty.call(options, "selectedPhraseStart")
+      ? options.selectedPhraseStart
+      : (selectedPhrase ? selectedPhrase.startSec : null),
+    selectedPhraseEnd: Object.prototype.hasOwnProperty.call(options, "selectedPhraseEnd")
+      ? options.selectedPhraseEnd
+      : (selectedPhrase ? selectedPhrase.endSec : null),
+    bpm: Object.prototype.hasOwnProperty.call(options, "bpm")
+      ? options.bpm
+      : (chart && chart.bpm ? chart.bpm : null),
+    eventCount: Object.prototype.hasOwnProperty.call(options, "eventCount")
+      ? options.eventCount
+      : events.length,
+    phraseCount: Object.prototype.hasOwnProperty.call(options, "phraseCount")
+      ? options.phraseCount
+      : phrases.length
+  });
+}
+
+function applyPerformanceEditorCoreMutation(action, payload) {
+  if (!window.sparkCore || typeof window.sparkCore.applyPerformanceEditorMutation !== "function") return null;
+  return window.sparkCore.applyPerformanceEditorMutation(action, payload || {});
+}
+
+function syncPerformanceEditorLibraryState(library) {
+  var nextLibrary = Array.isArray(library) ? library : [];
+  S.performEditorLibrary = nextLibrary;
+  return nextLibrary;
+}
+
+function getPerformanceEditorExportData() {
+  if (window.sparkCore && typeof window.sparkCore.getPerformanceEditorExportData === "function") {
+    return window.sparkCore.getPerformanceEditorExportData();
+  }
+  if (!S.performEditorChart) return { chart: null, json: "", fileName: "chart.json" };
+  return {
+    chart: S.performEditorChart,
+    json: JSON.stringify(S.performEditorChart, null, 2),
+    fileName: (S.performEditorChart.title || "chart").replace(/\s+/g, "_") + ".json"
+  };
+}
+
+function getPerformanceEditorPreviewChart() {
+  if (window.sparkCore && typeof window.sparkCore.getPerformanceEditorPreviewChart === "function") {
+    return window.sparkCore.getPerformanceEditorPreviewChart();
+  }
+  return S.performEditorChart || null;
+}
+
+function getPerformanceEditorPreviewRequest() {
+  if (window.sparkCore && typeof window.sparkCore.startPerformanceEditorPreview === "function") {
+    return window.sparkCore.startPerformanceEditorPreview();
+  }
+  var chart = getPerformanceEditorPreviewChart();
+  if (!chart) return null;
+  return {
+    chart: chart,
+    chartId: chart.id || "generated",
+    arrangementType: chart.arrangementType || S.performArrangementType || "chords",
+    difficulty: S.performDifficulty || "normal",
+    speed: S.performSpeed || 1,
+    mode: S.performMode || "midi",
+    preset: S.performPracticePreset || null
+  };
+}
+
+function getPerformanceRetryRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.startPerformanceRetrySession === "function") {
+    return window.sparkCore.startPerformanceRetrySession(options || {});
+  }
+  options = options || {};
+  return {
+    chart: Object.prototype.hasOwnProperty.call(options, "chart") ? options.chart : null,
+    chartId: Object.prototype.hasOwnProperty.call(options, "chartId") ? options.chartId : (S.performChartId || "generated"),
+    arrangementType: Object.prototype.hasOwnProperty.call(options, "arrangementType") ? options.arrangementType : S.performArrangementType,
+    difficulty: Object.prototype.hasOwnProperty.call(options, "difficulty") ? options.difficulty : S.performDifficulty,
+    speed: Object.prototype.hasOwnProperty.call(options, "speed") ? options.speed : S.performSpeed,
+    mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : S.performMode,
+    preset: Object.prototype.hasOwnProperty.call(options, "preset") ? options.preset : S.performPracticePreset,
+    countIn: Object.prototype.hasOwnProperty.call(options, "countIn") ? !!options.countIn : !!S.performCountIn,
+    targetPhraseIndex: Object.prototype.hasOwnProperty.call(options, "targetPhraseIndex") ? options.targetPhraseIndex : null
+  };
+}
+
+function applyPerformanceCalibrationRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.applyPerformanceCalibrationRequest === "function") {
+    return window.sparkCore.applyPerformanceCalibrationRequest(action, options || {});
+  }
+  options = options || {};
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState(action, {
+      source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (S.performCalibrationSource || "midi"),
+      appliedOffsetMs: Object.prototype.hasOwnProperty.call(options, "appliedOffsetMs") ? options.appliedOffsetMs : null,
+      globalOffsetMs: Object.prototype.hasOwnProperty.call(options, "globalOffsetMs") ? options.globalOffsetMs : (S.performTimingOffsetMs || 0),
+      midiOffsetMs: Object.prototype.hasOwnProperty.call(options, "midiOffsetMs") ? options.midiOffsetMs : (S.performMidiOffsetMs || 0),
+      micOffsetMs: Object.prototype.hasOwnProperty.call(options, "micOffsetMs") ? options.micOffsetMs : (S.performMicOffsetMs || 0)
+    });
+  }
+  return options;
+}
+
+function applyPerformanceNavigationRequest(target, options) {
+  if (window.sparkCore && typeof window.sparkCore.applyPerformanceNavigationRequest === "function") {
+    return window.sparkCore.applyPerformanceNavigationRequest(target, options || {});
+  }
+  return null;
+}
+
+function openPerformanceStatsRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceStats === "function") {
+    return window.sparkCore.openPerformanceStats(options || {});
+  }
+  return null;
+}
+
+function openPerformanceEditorRequest(chart, options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceEditor === "function") {
+    return window.sparkCore.openPerformanceEditor(chart || null, options || {});
+  }
+  return null;
+}
+
+function openPerformanceCalibrationRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceCalibration === "function") {
+    return window.sparkCore.openPerformanceCalibration(options || {});
+  }
+  return applyPerformanceCalibrationRequest("open_calibration", options || {});
+}
+
+function openPerformanceSongSelectionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceSongSelection === "function") {
+    return window.sparkCore.openPerformanceSongSelection(options || {});
+  }
+  return null;
+}
+
+function startSelectedPerformanceSongRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.startSelectedPerformanceSong === "function") {
+    return window.sparkCore.startSelectedPerformanceSong(options || {});
+  }
+  return getPerformanceRetryRequest(options || {});
+}
+
+function openDailyPracticePlanRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openDailyPracticePlan === "function") {
+    return window.sparkCore.openDailyPracticePlan(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+    return window.sparkCore.startSession({
+      flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+      forceRebuild: !!(options && options.forceRebuild)
+    });
+  }
+  return null;
+}
+
+function completeDailyPracticePlanRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeDailyPracticePlan === "function") {
+    return window.sparkCore.completeDailyPracticePlan(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+    return window.sparkCore.completeSession({
+      flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+      markPlanComplete: true,
+      itemId: options && Object.prototype.hasOwnProperty.call(options, "itemId") ? options.itemId : undefined
+    });
+  }
+  return null;
+}
+
+function openGuidedSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openGuidedSession === "function") {
+    return window.sparkCore.openGuidedSession(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+    return window.sparkCore.startSession({
+      flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      sessionNum: options && Object.prototype.hasOwnProperty.call(options, "sessionNum") ? options.sessionNum : undefined
+    });
+  }
+  return null;
+}
+
+function completeGuidedSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeGuidedSession === "function") {
+    return window.sparkCore.completeGuidedSession(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+    var result = window.sparkCore.completeSession({
+      flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      markPlanComplete: true
+    });
+    if (typeof window.sparkCore.syncGuidedRuntimeState === "function") {
+      window.sparkCore.syncGuidedRuntimeState({
+        activeScreen: "guided_done",
+        guidedStep: null,
+        guidedNewMovePhase: null,
+        transport: { status: "completed", positionMs: 0 }
+      });
+    }
+    return result;
+  }
+  return null;
+}
+
+function applyGuidedNavigationRequest(target, options) {
+  if (window.sparkCore && typeof window.sparkCore.applyGuidedNavigationRequest === "function") {
+    return window.sparkCore.applyGuidedNavigationRequest(target, options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function") {
+    if (target === "guided_home") {
+      return window.sparkCore.syncGuidedRuntimeState({
+        activeScreen: "home",
+        guidedStep: null,
+        guidedNewMovePhase: null,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if (target === "guided_done") {
+      return window.sparkCore.syncGuidedRuntimeState({
+        activeScreen: "guided_done",
+        guidedStep: null,
+        guidedNewMovePhase: null,
+        transport: { status: "completed", positionMs: 0 }
+      });
+    }
+  }
+  return null;
+}
+
 // ===== ACTION DISPATCHER =====
 window.act=function(a,v){
   // Delegate to active instrument's handler first
@@ -784,12 +1054,7 @@ window.act=function(a,v){
   }
   if(a==="guidedStop"){
     if(S.metronomeOn)stopMetronome();
-    if(window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function"){
-      window.sparkCore.syncGuidedRuntimeState({
-        activeScreen: "home",
-        transport: { status: "idle", positionMs: 0 }
-      });
-    }
+    applyGuidedNavigationRequest("guided_home");
     S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();return;
   }
   // Dual instrument
@@ -1368,19 +1633,13 @@ window.act=function(a,v){
     if(!isNaN(sgIdx)&&SONGS[sgIdx]){
       var selectedSongId=(SONGS[sgIdx].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
       if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-        window.sparkCore.startSession({
-          flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+        openPerformanceSongSelectionRequest({
           songIndex: sgIdx,
+          songId: selectedSongId,
+          songTitle: SONGS[sgIdx].title || null,
           arrangementType: S.performArrangementType || "chords",
           difficultyId: S.performDifficulty || "normal"
         });
-        if(typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
-          window.sparkCore.syncPerformanceRuntimeState("select_song", {
-            chartId: selectedSongId,
-            arrangementType: S.performArrangementType || "chords",
-            difficulty: S.performDifficulty || "normal"
-          });
-        }
       } else {
         S.performSongData=SONGS[sgIdx];
         S.performSongId=selectedSongId;
@@ -1400,19 +1659,11 @@ window.act=function(a,v){
     var arrangementType=parts[1]||"chords";
     var difficultyId=parts[2]||"normal";
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-      window.sparkCore.startSession({
-        flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+      openPerformanceSongSelectionRequest({
         songId: songId,
         arrangementType: arrangementType,
         difficultyId: difficultyId
       });
-      if(typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
-        window.sparkCore.syncPerformanceRuntimeState("select_song", {
-          chartId: songId,
-          arrangementType: arrangementType,
-          difficulty: difficultyId
-        });
-      }
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
       }else{
@@ -1452,22 +1703,26 @@ window.act=function(a,v){
     return;
   }
   if(a==="openPerfStats"){
-    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
-      window.sparkCore.syncPerformanceRuntimeState("open_stats");
-    }
+    openPerformanceStatsRequest({ focus: "overview" });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERF_STATS}});
     else S.screen=SCR.PERF_STATS;
     render();return;
   }
   if(a==="openEditor"){
-    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
-      window.sparkCore.syncPerformanceRuntimeState("open_editor");
-    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performEditorChart:null,performEditorDirty:false,screen:SCR.PERF_EDITOR}});
     }else{
       S.performEditorChart=null;S.performEditorDirty=false;S.screen=SCR.PERF_EDITOR;
     }
+    openPerformanceEditorRequest(null, {
+      action: "open_editor",
+      source: "blank",
+      dirty: false,
+      mode: S.performEditorMode || "chords",
+      snap: S.performEditorSnap || "1/8",
+      selectedEventId: null,
+      selectedPhraseId: null
+    });
     render();return;
   }
   if(a==="openSkillTree"){
@@ -1481,53 +1736,54 @@ window.act=function(a,v){
   }
   if(a==="skillTreeFocus"){S.skillTreeFocus=v||"overview";render();return;}
   if(a==="openPlan"){
-    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-      window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+    if(window.sparkCore){
+      openDailyPracticePlanRequest();
     }
     S.screen=SCR.PLAN;render();return;
   }
   if(a==="openPerformCalibration"){
-    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
-      window.sparkCore.syncPerformanceRuntimeState("open_calibration", {
-        source: S.performCalibrationSource || "midi"
-      });
-    }
+    openPerformanceCalibrationRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_CALIBRATE}});
     else S.screen=SCR.PERFORM_CALIBRATE;
     render();return;
   }
   if(a==="performCalibrateSource"){
-    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
-      window.sparkCore.syncPerformanceRuntimeState("calibration_source", { source: v||"midi" });
-    }
+    applyPerformanceCalibrationRequest("calibration_source", { source: v||"midi" });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performCalibrationSource:v||"midi"}});
     else S.performCalibrationSource=v||"midi";
     render();return;
   }
   if(a==="performCalibrationStart"){
     var calStartSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(S.performCalibrationSource||"midi");
-    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
-      window.sparkCore.syncPerformanceRuntimeState("calibration_start", {
-        source: calStartSource
-      });
-    }
+    applyPerformanceCalibrationRequest("calibration_start", { source: calStartSource });
     startPerformanceCalibrationRun();render();return;
   }
   if(a==="performCalibrationStop"){
-    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
-      window.sparkCore.syncPerformanceRuntimeState("calibration_stop");
-    }
+    applyPerformanceCalibrationRequest("calibration_stop");
     stopPerformanceCalibration();render();return;
   }
-  if(a==="performCalibrationApply"){applyCalibrationOffset();render();return;}
+  if(a==="performCalibrationApply"){
+    var appliedOffset=applyCalibrationOffset();
+    applyPerformanceCalibrationRequest("calibration_apply", {
+      source: S.performCalibrationSource || "midi",
+      appliedOffsetMs: appliedOffset,
+      globalOffsetMs: S.performTimingOffsetMs || 0,
+      midiOffsetMs: S.performMidiOffsetMs || 0,
+      micOffsetMs: S.performMicOffsetMs || 0
+    });
+    render();return;
+  }
   if(a==="performCalibrationReset"){
-    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
-      window.sparkCore.syncPerformanceRuntimeState("calibration_reset");
-    }
     var resetSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(S.performCalibrationSource||"midi");
     var resetPatch={performCalibrationHits:[]};
     if(resetSource==="midi")resetPatch.performMidiOffsetMs=0;
     if(resetSource==="mic")resetPatch.performMicOffsetMs=0;
+    applyPerformanceCalibrationRequest("calibration_reset", {
+      source: resetSource,
+      globalOffsetMs: S.performTimingOffsetMs || 0,
+      midiOffsetMs: resetSource==="midi" ? 0 : (S.performMidiOffsetMs || 0),
+      micOffsetMs: resetSource==="mic" ? 0 : (S.performMicOffsetMs || 0)
+    });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:resetPatch,save:false});
     }else{
@@ -1538,13 +1794,7 @@ window.act=function(a,v){
     saveState();render();return;
   }
   if(a==="performStatsBack"){
-    if(window.sparkCore&&typeof window.sparkCore.updateRuntimeState==="function"){
-      window.sparkCore.updateRuntimeState({
-        activeScreen: "home",
-        activeTab: TAB.SONGS,
-        transport: { status: "idle", positionMs: 0 }
-      });
-    }
+    applyPerformanceNavigationRequest("songs_home");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
@@ -1552,16 +1802,17 @@ window.act=function(a,v){
     }
     render();return;
   }
-  if(a==="performCalibrationBack"){
-    if(typeof stopPerformanceCalibration==="function")stopPerformanceCalibration();
-    if(window.sparkCore&&typeof window.sparkCore.updateRuntimeState==="function"){
-      window.sparkCore.updateRuntimeState({
-        activeScreen: "home",
-        activeTab: TAB.SONGS,
-        transport: { status: "idle", positionMs: 0 },
-        performanceCalibrationMode: false
+  if(a==="performStatsFocus"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("configure_stats", {
+        focus: v || "overview"
       });
     }
+    render();return;
+  }
+  if(a==="performCalibrationBack"){
+    if(typeof stopPerformanceCalibration==="function")stopPerformanceCalibration();
+    applyPerformanceNavigationRequest("songs_home", { performanceCalibrationMode: false });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
@@ -1578,16 +1829,16 @@ window.act=function(a,v){
     recordCalibrationHit(targetMs,nowMs);render();return;
   }
   if(a==="completePlan"){
-    if(window.sparkCore && typeof window.sparkCore.completeSession==="function"){
-      window.sparkCore.completeSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, markPlanComplete: true });
+    if(window.sparkCore){
+      completeDailyPracticePlanRequest();
     } else {
       completePracticePlan();
     }
     render();return;
   }
   if(a==="regeneratePlan"){
-    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-      window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, forceRebuild: true });
+    if(window.sparkCore){
+      openDailyPracticePlanRequest({ forceRebuild: true });
     } else {
       buildPracticePlan();
     }
@@ -1601,37 +1852,109 @@ window.act=function(a,v){
     else {S.screen=SCR.HOME;S.tab=TAB.SONGS;}
     render();return;
   }
-  if(a==="editorMode"){S.performEditorMode=v;render();return;}
-  if(a==="editorSnap"){S.performEditorSnap=v;render();return;}
+  if(a==="editorMode"){
+    syncPerformanceEditorDocumentState(S.performEditorChart, { mode: v });
+    S.performEditorMode=v;render();return;
+  }
+  if(a==="editorSnap"){
+    syncPerformanceEditorDocumentState(S.performEditorChart, { snap: v });
+    S.performEditorSnap=v;render();return;
+  }
   if(a==="editorNew"){
-    S.performEditorChart={id:"custom_"+Date.now(),title:"New Chart",artist:"Custom",bpm:90,beatsPerBar:4,arrangementType:S.performEditorMode,events:[],phrases:[{id:0,name:"Phrase 1",startSec:0,endSec:8}]};
+    var newEditorChartResult=applyPerformanceEditorCoreMutation("new_blank", { mode: S.performEditorMode });
+    S.performEditorChart=newEditorChartResult&&newEditorChartResult.chart
+      ? newEditorChartResult.chart
+      : {id:"custom_"+Date.now(),title:"New Chart",artist:"Custom",bpm:90,beatsPerBar:4,arrangementType:S.performEditorMode,events:[],phrases:[{id:0,name:"Phrase 1",startSec:0,endSec:8}]};
+    syncPerformanceEditorDocumentState(S.performEditorChart, {
+      source: "blank",
+      dirty: true,
+      selectedEventId: null,
+      selectedPhraseId: null
+    });
     S.performEditorDirty=true;render();return;
   }
   if(a==="editorFromSong"){
     if(S.performSongData){
       var chart=buildPerformanceChartFromSong(S.performSongData,"builtin",S.performEditorMode);
-      if(chart){S.performEditorChart=chart;S.performEditorDirty=true;render();}
+      if(chart){
+        S.performEditorChart=chart;
+        syncPerformanceEditorDocumentState(chart, {
+          source: "song",
+          dirty: true,
+          selectedEventId: null,
+          selectedPhraseId: null
+        });
+        S.performEditorDirty=true;render();
+      }
     }
     return;
   }
-  if(a==="editorTitle"){if(S.performEditorChart){S.performEditorChart.title=v;S.performEditorDirty=true;render();}return;}
-  if(a==="editorBpm"){if(S.performEditorChart){S.performEditorChart.bpm=parseInt(v)||90;S.performEditorDirty=true;render();}return;}
-  if(a==="editorSelectEvent"){S.performEditorSelectedEventId=parseInt(v);render();return;}
+  if(a==="editorTitle"){
+    if(S.performEditorChart){
+      var titleMutation=applyPerformanceEditorCoreMutation("set_title", { title: v });
+      S.performEditorChart=titleMutation&&titleMutation.chart ? titleMutation.chart : S.performEditorChart;
+      S.performEditorChart.title=v;
+      syncPerformanceEditorDocumentState(S.performEditorChart, { source: "existing", dirty: true });
+      S.performEditorDirty=true;render();
+    }
+    return;
+  }
+  if(a==="editorBpm"){
+    if(S.performEditorChart){
+      var bpmValue=parseInt(v)||90;
+      var bpmMutation=applyPerformanceEditorCoreMutation("set_bpm", { bpm: bpmValue });
+      S.performEditorChart=bpmMutation&&bpmMutation.chart ? bpmMutation.chart : S.performEditorChart;
+      S.performEditorChart.bpm=bpmValue;
+      syncPerformanceEditorDocumentState(S.performEditorChart, { source: "existing", dirty: true });
+      S.performEditorDirty=true;render();
+    }
+    return;
+  }
+  if(a==="editorSelectEvent"){
+    S.performEditorSelectedEventId=parseInt(v);
+    var selectedEventMutation=applyPerformanceEditorCoreMutation("select_event", { id: S.performEditorSelectedEventId });
+    if(selectedEventMutation&&selectedEventMutation.chart)S.performEditorChart=selectedEventMutation.chart;
+    var selectedEditorEvent=null;
+    if(S.performEditorChart&&S.performEditorChart.events){
+      for(var selectedIdx=0;selectedIdx<S.performEditorChart.events.length;selectedIdx++){
+        if(S.performEditorChart.events[selectedIdx].id===S.performEditorSelectedEventId){selectedEditorEvent=S.performEditorChart.events[selectedIdx];break;}
+      }
+    }
+    syncPerformanceEditorDocumentState(S.performEditorChart, {
+      source: S.performEditorChart ? "existing" : "blank",
+      dirty: !!S.performEditorDirty,
+      selectedEventId: S.performEditorSelectedEventId,
+      selectedEvent: selectedEditorEvent
+    });
+    render();return;
+  }
   if(a==="editorAddEvent"){
     if(S.performEditorChart){
-      var evts=S.performEditorChart.events;
-      var maxId=0;for(var ei=0;ei<evts.length;ei++)if(evts[ei].id>maxId)maxId=evts[ei].id;
-      var lastT=evts.length?evts[evts.length-1].t+evts[evts.length-1].dur:0;
-      var beatDur=60/(S.performEditorChart.bpm||90);
-      evts.push({id:maxId+1,t:lastT,dur:beatDur,type:S.performEditorMode==="lead"?"note":"chord",chord:"",laneLabel:"?",notes:[],strum:"down"});
+      var addEventMutation=applyPerformanceEditorCoreMutation("add_event", { mode: S.performEditorMode });
+      if(addEventMutation&&addEventMutation.chart)S.performEditorChart=addEventMutation.chart;
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "existing",
+        dirty: true,
+        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+        selectedEvent: null
+      });
       S.performEditorDirty=true;render();
     }
     return;
   }
   if(a==="editorDeleteEvent"){
     if(S.performEditorChart){
-      S.performEditorChart.events=S.performEditorChart.events.filter(function(e){return e.id!==parseInt(v);});
+      var deleteEventId=parseInt(v);
+      var deleteEventMutation=applyPerformanceEditorCoreMutation("delete_event", { id: deleteEventId });
+      if(deleteEventMutation&&deleteEventMutation.chart)S.performEditorChart=deleteEventMutation.chart;
+      else S.performEditorChart.events=S.performEditorChart.events.filter(function(e){return e.id!==deleteEventId;});
       if(S.performEditorSelectedEventId===parseInt(v))S.performEditorSelectedEventId=null;
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "existing",
+        dirty: true,
+        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+        selectedEvent: null
+      });
       S.performEditorDirty=true;render();
     }
     return;
@@ -1640,14 +1963,20 @@ window.act=function(a,v){
     try{
       var p=JSON.parse(v);
       if(S.performEditorChart){
+        var editorMutation=applyPerformanceEditorCoreMutation("update_event", p);
+        if(editorMutation&&editorMutation.chart)S.performEditorChart=editorMutation.chart;
         for(var ee=0;ee<S.performEditorChart.events.length;ee++){
           if(S.performEditorChart.events[ee].id===p.id){
-            if(p.prop==="label"){S.performEditorChart.events[ee].laneLabel=p.val;S.performEditorChart.events[ee].chord=p.val;}
-            if(p.prop==="t")S.performEditorChart.events[ee].t=parseFloat(p.val)||0;
-            if(p.prop==="dur")S.performEditorChart.events[ee].dur=parseFloat(p.val)||0;
+            var editedEvent=S.performEditorChart.events[ee];
             break;
           }
         }
+        syncPerformanceEditorDocumentState(S.performEditorChart, {
+          source: "existing",
+          dirty: true,
+          selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+          selectedEvent: editedEvent || null
+        });
         S.performEditorDirty=true;render();
       }
     }catch(e){}
@@ -1655,55 +1984,149 @@ window.act=function(a,v){
   }
   if(a==="editorAddPhrase"){
     if(S.performEditorChart){
+      var addPhraseMutation=applyPerformanceEditorCoreMutation("add_phrase");
+      if(addPhraseMutation&&addPhraseMutation.chart)S.performEditorChart=addPhraseMutation.chart;
       var ph=S.performEditorChart.phrases;
-      var lastEnd=ph.length?ph[ph.length-1].endSec:0;
-      ph.push({id:ph.length,name:"Phrase "+(ph.length+1),startSec:lastEnd,endSec:lastEnd+8});
+      var addedPhrase=ph[ph.length-1];
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "existing",
+        dirty: true,
+        selectedPhraseId: addedPhrase.id,
+        selectedPhrase: addedPhrase
+      });
+      S.performEditorDirty=true;render();
+    }
+    return;
+  }
+  if(a==="editorSelectPhrase"){
+    var selectedPhraseId=parseInt(v,10);
+    var selectedPhraseMutation=applyPerformanceEditorCoreMutation("select_phrase", { id: selectedPhraseId });
+    if(selectedPhraseMutation&&selectedPhraseMutation.chart)S.performEditorChart=selectedPhraseMutation.chart;
+    var selectedPhrase=null;
+    if(S.performEditorChart&&S.performEditorChart.phrases){
+      for(var phraseIndex=0;phraseIndex<S.performEditorChart.phrases.length;phraseIndex++){
+        if(S.performEditorChart.phrases[phraseIndex].id===selectedPhraseId){selectedPhrase=S.performEditorChart.phrases[phraseIndex];break;}
+      }
+    }
+    syncPerformanceEditorDocumentState(S.performEditorChart, {
+      source: S.performEditorChart ? "existing" : "blank",
+      dirty: !!S.performEditorDirty,
+      selectedPhraseId: selectedPhrase ? selectedPhrase.id : null,
+      selectedPhrase: selectedPhrase
+    });
+    render();return;
+  }
+  if(a==="editorPhrase"){
+    try{
+      var phrasePatch=JSON.parse(v);
+      var updatedPhrase=null;
+      if(S.performEditorChart&&S.performEditorChart.phrases){
+        var phraseMutation=applyPerformanceEditorCoreMutation("update_phrase", phrasePatch);
+        if(phraseMutation&&phraseMutation.chart)S.performEditorChart=phraseMutation.chart;
+        for(var phraseEditIndex=0;phraseEditIndex<S.performEditorChart.phrases.length;phraseEditIndex++){
+          if(S.performEditorChart.phrases[phraseEditIndex].id===phrasePatch.id){
+            updatedPhrase=S.performEditorChart.phrases[phraseEditIndex];
+            break;
+          }
+        }
+        syncPerformanceEditorDocumentState(S.performEditorChart, {
+          source: "existing",
+          dirty: true,
+          selectedPhraseId: updatedPhrase ? updatedPhrase.id : null,
+          selectedPhrase: updatedPhrase
+        });
+        S.performEditorDirty=true;render();
+      }
+    }catch(e){}
+    return;
+  }
+  if(a==="editorDeletePhrase"){
+    var deletePhraseId=parseInt(v,10);
+    if(S.performEditorChart&&S.performEditorChart.phrases){
+      var deletePhraseMutation=applyPerformanceEditorCoreMutation("delete_phrase", { id: deletePhraseId });
+      if(deletePhraseMutation&&deletePhraseMutation.chart)S.performEditorChart=deletePhraseMutation.chart;
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "existing",
+        dirty: true,
+        selectedPhraseId: null,
+        selectedPhrase: null
+      });
       S.performEditorDirty=true;render();
     }
     return;
   }
   if(a==="editorSave"){
     if(S.performEditorChart){
-      if(!Array.isArray(S.performEditorLibrary))S.performEditorLibrary=[];
-      var exists=-1;
-      for(var si=0;si<S.performEditorLibrary.length;si++){
-        if(S.performEditorLibrary[si].id===S.performEditorChart.id){exists=si;break;}
-      }
       var copy=JSON.parse(JSON.stringify(S.performEditorChart));
-      if(exists>=0)S.performEditorLibrary[exists]=copy;
-      else S.performEditorLibrary.push(copy);
+      var saveMutation=applyPerformanceEditorCoreMutation("save_to_library");
+      if(saveMutation&&Array.isArray(saveMutation.library))syncPerformanceEditorLibraryState(saveMutation.library);
+      else{
+        if(!Array.isArray(S.performEditorLibrary))S.performEditorLibrary=[];
+        var exists=-1;
+        for(var si=0;si<S.performEditorLibrary.length;si++){
+          if(S.performEditorLibrary[si].id===S.performEditorChart.id){exists=si;break;}
+        }
+        if(exists>=0)S.performEditorLibrary[exists]=copy;
+        else S.performEditorLibrary.push(copy);
+      }
+      syncPerformanceEditorDocumentState(copy, {
+        source: "library",
+        dirty: false,
+        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null
+      });
       S.performEditorDirty=false;saveState();render();
     }
     return;
   }
   if(a==="editorLoad"){
     var idx=parseInt(v);
-    if(S.performEditorLibrary&&S.performEditorLibrary[idx]){
-      S.performEditorChart=JSON.parse(JSON.stringify(S.performEditorLibrary[idx]));
+    var loadMutation=applyPerformanceEditorCoreMutation("load_from_library", { index: idx });
+    if(loadMutation&&Array.isArray(loadMutation.library))syncPerformanceEditorLibraryState(loadMutation.library);
+    if((loadMutation&&loadMutation.chart) || (S.performEditorLibrary&&S.performEditorLibrary[idx])){
+      S.performEditorChart=loadMutation&&loadMutation.chart ? loadMutation.chart : JSON.parse(JSON.stringify(S.performEditorLibrary[idx]));
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "library",
+        dirty: false,
+        selectedEventId: null,
+        selectedPhraseId: null
+      });
       S.performEditorDirty=false;S.performEditorSelectedEventId=null;render();
     }
     return;
   }
   if(a==="editorDelete"){
     var di=parseInt(v);
+    var deleteMutation=applyPerformanceEditorCoreMutation("delete_from_library", { index: di });
+    if(deleteMutation&&Array.isArray(deleteMutation.library)){
+      syncPerformanceEditorLibraryState(deleteMutation.library);
+      saveState();render();
+      return;
+    }
     if(S.performEditorLibrary&&S.performEditorLibrary[di]){
       S.performEditorLibrary.splice(di,1);saveState();render();
     }
     return;
   }
   if(a==="editorExport"){
-    if(S.performEditorChart){
-      var json=JSON.stringify(S.performEditorChart,null,2);
+    var exportData=getPerformanceEditorExportData();
+    if(exportData.chart){
+      var json=exportData.json;
       var blob=new Blob([json],{type:"application/json"});
       var url=URL.createObjectURL(blob);
-      var a2=document.createElement("a");a2.href=url;a2.download=(S.performEditorChart.title||"chart").replace(/\s+/g,"_")+".json";
+      var a2=document.createElement("a");a2.href=url;a2.download=exportData.fileName;
       document.body.appendChild(a2);a2.click();document.body.removeChild(a2);URL.revokeObjectURL(url);
     }
     return;
   }
   if(a==="editorPreview"){
-    if(S.performEditorChart&&S.performEditorChart.events&&S.performEditorChart.events.length){
-      startPerformance(S.performEditorChart);
+    var previewRequest=getPerformanceEditorPreviewRequest();
+    if(previewRequest&&previewRequest.chart&&previewRequest.chart.events&&previewRequest.chart.events.length){
+      startPerformance(previewRequest.chart,{
+        difficulty:previewRequest.difficulty,
+        speed:previewRequest.speed,
+        preset:previewRequest.preset,
+        mode:previewRequest.mode
+      });
     }
     return;
   }
@@ -1727,7 +2150,18 @@ window.act=function(a,v){
     else {S.tab=TAB.SONGS;S.screen=SCR.HOME;}
     render();return;
   }
-  if(a==="performArrangement"){S.performArrangementType=v||"chords";saveState();render();return;}
+  if(a==="performArrangement"){
+    S.performArrangementType=v||"chords";
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      var arrangementState = window.sparkCore.getRuntimeState();
+      window.sparkCore.syncPerformanceRuntimeState("configure", {
+        arrangementType: S.performArrangementType,
+        songIndex: arrangementState.performanceSongIndex,
+        songTitle: arrangementState.performanceSongTitle
+      });
+    }
+    saveState();render();return;
+  }
   if(a==="importSongAudio"){
     if(!window.electron||!window.electron.stems){alert("Stem separation requires the desktop app.");return;}
     var importSongId=v;
@@ -1827,6 +2261,12 @@ window.act=function(a,v){
       ? coreView.plan.context.performanceSong || null
       : null;
     var selectedSong = performanceSong && performanceSong.songData ? performanceSong.songData : S.performSongData;
+    var selectedSongIndex = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceSongIndex")
+      ? coreView.runtimeState.performanceSongIndex
+      : null;
+    var selectedSongTitle = coreView && coreView.runtimeState && coreView.runtimeState.performanceSongTitle
+      ? coreView.runtimeState.performanceSongTitle
+      : (selectedSong && selectedSong.title ? selectedSong.title : null);
     var arrangementType = performanceSong && performanceSong.arrangementType ? performanceSong.arrangementType : S.performArrangementType;
     var difficultyId = coreView && coreView.runtimeState && coreView.runtimeState.performanceDifficultyId
       ? coreView.runtimeState.performanceDifficultyId
@@ -1836,18 +2276,43 @@ window.act=function(a,v){
       : S.performSpeed;
     if(selectedSong){
       var chart=buildPerformanceChartFromSong(selectedSong,"builtin",arrangementType);
-      if(chart)startPerformance(chart,{difficulty:difficultyId,speed:speed,preset:S.performPracticePreset,mode:S.performMode});
+      if(chart){
+        var startRequest = startSelectedPerformanceSongRequest({
+          chart: chart,
+          chartId: chart.id || null,
+          songIndex: selectedSongIndex,
+          songTitle: selectedSongTitle,
+          difficulty: difficultyId,
+          arrangementType: arrangementType,
+          speed: speed,
+          preset: S.performPracticePreset,
+          mode: S.performMode,
+          countIn: !!S.performCountIn
+        });
+        startPerformance(chart,{difficulty:startRequest.difficulty,speed:startRequest.speed,preset:startRequest.preset,mode:startRequest.mode});
+      }
     }
     return;
+  }
+  if(a==="performSongBack"){
+    applyPerformanceNavigationRequest("songs_home");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
   }
   if(a==="pausePerform"){pausePerformance();return;}
   if(a==="resumePerform"){resumePerformance();return;}
   if(a==="stopPerform"){
     stopPerformance();
+    var performanceStopState = applyPerformanceNavigationRequest("return_after_stop");
+    var shouldReturnToSong = performanceStopState && performanceStopState.activeScreen === "performance_song";
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:S.performSongData?{screen:SCR.PERFORM_SONG}:{screen:SCR.HOME,tab:TAB.SONGS}});
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:shouldReturnToSong?{screen:SCR.PERFORM_SONG}:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
-      if(S.performSongData){S.screen=SCR.PERFORM_SONG;}else{S.screen=SCR.HOME;S.tab=TAB.SONGS;}
+      if(shouldReturnToSong){S.screen=SCR.PERFORM_SONG;}else{S.screen=SCR.HOME;S.tab=TAB.SONGS;}
     }
     render();return;
   }
@@ -1861,14 +2326,22 @@ window.act=function(a,v){
   if(a==="performDifficulty"){
     applyPerformanceDifficultyToState(v||"normal");
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
-      window.sparkCore.syncPerformanceRuntimeState("configure", { difficulty: S.performDifficulty });
+      window.sparkCore.syncPerformanceRuntimeState("configure", {
+        difficulty: S.performDifficulty,
+        songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
+        songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
+      });
     }
     saveState();render();return;
   }
   if(a==="performSpeed"){
     S.performSpeed=parseFloat(v);PerformanceTransport.setSpeed(S.performSpeed);
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
-      window.sparkCore.syncPerformanceRuntimeState("configure", { speed: S.performSpeed });
+      window.sparkCore.syncPerformanceRuntimeState("configure", {
+        speed: S.performSpeed,
+        songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
+        songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
+      });
     }
     saveState();render();return;
   }
@@ -1888,18 +2361,15 @@ window.act=function(a,v){
   if(a==="performCalibrate"){startCalibration();return;}
   if(a==="performCalibrateTap"){recordCalibrationTap();return;}
   if(a==="performRetry"){
-    if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
-      window.sparkCore.syncPerformanceRuntimeState("start", {
-        chartId: S.performChartId,
-        difficulty: S.performDifficulty,
-        arrangementType: S.performArrangementType,
-        speed: S.performSpeed,
-        mode: S.performMode,
-        preset: S.performPracticePreset,
-        countIn: !!S.performCountIn
-      });
-    }
-    startPerformance(S.performChartId);return;
+    var retryRequest=getPerformanceRetryRequest({
+      chartId: S.performChartId
+    });
+    startPerformance(retryRequest.chartId,{
+      difficulty:retryRequest.difficulty,
+      speed:retryRequest.speed,
+      preset:retryRequest.preset,
+      mode:retryRequest.mode
+    });return;
   }
   if(a==="performDebug"){S.performDebug=!S.performDebug;render();return;}
   if(a==="performRetryPhrase"){
@@ -1913,21 +2383,15 @@ window.act=function(a,v){
       var weakPhrase=S.performChart.phrases[weakIdx];
       if(weakPhrase){
         S.performTargetPhrase=weakIdx;
-        if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
-          window.sparkCore.syncPerformanceRuntimeState("start", {
-            chartId: S.performChartId || (S.performChart && S.performChart.id) || "generated",
-            difficulty: S.performDifficulty,
-            arrangementType: S.performArrangementType,
-            speed: S.performSpeed,
-            mode: S.performMode,
-            preset: S.performPracticePreset,
-            countIn: !!S.performCountIn
-          });
-        }
-        startPerformance(S.performChartId||S.performChart,{
-          mode:S.performMode,
-          difficulty:S.performDifficulty,
-          speed:S.performSpeed
+        var retryPhraseRequest=getPerformanceRetryRequest({
+          chart: S.performChart,
+          chartId: S.performChartId || (S.performChart && S.performChart.id) || "generated",
+          targetPhraseIndex: weakIdx
+        });
+        startPerformance(retryPhraseRequest.chartId||retryPhraseRequest.chart,{
+          mode:retryPhraseRequest.mode,
+          difficulty:retryPhraseRequest.difficulty,
+          speed:retryPhraseRequest.speed
         });
         // Set loop after start (chart needs to load first) - use setTimeout to let it resolve
         setTimeout(function(){
@@ -1942,31 +2406,18 @@ window.act=function(a,v){
     return;
   }
   if(a==="performDoneSongs"){
-    if(window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function"){
-      window.sparkCore.updateRuntimeState({
-        activeScreen:"home",
-        activeTab:TAB.SONGS,
-        transport:{ status:"idle", positionMs:0 }
-      });
-    }
+    applyPerformanceNavigationRequest("songs_home");
     act("tab","songs");
     return;
   }
   if(a==="guidedDoneHome"){
-    if(window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function"){
-      window.sparkCore.syncGuidedRuntimeState({
-        activeScreen:"home",
-        guidedStep:null,
-        guidedNewMovePhase:null,
-        transport:{ status:"idle", positionMs:0 }
-      });
-    }
+    applyGuidedNavigationRequest("guided_home");
     act("tab","practice");
     return;
   }
   if(a==="completePlanItem"){
-    if(window.sparkCore && typeof window.sparkCore.completeSession==="function"){
-      window.sparkCore.completeSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, itemId: v });
+    if(window.sparkCore){
+      completeDailyPracticePlanRequest({ itemId: v });
     } else if(typeof markPracticePlanItem==="function"){
       markPracticePlanItem(v);
     }

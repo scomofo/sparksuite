@@ -2,6 +2,9 @@ function performCalibrationPage(){
   var calibrationView = getPerformanceCalibrationView();
   var source = calibrationView.source;
   var calibrationMode = calibrationView.mode;
+  var globalOffsetMs = calibrationView.globalOffsetMs;
+  var midiOffsetMs = calibrationView.midiOffsetMs;
+  var micOffsetMs = calibrationView.micOffsetMs;
   var h = '';
   h += '<div class="card mb16">';
   h += '<h2>Performance Calibration</h2>';
@@ -15,9 +18,9 @@ function performCalibrationPage(){
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<div>Global Offset: '+(S.performTimingOffsetMs||0)+' ms</div>';
-  h += '<div>MIDI Offset: '+(S.performMidiOffsetMs||0)+' ms</div>';
-  h += '<div>Mic Offset: '+(S.performMicOffsetMs||0)+' ms</div>';
+  h += '<div>Global Offset: '+globalOffsetMs+' ms</div>';
+  h += '<div>MIDI Offset: '+midiOffsetMs+' ms</div>';
+  h += '<div>Mic Offset: '+micOffsetMs+' ms</div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
@@ -53,6 +56,15 @@ function getPerformanceCalibrationView(){
       : (S.performCalibrationSource || "midi"),
     mode: runtimeState && typeof runtimeState.performanceCalibrationMode === "boolean"
       ? runtimeState.performanceCalibrationMode
-      : !!S.performCalibrationMode
+      : !!S.performCalibrationMode,
+    globalOffsetMs: runtimeState && typeof runtimeState.performanceTimingOffsetMs === "number"
+      ? runtimeState.performanceTimingOffsetMs
+      : (S.performTimingOffsetMs || 0),
+    midiOffsetMs: runtimeState && typeof runtimeState.performanceMidiOffsetMs === "number"
+      ? runtimeState.performanceMidiOffsetMs
+      : (S.performMidiOffsetMs || 0),
+    micOffsetMs: runtimeState && typeof runtimeState.performanceMicOffsetMs === "number"
+      ? runtimeState.performanceMicOffsetMs
+      : (S.performMicOffsetMs || 0)
   };
 }

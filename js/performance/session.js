@@ -512,12 +512,21 @@ function finishPerformance() {
   var xpAward = Math.max(5, Math.round(S.performResults.accuracy / 10));
   var corePerformanceResult = null;
   if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-    corePerformanceResult = window.sparkCore.completeSession({
-      flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
-      markPlanComplete: true,
-      performanceResults: S.performResults,
-      xpAwarded: xpAward
-    });
+    var completionRequest = typeof window.sparkCore.buildPerformanceCompletionRequest === "function"
+      ? window.sparkCore.buildPerformanceCompletionRequest({
+          performanceResults: S.performResults,
+          xpAwarded: xpAward,
+          chartId: S.performChartId || "unknown",
+          arrangementType: (S.performChart && S.performChart.arrangementType) || S.performArrangementType,
+          difficultyId: S.performDifficulty
+        })
+      : {
+          flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+          markPlanComplete: true,
+          performanceResults: S.performResults,
+          xpAwarded: xpAward
+        };
+    corePerformanceResult = window.sparkCore.completeSession(completionRequest);
     if (corePerformanceResult && typeof corePerformanceResult.xpAwarded === "number") {
       xpAward = corePerformanceResult.xpAwarded;
     }

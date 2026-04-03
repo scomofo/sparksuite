@@ -3,7 +3,7 @@
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
-  if (!song) return '<div class="perform-page text-center"><p>No song selected.</p><button class="btn" onclick="act(\'tab\',\'songs\')">Back</button></div>';
+  if (!song) return '<div class="perform-page text-center"><p>No song selected.</p><button class="btn" onclick="act(\'performSongBack\')">Back</button></div>';
 
   var sid = performanceSongView.songId || "unknown";
   var arrType = performanceSongView.arrangementType || "chords";
@@ -14,7 +14,7 @@ function performSongPage() {
 
   // Header
   h += '<div class="perform-header">';
-  h += '<button class="back-btn" onclick="act(\'tab\',\'songs\')">&larr; Back</button>';
+  h += '<button class="back-btn" onclick="act(\'performSongBack\')">&larr; Back</button>';
   h += '<div class="perform-title"><strong>' + escHTML(song.title) + '</strong>';
   h += '<span class="perform-artist">' + escHTML(song.artist || "") + '</span></div>';
   h += '</div>';
