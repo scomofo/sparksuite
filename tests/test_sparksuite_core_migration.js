@@ -181,6 +181,55 @@ test("startSession returns a SessionPlan and syncs the legacy practice plan", fu
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "session_1");
 });
 
+test("SparkCore exposes engine-owned runtime state for active session context", function() {
+  var core = createDefaultSparkCore();
+  var initialState = core.getRuntimeState();
+
+  assert.strictEqual(initialState.activeFlow, null);
+  assert.strictEqual(initialState.transport.status, "idle");
+
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+  var runtimeState = core.getRuntimeState();
+  var view = core.getActiveSessionView();
+
+  assert.strictEqual(runtimeState.activeFlow, "daily_practice");
+  assert.strictEqual(runtimeState.activeInstrumentId, "chordspark");
+  assert.strictEqual(runtimeState.activeInstrumentType, "guitar");
+  assert.strictEqual(runtimeState.activePlanId, plan.id);
+  assert.strictEqual(runtimeState.activeSegmentId, plan.segments[0].id);
+  assert.strictEqual(runtimeState.activeScreen, "daily_practice");
+  assert.strictEqual(runtimeState.transport.status, "ready");
+  assert.strictEqual(runtimeState.transport.positionMs, 0);
+  assert.strictEqual(view.plan, plan);
+  assert.strictEqual(view.runtimeState, runtimeState);
+  assert.strictEqual(view.lastSessionOutcome, null);
+});
+
+test("SparkCore runtime state tracks manual patches and completion summaries", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  core.updateRuntimeState({
+    activeSegmentId: plan.segments[1].id,
+    transport: { status: "running", positionMs: 6400 }
+  });
+
+  var midState = core.getRuntimeState();
+  assert.strictEqual(midState.activeSegmentId, plan.segments[1].id);
+  assert.strictEqual(midState.transport.status, "running");
+  assert.strictEqual(midState.transport.positionMs, 6400);
+
+  core.completeSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, itemId: plan.segments[0].id });
+  var result = core.completeSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, itemId: plan.segments[1].id });
+  var completedState = core.getRuntimeState();
+
+  assert.strictEqual(completedState.transport.status, "completed");
+  assert.strictEqual(completedState.lastCompletedSessionId, plan.id);
+  assert.strictEqual(completedState.lastCompletedFlow, "daily_practice");
+  assert.strictEqual(completedState.lastOutcomeSummary.sessionId, plan.id);
+  assert.strictEqual(completedState.lastOutcomeSummary.xpAwarded, result.xpAwarded);
+});
+
 test("completeSession marks a single session segment complete through progress engine", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });

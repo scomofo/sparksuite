@@ -12,6 +12,8 @@ Primary source plans:
 - `docs/superpowers/plans/2026-03-31-rocksmith-performance-mode.md`
 - `docs/superpowers/plans/2026-04-02-progression-system.md`
 - `docs/superpowers/plans/2026-04-02-phase-1-handoff-backlog.md`
+- `docs/superpowers/plans/2026-04-02-phase-2-convergence-backlog.md`
+- `docs/superpowers/plans/2026-04-02-phase-3-platform-backlog.md`
 - SparkSuite ukulele module handoff and fretted-strings tree follow-up
 - Download handoffs for SparkSuite rhythm gameplay and related curriculum extensions
 
@@ -125,6 +127,21 @@ Primary source plans:
 - Tuner runtime flags, dark-mode toggling, and onboarding completion in `js/app.js` now also route their simple state transitions through the shared runtime helper instead of direct field mutation.
   - `js/sparksuite/bridges/progress_bridge.js`
   - `js/app.js`
+- Metronome and chord-detect state flips in `js/audio.js` now also route their simple runtime/error state through the shared runtime helper, which pushes another tool boundary away from direct `S.*` mutation.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/audio.js`
+- Audio-input testing and MIDI device/output state in `js/audio.js` now also route their simple setup/selection state through the shared runtime helper, leaving the live signal polling local but reducing more direct shell-owned device state.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/audio.js`
+- Stem playback state in `js/audio.js` now also routes simple play/pause/current-time/duration/reset flags through the shared runtime helper, leaving the actual `Audio` objects local while trimming more direct media-state ownership.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/audio.js`
+- Performance/editor screen-open and selection state in `js/app.js` now also routes more simple performance-song, editor, stats, skill-tree, calibration, and stop-return transitions through the shared runtime helper instead of direct inline screen mutation.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+- Stem-separation UI state and song-audio import status in `js/app.js` now also route their simple status/progress/screen transitions through the shared runtime helper, leaving the Electron file-processing flow local while reducing more shell-owned UI state.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
 - Ukulele now exists as a module-backed instrument instead of a core-engine fork.
   - New SparkSuite content and adapter files under `js/sparksuite/instruments/ukulele/`
   - Launcher/onboarding registration in `js/instruments/ukulele/register.js`, `js/onboarding/ui.js`, and `js/onboarding/actions.js`
@@ -143,10 +160,18 @@ Primary source plans:
   - `js/performance/practice_engine.js`
   - `js/practice/engine.js`
   - `tests/test_sparksuite_legacy_bridge_cleanup.js`
+- Phase 2 convergence has started with an engine-owned SparkCore runtime state model instead of only legacy-state projection.
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- The shared practice plan screen can now prefer a core-backed active session view instead of reading only legacy practice-plan state.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/pages/plan.js`
+  - `tests/test_sparksuite_core_migration.js`
 
 ## Partial
 
 - SparkSuite core owns major entry and completion flows, but not every runtime path in the app is fully migrated.
+- SparkCore now exposes an explicit runtime-state API, and the plan screen has started consuming it, but pages and live loops still mostly read from legacy shell state first.
 - SparkSuite core now owns more of the piano runtime too, but broader piano gameplay/runtime and other legacy instrument flows still have local orchestration paths.
 - Performance session orchestration is much thinner now, but the live transport/game loop still lives outside SparkCore.
 - Rhythm-highway architecture exists and is playable, but later-phase gameplay features are still partial.

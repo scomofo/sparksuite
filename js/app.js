@@ -1173,14 +1173,29 @@ window.act=function(a,v){
   // === Stem Separation ===
   if(a==="stemOpenFile"){
     if(!window.electron)return;
-    S.stemError=null;render();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemError:null}});
+    }else{
+      S.stemError=null;
+    }
+    render();
     window.electron.stems.openFile().then(function(result){
       if(!result)return;
-      S.stemFile=result;S.stemError=null;S.stemStatus="idle";render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemFile:result,stemError:null,stemStatus:"idle"}});
+      }else{
+        S.stemFile=result;S.stemError=null;S.stemStatus="idle";
+      }
+      render();
       // Check cache first
       window.electron.stems.checkCache(result.filePath).then(function(cached){
         if(cached){
-          S.stemPaths=cached;S.stemStatus="ready";render();
+          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPaths:cached,stemStatus:"ready"}});
+          }else{
+            S.stemPaths=cached;S.stemStatus="ready";
+          }
+          render();
           // Pre-load audio URLs
           _loadStemFileUrls(cached);
         } else {
@@ -1192,35 +1207,64 @@ window.act=function(a,v){
   }
   if(a==="stemSeparate"){
     if(!window.electron||!S.stemFile)return;
-    S.stemStatus="separating";S.stemProgress=0;S.stemError=null;render();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"separating",stemProgress:0,stemError:null}});
+    }else{
+      S.stemStatus="separating";S.stemProgress=0;S.stemError=null;
+    }
+    render();
     // Listen for progress
     var removeProgress=window.electron.stems.onProgress(function(data){
       // Estimate progress from stderr output
       if(data.line){
         // demucs.cpp outputs segment info; rough estimate
-        S.stemProgress=Math.min(95,S.stemProgress+2);
+        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemProgress:Math.min(95,S.stemProgress+2)},save:false});
+        }else{
+          S.stemProgress=Math.min(95,S.stemProgress+2);
+        }
         render();
       }
     });
     window.electron.stems.separate(S.stemFile.filePath).then(function(result){
       removeProgress();
-      S.stemPaths=result.stemPaths;S.stemStatus="ready";S.stemProgress=100;render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPaths:result.stemPaths,stemStatus:"ready",stemProgress:100}});
+      }else{
+        S.stemPaths=result.stemPaths;S.stemStatus="ready";S.stemProgress=100;
+      }
+      render();
       _loadStemFileUrls(result.stemPaths);
     }).catch(function(err){
       removeProgress();
-      S.stemStatus="error";S.stemError=err.message||"Separation failed";render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"error",stemError:err.message||"Separation failed"}});
+      }else{
+        S.stemStatus="error";S.stemError=err.message||"Separation failed";
+      }
+      render();
     });
     return;
   }
   if(a==="stemCancel"){
     if(window.electron)window.electron.stems.cancel();
-    S.stemStatus="idle";S.stemProgress=0;render();return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"idle",stemProgress:0}});
+    }else{
+      S.stemStatus="idle";S.stemProgress=0;
+    }
+    render();return;
   }
   if(a==="stemOpen"){
-    S.screen=SCR.STEMS;render();return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.STEMS}});
+    else S.screen=SCR.STEMS;
+    render();return;
   }
   if(a==="stemBack"){
-    cleanupStems();S.screen=SCR.HOME;S.tab=TAB.SONGS;S.songsSubTab="stems";render();return;
+    cleanupStems();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS,songsSubTab:"stems"}});
+    else {S.screen=SCR.HOME;S.tab=TAB.SONGS;S.songsSubTab="stems";}
+    render();return;
   }
   if(a==="stemToggle"){
     S.stemToggles[v]=!S.stemToggles[v];
@@ -1281,7 +1325,14 @@ window.act=function(a,v){
     var songIdx=parseInt(v);
     if(!isNaN(songIdx)&&SONGS[songIdx]){
       var chart=buildPerformanceChartFromSong(SONGS[songIdx],"builtin","rhythm_chords");
-      if(chart){S.performArrangementType="rhythm_chords";startPerformance(chart);return;}
+      if(chart){
+        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performArrangementType:"rhythm_chords"}});
+        }else{
+          S.performArrangementType="rhythm_chords";
+        }
+        startPerformance(chart);return;
+      }
     }
     return;
   }
@@ -1299,7 +1350,12 @@ window.act=function(a,v){
         S.performSongData=SONGS[sgIdx];
         S.performSongId=SONGS[sgIdx].title.toLowerCase().replace(/[^a-z0-9]+/g,"_");
       }
-      S.screen=SCR.PERFORM_SONG;render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+      }else{
+        S.screen=SCR.PERFORM_SONG;
+      }
+      render();
     }
     return;
   }
@@ -1315,7 +1371,12 @@ window.act=function(a,v){
         arrangementType: arrangementType,
         difficultyId: difficultyId
       });
-      S.screen=SCR.PERFORM_SONG;render();return;
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+      }else{
+        S.screen=SCR.PERFORM_SONG;
+      }
+      render();return;
     }
     for(var psi=0;psi<SONGS.length;psi++){
       var planSongId=(SONGS[psi].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
@@ -1324,7 +1385,12 @@ window.act=function(a,v){
         S.performSongId=songId;
         S.performArrangementType=arrangementType;
         S.performDifficulty=difficultyId;
-        S.screen=SCR.PERFORM_SONG;render();return;
+        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+        }else{
+          S.screen=SCR.PERFORM_SONG;
+        }
+        render();return;
       }
     }
     return;
@@ -1335,13 +1401,32 @@ window.act=function(a,v){
     var phraseArrangementType=phraseParts[1]||"chords";
     var phraseDifficultyId=phraseParts[2]||"normal";
     var phraseId=phraseParts[3];
-    S.performTargetPhrase=phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetPhrase:phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null}});
+    }else{
+      S.performTargetPhrase=phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null;
+    }
     act("planStartPerformanceSong", phraseSongId + "|" + phraseArrangementType + "|" + phraseDifficultyId);
     return;
   }
-  if(a==="openPerfStats"){S.screen=SCR.PERF_STATS;render();return;}
-  if(a==="openEditor"){S.performEditorChart=null;S.performEditorDirty=false;S.screen=SCR.PERF_EDITOR;render();return;}
-  if(a==="openSkillTree"){S.screen=SCR.SKILL_TREE;render();return;}
+  if(a==="openPerfStats"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERF_STATS}});
+    else S.screen=SCR.PERF_STATS;
+    render();return;
+  }
+  if(a==="openEditor"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performEditorChart:null,performEditorDirty:false,screen:SCR.PERF_EDITOR}});
+    }else{
+      S.performEditorChart=null;S.performEditorDirty=false;S.screen=SCR.PERF_EDITOR;
+    }
+    render();return;
+  }
+  if(a==="openSkillTree"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SKILL_TREE}});
+    else S.screen=SCR.SKILL_TREE;
+    render();return;
+  }
   if(a==="planStartRhythmHighway"){
     if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v))return;
     render();return;
@@ -1353,15 +1438,31 @@ window.act=function(a,v){
     }
     S.screen=SCR.PLAN;render();return;
   }
-  if(a==="openPerformCalibration"){S.screen=SCR.PERFORM_CALIBRATE;render();return;}
-  if(a==="performCalibrateSource"){S.performCalibrationSource=v||"midi";render();return;}
+  if(a==="openPerformCalibration"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_CALIBRATE}});
+    else S.screen=SCR.PERFORM_CALIBRATE;
+    render();return;
+  }
+  if(a==="performCalibrateSource"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performCalibrationSource:v||"midi"}});
+    else S.performCalibrationSource=v||"midi";
+    render();return;
+  }
   if(a==="performCalibrationStart"){startPerformanceCalibrationRun();render();return;}
   if(a==="performCalibrationStop"){stopPerformanceCalibration();render();return;}
   if(a==="performCalibrationApply"){applyCalibrationOffset();render();return;}
   if(a==="performCalibrationReset"){
-    if(S.performCalibrationSource==="midi")S.performMidiOffsetMs=0;
-    if(S.performCalibrationSource==="mic")S.performMicOffsetMs=0;
-    S.performCalibrationHits=[];saveState();render();return;
+    var resetPatch={performCalibrationHits:[]};
+    if(S.performCalibrationSource==="midi")resetPatch.performMidiOffsetMs=0;
+    if(S.performCalibrationSource==="mic")resetPatch.performMicOffsetMs=0;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:resetPatch,save:false});
+    }else{
+      if(resetPatch.performMidiOffsetMs===0)S.performMidiOffsetMs=0;
+      if(resetPatch.performMicOffsetMs===0)S.performMicOffsetMs=0;
+      S.performCalibrationHits=[];
+    }
+    saveState();render();return;
   }
   if(a==="performCalibrateTap"){
     var nowMs=performance.now();
@@ -1387,7 +1488,11 @@ window.act=function(a,v){
     }
     render();return;
   }
-  if(a==="editorBack"){S.screen=SCR.HOME;S.tab=TAB.SONGS;render();return;}
+  if(a==="editorBack"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    else {S.screen=SCR.HOME;S.tab=TAB.SONGS;}
+    render();return;
+  }
   if(a==="editorMode"){S.performEditorMode=v;render();return;}
   if(a==="editorSnap"){S.performEditorSnap=v;render();return;}
   if(a==="editorNew"){
@@ -1504,11 +1609,15 @@ window.act=function(a,v){
           S.performSongData=SONGS[di];S.performSongId=ch.songId;
           S.performArrangementType=ch.arrangementType||"chords";
           S.performDifficulty=ch.difficultyId||"normal";
-          S.screen=SCR.PERFORM_SONG;render();return;
+          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+          else S.screen=SCR.PERFORM_SONG;
+          render();return;
         }
       }
     }
-    S.tab=TAB.SONGS;S.screen=SCR.HOME;render();return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tab:TAB.SONGS,screen:SCR.HOME}});
+    else {S.tab=TAB.SONGS;S.screen=SCR.HOME;}
+    render();return;
   }
   if(a==="performArrangement"){S.performArrangementType=v||"chords";saveState();render();return;}
   if(a==="importSongAudio"){
@@ -1516,14 +1625,22 @@ window.act=function(a,v){
     var importSongId=v;
     window.electron.stems.openFile().then(function(result){
       if(!result)return;
-      S.songAudioImporting=true;
-      S.songAudioProgress=0;
-      S.songAudioImportingSongId=importSongId;
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:true,songAudioProgress:0,songAudioImportingSongId:importSongId}});
+      }else{
+        S.songAudioImporting=true;
+        S.songAudioProgress=0;
+        S.songAudioImportingSongId=importSongId;
+      }
       render();
 
       var unsubProgress=window.electron.stems.onProgress(function(data){
         if(data&&data.progress!=null){
-          S.songAudioProgress=Math.round(data.progress);
+          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioProgress:Math.round(data.progress)},save:false});
+          }else{
+            S.songAudioProgress=Math.round(data.progress);
+          }
           render();
         }
       });
@@ -1535,7 +1652,14 @@ window.act=function(a,v){
         return window.electron.stems.separate(result.filePath);
       }).then(function(stemPaths){
         unsubProgress();
-        if(!stemPaths){S.songAudioImporting=false;render();return;}
+        if(!stemPaths){
+          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false}});
+          }else{
+            S.songAudioImporting=false;
+          }
+          render();return;
+        }
 
         var stemNames=Object.keys(stemPaths);
         var urlMap={};
@@ -1549,8 +1673,12 @@ window.act=function(a,v){
               stemUrls:urlMap,
               importedAt:new Date().toISOString()
             };
-            S.songAudioImporting=false;
-            S.songAudioProgress=0;
+            if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+              SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0},save:false});
+            }else{
+              S.songAudioImporting=false;
+              S.songAudioProgress=0;
+            }
             saveState();
             render();
             return;
@@ -1564,8 +1692,12 @@ window.act=function(a,v){
         loadNextUrl(0);
       }).catch(function(err){
         unsubProgress();
-        S.songAudioImporting=false;
-        S.songAudioProgress=0;
+        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0}});
+        }else{
+          S.songAudioImporting=false;
+          S.songAudioProgress=0;
+        }
         alert("Stem separation failed: "+(err.message||err));
         render();
       });
@@ -1585,7 +1717,15 @@ window.act=function(a,v){
   }
   if(a==="pausePerform"){pausePerformance();return;}
   if(a==="resumePerform"){resumePerformance();return;}
-  if(a==="stopPerform"){stopPerformance();if(S.performSongData){S.screen=SCR.PERFORM_SONG;}else{S.screen=SCR.HOME;S.tab=TAB.SONGS;}render();return;}
+  if(a==="stopPerform"){
+    stopPerformance();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:S.performSongData?{screen:SCR.PERFORM_SONG}:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      if(S.performSongData){S.screen=SCR.PERFORM_SONG;}else{S.screen=SCR.HOME;S.tab=TAB.SONGS;}
+    }
+    render();return;
+  }
   if(a==="performMode"){S.performMode=v;S.performInputSource=v;PerformanceInput.start(v);saveState();render();return;}
   if(a==="performDifficulty"){applyPerformanceDifficultyToState(v||"normal");saveState();render();return;}
   if(a==="performSpeed"){

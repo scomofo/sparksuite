@@ -162,6 +162,11 @@ These belong to a later convergence phase:
 - make pages render directly from core/domain state only
 - remove the legacy shell entirely
 
+Follow-on planning docs:
+
+- `docs/superpowers/plans/2026-04-02-phase-2-convergence-backlog.md`
+- `docs/superpowers/plans/2026-04-02-phase-3-platform-backlog.md`
+
 ## Suggested Implementation Order
 
 1. Finish remaining runtime ownership

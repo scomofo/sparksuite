@@ -11,13 +11,87 @@
     this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine);
     this.currentPlan = null;
     this.lastSessionOutcome = null;
+    this.runtimeState = this.createInitialRuntimeState();
   }
+
+  SparkCore.prototype.createInitialRuntimeState = function() {
+    return {
+      activeFlow: null,
+      activeInstrumentId: null,
+      activeInstrumentType: null,
+      activePlanId: null,
+      activeSegmentId: null,
+      activeScreen: null,
+      transport: {
+        status: "idle",
+        positionMs: 0
+      },
+      lastCompletedSessionId: null,
+      lastCompletedFlow: null,
+      lastOutcomeSummary: null
+    };
+  };
+
+  SparkCore.prototype.getRuntimeState = function() {
+    return this.runtimeState;
+  };
+
+  SparkCore.prototype.updateRuntimeState = function(patch) {
+    var key;
+    var next = {};
+    patch = patch || {};
+
+    for (key in this.runtimeState) {
+      if (Object.prototype.hasOwnProperty.call(this.runtimeState, key)) {
+        next[key] = this.runtimeState[key];
+      }
+    }
+
+    for (key in patch) {
+      if (!Object.prototype.hasOwnProperty.call(patch, key)) continue;
+      if (key === "transport" && patch.transport && typeof patch.transport === "object") {
+        next.transport = {};
+        var transportKey;
+        for (transportKey in this.runtimeState.transport) {
+          if (Object.prototype.hasOwnProperty.call(this.runtimeState.transport, transportKey)) {
+            next.transport[transportKey] = this.runtimeState.transport[transportKey];
+          }
+        }
+        for (transportKey in patch.transport) {
+          if (Object.prototype.hasOwnProperty.call(patch.transport, transportKey)) {
+            next.transport[transportKey] = patch.transport[transportKey];
+          }
+        }
+      } else {
+        next[key] = patch[key];
+      }
+    }
+
+    this.runtimeState = next;
+    return this.runtimeState;
+  };
+
+  SparkCore.prototype.deriveRuntimeScreen = function(flow) {
+    if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return "guided_session";
+    if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return "performance_song";
+    if (flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return "daily_practice";
+    return flow || null;
+  };
 
   SparkCore.prototype.startSession = function(input) {
     input = input || {};
     var flow = input.flow || this.aiEngine.suggestNextFlow();
     var today = new Date().toISOString().slice(0, 10);
     if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today) {
+      this.updateRuntimeState({
+        activeFlow: this.currentPlan.flow,
+        activeInstrumentId: this.currentPlan.instrumentType || this.currentPlan.instrumentId || null,
+        activeInstrumentType: this.runtimeState.activeInstrumentType,
+        activePlanId: this.currentPlan.id,
+        activeSegmentId: this.currentPlan.segments && this.currentPlan.segments.length ? this.currentPlan.segments[0].id : null,
+        activeScreen: this.deriveRuntimeScreen(this.currentPlan.flow),
+        transport: { status: "ready", positionMs: 0 }
+      });
       SparkProgressBridge.syncPlanToState(this.currentPlan);
       return this.currentPlan;
     }
@@ -34,6 +108,15 @@
     });
     this.currentPlan = plan;
     this.storage.setCurrentPlanId(plan.id);
+    this.updateRuntimeState({
+      activeFlow: plan.flow,
+      activeInstrumentId: plan.instrumentType || plan.instrumentId || null,
+      activeInstrumentType: instrumentContext.instrumentType || null,
+      activePlanId: plan.id,
+      activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
+      activeScreen: this.deriveRuntimeScreen(plan.flow),
+      transport: { status: "ready", positionMs: 0 }
+    });
     SparkProgressBridge.syncPlanToState(plan);
     return plan;
   };
@@ -46,6 +129,20 @@
 
     var result = this.progressEngine.completeSession(this.currentPlan, payload);
     this.lastSessionOutcome = result;
+    this.updateRuntimeState({
+      activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
+      activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
+        ? (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
+        : this.runtimeState.activeInstrumentId,
+      activeInstrumentType: this.runtimeState.activeInstrumentType,
+      activePlanId: this.currentPlan ? this.currentPlan.id : this.runtimeState.activePlanId,
+      activeSegmentId: payload.itemId || this.runtimeState.activeSegmentId,
+      activeScreen: this.currentPlan ? this.deriveRuntimeScreen(this.currentPlan.flow) : this.runtimeState.activeScreen,
+      transport: { status: result.planCompleted ? "completed" : "ready" },
+      lastCompletedSessionId: result.planCompleted && this.currentPlan ? this.currentPlan.id : this.runtimeState.lastCompletedSessionId,
+      lastCompletedFlow: result.planCompleted && this.currentPlan ? this.currentPlan.flow : this.runtimeState.lastCompletedFlow,
+      lastOutcomeSummary: result.completionSummary || result.performanceSummary || result.itemResultSummary || null
+    });
     if (result.planCompleted) this.storage.setCurrentPlanId(this.currentPlan.id);
     return result;
   };
@@ -64,6 +161,14 @@
 
   SparkCore.prototype.getLastSessionOutcome = function() {
     return this.lastSessionOutcome;
+  };
+
+  SparkCore.prototype.getActiveSessionView = function() {
+    return {
+      plan: this.currentPlan,
+      runtimeState: this.getRuntimeState(),
+      lastSessionOutcome: this.getLastSessionOutcome()
+    };
   };
 
   function createDefaultSparkCore() {
