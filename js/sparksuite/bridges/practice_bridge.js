@@ -69,7 +69,42 @@
     return JSON.parse(JSON.stringify(value || {}));
   }
 
+  function toLegacyPlan(plan) {
+    if (!plan) return null;
+    var items = [];
+    var segments = Array.isArray(plan.segments) ? plan.segments : [];
+    for (var i = 0; i < segments.length; i++) {
+      items.push({
+        id: segments[i].id,
+        type: segments[i].type,
+        label: segments[i].label || segments[i].type || "Practice item",
+        desc: segments[i].desc || "",
+        durationSec: segments[i].durationSec || 0,
+        completed: !!segments[i].completed,
+        meta: clone(segments[i].meta || {})
+      });
+    }
+
+    return {
+      id: plan.id,
+      flow: plan.flow,
+      focus: plan.focus || "",
+      items: items,
+      totalItems: items.length,
+      completedItems: countCompletedItems(items)
+    };
+  }
+
+  function countCompletedItems(items) {
+    var completed = 0;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i] && items[i].completed) completed++;
+    }
+    return completed;
+  }
+
   window.SparkPracticeBridge = {
-    buildDailyPracticeSegments: buildDailyPracticeSegments
+    buildDailyPracticeSegments: buildDailyPracticeSegments,
+    toLegacyPlan: toLegacyPlan
   };
 })();

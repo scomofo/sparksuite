@@ -280,10 +280,15 @@ function earTrainPage(){
 
 // ===== PRACTICE PLAN PAGE (Brain System) =====
 function practicePage(){
-  if(!S.practicePlan) generateDailyPracticePlan();
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  if(!S.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice")) generateDailyPracticePlan();
 
   var stats = getPracticeStats();
-  var plan = S.practicePlan;
+  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    : S.practicePlan;
 
   var h = '<div class="card mb16">';
   h += '<div><b>Practice Stats</b></div>';
@@ -307,7 +312,14 @@ function practicePage(){
 }
 
 function startPracticeItem(id){
-  var plan = S.practicePlan;
+  var plan = null;
+  if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
+    var view = window.sparkCore.getActiveSessionView();
+    if(view && view.plan && view.plan.flow === "daily_practice"){
+      plan = SparkPracticeBridge.toLegacyPlan(view.plan);
+    }
+  }
+  if(!plan) plan = S.practicePlan;
   if(!plan) return;
   for(var i=0;i<plan.items.length;i++){
     if(plan.items[i].id === id){

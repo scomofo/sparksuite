@@ -230,6 +230,20 @@ test("SparkCore runtime state tracks manual patches and completion summaries", f
   assert.strictEqual(completedState.lastOutcomeSummary.xpAwarded, result.xpAwarded);
 });
 
+test("SparkPracticeBridge can project active session plans into legacy practice-plan shape", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+  var projected = SparkPracticeBridge.toLegacyPlan(plan);
+
+  assert.strictEqual(projected.id, plan.id);
+  assert.strictEqual(projected.flow, "daily_practice");
+  assert.strictEqual(projected.focus, plan.focus);
+  assert.strictEqual(projected.items.length, plan.segments.length);
+  assert.strictEqual(projected.items[0].id, plan.segments[0].id);
+  assert.strictEqual(projected.items[0].label, plan.segments[0].label);
+  assert.strictEqual(projected.completedItems, 0);
+});
+
 test("completeSession marks a single session segment complete through progress engine", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
