@@ -107,6 +107,7 @@ eval(loadJS("js/recommend/candidates.js"));
 eval(loadJS("js/recommend/rules.js"));
 eval(loadJS("js/recommend/scoring.js"));
 eval(loadJS("js/recommend/engine.js"));
+eval(loadJS("js/recommend/ui.js"));
 
 console.log("\n--- Recommendations ---");
 
@@ -139,6 +140,59 @@ test("generateRecommendations prioritizes module-progress candidates ahead of ge
   assert.strictEqual(recommendations[0].source, "module_progress");
   assert.strictEqual(recommendations[0].meta.exerciseId, "bass_turnaround_01");
   assert.strictEqual(S.recommendations[0].source, "module_progress");
+});
+
+test("module-progress scoring increases when the weakest metric is lower", function() {
+  var stronger = {
+    id: "module_stronger",
+    type: "bassline",
+    source: "module_progress",
+    meta: {
+      progressSummary: {
+        weakestMetric: "timing",
+        timing: 0.66
+      }
+    }
+  };
+  var weaker = {
+    id: "module_weaker",
+    type: "bassline",
+    source: "module_progress",
+    meta: {
+      progressSummary: {
+        weakestMetric: "timing",
+        timing: 0.32
+      }
+    }
+  };
+
+  scoreRecommendationCandidate(stronger);
+  scoreRecommendationCandidate(weaker);
+
+  assert.ok(weaker.score > stronger.score);
+});
+
+test("recommendationsPage renders module-progress focus and weakest metric details", function() {
+  global.escHTML = function(value) { return String(value); };
+  S.recommendations = [{
+    id: "module_bass_level_4",
+    type: "bassline",
+    title: "Bass: Walking Lines - Walking (Turnaround Steps)",
+    source: "module_progress",
+    reasons: ["Bass timing is at 48%, so the turnaround needs steadier placement."],
+    meta: {
+      recommendationFocus: "walking",
+      progressSummary: {
+        weakestMetric: "timing",
+        timing: 0.48
+      }
+    }
+  }];
+
+  var html = recommendationsPage();
+
+  assert.ok(html.indexOf("Focus: walking") >= 0);
+  assert.ok(html.indexOf("Weakest: timing 48%") >= 0);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

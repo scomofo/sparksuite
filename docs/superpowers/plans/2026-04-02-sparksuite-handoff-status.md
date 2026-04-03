@@ -506,6 +506,7 @@ Primary source plans:
 - Dashboard recommendations can now surface module-progress work directly, so authored bass/ukulele follow-through is not limited to the practice-plan surface.
   - `js/recommend/candidates.js`
   - `js/recommend/scoring.js`
+  - `js/recommend/ui.js`
   - `tests/test_recommendations.js`
 - Ukulele launcher support is live, but deeper performance/song-library parity is still early.
   - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
