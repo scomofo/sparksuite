@@ -503,6 +503,10 @@ Primary source plans:
   - The underlying note sprite renderer still treats imported techniques generically
 - Progression cleanup is significantly better, but the app still persists to legacy `S.*` state.
 - Dashboard, songs-browser, and career-launch surfaces now have explicit SparkCore-backed state and request helpers, including dedicated dashboard-section entry, dashboard/home return routing, utility-screen entry, career-song selection, recommendation-launch, challenge-claim sync, dashboard snapshot refresh/init, and dashboard-to-plan entry paths across shared and piano flows, reducing more of the old shell-only navigation/selection logic.
+- Dashboard recommendations can now surface module-progress work directly, so authored bass/ukulele follow-through is not limited to the practice-plan surface.
+  - `js/recommend/candidates.js`
+  - `js/recommend/scoring.js`
+  - `tests/test_recommendations.js`
 - Ukulele launcher support is live, but deeper performance/song-library parity is still early.
   - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
   - Broader dedicated song/chart coverage, richer module-specific screens, and deeper gameplay parity can still expand
