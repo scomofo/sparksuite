@@ -354,6 +354,90 @@
     return Math.round(value * 100) / 100;
   }
 
+  function getBassRhythmGuidance(focus, result) {
+    focus = String(focus || "");
+    var weakAreas = result && result.learning && Array.isArray(result.learning.weakAreas)
+      ? result.learning.weakAreas
+      : [];
+    var accuracy = result && result.gameplay && typeof result.gameplay.accuracy === "number"
+      ? Math.round(result.gameplay.accuracy * 100)
+      : 0;
+    var byFocus = {
+      walking_bass: {
+        title: "Bass Walking Checkpoint",
+        success: "Your line is starting to flow. Keep each note even and connected.",
+        late: "Walking lines are landing late. Think one step ahead so the next note arrives before the beat slips.",
+        wrong_fret: "The walking shape is breaking down under motion. Slow the line and keep the root landmarks visible.",
+        next: "Run the walking line again, then loop the turnaround if the motion still feels jumpy."
+      },
+      passing_notes: {
+        title: "Passing Tone Control",
+        success: "The connecting tones are sounding intentional instead of rushed.",
+        late: "The passing tones are dragging behind the beat. Keep the connector notes lighter and earlier.",
+        wrong_fret: "The chromatic walk-up is losing fret accuracy. Re-center the shape before adding speed.",
+        next: "Repeat the line and listen for smooth movement into the target note."
+      },
+      arpeggios: {
+        title: "Arpeggio Motion",
+        success: "The shape is outlining the harmony cleanly.",
+        late: "The arpeggio climb is a little late. Commit to the shape before each jump.",
+        wrong_fret: "The arpeggio pattern is missing its target notes. Anchor the root and rebuild upward.",
+        next: "Loop the phrase and aim for one clean climb before increasing intensity."
+      },
+      ghost_notes: {
+        title: "Ghost Note Pocket",
+        success: "The mute notes are adding groove without crowding the line.",
+        late: "The ghost notes are dragging. Make the mute strokes lighter so the pulse stays ahead.",
+        wrong_fret: "The groove is opening up too much on the fret hand. Keep the left hand relaxed and muted.",
+        next: "Retry the ghost grid and lock the note-x-note-x feel before going faster."
+      },
+      groove_accents: {
+        title: "Accent Placement",
+        success: "Your accents are making the groove speak clearly.",
+        late: "The accents are arriving late. Hear beats 2 and 4 internally before you strike.",
+        wrong_fret: "The accented notes are losing shape. Set the fretting hand early and hit through the note.",
+        next: "Loop the accented phrase and keep the unaccented notes smaller."
+      },
+      slap: {
+        title: "Slap Technique",
+        success: "The thumb and pop motions are starting to feel controlled.",
+        late: "The slap hits are late. Let the thumb motion fall through the string instead of forcing it.",
+        wrong_fret: "The slap phrase is missing its fret shape. Set the octave frame before each attack.",
+        next: "Retry the slap phrase and keep the thumb relaxed."
+      },
+      pop: {
+        title: "Pop Technique",
+        success: "The popped notes are speaking with more confidence.",
+        late: "The pop attacks are a touch behind. Prepare the finger under the string sooner.",
+        wrong_fret: "The pop phrase is missing its landing notes. Rebuild the octave shape before the pop.",
+        next: "Loop the pop phrase and make the motion compact."
+      },
+      funk_grooves: {
+        title: "Funk Pocket",
+        success: "The groove is sounding tighter and more deliberate.",
+        late: "The funk grid is leaning late. Keep the sixteenth-note pulse moving under the hand.",
+        wrong_fret: "The groove shape is slipping under syncopation. Shrink the left-hand motion and stay anchored.",
+        next: "Run the groove again and aim for cleaner subdivision, not just bigger attack."
+      }
+    };
+    var guidance = byFocus[focus] || {
+      title: "Bass Groove Checkpoint",
+      success: "The groove is settling in.",
+      late: "The line is landing late. Keep the pulse more active in your body.",
+      wrong_fret: "The fret shape is slipping. Slow down and lock the shape before the hit.",
+      next: "Repeat the drill and aim for steadier pocket control."
+    };
+    var summary = guidance.success;
+    if (weakAreas.indexOf("late") >= 0 || weakAreas.indexOf("late_strums") >= 0) summary = guidance.late;
+    else if (weakAreas.indexOf("wrong_fret") >= 0) summary = guidance.wrong_fret;
+    return {
+      title: guidance.title,
+      summary: summary,
+      nextStep: guidance.next,
+      accuracy: accuracy
+    };
+  }
+
   window.SparkBassModule = {
     id: "bass",
     appId: "bassspark",
@@ -412,6 +496,10 @@
         progressSummary: progressSummary,
         labelSuffix: primarySkill === "walking_bass" ? "Walking" : primarySkill === "root_fifth" ? "Groove" : null
       };
+    },
+
+    getRhythmGuidance: function(focus, result) {
+      return getBassRhythmGuidance(focus, result);
     },
 
     getRhythmChartLibrary: function() {

@@ -188,6 +188,7 @@
     var gameplay = result.gameplay || {};
     var learning = result.learning || {};
     var activePreset = getCurrentAssistPreset();
+    var moduleGuidance = getRhythmHighwayModuleGuidance(result);
     var h = '<div class="text-center" style="padding-top:16px"><div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
     h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Rhythm Highway Complete</h2>';
     if (activePreset) {
@@ -195,6 +196,13 @@
     }
     if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.exerciseFocus) {
       h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Focus: ' + escHTML(String(S.rhythmHighwayLaunchContext.exerciseFocus).replace(/_/g, " ")) + '</div>';
+    }
+    if (moduleGuidance) {
+      h += '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(20,184,166,.12),rgba(20,184,166,.04));border:1px solid rgba(20,184,166,.28)">';
+      h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:6px">' + escHTML(moduleGuidance.title) + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">' + escHTML(moduleGuidance.summary) + '</div>';
+      h += '<div style="font-size:11px;color:var(--text-muted)">Next: ' + escHTML(moduleGuidance.nextStep) + '</div>';
+      h += '</div>';
     }
     h += '<div class="card mb16"><div style="display:flex;justify-content:space-around;text-align:center">';
     h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">' + gameplay.score + '</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
@@ -245,6 +253,20 @@
 
   function maskHasLane(mask, laneIndex) {
     return (mask & (1 << laneIndex)) !== 0;
+  }
+
+  function getRhythmHighwayModuleGuidance(result) {
+    var launchContext = S.rhythmHighwayLaunchContext || null;
+    if (!launchContext || !launchContext.instrument || !launchContext.exerciseFocus) return null;
+    var moduleMap = {
+      bass: window.SparkBassModule,
+      ukulele: window.SparkUkuleleModule,
+      guitar: window.SparkGuitarModule,
+      piano: window.SparkPianoModule
+    };
+    var instrumentModule = moduleMap[launchContext.instrument] || null;
+    if (!instrumentModule || typeof instrumentModule.getRhythmGuidance !== "function") return null;
+    return instrumentModule.getRhythmGuidance(launchContext.exerciseFocus, result || S.rhythmHighwayResult || null);
   }
 
   function resolveRhythmHighwayPresetName(name) {
