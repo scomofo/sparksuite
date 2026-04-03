@@ -1,0 +1,118 @@
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+
+var passed = 0;
+var failed = 0;
+
+function test(name, fn) {
+  try {
+    resetState();
+    fn();
+    passed++;
+    console.log("  PASS: " + name);
+  } catch (err) {
+    failed++;
+    console.error("  FAIL: " + name);
+    console.error("    " + err.message);
+  }
+}
+
+function loadJS(file) {
+  return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+}
+
+function resetState() {
+  global.window = global;
+  global.S = {
+    recommendationHistory: [],
+    performanceStats: {},
+    personalInsights: null,
+    lastInsightRun: null
+  };
+  global.escHTML = function(value) { return String(value); };
+  global.getWeakestMasterySkills = function() { return []; };
+  global.getStrongestMasterySkills = function() { return []; };
+  global.buildMasteryTrend = function() { return {}; };
+  global.buildPracticeTrendSeries = function() { return {}; };
+  global.buildCareerInsights = function() { return {}; };
+}
+
+resetState();
+eval(loadJS("js/insights/recommendations.js"));
+eval(loadJS("js/insights/engine.js"));
+eval(loadJS("js/insights/ui.js"));
+
+console.log("\n--- Insights ---");
+
+test("buildRecommendationInsights carries a focused imported-technique block when still weak", function() {
+  S.performanceStats = {
+    imported_song_imported_chart_hard: {
+      songId: "imported_song",
+      arrangement: "imported_chart",
+      difficulty: "hard",
+      lastFocusedTechnique: "tap",
+      focusedTechniqueRuns: { tap: 3 },
+      importedTechniqueTotals: {
+        tap: { total: 10, hits: 4, misses: 6 }
+      }
+    }
+  };
+
+  var insights = buildRecommendationInsights();
+
+  assert.ok(insights.focusedTechnique);
+  assert.strictEqual(insights.focusedTechnique.techniqueKey, "tap");
+  assert.strictEqual(insights.focusedTechnique.accuracy, 40);
+  assert.strictEqual(insights.focusedTechnique.focusedRuns, 3);
+  assert.strictEqual(insights.focusedTechnique.songId, "imported_song");
+});
+
+test("generatePersonalInsights includes focused imported-technique insight data", function() {
+  S.performanceStats = {
+    imported_song_imported_chart_hard: {
+      songId: "imported_song",
+      arrangement: "imported_chart",
+      difficulty: "hard",
+      lastFocusedTechnique: "forced",
+      focusedTechniqueRuns: { forced: 2 },
+      importedTechniqueTotals: {
+        forced: { total: 8, hits: 5, misses: 3 }
+      }
+    }
+  };
+
+  var insights = generatePersonalInsights();
+
+  assert.ok(insights.recommendationQuality.focusedTechnique);
+  assert.strictEqual(insights.recommendationQuality.focusedTechnique.techniqueKey, "forced");
+  assert.strictEqual(insights.recommendationQuality.focusedTechnique.accuracy, 63);
+});
+
+test("insightsDashboardPage renders focused imported-technique continuity", function() {
+  S.personalInsights = {
+    weakestSkills: [],
+    strongestSkills: [],
+    masteryTrend: {},
+    practiceTrend: {},
+    recommendationQuality: {
+      totalAccepted: 0,
+      focusedTechnique: {
+        songId: "imported_song",
+        techniqueLabel: "tap-note consistency",
+        accuracy: 40
+      }
+    },
+    careerTrend: {}
+  };
+  S.lastInsightRun = Date.now();
+  global.renderInsightLineChart = function() { return "<svg></svg>"; };
+
+  var html = insightsDashboardPage();
+
+  assert.ok(html.indexOf("Focused Technique") >= 0);
+  assert.ok(html.indexOf("tap-note consistency is still at 40% in imported song") >= 0);
+});
+
+console.log("\nPassed: " + passed + "  Failed: " + failed);
+if (failed > 0) process.exit(1);

@@ -508,6 +508,10 @@ Primary source plans:
   - `js/recommend/scoring.js`
   - `js/recommend/ui.js`
   - `tests/test_recommendations.js`
+- Personal insights now carry the active focused imported-technique block too, so analytics surfaces can continue the same song/technique thread instead of showing only generic trends.
+  - `js/insights/recommendations.js`
+  - `js/insights/ui.js`
+  - `tests/test_insights.js`
 - Ukulele launcher support is live, but deeper performance/song-library parity is still early.
   - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
   - Broader dedicated song/chart coverage, richer module-specific screens, and deeper gameplay parity can still expand
