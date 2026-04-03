@@ -55,6 +55,8 @@
       if (note.timeSec < songTimeSec - 0.5 || note.timeSec > songTimeSec + 4) continue;
       upcoming.push({
         id: note.id,
+        tick: note.tick,
+        tickLength: note.tickLength,
         timeSec: note.timeSec,
         laneMask: note.laneMask,
         label: note.label,

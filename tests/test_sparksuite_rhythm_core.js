@@ -68,6 +68,12 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
 eval(loadJS("js/sparksuite/core/practice_engine.js"));
+global.requestAnimationFrame = function() { return 1; };
+global.cancelAnimationFrame = function() {};
+global.render = function() {};
+global.escHTML = function(value) { return String(value); };
+global.SCR = { RHYTHM_HIGHWAY: "rhythmHighway" };
+eval(loadJS("js/pages/rhythm_highway.js"));
 
 console.log("\n--- SparkSuite Rhythm Core ---");
 
@@ -361,6 +367,20 @@ test("rhythm gameplay engine can run with tighter challenge preset timing", func
   assert.strictEqual(engine.preset.name, "spark_challenge");
   assert.strictEqual(snapshot.gameplay.score, 0);
   assert.strictEqual(engine.preset.hitWindowMs.miss, 145);
+});
+
+test("rhythm highway loop tooling can build a normalized loop payload", function() {
+  var adapter = new SparkGuitarRhythmAdapter();
+  var payload = adapter.createPayload({});
+  var loopSpec = _createRhythmHighwayLoopSpec(payload, { songTimeSec: 0 });
+  var loopPayload = _buildRhythmHighwayLoopPayload(payload, loopSpec);
+
+  assert.ok(loopSpec);
+  assert.ok(loopPayload);
+  assert.ok(loopPayload.songChart.tracks.guitar.notes.length >= 1);
+  assert.strictEqual(loopPayload.songChart.tracks.guitar.notes[0].tick, 0);
+  assert.strictEqual(loopPayload.songChart.tempoMap.segments[0].tick, 0);
+  assert.ok(loopPayload.songChart.metadata.loopedFrom);
 });
 
 test("rhythm gameplay engine produces deterministic results for the same input stream", function() {

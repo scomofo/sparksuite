@@ -3,7 +3,8 @@
     engine: null,
     clock: null,
     raf: null,
-    segmentId: null
+    segmentId: null,
+    sourcePayload: null
   };
 
   var ASSIST_PRESETS = [
@@ -21,16 +22,22 @@
 
     var payload = segment.meta.gameplayPayload;
     var resolvedPresetName = resolveRhythmHighwayPresetName(presetName || S.rhythmHighwayPreset || payload.enginePreset);
+    var resolvedLoopSpec = loopSpec || S.rhythmHighwayLoop || null;
+    var activePayload = resolvedLoopSpec ? buildRhythmHighwayLoopPayload(payload, resolvedLoopSpec) : payload;
+    if (!activePayload || !activePayload.songChart) activePayload = payload;
+
     runtime.segmentId = segmentId;
+    runtime.sourcePayload = payload;
     runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock("guitar");
     runtime.engine = new SparkRhythmGameplayEngine({
-      chart: payload.songChart,
+      chart: activePayload.songChart,
       adapter: new SparkGuitarRhythmAdapter(),
       preset: SparkEnginePresetRegistry.get(resolvedPresetName)
     });
 
     S.activeCoreSegmentId = segmentId;
     S.rhythmHighwayPreset = resolvedPresetName;
+    S.rhythmHighwayLoop = resolvedLoopSpec && activePayload !== payload ? resolvedLoopSpec : null;
     S.rhythmHighwayHeldMask = 0;
     S.rhythmHighwaySnapshot = runtime.engine.getSnapshot(0);
     S.rhythmHighwayResult = null;
@@ -140,8 +147,12 @@
     h += '</div>';
     h += '<div style="display:flex;justify-content:center;gap:10px">';
     h += '<button class="btn" onclick="act(\'rhythmHighwayStrum\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:18px;padding:14px 28px">Strum</button>';
+    h += '<button class="btn" onclick="act(\'' + (S.rhythmHighwayLoop ? "rhythmHighwayClearLoop" : "rhythmHighwayLoopWindow") + '\')" style="background:' + (S.rhythmHighwayLoop ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (S.rhythmHighwayLoop ? "#fff" : "var(--text-secondary)") + '">' + (S.rhythmHighwayLoop ? "Clear Loop" : "Loop Window") + '</button>';
     h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">Exit</button>';
     h += '</div>';
+    if (S.rhythmHighwayLoop) {
+      h += '<div style="margin-top:10px;font-size:11px;color:#4ECDC4;font-weight:800">Looping ' + escHTML(S.rhythmHighwayLoop.label || "current window") + '</div>';
+    }
     if (S.rhythmHighwayFeedback) {
       h += '<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">' + escHTML(S.rhythmHighwayFeedback) + '</div>';
     }
@@ -171,6 +182,11 @@
     h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML((learning.weakAreas || []).join(", ") || "None") + '</div></div>';
     h += '<div style="display:flex;gap:10px;justify-content:center">';
     h += '<button class="btn" onclick="act(\'restartRhythmHighway\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
+    if (S.rhythmHighwayLoop) {
+      h += '<button class="btn" onclick="act(\'rhythmHighwayClearLoop\')" style="background:var(--input-bg);color:var(--text-secondary)">Play Full Run</button>';
+    } else {
+      h += '<button class="btn" onclick="act(\'rhythmHighwayLoopWindow\')" style="background:var(--input-bg);color:var(--text-secondary)">Loop Window</button>';
+    }
     h += '<button class="btn" onclick="act(\'openPlan\')" style="background:#4ECDC4;color:#fff">Back To Plan</button>';
     h += '</div></div>';
     return h;
@@ -220,6 +236,135 @@
     return ASSIST_PRESETS[0];
   }
 
+  function buildRhythmHighwayLoopPayload(payload, loopSpec) {
+    if (!payload || !payload.songChart || !loopSpec) return payload;
+    var chart = payload.songChart;
+    var track = chart.tracks && chart.tracks.guitar ? chart.tracks.guitar : null;
+    if (!track || !track.notes || !track.notes.length) return payload;
+
+    var startTick = Math.max(0, loopSpec.startTick || 0);
+    var endTick = Math.max(startTick + 1, loopSpec.endTick || (startTick + chart.tempoMap.ppq));
+    var filteredNotes = [];
+    for (var i = 0; i < track.notes.length; i++) {
+      var note = track.notes[i];
+      if (note.tick < startTick || note.tick > endTick) continue;
+      filteredNotes.push(new SparkNoteEvent({
+        id: note.id,
+        tick: note.tick - startTick,
+        tickLength: note.tickLength || 0,
+        laneMask: note.laneMask,
+        flags: JSON.parse(JSON.stringify(note.flags || {})),
+        difficulty: note.difficulty,
+        instrument: note.instrument,
+        label: note.label,
+        skillId: note.skillId
+      }));
+    }
+    if (!filteredNotes.length) return payload;
+
+    var shiftedTempoMap = buildShiftedTempoMap(chart.tempoMap, startTick, endTick);
+    var filteredPhrases = buildShiftedLoopPhrases(track.phrases || [], startTick, endTick);
+    var metadata = JSON.parse(JSON.stringify(chart.metadata || {}));
+    metadata.loopedFrom = {
+      startTick: startTick,
+      endTick: endTick,
+      label: loopSpec.label || null
+    };
+
+    return {
+      chartId: payload.chartId ? payload.chartId + "_loop" : "rhythm_loop",
+      enginePreset: payload.enginePreset || "spark_learning",
+      songChart: new SparkSongChart({
+        song: JSON.parse(JSON.stringify(chart.song || {})),
+        tempoMap: shiftedTempoMap,
+        metadata: metadata,
+        tracks: {
+          guitar: {
+            notes: filteredNotes,
+            phrases: filteredPhrases
+          }
+        }
+      })
+    };
+  }
+
+  function createRhythmHighwayLoopSpec(payload, snapshot) {
+    if (!payload || !payload.songChart || !snapshot) return null;
+    var track = payload.songChart.tracks && payload.songChart.tracks.guitar ? payload.songChart.tracks.guitar : null;
+    if (!track || !track.notes || !track.notes.length) return null;
+
+    var songTimeSec = snapshot.songTimeSec || 0;
+    var targetIndex = findLoopTargetIndex(payload.songChart, track.notes, songTimeSec);
+    var startIndex = Math.max(0, targetIndex - 1);
+    var endIndex = Math.min(track.notes.length - 1, targetIndex + 2);
+    var startNote = track.notes[startIndex];
+    var endNote = track.notes[endIndex];
+    var trailingTicks = payload.songChart.tempoMap && payload.songChart.tempoMap.ppq ? payload.songChart.tempoMap.ppq : 480;
+
+    return {
+      startTick: startNote.tick,
+      endTick: endNote.tick + (endNote.tickLength || 0) + trailingTicks,
+      label: (startNote.label || "practice window") + " loop"
+    };
+  }
+
+  function findLoopTargetIndex(chart, notes, songTimeSec) {
+    var bestIndex = 0;
+    var bestDistance = Infinity;
+    var timingEngine = new SparkTimingEngine(new SparkCalibrationEngine());
+    for (var i = 0; i < notes.length; i++) {
+      var noteSec = timingEngine.tickToSeconds(chart.tempoMap, notes[i].tick);
+      var distance = noteSec >= songTimeSec ? (noteSec - songTimeSec) : (songTimeSec - noteSec + 0.5);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = i;
+      }
+    }
+    return bestIndex;
+  }
+
+  function buildShiftedTempoMap(tempoMap, startTick, endTick) {
+    var segments = tempoMap && Array.isArray(tempoMap.segments) ? tempoMap.segments : [];
+    var shifted = [];
+    var activeBpm = segments.length ? segments[0].bpm : 100;
+    for (var i = 0; i < segments.length; i++) {
+      if (segments[i].tick <= startTick) activeBpm = segments[i].bpm;
+      if (segments[i].tick > startTick && segments[i].tick < endTick) {
+        shifted.push({ tick: segments[i].tick - startTick, bpm: segments[i].bpm });
+      }
+    }
+    shifted.unshift({ tick: 0, bpm: activeBpm });
+    return new SparkTempoMap({
+      ppq: tempoMap && tempoMap.ppq ? tempoMap.ppq : 480,
+      segments: shifted
+    });
+  }
+
+  function buildShiftedLoopPhrases(phrases, startTick, endTick) {
+    var out = [];
+    for (var i = 0; i < phrases.length; i++) {
+      var phrase = phrases[i];
+      if (phrase.endTick < startTick || phrase.startTick > endTick) continue;
+      out.push(new SparkPhrase({
+        id: phrase.id,
+        name: phrase.name,
+        startTick: Math.max(0, phrase.startTick - startTick),
+        endTick: Math.max(0, Math.min(endTick, phrase.endTick) - startTick),
+        flags: JSON.parse(JSON.stringify(phrase.flags || {}))
+      }));
+    }
+    if (!out.length) {
+      out.push(new SparkPhrase({
+        id: 0,
+        name: "Loop Window",
+        startTick: 0,
+        endTick: Math.max(1, endTick - startTick),
+        flags: {}
+      }));
+    }
+    return out;
+  }
+
   function laneColor(index) {
     return ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316"][index] || "#999";
   }
@@ -227,5 +372,7 @@
   window.startRhythmHighwaySegment = startRhythmHighwaySegment;
   window.stopSparkRhythmHighway = stopSparkRhythmHighway;
   window._sparkRhythmHighwayStrum = sparkRhythmHighwayStrum;
+  window._buildRhythmHighwayLoopPayload = buildRhythmHighwayLoopPayload;
+  window._createRhythmHighwayLoopSpec = createRhythmHighwayLoopSpec;
   window.rhythmHighwayPage = rhythmHighwayPage;
 })();
