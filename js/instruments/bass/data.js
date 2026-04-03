@@ -159,28 +159,28 @@ var BASS_SESSIONS = [
 // ── Songs ──
 var BASS_SONGS = [
   // Level 1
-  { title: "Seven Nation Army", artist: "White Stripes", level: 1, bpm: 60, chords: ["E", "G", "F#"], difficulty: 1 },
-  { title: "Another One Bites The Dust", artist: "Queen", level: 1, bpm: 65, chords: ["E", "G", "A"], difficulty: 1 },
-  { title: "Sunshine Of Your Love", artist: "Cream", level: 1, bpm: 66, chords: ["E", "G", "A"], difficulty: 2 },
-  { title: "Billie Jean", artist: "Michael Jackson", level: 1, bpm: 58, chords: ["F#", "G", "A"], difficulty: 2 },
-  { title: "Stand By Me", artist: "Ben E. King", level: 1, bpm: 60, chords: ["A", "F#", "E"], difficulty: 1 },
+  { title: "Seven Nation Army", artist: "White Stripes", level: 1, bpm: 60, chords: ["E", "G", "F#"], difficulty: 1, midi: "content/songs/midi/seven_nation_army.mid" },
+  { title: "Another One Bites The Dust", artist: "Queen", level: 1, bpm: 65, chords: ["E", "G", "A"], difficulty: 1, midi: "content/songs/midi/another_one_bites_the_dust.mid" },
+  { title: "Sunshine Of Your Love", artist: "Cream", level: 1, bpm: 66, chords: ["E", "G", "A"], difficulty: 2, midi: "content/songs/midi/sunshine_of_your_love.mid" },
+  { title: "Billie Jean", artist: "Michael Jackson", level: 1, bpm: 58, chords: ["F#", "G", "A"], difficulty: 2, midi: "content/songs/midi/billie_jean.mid" },
+  { title: "Stand By Me", artist: "Ben E. King", level: 1, bpm: 60, chords: ["A", "F#", "E"], difficulty: 1, midi: "content/songs/midi/stand_by_me.mid" },
   // Level 2
-  { title: "Come Together", artist: "The Beatles", level: 2, bpm: 75, chords: ["D", "C", "A", "B"], difficulty: 2 },
-  { title: "With Or Without You", artist: "U2", level: 2, bpm: 55, chords: ["D", "A", "B", "F#"], difficulty: 1 },
-  { title: "Feel Good Inc", artist: "Gorillaz", level: 2, bpm: 80, chords: ["E", "F", "F#", "G"], difficulty: 3 },
-  { title: "Pumped Up Kicks", artist: "Foster The People", level: 2, bpm: 63, chords: ["F", "D", "C", "A"], difficulty: 2 },
-  { title: "Zombie", artist: "The Cranberries", level: 2, bpm: 83, chords: ["E", "C", "G", "D"], difficulty: 2 },
+  { title: "Come Together", artist: "The Beatles", level: 2, bpm: 75, chords: ["D", "C", "A", "B"], difficulty: 2, midi: "content/songs/midi/come_together.mid" },
+  { title: "With Or Without You", artist: "U2", level: 2, bpm: 55, chords: ["D", "A", "B", "F#"], difficulty: 1, midi: "content/songs/midi/with_or_without_you.mid" },
+  { title: "Feel Good Inc", artist: "Gorillaz", level: 2, bpm: 80, chords: ["E", "F", "F#", "G"], difficulty: 3, midi: "content/songs/midi/feel_good_inc.mid" },
+  { title: "Pumped Up Kicks", artist: "Foster The People", level: 2, bpm: 63, chords: ["F", "D", "C", "A"], difficulty: 2, midi: "content/songs/midi/pumped_up_kicks.mid" },
+  { title: "Zombie", artist: "The Cranberries", level: 2, bpm: 83, chords: ["E", "C", "G", "D"], difficulty: 2, midi: "content/songs/midi/zombie.mid" },
   // Level 3
-  { title: "Longview", artist: "Green Day", level: 3, bpm: 75, chords: ["E5", "A5", "E8"], difficulty: 3 },
-  { title: "Under Pressure", artist: "Queen & Bowie", level: 3, bpm: 74, chords: ["E5", "A5", "D"], difficulty: 3 },
-  { title: "Sweet Child O Mine", artist: "GNR", level: 3, bpm: 63, chords: ["E5", "A5", "A8"], difficulty: 3 },
-  { title: "Smells Like Teen Spirit", artist: "Nirvana", level: 3, bpm: 56, chords: ["E5", "A5", "E8"], difficulty: 2 },
+  { title: "Longview", artist: "Green Day", level: 3, bpm: 75, chords: ["E5", "A5", "E8"], difficulty: 3, midi: "content/songs/midi/longview.mid" },
+  { title: "Under Pressure", artist: "Queen & Bowie", level: 3, bpm: 74, chords: ["E5", "A5", "D"], difficulty: 3, midi: "content/songs/midi/under_pressure.mid" },
+  { title: "Sweet Child O Mine", artist: "GNR", level: 3, bpm: 63, chords: ["E5", "A5", "A8"], difficulty: 3, midi: "content/songs/midi/sweet_child_o_mine.mid" },
+  { title: "Smells Like Teen Spirit", artist: "Nirvana", level: 3, bpm: 56, chords: ["E5", "A5", "E8"], difficulty: 2, midi: "content/songs/midi/smells_like_teen_spirit.mid" },
   // Level 4+
-  { title: "Money", artist: "Pink Floyd", level: 4, bpm: 62, chords: ["Cwalk", "Gwalk"], difficulty: 4 },
-  { title: "Hysteria", artist: "Muse", level: 4, bpm: 93, chords: ["Am-arp", "Cwalk"], difficulty: 5 },
-  { title: "Higher Ground", artist: "RHCP", level: 5, bpm: 100, chords: ["Sl-EG", "HO-A"], difficulty: 5 },
+  { title: "Money", artist: "Pink Floyd", level: 4, bpm: 62, chords: ["Cwalk", "Gwalk"], difficulty: 4, midi: "content/songs/midi/money.mid" },
+  { title: "Hysteria", artist: "Muse", level: 4, bpm: 93, chords: ["Am-arp", "Cwalk"], difficulty: 5, midi: "content/songs/midi/hysteria.mid" },
+  { title: "Higher Ground", artist: "RHCP", level: 5, bpm: 100, chords: ["Sl-EG", "HO-A"], difficulty: 5, midi: "content/songs/midi/higher_ground.mid" },
   { title: "Superstition", artist: "Stevie Wonder", level: 5, bpm: 100, chords: ["Ghost", "Mute", "Funk"], difficulty: 5 },
-  { title: "Come As You Are", artist: "Nirvana", level: 4, bpm: 60, chords: ["Sl-EG", "E5"], difficulty: 3 }
+  { title: "Come As You Are", artist: "Nirvana", level: 4, bpm: 60, chords: ["Sl-EG", "E5"], difficulty: 3, midi: "content/songs/midi/come_as_you_are.mid" }
 ];
 
 // ── Skill Tree ──

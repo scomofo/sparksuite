@@ -360,6 +360,9 @@ function loadState(){
     if(!Array.isArray(S.customSets))S.customSets=[];
     if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
     if(!Array.isArray(S.importedSongs))S.importedSongs=[];
+    // Ensure transient UI state has sane defaults
+    if(!S.screen)S.screen=SCR.HOME;
+    if(!S.tab)S.tab=TAB.PRACTICE;
   }catch(e){console.error("ChordSpark: loadState failed — data may be corrupted",e);}
 }
 

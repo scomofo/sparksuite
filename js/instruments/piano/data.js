@@ -1184,15 +1184,15 @@ var SONGS = [
   { title:"La Bamba", artist:"Ritchie Valens",
     chords:["C","F","G"], level:2, style:"block", bpm:138,
     progression:["C","F","G","G","C","F","G","G"],
-    practiceStart:65, target:110 },
+    practiceStart:65, target:110, midi:"content/songs/midi/la_bamba.mid" },
   { title:"Let It Be", artist:"The Beatles",
     chords:["C","G","Am","F"], level:3, style:"block", bpm:72,
     progression:["C","G","Am","F","C","G","F","C"],
-    practiceStart:55, target:72 },
+    practiceStart:55, target:72, midi:"content/songs/midi/let_it_be.mid" },
   { title:"Stand By Me", artist:"Ben E. King",
     chords:["C","Am","F","G"], level:3, style:"block", bpm:120,
     progression:["C","C","Am","Am","F","G","C","C"],
-    practiceStart:70, target:100 },
+    practiceStart:70, target:100, midi:"content/songs/midi/stand_by_me.mid" },
   { title:"All of Me", artist:"John Legend",
     chords:["Am","F","C","G"], level:3, style:"block", bpm:63,
     progression:["Am","F","C","G","Am","F","C","G"],
@@ -1280,7 +1280,7 @@ var SONGS = [
   { title:"Knockin' on Heaven's Door", artist:"Bob Dylan",
     chords:["G","D","Am","C"], level:5, style:"block", bpm:69,
     progression:["G","D","Am","Am","G","D","C","C"],
-    practiceStart:55, target:69 }
+    practiceStart:55, target:69, midi:"content/songs/midi/knockin_on_heavens_door.mid" }
 ];
 
 // ── BADGES (expanded 15+) ──

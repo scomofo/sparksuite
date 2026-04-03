@@ -37,6 +37,41 @@ function pianoPlanPage(){
   return h;
 }
 
+function launchPracticePlanItem(item) {
+  if (!item) return;
+  switch (item.type) {
+    case "warmup":
+    case "finger":
+      act("tab", "games");
+      S._gameTab = "fingers";
+      render();
+      break;
+    case "transition":
+      act("start_drill", "level");
+      break;
+    case "chord_practice":
+      if (item.chord) { S.chord = item.chord; }
+      act("start_drill", "level");
+      break;
+    case "performance_song":
+      if (item.songId) act("openPerform", item.songId);
+      else { act("tab", "songs"); render(); }
+      break;
+    case "performance_phrase":
+      if (item.songId) act("openPerform", item.songId);
+      else { act("tab", "songs"); render(); }
+      break;
+    case "explore":
+      act("tab", "songs");
+      render();
+      break;
+    default:
+      act("tab", "practice");
+      render();
+      break;
+  }
+}
+
 function planItemColor(type){
   if(type==="warmup" || type==="finger") return "var(--warning)";
   if(type==="transition") return "var(--chord-major)";
