@@ -32,6 +32,8 @@
       performancePracticePreset: null,
       performanceLoop: null,
       performanceInputMode: null,
+      performanceCalibrationSource: null,
+      performanceCalibrationMode: false,
       performanceResults: null,
       transport: {
         status: "idle",
@@ -111,6 +113,8 @@
       performancePracticePreset: this.runtimeState.performancePracticePreset,
       performanceLoop: this.runtimeState.performanceLoop,
       performanceInputMode: this.runtimeState.performanceInputMode,
+      performanceCalibrationSource: this.runtimeState.performanceCalibrationSource,
+      performanceCalibrationMode: false,
       performanceResults: this.runtimeState.performanceResults,
       transport: { status: "ready", positionMs: 0 }
     });
@@ -147,6 +151,8 @@
       performancePracticePreset: null,
       performanceLoop: null,
       performanceInputMode: null,
+      performanceCalibrationSource: this.runtimeState.performanceCalibrationSource,
+      performanceCalibrationMode: false,
       performanceResults: null,
       transport: { status: "ready", positionMs: 0 }
     });
@@ -181,7 +187,9 @@
       performancePracticePreset: this.runtimeState.performancePracticePreset,
       performanceLoop: result.planCompleted ? null : this.runtimeState.performanceLoop,
       performanceInputMode: this.runtimeState.performanceInputMode,
-      performanceResults: result.performanceSummary ? this.runtimeState.performanceResults : this.runtimeState.performanceResults,
+      performanceCalibrationSource: this.runtimeState.performanceCalibrationSource,
+      performanceCalibrationMode: false,
+      performanceResults: result.performanceSummary || this.runtimeState.performanceResults,
       transport: { status: result.planCompleted ? "completed" : "ready" },
       lastCompletedSessionId: result.planCompleted && this.currentPlan ? this.currentPlan.id : this.runtimeState.lastCompletedSessionId,
       lastCompletedFlow: result.planCompleted && this.currentPlan ? this.currentPlan.flow : this.runtimeState.lastCompletedFlow,
@@ -242,6 +250,8 @@
       performancePracticePreset: this.runtimeState.performancePracticePreset,
       performanceLoop: this.runtimeState.performanceLoop,
       performanceInputMode: this.runtimeState.performanceInputMode,
+      performanceCalibrationSource: this.runtimeState.performanceCalibrationSource,
+      performanceCalibrationMode: this.runtimeState.performanceCalibrationMode,
       performanceResults: this.runtimeState.performanceResults,
       transport: this.runtimeState.transport
     };
@@ -256,6 +266,7 @@
       next.performancePracticePreset = payload.preset || this.runtimeState.performancePracticePreset;
       next.performanceLoop = null;
       next.performanceInputMode = payload.mode || this.runtimeState.performanceInputMode;
+      next.performanceCalibrationMode = false;
       next.performanceResults = null;
       next.transport = { status: payload.countIn ? "count_in" : "running", positionMs: 0 };
     } else if (action === "select_song") {
@@ -264,8 +275,51 @@
       if (Object.prototype.hasOwnProperty.call(payload, "chartId")) next.performanceChartId = payload.chartId;
       if (Object.prototype.hasOwnProperty.call(payload, "difficulty")) next.performanceDifficultyId = payload.difficulty;
       if (Object.prototype.hasOwnProperty.call(payload, "arrangementType")) next.performanceArrangementType = payload.arrangementType;
+      next.performanceCalibrationMode = false;
       next.performanceResults = null;
       next.transport = { status: "ready", positionMs: 0 };
+    } else if (action === "open_stats") {
+      next.activeFlow = SparkSessionTypes.FLOW_PERFORMANCE_SONG;
+      next.activeScreen = "performance_stats";
+      next.performanceCalibrationMode = false;
+      next.transport = { status: "idle", positionMs: 0 };
+    } else if (action === "open_editor") {
+      next.activeFlow = SparkSessionTypes.FLOW_PERFORMANCE_SONG;
+      next.activeScreen = "performance_editor";
+      next.performanceCalibrationMode = false;
+      next.transport = { status: "idle", positionMs: 0 };
+    } else if (action === "close_editor") {
+      next.activeScreen = payload.screen || "home";
+      next.performanceCalibrationMode = false;
+      next.transport = { status: "idle", positionMs: 0 };
+    } else if (action === "open_calibration") {
+      next.activeFlow = SparkSessionTypes.FLOW_PERFORMANCE_SONG;
+      next.activeScreen = "perform_calibration";
+      next.performanceCalibrationMode = false;
+      if (Object.prototype.hasOwnProperty.call(payload, "source")) {
+        next.performanceCalibrationSource = payload.source;
+      }
+      next.transport = { status: "idle", positionMs: 0 };
+    } else if (action === "calibration_source") {
+      next.performanceCalibrationSource = Object.prototype.hasOwnProperty.call(payload, "source")
+        ? payload.source
+        : (this.runtimeState.performanceCalibrationSource || "midi");
+    } else if (action === "calibration_start") {
+      next.activeScreen = "perform_calibration";
+      next.performanceCalibrationMode = true;
+      if (Object.prototype.hasOwnProperty.call(payload, "source")) {
+        next.performanceCalibrationSource = payload.source;
+      }
+      next.transport = { status: "calibrating", positionMs: 0 };
+    } else if (action === "calibration_stop") {
+      next.activeScreen = "perform_calibration";
+      next.performanceCalibrationMode = false;
+      next.transport = { status: "idle", positionMs: 0 };
+    } else if (action === "calibration_reset") {
+      next.activeScreen = "perform_calibration";
+      next.performanceCalibrationMode = false;
+      next.performanceCalibrationSource = this.runtimeState.performanceCalibrationSource;
+      next.transport = { status: "idle", positionMs: 0 };
     } else if (action === "pause") {
       next.transport = { status: "paused" };
     } else if (action === "resume") {
@@ -285,14 +339,17 @@
       if (Object.prototype.hasOwnProperty.call(payload, "preset")) next.performancePracticePreset = payload.preset;
     } else if (action === "stop") {
       next.activeScreen = payload.screen || "performance_song";
+      next.performanceCalibrationMode = false;
       next.transport = { status: "idle", positionMs: this.runtimeState.transport.positionMs || 0 };
     } else if (action === "finish") {
       next.activeScreen = payload.screen || "perform_done";
       next.performanceLoop = null;
+      next.performanceCalibrationMode = false;
       next.performanceResults = payload.results || this.runtimeState.performanceResults;
       next.transport = { status: "completed", positionMs: this.runtimeState.transport.positionMs || 0 };
     } else if (action === "start_failed") {
       next.activeScreen = payload.screen || "home";
+      next.performanceCalibrationMode = false;
       next.transport = { status: "idle", positionMs: 0 };
     }
 

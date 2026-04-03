@@ -1452,11 +1452,17 @@ window.act=function(a,v){
     return;
   }
   if(a==="openPerfStats"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("open_stats");
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERF_STATS}});
     else S.screen=SCR.PERF_STATS;
     render();return;
   }
   if(a==="openEditor"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("open_editor");
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performEditorChart:null,performEditorDirty:false,screen:SCR.PERF_EDITOR}});
     }else{
@@ -1481,22 +1487,47 @@ window.act=function(a,v){
     S.screen=SCR.PLAN;render();return;
   }
   if(a==="openPerformCalibration"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("open_calibration", {
+        source: S.performCalibrationSource || "midi"
+      });
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_CALIBRATE}});
     else S.screen=SCR.PERFORM_CALIBRATE;
     render();return;
   }
   if(a==="performCalibrateSource"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("calibration_source", { source: v||"midi" });
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performCalibrationSource:v||"midi"}});
     else S.performCalibrationSource=v||"midi";
     render();return;
   }
-  if(a==="performCalibrationStart"){startPerformanceCalibrationRun();render();return;}
-  if(a==="performCalibrationStop"){stopPerformanceCalibration();render();return;}
+  if(a==="performCalibrationStart"){
+    var calStartSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(S.performCalibrationSource||"midi");
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("calibration_start", {
+        source: calStartSource
+      });
+    }
+    startPerformanceCalibrationRun();render();return;
+  }
+  if(a==="performCalibrationStop"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("calibration_stop");
+    }
+    stopPerformanceCalibration();render();return;
+  }
   if(a==="performCalibrationApply"){applyCalibrationOffset();render();return;}
   if(a==="performCalibrationReset"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("calibration_reset");
+    }
+    var resetSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(S.performCalibrationSource||"midi");
     var resetPatch={performCalibrationHits:[]};
-    if(S.performCalibrationSource==="midi")resetPatch.performMidiOffsetMs=0;
-    if(S.performCalibrationSource==="mic")resetPatch.performMicOffsetMs=0;
+    if(resetSource==="midi")resetPatch.performMidiOffsetMs=0;
+    if(resetSource==="mic")resetPatch.performMicOffsetMs=0;
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:resetPatch,save:false});
     }else{
@@ -1505,6 +1536,38 @@ window.act=function(a,v){
       S.performCalibrationHits=[];
     }
     saveState();render();return;
+  }
+  if(a==="performStatsBack"){
+    if(window.sparkCore&&typeof window.sparkCore.updateRuntimeState==="function"){
+      window.sparkCore.updateRuntimeState({
+        activeScreen: "home",
+        activeTab: TAB.SONGS,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
+  }
+  if(a==="performCalibrationBack"){
+    if(typeof stopPerformanceCalibration==="function")stopPerformanceCalibration();
+    if(window.sparkCore&&typeof window.sparkCore.updateRuntimeState==="function"){
+      window.sparkCore.updateRuntimeState({
+        activeScreen: "home",
+        activeTab: TAB.SONGS,
+        transport: { status: "idle", positionMs: 0 },
+        performanceCalibrationMode: false
+      });
+    }
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
   }
   if(a==="performCalibrateTap"){
     var nowMs=performance.now();
@@ -1531,6 +1594,9 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="editorBack"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("close_editor", { screen: "home" });
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
     else {S.screen=SCR.HOME;S.tab=TAB.SONGS;}
     render();return;

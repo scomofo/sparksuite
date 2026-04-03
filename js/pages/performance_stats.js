@@ -2,7 +2,7 @@
 
 function performanceStatsPage(){
   var h='<div class="perform-page">';
-  h+='<div class="perform-header"><button class="back-btn" onclick="act(\'back\')">&larr; Back</button>';
+  h+='<div class="perform-header"><button class="back-btn" onclick="act(\'performStatsBack\')">&larr; Back</button>';
   h+='<div class="perform-title"><strong>Performance Stats</strong></div></div>';
 
   // Overview

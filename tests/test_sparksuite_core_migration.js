@@ -341,6 +341,73 @@ test("SparkCore can mirror performance runtime configuration changes", function(
   assert.strictEqual(state.performancePracticePreset, "guitar_solo");
 });
 
+test("SparkCore can track performance screen transitions for stats, editor, and calibration", function() {
+  var core = createDefaultSparkCore();
+  core.startSession({
+    flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+    songId: "night_drive",
+    arrangementType: "rhythm_chords",
+    difficultyId: "hard"
+  });
+
+  core.syncPerformanceRuntimeState("open_stats");
+  var statsState = core.getRuntimeState();
+  assert.strictEqual(statsState.activeScreen, "performance_stats");
+  assert.strictEqual(statsState.transport.status, "idle");
+
+  core.syncPerformanceRuntimeState("open_editor");
+  var editorState = core.getRuntimeState();
+  assert.strictEqual(editorState.activeScreen, "performance_editor");
+  assert.strictEqual(editorState.transport.status, "idle");
+
+  core.syncPerformanceRuntimeState("open_calibration", { source: "mic" });
+  var calibrationScreenState = core.getRuntimeState();
+  assert.strictEqual(calibrationScreenState.activeScreen, "perform_calibration");
+  assert.strictEqual(calibrationScreenState.performanceCalibrationSource, "mic");
+  assert.strictEqual(calibrationScreenState.performanceCalibrationMode, false);
+
+  // calibration_source: standalone source change
+  core.syncPerformanceRuntimeState("calibration_source", { source: "midi" });
+  var sourceChangedState = core.getRuntimeState();
+  assert.strictEqual(sourceChangedState.performanceCalibrationSource, "midi");
+  assert.strictEqual(sourceChangedState.activeScreen, "perform_calibration");
+
+  // switch back to mic for remaining calibration tests
+  core.syncPerformanceRuntimeState("calibration_source", { source: "mic" });
+  assert.strictEqual(core.getRuntimeState().performanceCalibrationSource, "mic");
+
+  core.syncPerformanceRuntimeState("calibration_start");
+  var calibrationRunningState = core.getRuntimeState();
+  assert.strictEqual(calibrationRunningState.performanceCalibrationMode, true);
+  assert.strictEqual(calibrationRunningState.transport.status, "calibrating");
+  assert.strictEqual(calibrationRunningState.performanceCalibrationSource, "mic");
+
+  core.syncPerformanceRuntimeState("calibration_stop");
+  var calibrationStoppedState = core.getRuntimeState();
+  assert.strictEqual(calibrationStoppedState.performanceCalibrationMode, false);
+  assert.strictEqual(calibrationStoppedState.transport.status, "idle");
+
+  // calibration_reset: distinct from stop — preserves source, resets mode
+  core.syncPerformanceRuntimeState("calibration_start");
+  assert.strictEqual(core.getRuntimeState().performanceCalibrationMode, true);
+  core.syncPerformanceRuntimeState("calibration_reset");
+  var calibrationResetState = core.getRuntimeState();
+  assert.strictEqual(calibrationResetState.performanceCalibrationMode, false);
+  assert.strictEqual(calibrationResetState.transport.status, "idle");
+  assert.strictEqual(calibrationResetState.activeScreen, "perform_calibration");
+  assert.strictEqual(calibrationResetState.performanceCalibrationSource, "mic");
+
+  // start action clears calibrationMode
+  core.syncPerformanceRuntimeState("calibration_start");
+  assert.strictEqual(core.getRuntimeState().performanceCalibrationMode, true);
+  core.syncPerformanceRuntimeState("start", { chartId: "night_drive_chart" });
+  assert.strictEqual(core.getRuntimeState().performanceCalibrationMode, false);
+
+  core.syncPerformanceRuntimeState("close_editor", { screen: "home" });
+  var homeState = core.getRuntimeState();
+  assert.strictEqual(homeState.activeScreen, "home");
+});
+
 test("SparkCore can mirror performance song selection state explicitly", function() {
   var core = createDefaultSparkCore();
   core.syncPerformanceRuntimeState("select_song", {

@@ -215,6 +215,12 @@ Primary source plans:
   - `js/pages/perform.js`
   - `js/sparksuite/core/spark_core.js`
   - `tests/test_sparksuite_core_migration.js`
+- Performance stats/editor/calibration transitions now have explicit SparkCore runtime actions, and stats/calibration exits now use explicit app actions instead of falling through the generic shell back path. The calibration screen can also prefer core-backed source/mode state instead of relying only on legacy calibration fields.
+  - `js/app.js`
+  - `js/pages/performance_stats.js`
+  - `js/pages/perform_calibration.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
 
 ## Partial
 
