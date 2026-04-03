@@ -58,8 +58,13 @@ Primary source plans:
   - `tests/test_sparksuite_core_migration.js`
 - Bass is now registered as a first-class SparkSuite instrument adapter in the default core runtime.
   - `js/sparksuite/instruments/bass/bass_adapter.js`
+  - `js/sparksuite/instruments/bass/bass_module.js`
   - `js/sparksuite/instruments/bass/index.js`
   - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Bass now has a real SparkSuite module boundary with authored curriculum/song/rhythm content instead of only a thin adapter on top of legacy runtime data.
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `js/sparksuite/instruments/bass/bass_adapter.js`
   - `tests/test_sparksuite_core_migration.js`
 - First engine-owned rhythm-highway slice is implemented.
   - `js/sparksuite/core/rhythm_gameplay_engine.js`

@@ -159,6 +159,8 @@ eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_progression.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_module.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/index.js"));
+eval(loadJS("js/instruments/bass/data.js"));
+eval(loadJS("js/sparksuite/instruments/bass/bass_module.js"));
 eval(loadJS("js/sparksuite/instruments/bass/bass_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/bass/index.js"));
 eval(loadJS("js/sparksuite/instruments/piano/piano_adapter.js"));
@@ -1893,21 +1895,12 @@ test("createDefaultSparkCore registers piano as a first-class instrument adapter
 });
 
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
-  var bassSongs = [
-    { title: "Low Tide", artist: "Bass Suite" },
-    { title: "Deep Pulse", artist: "Bass Suite" }
-  ];
-  var bassSessions = [
-    { num: 1, title: "Bass Spark 1", spark: { text: "Groove" }, newMove: { chord: "E" } },
-    { num: 2, title: "Bass Spark 2", spark: { text: "Lock in" }, newMove: { chord: "A" } }
-  ];
-
   SparkInstrumentAdapter = {
     getAppId: function() { return "bassspark"; },
     getInstrumentType: function() { return "bass"; },
-    getCurriculumMap: function() { return [{ num: 1, title: "Low End Basics" }]; },
-    getCurriculum: function() { return { SESSIONS: bassSessions }; },
-    getSongs: function() { return bassSongs; }
+    getCurriculumMap: function() { return SparkBassModule.getCurriculumMap(); },
+    getCurriculum: function() { return { SESSIONS: SparkBassModule.getCurriculumMap() }; },
+    getSongs: function() { return SparkBassModule.getSongs(); }
   };
 
   var core = createDefaultSparkCore();
@@ -1922,12 +1915,33 @@ test("createDefaultSparkCore registers bass as a first-class instrument adapter"
   assert.ok(context.adapter);
   assert.strictEqual(context.instrumentType, "bass");
   assert.strictEqual(context.adapter.getType(), "bass");
-  assert.strictEqual(context.curriculumMap[0].title, "Low End Basics");
-  assert.strictEqual(context.songs[0].title, "Low Tide");
-  assert.strictEqual(performancePlan.context.performanceSong.songId, "low_tide");
-  assert.strictEqual(S.performSongData.title, "Low Tide");
+  assert.strictEqual(context.curriculumMap[0].title, "First Groove");
+  assert.strictEqual(context.songs[0].title, "Seven Nation Army");
+  assert.ok(context.rhythmAdapter);
+  assert.strictEqual(context.rhythmAdapter.getLaneCount(), 4);
+  assert.strictEqual(performancePlan.context.performanceSong.songId, "seven_nation_army");
+  assert.strictEqual(S.performSongData.title, "Seven Nation Army");
   assert.strictEqual(S.performArrangementType, "groove");
   assert.strictEqual(S.performDifficulty, "hard");
+});
+
+test("bass rhythm adapter selects richer chart variants as sessions progress", function() {
+  var adapter = new SparkBassRhythmAdapter();
+  var rootPayload = adapter.createPayload({
+    curriculum: { nextLessonId: "session_1" }
+  });
+  var groovePayload = adapter.createPayload({
+    curriculum: { nextLessonId: "session_11" }
+  });
+  var walkingPayload = adapter.createPayload({
+    curriculum: { nextLessonId: "session_16" }
+  });
+
+  assert.strictEqual(rootPayload.chartId, "bass_root_pulse_01");
+  assert.strictEqual(groovePayload.chartId, "bass_fifth_drive_01");
+  assert.strictEqual(walkingPayload.chartId, "bass_walk_intro_01");
+  assert.strictEqual(rootPayload.songChart.metadata.laneCount, 4);
+  assert.ok(walkingPayload.songChart.tracks.guitar.notes.length >= 6);
 });
 
 test("completeSession routes performance completion rewards through core", function() {
