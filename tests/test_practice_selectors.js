@@ -31,7 +31,8 @@ function resetState() {
     transitionStats: {},
     rhythmResults: null,
     fingerStats: {},
-    guidedSession: 1
+    guidedSession: 1,
+    ukuleleSkillProgress: {}
   };
   global.getNextLessonFromCurriculum = function(rootLessonId, completedLessonIds) {
     completedLessonIds = completedLessonIds || [];
@@ -79,10 +80,12 @@ function resetState() {
           };
           var hint = hints[lesson.skill] || { reason: "Continue ukulele progression.", focusTag: "ukulele", priorityBoost: 0 };
           var completedCount = Array.isArray(state.completedLessonIds) ? state.completedLessonIds.length : 0;
+          var progressEntry = state.ukuleleSkillProgress && lesson.skill ? state.ukuleleSkillProgress[lesson.skill] : null;
           return {
-            reason: hint.reason,
+            reason: progressEntry ? ("Ukulele timing is at " + Math.round((progressEntry.timing || 0) * 100) + "%, so " + hint.reason.toLowerCase()) : hint.reason,
             focusTag: hint.focusTag,
-            priorityBoost: hint.priorityBoost + Math.min(4, Math.floor(completedCount / 2))
+            priorityBoost: hint.priorityBoost + Math.min(4, Math.floor(completedCount / 2)),
+            progressSummary: progressEntry ? { skill: lesson.skill, weakestMetric: "timing", timing: progressEntry.timing } : null
           };
         }
       };
@@ -168,6 +171,25 @@ test("selectInstrumentModuleCandidate advances into deeper ukulele lessons after
   assert.strictEqual(candidate.meta.recommendationFocus, "fingerpicking");
   assert.ok(candidate.reason.indexOf("arpeggio") >= 0);
   assert.ok(candidate.priority > 96);
+});
+
+test("selectInstrumentModuleCandidate carries ukulele progress summary into recommendation metadata", function() {
+  S.ukuleleSkillProgress.fingerpicking = {
+    accuracy: 0.7,
+    timing: 0.52,
+    speed: 0.63,
+    consistency: 0.66
+  };
+  S.completedLessons = ["uke_01", "uke_02", "uke_03", "uke_04", "uke_05"];
+
+  var candidate = selectInstrumentModuleCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.skill, "fingerpicking");
+  assert.ok(candidate.meta.progressSummary);
+  assert.strictEqual(candidate.meta.progressSummary.skill, "fingerpicking");
+  assert.strictEqual(candidate.meta.progressSummary.weakestMetric, "timing");
+  assert.ok(candidate.reason.indexOf("timing is at 52%") >= 0);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

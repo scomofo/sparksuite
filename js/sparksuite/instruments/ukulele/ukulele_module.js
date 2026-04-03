@@ -245,11 +245,21 @@
         focusTag: "ukulele"
       };
       var completedCount = Array.isArray(state.completedLessonIds) ? state.completedLessonIds.length : 0;
+      var progressSummary = typeof summarizeUkuleleSkillProgress === "function"
+        ? summarizeUkuleleSkillProgress(lesson.skill, state)
+        : null;
+      var reason = hint.reason;
+      var priorityBoost = hint.priorityBoost + Math.min(4, Math.floor(completedCount / 2));
+      if (progressSummary) {
+        priorityBoost += progressSummary.stage === "developing" ? 3 : progressSummary.stage === "steady" ? 1 : 0;
+        reason = "Ukulele " + progressSummary.weakestMetric + " is at " + Math.round(progressSummary[progressSummary.weakestMetric] * 100) + "%, so " + hint.reason.toLowerCase();
+      }
       return {
-        priorityBoost: hint.priorityBoost + Math.min(4, Math.floor(completedCount / 2)),
-        reason: hint.reason,
+        priorityBoost: priorityBoost,
+        reason: reason,
         focusTag: hint.focusTag,
-        labelSuffix: exercise.type === "performance_run" ? "Performance" : null
+        labelSuffix: exercise.type === "performance_run" ? "Performance" : null,
+        progressSummary: progressSummary
       };
     },
 

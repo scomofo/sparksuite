@@ -47,7 +47,8 @@
       ? (module.getPracticeRecommendation(lesson, exercise, {
           completedLessonIds: completedLessonIds,
           mastery: S.mastery || {},
-          performanceStats: S.performanceStats || {}
+          performanceStats: S.performanceStats || {},
+          ukuleleSkillProgress: S.ukuleleSkillProgress || {}
         }) || {})
       : {};
     var label = instrumentName + ": " + (lesson.title || lesson.skill);
@@ -64,7 +65,8 @@
         exerciseId:exercise.id || null,
         exerciseType:exercise.type || null,
         instrument:module.instrument || null,
-        recommendationFocus:recommendation.focusTag || null
+        recommendationFocus:recommendation.focusTag || null,
+        progressSummary:recommendation.progressSummary || null
       }
     };
   }
