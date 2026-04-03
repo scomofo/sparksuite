@@ -7,6 +7,13 @@ function guitarAct(a, v) {
   if (a === "quickStart") {
     var session = SparkSession.buildSession({ mode: "quickStart", level: S.level });
     if (!session) return true;
+    if (typeof window.openLegacyPracticeSessionRequest === "function") {
+      window.openLegacyPracticeSessionRequest({
+        mode: "quickStart",
+        chordName: session.chordName,
+        durationSec: session.duration
+      });
+    }
     S.sessionMicros = [];
     S.lastChordName = session.chordName;
     snd("start");
@@ -25,6 +32,13 @@ function guitarAct(a, v) {
   if (a === "resumeSession") {
     var session = SparkSession.buildSession({ mode: "chord", chordName: S.lastChordName });
     if (!session) { act("quickStart"); return true; }
+    if (typeof window.openLegacyPracticeSessionRequest === "function") {
+      window.openLegacyPracticeSessionRequest({
+        mode: "chord",
+        chordName: session.chordName,
+        durationSec: session.duration
+      });
+    }
     S.sessionMicros = [];
     snd("start");
     S.currentChord = session.chord;
@@ -42,6 +56,13 @@ function guitarAct(a, v) {
   if (a === "startSession") {
     var session = SparkSession.buildSession({ mode: "chord", chordName: v });
     if (!session) return true;
+    if (typeof window.openLegacyPracticeSessionRequest === "function") {
+      window.openLegacyPracticeSessionRequest({
+        mode: "chord",
+        chordName: session.chordName,
+        durationSec: session.duration
+      });
+    }
     S.sessionMicros = [];
     S.lastChordName = session.chordName;
     snd("start");
@@ -61,6 +82,12 @@ function guitarAct(a, v) {
   if (a === "startDrill") {
     var session = SparkSession.buildSession({ mode: "drill", level: S.level });
     if (!session) return true;
+    if (typeof window.openLegacyPracticeDrillRequest === "function") {
+      window.openLegacyPracticeDrillRequest({
+        durationSec: session.duration,
+        chordNames: session.chords ? session.chords.map(function(ch) { return ch.name; }) : []
+      });
+    }
     S.drillChords = session.chords;
     S.drillIdx = 0;
     S.drillTimer = session.duration;
@@ -75,6 +102,30 @@ function guitarAct(a, v) {
     render();
     T.drill = setTimeout(tickD, 1000);
     return true;
+  }
+
+  if (a === "repeatLegacyPracticeSession") {
+    var repeatChordName = S.currentChord ? S.currentChord.name : (S.lastChordName || null);
+    var repeatDuration = typeof S.timer === "number" ? S.timer : 120;
+    if (typeof window.repeatLegacyPracticeSessionRequest === "function") {
+      window.repeatLegacyPracticeSessionRequest({
+        mode: repeatChordName ? "chord" : "quickStart",
+        chordName: repeatChordName,
+        durationSec: repeatDuration
+      });
+    }
+    if (repeatChordName) return guitarAct("startSession", repeatChordName);
+    return guitarAct("quickStart");
+  }
+
+  if (a === "repeatLegacyPracticeDrill") {
+    if (typeof window.repeatLegacyPracticeDrillRequest === "function") {
+      window.repeatLegacyPracticeDrillRequest({
+        durationSec: typeof S.drillTimer === "number" ? S.drillTimer : 60,
+        chordNames: S.drillChords ? S.drillChords.map(function(ch) { return ch.name; }) : []
+      });
+    }
+    return guitarAct("startDrill");
   }
 
   if (a === "drillSwitch") {
@@ -124,6 +175,12 @@ function guitarAct(a, v) {
       if (D.ALL_CHORDS[i].name === parts[1]) c2 = D.ALL_CHORDS[i];
     }
     if (c1 && c2) {
+      if (typeof window.openLegacyPracticeDrillRequest === "function") {
+        window.openLegacyPracticeDrillRequest({
+          durationSec: 60,
+          chordNames: [c1.name, c2.name]
+        });
+      }
       S.drillChords = [c1, c2]; S.drillIdx = 0; S.drillTimer = 60; S.drillSwitches = 0; S.drillLastSwitchTime = Date.now();
       S.drillAdaptiveBpm = 60; S.drillConsecutiveFast = 0; S.drillConsecutiveSlow = 0;
       _prevChordKey = c1.name;

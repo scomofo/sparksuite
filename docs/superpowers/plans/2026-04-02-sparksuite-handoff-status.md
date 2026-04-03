@@ -110,6 +110,14 @@ Primary source plans:
   - `js/sparksuite/bridges/progress_bridge.js`
   - `js/app.js`
   - `tests/test_sparksuite_legacy_bridge_cleanup.js`
+- Dashboard, career, songs-browser, and utility-screen families now have explicit SparkCore-backed entry/refresh/navigation helpers across shared and piano flows.
+  - Includes dashboard section open, dashboard/home return, dashboard refresh/init, dashboard-to-plan entry, explicit practice-plan screen entry, career-song selection, recommendation launch, challenge-claim sync, utility-screen open, utility-family return, skill-tree entry/focus, performance-daily challenge launch, stem-player open/close, and piano calibration entry through shared helpers
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/instruments/piano/app.js`
+  - `js/pages/skill_tree.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_piano_runtime_core_migration.js`
 - Shared mini-activity runtime state for ear training and song playback now also routes through the progress bridge for start/stop/reset-style state transitions instead of direct inline field/timer mutation.
   - `js/sparksuite/bridges/progress_bridge.js`
   - `js/app.js`
@@ -249,6 +257,14 @@ Primary source plans:
   - `tests/test_piano_runtime_core_migration.js`
 - Bass guided completion now also mirrors the guided-done transition through the shared guided navigation helper, and bass has dedicated runtime migration coverage instead of only being indirectly covered by the broader core tests.
   - `js/instruments/bass/app.js`
+  - `tests/test_bass_runtime_core_migration.js`
+- Legacy guitar/bass timed session and drill flows now also use explicit SparkCore-backed entry/completion/return/retry helpers, and the shared session/drill result pages can prefer core runtime practice state instead of depending only on shell-owned chord/drill selection and generic tab exits.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/instruments/guitar/app.js`
+  - `js/instruments/bass/app.js`
+  - `js/app.js`
+  - `js/pages/session.js`
+  - `tests/test_sparksuite_core_migration.js`
   - `tests/test_bass_runtime_core_migration.js`
 - The shared songs browser now has a core-backed state slice for subtab, filter, sort, and community browse/search controls, and the songs page can prefer that SparkCore browser state instead of reading only shell-owned fields.
   - `js/sparksuite/core/spark_core.js`
@@ -396,7 +412,7 @@ Primary source plans:
   - Current parity is achieved with conversion, scoring, preview, hit-color, and overlay layers
   - The underlying note sprite renderer still treats imported techniques generically
 - Progression cleanup is significantly better, but the app still persists to legacy `S.*` state.
-- Dashboard, songs-browser, and career-launch surfaces now have explicit SparkCore-backed state and request helpers, including dedicated career-song selection, recommendation-launch, challenge-claim sync, and dashboard-to-plan entry paths across shared and piano flows, reducing more of the old shell-only navigation/selection logic.
+- Dashboard, songs-browser, and career-launch surfaces now have explicit SparkCore-backed state and request helpers, including dedicated dashboard-section entry, dashboard/home return routing, utility-screen entry, career-song selection, recommendation-launch, challenge-claim sync, dashboard snapshot refresh/init, and dashboard-to-plan entry paths across shared and piano flows, reducing more of the old shell-only navigation/selection logic.
 - Ukulele launcher support is live, but deeper performance/song-library parity is still early.
   - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
   - Broader dedicated song/chart coverage, richer module-specific screens, and deeper gameplay parity can still expand

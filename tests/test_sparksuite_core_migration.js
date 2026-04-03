@@ -256,6 +256,148 @@ test("SparkCore can open daily practice from dashboard through an explicit helpe
   assert.strictEqual(core.getRuntimeState().activeScreen, "daily_practice");
 });
 
+test("SparkCore can open the practice plan screen through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.openPracticePlanScreen();
+
+  assert.ok(plan instanceof SessionPlan);
+  assert.strictEqual(plan.flow, "daily_practice");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "practice_plan");
+  assert.strictEqual(core.getRuntimeState().activeTab, "practice");
+});
+
+test("SparkCore can open legacy practice session and drill runtime explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var sessionState = core.openLegacyPracticeSession({
+    mode: "chord",
+    chordName: "C",
+    durationSec: 120
+  });
+  assert.strictEqual(sessionState.activeFlow, "legacy_practice_session");
+  assert.strictEqual(sessionState.activeScreen, "session");
+  assert.strictEqual(sessionState.activeTab, "practice");
+  assert.strictEqual(sessionState.legacyPracticeMode, "chord");
+  assert.strictEqual(sessionState.legacyPracticeChordName, "C");
+  assert.strictEqual(sessionState.legacyPracticeDurationSec, 120);
+  assert.strictEqual(sessionState.transport.status, "running");
+
+  var drillState = core.openLegacyPracticeDrill({
+    durationSec: 60,
+    chordNames: ["C", "G"]
+  });
+  assert.strictEqual(drillState.activeFlow, "legacy_practice_drill");
+  assert.strictEqual(drillState.activeScreen, "drill");
+  assert.strictEqual(drillState.activeTab, "practice");
+  assert.strictEqual(drillState.legacyPracticeMode, "drill");
+  assert.deepStrictEqual(drillState.legacyDrillChordNames, ["C", "G"]);
+  assert.strictEqual(drillState.legacyPracticeDurationSec, 60);
+  assert.strictEqual(drillState.transport.status, "running");
+
+  var completedSessionState = core.completeLegacyPracticeSession({
+    mode: "chord",
+    chordName: "C",
+    durationSec: 120
+  });
+  assert.strictEqual(completedSessionState.activeScreen, "complete");
+  assert.strictEqual(completedSessionState.transport.status, "completed");
+  assert.strictEqual(completedSessionState.legacyPracticeChordName, "C");
+
+  var completedDrillState = core.completeLegacyPracticeDrill({
+    durationSec: 60,
+    chordNames: ["C", "G"]
+  });
+  assert.strictEqual(completedDrillState.activeScreen, "drill_done");
+  assert.strictEqual(completedDrillState.transport.status, "completed");
+  assert.deepStrictEqual(completedDrillState.legacyDrillChordNames, ["C", "G"]);
+
+  var returnedState = core.returnFromLegacyPracticeFamily({ activeTab: "practice" });
+  assert.strictEqual(returnedState.activeScreen, "home");
+  assert.strictEqual(returnedState.activeTab, "practice");
+  assert.strictEqual(returnedState.transport.status, "idle");
+
+  var repeatedSessionState = core.repeatLegacyPracticeSession({
+    mode: "chord",
+    chordName: "C",
+    durationSec: 120
+  });
+  assert.strictEqual(repeatedSessionState.activeScreen, "session");
+  assert.strictEqual(repeatedSessionState.transport.status, "running");
+  assert.strictEqual(repeatedSessionState.legacyPracticeChordName, "C");
+
+  var repeatedDrillState = core.repeatLegacyPracticeDrill({
+    durationSec: 60,
+    chordNames: ["C", "G"]
+  });
+  assert.strictEqual(repeatedDrillState.activeScreen, "drill");
+  assert.strictEqual(repeatedDrillState.transport.status, "running");
+  assert.deepStrictEqual(repeatedDrillState.legacyDrillChordNames, ["C", "G"]);
+});
+
+test("legacy session and drill pages can fall back to SparkCore practice runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.VOICINGS = {};
+  global._prevChordKey = "";
+  global.ringHTML = function(_pct, _size, _stroke, _color, inner) { return inner; };
+  global.getExpectedNotes = function() { return []; };
+  global._buildChordCheckInner = function() { return ""; };
+  global.escHTML = function(value) { return String(value); };
+  global.tierBadgeHTML = function() { return ""; };
+  global.getTransitionTip = function() { return null; };
+  global.clickableDiv = function() { return ""; };
+  global.strumHandSVG = function() { return ""; };
+  global.strumHTML = function() { return ""; };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            ALL_CHORDS: [
+              { name: "C", short: "C" },
+              { name: "G", short: "G" }
+            ],
+            LC: { 1: "#fff" }
+          };
+        },
+        ui: {
+          chord: function(chord) { return "<div>" + chord.name + "</div>"; }
+        }
+      };
+    }
+  };
+  S.selectedVoicing = 0;
+  S.level = 1;
+  S.metronomeBpm = 80;
+  S._metroBeats = 4;
+  S._metroBeat = 0;
+  S.metronomeOn = false;
+  S.chordDetectOn = false;
+  S.chordDetectErr = "";
+  S.practiceIntention = "";
+  S.timerActive = true;
+  S.drillIdx = 0;
+  S.drillSwitches = 0;
+  S.drillAdaptiveBpm = 60;
+  S.currentChord = null;
+  S.timer = undefined;
+  S.drillChords = [];
+  S.drillTimer = undefined;
+
+  eval(loadJS("js/pages/session.js"));
+
+  core.openLegacyPracticeSession({ mode: "chord", chordName: "C", durationSec: 120 });
+  var sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf(">C<") >= 0);
+  assert.ok(sessionHtml.indexOf("2:00") >= 0);
+
+  core.openLegacyPracticeDrill({ durationSec: 60, chordNames: ["C", "G"] });
+  var drillHtml = drillPage();
+  assert.ok(drillHtml.indexOf("Switch Drill") >= 0);
+  assert.ok(drillHtml.indexOf(">C<") >= 0);
+  assert.ok(drillHtml.indexOf(">G<") >= 0);
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
@@ -385,6 +527,27 @@ test("SparkCore can track dashboard recommendation, insight, and challenge snaps
   assert.strictEqual(state.lastDashboardRefreshAt, 12345);
 });
 
+test("SparkCore can refresh and initialize dashboard snapshots through explicit helpers", function() {
+  var core = createDefaultSparkCore();
+  var refreshState = core.refreshDashboardSnapshot({
+    recommendations: [{ id: "rec_1", title: "Practice G to C" }],
+    insights: { strongestSkills: [{ id: "timing" }] },
+    challenges: [{ id: "daily_1", title: "Daily Challenge" }],
+    refreshedAt: 12345
+  });
+  assert.strictEqual(refreshState.dashboardRecommendations[0].id, "rec_1");
+  assert.strictEqual(refreshState.dashboardInsights.strongestSkills[0].id, "timing");
+  assert.strictEqual(refreshState.lastDashboardRefreshAt, 12345);
+
+  var initState = core.initializeDashboardChallenges({
+    challenges: [{ id: "daily_2", title: "Weekly Challenge" }],
+    refreshedAt: 67890
+  });
+  assert.strictEqual(initState.dashboardChallenges[0].id, "daily_2");
+  assert.strictEqual(initState.dashboardRecommendations[0].id, "rec_1");
+  assert.strictEqual(initState.lastDashboardRefreshAt, 67890);
+});
+
 test("SparkCore can track dashboard navigation and recommendation lookup explicitly", function() {
   var core = createDefaultSparkCore();
   core.applyDashboardRequest({
@@ -406,6 +569,81 @@ test("SparkCore can track dashboard navigation and recommendation lookup explici
   var recommendation = core.getDashboardRecommendationById("rec_1");
   assert.strictEqual(recommendation.title, "Practice G to C");
   assert.strictEqual(core.getDashboardRecommendationById("missing"), null);
+});
+
+test("SparkCore can open dashboard sections through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+
+  assert.strictEqual(core.openDashboardSection("recommendations").activeScreen, "recommendations");
+  assert.strictEqual(core.openDashboardSection("career").activeScreen, "career");
+  assert.strictEqual(core.openDashboardSection("insights").activeScreen, "insights");
+  assert.strictEqual(core.openDashboardSection("challenges").activeScreen, "challenges");
+  assert.strictEqual(core.openDashboardSection("home_dash").activeScreen, "home_dash");
+});
+
+test("SparkCore can return from dashboard-family and home-family screens explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  core.openDashboardSection("recommendations");
+  assert.strictEqual(core.returnFromHomeFamily({ currentScreen: "recommendations" }).activeScreen, "home_dash");
+
+  var state = core.returnFromHomeFamily({ currentScreen: "home" });
+  assert.strictEqual(state.activeScreen, "home");
+  assert.strictEqual(state.transport.status, "idle");
+});
+
+test("SparkCore can open utility screens through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+
+  assert.strictEqual(core.openUtilityScreen("settings").activeScreen, "settings");
+  assert.strictEqual(core.openUtilityScreen("curriculum").activeScreen, "curriculum");
+  assert.strictEqual(core.openUtilityScreen("cloud_settings").activeScreen, "cloud_settings");
+  assert.strictEqual(core.openUtilityScreen("midi_settings").activeScreen, "midi_settings");
+  assert.strictEqual(core.openUtilityScreen("midi_import").activeScreen, "midi_import");
+});
+
+test("SparkCore can open the skill tree through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+  var state = core.openSkillTree();
+
+  assert.strictEqual(state.activeScreen, "skill_tree");
+  assert.strictEqual(state.skillTreeFocus, "overview");
+});
+
+test("SparkCore can track skill tree focus through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+  core.openSkillTree();
+
+  var state = core.setSkillTreeFocus("rhythm");
+  assert.strictEqual(state.activeScreen, "skill_tree");
+  assert.strictEqual(state.skillTreeFocus, "rhythm");
+});
+
+test("SparkCore can open and close the stem player through explicit helpers", function() {
+  var core = createDefaultSparkCore();
+
+  var openState = core.openStemPlayer();
+  assert.strictEqual(openState.activeScreen, "stems");
+  assert.strictEqual(openState.activeTab, "songs");
+  assert.strictEqual(openState.songsSubTab, "stems");
+
+  var closeState = core.closeStemPlayer();
+  assert.strictEqual(closeState.activeScreen, "home");
+  assert.strictEqual(closeState.activeTab, "songs");
+  assert.strictEqual(closeState.songsSubTab, "stems");
+  assert.strictEqual(closeState.transport.status, "idle");
+});
+
+test("SparkCore can return from utility-family screens explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  core.openUtilityScreen("settings");
+  assert.strictEqual(core.returnFromUtilityFamily({ currentScreen: "settings" }).activeScreen, "home");
+
+  core.openUtilityScreen("midi_import");
+  var state = core.returnFromUtilityFamily({ currentScreen: "midi_import" });
+  assert.strictEqual(state.activeScreen, "home");
+  assert.strictEqual(state.transport.status, "idle");
 });
 
 test("SparkCore can build and apply dashboard recommendation launch requests", function() {
@@ -1022,6 +1260,29 @@ test("SparkCore can open career song selection through an explicit helper", func
   assert.strictEqual(core.getRuntimeState().performanceSongData.title, "Career Anthem");
   assert.strictEqual(core.getRuntimeState().performanceArrangementType, "lead");
   assert.strictEqual(core.getRuntimeState().performanceDifficultyId, "hard");
+});
+
+test("SparkCore can open performance daily challenge selection through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+  var request = core.openPerformanceDailyChallenge({
+    songId: "fire_road",
+    songData: {
+      title: "Fire Road",
+      artist: "Spark Suite"
+    },
+    songTitle: "Fire Road",
+    arrangementType: "chords",
+    difficultyId: "normal",
+    songIndex: 0
+  });
+
+  assert.strictEqual(request.songId, "fire_road");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "performance_song");
+  assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Fire Road");
+
+  var fallback = core.openPerformanceDailyChallenge({});
+  assert.strictEqual(fallback.activeScreen, "home");
+  assert.strictEqual(fallback.activeTab, "songs");
 });
 
 test("SparkCore can start a selected performance song through an explicit helper", function() {
