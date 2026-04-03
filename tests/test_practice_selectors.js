@@ -71,6 +71,19 @@ function resetState() {
             performance: [{ id: "uke_perform_01", type: "performance_run" }]
           };
           return map[skill] || [];
+        },
+        getPracticeRecommendation: function(lesson, exercise, state) {
+          var hints = {
+            down_strum: { reason: "Lock in steady down-strums before adding movement.", focusTag: "groove", priorityBoost: 0 },
+            fingerpicking: { reason: "Develop independent finger motion with a steady arpeggio pulse.", focusTag: "fingerpicking", priorityBoost: 6 }
+          };
+          var hint = hints[lesson.skill] || { reason: "Continue ukulele progression.", focusTag: "ukulele", priorityBoost: 0 };
+          var completedCount = Array.isArray(state.completedLessonIds) ? state.completedLessonIds.length : 0;
+          return {
+            reason: hint.reason,
+            focusTag: hint.focusTag,
+            priorityBoost: hint.priorityBoost + Math.min(4, Math.floor(completedCount / 2))
+          };
         }
       };
     }
@@ -132,6 +145,8 @@ test("selectInstrumentModuleCandidate returns the next ukulele lesson focus", fu
   assert.strictEqual(candidate.meta.lessonId, "uke_01");
   assert.strictEqual(candidate.meta.skill, "down_strum");
   assert.strictEqual(candidate.meta.instrument, "ukulele");
+  assert.strictEqual(candidate.meta.recommendationFocus, "groove");
+  assert.ok(candidate.reason.indexOf("down-strums") >= 0);
 });
 
 test("buildPracticeCandidates includes the module-driven ukulele candidate", function() {
@@ -150,6 +165,9 @@ test("selectInstrumentModuleCandidate advances into deeper ukulele lessons after
   assert.strictEqual(candidate.meta.lessonId, "uke_06");
   assert.strictEqual(candidate.meta.skill, "fingerpicking");
   assert.strictEqual(candidate.meta.exerciseId, "uke_pick_01");
+  assert.strictEqual(candidate.meta.recommendationFocus, "fingerpicking");
+  assert.ok(candidate.reason.indexOf("arpeggio") >= 0);
+  assert.ok(candidate.priority > 96);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

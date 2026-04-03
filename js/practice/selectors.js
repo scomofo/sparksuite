@@ -42,18 +42,29 @@
     if(!exercises.length) return null;
     var exercise = exercises[0];
     var instrumentName = module.name || module.instrument || "Instrument";
+    var completedLessonIds = getCompletedLessonIds();
+    var recommendation = typeof module.getPracticeRecommendation==="function"
+      ? (module.getPracticeRecommendation(lesson, exercise, {
+          completedLessonIds: completedLessonIds,
+          mastery: S.mastery || {},
+          performanceStats: S.performanceStats || {}
+        }) || {})
+      : {};
+    var label = instrumentName + ": " + (lesson.title || lesson.skill);
+    if(recommendation.labelSuffix) label += " - " + recommendation.labelSuffix;
     return {
       id:"module_" + (lesson.id || lesson.skill),
       type:exercise.type || "lesson",
-      priority:96,
-      label:instrumentName + ": " + (lesson.title || lesson.skill),
-      reason:"Continue module progression with " + lesson.skill,
+      priority:96 + (recommendation.priorityBoost || 0),
+      label:label,
+      reason:recommendation.reason || ("Continue module progression with " + lesson.skill),
       meta:{
         lessonId:lesson.id || null,
         skill:lesson.skill,
         exerciseId:exercise.id || null,
         exerciseType:exercise.type || null,
-        instrument:module.instrument || null
+        instrument:module.instrument || null,
+        recommendationFocus:recommendation.focusTag || null
       }
     };
   }
