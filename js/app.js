@@ -85,11 +85,21 @@ function tickD(){
 function tickDy(){
   if(S.screen===SCR.DAILY&&S.dailyTimer>0&&!S.dailyComplete){
     S.dailyTimer--;addPracticeSecond();
+    syncLegacyDailyRuntimeRequest("tick", {
+      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
+      remainingSec: S.dailyTimer,
+      timerActive: true,
+      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+    });
     if(!updateDailyTimerUI())render(); // partial update if elements exist
     T.daily=setTimeout(tickDy,1000);
   } else if(S.screen===SCR.DAILY&&S.dailyTimer<=0&&!S.dailyComplete){
     clearTimeout(T.daily);snd("complete");
     var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
+    completeLegacyDailyChallengeRequest({
+      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
+      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+    });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:xp,
@@ -700,6 +710,27 @@ function repeatLegacyPracticeDrillRequest(options) {
   return openLegacyPracticeDrillRequest(options || {});
 }
 
+function openLegacyDailyChallengeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openLegacyDailyChallenge === "function") {
+    return window.sparkCore.openLegacyDailyChallenge(options || {});
+  }
+  return null;
+}
+
+function syncLegacyDailyRuntimeRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.syncLegacyDailyRuntimeState === "function") {
+    return window.sparkCore.syncLegacyDailyRuntimeState(action, options || {});
+  }
+  return null;
+}
+
+function completeLegacyDailyChallengeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeLegacyDailyChallenge === "function") {
+    return window.sparkCore.completeLegacyDailyChallenge(options || {});
+  }
+  return null;
+}
+
 function completeDailyPracticePlanRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeDailyPracticePlan === "function") {
     return window.sparkCore.completeDailyPracticePlan(options || {});
@@ -1286,11 +1317,19 @@ window.act=function(a,v){
     }else{
       S.dailyTimer=t;S.dailyComplete=false;S.screen=SCR.DAILY;
     }
+    openLegacyDailyChallengeRequest({
+      challengeId: S.dailyChallenge.id,
+      durationSec: t
+    });
     snd("start");render();T.daily=setTimeout(tickDy,1000);return;
   }
   if(a==="completeDaily"){
     clearTimeout(T.daily);snd("complete");
     var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
+    completeLegacyDailyChallengeRequest({
+      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
+      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+    });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:xp,

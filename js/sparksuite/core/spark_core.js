@@ -47,6 +47,11 @@
       legacyPracticeDurationSec: null,
       legacyPracticeRemainingSec: null,
       legacyDrillChordNames: null,
+      legacyDailyChallengeId: null,
+      legacyDailyTimerActive: false,
+      legacyDailyDurationSec: null,
+      legacyDailyRemainingSec: null,
+      legacyDailyComplete: false,
       dashboardRecommendations: [],
       dashboardInsights: null,
       dashboardChallenges: [],
@@ -437,6 +442,78 @@
 
   SparkCore.prototype.repeatLegacyPracticeDrill = function(options) {
     return this.openLegacyPracticeDrill(options || {});
+  };
+
+  SparkCore.prototype.openLegacyDailyChallenge = function(options) {
+    options = options || {};
+    var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
+    return this.updateRuntimeState({
+      activeFlow: "legacy_daily_challenge",
+      activeScreen: "daily",
+      activeTab: "daily",
+      legacyDailyChallengeId: Object.prototype.hasOwnProperty.call(options, "challengeId") ? options.challengeId : null,
+      legacyDailyTimerActive: true,
+      legacyDailyDurationSec: durationSec,
+      legacyDailyRemainingSec: durationSec,
+      legacyDailyComplete: false,
+      transport: { status: "running", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.syncLegacyDailyRuntimeState = function(action, options) {
+    var runtimeState = this.getRuntimeState();
+    var next = {
+      activeFlow: runtimeState.activeFlow || "legacy_daily_challenge",
+      activeScreen: runtimeState.activeScreen || "daily",
+      activeTab: runtimeState.activeTab || "daily",
+      legacyDailyChallengeId: runtimeState.legacyDailyChallengeId,
+      legacyDailyTimerActive: !!runtimeState.legacyDailyTimerActive,
+      legacyDailyDurationSec: runtimeState.legacyDailyDurationSec,
+      legacyDailyRemainingSec: runtimeState.legacyDailyRemainingSec,
+      legacyDailyComplete: !!runtimeState.legacyDailyComplete,
+      transport: runtimeState.transport || { status: "idle", positionMs: 0 }
+    };
+    options = options || {};
+
+    if (Object.prototype.hasOwnProperty.call(options, "challengeId")) next.legacyDailyChallengeId = options.challengeId;
+    if (Object.prototype.hasOwnProperty.call(options, "remainingSec")) next.legacyDailyRemainingSec = options.remainingSec;
+    if (Object.prototype.hasOwnProperty.call(options, "durationSec")) next.legacyDailyDurationSec = options.durationSec;
+    if (Object.prototype.hasOwnProperty.call(options, "timerActive")) next.legacyDailyTimerActive = !!options.timerActive;
+    if (Object.prototype.hasOwnProperty.call(options, "dailyComplete")) next.legacyDailyComplete = !!options.dailyComplete;
+
+    if (action === "tick") {
+      if (typeof next.legacyDailyRemainingSec === "number") {
+        next.legacyDailyRemainingSec = Math.max(0, next.legacyDailyRemainingSec);
+      }
+      next.legacyDailyTimerActive = true;
+      next.legacyDailyComplete = false;
+      next.transport = { status: "running", positionMs: 0 };
+    } else if (action === "pause") {
+      next.legacyDailyTimerActive = false;
+      next.transport = { status: "paused", positionMs: 0 };
+    } else if (action === "resume") {
+      next.legacyDailyTimerActive = true;
+      next.transport = { status: "running", positionMs: 0 };
+    } else if (action === "set_remaining") {
+      next.transport = { status: next.legacyDailyTimerActive ? "running" : "paused", positionMs: 0 };
+    }
+
+    return this.updateRuntimeState(next);
+  };
+
+  SparkCore.prototype.completeLegacyDailyChallenge = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_daily_challenge",
+      activeScreen: "daily",
+      activeTab: "daily",
+      legacyDailyChallengeId: Object.prototype.hasOwnProperty.call(options, "challengeId") ? options.challengeId : this.runtimeState.legacyDailyChallengeId,
+      legacyDailyTimerActive: false,
+      legacyDailyDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : this.runtimeState.legacyDailyDurationSec,
+      legacyDailyRemainingSec: 0,
+      legacyDailyComplete: true,
+      transport: { status: "completed", positionMs: 0 }
+    });
   };
 
   SparkCore.prototype.completeDailyPracticePlan = function(options) {
