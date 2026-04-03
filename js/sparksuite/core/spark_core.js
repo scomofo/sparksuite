@@ -766,6 +766,34 @@
     });
   };
 
+  SparkCore.prototype.openCloudSettings = function(options) {
+    options = options || {};
+    this.openUtilityScreen("cloud_settings");
+    return this.syncCloudSettingsState(options);
+  };
+
+  SparkCore.prototype.applyCloudWorkflowRequest = function(action, options) {
+    options = options || {};
+    if (action === "open") {
+      return this.openCloudSettings(options);
+    }
+    if (action === "login" || action === "logout") {
+      return this.syncCloudSettingsState(options);
+    }
+    if (action === "sync_start" || action === "pull_start") {
+      return this.syncCloudSettingsState({
+        loggedIn: Object.prototype.hasOwnProperty.call(options, "loggedIn") ? options.loggedIn : this.runtimeState.cloudLoggedIn,
+        email: Object.prototype.hasOwnProperty.call(options, "email") ? options.email : this.runtimeState.cloudEmail,
+        lastSyncStatus: options.lastSyncStatus || "syncing",
+        lastSyncAt: Object.prototype.hasOwnProperty.call(options, "lastSyncAt") ? options.lastSyncAt : this.runtimeState.cloudLastSyncAt
+      });
+    }
+    if (action === "sync_done" || action === "pull_done" || action === "sync_error" || action === "pull_error") {
+      return this.syncCloudSettingsState(options);
+    }
+    return this.syncCloudSettingsState(options);
+  };
+
   SparkCore.prototype.syncCurriculumState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
