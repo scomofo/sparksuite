@@ -230,6 +230,175 @@ test("SparkCore runtime state tracks manual patches and completion summaries", f
   assert.strictEqual(completedState.lastOutcomeSummary.xpAwarded, result.xpAwarded);
 });
 
+test("SparkCore can track guided runtime step and phase state explicitly", function() {
+  var core = createDefaultSparkCore();
+  core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+
+  core.syncGuidedRuntimeState({
+    guidedStep: "newMove",
+    guidedNewMovePhase: "shadow",
+    transport: { status: "running", positionMs: 18000 }
+  });
+
+  var state = core.getRuntimeState();
+  assert.strictEqual(state.activeFlow, "guided_session");
+  assert.strictEqual(state.activeScreen, "guided_session");
+  assert.strictEqual(state.guidedStep, "newMove");
+  assert.strictEqual(state.guidedNewMovePhase, "shadow");
+  assert.strictEqual(state.transport.status, "running");
+  assert.strictEqual(state.transport.positionMs, 18000);
+});
+
+test("SparkCore can mirror performance runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+  core.startSession({
+    flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+    songId: "night_drive",
+    arrangementType: "rhythm_chords",
+    difficultyId: "hard"
+  });
+
+  core.syncPerformanceRuntimeState("start", {
+    chartId: "night_drive_chart",
+    difficulty: "hard",
+    arrangementType: "rhythm_chords",
+    speed: 0.75,
+    mode: "midi",
+    countIn: true
+  });
+  core.syncPerformanceRuntimeState("tick", { sec: 12.4, status: "running" });
+  core.syncPerformanceRuntimeState("set_loop", { loop: { startSec: 10, endSec: 14, phraseId: "phrase_2" } });
+
+  var runningState = core.getRuntimeState();
+  assert.strictEqual(runningState.activeFlow, "performance_song");
+  assert.strictEqual(runningState.activeScreen, "perform");
+  assert.strictEqual(runningState.performanceChartId, "night_drive_chart");
+  assert.strictEqual(runningState.performanceDifficultyId, "hard");
+  assert.strictEqual(runningState.performanceArrangementType, "rhythm_chords");
+  assert.strictEqual(runningState.performanceSpeed, 0.75);
+  assert.strictEqual(runningState.performanceInputMode, "midi");
+  assert.strictEqual(runningState.transport.status, "running");
+  assert.strictEqual(runningState.transport.positionMs, 12400);
+  assert.deepStrictEqual(runningState.performanceLoop, { startSec: 10, endSec: 14, phraseId: "phrase_2" });
+
+  core.syncPerformanceRuntimeState("pause");
+  assert.strictEqual(core.getRuntimeState().transport.status, "paused");
+
+  core.syncPerformanceRuntimeState("finish", { screen: "perform_done" });
+  var finishedState = core.getRuntimeState();
+  assert.strictEqual(finishedState.activeScreen, "perform_done");
+  assert.strictEqual(finishedState.transport.status, "completed");
+  assert.strictEqual(finishedState.performanceLoop, null);
+});
+
+test("SparkCore retains performance result payload for result-screen consumers", function() {
+  var core = createDefaultSparkCore();
+  core.startSession({
+    flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+    songId: "night_drive",
+    arrangementType: "rhythm_chords",
+    difficultyId: "hard"
+  });
+
+  core.syncPerformanceRuntimeState("finish", {
+    screen: "perform_done",
+    results: {
+      title: "Night Drive",
+      artist: "Spark Suite",
+      score: 1234,
+      accuracy: 88,
+      stars: 4
+    }
+  });
+
+  var state = core.getRuntimeState();
+  assert.strictEqual(state.activeScreen, "perform_done");
+  assert.strictEqual(state.performanceResults.title, "Night Drive");
+  assert.strictEqual(state.performanceResults.score, 1234);
+  assert.strictEqual(state.performanceResults.accuracy, 88);
+});
+
+test("SparkCore can mirror performance runtime configuration changes", function() {
+  var core = createDefaultSparkCore();
+  core.startSession({
+    flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+    songId: "night_drive",
+    arrangementType: "rhythm_chords",
+    difficultyId: "normal"
+  });
+
+  core.syncPerformanceRuntimeState("configure", {
+    difficulty: "pro",
+    speed: 0.5,
+    mode: "mic",
+    preset: "guitar_solo"
+  });
+
+  var state = core.getRuntimeState();
+  assert.strictEqual(state.performanceDifficultyId, "pro");
+  assert.strictEqual(state.performanceSpeed, 0.5);
+  assert.strictEqual(state.performanceInputMode, "mic");
+  assert.strictEqual(state.performancePracticePreset, "guitar_solo");
+});
+
+test("SparkCore can mirror performance song selection state explicitly", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceRuntimeState("select_song", {
+    chartId: "night_drive",
+    arrangementType: "rhythm_chords",
+    difficulty: "hard"
+  });
+
+  var state = core.getRuntimeState();
+  assert.strictEqual(state.activeFlow, "performance_song");
+  assert.strictEqual(state.activeScreen, "performance_song");
+  assert.strictEqual(state.performanceChartId, "night_drive");
+  assert.strictEqual(state.performanceArrangementType, "rhythm_chords");
+  assert.strictEqual(state.performanceDifficultyId, "hard");
+  assert.strictEqual(state.transport.status, "ready");
+  assert.strictEqual(state.transport.positionMs, 0);
+});
+
+test("SparkCore runtime state can track shell navigation back to home tabs", function() {
+  var core = createDefaultSparkCore();
+  core.updateRuntimeState({
+    activeScreen: "perform_done",
+    activeTab: "songs",
+    transport: { status: "completed", positionMs: 22000 }
+  });
+
+  var state = core.updateRuntimeState({
+    activeScreen: "home",
+    activeTab: "practice",
+    transport: { status: "idle", positionMs: 0 }
+  });
+
+  assert.strictEqual(state.activeScreen, "home");
+  assert.strictEqual(state.activeTab, "practice");
+  assert.strictEqual(state.transport.status, "idle");
+  assert.strictEqual(state.transport.positionMs, 0);
+});
+
+test("SparkCore guided runtime state can transition from done screen back to home", function() {
+  var core = createDefaultSparkCore();
+  core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+  core.syncGuidedRuntimeState({
+    activeScreen: "guided_done",
+    guidedStep: null,
+    guidedNewMovePhase: null,
+    transport: { status: "completed", positionMs: 0 }
+  });
+  var state = core.syncGuidedRuntimeState({
+    activeScreen: "home",
+    guidedStep: null,
+    guidedNewMovePhase: null,
+    transport: { status: "idle", positionMs: 0 }
+  });
+
+  assert.strictEqual(state.activeScreen, "home");
+  assert.strictEqual(state.transport.status, "idle");
+});
+
 test("SparkPracticeBridge can project active session plans into legacy practice-plan shape", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
@@ -323,10 +492,13 @@ test("completeSession returns engine-owned rhythm learning summary while bridge 
 test("startSession routes guided sessions through core and syncs guided state", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 2 });
+  var view = core.getActiveSessionView();
 
   assert.ok(plan instanceof SessionPlan);
   assert.strictEqual(plan.flow, "guided_session");
   assert.strictEqual(plan.segments.length, 1);
+  assert.strictEqual(view.plan.context.guidedPlan.title, "Second Spark");
+  assert.strictEqual(view.runtimeState.activeScreen, "guided_session");
   assert.strictEqual(S.guidedSession, 2);
   assert.strictEqual(S.guidedPlan.title, "Second Spark");
   assert.strictEqual(S.guidedStep, "spark");
@@ -359,10 +531,14 @@ test("startSession routes performance song selection through core and syncs the 
     arrangementType: "rhythm_chords",
     difficultyId: "hard"
   });
+  var view = core.getActiveSessionView();
 
   assert.ok(plan instanceof SessionPlan);
   assert.strictEqual(plan.flow, "performance_song");
   assert.strictEqual(plan.segments.length, 1);
+  assert.strictEqual(view.plan.context.performanceSong.songId, "night_drive");
+  assert.strictEqual(view.runtimeState.performanceArrangementType, "rhythm_chords");
+  assert.strictEqual(view.runtimeState.performanceDifficultyId, "hard");
   assert.strictEqual(S.performSongId, "night_drive");
   assert.strictEqual(S.performSongData.title, "Night Drive");
   assert.strictEqual(S.performArrangementType, "rhythm_chords");

@@ -1,12 +1,14 @@
 /* ===== ChordSpark: Performance Song Detail Page ===== */
 
 function performSongPage() {
-  var song = S.performSongData;
+  var performanceSongView = getPerformanceSongView();
+  var song = performanceSongView.song;
   if (!song) return '<div class="perform-page text-center"><p>No song selected.</p><button class="btn" onclick="act(\'tab\',\'songs\')">Back</button></div>';
 
-  var sid = S.performSongId || "unknown";
-  var arrType = S.performArrangementType || "chords";
-  var diff = S.performDifficulty || "normal";
+  var sid = performanceSongView.songId || "unknown";
+  var arrType = performanceSongView.arrangementType || "chords";
+  var diff = performanceSongView.difficultyId || "normal";
+  var speed = performanceSongView.speed;
 
   var h = '<div class="perform-page">';
 
@@ -67,7 +69,7 @@ function performSongPage() {
   h += '<div class="perform-toggle-group" style="justify-content:center">';
   var speeds = [0.5, 0.75, 1.0];
   for (var sp = 0; sp < speeds.length; sp++) {
-    h += '<button class="btn btn-sm' + (S.performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
+    h += '<button class="btn btn-sm' + (speed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
   }
   h += '</div></div>';
 
@@ -124,4 +126,25 @@ function performSongPage() {
 
   h += '</div>';
   return h;
+}
+
+function getPerformanceSongView() {
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var performanceSong = coreView
+    && coreView.plan
+    && coreView.plan.flow === "performance_song"
+    && coreView.plan.context
+    ? coreView.plan.context.performanceSong || null
+    : null;
+
+  return {
+    song: performanceSong && performanceSong.songData ? performanceSong.songData : S.performSongData,
+    songId: performanceSong && performanceSong.songId ? performanceSong.songId : S.performSongId,
+    arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : S.performArrangementType,
+    difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty,
+    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed
+  };
 }

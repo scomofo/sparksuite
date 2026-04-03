@@ -125,6 +125,17 @@ function startPerformance(chartIdOrChart, opts) {
       if (opts.preset) S.performPracticePreset = opts.preset;
       S.performInputSource = S.performMode;
     }
+    if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+      window.sparkCore.syncPerformanceRuntimeState("start", {
+        chartId: typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated"),
+        difficulty: opts.difficulty || S.performDifficulty,
+        arrangementType: chart.arrangementType || S.performArrangementType,
+        speed: opts.speed || S.performSpeed,
+        mode: opts.mode || S.performMode,
+        preset: opts.preset || S.performPracticePreset,
+        countIn: !!S.performCountIn
+      });
+    }
 
     // Apply difficulty profile to state windows
     applyPerformanceDifficultyToState(S.performDifficulty);
@@ -191,6 +202,11 @@ function startPerformance(chartIdOrChart, opts) {
       S.screen = SCR.HOME;
       S.tab = TAB.SONGS;
     }
+    if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+      window.sparkCore.syncPerformanceRuntimeState("start_failed", {
+        screen: "home"
+      });
+    }
     render();
   });
 }
@@ -209,6 +225,11 @@ function stopPerformance() {
   } else {
     S.performPlaying = false;
     S.performPaused = false;
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState("stop", {
+      screen: "performance_song"
+    });
   }
 }
 
@@ -236,6 +257,9 @@ function pausePerformance() {
     S.performPaused = true;
     S.performPlaying = false;
   }
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState("pause");
+  }
   if (_performRAF) { cancelAnimationFrame(_performRAF); _performRAF = null; }
   render();
 }
@@ -247,6 +271,9 @@ function resumePerformance() {
   } else {
     S.performPaused = false;
     S.performPlaying = true;
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState("resume");
   }
   if (typeof playStems === "function") playStems();
   if (typeof playMidiBacking === "function" && S.performChart && S.performChart.audio && S.performChart.audio.type === "midi") {
@@ -263,6 +290,9 @@ function seekPerformance(sec) {
   } else {
     S.performCurrentSec = sec;
   }
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState("seek", { sec: sec });
+  }
   if (typeof seekStems === "function") seekStems(sec);
   if (typeof seekMidiBacking === "function") seekMidiBacking(sec, S.performSpeed);
   render();
@@ -274,6 +304,9 @@ function setPerformanceLoop(loopObj) {
   } else {
     S.performLoop = loopObj;
   }
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState("set_loop", { loop: loopObj });
+  }
   render();
 }
 
@@ -283,6 +316,9 @@ function clearPerformanceLoop() {
   } else {
     S.performLoop = null;
   }
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState("clear_loop");
+  }
   render();
 }
 
@@ -291,6 +327,9 @@ function updatePerformanceFrame() {
 
   var nowSec = PerformanceTransport.now();
   S.performCurrentSec = nowSec;
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState("tick", { sec: nowSec, status: "running" });
+  }
   S.performPhraseIdx = getPerformancePhraseIndexForTime(S.performChart, nowSec);
 
   maybeScorePendingEvents(nowSec);
@@ -463,6 +502,11 @@ function finishPerformance() {
   } else {
     S.performResults = results;
     S.performStarRating = results.stars;
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState("finish", {
+      screen: "perform_done"
+    });
   }
 
   var xpAward = Math.max(5, Math.round(S.performResults.accuracy / 10));
