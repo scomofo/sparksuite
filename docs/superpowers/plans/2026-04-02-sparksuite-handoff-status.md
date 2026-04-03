@@ -119,6 +119,7 @@ Primary source plans:
 - Imported chart semantics now survive conversion into performance-mode events.
   - Preserved fields include `laneMask`, `sourceFlags`, `sourceLabel`, and `sourceSkillId`
 - Imported-technique practice launches now carry their focus all the way through performance song detail, start/retry requests, and the result screen instead of stopping at plan metadata.
+  - Live performance UI also keeps the focused technique visible during the run and highlights when the next focused note is approaching
   - `js/practice/launchers.js`
   - `js/app.js`
   - `js/performance/session.js`
