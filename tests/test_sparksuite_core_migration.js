@@ -690,6 +690,14 @@ test("SparkCore can track settings, midi, and cloud utility snapshots explicitly
   assert.strictEqual(cloudState.cloudEmail, "player@sparksuite.dev");
   assert.strictEqual(cloudState.cloudLastSyncStatus, "ok");
   assert.strictEqual(cloudState.cloudLastSyncAt, 1712102400000);
+
+  var curriculumState = core.syncCurriculumState({
+    curriculums: [{ id: "starter", title: "Starter Path", trackCount: 2 }],
+    packs: [{ id: "pack_1", title: "Road Pack", type: "songs" }]
+  });
+  assert.strictEqual(curriculumState.curriculumSummaries[0].id, "starter");
+  assert.strictEqual(curriculumState.curriculumSummaries[0].trackCount, 2);
+  assert.strictEqual(curriculumState.curriculumPackSummaries[0].title, "Road Pack");
 });
 
 test("SparkCore can build and apply dashboard recommendation launch requests", function() {

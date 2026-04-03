@@ -917,6 +917,44 @@ function syncCloudSettingsStateRequest(options) {
   return null;
 }
 
+function buildCurriculumRuntimePayload() {
+  var curriculums = (window.SparkCurriculum && SparkCurriculum.curriculums) || {};
+  var packs = (window.SparkContent && SparkContent.packs) || {};
+  var curriculumIds = Object.keys(curriculums);
+  var packIds = Object.keys(packs);
+  return {
+    curriculums: curriculumIds.map(function(id) {
+      var cur = curriculums[id] || {};
+      return {
+        id: id,
+        title: cur.title || id,
+        trackCount: Array.isArray(cur.tracks) ? cur.tracks.length : 0
+      };
+    }),
+    packs: packIds.map(function(id) {
+      var pack = packs[id] || {};
+      return {
+        id: id,
+        title: pack.title || id,
+        type: pack.type || "pack"
+      };
+    })
+  };
+}
+
+function syncCurriculumStateRequest(options) {
+  var payload = buildCurriculumRuntimePayload();
+  var key;
+  options = options || {};
+  for (key in options) {
+    if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncCurriculumState === "function") {
+    return window.sparkCore.syncCurriculumState(payload);
+  }
+  return null;
+}
+
 function openSkillTreeRequest() {
   if (window.sparkCore && typeof window.sparkCore.openSkillTree === "function") {
     return window.sparkCore.openSkillTree();
@@ -2991,6 +3029,7 @@ window.act=function(a,v){
   // === Curriculum ===
   if(a==="openCurriculum"){
     openUtilityScreenRequest("curriculum");
+    syncCurriculumStateRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CURRICULUM}});
     else S.screen=SCR.CURRICULUM;
     render();return;

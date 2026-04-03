@@ -1897,6 +1897,9 @@ function act(action, param) {
       if (typeof openUtilityScreenRequest === "function") {
         openUtilityScreenRequest("curriculum");
       }
+      if (typeof syncCurriculumStateRequest === "function") {
+        syncCurriculumStateRequest();
+      }
       S.screen = SCR.CURRICULUM;
       break;
 
