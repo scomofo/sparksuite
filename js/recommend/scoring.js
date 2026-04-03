@@ -4,6 +4,7 @@
     var score = 0;
     score += scoreWeakSpotWeight(candidate);
     score += scoreCurriculumWeight(candidate);
+    score += scoreModuleProgressWeight(candidate);
     score += scoreVarietyWeight(candidate);
     score += scoreUnlockWeight(candidate);
     score += scoreGoalWeight(candidate);
@@ -19,6 +20,11 @@
 
   function scoreCurriculumWeight(candidate){
     if(candidate.source === "curriculum") return 35;
+    return 0;
+  }
+
+  function scoreModuleProgressWeight(candidate){
+    if(candidate.source === "module_progress") return 30;
     return 0;
   }
 
