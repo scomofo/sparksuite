@@ -80,6 +80,64 @@
       phrases: [
         { id: 0, name: "Arpeggio", startBeat: 0, endBeat: 8, flags: { special: true } }
       ]
+    },
+    uke_melody_lift_01: {
+      id: "uke_melody_lift_01",
+      title: "Melody Lift 01",
+      bpm: 80,
+      enginePreset: "spark_balanced",
+      totalBeats: 16,
+      notes: [
+        { beat: 0, laneMask: 8, label: "C", skillId: "melody" },
+        { beat: 1, laneMask: 4, label: "E", skillId: "melody", flags: { tap: true } },
+        { beat: 2, laneMask: 2, label: "G", skillId: "melody" },
+        { beat: 3, laneMask: 1, label: "A", skillId: "melody", flags: { tap: true } },
+        { beat: 4, laneMask: 2, label: "G", skillId: "melody" },
+        { beat: 5, laneMask: 4, label: "E", skillId: "melody" },
+        { beat: 6, laneMask: 8, label: "C", skillId: "melody" },
+        { beat: 7, laneMask: 1, label: "A", skillId: "melody", flags: { specialPhrase: true } },
+        { beat: 8, laneMask: 1, label: "A", skillId: "melody" },
+        { beat: 9, laneMask: 2, label: "B", skillId: "melody", flags: { tap: true } },
+        { beat: 10, laneMask: 4, label: "C", skillId: "melody" },
+        { beat: 11, laneMask: 2, label: "B", skillId: "melody", flags: { tap: true } },
+        { beat: 12, laneMask: 1, label: "A", skillId: "melody" },
+        { beat: 13, laneMask: 2, label: "G", skillId: "melody" },
+        { beat: 14, laneMask: 4, label: "E", skillId: "melody" },
+        { beat: 15, laneMask: 8, label: "C", skillId: "melody", flags: { specialPhrase: true } }
+      ],
+      phrases: [
+        { id: 0, name: "Lift A", startBeat: 0, endBeat: 8, flags: { special: true } },
+        { id: 1, name: "Lift B", startBeat: 8, endBeat: 16, flags: { special: true } }
+      ]
+    },
+    uke_stage_flow_01: {
+      id: "uke_stage_flow_01",
+      title: "Stage Flow 01",
+      bpm: 86,
+      enginePreset: "spark_challenge",
+      totalBeats: 16,
+      notes: [
+        { beat: 0, laneMask: 8, label: "C", skillId: "performance" },
+        { beat: 1, laneMask: 8, label: "C", skillId: "performance", flags: { tap: true } },
+        { beat: 2, laneMask: 1, label: "Am", skillId: "performance" },
+        { beat: 3, laneMask: 5, label: "F", skillId: "performance", flags: { forced: true } },
+        { beat: 4, laneMask: 6, label: "G", skillId: "performance" },
+        { beat: 5, laneMask: 2, label: "B", skillId: "melody", flags: { tap: true } },
+        { beat: 6, laneMask: 1, label: "A", skillId: "melody" },
+        { beat: 7, laneMask: 6, label: "G", skillId: "performance", flags: { specialPhrase: true } },
+        { beat: 8, laneMask: 8, label: "C", skillId: "performance" },
+        { beat: 9, laneMask: 4, label: "E", skillId: "fingerpicking", flags: { tap: true } },
+        { beat: 10, laneMask: 1, label: "Am", skillId: "performance" },
+        { beat: 11, laneMask: 5, label: "F", skillId: "performance", flags: { forced: true } },
+        { beat: 12, laneMask: 6, label: "G", skillId: "performance" },
+        { beat: 13, laneMask: 2, label: "B", skillId: "melody", flags: { tap: true } },
+        { beat: 14, laneMask: 1, label: "A", skillId: "melody" },
+        { beat: 15, laneMask: 8, label: "C", skillId: "performance", flags: { specialPhrase: true } }
+      ],
+      phrases: [
+        { id: 0, name: "Stage A", startBeat: 0, endBeat: 8, flags: { special: true } },
+        { id: 1, name: "Stage B", startBeat: 8, endBeat: 16, flags: { special: true } }
+      ]
     }
   };
 
@@ -89,7 +147,9 @@
     chord_switching: "uke_switch_flow_01",
     strumming_patterns: "uke_island_pattern_01",
     songs: "uke_island_pattern_01",
-    fingerpicking: "uke_pick_arpeggio_01"
+    fingerpicking: "uke_pick_arpeggio_01",
+    melody: "uke_melody_lift_01",
+    performance: "uke_stage_flow_01"
   };
   var UKULELE_RECOMMENDATION_HINTS = {
     down_strum: {

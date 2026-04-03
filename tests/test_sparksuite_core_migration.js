@@ -1850,10 +1850,19 @@ test("ukulele rhythm adapter selects richer chart variants as lessons progress",
   var patternPayload = adapter.createPayload({
     curriculum: { nextLessonId: "uke_04" }
   });
+  var melodyPayload = adapter.createPayload({
+    curriculum: { nextLessonId: "uke_07" }
+  });
+  var performancePayload = adapter.createPayload({
+    curriculum: { nextLessonId: "uke_08" }
+  });
 
   assert.strictEqual(switchingPayload.chartId, "uke_switch_flow_01");
   assert.strictEqual(patternPayload.chartId, "uke_island_pattern_01");
+  assert.strictEqual(melodyPayload.chartId, "uke_melody_lift_01");
+  assert.strictEqual(performancePayload.chartId, "uke_stage_flow_01");
   assert.ok(patternPayload.songChart.tracks.guitar.notes.length >= 8);
+  assert.ok(performancePayload.songChart.tracks.guitar.notes.length >= 12);
 });
 
 test("createDefaultSparkCore registers piano as a first-class instrument adapter", function() {
@@ -1936,12 +1945,21 @@ test("bass rhythm adapter selects richer chart variants as sessions progress", f
   var walkingPayload = adapter.createPayload({
     curriculum: { nextLessonId: "session_16" }
   });
+  var ghostPayload = adapter.createPayload({
+    curriculum: { nextLessonId: "session_21" }
+  });
+  var funkPayload = adapter.createPayload({
+    curriculum: { nextLessonId: "session_27" }
+  });
 
   assert.strictEqual(rootPayload.chartId, "bass_root_pulse_01");
   assert.strictEqual(groovePayload.chartId, "bass_fifth_drive_01");
   assert.strictEqual(walkingPayload.chartId, "bass_walk_intro_01");
+  assert.strictEqual(ghostPayload.chartId, "bass_ghost_grid_01");
+  assert.strictEqual(funkPayload.chartId, "bass_funk_push_01");
   assert.strictEqual(rootPayload.songChart.metadata.laneCount, 4);
   assert.ok(walkingPayload.songChart.tracks.guitar.notes.length >= 6);
+  assert.ok(funkPayload.songChart.tracks.guitar.notes.length >= 16);
 });
 
 test("completeSession routes performance completion rewards through core", function() {
