@@ -58,6 +58,10 @@
       midiActiveProfileName: null,
       midiDeviceOptions: [],
       midiProfileOptions: [],
+      cloudLoggedIn: false,
+      cloudEmail: null,
+      cloudLastSyncStatus: "idle",
+      cloudLastSyncAt: null,
       guidedStep: null,
       guidedNewMovePhase: null,
       performanceChartId: null,
@@ -717,6 +721,24 @@
       midiProfileOptions: Object.prototype.hasOwnProperty.call(options, "profileOptions")
         ? this.cloneValue(options.profileOptions || [])
         : this.cloneValue(this.runtimeState.midiProfileOptions || [])
+    });
+  };
+
+  SparkCore.prototype.syncCloudSettingsState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      cloudLoggedIn: Object.prototype.hasOwnProperty.call(options, "loggedIn")
+        ? !!options.loggedIn
+        : this.runtimeState.cloudLoggedIn,
+      cloudEmail: Object.prototype.hasOwnProperty.call(options, "email")
+        ? options.email
+        : this.runtimeState.cloudEmail,
+      cloudLastSyncStatus: Object.prototype.hasOwnProperty.call(options, "lastSyncStatus")
+        ? options.lastSyncStatus
+        : this.runtimeState.cloudLastSyncStatus,
+      cloudLastSyncAt: Object.prototype.hasOwnProperty.call(options, "lastSyncAt")
+        ? options.lastSyncAt
+        : this.runtimeState.cloudLastSyncAt
     });
   };
 

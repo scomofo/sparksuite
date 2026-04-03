@@ -119,7 +119,7 @@ Primary source plans:
   - `js/pages/skill_tree.js`
   - `tests/test_sparksuite_core_migration.js`
   - `tests/test_piano_runtime_core_migration.js`
-- Settings and MIDI utility screens can now prefer core-backed utility snapshots instead of relying only on shell-owned state, with theme and MIDI device/profile summaries mirrored into SparkCore from shared and piano actions.
+- Settings, MIDI, and cloud utility screens can now prefer core-backed utility snapshots instead of relying only on shell-owned state, with theme, MIDI device/profile summaries, and cloud auth/sync status mirrored into SparkCore from shared and piano actions.
   - `js/sparksuite/core/spark_core.js`
   - `js/app.js`
   - `js/instruments/piano/app.js`

@@ -41,6 +41,17 @@ function resetState() {
     chordProgress: {},
     adaptiveState: {},
     weakSpots: {},
+    cloudAuth: {
+      userId: null,
+      email: null,
+      token: null,
+      loggedIn: false
+    },
+    cloudSync: {
+      lastSyncStatus: "idle",
+      lastSyncAt: null,
+      dirtyKeys: []
+    },
     performArrangementType: "chords",
     performDifficulty: "normal"
   };
@@ -646,7 +657,7 @@ test("SparkCore can return from utility-family screens explicitly", function() {
   assert.strictEqual(state.transport.status, "idle");
 });
 
-test("SparkCore can track settings and midi utility snapshots explicitly", function() {
+test("SparkCore can track settings, midi, and cloud utility snapshots explicitly", function() {
   var core = createDefaultSparkCore();
 
   var settingsState = core.syncSettingsState({ theme: "retro" });
@@ -668,6 +679,17 @@ test("SparkCore can track settings and midi utility snapshots explicitly", funct
   assert.strictEqual(midiState.midiActiveProfileName, "Default Piano");
   assert.strictEqual(midiState.midiDeviceOptions[0].id, "dev_1");
   assert.strictEqual(midiState.midiProfileOptions[0].type, "piano");
+
+  var cloudState = core.syncCloudSettingsState({
+    loggedIn: true,
+    email: "player@sparksuite.dev",
+    lastSyncStatus: "ok",
+    lastSyncAt: 1712102400000
+  });
+  assert.strictEqual(cloudState.cloudLoggedIn, true);
+  assert.strictEqual(cloudState.cloudEmail, "player@sparksuite.dev");
+  assert.strictEqual(cloudState.cloudLastSyncStatus, "ok");
+  assert.strictEqual(cloudState.cloudLastSyncAt, 1712102400000);
 });
 
 test("SparkCore can build and apply dashboard recommendation launch requests", function() {

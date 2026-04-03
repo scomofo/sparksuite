@@ -11,6 +11,7 @@
       token: data.token,
       loggedIn: true
     };
+    if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
     saveState();
     return true;
   }
@@ -22,6 +23,7 @@
       token: null,
       loggedIn: false
     };
+    if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
     saveState();
   }
 

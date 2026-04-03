@@ -4,6 +4,7 @@
     if(!isLoggedInSpark()) return false;
     try{
       S.cloudSync.lastSyncStatus = "syncing";
+      if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       if(typeof render === "function") render();
       var snapshot = buildCloudSnapshot();
       var result = await sparkApiRequest("/api/sync/push", "POST", {
@@ -15,11 +16,13 @@
       S.cloudSync.lastSyncAt = Date.now();
       S.cloudSync.lastSyncStatus = "ok";
       S.cloudSync.dirtyKeys = [];
+      if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
       return true;
     }catch(e){
       console.error("Spark sync failed", e);
       S.cloudSync.lastSyncStatus = "error";
+      if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
       return false;
     }
@@ -29,17 +32,20 @@
     if(!isLoggedInSpark()) return false;
     try{
       S.cloudSync.lastSyncStatus = "syncing";
+      if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       var result = await sparkApiRequest("/api/sync/pull", "GET");
       if(result && result.snapshot){
         applyCloudSnapshot(result.snapshot);
       }
       S.cloudSync.lastSyncAt = Date.now();
       S.cloudSync.lastSyncStatus = "ok";
+      if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
       return true;
     }catch(e){
       console.error("Spark pull failed", e);
       S.cloudSync.lastSyncStatus = "error";
+      if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
       return false;
     }
