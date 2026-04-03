@@ -173,6 +173,7 @@ Primary source plans:
   - `js/sparksuite/instruments/ukulele/ukulele_module.js`
   - `data/performance_charts/ukulele_island_package.json`
   - `data/performance_charts/ukulele_switch_flow_package.json`
+  - `data/performance_charts/ukulele_moonlit_picking_package.json`
   - `js/performance/chart_manifest.js`
   - `js/instruments/ukulele/register.js`
 - Legacy practice selectors now understand the current flat performance stats shape and module-driven instrument candidates.

@@ -67,6 +67,17 @@
         accentColor: "#16a34a",
         badge: "Ukulele",
         instrument: "ukulele"
+      },
+      {
+        id: "ukulele_moonlit_picking_package",
+        title: "Moonlit Picking",
+        artist: "SparkSuite Ukulele",
+        bpm: 72,
+        description: "Ukulele fingerpicking performance chart with a 4-string arpeggio pattern.",
+        sourceType: "imported_package",
+        accentColor: "#0f766e",
+        badge: "Ukulele",
+        instrument: "ukulele"
       }
     ]
   };
