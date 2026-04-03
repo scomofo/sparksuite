@@ -68,6 +68,12 @@
       cloudLastSyncAt: null,
       curriculumSummaries: [],
       curriculumPackSummaries: [],
+      curriculumLoading: false,
+      curriculumLastManifestPath: null,
+      curriculumLastLoadStatus: "idle",
+      contentLoading: false,
+      contentLastManifestPath: null,
+      contentLastLoadStatus: "idle",
       guidedStep: null,
       guidedNewMovePhase: null,
       performanceChartId: null,
@@ -804,6 +810,47 @@
         ? this.cloneValue(options.packs || [])
         : this.cloneValue(this.runtimeState.curriculumPackSummaries || [])
     });
+  };
+
+  SparkCore.prototype.applyCurriculumWorkflowRequest = function(action, options) {
+    options = options || {};
+    if (action === "curriculum_load_start") {
+      return this.updateRuntimeState({
+        curriculumLoading: true,
+        curriculumLastManifestPath: Object.prototype.hasOwnProperty.call(options, "manifestPath")
+          ? options.manifestPath
+          : this.runtimeState.curriculumLastManifestPath,
+        curriculumLastLoadStatus: "loading"
+      });
+    }
+    if (action === "curriculum_load_done" || action === "curriculum_load_error") {
+      return this.updateRuntimeState({
+        curriculumLoading: false,
+        curriculumLastManifestPath: Object.prototype.hasOwnProperty.call(options, "manifestPath")
+          ? options.manifestPath
+          : this.runtimeState.curriculumLastManifestPath,
+        curriculumLastLoadStatus: options.status || (action === "curriculum_load_done" ? "ok" : "error")
+      });
+    }
+    if (action === "content_load_start") {
+      return this.updateRuntimeState({
+        contentLoading: true,
+        contentLastManifestPath: Object.prototype.hasOwnProperty.call(options, "manifestPath")
+          ? options.manifestPath
+          : this.runtimeState.contentLastManifestPath,
+        contentLastLoadStatus: "loading"
+      });
+    }
+    if (action === "content_load_done" || action === "content_load_error") {
+      return this.updateRuntimeState({
+        contentLoading: false,
+        contentLastManifestPath: Object.prototype.hasOwnProperty.call(options, "manifestPath")
+          ? options.manifestPath
+          : this.runtimeState.contentLastManifestPath,
+        contentLastLoadStatus: options.status || (action === "content_load_done" ? "ok" : "error")
+      });
+    }
+    return this.updateRuntimeState({});
   };
 
   SparkCore.prototype.openSkillTree = function() {
