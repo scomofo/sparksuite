@@ -560,6 +560,30 @@ test('buildPerformanceRecommendationsForSong skips imported technique focus when
   assert.strictEqual(recs[0].type, 'promote_difficulty');
 });
 
+test('choosePerformanceDailyChallenge carries focused imported-technique targets into the challenge payload', function() {
+  S.performanceStats = {};
+  S.performanceDailyChallenge = null;
+  S.performanceDailyComplete = false;
+  SONGS = [
+    { title: 'Daily Focus', progression: ['C', 'G'] }
+  ];
+  updatePerformanceStats('daily_focus', 'imported_chart', 'normal', {
+    score: 720,
+    accuracy: 84,
+    stars: 3,
+    focusedTechnique: 'tap',
+    importedTechniqueSummary: {
+      tap: { total: 5, hits: 3, misses: 2 }
+    }
+  });
+
+  var challenge = choosePerformanceDailyChallenge();
+
+  assert.strictEqual(challenge.type, 'imported_technique_focus');
+  assert.strictEqual(challenge.techniqueKey, 'tap');
+  assert.strictEqual(challenge.target.accuracy, 90);
+});
+
 test('applyPerformanceRunOutcome centralizes song stat and progression bookkeeping', function() {
   S.performSongStats = {};
   S.performanceStats = {};
@@ -635,6 +659,44 @@ test('applyPerformanceRunFollowOns centralizes daily challenge, badge, and unloc
   assert.ok(outcome.standaloneBadges.length >= 1);
   assert.ok(outcome.unlockResult.xp >= 10);
   assert.ok(S.xp >= 35);
+});
+
+test('applyPerformanceRunFollowOns completes imported-technique daily challenges from focused accuracy', function() {
+  S.performanceStats = {};
+  S.performanceUnlocks = {};
+  S.earnedBadges = [];
+  S.performanceBadges = [];
+  S.performanceDailyHistory = [];
+  S.performanceDailyComplete = false;
+  S.performanceDailyChallenge = {
+    id: 'perf_focus_today',
+    date: '2026-04-02',
+    type: 'imported_technique_focus',
+    techniqueKey: 'tap',
+    xp: 35,
+    target: { accuracy: 90 }
+  };
+  S.xp = 0;
+
+  var outcome = SparkPerformanceBridge.applyPerformanceRunFollowOns({
+    chartId: 'focus_song',
+    chart: { arrangementType: 'imported_chart' },
+    difficulty: 'normal',
+    results: {
+      totalEvents: 10,
+      accuracy: 82,
+      stars: 3,
+      importedTechniqueSummary: {
+        tap: { total: 4, hits: 4, misses: 0 }
+      }
+    },
+    progressionStats: { mastery: 'developing' },
+    songStats: { bestScore: 800, runs: 2, mastered: false, phrases: {} }
+  });
+
+  assert.strictEqual(outcome.dailyXp, 35);
+  assert.strictEqual(S.performanceDailyComplete, true);
+  assert.strictEqual(S.performanceDailyHistory.length, 1);
 });
 
 test('syncPerformanceRuntimeState centralizes performance runtime flags and screen transitions', function() {

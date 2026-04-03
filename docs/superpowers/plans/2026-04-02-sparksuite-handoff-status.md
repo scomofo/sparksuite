@@ -124,6 +124,7 @@ Primary source plans:
   - Focused imported-technique hits and misses now use technique-aware live feedback labels instead of only generic PERFECT/GOOD/MISS badges
   - Progression stats now remember the currently focused imported technique, and recommendations can continue that focus block when it is still below target
   - Practice selectors now continue the same focused technique block when planning the next imported-technique drill instead of jumping to a different weak spot too early
+  - Performance daily challenges can now preserve and complete focused imported-technique targets instead of flattening those runs into generic song challenges
   - `js/practice/launchers.js`
   - `js/app.js`
   - `js/performance/session.js`

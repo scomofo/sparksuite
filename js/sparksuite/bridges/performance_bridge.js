@@ -188,6 +188,15 @@
     if (dc.type === "full_run" && summary.totalEvents > 0) completed = true;
     if (dc.type === "retry_run" && summary.accuracy >= 70) completed = true;
     if (dc.type === "weakest_phrase" && summary.accuracy >= (((dc.target && dc.target.accuracy) || 85))) completed = true;
+    if (dc.type === "imported_technique_focus") {
+      var focusedSummary = results && results.importedTechniqueSummary && dc.techniqueKey
+        ? results.importedTechniqueSummary[dc.techniqueKey]
+        : null;
+      var focusedAccuracy = focusedSummary && focusedSummary.total
+        ? Math.round(((focusedSummary.hits || 0) / focusedSummary.total) * 100)
+        : 0;
+      completed = focusedAccuracy >= (((dc.target && dc.target.accuracy) || 90));
+    }
     if (dc.type === "promote_difficulty" && summary.stars >= (((dc.target && dc.target.stars) || 3))) completed = true;
     if (dc.type === "try_rhythm" && chart && chart.arrangementType === "rhythm_chords") completed = true;
     if (!completed || typeof markPerformanceDailyComplete !== "function") return 0;
