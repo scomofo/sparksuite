@@ -342,6 +342,21 @@ test('getPerformancePhraseIndicesForTechnique finds only phrases containing the 
   assert.deepStrictEqual(getPerformancePhraseIndicesForTechnique(chart, 'forced'), []);
 });
 
+test('buildPerformanceFeedbackLabel adds focused imported technique labels for matching events', function() {
+  assert.strictEqual(
+    buildPerformanceFeedbackLabel({ sourceFlags: { tap: true } }, { grade: 'perfect' }, 'tap'),
+    'PERFECT TAP!'
+  );
+  assert.strictEqual(
+    buildPerformanceFeedbackLabel({ sourceFlags: { open: true } }, { grade: 'miss' }, 'tap'),
+    'MISS!'
+  );
+  assert.strictEqual(
+    buildPerformanceFeedbackLabel({ sourceFlags: { forced: true } }, { grade: 'good' }, 'forced'),
+    'GOOD FORCED!'
+  );
+});
+
 test('convertSparkSongChartToPerformanceChart preserves imported technique flags and lane metadata', function() {
   var performanceChart = convertSparkSongChartToPerformanceChart({
     song: { id: 'flag_chart', title: 'Flag Chart', artist: 'Tester', offsetSec: 0, durationSec: 2 },

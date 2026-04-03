@@ -121,6 +121,7 @@ Primary source plans:
 - Imported-technique practice launches now carry their focus all the way through performance song detail, start/retry requests, and the result screen instead of stopping at plan metadata.
   - Live performance UI also keeps the focused technique visible during the run and highlights when the next focused note is approaching
   - Phrase retry now prefers the weakest phrase that actually contains the focused imported technique instead of picking an unrelated weak phrase
+  - Focused imported-technique hits and misses now use technique-aware live feedback labels instead of only generic PERFECT/GOOD/MISS badges
   - `js/practice/launchers.js`
   - `js/app.js`
   - `js/performance/session.js`

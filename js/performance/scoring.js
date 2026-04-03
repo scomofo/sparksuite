@@ -259,3 +259,21 @@ function updateImportedTechniqueBucket(bucket, evt) {
 function finalizeImportedTechniqueBucket(bucket) {
   bucket.accuracy = bucket.total > 0 ? Math.round((bucket.hits / bucket.total) * 100) : 0;
 }
+
+function buildPerformanceFeedbackLabel(event, result, targetTechnique) {
+  var grade = result && result.grade ? String(result.grade).toUpperCase() : "MISS";
+  if (!event || !event.sourceFlags || !targetTechnique || !event.sourceFlags[targetTechnique]) {
+    return grade + "!";
+  }
+  return grade + " " + formatFocusedTechniqueShortLabel(targetTechnique) + "!";
+}
+
+function formatFocusedTechniqueShortLabel(key) {
+  var labels = {
+    open: "OPEN",
+    tap: "TAP",
+    forced: "FORCED",
+    specialPhrase: "PHRASE"
+  };
+  return labels[key] || String(key || "TECH");
+}

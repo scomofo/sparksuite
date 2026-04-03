@@ -394,6 +394,7 @@ function maybeScorePendingEvents(nowSec) {
   S.performInputSource = PerformanceInput.activeMode;
   S.performInputNotes = snapshot.pitchClasses.slice();
   var offsetMs = S.performMode === "midi" ? (S.performMidiOffsetMs || 0) : (S.performAudioOffsetMs || 0);
+  var targetTechnique = S.performTargetTechnique || null;
 
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
@@ -411,6 +412,10 @@ function maybeScorePendingEvents(nowSec) {
       evt._score = 0;
       updatePhraseStats(S.performPhraseStats, evt, evt._result);
       S.performCombo = 0;
+      if (evt.sourceFlags && targetTechnique && evt.sourceFlags[targetTechnique] && typeof buildPerformanceFeedbackLabel === "function") {
+        S.performLastHitLabel = buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique);
+        S.performLastHitTime = Date.now();
+      }
       _updatePerformanceAccuracy(chart);
       continue;
     }
@@ -433,7 +438,9 @@ function maybeScorePendingEvents(nowSec) {
         var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
         S.performScore += Math.round(100 * result.score * comboMult);
 
-        S.performLastHitLabel = result.grade.toUpperCase() + "!";
+        S.performLastHitLabel = typeof buildPerformanceFeedbackLabel === "function"
+          ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
+          : (result.grade.toUpperCase() + "!");
         S.performLastHitTime = Date.now();
 
         _updatePerformanceAccuracy(chart);
