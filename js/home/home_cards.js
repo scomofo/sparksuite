@@ -75,15 +75,25 @@ function renderHomePackCard(data){
 function renderHomeInsightCard(data){
   var h = '<div class="card">';
   h += '<div><b>Insights</b></div>';
+  var focused = data && data.recommendationQuality ? data.recommendationQuality.focusedTechnique : null;
+  if(focused){
+    h += '<div>Focus: '+escHTML(buildHomeFocusedTechniqueLabel(focused))+'</div>';
+  }
   var ws = (data && data.weakestSkills) || [];
   if(ws.length){
     h += '<div>Weakest: '+escHTML(ws[0].bucket+': '+ws[0].id)+'</div>';
-  }else{
+  }else if(!focused){
     h += '<div>Practice more to see insights.</div>';
   }
   h += '<button onclick="act(\'openInsights\')">View</button>';
   h += '</div>';
   return h;
+}
+
+function buildHomeFocusedTechniqueLabel(focused){
+  if(!focused) return "";
+  var songLabel = String(focused.songId || "song").replace(/_/g, " ");
+  return focused.techniqueLabel + " " + focused.accuracy + "% in " + songLabel;
 }
 
 function renderHomeEventCard(data){
