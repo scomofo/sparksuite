@@ -731,6 +731,22 @@ function completeLegacyDailyChallengeRequest(options) {
   return null;
 }
 
+function returnFromLegacyDailyChallengeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.returnFromLegacyDailyChallenge === "function") {
+    return window.sparkCore.returnFromLegacyDailyChallenge(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeFlow: "legacy_daily_challenge",
+      activeScreen: "home",
+      activeTab: options && options.activeTab ? options.activeTab : "daily",
+      legacyDailyTimerActive: false,
+      transport: { status: "idle", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
 function completeDailyPracticePlanRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeDailyPracticePlan === "function") {
     return window.sparkCore.completeDailyPracticePlan(options || {});
@@ -1345,6 +1361,11 @@ window.act=function(a,v){
       checkBadges();saveState();
     }
     trigC();render();return;
+  }
+  if(a==="dailyDoneHome"){
+    returnFromLegacyDailyChallengeRequest({ activeTab: "daily" });
+    act("tab","daily");
+    return;
   }
   if(a==="replayEarTrain"&&S.earTrainQ){strumChord(S.earTrainQ);return;}
   if(a==="answerEarTrain"&&S.earTrainAns===null){
@@ -3325,30 +3346,35 @@ window.act=function(a,v){
   }
   // === Back ===
   if(a==="back"){
-    var _dashboardBack = S.screen===SCR.RECOMMENDATIONS||S.screen===SCR.INSIGHTS||S.screen===SCR.CHALLENGES||S.screen===SCR.CAREER||S.screen===SCR.HOME_DASH;
-    var _utilityBack = S.screen===SCR.SETTINGS||S.screen===SCR.CLOUD_SETTINGS||S.screen===SCR.CURRICULUM||S.screen===SCR.MIDI_SETTINGS||S.screen===SCR.MIDI_IMPORT;
-    if(S.screen===SCR.SONG||S.screen===SCR.SONG_DONE){
-      applySongNavigationRequest("songs_home");
+      var _dashboardBack = S.screen===SCR.RECOMMENDATIONS||S.screen===SCR.INSIGHTS||S.screen===SCR.CHALLENGES||S.screen===SCR.CAREER||S.screen===SCR.HOME_DASH;
+      var _utilityBack = S.screen===SCR.SETTINGS||S.screen===SCR.CLOUD_SETTINGS||S.screen===SCR.CURRICULUM||S.screen===SCR.MIDI_SETTINGS||S.screen===SCR.MIDI_IMPORT;
+      var _dailyBack = S.screen===SCR.DAILY;
+      if(S.screen===SCR.SONG||S.screen===SCR.SONG_DONE){
+        applySongNavigationRequest("songs_home");
+      }
+      if(_dailyBack){
+        returnFromLegacyDailyChallengeRequest({ activeTab: "daily" });
+      }
+      if(_utilityBack){
+        returnFromUtilityFamilyRequest({
+          currentScreen: S.screen===SCR.SETTINGS ? "settings"
+            : S.screen===SCR.CLOUD_SETTINGS ? "cloud_settings"
+            : S.screen===SCR.CURRICULUM ? "curriculum"
+            : S.screen===SCR.MIDI_SETTINGS ? "midi_settings"
+            : "midi_import"
+        });
+      }else if(!_dailyBack){
+        returnFromHomeFamilyRequest({ currentScreen: _dashboardBack ? "home_dash" : "home" });
+      }
+      stopAllTimers();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:_dashboardBack?SCR.HOME_DASH:SCR.HOME,tab:_dailyBack?TAB.DAILY:S.tab}});
+      }else{
+        S.selectedVoicing=0;S.screen=_dashboardBack?SCR.HOME_DASH:SCR.HOME;
+        if(_dailyBack)S.tab=TAB.DAILY;
+      }
+      render();
     }
-    if(_utilityBack){
-      returnFromUtilityFamilyRequest({
-        currentScreen: S.screen===SCR.SETTINGS ? "settings"
-          : S.screen===SCR.CLOUD_SETTINGS ? "cloud_settings"
-          : S.screen===SCR.CURRICULUM ? "curriculum"
-          : S.screen===SCR.MIDI_SETTINGS ? "midi_settings"
-          : "midi_import"
-      });
-    }else{
-      returnFromHomeFamilyRequest({ currentScreen: _dashboardBack ? "home_dash" : "home" });
-    }
-    stopAllTimers();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:_dashboardBack?SCR.HOME_DASH:SCR.HOME}});
-    }else{
-      S.selectedVoicing=0;S.screen=_dashboardBack?SCR.HOME_DASH:SCR.HOME;
-    }
-    render();
-  }
 };
 
 // ===== RENDER =====

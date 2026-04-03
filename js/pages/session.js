@@ -161,7 +161,7 @@ function dailyPage(){
   if(!runtime.complete)
     h+='<div class="flex-center"><span id="daily-timer-ring">'+ringHTML((1-runtime.timer/mx)*100,100,7,"#FF6B6B",'<div style="font-size:28px;font-weight:900;color:var(--text-primary)">'+runtime.timer+'s</div>',"Daily challenge timer")+'</span></div><div style="margin-top:16px"><button class="btn" onclick="act(\'completeDaily\')" style="background:#FF6B6B;color:#fff">&#10003; Complete</button></div>';
   else
-    h+='<div style="font-size:56px;animation:bn .6s ease">&#127941;</div><h3 style="color:#4ECDC4;font-size:20px;font-weight:800;margin:12px 0">Challenge Complete!</h3><div class="card" style="margin:16px 0"><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+dc.xp+' XP</div></div><button class="btn" onclick="act(\'tab\',\'daily\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button>';
+    h+='<div style="font-size:56px;animation:bn .6s ease">&#127941;</div><h3 style="color:#4ECDC4;font-size:20px;font-weight:800;margin:12px 0">Challenge Complete!</h3><div class="card" style="margin:16px 0"><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+dc.xp+' XP</div></div><button class="btn" onclick="act(\'dailyDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button>';
   return h+'</div>';
 }
 
