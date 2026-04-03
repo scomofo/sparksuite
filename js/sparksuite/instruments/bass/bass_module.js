@@ -314,6 +314,45 @@
     return matches.length ? matches : exercises.slice(0, 2);
   }
 
+  function pickBassPracticeExercise(lesson, exercises, state) {
+    lesson = lesson || {};
+    exercises = Array.isArray(exercises) ? exercises.slice() : [];
+    state = state || {};
+    if (!exercises.length) return null;
+    var progress = summarizeBassSkillProgress(lesson.skill, state);
+    if (!progress) return exercises[0];
+    var targetByWeakness = {
+      movement: {
+        walking_bass: "bass_walk_lines_01",
+        root_fifth: "B-OCTAVE",
+        slap: "bass_slap_pop_01",
+        pop: "bass_pop_snaps_01"
+      },
+      timing: {
+        walking_bass: "bass_turnaround_01",
+        ghost_notes: "bass_ghost_grid_02",
+        groove_accents: "bass_accent_lock_01",
+        funk_grooves: "bass_funk_grid_01"
+      },
+      accuracy: {
+        arpeggios: "bass_arpeggio_climb_01",
+        passing_notes: "bass_passing_notes_01",
+        improvisation: "bass_improv_cells_01"
+      },
+      groove: {
+        walking_bass: "bass_walk_lines_01",
+        funk_grooves: "bass_funk_grid_01",
+        ghost_notes: "bass_ghost_grid_02"
+      }
+    };
+    var preferredId = targetByWeakness[progress.weakestMetric] && targetByWeakness[progress.weakestMetric][lesson.skill];
+    if (!preferredId) return exercises[0];
+    for (var i = 0; i < exercises.length; i++) {
+      if (exercises[i].id === preferredId) return exercises[i];
+    }
+    return exercises[0];
+  }
+
   function summarizeBassSkillProgress(skill, state) {
     state = state || {};
     var map = state.bassSkillProgress || state.skillProgress || {};
@@ -457,6 +496,10 @@
 
     getExercises: function(skill) {
       return getBassExercisesForSkill(skill);
+    },
+
+    pickPracticeExercise: function(lesson, exercises, state) {
+      return pickBassPracticeExercise(lesson, exercises, state);
     },
 
     getSongs: function() {
