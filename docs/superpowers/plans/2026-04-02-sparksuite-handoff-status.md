@@ -85,6 +85,14 @@ Primary source plans:
   - `js/pages/rhythm_highway.js`
   - `js/app.js`
   - `tests/test_sparksuite_rhythm_core.js`
+- Rhythm Highway now has a first real micro-loop workflow instead of only full-run replay.
+  - The page can build and restart into a looped note window around the current rhythm phrase
+  - Loop replay preserves the selected assist mode and can be cleared back to the full run
+  - `js/pages/rhythm_highway.js`
+  - `js/app.js`
+  - `js/sparksuite/core/rhythm_gameplay_engine.js`
+  - `js/state.js`
+  - `tests/test_sparksuite_rhythm_core.js`
 - Chart import parity moved beyond the first `.chart` slice.
   - `SparkChartIO.fromNotesChart(...)` supports `notes.chart` + `song.ini`
   - `SparkChartIO.fromMidiBuffer(...)` supports `.mid` import with tempo changes, time signatures, track selection, marker phrases, and channel filtering
@@ -445,7 +453,6 @@ Primary source plans:
 - SparkSuite core now owns more of the piano runtime too, but broader piano gameplay/runtime and other legacy instrument flows still have local orchestration paths.
 - Performance session orchestration is much thinner now, but the live transport/game loop still lives outside SparkCore.
 - Rhythm-highway architecture exists and is playable, but later-phase gameplay features are still partial.
-  - richer loop tooling
   - broader instrument-specific rhythm libraries
 - Performance imported-chart support is integrated, but the shared `SparkHighway` renderer itself has not been deeply modified.
   - Current parity is achieved with conversion, scoring, preview, hit-color, and overlay layers

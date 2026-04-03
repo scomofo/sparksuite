@@ -3038,8 +3038,29 @@ window.act=function(a,v){
     if(typeof _sparkRhythmHighwayStrum==="function")_sparkRhythmHighwayStrum();
     render();return;
   }
+  if(a==="rhythmHighwayLoopWindow"){
+    if(typeof _createRhythmHighwayLoopSpec==="function" && S.activeCoreSegmentId){
+      var segment = window.sparkCore && typeof window.sparkCore.getSegmentById==="function" ? window.sparkCore.getSegmentById(S.activeCoreSegmentId) : null;
+      var payload = segment && segment.meta ? segment.meta.gameplayPayload : null;
+      var loopSpec = _createRhythmHighwayLoopSpec(payload, S.rhythmHighwaySnapshot);
+      if(loopSpec && typeof startRhythmHighwaySegment==="function"){
+        S.rhythmHighwayLoop=loopSpec;
+        startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,loopSpec);
+        return;
+      }
+    }
+    render();return;
+  }
+  if(a==="rhythmHighwayClearLoop"){
+    S.rhythmHighwayLoop=null;
+    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function"){
+      startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,null);
+      return;
+    }
+    render();return;
+  }
   if(a==="restartRhythmHighway"){
-    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset);
+    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,S.rhythmHighwayLoop);
     return;
   }
   // === MIDI Device/Profile Actions ===
