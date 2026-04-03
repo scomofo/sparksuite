@@ -13,7 +13,9 @@
         runs: 0,
         lastPlayed: null,
         mastery: "none",
-        importedTechniqueTotals: {}
+        importedTechniqueTotals: {},
+        lastFocusedTechnique: null,
+        focusedTechniqueRuns: {}
       };
     }
     return S.performanceStats[key];
@@ -27,6 +29,8 @@
     if (results.accuracy > stats.bestAccuracy) stats.bestAccuracy = results.accuracy;
     if (results.stars > stats.bestStars) stats.bestStars = results.stars;
     stats.lastTechniqueSummary = results.importedTechniqueSummary || null;
+    stats.lastFocusedTechnique = results.focusedTechnique || null;
+    accumulateFocusedTechniqueRuns(stats, results.focusedTechnique);
     accumulateImportedTechniqueTotals(stats, results.importedTechniqueSummary);
     stats.mastery = computeMasteryLabel(stats);
     return stats;
@@ -52,6 +56,13 @@
     if (stats.bestStars >= 3 && stats.bestAccuracy >= 70) return "developing";
     if (stats.runs >= 1) return "attempted";
     return "none";
+  }
+
+  function accumulateFocusedTechniqueRuns(stats, focusedTechnique) {
+    if (!focusedTechnique) return;
+    if (!stats.focusedTechniqueRuns) stats.focusedTechniqueRuns = {};
+    if (!stats.focusedTechniqueRuns[focusedTechnique]) stats.focusedTechniqueRuns[focusedTechnique] = 0;
+    stats.focusedTechniqueRuns[focusedTechnique]++;
   }
 
   function getMasteryColor(mastery) {
@@ -110,5 +121,6 @@
   window.getMasteryIcon = getMasteryIcon;
   window.checkPerformanceUnlocks = checkPerformanceUnlocks;
   window.accumulateImportedTechniqueTotals = accumulateImportedTechniqueTotals;
+  window.accumulateFocusedTechniqueRuns = accumulateFocusedTechniqueRuns;
 
 })();

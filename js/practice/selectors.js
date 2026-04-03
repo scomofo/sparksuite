@@ -178,23 +178,26 @@
     var strongestNeed = null;
     for(var i=0;i<buckets.length;i++){
       var bucket = buckets[i];
-      var weakTechnique = getWeakestTechniqueFromBucket(bucket);
+      var weakTechnique = getFocusedTechniqueNeed(bucket) || getWeakestTechniqueFromBucket(bucket);
       if(!weakTechnique) continue;
-      var priority = 120 - weakTechnique.accuracy;
+      var priority = (weakTechnique.fromFocus ? 195 : 120) - weakTechnique.accuracy;
       if((bucket.runs || bucket.attempts || 0) < 3) priority += 6;
       if(!strongestNeed || priority > strongestNeed.priority){
         strongestNeed = {
           id:"imported_technique_" + bucket.songId + "_" + weakTechnique.key,
           type:"performance_technique",
           priority:priority,
-          label:"Fix " + weakTechnique.label + " timing in " + prettySongId(bucket.songId),
-          reason:"Imported " + weakTechnique.label + " accuracy is at " + weakTechnique.accuracy + "%",
+          label:(weakTechnique.fromFocus ? "Stay on " : "Fix ") + weakTechnique.label + " timing in " + prettySongId(bucket.songId),
+          reason:weakTechnique.fromFocus
+            ? ("Current focus block still has " + weakTechnique.label + " at " + weakTechnique.accuracy + "%")
+            : ("Imported " + weakTechnique.label + " accuracy is at " + weakTechnique.accuracy + "%"),
           meta:{
             songId:bucket.songId,
             arrangementType:bucket.arrangementType,
             difficultyId:bucket.difficultyId,
             techniqueKey:weakTechnique.key,
-            techniqueAccuracy:weakTechnique.accuracy
+            techniqueAccuracy:weakTechnique.accuracy,
+            continuedFocus:!!weakTechnique.fromFocus
           }
         };
       }
@@ -319,6 +322,20 @@
     return weakest;
   }
 
+  function getFocusedTechniqueNeed(bucket){
+    if(!bucket || !bucket.importedTechniqueTotals || !bucket.lastFocusedTechnique) return null;
+    var focused = bucket.importedTechniqueTotals[bucket.lastFocusedTechnique];
+    if(!focused || !focused.total) return null;
+    var accuracy = Math.round(((focused.hits || 0) / focused.total) * 100);
+    if(accuracy >= 90) return null;
+    return {
+      key: bucket.lastFocusedTechnique,
+      label: formatTechniqueLabel(bucket.lastFocusedTechnique),
+      accuracy: accuracy,
+      fromFocus: true
+    };
+  }
+
   function normalizePerformanceBuckets(perf){
     var buckets = [];
     for(var key in perf){
@@ -337,7 +354,8 @@
           mastery:row.mastery,
           mastered:row.mastered,
           phrases:row.phrases,
-          importedTechniqueTotals:row.importedTechniqueTotals
+          importedTechniqueTotals:row.importedTechniqueTotals,
+          lastFocusedTechnique:row.lastFocusedTechnique
         });
         continue;
       }
@@ -359,7 +377,8 @@
             mastery:bucket.mastery,
             mastered:bucket.mastered,
             phrases:bucket.phrases,
-            importedTechniqueTotals:bucket.importedTechniqueTotals
+            importedTechniqueTotals:bucket.importedTechniqueTotals,
+            lastFocusedTechnique:bucket.lastFocusedTechnique
           });
         }
       }
@@ -381,6 +400,16 @@
 
   function prettySongId(songId){
     return String(songId || "").replace(/_/g," ");
+  }
+
+  function formatTechniqueLabel(key){
+    var labels = {
+      open: "open-note",
+      tap: "tap-note",
+      forced: "forced-note",
+      specialPhrase: "phrase section"
+    };
+    return labels[key] || String(key || "technique");
   }
 
   window.selectWarmupCandidate = selectWarmupCandidate;

@@ -18,6 +18,9 @@ Already true:
 - performance, guided, daily practice, songs, dashboard, editor, and many utility flows now have core-backed runtime paths
 - guitar, piano, bass, and ukulele all exist in the SparkSuite instrument layer
 - rhythm/import/performance architecture is implemented beyond a stub
+- imported-technique practice focus now has real end-to-end follow-through across launch, song detail, runtime UI, retry targeting, scoring feedback, progression, recommendations, and practice planning
+- rhythm highway now has selectable assist modes, micro-loop tooling, and instrument-aware lane layouts instead of only a single early slice
+- ukulele is no longer just structural scaffolding; it has deeper lesson depth, multiple performance charts, and module-owned recommendation/progression hooks
 
 Still true:
 - the app is still in a hybrid migration state
@@ -62,41 +65,39 @@ Goal:
 - bass should be a real migrated instrument, not just a registered adapter with partial runtime coverage
 
 Still open:
-- authored bass content depth
-- broader bass performance/practice parity
-- stronger bass-specific module/runtime identity beyond the currently migrated guided/practice surfaces
+- authored bass content breadth beyond the current groove/ghost/funk slices
+- broader bass performance/practice parity across more real song/chart surfaces
+- stronger bass-specific module/runtime identity beyond the currently migrated guided/practice/recommendation surfaces
 
 ### 4. Finish Ukulele Phase 1 Parity
 
 Goal:
-- ukulele should feel like a real instrument track, not an early content slice
+- ukulele should feel fully peer-level with the stronger instrument tracks
 
 Still open:
-- more authored lessons and exercises
-- more performance chart coverage
-- broader song/performance depth
-- stronger module-specific progression/recommendation follow-through
+- broader song/performance depth beyond the current lesson/rhythm/chart slice
+- more authored chart/song coverage
+- continued module-specific polish so ukulele feels fully productized, not just clearly real
 
 ### 5. Finish Rhythm-Highway Phase 1 Parity
 
 Goal:
-- move from "strong first slice" to "matches handoff intent in real use"
+- move from "credible real feature" to "matches handoff intent in later-phase depth"
 
 Still open:
-- richer assist modes
-- deeper loop and micro-loop tooling
-- broader authored rhythm content
-- broader instrument-specific rhythm support
+- more authored rhythm content breadth
+- deeper loop refinement and practice polish
+- more instrument-specific authored rhythm coverage and later-phase tuning
 
 ### 6. Finish Import/Performance Parity
 
 Goal:
-- imported charts should feel production-ready enough for Phase 1
+- imported charts should feel robust and polished enough for real Phase 1 use
 
 Still open:
 - more robustness around import edge cases
 - deeper imported-technique behavior in shared rendering
-- stronger analytics/recommendation follow-through for imported content
+- challenge/daily/follow-on surfaces that should respect the current focused imported-technique block
 
 ## Main Phase 2 Gaps
 
@@ -150,14 +151,15 @@ Current state:
 Current state:
 - utility screens now have explicit open/return helpers
 - settings and MIDI now have a first core-backed state slice
-- cloud/curriculum/import workflows are still more shell-owned than session families
+- cloud/curriculum/import workflows are cleaner than before, but still more shell-owned than the major session families
 
 ### 3. Long-Tail Instrument Polish
 
 Current state:
 - guitar is still the strongest path
 - piano is much more converged than before
-- bass and ukulele still need deeper authored parity and product depth
+- bass still needs the most parity work
+- ukulele is in much better shape now, but still needs more breadth/depth to feel fully peer-level
 
 ## Recommended Next Order
 
@@ -165,8 +167,8 @@ Current state:
 - runtime ownership
 - progression convergence
 - bass parity
-- ukulele parity
-- rhythm/import parity
+- utility/workflow depth
+- imported-technique follow-through in remaining surfaces
 
 2. Keep Phase 2 moving in parallel where it has the highest payoff:
 - reduce `S.*` dependence

@@ -503,7 +503,9 @@ function applyPerformanceStemPreset(preset) {
 
 function finishPerformance() {
   stopPerformance();
-  var results = finalizePerformanceResults(S.performChart, S.performPhraseStats);
+  var results = finalizePerformanceResults(S.performChart, S.performPhraseStats, {
+    focusedTechnique: S.performTargetTechnique || null
+  });
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("finish", {
       results: results,
