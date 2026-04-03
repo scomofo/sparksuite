@@ -176,6 +176,10 @@ Primary source plans:
   - `data/performance_charts/ukulele_moonlit_picking_package.json`
   - `js/performance/chart_manifest.js`
   - `js/instruments/ukulele/register.js`
+- Ukulele authored lesson depth now extends beyond the first strum/chord slice into fingerpicking, melody, and performance lessons, and the practice selector path can advance into those deeper module lessons.
+  - `js/sparksuite/instruments/ukulele/ukulele_lessons.js`
+  - `js/sparksuite/instruments/ukulele/ukulele_exercises.js`
+  - `tests/test_practice_selectors.js`
 - Legacy practice selectors now understand the current flat performance stats shape and module-driven instrument candidates.
   - `js/practice/selectors.js`
   - `tests/test_practice_selectors.js`

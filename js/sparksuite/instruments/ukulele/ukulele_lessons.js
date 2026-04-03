@@ -44,6 +44,33 @@
       prerequisites: ["strumming_patterns"],
       masteryRequired: 0.85,
       desc: "Put rhythm, chords, and confidence together in repertoire."
+    },
+    {
+      id: "uke_06",
+      num: 6,
+      title: "Fingerpicked Motion",
+      skill: "fingerpicking",
+      prerequisites: ["songs"],
+      masteryRequired: 0.85,
+      desc: "Move from broad strums into steady four-string arpeggios."
+    },
+    {
+      id: "uke_07",
+      num: 7,
+      title: "Melody Notes",
+      skill: "melody",
+      prerequisites: ["fingerpicking"],
+      masteryRequired: 0.86,
+      desc: "Pull simple lead notes out of chord shapes and connect them musically."
+    },
+    {
+      id: "uke_08",
+      num: 8,
+      title: "Campfire Performance",
+      skill: "performance",
+      prerequisites: ["melody"],
+      masteryRequired: 0.88,
+      desc: "Blend groove, clean changes, and confidence into a full playthrough."
     }
   ];
 })();

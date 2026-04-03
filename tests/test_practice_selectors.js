@@ -35,7 +35,7 @@ function resetState() {
   };
   global.getNextLessonFromCurriculum = function(rootLessonId, completedLessonIds) {
     completedLessonIds = completedLessonIds || [];
-    var order = ["uke_01", "uke_02", "uke_03"];
+    var order = ["uke_01", "uke_02", "uke_03", "uke_04", "uke_05", "uke_06", "uke_07", "uke_08"];
     if (rootLessonId !== "uke_01") return null;
     for (var i = 0; i < order.length; i++) {
       if (completedLessonIds.indexOf(order[i]) === -1) return order[i];
@@ -51,14 +51,24 @@ function resetState() {
           return [
             { id: "uke_01", title: "First Strum", skill: "down_strum" },
             { id: "uke_02", title: "Starter Chords", skill: "basic_chords" },
-            { id: "uke_03", title: "Smooth Changes", skill: "chord_switching" }
+            { id: "uke_03", title: "Smooth Changes", skill: "chord_switching" },
+            { id: "uke_04", title: "Pattern Flow", skill: "strumming_patterns" },
+            { id: "uke_05", title: "Play a Song", skill: "songs" },
+            { id: "uke_06", title: "Fingerpicked Motion", skill: "fingerpicking" },
+            { id: "uke_07", title: "Melody Notes", skill: "melody" },
+            { id: "uke_08", title: "Campfire Performance", skill: "performance" }
           ];
         },
         getExercises: function(skill) {
           var map = {
             down_strum: [{ id: "uke_down_strum_01", type: "strum" }],
             basic_chords: [{ id: "uke_basic_chords_c", type: "chord" }],
-            chord_switching: [{ id: "uke_switch_c_am", type: "transition" }]
+            chord_switching: [{ id: "uke_switch_c_am", type: "transition" }],
+            strumming_patterns: [{ id: "uke_pattern_island", type: "strum_pattern" }],
+            songs: [{ id: "uke_song_loop_01", type: "song_loop" }],
+            fingerpicking: [{ id: "uke_pick_01", type: "fingerpick" }],
+            melody: [{ id: "uke_melody_01", type: "melody_line" }],
+            performance: [{ id: "uke_perform_01", type: "performance_run" }]
           };
           return map[skill] || [];
         }
@@ -129,6 +139,17 @@ test("buildPracticeCandidates includes the module-driven ukulele candidate", fun
 
   assert.ok(candidates.length > 0);
   assert.strictEqual(candidates[0].id, "module_uke_01");
+});
+
+test("selectInstrumentModuleCandidate advances into deeper ukulele lessons after early completions", function() {
+  S.completedLessons = ["uke_01", "uke_02", "uke_03", "uke_04", "uke_05"];
+
+  var candidate = selectInstrumentModuleCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.lessonId, "uke_06");
+  assert.strictEqual(candidate.meta.skill, "fingerpicking");
+  assert.strictEqual(candidate.meta.exerciseId, "uke_pick_01");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

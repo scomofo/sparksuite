@@ -17,10 +17,20 @@
       { id: "uke_pattern_island", type: "strum_pattern", pattern: "D DU UDU", tempo: 76, durationSec: 120 }
     ],
     songs: [
-      { id: "uke_song_loop_01", type: "song_loop", progression: ["C", "Am", "F", "G"], tempo: 78, durationSec: 180 }
+      { id: "uke_song_loop_01", type: "song_loop", progression: ["C", "Am", "F", "G"], tempo: 78, durationSec: 180 },
+      { id: "uke_song_loop_02", type: "song_loop", progression: ["F", "G", "Em", "Am"], tempo: 74, durationSec: 180 }
     ],
     fingerpicking: [
-      { id: "uke_pick_01", type: "fingerpick", pattern: "GCEA", tempo: 72, durationSec: 120 }
+      { id: "uke_pick_01", type: "fingerpick", pattern: "GCEA", tempo: 72, durationSec: 120 },
+      { id: "uke_pick_02", type: "fingerpick", pattern: "AECG", tempo: 68, durationSec: 120 }
+    ],
+    melody: [
+      { id: "uke_melody_01", type: "melody_line", notes: ["C5", "E5", "G5", "A5"], tempo: 72, durationSec: 90 },
+      { id: "uke_melody_02", type: "melody_line", notes: ["A4", "C5", "E5", "G5"], tempo: 76, durationSec: 90 }
+    ],
+    performance: [
+      { id: "uke_perform_01", type: "performance_run", progression: ["Am", "F", "C", "G"], tempo: 72, durationSec: 210 },
+      { id: "uke_perform_02", type: "performance_run", progression: ["C", "G", "Am", "F"], tempo: 78, durationSec: 210 }
     ]
   };
 })();
