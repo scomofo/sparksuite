@@ -2,6 +2,13 @@
 function tickS(){
   if(S.timerActive&&S.timer>0){
     S.timer--;
+    syncLegacyPracticeRuntimeRequest("tick", {
+      remainingSec: S.timer,
+      timerActive: S.timerActive,
+      mode: S.lastChordName ? "chord" : "quickStart",
+      chordName: S.currentChord ? S.currentChord.name : null,
+      durationSec: 120
+    });
     if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
     else if(S.timer%30===0&&S.timer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}} // silent XP accrual when toast skipped
     if(S.timer===60)fireMicro("halfway","Halfway there!","&#128170;");
@@ -35,6 +42,13 @@ function tickS(){
 function tickD(){
   if(S.screen===SCR.DRILL&&S.drillTimer>0){
     S.drillTimer--;
+    syncLegacyPracticeRuntimeRequest("tick", {
+      remainingSec: S.drillTimer,
+      timerActive: true,
+      mode: "drill",
+      chordNames: S.drillChords.map(function(c){ return c.name; }),
+      durationSec: 60
+    });
     if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
     else if(S.drillTimer%30===0&&S.drillTimer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}}
     addPracticeSecond();
@@ -665,6 +679,13 @@ function openLegacyPracticeDrillRequest(options) {
   return null;
 }
 
+function syncLegacyPracticeRuntimeRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
+    return window.sparkCore.syncLegacyPracticeRuntimeState(action, options || {});
+  }
+  return null;
+}
+
 function repeatLegacyPracticeSessionRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.repeatLegacyPracticeSession === "function") {
     return window.sparkCore.repeatLegacyPracticeSession(options || {});
@@ -1214,6 +1235,13 @@ window.act=function(a,v){
   if(a==="selLevel"&&parseInt(v)<=S.level){S.selectedLevel=parseInt(v);render();return;}
   if(a==="toggleTimer"){
     S.timerActive=!S.timerActive;
+    syncLegacyPracticeRuntimeRequest(S.timerActive ? "resume" : "pause", {
+      remainingSec: S.timer,
+      timerActive: S.timerActive,
+      mode: S.lastChordName ? "chord" : "quickStart",
+      chordName: S.currentChord ? S.currentChord.name : null,
+      durationSec: 120
+    });
     if(S.timerActive)T.session=setTimeout(tickS,1000);else clearTimeout(T.session);
     render();return;
   }
@@ -1240,6 +1268,13 @@ window.act=function(a,v){
     }else{
       S.timerActive=true;S.timer=0;
     }
+    syncLegacyPracticeRuntimeRequest("set_remaining", {
+      remainingSec: 0,
+      timerActive: true,
+      mode: S.lastChordName ? "chord" : "quickStart",
+      chordName: S.currentChord ? S.currentChord.name : null,
+      durationSec: 120
+    });
     tickS();return;
   }
   if(a==="startDaily"&&S.dailyChallenge){

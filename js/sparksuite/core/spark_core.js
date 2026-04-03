@@ -43,7 +43,9 @@
       communitySort: "votes",
       legacyPracticeMode: null,
       legacyPracticeChordName: null,
+      legacyPracticeTimerActive: false,
       legacyPracticeDurationSec: null,
+      legacyPracticeRemainingSec: null,
       legacyDrillChordNames: null,
       dashboardRecommendations: [],
       dashboardInsights: null,
@@ -312,13 +314,16 @@
 
   SparkCore.prototype.openLegacyPracticeSession = function(options) {
     options = options || {};
+    var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
       activeFlow: "legacy_practice_session",
       activeScreen: "session",
       activeTab: "practice",
       legacyPracticeMode: options.mode || "chord",
       legacyPracticeChordName: Object.prototype.hasOwnProperty.call(options, "chordName") ? options.chordName : null,
-      legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null,
+      legacyPracticeTimerActive: true,
+      legacyPracticeDurationSec: durationSec,
+      legacyPracticeRemainingSec: durationSec,
       legacyDrillChordNames: null,
       transport: { status: "running", positionMs: 0 }
     });
@@ -326,16 +331,61 @@
 
   SparkCore.prototype.openLegacyPracticeDrill = function(options) {
     options = options || {};
+    var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
       activeFlow: "legacy_practice_drill",
       activeScreen: "drill",
       activeTab: "practice",
       legacyPracticeMode: "drill",
       legacyPracticeChordName: null,
-      legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null,
+      legacyPracticeTimerActive: true,
+      legacyPracticeDurationSec: durationSec,
+      legacyPracticeRemainingSec: durationSec,
       legacyDrillChordNames: this.cloneValue(options.chordNames || null),
       transport: { status: "running", positionMs: 0 }
     });
+  };
+
+  SparkCore.prototype.syncLegacyPracticeRuntimeState = function(action, options) {
+    var runtimeState = this.getRuntimeState();
+    var next = {
+      activeFlow: runtimeState.activeFlow || "legacy_practice_session",
+      activeScreen: runtimeState.activeScreen || "session",
+      activeTab: runtimeState.activeTab || "practice",
+      legacyPracticeMode: runtimeState.legacyPracticeMode || "chord",
+      legacyPracticeChordName: runtimeState.legacyPracticeChordName,
+      legacyPracticeTimerActive: !!runtimeState.legacyPracticeTimerActive,
+      legacyPracticeDurationSec: runtimeState.legacyPracticeDurationSec,
+      legacyPracticeRemainingSec: runtimeState.legacyPracticeRemainingSec,
+      legacyDrillChordNames: this.cloneValue(runtimeState.legacyDrillChordNames),
+      transport: runtimeState.transport || { status: "idle", positionMs: 0 }
+    };
+    options = options || {};
+
+    if (Object.prototype.hasOwnProperty.call(options, "remainingSec")) next.legacyPracticeRemainingSec = options.remainingSec;
+    if (Object.prototype.hasOwnProperty.call(options, "durationSec")) next.legacyPracticeDurationSec = options.durationSec;
+    if (Object.prototype.hasOwnProperty.call(options, "timerActive")) next.legacyPracticeTimerActive = !!options.timerActive;
+    if (Object.prototype.hasOwnProperty.call(options, "mode")) next.legacyPracticeMode = options.mode || next.legacyPracticeMode;
+    if (Object.prototype.hasOwnProperty.call(options, "chordName")) next.legacyPracticeChordName = options.chordName;
+    if (Object.prototype.hasOwnProperty.call(options, "chordNames")) next.legacyDrillChordNames = this.cloneValue(options.chordNames || null);
+
+    if (action === "tick") {
+      if (typeof next.legacyPracticeRemainingSec === "number") {
+        next.legacyPracticeRemainingSec = Math.max(0, next.legacyPracticeRemainingSec);
+      }
+      next.legacyPracticeTimerActive = true;
+      next.transport = { status: "running", positionMs: 0 };
+    } else if (action === "pause") {
+      next.legacyPracticeTimerActive = false;
+      next.transport = { status: "paused", positionMs: 0 };
+    } else if (action === "resume") {
+      next.legacyPracticeTimerActive = true;
+      next.transport = { status: "running", positionMs: 0 };
+    } else if (action === "set_remaining") {
+      next.transport = { status: next.legacyPracticeTimerActive ? "running" : "paused", positionMs: 0 };
+    }
+
+    return this.updateRuntimeState(next);
   };
 
   SparkCore.prototype.completeLegacyPracticeSession = function(options) {
@@ -346,7 +396,9 @@
       activeTab: "practice",
       legacyPracticeMode: options.mode || this.runtimeState.legacyPracticeMode || "chord",
       legacyPracticeChordName: Object.prototype.hasOwnProperty.call(options, "chordName") ? options.chordName : this.runtimeState.legacyPracticeChordName,
+      legacyPracticeTimerActive: false,
       legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : this.runtimeState.legacyPracticeDurationSec,
+      legacyPracticeRemainingSec: 0,
       transport: { status: "completed", positionMs: 0 }
     });
   };
@@ -359,7 +411,9 @@
       activeTab: "practice",
       legacyPracticeMode: "drill",
       legacyPracticeChordName: null,
+      legacyPracticeTimerActive: false,
       legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : this.runtimeState.legacyPracticeDurationSec,
+      legacyPracticeRemainingSec: 0,
       legacyDrillChordNames: Object.prototype.hasOwnProperty.call(options, "chordNames")
         ? this.cloneValue(options.chordNames || null)
         : this.cloneValue(this.runtimeState.legacyDrillChordNames),
@@ -372,6 +426,7 @@
     return this.updateRuntimeState({
       activeScreen: "home",
       activeTab: options.activeTab || "practice",
+      legacyPracticeTimerActive: false,
       transport: { status: "idle", positionMs: 0 }
     });
   };
