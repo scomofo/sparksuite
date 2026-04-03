@@ -1416,6 +1416,7 @@
       songData: Object.prototype.hasOwnProperty.call(options, "songData") ? this.cloneValue(options.songData) : null,
       songIndex: Object.prototype.hasOwnProperty.call(options, "songIndex") ? options.songIndex : null,
       songTitle: Object.prototype.hasOwnProperty.call(options, "songTitle") ? options.songTitle : null,
+      targetTechnique: Object.prototype.hasOwnProperty.call(options, "targetTechnique") ? options.targetTechnique : null,
       arrangementType: Object.prototype.hasOwnProperty.call(options, "arrangementType")
         ? options.arrangementType
         : (this.runtimeState.performanceArrangementType || "chords"),
@@ -1446,6 +1447,7 @@
       songData: request.songData,
       songIndex: request.songIndex,
       songTitle: request.songTitle,
+      targetTechnique: request.targetTechnique,
       arrangementType: request.arrangementType,
       difficulty: request.difficultyId
     });
@@ -1500,6 +1502,9 @@
       songTitle: Object.prototype.hasOwnProperty.call(options, "songTitle")
         ? options.songTitle
         : runtimeState.performanceSongTitle,
+      targetTechnique: Object.prototype.hasOwnProperty.call(options, "targetTechnique")
+        ? options.targetTechnique
+        : (runtimeState.performanceTargetTechnique || null),
       targetPhraseIndex: Object.prototype.hasOwnProperty.call(options, "targetPhraseIndex")
         ? options.targetPhraseIndex
         : null
@@ -1517,7 +1522,8 @@
       preset: request.preset,
       countIn: request.countIn,
       songIndex: request.songIndex,
-      songTitle: request.songTitle
+      songTitle: request.songTitle,
+      targetTechnique: request.targetTechnique
     });
     return request;
   };
@@ -1533,7 +1539,8 @@
       preset: request.preset,
       countIn: request.countIn,
       songIndex: request.songIndex,
-      songTitle: request.songTitle
+      songTitle: request.songTitle,
+      targetTechnique: request.targetTechnique
     });
     return request;
   };
@@ -1902,6 +1909,7 @@
       if (Object.prototype.hasOwnProperty.call(payload, "songData")) next.performanceSongData = this.cloneValue(payload.songData);
       if (Object.prototype.hasOwnProperty.call(payload, "songIndex")) next.performanceSongIndex = payload.songIndex;
       if (Object.prototype.hasOwnProperty.call(payload, "songTitle")) next.performanceSongTitle = payload.songTitle;
+      if (Object.prototype.hasOwnProperty.call(payload, "targetTechnique")) next.performanceTargetTechnique = payload.targetTechnique;
       if (Object.prototype.hasOwnProperty.call(payload, "arrangementType")) next.performanceArrangementType = payload.arrangementType;
       if (Object.prototype.hasOwnProperty.call(payload, "difficulty")) next.performanceDifficultyId = payload.difficulty;
       if (Object.prototype.hasOwnProperty.call(payload, "speed")) next.performanceSpeed = payload.speed;

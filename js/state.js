@@ -118,6 +118,7 @@ var S={
   performDebug:false,
   performPracticeMode:"full",
   performTargetPhrase:null,
+  performTargetTechnique:null,
   performSongStats:{},
   performArrangementType:"chords",
   performanceStats:{},

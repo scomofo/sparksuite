@@ -227,6 +227,11 @@ Primary source plans:
 - Practice selectors now also emit explicit imported-technique focus candidates instead of turning imported chart weak spots only into generic replay advice.
   - `js/practice/selectors.js`
   - `tests/test_practice_selectors.js`
+- Imported-technique practice candidates now have an explicit launcher path into performance-song detail with a visible technique-focus hint instead of behaving like dead-end metadata.
+  - `js/practice/launchers.js`
+  - `js/app.js`
+  - `js/pages/perform_song.js`
+  - `tests/test_practice_launchers.js`
 - More legacy practice wrappers now defer to the shared practice engine path instead of duplicating plan ownership.
   - `js/practice/plan.js`
   - `js/performance/practice_engine.js`
