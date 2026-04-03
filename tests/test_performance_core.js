@@ -485,6 +485,7 @@ test('updatePerformanceStats accumulates imported technique totals', function() 
     score: 500,
     accuracy: 80,
     stars: 3,
+    focusedTechnique: 'open',
     importedTechniqueSummary: {
       open: { total: 2, hits: 1, misses: 1 },
       tap: { total: 1, hits: 1, misses: 0 }
@@ -495,6 +496,8 @@ test('updatePerformanceStats accumulates imported technique totals', function() 
   assert.strictEqual(stats.importedTechniqueTotals.open.hits, 1);
   assert.strictEqual(stats.importedTechniqueTotals.tap.total, 1);
   assert.strictEqual(stats.lastTechniqueSummary.tap.hits, 1);
+  assert.strictEqual(stats.lastFocusedTechnique, 'open');
+  assert.strictEqual(stats.focusedTechniqueRuns.open, 1);
 });
 
 test('buildPerformanceRecommendationsForSong prioritizes imported technique weak spots', function() {
@@ -514,6 +517,26 @@ test('buildPerformanceRecommendationsForSong prioritizes imported technique weak
   assert.strictEqual(recs[0].type, 'imported_technique_focus');
   assert.strictEqual(recs[0].techniqueKey, 'open');
   assert.ok(recs[0].reason.indexOf('33%') >= 0);
+});
+
+test('buildPerformanceRecommendationsForSong continues the current focused technique block when still weak', function() {
+  S.performanceStats = {};
+  updatePerformanceStats('focus_song', 'imported_chart', 'normal', {
+    score: 700,
+    accuracy: 84,
+    stars: 3,
+    focusedTechnique: 'tap',
+    importedTechniqueSummary: {
+      open: { total: 6, hits: 1, misses: 5 },
+      tap: { total: 4, hits: 3, misses: 1 }
+    }
+  });
+
+  var recs = buildPerformanceRecommendationsForSong('focus_song');
+
+  assert.strictEqual(recs[0].type, 'imported_technique_focus');
+  assert.strictEqual(recs[0].techniqueKey, 'tap');
+  assert.ok(recs[0].label.indexOf('Stay on') >= 0);
 });
 
 test('buildPerformanceRecommendationsForSong skips imported technique focus when accuracy is strong', function() {

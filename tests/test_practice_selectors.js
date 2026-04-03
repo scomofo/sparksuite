@@ -166,6 +166,30 @@ test("selectImportedTechniqueCandidate creates a focused imported-technique prac
   assert.ok(candidate.label.indexOf("tap-note") >= 0);
 });
 
+test("selectImportedTechniqueCandidate continues the current focused technique block when still weak", function() {
+  S.performanceStats = {
+    song_focus_imported_chart_hard: {
+      songId: "song_focus",
+      arrangement: "imported_chart",
+      difficulty: "hard",
+      bestAccuracy: 84,
+      runs: 4,
+      lastFocusedTechnique: "open",
+      importedTechniqueTotals: {
+        tap: { total: 10, hits: 2, misses: 8 },
+        open: { total: 6, hits: 4, misses: 2 }
+      }
+    }
+  };
+
+  var candidate = selectImportedTechniqueCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.techniqueKey, "open");
+  assert.strictEqual(candidate.meta.continuedFocus, true);
+  assert.ok(candidate.label.indexOf("Stay on") >= 0);
+});
+
 test("selectInstrumentModuleCandidate returns the next ukulele lesson focus", function() {
   var candidate = selectInstrumentModuleCandidate();
 

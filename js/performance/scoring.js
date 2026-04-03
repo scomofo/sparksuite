@@ -177,7 +177,8 @@ function updatePhraseStats(phraseStats, event, result) {
   }
 }
 
-function finalizePerformanceResults(chart, phraseStats) {
+function finalizePerformanceResults(chart, phraseStats, options) {
+  options = options || {};
   var totalEvents = chart.events.length;
   var totalScore = 0;
   var totalHits = 0;
@@ -211,7 +212,10 @@ function finalizePerformanceResults(chart, phraseStats) {
     stars: stars,
     phraseStats: phraseStats,
     totalEvents: totalEvents,
-    importedTechniqueSummary: importedTechniqueSummary
+    importedTechniqueSummary: importedTechniqueSummary,
+    focusedTechnique: Object.prototype.hasOwnProperty.call(options, "focusedTechnique")
+      ? options.focusedTechnique
+      : null
   };
 }
 

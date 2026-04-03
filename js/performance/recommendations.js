@@ -7,6 +7,29 @@
 
   function getImportedTechniqueRecommendation(songId, st){
     if(!st||!st.importedTechniqueTotals)return null;
+    var labels={
+      open:"Open-note timing",
+      tap:"Tap-note consistency",
+      forced:"Forced-note transitions",
+      specialPhrase:"Phrase section control"
+    };
+    var focusedKey = st.lastFocusedTechnique || null;
+    if(focusedKey && st.importedTechniqueTotals[focusedKey] && st.importedTechniqueTotals[focusedKey].total){
+      var focusedBucket = st.importedTechniqueTotals[focusedKey];
+      var focusedAccuracy = getTechniqueAccuracy(focusedBucket);
+      if(focusedAccuracy < 90){
+        return {
+          type:"imported_technique_focus",
+          priority:205-Math.min(focusedAccuracy,100),
+          songId:songId,
+          arrangementType:st.arrangement,
+          difficultyId:st.difficulty,
+          techniqueKey:focusedKey,
+          label:"Stay on " + (labels[focusedKey]||"imported technique"),
+          reason:(labels[focusedKey]||"Imported technique") + " is still only at " + focusedAccuracy + "% during the current focus block"
+        };
+      }
+    }
     var weakestKey=null;
     var weakestAccuracy=101;
     for(var key in st.importedTechniqueTotals){
@@ -20,12 +43,6 @@
       }
     }
     if(!weakestKey||weakestAccuracy>=85)return null;
-    var labels={
-      open:"Open-note timing",
-      tap:"Tap-note consistency",
-      forced:"Forced-note transitions",
-      specialPhrase:"Phrase section control"
-    };
     return {
       type:"imported_technique_focus",
       priority:140-Math.min(weakestAccuracy,100),
