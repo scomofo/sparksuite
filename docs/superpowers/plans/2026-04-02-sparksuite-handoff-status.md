@@ -217,8 +217,129 @@ Primary source plans:
   - `tests/test_sparksuite_core_migration.js`
 - Performance stats/editor/calibration transitions now have explicit SparkCore runtime actions, and stats/calibration exits now use explicit app actions instead of falling through the generic shell back path. The calibration screen can also prefer core-backed source/mode state instead of relying only on legacy calibration fields.
   - `js/app.js`
+  - `js/pages/performance_editor.js`
   - `js/pages/performance_stats.js`
   - `js/pages/perform_calibration.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor context now mirrors active chart identity, title, source, and dirty state into SparkCore runtime instead of leaving even that basic editor session context entirely shell-owned.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance stats now have a core-backed view focus, and editor runtime state now also mirrors selected-event context instead of leaving those last basic screen-level selections entirely shell-owned.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/pages/performance_stats.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance song selection now mirrors richer song metadata into SparkCore runtime, and calibration now mirrors applied offset state into core so the calibration screen can prefer core-backed offset values instead of only shell fields.
+  - `js/app.js`
+  - `js/pages/perform_song.js`
+  - `js/pages/perform_calibration.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance song detail navigation now uses explicit core-backed back/stop transitions, and arrangement changes from the song-detail page now mirror into SparkCore runtime instead of being shell-only settings.
+  - `js/app.js`
+  - `js/pages/perform_song.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance song-detail launch/configuration now carries selected-song metadata through core runtime too, so difficulty/speed/arrangement changes and start-from-song launches preserve richer song context instead of depending only on shell fields.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor runtime now mirrors basic chart metrics like BPM, event count, and phrase count into SparkCore too, so the editor screen depends less on shell-owned chart bookkeeping for its live summary state.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor runtime now also mirrors a compact selected-event summary into SparkCore, so the current event label/time/duration is no longer only implicit in the shell-owned chart object.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor phrases now have explicit core-backed selection state too, including selected phrase id/name/start/end, so phrase focus is no longer just passive shell markup.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor phrase editing and deletion now also flow through the core-backed phrase selection summary, so the current phrase lifecycle is less shell-owned than before.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor synchronization now has a dedicated SparkCore document-sync API instead of relying only on repetitive hand-built `configure_editor` payloads in `js/app.js`, which makes the editor migration cleaner and more platform-shaped.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- SparkCore now keeps a cloned performance-editor chart document and applies the first editor mutations against that core-owned copy, so the legacy shell is starting to follow editor edits instead of owning them outright.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor event selection, editing, and deletion now also route through the core-owned editor document mutation path, so event lifecycle is less shell-owned and closer to the roadmap’s engine-first runtime model.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor save/load/delete now also has a core-owned library path, and the blank editor screen can prefer that core-backed library instead of depending only on `S.performEditorLibrary`.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor export and preview now also use explicit core-backed helpers, so those workflows no longer depend only on the shell-owned chart object at trigger time.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor preview launch now also goes through a core-owned preview request, so the preview session carries chart/config/runtime context from SparkCore instead of being only a page-shell handoff.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance retry and phrase-retry launch config now also goes through a SparkCore request helper instead of being hand-built inline in `js/app.js`, which pulls another performance lifecycle path toward the roadmap’s core-owned runtime model.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance calibration request flow now also goes through a SparkCore helper instead of hand-building runtime sync payloads in each calibration action branch, which makes calibration more consistent with the newer core-first performance flows.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance completion payload construction now also has a SparkCore helper, so `finishPerformance()` no longer has to hand-build the core completion request inline before calling `completeSession(...)`.
+  - `js/performance/session.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance result and back/exit navigation now also uses a SparkCore helper, which pulls Songs-home and song-detail return transitions away from one-off `updateRuntimeState(...)` blocks in `js/app.js` and lets `stopPerform` choose its return target from core runtime state instead of shell-owned song flags.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance stats/editor/calibration entry points now also go through explicit SparkCore helpers instead of each app action branch hand-assembling its own open-screen payloads.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance song/detail entry now also has an explicit SparkCore helper, so song selection no longer has to manually pair `startSession(...)` with a separate `select_song` runtime patch in `js/app.js`.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance start-from-song now also goes through an explicit SparkCore helper, so the shell no longer hand-assembles the runtime start payload for song-detail launches.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Piano performance song open/start now also leans on the shared SparkCore performance request helpers instead of keeping a fully parallel local launch path.
+  - `js/instruments/piano/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Daily practice open/regenerate/complete actions now also go through explicit SparkCore helpers instead of having `js/app.js` call raw `startSession(...)` and `completeSession(...)` directly for that screen family.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Guided-session open/complete flows now also have explicit SparkCore helpers, and the guitar/bass/piano guided paths now lean on those helpers instead of calling raw guided session APIs directly.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `js/instruments/guitar/app.js`
+  - `js/instruments/bass/app.js`
+  - `js/instruments/piano/app.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Guided stop/done-home navigation now also goes through an explicit SparkCore helper instead of raw `syncGuidedRuntimeState(...)` patches from `js/app.js`.
+  - `js/app.js`
   - `js/sparksuite/core/spark_core.js`
   - `tests/test_sparksuite_core_migration.js`
 

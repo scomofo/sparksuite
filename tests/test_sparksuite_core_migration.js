@@ -230,6 +230,54 @@ test("SparkCore runtime state tracks manual patches and completion summaries", f
   assert.strictEqual(completedState.lastOutcomeSummary.xpAwarded, result.xpAwarded);
 });
 
+test("SparkCore can open and complete daily practice through explicit helpers", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.openDailyPracticePlan();
+
+  assert.ok(plan instanceof SessionPlan);
+  assert.strictEqual(plan.flow, "daily_practice");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "daily_practice");
+
+  var rebuiltPlan = core.openDailyPracticePlan({ forceRebuild: true });
+  assert.ok(rebuiltPlan instanceof SessionPlan);
+  assert.notStrictEqual(rebuiltPlan.id, plan.id);
+
+  var completionResult = core.completeDailyPracticePlan();
+  assert.strictEqual(completionResult.planCompleted, true);
+  assert.strictEqual(core.getRuntimeState().transport.status, "completed");
+});
+
+test("SparkCore can open and complete guided sessions through explicit helpers", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 2 });
+
+  assert.ok(plan instanceof SessionPlan);
+  assert.strictEqual(plan.flow, "guided_session");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "guided_session");
+  assert.strictEqual(core.getRuntimeState().guidedStep, "spark");
+
+  var result = core.completeGuidedSession();
+  assert.strictEqual(result.planCompleted, true);
+  assert.strictEqual(core.getRuntimeState().activeScreen, "guided_done");
+  assert.strictEqual(core.getRuntimeState().transport.status, "completed");
+});
+
+test("SparkCore can apply guided navigation requests explicitly", function() {
+  var core = createDefaultSparkCore();
+  core.openGuidedSession({ sessionNum: 1 });
+
+  var doneState = core.applyGuidedNavigationRequest("guided_done");
+  assert.strictEqual(doneState.activeScreen, "guided_done");
+  assert.strictEqual(doneState.transport.status, "completed");
+
+  var homeState = core.applyGuidedNavigationRequest("guided_home");
+  assert.strictEqual(homeState.activeScreen, "home");
+  assert.strictEqual(homeState.activeTab, "practice");
+  assert.strictEqual(homeState.guidedStep, null);
+  assert.strictEqual(homeState.guidedNewMovePhase, null);
+  assert.strictEqual(homeState.transport.status, "idle");
+});
+
 test("SparkCore can track guided runtime step and phase state explicitly", function() {
   var core = createDefaultSparkCore();
   core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
@@ -260,6 +308,8 @@ test("SparkCore can mirror performance runtime state explicitly", function() {
 
   core.syncPerformanceRuntimeState("start", {
     chartId: "night_drive_chart",
+    songIndex: 1,
+    songTitle: "Night Drive",
     difficulty: "hard",
     arrangementType: "rhythm_chords",
     speed: 0.75,
@@ -273,6 +323,8 @@ test("SparkCore can mirror performance runtime state explicitly", function() {
   assert.strictEqual(runningState.activeFlow, "performance_song");
   assert.strictEqual(runningState.activeScreen, "perform");
   assert.strictEqual(runningState.performanceChartId, "night_drive_chart");
+  assert.strictEqual(runningState.performanceSongIndex, 1);
+  assert.strictEqual(runningState.performanceSongTitle, "Night Drive");
   assert.strictEqual(runningState.performanceDifficultyId, "hard");
   assert.strictEqual(runningState.performanceArrangementType, "rhythm_chords");
   assert.strictEqual(runningState.performanceSpeed, 0.75);
@@ -328,6 +380,7 @@ test("SparkCore can mirror performance runtime configuration changes", function(
   });
 
   core.syncPerformanceRuntimeState("configure", {
+    arrangementType: "lead",
     difficulty: "pro",
     speed: 0.5,
     mode: "mic",
@@ -335,6 +388,7 @@ test("SparkCore can mirror performance runtime configuration changes", function(
   });
 
   var state = core.getRuntimeState();
+  assert.strictEqual(state.performanceArrangementType, "lead");
   assert.strictEqual(state.performanceDifficultyId, "pro");
   assert.strictEqual(state.performanceSpeed, 0.5);
   assert.strictEqual(state.performanceInputMode, "mic");
@@ -397,21 +451,583 @@ test("SparkCore can track performance screen transitions for stats, editor, and 
   assert.strictEqual(calibrationResetState.activeScreen, "perform_calibration");
   assert.strictEqual(calibrationResetState.performanceCalibrationSource, "mic");
 
+  core.syncPerformanceRuntimeState("calibration_apply", {
+    source: "mic",
+    globalOffsetMs: 12,
+    midiOffsetMs: -4,
+    micOffsetMs: 18
+  });
+  var calibrationAppliedState = core.getRuntimeState();
+  assert.strictEqual(calibrationAppliedState.performanceTimingOffsetMs, 12);
+  assert.strictEqual(calibrationAppliedState.performanceMidiOffsetMs, -4);
+  assert.strictEqual(calibrationAppliedState.performanceMicOffsetMs, 18);
+
   // start action clears calibrationMode
   core.syncPerformanceRuntimeState("calibration_start");
   assert.strictEqual(core.getRuntimeState().performanceCalibrationMode, true);
   core.syncPerformanceRuntimeState("start", { chartId: "night_drive_chart" });
   assert.strictEqual(core.getRuntimeState().performanceCalibrationMode, false);
 
+  core.syncPerformanceRuntimeState("configure_editor", {
+    mode: "lead",
+    snap: "1/16",
+    chartId: "custom_chart",
+    chartTitle: "Lead Builder",
+    source: "library",
+    dirty: true,
+    selectedEventId: 7,
+    bpm: 132,
+    eventCount: 18,
+    phraseCount: 4
+  });
+  var editorConfiguredState = core.getRuntimeState();
+  assert.strictEqual(editorConfiguredState.performanceEditorMode, "lead");
+  assert.strictEqual(editorConfiguredState.performanceEditorSnap, "1/16");
+  assert.strictEqual(editorConfiguredState.performanceEditorChartId, "custom_chart");
+  assert.strictEqual(editorConfiguredState.performanceEditorChartTitle, "Lead Builder");
+  assert.strictEqual(editorConfiguredState.performanceEditorSource, "library");
+  assert.strictEqual(editorConfiguredState.performanceEditorDirty, true);
+  assert.strictEqual(editorConfiguredState.performanceEditorSelectedEventId, 7);
+  assert.strictEqual(editorConfiguredState.performanceEditorSelectedEventLabel, null);
+  assert.strictEqual(editorConfiguredState.performanceEditorSelectedEventTime, null);
+  assert.strictEqual(editorConfiguredState.performanceEditorSelectedEventDuration, null);
+  assert.strictEqual(editorConfiguredState.performanceEditorBpm, 132);
+  assert.strictEqual(editorConfiguredState.performanceEditorEventCount, 18);
+  assert.strictEqual(editorConfiguredState.performanceEditorPhraseCount, 4);
+
+  core.syncPerformanceRuntimeState("configure_editor", {
+    selectedEventId: 9,
+    selectedEventLabel: "Am",
+    selectedEventTime: 12.5,
+    selectedEventDuration: 1.25
+  });
+  var selectedEventState = core.getRuntimeState();
+  assert.strictEqual(selectedEventState.performanceEditorSelectedEventId, 9);
+  assert.strictEqual(selectedEventState.performanceEditorSelectedEventLabel, "Am");
+  assert.strictEqual(selectedEventState.performanceEditorSelectedEventTime, 12.5);
+  assert.strictEqual(selectedEventState.performanceEditorSelectedEventDuration, 1.25);
+
+  core.syncPerformanceRuntimeState("configure_editor", {
+    selectedPhraseId: 2,
+    selectedPhraseName: "Bridge",
+    selectedPhraseStart: 16,
+    selectedPhraseEnd: 24
+  });
+  var selectedPhraseState = core.getRuntimeState();
+  assert.strictEqual(selectedPhraseState.performanceEditorSelectedPhraseId, 2);
+  assert.strictEqual(selectedPhraseState.performanceEditorSelectedPhraseName, "Bridge");
+  assert.strictEqual(selectedPhraseState.performanceEditorSelectedPhraseStart, 16);
+  assert.strictEqual(selectedPhraseState.performanceEditorSelectedPhraseEnd, 24);
+
+  core.syncPerformanceRuntimeState("configure_editor", {
+    selectedPhraseId: null,
+    selectedPhraseName: null,
+    selectedPhraseStart: null,
+    selectedPhraseEnd: null,
+    phraseCount: 3
+  });
+  var clearedPhraseState = core.getRuntimeState();
+  assert.strictEqual(clearedPhraseState.performanceEditorSelectedPhraseId, null);
+  assert.strictEqual(clearedPhraseState.performanceEditorSelectedPhraseName, null);
+  assert.strictEqual(clearedPhraseState.performanceEditorSelectedPhraseStart, null);
+  assert.strictEqual(clearedPhraseState.performanceEditorSelectedPhraseEnd, null);
+  assert.strictEqual(clearedPhraseState.performanceEditorPhraseCount, 3);
+
+  core.syncPerformanceRuntimeState("configure_stats", {
+    focus: "weak"
+  });
+  var statsConfiguredState = core.getRuntimeState();
+  assert.strictEqual(statsConfiguredState.performanceStatsFocus, "weak");
+
   core.syncPerformanceRuntimeState("close_editor", { screen: "home" });
   var homeState = core.getRuntimeState();
   assert.strictEqual(homeState.activeScreen, "home");
+});
+
+test("SparkCore exposes a compact performance editor document view", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceEditorDocument({
+    id: "custom_chart",
+    title: "Lead Builder",
+    bpm: 132,
+    events: [
+      { id: 9, laneLabel: "Am", t: 12.5, dur: 1.25 }
+    ],
+    phrases: [
+      { id: 2, name: "Bridge", startSec: 16, endSec: 24 }
+    ]
+  }, {
+    source: "library",
+    dirty: true,
+    mode: "lead",
+    snap: "1/16",
+    eventCount: 18,
+    phraseCount: 4,
+    selectedEventId: 9,
+    selectedPhraseId: 2
+  });
+
+  var documentView = core.getPerformanceEditorDocumentView();
+  assert.ok(documentView.chart);
+  assert.strictEqual(documentView.chart.id, "custom_chart");
+  assert.strictEqual(documentView.chartId, "custom_chart");
+  assert.strictEqual(documentView.title, "Lead Builder");
+  assert.strictEqual(documentView.source, "library");
+  assert.strictEqual(documentView.dirty, true);
+  assert.strictEqual(documentView.mode, "lead");
+  assert.strictEqual(documentView.snap, "1/16");
+  assert.strictEqual(documentView.bpm, 132);
+  assert.strictEqual(documentView.eventCount, 18);
+  assert.strictEqual(documentView.phraseCount, 4);
+  assert.strictEqual(documentView.selectedEvent.id, 9);
+  assert.strictEqual(documentView.selectedEvent.label, "Am");
+  assert.strictEqual(documentView.selectedPhrase.id, 2);
+  assert.strictEqual(documentView.selectedPhrase.name, "Bridge");
+
+  documentView.chart.title = "Changed Outside";
+  assert.strictEqual(core.getPerformanceEditorDocumentView().chart.title, "Lead Builder");
+});
+
+test("SparkCore can derive editor document runtime state from a chart payload", function() {
+  var core = createDefaultSparkCore();
+  var chart = {
+    id: "custom_chart",
+    title: "Roadmap Builder",
+    bpm: 128,
+    events: [
+      { id: 4, laneLabel: "C", t: 2.5, dur: 1 }
+    ],
+    phrases: [
+      { id: 1, name: "Verse", startSec: 0, endSec: 8 }
+    ]
+  };
+
+  core.syncPerformanceEditorDocument(chart, {
+    source: "song",
+    dirty: true,
+    mode: "chords",
+    snap: "1/8",
+    selectedEventId: 4,
+    selectedPhraseId: 1
+  });
+
+  var state = core.getRuntimeState();
+  assert.strictEqual(state.activeScreen, "performance_editor");
+  assert.strictEqual(state.performanceEditorChartId, "custom_chart");
+  assert.strictEqual(state.performanceEditorChartTitle, "Roadmap Builder");
+  assert.strictEqual(state.performanceEditorSource, "song");
+  assert.strictEqual(state.performanceEditorDirty, true);
+  assert.strictEqual(state.performanceEditorBpm, 128);
+  assert.strictEqual(state.performanceEditorEventCount, 1);
+  assert.strictEqual(state.performanceEditorPhraseCount, 1);
+  assert.strictEqual(state.performanceEditorSelectedEventLabel, "C");
+  assert.strictEqual(state.performanceEditorSelectedEventTime, 2.5);
+  assert.strictEqual(state.performanceEditorSelectedPhraseName, "Verse");
+  assert.strictEqual(state.performanceEditorSelectedPhraseEnd, 8);
+
+  core.syncPerformanceEditorDocument(null, {
+    action: "open_editor",
+    source: "blank",
+    dirty: false,
+    mode: "lead",
+    snap: "free",
+    selectedEventId: null,
+    selectedPhraseId: null
+  });
+
+  var blankState = core.getRuntimeState();
+  assert.strictEqual(blankState.activeScreen, "performance_editor");
+  assert.strictEqual(blankState.performanceEditorChartId, null);
+  assert.strictEqual(blankState.performanceEditorSource, "blank");
+  assert.strictEqual(blankState.performanceEditorDirty, false);
+  assert.strictEqual(blankState.performanceEditorMode, "lead");
+  assert.strictEqual(blankState.performanceEditorSnap, "free");
+});
+
+test("SparkCore can apply editor chart mutations through a core-owned document copy", function() {
+  var core = createDefaultSparkCore();
+  var blank = core.applyPerformanceEditorMutation("new_blank", { mode: "chords" });
+  core.syncPerformanceEditorDocument(blank.chart, {
+    action: "open_editor",
+    source: "blank",
+    dirty: true,
+    mode: "chords",
+    snap: "1/8"
+  });
+
+  var addedEvent = core.applyPerformanceEditorMutation("add_event", { mode: "chords" });
+  assert.ok(addedEvent.chart);
+  assert.strictEqual(addedEvent.chart.events.length, 1);
+  assert.strictEqual(addedEvent.chart.events[0].id, 1);
+
+  core.syncPerformanceEditorDocument(addedEvent.chart, {
+    source: "blank",
+    dirty: true,
+    selectedEventId: null,
+    selectedPhraseId: null
+  });
+
+  var selectedEvent = core.applyPerformanceEditorMutation("select_event", { id: 1 });
+  assert.strictEqual(selectedEvent.selectedEventId, 1);
+
+  var updatedEvent = core.applyPerformanceEditorMutation("update_event", {
+    id: 1,
+    prop: "label",
+    val: "G"
+  });
+  assert.strictEqual(updatedEvent.chart.events[0].laneLabel, "G");
+  assert.strictEqual(updatedEvent.chart.events[0].chord, "G");
+
+  core.syncPerformanceEditorDocument(updatedEvent.chart, {
+    source: "blank",
+    dirty: true,
+    selectedEventId: 1,
+    selectedPhraseId: null
+  });
+
+  var deletedEvent = core.applyPerformanceEditorMutation("delete_event", { id: 1 });
+  assert.strictEqual(deletedEvent.chart.events.length, 0);
+  assert.strictEqual(deletedEvent.selectedEventId, null);
+
+  var titled = core.applyPerformanceEditorMutation("set_title", { title: "Edited in Core" });
+  assert.strictEqual(titled.chart.title, "Edited in Core");
+
+  var addedPhrase = core.applyPerformanceEditorMutation("add_phrase");
+  assert.strictEqual(addedPhrase.chart.phrases.length, 2);
+  assert.strictEqual(addedPhrase.selectedPhraseId, 1);
+
+  core.syncPerformanceEditorDocument(addedPhrase.chart, {
+    source: "blank",
+    dirty: true,
+    selectedPhraseId: addedPhrase.selectedPhraseId
+  });
+
+  var updatedPhrase = core.applyPerformanceEditorMutation("update_phrase", {
+    id: 1,
+    prop: "name",
+    val: "Chorus"
+  });
+  assert.strictEqual(updatedPhrase.chart.phrases[1].name, "Chorus");
+
+  var deletedPhrase = core.applyPerformanceEditorMutation("delete_phrase", { id: 1 });
+  assert.strictEqual(deletedPhrase.chart.phrases.length, 1);
+  assert.strictEqual(deletedPhrase.selectedPhraseId, null);
+});
+
+test("SparkCore can manage the editor library from the core-owned document workflow", function() {
+  var core = createDefaultSparkCore();
+  var chart = {
+    id: "library_chart",
+    title: "Saved Core Chart",
+    bpm: 110,
+    events: [{ id: 1, laneLabel: "C", t: 0, dur: 1 }],
+    phrases: [{ id: 0, name: "Phrase 1", startSec: 0, endSec: 8 }]
+  };
+
+  core.syncPerformanceEditorDocument(chart, {
+    action: "open_editor",
+    source: "blank",
+    dirty: true,
+    mode: "chords",
+    snap: "1/8"
+  });
+
+  var saved = core.applyPerformanceEditorMutation("save_to_library");
+  assert.strictEqual(saved.library.length, 1);
+  assert.strictEqual(saved.library[0].title, "Saved Core Chart");
+
+  var loaded = core.applyPerformanceEditorMutation("load_from_library", { index: 0 });
+  assert.ok(loaded.chart);
+  assert.strictEqual(loaded.chart.id, "library_chart");
+  assert.strictEqual(loaded.selectedEventId, null);
+  assert.strictEqual(loaded.selectedPhraseId, null);
+
+  var deleted = core.applyPerformanceEditorMutation("delete_from_library", { index: 0 });
+  assert.strictEqual(deleted.library.length, 0);
+});
+
+test("SparkCore can expose export and preview artifacts from the core-owned editor document", function() {
+  var core = createDefaultSparkCore();
+  var chart = {
+    id: "preview_chart",
+    title: "Preview Chart",
+    bpm: 95,
+    events: [{ id: 1, laneLabel: "Dm", t: 1, dur: 1 }],
+    phrases: [{ id: 0, name: "Phrase 1", startSec: 0, endSec: 8 }]
+  };
+
+  core.syncPerformanceEditorDocument(chart, {
+    action: "open_editor",
+    source: "library",
+    dirty: false,
+    mode: "chords",
+    snap: "1/8"
+  });
+
+  var exportData = core.getPerformanceEditorExportData();
+  assert.ok(exportData.chart);
+  assert.strictEqual(exportData.chart.id, "preview_chart");
+  assert.strictEqual(exportData.fileName, "Preview_Chart.json");
+  assert.ok(exportData.json.indexOf("\"title\": \"Preview Chart\"") >= 0);
+
+  var previewChart = core.getPerformanceEditorPreviewChart();
+  assert.ok(previewChart);
+  assert.strictEqual(previewChart.title, "Preview Chart");
+  previewChart.title = "Changed Locally";
+  assert.strictEqual(core.getPerformanceEditorPreviewChart().title, "Preview Chart");
+
+  core.syncPerformanceRuntimeState("configure", {
+    difficulty: "hard",
+    speed: 0.8,
+    mode: "mic",
+    preset: "guitar_solo",
+    arrangementType: "lead"
+  });
+
+  var previewRequest = core.startPerformanceEditorPreview();
+  assert.ok(previewRequest);
+  assert.strictEqual(previewRequest.chartId, "preview_chart");
+  assert.strictEqual(previewRequest.arrangementType, "lead");
+  assert.strictEqual(previewRequest.difficulty, "hard");
+  assert.strictEqual(previewRequest.speed, 0.8);
+  assert.strictEqual(previewRequest.mode, "mic");
+  assert.strictEqual(previewRequest.preset, "guitar_solo");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "perform");
+  assert.strictEqual(core.getRuntimeState().performanceChartId, "preview_chart");
+  assert.strictEqual(core.getRuntimeState().transport.status, "running");
+});
+
+test("SparkCore can open performance stats, editor, and calibration through explicit helpers", function() {
+  var core = createDefaultSparkCore();
+
+  var statsRequest = core.openPerformanceStats({ focus: "weak" });
+  assert.strictEqual(statsRequest.focus, "weak");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "performance_stats");
+  assert.strictEqual(core.getRuntimeState().performanceStatsFocus, "weak");
+
+  var editorRequest = core.openPerformanceEditor(null, {
+    source: "blank",
+    mode: "lead",
+    snap: "1/16"
+  });
+  assert.strictEqual(editorRequest.source, "blank");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "performance_editor");
+  assert.strictEqual(core.getRuntimeState().performanceEditorMode, "lead");
+  assert.strictEqual(core.getRuntimeState().performanceEditorSnap, "1/16");
+
+  var calibrationRequest = core.openPerformanceCalibration({ source: "mic" });
+  assert.strictEqual(calibrationRequest.source, "mic");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "perform_calibration");
+  assert.strictEqual(core.getRuntimeState().performanceCalibrationSource, "mic");
+});
+
+test("SparkCore can open performance song selection through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+
+  var selectionRequest = core.openPerformanceSongSelection({
+    songId: "night_drive",
+    songIndex: 1,
+    songTitle: "Night Drive",
+    arrangementType: "rhythm_chords",
+    difficultyId: "hard"
+  });
+
+  assert.strictEqual(selectionRequest.songId, "night_drive");
+  assert.strictEqual(selectionRequest.songIndex, 1);
+  assert.strictEqual(selectionRequest.songTitle, "Night Drive");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "performance_song");
+  assert.strictEqual(core.getRuntimeState().performanceChartId, "night_drive");
+  assert.strictEqual(core.getRuntimeState().performanceSongIndex, 1);
+  assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Night Drive");
+  assert.strictEqual(core.getRuntimeState().performanceArrangementType, "rhythm_chords");
+  assert.strictEqual(core.getRuntimeState().performanceDifficultyId, "hard");
+});
+
+test("SparkCore can start a selected performance song through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+  core.openPerformanceSongSelection({
+    songId: "night_drive",
+    songIndex: 1,
+    songTitle: "Night Drive",
+    arrangementType: "rhythm_chords",
+    difficultyId: "hard"
+  });
+
+  var startRequest = core.startSelectedPerformanceSong({
+    chartId: "night_drive",
+    songIndex: 1,
+    songTitle: "Night Drive",
+    arrangementType: "rhythm_chords",
+    difficulty: "hard",
+    speed: 0.8,
+    mode: "mic",
+    preset: "guitar_solo",
+    countIn: true
+  });
+
+  assert.strictEqual(startRequest.chartId, "night_drive");
+  assert.strictEqual(startRequest.songIndex, 1);
+  assert.strictEqual(startRequest.songTitle, "Night Drive");
+  assert.strictEqual(startRequest.arrangementType, "rhythm_chords");
+  assert.strictEqual(startRequest.difficulty, "hard");
+  assert.strictEqual(startRequest.speed, 0.8);
+  assert.strictEqual(startRequest.mode, "mic");
+  assert.strictEqual(startRequest.preset, "guitar_solo");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "perform");
+  assert.strictEqual(core.getRuntimeState().transport.status, "count_in");
+});
+
+test("SparkCore can build retry launch requests from performance runtime state", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceRuntimeState("select_song", {
+    chartId: "night_drive",
+    songIndex: 1,
+    songTitle: "Night Drive",
+    arrangementType: "rhythm_chords",
+    difficulty: "hard"
+  });
+  core.syncPerformanceRuntimeState("configure", {
+    speed: 0.75,
+    mode: "mic",
+    preset: "guitar_solo"
+  });
+
+  var retryRequest = core.startPerformanceRetrySession({
+    chartId: "night_drive"
+  });
+  assert.strictEqual(retryRequest.chartId, "night_drive");
+  assert.strictEqual(retryRequest.arrangementType, "rhythm_chords");
+  assert.strictEqual(retryRequest.difficulty, "hard");
+  assert.strictEqual(retryRequest.speed, 0.75);
+  assert.strictEqual(retryRequest.mode, "mic");
+  assert.strictEqual(retryRequest.preset, "guitar_solo");
+  assert.strictEqual(retryRequest.songIndex, 1);
+  assert.strictEqual(retryRequest.songTitle, "Night Drive");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "perform");
+  assert.strictEqual(core.getRuntimeState().performanceChartId, "night_drive");
+  assert.strictEqual(core.getRuntimeState().transport.status, "running");
+
+  var phraseRetryRequest = core.startPerformanceRetrySession({
+    chartId: "night_drive",
+    targetPhraseIndex: 2
+  });
+  assert.strictEqual(phraseRetryRequest.targetPhraseIndex, 2);
+  assert.strictEqual(phraseRetryRequest.chartId, "night_drive");
+});
+
+test("SparkCore can build and apply calibration requests from runtime state", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceRuntimeState("open_calibration", {
+    source: "mic",
+    globalOffsetMs: 12,
+    midiOffsetMs: -4,
+    micOffsetMs: 18
+  });
+
+  var startRequest = core.applyPerformanceCalibrationRequest("calibration_start", {
+    source: "mic"
+  });
+  assert.strictEqual(startRequest.source, "mic");
+  assert.strictEqual(core.getRuntimeState().performanceCalibrationMode, true);
+  assert.strictEqual(core.getRuntimeState().transport.status, "calibrating");
+
+  var applyRequest = core.applyPerformanceCalibrationRequest("calibration_apply", {
+    source: "mic",
+    appliedOffsetMs: 10,
+    globalOffsetMs: 22,
+    midiOffsetMs: -4,
+    micOffsetMs: 28
+  });
+  assert.strictEqual(applyRequest.appliedOffsetMs, 10);
+  assert.strictEqual(core.getRuntimeState().performanceTimingOffsetMs, 22);
+  assert.strictEqual(core.getRuntimeState().performanceMicOffsetMs, 28);
+
+  var resetRequest = core.applyPerformanceCalibrationRequest("calibration_reset", {
+    source: "mic",
+    globalOffsetMs: 22,
+    midiOffsetMs: -4,
+    micOffsetMs: 0
+  });
+  assert.strictEqual(resetRequest.source, "mic");
+  assert.strictEqual(core.getRuntimeState().performanceMicOffsetMs, 0);
+  assert.strictEqual(core.getRuntimeState().performanceCalibrationMode, false);
+  assert.strictEqual(core.getRuntimeState().transport.status, "idle");
+});
+
+test("SparkCore can build performance completion requests from runtime state", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceRuntimeState("select_song", {
+    chartId: "night_drive",
+    songIndex: 1,
+    songTitle: "Night Drive",
+    arrangementType: "rhythm_chords",
+    difficulty: "hard"
+  });
+
+  var completionRequest = core.buildPerformanceCompletionRequest({
+    performanceResults: {
+      title: "Night Drive",
+      accuracy: 88,
+      stars: 4,
+      score: 12345
+    },
+    xpAwarded: 9
+  });
+
+  assert.strictEqual(completionRequest.flow, SparkSessionTypes.FLOW_PERFORMANCE_SONG);
+  assert.strictEqual(completionRequest.markPlanComplete, true);
+  assert.strictEqual(completionRequest.chartId, "night_drive");
+  assert.strictEqual(completionRequest.arrangementType, "rhythm_chords");
+  assert.strictEqual(completionRequest.difficultyId, "hard");
+  assert.strictEqual(completionRequest.songIndex, 1);
+  assert.strictEqual(completionRequest.songTitle, "Night Drive");
+  assert.strictEqual(completionRequest.xpAwarded, 9);
+  assert.strictEqual(completionRequest.performanceResults.accuracy, 88);
+});
+
+test("SparkCore can build and apply performance navigation requests", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceRuntimeState("select_song", {
+    chartId: "night_drive",
+    songIndex: 1,
+    songTitle: "Night Drive",
+    arrangementType: "rhythm_chords",
+    difficulty: "hard"
+  });
+  core.syncPerformanceRuntimeState("finish", {
+    screen: "perform_done",
+    results: {
+      title: "Night Drive",
+      accuracy: 88
+    }
+  });
+
+  var songsHomeRequest = core.buildPerformanceNavigationRequest("songs_home");
+  assert.strictEqual(songsHomeRequest.activeScreen, "home");
+  assert.strictEqual(songsHomeRequest.activeTab, "songs");
+  assert.strictEqual(songsHomeRequest.transport.status, "idle");
+
+  var songsHomeState = core.applyPerformanceNavigationRequest("songs_home");
+  assert.strictEqual(songsHomeState.activeScreen, "home");
+  assert.strictEqual(songsHomeState.activeTab, "songs");
+  assert.strictEqual(songsHomeState.transport.status, "idle");
+
+  var songDetailState = core.applyPerformanceNavigationRequest("song_detail");
+  assert.strictEqual(songDetailState.activeScreen, "performance_song");
+  assert.strictEqual(songDetailState.activeTab, "songs");
+  assert.strictEqual(songDetailState.performanceSongTitle, "Night Drive");
+
+  var stopReturnState = core.applyPerformanceNavigationRequest("return_after_stop");
+  assert.strictEqual(stopReturnState.activeScreen, "performance_song");
+  assert.strictEqual(stopReturnState.activeTab, "songs");
 });
 
 test("SparkCore can mirror performance song selection state explicitly", function() {
   var core = createDefaultSparkCore();
   core.syncPerformanceRuntimeState("select_song", {
     chartId: "night_drive",
+    songIndex: 1,
+    songTitle: "Night Drive",
     arrangementType: "rhythm_chords",
     difficulty: "hard"
   });
@@ -420,6 +1036,8 @@ test("SparkCore can mirror performance song selection state explicitly", functio
   assert.strictEqual(state.activeFlow, "performance_song");
   assert.strictEqual(state.activeScreen, "performance_song");
   assert.strictEqual(state.performanceChartId, "night_drive");
+  assert.strictEqual(state.performanceSongIndex, 1);
+  assert.strictEqual(state.performanceSongTitle, "Night Drive");
   assert.strictEqual(state.performanceArrangementType, "rhythm_chords");
   assert.strictEqual(state.performanceDifficultyId, "hard");
   assert.strictEqual(state.transport.status, "ready");
@@ -444,6 +1062,27 @@ test("SparkCore runtime state can track shell navigation back to home tabs", fun
   assert.strictEqual(state.activeTab, "practice");
   assert.strictEqual(state.transport.status, "idle");
   assert.strictEqual(state.transport.positionMs, 0);
+});
+
+test("SparkCore performance runtime state can return from song detail back to songs home", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceRuntimeState("select_song", {
+    chartId: "night_drive",
+    songIndex: 1,
+    songTitle: "Night Drive",
+    arrangementType: "rhythm_chords",
+    difficulty: "hard"
+  });
+
+  var state = core.updateRuntimeState({
+    activeScreen: "home",
+    activeTab: "songs",
+    transport: { status: "idle", positionMs: 0 }
+  });
+
+  assert.strictEqual(state.activeScreen, "home");
+  assert.strictEqual(state.activeTab, "songs");
+  assert.strictEqual(state.transport.status, "idle");
 });
 
 test("SparkCore guided runtime state can transition from done screen back to home", function() {

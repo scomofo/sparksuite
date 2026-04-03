@@ -475,7 +475,21 @@ function buildTick() {
 
 // ── Guided session flow ──
 function startGuidedSession() {
-  if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+  if (typeof window.openGuidedSessionRequest === "function") {
+    var guidedSession = parseInt(S.currentSession, 10);
+    if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
+    var corePlan = window.openGuidedSessionRequest({
+      sessionNum: guidedSession
+    });
+    if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+      syncPianoGuidedPlanFromCore(corePlan);
+      checkPracticeDate();
+      playSound("start");
+      saveState();
+      render();
+      return;
+    }
+  } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
     var guidedSession = parseInt(S.currentSession, 10);
     if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
     var corePlan = window.sparkCore.startSession({
@@ -591,7 +605,30 @@ function completeGuidedSession() {
   if (S.detecting) stopDetection();
 
   var plan = S.sessionPlan;
-  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+  if (typeof window.completeGuidedSessionRequest === "function") {
+    var guidedResult = window.completeGuidedSessionRequest();
+    syncPianoGuidedCompletionFromCore(guidedResult, plan);
+    checkPracticeDate();
+    checkLevelUp();
+    var coreBadges = pianoCheckBadges();
+    pianoShowConfetti();
+    if (coreBadges.length) {
+      showToast("Session complete! Badge earned! " + coreBadges.map(function(b) {
+        var badge = BADGES.find(function(x) { return x.id === b; });
+        return badge ? badge.icon : "";
+      }).join(" "));
+    } else {
+      showToast("Session " + (plan ? plan.num : "") + " complete!");
+    }
+    playSound(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
+    S.screen = SCR.HOME;
+    S.sessionStep = null;
+    S.sessionPlan = null;
+    S.newMovePhase = null;
+    saveState();
+    render();
+    return;
+  } else if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
     var guidedResult = window.sparkCore.completeSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       markPlanComplete: true
@@ -1339,10 +1376,26 @@ function act(action, param) {
       var idx = parseInt(param);
       var song = SONGS[idx];
       if(song){
-        if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+        if (typeof window.openPerformanceSongSelectionRequest === "function") {
+          window.openPerformanceSongSelectionRequest({
+            songIndex: idx,
+            songId: normalizeSongId(song),
+            songTitle: song.title || null,
+            arrangementType: "block_chords",
+            difficultyId: S.performDifficulty || "normal"
+          });
+          if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+            var coreView = window.sparkCore.getActiveSessionView();
+            if (coreView && coreView.plan && coreView.plan.context && coreView.plan.context.performanceSong) {
+              syncPianoPerformanceSongFromCore(coreView.plan);
+              break;
+            }
+          }
+        } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
           var corePlan = window.sparkCore.startSession({
             flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
             songIndex: idx,
+            songId: normalizeSongId(song),
             arrangementType: "block_chords",
             difficultyId: S.performDifficulty || "normal"
           });
@@ -1360,10 +1413,20 @@ function act(action, param) {
     }
     case "performDifficulty":
       applyPerformanceDifficultyToState(param || "normal");
+      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+        window.sparkCore.syncPerformanceRuntimeState("configure", {
+          difficulty: S.performDifficulty
+        });
+      }
       saveState();
       break;
     case "performArrangement":
       S.performArrangementType = param || "block_chords";
+      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+        window.sparkCore.syncPerformanceRuntimeState("configure", {
+          arrangementType: S.performArrangementType
+        });
+      }
       saveState();
       break;
     case "importSongAudio":
@@ -1420,9 +1483,24 @@ function act(action, param) {
       break;
     case "performStart": {
       var chart = buildPerformanceChartFromSong(S.performSongData, S.performArrangementType);
+      var startRequest = typeof window.startSelectedPerformanceSongRequest === "function"
+        ? window.startSelectedPerformanceSongRequest({
+            chart: chart,
+            chartId: chart && chart.id ? chart.id : null,
+            songTitle: S.performSongData && S.performSongData.title ? S.performSongData.title : null,
+            difficulty: S.performDifficulty,
+            arrangementType: S.performArrangementType,
+            speed: S.performSpeed || 1,
+            preset: S.performPracticePreset || null,
+            mode: S.performMode || "midi",
+            countIn: !!S.performCountIn
+          })
+        : null;
       startPerformance(chart, {
-        difficulty:S.performDifficulty,
-        speed:S.performSpeed || 1
+        difficulty:startRequest && startRequest.difficulty ? startRequest.difficulty : S.performDifficulty,
+        speed:startRequest && startRequest.speed ? startRequest.speed : (S.performSpeed || 1),
+        preset:startRequest ? startRequest.preset : (S.performPracticePreset || null),
+        mode:startRequest && startRequest.mode ? startRequest.mode : (S.performMode || "midi")
       });
       return;
     }
@@ -1435,14 +1513,30 @@ function act(action, param) {
     case "performRetry":
       if(S.performSongData){
         var chart = buildPerformanceChartFromSong(S.performSongData, S.performArrangementType);
+        var retryRequest = typeof window.getPerformanceRetryRequest === "function"
+          ? window.getPerformanceRetryRequest({
+              chart: chart,
+              chartId: chart && chart.id ? chart.id : null,
+              difficulty: S.performDifficulty,
+              arrangementType: S.performArrangementType,
+              speed: S.performSpeed || 1,
+              mode: S.performMode || "midi",
+              preset: S.performPracticePreset || null
+            })
+          : null;
         startPerformance(chart, {
-          difficulty:S.performDifficulty,
-          speed:S.performSpeed || 1
+          difficulty:retryRequest && retryRequest.difficulty ? retryRequest.difficulty : S.performDifficulty,
+          speed:retryRequest && retryRequest.speed ? retryRequest.speed : (S.performSpeed || 1),
+          preset:retryRequest ? retryRequest.preset : (S.performPracticePreset || null),
+          mode:retryRequest && retryRequest.mode ? retryRequest.mode : (S.performMode || "midi")
         });
       }
       return;
     case "stopPerform":
       stopPerformance();
+      if (typeof window.applyPerformanceNavigationRequest === "function") {
+        window.applyPerformanceNavigationRequest("songs_home");
+      }
       S.screen = SCR.HOME;
       S.tab = TAB.SONGS;
       render();
