@@ -129,6 +129,7 @@ Primary source plans:
   - Bass performance mode now has a first manifest-backed import/package chart path instead of only guitar and ukulele package coverage
   - Bass now has multiple manifest-backed performance package charts, so its browser/performance depth is no longer a single-chart exception
   - The bass instrument now has its own Songs/Performance tab rendering path, so those charts surface as bass content instead of only through the shared mixed-instrument browser
+  - Later-phase bass skills like walking lines, ghost-note groove, slap, pop, and funk now return authored bass-specific exercises from the module instead of falling back to generic exercise IDs
   - `js/practice/launchers.js`
   - `js/app.js`
   - `js/performance/session.js`

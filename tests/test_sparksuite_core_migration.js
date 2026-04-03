@@ -1995,6 +1995,19 @@ test("bass rhythm adapter selects richer chart variants as sessions progress", f
   assert.ok(funkPayload.songChart.tracks.guitar.notes.length >= 16);
 });
 
+test("SparkBassModule exposes authored advanced exercises for later-phase bass skills", function() {
+  var walking = SparkBassModule.getExercises("walking_bass");
+  var slap = SparkBassModule.getExercises("slap");
+  var ghost = SparkBassModule.getExercises("ghost_notes");
+
+  assert.strictEqual(walking[0].id, "bass_walk_lines_01");
+  assert.strictEqual(walking[0].focus, "walking_bass");
+  assert.strictEqual(slap[0].id, "bass_slap_pop_01");
+  assert.strictEqual(slap[0].focus, "slap");
+  assert.strictEqual(ghost[0].id, "bass_ghost_grid_02");
+  assert.strictEqual(ghost[0].focus, "ghost_notes");
+});
+
 test("completeSession routes performance completion rewards through core", function() {
   var core = createDefaultSparkCore();
   core.startSession({
