@@ -24,7 +24,7 @@ function planPage(){
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
     h += '<div style="font-weight:700;font-size:14px">'+escHTML(item.label)+'</div>';
-    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(item.type)+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
+    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
     h += '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(item.id)+'\')" style="background:var(--accent);color:#fff">Go</button>';
     h += '</div>';
@@ -51,8 +51,25 @@ function planItemColor(type){
   if(type==="rhythm_highway") return "#ec4899";
   if(type==="performance_song" || type==="performance_phrase" || type==="performance_technique") return "#22c55e";
   if(type==="rhythm") return "#ec4899";
+  if(type==="bassline" || type==="groove" || type==="arpeggio" || type==="improv" || type==="melody" || type==="strum_pattern") return "#14b8a6";
+  if(type==="technique") return "#f97316";
   if(type==="lead") return "#8b5cf6";
   return "#6b7280";
+}
+
+function formatPlanItemSubtitle(item){
+  item = item || {};
+  var meta = item.meta || {};
+  var parts = [];
+  if(meta.instrument) parts.push(prettyPlanToken(meta.instrument));
+  if(meta.exerciseFocus) parts.push(prettyPlanToken(meta.exerciseFocus));
+  else if(meta.skill) parts.push(prettyPlanToken(meta.skill));
+  if(item.type) parts.push(prettyPlanToken(item.type));
+  return parts.join(" • ") || String(item.type || "practice");
+}
+
+function prettyPlanToken(value){
+  return String(value || "").replace(/_/g, " ");
 }
 
 function launchPracticePlanItem(itemId){
