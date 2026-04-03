@@ -14,7 +14,7 @@
     "cap:sync": "npx cap sync",
     "cap:android": "npx cap open android",
     "cap:ios": "npx cap open ios",
-    "test": "node tests/test_core.js && node tests/test_spark_core.js && node tests/test_performance_core.js && node tests/test_launcher.js && node tests/test_practice_selectors.js && node tests/test_sparksuite_core_migration.js && node tests/test_sparksuite_rhythm_core.js && node tests/test_sparksuite_legacy_bridge_cleanup.js && node tests/test_piano_runtime_core_migration.js"
+    "test": "node tests/test_core.js && node tests/test_spark_core.js && node tests/test_performance_core.js && node tests/test_launcher.js && node tests/test_practice_selectors.js && node tests/test_sparksuite_core_migration.js && node tests/test_sparksuite_rhythm_core.js && node tests/test_sparksuite_legacy_bridge_cleanup.js && node tests/test_piano_runtime_core_migration.js && node tests/test_bass_runtime_core_migration.js"
   },
   "author": "SparkSuite",
   "license": "MIT",

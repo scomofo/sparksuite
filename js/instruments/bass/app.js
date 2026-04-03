@@ -127,6 +127,9 @@
       if (S.metronomeOn) stopMetronome();
       if (typeof window.completeGuidedSessionRequest === "function") {
         var guidedResult = window.completeGuidedSessionRequest();
+        if (typeof window.applyGuidedNavigationRequest === "function") {
+          window.applyGuidedNavigationRequest("guided_done");
+        }
         snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
         trigC();
         S.screen = SCR.GUIDED_DONE;
@@ -144,6 +147,9 @@
             guidedNewMovePhase: null,
             transport: { status: "completed", positionMs: 0 }
           });
+        }
+        if (typeof window.applyGuidedNavigationRequest === "function") {
+          window.applyGuidedNavigationRequest("guided_done");
         }
         snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
         trigC();

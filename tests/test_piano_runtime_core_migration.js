@@ -94,6 +94,9 @@ function resetState() {
   global.performanceStarts = [];
   global.performanceNavigationCalls = [];
   global.songRuntimeCalls = [];
+  global.dashboardNavigationCalls = [];
+  global.dashboardRequestCalls = [];
+  global.dashboardChallengeRewardCalls = [];
 
   global.saveState = function() { saveStateCalls++; };
   global.render = function() { renderCalls++; };
@@ -240,6 +243,14 @@ function resetState() {
     sparkCoreCalls.push({ fn: "openPerformanceSongSelection", payload: payload });
     return payload;
   };
+  global.sparkCore.openDashboardPracticePlan = function(payload) {
+    sparkCoreCalls.push({ fn: "openDashboardPracticePlan", payload: payload || {} });
+    return payload || {};
+  };
+  global.sparkCore.openCareerSongSelection = function(payload) {
+    sparkCoreCalls.push({ fn: "openCareerSongSelection", payload: payload });
+    return payload;
+  };
   global.sparkCore.startSelectedPerformanceSong = function(payload) {
     sparkCoreCalls.push({ fn: "startSelectedPerformanceSong", payload: payload });
     return payload;
@@ -254,6 +265,12 @@ function resetState() {
   };
   global.openPerformanceSongSelectionRequest = function(payload) {
     return global.sparkCore.openPerformanceSongSelection(payload);
+  };
+  global.openDashboardPracticePlanRequest = function(payload) {
+    return global.sparkCore.openDashboardPracticePlan(payload);
+  };
+  global.openCareerSongSelectionRequest = function(payload) {
+    return global.sparkCore.openCareerSongSelection(payload);
   };
   global.openGuidedSessionRequest = function(payload) {
     return global.sparkCore.openGuidedSession(payload);
@@ -278,6 +295,30 @@ function resetState() {
   global.applySongNavigationRequest = function(target, payload) {
     songRuntimeCalls.push({ fn: "applySongNavigationRequest", target: target, payload: payload || {} });
     return { activeScreen: "home", activeTab: "songs" };
+  };
+  global.applyDashboardNavigationRequest = function(target) {
+    dashboardNavigationCalls.push(target);
+    return { activeScreen: target };
+  };
+  global.applyDashboardRequest = function(payload) {
+    dashboardRequestCalls.push(payload);
+    return payload;
+  };
+  global.applyDashboardChallengeRewardRequest = function(challengeId) {
+    dashboardChallengeRewardCalls.push(challengeId);
+    return { challengeId: challengeId };
+  };
+  global.generateRecommendations = function() {
+    S.recommendations = [{ id: "rec_1", title: "Practice River Walk" }];
+    return S.recommendations;
+  };
+  global.generatePersonalInsights = function() {
+    S.personalInsights = { strongestSkills: [{ id: "timing" }] };
+    return S.personalInsights;
+  };
+  global.initializeChallengesForCurrentCycle = function() {
+    S.activeChallenges = [{ id: "daily_1", title: "Daily Challenge" }];
+    return S.activeChallenges;
   };
   global.getPerformanceRetryRequest = function(payload) {
     sparkCoreCalls.push({ fn: "getPerformanceRetryRequest", payload: payload });
@@ -336,6 +377,31 @@ test("open_perform_song delegates to sparkCore and syncs piano performance alias
   assert.strictEqual(S.performSongId, "river_walk");
   assert.strictEqual(S.performArrangementType, "block_chords");
   assert.strictEqual(S.performDifficulty, "normal");
+  assert.strictEqual(S.screen, "performSong");
+});
+
+test("openPlan delegates piano dashboard practice entry to the shared helper", function() {
+  pianoAct("openPlan");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].fn, "openDashboardPracticePlan");
+  assert.strictEqual(S.screen, "practicePlan");
+});
+
+test("openCareerSong delegates to shared performance selection helper and syncs piano aliases", function() {
+  global.getCareerItem = function(type, id) {
+    if (type !== "songs" || id !== "career_river") return null;
+    return { title: "Career River", artist: "Piano Suite", bpm: 76, chords: ["C"], progression: ["C", "G"] };
+  };
+
+  pianoAct("openCareerSong", "career_river");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].fn, "openCareerSongSelection");
+  assert.strictEqual(sparkCoreCalls[0].payload.songId, "career_river");
+  assert.strictEqual(sparkCoreCalls[0].payload.songData.title, "Career River");
+  assert.strictEqual(S.performSongData.title, "Career River");
+  assert.strictEqual(S.performSongId, "career_river");
   assert.strictEqual(S.screen, "performSong");
 });
 
@@ -404,6 +470,48 @@ test("song_back mirrors piano song exit into song-session navigation helper", fu
   assert.strictEqual(songRuntimeCalls.length, 1);
   assert.strictEqual(songRuntimeCalls[0].fn, "applySongNavigationRequest");
   assert.strictEqual(songRuntimeCalls[0].target, "songs_home");
+});
+
+test("dashboard entry actions mirror piano navigation into shared dashboard helpers", function() {
+  pianoAct("openRecommendations");
+  pianoAct("openInsights");
+  pianoAct("openChallengeHub");
+  pianoAct("openHomeDash");
+
+  assert.deepStrictEqual(dashboardNavigationCalls, ["recommendations", "insights", "challenges", "home_dash"]);
+  assert.strictEqual(S.screen, "homeDash");
+});
+
+test("refreshHome mirrors piano dashboard snapshots into shared helper", function() {
+  S.activeChallenges = [{ id: "daily_1", title: "Daily Challenge" }];
+
+  pianoAct("refreshHome");
+
+  assert.strictEqual(dashboardRequestCalls.length, 1);
+  assert.strictEqual(dashboardRequestCalls[0].recommendations[0].id, "rec_1");
+  assert.strictEqual(dashboardRequestCalls[0].insights.strongestSkills[0].id, "timing");
+  assert.strictEqual(dashboardRequestCalls[0].challenges[0].id, "daily_1");
+});
+
+test("claimChallengeReward mirrors piano challenge claims into shared dashboard helper", function() {
+  global.claimedChallengeIds = [];
+  global.claimChallengeReward = function(id) {
+    claimedChallengeIds.push(id);
+  };
+
+  pianoAct("claimChallengeReward", "daily_1");
+
+  assert.deepStrictEqual(claimedChallengeIds, ["daily_1"]);
+  assert.deepStrictEqual(dashboardChallengeRewardCalls, ["daily_1"]);
+});
+
+test("go_home returns piano dashboard-family screens through shared dashboard back helper", function() {
+  S.screen = "recommendations";
+
+  pianoAct("go_home");
+
+  assert.deepStrictEqual(dashboardNavigationCalls, ["dashboard_back"]);
+  assert.strictEqual(S.screen, "homeDash");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

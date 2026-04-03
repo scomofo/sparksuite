@@ -141,7 +141,9 @@ function getPerformanceSongView() {
     : null;
 
   return {
-    song: performanceSong && performanceSong.songData ? performanceSong.songData : S.performSongData,
+    song: performanceSong && performanceSong.songData
+      ? performanceSong.songData
+      : (runtimeState && runtimeState.performanceSongData ? runtimeState.performanceSongData : S.performSongData),
     songId: performanceSong && performanceSong.songId ? performanceSong.songId : S.performSongId,
     arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : S.performArrangementType,
     difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty,

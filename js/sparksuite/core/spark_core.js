@@ -34,9 +34,22 @@
       songSessionSource: null,
       songPlaying: false,
       songBeat: 0,
+      songsSubTab: "builtin",
+      songFilter: "",
+      songSort: "level",
+      songSortAsc: true,
+      communityTab: "browse",
+      communitySearch: "",
+      communitySort: "votes",
+      dashboardRecommendations: [],
+      dashboardInsights: null,
+      dashboardChallenges: [],
+      lastDashboardRecommendationId: null,
+      lastDashboardRefreshAt: null,
       guidedStep: null,
       guidedNewMovePhase: null,
       performanceChartId: null,
+      performanceSongData: null,
       performanceSongIndex: null,
       performanceSongTitle: null,
       performanceDifficultyId: null,
@@ -141,6 +154,7 @@
         guidedStep: this.currentPlan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION ? "spark" : null,
       guidedNewMovePhase: null,
       performanceChartId: this.runtimeState.performanceChartId,
+      performanceSongData: this.runtimeState.performanceSongData,
       performanceSongIndex: this.runtimeState.performanceSongIndex,
       performanceSongTitle: this.runtimeState.performanceSongTitle,
       performanceDifficultyId: this.runtimeState.performanceDifficultyId,
@@ -202,6 +216,7 @@
       guidedStep: plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION ? "spark" : null,
       guidedNewMovePhase: null,
       performanceChartId: null,
+      performanceSongData: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.songData || null) : null,
       performanceSongIndex: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.songIndex != null ? plan.context.performanceSong.songIndex : null) : null,
       performanceSongTitle: plan.context && plan.context.performanceSong && plan.context.performanceSong.songData
         ? (plan.context.performanceSong.songData.title || null)
@@ -248,6 +263,10 @@
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
       forceRebuild: !!options.forceRebuild
     });
+  };
+
+  SparkCore.prototype.openDashboardPracticePlan = function(options) {
+    return this.openDailyPracticePlan(options || {});
   };
 
   SparkCore.prototype.completeDailyPracticePlan = function(options) {
@@ -414,6 +433,144 @@
     return this.buildSongNavigationRequest("song_done", options);
   };
 
+  SparkCore.prototype.buildSongBrowserRequest = function(action, options) {
+    var runtimeState = this.getRuntimeState();
+    options = options || {};
+    return {
+      action: action || "songs_subtab",
+      songsSubTab: Object.prototype.hasOwnProperty.call(options, "songsSubTab")
+        ? options.songsSubTab
+        : runtimeState.songsSubTab,
+      songFilter: Object.prototype.hasOwnProperty.call(options, "songFilter")
+        ? options.songFilter
+        : runtimeState.songFilter,
+      songSort: Object.prototype.hasOwnProperty.call(options, "songSort")
+        ? options.songSort
+        : runtimeState.songSort,
+      songSortAsc: Object.prototype.hasOwnProperty.call(options, "songSortAsc")
+        ? !!options.songSortAsc
+        : runtimeState.songSortAsc,
+      communityTab: Object.prototype.hasOwnProperty.call(options, "communityTab")
+        ? options.communityTab
+        : runtimeState.communityTab,
+      communitySearch: Object.prototype.hasOwnProperty.call(options, "communitySearch")
+        ? options.communitySearch
+        : runtimeState.communitySearch,
+      communitySort: Object.prototype.hasOwnProperty.call(options, "communitySort")
+        ? options.communitySort
+        : runtimeState.communitySort
+    };
+  };
+
+  SparkCore.prototype.applySongBrowserRequest = function(action, options) {
+    var request = this.buildSongBrowserRequest(action, options);
+    return this.updateRuntimeState({
+      activeTab: "songs",
+      songsSubTab: request.songsSubTab,
+      songFilter: request.songFilter,
+      songSort: request.songSort,
+      songSortAsc: request.songSortAsc,
+      communityTab: request.communityTab,
+      communitySearch: request.communitySearch,
+      communitySort: request.communitySort
+    });
+  };
+
+  SparkCore.prototype.buildDashboardRequest = function(options) {
+    var runtimeState = this.getRuntimeState();
+    options = options || {};
+    return {
+      recommendations: Object.prototype.hasOwnProperty.call(options, "recommendations")
+        ? this.cloneValue(options.recommendations)
+        : this.cloneValue(runtimeState.dashboardRecommendations || []),
+      insights: Object.prototype.hasOwnProperty.call(options, "insights")
+        ? this.cloneValue(options.insights)
+        : this.cloneValue(runtimeState.dashboardInsights),
+      challenges: Object.prototype.hasOwnProperty.call(options, "challenges")
+        ? this.cloneValue(options.challenges)
+        : this.cloneValue(runtimeState.dashboardChallenges || []),
+      refreshedAt: Object.prototype.hasOwnProperty.call(options, "refreshedAt")
+        ? options.refreshedAt
+        : Date.now()
+    };
+  };
+
+  SparkCore.prototype.applyDashboardRequest = function(options) {
+    var request = this.buildDashboardRequest(options);
+    return this.updateRuntimeState({
+      dashboardRecommendations: request.recommendations || [],
+      dashboardInsights: request.insights || null,
+      dashboardChallenges: request.challenges || [],
+      lastDashboardRefreshAt: request.refreshedAt || null
+    });
+  };
+
+  SparkCore.prototype.buildDashboardNavigationRequest = function(target) {
+    var request = {
+      target: target || "home_dash",
+      activeScreen: "home_dash",
+      activeTab: this.runtimeState.activeTab || null
+    };
+
+    if (request.target === "dashboard_back") request.activeScreen = "home_dash";
+    else if (request.target === "recommendations") request.activeScreen = "recommendations";
+    else if (request.target === "insights") request.activeScreen = "insights";
+    else if (request.target === "challenges") request.activeScreen = "challenges";
+    else if (request.target === "career") request.activeScreen = "career";
+    else request.activeScreen = "home_dash";
+
+    return request;
+  };
+
+  SparkCore.prototype.applyDashboardNavigationRequest = function(target) {
+    var request = this.buildDashboardNavigationRequest(target);
+    return this.updateRuntimeState({
+      activeScreen: request.activeScreen,
+      activeTab: request.activeTab
+    });
+  };
+
+  SparkCore.prototype.getDashboardRecommendationById = function(id) {
+    var arr = this.runtimeState.dashboardRecommendations || [];
+    var i;
+    for (i = 0; i < arr.length; i++) {
+      if (arr[i] && arr[i].id === id) return this.cloneValue(arr[i]);
+    }
+    return null;
+  };
+
+  SparkCore.prototype.buildDashboardRecommendationLaunchRequest = function(id) {
+    return {
+      recommendationId: id || null,
+      recommendation: id ? this.getDashboardRecommendationById(id) : null
+    };
+  };
+
+  SparkCore.prototype.launchDashboardRecommendation = function(id) {
+    var request = this.buildDashboardRecommendationLaunchRequest(id);
+    if (request.recommendation) {
+      this.updateRuntimeState({
+        activeScreen: "recommendations",
+        lastDashboardRecommendationId: request.recommendationId
+      });
+    }
+    return request;
+  };
+
+  SparkCore.prototype.applyDashboardChallengeReward = function(challengeId) {
+    var arr = this.cloneValue(this.runtimeState.dashboardChallenges || []);
+    var i;
+    for (i = 0; i < arr.length; i++) {
+      if (arr[i] && arr[i].id === challengeId) {
+        arr[i].claimed = true;
+        break;
+      }
+    }
+    return this.updateRuntimeState({
+      dashboardChallenges: arr
+    });
+  };
+
   SparkCore.prototype.completeGuidedSession = function(options) {
     options = options || {};
     var result = this.completeSession({
@@ -445,6 +602,7 @@
       guidedStep: result.planCompleted ? null : this.runtimeState.guidedStep,
       guidedNewMovePhase: result.planCompleted ? null : this.runtimeState.guidedNewMovePhase,
       performanceChartId: result.planCompleted ? this.runtimeState.performanceChartId : this.runtimeState.performanceChartId,
+      performanceSongData: this.runtimeState.performanceSongData,
       performanceSongIndex: this.runtimeState.performanceSongIndex,
       performanceSongTitle: this.runtimeState.performanceSongTitle,
       performanceDifficultyId: this.runtimeState.performanceDifficultyId,
@@ -881,6 +1039,7 @@
     options = options || {};
     var request = {
       songId: Object.prototype.hasOwnProperty.call(options, "songId") ? options.songId : null,
+      songData: Object.prototype.hasOwnProperty.call(options, "songData") ? this.cloneValue(options.songData) : null,
       songIndex: Object.prototype.hasOwnProperty.call(options, "songIndex") ? options.songIndex : null,
       songTitle: Object.prototype.hasOwnProperty.call(options, "songTitle") ? options.songTitle : null,
       arrangementType: Object.prototype.hasOwnProperty.call(options, "arrangementType")
@@ -890,6 +1049,15 @@
         ? options.difficultyId
         : (this.runtimeState.performanceDifficultyId || "normal")
     };
+    if (!request.songId && request.songData && request.songData.title) {
+      request.songId = String(request.songData.title || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+    }
+    if (!request.songTitle && request.songData && request.songData.title) {
+      request.songTitle = request.songData.title;
+    }
     if (request.songId) {
       this.startSession({
         flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
@@ -901,12 +1069,17 @@
     }
     this.syncPerformanceRuntimeState("select_song", {
       chartId: request.songId,
+      songData: request.songData,
       songIndex: request.songIndex,
       songTitle: request.songTitle,
       arrangementType: request.arrangementType,
       difficulty: request.difficultyId
     });
     return request;
+  };
+
+  SparkCore.prototype.openCareerSongSelection = function(options) {
+    return this.openPerformanceSongSelection(options || {});
   };
 
   SparkCore.prototype.buildPerformanceStartRequest = function(options) {
@@ -1200,6 +1373,9 @@
       next.activeFlow = SparkSessionTypes.FLOW_PERFORMANCE_SONG;
       next.activeScreen = "perform";
       next.performanceChartId = payload.chartId || this.runtimeState.performanceChartId;
+      next.performanceSongData = Object.prototype.hasOwnProperty.call(payload, "songData")
+        ? this.cloneValue(payload.songData)
+        : this.runtimeState.performanceSongData;
       next.performanceSongIndex = Object.prototype.hasOwnProperty.call(payload, "songIndex")
         ? payload.songIndex
         : this.runtimeState.performanceSongIndex;
@@ -1219,6 +1395,7 @@
       next.activeFlow = SparkSessionTypes.FLOW_PERFORMANCE_SONG;
       next.activeScreen = "performance_song";
       if (Object.prototype.hasOwnProperty.call(payload, "chartId")) next.performanceChartId = payload.chartId;
+      if (Object.prototype.hasOwnProperty.call(payload, "songData")) next.performanceSongData = this.cloneValue(payload.songData);
       if (Object.prototype.hasOwnProperty.call(payload, "songIndex")) next.performanceSongIndex = payload.songIndex;
       if (Object.prototype.hasOwnProperty.call(payload, "songTitle")) next.performanceSongTitle = payload.songTitle;
       if (Object.prototype.hasOwnProperty.call(payload, "difficulty")) next.performanceDifficultyId = payload.difficulty;
@@ -1336,6 +1513,7 @@
     } else if (action === "clear_loop") {
       next.performanceLoop = null;
     } else if (action === "configure") {
+      if (Object.prototype.hasOwnProperty.call(payload, "songData")) next.performanceSongData = this.cloneValue(payload.songData);
       if (Object.prototype.hasOwnProperty.call(payload, "songIndex")) next.performanceSongIndex = payload.songIndex;
       if (Object.prototype.hasOwnProperty.call(payload, "songTitle")) next.performanceSongTitle = payload.songTitle;
       if (Object.prototype.hasOwnProperty.call(payload, "arrangementType")) next.performanceArrangementType = payload.arrangementType;

@@ -1,8 +1,13 @@
 function insightsDashboardPage(){
-  if(!S.personalInsights || !S.lastInsightRun){
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var pi = runtimeState && runtimeState.dashboardInsights ? runtimeState.dashboardInsights : S.personalInsights;
+  if(!pi || !S.lastInsightRun){
     generatePersonalInsights();
+    pi = S.personalInsights || {};
   }
-  var pi = S.personalInsights || {};
   var h = '';
   h += '<div class="card mb16">';
   h += '<div><b>Personal Progress Insights</b></div>';

@@ -1006,7 +1006,10 @@ function act(action, param) {
       return;
 
     case "go_home":
-      S.screen = SCR.HOME;
+      if ((S.screen === SCR.RECOMMENDATIONS || S.screen === SCR.INSIGHTS || S.screen === SCR.CHALLENGES || S.screen === SCR.CAREER || S.screen === SCR.HOME_DASH) && typeof applyDashboardNavigationRequest === "function") {
+        applyDashboardNavigationRequest("dashboard_back");
+      }
+      S.screen = (S.screen === SCR.RECOMMENDATIONS || S.screen === SCR.INSIGHTS || S.screen === SCR.CHALLENGES || S.screen === SCR.CAREER || S.screen === SCR.HOME_DASH) ? SCR.HOME_DASH : SCR.HOME;
       S.sessionStep = null;
       S.sessionPlan = null;
       break;
@@ -1396,6 +1399,9 @@ function act(action, param) {
 
     // ── Practice Plan ──
     case "openPlan":
+      if (typeof openDashboardPracticePlanRequest === "function") {
+        openDashboardPracticePlanRequest();
+      }
       S.screen = SCR.PLAN; break;
     case "completePlan":
       completePracticePlan(); break;
@@ -1869,6 +1875,9 @@ function act(action, param) {
 
     // ── Recommendation engine ──
     case "openRecommendations":
+      if (typeof applyDashboardNavigationRequest === "function") {
+        applyDashboardNavigationRequest("recommendations");
+      }
       S.screen = SCR.RECOMMENDATIONS;
       break;
     case "launchRecommendation":
@@ -1877,27 +1886,51 @@ function act(action, param) {
 
     // ── Career mode ──
     case "openCareer":
+      if (typeof applyDashboardNavigationRequest === "function") {
+        applyDashboardNavigationRequest("career");
+      }
       S.screen = SCR.CAREER;
       break;
     case "openCareerSong":
       if(typeof getCareerItem === "function"){
         var cSong = getCareerItem("songs", param);
-        if(cSong) S.performSongId = param;
+        if(cSong && typeof window.openCareerSongSelectionRequest === "function"){
+          window.openCareerSongSelectionRequest({
+            songId: param,
+            songData: cSong,
+            songTitle: cSong.title || null,
+            arrangementType: S.performArrangementType || "block_chords",
+            difficultyId: S.performDifficulty || "normal"
+          });
+        }
+        if(cSong){
+          S.performSongData = cSong;
+          S.performSongId = param;
+        }
       }
       S.screen = SCR.PERFORM_SONG;
       break;
 
     // ── Insights ──
     case "openInsights":
+      if (typeof applyDashboardNavigationRequest === "function") {
+        applyDashboardNavigationRequest("insights");
+      }
       S.screen = SCR.INSIGHTS;
       break;
 
     // ── Challenge hub ──
     case "openChallengeHub":
+      if (typeof applyDashboardNavigationRequest === "function") {
+        applyDashboardNavigationRequest("challenges");
+      }
       S.screen = SCR.CHALLENGES;
       break;
     case "claimChallengeReward":
       if(typeof claimChallengeReward === "function") claimChallengeReward(param);
+      if (typeof applyDashboardChallengeRewardRequest === "function") {
+        applyDashboardChallengeRewardRequest(param);
+      }
       break;
     case "initChallenges":
       if(typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();
@@ -1906,11 +1939,22 @@ function act(action, param) {
     // ── Home dashboard ──
     case "openHome":
     case "openHomeDash":
+      if (typeof applyDashboardNavigationRequest === "function") {
+        applyDashboardNavigationRequest("home_dash");
+      }
       S.screen = SCR.HOME_DASH;
       break;
     case "refreshHome":
       if(typeof generateRecommendations === "function") generateRecommendations();
       if(typeof generatePersonalInsights === "function") generatePersonalInsights();
+      if (typeof applyDashboardRequest === "function") {
+        applyDashboardRequest({
+          recommendations: S.recommendations || [],
+          insights: S.personalInsights || null,
+          challenges: S.activeChallenges || [],
+          refreshedAt: Date.now()
+        });
+      }
       break;
 
     // ── Practice plan ──
