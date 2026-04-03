@@ -68,8 +68,8 @@ function resetState() {
   ];
   global.PIANO_SONGS = [];
   global.PIANO_DATA.SONGS = [
-    { title: "Midnight Train", artist: "Piano Suite" },
-    { title: "River Walk", artist: "Piano Suite" }
+    { title: "Midnight Train", artist: "Piano Suite", bpm: 72, chords: ["C", "G"], progression: ["C", "G"], style: "block" },
+    { title: "River Walk", artist: "Piano Suite", bpm: 88, chords: ["F", "Am"], progression: ["F", "Am", "F"], style: "block" }
   ];
   global.PIANO_SONGS = global.PIANO_DATA.SONGS;
   global.PIANO_DATA.FINGER_EXERCISES = [];
@@ -93,6 +93,7 @@ function resetState() {
   global.sparkCoreCalls = [];
   global.performanceStarts = [];
   global.performanceNavigationCalls = [];
+  global.songRuntimeCalls = [];
 
   global.saveState = function() { saveStateCalls++; };
   global.render = function() { renderCalls++; };
@@ -266,6 +267,18 @@ function resetState() {
   global.applyPerformanceNavigationRequest = function(target) {
     return global.sparkCore.applyPerformanceNavigationRequest(target);
   };
+  global.openSongSessionRequest = function(payload) {
+    songRuntimeCalls.push({ fn: "openSongSessionRequest", payload: payload });
+    return payload;
+  };
+  global.syncSongRuntimeRequest = function(action, payload) {
+    songRuntimeCalls.push({ fn: "syncSongRuntimeRequest", action: action, payload: payload });
+    return payload;
+  };
+  global.applySongNavigationRequest = function(target, payload) {
+    songRuntimeCalls.push({ fn: "applySongNavigationRequest", target: target, payload: payload || {} });
+    return { activeScreen: "home", activeTab: "songs" };
+  };
   global.getPerformanceRetryRequest = function(payload) {
     sparkCoreCalls.push({ fn: "getPerformanceRetryRequest", payload: payload });
     return payload;
@@ -343,6 +356,54 @@ test("performStart delegates launch request construction to sparkCore helpers", 
   assert.strictEqual(performanceStarts[0].options.difficulty, "hard");
   assert.strictEqual(performanceStarts[0].options.speed, 0.8);
   assert.strictEqual(performanceStarts[0].options.mode, "mic");
+});
+
+test("select_song mirrors piano song detail selection into song-session core helpers", function() {
+  pianoAct("select_song", "1");
+
+  assert.strictEqual(S.songIdx, 1);
+  assert.strictEqual(S.songChordIdx, 0);
+  assert.strictEqual(S.songPlaying, false);
+  assert.strictEqual(S.bpm, global.PIANO_DATA.SONGS[1].bpm);
+  assert.strictEqual(songRuntimeCalls.length, 1);
+  assert.strictEqual(songRuntimeCalls[0].fn, "openSongSessionRequest");
+  assert.strictEqual(songRuntimeCalls[0].payload.songData.title, "River Walk");
+  assert.strictEqual(songRuntimeCalls[0].payload.source, "builtin");
+});
+
+test("play_song mirrors piano song playback state into song-session core helpers", function() {
+  S.songIdx = 1;
+  S.songChordIdx = 0;
+  S.bpm = 88;
+
+  pianoAct("play_song");
+
+  assert.strictEqual(S.songPlaying, true);
+  assert.strictEqual(songRuntimeCalls.length, 1);
+  assert.strictEqual(songRuntimeCalls[0].fn, "syncSongRuntimeRequest");
+  assert.strictEqual(songRuntimeCalls[0].action, "play");
+  assert.strictEqual(songRuntimeCalls[0].payload.songData.title, "River Walk");
+
+  pianoAct("play_song");
+
+  assert.strictEqual(S.songPlaying, false);
+  assert.strictEqual(songRuntimeCalls.length, 2);
+  assert.strictEqual(songRuntimeCalls[1].fn, "syncSongRuntimeRequest");
+  assert.strictEqual(songRuntimeCalls[1].action, "pause");
+});
+
+test("song_back mirrors piano song exit into song-session navigation helper", function() {
+  S.songIdx = 1;
+  S.songPlaying = true;
+  T.song = 42;
+
+  pianoAct("song_back");
+
+  assert.strictEqual(S.songIdx, null);
+  assert.strictEqual(S.songPlaying, false);
+  assert.strictEqual(songRuntimeCalls.length, 1);
+  assert.strictEqual(songRuntimeCalls[0].fn, "applySongNavigationRequest");
+  assert.strictEqual(songRuntimeCalls[0].target, "songs_home");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

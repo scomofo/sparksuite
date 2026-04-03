@@ -30,6 +30,10 @@
       activeSegmentId: null,
       activeScreen: null,
       activeTab: null,
+      songSessionData: null,
+      songSessionSource: null,
+      songPlaying: false,
+      songBeat: 0,
       guidedStep: null,
       guidedNewMovePhase: null,
       performanceChartId: null,
@@ -261,6 +265,153 @@
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       sessionNum: Object.prototype.hasOwnProperty.call(options, "sessionNum") ? options.sessionNum : undefined
     });
+  };
+
+  SparkCore.prototype.buildSongSessionRequest = function(options) {
+    var runtimeState = this.getRuntimeState();
+    options = options || {};
+    var songData = Object.prototype.hasOwnProperty.call(options, "songData")
+      ? this.cloneValue(options.songData)
+      : this.cloneValue(runtimeState.songSessionData);
+    return {
+      songData: songData,
+      source: Object.prototype.hasOwnProperty.call(options, "source")
+        ? options.source
+        : (runtimeState.songSessionSource || "builtin"),
+      songPlaying: Object.prototype.hasOwnProperty.call(options, "songPlaying")
+        ? !!options.songPlaying
+        : false,
+      songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat")
+        ? Math.max(0, Math.round(options.songBeat || 0))
+        : 0,
+      targetScreen: Object.prototype.hasOwnProperty.call(options, "targetScreen")
+        ? options.targetScreen
+        : "song"
+    };
+  };
+
+  SparkCore.prototype.openSongSession = function(options) {
+    var request = this.buildSongSessionRequest(options);
+    this.updateRuntimeState({
+      activeFlow: "song_session",
+      activeScreen: request.targetScreen,
+      activeTab: "songs",
+      songSessionData: request.songData,
+      songSessionSource: request.source,
+      songPlaying: !!request.songPlaying,
+      songBeat: request.songBeat,
+      transport: {
+        status: request.songPlaying ? "running" : "ready",
+        positionMs: 0
+      }
+    });
+    return request;
+  };
+
+  SparkCore.prototype.syncSongRuntimeState = function(action, options) {
+    var runtimeState = this.getRuntimeState();
+    var next = {
+      activeFlow: runtimeState.activeFlow || "song_session",
+      activeScreen: runtimeState.activeScreen || "song",
+      activeTab: runtimeState.activeTab || "songs",
+      songSessionData: this.cloneValue(runtimeState.songSessionData),
+      songSessionSource: runtimeState.songSessionSource || "builtin",
+      songPlaying: !!runtimeState.songPlaying,
+      songBeat: runtimeState.songBeat || 0,
+      transport: runtimeState.transport || { status: "idle", positionMs: 0 }
+    };
+    options = options || {};
+
+    if (Object.prototype.hasOwnProperty.call(options, "songData")) {
+      next.songSessionData = this.cloneValue(options.songData);
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "source")) {
+      next.songSessionSource = options.source || next.songSessionSource;
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "songPlaying")) {
+      next.songPlaying = !!options.songPlaying;
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "songBeat")) {
+      next.songBeat = Math.max(0, Math.round(options.songBeat || 0));
+    }
+    if (Object.prototype.hasOwnProperty.call(options, "targetScreen")) {
+      next.activeScreen = options.targetScreen || next.activeScreen;
+    }
+
+    if (action === "play") {
+      next.songPlaying = true;
+      next.songBeat = Object.prototype.hasOwnProperty.call(options, "songBeat") ? next.songBeat : 0;
+      next.transport = { status: "running", positionMs: 0 };
+    } else if (action === "pause") {
+      next.songPlaying = false;
+      next.transport = { status: "ready", positionMs: 0 };
+    } else if (action === "tick") {
+      next.transport = { status: next.songPlaying ? "running" : "ready", positionMs: 0 };
+    } else if (action === "complete") {
+      next.songPlaying = false;
+      next.activeScreen = "song_done";
+      next.transport = { status: "completed", positionMs: 0 };
+    } else if (action === "open_song") {
+      next.songPlaying = false;
+      next.songBeat = Object.prototype.hasOwnProperty.call(options, "songBeat") ? next.songBeat : 0;
+      next.activeScreen = options.targetScreen || "song";
+      next.transport = { status: "ready", positionMs: 0 };
+    }
+
+    return this.updateRuntimeState(next);
+  };
+
+  SparkCore.prototype.buildSongNavigationRequest = function(target, options) {
+    var runtimeState = this.getRuntimeState();
+    var request = {
+      target: target || "songs_home",
+      activeFlow: runtimeState.activeFlow || "song_session",
+      activeScreen: runtimeState.activeScreen || "song",
+      activeTab: "songs",
+      songPlaying: false,
+      songBeat: runtimeState.songBeat || 0,
+      transport: { status: "idle", positionMs: 0 }
+    };
+    options = options || {};
+
+    if (request.target === "songs_home") {
+      request.activeScreen = "home";
+    } else if (request.target === "song_detail") {
+      request.activeScreen = "song";
+      request.transport.status = runtimeState.songPlaying ? "running" : "ready";
+      request.songPlaying = !!runtimeState.songPlaying;
+    } else if (request.target === "song_done") {
+      request.activeScreen = "song_done";
+      request.transport.status = "completed";
+    }
+
+    if (Object.prototype.hasOwnProperty.call(options, "songBeat")) {
+      request.songBeat = Math.max(0, Math.round(options.songBeat || 0));
+    }
+
+    return request;
+  };
+
+  SparkCore.prototype.applySongNavigationRequest = function(target, options) {
+    var request = this.buildSongNavigationRequest(target, options);
+    return this.updateRuntimeState({
+      activeFlow: request.activeFlow,
+      activeScreen: request.activeScreen,
+      activeTab: request.activeTab,
+      songPlaying: request.songPlaying,
+      songBeat: request.songBeat,
+      transport: request.transport
+    });
+  };
+
+  SparkCore.prototype.completeSongSession = function(options) {
+    options = options || {};
+    this.syncSongRuntimeState("complete", {
+      songData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : this.runtimeState.songSessionData,
+      source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : this.runtimeState.songSessionSource,
+      songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat") ? options.songBeat : this.runtimeState.songBeat
+    });
+    return this.buildSongNavigationRequest("song_done", options);
   };
 
   SparkCore.prototype.completeGuidedSession = function(options) {

@@ -171,7 +171,12 @@ function guitarAct(a, v) {
   if (a === "openSong") {
     var sg = typeof v === "number" ? D.SONGS[v] : null;
     if (!sg) { for (var i = 0; i < D.SONGS.length; i++) if (D.SONGS[i].title === v) { sg = D.SONGS[i]; break; } }
-    if (sg && sg.level <= S.level) { S.selectedSong = sg; S.songPlaying = false; S.songBeat = 0; clearInterval(T.song); S.screen = SCR.SONG; render(); }
+    if (sg && sg.level <= S.level) {
+      if (typeof window.openSongSessionRequest === "function") {
+        window.openSongSessionRequest({ songData: sg, source: "builtin" });
+      }
+      S.selectedSong = sg; S.songPlaying = false; S.songBeat = 0; clearInterval(T.song); S.screen = SCR.SONG; render();
+    }
     return true;
   }
 

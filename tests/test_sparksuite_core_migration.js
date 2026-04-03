@@ -297,6 +297,47 @@ test("SparkCore can track guided runtime step and phase state explicitly", funct
   assert.strictEqual(state.transport.positionMs, 18000);
 });
 
+test("SparkCore can open, sync, navigate, and complete song sessions explicitly", function() {
+  var core = createDefaultSparkCore();
+  var request = core.openSongSession({
+    songData: {
+      title: "Fire Road",
+      artist: "Spark Suite",
+      bpm: 96,
+      chords: ["C", "G"],
+      progression: ["C", "G", "C", "G"],
+      pattern: ["D", "D", "U", "U"]
+    },
+    source: "builtin"
+  });
+
+  assert.strictEqual(request.songData.title, "Fire Road");
+  assert.strictEqual(core.getRuntimeState().activeFlow, "song_session");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "song");
+  assert.strictEqual(core.getRuntimeState().activeTab, "songs");
+  assert.strictEqual(core.getRuntimeState().songSessionSource, "builtin");
+  assert.strictEqual(core.getRuntimeState().songPlaying, false);
+  assert.strictEqual(core.getRuntimeState().transport.status, "ready");
+
+  core.syncSongRuntimeState("play", { songBeat: 0 });
+  assert.strictEqual(core.getRuntimeState().songPlaying, true);
+  assert.strictEqual(core.getRuntimeState().transport.status, "running");
+
+  core.syncSongRuntimeState("tick", { songBeat: 2 });
+  assert.strictEqual(core.getRuntimeState().songBeat, 2);
+
+  var doneRequest = core.completeSongSession();
+  assert.strictEqual(doneRequest.activeScreen, "song_done");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "song_done");
+  assert.strictEqual(core.getRuntimeState().songPlaying, false);
+  assert.strictEqual(core.getRuntimeState().transport.status, "completed");
+
+  var homeState = core.applySongNavigationRequest("songs_home");
+  assert.strictEqual(homeState.activeScreen, "home");
+  assert.strictEqual(homeState.activeTab, "songs");
+  assert.strictEqual(homeState.transport.status, "idle");
+});
+
 test("SparkCore can mirror performance runtime state explicitly", function() {
   var core = createDefaultSparkCore();
   core.startSession({
