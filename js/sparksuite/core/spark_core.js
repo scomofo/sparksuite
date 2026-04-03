@@ -516,6 +516,17 @@
     });
   };
 
+  SparkCore.prototype.returnFromLegacyDailyChallenge = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_daily_challenge",
+      activeScreen: "home",
+      activeTab: options.activeTab || "daily",
+      legacyDailyTimerActive: false,
+      transport: { status: "idle", positionMs: 0 }
+    });
+  };
+
   SparkCore.prototype.completeDailyPracticePlan = function(options) {
     options = options || {};
     return this.completeSession({

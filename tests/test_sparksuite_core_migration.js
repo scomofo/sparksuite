@@ -412,6 +412,12 @@ test("SparkCore can open, sync, and complete legacy daily challenge runtime expl
   assert.strictEqual(completeState.legacyDailyTimerActive, false);
   assert.strictEqual(completeState.legacyDailyComplete, true);
   assert.strictEqual(completeState.transport.status, "completed");
+
+  var homeState = core.returnFromLegacyDailyChallenge({ activeTab: "daily" });
+  assert.strictEqual(homeState.activeScreen, "home");
+  assert.strictEqual(homeState.activeTab, "daily");
+  assert.strictEqual(homeState.legacyDailyTimerActive, false);
+  assert.strictEqual(homeState.transport.status, "idle");
 });
 
 test("legacy session and drill pages can fall back to SparkCore practice runtime state", function() {
@@ -513,6 +519,12 @@ test("legacy session and drill pages can fall back to SparkCore practice runtime
   });
   var dailyHtml = dailyPage();
   assert.ok(dailyHtml.indexOf("43s") >= 0);
+
+  S.dailyTimer = undefined;
+  S.dailyComplete = undefined;
+  core.completeLegacyDailyChallenge({ challengeId: "marathon", durationSec: 180 });
+  dailyHtml = dailyPage();
+  assert.ok(dailyHtml.indexOf("dailyDoneHome") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
