@@ -1006,14 +1006,29 @@ function act(action, param) {
       return;
 
     case "go_home":
-      if ((S.screen === SCR.RECOMMENDATIONS || S.screen === SCR.INSIGHTS || S.screen === SCR.CHALLENGES || S.screen === SCR.CAREER || S.screen === SCR.HOME_DASH) && typeof applyDashboardNavigationRequest === "function") {
-        applyDashboardNavigationRequest("dashboard_back");
+      var _pianoDashboardScreen = S.screen === SCR.RECOMMENDATIONS || S.screen === SCR.INSIGHTS || S.screen === SCR.CHALLENGES || S.screen === SCR.CAREER || S.screen === SCR.HOME_DASH;
+      var _pianoUtilityScreen = S.screen === SCR.SETTINGS || S.screen === SCR.CURRICULUM || S.screen === SCR.CLOUD_SETTINGS || S.screen === SCR.MIDI_SETTINGS || S.screen === SCR.MIDI_IMPORT;
+      if (_pianoUtilityScreen && typeof returnFromUtilityFamilyRequest === "function") {
+        returnFromUtilityFamilyRequest({
+          currentScreen: S.screen === SCR.SETTINGS ? "settings"
+            : S.screen === SCR.CURRICULUM ? "curriculum"
+            : S.screen === SCR.CLOUD_SETTINGS ? "cloud_settings"
+            : S.screen === SCR.MIDI_SETTINGS ? "midi_settings"
+            : "midi_import"
+        });
+      } else if (typeof returnFromHomeFamilyRequest === "function") {
+        returnFromHomeFamilyRequest({
+          currentScreen: _pianoDashboardScreen ? "home_dash" : "home"
+        });
       }
-      S.screen = (S.screen === SCR.RECOMMENDATIONS || S.screen === SCR.INSIGHTS || S.screen === SCR.CHALLENGES || S.screen === SCR.CAREER || S.screen === SCR.HOME_DASH) ? SCR.HOME_DASH : SCR.HOME;
+      S.screen = _pianoDashboardScreen ? SCR.HOME_DASH : SCR.HOME;
       S.sessionStep = null;
       S.sessionPlan = null;
       break;
     case "openCalibration":
+      if (typeof openPerformanceCalibrationRequest === "function") {
+        openPerformanceCalibrationRequest();
+      }
       S.screen = SCR.CALIBRATION;
       break;
 
@@ -1374,8 +1389,14 @@ function act(action, param) {
       S.stemStatus = "idle"; S.stemProgress = 0; render();
       break;
     case "stemOpen":
+      if (typeof openStemPlayerRequest === "function") {
+        openStemPlayerRequest();
+      }
       S.screen = SCR.STEM_PLAYER; render(); break;
     case "stemBack":
+      if (typeof closeStemPlayerRequest === "function") {
+        closeStemPlayerRequest();
+      }
       cleanupStems(); S.screen = SCR.HOME; S.tab = TAB.SONGS; S._songTab = "stems"; render();
       break;
     case "stemToggle":
@@ -1399,7 +1420,9 @@ function act(action, param) {
 
     // ── Practice Plan ──
     case "openPlan":
-      if (typeof openDashboardPracticePlanRequest === "function") {
+      if (typeof openPracticePlanScreenRequest === "function") {
+        openPracticePlanScreenRequest();
+      } else if (typeof openDashboardPracticePlanRequest === "function") {
         openDashboardPracticePlanRequest();
       }
       S.screen = SCR.PLAN; break;
@@ -1801,10 +1824,16 @@ function act(action, param) {
       break;
 
     case "openMidiSettings":
+      if (typeof openUtilityScreenRequest === "function") {
+        openUtilityScreenRequest("midi_settings");
+      }
       S.screen = SCR.MIDI_SETTINGS;
       break;
 
     case "openMidiImport":
+      if (typeof openUtilityScreenRequest === "function") {
+        openUtilityScreenRequest("midi_import");
+      }
       S.screen = SCR.MIDI_IMPORT;
       break;
 
@@ -1853,10 +1882,16 @@ function act(action, param) {
     }
 
     case "openCloudSettings":
+      if (typeof openUtilityScreenRequest === "function") {
+        openUtilityScreenRequest("cloud_settings");
+      }
       S.screen = SCR.CLOUD_SETTINGS;
       break;
 
     case "openCurriculum":
+      if (typeof openUtilityScreenRequest === "function") {
+        openUtilityScreenRequest("curriculum");
+      }
       S.screen = SCR.CURRICULUM;
       break;
 
@@ -1875,8 +1910,8 @@ function act(action, param) {
 
     // ── Recommendation engine ──
     case "openRecommendations":
-      if (typeof applyDashboardNavigationRequest === "function") {
-        applyDashboardNavigationRequest("recommendations");
+      if (typeof openDashboardSectionRequest === "function") {
+        openDashboardSectionRequest("recommendations");
       }
       S.screen = SCR.RECOMMENDATIONS;
       break;
@@ -1886,8 +1921,8 @@ function act(action, param) {
 
     // ── Career mode ──
     case "openCareer":
-      if (typeof applyDashboardNavigationRequest === "function") {
-        applyDashboardNavigationRequest("career");
+      if (typeof openDashboardSectionRequest === "function") {
+        openDashboardSectionRequest("career");
       }
       S.screen = SCR.CAREER;
       break;
@@ -1913,16 +1948,16 @@ function act(action, param) {
 
     // ── Insights ──
     case "openInsights":
-      if (typeof applyDashboardNavigationRequest === "function") {
-        applyDashboardNavigationRequest("insights");
+      if (typeof openDashboardSectionRequest === "function") {
+        openDashboardSectionRequest("insights");
       }
       S.screen = SCR.INSIGHTS;
       break;
 
     // ── Challenge hub ──
     case "openChallengeHub":
-      if (typeof applyDashboardNavigationRequest === "function") {
-        applyDashboardNavigationRequest("challenges");
+      if (typeof openDashboardSectionRequest === "function") {
+        openDashboardSectionRequest("challenges");
       }
       S.screen = SCR.CHALLENGES;
       break;
@@ -1932,23 +1967,31 @@ function act(action, param) {
         applyDashboardChallengeRewardRequest(param);
       }
       break;
-    case "initChallenges":
-      if(typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();
-      break;
 
     // ── Home dashboard ──
     case "openHome":
     case "openHomeDash":
-      if (typeof applyDashboardNavigationRequest === "function") {
-        applyDashboardNavigationRequest("home_dash");
+      if (typeof openDashboardSectionRequest === "function") {
+        openDashboardSectionRequest("home_dash");
       }
       S.screen = SCR.HOME_DASH;
       break;
     case "refreshHome":
       if(typeof generateRecommendations === "function") generateRecommendations();
       if(typeof generatePersonalInsights === "function") generatePersonalInsights();
-      if (typeof applyDashboardRequest === "function") {
-        applyDashboardRequest({
+      if (typeof refreshDashboardSnapshotRequest === "function") {
+        refreshDashboardSnapshotRequest({
+          recommendations: S.recommendations || [],
+          insights: S.personalInsights || null,
+          challenges: S.activeChallenges || [],
+          refreshedAt: Date.now()
+        });
+      }
+      break;
+    case "initChallenges":
+      if(typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();
+      if (typeof initializeDashboardChallengesRequest === "function") {
+        initializeDashboardChallengesRequest({
           recommendations: S.recommendations || [],
           insights: S.personalInsights || null,
           challenges: S.activeChallenges || [],
@@ -1972,6 +2015,9 @@ function act(action, param) {
 
     // ── Settings ──
     case "openSettings":
+      if (typeof openUtilityScreenRequest === "function") {
+        openUtilityScreenRequest("settings");
+      }
       S.screen = SCR.SETTINGS;
       break;
 

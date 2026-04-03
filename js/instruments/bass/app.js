@@ -1,12 +1,29 @@
 // js/instruments/bass/app.js — Bass instrument action handler
 (function() {
 
+  function queueSessionTick() {
+    clearTimeout(T.session);
+    if (typeof tickS === "function") T.session = setTimeout(tickS, 1000);
+  }
+
+  function queueDrillTick() {
+    clearTimeout(T.drill);
+    if (typeof tickD === "function") T.drill = setTimeout(tickD, 1000);
+  }
+
   function bassAct(a, v) {
     var D = SparkInstruments.getActive().getData();
 
     if (a === "quickStart") {
       var session = SparkSession.buildSession({ mode: "quickStart", level: S.level });
       if (!session) return true;
+      if (typeof window.openLegacyPracticeSessionRequest === "function") {
+        window.openLegacyPracticeSessionRequest({
+          mode: "quickStart",
+          chordName: session.chordName,
+          durationSec: session.duration
+        });
+      }
       S.sessionMicros = [];
       S.lastChordName = session.chordName;
       snd("start");
@@ -16,8 +33,7 @@
       S.selectedVoicing = 0;
       S.screen = SCR.SESSION;
       render();
-      clearTimeout(T.session);
-      T.session = setTimeout(tickS, 1000);
+      queueSessionTick();
       saveState();
       return true;
     }
@@ -25,6 +41,13 @@
     if (a === "resumeSession") {
       var session = SparkSession.buildSession({ mode: "chord", chordName: S.lastChordName });
       if (!session) { act("quickStart"); return true; }
+      if (typeof window.openLegacyPracticeSessionRequest === "function") {
+        window.openLegacyPracticeSessionRequest({
+          mode: "chord",
+          chordName: session.chordName,
+          durationSec: session.duration
+        });
+      }
       S.sessionMicros = [];
       snd("start");
       S.currentChord = session.chord;
@@ -33,14 +56,20 @@
       S.selectedVoicing = 0;
       S.screen = SCR.SESSION;
       render();
-      clearTimeout(T.session);
-      T.session = setTimeout(tickS, 1000);
+      queueSessionTick();
       return true;
     }
 
     if (a === "startSession") {
       var session = SparkSession.buildSession({ mode: "chord", chordName: v });
       if (!session) return true;
+      if (typeof window.openLegacyPracticeSessionRequest === "function") {
+        window.openLegacyPracticeSessionRequest({
+          mode: "chord",
+          chordName: session.chordName,
+          durationSec: session.duration
+        });
+      }
       S.sessionMicros = [];
       S.lastChordName = session.chordName;
       snd("start");
@@ -50,8 +79,7 @@
       S.selectedVoicing = 0;
       S.screen = SCR.SESSION;
       render();
-      clearTimeout(T.session);
-      T.session = setTimeout(tickS, 1000);
+      queueSessionTick();
       saveState();
       return true;
     }
@@ -59,6 +87,12 @@
     if (a === "startDrill") {
       var session = SparkSession.buildSession({ mode: "drill", level: S.level });
       if (!session) return true;
+      if (typeof window.openLegacyPracticeDrillRequest === "function") {
+        window.openLegacyPracticeDrillRequest({
+          durationSec: session.duration,
+          chordNames: session.chords ? session.chords.map(function(ch) { return ch.name; }) : []
+        });
+      }
       S.drillChords = session.chords;
       S.drillIdx = 0;
       S.drillTimer = session.duration;
@@ -70,8 +104,32 @@
       snd("start");
       S.screen = SCR.DRILL;
       render();
-      T.drill = setTimeout(tickD, 1000);
+      queueDrillTick();
       return true;
+    }
+
+    if (a === "repeatLegacyPracticeSession") {
+      var repeatChordName = S.currentChord ? S.currentChord.name : (S.lastChordName || null);
+      var repeatDuration = typeof S.timer === "number" ? S.timer : 120;
+      if (typeof window.repeatLegacyPracticeSessionRequest === "function") {
+        window.repeatLegacyPracticeSessionRequest({
+          mode: repeatChordName ? "chord" : "quickStart",
+          chordName: repeatChordName,
+          durationSec: repeatDuration
+        });
+      }
+      if (repeatChordName) return bassAct("startSession", repeatChordName);
+      return bassAct("quickStart");
+    }
+
+    if (a === "repeatLegacyPracticeDrill") {
+      if (typeof window.repeatLegacyPracticeDrillRequest === "function") {
+        window.repeatLegacyPracticeDrillRequest({
+          durationSec: typeof S.drillTimer === "number" ? S.drillTimer : 60,
+          chordNames: S.drillChords ? S.drillChords.map(function(ch) { return ch.name; }) : []
+        });
+      }
+      return bassAct("startDrill");
     }
 
     if (a === "guidedStart") {

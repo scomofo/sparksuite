@@ -1,6 +1,10 @@
 function skillTreePage(){
   var tree = buildSkillTree();
   var h = '';
+  var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
+    ? window.sparkCore.getRuntimeState()
+    : null;
+  var focus = runtimeState && runtimeState.skillTreeFocus ? runtimeState.skillTreeFocus : (S.skillTreeFocus || "overview");
 
   h += '<div class="card mb16">';
   h += '<h2>Skill Tree</h2>';
@@ -8,10 +12,8 @@ function skillTreePage(){
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += buildSkillTreeBranchTabs();
+  h += buildSkillTreeBranchTabs(focus);
   h += '</div>';
-
-  var focus = S.skillTreeFocus || "overview";
 
   if(focus==="overview"){
     for(var i=0;i<tree.branches.length;i++){
@@ -32,7 +34,7 @@ function skillTreePage(){
   return h;
 }
 
-function buildSkillTreeBranchTabs(){
+function buildSkillTreeBranchTabs(focus){
   var tabs = [
     ["overview","Overview"],
     ["chords","Chords"],
@@ -45,7 +47,7 @@ function buildSkillTreeBranchTabs(){
   var h = '';
   for(var i=0;i<tabs.length;i++){
     var id = tabs[i][0], label = tabs[i][1];
-    h += '<button class="btn'+(S.skillTreeFocus===id?' btn-primary':'')+'" onclick="act(\'skillTreeFocus\',\''+id+'\')">'+label+'</button> ';
+    h += '<button class="btn'+(focus===id?' btn-primary':'')+'" onclick="act(\'skillTreeFocus\',\''+id+'\')">'+label+'</button> ';
   }
   return h;
 }

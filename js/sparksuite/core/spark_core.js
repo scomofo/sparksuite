@@ -41,6 +41,10 @@
       communityTab: "browse",
       communitySearch: "",
       communitySort: "votes",
+      legacyPracticeMode: null,
+      legacyPracticeChordName: null,
+      legacyPracticeDurationSec: null,
+      legacyDrillChordNames: null,
       dashboardRecommendations: [],
       dashboardInsights: null,
       dashboardChallenges: [],
@@ -75,6 +79,7 @@
       performanceEditorBpm: null,
       performanceEditorEventCount: 0,
       performanceEditorPhraseCount: 0,
+      skillTreeFocus: "overview",
       performanceStatsFocus: null,
       performanceCalibrationSource: null,
       performanceCalibrationMode: false,
@@ -267,6 +272,89 @@
 
   SparkCore.prototype.openDashboardPracticePlan = function(options) {
     return this.openDailyPracticePlan(options || {});
+  };
+
+  SparkCore.prototype.openPracticePlanScreen = function(options) {
+    var plan = this.openDashboardPracticePlan(options || {});
+    this.updateRuntimeState({
+      activeScreen: "practice_plan",
+      activeTab: "practice"
+    });
+    return plan;
+  };
+
+  SparkCore.prototype.openLegacyPracticeSession = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_practice_session",
+      activeScreen: "session",
+      activeTab: "practice",
+      legacyPracticeMode: options.mode || "chord",
+      legacyPracticeChordName: Object.prototype.hasOwnProperty.call(options, "chordName") ? options.chordName : null,
+      legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null,
+      legacyDrillChordNames: null,
+      transport: { status: "running", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.openLegacyPracticeDrill = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_practice_drill",
+      activeScreen: "drill",
+      activeTab: "practice",
+      legacyPracticeMode: "drill",
+      legacyPracticeChordName: null,
+      legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null,
+      legacyDrillChordNames: this.cloneValue(options.chordNames || null),
+      transport: { status: "running", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.completeLegacyPracticeSession = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_practice_session",
+      activeScreen: "complete",
+      activeTab: "practice",
+      legacyPracticeMode: options.mode || this.runtimeState.legacyPracticeMode || "chord",
+      legacyPracticeChordName: Object.prototype.hasOwnProperty.call(options, "chordName") ? options.chordName : this.runtimeState.legacyPracticeChordName,
+      legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : this.runtimeState.legacyPracticeDurationSec,
+      transport: { status: "completed", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.completeLegacyPracticeDrill = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_practice_drill",
+      activeScreen: "drill_done",
+      activeTab: "practice",
+      legacyPracticeMode: "drill",
+      legacyPracticeChordName: null,
+      legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : this.runtimeState.legacyPracticeDurationSec,
+      legacyDrillChordNames: Object.prototype.hasOwnProperty.call(options, "chordNames")
+        ? this.cloneValue(options.chordNames || null)
+        : this.cloneValue(this.runtimeState.legacyDrillChordNames),
+      transport: { status: "completed", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.returnFromLegacyPracticeFamily = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeScreen: "home",
+      activeTab: options.activeTab || "practice",
+      transport: { status: "idle", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.repeatLegacyPracticeSession = function(options) {
+    return this.openLegacyPracticeSession(options || {});
+  };
+
+  SparkCore.prototype.repeatLegacyPracticeDrill = function(options) {
+    return this.openLegacyPracticeDrill(options || {});
   };
 
   SparkCore.prototype.completeDailyPracticePlan = function(options) {
@@ -505,6 +593,29 @@
     });
   };
 
+  SparkCore.prototype.refreshDashboardSnapshot = function(options) {
+    return this.applyDashboardRequest(options || {});
+  };
+
+  SparkCore.prototype.initializeDashboardChallenges = function(options) {
+    var runtimeState = this.getRuntimeState();
+    options = options || {};
+    return this.applyDashboardRequest({
+      recommendations: Object.prototype.hasOwnProperty.call(options, "recommendations")
+        ? options.recommendations
+        : (runtimeState.dashboardRecommendations || []),
+      insights: Object.prototype.hasOwnProperty.call(options, "insights")
+        ? options.insights
+        : (runtimeState.dashboardInsights || null),
+      challenges: Object.prototype.hasOwnProperty.call(options, "challenges")
+        ? options.challenges
+        : (runtimeState.dashboardChallenges || []),
+      refreshedAt: Object.prototype.hasOwnProperty.call(options, "refreshedAt")
+        ? options.refreshedAt
+        : Date.now()
+    });
+  };
+
   SparkCore.prototype.buildDashboardNavigationRequest = function(target) {
     var request = {
       target: target || "home_dash",
@@ -528,6 +639,92 @@
       activeScreen: request.activeScreen,
       activeTab: request.activeTab
     });
+  };
+
+  SparkCore.prototype.openDashboardSection = function(target) {
+    return this.applyDashboardNavigationRequest(target || "home_dash");
+  };
+
+  SparkCore.prototype.returnFromHomeFamily = function(options) {
+    options = options || {};
+    var currentScreen = options.currentScreen || this.runtimeState.activeScreen || "home";
+    var isDashboardFamily = currentScreen === "recommendations"
+      || currentScreen === "insights"
+      || currentScreen === "challenges"
+      || currentScreen === "career"
+      || currentScreen === "home_dash";
+    if (isDashboardFamily) {
+      return this.applyDashboardNavigationRequest("dashboard_back");
+    }
+    return this.updateRuntimeState({
+      activeScreen: "home",
+      activeTab: this.runtimeState.activeTab || null,
+      transport: { status: "idle", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.openUtilityScreen = function(target) {
+    var activeScreen = "home";
+    if (target === "settings") activeScreen = "settings";
+    else if (target === "curriculum") activeScreen = "curriculum";
+    else if (target === "cloud_settings") activeScreen = "cloud_settings";
+    else if (target === "midi_settings") activeScreen = "midi_settings";
+    else if (target === "midi_import") activeScreen = "midi_import";
+    return this.updateRuntimeState({
+      activeScreen: activeScreen,
+      activeTab: this.runtimeState.activeTab || null
+    });
+  };
+
+  SparkCore.prototype.openSkillTree = function() {
+    return this.updateRuntimeState({
+      activeScreen: "skill_tree",
+      activeTab: this.runtimeState.activeTab || null,
+      skillTreeFocus: this.runtimeState.skillTreeFocus || "overview"
+    });
+  };
+
+  SparkCore.prototype.setSkillTreeFocus = function(focus) {
+    return this.updateRuntimeState({
+      activeScreen: this.runtimeState.activeScreen || "skill_tree",
+      activeTab: this.runtimeState.activeTab || null,
+      skillTreeFocus: focus || "overview"
+    });
+  };
+
+  SparkCore.prototype.openStemPlayer = function() {
+    return this.updateRuntimeState({
+      activeScreen: "stems",
+      activeTab: "songs",
+      songsSubTab: "stems"
+    });
+  };
+
+  SparkCore.prototype.closeStemPlayer = function() {
+    return this.updateRuntimeState({
+      activeScreen: "home",
+      activeTab: "songs",
+      songsSubTab: "stems",
+      transport: { status: "idle", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.returnFromUtilityFamily = function(options) {
+    options = options || {};
+    var currentScreen = options.currentScreen || this.runtimeState.activeScreen || "home";
+    var isUtilityFamily = currentScreen === "settings"
+      || currentScreen === "curriculum"
+      || currentScreen === "cloud_settings"
+      || currentScreen === "midi_settings"
+      || currentScreen === "midi_import";
+    if (isUtilityFamily) {
+      return this.updateRuntimeState({
+        activeScreen: "home",
+        activeTab: this.runtimeState.activeTab || null,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    return this.getRuntimeState();
   };
 
   SparkCore.prototype.getDashboardRecommendationById = function(id) {
@@ -1080,6 +1277,18 @@
 
   SparkCore.prototype.openCareerSongSelection = function(options) {
     return this.openPerformanceSongSelection(options || {});
+  };
+
+  SparkCore.prototype.openPerformanceDailyChallenge = function(options) {
+    options = options || {};
+    if (options.songData || options.songId) {
+      return this.openPerformanceSongSelection(options);
+    }
+    return this.updateRuntimeState({
+      activeScreen: "home",
+      activeTab: "songs",
+      transport: { status: "idle", positionMs: 0 }
+    });
   };
 
   SparkCore.prototype.buildPerformanceStartRequest = function(options) {

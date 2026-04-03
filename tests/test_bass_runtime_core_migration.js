@@ -37,6 +37,7 @@ function resetState() {
   global.playedSounds = [];
   global.sparkCoreCalls = [];
   global.guidedNavigationCalls = [];
+  global.legacyPracticeCalls = [];
   global.confettiCalls = 0;
 
   global.render = function() { renderCalls++; };
@@ -46,6 +47,8 @@ function resetState() {
   global.stopMetronome = function() {};
 
   global.SCR = {
+    SESSION: "session",
+    DRILL: "drill",
     GUIDED: "guided",
     GUIDED_DONE: "guided_done"
   };
@@ -86,6 +89,26 @@ function resetState() {
     return { audioCue: "levelup" };
   };
 
+  global.openLegacyPracticeSessionRequest = function(payload) {
+    legacyPracticeCalls.push({ fn: "openLegacyPracticeSession", payload: payload });
+    return payload;
+  };
+
+  global.openLegacyPracticeDrillRequest = function(payload) {
+    legacyPracticeCalls.push({ fn: "openLegacyPracticeDrill", payload: payload });
+    return payload;
+  };
+
+  global.repeatLegacyPracticeSessionRequest = function(payload) {
+    legacyPracticeCalls.push({ fn: "repeatLegacyPracticeSession", payload: payload });
+    return payload;
+  };
+
+  global.repeatLegacyPracticeDrillRequest = function(payload) {
+    legacyPracticeCalls.push({ fn: "repeatLegacyPracticeDrill", payload: payload });
+    return payload;
+  };
+
   global.applyGuidedNavigationRequest = function(target) {
     guidedNavigationCalls.push(target);
     return { activeScreen: "guided_done" };
@@ -93,6 +116,18 @@ function resetState() {
 
   global.SparkProgressBridge = null;
   global.SparkSession = {
+    buildSession: function(options) {
+      if (options.mode === "quickStart") {
+        return { chordName: "E", chord: { name: "E" }, duration: 120 };
+      }
+      if (options.mode === "chord") {
+        return { chordName: options.chordName || "A", chord: { name: options.chordName || "A" }, duration: 120 };
+      }
+      if (options.mode === "drill") {
+        return { chords: [{ name: "E" }, { name: "A" }], duration: 60 };
+      }
+      return null;
+    },
     processResults: function() {
       return { xpEarned: 30, jackpot: false, leveledUp: false };
     }
@@ -125,6 +160,34 @@ test("guidedComplete delegates to shared completion and guided navigation helper
   assert.strictEqual(S.screen, "guided_done");
   assert.ok(playedSounds.indexOf("levelup") >= 0);
   assert.strictEqual(confettiCalls, 1);
+});
+
+test("quickStart and drill entry delegate to shared legacy practice helpers", function() {
+  bassAct("quickStart");
+  bassAct("startDrill");
+
+  assert.deepStrictEqual(legacyPracticeCalls, [
+    { fn: "openLegacyPracticeSession", payload: { mode: "quickStart", chordName: "E", durationSec: 120 } },
+    { fn: "openLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } }
+  ]);
+  assert.strictEqual(S.screen, "drill");
+});
+
+test("legacy practice replay actions delegate to shared retry helpers", function() {
+  S.currentChord = { name: "A" };
+  S.timer = 120;
+  S.drillChords = [{ name: "E" }, { name: "A" }];
+  S.drillTimer = 60;
+
+  bassAct("repeatLegacyPracticeSession");
+  bassAct("repeatLegacyPracticeDrill");
+
+  assert.deepStrictEqual(legacyPracticeCalls.slice(0, 4), [
+    { fn: "repeatLegacyPracticeSession", payload: { mode: "chord", chordName: "A", durationSec: 120 } },
+    { fn: "openLegacyPracticeSession", payload: { mode: "chord", chordName: "A", durationSec: 120 } },
+    { fn: "repeatLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } },
+    { fn: "openLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } }
+  ]);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

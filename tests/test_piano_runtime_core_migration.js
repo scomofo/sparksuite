@@ -93,9 +93,17 @@ function resetState() {
   global.sparkCoreCalls = [];
   global.performanceStarts = [];
   global.performanceNavigationCalls = [];
+  global.performanceCalibrationOpenCalls = [];
   global.songRuntimeCalls = [];
   global.dashboardNavigationCalls = [];
+  global.dashboardSectionCalls = [];
+  global.homeReturnCalls = [];
+  global.utilityScreenCalls = [];
+  global.utilityReturnCalls = [];
+  global.stemPlayerCalls = [];
   global.dashboardRequestCalls = [];
+  global.dashboardRefreshCalls = [];
+  global.dashboardInitCalls = [];
   global.dashboardChallengeRewardCalls = [];
 
   global.saveState = function() { saveStateCalls++; };
@@ -247,6 +255,10 @@ function resetState() {
     sparkCoreCalls.push({ fn: "openDashboardPracticePlan", payload: payload || {} });
     return payload || {};
   };
+  global.sparkCore.openPracticePlanScreen = function(payload) {
+    sparkCoreCalls.push({ fn: "openPracticePlanScreen", payload: payload || {} });
+    return payload || {};
+  };
   global.sparkCore.openCareerSongSelection = function(payload) {
     sparkCoreCalls.push({ fn: "openCareerSongSelection", payload: payload });
     return payload;
@@ -269,6 +281,9 @@ function resetState() {
   global.openDashboardPracticePlanRequest = function(payload) {
     return global.sparkCore.openDashboardPracticePlan(payload);
   };
+  global.openPracticePlanScreenRequest = function(payload) {
+    return global.sparkCore.openPracticePlanScreen(payload);
+  };
   global.openCareerSongSelectionRequest = function(payload) {
     return global.sparkCore.openCareerSongSelection(payload);
   };
@@ -283,6 +298,10 @@ function resetState() {
   };
   global.applyPerformanceNavigationRequest = function(target) {
     return global.sparkCore.applyPerformanceNavigationRequest(target);
+  };
+  global.openPerformanceCalibrationRequest = function(payload) {
+    performanceCalibrationOpenCalls.push(payload || {});
+    return payload || {};
   };
   global.openSongSessionRequest = function(payload) {
     songRuntimeCalls.push({ fn: "openSongSessionRequest", payload: payload });
@@ -300,8 +319,40 @@ function resetState() {
     dashboardNavigationCalls.push(target);
     return { activeScreen: target };
   };
+  global.openDashboardSectionRequest = function(target) {
+    dashboardSectionCalls.push(target);
+    return { activeScreen: target };
+  };
+  global.returnFromHomeFamilyRequest = function(payload) {
+    homeReturnCalls.push(payload);
+    return { activeScreen: payload && payload.currentScreen === "home_dash" ? "home_dash" : "home" };
+  };
+  global.openUtilityScreenRequest = function(target) {
+    utilityScreenCalls.push(target);
+    return { activeScreen: target };
+  };
+  global.returnFromUtilityFamilyRequest = function(payload) {
+    utilityReturnCalls.push(payload);
+    return { activeScreen: "home" };
+  };
+  global.openStemPlayerRequest = function() {
+    stemPlayerCalls.push({ fn: "openStemPlayerRequest" });
+    return { activeScreen: "stems" };
+  };
+  global.closeStemPlayerRequest = function() {
+    stemPlayerCalls.push({ fn: "closeStemPlayerRequest" });
+    return { activeScreen: "home" };
+  };
   global.applyDashboardRequest = function(payload) {
     dashboardRequestCalls.push(payload);
+    return payload;
+  };
+  global.refreshDashboardSnapshotRequest = function(payload) {
+    dashboardRefreshCalls.push(payload);
+    return payload;
+  };
+  global.initializeDashboardChallengesRequest = function(payload) {
+    dashboardInitCalls.push(payload);
     return payload;
   };
   global.applyDashboardChallengeRewardRequest = function(challengeId) {
@@ -384,7 +435,7 @@ test("openPlan delegates piano dashboard practice entry to the shared helper", f
   pianoAct("openPlan");
 
   assert.strictEqual(sparkCoreCalls.length, 1);
-  assert.strictEqual(sparkCoreCalls[0].fn, "openDashboardPracticePlan");
+  assert.strictEqual(sparkCoreCalls[0].fn, "openPracticePlanScreen");
   assert.strictEqual(S.screen, "practicePlan");
 });
 
@@ -478,7 +529,7 @@ test("dashboard entry actions mirror piano navigation into shared dashboard help
   pianoAct("openChallengeHub");
   pianoAct("openHomeDash");
 
-  assert.deepStrictEqual(dashboardNavigationCalls, ["recommendations", "insights", "challenges", "home_dash"]);
+  assert.deepStrictEqual(dashboardSectionCalls, ["recommendations", "insights", "challenges", "home_dash"]);
   assert.strictEqual(S.screen, "homeDash");
 });
 
@@ -487,10 +538,19 @@ test("refreshHome mirrors piano dashboard snapshots into shared helper", functio
 
   pianoAct("refreshHome");
 
-  assert.strictEqual(dashboardRequestCalls.length, 1);
-  assert.strictEqual(dashboardRequestCalls[0].recommendations[0].id, "rec_1");
-  assert.strictEqual(dashboardRequestCalls[0].insights.strongestSkills[0].id, "timing");
-  assert.strictEqual(dashboardRequestCalls[0].challenges[0].id, "daily_1");
+  assert.strictEqual(dashboardRefreshCalls.length, 1);
+  assert.strictEqual(dashboardRefreshCalls[0].recommendations[0].id, "rec_1");
+  assert.strictEqual(dashboardRefreshCalls[0].insights.strongestSkills[0].id, "timing");
+  assert.strictEqual(dashboardRefreshCalls[0].challenges[0].id, "daily_1");
+});
+
+test("initChallenges mirrors piano dashboard snapshots into shared init helper", function() {
+  S.activeChallenges = [{ id: "daily_1", title: "Daily Challenge" }];
+
+  pianoAct("initChallenges");
+
+  assert.strictEqual(dashboardInitCalls.length, 1);
+  assert.strictEqual(dashboardInitCalls[0].challenges[0].id, "daily_1");
 });
 
 test("claimChallengeReward mirrors piano challenge claims into shared dashboard helper", function() {
@@ -510,8 +570,46 @@ test("go_home returns piano dashboard-family screens through shared dashboard ba
 
   pianoAct("go_home");
 
-  assert.deepStrictEqual(dashboardNavigationCalls, ["dashboard_back"]);
+  assert.deepStrictEqual(homeReturnCalls, [{ currentScreen: "home_dash" }]);
   assert.strictEqual(S.screen, "homeDash");
+});
+
+test("go_home returns piano utility-family screens through shared utility helper", function() {
+  S.screen = "midi_settings";
+
+  pianoAct("go_home");
+
+  assert.deepStrictEqual(utilityReturnCalls, [{ currentScreen: "midi_settings" }]);
+  assert.strictEqual(S.screen, "home");
+});
+
+test("openCalibration mirrors piano calibration entry into shared performance helper", function() {
+  pianoAct("openCalibration");
+
+  assert.strictEqual(performanceCalibrationOpenCalls.length, 1);
+  assert.strictEqual(S.screen, "perfCalibrate");
+});
+
+test("utility screen entry actions mirror piano navigation into shared utility helper", function() {
+  pianoAct("openSettings");
+  pianoAct("openCurriculum");
+  pianoAct("openCloudSettings");
+  pianoAct("openMidiSettings");
+  pianoAct("openMidiImport");
+
+  assert.deepStrictEqual(utilityScreenCalls, ["settings", "curriculum", "cloud_settings", "midi_settings", "midi_import"]);
+  assert.strictEqual(S.screen, "midi_import");
+});
+
+test("stem player actions mirror piano navigation into shared stem helpers", function() {
+  pianoAct("stemOpen");
+  pianoAct("stemBack");
+
+  assert.deepStrictEqual(stemPlayerCalls, [
+    { fn: "openStemPlayerRequest" },
+    { fn: "closeStemPlayerRequest" }
+  ]);
+  assert.strictEqual(S.screen, "home");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);
