@@ -31,6 +31,28 @@
         earlyLateText: true,
         mistakeReason: true
       }
+    },
+    spark_balanced: {
+      name: "spark_balanced",
+      hitWindowMs: { perfect: 60, good: 115, miss: 185 },
+      extraFretTolerance: true,
+      comboStep: 10,
+      maxMultiplier: 4,
+      feedback: {
+        earlyLateText: true,
+        mistakeReason: true
+      }
+    },
+    spark_challenge: {
+      name: "spark_challenge",
+      hitWindowMs: { perfect: 48, good: 92, miss: 145 },
+      extraFretTolerance: false,
+      comboStep: 12,
+      maxMultiplier: 4,
+      feedback: {
+        earlyLateText: true,
+        mistakeReason: true
+      }
     }
   };
 

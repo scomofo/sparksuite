@@ -2316,7 +2316,15 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="planStartRhythmHighway"){
-    if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v))return;
+    if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v,S.rhythmHighwayPreset))return;
+    render();return;
+  }
+  if(a==="rhythmHighwayPreset"){
+    S.rhythmHighwayPreset=v||"spark_learning";
+    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function"){
+      startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset);
+      return;
+    }
     render();return;
   }
   if(a==="skillTreeFocus"){
@@ -3031,7 +3039,7 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="restartRhythmHighway"){
-    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(S.activeCoreSegmentId);
+    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset);
     return;
   }
   // === MIDI Device/Profile Actions ===
