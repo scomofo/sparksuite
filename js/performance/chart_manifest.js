@@ -78,6 +78,17 @@
         accentColor: "#0f766e",
         badge: "Ukulele",
         instrument: "ukulele"
+      },
+      {
+        id: "bass_midnight_lock_package",
+        title: "Midnight Lock",
+        artist: "SparkSuite Bass",
+        bpm: 75,
+        description: "Bass package-backed performance chart with a steady 4-string pocket groove.",
+        sourceType: "imported_package",
+        accentColor: "#2563eb",
+        badge: "Bass",
+        instrument: "bass"
       }
     ]
   };
