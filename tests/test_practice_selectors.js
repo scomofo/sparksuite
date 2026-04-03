@@ -394,5 +394,74 @@ test("selectInstrumentModuleCandidate carries authored bass exercise details int
   assert.ok(candidate.label.indexOf("Walk Lines 01") >= 0);
 });
 
+test("selectInstrumentModuleCandidate lets bass choose a targeted authored exercise from skill progress", function() {
+  S.completedLessons = ["bass_level_1", "bass_level_2", "bass_level_3"];
+  S.bassSkillProgress = {
+    walking_bass: {
+      groove: 0.82,
+      timing: 0.44,
+      accuracy: 0.69,
+      movement: 0.71
+    }
+  };
+  SparkInstruments.getActive = function() {
+    return {
+      name: "Bass",
+      instrument: "bass",
+      getCurriculumMap: function() {
+        return [
+          { id: "bass_level_1", title: "First Groove", skill: "posture" },
+          { id: "bass_level_2", title: "Finding Notes", skill: "root_notes" },
+          { id: "bass_level_3", title: "Movement", skill: "root_fifth" },
+          { id: "bass_level_4", title: "Walking Lines", skill: "walking_bass" }
+        ];
+      },
+      getExercises: function(skill) {
+        if (skill === "walking_bass") {
+          return [
+            { id: "bass_walk_lines_01", name: "Walk Lines 01", focus: "walking_bass", type: "bassline" },
+            { id: "bass_turnaround_01", name: "Turnaround Steps", focus: "passing_notes", type: "bassline" }
+          ];
+        }
+        return [{ id: "B-GROOVE", type: "groove" }];
+      },
+      pickPracticeExercise: function(lesson, exercises, state) {
+        if (lesson.skill === "walking_bass" && state.bassSkillProgress.walking_bass.timing < 0.5) {
+          return exercises[1];
+        }
+        return exercises[0];
+      },
+      getPracticeRecommendation: function(lesson, exercise, state) {
+        return {
+          reason: "Bass timing is at 44%, so the turnaround needs steadier placement.",
+          focusTag: lesson.skill === "walking_bass" ? "walking" : "bass",
+          priorityBoost: 6,
+          progressSummary: state.bassSkillProgress && state.bassSkillProgress.walking_bass
+            ? { skill: "walking_bass", weakestMetric: "timing", timing: state.bassSkillProgress.walking_bass.timing }
+            : null,
+          labelSuffix: "Walking"
+        };
+      }
+    };
+  };
+  global.getNextLessonFromCurriculum = function(rootLessonId, completedLessonIds) {
+    completedLessonIds = completedLessonIds || [];
+    var order = ["bass_level_1", "bass_level_2", "bass_level_3", "bass_level_4"];
+    if (rootLessonId !== "bass_level_1") return null;
+    for (var i = 0; i < order.length; i++) {
+      if (completedLessonIds.indexOf(order[i]) === -1) return order[i];
+    }
+    return null;
+  };
+
+  var candidate = selectInstrumentModuleCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.exerciseId, "bass_turnaround_01");
+  assert.strictEqual(candidate.meta.exerciseName, "Turnaround Steps");
+  assert.strictEqual(candidate.meta.exerciseFocus, "passing_notes");
+  assert.ok(candidate.label.indexOf("Turnaround Steps") >= 0);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);

@@ -40,17 +40,20 @@
     if(!lesson || !lesson.skill) return null;
     var exercises = module.getExercises(lesson.skill) || [];
     if(!exercises.length) return null;
-    var exercise = exercises[0];
     var instrumentName = module.name || module.instrument || "Instrument";
     var completedLessonIds = getCompletedLessonIds();
+    var moduleState = {
+      completedLessonIds: completedLessonIds,
+      mastery: S.mastery || {},
+      performanceStats: S.performanceStats || {},
+      ukuleleSkillProgress: S.ukuleleSkillProgress || {},
+      bassSkillProgress: S.bassSkillProgress || {}
+    };
+    var exercise = typeof module.pickPracticeExercise==="function"
+      ? (module.pickPracticeExercise(lesson, exercises.slice(), moduleState) || exercises[0])
+      : exercises[0];
     var recommendation = typeof module.getPracticeRecommendation==="function"
-      ? (module.getPracticeRecommendation(lesson, exercise, {
-          completedLessonIds: completedLessonIds,
-          mastery: S.mastery || {},
-          performanceStats: S.performanceStats || {},
-          ukuleleSkillProgress: S.ukuleleSkillProgress || {},
-          bassSkillProgress: S.bassSkillProgress || {}
-        }) || {})
+      ? (module.getPracticeRecommendation(lesson, exercise, moduleState) || {})
       : {};
     var label = instrumentName + ": " + (lesson.title || lesson.skill);
     if(recommendation.labelSuffix) label += " - " + recommendation.labelSuffix;

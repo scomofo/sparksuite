@@ -134,6 +134,7 @@ Primary source plans:
   - Authored bass module drills can now launch directly into Rhythm Highway from practice planning, so those recommendation cards have a real follow-through path instead of stopping at metadata
   - Bass module-owned Rhythm Highway guidance now appears on focused drill results, so walking, ghost-note, slap, pop, and groove drills can coach the player with bass-specific next steps instead of only generic lane feedback
   - Focused bass Rhythm Highway drills now write back into `bassSkillProgress`, so bass-specific planning and recommendation hooks can react to actual drill results instead of only static module metadata
+  - Bass module planning can now pick between multiple authored drills based on the current weakest metric, so later-phase bass recommendations can steer toward turnaround timing, ghost-note control, funk subdivision, or movement work instead of always picking the first exercise in the list
   - `js/practice/launchers.js`
   - `js/app.js`
   - `js/performance/session.js`
