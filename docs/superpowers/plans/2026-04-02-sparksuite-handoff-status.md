@@ -163,9 +163,11 @@ Primary source plans:
 - Phase 2 convergence has started with an engine-owned SparkCore runtime state model instead of only legacy-state projection.
   - `js/sparksuite/core/spark_core.js`
   - `tests/test_sparksuite_core_migration.js`
-- The shared practice plan screen can now prefer a core-backed active session view instead of reading only legacy practice-plan state.
+- The shared practice plan screens can now prefer a core-backed active session view instead of reading only legacy practice-plan state.
   - `js/sparksuite/core/spark_core.js`
   - `js/pages/plan.js`
+  - `js/pages/practice.js`
+  - `js/sparksuite/bridges/practice_bridge.js`
   - `tests/test_sparksuite_core_migration.js`
 
 ## Partial
