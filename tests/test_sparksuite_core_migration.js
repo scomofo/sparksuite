@@ -378,6 +378,42 @@ test("SparkCore can sync legacy practice runtime countdown and pause state expli
   assert.strictEqual(resumeState.transport.status, "running");
 });
 
+test("SparkCore can open, sync, and complete legacy daily challenge runtime explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var openState = core.openLegacyDailyChallenge({
+    challengeId: "marathon",
+    durationSec: 180
+  });
+  assert.strictEqual(openState.activeFlow, "legacy_daily_challenge");
+  assert.strictEqual(openState.activeScreen, "daily");
+  assert.strictEqual(openState.activeTab, "daily");
+  assert.strictEqual(openState.legacyDailyChallengeId, "marathon");
+  assert.strictEqual(openState.legacyDailyRemainingSec, 180);
+  assert.strictEqual(openState.legacyDailyTimerActive, true);
+  assert.strictEqual(openState.transport.status, "running");
+
+  var tickState = core.syncLegacyDailyRuntimeState("tick", {
+    challengeId: "marathon",
+    remainingSec: 43,
+    durationSec: 180,
+    timerActive: true
+  });
+  assert.strictEqual(tickState.legacyDailyRemainingSec, 43);
+  assert.strictEqual(tickState.legacyDailyTimerActive, true);
+  assert.strictEqual(tickState.legacyDailyComplete, false);
+  assert.strictEqual(tickState.transport.status, "running");
+
+  var completeState = core.completeLegacyDailyChallenge({
+    challengeId: "marathon",
+    durationSec: 180
+  });
+  assert.strictEqual(completeState.legacyDailyRemainingSec, 0);
+  assert.strictEqual(completeState.legacyDailyTimerActive, false);
+  assert.strictEqual(completeState.legacyDailyComplete, true);
+  assert.strictEqual(completeState.transport.status, "completed");
+});
+
 test("legacy session and drill pages can fall back to SparkCore practice runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
@@ -427,6 +463,15 @@ test("legacy session and drill pages can fall back to SparkCore practice runtime
   S.timer = undefined;
   S.drillChords = [];
   S.drillTimer = undefined;
+  S.dailyChallenge = {
+    id: "marathon",
+    title: "Marathon",
+    desc: "Keep going",
+    icon: "M",
+    xp: 40
+  };
+  S.dailyTimer = undefined;
+  S.dailyComplete = undefined;
 
   eval(loadJS("js/pages/session.js"));
 
@@ -458,6 +503,16 @@ test("legacy session and drill pages can fall back to SparkCore practice runtime
   });
   drillHtml = drillPage();
   assert.ok(drillHtml.indexOf("27s") >= 0);
+
+  core.openLegacyDailyChallenge({ challengeId: "marathon", durationSec: 180 });
+  core.syncLegacyDailyRuntimeState("tick", {
+    challengeId: "marathon",
+    remainingSec: 43,
+    durationSec: 180,
+    timerActive: true
+  });
+  var dailyHtml = dailyPage();
+  assert.ok(dailyHtml.indexOf("43s") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
