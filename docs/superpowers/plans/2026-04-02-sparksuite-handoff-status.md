@@ -180,6 +180,10 @@ Primary source plans:
   - `js/sparksuite/instruments/ukulele/ukulele_lessons.js`
   - `js/sparksuite/instruments/ukulele/ukulele_exercises.js`
   - `tests/test_practice_selectors.js`
+- Ukulele module-driven practice recommendations now carry instrument-owned focus hints and richer reasons instead of being only generic shared-selector output.
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
 - Legacy practice selectors now understand the current flat performance stats shape and module-driven instrument candidates.
   - `js/practice/selectors.js`
   - `tests/test_practice_selectors.js`

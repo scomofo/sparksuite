@@ -91,6 +91,48 @@
     songs: "uke_island_pattern_01",
     fingerpicking: "uke_pick_arpeggio_01"
   };
+  var UKULELE_RECOMMENDATION_HINTS = {
+    down_strum: {
+      priorityBoost: 0,
+      reason: "Lock in steady down-strums before adding movement.",
+      focusTag: "groove"
+    },
+    basic_chords: {
+      priorityBoost: 1,
+      reason: "Add the core campfire chords so more songs open up quickly.",
+      focusTag: "chords"
+    },
+    chord_switching: {
+      priorityBoost: 2,
+      reason: "Smooth out the common C-Am-F-G switch path.",
+      focusTag: "switches"
+    },
+    strumming_patterns: {
+      priorityBoost: 3,
+      reason: "Build a more musical island strum instead of straight downstrokes.",
+      focusTag: "patterns"
+    },
+    songs: {
+      priorityBoost: 4,
+      reason: "Use a full progression loop to connect groove and clean changes.",
+      focusTag: "song_flow"
+    },
+    fingerpicking: {
+      priorityBoost: 6,
+      reason: "Develop independent finger motion with a steady arpeggio pulse.",
+      focusTag: "fingerpicking"
+    },
+    melody: {
+      priorityBoost: 7,
+      reason: "Pull lead notes out of chord shapes so the neck feels musical.",
+      focusTag: "melody"
+    },
+    performance: {
+      priorityBoost: 8,
+      reason: "Turn the current skill stack into a full confident playthrough.",
+      focusTag: "performance"
+    }
+  };
 
   function UkuleleRhythmAdapter() {
     this.chartIO = new SparkChartIO();
@@ -191,6 +233,24 @@
 
     getSongs: function() {
       return getSongs();
+    },
+
+    getPracticeRecommendation: function(lesson, exercise, state) {
+      lesson = lesson || {};
+      exercise = exercise || {};
+      state = state || {};
+      var hint = UKULELE_RECOMMENDATION_HINTS[lesson.skill] || {
+        priorityBoost: 0,
+        reason: "Continue ukulele progression.",
+        focusTag: "ukulele"
+      };
+      var completedCount = Array.isArray(state.completedLessonIds) ? state.completedLessonIds.length : 0;
+      return {
+        priorityBoost: hint.priorityBoost + Math.min(4, Math.floor(completedCount / 2)),
+        reason: hint.reason,
+        focusTag: hint.focusTag,
+        labelSuffix: exercise.type === "performance_run" ? "Performance" : null
+      };
     },
 
     getRhythmAdapter: function() {
