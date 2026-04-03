@@ -58,5 +58,34 @@ test("launchPracticeItem routes imported technique candidates through explicit p
   assert.strictEqual(global._acts[0].value, "song_b|imported_chart|hard|tap");
 });
 
+test("launchPracticeItem routes authored bass module exercises through explicit module exercise action", function() {
+  var launched = launchPracticeItem({
+    id: "module_bass_level_4",
+    type: "bassline",
+    meta: {
+      instrument: "bass",
+      lessonId: "bass_level_4",
+      skill: "walking_bass",
+      exerciseId: "bass_walk_lines_01",
+      exerciseName: "Walk Lines 01",
+      exerciseFocus: "walking_bass",
+      exerciseType: "bassline"
+    }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.strictEqual(global._acts.length, 1);
+  assert.strictEqual(global._acts[0].name, "planStartModuleExercise");
+  assert.deepStrictEqual(JSON.parse(global._acts[0].value), {
+    instrument: "bass",
+    lessonId: "bass_level_4",
+    skill: "walking_bass",
+    exerciseId: "bass_walk_lines_01",
+    exerciseName: "Walk Lines 01",
+    exerciseFocus: "walking_bass",
+    exerciseType: "bassline"
+  });
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);

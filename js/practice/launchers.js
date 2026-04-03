@@ -5,6 +5,7 @@
     if(item.type==="warmup") return launchWarmupItem(item);
     if(item.type==="transition") return launchTransitionItem(item);
     if(item.type==="rhythm_highway") return launchRhythmHighwayItem(item);
+    if(isModuleExerciseItem(item)) return launchModuleExerciseItem(item);
     if(item.type==="performance_song") return launchPerformanceSongItem(item);
     if(item.type==="performance_phrase") return launchPerformancePhraseItem(item);
     if(item.type==="performance_technique") return launchPerformanceTechniqueItem(item);
@@ -95,6 +96,35 @@
     return true;
   }
 
+  function isModuleExerciseItem(item){
+    if(!item || !item.meta || !item.meta.instrument || !item.meta.exerciseId) return false;
+    var types = {
+      lesson: true,
+      bassline: true,
+      groove: true,
+      technique: true,
+      arpeggio: true,
+      improv: true,
+      melody: true,
+      strum_pattern: true
+    };
+    return !!types[item.type];
+  }
+
+  function launchModuleExerciseItem(item){
+    if(typeof act!=="function" || !item || !item.meta) return false;
+    act("planStartModuleExercise", JSON.stringify({
+      instrument: item.meta.instrument || null,
+      lessonId: item.meta.lessonId || null,
+      skill: item.meta.skill || null,
+      exerciseId: item.meta.exerciseId || null,
+      exerciseName: item.meta.exerciseName || null,
+      exerciseFocus: item.meta.exerciseFocus || null,
+      exerciseType: item.meta.exerciseType || item.type || null
+    }));
+    return true;
+  }
+
   window.launchPracticeItem = launchPracticeItem;
   window.launchWarmupItem = launchWarmupItem;
   window.launchTransitionItem = launchTransitionItem;
@@ -104,6 +134,7 @@
   window.launchRhythmItem = launchRhythmItem;
   window.launchRhythmHighwayItem = launchRhythmHighwayItem;
   window.launchFingerItem = launchFingerItem;
+  window.launchModuleExerciseItem = launchModuleExerciseItem;
   window.launchPracticePlanItem = launchPracticeItem;
 
 })();
