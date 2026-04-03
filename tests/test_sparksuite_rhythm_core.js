@@ -402,6 +402,34 @@ test("instrument rhythm adapters expose lane metadata for non-guitar highway lay
   assert.deepStrictEqual(ukulelePayload.laneLabels, ["G", "C", "E", "A"]);
 });
 
+test("rhythm highway can launch directly from an authored bass module payload", function() {
+  var payload = new SparkBassRhythmAdapter().createPayload({
+    segment: {
+      id: "bass_walk_lines_01",
+      meta: { skill: "walking_bass" }
+    },
+    curriculum: {
+      nextLessonId: "bass_level_4"
+    }
+  });
+
+  var started = startRhythmHighwayPayload(payload, "spark_balanced", {
+    source: "module_exercise",
+    label: "Walk Lines 01",
+    instrument: "bass",
+    exerciseId: "bass_walk_lines_01",
+    exerciseFocus: "walking_bass"
+  });
+
+  assert.strictEqual(started, true);
+  assert.strictEqual(S.screen, SCR.RHYTHM_HIGHWAY);
+  assert.strictEqual(S.activeCoreSegmentId, null);
+  assert.strictEqual(S.rhythmHighwayLaunchContext.label, "Walk Lines 01");
+  assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "bass");
+  assert.strictEqual(S.rhythmHighwayLaunchContext.exerciseFocus, "walking_bass");
+  assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["E", "A", "D", "G"]);
+});
+
 test("rhythm gameplay engine produces deterministic results for the same input stream", function() {
   var adapter = new SparkGuitarRhythmAdapter();
   var payload = adapter.createPayload({});

@@ -14,20 +14,30 @@
     { id: "spark_challenge", label: "Challenge", hint: "Tighter timing and stricter fret checks" }
   ];
 
-  function startRhythmHighwaySegment(segmentId, presetName) {
+  function startRhythmHighwaySegment(segmentId, presetName, loopSpec) {
     if (!window.sparkCore || typeof window.sparkCore.getSegmentById !== "function") return false;
     var segment = window.sparkCore.getSegmentById(segmentId);
     if (!segment || !segment.meta || !segment.meta.gameplayPayload) return false;
+    return startRhythmHighwayPayload(segment.meta.gameplayPayload, presetName, {
+      segmentId: segmentId,
+      loopSpec: loopSpec || null,
+      source: "core_segment",
+      label: segment.label || (segment.meta && segment.meta.skill) || null
+    });
+  }
+
+  function startRhythmHighwayPayload(payload, presetName, launchContext) {
+    if (!payload || !payload.songChart) return false;
+    launchContext = launchContext || {};
 
     stopSparkRhythmHighway();
 
-    var payload = segment.meta.gameplayPayload;
     var resolvedPresetName = resolveRhythmHighwayPresetName(presetName || S.rhythmHighwayPreset || payload.enginePreset);
-    var resolvedLoopSpec = loopSpec || S.rhythmHighwayLoop || null;
+    var resolvedLoopSpec = launchContext.loopSpec || S.rhythmHighwayLoop || null;
     var activePayload = resolvedLoopSpec ? buildRhythmHighwayLoopPayload(payload, resolvedLoopSpec) : payload;
     if (!activePayload || !activePayload.songChart) activePayload = payload;
 
-    runtime.segmentId = segmentId;
+    runtime.segmentId = launchContext.segmentId || null;
     runtime.sourcePayload = payload;
     runtime.activePayload = activePayload;
     runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock("guitar");
@@ -37,9 +47,16 @@
       preset: SparkEnginePresetRegistry.get(resolvedPresetName)
     });
 
-    S.activeCoreSegmentId = segmentId;
+    S.activeCoreSegmentId = launchContext.segmentId || null;
     S.rhythmHighwayPreset = resolvedPresetName;
     S.rhythmHighwayLoop = resolvedLoopSpec && activePayload !== payload ? resolvedLoopSpec : null;
+    S.rhythmHighwayLaunchContext = {
+      source: launchContext.source || "ad_hoc",
+      label: launchContext.label || payload.chartId || (payload.songChart.song && payload.songChart.song.title) || null,
+      instrument: launchContext.instrument || payload.adapterType || null,
+      exerciseId: launchContext.exerciseId || null,
+      exerciseFocus: launchContext.exerciseFocus || null
+    };
     S.rhythmHighwayHeldMask = 0;
     S.rhythmHighwaySnapshot = runtime.engine.getSnapshot(0);
     S.rhythmHighwayResult = null;
@@ -76,7 +93,7 @@
     var result = runtime.engine.finalize();
     S.rhythmHighwayResult = result;
     S.rhythmHighwayFeedback = buildFeedback(result);
-    if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+    if (runtime.segmentId && window.sparkCore && typeof window.sparkCore.completeSession === "function") {
       window.sparkCore.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         itemId: runtime.segmentId,
@@ -126,6 +143,9 @@
     h += '<div><div style="font-size:24px;font-weight:900;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div style="font-size:10px;color:var(--text-muted)">Max Combo</div></div>';
     h += '<div><div style="font-size:24px;font-weight:900;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:10px;color:var(--text-muted)">Accuracy</div></div>';
     h += '</div>';
+    if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.label) {
+      h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(S.rhythmHighwayLaunchContext.label) + '</div>';
+    }
 
     h += '<div style="display:grid;grid-template-columns:repeat(' + laneCount + ',56px);gap:8px;justify-content:center;align-items:end;height:320px;margin:0 auto 16px;position:relative">';
     for (var lane = 0; lane < laneCount; lane++) {
@@ -172,6 +192,9 @@
     h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Rhythm Highway Complete</h2>';
     if (activePreset) {
       h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Assist Mode: <span style="color:var(--text-primary);font-weight:800">' + escHTML(activePreset.label) + "</span></div>";
+    }
+    if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.exerciseFocus) {
+      h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Focus: ' + escHTML(String(S.rhythmHighwayLaunchContext.exerciseFocus).replace(/_/g, " ")) + '</div>';
     }
     h += '<div class="card mb16"><div style="display:flex;justify-content:space-around;text-align:center">';
     h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">' + gameplay.score + '</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
@@ -386,6 +409,7 @@
   }
 
   window.startRhythmHighwaySegment = startRhythmHighwaySegment;
+  window.startRhythmHighwayPayload = startRhythmHighwayPayload;
   window.stopSparkRhythmHighway = stopSparkRhythmHighway;
   window._sparkRhythmHighwayStrum = sparkRhythmHighwayStrum;
   window._buildRhythmHighwayLoopPayload = buildRhythmHighwayLoopPayload;

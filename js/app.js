@@ -604,6 +604,53 @@ function openPracticePlanScreenRequest(options) {
   return openDashboardPracticePlanRequest(options || {});
 }
 
+function resolveModuleExerciseLaunchOptions(rawValue) {
+  if (!rawValue) return null;
+  if (typeof rawValue === "object") return rawValue;
+  try {
+    return JSON.parse(String(rawValue));
+  } catch (err) {
+    return null;
+  }
+}
+
+function getInstrumentModuleForLaunch(instrumentId) {
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
+    var active = SparkInstruments.getActive();
+    if (active && (!instrumentId || active.instrument === instrumentId || active.id === instrumentId)) return active;
+  }
+  var map = {
+    bass: window.SparkBassModule,
+    ukulele: window.SparkUkuleleModule,
+    guitar: window.SparkGuitarModule,
+    piano: window.SparkPianoModule
+  };
+  return instrumentId ? (map[instrumentId] || null) : null;
+}
+
+function buildModuleExerciseRhythmPayload(options) {
+  options = options || {};
+  var module = getInstrumentModuleForLaunch(options.instrument);
+  if (!module || typeof module.getRhythmAdapter !== "function") return null;
+  var rhythmAdapter = module.getRhythmAdapter();
+  if (!rhythmAdapter || typeof rhythmAdapter.createPayload !== "function") return null;
+  return rhythmAdapter.createPayload({
+    segment: {
+      id: options.exerciseId || options.lessonId || "module_rhythm_exercise",
+      type: SparkSessionSegmentTypes ? SparkSessionSegmentTypes.RHYTHM_HIGHWAY : "rhythm_highway",
+      meta: {
+        skill: options.exerciseFocus || options.skill || null
+      }
+    },
+    curriculum: {
+      nextLessonId: options.lessonId || null
+    },
+    instrumentContext: {
+      instrumentType: options.instrument || null
+    }
+  });
+}
+
 function openLegacyPracticeSessionRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeSession === "function") {
     return window.sparkCore.openLegacyPracticeSession(options || {});
@@ -2355,6 +2402,22 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SKILL_TREE}});
     else S.screen=SCR.SKILL_TREE;
     render();return;
+  }
+  if(a==="planStartModuleExercise"){
+    var moduleExercise = resolveModuleExerciseLaunchOptions(v);
+    var modulePayload = buildModuleExerciseRhythmPayload(moduleExercise);
+    if(modulePayload && typeof startRhythmHighwayPayload==="function"){
+      startRhythmHighwayPayload(modulePayload, S.rhythmHighwayPreset, {
+        source: "module_exercise",
+        label: moduleExercise && (moduleExercise.exerciseName || moduleExercise.lessonId || moduleExercise.skill) || "Module exercise",
+        instrument: moduleExercise && moduleExercise.instrument || null,
+        exerciseId: moduleExercise && moduleExercise.exerciseId || null,
+        exerciseFocus: moduleExercise && (moduleExercise.exerciseFocus || moduleExercise.skill) || null
+      });
+      return;
+    }
+    act("tab", TAB.PRACTICE);
+    return;
   }
   if(a==="planStartRhythmHighway"){
     if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v,S.rhythmHighwayPreset))return;
