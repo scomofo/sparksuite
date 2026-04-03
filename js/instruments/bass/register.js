@@ -1,5 +1,31 @@
 // js/instruments/bass/register.js
 (function() {
+  function renderBassSongsTab() {
+    var songs = (window.SparkBassModule && window.SparkBassModule.getSongs()) || (typeof BASS_SONGS !== "undefined" ? BASS_SONGS : []);
+    var charts = typeof getPerformanceChartLibrary === "function"
+      ? getPerformanceChartLibrary({ instrument: "bass" })
+      : [];
+    var h = '<div class="card mb12"><div style="font-size:18px;font-weight:900;color:var(--text-primary)">Bass Songs & Performance</div>';
+    h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Lock into pocket-driven bass charts and song studies that feel like real low-end parts.</div></div>';
+    if (charts.length) {
+      h += '<div class="card mb12"><div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Bass Performance Charts</div>';
+      for (var c = 0; c < charts.length; c++) {
+        h += '<div style="padding:8px 0;border-top:' + (c ? '1px solid var(--border)' : '0') + ';display:flex;justify-content:space-between;align-items:center;gap:10px">';
+        h += '<div><div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(charts[c].title) + '</div>';
+        h += '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(charts[c].artist || "") + ' | ' + escHTML(String(charts[c].bpm || "--")) + ' BPM</div></div>';
+        h += '<button class="btn btn-sm" onclick="act(\'openPerform\',\'' + charts[c].id + '\')" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff">Perform</button>';
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    for (var i = 0; i < songs.length; i++) {
+      h += '<div class="card mb12"><div style="font-size:15px;font-weight:800;color:var(--text-primary)">' + escHTML(songs[i].title) + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML(songs[i].artist || "") + ' | ' + escHTML((songs[i].chords || []).join(" - ")) + '</div>';
+      h += '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">' + escHTML(String(songs[i].bpm || "--")) + ' BPM | Difficulty ' + escHTML(String(songs[i].difficulty || songs[i].level || 1)) + '</div></div>';
+    }
+    return h;
+  }
+
   SparkInstruments.register({
     id: "bassspark",
     instrument: "bass",
@@ -42,6 +68,10 @@
 
     act: function(a, v) {
       return bassAct(a, v);
+    },
+
+    tabRenderers: {
+      songs: renderBassSongsTab
     },
 
     pages: {},

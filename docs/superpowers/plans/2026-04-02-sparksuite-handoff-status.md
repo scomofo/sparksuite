@@ -128,6 +128,7 @@ Primary source plans:
   - The Songs tab performance-daily card now reads that focused challenge from SparkCore runtime and shows the active technique focus, target accuracy, and reason instead of only generic daily copy
   - Bass performance mode now has a first manifest-backed import/package chart path instead of only guitar and ukulele package coverage
   - Bass now has multiple manifest-backed performance package charts, so its browser/performance depth is no longer a single-chart exception
+  - The bass instrument now has its own Songs/Performance tab rendering path, so those charts surface as bass content instead of only through the shared mixed-instrument browser
   - `js/practice/launchers.js`
   - `js/app.js`
   - `js/performance/session.js`
