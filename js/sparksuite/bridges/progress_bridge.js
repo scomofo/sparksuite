@@ -125,7 +125,40 @@
       }
     }
 
+    if (patch.bassSkillProgress) {
+      if (!S.bassSkillProgress || typeof S.bassSkillProgress !== "object") S.bassSkillProgress = {};
+      mergeInstrumentSkillProgress(S.bassSkillProgress, patch.bassSkillProgress);
+    }
+
+    if (patch.ukuleleSkillProgress) {
+      if (!S.ukuleleSkillProgress || typeof S.ukuleleSkillProgress !== "object") S.ukuleleSkillProgress = {};
+      mergeInstrumentSkillProgress(S.ukuleleSkillProgress, patch.ukuleleSkillProgress);
+    }
+
     if (patch.xpToast) S.xpToast = patch.xpToast;
+  }
+
+  function mergeInstrumentSkillProgress(target, incoming) {
+    for (var skillId in incoming) {
+      var next = incoming[skillId] || {};
+      var prev = target[skillId] || null;
+      if (!prev) {
+        target[skillId] = clone(next);
+        continue;
+      }
+      target[skillId] = {
+        groove: averageUnit(prev.groove, next.groove),
+        timing: averageUnit(prev.timing, next.timing),
+        accuracy: averageUnit(prev.accuracy, next.accuracy),
+        movement: averageUnit(prev.movement, next.movement)
+      };
+    }
+  }
+
+  function averageUnit(prev, next) {
+    if (typeof prev !== "number") return typeof next === "number" ? next : 0;
+    if (typeof next !== "number") return prev;
+    return Math.round((((prev + next) / 2) * 100)) / 100;
   }
 
   function applyLegacyReward(reward) {

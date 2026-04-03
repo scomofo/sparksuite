@@ -2038,5 +2038,44 @@ test("completeSession routes performance completion rewards through core", funct
   assert.strictEqual(S.xpToast.amount, 9);
 });
 
+test("completeSession can carry focused bass rhythm drill progress into bass skill state", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({
+    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE
+  });
+
+  plan.segments = [
+    SparkSessionSegment.create({
+      id: "bass_walk_lines_01",
+      type: SparkSessionSegmentTypes.RHYTHM_HIGHWAY,
+      label: "Walk Lines 01",
+      meta: {}
+    })
+  ];
+
+  var result = core.completeSession({
+    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+    itemId: "bass_walk_lines_01",
+    gameplayContext: {
+      instrument: "bass",
+      exerciseFocus: "walking_bass"
+    },
+    gameplayResult: {
+      gameplay: {
+        accuracy: 0.74,
+        maxCombo: 11
+      },
+      learning: {
+        weakAreas: ["late"]
+      }
+    }
+  });
+
+  assert.ok(result.sessionStatePatch.bassSkillProgress);
+  assert.ok(result.sessionStatePatch.bassSkillProgress.walking_bass);
+  assert.ok(result.sessionStatePatch.bassSkillProgress.walking_bass.timing < result.sessionStatePatch.bassSkillProgress.walking_bass.accuracy);
+  assert.ok(S.bassSkillProgress.walking_bass);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);

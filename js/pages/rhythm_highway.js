@@ -98,7 +98,8 @@
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         itemId: runtime.segmentId,
         result: result,
-        gameplayResult: result
+        gameplayResult: result,
+        gameplayContext: cloneRhythmHighwayLaunchContext()
       });
     }
     stopSparkRhythmHighway();
@@ -267,6 +268,11 @@
     var instrumentModule = moduleMap[launchContext.instrument] || null;
     if (!instrumentModule || typeof instrumentModule.getRhythmGuidance !== "function") return null;
     return instrumentModule.getRhythmGuidance(launchContext.exerciseFocus, result || S.rhythmHighwayResult || null);
+  }
+
+  function cloneRhythmHighwayLaunchContext() {
+    if (!S.rhythmHighwayLaunchContext) return null;
+    return JSON.parse(JSON.stringify(S.rhythmHighwayLaunchContext));
   }
 
   function resolveRhythmHighwayPresetName(name) {

@@ -29,7 +29,7 @@
       };
       if (payload.gameplayResult) {
         xpAwarded += Math.max(0, Math.round(((payload.gameplayResult.gameplay && payload.gameplayResult.gameplay.accuracy) || 0) * 20));
-        sessionStatePatch = mergeSessionStatePatch(sessionStatePatch, buildGameplayLearningPatch(payload.gameplayResult.learning));
+        sessionStatePatch = mergeSessionStatePatch(sessionStatePatch, buildGameplayLearningPatch(payload.gameplayResult.learning, payload.gameplayContext, payload.gameplayResult.gameplay));
         sessionStatePatch.xpToast.amount = xpAwarded;
       }
       var completionSummary = buildCompletionSummary(plan, xpAwarded, summary.durationSec);
@@ -141,7 +141,7 @@
     return progress;
   }
 
-  function buildGameplayLearningPatch(learning) {
+  function buildGameplayLearningPatch(learning, gameplayContext, gameplay) {
     learning = learning || {};
     var patch = {
       mastery: {
@@ -156,7 +156,54 @@
     if (Array.isArray(learning.weakAreas)) {
       patch.weakSpots.rhythmHighway = learning.weakAreas.slice();
     }
+    var instrumentSkillPatch = buildInstrumentSkillProgressPatch(gameplayContext, learning, gameplay);
+    if (instrumentSkillPatch) {
+      if (instrumentSkillPatch.bassSkillProgress) patch.bassSkillProgress = instrumentSkillPatch.bassSkillProgress;
+      if (instrumentSkillPatch.ukuleleSkillProgress) patch.ukuleleSkillProgress = instrumentSkillPatch.ukuleleSkillProgress;
+    }
     return patch;
+  }
+
+  function buildInstrumentSkillProgressPatch(gameplayContext, learning, gameplay) {
+    gameplayContext = gameplayContext || {};
+    var instrument = gameplayContext.instrument || null;
+    var focus = gameplayContext.exerciseFocus || null;
+    if (!instrument || !focus) return null;
+
+    var accuracy = typeof gameplay.accuracy === "number" ? Math.max(0, Math.min(1, gameplay.accuracy)) : 0;
+    var maxCombo = typeof gameplay.maxCombo === "number" ? gameplay.maxCombo : 0;
+    var comboFactor = Math.max(0, Math.min(1, maxCombo / 20));
+    var weakAreas = Array.isArray(learning.weakAreas) ? learning.weakAreas : [];
+    var latePenalty = weakAreas.indexOf("late") >= 0 || weakAreas.indexOf("late_strums") >= 0 ? 0.18 : 0;
+    var fretPenalty = weakAreas.indexOf("wrong_fret") >= 0 ? 0.18 : 0;
+    var groove = clampUnit(accuracy * 0.7 + comboFactor * 0.3 - latePenalty / 2);
+    var timing = clampUnit(accuracy - latePenalty);
+    var movement = clampUnit(accuracy - fretPenalty);
+    var control = clampUnit((accuracy + groove) / 2 - (fretPenalty / 2));
+    var entry = {
+      groove: groove,
+      timing: timing,
+      accuracy: accuracy,
+      movement: instrument === "bass" ? movement : control
+    };
+
+    if (instrument === "bass") {
+      return { bassSkillProgress: buildSkillProgressMap(focus, entry) };
+    }
+    if (instrument === "ukulele") {
+      return { ukuleleSkillProgress: buildSkillProgressMap(focus, entry) };
+    }
+    return null;
+  }
+
+  function buildSkillProgressMap(skill, entry) {
+    var out = {};
+    out[skill] = entry;
+    return out;
+  }
+
+  function clampUnit(value) {
+    return Math.max(0, Math.min(1, value || 0));
   }
 
   function buildCompletionSummary(plan, xpAwarded, durationSec) {
@@ -214,8 +261,24 @@
       }
     }
 
+    if (nextPatch.bassSkillProgress) {
+      if (!basePatch.bassSkillProgress) basePatch.bassSkillProgress = {};
+      mergeNamedSkillPatch(basePatch.bassSkillProgress, nextPatch.bassSkillProgress);
+    }
+
+    if (nextPatch.ukuleleSkillProgress) {
+      if (!basePatch.ukuleleSkillProgress) basePatch.ukuleleSkillProgress = {};
+      mergeNamedSkillPatch(basePatch.ukuleleSkillProgress, nextPatch.ukuleleSkillProgress);
+    }
+
     if (nextPatch.xpToast) basePatch.xpToast = nextPatch.xpToast;
     return basePatch;
+  }
+
+  function mergeNamedSkillPatch(target, incoming) {
+    for (var skillId in incoming) {
+      target[skillId] = incoming[skillId];
+    }
   }
 
   window.SparkSuiteProgressEngine = ProgressEngine;
