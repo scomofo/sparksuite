@@ -54,6 +54,7 @@
       : {};
     var label = instrumentName + ": " + (lesson.title || lesson.skill);
     if(recommendation.labelSuffix) label += " - " + recommendation.labelSuffix;
+    if(exercise && exercise.name) label += " (" + exercise.name + ")";
     return {
       id:"module_" + (lesson.id || lesson.skill),
       type:exercise.type || "lesson",
@@ -64,6 +65,8 @@
         lessonId:lesson.id || null,
         skill:lesson.skill,
         exerciseId:exercise.id || null,
+        exerciseName:exercise.name || null,
+        exerciseFocus:exercise.focus || null,
         exerciseType:exercise.type || null,
         instrument:module.instrument || null,
         recommendationFocus:recommendation.focusTag || null,
