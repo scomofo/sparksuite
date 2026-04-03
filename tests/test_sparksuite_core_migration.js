@@ -447,6 +447,17 @@ test("legacy session and drill pages can fall back to SparkCore practice runtime
   assert.ok(drillHtml.indexOf("Switch Drill") >= 0);
   assert.ok(drillHtml.indexOf(">C<") >= 0);
   assert.ok(drillHtml.indexOf(">G<") >= 0);
+
+  S.drillTimer = undefined;
+  core.syncLegacyPracticeRuntimeState("tick", {
+    remainingSec: 27,
+    timerActive: true,
+    mode: "drill",
+    chordNames: ["C", "G"],
+    durationSec: 60
+  });
+  drillHtml = drillPage();
+  assert.ok(drillHtml.indexOf("27s") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
