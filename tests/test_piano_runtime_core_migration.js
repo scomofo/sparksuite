@@ -102,6 +102,7 @@ function resetState() {
   global.utilityReturnCalls = [];
   global.midiSettingsSyncCalls = [];
   global.curriculumSyncCalls = [];
+  global.midiImportSyncCalls = [];
   global.stemPlayerCalls = [];
   global.dashboardRequestCalls = [];
   global.dashboardRefreshCalls = [];
@@ -344,6 +345,21 @@ function resetState() {
   global.syncCurriculumStateRequest = function(payload) {
     curriculumSyncCalls.push(payload || {});
     return payload || {};
+  };
+  global.syncMidiImportStateRequest = function(payload) {
+    if (!payload) {
+      payload = {
+        summary: S.importedMidi ? {
+          sourceName: S.importedMidi.sourceName || null,
+          trackCount: Array.isArray(S.importedMidi.tracks) ? S.importedMidi.tracks.length : 0
+        } : null,
+        assignments: S.importedMidiAssignments || {},
+        seedMode: null,
+        seedTitle: S.importedMidiSeedPreview && S.importedMidiSeedPreview.title ? S.importedMidiSeedPreview.title : null
+      };
+    }
+    midiImportSyncCalls.push(payload);
+    return payload;
   };
   global.openStemPlayerRequest = function() {
     stemPlayerCalls.push({ fn: "openStemPlayerRequest" });
@@ -609,7 +625,33 @@ test("utility screen entry actions mirror piano navigation into shared utility h
 
   assert.deepStrictEqual(utilityScreenCalls, ["settings", "curriculum", "cloud_settings", "midi_settings", "midi_import"]);
   assert.strictEqual(curriculumSyncCalls.length, 1);
+  assert.strictEqual(midiImportSyncCalls.length, 1);
   assert.strictEqual(S.screen, "midi_import");
+});
+
+test("piano midi import actions mirror into shared midi import sync helper", function() {
+  S.importedMidi = {
+    sourceName: "lesson.mid",
+    tracks: [
+      { id: "t1", name: "Piano RH", notes: [{}, {}] },
+      { id: "t2", name: "Piano LH", notes: [{}] }
+    ]
+  };
+  S.importedMidiAssignments = { t1: "melody", t2: "left_hand" };
+  global.setMidiTrackAssignment = function(trackId, role) {
+    S.importedMidiAssignments[trackId] = role;
+  };
+  global.buildSeedChartFromImportedMidi = function(_midi, _assignments, mode) {
+    return { title: mode === "piano_left_hand" ? "Imported LH" : "Imported Seed" };
+  };
+
+  pianoAct("assignMidiTrack", "t1|single_note");
+  pianoAct("buildMidiSeedChart", "piano_left_hand");
+
+  assert.strictEqual(midiImportSyncCalls.length, 2);
+  assert.strictEqual(midiImportSyncCalls[midiImportSyncCalls.length - 2].summary.sourceName, "lesson.mid");
+  assert.strictEqual(midiImportSyncCalls[midiImportSyncCalls.length - 2].assignments.t1, "single_note");
+  assert.strictEqual(midiImportSyncCalls[midiImportSyncCalls.length - 1].seedMode, "piano_left_hand");
 });
 
 test("piano midi actions mirror into shared midi settings sync helper", function() {

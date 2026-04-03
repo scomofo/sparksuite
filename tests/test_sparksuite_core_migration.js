@@ -657,7 +657,7 @@ test("SparkCore can return from utility-family screens explicitly", function() {
   assert.strictEqual(state.transport.status, "idle");
 });
 
-test("SparkCore can track settings, midi, and cloud utility snapshots explicitly", function() {
+test("SparkCore can track settings, midi, cloud, and midi-import utility snapshots explicitly", function() {
   var core = createDefaultSparkCore();
 
   var settingsState = core.syncSettingsState({ theme: "retro" });
@@ -690,6 +690,25 @@ test("SparkCore can track settings, midi, and cloud utility snapshots explicitly
   assert.strictEqual(cloudState.cloudEmail, "player@sparksuite.dev");
   assert.strictEqual(cloudState.cloudLastSyncStatus, "ok");
   assert.strictEqual(cloudState.cloudLastSyncAt, 1712102400000);
+
+  var midiImportState = core.syncMidiImportState({
+    summary: {
+      sourceName: "lesson.mid",
+      trackCount: 2,
+      tracks: [
+        { id: "t1", name: "Piano RH", noteCount: 24 },
+        { id: "t2", name: "Piano LH", noteCount: 18 }
+      ]
+    },
+    assignments: { t1: "melody", t2: "left_hand" },
+    seedMode: "piano_left_hand",
+    seedTitle: "Imported LH"
+  });
+  assert.strictEqual(midiImportState.midiImportSummary.sourceName, "lesson.mid");
+  assert.strictEqual(midiImportState.midiImportSummary.trackCount, 2);
+  assert.strictEqual(midiImportState.midiImportAssignments.t1, "melody");
+  assert.strictEqual(midiImportState.midiImportSeedMode, "piano_left_hand");
+  assert.strictEqual(midiImportState.midiImportSeedTitle, "Imported LH");
 
   var curriculumState = core.syncCurriculumState({
     curriculums: [{ id: "starter", title: "Starter Path", trackCount: 2 }],
