@@ -1,5 +1,10 @@
 (function(){
 
+  function syncPerformanceDailyStateWithCore(challenge, isComplete){
+    if(!window.sparkCore||typeof window.sparkCore.syncPerformanceDailyChallengeState!=="function")return;
+    window.sparkCore.syncPerformanceDailyChallengeState(challenge||null, !!isComplete);
+  }
+
   function getTechniqueAccuracy(bucket){
     if(!bucket||!bucket.total)return 100;
     return Math.round(((bucket.hits||0)/bucket.total)*100);
@@ -111,7 +116,10 @@
 
   function choosePerformanceDailyChallenge(){
     var today=getTodayPerfDateKey();
-    if(S.performanceDailyChallenge&&S.performanceDailyChallenge.date===today)return S.performanceDailyChallenge;
+    if(S.performanceDailyChallenge&&S.performanceDailyChallenge.date===today){
+      syncPerformanceDailyStateWithCore(S.performanceDailyChallenge, S.performanceDailyComplete);
+      return S.performanceDailyChallenge;
+    }
     var recs=buildGlobalPerformanceRecommendations();
     var challenge;
     if(recs.length){
@@ -135,6 +143,7 @@
     }
     S.performanceDailyChallenge=challenge;
     S.performanceDailyComplete=false;
+    syncPerformanceDailyStateWithCore(challenge, false);
     return challenge;
   }
 
@@ -143,6 +152,7 @@
     S.performanceDailyComplete=true;
     if(!Array.isArray(S.performanceDailyHistory))S.performanceDailyHistory=[];
     S.performanceDailyHistory.push({id:S.performanceDailyChallenge.id,date:S.performanceDailyChallenge.date,type:S.performanceDailyChallenge.type,xp:S.performanceDailyChallenge.xp,completedAt:Date.now()});
+    syncPerformanceDailyStateWithCore(S.performanceDailyChallenge, true);
     saveState();
     return S.performanceDailyChallenge.xp||0;
   }

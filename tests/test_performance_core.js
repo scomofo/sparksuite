@@ -564,6 +564,12 @@ test('choosePerformanceDailyChallenge carries focused imported-technique targets
   S.performanceStats = {};
   S.performanceDailyChallenge = null;
   S.performanceDailyComplete = false;
+  var syncedState = null;
+  window.sparkCore = {
+    syncPerformanceDailyChallengeState: function(challenge, isComplete) {
+      syncedState = { challenge: challenge, isComplete: isComplete };
+    }
+  };
   SONGS = [
     { title: 'Daily Focus', progression: ['C', 'G'] }
   ];
@@ -582,6 +588,9 @@ test('choosePerformanceDailyChallenge carries focused imported-technique targets
   assert.strictEqual(challenge.type, 'imported_technique_focus');
   assert.strictEqual(challenge.techniqueKey, 'tap');
   assert.strictEqual(challenge.target.accuracy, 90);
+  assert.strictEqual(syncedState.challenge.techniqueKey, 'tap');
+  assert.strictEqual(syncedState.isComplete, false);
+  window.sparkCore = null;
 });
 
 test('applyPerformanceRunOutcome centralizes song stat and progression bookkeeping', function() {
@@ -697,6 +706,32 @@ test('applyPerformanceRunFollowOns completes imported-technique daily challenges
   assert.strictEqual(outcome.dailyXp, 35);
   assert.strictEqual(S.performanceDailyComplete, true);
   assert.strictEqual(S.performanceDailyHistory.length, 1);
+});
+
+test('markPerformanceDailyComplete syncs focused challenge completion into sparkCore runtime state', function() {
+  var syncedState = null;
+  window.sparkCore = {
+    syncPerformanceDailyChallengeState: function(challenge, isComplete) {
+      syncedState = { challenge: challenge, isComplete: isComplete };
+    }
+  };
+  S.performanceDailyHistory = [];
+  S.performanceDailyComplete = false;
+  S.performanceDailyChallenge = {
+    id: 'perf_focus_today',
+    date: '2026-04-03',
+    type: 'imported_technique_focus',
+    techniqueKey: 'open',
+    xp: 35,
+    target: { accuracy: 90 }
+  };
+
+  var xp = markPerformanceDailyComplete();
+
+  assert.strictEqual(xp, 35);
+  assert.strictEqual(syncedState.challenge.techniqueKey, 'open');
+  assert.strictEqual(syncedState.isComplete, true);
+  window.sparkCore = null;
 });
 
 test('syncPerformanceRuntimeState centralizes performance runtime flags and screen transitions', function() {

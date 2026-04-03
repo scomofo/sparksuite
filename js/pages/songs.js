@@ -7,6 +7,16 @@ function _isStemSolo(name){
   return onCount===1&&soloName===name;
 }
 
+function _formatPerformanceTechniqueLabel(key){
+  var labels={
+    open:"Open-note timing",
+    tap:"Tap-note consistency",
+    forced:"Forced-note transitions",
+    specialPhrase:"Phrase section control"
+  };
+  return labels[key]||"Technique focus";
+}
+
 // ===== STRUM TAB =====
 function strumTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
@@ -37,6 +47,12 @@ function songsTab(){
   var songFilter = songBrowserState && typeof songBrowserState.songFilter === "string" ? songBrowserState.songFilter : S.songFilter;
   var songSort = songBrowserState && songBrowserState.songSort ? songBrowserState.songSort : S.songSort;
   var songSortAsc = songBrowserState && typeof songBrowserState.songSortAsc === "boolean" ? songBrowserState.songSortAsc : S.songSortAsc;
+  var performanceDailyChallenge = songBrowserState && songBrowserState.performanceDailyChallenge
+    ? songBrowserState.performanceDailyChallenge
+    : S.performanceDailyChallenge;
+  var performanceDailyComplete = songBrowserState && typeof songBrowserState.performanceDailyComplete === "boolean"
+    ? songBrowserState.performanceDailyComplete
+    : S.performanceDailyComplete;
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Song Library &#127925;</h2></div>';
   // Sub-tabs: Built-in | Community
   h+='<div class="community-tabs">';
@@ -53,13 +69,25 @@ function songsTab(){
   if(songsSubTab==="perform") return h+performSubTab();
 
   // Performance Daily Challenge card
-  if(S.performanceDailyChallenge){
-    h+='<div class="card mb20" style="border:2px solid '+(S.performanceDailyComplete?"#4ECDC4":"#FFE66D")+'">';
+  if(performanceDailyChallenge){
+    var dailyTechniqueLabel=performanceDailyChallenge.techniqueKey?_formatPerformanceTechniqueLabel(performanceDailyChallenge.techniqueKey):"";
+    h+='<div class="card mb20" style="border:2px solid '+(performanceDailyComplete?"#4ECDC4":"#FFE66D")+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
-    h+='<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+(S.performanceDailyComplete?'&#9989;':'&#127919;')+' Performance Daily</h3>';
-    h+='<p style="margin:3px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(S.performanceDailyChallenge.label)+'</p>';
-    h+='<p style="margin:2px 0 0;font-size:11px;color:var(--text-dim)">+'+S.performanceDailyChallenge.xp+' XP</p></div>';
-    if(!S.performanceDailyComplete){
+    h+='<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+(performanceDailyComplete?'&#9989;':'&#127919;')+' Performance Daily</h3>';
+    h+='<p style="margin:3px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(performanceDailyChallenge.label)+'</p>';
+    if(dailyTechniqueLabel){
+      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">';
+      h+='<span style="background:#FF6B6B22;color:#FF6B6B;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">Focus: '+escHTML(dailyTechniqueLabel)+'</span>';
+      if(performanceDailyChallenge.target&&performanceDailyChallenge.target.accuracy){
+        h+='<span style="background:var(--chip-bg);color:var(--chip-color);padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800">Target '+escHTML(String(performanceDailyChallenge.target.accuracy))+'%</span>';
+      }
+      h+='</div>';
+    }
+    if(performanceDailyChallenge.reason){
+      h+='<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(performanceDailyChallenge.reason)+'</p>';
+    }
+    h+='<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">+'+performanceDailyChallenge.xp+' XP</p></div>';
+    if(!performanceDailyComplete){
       h+='<button class="btn" onclick="act(\'openPerformanceDaily\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;font-weight:800">Go</button>';
     }
     h+='</div></div>';
