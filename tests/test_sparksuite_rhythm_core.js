@@ -67,6 +67,13 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_chart_library.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
+eval(loadJS("js/sparksuite/instruments/bass/bass_module.js"));
+eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_lessons.js"));
+eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_chords.js"));
+eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_scales.js"));
+eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_exercises.js"));
+eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_progression.js"));
+eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_module.js"));
 eval(loadJS("js/sparksuite/core/practice_engine.js"));
 global.requestAnimationFrame = function() { return 1; };
 global.cancelAnimationFrame = function() {};
@@ -381,6 +388,18 @@ test("rhythm highway loop tooling can build a normalized loop payload", function
   assert.strictEqual(loopPayload.songChart.tracks.guitar.notes[0].tick, 0);
   assert.strictEqual(loopPayload.songChart.tempoMap.segments[0].tick, 0);
   assert.ok(loopPayload.songChart.metadata.loopedFrom);
+});
+
+test("instrument rhythm adapters expose lane metadata for non-guitar highway layouts", function() {
+  var bassPayload = new SparkBassRhythmAdapter().createPayload({});
+  var ukulelePayload = new SparkUkuleleRhythmAdapter().createPayload({});
+
+  assert.strictEqual(bassPayload.adapterType, "bass");
+  assert.strictEqual(bassPayload.laneCount, 4);
+  assert.deepStrictEqual(bassPayload.laneLabels, ["E", "A", "D", "G"]);
+  assert.strictEqual(ukulelePayload.adapterType, "ukulele");
+  assert.strictEqual(ukulelePayload.laneCount, 4);
+  assert.deepStrictEqual(ukulelePayload.laneLabels, ["G", "C", "E", "A"]);
 });
 
 test("rhythm gameplay engine produces deterministic results for the same input stream", function() {

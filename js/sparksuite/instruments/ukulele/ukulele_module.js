@@ -154,7 +154,10 @@
     var chartDefinition = selectUkuleleChartDefinition(context);
     return {
       chartId: chartDefinition.id,
+      adapterType: "ukulele",
       enginePreset: chartDefinition.enginePreset || this.getDefaultPreset(),
+      laneCount: this.getLaneCount(),
+      laneLabels: this.getLaneLabels(),
       noteSpeed: 1,
       assistMode: {
         showTimingText: true,

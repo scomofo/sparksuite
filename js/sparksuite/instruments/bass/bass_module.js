@@ -149,7 +149,10 @@
     var chartDefinition = selectBassChartDefinition(context);
     return {
       chartId: chartDefinition.id,
+      adapterType: "bass",
       enginePreset: chartDefinition.enginePreset || this.getDefaultPreset(),
+      laneCount: this.getLaneCount(),
+      laneLabels: this.getLaneLabels(),
       noteSpeed: 1,
       assistMode: {
         showTimingText: true,

@@ -21,7 +21,10 @@
     var songChart = this.chartIO.fromExerciseDefinition(definition, this);
     return {
       chartId: chartId,
+      adapterType: "guitar",
       enginePreset: definition.enginePreset || this.getDefaultPreset(),
+      laneCount: this.getLaneCount(),
+      laneLabels: this.getLaneLabels(),
       noteSpeed: 1,
       assistMode: {
         showTimingText: true,
