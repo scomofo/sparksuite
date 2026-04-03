@@ -93,6 +93,13 @@ Primary source plans:
   - `js/sparksuite/core/rhythm_gameplay_engine.js`
   - `js/state.js`
   - `tests/test_sparksuite_rhythm_core.js`
+- Rhythm Highway now honors instrument lane metadata instead of always rendering a 5-lane guitar-only layout.
+  - Bass and ukulele rhythm payloads now carry lane labels/count into the highway page
+  - `js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js`
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `js/pages/rhythm_highway.js`
+  - `tests/test_sparksuite_rhythm_core.js`
 - Chart import parity moved beyond the first `.chart` slice.
   - `SparkChartIO.fromNotesChart(...)` supports `notes.chart` + `song.ini`
   - `SparkChartIO.fromMidiBuffer(...)` supports `.mid` import with tempo changes, time signatures, track selection, marker phrases, and channel filtering

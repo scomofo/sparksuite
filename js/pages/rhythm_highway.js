@@ -4,7 +4,8 @@
     clock: null,
     raf: null,
     segmentId: null,
-    sourcePayload: null
+    sourcePayload: null,
+    activePayload: null
   };
 
   var ASSIST_PRESETS = [
@@ -28,6 +29,7 @@
 
     runtime.segmentId = segmentId;
     runtime.sourcePayload = payload;
+    runtime.activePayload = activePayload;
     runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock("guitar");
     runtime.engine = new SparkRhythmGameplayEngine({
       chart: activePayload.songChart,
@@ -103,7 +105,8 @@
     var snapshot = S.rhythmHighwaySnapshot;
     if (!snapshot) return '<div class="text-center"><p>No rhythm session active.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
-    var labels = ["G", "R", "Y", "B", "O"];
+    var labels = getRhythmHighwayLaneLabels();
+    var laneCount = labels.length;
     var activePreset = getCurrentAssistPreset();
     var h = '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Highway</h2>';
     h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">Hold frets 1-5 and strum on time. Audio clock drives the run; this page only renders snapshots.</p>';
@@ -124,8 +127,8 @@
     h += '<div><div style="font-size:24px;font-weight:900;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:10px;color:var(--text-muted)">Accuracy</div></div>';
     h += '</div>';
 
-    h += '<div style="display:grid;grid-template-columns:repeat(5,56px);gap:8px;justify-content:center;align-items:end;height:320px;margin:0 auto 16px;position:relative">';
-    for (var lane = 0; lane < 5; lane++) {
+    h += '<div style="display:grid;grid-template-columns:repeat(' + laneCount + ',56px);gap:8px;justify-content:center;align-items:end;height:320px;margin:0 auto 16px;position:relative">';
+    for (var lane = 0; lane < laneCount; lane++) {
       h += '<div style="position:relative;height:320px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border)">';
       h += '<div style="position:absolute;left:6px;right:6px;bottom:72px;height:4px;background:#FFE66D;border-radius:999px"></div>';
       h += '<div style="position:absolute;left:0;right:0;bottom:12px;font-size:12px;font-weight:900;color:' + laneColor(lane) + '">' + labels[lane] + '</div>';
@@ -140,7 +143,7 @@
     h += '</div>';
 
     h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
-    for (var fi = 0; fi < 5; fi++) {
+    for (var fi = 0; fi < laneCount; fi++) {
       var active = maskHasLane(S.rhythmHighwayHeldMask, fi);
       h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + labels[fi] + '</button>';
     }
@@ -236,6 +239,16 @@
     return ASSIST_PRESETS[0];
   }
 
+  function getRhythmHighwayLaneLabels() {
+    var payload = runtime.activePayload || runtime.sourcePayload || null;
+    if (payload && Array.isArray(payload.laneLabels) && payload.laneLabels.length) {
+      return payload.laneLabels.slice();
+    }
+    var laneCount = payload && payload.laneCount ? payload.laneCount : 5;
+    if (laneCount === 4) return ["G", "C", "E", "A"];
+    return ["G", "R", "Y", "B", "O"];
+  }
+
   function buildRhythmHighwayLoopPayload(payload, loopSpec) {
     if (!payload || !payload.songChart || !loopSpec) return payload;
     var chart = payload.songChart;
@@ -273,7 +286,10 @@
 
     return {
       chartId: payload.chartId ? payload.chartId + "_loop" : "rhythm_loop",
+      adapterType: payload.adapterType || "guitar",
       enginePreset: payload.enginePreset || "spark_learning",
+      laneCount: payload.laneCount || 5,
+      laneLabels: Array.isArray(payload.laneLabels) ? payload.laneLabels.slice() : null,
       songChart: new SparkSongChart({
         song: JSON.parse(JSON.stringify(chart.song || {})),
         tempoMap: shiftedTempoMap,
@@ -374,5 +390,6 @@
   window._sparkRhythmHighwayStrum = sparkRhythmHighwayStrum;
   window._buildRhythmHighwayLoopPayload = buildRhythmHighwayLoopPayload;
   window._createRhythmHighwayLoopSpec = createRhythmHighwayLoopSpec;
+  window._getRhythmHighwayLaneLabels = getRhythmHighwayLaneLabels;
   window.rhythmHighwayPage = rhythmHighwayPage;
 })();
