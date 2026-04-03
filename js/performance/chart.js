@@ -260,6 +260,25 @@ function getPerformancePhraseForTime(chart, sec) {
   return chart.phrases[chart.phrases.length - 1] || null;
 }
 
+function getPerformancePhraseIndicesForTechnique(chart, techniqueKey) {
+  if (!chart || !Array.isArray(chart.phrases) || !Array.isArray(chart.events) || !techniqueKey) return [];
+  var matches = [];
+  for (var i = 0; i < chart.phrases.length; i++) {
+    var phrase = chart.phrases[i];
+    var found = false;
+    for (var j = 0; j < chart.events.length; j++) {
+      var evt = chart.events[j];
+      if (!evt || !evt.sourceFlags || !evt.sourceFlags[techniqueKey]) continue;
+      if (evt.t >= phrase.startSec && evt.t < phrase.endSec) {
+        found = true;
+        break;
+      }
+    }
+    if (found) matches.push(i);
+  }
+  return matches;
+}
+
 function getPerformancePhraseIndexForTime(chart, sec) {
   for (var i = 0; i < chart.phrases.length; i++) {
     var p = chart.phrases[i];

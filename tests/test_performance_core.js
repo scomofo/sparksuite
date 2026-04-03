@@ -320,6 +320,28 @@ test('normalizePerformanceChartDefinition supports the third ukulele picking pac
   assert.strictEqual(performanceChart.events.length, 4);
 });
 
+test('getPerformancePhraseIndicesForTechnique finds only phrases containing the focused imported technique', function() {
+  var chart = normalizePerformanceChart({
+    id: 'focus_test',
+    title: 'Focus Test',
+    bpm: 100,
+    phrases: [
+      { id: 0, name: 'Intro', startSec: 0, endSec: 2 },
+      { id: 1, name: 'Verse', startSec: 2, endSec: 4 },
+      { id: 2, name: 'Chorus', startSec: 4, endSec: 6 }
+    ],
+    events: [
+      { id: 'a', t: 0.5, dur: 0.2, type: 'tap', laneLabel: 'Tap', notes: ['C'], sourceFlags: { tap: true } },
+      { id: 'b', t: 2.5, dur: 0.2, type: 'open', laneLabel: 'Open', notes: [], sourceFlags: { open: true } },
+      { id: 'c', t: 4.5, dur: 0.2, type: 'tap', laneLabel: 'Tap', notes: ['D'], sourceFlags: { tap: true } }
+    ]
+  });
+
+  assert.deepStrictEqual(getPerformancePhraseIndicesForTechnique(chart, 'tap'), [0, 2]);
+  assert.deepStrictEqual(getPerformancePhraseIndicesForTechnique(chart, 'open'), [1]);
+  assert.deepStrictEqual(getPerformancePhraseIndicesForTechnique(chart, 'forced'), []);
+});
+
 test('convertSparkSongChartToPerformanceChart preserves imported technique flags and lane metadata', function() {
   var performanceChart = convertSparkSongChartToPerformanceChart({
     song: { id: 'flag_chart', title: 'Flag Chart', artist: 'Tester', offsetSec: 0, durationSec: 2 },
