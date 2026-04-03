@@ -135,6 +135,31 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.strictEqual(typeof ukulele.tabRenderers.practice, 'function');
 });
 
+test('bass register exposes a dedicated songs tab renderer', function() {
+  global.getPerformanceChartLibrary = function(options) {
+    if (options && options.instrument === 'bass') {
+      return [{ id: 'bass_midnight_lock_package', title: 'Midnight Lock', artist: 'SparkSuite Bass', bpm: 75 }];
+    }
+    return [];
+  };
+  eval(loadJS('js/instruments/bass/data.js'));
+  eval(loadJS('js/sparksuite/instruments/bass/bass_module.js'));
+  eval(loadJS('js/instruments/bass/register.js'));
+
+  var all = SparkInstruments.getAll();
+  var bass = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === 'bassspark') bass = all[i];
+  }
+
+  assert.ok(bass);
+  assert.strictEqual(bass.instrument, 'bass');
+  assert.strictEqual(typeof bass.tabRenderers.songs, 'function');
+  var html = bass.tabRenderers.songs();
+  assert.ok(html.indexOf('Bass Performance Charts') >= 0);
+  assert.ok(html.indexOf('Midnight Lock') >= 0);
+});
+
 // Summary
 console.log('\n' + '='.repeat(40));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');
