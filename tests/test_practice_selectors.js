@@ -192,5 +192,69 @@ test("selectInstrumentModuleCandidate carries ukulele progress summary into reco
   assert.ok(candidate.reason.indexOf("timing is at 52%") >= 0);
 });
 
+test("selectInstrumentModuleCandidate supports bass module recommendation hints and progress summaries", function() {
+  S.completedLessons = ["bass_level_1", "bass_level_2"];
+  S.bassSkillProgress = {
+    root_fifth: {
+      groove: 0.62,
+      timing: 0.7,
+      accuracy: 0.68,
+      movement: 0.51
+    }
+  };
+  SparkInstruments.getActive = function() {
+    return {
+      name: "Bass",
+      instrument: "bass",
+      getCurriculumMap: function() {
+        return [
+          { id: "bass_level_1", title: "First Groove", skill: "posture" },
+          { id: "bass_level_2", title: "Finding Notes", skill: "root_notes" },
+          { id: "bass_level_3", title: "Movement", skill: "root_fifth" }
+        ];
+      },
+      getExercises: function(skill) {
+        var map = {
+          posture: [{ id: "B-CHROM", type: "warmup" }],
+          root_notes: [{ id: "B-GROOVE", type: "groove" }],
+          root_fifth: [{ id: "B-OCTAVE", type: "groove" }]
+        };
+        return map[skill] || [];
+      },
+      getPracticeRecommendation: function(lesson, exercise, state) {
+        var progressEntry = state.bassSkillProgress && lesson.skill ? state.bassSkillProgress[lesson.skill] : null;
+        return {
+          reason: progressEntry ? ("Bass movement is at " + Math.round((progressEntry.movement || 0) * 100) + "%, so root-fifth motion is the first real bassline building block.") : "Continue bass progression.",
+          focusTag: lesson.skill === "root_fifth" ? "root_fifth" : "bass",
+          priorityBoost: lesson.skill === "root_fifth" ? 5 : 0,
+          progressSummary: progressEntry ? { skill: lesson.skill, weakestMetric: "movement", movement: progressEntry.movement } : null,
+          labelSuffix: lesson.skill === "root_fifth" ? "Groove" : null
+        };
+      }
+    };
+  };
+  global.getNextLessonFromCurriculum = function(rootLessonId, completedLessonIds) {
+    completedLessonIds = completedLessonIds || [];
+    var order = ["bass_level_1", "bass_level_2", "bass_level_3"];
+    if (rootLessonId !== "bass_level_1") return null;
+    for (var i = 0; i < order.length; i++) {
+      if (completedLessonIds.indexOf(order[i]) === -1) return order[i];
+    }
+    return null;
+  };
+
+  var candidate = selectInstrumentModuleCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.lessonId, "bass_level_3");
+  assert.strictEqual(candidate.meta.skill, "root_fifth");
+  assert.strictEqual(candidate.meta.exerciseId, "B-OCTAVE");
+  assert.strictEqual(candidate.meta.recommendationFocus, "root_fifth");
+  assert.ok(candidate.meta.progressSummary);
+  assert.strictEqual(candidate.meta.progressSummary.weakestMetric, "movement");
+  assert.ok(candidate.label.indexOf("Groove") >= 0);
+  assert.ok(candidate.reason.indexOf("movement is at 51%") >= 0);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);

@@ -48,7 +48,8 @@
           completedLessonIds: completedLessonIds,
           mastery: S.mastery || {},
           performanceStats: S.performanceStats || {},
-          ukuleleSkillProgress: S.ukuleleSkillProgress || {}
+          ukuleleSkillProgress: S.ukuleleSkillProgress || {},
+          bassSkillProgress: S.bassSkillProgress || {}
         }) || {})
       : {};
     var label = instrumentName + ": " + (lesson.title || lesson.skill);

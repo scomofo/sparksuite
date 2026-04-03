@@ -79,6 +79,55 @@
       ]
     }
   };
+  var BASS_SKILL_EXERCISE_MAP = {
+    posture: ["B-CHROM"],
+    plucking: ["B-SPIDER"],
+    string_names: ["B-CROSS"],
+    quarter_notes: ["B-GROOVE"],
+    metronome: ["B-GROOVE"],
+    notes_E_string: ["B-CHROM"],
+    notes_A_string: ["B-CROSS"],
+    root_notes: ["B-GROOVE"],
+    note_duration: ["B-MUTE"],
+    timing_stability: ["B-GROOVE"],
+    root_fifth: ["B-OCTAVE"],
+    octaves: ["B-OCTAVE"],
+    eighth_notes: ["B-GROOVE"],
+    major_scale: ["B-SHIFT"],
+    minor_scale: ["B-SHIFT"],
+    position_shifting: ["B-SHIFT"],
+    walking_bass: ["B-GROOVE"],
+    passing_notes: ["B-GHOST"],
+    arpeggios: ["B-OCTAVE"],
+    syncopation: ["B-GHOST"],
+    groove_variations: ["B-GROOVE"],
+    drum_loop_playing: ["B-GROOVE"],
+    slides: ["B-SHIFT"],
+    hammer_ons: ["B-MUTE"],
+    pull_offs: ["B-MUTE"],
+    ghost_notes: ["B-GHOST"],
+    muting_mastery: ["B-MUTE"],
+    dynamic_control: ["B-MUTE"],
+    groove_accents: ["B-GROOVE"],
+    slap: ["B-GHOST"],
+    pop: ["B-GHOST"],
+    funk_grooves: ["B-GROOVE"],
+    improvisation: ["B-SHIFT"],
+    walking_multi_key: ["B-GROOVE"],
+    jam_tracks: ["B-GROOVE"]
+  };
+  var BASS_RECOMMENDATION_HINTS = {
+    posture: { reason: "Set a relaxed hand shape so the groove stays easy.", focusTag: "fundamentals", priorityBoost: 0 },
+    plucking: { reason: "Build steady alternating fingers before chasing speed.", focusTag: "plucking", priorityBoost: 1 },
+    root_notes: { reason: "Lock root notes to the pulse before adding motion.", focusTag: "roots", priorityBoost: 2 },
+    root_fifth: { reason: "Root-fifth motion is the first real bassline building block.", focusTag: "root_fifth", priorityBoost: 4 },
+    octaves: { reason: "Octaves make simple grooves feel like real bass parts.", focusTag: "octaves", priorityBoost: 4 },
+    walking_bass: { reason: "Walking lines need steadier note flow and fretboard intent.", focusTag: "walking", priorityBoost: 6 },
+    passing_notes: { reason: "Passing notes add movement, but timing has to stay tight.", focusTag: "passing_notes", priorityBoost: 6 },
+    arpeggios: { reason: "Arpeggio motion connects harmony to groove on the neck.", focusTag: "arpeggios", priorityBoost: 5 },
+    ghost_notes: { reason: "Ghost notes bring life to the groove when timing is controlled.", focusTag: "ghost_notes", priorityBoost: 7 },
+    slap: { reason: "Slap technique needs clean touch before it needs force.", focusTag: "slap", priorityBoost: 8 }
+  };
 
   function BassRhythmAdapter() {
     this.chartIO = new SparkChartIO();
@@ -152,6 +201,58 @@
     return window.BASS_SONGS || [];
   }
 
+  function getBassExercisesForSkill(skill) {
+    var exercises = window.BASS_EXERCISES || [];
+    if (!skill) return exercises.slice();
+    var preferredIds = BASS_SKILL_EXERCISE_MAP[skill] || [];
+    if (!preferredIds.length) return exercises.slice(0, 2);
+    var matches = [];
+    for (var i = 0; i < exercises.length; i++) {
+      if (preferredIds.indexOf(exercises[i].id) >= 0) matches.push(exercises[i]);
+    }
+    return matches.length ? matches : exercises.slice(0, 2);
+  }
+
+  function summarizeBassSkillProgress(skill, state) {
+    state = state || {};
+    var map = state.bassSkillProgress || state.skillProgress || {};
+    var entry = skill && map ? map[skill] : null;
+    if (!entry) return null;
+    var groove = normalizeUnit(entry.groove);
+    var timing = normalizeUnit(entry.timing);
+    var accuracy = normalizeUnit(entry.accuracy);
+    var movement = normalizeUnit(entry.movement);
+    var mastery = roundUnit((groove + timing + accuracy + movement) / 4);
+    var weakestMetric = "groove";
+    var weakestValue = groove;
+    var metrics = { timing: timing, accuracy: accuracy, movement: movement };
+    for (var key in metrics) {
+      if (metrics[key] < weakestValue) {
+        weakestMetric = key;
+        weakestValue = metrics[key];
+      }
+    }
+    return {
+      skill: skill,
+      groove: groove,
+      timing: timing,
+      accuracy: accuracy,
+      movement: movement,
+      mastery: mastery,
+      weakestMetric: weakestMetric,
+      stage: mastery >= 0.85 ? "ready" : mastery >= 0.7 ? "steady" : "developing"
+    };
+  }
+
+  function normalizeUnit(value) {
+    if (typeof value !== "number" || !isFinite(value)) return 0;
+    return Math.max(0, Math.min(1, value));
+  }
+
+  function roundUnit(value) {
+    return Math.round(value * 100) / 100;
+  }
+
   window.SparkBassModule = {
     id: "bass",
     appId: "bassspark",
@@ -169,8 +270,8 @@
       return window.BASS_CURRICULUM || [];
     },
 
-    getExercises: function() {
-      return window.BASS_EXERCISES || [];
+    getExercises: function(skill) {
+      return getBassExercisesForSkill(skill);
     },
 
     getSongs: function() {
@@ -185,10 +286,38 @@
       return new BassRhythmAdapter();
     },
 
+    getPracticeRecommendation: function(lesson, exercise, state) {
+      lesson = lesson || {};
+      exercise = exercise || {};
+      state = state || {};
+      var primarySkill = lesson.skill || (lesson.focusSkills && lesson.focusSkills[0]) || "";
+      var hint = BASS_RECOMMENDATION_HINTS[primarySkill] || {
+        reason: "Continue bass progression with a tighter pocket.",
+        focusTag: "bass",
+        priorityBoost: 0
+      };
+      var completedCount = Array.isArray(state.completedLessonIds) ? state.completedLessonIds.length : 0;
+      var progressSummary = summarizeBassSkillProgress(primarySkill, state);
+      var priorityBoost = hint.priorityBoost + Math.min(4, Math.floor(completedCount / 3));
+      var reason = hint.reason;
+      if (progressSummary) {
+        priorityBoost += progressSummary.stage === "developing" ? 3 : progressSummary.stage === "steady" ? 1 : 0;
+        reason = "Bass " + progressSummary.weakestMetric + " is at " + Math.round(progressSummary[progressSummary.weakestMetric] * 100) + "%, so " + hint.reason.toLowerCase();
+      }
+      return {
+        priorityBoost: priorityBoost,
+        reason: reason,
+        focusTag: hint.focusTag,
+        progressSummary: progressSummary,
+        labelSuffix: primarySkill === "walking_bass" ? "Walking" : primarySkill === "root_fifth" ? "Groove" : null
+      };
+    },
+
     getRhythmChartLibrary: function() {
       return BASS_RHYTHM_LIBRARY;
     }
   };
 
   window.SparkBassRhythmAdapter = BassRhythmAdapter;
+  window.summarizeBassSkillProgress = summarizeBassSkillProgress;
 })();

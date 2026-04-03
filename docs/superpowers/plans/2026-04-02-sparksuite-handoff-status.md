@@ -66,6 +66,10 @@ Primary source plans:
   - `js/sparksuite/instruments/bass/bass_module.js`
   - `js/sparksuite/instruments/bass/bass_adapter.js`
   - `tests/test_sparksuite_core_migration.js`
+- Bass module-driven practice recommendations now carry module-owned exercise filtering, focus hints, and progress summaries instead of behaving like a flat legacy exercise list.
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
 - First engine-owned rhythm-highway slice is implemented.
   - `js/sparksuite/core/rhythm_gameplay_engine.js`
   - `js/sparksuite/core/timing_engine.js`
