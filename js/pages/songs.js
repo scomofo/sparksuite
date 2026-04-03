@@ -29,20 +29,28 @@ function strumTab(){
 // ===== SONGS TAB =====
 function songsTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var songBrowserState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var songsSubTab = songBrowserState && songBrowserState.songsSubTab ? songBrowserState.songsSubTab : S.songsSubTab;
+  var songFilter = songBrowserState && typeof songBrowserState.songFilter === "string" ? songBrowserState.songFilter : S.songFilter;
+  var songSort = songBrowserState && songBrowserState.songSort ? songBrowserState.songSort : S.songSort;
+  var songSortAsc = songBrowserState && typeof songBrowserState.songSortAsc === "boolean" ? songBrowserState.songSortAsc : S.songSortAsc;
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Song Library &#127925;</h2></div>';
   // Sub-tabs: Built-in | Community
   h+='<div class="community-tabs">';
-  h+='<button class="community-tab'+(S.songsSubTab==="builtin"?" active":"")+'" onclick="act(\'songsSubTab\',\'builtin\')">&#127925; Built-in</button>';
-  h+='<button class="community-tab'+(S.songsSubTab==="community"?" active":"")+'" onclick="act(\'songsSubTab\',\'community\')">&#127760; Community</button>';
-  h+='<button class="community-tab'+(S.songsSubTab==="import"?" active":"")+'" onclick="act(\'songsSubTab\',\'import\')">&#128196; Import</button>';
-  h+='<button class="community-tab'+(S.songsSubTab==="stems"?" active":"")+'" onclick="act(\'songsSubTab\',\'stems\')">&#127911; Stems</button>';
-  h+='<button class="songs-subtab'+(S.songsSubTab==="perform"?" active":"")+'"'+clickableDiv("act(\'songsSubTab\',\'perform\')")+'>&#127918; Perform</button>';
+  h+='<button class="community-tab'+(songsSubTab==="builtin"?" active":"")+'" onclick="act(\'songsSubTab\',\'builtin\')">&#127925; Built-in</button>';
+  h+='<button class="community-tab'+(songsSubTab==="community"?" active":"")+'" onclick="act(\'songsSubTab\',\'community\')">&#127760; Community</button>';
+  h+='<button class="community-tab'+(songsSubTab==="import"?" active":"")+'" onclick="act(\'songsSubTab\',\'import\')">&#128196; Import</button>';
+  h+='<button class="community-tab'+(songsSubTab==="stems"?" active":"")+'" onclick="act(\'songsSubTab\',\'stems\')">&#127911; Stems</button>';
+  h+='<button class="songs-subtab'+(songsSubTab==="perform"?" active":"")+'"'+clickableDiv("act(\'songsSubTab\',\'perform\')")+'>&#127918; Perform</button>';
   h+='</div>';
 
-  if(S.songsSubTab==="community") return h+communitySection();
-  if(S.songsSubTab==="import") return h+importSection();
-  if(S.songsSubTab==="stems") return h+stemsSection();
-  if(S.songsSubTab==="perform") return h+performSubTab();
+  if(songsSubTab==="community") return h+communitySection();
+  if(songsSubTab==="import") return h+importSection();
+  if(songsSubTab==="stems") return h+stemsSection();
+  if(songsSubTab==="perform") return h+performSubTab();
 
   // Performance Daily Challenge card
   if(S.performanceDailyChallenge){
@@ -58,22 +66,22 @@ function songsTab(){
   }
 
   // Search filter
-  h+='<div style="margin-bottom:12px"><input class="set-input" type="text" placeholder="Search by title, artist, or chord..." value="'+escHTML(S.songFilter)+'" oninput="act(\'songFilter\',this.value)" aria-label="Filter songs"/></div>';
+  h+='<div style="margin-bottom:12px"><input class="set-input" type="text" placeholder="Search by title, artist, or chord..." value="'+escHTML(songFilter)+'" oninput="act(\'songFilter\',this.value)" aria-label="Filter songs"/></div>';
 
   // Sort controls
   var sorts=[["level","Level"],["title","Title"],["artist","Artist"],["bpm","BPM"],["chords","Chords"]];
   h+='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
   for(var si=0;si<sorts.length;si++){
-    var sk=sorts[si][0],sl=sorts[si][1],active=S.songSort===sk;
-    var arrow=active?(S.songSortAsc?" &#9650;":" &#9660;"):"";
+    var sk=sorts[si][0],sl=sorts[si][1],active=songSort===sk;
+    var arrow=active?(songSortAsc?" &#9650;":" &#9660;"):"";
     h+='<button onclick="act(\'songSort\',\''+sk+'\')" style="padding:5px 12px;border-radius:10px;font-size:11px;font-weight:700;background:'+(active?"#4ECDC4":"var(--input-bg)")+';color:'+(active?"#fff":"var(--text-muted)")+';border:1px solid '+(active?"#4ECDC4":"var(--border)")+'">'+sl+arrow+'</button>';
   }
   h+='</div>';
 
   // Filter songs
   var filtered=D.SONGS.slice();
-  if(S.songFilter){
-    var q=S.songFilter.toLowerCase();
+  if(songFilter){
+    var q=songFilter.toLowerCase();
     filtered=filtered.filter(function(s){
       return s.title.toLowerCase().indexOf(q)!==-1||
              s.artist.toLowerCase().indexOf(q)!==-1||
@@ -82,7 +90,7 @@ function songsTab(){
   }
 
   // Sort songs
-  var sortKey=S.songSort||"level",asc=S.songSortAsc;
+  var sortKey=songSort||"level",asc=songSortAsc;
   filtered.sort(function(a,b){
     var va,vb;
     if(sortKey==="title"){va=a.title.toLowerCase();vb=b.title.toLowerCase();}
@@ -96,7 +104,7 @@ function songsTab(){
   });
 
   // Count
-  h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(S.songFilter?" matching &ldquo;"+escHTML(S.songFilter)+"&rdquo;":"")+'</div>';
+  h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(songFilter?" matching &ldquo;"+escHTML(songFilter)+"&rdquo;":"")+'</div>';
 
   h+='<div class="flex-col">';
   for(var i=0;i<filtered.length;i++){
@@ -126,16 +134,23 @@ function songsTab(){
 
 // ===== COMMUNITY SECTION =====
 function communitySection(){
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var songBrowserState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var communityTab = songBrowserState && songBrowserState.communityTab ? songBrowserState.communityTab : S.communityTab;
+  var communitySearch = songBrowserState && typeof songBrowserState.communitySearch === "string" ? songBrowserState.communitySearch : S.communitySearch;
+  var communitySort = songBrowserState && songBrowserState.communitySort ? songBrowserState.communitySort : S.communitySort;
   var h='<div class="community-tabs" style="margin-bottom:12px">';
-  h+='<button class="community-tab'+(S.communityTab==="browse"?" active":"")+'" onclick="act(\'communityTab\',\'browse\')">Browse</button>';
-  h+='<button class="community-tab'+(S.communityTab==="submit"?" active":"")+'" onclick="act(\'communityTab\',\'submit\')">Submit</button>';
+  h+='<button class="community-tab'+(communityTab==="browse"?" active":"")+'" onclick="act(\'communityTab\',\'browse\')">Browse</button>';
+  h+='<button class="community-tab'+(communityTab==="submit"?" active":"")+'" onclick="act(\'communityTab\',\'submit\')">Submit</button>';
   h+='</div>';
 
-  if(S.communityTab==="submit") return h+communitySubmitForm();
+  if(communityTab==="submit") return h+communitySubmitForm();
 
   // Browse
-  h+='<div style="display:flex;gap:8px;margin-bottom:12px"><input class="set-input" style="flex:1" type="text" placeholder="Search songs..." value="'+escHTML(S.communitySearch)+'" oninput="act(\'communitySearch\',this.value)" aria-label="Search community songs"/>';
-  h+='<button onclick="act(\'communitySort\',\''+(S.communitySort==="votes"?"newest":"votes")+'\')" style="padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;background:var(--input-bg);color:var(--text-muted)">'+(S.communitySort==="votes"?"&#11088; Top":"&#128337; New")+'</button></div>';
+  h+='<div style="display:flex;gap:8px;margin-bottom:12px"><input class="set-input" style="flex:1" type="text" placeholder="Search songs..." value="'+escHTML(communitySearch)+'" oninput="act(\'communitySearch\',this.value)" aria-label="Search community songs"/>';
+  h+='<button onclick="act(\'communitySort\',\''+(communitySort==="votes"?"newest":"votes")+'\')" style="padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;background:var(--input-bg);color:var(--text-muted)">'+(communitySort==="votes"?"&#11088; Top":"&#128337; New")+'</button></div>';
 
   if(S.communityLoading){
     h+='<div class="text-center" style="padding:30px;color:var(--text-muted)">Loading...</div>';

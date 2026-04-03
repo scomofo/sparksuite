@@ -577,6 +577,13 @@ function openDailyPracticePlanRequest(options) {
   return null;
 }
 
+function openDashboardPracticePlanRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openDashboardPracticePlan === "function") {
+    return window.sparkCore.openDashboardPracticePlan(options || {});
+  }
+  return openDailyPracticePlanRequest(options || {});
+}
+
 function completeDailyPracticePlanRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeDailyPracticePlan === "function") {
     return window.sparkCore.completeDailyPracticePlan(options || {});
@@ -624,6 +631,16 @@ function openSongSessionRequest(options) {
   return null;
 }
 
+function openCareerSongSelectionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openCareerSongSelection === "function") {
+    return window.sparkCore.openCareerSongSelection(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceSongSelection === "function") {
+    return window.sparkCore.openPerformanceSongSelection(options || {});
+  }
+  return null;
+}
+
 function syncSongRuntimeRequest(action, options) {
   if (window.sparkCore && typeof window.sparkCore.syncSongRuntimeState === "function") {
     return window.sparkCore.syncSongRuntimeState(action, options || {});
@@ -659,6 +676,64 @@ function applySongNavigationRequest(target, options) {
       songPlaying: false,
       transport: { status: target === "song_done" ? "completed" : "idle", positionMs: 0 }
     });
+  }
+  return null;
+}
+
+function applySongBrowserRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.applySongBrowserRequest === "function") {
+    return window.sparkCore.applySongBrowserRequest(action, options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    options = options || {};
+    return window.sparkCore.updateRuntimeState({
+      activeTab: "songs",
+      songsSubTab: Object.prototype.hasOwnProperty.call(options, "songsSubTab") ? options.songsSubTab : S.songsSubTab,
+      songFilter: Object.prototype.hasOwnProperty.call(options, "songFilter") ? options.songFilter : S.songFilter,
+      songSort: Object.prototype.hasOwnProperty.call(options, "songSort") ? options.songSort : S.songSort,
+      songSortAsc: Object.prototype.hasOwnProperty.call(options, "songSortAsc") ? !!options.songSortAsc : !!S.songSortAsc,
+      communityTab: Object.prototype.hasOwnProperty.call(options, "communityTab") ? options.communityTab : S.communityTab,
+      communitySearch: Object.prototype.hasOwnProperty.call(options, "communitySearch") ? options.communitySearch : S.communitySearch,
+      communitySort: Object.prototype.hasOwnProperty.call(options, "communitySort") ? options.communitySort : S.communitySort
+    });
+  }
+  return null;
+}
+
+function applyDashboardRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.applyDashboardRequest === "function") {
+    return window.sparkCore.applyDashboardRequest(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    options = options || {};
+    return window.sparkCore.updateRuntimeState({
+      dashboardRecommendations: Object.prototype.hasOwnProperty.call(options, "recommendations") ? options.recommendations : (S.recommendations || []),
+      dashboardInsights: Object.prototype.hasOwnProperty.call(options, "insights") ? options.insights : (S.personalInsights || null),
+      dashboardChallenges: Object.prototype.hasOwnProperty.call(options, "challenges") ? options.challenges : (S.activeChallenges || []),
+      lastDashboardRefreshAt: Object.prototype.hasOwnProperty.call(options, "refreshedAt") ? options.refreshedAt : Date.now()
+    });
+  }
+  return null;
+}
+
+function applyDashboardNavigationRequest(target) {
+  if (window.sparkCore && typeof window.sparkCore.applyDashboardNavigationRequest === "function") {
+    return window.sparkCore.applyDashboardNavigationRequest(target);
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    var screen = "home_dash";
+    if (target === "recommendations") screen = "recommendations";
+    else if (target === "insights") screen = "insights";
+    else if (target === "challenges") screen = "challenges";
+    else if (target === "career") screen = "career";
+    return window.sparkCore.updateRuntimeState({ activeScreen: screen });
+  }
+  return null;
+}
+
+function applyDashboardChallengeRewardRequest(challengeId) {
+  if (window.sparkCore && typeof window.sparkCore.applyDashboardChallengeReward === "function") {
+    return window.sparkCore.applyDashboardChallengeReward(challengeId);
   }
   return null;
 }
@@ -870,6 +945,7 @@ window.act=function(a,v){
   // === Songs ===
   if(a==="songsSubTab"){
     S.songsSubTab=v;
+    applySongBrowserRequest("songs_subtab", { songsSubTab: S.songsSubTab });
     if(v==="community")fetchCommunity();
     render();return;
   }
@@ -1047,37 +1123,55 @@ window.act=function(a,v){
   }
   // New system screens
   if(a==="openRecommendations"){
+    applyDashboardNavigationRequest("recommendations");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.RECOMMENDATIONS}});
     else S.screen=SCR.RECOMMENDATIONS;
     render();return;
   }
   if(a==="openCareer"){
+    applyDashboardNavigationRequest("career");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CAREER}});
     else S.screen=SCR.CAREER;
     render();return;
   }
   if(a==="openCareerSong"){
     var nextSong=null;
-    if(typeof getContent==="function")nextSong=getContent("songs",v);
+    if(typeof getCareerItem==="function")nextSong=getCareerItem("songs",v);
+    if(nextSong){
+      openCareerSongSelectionRequest({
+        songId: v,
+        songData: nextSong,
+        songTitle: nextSong.title || null,
+        arrangementType: S.performArrangementType || "chords",
+        difficultyId: S.performDifficulty || "normal"
+      });
+      S.performSongData = nextSong;
+      S.performSongId = v;
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{currentSong:nextSong,screen:SCR.PERFORM_SONG}});
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{currentSong:nextSong,performSongData:nextSong,performSongId:v,screen:SCR.PERFORM_SONG}});
     }else{
-      if(typeof getContent==="function")S.currentSong=nextSong;
+      S.currentSong=nextSong;
+      S.performSongData=nextSong;
+      S.performSongId=v;
       S.screen=SCR.PERFORM_SONG;
     }
     render();return;
   }
   if(a==="openInsights"){
+    applyDashboardNavigationRequest("insights");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.INSIGHTS}});
     else S.screen=SCR.INSIGHTS;
     render();return;
   }
   if(a==="openChallengeHub"){
+    applyDashboardNavigationRequest("challenges");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CHALLENGES}});
     else S.screen=SCR.CHALLENGES;
     render();return;
   }
   if(a==="openHomeDash"){
+    applyDashboardNavigationRequest("home_dash");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME_DASH}});
     else S.screen=SCR.HOME_DASH;
     render();return;
@@ -1092,12 +1186,32 @@ window.act=function(a,v){
   if(a==="refreshHome"){
     if(typeof generateRecommendations==="function")generateRecommendations();
     if(typeof generatePersonalInsights==="function")generatePersonalInsights();
+    applyDashboardRequest({
+      recommendations: S.recommendations || [],
+      insights: S.personalInsights || null,
+      challenges: S.activeChallenges || [],
+      refreshedAt: Date.now()
+    });
     render();return;
   }
   if(a==="launchRecommendation"){if(typeof launchRecommendationById==="function")launchRecommendationById(v);return;}
-  if(a==="claimChallengeReward"){if(typeof claimChallengeReward==="function")claimChallengeReward(v);render();return;}
-  if(a==="initChallenges"){if(typeof initializeChallengesForCurrentCycle==="function")initializeChallengesForCurrentCycle();render();return;}
+  if(a==="claimChallengeReward"){
+    if(typeof claimChallengeReward==="function")claimChallengeReward(v);
+    applyDashboardChallengeRewardRequest(v);
+    render();return;
+  }
+  if(a==="initChallenges"){
+    if(typeof initializeChallengesForCurrentCycle==="function")initializeChallengesForCurrentCycle();
+    applyDashboardRequest({
+      recommendations: S.recommendations || [],
+      insights: S.personalInsights || null,
+      challenges: S.activeChallenges || [],
+      refreshedAt: Date.now()
+    });
+    render();return;
+  }
   if(a==="openPracticePlan"){
+    openDashboardPracticePlanRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PLAN}});
     else S.screen=SCR.PLAN;
     render();return;
@@ -1107,9 +1221,13 @@ window.act=function(a,v){
   if(a==="songSort"){
     if(S.songSort===v){S.songSortAsc=!S.songSortAsc;}
     else{S.songSort=v;S.songSortAsc=true;}
+    applySongBrowserRequest("song_sort", {
+      songSort: S.songSort,
+      songSortAsc: S.songSortAsc
+    });
     render();return;
   }
-  if(a==="songFilter"){S.songFilter=v||"";render();return;}
+  if(a==="songFilter"){S.songFilter=v||"";applySongBrowserRequest("song_filter", { songFilter: S.songFilter });render();return;}
   // Stem solo
   if(a==="stemSolo"){
     for(var sk in S.stemToggles)S.stemToggles[sk]=(sk===v);
@@ -1426,9 +1544,9 @@ window.act=function(a,v){
     }return;
   }
   // === Community ===
-  if(a==="communityTab"){S.communityTab=v;render();return;}
-  if(a==="communitySearch"){S.communitySearch=v;fetchCommunity();return;}
-  if(a==="communitySort"){S.communitySort=v;fetchCommunity();return;}
+  if(a==="communityTab"){S.communityTab=v;applySongBrowserRequest("community_tab", { communityTab: S.communityTab });render();return;}
+  if(a==="communitySearch"){S.communitySearch=v;applySongBrowserRequest("community_search", { communitySearch: S.communitySearch });fetchCommunity();return;}
+  if(a==="communitySort"){S.communitySort=v;applySongBrowserRequest("community_sort", { communitySort: S.communitySort });fetchCommunity();return;}
   if(a==="voteSong"){
     fetch(COMMUNITY_URL+"/api/songs/"+v+"/vote",{method:"POST"}).then(function(){fetchCommunity();}).catch(function(){});
     return;
@@ -1837,7 +1955,7 @@ window.act=function(a,v){
   if(a==="skillTreeFocus"){S.skillTreeFocus=v||"overview";render();return;}
   if(a==="openPlan"){
     if(window.sparkCore){
-      openDailyPracticePlanRequest();
+      openDashboardPracticePlanRequest();
     }
     S.screen=SCR.PLAN;render();return;
   }
@@ -2582,18 +2700,22 @@ window.act=function(a,v){
   }
   // === Back ===
   if(a==="back"){
+    var _dashboardBack = S.screen===SCR.RECOMMENDATIONS||S.screen===SCR.INSIGHTS||S.screen===SCR.CHALLENGES||S.screen===SCR.CAREER||S.screen===SCR.HOME_DASH;
     if(S.screen===SCR.SONG||S.screen===SCR.SONG_DONE){
       applySongNavigationRequest("songs_home");
     }
+    if(_dashboardBack){
+      applyDashboardNavigationRequest("dashboard_back");
+    }
     stopAllTimers();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:SCR.HOME}});
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:_dashboardBack?SCR.HOME_DASH:SCR.HOME}});
     }else{
-      S.selectedVoicing=0;S.screen=SCR.HOME;
+      S.selectedVoicing=0;S.screen=_dashboardBack?SCR.HOME_DASH:SCR.HOME;
     }
     if(window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function"){
       window.sparkCore.updateRuntimeState({
-        activeScreen: "home",
+        activeScreen: _dashboardBack ? "home_dash" : "home",
         activeTab: S.tab || null,
         transport: { status: "idle", positionMs: 0 }
       });

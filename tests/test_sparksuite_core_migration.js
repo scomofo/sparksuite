@@ -247,6 +247,15 @@ test("SparkCore can open and complete daily practice through explicit helpers", 
   assert.strictEqual(core.getRuntimeState().transport.status, "completed");
 });
 
+test("SparkCore can open daily practice from dashboard through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.openDashboardPracticePlan();
+
+  assert.ok(plan instanceof SessionPlan);
+  assert.strictEqual(plan.flow, "daily_practice");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "daily_practice");
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
@@ -336,6 +345,93 @@ test("SparkCore can open, sync, navigate, and complete song sessions explicitly"
   assert.strictEqual(homeState.activeScreen, "home");
   assert.strictEqual(homeState.activeTab, "songs");
   assert.strictEqual(homeState.transport.status, "idle");
+});
+
+test("SparkCore can track song browser state explicitly", function() {
+  var core = createDefaultSparkCore();
+  var state = core.applySongBrowserRequest("songs_subtab", {
+    songsSubTab: "community",
+    songFilter: "fire",
+    songSort: "title",
+    songSortAsc: false,
+    communityTab: "submit",
+    communitySearch: "suite",
+    communitySort: "newest"
+  });
+
+  assert.strictEqual(state.activeTab, "songs");
+  assert.strictEqual(state.songsSubTab, "community");
+  assert.strictEqual(state.songFilter, "fire");
+  assert.strictEqual(state.songSort, "title");
+  assert.strictEqual(state.songSortAsc, false);
+  assert.strictEqual(state.communityTab, "submit");
+  assert.strictEqual(state.communitySearch, "suite");
+  assert.strictEqual(state.communitySort, "newest");
+});
+
+test("SparkCore can track dashboard recommendation, insight, and challenge snapshots explicitly", function() {
+  var core = createDefaultSparkCore();
+  var state = core.applyDashboardRequest({
+    recommendations: [{ id: "rec_1", title: "Practice G to C" }],
+    insights: { strongestSkills: [{ id: "timing" }] },
+    challenges: [{ id: "daily_1", title: "Daily Challenge" }],
+    refreshedAt: 12345
+  });
+
+  assert.strictEqual(state.dashboardRecommendations.length, 1);
+  assert.strictEqual(state.dashboardRecommendations[0].id, "rec_1");
+  assert.strictEqual(state.dashboardInsights.strongestSkills[0].id, "timing");
+  assert.strictEqual(state.dashboardChallenges[0].id, "daily_1");
+  assert.strictEqual(state.lastDashboardRefreshAt, 12345);
+});
+
+test("SparkCore can track dashboard navigation and recommendation lookup explicitly", function() {
+  var core = createDefaultSparkCore();
+  core.applyDashboardRequest({
+    recommendations: [{ id: "rec_1", title: "Practice G to C" }]
+  });
+
+  var recommendationState = core.applyDashboardNavigationRequest("recommendations");
+  assert.strictEqual(recommendationState.activeScreen, "recommendations");
+
+  var insightState = core.applyDashboardNavigationRequest("insights");
+  assert.strictEqual(insightState.activeScreen, "insights");
+
+  var backState = core.applyDashboardNavigationRequest("dashboard_back");
+  assert.strictEqual(backState.activeScreen, "home_dash");
+
+  var homeState = core.applyDashboardNavigationRequest("home_dash");
+  assert.strictEqual(homeState.activeScreen, "home_dash");
+
+  var recommendation = core.getDashboardRecommendationById("rec_1");
+  assert.strictEqual(recommendation.title, "Practice G to C");
+  assert.strictEqual(core.getDashboardRecommendationById("missing"), null);
+});
+
+test("SparkCore can build and apply dashboard recommendation launch requests", function() {
+  var core = createDefaultSparkCore();
+  core.applyDashboardRequest({
+    recommendations: [{ id: "rec_song", title: "Play Fire Road" }]
+  });
+
+  var request = core.launchDashboardRecommendation("rec_song");
+  assert.strictEqual(request.recommendationId, "rec_song");
+  assert.strictEqual(request.recommendation.title, "Play Fire Road");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "recommendations");
+  assert.strictEqual(core.getRuntimeState().lastDashboardRecommendationId, "rec_song");
+});
+
+test("SparkCore can update dashboard challenge snapshots after reward claim", function() {
+  var core = createDefaultSparkCore();
+  core.applyDashboardRequest({
+    challenges: [
+      { id: "daily_1", title: "Daily Challenge", completed: true, claimed: false }
+    ]
+  });
+
+  var state = core.applyDashboardChallengeReward("daily_1");
+  assert.strictEqual(state.dashboardChallenges[0].id, "daily_1");
+  assert.strictEqual(state.dashboardChallenges[0].claimed, true);
 });
 
 test("SparkCore can mirror performance runtime state explicitly", function() {
@@ -881,6 +977,50 @@ test("SparkCore can open performance song selection through an explicit helper",
   assert.strictEqual(core.getRuntimeState().performanceSongIndex, 1);
   assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Night Drive");
   assert.strictEqual(core.getRuntimeState().performanceArrangementType, "rhythm_chords");
+  assert.strictEqual(core.getRuntimeState().performanceDifficultyId, "hard");
+});
+
+test("SparkCore can open performance song selection from direct song data", function() {
+  var core = createDefaultSparkCore();
+  var songData = {
+    title: "Career Anthem",
+    artist: "Spark Career",
+    bpm: 92,
+    chords: ["C", "G"],
+    progression: ["C", "G", "Am", "F"]
+  };
+
+  var selectionRequest = core.openPerformanceSongSelection({
+    songId: "career_anthem",
+    songData: songData,
+    arrangementType: "chords",
+    difficultyId: "normal"
+  });
+
+  assert.strictEqual(selectionRequest.songId, "career_anthem");
+  assert.strictEqual(selectionRequest.songData.title, "Career Anthem");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "performance_song");
+  assert.strictEqual(core.getRuntimeState().performanceChartId, "career_anthem");
+  assert.strictEqual(core.getRuntimeState().performanceSongData.title, "Career Anthem");
+  assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Career Anthem");
+});
+
+test("SparkCore can open career song selection through an explicit helper", function() {
+  var core = createDefaultSparkCore();
+  var request = core.openCareerSongSelection({
+    songId: "career_anthem",
+    songData: {
+      title: "Career Anthem",
+      artist: "Spark Career"
+    },
+    arrangementType: "lead",
+    difficultyId: "hard"
+  });
+
+  assert.strictEqual(request.songId, "career_anthem");
+  assert.strictEqual(core.getRuntimeState().activeScreen, "performance_song");
+  assert.strictEqual(core.getRuntimeState().performanceSongData.title, "Career Anthem");
+  assert.strictEqual(core.getRuntimeState().performanceArrangementType, "lead");
   assert.strictEqual(core.getRuntimeState().performanceDifficultyId, "hard");
 });
 

@@ -247,6 +247,36 @@ Primary source plans:
 - Piano’s older in-tab song mode now also mirrors song selection, playback state, and song-exit navigation through the shared song-session helper path instead of remaining a completely separate local runtime island.
   - `js/instruments/piano/app.js`
   - `tests/test_piano_runtime_core_migration.js`
+- Bass guided completion now also mirrors the guided-done transition through the shared guided navigation helper, and bass has dedicated runtime migration coverage instead of only being indirectly covered by the broader core tests.
+  - `js/instruments/bass/app.js`
+  - `tests/test_bass_runtime_core_migration.js`
+- The shared songs browser now has a core-backed state slice for subtab, filter, sort, and community browse/search controls, and the songs page can prefer that SparkCore browser state instead of reading only shell-owned fields.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/pages/songs.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Home/dashboard recommendation, insight, and challenge snapshots now have a core-backed state slice too, and the shared home/recommendation/insight/challenge pages can prefer that SparkCore snapshot instead of reading only shell-owned dashboard fields.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/home/home_engine.js`
+  - `js/recommend/ui.js`
+  - `js/insights/ui.js`
+  - `js/meta/challenge_ui.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Dashboard screen entry and recommendation lookup now also have explicit core-backed helpers, so recommendation/insight/challenge/home-dash navigation is less dependent on raw shell-only screen flips.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/recommend/ui.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Piano’s parallel dashboard actions now also mirror into the shared dashboard navigation/snapshot helpers instead of keeping a separate local-only dashboard flow.
+  - `js/instruments/piano/app.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Dashboard-family return paths now also route through the shared dashboard navigation helper, so recommendation/insight/challenge/career exits are less dependent on generic shell back behavior.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/instruments/piano/app.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_piano_runtime_core_migration.js`
   - `tests/test_sparksuite_core_migration.js`
 - Performance song detail navigation now uses explicit core-backed back/stop transitions, and arrangement changes from the song-detail page now mirror into SparkCore runtime instead of being shell-only settings.
   - `js/app.js`
@@ -366,6 +396,7 @@ Primary source plans:
   - Current parity is achieved with conversion, scoring, preview, hit-color, and overlay layers
   - The underlying note sprite renderer still treats imported techniques generically
 - Progression cleanup is significantly better, but the app still persists to legacy `S.*` state.
+- Dashboard, songs-browser, and career-launch surfaces now have explicit SparkCore-backed state and request helpers, including dedicated career-song selection, recommendation-launch, challenge-claim sync, and dashboard-to-plan entry paths across shared and piano flows, reducing more of the old shell-only navigation/selection logic.
 - Ukulele launcher support is live, but deeper performance/song-library parity is still early.
   - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
   - Broader dedicated song/chart coverage, richer module-specific screens, and deeper gameplay parity can still expand
@@ -386,6 +417,7 @@ Regression coverage currently includes:
 - `tests/test_sparksuite_rhythm_core.js`
 - `tests/test_sparksuite_legacy_bridge_cleanup.js`
 - `tests/test_piano_runtime_core_migration.js`
+- `tests/test_bass_runtime_core_migration.js`
 - `tests/test_performance_core.js`
 
 Current validation command:
