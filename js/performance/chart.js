@@ -92,6 +92,15 @@ function getPerformanceImportAdapter(chartDefinition) {
   if (chartDefinition && chartDefinition.adapter && typeof chartDefinition.adapter.getLaneCount === "function") {
     return chartDefinition.adapter;
   }
+  if (chartDefinition && (chartDefinition.adapterType === "bass" || chartDefinition.instrument === "bass")) {
+    if (typeof SparkBassRhythmAdapter === "function") return new SparkBassRhythmAdapter();
+    if (window.SparkBassModule && typeof window.SparkBassModule.getRhythmAdapter === "function") {
+      return window.SparkBassModule.getRhythmAdapter();
+    }
+    return {
+      getLaneCount: function() { return 4; }
+    };
+  }
   if (chartDefinition && (chartDefinition.adapterType === "ukulele" || chartDefinition.instrument === "ukulele")) {
     if (typeof SparkUkuleleRhythmAdapter === "function") return new SparkUkuleleRhythmAdapter();
     if (window.SparkUkuleleModule && typeof window.SparkUkuleleModule.getRhythmAdapter === "function") {

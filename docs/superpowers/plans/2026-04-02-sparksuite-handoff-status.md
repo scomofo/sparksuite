@@ -126,6 +126,7 @@ Primary source plans:
   - Practice selectors now continue the same focused technique block when planning the next imported-technique drill instead of jumping to a different weak spot too early
   - Performance daily challenges can now preserve and complete focused imported-technique targets instead of flattening those runs into generic song challenges
   - The Songs tab performance-daily card now reads that focused challenge from SparkCore runtime and shows the active technique focus, target accuracy, and reason instead of only generic daily copy
+  - Bass performance mode now has a first manifest-backed import/package chart path instead of only guitar and ukulele package coverage
   - `js/practice/launchers.js`
   - `js/app.js`
   - `js/performance/session.js`
