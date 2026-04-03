@@ -238,6 +238,15 @@ Primary source plans:
   - `js/pages/perform_song.js`
   - `js/pages/perform_calibration.js`
   - `js/sparksuite/core/spark_core.js`
+- The legacy song/player family now has explicit SparkCore helpers for song open, playback-state sync, completion, and navigation, and the shared song detail/done pages can prefer core-backed song session state instead of reading only shell-owned fields.
+  - `js/app.js`
+  - `js/instruments/guitar/app.js`
+  - `js/pages/session.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Piano’s older in-tab song mode now also mirrors song selection, playback state, and song-exit navigation through the shared song-session helper path instead of remaining a completely separate local runtime island.
+  - `js/instruments/piano/app.js`
+  - `tests/test_piano_runtime_core_migration.js`
   - `tests/test_sparksuite_core_migration.js`
 - Performance song detail navigation now uses explicit core-backed back/stop transitions, and arrangement changes from the song-detail page now mirror into SparkCore runtime instead of being shell-only settings.
   - `js/app.js`

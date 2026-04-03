@@ -459,6 +459,13 @@ function songTick() {
     }
   }
   var chord = song.progression[S.songChordIdx];
+  if (typeof window.syncSongRuntimeRequest === "function") {
+    window.syncSongRuntimeRequest("tick", {
+      songData: song,
+      source: "builtin",
+      songBeat: S.songChordIdx
+    });
+  }
   playChordByName(chord, song.style || "block");
   render();
 }
@@ -1268,11 +1275,25 @@ function act(action, param) {
       S.songChordIdx = 0;
       S.songPlaying = false;
       S.bpm = SONGS[parseInt(param)].bpm;
+      if (typeof window.openSongSessionRequest === "function" && SONGS[S.songIdx]) {
+        window.openSongSessionRequest({
+          songData: SONGS[S.songIdx],
+          source: "builtin",
+          songBeat: 0
+        });
+      }
       break;
 
     case "play_song":
       if (S.songPlaying) {
         S.songPlaying = false;
+        if (typeof window.syncSongRuntimeRequest === "function" && SONGS[S.songIdx]) {
+          window.syncSongRuntimeRequest("pause", {
+            songData: SONGS[S.songIdx],
+            source: "builtin",
+            songBeat: S.songChordIdx
+          });
+        }
         if (T.song) { clearInterval(T.song); T.song = null; }
         stopMetronome();
         if (typeof stopMidiBacking === "function") stopMidiBacking();
@@ -1280,6 +1301,13 @@ function act(action, param) {
         S.songPlaying = true;
         var song = SONGS[S.songIdx];
         if (song) {
+          if (typeof window.syncSongRuntimeRequest === "function") {
+            window.syncSongRuntimeRequest("play", {
+              songData: song,
+              source: "builtin",
+              songBeat: S.songChordIdx
+            });
+          }
           var interval = (60000 / S.bpm) * 2;
           playChordByName(song.progression[0], song.style || "block");
           T.song = setInterval(songTick, interval);
@@ -1295,6 +1323,9 @@ function act(action, param) {
       break;
 
     case "song_back":
+      if (typeof window.applySongNavigationRequest === "function") {
+        window.applySongNavigationRequest("songs_home");
+      }
       S.songIdx = null;
       S.songPlaying = false;
       if (T.song) { clearInterval(T.song); T.song = null; }

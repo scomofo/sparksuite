@@ -604,6 +604,72 @@ function openGuidedSessionRequest(options) {
   return null;
 }
 
+function openSongSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openSongSession === "function") {
+    return window.sparkCore.openSongSession(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    options = options || {};
+    return window.sparkCore.updateRuntimeState({
+      activeFlow: "song_session",
+      activeScreen: options.targetScreen || "song",
+      activeTab: "songs",
+      songSessionData: options.songData || null,
+      songSessionSource: options.source || "builtin",
+      songPlaying: !!options.songPlaying,
+      songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat") ? options.songBeat : 0,
+      transport: { status: options.songPlaying ? "running" : "ready", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
+function syncSongRuntimeRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.syncSongRuntimeState === "function") {
+    return window.sparkCore.syncSongRuntimeState(action, options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    options = options || {};
+    return window.sparkCore.updateRuntimeState({
+      activeFlow: "song_session",
+      activeScreen: options.targetScreen || (action === "complete" ? "song_done" : "song"),
+      activeTab: "songs",
+      songSessionData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : window.sparkCore.getRuntimeState().songSessionData,
+      songSessionSource: options.source || window.sparkCore.getRuntimeState().songSessionSource || "builtin",
+      songPlaying: action === "play" ? true : !!options.songPlaying,
+      songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat") ? options.songBeat : 0,
+      transport: {
+        status: action === "complete" ? "completed" : (action === "play" ? "running" : "ready"),
+        positionMs: 0
+      }
+    });
+  }
+  return null;
+}
+
+function applySongNavigationRequest(target, options) {
+  if (window.sparkCore && typeof window.sparkCore.applySongNavigationRequest === "function") {
+    return window.sparkCore.applySongNavigationRequest(target, options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeFlow: "song_session",
+      activeScreen: target === "song_done" ? "song_done" : (target === "song_detail" ? "song" : "home"),
+      activeTab: "songs",
+      songPlaying: false,
+      transport: { status: target === "song_done" ? "completed" : "idle", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
+function completeSongSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeSongSession === "function") {
+    return window.sparkCore.completeSongSession(options || {});
+  }
+  return syncSongRuntimeRequest("complete", options || {});
+}
+
 function completeGuidedSessionRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeGuidedSession === "function") {
     return window.sparkCore.completeGuidedSession(options || {});
@@ -810,6 +876,11 @@ window.act=function(a,v){
   if(a==="toggleSong"){
     snd("click");
     var nextSongPlaying=!S.songPlaying;
+    syncSongRuntimeRequest(nextSongPlaying ? "play" : "pause", {
+      songData: S.selectedSong,
+      source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
+      songBeat: nextSongPlaying ? 0 : S.songBeat
+    });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
         setFields:nextSongPlaying?{songPlaying:true,songBeat:0}:{songPlaying:false},
@@ -824,7 +895,11 @@ window.act=function(a,v){
       var ms=60000/S.selectedSong.bpm;
       var cn=S.selectedSong.progression[0];strumChord(CHORD_NAME_MAP[cn]||cn);
       render();
-      T.song=setInterval(function(){S.songBeat=(S.songBeat+1)%S.selectedSong.progression.length;var cn=S.selectedSong.progression[S.songBeat];strumChord(CHORD_NAME_MAP[cn]||cn);render();},ms);
+      T.song=setInterval(function(){
+        S.songBeat=(S.songBeat+1)%S.selectedSong.progression.length;
+        syncSongRuntimeRequest("tick", { songBeat: S.songBeat });
+        var cn=S.selectedSong.progression[S.songBeat];strumChord(CHORD_NAME_MAP[cn]||cn);render();
+      },ms);
     }else{render();}return;
   }
   if(a==="completeSong"){
@@ -851,8 +926,31 @@ window.act=function(a,v){
       _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
       checkBadges();saveState();
     }
+    completeSongSessionRequest({
+      songData: S.selectedSong,
+      source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
+      songBeat: S.songBeat
+    });
     fireMicro("full_song","Rockstar!","&#127908;");
     trigC();S.screen=SCR.SONG_DONE;render();return;
+  }
+  if(a==="songBack"){
+    applySongNavigationRequest("songs_home");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
+  }
+  if(a==="songDoneHome"){
+    applySongNavigationRequest("songs_home");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
   }
   // === Tuner ===
   if(a==="startTuner"){
@@ -1314,6 +1412,7 @@ window.act=function(a,v){
   if(a==="playImport"){
     var idx=parseInt(v);
     if(idx>=0&&idx<S.importedSongs.length){
+      openSongSessionRequest({ songData: S.importedSongs[idx], source: "imported" });
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({
           setFields:{selectedSong:S.importedSongs[idx],songPlaying:false,songBeat:0,screen:SCR.SONG},
@@ -1346,6 +1445,7 @@ window.act=function(a,v){
         pattern:JSON.parse(song.pattern||'["D","D","U","U","D","U"]')
       };
       if(!Array.isArray(parsed.chords)||!Array.isArray(parsed.progression)){throw new Error("Invalid song data");}
+      openSongSessionRequest({ songData: parsed, source: "community" });
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({
           setFields:{selectedSong:parsed,songPlaying:false,songBeat:0,screen:SCR.SONG},
@@ -2482,6 +2582,9 @@ window.act=function(a,v){
   }
   // === Back ===
   if(a==="back"){
+    if(S.screen===SCR.SONG||S.screen===SCR.SONG_DONE){
+      applySongNavigationRequest("songs_home");
+    }
     stopAllTimers();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:SCR.HOME}});

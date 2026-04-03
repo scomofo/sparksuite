@@ -153,22 +153,29 @@ function strumDetailPage(){
 function songDetailPage(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
-  var sg=S.selectedSong;if(!sg)return '';
-  var patBeat=S.songPlaying?(S.songBeat%sg.pattern.length):-1;
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var sg = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : S.selectedSong;
+  if(!sg)return '';
+  var songPlaying = songRuntime && typeof songRuntime.songPlaying === "boolean" ? songRuntime.songPlaying : S.songPlaying;
+  var songBeat = songRuntime && typeof songRuntime.songBeat === "number" ? songRuntime.songBeat : S.songBeat;
+  var patBeat=songPlaying?(songBeat%sg.pattern.length):-1;
   var curDir=patBeat>=0?sg.pattern[patBeat]:"x";
-  var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(sg.title)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(sg.artist)+' &#8226; '+sg.bpm+' BPM</p>';
+  var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(sg.title)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(sg.artist)+' &#8226; '+sg.bpm+' BPM</p>';
   h+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
   for(var i=0;i<sg.chords.length;i++)
     h+='<span style="background:var(--chip-bg);padding:4px 12px;border-radius:10px;font-size:13px;font-weight:700;color:var(--chip-color)">'+escHTML(sg.chords[i])+'</span>';
   h+='</div>';
   h+='<div class="card mb16"><h4 style="margin:0 0 10px;font-size:14px;color:var(--text-primary)">Chord Progression</h4><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">';
   for(var i=0;i<sg.progression.length;i++){
-    var c=sg.progression[i],isA=S.songPlaying&&i===S.songBeat;
+    var c=sg.progression[i],isA=songPlaying&&i===songBeat;
     h+='<div style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:'+(isA?"#FF6B6B":"var(--chip-bg)")+';color:'+(isA?"#fff":"var(--chip-color)")+';font-size:16px;font-weight:800;border:2px solid '+(isA?"#FF6B6B":"var(--border)")+';transition:all .15s;transform:'+(isA?"scale(1.15)":"scale(1)")+'">'+escHTML(c)+'</div>';
   }
   h+='</div></div>';
-  if(S.songPlaying){
-    var cn=sg.progression[S.songBeat],ch=null;
+  if(songPlaying){
+    var cn=sg.progression[songBeat],ch=null;
     for(var i=0;i<D.ALL_CHORDS.length;i++)if(D.ALL_CHORDS[i].short===cn||D.ALL_CHORDS[i].name===cn)ch=D.ALL_CHORDS[i];
     if(ch)h+='<div class="card mb16"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
   }
@@ -185,12 +192,16 @@ function songDetailPage(){
     h+='<button onclick="act(\'setTone\',\''+t+'\')" style="padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;background:'+(sel?"#4ECDC4":"var(--input-bg)")+';color:'+(sel?"#fff":"var(--text-muted)")+';border:2px solid '+(sel?"#4ECDC4":"var(--border)")+';transition:all .2s">'+toneLabels[t]+'</button>';
   }
   h+='</div></div>';
-  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleSong\')" style="background:'+(S.songPlaying?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(S.songPlaying?"var(--text-primary)":"#fff")+'">'+(S.songPlaying?"&#9208; Pause":"&#9654; Play Along")+'</button>';
-  if(S.songPlaying)h+='<button class="btn" onclick="act(\'completeSong\')" style="background:#4ECDC4;color:#fff">&#10003; Done</button>';
+  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleSong\')" style="background:'+(songPlaying?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(songPlaying?"var(--text-primary)":"#fff")+'">'+(songPlaying?"&#9208; Pause":"&#9654; Play Along")+'</button>';
+  if(songPlaying)h+='<button class="btn" onclick="act(\'completeSong\')" style="background:#4ECDC4;color:#fff">&#10003; Done</button>';
   return h+'</div></div>';
 }
 
 function songDonePage(){
-  var t=S.selectedSong?escHTML(S.selectedSong.title):"";
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#127925;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Song Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px">You played <strong>'+t+'</strong></p><div class="card mb20"><div style="font-size:28px;font-weight:900;color:#FFE66D">+40 XP</div></div><button class="btn" onclick="act(\'tab\',\'songs\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div>';
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var t=songRuntime && songRuntime.songSessionData ? escHTML(songRuntime.songSessionData.title || "") : (S.selectedSong?escHTML(S.selectedSong.title):"");
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#127925;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Song Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px">You played <strong>'+t+'</strong></p><div class="card mb20"><div style="font-size:28px;font-weight:900;color:#FFE66D">+40 XP</div></div><button class="btn" onclick="act(\'songDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div>';
 }
