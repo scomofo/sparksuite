@@ -207,9 +207,10 @@ test('getPerformanceChartLibrary includes package-backed entries for the perform
 
 test('getPerformanceChartLibrary can filter the manifest by instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'ukulele' });
-  assert.strictEqual(library.length, 2);
+  assert.strictEqual(library.length, 3);
   assert.strictEqual(library[0].instrument, 'ukulele');
   assert.strictEqual(library[1].instrument, 'ukulele');
+  assert.strictEqual(library[2].instrument, 'ukulele');
 });
 
 test('normalizePerformanceChartDefinition supports ukulele package charts through manifest adapter metadata', function() {
@@ -280,6 +281,42 @@ test('normalizePerformanceChartDefinition supports the second ukulele package ch
   });
 
   assert.strictEqual(performanceChart.title, 'Sunset Switches');
+  assert.strictEqual(performanceChart.events.length, 4);
+});
+
+test('normalizePerformanceChartDefinition supports the third ukulele picking package chart', function() {
+  var performanceChart = normalizePerformanceChartDefinition({
+    id: 'ukulele_moonlit_picking_package',
+    title: 'Moonlit Picking',
+    artist: 'SparkSuite Ukulele',
+    packageFormat: 'sparksuite_import_v1',
+    adapterType: 'ukulele',
+    instrument: 'ukulele',
+    chartImport: {
+      files: {
+        'notes.chart': [
+          '[Song]',
+          '{',
+          '  Resolution = 192',
+          '}',
+          '[SyncTrack]',
+          '{',
+          '  0 = B 83333',
+          '}',
+          '[ExpertSingle]',
+          '{',
+          '  0 = N 3 0',
+          '  96 = N 2 0',
+          '  192 = N 1 0',
+          '  288 = N 0 0',
+          '}'
+        ].join('\n'),
+        'song.ini': '[song]\nname = Moonlit Picking\nartist = SparkSuite Ukulele'
+      }
+    }
+  });
+
+  assert.strictEqual(performanceChart.title, 'Moonlit Picking');
   assert.strictEqual(performanceChart.events.length, 4);
 });
 

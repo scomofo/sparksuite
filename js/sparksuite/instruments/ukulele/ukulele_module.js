@@ -150,7 +150,8 @@
     return [
       { title: "Island Loop", artist: "SparkSuite", progression: ["C", "Am", "F", "G"], bpm: 78, focus: "steady island groove" },
       { title: "Sunset Switches", artist: "SparkSuite", progression: ["F", "G", "Em", "Am"], bpm: 74, focus: "clean chord changes" },
-      { title: "Palm Arpeggio", artist: "SparkSuite", progression: ["C", "G", "Am", "F"], bpm: 68, focus: "fingerpicked flow" }
+      { title: "Palm Arpeggio", artist: "SparkSuite", progression: ["C", "G", "Am", "F"], bpm: 68, focus: "fingerpicked flow" },
+      { title: "Moonlit Picking", artist: "SparkSuite", progression: ["Am", "F", "C", "G"], bpm: 72, focus: "steady arpeggio motion" }
     ];
   }
 
