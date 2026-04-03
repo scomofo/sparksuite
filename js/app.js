@@ -3031,8 +3031,22 @@ window.act=function(a,v){
   if(a==="performDebug"){S.performDebug=!S.performDebug;render();return;}
   if(a==="performRetryPhrase"){
     if(S.performChart&&S.performResults&&S.performResults.phraseStats){
-      var weakIdx=0,weakAvg=Infinity;
+      var targetTechnique = null;
+      if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
+        var coreView = window.sparkCore.getActiveSessionView();
+        if(coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceTargetTechnique")){
+          targetTechnique = coreView.runtimeState.performanceTargetTechnique;
+        }
+      }
+      if(!targetTechnique) targetTechnique = S.performTargetTechnique || null;
+      var candidateIndices = null;
+      if(targetTechnique && typeof getPerformancePhraseIndicesForTechnique === "function"){
+        candidateIndices = getPerformancePhraseIndicesForTechnique(S.performChart, targetTechnique);
+        if(!candidateIndices || !candidateIndices.length) candidateIndices = null;
+      }
+      var weakIdx=candidateIndices && candidateIndices.length ? candidateIndices[0] : 0,weakAvg=Infinity;
       for(var wi=0;wi<S.performResults.phraseStats.length;wi++){
+        if(candidateIndices && candidateIndices.indexOf(wi) === -1) continue;
         var wp=S.performResults.phraseStats[wi];
         var wa=wp.total>0?wp.scoreSum/wp.total:0;
         if(wa<weakAvg){weakAvg=wa;weakIdx=wi;}
