@@ -118,6 +118,13 @@ Primary source plans:
   - `index.html`
 - Imported chart semantics now survive conversion into performance-mode events.
   - Preserved fields include `laneMask`, `sourceFlags`, `sourceLabel`, and `sourceSkillId`
+- Imported-technique practice launches now carry their focus all the way through performance song detail, start/retry requests, and the result screen instead of stopping at plan metadata.
+  - `js/practice/launchers.js`
+  - `js/app.js`
+  - `js/performance/session.js`
+  - `js/pages/perform_song.js`
+  - `js/pages/perform.js`
+  - `js/sparksuite/core/spark_core.js`
   - Imported `open` and `tap` events keep distinct event types
   - `js/performance/chart.js`
 - Imported chart semantics now affect performance scoring.

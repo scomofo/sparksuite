@@ -3024,7 +3024,8 @@ window.act=function(a,v){
       difficulty:retryRequest.difficulty,
       speed:retryRequest.speed,
       preset:retryRequest.preset,
-      mode:retryRequest.mode
+      mode:retryRequest.mode,
+      targetTechnique: retryRequest.targetTechnique
     });return;
   }
   if(a==="performDebug"){S.performDebug=!S.performDebug;render();return;}
@@ -3047,7 +3048,8 @@ window.act=function(a,v){
         startPerformance(retryPhraseRequest.chartId||retryPhraseRequest.chart,{
           mode:retryPhraseRequest.mode,
           difficulty:retryPhraseRequest.difficulty,
-          speed:retryPhraseRequest.speed
+          speed:retryPhraseRequest.speed,
+          targetTechnique: retryPhraseRequest.targetTechnique
         });
         // Set loop after start (chart needs to load first) - use setTimeout to let it resolve
         setTimeout(function(){

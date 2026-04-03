@@ -34,6 +34,16 @@ function startCalibration() {
   render();
 }
 
+function formatTechniqueFocusLabel(key) {
+  var labels = {
+    open: "Open-note timing",
+    tap: "Tap-note consistency",
+    forced: "Forced-note transitions",
+    specialPhrase: "Phrase section control"
+  };
+  return labels[key] || String(key || "Technique");
+}
+
 function recordCalibrationTap() {
   if (!S._calibrating) return;
   var expected = S._calibExpectedTime - S._calibBeatMs;
@@ -267,6 +277,9 @@ function performDonePage() {
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var r = runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults;
+  var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+    ? runtimeState.performanceTargetTechnique
+    : S.performTargetTechnique;
   if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
   var h = '<div class="perform-page text-center" style="padding-top:20px">';
@@ -337,6 +350,14 @@ function performDonePage() {
     h += '</div>';
   }
 
+  if (targetTechnique) {
+    h += '<div class="card mb20" style="text-align:left;border:1px solid #FF8A5C44;background:linear-gradient(135deg,#FF8A5C12,#FFE66D12)">';
+    h += '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Technique Focus</div>';
+    h += '<div style="font-size:14px;color:var(--text-primary);font-weight:800">' + escHTML(formatTechniqueFocusLabel(targetTechnique)) + '</div>';
+    h += '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">Keep this same focus on retry so the next run stays aimed at the weak spot.</div>';
+    h += '</div>';
+  }
+
   // Best and weakest phrases
   if (r.phraseStats && r.phraseStats.length > 1) {
     var bestIdx = 0, worstIdx = 0;
@@ -355,13 +376,18 @@ function performDonePage() {
 
   // Buttons
   h += '<div class="flex-col">';
-  h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; Retry</button>';
+  h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; ' + escHTML(targetTechnique ? ("Retry " + formatTechniqueFocusLabel(targetTechnique)) : "Retry") + '</button>';
   h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; Retry Weakest</button>';
   h += '<button class="btn" onclick="act(\'performDoneSongs\')" style="background:#4ECDC4;color:#fff">&#127968; Songs</button>';
   h += '</div>';
 
   // Next step recommendation
-  if(typeof buildPerformanceRecommendationsForSong==="function"&&r.title){
+  var focusedTechniqueRow = targetTechnique ? getTechniqueSummaryRow(r.importedTechniqueSummary, targetTechnique) : null;
+  if (focusedTechniqueRow) {
+    h += '<div class="card" style="margin-top:12px;text-align:left"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Next Step</div>';
+    h += '<div style="font-size:13px;color:var(--text-primary)">' + escHTML("Stay on " + formatTechniqueFocusLabel(targetTechnique)) + '</div>';
+    h += '<div style="font-size:11px;color:var(--text-dim)">' + escHTML("You hit " + focusedTechniqueRow.hits + " of " + focusedTechniqueRow.total + " focused notes. Retry this same target to lock it in.") + '</div></div>';
+  } else if(typeof buildPerformanceRecommendationsForSong==="function"&&r.title){
     var songId=(r.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
     var nextRecs=buildPerformanceRecommendationsForSong(songId);
     if(nextRecs&&nextRecs.length){
@@ -407,6 +433,11 @@ function renderImportedTechniqueSummaryRows(summary) {
     h += '</div>';
   }
   return h;
+}
+
+function getTechniqueSummaryRow(summary, key) {
+  if (!summary || !key || !Object.prototype.hasOwnProperty.call(summary, key)) return null;
+  return summary[key] || null;
 }
 
 function renderImportedTechniqueFlags(flags) {

@@ -1419,7 +1419,8 @@ test("SparkCore can start a selected performance song through an explicit helper
     songIndex: 1,
     songTitle: "Night Drive",
     arrangementType: "rhythm_chords",
-    difficultyId: "hard"
+    difficultyId: "hard",
+    targetTechnique: "tap"
   });
 
   var startRequest = core.startSelectedPerformanceSong({
@@ -1431,7 +1432,8 @@ test("SparkCore can start a selected performance song through an explicit helper
     speed: 0.8,
     mode: "mic",
     preset: "guitar_solo",
-    countIn: true
+    countIn: true,
+    targetTechnique: "tap"
   });
 
   assert.strictEqual(startRequest.chartId, "night_drive");
@@ -1442,8 +1444,10 @@ test("SparkCore can start a selected performance song through an explicit helper
   assert.strictEqual(startRequest.speed, 0.8);
   assert.strictEqual(startRequest.mode, "mic");
   assert.strictEqual(startRequest.preset, "guitar_solo");
+  assert.strictEqual(startRequest.targetTechnique, "tap");
   assert.strictEqual(core.getRuntimeState().activeScreen, "perform");
   assert.strictEqual(core.getRuntimeState().transport.status, "count_in");
+  assert.strictEqual(core.getRuntimeState().performanceTargetTechnique, "tap");
 });
 
 test("SparkCore can build retry launch requests from performance runtime state", function() {
@@ -1458,7 +1462,8 @@ test("SparkCore can build retry launch requests from performance runtime state",
   core.syncPerformanceRuntimeState("configure", {
     speed: 0.75,
     mode: "mic",
-    preset: "guitar_solo"
+    preset: "guitar_solo",
+    targetTechnique: "open"
   });
 
   var retryRequest = core.startPerformanceRetrySession({
@@ -1470,10 +1475,12 @@ test("SparkCore can build retry launch requests from performance runtime state",
   assert.strictEqual(retryRequest.speed, 0.75);
   assert.strictEqual(retryRequest.mode, "mic");
   assert.strictEqual(retryRequest.preset, "guitar_solo");
+  assert.strictEqual(retryRequest.targetTechnique, "open");
   assert.strictEqual(retryRequest.songIndex, 1);
   assert.strictEqual(retryRequest.songTitle, "Night Drive");
   assert.strictEqual(core.getRuntimeState().activeScreen, "perform");
   assert.strictEqual(core.getRuntimeState().performanceChartId, "night_drive");
+  assert.strictEqual(core.getRuntimeState().performanceTargetTechnique, "open");
   assert.strictEqual(core.getRuntimeState().transport.status, "running");
 
   var phraseRetryRequest = core.startPerformanceRetrySession({
@@ -1482,6 +1489,32 @@ test("SparkCore can build retry launch requests from performance runtime state",
   });
   assert.strictEqual(phraseRetryRequest.targetPhraseIndex, 2);
   assert.strictEqual(phraseRetryRequest.chartId, "night_drive");
+});
+
+test("SparkCore preserves focused imported technique through performance finish", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceRuntimeState("select_song", {
+    chartId: "night_drive",
+    songTitle: "Night Drive",
+    targetTechnique: "forced"
+  });
+  core.syncPerformanceRuntimeState("start", {
+    chartId: "night_drive",
+    difficulty: "hard",
+    arrangementType: "rhythm_chords",
+    speed: 1,
+    mode: "midi",
+    preset: "full_mix",
+    targetTechnique: "forced"
+  });
+  core.syncPerformanceRuntimeState("finish", {
+    screen: "perform_done",
+    results: { title: "Night Drive", accuracy: 82 },
+    targetTechnique: "forced"
+  });
+
+  assert.strictEqual(core.getRuntimeState().activeScreen, "perform_done");
+  assert.strictEqual(core.getRuntimeState().performanceTargetTechnique, "forced");
 });
 
 test("SparkCore can build and apply calibration requests from runtime state", function() {
