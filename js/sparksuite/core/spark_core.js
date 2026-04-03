@@ -190,6 +190,7 @@
       performanceArrangementType: this.runtimeState.performanceArrangementType,
       performanceSpeed: this.runtimeState.performanceSpeed,
       performancePracticePreset: this.runtimeState.performancePracticePreset,
+      performanceTargetTechnique: this.runtimeState.performanceTargetTechnique,
       performanceLoop: this.runtimeState.performanceLoop,
       performanceInputMode: this.runtimeState.performanceInputMode,
       performanceEditorMode: this.runtimeState.performanceEditorMode,
@@ -1779,6 +1780,7 @@
       next.performanceArrangementType = payload.arrangementType || this.runtimeState.performanceArrangementType;
       next.performanceSpeed = payload.speed || this.runtimeState.performanceSpeed || 1;
       next.performancePracticePreset = payload.preset || this.runtimeState.performancePracticePreset;
+      if (Object.prototype.hasOwnProperty.call(payload, "targetTechnique")) next.performanceTargetTechnique = payload.targetTechnique;
       next.performanceLoop = null;
       next.performanceInputMode = payload.mode || this.runtimeState.performanceInputMode;
       next.performanceCalibrationMode = false;
@@ -1791,6 +1793,7 @@
       if (Object.prototype.hasOwnProperty.call(payload, "songData")) next.performanceSongData = this.cloneValue(payload.songData);
       if (Object.prototype.hasOwnProperty.call(payload, "songIndex")) next.performanceSongIndex = payload.songIndex;
       if (Object.prototype.hasOwnProperty.call(payload, "songTitle")) next.performanceSongTitle = payload.songTitle;
+      if (Object.prototype.hasOwnProperty.call(payload, "targetTechnique")) next.performanceTargetTechnique = payload.targetTechnique;
       if (Object.prototype.hasOwnProperty.call(payload, "difficulty")) next.performanceDifficultyId = payload.difficulty;
       if (Object.prototype.hasOwnProperty.call(payload, "arrangementType")) next.performanceArrangementType = payload.arrangementType;
       next.performanceCalibrationMode = false;
@@ -1923,6 +1926,7 @@
       next.activeScreen = payload.screen || "perform_done";
       next.performanceLoop = null;
       next.performanceCalibrationMode = false;
+      if (Object.prototype.hasOwnProperty.call(payload, "targetTechnique")) next.performanceTargetTechnique = payload.targetTechnique;
       next.performanceResults = payload.results || this.runtimeState.performanceResults;
       next.transport = { status: "completed", positionMs: this.runtimeState.transport.positionMs || 0 };
     } else if (action === "start_failed") {

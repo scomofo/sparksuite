@@ -133,7 +133,10 @@ function startPerformance(chartIdOrChart, opts) {
         speed: opts.speed || S.performSpeed,
         mode: opts.mode || S.performMode,
         preset: opts.preset || S.performPracticePreset,
-        countIn: !!S.performCountIn
+        countIn: !!S.performCountIn,
+        targetTechnique: Object.prototype.hasOwnProperty.call(opts, "targetTechnique")
+          ? opts.targetTechnique
+          : (S.performTargetTechnique || null)
       });
     }
 
