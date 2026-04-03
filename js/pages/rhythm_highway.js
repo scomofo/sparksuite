@@ -6,7 +6,13 @@
     segmentId: null
   };
 
-  function startRhythmHighwaySegment(segmentId) {
+  var ASSIST_PRESETS = [
+    { id: "spark_learning", label: "Guided", hint: "Wider timing and fret forgiveness" },
+    { id: "spark_balanced", label: "Balanced", hint: "Closer to standard timing" },
+    { id: "spark_challenge", label: "Challenge", hint: "Tighter timing and stricter fret checks" }
+  ];
+
+  function startRhythmHighwaySegment(segmentId, presetName) {
     if (!window.sparkCore || typeof window.sparkCore.getSegmentById !== "function") return false;
     var segment = window.sparkCore.getSegmentById(segmentId);
     if (!segment || !segment.meta || !segment.meta.gameplayPayload) return false;
@@ -14,15 +20,17 @@
     stopSparkRhythmHighway();
 
     var payload = segment.meta.gameplayPayload;
+    var resolvedPresetName = resolveRhythmHighwayPresetName(presetName || S.rhythmHighwayPreset || payload.enginePreset);
     runtime.segmentId = segmentId;
     runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock("guitar");
     runtime.engine = new SparkRhythmGameplayEngine({
       chart: payload.songChart,
       adapter: new SparkGuitarRhythmAdapter(),
-      preset: SparkEnginePresetRegistry.get(payload.enginePreset)
+      preset: SparkEnginePresetRegistry.get(resolvedPresetName)
     });
 
     S.activeCoreSegmentId = segmentId;
+    S.rhythmHighwayPreset = resolvedPresetName;
     S.rhythmHighwayHeldMask = 0;
     S.rhythmHighwaySnapshot = runtime.engine.getSnapshot(0);
     S.rhythmHighwayResult = null;
@@ -89,8 +97,20 @@
     if (!snapshot) return '<div class="text-center"><p>No rhythm session active.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
     var labels = ["G", "R", "Y", "B", "O"];
+    var activePreset = getCurrentAssistPreset();
     var h = '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Highway</h2>';
-    h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:12px">Hold frets 1-5 and strum on time. Audio clock drives the run; this page only renders snapshots.</p>';
+    h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">Hold frets 1-5 and strum on time. Audio clock drives the run; this page only renders snapshots.</p>';
+    h += '<div style="margin-bottom:14px">';
+    h += '<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:6px">Assist Mode</div>';
+    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">';
+    for (var pi = 0; pi < ASSIST_PRESETS.length; pi++) {
+      var preset = ASSIST_PRESETS[pi];
+      var presetActive = activePreset && activePreset.id === preset.id;
+      h += '<button class="btn" onclick="act(\'rhythmHighwayPreset\',\'' + preset.id + '\')" style="min-width:112px;background:' + (presetActive ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (presetActive ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + preset.label + '</button>';
+    }
+    h += '</div>';
+    h += '<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">' + escHTML(activePreset ? activePreset.hint : "Switching assist mode restarts the run.") + '</div>';
+    h += '</div>';
     h += '<div style="display:flex;justify-content:center;gap:18px;margin-bottom:12px">';
     h += '<div><div style="font-size:24px;font-weight:900;color:#FFE66D">' + snapshot.gameplay.score + '</div><div style="font-size:10px;color:var(--text-muted)">Score</div></div>';
     h += '<div><div style="font-size:24px;font-weight:900;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div style="font-size:10px;color:var(--text-muted)">Max Combo</div></div>';
@@ -133,8 +153,12 @@
     var result = S.rhythmHighwayResult;
     var gameplay = result.gameplay || {};
     var learning = result.learning || {};
+    var activePreset = getCurrentAssistPreset();
     var h = '<div class="text-center" style="padding-top:16px"><div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
     h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Rhythm Highway Complete</h2>';
+    if (activePreset) {
+      h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Assist Mode: <span style="color:var(--text-primary);font-weight:800">' + escHTML(activePreset.label) + "</span></div>";
+    }
     h += '<div class="card mb16"><div style="display:flex;justify-content:space-around;text-align:center">';
     h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">' + gameplay.score + '</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
     h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + Math.round((gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
@@ -179,6 +203,21 @@
 
   function maskHasLane(mask, laneIndex) {
     return (mask & (1 << laneIndex)) !== 0;
+  }
+
+  function resolveRhythmHighwayPresetName(name) {
+    var presets = window.SparkEnginePresetRegistry && typeof SparkEnginePresetRegistry.all === "function"
+      ? SparkEnginePresetRegistry.all()
+      : {};
+    return presets[name] ? name : "spark_learning";
+  }
+
+  function getCurrentAssistPreset() {
+    var presetName = resolveRhythmHighwayPresetName(S.rhythmHighwayPreset);
+    for (var i = 0; i < ASSIST_PRESETS.length; i++) {
+      if (ASSIST_PRESETS[i].id === presetName) return ASSIST_PRESETS[i];
+    }
+    return ASSIST_PRESETS[0];
   }
 
   function laneColor(index) {

@@ -337,6 +337,32 @@ test("chart io loads notes.mid packages through a single package entry point", f
   assert.strictEqual(chart.tracks.guitar.notes.length, 1);
 });
 
+test("engine preset registry exposes selectable spark rhythm assist presets", function() {
+  var presets = SparkEnginePresetRegistry.all();
+
+  assert.ok(presets.spark_learning);
+  assert.ok(presets.spark_balanced);
+  assert.ok(presets.spark_challenge);
+  assert.ok(presets.spark_learning.hitWindowMs.miss > presets.spark_balanced.hitWindowMs.miss);
+  assert.ok(presets.spark_balanced.hitWindowMs.miss > presets.spark_challenge.hitWindowMs.miss);
+  assert.strictEqual(presets.spark_challenge.extraFretTolerance, false);
+});
+
+test("rhythm gameplay engine can run with tighter challenge preset timing", function() {
+  var adapter = new SparkGuitarRhythmAdapter();
+  var payload = adapter.createPayload({});
+  var engine = new SparkRhythmGameplayEngine({
+    chart: payload.songChart,
+    adapter: adapter,
+    preset: SparkEnginePresetRegistry.get("spark_challenge")
+  });
+
+  var snapshot = engine.update(0);
+  assert.strictEqual(engine.preset.name, "spark_challenge");
+  assert.strictEqual(snapshot.gameplay.score, 0);
+  assert.strictEqual(engine.preset.hitWindowMs.miss, 145);
+});
+
 test("rhythm gameplay engine produces deterministic results for the same input stream", function() {
   var adapter = new SparkGuitarRhythmAdapter();
   var payload = adapter.createPayload({});

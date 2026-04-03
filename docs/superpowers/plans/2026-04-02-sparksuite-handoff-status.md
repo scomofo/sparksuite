@@ -78,6 +78,13 @@ Primary source plans:
   - `js/sparksuite/core/replay_engine.js`
   - `js/sparksuite/core/calibration_engine.js`
   - `js/pages/rhythm_highway.js`
+- Rhythm Highway now has explicit SparkSuite assist presets instead of only one hidden default.
+  - Guided, Balanced, and Challenge assist modes now route through `SparkEnginePresetRegistry`
+  - Start/restart preserve the selected assist mode
+  - `js/sparksuite/domain/engine_preset.js`
+  - `js/pages/rhythm_highway.js`
+  - `js/app.js`
+  - `tests/test_sparksuite_rhythm_core.js`
 - Chart import parity moved beyond the first `.chart` slice.
   - `SparkChartIO.fromNotesChart(...)` supports `notes.chart` + `song.ini`
   - `SparkChartIO.fromMidiBuffer(...)` supports `.mid` import with tempo changes, time signatures, track selection, marker phrases, and channel filtering
@@ -438,7 +445,6 @@ Primary source plans:
 - SparkSuite core now owns more of the piano runtime too, but broader piano gameplay/runtime and other legacy instrument flows still have local orchestration paths.
 - Performance session orchestration is much thinner now, but the live transport/game loop still lives outside SparkCore.
 - Rhythm-highway architecture exists and is playable, but later-phase gameplay features are still partial.
-  - Assist-mode depth
   - richer loop tooling
   - broader instrument-specific rhythm libraries
 - Performance imported-chart support is integrated, but the shared `SparkHighway` renderer itself has not been deeply modified.

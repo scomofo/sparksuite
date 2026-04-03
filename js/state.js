@@ -238,6 +238,7 @@ var S={
 
   // Core-owned rhythm highway runtime (transient)
   activeCoreSegmentId:null,
+  rhythmHighwayPreset:"spark_learning",
   rhythmHighwayHeldMask:0,
   rhythmHighwaySnapshot:null,
   rhythmHighwayResult:null,
