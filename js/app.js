@@ -223,10 +223,30 @@ function changeRunnerTarget(){
       S.runnerObstacles[i].isTarget=S.runnerObstacles[i].name===S.runnerTarget.name;
     }
   }
+  syncLegacyRunnerRuntimeRequest({
+    active: S.runnerActive,
+    targetName: S.runnerTarget ? S.runnerTarget.name : null,
+    score: S.runnerScore,
+    combo: S.runnerCombo,
+    maxCombo: S.runnerMaxCombo,
+    lives: S.runnerLives,
+    distance: Math.floor(S.runnerDistance/100),
+    obstacles: S.runnerObstacles
+  });
 }
 
 function finishRunner(){
   var runnerResult={score:S.runnerScore,maxCombo:S.runnerMaxCombo,distance:Math.floor(S.runnerDistance/100)};
+  completeLegacyRunnerGameRequest({
+    targetName: S.runnerTarget ? S.runnerTarget.name : null,
+    score: S.runnerScore,
+    combo: S.runnerCombo,
+    maxCombo: S.runnerMaxCombo,
+    lives: S.runnerLives,
+    distance: runnerResult.distance,
+    obstacles: S.runnerObstacles,
+    results: runnerResult
+  });
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({
       setFields:{runnerActive:false,runnerResults:runnerResult},
@@ -289,6 +309,17 @@ function runnerTick(){
     spawnRunnerObstacle();
     S.runnerLastSpawn=now;
   }
+
+  syncLegacyRunnerRuntimeRequest({
+    active: S.runnerActive,
+    targetName: S.runnerTarget ? S.runnerTarget.name : null,
+    score: S.runnerScore,
+    combo: S.runnerCombo,
+    maxCombo: S.runnerMaxCombo,
+    lives: S.runnerLives,
+    distance: Math.floor(S.runnerDistance/100),
+    obstacles: S.runnerObstacles
+  });
 
   render();
   _runnerAnim=requestAnimationFrame(runnerTick);
@@ -727,6 +758,27 @@ function syncLegacyDailyRuntimeRequest(action, options) {
 function completeLegacyDailyChallengeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeLegacyDailyChallenge === "function") {
     return window.sparkCore.completeLegacyDailyChallenge(options || {});
+  }
+  return null;
+}
+
+function openLegacyRunnerGameRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openLegacyRunnerGame === "function") {
+    return window.sparkCore.openLegacyRunnerGame(options || {});
+  }
+  return null;
+}
+
+function syncLegacyRunnerRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncLegacyRunnerRuntimeState === "function") {
+    return window.sparkCore.syncLegacyRunnerRuntimeState(options || {});
+  }
+  return null;
+}
+
+function completeLegacyRunnerGameRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeLegacyRunnerGame === "function") {
+    return window.sparkCore.completeLegacyRunnerGame(options || {});
   }
   return null;
 }
@@ -2150,6 +2202,15 @@ window.act=function(a,v){
       S.runnerLives=3;S.runnerObstacles=[];S.runnerSpeed=2;S.runnerDistance=0;
       S.runnerResults=null;S.runnerStartTime=Date.now();S.runnerLastSpawn=0;
     }
+    openLegacyRunnerGameRequest({
+      targetName: runnerTarget ? runnerTarget.name : null,
+      score: 0,
+      combo: 0,
+      maxCombo: 0,
+      lives: 3,
+      distance: 0,
+      obstacles: []
+    });
     _runnerObstId=0;
     snd("start");render();_runnerAnim=requestAnimationFrame(runnerTick);
     return;
@@ -2183,6 +2244,16 @@ window.act=function(a,v){
     }else{
       S.runnerCombo=0;
     }
+    syncLegacyRunnerRuntimeRequest({
+      active: S.runnerActive,
+      targetName: S.runnerTarget ? S.runnerTarget.name : null,
+      score: S.runnerScore,
+      combo: S.runnerCombo,
+      maxCombo: S.runnerMaxCombo,
+      lives: S.runnerLives,
+      distance: Math.floor(S.runnerDistance/100),
+      obstacles: S.runnerObstacles
+    });
     render();return;
   }
   // === Stem Separation ===

@@ -52,6 +52,15 @@
       legacyDailyDurationSec: null,
       legacyDailyRemainingSec: null,
       legacyDailyComplete: false,
+      legacyRunnerActive: false,
+      legacyRunnerTargetName: null,
+      legacyRunnerScore: 0,
+      legacyRunnerCombo: 0,
+      legacyRunnerMaxCombo: 0,
+      legacyRunnerLives: 0,
+      legacyRunnerDistance: 0,
+      legacyRunnerObstacles: [],
+      legacyRunnerResults: null,
       dashboardRecommendations: [],
       dashboardInsights: null,
       dashboardChallenges: [],
@@ -524,6 +533,77 @@
       activeTab: options.activeTab || "daily",
       legacyDailyTimerActive: false,
       transport: { status: "idle", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.openLegacyRunnerGame = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_runner_game",
+      activeScreen: "home",
+      activeTab: "runner",
+      legacyRunnerActive: true,
+      legacyRunnerTargetName: Object.prototype.hasOwnProperty.call(options, "targetName") ? options.targetName : null,
+      legacyRunnerScore: Object.prototype.hasOwnProperty.call(options, "score") ? options.score : 0,
+      legacyRunnerCombo: Object.prototype.hasOwnProperty.call(options, "combo") ? options.combo : 0,
+      legacyRunnerMaxCombo: Object.prototype.hasOwnProperty.call(options, "maxCombo") ? options.maxCombo : 0,
+      legacyRunnerLives: Object.prototype.hasOwnProperty.call(options, "lives") ? options.lives : 3,
+      legacyRunnerDistance: Object.prototype.hasOwnProperty.call(options, "distance") ? options.distance : 0,
+      legacyRunnerObstacles: this.cloneValue(options.obstacles || []),
+      legacyRunnerResults: null,
+      transport: { status: "running", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.syncLegacyRunnerRuntimeState = function(options) {
+    var runtimeState = this.getRuntimeState();
+    var next = {
+      activeFlow: runtimeState.activeFlow || "legacy_runner_game",
+      activeScreen: runtimeState.activeScreen || "home",
+      activeTab: runtimeState.activeTab || "runner",
+      legacyRunnerActive: !!runtimeState.legacyRunnerActive,
+      legacyRunnerTargetName: runtimeState.legacyRunnerTargetName,
+      legacyRunnerScore: runtimeState.legacyRunnerScore || 0,
+      legacyRunnerCombo: runtimeState.legacyRunnerCombo || 0,
+      legacyRunnerMaxCombo: runtimeState.legacyRunnerMaxCombo || 0,
+      legacyRunnerLives: runtimeState.legacyRunnerLives || 0,
+      legacyRunnerDistance: runtimeState.legacyRunnerDistance || 0,
+      legacyRunnerObstacles: this.cloneValue(runtimeState.legacyRunnerObstacles || []),
+      legacyRunnerResults: this.cloneValue(runtimeState.legacyRunnerResults || null),
+      transport: runtimeState.transport || { status: "idle", positionMs: 0 }
+    };
+    options = options || {};
+
+    if (Object.prototype.hasOwnProperty.call(options, "active")) next.legacyRunnerActive = !!options.active;
+    if (Object.prototype.hasOwnProperty.call(options, "targetName")) next.legacyRunnerTargetName = options.targetName;
+    if (Object.prototype.hasOwnProperty.call(options, "score")) next.legacyRunnerScore = options.score;
+    if (Object.prototype.hasOwnProperty.call(options, "combo")) next.legacyRunnerCombo = options.combo;
+    if (Object.prototype.hasOwnProperty.call(options, "maxCombo")) next.legacyRunnerMaxCombo = options.maxCombo;
+    if (Object.prototype.hasOwnProperty.call(options, "lives")) next.legacyRunnerLives = options.lives;
+    if (Object.prototype.hasOwnProperty.call(options, "distance")) next.legacyRunnerDistance = options.distance;
+    if (Object.prototype.hasOwnProperty.call(options, "obstacles")) next.legacyRunnerObstacles = this.cloneValue(options.obstacles || []);
+    if (Object.prototype.hasOwnProperty.call(options, "results")) next.legacyRunnerResults = this.cloneValue(options.results || null);
+
+    next.transport = { status: next.legacyRunnerActive ? "running" : "idle", positionMs: 0 };
+    return this.updateRuntimeState(next);
+  };
+
+  SparkCore.prototype.completeLegacyRunnerGame = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_runner_game",
+      activeScreen: "home",
+      activeTab: "runner",
+      legacyRunnerActive: false,
+      legacyRunnerTargetName: Object.prototype.hasOwnProperty.call(options, "targetName") ? options.targetName : this.runtimeState.legacyRunnerTargetName,
+      legacyRunnerScore: Object.prototype.hasOwnProperty.call(options, "score") ? options.score : this.runtimeState.legacyRunnerScore,
+      legacyRunnerCombo: Object.prototype.hasOwnProperty.call(options, "combo") ? options.combo : this.runtimeState.legacyRunnerCombo,
+      legacyRunnerMaxCombo: Object.prototype.hasOwnProperty.call(options, "maxCombo") ? options.maxCombo : this.runtimeState.legacyRunnerMaxCombo,
+      legacyRunnerLives: Object.prototype.hasOwnProperty.call(options, "lives") ? options.lives : this.runtimeState.legacyRunnerLives,
+      legacyRunnerDistance: Object.prototype.hasOwnProperty.call(options, "distance") ? options.distance : this.runtimeState.legacyRunnerDistance,
+      legacyRunnerObstacles: this.cloneValue(Object.prototype.hasOwnProperty.call(options, "obstacles") ? (options.obstacles || []) : (this.runtimeState.legacyRunnerObstacles || [])),
+      legacyRunnerResults: this.cloneValue(Object.prototype.hasOwnProperty.call(options, "results") ? (options.results || null) : null),
+      transport: { status: "completed", positionMs: 0 }
     });
   };
 
