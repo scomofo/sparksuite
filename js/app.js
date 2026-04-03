@@ -843,6 +843,58 @@ function openUtilityScreenRequest(target) {
   return null;
 }
 
+function syncSettingsStateRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncSettingsState === "function") {
+    return window.sparkCore.syncSettingsState(options || {});
+  }
+  return null;
+}
+
+function buildMidiSettingsRuntimePayload() {
+  var activeDevice = typeof getActiveMidiDevice === "function" ? getActiveMidiDevice() : null;
+  var activeProfile = typeof getActiveMidiProfile === "function" ? getActiveMidiProfile() : null;
+  var profileIds = S.midiProfiles ? Object.keys(S.midiProfiles) : [];
+  var profileOptions = [];
+  var i;
+  for (i = 0; i < profileIds.length; i++) {
+    var id = profileIds[i];
+    var profile = S.midiProfiles[id];
+    if (!profile) continue;
+    profileOptions.push({
+      id: id,
+      name: profile.name || "Unnamed Profile",
+      type: profile.type || "default"
+    });
+  }
+  return {
+    midiEnabled: !!S.midiEnabled,
+    activeDeviceId: S.activeMidiDeviceId || null,
+    activeDeviceName: activeDevice ? (activeDevice.name || null) : null,
+    activeProfileId: S.activeMidiProfileId || null,
+    activeProfileName: activeProfile ? (activeProfile.name || null) : null,
+    deviceOptions: Array.isArray(S.midiDevices) ? S.midiDevices.map(function(device) {
+      return {
+        id: device.id,
+        name: device.name || "MIDI Input"
+      };
+    }) : [],
+    profileOptions: profileOptions
+  };
+}
+
+function syncMidiSettingsStateRequest(options) {
+  var payload = buildMidiSettingsRuntimePayload();
+  var key;
+  options = options || {};
+  for (key in options) {
+    if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncMidiSettingsState === "function") {
+    return window.sparkCore.syncMidiSettingsState(payload);
+  }
+  return null;
+}
+
 function openSkillTreeRequest() {
   if (window.sparkCore && typeof window.sparkCore.openSkillTree === "function") {
     return window.sparkCore.openSkillTree();
@@ -1374,6 +1426,7 @@ window.act=function(a,v){
   }
   if(a==="openSettings"){
     openUtilityScreenRequest("settings");
+    syncSettingsStateRequest({ theme: S.settings ? S.settings.theme : null });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SETTINGS}});
     else S.screen=SCR.SETTINGS;
     render();return;
@@ -2010,6 +2063,7 @@ window.act=function(a,v){
     S.midiEnabled=!S.midiEnabled;
     if(S.midiEnabled){initMIDI();}
     else{S.midiOutput=null;S.midiDevices=[];}
+    syncMidiSettingsStateRequest();
     saveState();render();return;
   }
   if(a==="selectMidiDevice"){selectMIDIDevice(v);saveState();render();return;}
@@ -2868,12 +2922,13 @@ window.act=function(a,v){
     return;
   }
   // === MIDI Device/Profile Actions ===
-  if(a==="setMidiDevice"){S.activeMidiDeviceId=v;saveState();render();return;}
-  if(a==="setMidiProfile"){if(typeof setActiveMidiProfile==="function")setActiveMidiProfile(v);render();return;}
-  if(a==="createDefaultPianoProfile"){if(typeof createDefaultPianoProfile==="function")createDefaultPianoProfile();render();return;}
-  if(a==="createDefaultGuitarProfile"){if(typeof createDefaultGuitarProfile==="function")createDefaultGuitarProfile();render();return;}
+  if(a==="setMidiDevice"){S.activeMidiDeviceId=v;syncMidiSettingsStateRequest();saveState();render();return;}
+  if(a==="setMidiProfile"){if(typeof setActiveMidiProfile==="function")setActiveMidiProfile(v);syncMidiSettingsStateRequest();render();return;}
+  if(a==="createDefaultPianoProfile"){if(typeof createDefaultPianoProfile==="function")createDefaultPianoProfile();syncMidiSettingsStateRequest();render();return;}
+  if(a==="createDefaultGuitarProfile"){if(typeof createDefaultGuitarProfile==="function")createDefaultGuitarProfile();syncMidiSettingsStateRequest();render();return;}
   if(a==="openMidiSettings"){
     openUtilityScreenRequest("midi_settings");
+    syncMidiSettingsStateRequest();
     S.screen=SCR.MIDI_SETTINGS;render();return;
   }
   // === MIDI Import Actions ===

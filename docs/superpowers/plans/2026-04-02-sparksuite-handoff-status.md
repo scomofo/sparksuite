@@ -14,6 +14,7 @@ Primary source plans:
 - `docs/superpowers/plans/2026-04-02-phase-1-handoff-backlog.md`
 - `docs/superpowers/plans/2026-04-02-phase-2-convergence-backlog.md`
 - `docs/superpowers/plans/2026-04-02-phase-3-platform-backlog.md`
+- `docs/superpowers/plans/2026-04-03-remaining-handoff-backlog.md`
 - SparkSuite ukulele module handoff and fretted-strings tree follow-up
 - Download handoffs for SparkSuite rhythm gameplay and related curriculum extensions
 
@@ -116,6 +117,15 @@ Primary source plans:
   - `js/app.js`
   - `js/instruments/piano/app.js`
   - `js/pages/skill_tree.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Settings and MIDI utility screens can now prefer core-backed utility snapshots instead of relying only on shell-owned state, with theme and MIDI device/profile summaries mirrored into SparkCore from shared and piano actions.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/instruments/piano/app.js`
+  - `js/settings/settings_ui.js`
+  - `js/midi/ui.js`
+  - `js/midi/devices.js`
   - `tests/test_sparksuite_core_migration.js`
   - `tests/test_piano_runtime_core_migration.js`
 - Shared mini-activity runtime state for ear training and song playback now also routes through the progress bridge for start/stop/reset-style state transitions instead of direct inline field/timer mutation.

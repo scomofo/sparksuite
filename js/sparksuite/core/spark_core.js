@@ -50,6 +50,14 @@
       dashboardChallenges: [],
       lastDashboardRecommendationId: null,
       lastDashboardRefreshAt: null,
+      settingsTheme: null,
+      midiEnabled: false,
+      midiActiveDeviceId: null,
+      midiActiveDeviceName: null,
+      midiActiveProfileId: null,
+      midiActiveProfileName: null,
+      midiDeviceOptions: [],
+      midiProfileOptions: [],
       guidedStep: null,
       guidedNewMovePhase: null,
       performanceChartId: null,
@@ -673,6 +681,42 @@
     return this.updateRuntimeState({
       activeScreen: activeScreen,
       activeTab: this.runtimeState.activeTab || null
+    });
+  };
+
+  SparkCore.prototype.syncSettingsState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      settingsTheme: Object.prototype.hasOwnProperty.call(options, "theme")
+        ? options.theme
+        : this.runtimeState.settingsTheme
+    });
+  };
+
+  SparkCore.prototype.syncMidiSettingsState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      midiEnabled: Object.prototype.hasOwnProperty.call(options, "midiEnabled")
+        ? !!options.midiEnabled
+        : this.runtimeState.midiEnabled,
+      midiActiveDeviceId: Object.prototype.hasOwnProperty.call(options, "activeDeviceId")
+        ? options.activeDeviceId
+        : this.runtimeState.midiActiveDeviceId,
+      midiActiveDeviceName: Object.prototype.hasOwnProperty.call(options, "activeDeviceName")
+        ? options.activeDeviceName
+        : this.runtimeState.midiActiveDeviceName,
+      midiActiveProfileId: Object.prototype.hasOwnProperty.call(options, "activeProfileId")
+        ? options.activeProfileId
+        : this.runtimeState.midiActiveProfileId,
+      midiActiveProfileName: Object.prototype.hasOwnProperty.call(options, "activeProfileName")
+        ? options.activeProfileName
+        : this.runtimeState.midiActiveProfileName,
+      midiDeviceOptions: Object.prototype.hasOwnProperty.call(options, "deviceOptions")
+        ? this.cloneValue(options.deviceOptions || [])
+        : this.cloneValue(this.runtimeState.midiDeviceOptions || []),
+      midiProfileOptions: Object.prototype.hasOwnProperty.call(options, "profileOptions")
+        ? this.cloneValue(options.profileOptions || [])
+        : this.cloneValue(this.runtimeState.midiProfileOptions || [])
     });
   };
 

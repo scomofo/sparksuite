@@ -1,10 +1,29 @@
 (function(){
 
   function midiSettingsPage(){
+    var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
+      ? window.sparkCore.getRuntimeState()
+      : null;
+    var activeDeviceName = runtimeState && runtimeState.midiActiveDeviceName
+      ? runtimeState.midiActiveDeviceName
+      : ((getActiveMidiDevice() && getActiveMidiDevice().name) || "None");
+    var activeProfileName = runtimeState && runtimeState.midiActiveProfileName
+      ? runtimeState.midiActiveProfileName
+      : ((getActiveMidiProfile() && getActiveMidiProfile().name) || "None");
+    var devs = runtimeState && Array.isArray(runtimeState.midiDeviceOptions) && runtimeState.midiDeviceOptions.length
+      ? runtimeState.midiDeviceOptions
+      : (S.midiDevices || []);
+    var profiles = runtimeState && Array.isArray(runtimeState.midiProfileOptions) && runtimeState.midiProfileOptions.length
+      ? runtimeState.midiProfileOptions
+      : (S.midiProfiles || {});
+    var activeProfileId = runtimeState && runtimeState.midiActiveProfileId
+      ? runtimeState.midiActiveProfileId
+      : S.activeMidiProfileId;
+    var usingProfileArray = Array.isArray(profiles);
     var h = '<div class="card">';
     h += '<div><b>MIDI Settings</b></div>';
-    h += '<div>Active Device: ' + ((getActiveMidiDevice() && getActiveMidiDevice().name) || "None") + '</div>';
-    h += '<div>Active Profile: ' + ((getActiveMidiProfile() && getActiveMidiProfile().name) || "None") + '</div>';
+    h += '<div>Active Device: ' + escHTML(activeDeviceName) + '</div>';
+    h += '<div>Active Profile: ' + escHTML(activeProfileName) + '</div>';
     h += '<button onclick="refreshMidiDevices()">Refresh Devices</button> ';
     h += '<button onclick="act(\'createDefaultPianoProfile\')">New Piano Profile</button> ';
     h += '<button onclick="act(\'createDefaultGuitarProfile\')">New Guitar Profile</button>';
@@ -12,7 +31,6 @@
 
     h += '<div class="card">';
     h += '<div><b>Available Devices</b></div>';
-    var devs = S.midiDevices || [];
     for(var i=0;i<devs.length;i++){
       h += '<div>';
       h += escHTML(devs[i].name) + ' ';
@@ -24,11 +42,13 @@
 
     h += '<div class="card">';
     h += '<div><b>Saved Profiles</b></div>';
-    var profiles = S.midiProfiles || {};
-    var profileIds = Object.keys(profiles);
+    var profileIds = usingProfileArray ? [] : Object.keys(profiles);
+    if (usingProfileArray) {
+      for (var pIdx = 0; pIdx < profiles.length; pIdx++) profileIds.push(profiles[pIdx].id);
+    }
     for(var j=0;j<profileIds.length;j++){
-      var p = profiles[profileIds[j]];
-      var active = (profileIds[j] === S.activeMidiProfileId) ? ' (active)' : '';
+      var p = usingProfileArray ? profiles[j] : profiles[profileIds[j]];
+      var active = (profileIds[j] === activeProfileId) ? ' (active)' : '';
       h += '<div>';
       h += escHTML(p.name) + ' [' + p.type + ']' + active + ' ';
       h += '<button onclick="act(\'setMidiProfile\', \''+profileIds[j]+'\')">Use</button>';
