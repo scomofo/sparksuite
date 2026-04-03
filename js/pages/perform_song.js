@@ -9,6 +9,7 @@ function performSongPage() {
   var arrType = performanceSongView.arrangementType || "chords";
   var diff = performanceSongView.difficultyId || "normal";
   var speed = performanceSongView.speed;
+  var targetTechnique = performanceSongView.targetTechnique;
 
   var h = '<div class="perform-page">';
 
@@ -86,6 +87,12 @@ function performSongPage() {
     }
   }
 
+  if (targetTechnique) {
+    h += '<div class="card mb20"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Technique Focus</div>';
+    h += '<div style="font-size:14px;color:var(--text-primary);font-weight:800">' + escHTML(formatTechniqueLabel(targetTechnique)) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-dim);margin-top:6px">This practice launch came from an imported-chart weak spot. Keep that technique in focus during the run.</div></div>';
+  }
+
   // Audio import
   var songId = (song.title || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
   var audioData = S.songAudioData[songId];
@@ -147,6 +154,19 @@ function getPerformanceSongView() {
     songId: performanceSong && performanceSong.songId ? performanceSong.songId : S.performSongId,
     arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : S.performArrangementType,
     difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty,
-    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed
+    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed,
+    targetTechnique: runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+      ? runtimeState.performanceTargetTechnique
+      : S.performTargetTechnique
   };
+}
+
+function formatTechniqueLabel(key) {
+  var labels = {
+    open: "Open-note timing",
+    tap: "Tap-note consistency",
+    forced: "Forced-note transitions",
+    specialPhrase: "Phrase section control"
+  };
+  return labels[key] || String(key || "Technique");
 }

@@ -7,6 +7,7 @@
     if(item.type==="rhythm_highway") return launchRhythmHighwayItem(item);
     if(item.type==="performance_song") return launchPerformanceSongItem(item);
     if(item.type==="performance_phrase") return launchPerformancePhraseItem(item);
+    if(item.type==="performance_technique") return launchPerformanceTechniqueItem(item);
     if(item.type==="rhythm") return launchRhythmItem(item);
     if(item.type==="finger") return launchFingerItem(item);
     if(item.type==="guided_session" && typeof launchGuidedSessionItem==="function"){
@@ -62,6 +63,16 @@
     return true;
   }
 
+  function launchPerformanceTechniqueItem(item){
+    if(!item.meta || typeof act!=="function") return false;
+    var songId = item.meta.songId || "";
+    var arrangementType = item.meta.arrangementType || "imported_chart";
+    var difficultyId = item.meta.difficultyId || "normal";
+    var techniqueKey = item.meta.techniqueKey || "";
+    act("planStartPerformanceTechnique", songId + "|" + arrangementType + "|" + difficultyId + "|" + techniqueKey);
+    return true;
+  }
+
   function launchRhythmItem(item){
     var bpm = item && item.meta && item.meta.bpm ? item.meta.bpm : 90;
     if(typeof act==="function"){
@@ -89,6 +100,7 @@
   window.launchTransitionItem = launchTransitionItem;
   window.launchPerformanceSongItem = launchPerformanceSongItem;
   window.launchPerformancePhraseItem = launchPerformancePhraseItem;
+  window.launchPerformanceTechniqueItem = launchPerformanceTechniqueItem;
   window.launchRhythmItem = launchRhythmItem;
   window.launchRhythmHighwayItem = launchRhythmHighwayItem;
   window.launchFingerItem = launchFingerItem;

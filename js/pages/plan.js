@@ -49,7 +49,7 @@ function planItemColor(type){
   if(type==="warmup" || type==="finger") return "#f59e0b";
   if(type==="transition") return "#3b82f6";
   if(type==="rhythm_highway") return "#ec4899";
-  if(type==="performance_song" || type==="performance_phrase") return "#22c55e";
+  if(type==="performance_song" || type==="performance_phrase" || type==="performance_technique") return "#22c55e";
   if(type==="rhythm") return "#ec4899";
   if(type==="lead") return "#8b5cf6";
   return "#6b7280";
