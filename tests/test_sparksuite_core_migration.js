@@ -420,6 +420,58 @@ test("SparkCore can open, sync, and complete legacy daily challenge runtime expl
   assert.strictEqual(homeState.transport.status, "idle");
 });
 
+test("SparkCore can open, sync, and complete legacy runner runtime explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var openState = core.openLegacyRunnerGame({
+    targetName: "C",
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    lives: 3,
+    distance: 0,
+    obstacles: []
+  });
+  assert.strictEqual(openState.activeFlow, "legacy_runner_game");
+  assert.strictEqual(openState.activeScreen, "home");
+  assert.strictEqual(openState.activeTab, "runner");
+  assert.strictEqual(openState.legacyRunnerActive, true);
+  assert.strictEqual(openState.legacyRunnerTargetName, "C");
+  assert.strictEqual(openState.transport.status, "running");
+
+  var tickState = core.syncLegacyRunnerRuntimeState({
+    active: true,
+    targetName: "G",
+    score: 220,
+    combo: 3,
+    maxCombo: 5,
+    lives: 2,
+    distance: 19,
+    obstacles: [{ id: 1, name: "G", short: "G", x: 80, isTarget: true, hit: false, result: null }]
+  });
+  assert.strictEqual(tickState.legacyRunnerTargetName, "G");
+  assert.strictEqual(tickState.legacyRunnerScore, 220);
+  assert.strictEqual(tickState.legacyRunnerCombo, 3);
+  assert.strictEqual(tickState.legacyRunnerLives, 2);
+  assert.strictEqual(tickState.legacyRunnerDistance, 19);
+  assert.strictEqual(tickState.transport.status, "running");
+
+  var completeState = core.completeLegacyRunnerGame({
+    targetName: "G",
+    score: 220,
+    combo: 0,
+    maxCombo: 5,
+    lives: 0,
+    distance: 19,
+    obstacles: [],
+    results: { score: 220, maxCombo: 5, distance: 19 }
+  });
+  assert.strictEqual(completeState.legacyRunnerActive, false);
+  assert.strictEqual(completeState.legacyRunnerScore, 220);
+  assert.deepStrictEqual(completeState.legacyRunnerResults, { score: 220, maxCombo: 5, distance: 19 });
+  assert.strictEqual(completeState.transport.status, "completed");
+});
+
 test("legacy session and drill pages can fall back to SparkCore practice runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
@@ -525,6 +577,79 @@ test("legacy session and drill pages can fall back to SparkCore practice runtime
   core.completeLegacyDailyChallenge({ challengeId: "marathon", durationSec: 180 });
   dailyHtml = dailyPage();
   assert.ok(dailyHtml.indexOf("dailyDoneHome") >= 0);
+});
+
+test("runner pages can fall back to SparkCore runner runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            ALL_CHORDS: [
+              { name: "C", short: "C" },
+              { name: "G", short: "G" }
+            ]
+          };
+        },
+        ui: {
+          chord: function(chord) { return "<div>" + chord.name + "</div>"; }
+        }
+      };
+    }
+  };
+  S.runnerActive = undefined;
+  S.runnerTarget = null;
+  S.runnerScore = undefined;
+  S.runnerCombo = undefined;
+  S.runnerLives = undefined;
+  S.runnerDistance = undefined;
+  S.runnerObstacles = undefined;
+  S.runnerResults = null;
+  S.runnerHighScore = 100;
+
+  eval(loadJS("js/pages/games.js"));
+
+  core.openLegacyRunnerGame({
+    targetName: "C",
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    lives: 3,
+    distance: 0,
+    obstacles: []
+  });
+  core.syncLegacyRunnerRuntimeState({
+    active: true,
+    targetName: "G",
+    score: 220,
+    combo: 3,
+    maxCombo: 5,
+    lives: 2,
+    distance: 19,
+    obstacles: [{ id: 1, name: "G", short: "G", x: 80, isTarget: true, hit: false, result: null }]
+  });
+  var runnerHtml = runnerGamePage();
+  assert.ok(runnerHtml.indexOf(">220<") >= 0);
+  assert.ok(runnerHtml.indexOf(">G<") >= 0);
+  assert.ok(runnerHtml.indexOf("runner-obstacle") >= 0);
+
+  S.runnerResults = null;
+  core.completeLegacyRunnerGame({
+    targetName: "G",
+    score: 220,
+    combo: 0,
+    maxCombo: 5,
+    lives: 0,
+    distance: 19,
+    obstacles: [],
+    results: { score: 220, maxCombo: 5, distance: 19 }
+  });
+  var resultsHtml = runnerResultsPage();
+  assert.ok(resultsHtml.indexOf("Game Over!") >= 0);
+  assert.ok(resultsHtml.indexOf(">220<") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {

@@ -55,9 +55,38 @@ function rhythmResultsPage(){
 }
 
 // ===== CHORD RUNNER TAB =====
+function getLegacyRunnerRuntime(D){
+  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  var target = S.runnerTarget || null;
+  if(!target && runtime && runtime.legacyRunnerTargetName && D && Array.isArray(D.ALL_CHORDS)){
+    for(var i=0;i<D.ALL_CHORDS.length;i++){
+      if(D.ALL_CHORDS[i] && D.ALL_CHORDS[i].name === runtime.legacyRunnerTargetName){
+        target = D.ALL_CHORDS[i];
+        break;
+      }
+    }
+  }
+  return {
+    active: typeof S.runnerActive === "boolean" ? S.runnerActive : !!(runtime && runtime.legacyRunnerActive),
+    score: typeof S.runnerScore === "number" ? S.runnerScore : (runtime && typeof runtime.legacyRunnerScore === "number" ? runtime.legacyRunnerScore : 0),
+    combo: typeof S.runnerCombo === "number" ? S.runnerCombo : (runtime && typeof runtime.legacyRunnerCombo === "number" ? runtime.legacyRunnerCombo : 0),
+    maxCombo: typeof S.runnerMaxCombo === "number" ? S.runnerMaxCombo : (runtime && typeof runtime.legacyRunnerMaxCombo === "number" ? runtime.legacyRunnerMaxCombo : 0),
+    lives: typeof S.runnerLives === "number" ? S.runnerLives : (runtime && typeof runtime.legacyRunnerLives === "number" ? runtime.legacyRunnerLives : 0),
+    distance: typeof S.runnerDistance === "number" ? S.runnerDistance : (runtime && typeof runtime.legacyRunnerDistance === "number" ? runtime.legacyRunnerDistance : 0),
+    target: target,
+    obstacles: Array.isArray(S.runnerObstacles) ? S.runnerObstacles : (runtime && Array.isArray(runtime.legacyRunnerObstacles) ? runtime.legacyRunnerObstacles : []),
+    results: S.runnerResults || (runtime ? runtime.legacyRunnerResults : null)
+  };
+}
+
 function runnerTab(){
-  if(S.runnerResults)return runnerResultsPage();
-  if(S.runnerActive)return runnerGamePage();
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var runtime = getLegacyRunnerRuntime(D);
+  if(runtime.results)return runnerResultsPage();
+  if(runtime.active)return runnerGamePage();
   var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Runner &#127918;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Strum the right chords as they scroll by!</p>';
   h+='<div class="card"><div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
   h+='<div style="margin-bottom:16px;font-size:13px;color:var(--text-secondary);line-height:1.5">Chord names scroll across the screen.<br><strong>Strum</strong> when the <strong>target chord</strong> reaches you.<br>Let wrong chords pass! 3 lives.</div>';
@@ -69,23 +98,25 @@ function runnerTab(){
 
 function runnerGamePage(){
   var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var runtime = getLegacyRunnerRuntime(D);
   var h='<div>';
   // Lives, Score, Combo row
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px">';
   h+='<div style="font-size:18px;letter-spacing:2px">';
-  for(var i=0;i<3;i++)h+=(i<S.runnerLives?'&#10084;&#65039;':'&#128420;');
+  for(var i=0;i<3;i++)h+=(i<runtime.lives?'&#10084;&#65039;':'&#128420;');
   h+='</div>';
-  h+='<div style="font-size:22px;font-weight:900;color:#FFE66D">'+S.runnerScore+'</div>';
-  h+='<div style="font-size:16px;font-weight:800;color:'+(S.runnerCombo>=3?'#4ECDC4':'var(--text-muted)')+'">'+S.runnerCombo+'x</div>';
+  h+='<div style="font-size:22px;font-weight:900;color:#FFE66D">'+runtime.score+'</div>';
+  h+='<div style="font-size:16px;font-weight:800;color:'+(runtime.combo>=3?'#4ECDC4':'var(--text-muted)')+'">'+runtime.combo+'x</div>';
   h+='</div>';
 
   // Target chord card
   h+='<div class="card mb12" style="padding:10px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(69,183,209,.12));border:2px solid rgba(78,205,196,.3)">';
-  if(S.runnerTarget){
-    h+=UI.chord(S.runnerTarget,55);
+  if(runtime.target){
+    h+=UI.chord(runtime.target,55);
     h+='<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Target Chord</div>';
-    h+='<div style="font-size:22px;font-weight:900;color:var(--text-primary)">'+escHTML(S.runnerTarget.short)+'</div>';
-    h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(S.runnerTarget.name)+'</div></div>';
+    h+='<div style="font-size:22px;font-weight:900;color:var(--text-primary)">'+escHTML(runtime.target.short)+'</div>';
+    h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(runtime.target.name)+'</div></div>';
   }
   h+='</div>';
 
@@ -94,8 +125,8 @@ function runnerGamePage(){
   h+='<div class="runner-ground"></div>';
   h+='<div class="runner-hit-zone"></div>';
   h+='<div class="runner-player" id="runner-player">&#127928;</div>';
-  for(var i=0;i<S.runnerObstacles.length;i++){
-    var o=S.runnerObstacles[i];
+  for(var i=0;i<runtime.obstacles.length;i++){
+    var o=runtime.obstacles[i];
     if(o.x<-80||o.x>500)continue;
     var cls="runner-obstacle";
     if(o.result==="correct")cls+=" correct";
@@ -105,7 +136,7 @@ function runnerGamePage(){
     h+='<div class="'+cls+'" style="left:'+Math.round(o.x)+'px">'+escHTML(o.short)+'</div>';
   }
   // Scrolling ground dashes
-  var offset=Math.round(S.runnerDistance%30);
+  var offset=Math.round(runtime.distance%30);
   for(var i=-1;i<18;i++){
     var gx=i*30-offset;
     h+='<div style="position:absolute;bottom:10px;left:'+gx+'px;width:16px;height:2px;background:var(--text-muted);opacity:0.25;border-radius:1px"></div>';
@@ -120,7 +151,9 @@ function runnerGamePage(){
 }
 
 function runnerResultsPage(){
-  var r=S.runnerResults;
+  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var runtime = getLegacyRunnerRuntime(D);
+  var r=runtime.results;
   var isHigh=r.score>=S.runnerHighScore&&r.score>0;
   var h='<div class="text-center" style="padding-top:20px"><div style="font-size:56px;animation:bn .6s ease">&#127918;</div>';
   h+='<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Game Over!</h2>';
