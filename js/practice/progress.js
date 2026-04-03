@@ -2,10 +2,14 @@
 
   function recordPracticeSession(result){
     if(!result) return;
-    result.ts = Date.now();
-    S.practiceHistory.push(result);
-    updatePracticeTime(result.durationMin || 0);
-    updatePracticeStreak();
+    if(window.SparkProgressBridge && typeof SparkProgressBridge.applyPracticeSessionRecord === "function"){
+      SparkProgressBridge.applyPracticeSessionRecord(result);
+    }else{
+      result.ts = Date.now();
+      S.practiceHistory.push(result);
+      updatePracticeTime(result.durationMin || 0);
+      updatePracticeStreak();
+    }
     saveState();
   }
 

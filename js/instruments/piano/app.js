@@ -475,6 +475,23 @@ function buildTick() {
 
 // ── Guided session flow ──
 function startGuidedSession() {
+  if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+    var guidedSession = parseInt(S.currentSession, 10);
+    if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
+    var corePlan = window.sparkCore.startSession({
+      flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      sessionNum: guidedSession
+    });
+    if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+      syncPianoGuidedPlanFromCore(corePlan);
+      checkPracticeDate();
+      playSound("start");
+      saveState();
+      render();
+      return;
+    }
+  }
+
   var plan = getCurrentSessionPlan();
   if (!plan) { showToast("No more sessions!"); render(); return; }
 
@@ -491,6 +508,39 @@ function startGuidedSession() {
   playSound("start");
   saveState();
   render();
+}
+
+function syncPianoGuidedPlanFromCore(plan) {
+  var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
+  if (!guidedPlan) return null;
+
+  var guidedSession = plan.context.guidedSession || guidedPlan.num || S.currentSession || 1;
+  S.guidedPlan = guidedPlan;
+  S.guidedSession = guidedSession;
+  S.currentSession = guidedSession;
+  S.sessionPlan = guidedPlan;
+  S.screen = SCR.SESSION;
+  S.sessionStep = "spark";
+  S.guidedStep = "spark";
+  S.newMovePhase = null;
+  S.feedbackMessage = "";
+  S.adaptiveBpm = guidedPlan.bpm || S.bpm;
+  S.paused = false;
+  S.guidedPaused = false;
+  S.fingerWarmUpDone = false;
+  return guidedPlan;
+}
+
+function syncPianoPerformanceSongFromCore(plan) {
+  var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
+  if (!performanceSong) return null;
+
+  S.performSongData = performanceSong.songData || null;
+  S.performSongId = performanceSong.songId || normalizeSongId(performanceSong.songData);
+  S.performArrangementType = performanceSong.arrangementType || S.performArrangementType || "block_chords";
+  if (performanceSong.difficultyId) S.performDifficulty = performanceSong.difficultyId;
+  S.screen = SCR.PERFORM_SONG;
+  return performanceSong;
 }
 
 function advanceSessionStep() {
@@ -541,6 +591,34 @@ function completeGuidedSession() {
   if (S.detecting) stopDetection();
 
   var plan = S.sessionPlan;
+  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+    var guidedResult = window.sparkCore.completeSession({
+      flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      markPlanComplete: true
+    });
+    syncPianoGuidedCompletionFromCore(guidedResult, plan);
+    checkPracticeDate();
+    checkLevelUp();
+    var coreBadges = pianoCheckBadges();
+    pianoShowConfetti();
+    if (coreBadges.length) {
+      showToast("Session complete! Badge earned! " + coreBadges.map(function(b) {
+        var badge = BADGES.find(function(x) { return x.id === b; });
+        return badge ? badge.icon : "";
+      }).join(" "));
+    } else {
+      showToast("Session " + (plan ? plan.num : "") + " complete!");
+    }
+    playSound(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
+    S.screen = SCR.HOME;
+    S.sessionStep = null;
+    S.sessionPlan = null;
+    S.newMovePhase = null;
+    saveState();
+    render();
+    return;
+  }
+
   if (plan) {
     // Mark session complete
     if (S.completedSessions.indexOf(plan.num) < 0) {
@@ -588,6 +666,46 @@ function completeGuidedSession() {
   S.newMovePhase = null;
   saveState();
   render();
+}
+
+function syncPianoGuidedCompletionFromCore(result, plan) {
+  var guidedPatch = result && result.sessionStatePatch ? result.sessionStatePatch.guided : null;
+  if (!Array.isArray(S.completedSessions)) S.completedSessions = [];
+  if (!S.chordProg || typeof S.chordProg !== "object") S.chordProg = {};
+
+  if (guidedPatch && Array.isArray(guidedPatch.completedSessionNums)) {
+    for (var i = 0; i < guidedPatch.completedSessionNums.length; i++) {
+      if (S.completedSessions.indexOf(guidedPatch.completedSessionNums[i]) < 0) {
+        S.completedSessions.push(guidedPatch.completedSessionNums[i]);
+      }
+    }
+  } else if (plan && S.completedSessions.indexOf(plan.num) < 0) {
+    S.completedSessions.push(plan.num);
+  }
+
+  if (guidedPatch && guidedPatch.chordProgress) {
+    for (var chordName in guidedPatch.chordProgress) {
+      S.chordProg[chordName] = Math.min((S.chordProg[chordName] || 0) + guidedPatch.chordProgress[chordName], 100);
+    }
+  } else if (plan && plan.newMove && plan.newMove.chord) {
+    S.chordProg[plan.newMove.chord] = Math.min((S.chordProg[plan.newMove.chord] || 0) + 15, 100);
+  }
+
+  if (guidedPatch && guidedPatch.nextGuidedSession != null) {
+    S.currentSession = guidedPatch.nextGuidedSession;
+    S.guidedSession = guidedPatch.nextGuidedSession;
+  } else if (plan && plan.num != null) {
+    S.currentSession = Math.min(50, plan.num + 1);
+    S.guidedSession = S.currentSession;
+  }
+
+  if (plan) {
+    var newLvl = CURRICULUM[Math.min(S.level, 8) - 1];
+    if (newLvl && newLvl.lhPattern) {
+      var patIdx = LH_PATTERNS.findIndex(function(p) { return p.id === newLvl.lhPattern; });
+      if (patIdx >= 0 && patIdx + 1 > S.lhLevel) S.lhLevel = patIdx + 1;
+    }
+  }
 }
 
 // ── Finger exercise helpers ──
@@ -1213,6 +1331,18 @@ function act(action, param) {
       var idx = parseInt(param);
       var song = SONGS[idx];
       if(song){
+        if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+          var corePlan = window.sparkCore.startSession({
+            flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+            songIndex: idx,
+            arrangementType: "block_chords",
+            difficultyId: S.performDifficulty || "normal"
+          });
+          if (corePlan && corePlan.context && corePlan.context.performanceSong) {
+            syncPianoPerformanceSongFromCore(corePlan);
+            break;
+          }
+        }
         S.performSongData = song;
         S.performSongId = normalizeSongId(song);
         S.performArrangementType = "block_chords";

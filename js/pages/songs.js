@@ -369,15 +369,24 @@ function stemsPage(){
 
 function performSubTab(){
   var h='<div class="card mb20" style="text-align:center;padding:24px">';
+  var charts = typeof getPerformanceChartLibrary === "function" ? getPerformanceChartLibrary() : [];
   h+='<div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
   h+='<h3 style="font-size:18px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Performance Mode</h3>';
   h+='<p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Play along with a scrolling chord highway. MIDI guitar or mic input.</p>';
-  h+='<div class="card" style="cursor:pointer;border:2px solid #4ECDC4;margin-bottom:12px"'
-    +clickableDiv("act(\'openPerform\',\'demo_progression\')")+'>';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center">';
-  h+='<div style="text-align:left"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">Demo Progression</h4>';
-  h+='<p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">ChordSpark &bull; 90 BPM &bull; 8 chords</p></div>';
-  h+='<div style="font-size:24px">&#127918;</div></div></div>';
+  for(var i=0;i<charts.length;i++){
+    var chart=charts[i];
+    var accent=chart.accentColor||"#4ECDC4";
+    var icon=chart.sourceType==="imported_package"?"&#128230;":"&#127918;";
+    var badge=chart.badge?'<span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:'+accent+'">'+escHTML(chart.badge)+'</span>':'';
+    h+='<div class="card" style="cursor:pointer;border:2px solid '+accent+';margin-bottom:12px"'
+      +clickableDiv("act(\'openPerform\',\'"+chart.id+"\')")+'>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
+    h+='<div style="text-align:left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(chart.title)+'</h4>'+badge+'</div>';
+    h+='<p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(chart.artist||"Unknown Artist")+' &bull; '+escHTML(String(chart.bpm||"--"))+' BPM</p>';
+    if(chart.description)h+='<p style="margin:4px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(chart.description)+'</p>';
+    h+='</div>';
+    h+='<div style="font-size:24px">'+icon+'</div></div></div>';
+  }
   h+='<p style="font-size:11px;color:var(--text-muted)">More charts coming soon! MIDI input: '+
     (S.midiEnabled?'<span style="color:#4ECDC4;font-weight:700">Connected</span>':'<span style="color:#FF6B6B">Off &mdash; enable in Tools</span>')+'</p>';
   h+='</div>';

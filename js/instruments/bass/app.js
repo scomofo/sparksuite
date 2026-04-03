@@ -75,12 +75,36 @@
     }
 
     if (a === "guidedStart") {
-      var plan = D.SESSIONS[S.guidedSession - 1];
+      var sessionNum = parseInt(v, 10);
+      if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+        var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
+        var corePlan = window.sparkCore.startSession({
+          flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+          sessionNum: guidedSession
+        });
+        if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+          S.screen = SCR.GUIDED;
+          snd("start");
+          render();
+          saveState();
+          return true;
+        }
+      }
+      var plan = D.SESSIONS[(isNaN(sessionNum) ? S.guidedSession || 1 : sessionNum) - 1];
       if (!plan) { S.guidedSession = 1; plan = D.SESSIONS[0]; }
-      S.guidedPlan = plan;
-      S.guidedStep = "spark";
-      S.newMovePhase = null;
-      S.guidedPaused = false;
+      if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
+        SparkProgressBridge.syncGuidedSessionToState({
+          context: {
+            guidedPlan: plan,
+            guidedSession: plan && plan.num ? plan.num : (S.guidedSession || 1)
+          }
+        });
+      } else {
+        S.guidedPlan = plan;
+        S.guidedStep = "spark";
+        S.newMovePhase = null;
+        S.guidedPaused = false;
+      }
       S.screen = SCR.GUIDED;
       snd("start");
       render();
@@ -89,21 +113,44 @@
 
     if (a === "guidedComplete") {
       if (S.metronomeOn) stopMetronome();
+      if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+        var guidedResult = window.sparkCore.completeSession({
+          flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+          markPlanComplete: true
+        });
+        snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
+        trigC();
+        S.screen = SCR.GUIDED_DONE;
+        render();
+        return true;
+      }
       var plan = S.guidedPlan;
       if (plan) {
-        if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
-        if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
-        S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
+        if (window.SparkProgressBridge && typeof SparkProgressBridge.applySessionStatePatch === "function") {
+          SparkProgressBridge.applySessionStatePatch({
+            guided: {
+              completedSessionNums: [plan.num],
+              nextGuidedSession: Math.min(D.SESSIONS.length, plan.num + 1),
+              chordProgress: {}
+            }
+          });
+        } else {
+          if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
+          if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
+          S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
+        }
         var outcome = SparkSession.processResults({
           type: "guided",
           chordName: plan.newMove ? plan.newMove.chord : null,
           duration: 300
         });
-        S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
+        if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ toastAmount: outcome.xpEarned, jackpot: outcome.jackpot });
+        else S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
         if (outcome.jackpot) snd("levelup"); else snd("complete");
         if (outcome.leveledUp) snd("levelup");
       } else {
-        S.xpToast = { amount: 30, time: Date.now() };
+        if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ toastAmount: 30 });
+        else S.xpToast = { amount: 30, time: Date.now() };
         snd("complete");
       }
       trigC();

@@ -30,7 +30,8 @@ function renderOnboardingInstrument(){
   var h = '<div class="card mb16">';
   h += '<div><b>Choose Your Instrument</b></div>';
   h += '<button onclick="setOnboardingInstrument(\'guitar\')">Guitar</button> ';
-  h += '<button onclick="setOnboardingInstrument(\'piano\')">Piano</button>';
+  h += '<button onclick="setOnboardingInstrument(\'piano\')">Piano</button> ';
+  h += '<button onclick="setOnboardingInstrument(\'ukulele\')">Ukulele</button>';
   h += '<div style="margin-top:8px">Selected: '+escHTML(S.onboarding.instrument || "none")+'</div>';
   h += '</div>';
   return h;

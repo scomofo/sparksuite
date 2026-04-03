@@ -236,6 +236,13 @@ var S={
   desktopInfo:{channel:"dev", version:"dev", buildNumber:0, lastUpdateCheckAt:null, updateStatus:"idle", lastBackupAt:null},
   feedbackDraft:{text:"", email:""},
 
+  // Core-owned rhythm highway runtime (transient)
+  activeCoreSegmentId:null,
+  rhythmHighwayHeldMask:0,
+  rhythmHighwaySnapshot:null,
+  rhythmHighwayResult:null,
+  rhythmHighwayFeedback:"",
+
   // Release info (loaded at runtime)
   releaseInfo:null,
   releaseNotes:[],

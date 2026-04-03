@@ -79,6 +79,26 @@
         ]);
       }
     }
+    if(instrument === "ukulele"){
+      if(level === "beginner"){
+        unlockStarterIds([
+          "uke_01",
+          "uke_02"
+        ]);
+      }else if(level === "early_intermediate"){
+        unlockStarterIds([
+          "uke_02",
+          "uke_03",
+          "uke_04"
+        ]);
+      }else{
+        unlockStarterIds([
+          "uke_03",
+          "uke_04",
+          "uke_05"
+        ]);
+      }
+    }
     markOnboardingStarterUnlocksDone();
   }
 
@@ -99,7 +119,9 @@
 
   function generateInitialRecommendationsFromOnboarding(){
     if(typeof generateRecommendations !== "function") return [];
-    return generateRecommendations(S.onboarding.instrument === "piano" ? "piano" : "guitar");
+    if(S.onboarding.instrument === "piano") return generateRecommendations("piano");
+    if(S.onboarding.instrument === "ukulele") return generateRecommendations("guitar");
+    return generateRecommendations("guitar");
   }
 
   window.setOnboardingInstrument = setOnboardingInstrument;

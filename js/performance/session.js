@@ -90,30 +90,41 @@ function startPerformance(chartIdOrChart, opts) {
   }
 
   chartPromise.then(function(chart) {
-    S.performChart = chart;
-    S.performChartId = typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated");
-    S.performPlaying = true;
-    S.performPaused = false;
-    S.performCurrentSec = 0;
-    S.performStartSec = 0;
-    S.performScore = 0;
-    S.performCombo = 0;
-    S.performMaxCombo = 0;
-    S.performAccuracy = 0;
-    S.performPhraseIdx = 0;
-    S.performResults = null;
-    S.performStarRating = 0;
-    S.performLoop = null;
-    S.performLastHitLabel = "";
-    S.performLastHitTime = 0;
-    S.performPhraseStats = createEmptyPhraseStats(chart);
-
-    if (opts.mode) S.performMode = opts.mode;
-    if (opts.difficulty) S.performDifficulty = opts.difficulty;
-    if (opts.speed) S.performSpeed = opts.speed;
-    if (opts.preset) S.performPracticePreset = opts.preset;
-
-    S.performInputSource = S.performMode;
+    if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+      SparkPerformanceBridge.syncPerformanceRuntimeState("start", {
+        chart: chart,
+        chartId: typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated"),
+        phraseStats: createEmptyPhraseStats(chart),
+        mode: opts.mode || S.performMode,
+        difficulty: opts.difficulty || S.performDifficulty,
+        speed: opts.speed || S.performSpeed,
+        preset: opts.preset || S.performPracticePreset,
+        screen: SCR.PERFORM
+      });
+    } else {
+      S.performChart = chart;
+      S.performChartId = typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated");
+      S.performPlaying = true;
+      S.performPaused = false;
+      S.performCurrentSec = 0;
+      S.performStartSec = 0;
+      S.performScore = 0;
+      S.performCombo = 0;
+      S.performMaxCombo = 0;
+      S.performAccuracy = 0;
+      S.performPhraseIdx = 0;
+      S.performResults = null;
+      S.performStarRating = 0;
+      S.performLoop = null;
+      S.performLastHitLabel = "";
+      S.performLastHitTime = 0;
+      S.performPhraseStats = createEmptyPhraseStats(chart);
+      if (opts.mode) S.performMode = opts.mode;
+      if (opts.difficulty) S.performDifficulty = opts.difficulty;
+      if (opts.speed) S.performSpeed = opts.speed;
+      if (opts.preset) S.performPracticePreset = opts.preset;
+      S.performInputSource = S.performMode;
+    }
 
     // Apply difficulty profile to state windows
     applyPerformanceDifficultyToState(S.performDifficulty);
@@ -144,9 +155,6 @@ function startPerformance(chartIdOrChart, opts) {
     var midiReady = hasMidiBacking
       ? (typeof loadMidiBacking === "function" ? loadMidiBacking(chart.audio.src) : Promise.resolve())
       : Promise.resolve();
-
-    S.screen = SCR.PERFORM;
-
     midiReady.then(function(){
     if (S.performCountIn) {
       startPerformanceCountIn(chart, S.performSpeed, function() {
@@ -174,8 +182,15 @@ function startPerformance(chartIdOrChart, opts) {
     }).catch(function(e){ console.warn("MIDI backing load failed:", e); });
   }).catch(function(err) {
     console.error("ChordSpark: Failed to start performance:", err);
-    S.screen = SCR.HOME;
-    S.tab = TAB.SONGS;
+    if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+      SparkPerformanceBridge.syncPerformanceRuntimeState("start_failed", {
+        screen: SCR.HOME,
+        tab: TAB.SONGS
+      });
+    } else {
+      S.screen = SCR.HOME;
+      S.tab = TAB.SONGS;
+    }
     render();
   });
 }
@@ -189,8 +204,12 @@ function stopPerformance() {
   if (_performRAF) { cancelAnimationFrame(_performRAF); _performRAF = null; }
   try { PerformanceTransport.stop(); } catch(e) {}
   try { PerformanceInput.stop(); } catch(e) {}
-  S.performPlaying = false;
-  S.performPaused = false;
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+    SparkPerformanceBridge.syncPerformanceRuntimeState("stop");
+  } else {
+    S.performPlaying = false;
+    S.performPaused = false;
+  }
 }
 
 function resetPerformanceEvents(chart, rangeStartSec, rangeEndSec) {
@@ -211,16 +230,24 @@ function pausePerformance() {
   PerformanceTransport.pause();
   if (typeof pauseStems === "function") pauseStems();
   if (typeof pauseMidiBacking === "function") pauseMidiBacking();
-  S.performPaused = true;
-  S.performPlaying = false;
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+    SparkPerformanceBridge.syncPerformanceRuntimeState("pause");
+  } else {
+    S.performPaused = true;
+    S.performPlaying = false;
+  }
   if (_performRAF) { cancelAnimationFrame(_performRAF); _performRAF = null; }
   render();
 }
 
 function resumePerformance() {
   PerformanceTransport.resume();
-  S.performPaused = false;
-  S.performPlaying = true;
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+    SparkPerformanceBridge.syncPerformanceRuntimeState("resume");
+  } else {
+    S.performPaused = false;
+    S.performPlaying = true;
+  }
   if (typeof playStems === "function") playStems();
   if (typeof playMidiBacking === "function" && S.performChart && S.performChart.audio && S.performChart.audio.type === "midi") {
     playMidiBacking(S.performCurrentSec, S.performSpeed);
@@ -231,19 +258,31 @@ function resumePerformance() {
 
 function seekPerformance(sec) {
   PerformanceTransport.seek(sec);
-  S.performCurrentSec = sec;
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+    SparkPerformanceBridge.syncPerformanceRuntimeState("seek", { sec: sec });
+  } else {
+    S.performCurrentSec = sec;
+  }
   if (typeof seekStems === "function") seekStems(sec);
   if (typeof seekMidiBacking === "function") seekMidiBacking(sec, S.performSpeed);
   render();
 }
 
 function setPerformanceLoop(loopObj) {
-  S.performLoop = loopObj;
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+    SparkPerformanceBridge.syncPerformanceRuntimeState("set_loop", { loop: loopObj });
+  } else {
+    S.performLoop = loopObj;
+  }
   render();
 }
 
 function clearPerformanceLoop() {
-  S.performLoop = null;
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+    SparkPerformanceBridge.syncPerformanceRuntimeState("clear_loop");
+  } else {
+    S.performLoop = null;
+  }
   render();
 }
 
@@ -299,6 +338,11 @@ function _updatePerformDisplay() {
     var phrase = getPerformancePhraseForTime(S.performChart, S.performCurrentSec);
     phraseEl.textContent = phrase ? phrase.name : "";
   }
+
+  var importedOverlayEl = document.getElementById("perform-imported-overlay");
+  if (importedOverlayEl && typeof renderImportedTechniqueOverlay === "function") {
+    importedOverlayEl.innerHTML = renderImportedTechniqueOverlay(S.performChart, S.performCurrentSec, 3);
+  }
 }
 
 function maybeScorePendingEvents(nowSec) {
@@ -330,7 +374,7 @@ function maybeScorePendingEvents(nowSec) {
     }
 
     // In scoring window — check snapshot
-    if (snapshot.pitchClasses.length > 0) {
+    if (performanceSnapshotHasActivity(snapshot, evt, S.performMode)) {
       var result = scorePerformanceEvent(evt, snapshot, deltaMs, S.performDifficulty, S.performMode);
 
       if (result.grade !== "miss") {
@@ -410,138 +454,54 @@ function applyPerformanceStemPreset(preset) {
 
 function finishPerformance() {
   stopPerformance();
-  S.performResults = finalizePerformanceResults(S.performChart, S.performPhraseStats);
-  S.performStarRating = S.performResults.stars;
+  var results = finalizePerformanceResults(S.performChart, S.performPhraseStats);
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
+    SparkPerformanceBridge.syncPerformanceRuntimeState("finish", {
+      results: results,
+      screen: SCR.PERFORM_DONE
+    });
+  } else {
+    S.performResults = results;
+    S.performStarRating = results.stars;
+  }
 
   var xpAward = Math.max(5, Math.round(S.performResults.accuracy / 10));
-  S.xp += xpAward;
-  S.xpToast = { amount: xpAward, time: Date.now() };
+  var corePerformanceResult = null;
+  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+    corePerformanceResult = window.sparkCore.completeSession({
+      flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+      markPlanComplete: true,
+      performanceResults: S.performResults,
+      xpAwarded: xpAward
+    });
+    if (corePerformanceResult && typeof corePerformanceResult.xpAwarded === "number") {
+      xpAward = corePerformanceResult.xpAwarded;
+    }
+  } else if (window.SparkProgressBridge) {
+    SparkProgressBridge.applyLegacyReward({ xpDelta: xpAward, toastAmount: xpAward });
+  } else {
+    S.xp += xpAward; S.xpToast = { amount: xpAward, time: Date.now() };
+  }
   logHistory("perform", S.performResults.title + " - " + S.performResults.accuracy + "% accuracy", xpAward);
 
-  // Persist song stats
-  var songKey = S.performChartId || "unknown";
-  if (!S.performSongStats[songKey]) {
-    S.performSongStats[songKey] = { bestScore: 0, bestAccuracy: 0, bestStars: 0, runs: 0, phrases: {} };
-  }
-  var ss = S.performSongStats[songKey];
-  ss.runs++;
-  if (S.performResults.score > ss.bestScore) ss.bestScore = S.performResults.score;
-  if (S.performResults.accuracy > ss.bestAccuracy) ss.bestAccuracy = S.performResults.accuracy;
-  if (S.performResults.stars > ss.bestStars) ss.bestStars = S.performResults.stars;
-
-  // Per-phrase bests
-  if (S.performResults.phraseStats) {
-    for (var pi = 0; pi < S.performResults.phraseStats.length; pi++) {
-      var ps = S.performResults.phraseStats[pi];
-      var pk = String(ps.phraseId);
-      if (!ss.phrases[pk]) ss.phrases[pk] = { bestScore: 0, attempts: 0 };
-      ss.phrases[pk].attempts++;
-      var avg = ps.total > 0 ? ps.scoreSum / ps.total : 0;
-      if (avg > ss.phrases[pk].bestScore) ss.phrases[pk].bestScore = avg;
-    }
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.applyPerformanceRunOutcome === "function") {
+    SparkPerformanceBridge.applyPerformanceRunOutcome({
+      chartId: S.performChartId || "unknown",
+      chart: S.performChart,
+      results: S.performResults,
+      difficulty: S.performDifficulty
+    });
   }
 
-  // Update progression stats
-  if (typeof updatePerformanceStats === "function") {
-    var arrType = (S.performChart && S.performChart.arrangementType) || "chords";
-    var progStats = updatePerformanceStats(
-      S.performChartId || "unknown",
-      arrType,
-      S.performDifficulty,
-      S.performResults
-    );
-    // Check for unlocks
-    var unlocks = checkPerformanceUnlocks(
-      S.performChartId || "unknown",
-      arrType,
-      S.performDifficulty,
-      progStats
-    );
-    if (unlocks.length > 0) {
-      S.performResults.unlocks = unlocks;
-    }
-  }
-
-  // Check daily challenge completion
-  if(S.performanceDailyChallenge&&!S.performanceDailyComplete){
-    var dc=S.performanceDailyChallenge,dr=S.performResults;
-    var matchSong=!dc.songId||dc.songId===(S.performChartId||"").split("_")[0];
-    var completed=false;
-    if(dc.type==="full_run"&&dr.totalEvents>0)completed=true;
-    if(dc.type==="retry_run"&&dr.accuracy>=70)completed=true;
-    if(dc.type==="weakest_phrase"&&dr.accuracy>=(dc.target&&dc.target.accuracy||85))completed=true;
-    if(dc.type==="promote_difficulty"&&dr.stars>=(dc.target&&dc.target.stars||3))completed=true;
-    if(dc.type==="try_rhythm"&&(S.performChart&&S.performChart.arrangementType==="rhythm_chords"))completed=true;
-    if(completed){
-      var bonusXp=markPerformanceDailyComplete();
-      if(bonusXp>0){S.xp+=bonusXp;S.xpToast={amount:bonusXp,time:Date.now()};}
-    }
-  }
-
-  // Performance badges
-  (function(){
-    var r=S.performResults;if(!r)return;
-    var b=S.earnedBadges;if(!Array.isArray(b))return;
-    function award(id){if(b.indexOf(id)<0){b.push(id);S.newBadge=null;for(var bi=0;bi<BADGES.length;bi++){if(BADGES[bi].id===id){S.newBadge=BADGES[bi];break;}}}}
-
-    // First performance
-    award("perf_first");
-
-    // Star badges
-    if(r.stars>=3)award("perf_3star");
-    if(r.stars>=5)award("perf_5star");
-
-    // Run count
-    var totalRuns=0;
-    for(var k in S.performanceStats){if(S.performanceStats[k]&&S.performanceStats[k].runs)totalRuns+=S.performanceStats[k].runs;}
-    if(totalRuns>=10)award("perf_10runs");
-
-    // Mastery
-    for(var mk in S.performanceStats){if(S.performanceStats[mk]&&S.performanceStats[mk].mastery==="mastered"){award("perf_mastered");break;}}
-
-    // Rhythm
-    if(S.performChart&&S.performChart.arrangementType==="rhythm_chords")award("perf_rhythm");
-
-    // Pro
-    if(S.performDifficulty==="pro"&&r.stars>=3)award("perf_pro");
-
-    // Daily
-    if(S.performanceDailyComplete)award("perf_daily");
-
-    // Daily streak
-    if(Array.isArray(S.performanceDailyHistory)&&S.performanceDailyHistory.length>=3)award("perf_streak3");
-
-    // All songs played
-    if(typeof SONGS!=="undefined"&&Array.isArray(SONGS)){
-      var playedSongs=0,totalSongs=0;
-      for(var si=0;si<SONGS.length;si++){
-        if(!SONGS[si].progression||!SONGS[si].progression.length)continue;
-        totalSongs++;
-        var sid=(SONGS[si].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
-        for(var pk in S.performanceStats){if(pk.indexOf(sid)===0&&S.performanceStats[pk].runs>0){playedSongs++;break;}}
-      }
-      if(totalSongs>0&&playedSongs>=totalSongs)award("perf_allsongs");
-    }
-  })();
-
-  // Standalone badge + unlock module evaluation
-  if(typeof evaluatePerformanceBadges==="function"){
-    var progKey = S.performChartId || "unknown";
-    var arrType2 = (S.performChart && S.performChart.arrangementType) || "chords";
-    var bucket = S.performanceStats && S.performanceStats[progKey] && S.performanceStats[progKey][arrType2] && S.performanceStats[progKey][arrType2][S.performDifficulty] || null;
-    var newBadges = evaluatePerformanceBadges(S.performResults, bucket);
-    if(newBadges && newBadges.length){
-      S.xp += newBadges.length * 10;
-    }
-  }
-  if(typeof applyPerformanceUnlocks==="function"){
-    var progKey3 = S.performChartId || "unknown";
-    var arrType3 = (S.performChart && S.performChart.arrangementType) || "chords";
-    var bucket3 = S.performanceStats && S.performanceStats[progKey3] && S.performanceStats[progKey3][arrType3] && S.performanceStats[progKey3][arrType3][S.performDifficulty] || null;
-    var unlockResult = applyPerformanceUnlocks(S.performResults, bucket3);
-    if(unlockResult && unlockResult.xp > 0){
-      S.xp += unlockResult.xp;
-    }
+  if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.applyPerformanceRunFollowOns === "function") {
+    SparkPerformanceBridge.applyPerformanceRunFollowOns({
+      chartId: S.performChartId || "unknown",
+      chart: S.performChart,
+      results: S.performResults,
+      difficulty: S.performDifficulty,
+      progressionStats: S.performanceStats && S.performanceStats[(S.performChartId || "unknown") + "_" + ((S.performChart && S.performChart.arrangementType) || "chords") + "_" + (S.performDifficulty || "normal")] || null,
+      songStats: S.performSongStats && S.performSongStats[S.performChartId || "unknown"] || null
+    });
   }
 
   if (typeof PerfEvents !== "undefined") PerfEvents.emit("performance_completed", {

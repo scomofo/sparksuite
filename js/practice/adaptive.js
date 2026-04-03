@@ -31,6 +31,12 @@
 
   function updateAdaptiveFromResult(result){
     if(!result || !result.exerciseId) return;
+    if(window.SparkProgressBridge && typeof SparkProgressBridge.buildLegacyItemResultSummary === "function" && typeof SparkProgressBridge.applyAdaptiveUpdate === "function"){
+      var summary = SparkProgressBridge.buildLegacyItemResultSummary(result);
+      SparkProgressBridge.applyAdaptiveUpdate(summary ? summary.adaptiveUpdate : null);
+      saveState();
+      return;
+    }
 
     S.adaptiveState[result.exerciseId] = {
       accuracy: result.accuracy,

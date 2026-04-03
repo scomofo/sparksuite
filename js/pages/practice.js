@@ -71,8 +71,8 @@ function practiceTab(){
   }
 
   // Adaptive Practice Plan
-  if(typeof generatePracticePlan==="function"){
-    var plan=generatePracticePlan();
+  if(typeof ensurePracticePlan==="function"){
+    var plan=ensurePracticePlan();
     if(plan&&plan.items&&plan.items.length){
       h+='<div class="card mb20" style="border:2px solid '+(plan.completedItems>=plan.totalItems?"#4ECDC4":"#45B7D1")+'">';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';

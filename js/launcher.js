@@ -4,6 +4,13 @@
   var _instruments = [];
   var _active = null;
 
+  function renderInstrumentIcon(inst) {
+    if (inst && inst.iconImage) {
+      return '<img class="instrument-icon-image" src="' + escHTML(inst.iconImage) + '" alt="' + escHTML(inst.name || "Instrument") + ' icon">';
+    }
+    return inst && inst.icon ? inst.icon : "&#127925;";
+  }
+
   var SparkInstruments = {
     register: function(config) {
       for (var i = 0; i < _instruments.length; i++) {
@@ -76,8 +83,11 @@
         if (inst.available !== false) {
           h += '<div class="launcher-card" ';
           h += 'onclick="SparkInstruments.activate(\'' + inst.id + '\');S.activeInstrument=\'' + inst.id + '\';S.screen=SCR.HOME;S.tab=TAB.PRACTICE;saveState();render()">';
-          h += '<span class="instrument-icon">' + inst.icon + '</span>';
+          h += '<span class="instrument-icon">' + renderInstrumentIcon(inst) + '</span>';
           h += '<div class="instrument-name">' + escHTML(inst.name) + '</div>';
+          if (inst.tagline) {
+            h += '<div class="instrument-tagline">' + escHTML(inst.tagline) + '</div>';
+          }
           if (appStats) {
             h += '<div class="instrument-stats">Lvl ' + (appStats.level || 1) + ' &middot; ' + (appStats.xp || 0) + ' XP</div>';
           } else {
@@ -86,8 +96,11 @@
           h += '</div>';
         } else {
           h += '<div class="launcher-card disabled">';
-          h += '<span class="instrument-icon">' + inst.icon + '</span>';
+          h += '<span class="instrument-icon">' + renderInstrumentIcon(inst) + '</span>';
           h += '<div class="instrument-name">' + escHTML(inst.name) + '</div>';
+          if (inst.tagline) {
+            h += '<div class="instrument-tagline">' + escHTML(inst.tagline) + '</div>';
+          }
           h += '<div class="instrument-stats">Coming Soon</div>';
           h += '</div>';
         }

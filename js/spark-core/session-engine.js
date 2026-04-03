@@ -95,25 +95,45 @@
 
       // --- Streak: once per day ---
       var today = new Date().toISOString().slice(0, 10);
+      var sessionUpdate = {
+        streak: null,
+        sessionsDelta: 1,
+        xpDelta: 0,
+        chordProgress: {},
+        level: null
+      };
       if (S.lastSessionDate !== today) {
-        S.streak = (S.streak || 0) + 1;
-        S.lastSessionDate = today;
+        sessionUpdate.streak = {
+          increment: 1,
+          lastSessionDate: today
+        };
         streakUpdated = true;
       }
-
-      // --- Session count ---
-      S.sessions = (S.sessions || 0) + 1;
 
       // --- XP with 1-in-15 jackpot ---
       jackpot  = Math.random() < (1 / 15);
       xpEarned = jackpot ? 50 : 10;
-      S.xp     = (S.xp || 0) + xpEarned;
+      sessionUpdate.xpDelta = xpEarned;
 
       // --- Chord mastery (+34 per session, capped at 100) ---
       var chordName = results.chordName || null;
       if (chordName) {
-        if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
-        S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + 34, 100);
+        sessionUpdate.chordProgress[chordName] = 34;
+      }
+
+      if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
+        SparkProgressBridge.applyLegacySessionOutcome(sessionUpdate);
+      } else {
+        if (sessionUpdate.streak) {
+          S.streak = (S.streak || 0) + sessionUpdate.streak.increment;
+          S.lastSessionDate = sessionUpdate.streak.lastSessionDate;
+        }
+        S.sessions = (S.sessions || 0) + sessionUpdate.sessionsDelta;
+        S.xp = (S.xp || 0) + sessionUpdate.xpDelta;
+        if (chordName) {
+          if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
+          S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+        }
       }
 
       // --- Level-up: all chords at current level mastered ---
@@ -128,7 +148,11 @@
           if ((S.chordProgress[levelChords[i].name] || 0) < 100) { allMastered = false; break; }
         }
         if (allMastered) {
-          S.level++;
+          if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
+            SparkProgressBridge.applyLegacySessionOutcome({ level: (S.level || 1) + 1 });
+          } else {
+            S.level++;
+          }
           leveledUp = true;
           newLevel  = S.level;
         }

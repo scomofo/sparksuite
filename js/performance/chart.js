@@ -1,14 +1,178 @@
 /* ===== ChordSpark Performance: Chart Loader ===== */
 
+var PERFORMANCE_CHART_LIBRARY_FALLBACK = [
+  {
+    id: "demo_progression",
+    title: "Demo Progression",
+    artist: "ChordSpark",
+    bpm: 90,
+    description: "ChordSpark demo chart with 8 steady chord hits.",
+    sourceType: "built_in",
+    accentColor: "#4ECDC4",
+    badge: "Demo",
+    instrument: "guitar"
+  },
+  {
+    id: "demo_imported_package",
+    title: "Imported MIDI Demo",
+    artist: "SparkSuite Import",
+    bpm: 120,
+    description: "Package-backed import using notes.mid plus song.ini through SparkChartIO.",
+    sourceType: "imported_package",
+    accentColor: "#f59e0b",
+    badge: "Import",
+    instrument: "guitar"
+  }
+];
+
 function loadPerformanceChart(chartId) {
   return fetch("data/performance_charts/" + chartId + ".json")
     .then(function(r) {
       if (!r.ok) throw new Error("Chart not found: " + chartId);
       return r.json();
     })
-    .then(function(chart) {
-      return normalizePerformanceChart(chart);
+    .then(function(chartDefinition) {
+      return normalizePerformanceChartDefinition(chartDefinition);
     });
+}
+
+function getPerformanceChartManifest() {
+  if (window.PERFORMANCE_CHART_MANIFEST && Array.isArray(window.PERFORMANCE_CHART_MANIFEST.charts)) {
+    return window.PERFORMANCE_CHART_MANIFEST.charts.slice();
+  }
+  return PERFORMANCE_CHART_LIBRARY_FALLBACK.slice();
+}
+
+function getPerformanceChartLibrary(options) {
+  options = options || {};
+  var charts = getPerformanceChartManifest();
+  if (options.instrument) {
+    charts = charts.filter(function(chart) {
+      return !chart.instrument || chart.instrument === options.instrument;
+    });
+  }
+  return charts;
+}
+
+function getPerformanceChartMeta(chartId) {
+  var library = getPerformanceChartLibrary();
+  for (var i = 0; i < library.length; i++) {
+    if (library[i].id === chartId) return library[i];
+  }
+  return null;
+}
+
+function normalizePerformanceChartDefinition(chartDefinition) {
+  if (!chartDefinition) throw new Error("Performance chart is empty");
+  if (chartDefinition.events) return normalizePerformanceChart(chartDefinition);
+  if (chartDefinition.songChart) {
+    return convertSparkSongChartToPerformanceChart(chartDefinition.songChart, chartDefinition.importOptions || {});
+  }
+  if (chartDefinition.chartImport || chartDefinition.packageFormat === "sparksuite_import_v1") {
+    return importPerformanceChartPackage(chartDefinition);
+  }
+  throw new Error("Unsupported performance chart definition");
+}
+
+function importPerformanceChartPackage(chartDefinition) {
+  if (typeof SparkChartIO !== "function") throw new Error("SparkChartIO is not available");
+  var chartIO = new SparkChartIO();
+  var adapter = getPerformanceImportAdapter(chartDefinition);
+  var sparkChart = chartIO.fromPackage(chartDefinition.chartImport || chartDefinition, adapter, chartDefinition.importOptions || {});
+  return convertSparkSongChartToPerformanceChart(sparkChart, {
+    chartId: chartDefinition.id,
+    title: chartDefinition.title,
+    artist: chartDefinition.artist,
+    arrangementType: chartDefinition.arrangementType,
+    audio: chartDefinition.audio
+  });
+}
+
+function getPerformanceImportAdapter(chartDefinition) {
+  if (chartDefinition && chartDefinition.adapter && typeof chartDefinition.adapter.getLaneCount === "function") {
+    return chartDefinition.adapter;
+  }
+  if (chartDefinition && (chartDefinition.adapterType === "ukulele" || chartDefinition.instrument === "ukulele")) {
+    if (typeof SparkUkuleleRhythmAdapter === "function") return new SparkUkuleleRhythmAdapter();
+    if (window.SparkUkuleleModule && typeof window.SparkUkuleleModule.getRhythmAdapter === "function") {
+      return window.SparkUkuleleModule.getRhythmAdapter();
+    }
+    return {
+      getLaneCount: function() { return 4; }
+    };
+  }
+  if (typeof SparkGuitarRhythmAdapter === "function") return new SparkGuitarRhythmAdapter();
+  return {
+    getLaneCount: function() { return 5; }
+  };
+}
+
+function convertSparkSongChartToPerformanceChart(songChart, options) {
+  options = options || {};
+  if (!songChart || !songChart.tempoMap || !songChart.tracks) throw new Error("Invalid Spark song chart");
+  var track = pickSparkPerformanceTrack(songChart);
+  var notes = track.notes || [];
+  var phrases = track.phrases || [];
+  var events = [];
+  var bpm = songChart.tempoMap.segments && songChart.tempoMap.segments.length ? songChart.tempoMap.segments[0].bpm : 100;
+
+  for (var i = 0; i < notes.length; i++) {
+    var note = notes[i];
+    var startSec = songChart.tempoMap.tickToSeconds(note.tick) + (songChart.song.offsetSec || 0);
+    var endTick = note.tick + (note.tickLength || 0);
+    var endSec = songChart.tempoMap.tickToSeconds(endTick) + (songChart.song.offsetSec || 0);
+    var eventNotes = sparkNoteToPitchClasses(note);
+    var importFlags = cloneImportFlags(note.flags);
+    var eventType = deriveImportedPerformanceEventType(note, eventNotes);
+    var laneLabel = note.label || formatPitchClasses(eventNotes) || maskToLaneLabel(note.laneMask, importFlags);
+    events.push({
+      id: note.id || ("spark_evt_" + i),
+      t: startSec,
+      dur: Math.max(0.05, endSec - startSec),
+      type: eventType,
+      chord: note.label || formatPitchClasses(eventNotes),
+      laneLabel: laneLabel,
+      notes: eventNotes,
+      strum: eventType === "tap" ? "tap" : (importFlags.open ? "open" : "down"),
+      sourceEventId: note.id || null,
+      laneMask: note.laneMask || 0,
+      sourceFlags: importFlags,
+      sourceLabel: note.label || "",
+      sourceSkillId: note.skillId || null
+    });
+  }
+
+  var normalizedPhrases = [];
+  for (var j = 0; j < phrases.length; j++) {
+    normalizedPhrases.push({
+      id: phrases[j].id,
+      name: phrases[j].name,
+      startSec: songChart.tempoMap.tickToSeconds(phrases[j].startTick) + (songChart.song.offsetSec || 0),
+      endSec: songChart.tempoMap.tickToSeconds(phrases[j].endTick) + (songChart.song.offsetSec || 0)
+    });
+  }
+  if (!normalizedPhrases.length) {
+    normalizedPhrases.push({
+      id: 0,
+      name: "Full Song",
+      startSec: 0,
+      endSec: songChart.song.durationSec || (events.length ? events[events.length - 1].t + events[events.length - 1].dur : 0)
+    });
+  }
+
+  return normalizePerformanceChart({
+    id: options.chartId || songChart.song.id || "imported_chart",
+    title: options.title || songChart.song.title || "Imported Chart",
+    artist: options.artist || songChart.song.artist || "Unknown Artist",
+    bpm: bpm,
+    beatsPerBar: normalizedPhrases.length ? 4 : 4,
+    offsetSec: songChart.song.offsetSec || 0,
+    arrangementType: options.arrangementType || "imported_chart",
+    audio: options.audio || { type: "silent" },
+    events: events,
+    phrases: normalizedPhrases,
+    sourceFormat: songChart.metadata ? songChart.metadata.sourceFormat : null
+  });
 }
 
 function validatePerformanceChart(chart) {
@@ -107,3 +271,85 @@ function getPerformancePhraseIndexForTime(chart, sec) {
 function clonePerformanceChart(chart) {
   return normalizePerformanceChart(JSON.parse(JSON.stringify(chart)));
 }
+
+function pickSparkPerformanceTrack(songChart) {
+  if (songChart.tracks.guitar) return songChart.tracks.guitar;
+  for (var key in songChart.tracks) {
+    if (songChart.tracks[key]) return songChart.tracks[key];
+  }
+  return { notes: [], phrases: [] };
+}
+
+function sparkNoteToPitchClasses(note) {
+  var midiNotes = note && note.flags ? note.flags.midiNotes : null;
+  var pitchClasses = [];
+  if (Array.isArray(midiNotes) && midiNotes.length) {
+    for (var i = 0; i < midiNotes.length; i++) {
+      pitchClasses.push(midiNumberToPitchClass(midiNotes[i]));
+    }
+    return dedupePerformancePitchClasses(pitchClasses);
+  }
+  if (note && note.label) {
+    var labelMatches = String(note.label).match(/[A-G](?:#|b)?/g);
+    if (labelMatches && labelMatches.length) return dedupePerformancePitchClasses(labelMatches);
+  }
+  return dedupePerformancePitchClasses(maskToPitchClasses(note ? note.laneMask : 0));
+}
+
+function deriveImportedPerformanceEventType(note, eventNotes) {
+  var flags = note && note.flags ? note.flags : {};
+  if (flags.tap) return "tap";
+  if (flags.open) return "open";
+  if (eventNotes.length > 1) return "chord";
+  return "note";
+}
+
+function cloneImportFlags(flags) {
+  var out = {};
+  flags = flags || {};
+  for (var key in flags) {
+    if (!Object.prototype.hasOwnProperty.call(flags, key)) continue;
+    if (Array.isArray(flags[key])) out[key] = flags[key].slice();
+    else if (flags[key] && typeof flags[key] === "object") out[key] = JSON.parse(JSON.stringify(flags[key]));
+    else out[key] = flags[key];
+  }
+  return out;
+}
+
+function midiNumberToPitchClass(midi) {
+  var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  return names[((midi % 12) + 12) % 12];
+}
+
+function maskToPitchClasses(laneMask) {
+  var labels = ["G", "R", "Y", "B", "O"];
+  var out = [];
+  for (var i = 0; i < labels.length; i++) {
+    if (laneMask & (1 << i)) out.push(labels[i]);
+  }
+  return out;
+}
+
+function maskToLaneLabel(laneMask, flags) {
+  flags = flags || {};
+  if (flags.open) return "Open";
+  var labels = maskToPitchClasses(laneMask);
+  return labels.length ? labels.join("+") : "Open";
+}
+
+function formatPitchClasses(notes) {
+  return notes && notes.length ? notes.join(" ") : "";
+}
+
+function dedupePerformancePitchClasses(notes) {
+  var seen = {};
+  var out = [];
+  for (var i = 0; i < notes.length; i++) {
+    if (!notes[i] || seen[notes[i]]) continue;
+    seen[notes[i]] = true;
+    out.push(notes[i]);
+  }
+  return out;
+}
+
+window.getPerformanceChartManifest = getPerformanceChartManifest;
