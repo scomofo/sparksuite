@@ -1808,25 +1808,30 @@ function act(action, param) {
     // ── MIDI Device/Profile actions ──
     case "setMidiDevice":
       S.activeMidiDeviceId = param;
+      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       saveState();
       break;
 
     case "setMidiProfile":
       if(typeof setActiveMidiProfile === "function") setActiveMidiProfile(param);
+      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       break;
 
     case "createDefaultPianoProfile":
       if(typeof createDefaultPianoProfile === "function") createDefaultPianoProfile();
+      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       break;
 
     case "createDefaultGuitarProfile":
       if(typeof createDefaultGuitarProfile === "function") createDefaultGuitarProfile();
+      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       break;
 
     case "openMidiSettings":
       if (typeof openUtilityScreenRequest === "function") {
         openUtilityScreenRequest("midi_settings");
       }
+      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       S.screen = SCR.MIDI_SETTINGS;
       break;
 

@@ -100,6 +100,7 @@ function resetState() {
   global.homeReturnCalls = [];
   global.utilityScreenCalls = [];
   global.utilityReturnCalls = [];
+  global.midiSettingsSyncCalls = [];
   global.stemPlayerCalls = [];
   global.dashboardRequestCalls = [];
   global.dashboardRefreshCalls = [];
@@ -334,6 +335,10 @@ function resetState() {
   global.returnFromUtilityFamilyRequest = function(payload) {
     utilityReturnCalls.push(payload);
     return { activeScreen: "home" };
+  };
+  global.syncMidiSettingsStateRequest = function(payload) {
+    midiSettingsSyncCalls.push(payload || {});
+    return payload || {};
   };
   global.openStemPlayerRequest = function() {
     stemPlayerCalls.push({ fn: "openStemPlayerRequest" });
@@ -599,6 +604,17 @@ test("utility screen entry actions mirror piano navigation into shared utility h
 
   assert.deepStrictEqual(utilityScreenCalls, ["settings", "curriculum", "cloud_settings", "midi_settings", "midi_import"]);
   assert.strictEqual(S.screen, "midi_import");
+});
+
+test("piano midi actions mirror into shared midi settings sync helper", function() {
+  pianoAct("setMidiDevice", "dev_1");
+  pianoAct("setMidiProfile", "profile_1");
+  pianoAct("createDefaultPianoProfile");
+  pianoAct("openMidiSettings");
+
+  assert.strictEqual(midiSettingsSyncCalls.length, 4);
+  assert.deepStrictEqual(utilityScreenCalls, ["midi_settings"]);
+  assert.strictEqual(S.screen, "midi_settings");
 });
 
 test("stem player actions mirror piano navigation into shared stem helpers", function() {

@@ -646,6 +646,30 @@ test("SparkCore can return from utility-family screens explicitly", function() {
   assert.strictEqual(state.transport.status, "idle");
 });
 
+test("SparkCore can track settings and midi utility snapshots explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var settingsState = core.syncSettingsState({ theme: "retro" });
+  assert.strictEqual(settingsState.settingsTheme, "retro");
+
+  var midiState = core.syncMidiSettingsState({
+    midiEnabled: true,
+    activeDeviceId: "dev_1",
+    activeDeviceName: "Keyboard",
+    activeProfileId: "profile_1",
+    activeProfileName: "Default Piano",
+    deviceOptions: [{ id: "dev_1", name: "Keyboard" }],
+    profileOptions: [{ id: "profile_1", name: "Default Piano", type: "piano" }]
+  });
+  assert.strictEqual(midiState.midiEnabled, true);
+  assert.strictEqual(midiState.midiActiveDeviceId, "dev_1");
+  assert.strictEqual(midiState.midiActiveDeviceName, "Keyboard");
+  assert.strictEqual(midiState.midiActiveProfileId, "profile_1");
+  assert.strictEqual(midiState.midiActiveProfileName, "Default Piano");
+  assert.strictEqual(midiState.midiDeviceOptions[0].id, "dev_1");
+  assert.strictEqual(midiState.midiProfileOptions[0].type, "piano");
+});
+
 test("SparkCore can build and apply dashboard recommendation launch requests", function() {
   var core = createDefaultSparkCore();
   core.applyDashboardRequest({
