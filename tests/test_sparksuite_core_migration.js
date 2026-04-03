@@ -691,6 +691,30 @@ test("SparkCore can track settings, midi, cloud, and midi-import utility snapsho
   assert.strictEqual(cloudState.cloudLastSyncStatus, "ok");
   assert.strictEqual(cloudState.cloudLastSyncAt, 1712102400000);
 
+  var openedCloudState = core.openCloudSettings({
+    loggedIn: true,
+    email: "player@sparksuite.dev",
+    lastSyncStatus: "idle"
+  });
+  assert.strictEqual(openedCloudState.activeScreen, "cloud_settings");
+  assert.strictEqual(openedCloudState.cloudLoggedIn, true);
+
+  var syncingCloudState = core.applyCloudWorkflowRequest("sync_start", {
+    loggedIn: true,
+    email: "player@sparksuite.dev",
+    lastSyncStatus: "syncing"
+  });
+  assert.strictEqual(syncingCloudState.cloudLastSyncStatus, "syncing");
+
+  var completedCloudState = core.applyCloudWorkflowRequest("sync_done", {
+    loggedIn: true,
+    email: "player@sparksuite.dev",
+    lastSyncStatus: "ok",
+    lastSyncAt: 1712102400000
+  });
+  assert.strictEqual(completedCloudState.cloudLastSyncStatus, "ok");
+  assert.strictEqual(completedCloudState.cloudLastSyncAt, 1712102400000);
+
   var midiImportState = core.syncMidiImportState({
     summary: {
       sourceName: "lesson.mid",

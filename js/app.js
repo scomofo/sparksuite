@@ -917,6 +917,22 @@ function syncCloudSettingsStateRequest(options) {
   return null;
 }
 
+function applyCloudWorkflowRequest(action, options) {
+  var payload = buildCloudSettingsRuntimePayload();
+  var key;
+  options = options || {};
+  for (key in options) {
+    if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
+  }
+  if (window.sparkCore && typeof window.sparkCore.applyCloudWorkflowRequest === "function") {
+    return window.sparkCore.applyCloudWorkflowRequest(action, payload);
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncCloudSettingsState === "function") {
+    return window.sparkCore.syncCloudSettingsState(payload);
+  }
+  return null;
+}
+
 function buildCurriculumRuntimePayload() {
   var curriculums = (window.SparkCurriculum && SparkCurriculum.curriculums) || {};
   var packs = (window.SparkContent && SparkContent.packs) || {};
@@ -3051,17 +3067,17 @@ window.act=function(a,v){
     }return;
   }
   // === Cloud Sync Actions ===
-  if(a==="cloudSync"){if(typeof syncSparkNow==="function")syncSparkNow();return;}
-  if(a==="cloudPull"){if(typeof pullSparkCloud==="function")pullSparkCloud();return;}
-  if(a==="cloudLogout"){if(typeof logoutSpark==="function")logoutSpark();syncCloudSettingsStateRequest();render();return;}
+  if(a==="cloudSync"){applyCloudWorkflowRequest("sync_start",{lastSyncStatus:"syncing"});if(typeof syncSparkNow==="function")syncSparkNow();return;}
+  if(a==="cloudPull"){applyCloudWorkflowRequest("pull_start",{lastSyncStatus:"syncing"});if(typeof pullSparkCloud==="function")pullSparkCloud();return;}
+  if(a==="cloudLogout"){if(typeof logoutSpark==="function")logoutSpark();applyCloudWorkflowRequest("logout");render();return;}
   if(a==="cloudLoginPrompt"){
     var email=prompt("Email:");
     var password=prompt("Password:");
     if(email&&password&&typeof loginSpark==="function"){
-      loginSpark(email,password).then(function(){syncCloudSettingsStateRequest();render();});
+      loginSpark(email,password).then(function(){applyCloudWorkflowRequest("login");render();});
     }return;
   }
-  if(a==="openCloudSettings"){openUtilityScreenRequest("cloud_settings");syncCloudSettingsStateRequest();S.screen=SCR.CLOUD_SETTINGS;render();return;}
+  if(a==="openCloudSettings"){openUtilityScreenRequest("cloud_settings");applyCloudWorkflowRequest("open");S.screen=SCR.CLOUD_SETTINGS;render();return;}
   // === Desktop Actions ===
   if(a==="checkUpdates"){if(typeof checkForDesktopUpdates==="function")checkForDesktopUpdates();return;}
   if(a==="exportBackup"){if(typeof exportFullBackupDesktopAware==="function")exportFullBackupDesktopAware();return;}

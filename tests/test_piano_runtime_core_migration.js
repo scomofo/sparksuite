@@ -103,6 +103,7 @@ function resetState() {
   global.midiSettingsSyncCalls = [];
   global.curriculumSyncCalls = [];
   global.midiImportSyncCalls = [];
+  global.cloudWorkflowCalls = [];
   global.stemPlayerCalls = [];
   global.dashboardRequestCalls = [];
   global.dashboardRefreshCalls = [];
@@ -360,6 +361,10 @@ function resetState() {
     }
     midiImportSyncCalls.push(payload);
     return payload;
+  };
+  global.applyCloudWorkflowRequest = function(action, payload) {
+    cloudWorkflowCalls.push({ action: action, payload: payload || {} });
+    return payload || {};
   };
   global.openStemPlayerRequest = function() {
     stemPlayerCalls.push({ fn: "openStemPlayerRequest" });
@@ -626,7 +631,18 @@ test("utility screen entry actions mirror piano navigation into shared utility h
   assert.deepStrictEqual(utilityScreenCalls, ["settings", "curriculum", "cloud_settings", "midi_settings", "midi_import"]);
   assert.strictEqual(curriculumSyncCalls.length, 1);
   assert.strictEqual(midiImportSyncCalls.length, 1);
+  assert.strictEqual(cloudWorkflowCalls.length, 1);
+  assert.strictEqual(cloudWorkflowCalls[0].action, "open");
   assert.strictEqual(S.screen, "midi_import");
+});
+
+test("piano cloud actions mirror into shared cloud workflow helper", function() {
+  pianoAct("cloudSync");
+  pianoAct("cloudPull");
+
+  assert.strictEqual(cloudWorkflowCalls.length, 2);
+  assert.strictEqual(cloudWorkflowCalls[0].action, "sync_start");
+  assert.strictEqual(cloudWorkflowCalls[1].action, "pull_start");
 });
 
 test("piano midi import actions mirror into shared midi import sync helper", function() {

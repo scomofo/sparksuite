@@ -119,7 +119,7 @@ Primary source plans:
   - `js/pages/skill_tree.js`
   - `tests/test_sparksuite_core_migration.js`
   - `tests/test_piano_runtime_core_migration.js`
-- Settings, MIDI, MIDI import, cloud, and curriculum utility screens can now prefer core-backed utility snapshots instead of relying only on shell-owned state, with theme, MIDI device/profile summaries, MIDI import summaries/assignments, cloud auth/sync status, and curriculum/pack summaries mirrored into SparkCore from shared and piano actions.
+- Settings, MIDI, MIDI import, cloud, and curriculum utility screens can now prefer core-backed utility snapshots instead of relying only on shell-owned state, with theme, MIDI device/profile summaries, MIDI import summaries/assignments, cloud auth/sync status, and curriculum/pack summaries mirrored into SparkCore from shared and piano actions, and cloud open/sync/pull/login/logout now route through explicit core-backed workflow helpers.
   - `js/sparksuite/core/spark_core.js`
   - `js/app.js`
   - `js/instruments/piano/app.js`

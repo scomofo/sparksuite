@@ -1869,10 +1869,12 @@ function act(action, param) {
 
     // ── Cloud Sync actions ──
     case "cloudSync":
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing" });
       if(typeof syncSparkNow === "function") syncSparkNow();
       return;
 
     case "cloudPull":
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing" });
       if(typeof pullSparkCloud === "function") pullSparkCloud();
       return;
 
@@ -1884,7 +1886,7 @@ function act(action, param) {
       var clEmail = prompt("Email:");
       var clPassword = prompt("Password:");
       if(clEmail && clPassword && typeof loginSpark === "function"){
-        loginSpark(clEmail, clPassword).then(function(){ render(); });
+        loginSpark(clEmail, clPassword).then(function(){ if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login"); render(); });
       }
       return;
     }
@@ -1893,6 +1895,7 @@ function act(action, param) {
       if (typeof openUtilityScreenRequest === "function") {
         openUtilityScreenRequest("cloud_settings");
       }
+      if (typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("open");
       S.screen = SCR.CLOUD_SETTINGS;
       break;
 
