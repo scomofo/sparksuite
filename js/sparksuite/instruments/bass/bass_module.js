@@ -178,6 +178,36 @@
     walking_multi_key: ["B-GROOVE"],
     jam_tracks: ["B-GROOVE"]
   };
+  var BASS_ADVANCED_EXERCISES = {
+    walking_bass: [
+      { id: "bass_walk_lines_01", type: "bassline", name: "Walk Lines 01", focus: "walking_bass", pattern: "Root-3-5-6", duration: 75 },
+      { id: "bass_turnaround_01", type: "bassline", name: "Turnaround Steps", focus: "passing_notes", pattern: "3-2-1-walk", duration: 75 }
+    ],
+    passing_notes: [
+      { id: "bass_passing_notes_01", type: "bassline", name: "Passing Notes 01", focus: "passing_notes", pattern: "Root chromatic walk-up", duration: 70 }
+    ],
+    arpeggios: [
+      { id: "bass_arpeggio_climb_01", type: "arpeggio", name: "Arpeggio Climb", focus: "arpeggios", pattern: "1-3-5-8", duration: 70 }
+    ],
+    ghost_notes: [
+      { id: "bass_ghost_grid_02", type: "groove", name: "Ghost Grid 02", focus: "ghost_notes", pattern: "Note-x-note-x", duration: 80 }
+    ],
+    groove_accents: [
+      { id: "bass_accent_lock_01", type: "groove", name: "Accent Lock", focus: "groove_accents", pattern: "Accent on 2 and 4", duration: 80 }
+    ],
+    slap: [
+      { id: "bass_slap_pop_01", type: "technique", name: "Slap Pop 01", focus: "slap", pattern: "Thumb-pop-thumb", duration: 75 }
+    ],
+    pop: [
+      { id: "bass_pop_snaps_01", type: "technique", name: "Pop Snaps", focus: "pop", pattern: "Pop-octave-pop", duration: 75 }
+    ],
+    funk_grooves: [
+      { id: "bass_funk_grid_01", type: "groove", name: "Funk Grid", focus: "funk_grooves", pattern: "16th note syncopation", duration: 90 }
+    ],
+    improvisation: [
+      { id: "bass_improv_cells_01", type: "improv", name: "Improv Cells", focus: "improvisation", pattern: "Root-fifth-fill", duration: 90 }
+    ]
+  };
   var BASS_RECOMMENDATION_HINTS = {
     posture: { reason: "Set a relaxed hand shape so the groove stays easy.", focusTag: "fundamentals", priorityBoost: 0 },
     plucking: { reason: "Build steady alternating fingers before chasing speed.", focusTag: "plucking", priorityBoost: 1 },
@@ -273,6 +303,8 @@
   function getBassExercisesForSkill(skill) {
     var exercises = window.BASS_EXERCISES || [];
     if (!skill) return exercises.slice();
+    var advanced = BASS_ADVANCED_EXERCISES[skill];
+    if (advanced && advanced.length) return advanced.slice();
     var preferredIds = BASS_SKILL_EXERCISE_MAP[skill] || [];
     if (!preferredIds.length) return exercises.slice(0, 2);
     var matches = [];
