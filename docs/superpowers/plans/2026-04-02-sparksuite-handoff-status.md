@@ -490,6 +490,7 @@ Primary source plans:
   - `js/sparksuite/core/spark_core.js`
   - `tests/test_sparksuite_core_migration.js`
 - Legacy timed practice now has explicit core-backed countdown/pause runtime sync too, so the old session timer is no longer only a shell-owned toggle.
+- Legacy timed practice now has explicit core-backed countdown/pause runtime sync too, and both session and drill pages can render the migrated timer state instead of relying only on shell countdown fields.
   - `js/app.js`
   - `js/pages/session.js`
   - `js/sparksuite/core/spark_core.js`

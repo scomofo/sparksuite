@@ -36,7 +36,7 @@ function getLegacyDrillRuntime(D){
   }
   return {
     chords: drillChords,
-    timer: typeof S.drillTimer === "number" ? S.drillTimer : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0)
+    timer: typeof S.drillTimer === "number" ? S.drillTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0))
   };
 }
 
