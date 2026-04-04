@@ -249,30 +249,44 @@ function quizTab(){
 }
 
 // ===== EAR TRAINING TAB =====
+function getLegacyEarTrainingRuntime(){
+  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  return {
+    question: typeof S.earTrainQ === "string" ? S.earTrainQ : (runtime ? runtime.legacyEarTrainQuestion : null),
+    options: Array.isArray(S.earTrainOpts) && S.earTrainOpts.length ? S.earTrainOpts : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
+    answer: typeof S.earTrainAns === "string" ? S.earTrainAns : (runtime ? runtime.legacyEarTrainAnswer : null)
+  };
+}
+
 function earTrainTab(){
-  if(S.earTrainQ)return earTrainPage();
+  var runtime = getLegacyEarTrainingRuntime();
+  if(runtime.question)return earTrainPage();
   return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Ear Training &#128066;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Listen to a chord, then identify it!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127911;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Score: <strong>'+S.earTrainScore+'</strong> correct all time</p><button class="btn" onclick="act(\'startEarTrain\')" style="background:linear-gradient(135deg,#FF6B6B,#4ECDC4);color:#fff">&#127911; Start Listening</button></div></div>';
 }
 
 function earTrainPage(){
+  var runtime = getLegacyEarTrainingRuntime();
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'ear\')">&#8592; Back</button>';
   h+='<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+S.earTrainScore+'/'+S.earTrainTotal+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+S.earTrainStreak+'</span></div></div>';
   h+='<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">What chord is this?</h2>';
   h+='<button class="btn mb16" onclick="act(\'replayEarTrain\')" style="padding:10px 20px;font-size:14px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#128264; Replay</button>';
   h+='<div style="display:flex;flex-direction:column;gap:8px;max-width:300px;margin:0 auto">';
-  for(var i=0;i<S.earTrainOpts.length;i++){
-    var opt=S.earTrainOpts[i];
-    var isA=S.earTrainAns!==null;
-    var isC=opt===S.earTrainQ;
-    var isP=S.earTrainAns===opt;
+  for(var i=0;i<runtime.options.length;i++){
+    var opt=runtime.options[i];
+    var isA=runtime.answer!==null;
+    var isC=opt===runtime.question;
+    var isP=runtime.answer===opt;
     var bg=isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--input-bg)")):"var(--card-bg)";
     var clr=isA?(isC||isP?"#fff":"var(--text-muted)"):"var(--text-primary)";
     h+='<button class="btn" onclick="act(\'answerEarTrain\',\''+opt+'\')" style="width:100%;padding:14px;font-size:16px;font-weight:700;background:'+bg+';color:'+clr+';border:2px solid '+(isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--border)")):"var(--border)")+'">'+opt+'</button>';
   }
   h+='</div>';
-  if(S.earTrainAns){
-    var ok=S.earTrainAns===S.earTrainQ;
-    h+='<div style="margin-top:16px;font-size:20px;font-weight:800;color:'+(ok?"#4ECDC4":"#FF6B6B")+';animation:bn .4s ease">'+(ok?"&#9989; Correct! +15 XP":"&#10060; It was "+S.earTrainQ)+'</div>';
+  if(runtime.answer){
+    var ok=runtime.answer===runtime.question;
+    h+='<div style="margin-top:16px;font-size:20px;font-weight:800;color:'+(ok?"#4ECDC4":"#FF6B6B")+';animation:bn .4s ease">'+(ok?"&#9989; Correct! +15 XP":"&#10060; It was "+runtime.question)+'</div>';
   }
   h+='</div>';
   return h;

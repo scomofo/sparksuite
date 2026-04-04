@@ -1479,6 +1479,13 @@ window.act=function(a,v){
   }
   if(a==="replayEarTrain"&&S.earTrainQ){strumChord(S.earTrainQ);return;}
   if(a==="answerEarTrain"&&S.earTrainAns===null){
+    if(window.sparkCore&&typeof window.sparkCore.syncLegacyEarTrainingRuntimeState==="function"){
+      window.sparkCore.syncLegacyEarTrainingRuntimeState({
+        question: S.earTrainQ,
+        options: S.earTrainOpts,
+        answer: v
+      });
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
         setFields:{earTrainAns:v},

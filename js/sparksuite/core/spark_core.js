@@ -52,6 +52,9 @@
       legacyFingerExerciseId: null,
       legacyFingerExerciseActive: false,
       legacyFingerExerciseCount: 0,
+      legacyEarTrainQuestion: null,
+      legacyEarTrainOptions: [],
+      legacyEarTrainAnswer: null,
       legacyDrillChordNames: null,
       legacyDailyChallengeId: null,
       legacyDailyTimerActive: false,
@@ -504,6 +507,20 @@
       legacyFingerExerciseActive: true,
       legacyFingerExerciseCount: Object.prototype.hasOwnProperty.call(options, "exerciseCount") ? options.exerciseCount : 0,
       transport: { status: "running", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.syncLegacyEarTrainingRuntimeState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: this.runtimeState.activeFlow || "legacy_ear_training",
+      activeScreen: this.runtimeState.activeScreen || "home",
+      activeTab: "ear",
+      legacyEarTrainQuestion: Object.prototype.hasOwnProperty.call(options, "question") ? options.question : this.runtimeState.legacyEarTrainQuestion,
+      legacyEarTrainOptions: Object.prototype.hasOwnProperty.call(options, "options")
+        ? this.cloneValue(options.options || [])
+        : this.cloneValue(this.runtimeState.legacyEarTrainOptions || []),
+      legacyEarTrainAnswer: Object.prototype.hasOwnProperty.call(options, "answer") ? options.answer : this.runtimeState.legacyEarTrainAnswer
     });
   };
 
