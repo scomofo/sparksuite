@@ -125,6 +125,57 @@
       }
 
       return result;
+    },
+
+    /**
+     * applySessionOutcome(sessionResult)
+     * Single entry point for post-session state updates.
+     * Accepts a SessionResult contract, runs the full cascade, and returns a ProgressOutcome.
+     */
+    applySessionOutcome: function(sessionResult) {
+      sessionResult = sessionResult || {};
+
+      // Map SessionResult to the evaluateAll event shape
+      var event = {
+        type: sessionResult.mode || "session",
+        chordName: sessionResult.chordName || null,
+        accuracy: sessionResult.accuracy || 0,
+        xpAwarded: 0,
+        duration: sessionResult.duration || 0,
+        songId: sessionResult.songId || null,
+        streakUpdated: false
+      };
+
+      // Compute XP via existing logic
+      var jackpot = typeof SparkPsychology !== "undefined" ? SparkPsychology.shouldJackpot() : (Math.random() < 1/15);
+      event.xpAwarded = jackpot ? 50 : 10;
+
+      // Check streak
+      if (typeof S !== "undefined") {
+        var today = new Date().toISOString().slice(0, 10);
+        if (S.lastSessionDate !== today) {
+          event.streakUpdated = true;
+        }
+      }
+
+      // Run the full cascade
+      var cascadeResult = this.evaluateAll(event);
+
+      // Return structured ProgressOutcome
+      if (typeof SparkContracts !== "undefined") {
+        return SparkContracts.createProgressOutcome({
+          xpEarned: cascadeResult.xpTotal || event.xpAwarded,
+          levelUps: cascadeResult.leveledUp ? [{ newLevel: cascadeResult.newLevel }] : [],
+          masteryChanges: cascadeResult.masteryUpdates || {},
+          unlocks: cascadeResult.newUnlocks || [],
+          achievements: cascadeResult.newAchievements || [],
+          streakChanges: event.streakUpdated ? { incremented: true } : null,
+          comebackBonus: 0,
+          nextRecommendation: null
+        });
+      }
+
+      return cascadeResult;
     }
   };
 
