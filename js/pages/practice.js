@@ -1,6 +1,91 @@
 // ===== ChordSpark: Home page and practice-related tabs =====
 
+function sv2HomeDashboard() {
+  var inst = SparkInstruments.getActive();
+  if (!inst) return "";
+  var D = inst.getData ? inst.getData() : {};
+  var instrumentType = inst.instrument || "guitar";
+  var theme = typeof SparkTheme !== "undefined" ? SparkTheme.get(instrumentType) : null;
+  if (!theme) return "";
+
+  var allInstruments = typeof SparkInstruments !== "undefined" ? SparkInstruments.getAll() : [];
+  var levelNames = D.LN || {};
+  var levelName = levelNames[S.level] || ("Level " + S.level);
+  var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
+  var masteredCount = 0;
+  if (D.ALL_CHORDS) {
+    for (var i = 0; i < D.ALL_CHORDS.length; i++) {
+      if ((S.chordProgress[D.ALL_CHORDS[i].name] || 0) >= 100) masteredCount++;
+    }
+  }
+
+  // Daily goal
+  var goalPct = Math.min(100, Math.round((S.todayPracticeSeconds / (S.dailyGoalMinutes * 60)) * 100));
+  var goalMins = Math.floor(S.todayPracticeSeconds / 60);
+
+  var h = '';
+
+  // Hero card
+  h += '<div class="sv2-home-hero sv2-anim-hero">';
+  h += '<div class="sv2-home-hero__header">';
+  h += '<div class="sv2-icon sv2-icon--lg sv2-anim-glow">' + (inst.icon || "\uD83C\uDFB8") + '</div>';
+  h += '<div class="sv2-home-hero__info">';
+  h += '<h2 class="sv2-home-hero__name">' + escHTML(inst.name) + '</h2>';
+  h += '<div class="sv2-home-hero__level">' + escHTML(levelName) + ' &mdash; Level ' + S.level + '</div>';
+  h += '<div class="sv2-home-hero__badges">';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + S.xp + ' XP</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + S.streak + '</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + masteredCount + '/' + chordCount + ' chords</span>';
+  h += '</div></div></div>';
+
+  // Action buttons inside hero
+  h += '<div class="sv2-home-hero__actions">';
+  h += '<button class="sv2-btn sv2-btn--primary" onclick="act(\'quickStart\')">&#9654; Practice</button>';
+  h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'songs\')">\uD83C\uDFB5 Songs</button>';
+  h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'games\')">\uD83C\uDFAE Play</button>';
+  h += '</div>';
+  h += '</div>';
+
+  // Inactive instruments row
+  var otherInstruments = [];
+  for (var j = 0; j < allInstruments.length; j++) {
+    if (allInstruments[j].id !== inst.id && allInstruments[j].available !== false) {
+      otherInstruments.push(allInstruments[j]);
+    }
+  }
+  if (otherInstruments.length > 0) {
+    h += '<div class="sv2-inst-row sv2-anim-stagger-1">';
+    for (var k = 0; k < otherInstruments.length; k++) {
+      var oi = otherInstruments[k];
+      var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(oi.instrument) : "#888";
+      h += '<div class="sv2-inst-row__item" onclick="act(\'switchInstrument\',\'' + oi.id + '\')">';
+      h += '<div class="sv2-icon sv2-icon--sm" style="background:' + oiColor + '">' + (oi.icon || "\uD83C\uDFB5") + '</div>';
+      h += '<div style="font-size:' + 'var(--text-micro)' + ';color:' + oiColor + ';font-weight:700;font-family:var(--font-body-v2)">' + escHTML(oi.name) + '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+
+  // Daily goal
+  h += '<div class="sv2-daily-goal sv2-anim-stagger-2">';
+  h += '<div class="sv2-ring" style="width:40px;height:40px">';
+  var ringR = 16, ringC = 2 * Math.PI * ringR, ringOff = ringC - (goalPct / 100) * ringC;
+  h += '<svg width="40" height="40" style="transform:rotate(-90deg)"><circle cx="20" cy="20" r="' + ringR + '" fill="none" stroke="var(--border)" stroke-width="4"/>';
+  h += '<circle cx="20" cy="20" r="' + ringR + '" fill="none" stroke="var(--inst-primary)" stroke-width="4" stroke-dasharray="' + ringC + '" stroke-dashoffset="' + ringOff + '" stroke-linecap="round" style="transition:stroke-dashoffset 0.8s ease"/></svg>';
+  h += '<div class="sv2-ring__label" style="font-size:10px">' + goalPct + '%</div>';
+  h += '</div>';
+  h += '<div style="flex:1">';
+  h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (S.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + S.dailyGoalMinutes + " min") + '</div>';
+  h += '<div style="font-size:var(--text-micro);color:var(--text-muted)">' + goalMins + ' / ' + S.dailyGoalMinutes + ' min today' + (S.goalStreak > 0 ? " &middot; \uD83D\uDD25 " + S.goalStreak + " day streak" : "") + '</div>';
+  h += '</div></div>';
+
+  return h;
+}
+
 function homePage(){
+  // V2 Dashboard
+  var v2Home = typeof sv2HomeDashboard === "function" && document.body.classList.contains("sv2") ? sv2HomeDashboard() : "";
+
   // Build tab bar from active instrument's tabs array
   var inst = SparkInstruments.getActive();
   var instTabs = inst && inst.tabs ? inst.tabs : [];
@@ -36,7 +121,7 @@ function homePage(){
   };
   var _renderer = _tabRenderers[S.tab] || _sharedTabRenderers[S.tab] || null;
   if (_renderer) h += _renderer();
-  return h;
+  return v2Home + h;
 }
 
 // ===== PRACTICE TAB =====
