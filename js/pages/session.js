@@ -48,6 +48,17 @@ function getLegacyDailyRuntime(){
   };
 }
 
+function getSessionChordDetectRuntime(){
+  if (typeof getLegacyChordDetectRuntime === "function") return getLegacyChordDetectRuntime();
+  var runtime = getSparkCoreRuntimeState();
+  return {
+    active: typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : !!(runtime && runtime.chordDetectActive),
+    notes: Array.isArray(S.detectedNotes) ? S.detectedNotes : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
+    match: typeof S.chordMatch === "number" ? S.chordMatch : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
+    error: S.chordDetectErr || (runtime && runtime.chordDetectError) || ""
+  };
+}
+
 // ===== SESSION PAGES =====
 function sessionPage(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
@@ -97,10 +108,11 @@ function sessionPage(){
   h+='</div>';
   // Chord detection card — detection results update via direct DOM (see updateChordCheckUI)
   var exp=getExpectedNotes(c.name);
-  h+='<div class="card mb16" style="min-height:80px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><h4 style="margin:0;font-size:14px;color:var(--text-primary)">&#127908; Chord Check</h4><button class="btn" id="chord-check-btn" onclick="act(\'toggleChordDetect\')" style="padding:8px 16px;font-size:13px;background:'+(S.chordDetectOn?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(S.chordDetectOn?"var(--text-primary)":"#fff")+'">'+(S.chordDetectOn?"&#9632; Stop":"&#127908; Listen")+'</button></div>';
-  if(S.chordDetectErr)h+='<p style="color:#FF6B6B;font-size:12px;margin-bottom:8px">'+S.chordDetectErr+'</p>';
+  var chordDetectRuntime = getSessionChordDetectRuntime();
+  h+='<div class="card mb16" style="min-height:80px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><h4 style="margin:0;font-size:14px;color:var(--text-primary)">&#127908; Chord Check</h4><button class="btn" id="chord-check-btn" onclick="act(\'toggleChordDetect\')" style="padding:8px 16px;font-size:13px;background:'+(chordDetectRuntime.active?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(chordDetectRuntime.active?"var(--text-primary)":"#fff")+'">'+(chordDetectRuntime.active?"&#9632; Stop":"&#127908; Listen")+'</button></div>';
+  if(chordDetectRuntime.error)h+='<p style="color:#FF6B6B;font-size:12px;margin-bottom:8px">'+chordDetectRuntime.error+'</p>';
   h+='<div id="chord-check-results">';
-  if(S.chordDetectOn){
+  if(chordDetectRuntime.active){
     h+=_buildChordCheckInner(exp);
   }else{h+='<div style="text-align:center;color:var(--text-muted);font-size:12px">Enable mic to check your chord</div>';}
   h+='</div></div>';

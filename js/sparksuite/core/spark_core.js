@@ -79,6 +79,10 @@
       tunerFreq: 0,
       tunerCents: 0,
       tunerError: null,
+      chordDetectActive: false,
+      chordDetectNotes: [],
+      chordDetectMatch: -1,
+      chordDetectError: null,
       midiEnabled: false,
       midiActiveDeviceId: null,
       midiActiveDeviceName: null,
@@ -690,6 +694,18 @@
       tunerFreq: Object.prototype.hasOwnProperty.call(options, "freq") ? options.freq : this.runtimeState.tunerFreq,
       tunerCents: Object.prototype.hasOwnProperty.call(options, "cents") ? options.cents : this.runtimeState.tunerCents,
       tunerError: Object.prototype.hasOwnProperty.call(options, "error") ? options.error : this.runtimeState.tunerError
+    });
+  };
+
+  SparkCore.prototype.syncChordDetectRuntimeState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      chordDetectActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.chordDetectActive,
+      chordDetectNotes: Object.prototype.hasOwnProperty.call(options, "notes")
+        ? this.cloneValue(options.notes || [])
+        : this.cloneValue(this.runtimeState.chordDetectNotes || []),
+      chordDetectMatch: Object.prototype.hasOwnProperty.call(options, "match") ? options.match : this.runtimeState.chordDetectMatch,
+      chordDetectError: Object.prototype.hasOwnProperty.call(options, "error") ? options.error : this.runtimeState.chordDetectError
     });
   };
 

@@ -527,6 +527,11 @@ Primary source plans:
 - Home recommendation cards now preserve module-progress and focused-technique detail instead of flattening everything back to generic titles.
   - `js/home/home_cards.js`
   - `tests/test_insights.js`
+- Chord-detect runtime now has explicit core-backed active/note-match/error state too, and the legacy session chord-check UI can fall back to the migrated runtime instead of relying only on shell `S.chordDetect*` fields.
+  - `js/audio.js`
+  - `js/pages/shared.js`
+  - `js/pages/session.js`
+  - `tests/test_sparksuite_core_migration.js`
 - Ukulele launcher support is live, but deeper performance/song-library parity is still early.
   - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
   - Broader dedicated song/chart coverage, richer module-specific screens, and deeper gameplay parity can still expand
