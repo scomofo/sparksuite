@@ -52,55 +52,9 @@
     return lessons[0] || null;
   }
 
-  function buildUkuleleFingerDots(shape) {
-    var colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFE66D"];
-    var dots = [];
-    var fingerNum = 1;
-    for (var i = 0; i < shape.length; i++) {
-      if (shape[i] <= 0) continue;
-      dots.push([i, shape[i], fingerNum, colors[(fingerNum - 1) % colors.length]]);
-      fingerNum++;
-    }
-    return dots;
-  }
-
   function renderUkuleleChordSVG(chordObj, size, label) {
-    var chord = chordObj || {};
-    var shape = chord.frets || [0, 0, 0, 0];
-    var stringNames = chord.stringNames || ["G", "C", "E", "A"];
-    var dots = chord.fingers || buildUkuleleFingerDots(shape);
-    var sz = size || 170;
-    var w = sz;
-    var h = Math.round(sz * 1.2);
-    var padL = 28;
-    var padR = 18;
-    var padT = 24;
-    var padB = 18;
-    var fretCount = 4;
-    var stringCount = 4;
-    var fretH = (h - padT - padB) / fretCount;
-    var stringW = (w - padL - padR) / (stringCount - 1);
-    var title = label || chord.name || "Ukulele chord";
-    var svg = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="' + escHTML(title) + '">';
-    svg += '<rect x="' + padL + '" y="' + padT + '" width="' + (w - padL - padR) + '" height="4" rx="2" fill="var(--svg-nut)"/>';
-    for (var f = 1; f <= fretCount; f++) {
-      svg += '<line x1="' + padL + '" y1="' + (padT + fretH * f) + '" x2="' + (w - padR) + '" y2="' + (padT + fretH * f) + '" stroke="var(--svg-fret)" stroke-width="1.5"/>';
-    }
-    for (var s = 0; s < stringCount; s++) {
-      svg += '<line x1="' + (padL + stringW * s) + '" y1="' + padT + '" x2="' + (padL + stringW * s) + '" y2="' + (h - padB) + '" stroke="var(--svg-string)" stroke-width="1.6"/>';
-      svg += '<text x="' + (padL + stringW * s) + '" y="' + (h - 4) + '" text-anchor="middle" font-size="10" fill="var(--text-muted)">' + escHTML(stringNames[s]) + '</text>';
-      if (shape[s] === 0) {
-        svg += '<circle cx="' + (padL + stringW * s) + '" cy="' + (padT - 10) + '" r="5" fill="none" stroke="#4ECDC4" stroke-width="2"/>';
-      }
-    }
-    for (var i = 0; i < dots.length; i++) {
-      var dot = dots[i];
-      var cx = padL + stringW * dot[0];
-      var cy = padT + fretH * (dot[1] - 0.5);
-      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="11" fill="' + dot[3] + '" stroke="#fff" stroke-width="2"/>';
-      svg += '<text x="' + cx + '" y="' + (cy + 4) + '" text-anchor="middle" font-size="10" font-weight="bold" fill="#fff">' + dot[2] + '</text>';
-    }
-    return svg + '</svg>';
+    // Delegate to the new pipeline: normalizer -> validator -> generic renderer
+    return ukuleleSVG(chordObj, { width: size, label: label });
   }
 
   function renderUkulelePracticeTab() {
