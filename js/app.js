@@ -31,6 +31,20 @@ function tickS(){
       chordName:S.currentChord?S.currentChord.name:null,
       duration:120
     });
+    // Route through contract-based progress path (Phase 3 migration)
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var sessionResult = SparkContracts.createSessionResult({
+        mode: S.lastChordName ? "chord" : "quickStart",
+        chordName: S.currentChord ? S.currentChord.name : null,
+        duration: 120,
+        accuracy: 0.75,
+        completed: true
+      });
+      var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult);
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[App] ProgressOutcome:", progressOutcome);
+      }
+    }
     if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
     else S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
     if(outcome.jackpot){snd("levelup");}else{snd("complete");}
