@@ -50,6 +50,24 @@
       if (mode === "quickStart") {
         var avail = (D.CHORDS && D.CHORDS[level]) || (D.CHORDS && D.CHORDS[1]) || [];
         var chord = avail.length ? avail[Math.floor(Math.random() * avail.length)] : null;
+
+        // Prefer chords needing review when CurriculumService is available (Phase 5)
+        if (typeof SparkCurriculumService !== "undefined" && typeof SparkCurriculumService.getReviewTargets === "function" && avail.length > 0) {
+          var reviewTargets = SparkCurriculumService.getReviewTargets();
+          if (reviewTargets.length > 0) {
+            // Try to find a review target chord in the available pool
+            for (var rt = 0; rt < reviewTargets.length; rt++) {
+              for (var ac = 0; ac < avail.length; ac++) {
+                if (avail[ac].name === reviewTargets[rt].id) {
+                  chord = avail[ac];
+                  rt = reviewTargets.length; // break outer loop
+                  break;
+                }
+              }
+            }
+          }
+        }
+
         return wrapPlan({
           type:      "quickStart",
           chord:     chord,
