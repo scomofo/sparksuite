@@ -15,6 +15,7 @@
     this.performanceEditorLibrary = [];
     this.runtimeState = this.createInitialRuntimeState();
     this.persistedState = {};
+    this.timerManager = new SparkTimerManager(this);
   }
 
   // --- Persisted state accessors ---
