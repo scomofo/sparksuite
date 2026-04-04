@@ -12,33 +12,63 @@
       var sessionNum = opts.sessionNum || 1;
       var chordName  = opts.chordName || null;
 
-      var D = {};
-      if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[SparkSession] buildSession:", mode, "level:", level);
+      }
+
+      var D = opts.instrumentData || {};
+      if (!opts.instrumentData && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
         D = SparkInstruments.getActive().getData();
+      }
+
+      // Resolve instrument identity for contract
+      var instrumentId = opts.instrumentId || null;
+      var instrumentType = opts.instrumentType || null;
+      if (!instrumentId && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+        instrumentId = SparkInstruments.getActive().id || null;
+        instrumentType = SparkInstruments.getActive().instrument || null;
+      }
+
+      function wrapPlan(raw) {
+        if (typeof SparkContracts !== "undefined") {
+          return SparkContracts.createSessionPlan({
+            sessionId: raw.sessionId,
+            instrumentId: instrumentId,
+            instrumentType: instrumentType,
+            mode: raw.type || mode,
+            chord: raw.chord,
+            chordName: raw.chordName || (raw.chord ? raw.chord.name : null),
+            estimatedDuration: raw.duration || 120,
+            difficulty: raw.level || level,
+            segments: raw.chords || [],
+            metadata: { plan: raw.plan || null, sessionNum: raw.sessionNum || null }
+          });
+        }
+        return raw;
       }
 
       if (mode === "quickStart") {
         var avail = (D.CHORDS && D.CHORDS[level]) || (D.CHORDS && D.CHORDS[1]) || [];
         var chord = avail.length ? avail[Math.floor(Math.random() * avail.length)] : null;
-        return {
+        return wrapPlan({
           type:      "quickStart",
           chord:     chord,
           chordName: chord ? chord.name : null,
           duration:  120,
           level:     level
-        };
+        });
       }
 
       if (mode === "guided") {
         var sessions = D.SESSIONS || [];
         var plan     = sessions[sessionNum - 1] || null;
-        return {
+        return wrapPlan({
           type:       "guided",
           plan:       plan,
           sessionNum: sessionNum,
           duration:   300,
           level:      level
-        };
+        });
       }
 
       if (mode === "chord") {
@@ -47,13 +77,13 @@
         for (var i = 0; i < allChords.length; i++) {
           if (allChords[i].name === chordName) { found = allChords[i]; break; }
         }
-        return {
+        return wrapPlan({
           type:      "chord",
           chord:     found,
           chordName: found ? found.name : chordName,
           duration:  120,
           level:     level
-        };
+        });
       }
 
       if (mode === "drill") {
@@ -65,16 +95,16 @@
           c2 = pool[Math.floor(Math.random() * pool.length)];
           attempts++;
         }
-        return {
+        return wrapPlan({
           type:     "drill",
           chords:   [c1, c2],
           duration: 60,
           level:    level
-        };
+        });
       }
 
       // Fallback — unknown mode returns minimal stub
-      return { type: mode, duration: 120, level: level };
+      return wrapPlan({ type: mode, duration: 120, level: level });
     },
 
     // processResults(results) — handles all post-session state updates.
@@ -82,6 +112,10 @@
     // Returns: { xpEarned, jackpot, leveledUp, newLevel, newBadges, streakUpdated }
     processResults: function(results) {
       results = results || {};
+
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[SparkSession] processResults:", results.type || "session", results.chordName || "-");
+      }
 
       var xpEarned      = 0;
       var jackpot       = false;
@@ -137,8 +171,8 @@
       }
 
       // --- Level-up: all chords at current level mastered ---
-      var D = {};
-      if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+      var D = results.instrumentData || {};
+      if (!results.instrumentData && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
         D = SparkInstruments.getActive().getData();
       }
       var levelChords = (D.CHORDS && D.CHORDS[S.level]) || [];
