@@ -547,6 +547,22 @@ function finishPerformance() {
   } else {
     S.xp += xpAward; S.xpToast = { amount: xpAward, time: Date.now() };
   }
+  // Route through contract-based progress path (Phase 6 migration)
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var perfSessionResult = SparkContracts.createSessionResult({
+      mode: "song",
+      instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
+      instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+      accuracy: S.performResults ? S.performResults.accuracy / 100 : 0,
+      duration: S.performResults ? (S.performResults.duration || 0) : 0,
+      songId: S.performChartId || null,
+      completed: true
+    });
+    var perfProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(perfSessionResult);
+    if (typeof console !== "undefined" && console.debug) {
+      console.debug("[Performance] ProgressOutcome:", perfProgressOutcome);
+    }
+  }
   logHistory("perform", S.performResults.title + " - " + S.performResults.accuracy + "% accuracy", xpAward);
 
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.applyPerformanceRunOutcome === "function") {
