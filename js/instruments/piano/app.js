@@ -2237,12 +2237,12 @@ document.addEventListener("keydown", function(e) {
     case "ArrowLeft":
       S.bpm = Math.max(40, S.bpm - 5);
       S.adaptiveBpm = Math.max(40, S.adaptiveBpm - 5);
-      render();
+      saveState(); render();
       break;
     case "ArrowRight":
       S.bpm = Math.min(200, S.bpm + 5);
       S.adaptiveBpm = Math.min(200, S.adaptiveBpm + 5);
-      render();
+      saveState(); render();
       break;
     case "m": case "M":
       if (metronomeInterval) stopMetronome();
