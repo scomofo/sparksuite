@@ -92,6 +92,20 @@ function tickD(){
       _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
       checkBadges();saveState();
     }
+    // Route through contract-based progress path (Phase 6 migration)
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var drillSessionResult = SparkContracts.createSessionResult({
+        mode: "drill",
+        chordName: S.drillChords && S.drillChords[0] ? S.drillChords[0].name : null,
+        duration: 60,
+        accuracy: 0.75,
+        completed: true
+      });
+      var drillProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(drillSessionResult);
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[App] Drill ProgressOutcome:", drillProgressOutcome);
+      }
+    }
     trigC();S.screen=SCR.DRILL_DONE;render();
   }
 }
