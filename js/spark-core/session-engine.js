@@ -45,6 +45,7 @@
             estimatedDuration: raw.duration || 120,
             difficulty: raw.level || level,
             segments: raw.chords || [],
+            lessonRef: raw.lessonRef || null,
             metadata: { plan: raw.plan || null, sessionNum: raw.sessionNum || null }
           });
         }

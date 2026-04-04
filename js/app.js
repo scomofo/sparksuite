@@ -344,12 +344,12 @@ function finishRunner(){
   }
   // Route through contract-based progress path
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var runnerResult = SparkContracts.createSessionResult({
+    var runnerSessionResult = SparkContracts.createSessionResult({
       mode: "runner",
       accuracy: S.runnerScore > 0 ? Math.min(1, S.runnerScore / 100) : 0,
       completed: true
     });
-    SparkProgressOrchestrator.applySessionOutcome(runnerResult);
+    SparkProgressOrchestrator.applySessionOutcome(runnerSessionResult);
   }
   snd("complete");
   render();

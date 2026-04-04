@@ -69,15 +69,15 @@
             stringLabels: ["E", "A", "D", "G"],
             fretCountVisible: 5,
             startFret: 0,
-            open: [],
+            open: [false, false, false, false],
             muted: [],
             fingers: chordObj.fingers || [],
             barre: null
           };
           // Build open array from frets if available
           if (chordObj.frets) {
-            for (var i = 0; i < chordObj.frets.length; i++) {
-              chart.open.push(chordObj.frets[i] === 0);
+            for (var i = 0; i < 4 && i < chordObj.frets.length; i++) {
+              chart.open[i] = chordObj.frets[i] === 0;
             }
           }
           return stringedChordSVG(chart, { width: size, label: label, animate: animate });

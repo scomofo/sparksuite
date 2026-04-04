@@ -131,23 +131,23 @@
         }
       }
 
-      // Try to find next lesson from active instrument's curriculum
+      // Try to find next lesson from active instrument's curriculum map
+      // currMap is an array of lesson/level objects (not a curriculum root ID),
+      // so iterate directly for the first incomplete lesson.
       var inst = typeof SparkInstruments !== "undefined" ? SparkInstruments.getActive() : null;
       if (inst) {
         var currMap = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
-        if (currMap.length > 0) {
-          var firstLessonId = currMap[0] && currMap[0].id ? currMap[0].id : null;
-          if (firstLessonId) {
-            var nextId = this.getNextLesson(firstLessonId, completedLessons);
-            if (nextId) {
-              var lesson = this.getLessonById(nextId);
-              queue.push({
-                type: "lesson",
-                id: nextId,
-                label: lesson ? lesson.title || nextId : nextId,
-                priority: "normal"
-              });
-            }
+        for (var ci = 0; ci < currMap.length; ci++) {
+          var cmItem = currMap[ci];
+          var cmId = cmItem && cmItem.id ? cmItem.id : null;
+          if (cmId && completedLessons.indexOf(cmId) === -1) {
+            queue.push({
+              type: "lesson",
+              id: cmId,
+              label: cmItem.title || cmItem.name || cmId,
+              priority: "normal"
+            });
+            break;
           }
         }
       }
