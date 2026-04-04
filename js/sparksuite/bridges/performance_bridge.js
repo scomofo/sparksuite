@@ -13,6 +13,7 @@
   }
 
   function applyPerformanceRunOutcome(payload) {
+    var ps = window.sparkCore.persistedState;
     payload = payload || {};
     var chartId = payload.chartId || "unknown";
     var chart = payload.chart || {};
@@ -20,9 +21,9 @@
     var difficulty = payload.difficulty || "normal";
     var arrangementType = chart.arrangementType || payload.arrangementType || "chords";
 
-    if (!S.performSongStats || typeof S.performSongStats !== "object") S.performSongStats = {};
-    if (!S.performSongStats[chartId]) {
-      S.performSongStats[chartId] = {
+    if (!ps.performSongStats || typeof ps.performSongStats !== "object") ps.performSongStats = {};
+    if (!ps.performSongStats[chartId]) {
+      ps.performSongStats[chartId] = {
         bestScore: 0,
         bestAccuracy: 0,
         bestStars: 0,
@@ -31,7 +32,7 @@
       };
     }
 
-    var songStats = S.performSongStats[chartId];
+    var songStats = ps.performSongStats[chartId];
     songStats.runs++;
     if (results.score > songStats.bestScore) songStats.bestScore = results.score;
     if (results.accuracy > songStats.bestAccuracy) songStats.bestAccuracy = results.accuracy;
@@ -39,11 +40,11 @@
 
     if (Array.isArray(results.phraseStats)) {
       for (var pi = 0; pi < results.phraseStats.length; pi++) {
-        var ps = results.phraseStats[pi];
-        var phraseKey = String(ps.phraseId);
+        var phr = results.phraseStats[pi];
+        var phraseKey = String(phr.phraseId);
         if (!songStats.phrases[phraseKey]) songStats.phrases[phraseKey] = { bestScore: 0, attempts: 0 };
         songStats.phrases[phraseKey].attempts++;
-        var avg = ps.total > 0 ? ps.scoreSum / ps.total : 0;
+        var avg = phr.total > 0 ? phr.scoreSum / phr.total : 0;
         if (avg > songStats.phrases[phraseKey].bestScore) songStats.phrases[phraseKey].bestScore = avg;
       }
     }
@@ -100,90 +101,92 @@
   }
 
   function syncPerformanceRuntimeState(action, payload) {
+    var ps = window.sparkCore.persistedState;
     payload = payload || {};
 
     if (action === "start") {
-      S.performChart = payload.chart || null;
-      S.performChartId = payload.chartId || "";
-      S.performPlaying = true;
-      S.performPaused = false;
-      S.performCurrentSec = 0;
-      S.performStartSec = 0;
-      S.performScore = 0;
-      S.performCombo = 0;
-      S.performMaxCombo = 0;
-      S.performAccuracy = 0;
-      S.performPhraseIdx = 0;
-      S.performResults = null;
-      S.performStarRating = 0;
-      S.performLoop = null;
-      S.performLastHitLabel = "";
-      S.performLastHitTime = 0;
-      if (payload.phraseStats) S.performPhraseStats = payload.phraseStats;
-      if (payload.mode) S.performMode = payload.mode;
-      if (payload.difficulty) S.performDifficulty = payload.difficulty;
-      if (payload.speed) S.performSpeed = payload.speed;
-      if (payload.preset) S.performPracticePreset = payload.preset;
-      S.performInputSource = S.performMode;
-      S.screen = payload.screen || SCR.PERFORM;
+      ps.performChart = payload.chart || null;
+      ps.performChartId = payload.chartId || "";
+      ps.performPlaying = true;
+      ps.performPaused = false;
+      ps.performCurrentSec = 0;
+      ps.performStartSec = 0;
+      ps.performScore = 0;
+      ps.performCombo = 0;
+      ps.performMaxCombo = 0;
+      ps.performAccuracy = 0;
+      ps.performPhraseIdx = 0;
+      ps.performResults = null;
+      ps.performStarRating = 0;
+      ps.performLoop = null;
+      ps.performLastHitLabel = "";
+      ps.performLastHitTime = 0;
+      if (payload.phraseStats) ps.performPhraseStats = payload.phraseStats;
+      if (payload.mode) ps.performMode = payload.mode;
+      if (payload.difficulty) ps.performDifficulty = payload.difficulty;
+      if (payload.speed) ps.performSpeed = payload.speed;
+      if (payload.preset) ps.performPracticePreset = payload.preset;
+      ps.performInputSource = ps.performMode;
+      ps.screen = payload.screen || SCR.PERFORM;
       return;
     }
 
     if (action === "start_failed") {
-      S.screen = payload.screen || SCR.HOME;
-      if (payload.tab != null) S.tab = payload.tab;
+      ps.screen = payload.screen || SCR.HOME;
+      if (payload.tab != null) ps.tab = payload.tab;
       return;
     }
 
     if (action === "stop") {
-      S.performPlaying = false;
-      S.performPaused = false;
-      if (payload.screen) S.screen = payload.screen;
-      if (payload.tab != null) S.tab = payload.tab;
+      ps.performPlaying = false;
+      ps.performPaused = false;
+      if (payload.screen) ps.screen = payload.screen;
+      if (payload.tab != null) ps.tab = payload.tab;
       return;
     }
 
     if (action === "pause") {
-      S.performPaused = true;
-      S.performPlaying = false;
+      ps.performPaused = true;
+      ps.performPlaying = false;
       return;
     }
 
     if (action === "resume") {
-      S.performPaused = false;
-      S.performPlaying = true;
+      ps.performPaused = false;
+      ps.performPlaying = true;
       return;
     }
 
     if (action === "seek") {
-      S.performCurrentSec = payload.sec || 0;
+      ps.performCurrentSec = payload.sec || 0;
       return;
     }
 
     if (action === "set_loop") {
-      S.performLoop = payload.loop || null;
+      ps.performLoop = payload.loop || null;
       return;
     }
 
     if (action === "clear_loop") {
-      S.performLoop = null;
+      ps.performLoop = null;
       return;
     }
 
     if (action === "finish") {
       if (payload.results) {
-        S.performResults = payload.results;
-        S.performStarRating = payload.results.stars || 0;
+        ps.performResults = payload.results;
+        ps.performStarRating = payload.results.stars || 0;
       }
-      S.performPlaying = false;
-      S.performPaused = false;
-      S.screen = payload.screen || SCR.PERFORM_DONE;
+      ps.performPlaying = false;
+      ps.performPaused = false;
+      ps.screen = payload.screen || SCR.PERFORM_DONE;
     }
   }
 
   function applyPerformanceDailyChallenge(summary, chart, results) {
-    if (!S.performanceDailyChallenge || S.performanceDailyComplete) return 0;
-    var dc = S.performanceDailyChallenge;
+    var ps = window.sparkCore.persistedState;
+    if (!ps.performanceDailyChallenge || ps.performanceDailyComplete) return 0;
+    var dc = ps.performanceDailyChallenge;
     var completed = false;
     if (dc.type === "full_run" && summary.totalEvents > 0) completed = true;
     if (dc.type === "retry_run" && summary.accuracy >= 70) completed = true;
@@ -207,18 +210,19 @@
   }
 
   function applyLegacyPerformanceBadges(summary, chart) {
-    if (!Array.isArray(S.earnedBadges)) return [];
+    var ps = window.sparkCore.persistedState;
+    if (!Array.isArray(ps.earnedBadges)) return [];
     var awarded = [];
 
     function award(id) {
-      if (S.earnedBadges.indexOf(id) >= 0) return;
-      S.earnedBadges.push(id);
+      if (ps.earnedBadges.indexOf(id) >= 0) return;
+      ps.earnedBadges.push(id);
       awarded.push(id);
-      S.newBadge = null;
+      ps.newBadge = null;
       if (typeof BADGES !== "undefined" && Array.isArray(BADGES)) {
         for (var bi = 0; bi < BADGES.length; bi++) {
           if (BADGES[bi].id === id) {
-            S.newBadge = BADGES[bi];
+            ps.newBadge = BADGES[bi];
             break;
           }
         }
@@ -230,13 +234,13 @@
     if (summary.stars >= 5) award("perf_5star");
 
     var totalRuns = 0;
-    for (var key in S.performanceStats) {
-      if (S.performanceStats[key] && S.performanceStats[key].runs) totalRuns += S.performanceStats[key].runs;
+    for (var key in ps.performanceStats) {
+      if (ps.performanceStats[key] && ps.performanceStats[key].runs) totalRuns += ps.performanceStats[key].runs;
     }
     if (totalRuns >= 10) award("perf_10runs");
 
-    for (var masteryKey in S.performanceStats) {
-      if (S.performanceStats[masteryKey] && S.performanceStats[masteryKey].mastery === "mastered") {
+    for (var masteryKey in ps.performanceStats) {
+      if (ps.performanceStats[masteryKey] && ps.performanceStats[masteryKey].mastery === "mastered") {
         award("perf_mastered");
         break;
       }
@@ -244,8 +248,8 @@
 
     if (chart && chart.arrangementType === "rhythm_chords") award("perf_rhythm");
     if (summary.difficultyId === "pro" && summary.stars >= 3) award("perf_pro");
-    if (S.performanceDailyComplete) award("perf_daily");
-    if (Array.isArray(S.performanceDailyHistory) && S.performanceDailyHistory.length >= 3) award("perf_streak3");
+    if (ps.performanceDailyComplete) award("perf_daily");
+    if (Array.isArray(ps.performanceDailyHistory) && ps.performanceDailyHistory.length >= 3) award("perf_streak3");
 
     if (typeof SONGS !== "undefined" && Array.isArray(SONGS)) {
       var playedSongs = 0;
@@ -254,8 +258,8 @@
         if (!SONGS[si].progression || !SONGS[si].progression.length) continue;
         totalSongs++;
         var sid = (SONGS[si].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-        for (var pk in S.performanceStats) {
-          if (pk.indexOf(sid) === 0 && S.performanceStats[pk].runs > 0) {
+        for (var pk in ps.performanceStats) {
+          if (pk.indexOf(sid) === 0 && ps.performanceStats[pk].runs > 0) {
             playedSongs++;
             break;
           }
@@ -284,18 +288,7 @@
   }
 
   function applyReward(reward) {
-    if (window.SparkProgressBridge && typeof window.SparkProgressBridge.applyLegacyReward === "function") {
-      return window.SparkProgressBridge.applyLegacyReward(reward);
-    }
-    reward = reward || {};
-    if (reward.xpDelta) S.xp = (S.xp || 0) + reward.xpDelta;
-    if (reward.toastAmount) {
-      S.xpToast = {
-        amount: reward.toastAmount,
-        time: Date.now()
-      };
-    }
-    return reward;
+    return window.sparkCore.applyReward(reward);
   }
 
   window.SparkPerformanceBridge = {
