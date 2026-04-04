@@ -611,6 +611,33 @@
     });
   };
 
+  SparkCore.prototype.openLegacyQuiz = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_quiz",
+      activeScreen: "quiz",
+      activeTab: "quiz",
+      legacyQuizQuestion: Object.prototype.hasOwnProperty.call(options, "question")
+        ? this.cloneValue(options.question)
+        : this.cloneValue(this.runtimeState.legacyQuizQuestion),
+      legacyQuizOptions: Object.prototype.hasOwnProperty.call(options, "options")
+        ? this.cloneValue(options.options || [])
+        : this.cloneValue(this.runtimeState.legacyQuizOptions || []),
+      legacyQuizAnswer: Object.prototype.hasOwnProperty.call(options, "answer")
+        ? options.answer
+        : null,
+      legacyQuizScore: Object.prototype.hasOwnProperty.call(options, "score")
+        ? options.score
+        : 0,
+      legacyQuizTotal: Object.prototype.hasOwnProperty.call(options, "total")
+        ? options.total
+        : 0,
+      legacyQuizStreak: Object.prototype.hasOwnProperty.call(options, "streak")
+        ? options.streak
+        : 0
+    });
+  };
+
   SparkCore.prototype.syncLegacyEarTrainingRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
@@ -631,6 +658,33 @@
       legacyEarTrainStreak: Object.prototype.hasOwnProperty.call(options, "streak")
         ? options.streak
         : this.runtimeState.legacyEarTrainStreak
+    });
+  };
+
+  SparkCore.prototype.openLegacyEarTraining = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_ear_training",
+      activeScreen: "home",
+      activeTab: "ear",
+      legacyEarTrainQuestion: Object.prototype.hasOwnProperty.call(options, "question")
+        ? options.question
+        : this.runtimeState.legacyEarTrainQuestion,
+      legacyEarTrainOptions: Object.prototype.hasOwnProperty.call(options, "options")
+        ? this.cloneValue(options.options || [])
+        : this.cloneValue(this.runtimeState.legacyEarTrainOptions || []),
+      legacyEarTrainAnswer: Object.prototype.hasOwnProperty.call(options, "answer")
+        ? options.answer
+        : null,
+      legacyEarTrainScore: Object.prototype.hasOwnProperty.call(options, "score")
+        ? options.score
+        : (this.runtimeState.legacyEarTrainScore || 0),
+      legacyEarTrainTotal: Object.prototype.hasOwnProperty.call(options, "total")
+        ? options.total
+        : (this.runtimeState.legacyEarTrainTotal || 0),
+      legacyEarTrainStreak: Object.prototype.hasOwnProperty.call(options, "streak")
+        ? options.streak
+        : (this.runtimeState.legacyEarTrainStreak || 0)
     });
   };
 

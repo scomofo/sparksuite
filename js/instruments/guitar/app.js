@@ -191,7 +191,13 @@ function guitarAct(a, v) {
 
   if (a === "startQuiz") {
     S.quizScore = 0; S.quizTotal = 0; S.quizStreak = 0; genQ(); S.screen = SCR.QUIZ;
-    if (window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
+    if (window.sparkCore && typeof window.sparkCore.openLegacyQuiz === "function") {
+      window.sparkCore.openLegacyQuiz({
+        score: 0,
+        total: 0,
+        streak: 0
+      });
+    } else if (window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
       window.sparkCore.syncLegacyQuizRuntimeState({
         score: 0,
         total: 0,
@@ -242,7 +248,16 @@ function guitarAct(a, v) {
     opts = shuffle(opts);
     S.earTrainQ = q.name; S.earTrainOpts = opts; S.earTrainAns = null;
     S.earTrainScore = S.earTrainScore || 0; S.earTrainTotal = S.earTrainTotal || 0; S.earTrainStreak = S.earTrainStreak || 0;
-    if (window.sparkCore && typeof window.sparkCore.syncLegacyEarTrainingRuntimeState === "function") {
+    if (window.sparkCore && typeof window.sparkCore.openLegacyEarTraining === "function") {
+      window.sparkCore.openLegacyEarTraining({
+        question: q.name,
+        options: opts,
+        answer: null,
+        score: S.earTrainScore,
+        total: S.earTrainTotal,
+        streak: S.earTrainStreak
+      });
+    } else if (window.sparkCore && typeof window.sparkCore.syncLegacyEarTrainingRuntimeState === "function") {
       window.sparkCore.syncLegacyEarTrainingRuntimeState({
         question: q.name,
         options: opts,

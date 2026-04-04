@@ -564,6 +564,10 @@ Primary source plans:
   - `js/pages/practice.js`
   - `js/sparksuite/core/spark_core.js`
   - `tests/test_sparksuite_core_migration.js`
+- Quiz and ear-training entry now open through explicit core helpers too instead of starting shell-first and only syncing afterward.
+  - `js/instruments/guitar/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
 - Strum-pattern playback now has explicit core-backed selected-pattern/active-beat state too, and the strum page can fall back to the migrated runtime instead of relying only on shell `S.selectedStrum / S.strumActive / S._strumBeat`.
   - `js/app.js`
   - `js/pages/session.js`
