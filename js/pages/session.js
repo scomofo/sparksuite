@@ -280,7 +280,7 @@ function songDetailPage(){
   }
   // Strum hand + pattern
   h+='<div class="card mb16" style="padding:16px"><h4 style="margin:0 0 8px;font-size:14px;color:var(--text-primary)">Strum Pattern</h4>';
-  h+='<div class="flex-center mb12">'+strumHandSVG(curDir,S.songPlaying)+'</div>';
+  h+='<div class="flex-center mb12">'+strumHandSVG(curDir,songPlaying)+'</div>';
   h+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sg.pattern,patBeat)+'</div></div>';
   // Tone picker
   h+='<div class="card mb16"><h4 style="margin:0 0 8px;font-size:13px;font-weight:800;color:var(--text-primary)">&#127928; Strum Tone</h4><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
