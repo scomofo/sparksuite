@@ -866,6 +866,9 @@ function loadStemUrls(urlMap){
   var first=_stemAudios[keys[0]];
   if(first){
     first.addEventListener("loadedmetadata",function(){
+      if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
+        window.sparkCore.syncStemPlayerRuntimeState({duration:first.duration});
+      }
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemDuration:first.duration}});
       }else{
@@ -882,6 +885,13 @@ function playStems(){
   for(var i=0;i<keys.length;i++){
     _stemAudios[keys[i]].play().catch(function(){});
   }
+  if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
+    window.sparkCore.syncStemPlayerRuntimeState({
+      playing:true,
+      currentTime:S.stemCurrentTime||0,
+      duration:S.stemDuration||0
+    });
+  }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPlaying:true}});
   }else{
@@ -892,6 +902,13 @@ function playStems(){
   _stemTimeUpdater=setInterval(function(){
     var first=_stemAudios[Object.keys(_stemAudios)[0]];
     if(first){
+      if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
+        window.sparkCore.syncStemPlayerRuntimeState({
+          playing:!first.ended,
+          currentTime:first.currentTime,
+          duration:first.duration||S.stemDuration||0
+        });
+      }
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemCurrentTime:first.currentTime},save:false});
       }else{
@@ -916,6 +933,13 @@ function pauseStems(){
   for(var i=0;i<keys.length;i++){
     _stemAudios[keys[i]].pause();
   }
+  if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
+    window.sparkCore.syncStemPlayerRuntimeState({
+      playing:false,
+      currentTime:S.stemCurrentTime||0,
+      duration:S.stemDuration||0
+    });
+  }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPlaying:false}});
   }else{
@@ -929,6 +953,13 @@ function seekStems(time){
   var keys=Object.keys(_stemAudios);
   for(var i=0;i<keys.length;i++){
     _stemAudios[keys[i]].currentTime=time;
+  }
+  if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
+    window.sparkCore.syncStemPlayerRuntimeState({
+      playing:!!S.stemPlaying,
+      currentTime:time,
+      duration:S.stemDuration||0
+    });
   }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemCurrentTime:time},save:false});
@@ -970,6 +1001,9 @@ function cleanupStems(){
   }
   _stemAudios={};
   clearInterval(_stemTimeUpdater);
+  if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
+    window.sparkCore.syncStemPlayerRuntimeState({playing:false,currentTime:0,duration:0});
+  }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPlaying:false,stemCurrentTime:0,stemDuration:0}});
   }else{
