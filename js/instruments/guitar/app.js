@@ -5,7 +5,12 @@ function guitarAct(a, v) {
   var D = SparkInstruments.getActive().getData();
 
   if (a === "quickStart") {
-    var session = SparkSession.buildSession({ mode: "quickStart", level: S.level });
+    var session;
+    if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {
+      session = SparkCore.startSession({ mode: "quickStart", level: S.level });
+    } else {
+      session = SparkSession.buildSession({ mode: "quickStart", level: S.level });
+    }
     if (!session) return true;
     if (typeof window.openLegacyPracticeSessionRequest === "function") {
       window.openLegacyPracticeSessionRequest({
@@ -30,7 +35,12 @@ function guitarAct(a, v) {
   }
 
   if (a === "resumeSession") {
-    var session = SparkSession.buildSession({ mode: "chord", chordName: S.lastChordName });
+    var session;
+    if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {
+      session = SparkCore.startSession({ mode: "chord", chordName: S.lastChordName });
+    } else {
+      session = SparkSession.buildSession({ mode: "chord", chordName: S.lastChordName });
+    }
     if (!session) { act("quickStart"); return true; }
     if (typeof window.openLegacyPracticeSessionRequest === "function") {
       window.openLegacyPracticeSessionRequest({
@@ -54,7 +64,12 @@ function guitarAct(a, v) {
   }
 
   if (a === "startSession") {
-    var session = SparkSession.buildSession({ mode: "chord", chordName: v });
+    var session;
+    if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {
+      session = SparkCore.startSession({ mode: "chord", chordName: v });
+    } else {
+      session = SparkSession.buildSession({ mode: "chord", chordName: v });
+    }
     if (!session) return true;
     if (typeof window.openLegacyPracticeSessionRequest === "function") {
       window.openLegacyPracticeSessionRequest({
@@ -80,7 +95,12 @@ function guitarAct(a, v) {
   }
 
   if (a === "startDrill") {
-    var session = SparkSession.buildSession({ mode: "drill", level: S.level });
+    var session;
+    if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {
+      session = SparkCore.startSession({ mode: "drill", level: S.level });
+    } else {
+      session = SparkSession.buildSession({ mode: "drill", level: S.level });
+    }
     if (!session) return true;
     if (typeof window.openLegacyPracticeDrillRequest === "function") {
       window.openLegacyPracticeDrillRequest({
