@@ -49,4 +49,27 @@
   window.getNextLessonFromCurriculum = getNextLessonFromCurriculum;
   window.checkLessonUnlockRules = checkLessonUnlockRules;
 
+  // Service wrapper for engine-first architecture (Phase 5)
+  window.SparkCurriculumService = {
+    getNextLesson: function(curriculumId, completedLessons) {
+      return getNextLessonFromCurriculum(curriculumId, completedLessons);
+    },
+
+    isLessonUnlocked: function(lessonId) {
+      return checkLessonUnlockRules(lessonId);
+    },
+
+    getLessonById: function(lessonId) {
+      if (typeof getCurriculumItem === "function") {
+        return getCurriculumItem("lessons", lessonId);
+      }
+      return null;
+    },
+
+    getReviewTargets: function(userContext) {
+      // Stub — review scheduling will be implemented when curriculum data supports it
+      return [];
+    }
+  };
+
 })();

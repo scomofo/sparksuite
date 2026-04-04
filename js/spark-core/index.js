@@ -33,7 +33,8 @@
         progress: window.SparkProgress,
         achievements: window.SparkAchievements,
         content: window.SparkContent,
-        contentNormalizer: window.SparkContentNormalizer
+        contentNormalizer: window.SparkContentNormalizer,
+        curriculum: window.SparkCurriculumService
       };
     }
   };
