@@ -456,7 +456,10 @@ test("SparkCore can sync quiz runtime state explicitly", function() {
   var openState = core.syncLegacyQuizRuntimeState({
     question: question,
     options: options,
-    answer: null
+    answer: null,
+    score: 2,
+    total: 3,
+    streak: 1
   });
   assert.strictEqual(openState.activeFlow, "legacy_quiz");
   assert.strictEqual(openState.activeScreen, "quiz");
@@ -464,12 +467,20 @@ test("SparkCore can sync quiz runtime state explicitly", function() {
   assert.deepStrictEqual(openState.legacyQuizQuestion, question);
   assert.deepStrictEqual(openState.legacyQuizOptions, options);
   assert.strictEqual(openState.legacyQuizAnswer, null);
+  assert.strictEqual(openState.legacyQuizScore, 2);
+  assert.strictEqual(openState.legacyQuizTotal, 3);
+  assert.strictEqual(openState.legacyQuizStreak, 1);
 
   var answerState = core.syncLegacyQuizRuntimeState({
-    answer: "G Major"
+    answer: "G Major",
+    score: 2,
+    total: 4,
+    streak: 0
   });
   assert.strictEqual(answerState.legacyQuizAnswer, "G Major");
   assert.deepStrictEqual(answerState.legacyQuizOptions, options);
+  assert.strictEqual(answerState.legacyQuizTotal, 4);
+  assert.strictEqual(answerState.legacyQuizStreak, 0);
 });
 
 test("SparkCore can open, sync, and complete legacy daily challenge runtime explicitly", function() {
@@ -1316,10 +1327,14 @@ test("quiz page can fall back to SparkCore quiz runtime state", function() {
       { name: "C Major", short: "C" },
       { name: "G Major", short: "G" }
     ],
-    answer: "G Major"
+    answer: "G Major",
+    score: 2,
+    total: 3,
+    streak: 1
   });
   var quizHtml = quizPage();
   assert.ok(quizHtml.indexOf("C Major?") >= 0);
+  assert.ok(quizHtml.indexOf("2/3") >= 0);
   assert.ok(quizHtml.indexOf("G Major") >= 0);
   assert.ok(quizHtml.indexOf("Not quite!") >= 0);
 });
@@ -1339,17 +1354,27 @@ test("ear training page can fall back to SparkCore ear training runtime state", 
   core.syncLegacyEarTrainingRuntimeState({
     question: "C Major",
     options: ["C Major", "G Major", "A Minor"],
-    answer: null
+    answer: null,
+    score: 3,
+    total: 5,
+    streak: 2
   });
   var activeHtml = earTrainTab();
   assert.ok(activeHtml.indexOf("What chord is this?") >= 0);
   assert.ok(activeHtml.indexOf("C Major") >= 0);
   assert.ok(activeHtml.indexOf("G Major") >= 0);
 
+  S.earTrainScore = undefined;
+  S.earTrainTotal = undefined;
+  S.earTrainStreak = undefined;
   core.syncLegacyEarTrainingRuntimeState({
-    answer: "G Major"
+    answer: "G Major",
+    score: 3,
+    total: 6,
+    streak: 0
   });
   var answeredHtml = earTrainPage();
+  assert.ok(answeredHtml.indexOf("3/6") >= 0);
   assert.ok(answeredHtml.indexOf("It was C Major") >= 0);
 });
 
