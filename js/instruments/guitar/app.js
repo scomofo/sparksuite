@@ -221,6 +221,13 @@ function guitarAct(a, v) {
     opts = shuffle(opts);
     S.earTrainQ = q.name; S.earTrainOpts = opts; S.earTrainAns = null;
     S.earTrainScore = S.earTrainScore || 0; S.earTrainTotal = S.earTrainTotal || 0; S.earTrainStreak = S.earTrainStreak || 0;
+    if (window.sparkCore && typeof window.sparkCore.syncLegacyEarTrainingRuntimeState === "function") {
+      window.sparkCore.syncLegacyEarTrainingRuntimeState({
+        question: q.name,
+        options: opts,
+        answer: null
+      });
+    }
     strumChord(q.name); render();
     return true;
   }

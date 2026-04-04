@@ -392,6 +392,29 @@ test("SparkCore can sync legacy practice runtime countdown and pause state expli
   assert.strictEqual(resumeState.transport.status, "running");
 });
 
+test("SparkCore can sync ear training runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var questionState = core.syncLegacyEarTrainingRuntimeState({
+    question: "C Major",
+    options: ["C Major", "G Major", "A Minor"],
+    answer: null
+  });
+  assert.strictEqual(questionState.activeFlow, "legacy_ear_training");
+  assert.strictEqual(questionState.activeScreen, "home");
+  assert.strictEqual(questionState.activeTab, "ear");
+  assert.strictEqual(questionState.legacyEarTrainQuestion, "C Major");
+  assert.deepStrictEqual(questionState.legacyEarTrainOptions, ["C Major", "G Major", "A Minor"]);
+  assert.strictEqual(questionState.legacyEarTrainAnswer, null);
+
+  var answerState = core.syncLegacyEarTrainingRuntimeState({
+    answer: "G Major"
+  });
+  assert.strictEqual(answerState.legacyEarTrainQuestion, "C Major");
+  assert.deepStrictEqual(answerState.legacyEarTrainOptions, ["C Major", "G Major", "A Minor"]);
+  assert.strictEqual(answerState.legacyEarTrainAnswer, "G Major");
+});
+
 test("SparkCore can open, sync, and complete legacy daily challenge runtime explicitly", function() {
   var core = createDefaultSparkCore();
 
@@ -1179,6 +1202,35 @@ test("finger exercise card can fall back to SparkCore finger exercise runtime st
   assert.ok(cardHtml.indexOf("Spider Walk") >= 0);
   assert.ok(cardHtml.indexOf("1:30") >= 0);
   assert.ok(cardHtml.indexOf("Stop") >= 0);
+});
+
+test("ear training page can fall back to SparkCore ear training runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  S.earTrainQ = undefined;
+  S.earTrainOpts = undefined;
+  S.earTrainAns = undefined;
+  S.earTrainScore = 3;
+  S.earTrainTotal = 5;
+  S.earTrainStreak = 2;
+
+  eval(loadJS("js/pages/practice.js"));
+
+  core.syncLegacyEarTrainingRuntimeState({
+    question: "C Major",
+    options: ["C Major", "G Major", "A Minor"],
+    answer: null
+  });
+  var activeHtml = earTrainTab();
+  assert.ok(activeHtml.indexOf("What chord is this?") >= 0);
+  assert.ok(activeHtml.indexOf("C Major") >= 0);
+  assert.ok(activeHtml.indexOf("G Major") >= 0);
+
+  core.syncLegacyEarTrainingRuntimeState({
+    answer: "G Major"
+  });
+  var answeredHtml = earTrainPage();
+  assert.ok(answeredHtml.indexOf("It was C Major") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
