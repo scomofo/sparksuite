@@ -79,6 +79,10 @@
       tunerFreq: 0,
       tunerCents: 0,
       tunerError: null,
+      metronomeActive: false,
+      metronomeBpm: 80,
+      metronomeBeat: 0,
+      metronomeBeatsPerBar: 4,
       chordDetectActive: false,
       chordDetectNotes: [],
       chordDetectMatch: -1,
@@ -694,6 +698,16 @@
       tunerFreq: Object.prototype.hasOwnProperty.call(options, "freq") ? options.freq : this.runtimeState.tunerFreq,
       tunerCents: Object.prototype.hasOwnProperty.call(options, "cents") ? options.cents : this.runtimeState.tunerCents,
       tunerError: Object.prototype.hasOwnProperty.call(options, "error") ? options.error : this.runtimeState.tunerError
+    });
+  };
+
+  SparkCore.prototype.syncMetronomeRuntimeState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      metronomeActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.metronomeActive,
+      metronomeBpm: Object.prototype.hasOwnProperty.call(options, "bpm") ? options.bpm : this.runtimeState.metronomeBpm,
+      metronomeBeat: Object.prototype.hasOwnProperty.call(options, "beat") ? options.beat : this.runtimeState.metronomeBeat,
+      metronomeBeatsPerBar: Object.prototype.hasOwnProperty.call(options, "beatsPerBar") ? options.beatsPerBar : this.runtimeState.metronomeBeatsPerBar
     });
   };
 

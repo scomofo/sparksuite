@@ -191,6 +191,14 @@ var _metroNextTime=0;
 var _metroLookahead=0.1; // seconds to look ahead
 var _metroScheduleInterval=25; // ms between scheduler calls
 function startMetronome(){
+  if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
+    window.sparkCore.syncMetronomeRuntimeState({
+      active:true,
+      bpm:S.metronomeBpm,
+      beat:0,
+      beatsPerBar:S._metroBeats
+    });
+  }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{metronomeOn:true,_metroBeat:0}});
   }else{
@@ -208,6 +216,14 @@ function _metroSchedule(){
     while(_metroNextTime<audioCtx.currentTime+_metroLookahead){
       metroClick(S._metroBeat===0);
       S._metroBeat=(S._metroBeat+1)%S._metroBeats;
+      if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
+        window.sparkCore.syncMetronomeRuntimeState({
+          active:true,
+          bpm:S.metronomeBpm,
+          beat:S._metroBeat,
+          beatsPerBar:S._metroBeats
+        });
+      }
       _metroNextTime+=secPerBeat;
     }
   }
@@ -216,6 +232,14 @@ function _metroSchedule(){
 }
 
 function stopMetronome(){
+  if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
+    window.sparkCore.syncMetronomeRuntimeState({
+      active:false,
+      bpm:S.metronomeBpm,
+      beat:0,
+      beatsPerBar:S._metroBeats
+    });
+  }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{metronomeOn:false},clearTimeouts:["metro"]});
   }else{

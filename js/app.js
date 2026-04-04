@@ -806,6 +806,13 @@ function syncTunerRuntimeRequest(options) {
   return null;
 }
 
+function syncMetronomeRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncMetronomeRuntimeState === "function") {
+    return window.sparkCore.syncMetronomeRuntimeState(options || {});
+  }
+  return null;
+}
+
 function openLegacyRhythmGameRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openLegacyRhythmGame === "function") {
     return window.sparkCore.openLegacyRhythmGame(options || {});
@@ -1702,7 +1709,18 @@ window.act=function(a,v){
     var b=parseInt(v);
     if(b>=40&&b<=200){
       S.metronomeBpm=b;
-      if(S.metronomeOn){clearInterval(T.metro);var ms=60000/b;T.metro=setInterval(function(){S._metroBeat=(S._metroBeat+1)%S._metroBeats;metroClick(S._metroBeat===0);render();},ms);}
+      syncMetronomeRuntimeRequest({
+        active: !!S.metronomeOn,
+        bpm: S.metronomeBpm,
+        beat: S._metroBeat,
+        beatsPerBar: S._metroBeats
+      });
+      if(S.metronomeOn){
+        clearTimeout(T.metro);
+        T.metro=null;
+        if(typeof _metroNextTime==="number"&&audioCtx)_metroNextTime=audioCtx.currentTime;
+        _metroSchedule();
+      }
       render();
     }return;
   }
