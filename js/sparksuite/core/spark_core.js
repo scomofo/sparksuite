@@ -49,6 +49,9 @@
       legacyPracticeTimerActive: false,
       legacyPracticeDurationSec: null,
       legacyPracticeRemainingSec: null,
+      legacyFingerExerciseId: null,
+      legacyFingerExerciseActive: false,
+      legacyFingerExerciseCount: 0,
       legacyDrillChordNames: null,
       legacyDailyChallengeId: null,
       legacyDailyTimerActive: false,
@@ -398,6 +401,9 @@
       legacyPracticeTimerActive: !!runtimeState.legacyPracticeTimerActive,
       legacyPracticeDurationSec: runtimeState.legacyPracticeDurationSec,
       legacyPracticeRemainingSec: runtimeState.legacyPracticeRemainingSec,
+      legacyFingerExerciseId: runtimeState.legacyFingerExerciseId,
+      legacyFingerExerciseActive: !!runtimeState.legacyFingerExerciseActive,
+      legacyFingerExerciseCount: runtimeState.legacyFingerExerciseCount || 0,
       legacyDrillChordNames: this.cloneValue(runtimeState.legacyDrillChordNames),
       transport: runtimeState.transport || { status: "idle", positionMs: 0 }
     };
@@ -409,6 +415,9 @@
     if (Object.prototype.hasOwnProperty.call(options, "mode")) next.legacyPracticeMode = options.mode || next.legacyPracticeMode;
     if (Object.prototype.hasOwnProperty.call(options, "chordName")) next.legacyPracticeChordName = options.chordName;
     if (Object.prototype.hasOwnProperty.call(options, "chordNames")) next.legacyDrillChordNames = this.cloneValue(options.chordNames || null);
+    if (Object.prototype.hasOwnProperty.call(options, "fingerExerciseId")) next.legacyFingerExerciseId = options.fingerExerciseId;
+    if (Object.prototype.hasOwnProperty.call(options, "fingerExerciseActive")) next.legacyFingerExerciseActive = !!options.fingerExerciseActive;
+    if (Object.prototype.hasOwnProperty.call(options, "fingerExerciseCount")) next.legacyFingerExerciseCount = options.fingerExerciseCount;
 
     if (action === "tick") {
       if (typeof next.legacyPracticeRemainingSec === "number") {
@@ -478,6 +487,24 @@
 
   SparkCore.prototype.repeatLegacyPracticeDrill = function(options) {
     return this.openLegacyPracticeDrill(options || {});
+  };
+
+  SparkCore.prototype.openLegacyFingerExercise = function(options) {
+    options = options || {};
+    var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
+    return this.updateRuntimeState({
+      activeFlow: "legacy_finger_exercise",
+      activeScreen: "home",
+      activeTab: "practice",
+      legacyPracticeMode: "finger_exercise",
+      legacyPracticeTimerActive: true,
+      legacyPracticeDurationSec: durationSec,
+      legacyPracticeRemainingSec: durationSec,
+      legacyFingerExerciseId: Object.prototype.hasOwnProperty.call(options, "exerciseId") ? options.exerciseId : null,
+      legacyFingerExerciseActive: true,
+      legacyFingerExerciseCount: Object.prototype.hasOwnProperty.call(options, "exerciseCount") ? options.exerciseCount : 0,
+      transport: { status: "running", positionMs: 0 }
+    });
   };
 
   SparkCore.prototype.openLegacyDailyChallenge = function(options) {

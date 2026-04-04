@@ -307,6 +307,20 @@ test("SparkCore can open legacy practice session and drill runtime explicitly", 
   assert.strictEqual(drillState.legacyPracticeDurationSec, 60);
   assert.strictEqual(drillState.transport.status, "running");
 
+  var fingerState = core.openLegacyFingerExercise({
+    exerciseId: "spider_walk",
+    durationSec: 90,
+    exerciseCount: 0
+  });
+  assert.strictEqual(fingerState.activeFlow, "legacy_finger_exercise");
+  assert.strictEqual(fingerState.activeTab, "practice");
+  assert.strictEqual(fingerState.legacyPracticeMode, "finger_exercise");
+  assert.strictEqual(fingerState.legacyPracticeDurationSec, 90);
+  assert.strictEqual(fingerState.legacyPracticeRemainingSec, 90);
+  assert.strictEqual(fingerState.legacyFingerExerciseId, "spider_walk");
+  assert.strictEqual(fingerState.legacyFingerExerciseActive, true);
+  assert.strictEqual(fingerState.transport.status, "running");
+
   var completedSessionState = core.completeLegacyPracticeSession({
     mode: "chord",
     chordName: "C",
@@ -1140,6 +1154,31 @@ test("session page metronome card can fall back to SparkCore metronome runtime s
   assert.ok(sessionHtml.indexOf(">96<") >= 0);
   assert.ok(sessionHtml.indexOf("Stop") >= 0);
   assert.ok(sessionHtml.indexOf("metro-dot active") >= 0);
+});
+
+test("finger exercise card can fall back to SparkCore finger exercise runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.FINGER_EXERCISES = [
+    { id: "spider_walk", name: "Spider Walk", desc: "Walk each finger in order.", duration: 90, frequency: "Daily", tier: 1, goal: "Clean finger independence" }
+  ];
+  S.fingerExActive = undefined;
+  S.fingerExId = undefined;
+  S.fingerExTimer = undefined;
+  S.fingerStats = {};
+
+  eval(loadJS("js/pages/shared.js"));
+
+  core.openLegacyFingerExercise({
+    exerciseId: "spider_walk",
+    durationSec: 90,
+    exerciseCount: 0
+  });
+  var cardHtml = fingerExerciseCard();
+  assert.ok(cardHtml.indexOf("Spider Walk") >= 0);
+  assert.ok(cardHtml.indexOf("1:30") >= 0);
+  assert.ok(cardHtml.indexOf("Stop") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
