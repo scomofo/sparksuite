@@ -39,10 +39,19 @@ function sv2HomeDashboard() {
   h += '</div></div></div>';
 
   // Action buttons inside hero
+  // Build action buttons based on available tabs
+  var instTabs = inst.tabs || [];
+  var hasSongs = false, hasDrill = false;
+  for (var ti = 0; ti < instTabs.length; ti++) {
+    var tabId = typeof instTabs[ti] === "string" ? instTabs[ti] : instTabs[ti].id;
+    if (tabId === "songs") hasSongs = true;
+    if (tabId === "drill") hasDrill = true;
+  }
   h += '<div class="sv2-home-hero__actions">';
   h += '<button class="sv2-btn sv2-btn--primary" onclick="act(\'quickStart\')">&#9654; Practice</button>';
-  h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'songs\')">\uD83C\uDFB5 Songs</button>';
-  h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'games\')">\uD83C\uDFAE Play</button>';
+  if (hasSongs) h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'songs\')">\uD83C\uDFB5 Songs</button>';
+  if (hasDrill) h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'drill\')">&#9889; Drill</button>';
+  if (!hasSongs && !hasDrill) h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'stats\')">&#128202; Stats</button>';
   h += '</div>';
   h += '</div>';
 

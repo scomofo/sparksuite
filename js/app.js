@@ -1448,6 +1448,16 @@ window.act=function(a,v){
   // Delegate to active instrument's handler first
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
+  // Switch instrument from v2 dashboard
+  if(a==="switchInstrument" && v){
+    SparkInstruments.activate(v);
+    S.activeInstrument = v;
+    S.screen = SCR.HOME;
+    S.tab = TAB.PRACTICE;
+    saveState();
+    render();
+    return;
+  }
   if(a==="tab"){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
