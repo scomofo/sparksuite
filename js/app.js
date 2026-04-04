@@ -7,164 +7,159 @@
   }
 })();
 
-// ===== TIMERS =====
-function tickS(){
-  if(S.timerActive&&S.timer>0){
-    S.timer--;
-    syncLegacyPracticeRuntimeRequest("tick", {
-      remainingSec: S.timer,
-      timerActive: S.timerActive,
-      mode: S.lastChordName ? "chord" : "quickStart",
-      chordName: S.currentChord ? S.currentChord.name : null,
-      durationSec: 120
-    });
-    if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
-    else if(S.timer%30===0&&S.timer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}} // silent XP accrual when toast skipped
-    if(S.timer===60)fireMicro("halfway","Halfway there!","&#128170;");
-    addPracticeSecond();
-    render();T.session=setTimeout(tickS,1000);
-  } else if(S.timerActive&&S.timer<=0){
-    S.timerActive=false;clearTimeout(T.session);
-    if(S.metronomeOn)stopMetronome();
-    if(S.chordDetectOn)stopChordDetect();
-    if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeSession === "function"){
-      window.sparkCore.completeLegacyPracticeSession({
-        mode: S.lastChordName ? "chord" : "quickStart",
-        chordName: S.currentChord ? S.currentChord.name : null,
-        durationSec: 120
-      });
+// ===== TIMERS (delegated to SparkTimerManager) =====
+// Wire timerManager callbacks once sparkCore is available
+(function _wireTimerCallbacks() {
+  if (!window.sparkCore || !window.sparkCore.timerManager) {
+    setTimeout(_wireTimerCallbacks, 50);
+    return;
+  }
+  var tm = window.sparkCore.timerManager;
+
+  tm.onRender(function() { render(); });
+  tm.onSound(function(name) { snd(name); });
+
+  tm.onComplete(function(info) {
+    if (info.type === "session" && info.event === "halfway") {
+      fireMicro("halfway", "Halfway there!", "&#128170;");
+      return;
     }
-    // Delegate all completion logic to SparkSession
-    var outcome=SparkSession.processResults({
-      type:"session",
-      chordName:S.currentChord?S.currentChord.name:null,
-      duration:120
-    });
-    // Route through contract-based progress path (Phase 3 migration)
-    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-      var sessionResult = SparkContracts.createSessionResult({
-        mode: S.lastChordName ? "chord" : "quickStart",
-        chordName: S.currentChord ? S.currentChord.name : null,
-        duration: 120,
-        accuracy: 0.75,
-        completed: true
-      });
-      var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult);
-      if (typeof console !== "undefined" && console.debug) {
-        console.debug("[App] ProgressOutcome:", progressOutcome);
+
+    if (info.type === "session" && info.event === "complete") {
+      if (S.metronomeOn) stopMetronome();
+      if (S.chordDetectOn) stopChordDetect();
+      if (window.sparkCore && typeof window.sparkCore.completeLegacyPracticeSession === "function") {
+        window.sparkCore.completeLegacyPracticeSession({
+          mode: info.mode,
+          chordName: info.chordName,
+          durationSec: info.durationSec
+        });
       }
+      var outcome = SparkSession.processResults({
+        type: "session",
+        chordName: info.chordName,
+        duration: info.durationSec
+      });
+      if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+        var sessionResult = SparkContracts.createSessionResult({
+          mode: info.mode,
+          chordName: info.chordName,
+          duration: info.durationSec,
+          accuracy: 0.75,
+          completed: true
+        });
+        var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult);
+        if (typeof console !== "undefined" && console.debug) {
+          console.debug("[App] ProgressOutcome:", progressOutcome);
+        }
+      }
+      if (window.SparkProgressBridge) SparkProgressBridge.applyLegacyReward({ toastAmount: outcome.xpEarned, jackpot: outcome.jackpot });
+      else S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
+      if (outcome.jackpot) { snd("levelup"); } else { snd("complete"); }
+      if (outcome.leveledUp) snd("levelup");
+      trigC(); S.screen = SCR.COMPLETE; render();
+      return;
     }
-    if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
-    else S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
-    if(outcome.jackpot){snd("levelup");}else{snd("complete");}
-    if(outcome.leveledUp)snd("levelup");
-    trigC();S.screen=SCR.COMPLETE;render();
+
+    if (info.type === "drill" && info.event === "complete") {
+      snd("complete");
+      var detail = (info.chordNames || []).join(" / ");
+      if (window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function") {
+        window.sparkCore.completeLegacyPracticeDrill({
+          durationSec: info.durationSec,
+          chordNames: info.chordNames
+        });
+      }
+      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
+        SparkProgressBridge.applyLegacyActivityCompletion({
+          xpDelta: 20,
+          toastAmount: 20,
+          incrementFields: { drillCount: 1 },
+          history: { type: "drill", detail: detail, xp: 20 },
+          emit: { type: "practice_session_completed", payload: { appId: "chordspark", type: "drill", xp: 20, detail: detail } },
+          checkBadges: true
+        });
+      } else {
+        S.drillCount++;
+        if (window.SparkProgressBridge) SparkProgressBridge.applyLegacyReward({ xpDelta: 20, toastAmount: 20 });
+        else { S.xp += 20; S.xpToast = { amount: 20, time: Date.now() }; }
+        logHistory("drill", detail, 20);
+        _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
+        checkBadges(); saveState();
+      }
+      if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+        var drillSessionResult = SparkContracts.createSessionResult({
+          mode: "drill",
+          chordName: info.chordNames && info.chordNames[0] ? info.chordNames[0] : null,
+          duration: info.durationSec,
+          accuracy: 0.75,
+          completed: true
+        });
+        var drillProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(drillSessionResult);
+        if (typeof console !== "undefined" && console.debug) {
+          console.debug("[App] Drill ProgressOutcome:", drillProgressOutcome);
+        }
+      }
+      trigC(); S.screen = SCR.DRILL_DONE; render();
+      return;
+    }
+
+    if (info.type === "daily" && info.event === "complete") {
+      snd("complete");
+      var xp = info.xp || 40;
+      completeLegacyDailyChallengeRequest({
+        challengeId: info.challengeId,
+        durationSec: info.durationSec
+      });
+      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
+        SparkProgressBridge.applyLegacyActivityCompletion({
+          xpDelta: xp,
+          toastAmount: xp,
+          setFlags: { dailyComplete: true },
+          incrementFields: { dailyDone: 1 },
+          history: { type: "daily", detail: info.challengeTitle || "Challenge", xp: xp },
+          checkBadges: true
+        });
+      } else {
+        S.dailyComplete = true; S.dailyDone++;
+        if (window.SparkProgressBridge) SparkProgressBridge.applyLegacyReward({ xpDelta: xp, toastAmount: xp });
+        else { S.xp += xp; S.xpToast = { amount: xp, time: Date.now() }; }
+        logHistory("daily", info.challengeTitle || "Challenge", xp);
+        checkBadges(); saveState();
+      }
+      if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+        var dailyResult = SparkContracts.createSessionResult({
+          mode: "daily",
+          duration: info.durationSec,
+          accuracy: 1.0,
+          completed: true
+        });
+        SparkProgressOrchestrator.applySessionOutcome(dailyResult);
+      }
+      trigC(); render();
+      return;
+    }
+  });
+})();
+
+// Thin shims -- existing callers (tickS/tickD/tickDy) still work during transition.
+// They delegate to timerManager if it exists; otherwise fall back to no-op.
+function tickS() {
+  if (window.sparkCore && window.sparkCore.timerManager && !window.sparkCore.timerManager.isRunning("session")) {
+    window.sparkCore.timerManager.startSession();
+  }
+}
+function tickD() {
+  if (window.sparkCore && window.sparkCore.timerManager && !window.sparkCore.timerManager.isRunning("drill")) {
+    window.sparkCore.timerManager.startDrill();
+  }
+}
+function tickDy() {
+  if (window.sparkCore && window.sparkCore.timerManager && !window.sparkCore.timerManager.isRunning("daily")) {
+    window.sparkCore.timerManager.startDaily();
   }
 }
 
-function tickD(){
-  if(S.screen===SCR.DRILL&&S.drillTimer>0){
-    S.drillTimer--;
-    syncLegacyPracticeRuntimeRequest("tick", {
-      remainingSec: S.drillTimer,
-      timerActive: true,
-      mode: "drill",
-      chordNames: S.drillChords.map(function(c){ return c.name; }),
-      durationSec: 60
-    });
-    if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
-    else if(S.drillTimer%30===0&&S.drillTimer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}}
-    addPracticeSecond();
-    if(!updateDrillTimerUI())render(); // partial update if elements exist
-    T.drill=setTimeout(tickD,1000);
-  } else if(S.screen===SCR.DRILL&&S.drillTimer<=0){
-    clearTimeout(T.drill);snd("complete");
-    var detail=S.drillChords.map(function(c){return c.name;}).join(" / ");
-    if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function"){
-      window.sparkCore.completeLegacyPracticeDrill({
-        durationSec: 60,
-        chordNames: S.drillChords.map(function(c){return c.name;})
-      });
-    }
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-      SparkProgressBridge.applyLegacyActivityCompletion({
-        xpDelta:20,
-        toastAmount:20,
-        incrementFields:{drillCount:1},
-        history:{type:"drill",detail:detail,xp:20},
-        emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
-        checkBadges:true
-      });
-    }else{
-      S.drillCount++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{S.xp+=20;S.xpToast={amount:20,time:Date.now()};}
-      logHistory("drill",detail,20);
-      _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
-      checkBadges();saveState();
-    }
-    // Route through contract-based progress path (Phase 6 migration)
-    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-      var drillSessionResult = SparkContracts.createSessionResult({
-        mode: "drill",
-        chordName: S.drillChords && S.drillChords[0] ? S.drillChords[0].name : null,
-        duration: 60,
-        accuracy: 0.75,
-        completed: true
-      });
-      var drillProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(drillSessionResult);
-      if (typeof console !== "undefined" && console.debug) {
-        console.debug("[App] Drill ProgressOutcome:", drillProgressOutcome);
-      }
-    }
-    trigC();S.screen=SCR.DRILL_DONE;render();
-  }
-}
-
-function tickDy(){
-  if(S.screen===SCR.DAILY&&S.dailyTimer>0&&!S.dailyComplete){
-    S.dailyTimer--;addPracticeSecond();
-    syncLegacyDailyRuntimeRequest("tick", {
-      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
-      remainingSec: S.dailyTimer,
-      timerActive: true,
-      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
-    });
-    if(!updateDailyTimerUI())render(); // partial update if elements exist
-    T.daily=setTimeout(tickDy,1000);
-  } else if(S.screen===SCR.DAILY&&S.dailyTimer<=0&&!S.dailyComplete){
-    clearTimeout(T.daily);snd("complete");
-    var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
-    completeLegacyDailyChallengeRequest({
-      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
-      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
-    });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-      SparkProgressBridge.applyLegacyActivityCompletion({
-        xpDelta:xp,
-        toastAmount:xp,
-        setFlags:{dailyComplete:true},
-        incrementFields:{dailyDone:1},
-        history:{type:"daily",detail:S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp:xp},
-        checkBadges:true
-      });
-    }else{
-      S.dailyComplete=true;S.dailyDone++;
-      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp,toastAmount:xp});else{S.xp+=xp;S.xpToast={amount:xp,time:Date.now()};}
-      logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
-      checkBadges();saveState();
-    }
-    // Route through contract-based progress path
-    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-      var dailyResult = SparkContracts.createSessionResult({
-        mode: "daily",
-        duration: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60,
-        accuracy: 1.0,
-        completed: true
-      });
-      SparkProgressOrchestrator.applySessionOutcome(dailyResult);
-    }
-    trigC();render();
-  }
-}
 
 function genQ(){
   var av=[];for(var _l=1;_l<=S.level;_l++)av=av.concat(CHORDS[_l]||[]);
@@ -503,8 +498,7 @@ var _prevChordKey="";
 
 // ===== CLEANUP =====
 function stopAllTimers(){
-  clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.fingerEx);
-  clearInterval(T.strum);clearInterval(T.song);clearInterval(T.metro);clearInterval(T.prog);
+  if(window.sparkCore&&window.sparkCore.timerManager){window.sparkCore.timerManager.stopAll();}else{clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.fingerEx);clearInterval(T.strum);clearInterval(T.song);clearInterval(T.metro);clearInterval(T.prog);}
   if(S.metronomeOn){stopMetronome();S.metronomeOn=false;}
   if(S.chordDetectOn)stopChordDetect();
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
@@ -1497,7 +1491,7 @@ window.act=function(a,v){
       chordName: S.currentChord ? S.currentChord.name : null,
       durationSec: 120
     });
-    if(S.timerActive)T.session=setTimeout(tickS,1000);else clearTimeout(T.session);
+    if(S.timerActive){tickS();}else{if(window.sparkCore&&window.sparkCore.timerManager)window.sparkCore.timerManager.stopTimer("session");else clearTimeout(T.session);}
     render();return;
   }
   if(a==="completeSessionHome"){
@@ -1515,7 +1509,7 @@ window.act=function(a,v){
     return;
   }
   if(a==="doneSession"){
-    clearTimeout(T.session);if(S.metronomeOn)stopMetronome();if(S.chordDetectOn)stopChordDetect();
+    if(window.sparkCore&&window.sparkCore.timerManager)window.sparkCore.timerManager.stopTimer("session");else clearTimeout(T.session);if(S.metronomeOn)stopMetronome();if(S.chordDetectOn)stopChordDetect();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
         setFields:{timerActive:true,timer:0}
@@ -1545,10 +1539,10 @@ window.act=function(a,v){
       challengeId: S.dailyChallenge.id,
       durationSec: t
     });
-    snd("start");render();T.daily=setTimeout(tickDy,1000);return;
+    snd("start");render();tickDy();return;
   }
   if(a==="completeDaily"){
-    clearTimeout(T.daily);snd("complete");
+    if(window.sparkCore&&window.sparkCore.timerManager)window.sparkCore.timerManager.stopTimer("daily");else clearTimeout(T.daily);snd("complete");
     var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
     completeLegacyDailyChallengeRequest({
       challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
@@ -2034,7 +2028,7 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="guidedStop"){
-    clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.metro);clearInterval(T.strum);
+    if(window.sparkCore&&window.sparkCore.timerManager){window.sparkCore.timerManager.stopAll();}else{clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.metro);clearInterval(T.strum);}
     if(S.metronomeOn)stopMetronome();
     applyGuidedNavigationRequest("guided_home");
     S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();return;

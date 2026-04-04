@@ -292,7 +292,7 @@ var S={
   dailyPracticePlan:[],
 };
 
-var T={session:null,drill:null,daily:null,song:null,strum:null,metro:null,undo:null,rhythm:null,prog:null};
+var T={}; // Timer handles now owned by sparkCore.timerManager; T kept as empty object for lingering references
 
 // Undo backup
 var _undoBackup=null;
