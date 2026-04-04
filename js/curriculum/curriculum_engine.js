@@ -67,8 +67,39 @@
     },
 
     getReviewTargets: function(userContext) {
-      // Stub — review scheduling will be implemented when curriculum data supports it
-      return [];
+      userContext = userContext || {};
+      var targets = [];
+      var chordMastery = {};
+      var lessonMastery = {};
+
+      // Read mastery data from global state or userContext
+      if (typeof S !== "undefined" && S.mastery) {
+        chordMastery = S.mastery.chords || {};
+        lessonMastery = S.mastery.lessons || {};
+      }
+      if (userContext.chordMastery) chordMastery = userContext.chordMastery;
+      if (userContext.lessonMastery) lessonMastery = userContext.lessonMastery;
+
+      // Find chords below mastery threshold (below 75 = needs review)
+      var chordProgress = (typeof S !== "undefined" && S.chordProgress) ? S.chordProgress : {};
+      for (var chordName in chordProgress) {
+        if (!Object.prototype.hasOwnProperty.call(chordProgress, chordName)) continue;
+        var progress = chordProgress[chordName];
+        if (progress > 0 && progress < 75) {
+          targets.push({
+            type: "chord",
+            id: chordName,
+            mastery: progress,
+            priority: progress < 25 ? "high" : progress < 50 ? "medium" : "low"
+          });
+        }
+      }
+
+      // Sort by priority: high first (lowest mastery)
+      targets.sort(function(a, b) { return a.mastery - b.mastery; });
+
+      // Limit to top 5 review targets
+      return targets.slice(0, 5);
     }
   };
 
