@@ -235,6 +235,12 @@
         SparkProfile.ensureApp(profile, "ukespark", "ukulele");
         SparkStorage.save(profile);
       }
+      if (typeof S !== "undefined") {
+        if (S.completedLessons === undefined) S.completedLessons = [];
+        if (!S.mastery) S.mastery = {};
+        if (!S.mastery.lessons) S.mastery.lessons = {};
+        if (!S.mastery.rhythm) S.mastery.rhythm = {};
+      }
     },
 
     getSkillTree: function() {

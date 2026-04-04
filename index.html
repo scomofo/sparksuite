@@ -354,6 +354,8 @@
   if (typeof pianoOnboardingPage === "function") piano.pages[SCR.ONBOARDING] = pianoOnboardingPage;
   if (typeof pianoStemsPlayerPage === "function") piano.pages[SCR.STEMS] = pianoStemsPlayerPage;
 })();
+  // Initial render — deferred to here so all instrument pages are registered
+  if (typeof render === "function") render();
 </script>
 </body>
 </html>

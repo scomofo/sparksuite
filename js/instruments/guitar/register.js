@@ -105,6 +105,22 @@
         SparkProfile.ensureApp(profile, "chordspark", "guitar");
         SparkStorage.save(profile);
       }
+      if (typeof S !== "undefined") {
+        if (S.completedGuidedSessions === undefined) S.completedGuidedSessions = [];
+        if (S.chordProgress === undefined) S.chordProgress = {};
+        if (S.customSets === undefined) S.customSets = [];
+        if (S.transitionStats === undefined) S.transitionStats = {};
+        if (S.fingerStats === undefined) S.fingerStats = {};
+        if (S.drillAdaptiveBpm === undefined) S.drillAdaptiveBpm = 60;
+        if (S.drillConsecutiveFast === undefined) S.drillConsecutiveFast = 0;
+        if (S.drillConsecutiveSlow === undefined) S.drillConsecutiveSlow = 0;
+        if (S.drillLastSwitchTime === undefined) S.drillLastSwitchTime = 0;
+        if (S.guidedSession === undefined) S.guidedSession = 1;
+        if (S.guidedPlan === undefined) S.guidedPlan = null;
+        if (S.guidedStep === undefined) S.guidedStep = null;
+        if (S.newMovePhase === undefined) S.newMovePhase = null;
+        if (S.guidedPaused === undefined) S.guidedPaused = false;
+      }
     },
 
     // ── InstrumentModule interface ──

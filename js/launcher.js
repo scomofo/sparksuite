@@ -30,6 +30,15 @@
     },
 
     deactivate: function() {
+      // Clean up any running timers before switching instruments
+      if (typeof T !== "undefined") {
+        clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);
+        clearInterval(T.fingerEx);clearInterval(T.strum);clearInterval(T.song);
+        clearInterval(T.metro);clearInterval(T.prog);clearInterval(T.undo);
+        if(T.sessionStep){clearInterval(T.sessionStep);T.sessionStep=null;}
+        if(T.chordChange){clearInterval(T.chordChange);T.chordChange=null;}
+      }
+      if(typeof stopMetronome==="function")try{stopMetronome();}catch(e){}
       _active = null;
     },
 

@@ -60,6 +60,7 @@ function guitarAct(a, v) {
     render();
     clearTimeout(T.session);
     T.session = setTimeout(tickS, 1000);
+    saveState();
     return true;
   }
 

@@ -42,7 +42,8 @@
   }
 
   function applyCloudSnapshot(snapshot){
-    if(!snapshot) return false;
+    if(!snapshot || typeof snapshot !== "object") return false;
+    if(snapshot.version !== 1){ console.warn("Cloud snapshot: unknown version", snapshot.version); return false; }
     if(snapshot.profile){
       S.playerXP = snapshot.profile.playerXP || 0;
       S.playerLevel = snapshot.profile.playerLevel || 1;

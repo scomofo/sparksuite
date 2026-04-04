@@ -57,6 +57,7 @@
       S.screen = SCR.SESSION;
       render();
       queueSessionTick();
+      saveState();
       return true;
     }
 

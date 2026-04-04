@@ -102,7 +102,7 @@
     S.practicePlanHistory.push({
       date: S.practicePlanDate,
       focus: S.practicePlanFocus,
-      itemCount: S.practicePlan ? S.practicePlan.items.length : 0,
+      itemCount: S.practicePlan && S.practicePlan.items ? S.practicePlan.items.length : 0,
       completedAt: Date.now()
     });
     if(S.practicePlanHistory.length > 30) S.practicePlanHistory.shift();

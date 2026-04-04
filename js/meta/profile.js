@@ -1,13 +1,14 @@
 function profilePage(){
+  var ps = S.playerStats || {};
   var h = '<div class="card">';
   h += '<div><b>Player Profile</b></div>';
-  h += '<div>Level: '+S.playerLevel+'</div>';
-  h += '<div>XP: '+S.playerXP+'</div>';
-  h += '<div>Songs Completed: '+S.playerStats.songsCompleted+'</div>';
-  h += '<div>Practice Minutes: '+S.playerStats.totalPracticeMinutes+'</div>';
-  h += '<div>Lessons Completed: '+S.playerStats.lessonsCompleted+'</div>';
-  h += '<div>Exercises Completed: '+S.playerStats.exercisesCompleted+'</div>';
-  h += '<div>Best Streak: '+S.playerStats.streakBest+'</div>';
+  h += '<div>Level: '+(S.playerLevel || 1)+'</div>';
+  h += '<div>XP: '+(S.playerXP || 0)+'</div>';
+  h += '<div>Songs Completed: '+(ps.songsCompleted || 0)+'</div>';
+  h += '<div>Practice Minutes: '+(ps.totalPracticeMinutes || 0)+'</div>';
+  h += '<div>Lessons Completed: '+(ps.lessonsCompleted || 0)+'</div>';
+  h += '<div>Exercises Completed: '+(ps.exercisesCompleted || 0)+'</div>';
+  h += '<div>Best Streak: '+(ps.streakBest || 0)+'</div>';
   h += '</div>';
   return h;
 }
