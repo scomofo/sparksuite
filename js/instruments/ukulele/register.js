@@ -296,6 +296,24 @@
 
     generateDrills: function(skill) {
       return window.SparkUkuleleModule ? window.SparkUkuleleModule.getExercises(skill) : [];
+    },
+
+    getExercisesForLesson: function(lessonId) {
+      if (lessonId && window.SparkUkuleleModule) {
+        var skill = getUkuleleLessonSkill(lessonId);
+        return window.SparkUkuleleModule.getExercises(skill) || [];
+      }
+      return this.getExercises();
+    },
+
+    getPerformanceConfig: function() {
+      return {
+        laneCount: 4,
+        laneLabels: ["G", "C", "E", "A"],
+        defaultBpm: 76,
+        supportedModes: ["rhythm", "song"],
+        inputType: "strum"
+      };
     }
   });
 })();

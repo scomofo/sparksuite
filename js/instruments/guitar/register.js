@@ -165,6 +165,28 @@
         return [c1, c2];
       }
       return chords.slice(0, 2);
+    },
+
+    getExercisesForLesson: function(lessonId) {
+      var D = this.getData();
+      if (lessonId && D.CURRICULUM) {
+        for (var i = 0; i < D.CURRICULUM.length; i++) {
+          if (D.CURRICULUM[i].id === lessonId && D.CURRICULUM[i].exercises) {
+            return D.CURRICULUM[i].exercises;
+          }
+        }
+      }
+      return D.FINGER_EXERCISES || [];
+    },
+
+    getPerformanceConfig: function() {
+      return {
+        laneCount: 6,
+        laneLabels: typeof STRING_NAMES !== "undefined" ? STRING_NAMES : ["E","A","D","G","B","e"],
+        defaultBpm: 80,
+        supportedModes: ["rhythm", "freestyle", "song"],
+        inputType: "strum"
+      };
     }
   });
 })();

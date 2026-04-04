@@ -149,6 +149,28 @@
       var D = this.getData();
       var chords = D.CHORDS[level] || D.CHORDS[1] || [];
       return chords.slice(0, 2);
+    },
+
+    getExercisesForLesson: function(lessonId) {
+      var D = this.getData();
+      if (lessonId && D.CURRICULUM) {
+        for (var i = 0; i < D.CURRICULUM.length; i++) {
+          if (D.CURRICULUM[i].id === lessonId && D.CURRICULUM[i].exercises) {
+            return D.CURRICULUM[i].exercises;
+          }
+        }
+      }
+      return D.FINGER_EXERCISES || [];
+    },
+
+    getPerformanceConfig: function() {
+      return {
+        laneCount: 4,
+        laneLabels: ["E", "A", "D", "G"],
+        defaultBpm: 70,
+        supportedModes: ["rhythm", "song"],
+        inputType: "pluck"
+      };
     }
   });
 })();
