@@ -334,7 +334,8 @@ function escHTML(s) {
 
 function pianoClickableDiv(onclick, content, cls) {
   if (!cls) cls = "";
-  return '<div class="' + cls + '" role="button" tabindex="0" onclick="' + onclick + '" onkeydown="if(event.key===\'Enter\')' + onclick + '">' + content + '</div>';
+  var k='if(event.key==="Enter"||event.key===" "){event.preventDefault();'+onclick+'}';
+  return '<div class="' + cls + '" role="button" tabindex="0" onclick="' + onclick + '" onkeydown="' + k + '">' + content + '</div>';
 }
 
 function pianoFormatTime(s) {
