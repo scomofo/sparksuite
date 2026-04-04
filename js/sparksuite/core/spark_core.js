@@ -90,6 +90,10 @@
       chordDetectNotes: [],
       chordDetectMatch: -1,
       chordDetectError: null,
+      audioInputDevices: [],
+      audioInputId: null,
+      audioTestingId: null,
+      audioTestLevel: 0,
       midiEnabled: false,
       midiActiveDeviceId: null,
       midiActiveDeviceName: null,
@@ -710,6 +714,18 @@
       stemPlaying: Object.prototype.hasOwnProperty.call(options, "playing") ? !!options.playing : this.runtimeState.stemPlaying,
       stemCurrentTime: Object.prototype.hasOwnProperty.call(options, "currentTime") ? options.currentTime : this.runtimeState.stemCurrentTime,
       stemDuration: Object.prototype.hasOwnProperty.call(options, "duration") ? options.duration : this.runtimeState.stemDuration
+    });
+  };
+
+  SparkCore.prototype.syncAudioInputRuntimeState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      audioInputDevices: Object.prototype.hasOwnProperty.call(options, "devices")
+        ? this.cloneValue(options.devices || [])
+        : this.cloneValue(this.runtimeState.audioInputDevices || []),
+      audioInputId: Object.prototype.hasOwnProperty.call(options, "inputId") ? options.inputId : this.runtimeState.audioInputId,
+      audioTestingId: Object.prototype.hasOwnProperty.call(options, "testingId") ? options.testingId : this.runtimeState.audioTestingId,
+      audioTestLevel: Object.prototype.hasOwnProperty.call(options, "testLevel") ? options.testLevel : this.runtimeState.audioTestLevel
     });
   };
 

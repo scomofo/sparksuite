@@ -806,6 +806,13 @@ function syncTunerRuntimeRequest(options) {
   return null;
 }
 
+function syncAudioInputRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncAudioInputRuntimeState === "function") {
+    return window.sparkCore.syncAudioInputRuntimeState(options || {});
+  }
+  return null;
+}
+
 function syncMetronomeRuntimeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncMetronomeRuntimeState === "function") {
     return window.sparkCore.syncMetronomeRuntimeState(options || {});
@@ -2466,7 +2473,17 @@ window.act=function(a,v){
   if(a==="refreshAudioInputs"){refreshAudioInputs();return;}
   if(a==="testAudioInput"){testAudioInput(v);return;}
   if(a==="stopAudioTest"){stopAudioTest();render();return;}
-  if(a==="selectAudioInput"){stopAudioTest();S.audioInputId=v;saveState();render();return;}
+  if(a==="selectAudioInput"){
+    stopAudioTest();
+    S.audioInputId=v;
+    syncAudioInputRuntimeRequest({
+      devices: S.audioInputDevices || [],
+      inputId: S.audioInputId || null,
+      testingId: "",
+      testLevel: 0
+    });
+    saveState();render();return;
+  }
   // === MIDI ===
   if(a==="toggleMidi"){
     S.midiEnabled=!S.midiEnabled;
