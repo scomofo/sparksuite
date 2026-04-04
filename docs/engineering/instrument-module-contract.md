@@ -26,6 +26,8 @@ Every instrument registers via `SparkInstruments.register(config)` with:
 | `getDifficultyRules(context?)` | object | { targetType, difficultyAction, currentValue, nextValue, reason } |
 | `analyzePerformance(sessionData)` | object | { accuracy, avgScore, stars } |
 | `generateDrills(skill?, level?)` | array | Generated drill exercises |
+| `getExercisesForLesson(lessonId)` | array | Exercises specific to a lesson, falls back to general |
+| `getPerformanceConfig()` | object | { laneCount, laneLabels, defaultBpm, supportedModes, inputType } |
 
 ## Required UI Overrides
 

@@ -49,6 +49,33 @@ Each instrument registers via `SparkInstruments.register(config)` with:
 - `init()`, `getSkillTree()`, `getCurriculumMap()`, `getExercises()`, `getSongs()`
 - `getDifficultyRules()`, `analyzePerformance()`, `generateDrills()`
 
+## Service Registry
+
+`SparkCore.getServices()` returns:
+
+| Service | Global | Purpose |
+|---------|--------|---------|
+| session | SparkSession | Session plan building, result processing |
+| psychology | SparkPsychology | Reinforcement schedules, difficulty, comeback bonuses |
+| progressOrchestrator | SparkProgressOrchestrator | 12-step progression cascade, applySessionOutcome |
+| instrumentAdapter | SparkInstrumentAdapter | Proxy to active instrument module methods |
+| curriculum | SparkCurriculumService | Next lesson, unlock checks, review targets, learning queue |
+| recommendations | SparkRecommendationService | Generate/track practice recommendations |
+| profile | SparkProfile | User profile schema |
+| storage | SparkStorage | Persistent storage |
+| events | SparkEvents | Event bus |
+| progress | SparkProgress | XP/level tracking |
+| achievements | SparkAchievements | Suite-level achievement evaluation |
+| content | SparkContent | Content schema |
+| contentNormalizer | SparkContentNormalizer | Content normalization |
+
+## Normalized Contracts
+
+`SparkContracts` provides factory functions:
+- `createSessionPlan(opts)` — session plan with sessionId, mode, instruments, exercises, difficulty
+- `createSessionResult(opts)` — completion payload with mode, accuracy, duration, chordName
+- `createProgressOutcome(opts)` — outcome summary with xpEarned, levelUps, masteryChanges, achievements
+
 ## Session Flow
 
 1. UI calls `SparkSession.buildSession({ mode, level, ... })`
