@@ -22,6 +22,11 @@
 (function() {
   'use strict';
 
+  // Local escHTML fallback — ui.js defines the global version but loads later
+  var _escHTML = typeof escHTML === "function" ? escHTML : function(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  };
+
   // Normalise a single finger entry to [stringIdx, fret, fingerNum, color].
   function normFinger(f) {
     if (Array.isArray(f)) {
@@ -111,7 +116,7 @@
     }
 
     // ---- Build accessible description ----
-    var accDesc = 'Chord diagram for ' + escHTML(label) + '.';
+    var accDesc = 'Chord diagram for ' + _escHTML(label) + '.';
     if (fingers.length > 0) {
       accDesc += ' Fingers:';
       for (var fi3 = 0; fi3 < fingers.length; fi3++) {
@@ -125,8 +130,8 @@
 
     // ---- SVG open + ARIA ----
     var s = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"'
-          + ' role="img" aria-label="' + escHTML(accDesc) + '">'
-          + '<title>' + escHTML(accDesc) + '</title>';
+          + ' role="img" aria-label="' + _escHTML(accDesc) + '">'
+          + '<title>' + _escHTML(accDesc) + '</title>';
 
     // ---- Nut or fret-number label ----
     if (startFret === 0) {
@@ -214,7 +219,7 @@
           + (fDelay + i5 * fStagger) + 's forwards"'
         : '';
       s += '<circle cx="' + cx + '" cy="' + cy + '" r="' + dotR + '"'
-         + ' fill="' + escHTML(f[3]) + '" stroke="#fff" stroke-width="2" ' + animStyle + '/>';
+         + ' fill="' + _escHTML(f[3]) + '" stroke="#fff" stroke-width="2" ' + animStyle + '/>';
       s += '<text x="' + cx + '" y="' + (cy + Math.round(4 * scale)) + '"'
          + ' text-anchor="middle" font-size="' + dotFS + '"'
          + ' fill="#fff" font-weight="bold" ' + animStyle + '>' + f[2] + '</text>';
@@ -229,7 +234,7 @@
       if (lbl === '') continue;
       s += '<text x="' + (pL + i6 * sW) + '" y="' + labelY + '"'
          + ' text-anchor="middle" font-size="' + labelFS + '"'
-         + ' fill="var(--text-muted)">' + escHTML(String(lbl)) + '</text>';
+         + ' fill="var(--text-muted)">' + _escHTML(String(lbl)) + '</text>';
     }
 
     return s + '</svg>';
