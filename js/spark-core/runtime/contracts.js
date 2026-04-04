@@ -8,21 +8,31 @@
    */
   function createSessionPlan(opts) {
     opts = opts || {};
-    return {
+    var segments = opts.segments || [];
+    var duration = opts.estimatedDuration || opts.duration || 120;
+    var plan = {
       sessionId: opts.sessionId || ("sp_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8)),
       instrumentId: opts.instrumentId || null,
       instrumentType: opts.instrumentType || null,
       mode: opts.mode || "quickStart",
       lessonRef: opts.lessonRef || null,
-      segments: opts.segments || [],
+      segments: segments,
       exercises: opts.exercises || [],
       goals: opts.goals || [],
       difficulty: opts.difficulty || 1,
-      estimatedDuration: opts.estimatedDuration || 120,
+      estimatedDuration: duration,
       chord: opts.chord || null,
       chordName: opts.chordName || null,
-      metadata: opts.metadata || {}
+      metadata: opts.metadata || {},
+      // Backward-compat aliases for legacy callers
+      type: opts.type || opts.mode || "quickStart",
+      chords: segments,
+      duration: duration,
+      level: opts.difficulty || opts.level || 1,
+      plan: (opts.metadata && opts.metadata.plan) || null,
+      sessionNum: (opts.metadata && opts.metadata.sessionNum) || null
     };
+    return plan;
   }
 
   /**
