@@ -3694,6 +3694,10 @@ function _renderInner(){
     var _inst = SparkInstruments.getActive();
     logoText.textContent = _inst ? _inst.name + "Spark" : "SparkSuite";
   }
+  // Apply instrument theme (v2 neon system)
+  if (typeof SparkTheme !== "undefined" && _inst) {
+    SparkTheme.apply(_inst.instrument || "guitar");
+  }
 
   document.getElementById("hdr-xp").textContent=S.xp;
   document.getElementById("hdr-str").textContent=S.streak;
