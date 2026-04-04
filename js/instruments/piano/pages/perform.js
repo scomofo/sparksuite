@@ -1,4 +1,10 @@
 function pianoPerformPage(){
+  try{ return _pianoPerformPageInner(); }catch(e){
+    console.error("Piano perform render error:",e);
+    return '<div class="card"><p>Performance error: '+escHTML(String(e.message||e))+'</p><button class="btn" onclick="act(&apos;stopPerform&apos;)">Exit</button></div>';
+  }
+}
+function _pianoPerformPageInner(){
   var chart = S.performChart;
   var phrase = chart ? getPerformancePhraseForTime(chart, S.performCurrentSec) : null;
   var h = '<div class="card mb16">';
@@ -44,6 +50,7 @@ function updatePerformanceDOM(){
 }
 
 function pianoPerformDonePage(){
+  if(typeof pianoPerformanceResultsPage === "function") return pianoPerformanceResultsPage();
   var r = S.performResults || {};
   var best = getPerformanceBest(r.songId, r.arrangementType || "block_chords", r.difficultyId || "normal");
   var mastery = getPerformanceMasteryLabel(best);
