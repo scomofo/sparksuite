@@ -400,7 +400,13 @@ function guitarAct(a, v) {
       addPracticeSecond();
       if (S.fingerExTimer <= 0) {
         clearInterval(T.fingerEx); S.fingerExActive = false;
-        if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
+        if (window.sparkCore && typeof window.sparkCore.completeLegacyFingerExercise === "function") {
+          window.sparkCore.completeLegacyFingerExercise({
+            exerciseId: v,
+            durationSec: ex.duration,
+            exerciseCount: (S.fingerExCount || 0) + 1
+          });
+        } else if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
           window.sparkCore.syncLegacyPracticeRuntimeState("pause", {
             mode: "finger_exercise",
             remainingSec: 0,
@@ -428,7 +434,7 @@ function guitarAct(a, v) {
       window.sparkCore.syncLegacyPracticeRuntimeState("pause", {
         mode: "finger_exercise",
         remainingSec: S.fingerExTimer,
-        durationSec: S.fingerExTimer,
+        durationSec: typeof S.fingerExTimer === "number" ? S.fingerExTimer : null,
         timerActive: false,
         fingerExerciseId: S.fingerExId,
         fingerExerciseActive: false,

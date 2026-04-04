@@ -522,6 +522,29 @@
     });
   };
 
+  SparkCore.prototype.completeLegacyFingerExercise = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_finger_exercise",
+      activeScreen: "home",
+      activeTab: "practice",
+      legacyPracticeMode: "finger_exercise",
+      legacyPracticeTimerActive: false,
+      legacyPracticeDurationSec: Object.prototype.hasOwnProperty.call(options, "durationSec")
+        ? options.durationSec
+        : this.runtimeState.legacyPracticeDurationSec,
+      legacyPracticeRemainingSec: 0,
+      legacyFingerExerciseId: Object.prototype.hasOwnProperty.call(options, "exerciseId")
+        ? options.exerciseId
+        : this.runtimeState.legacyFingerExerciseId,
+      legacyFingerExerciseActive: false,
+      legacyFingerExerciseCount: Object.prototype.hasOwnProperty.call(options, "exerciseCount")
+        ? options.exerciseCount
+        : this.runtimeState.legacyFingerExerciseCount,
+      transport: { status: "completed", positionMs: 0 }
+    });
+  };
+
   SparkCore.prototype.openLegacyStrumPattern = function(options) {
     options = options || {};
     return this.updateRuntimeState({
