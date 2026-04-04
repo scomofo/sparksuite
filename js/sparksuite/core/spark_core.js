@@ -61,6 +61,13 @@
       legacyRunnerDistance: 0,
       legacyRunnerObstacles: [],
       legacyRunnerResults: null,
+      legacyRhythmActive: false,
+      legacyRhythmBeats: [],
+      legacyRhythmScore: 0,
+      legacyRhythmCombo: 0,
+      legacyRhythmMaxCombo: 0,
+      legacyRhythmStartTimeMs: 0,
+      legacyRhythmResults: null,
       dashboardRecommendations: [],
       dashboardInsights: null,
       dashboardChallenges: [],
@@ -603,6 +610,69 @@
       legacyRunnerDistance: Object.prototype.hasOwnProperty.call(options, "distance") ? options.distance : this.runtimeState.legacyRunnerDistance,
       legacyRunnerObstacles: this.cloneValue(Object.prototype.hasOwnProperty.call(options, "obstacles") ? (options.obstacles || []) : (this.runtimeState.legacyRunnerObstacles || [])),
       legacyRunnerResults: this.cloneValue(Object.prototype.hasOwnProperty.call(options, "results") ? (options.results || null) : null),
+      transport: { status: "completed", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.openLegacyRhythmGame = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_rhythm_game",
+      activeScreen: "home",
+      activeTab: "rhythm",
+      legacyRhythmActive: true,
+      legacyRhythmBeats: this.cloneValue(options.beats || []),
+      legacyRhythmScore: Object.prototype.hasOwnProperty.call(options, "score") ? options.score : 0,
+      legacyRhythmCombo: Object.prototype.hasOwnProperty.call(options, "combo") ? options.combo : 0,
+      legacyRhythmMaxCombo: Object.prototype.hasOwnProperty.call(options, "maxCombo") ? options.maxCombo : 0,
+      legacyRhythmStartTimeMs: Object.prototype.hasOwnProperty.call(options, "startTimeMs") ? options.startTimeMs : 0,
+      legacyRhythmResults: null,
+      transport: { status: "running", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.syncLegacyRhythmRuntimeState = function(options) {
+    var runtimeState = this.getRuntimeState();
+    var next = {
+      activeFlow: runtimeState.activeFlow || "legacy_rhythm_game",
+      activeScreen: runtimeState.activeScreen || "home",
+      activeTab: runtimeState.activeTab || "rhythm",
+      legacyRhythmActive: !!runtimeState.legacyRhythmActive,
+      legacyRhythmBeats: this.cloneValue(runtimeState.legacyRhythmBeats || []),
+      legacyRhythmScore: runtimeState.legacyRhythmScore || 0,
+      legacyRhythmCombo: runtimeState.legacyRhythmCombo || 0,
+      legacyRhythmMaxCombo: runtimeState.legacyRhythmMaxCombo || 0,
+      legacyRhythmStartTimeMs: runtimeState.legacyRhythmStartTimeMs || 0,
+      legacyRhythmResults: this.cloneValue(runtimeState.legacyRhythmResults || null),
+      transport: runtimeState.transport || { status: "idle", positionMs: 0 }
+    };
+    options = options || {};
+
+    if (Object.prototype.hasOwnProperty.call(options, "active")) next.legacyRhythmActive = !!options.active;
+    if (Object.prototype.hasOwnProperty.call(options, "beats")) next.legacyRhythmBeats = this.cloneValue(options.beats || []);
+    if (Object.prototype.hasOwnProperty.call(options, "score")) next.legacyRhythmScore = options.score;
+    if (Object.prototype.hasOwnProperty.call(options, "combo")) next.legacyRhythmCombo = options.combo;
+    if (Object.prototype.hasOwnProperty.call(options, "maxCombo")) next.legacyRhythmMaxCombo = options.maxCombo;
+    if (Object.prototype.hasOwnProperty.call(options, "startTimeMs")) next.legacyRhythmStartTimeMs = options.startTimeMs;
+    if (Object.prototype.hasOwnProperty.call(options, "results")) next.legacyRhythmResults = this.cloneValue(options.results || null);
+
+    next.transport = { status: next.legacyRhythmActive ? "running" : "idle", positionMs: 0 };
+    return this.updateRuntimeState(next);
+  };
+
+  SparkCore.prototype.completeLegacyRhythmGame = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_rhythm_game",
+      activeScreen: "home",
+      activeTab: "rhythm",
+      legacyRhythmActive: false,
+      legacyRhythmBeats: this.cloneValue(Object.prototype.hasOwnProperty.call(options, "beats") ? (options.beats || []) : (this.runtimeState.legacyRhythmBeats || [])),
+      legacyRhythmScore: Object.prototype.hasOwnProperty.call(options, "score") ? options.score : this.runtimeState.legacyRhythmScore,
+      legacyRhythmCombo: Object.prototype.hasOwnProperty.call(options, "combo") ? options.combo : this.runtimeState.legacyRhythmCombo,
+      legacyRhythmMaxCombo: Object.prototype.hasOwnProperty.call(options, "maxCombo") ? options.maxCombo : this.runtimeState.legacyRhythmMaxCombo,
+      legacyRhythmStartTimeMs: Object.prototype.hasOwnProperty.call(options, "startTimeMs") ? options.startTimeMs : this.runtimeState.legacyRhythmStartTimeMs,
+      legacyRhythmResults: this.cloneValue(Object.prototype.hasOwnProperty.call(options, "results") ? (options.results || null) : null),
       transport: { status: "completed", positionMs: 0 }
     });
   };

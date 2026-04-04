@@ -152,6 +152,14 @@ function rhythmTick(){
       S.rhythmCombo=0;
     }
   }
+  syncLegacyRhythmRuntimeRequest({
+    active: S.rhythmActive,
+    beats: S.rhythmBeats,
+    score: S.rhythmScore,
+    combo: S.rhythmCombo,
+    maxCombo: S.rhythmMaxCombo,
+    startTimeMs: S.rhythmStartTime
+  });
   render();
   _rhythmAnim=requestAnimationFrame(rhythmTick);
 }
@@ -161,6 +169,14 @@ function finishRhythm(){
   for(var i=0;i<total;i++)if(S.rhythmBeats[i].result==="perfect"||S.rhythmBeats[i].result==="good")hits++;
   var acc=total>0?Math.round((hits/total)*100):0;
   var rhythmResult={score:S.rhythmScore,accuracy:acc,maxCombo:S.rhythmMaxCombo,total:total,hits:hits};
+  completeLegacyRhythmGameRequest({
+    beats: S.rhythmBeats,
+    score: S.rhythmScore,
+    combo: S.rhythmCombo,
+    maxCombo: S.rhythmMaxCombo,
+    startTimeMs: S.rhythmStartTime,
+    results: rhythmResult
+  });
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({
       setFields:{rhythmActive:false,rhythmResults:rhythmResult},
@@ -779,6 +795,27 @@ function syncLegacyRunnerRuntimeRequest(options) {
 function completeLegacyRunnerGameRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeLegacyRunnerGame === "function") {
     return window.sparkCore.completeLegacyRunnerGame(options || {});
+  }
+  return null;
+}
+
+function openLegacyRhythmGameRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openLegacyRhythmGame === "function") {
+    return window.sparkCore.openLegacyRhythmGame(options || {});
+  }
+  return null;
+}
+
+function syncLegacyRhythmRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncLegacyRhythmRuntimeState === "function") {
+    return window.sparkCore.syncLegacyRhythmRuntimeState(options || {});
+  }
+  return null;
+}
+
+function completeLegacyRhythmGameRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeLegacyRhythmGame === "function") {
+    return window.sparkCore.completeLegacyRhythmGame(options || {});
   }
   return null;
 }
@@ -1910,6 +1947,13 @@ window.act=function(a,v){
       S.rhythmBeats=beats;S.rhythmScore=0;S.rhythmCombo=0;S.rhythmMaxCombo=0;
       S.rhythmActive=true;S.rhythmResults=null;S.rhythmStartTime=performance.now();
     }
+    openLegacyRhythmGameRequest({
+      beats: beats,
+      score: 0,
+      combo: 0,
+      maxCombo: 0,
+      startTimeMs: S.rhythmStartTime
+    });
     render();_rhythmAnim=requestAnimationFrame(rhythmTick);
     return;
   }
@@ -1932,6 +1976,14 @@ window.act=function(a,v){
     }else{
       S.rhythmCombo=0;snd("wrong");
     }
+    syncLegacyRhythmRuntimeRequest({
+      active: S.rhythmActive,
+      beats: S.rhythmBeats,
+      score: S.rhythmScore,
+      combo: S.rhythmCombo,
+      maxCombo: S.rhythmMaxCombo,
+      startTimeMs: S.rhythmStartTime
+    });
     render();return;
   }
   // === Progression Builder ===
