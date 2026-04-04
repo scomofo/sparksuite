@@ -543,6 +543,32 @@ test("SparkCore can sync tuner runtime state explicitly", function() {
   assert.strictEqual(errorState.tunerError, "Microphone access denied");
 });
 
+test("SparkCore can sync metronome runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var activeState = core.syncMetronomeRuntimeState({
+    active: true,
+    bpm: 96,
+    beat: 2,
+    beatsPerBar: 4
+  });
+  assert.strictEqual(activeState.metronomeActive, true);
+  assert.strictEqual(activeState.metronomeBpm, 96);
+  assert.strictEqual(activeState.metronomeBeat, 2);
+  assert.strictEqual(activeState.metronomeBeatsPerBar, 4);
+
+  var idleState = core.syncMetronomeRuntimeState({
+    active: false,
+    bpm: 72,
+    beat: 0,
+    beatsPerBar: 3
+  });
+  assert.strictEqual(idleState.metronomeActive, false);
+  assert.strictEqual(idleState.metronomeBpm, 72);
+  assert.strictEqual(idleState.metronomeBeat, 0);
+  assert.strictEqual(idleState.metronomeBeatsPerBar, 3);
+});
+
 test("SparkCore can sync chord detect runtime state explicitly", function() {
   var core = createDefaultSparkCore();
 
@@ -933,6 +959,63 @@ test("session page chord check can fall back to SparkCore chord detect runtime s
   sessionHtml = sessionPage();
   assert.ok(sessionHtml.indexOf("Microphone access denied") >= 0);
   assert.ok(sessionHtml.indexOf("Listen") >= 0);
+});
+
+test("session page metronome card can fall back to SparkCore metronome runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.VOICINGS = {};
+  global._prevChordKey = "";
+  global.ringHTML = function(_pct, _size, _stroke, _color, inner) { return inner; };
+  global.getExpectedNotes = function() { return []; };
+  global._buildChordCheckInner = function() { return ""; };
+  global.getCoachFeedback = function() { return []; };
+  global.escHTML = function(value) { return String(value); };
+  global.tierBadgeHTML = function() { return ""; };
+  global.getTransitionTip = function() { return null; };
+  global.clickableDiv = function() { return ""; };
+  global.strumHandSVG = function() { return ""; };
+  global.strumHTML = function() { return ""; };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            ALL_CHORDS: [{ name: "C", short: "C" }],
+            LC: { 1: "#fff" }
+          };
+        },
+        ui: {
+          chord: function(chord) { return "<div>" + chord.name + "</div>"; }
+        }
+      };
+    }
+  };
+  S.selectedVoicing = 0;
+  S.level = 1;
+  S.currentChord = { name: "C", short: "C" };
+  S.practiceIntention = "";
+  S.timer = 120;
+  S.timerActive = true;
+  S.metronomeOn = undefined;
+  S.metronomeBpm = undefined;
+  S._metroBeat = undefined;
+  S._metroBeats = undefined;
+  S.chordDetectOn = false;
+  S.chordDetectErr = "";
+
+  eval(loadJS("js/pages/session.js"));
+
+  core.syncMetronomeRuntimeState({
+    active: true,
+    bpm: 96,
+    beat: 2,
+    beatsPerBar: 4
+  });
+  var sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf(">96<") >= 0);
+  assert.ok(sessionHtml.indexOf("Stop") >= 0);
+  assert.ok(sessionHtml.indexOf("metro-dot active") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {

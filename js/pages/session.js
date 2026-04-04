@@ -48,6 +48,16 @@ function getLegacyDailyRuntime(){
   };
 }
 
+function getSessionMetronomeRuntime(){
+  var runtime = getSparkCoreRuntimeState();
+  return {
+    active: typeof S.metronomeOn === "boolean" ? S.metronomeOn : !!(runtime && runtime.metronomeActive),
+    bpm: typeof S.metronomeBpm === "number" ? S.metronomeBpm : (runtime && typeof runtime.metronomeBpm === "number" ? runtime.metronomeBpm : 80),
+    beat: typeof S._metroBeat === "number" ? S._metroBeat : (runtime && typeof runtime.metronomeBeat === "number" ? runtime.metronomeBeat : 0),
+    beatsPerBar: typeof S._metroBeats === "number" ? S._metroBeats : (runtime && typeof runtime.metronomeBeatsPerBar === "number" ? runtime.metronomeBeatsPerBar : 4)
+  };
+}
+
 function getSessionChordDetectRuntime(){
   if (typeof getLegacyChordDetectRuntime === "function") return getLegacyChordDetectRuntime();
   var runtime = getSparkCoreRuntimeState();
@@ -96,13 +106,14 @@ function sessionPage(){
   h+='<button onclick="act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:8px" aria-label="Preview chord sound">&#128264; Listen to this chord</button>';
 
   // Metronome card
-  h+='<div class="card mb12"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><h4 style="margin:0;font-size:14px;color:var(--text-primary)">&#127924; Metronome</h4><button class="btn" onclick="act(\'toggleMetro\')" style="padding:8px 16px;font-size:13px;background:'+(S.metronomeOn?"#FFE66D":"linear-gradient(135deg,#4ECDC4,#45B7D1)")+';color:'+(S.metronomeOn?"var(--text-primary)":"#fff")+'">'+(S.metronomeOn?"&#9632; Stop":"&#9654; Start")+'</button></div>';
-  h+='<div style="display:flex;align-items:center;justify-content:center;gap:12px"><button onclick="act(\'metroBpm\',\''+(S.metronomeBpm-5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)" aria-label="Decrease BPM">-</button>';
-  h+='<div style="text-align:center;min-width:60px"><div style="font-size:24px;font-weight:900;color:var(--text-primary)">'+S.metronomeBpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
-  h+='<button onclick="act(\'metroBpm\',\''+(S.metronomeBpm+5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)" aria-label="Increase BPM">+</button></div>';
-  if(S.metronomeOn){
+  var metronomeRuntime = getSessionMetronomeRuntime();
+  h+='<div class="card mb12"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><h4 style="margin:0;font-size:14px;color:var(--text-primary)">&#127924; Metronome</h4><button class="btn" onclick="act(\'toggleMetro\')" style="padding:8px 16px;font-size:13px;background:'+(metronomeRuntime.active?"#FFE66D":"linear-gradient(135deg,#4ECDC4,#45B7D1)")+';color:'+(metronomeRuntime.active?"var(--text-primary)":"#fff")+'">'+(metronomeRuntime.active?"&#9632; Stop":"&#9654; Start")+'</button></div>';
+  h+='<div style="display:flex;align-items:center;justify-content:center;gap:12px"><button onclick="act(\'metroBpm\',\''+(metronomeRuntime.bpm-5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)" aria-label="Decrease BPM">-</button>';
+  h+='<div style="text-align:center;min-width:60px"><div style="font-size:24px;font-weight:900;color:var(--text-primary)">'+metronomeRuntime.bpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
+  h+='<button onclick="act(\'metroBpm\',\''+(metronomeRuntime.bpm+5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)" aria-label="Increase BPM">+</button></div>';
+  if(metronomeRuntime.active){
     h+='<div style="display:flex;justify-content:center;gap:8px;margin-top:10px">';
-    for(var i=0;i<S._metroBeats;i++)h+='<div class="metro-dot'+(i===S._metroBeat?" active":"")+'"></div>';
+    for(var i=0;i<metronomeRuntime.beatsPerBar;i++)h+='<div class="metro-dot'+(i===metronomeRuntime.beat?" active":"")+'"></div>';
     h+='</div>';
   }
   h+='</div>';
