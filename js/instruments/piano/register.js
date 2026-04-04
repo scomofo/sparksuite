@@ -183,6 +183,21 @@
         if (chords.length > 0) return chords.slice(0, 2);
       }
       return [];
+    },
+
+    getExercisesForLesson: function(lessonId) {
+      var D = this.getData();
+      return D.FINGER_EXERCISES || [];
+    },
+
+    getPerformanceConfig: function() {
+      return {
+        laneCount: 88,
+        laneLabels: null,
+        defaultBpm: 80,
+        supportedModes: ["rhythm", "freestyle", "song"],
+        inputType: "key"
+      };
     }
   });
 })();
