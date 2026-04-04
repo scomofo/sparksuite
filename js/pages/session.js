@@ -198,8 +198,11 @@ function quizPage(){
   var quizQuestion = S.quizQ || (runtime && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : null);
   var quizOptions = Array.isArray(S.quizOpts) && S.quizOpts.length ? S.quizOpts : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
   var quizAnswer = typeof S.quizAns === "string" ? S.quizAns : (runtime ? runtime.legacyQuizAnswer : null);
+  var quizScore = typeof S.quizScore === "number" ? S.quizScore : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
+  var quizTotal = typeof S.quizTotal === "number" ? S.quizTotal : (runtime && typeof runtime.legacyQuizTotal === "number" ? runtime.legacyQuizTotal : 0);
+  var quizStreak = typeof S.quizStreak === "number" ? S.quizStreak : (runtime && typeof runtime.legacyQuizStreak === "number" ? runtime.legacyQuizStreak : 0);
   if(!quizQuestion)return '';
-  var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'quiz\')">&#8592; Back</button><div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+S.quizScore+'/'+S.quizTotal+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+S.quizStreak+'</span></div></div>';
+  var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'quiz\')">&#8592; Back</button><div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+quizScore+'/'+quizTotal+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+quizStreak+'</span></div></div>';
   h+='<h2 style="font-size:28px;font-weight:900;color:var(--text-primary);margin:8px 0 4px">Which is...</h2><div style="font-size:36px;font-weight:900;color:#FF6B6B;margin-bottom:16px">'+quizQuestion.name+'?</div>';
   h+='<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">';
   for(var i=0;i<quizOptions.length;i++){

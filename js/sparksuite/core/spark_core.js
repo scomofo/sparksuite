@@ -58,9 +58,15 @@
       legacyQuizQuestion: null,
       legacyQuizOptions: [],
       legacyQuizAnswer: null,
+      legacyQuizScore: 0,
+      legacyQuizTotal: 0,
+      legacyQuizStreak: 0,
       legacyEarTrainQuestion: null,
       legacyEarTrainOptions: [],
       legacyEarTrainAnswer: null,
+      legacyEarTrainScore: 0,
+      legacyEarTrainTotal: 0,
+      legacyEarTrainStreak: 0,
       legacyDrillChordNames: null,
       legacyDailyChallengeId: null,
       legacyDailyTimerActive: false,
@@ -569,7 +575,16 @@
         : this.cloneValue(this.runtimeState.legacyQuizOptions || []),
       legacyQuizAnswer: Object.prototype.hasOwnProperty.call(options, "answer")
         ? options.answer
-        : this.runtimeState.legacyQuizAnswer
+        : this.runtimeState.legacyQuizAnswer,
+      legacyQuizScore: Object.prototype.hasOwnProperty.call(options, "score")
+        ? options.score
+        : this.runtimeState.legacyQuizScore,
+      legacyQuizTotal: Object.prototype.hasOwnProperty.call(options, "total")
+        ? options.total
+        : this.runtimeState.legacyQuizTotal,
+      legacyQuizStreak: Object.prototype.hasOwnProperty.call(options, "streak")
+        ? options.streak
+        : this.runtimeState.legacyQuizStreak
     });
   };
 
@@ -583,7 +598,16 @@
       legacyEarTrainOptions: Object.prototype.hasOwnProperty.call(options, "options")
         ? this.cloneValue(options.options || [])
         : this.cloneValue(this.runtimeState.legacyEarTrainOptions || []),
-      legacyEarTrainAnswer: Object.prototype.hasOwnProperty.call(options, "answer") ? options.answer : this.runtimeState.legacyEarTrainAnswer
+      legacyEarTrainAnswer: Object.prototype.hasOwnProperty.call(options, "answer") ? options.answer : this.runtimeState.legacyEarTrainAnswer,
+      legacyEarTrainScore: Object.prototype.hasOwnProperty.call(options, "score")
+        ? options.score
+        : this.runtimeState.legacyEarTrainScore,
+      legacyEarTrainTotal: Object.prototype.hasOwnProperty.call(options, "total")
+        ? options.total
+        : this.runtimeState.legacyEarTrainTotal,
+      legacyEarTrainStreak: Object.prototype.hasOwnProperty.call(options, "streak")
+        ? options.streak
+        : this.runtimeState.legacyEarTrainStreak
     });
   };
 
