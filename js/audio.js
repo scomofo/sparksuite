@@ -449,6 +449,9 @@ function getStableChordNotes(rawNotes){
 
 function startChordDetect(){
   if(!AC){
+    if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
+      window.sparkCore.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:"Audio not supported"});
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectErr:"Audio not supported"}});
     }else{
@@ -464,6 +467,9 @@ function startChordDetect(){
     an.smoothingTimeConstant=0.4; // Balanced: less lag, JS-level history handles stability
     src.connect(an);
     chordR.ctx=ctx;chordR.analyser=an;
+    if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
+      window.sparkCore.syncChordDetectRuntimeState({active:true,notes:[],match:-1,error:null});
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectOn:true,chordDetectErr:null}});
     }else{
@@ -488,12 +494,23 @@ function startChordDetect(){
           var penalty=wrong>0?wrong/(found.length+expected.length):0;
           S.chordMatch=Math.max(0,Math.round((accuracy-penalty)*100));
         }else{S.chordMatch=-1;}
+        if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
+          window.sparkCore.syncChordDetectRuntimeState({
+            active:true,
+            notes:found,
+            match:S.chordMatch,
+            error:null
+          });
+        }
         // Update only the chord check section, not full DOM rebuild
         updateChordCheckUI();
       }
       chordR.anim=requestAnimationFrame(det);
     }det();
   }).catch(function(){
+    if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
+      window.sparkCore.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:"Microphone access denied"});
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectErr:"Microphone access denied"}});
     }else{
@@ -504,6 +521,9 @@ function startChordDetect(){
 }
 
 function stopChordDetect(){
+  if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
+    window.sparkCore.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:null});
+  }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({
       setFields:{chordDetectOn:false,detectedNotes:[],chordMatch:-1}
@@ -736,6 +756,14 @@ function _processMIDIChord(){
       var accuracy=hits/expected.length;
       var penalty=wrong>0?wrong/(unique.length+expected.length):0;
       S.chordMatch=Math.max(0,Math.round((accuracy-penalty)*100));
+    }
+    if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
+      window.sparkCore.syncChordDetectRuntimeState({
+        active:!!S.chordDetectOn,
+        notes:unique,
+        match:S.chordMatch,
+        error:null
+      });
     }
     updateChordCheckUI();
   }

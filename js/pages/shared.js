@@ -1,26 +1,41 @@
 // ===== ChordSpark: Shared rendering helpers =====
 
+function getLegacyChordDetectRuntime(){
+  var runtime = null;
+  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+    var view = window.sparkCore.getActiveSessionView();
+    runtime = view && view.runtimeState ? view.runtimeState : null;
+  }
+  return {
+    active: typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : !!(runtime && runtime.chordDetectActive),
+    notes: Array.isArray(S.detectedNotes) ? S.detectedNotes : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
+    match: typeof S.chordMatch === "number" ? S.chordMatch : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
+    error: S.chordDetectErr || (runtime && runtime.chordDetectError) || ""
+  };
+}
+
 // Build chord check inner HTML (shared by sessionPage and updateChordCheckUI)
 function _buildChordCheckInner(exp){
+  var runtime=getLegacyChordDetectRuntime();
   // Note pills row — fixed height so layout doesn't jump
   var h='<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:10px;min-height:32px">';
   for(var i=0;i<exp.length;i++){
-    var found=S.detectedNotes.indexOf(exp[i])!==-1;
+    var found=runtime.notes.indexOf(exp[i])!==-1;
     h+='<span class="note-pill" style="background:'+(found?"#4ECDC422":"var(--chip-bg)")+';color:'+(found?"#4ECDC4":"var(--text-muted)")+';border:2px solid '+(found?"#4ECDC4":"var(--border)")+'">'+(found?"&#9989;":"&#9675;")+' '+exp[i]+'</span>';
   }
   h+='</div>';
   // Match ring area — always same height to prevent layout shifts
   h+='<div style="text-align:center;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center">';
-  if(S.chordMatch>=0){
-    var mc=S.chordMatch>=80?"#4ECDC4":S.chordMatch>=50?"#FFE66D":"#FF6B6B";
-    var ml=S.chordMatch>=80?"Great!":S.chordMatch>=50?"Getting there...":"Keep trying!";
-    h+=ringHTML(S.chordMatch,70,5,mc,'<div style="font-size:16px;font-weight:900;color:'+mc+'">'+S.chordMatch+'%</div>',"Chord match")+'<div style="font-size:12px;font-weight:700;color:'+mc+';margin-top:4px">'+ml+'</div>';
+  if(runtime.match>=0){
+    var mc=runtime.match>=80?"#4ECDC4":runtime.match>=50?"#FFE66D":"#FF6B6B";
+    var ml=runtime.match>=80?"Great!":runtime.match>=50?"Getting there...":"Keep trying!";
+    h+=ringHTML(runtime.match,70,5,mc,'<div style="font-size:16px;font-weight:900;color:'+mc+'">'+runtime.match+'%</div>',"Chord match")+'<div style="font-size:12px;font-weight:700;color:'+mc+';margin-top:4px">'+ml+'</div>';
   }else{h+='<div style="color:var(--text-muted);font-size:13px">Strum the chord...</div>';}
   h+='</div>';
   // AI Coach feedback — fixed min height
   h+='<div style="min-height:20px">';
-  var tips=getCoachFeedback(S.currentChord?S.currentChord.name:"",S.detectedNotes,exp);
-  if(tips.length>0&&S.chordMatch>=0&&S.chordMatch<100){
+  var tips=getCoachFeedback(S.currentChord?S.currentChord.name:"",runtime.notes,exp);
+  if(tips.length>0&&runtime.match>=0&&runtime.match<100){
     h+='<div style="margin-top:10px;background:var(--input-bg);border-radius:12px;padding:10px">';
     h+='<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:6px">&#129302; Coach Tips:</div>';
     for(var i=0;i<tips.length;i++){
@@ -35,7 +50,8 @@ function _buildChordCheckInner(exp){
 // Update chord check results without full DOM rebuild
 function updateChordCheckUI(){
   var el=document.getElementById("chord-check-results");
-  if(!el||!S.chordDetectOn)return;
+  var runtime=getLegacyChordDetectRuntime();
+  if(!el||!runtime.active)return;
   var exp=getExpectedNotes(S.currentChord?S.currentChord.name:"");
   el.innerHTML=_buildChordCheckInner(exp);
 }

@@ -543,6 +543,32 @@ test("SparkCore can sync tuner runtime state explicitly", function() {
   assert.strictEqual(errorState.tunerError, "Microphone access denied");
 });
 
+test("SparkCore can sync chord detect runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var activeState = core.syncChordDetectRuntimeState({
+    active: true,
+    notes: ["C", "E", "G"],
+    match: 82,
+    error: null
+  });
+  assert.strictEqual(activeState.chordDetectActive, true);
+  assert.deepStrictEqual(activeState.chordDetectNotes, ["C", "E", "G"]);
+  assert.strictEqual(activeState.chordDetectMatch, 82);
+  assert.strictEqual(activeState.chordDetectError, null);
+
+  var errorState = core.syncChordDetectRuntimeState({
+    active: false,
+    notes: [],
+    match: -1,
+    error: "Microphone access denied"
+  });
+  assert.strictEqual(errorState.chordDetectActive, false);
+  assert.deepStrictEqual(errorState.chordDetectNotes, []);
+  assert.strictEqual(errorState.chordDetectMatch, -1);
+  assert.strictEqual(errorState.chordDetectError, "Microphone access denied");
+});
+
 test("legacy session and drill pages can fall back to SparkCore practice runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
@@ -834,6 +860,79 @@ test("tuner page can fall back to SparkCore tuner runtime state", function() {
   });
   tunerHtml = tunerTab();
   assert.ok(tunerHtml.indexOf("Microphone access denied") >= 0);
+});
+
+test("session page chord check can fall back to SparkCore chord detect runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.VOICINGS = {};
+  global._prevChordKey = "";
+  global.ringHTML = function(_pct, _size, _stroke, _color, inner) { return inner; };
+  global.getExpectedNotes = function() { return ["C", "E", "G"]; };
+  global.getCoachFeedback = function() { return []; };
+  global.escHTML = function(value) { return String(value); };
+  global.tierBadgeHTML = function() { return ""; };
+  global.getTransitionTip = function() { return null; };
+  global.clickableDiv = function() { return ""; };
+  global.strumHandSVG = function() { return ""; };
+  global.strumHTML = function() { return ""; };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            ALL_CHORDS: [{ name: "C", short: "C" }],
+            LC: { 1: "#fff" }
+          };
+        },
+        ui: {
+          chord: function(chord) { return "<div>" + chord.name + "</div>"; }
+        }
+      };
+    }
+  };
+  S.selectedVoicing = 0;
+  S.level = 1;
+  S.currentChord = { name: "C", short: "C" };
+  S.metronomeBpm = 80;
+  S._metroBeats = 4;
+  S._metroBeat = 0;
+  S.metronomeOn = false;
+  S.practiceIntention = "";
+  S.timer = 120;
+  S.timerActive = true;
+  S.chordDetectOn = undefined;
+  S.chordDetectErr = undefined;
+  S.detectedNotes = undefined;
+  S.chordMatch = undefined;
+
+  eval(loadJS("js/pages/shared.js"));
+  eval(loadJS("js/pages/session.js"));
+
+  core.syncChordDetectRuntimeState({
+    active: true,
+    notes: ["C", "E", "G"],
+    match: 82,
+    error: null
+  });
+  var sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf("Stop") >= 0);
+  assert.ok(sessionHtml.indexOf("82%") >= 0);
+  assert.ok(sessionHtml.indexOf("C") >= 0);
+
+  S.chordDetectOn = undefined;
+  S.chordDetectErr = undefined;
+  S.detectedNotes = undefined;
+  S.chordMatch = undefined;
+  core.syncChordDetectRuntimeState({
+    active: false,
+    notes: [],
+    match: -1,
+    error: "Microphone access denied"
+  });
+  sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf("Microphone access denied") >= 0);
+  assert.ok(sessionHtml.indexOf("Listen") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
