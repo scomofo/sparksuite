@@ -21,11 +21,11 @@ function pianoHeaderHTML() {
   var html = '<header class="app-header" role="banner">';
   html += '<h1 class="logo">PianoSpark</h1>';
   html += '<div class="header-actions">';
-  html += '<span class="xp-badge" aria-label="XP">' + S.xp + ' XP</span>';
+  html += '<span class="xp-badge" aria-label="XP" aria-live="polite">' + S.xp + ' XP</span>';
   if (S.onboardingComplete) {
     html += '<span class="session-badge">S' + S.currentSession + '/50</span>';
   }
-  html += '<span class="streak-badge" aria-label="Streak">' + (S.streak > 0 ? "\u{1F525}" + S.streak : "") + '</span>';
+  html += '<span class="streak-badge" aria-label="Streak" aria-live="polite">' + (S.streak > 0 ? "\u{1F525}" + S.streak : "") + '</span>';
   html += '<button class="icon-btn" onclick="act(\'toggle_dark\')" title="Toggle dark mode" aria-label="Toggle dark mode">' + (S.darkMode ? "\u{2600}" : "\u{1F319}") + '</button>';
   html += '</div></header>';
   return html;

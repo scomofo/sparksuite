@@ -1718,7 +1718,7 @@ function act(action, param) {
         break;
       }
       if (invalid.length) showToast("Skipped unknown: " + invalid.join(", "));
-      S.customSets.push({ name: name.trim(), chords: valid });
+      S.customSets.push({ name: name.trim().slice(0, 50), chords: valid });
       saveState();
       break;
     }
@@ -1730,7 +1730,7 @@ function act(action, param) {
 
     // ── Settings ──
     case "set_bpm":
-      S.bpm = parseInt(param);
+      S.bpm = Math.max(40, Math.min(200, parseInt(param) || 72));
       break;
 
     case "set_volume":
