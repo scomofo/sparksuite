@@ -132,7 +132,15 @@ function genQ(){
     attempts++;
   }
   opts=shuffle(opts);
-  S.quizQ=q;S.quizOpts=opts;S.quizAns=null;render();
+  S.quizQ=q;S.quizOpts=opts;S.quizAns=null;
+  if(window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function"){
+    window.sparkCore.syncLegacyQuizRuntimeState({
+      question: q,
+      options: opts,
+      answer: null
+    });
+  }
+  render();
 }
 
 // ===== RHYTHM GAME =====

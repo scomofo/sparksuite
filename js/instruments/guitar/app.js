@@ -198,6 +198,13 @@ function guitarAct(a, v) {
     var ch;
     for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === v) ch = D.ALL_CHORDS[i];
     if (ch) {
+      if (window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
+        window.sparkCore.syncLegacyQuizRuntimeState({
+          question: S.quizQ,
+          options: S.quizOpts,
+          answer: ch.name
+        });
+      }
       var ok = ch.name === S.quizQ.name; S.quizAns = ch.name;
       if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: "chordspark", skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
       else { snd("wrong"); S.quizStreak = 0; }
