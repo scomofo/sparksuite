@@ -7,6 +7,14 @@
     icon: "\uD83C\uDFB9",
     skin: typeof SparkHighway !== "undefined" ? SparkHighway.PIANO_SKIN : null,
     available: true,
+    capabilities: {
+      stringCount: null,
+      noteLaneType: "key",
+      chordShapeSupport: true,
+      midiInput: true,
+      capoSupport: false,
+      performanceModes: ["rhythm", "freestyle", "song"]
+    },
 
     getData: function() {
       var d = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : {};

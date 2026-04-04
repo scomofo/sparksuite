@@ -7,6 +7,14 @@
     icon: "\uD83C\uDFB8",
     skin: typeof SparkHighway !== "undefined" ? SparkHighway.GUITAR_SKIN : null,
     available: true,
+    capabilities: {
+      stringCount: 6,
+      noteLaneType: "string",
+      chordShapeSupport: true,
+      midiInput: false,
+      capoSupport: true,
+      performanceModes: ["rhythm", "freestyle", "song"]
+    },
 
     getData: function() {
       return {
