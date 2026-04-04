@@ -583,3 +583,30 @@ h1, h2, h3, [style*="font-weight:900"], [style*="font-weight:800"] {
   padding:6px 14px;font-size:12px;font-weight:700;color:var(--text-muted);cursor:pointer
 }
 .songs-subtab.active{border-color:var(--accent);background:rgba(212,132,90,.08);color:var(--accent)}
+
+/* ===== V2 Header Overrides ===== */
+body.sv2 .header {
+  background: rgba(10,10,18,0.95);
+  border-bottom-color: var(--border);
+  backdrop-filter: blur(12px);
+}
+body.sv2 .logo-text {
+  font-family: var(--font-display-v2);
+  background: var(--inst-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+body.sv2 .stat-xp {
+  background: rgba(var(--inst-primary-rgb), 0.1);
+  color: var(--inst-primary);
+  border-color: rgba(var(--inst-primary-rgb), 0.2);
+}
+body.sv2 .tab.active {
+  background: var(--inst-primary);
+  color: #fff;
+}
+body.sv2 .tabs {
+  background: var(--card-bg);
+  border-color: var(--border);
+}
