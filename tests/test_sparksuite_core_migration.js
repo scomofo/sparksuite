@@ -407,6 +407,24 @@ test("SparkCore can sync legacy practice runtime countdown and pause state expli
 test("SparkCore can sync ear training runtime state explicitly", function() {
   var core = createDefaultSparkCore();
 
+  var openState = core.openLegacyEarTraining({
+    question: "C Major",
+    options: ["C Major", "G Major", "A Minor"],
+    answer: null,
+    score: 1,
+    total: 2,
+    streak: 1
+  });
+  assert.strictEqual(openState.activeFlow, "legacy_ear_training");
+  assert.strictEqual(openState.activeScreen, "home");
+  assert.strictEqual(openState.activeTab, "ear");
+  assert.strictEqual(openState.legacyEarTrainQuestion, "C Major");
+  assert.deepStrictEqual(openState.legacyEarTrainOptions, ["C Major", "G Major", "A Minor"]);
+  assert.strictEqual(openState.legacyEarTrainAnswer, null);
+  assert.strictEqual(openState.legacyEarTrainScore, 1);
+  assert.strictEqual(openState.legacyEarTrainTotal, 2);
+  assert.strictEqual(openState.legacyEarTrainStreak, 1);
+
   var questionState = core.syncLegacyEarTrainingRuntimeState({
     question: "C Major",
     options: ["C Major", "G Major", "A Minor"],
@@ -465,7 +483,7 @@ test("SparkCore can sync quiz runtime state explicitly", function() {
     { name: "G Major", short: "G" }
   ];
 
-  var openState = core.syncLegacyQuizRuntimeState({
+  var openState = core.openLegacyQuiz({
     question: question,
     options: options,
     answer: null,
