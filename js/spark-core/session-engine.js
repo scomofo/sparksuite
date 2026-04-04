@@ -62,12 +62,22 @@
       if (mode === "guided") {
         var sessions = D.SESSIONS || [];
         var plan     = sessions[sessionNum - 1] || null;
+
+        // Use CurriculumService for lesson resolution when available (Phase 5)
+        var lessonRef = null;
+        if (typeof SparkCurriculumService !== "undefined" && plan && plan.id) {
+          if (SparkCurriculumService.isLessonUnlocked(plan.id)) {
+            lessonRef = plan.id;
+          }
+        }
+
         return wrapPlan({
           type:       "guided",
           plan:       plan,
           sessionNum: sessionNum,
           duration:   300,
-          level:      level
+          level:      level,
+          lessonRef:  lessonRef
         });
       }
 
