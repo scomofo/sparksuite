@@ -34,6 +34,9 @@
       songSessionSource: null,
       songPlaying: false,
       songBeat: 0,
+      stemPlaying: false,
+      stemCurrentTime: 0,
+      stemDuration: 0,
       songsSubTab: "builtin",
       songFilter: "",
       songSort: "level",
@@ -698,6 +701,15 @@
       tunerFreq: Object.prototype.hasOwnProperty.call(options, "freq") ? options.freq : this.runtimeState.tunerFreq,
       tunerCents: Object.prototype.hasOwnProperty.call(options, "cents") ? options.cents : this.runtimeState.tunerCents,
       tunerError: Object.prototype.hasOwnProperty.call(options, "error") ? options.error : this.runtimeState.tunerError
+    });
+  };
+
+  SparkCore.prototype.syncStemPlayerRuntimeState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      stemPlaying: Object.prototype.hasOwnProperty.call(options, "playing") ? !!options.playing : this.runtimeState.stemPlaying,
+      stemCurrentTime: Object.prototype.hasOwnProperty.call(options, "currentTime") ? options.currentTime : this.runtimeState.stemCurrentTime,
+      stemDuration: Object.prototype.hasOwnProperty.call(options, "duration") ? options.duration : this.runtimeState.stemDuration
     });
   };
 

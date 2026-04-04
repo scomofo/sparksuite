@@ -543,6 +543,28 @@ test("SparkCore can sync tuner runtime state explicitly", function() {
   assert.strictEqual(errorState.tunerError, "Microphone access denied");
 });
 
+test("SparkCore can sync stem player runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var activeState = core.syncStemPlayerRuntimeState({
+    playing: true,
+    currentTime: 12.5,
+    duration: 96
+  });
+  assert.strictEqual(activeState.stemPlaying, true);
+  assert.strictEqual(activeState.stemCurrentTime, 12.5);
+  assert.strictEqual(activeState.stemDuration, 96);
+
+  var idleState = core.syncStemPlayerRuntimeState({
+    playing: false,
+    currentTime: 0,
+    duration: 96
+  });
+  assert.strictEqual(idleState.stemPlaying, false);
+  assert.strictEqual(idleState.stemCurrentTime, 0);
+  assert.strictEqual(idleState.stemDuration, 96);
+});
+
 test("SparkCore can sync metronome runtime state explicitly", function() {
   var core = createDefaultSparkCore();
 
@@ -886,6 +908,40 @@ test("tuner page can fall back to SparkCore tuner runtime state", function() {
   });
   tunerHtml = tunerTab();
   assert.ok(tunerHtml.indexOf("Microphone access denied") >= 0);
+});
+
+test("stem player page can fall back to SparkCore stem runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.formatTime = function(seconds) {
+    seconds = Math.max(0, Math.floor(seconds || 0));
+    var m = Math.floor(seconds / 60);
+    var s = seconds % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  };
+  global._isStemSolo = function() { return false; };
+  global.STEM_NAMES = ["vocals", "drums"];
+  global.STEM_COLORS = { vocals: "#f00", drums: "#0f0" };
+  global.STEM_ICONS = { vocals: "V", drums: "D" };
+  S.stemFile = { fileName: "mix.wav" };
+  S.stemPaths = { vocals: "vocals.wav", drums: "drums.wav" };
+  S.stemToggles = { vocals: true, drums: true };
+  S.stemVolume = 0.8;
+  S.stemPlaying = undefined;
+  S.stemCurrentTime = undefined;
+  S.stemDuration = undefined;
+
+  eval(loadJS("js/pages/songs.js"));
+
+  core.syncStemPlayerRuntimeState({
+    playing: true,
+    currentTime: 12.5,
+    duration: 96
+  });
+  var stemsHtml = stemsPage();
+  assert.ok(stemsHtml.indexOf("0:12 / 1:36") >= 0);
+  assert.ok(stemsHtml.indexOf("Pause") >= 0);
 });
 
 test("session page chord check can fall back to SparkCore chord detect runtime state", function() {

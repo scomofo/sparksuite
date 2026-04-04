@@ -359,6 +359,14 @@ function stemsSection(){
 
 // ===== STEM PLAYER PAGE =====
 function stemsPage(){
+  var runtime = null;
+  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+    var view = window.sparkCore.getActiveSessionView();
+    runtime = view && view.runtimeState ? view.runtimeState : null;
+  }
+  var stemPlaying = typeof S.stemPlaying === "boolean" ? S.stemPlaying : !!(runtime && runtime.stemPlaying);
+  var stemCurrentTime = typeof S.stemCurrentTime === "number" ? S.stemCurrentTime : (runtime && typeof runtime.stemCurrentTime === "number" ? runtime.stemCurrentTime : 0);
+  var stemDuration = typeof S.stemDuration === "number" ? S.stemDuration : (runtime && typeof runtime.stemDuration === "number" ? runtime.stemDuration : 0);
   var h='<div style="padding:8px 0">';
   // Header
   h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
@@ -391,11 +399,11 @@ function stemsPage(){
 
   // Playback controls
   h+='<div class="card mb12" style="text-align:center">';
-  var cur=formatTime(S.stemCurrentTime);
-  var dur=formatTime(S.stemDuration);
+  var cur=formatTime(stemCurrentTime);
+  var dur=formatTime(stemDuration);
   h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">'+cur+' / '+dur+'</div>';
-  h+='<input type="range" min="0" max="'+(S.stemDuration||100)+'" step="0.5" value="'+S.stemCurrentTime+'" oninput="act(\'stemSeek\',this.value)" style="width:100%;margin-bottom:12px;accent-color:#4ECDC4"/>';
-  h+='<button onclick="act(\'stemPlay\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:14px 40px;border-radius:16px;font-size:18px;font-weight:800;cursor:pointer;border:none">'+(S.stemPlaying?"&#9646;&#9646; Pause":"&#9654; Play")+'</button>';
+  h+='<input type="range" min="0" max="'+(stemDuration||100)+'" step="0.5" value="'+stemCurrentTime+'" oninput="act(\'stemSeek\',this.value)" style="width:100%;margin-bottom:12px;accent-color:#4ECDC4"/>';
+  h+='<button onclick="act(\'stemPlay\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:14px 40px;border-radius:16px;font-size:18px;font-weight:800;cursor:pointer;border:none">'+(stemPlaying?"&#9646;&#9646; Pause":"&#9654; Play")+'</button>';
   h+='</div>';
 
   // Volume
