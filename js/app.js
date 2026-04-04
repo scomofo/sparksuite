@@ -1372,6 +1372,21 @@ function completeGuidedSessionRequest(options) {
     }
     return result;
   }
+  // Route through contract-based progress path (Phase 6 migration)
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var guidedResult = SparkContracts.createSessionResult({
+      mode: "guided",
+      instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
+      instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+      duration: 300,
+      accuracy: 0.75,
+      completed: true
+    });
+    var guidedOutcome = SparkProgressOrchestrator.applySessionOutcome(guidedResult);
+    if (typeof console !== "undefined" && console.debug) {
+      console.debug("[App] Guided ProgressOutcome:", guidedOutcome);
+    }
+  }
   return null;
 }
 
