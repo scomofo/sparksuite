@@ -43,7 +43,7 @@
     if (chart.barre) {
       var b = chart.barre;
       if (b.fret !== undefined) {
-        return { fret: b.fret, fromString: b.fromString, toString: b.toString };
+        return { fret: b.fret, fromString: b.fromString !== undefined ? b.fromString : 0, toString: b.toString !== undefined ? b.toString : ((chart.stringCount || 6) - 1) };
       }
     }
     // Legacy guitar format

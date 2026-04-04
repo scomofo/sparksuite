@@ -52,9 +52,9 @@
     return lessons[0] || null;
   }
 
-  function renderUkuleleChordSVG(chordObj, size, label) {
+  function renderUkuleleChordSVG(chordObj, size, label, animate) {
     // Delegate to the new pipeline: normalizer -> validator -> generic renderer
-    return ukuleleSVG(chordObj, { width: size, label: label });
+    return ukuleleSVG(chordObj, { width: size, label: label, animate: !!animate });
   }
 
   function renderUkulelePracticeTab() {
@@ -194,8 +194,8 @@
     },
 
     ui: {
-      chord: function(chordObj, size, label) {
-        return renderUkuleleChordSVG(chordObj, size, label);
+      chord: function(chordObj, size, label, animate) {
+        return renderUkuleleChordSVG(chordObj, size, label, animate);
       },
       header: function() {
         return typeof headerHTML === "function" ? headerHTML() : "";
