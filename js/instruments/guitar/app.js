@@ -343,17 +343,47 @@ function guitarAct(a, v) {
     for (var fi = 0; fi < D.FINGER_EXERCISES.length; fi++) if (D.FINGER_EXERCISES[fi].id === v) { ex = D.FINGER_EXERCISES[fi]; break; }
     if (!ex) return true;
     S.fingerExId = v; S.fingerExTimer = ex.duration; S.fingerExActive = true; S.fingerExCount = 0;
+    if (window.sparkCore && typeof window.sparkCore.openLegacyFingerExercise === "function") {
+      window.sparkCore.openLegacyFingerExercise({
+        exerciseId: v,
+        durationSec: ex.duration,
+        exerciseCount: 0
+      });
+    }
     snd("start");
     clearInterval(T.fingerEx);
     T.fingerEx = setInterval(function() {
       if (!S.fingerExActive) return;
       S.fingerExTimer--;
+      if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
+        window.sparkCore.syncLegacyPracticeRuntimeState("tick", {
+          mode: "finger_exercise",
+          remainingSec: S.fingerExTimer,
+          durationSec: ex.duration,
+          timerActive: true,
+          fingerExerciseId: v,
+          fingerExerciseActive: true,
+          fingerExerciseCount: S.fingerExCount
+        });
+      }
       addPracticeSecond();
       if (S.fingerExTimer <= 0) {
         clearInterval(T.fingerEx); S.fingerExActive = false;
+        if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
+          window.sparkCore.syncLegacyPracticeRuntimeState("pause", {
+            mode: "finger_exercise",
+            remainingSec: 0,
+            durationSec: ex.duration,
+            timerActive: false,
+            fingerExerciseId: v,
+            fingerExerciseActive: false,
+            fingerExerciseCount: (S.fingerExCount || 0) + 1
+          });
+        }
         snd("complete"); if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ xpDelta: 10, toastAmount: 10 }); else { S.xp += 10; S.xpToast = { amount: 10, time: Date.now() }; }
         if (typeof S.fingerStats !== "object" || S.fingerStats === null) S.fingerStats = {};
         S.fingerStats[v] = (S.fingerStats[v] || 0) + 1;
+        S.fingerExCount = (S.fingerExCount || 0) + 1;
         saveState();
       }
       render();
@@ -363,6 +393,17 @@ function guitarAct(a, v) {
   }
 
   if (a === "stopFingerEx") {
+    if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
+      window.sparkCore.syncLegacyPracticeRuntimeState("pause", {
+        mode: "finger_exercise",
+        remainingSec: S.fingerExTimer,
+        durationSec: S.fingerExTimer,
+        timerActive: false,
+        fingerExerciseId: S.fingerExId,
+        fingerExerciseActive: false,
+        fingerExerciseCount: S.fingerExCount
+      });
+    }
     clearInterval(T.fingerEx); S.fingerExActive = false; S.fingerExId = null; render();
     return true;
   }

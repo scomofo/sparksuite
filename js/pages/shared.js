@@ -124,15 +124,23 @@ function updateDailyTimerUI(){
 
 // ===== FINGER EXERCISES CARD =====
 function fingerExerciseCard(){
+  var runtime = null;
+  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+    var view = window.sparkCore.getActiveSessionView();
+    runtime = view && view.runtimeState ? view.runtimeState : null;
+  }
+  var fingerExActive = typeof S.fingerExActive === "boolean" ? S.fingerExActive : !!(runtime && runtime.legacyFingerExerciseActive);
+  var fingerExId = typeof S.fingerExId === "string" ? S.fingerExId : (runtime ? runtime.legacyFingerExerciseId : null);
+  var fingerExTimer = typeof S.fingerExTimer === "number" ? S.fingerExTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : 0);
   var h='<div class="card" style="margin-top:12px">';
   h+='<h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#9995; Finger Exercises</h3>';
 
   // Active exercise
-  if(S.fingerExActive&&S.fingerExId){
+  if(fingerExActive&&fingerExId){
     var ex=null;
-    for(var i=0;i<FINGER_EXERCISES.length;i++)if(FINGER_EXERCISES[i].id===S.fingerExId){ex=FINGER_EXERCISES[i];break;}
+    for(var i=0;i<FINGER_EXERCISES.length;i++)if(FINGER_EXERCISES[i].id===fingerExId){ex=FINGER_EXERCISES[i];break;}
     if(ex){
-      var m=Math.floor(S.fingerExTimer/60),s=S.fingerExTimer%60;
+      var m=Math.floor(fingerExTimer/60),s=fingerExTimer%60;
       h+='<div style="background:var(--input-bg);border-radius:14px;padding:14px;margin-bottom:10px;border-left:4px solid #FF6B6B">';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
       h+='<div style="font-size:14px;font-weight:800;color:var(--text-primary)">'+escHTML(ex.name)+'</div>';
