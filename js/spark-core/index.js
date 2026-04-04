@@ -34,7 +34,8 @@
         achievements: window.SparkAchievements,
         content: window.SparkContent,
         contentNormalizer: window.SparkContentNormalizer,
-        curriculum: window.SparkCurriculumService
+        curriculum: window.SparkCurriculumService,
+        recommendations: window.SparkRecommendationService
       };
     }
   };
