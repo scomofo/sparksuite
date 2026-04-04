@@ -1,8 +1,9 @@
 /* ===== Shared Editor Page ===== */
 /* Handoffs 6-9: editor shell with items list, inspector, timeline, visual timeline */
 
+var sc = window.sparkCore;
 function editorPage(){
-  var obj = S.editorObject;
+  var obj = sc.r("editorObject");
   var h = '';
   h += '<div class="card mb16">';
   h += '<h2>Editor</h2>';
@@ -20,9 +21,9 @@ function editorPage(){
   var errors = validateEditorObject ? validateEditorObject(obj) : [];
 
   h += '<div class="card mb16">';
-  h += '<div><b>Mode:</b> '+escHTML(S.editorMode || "chart")+'</div>';
+  h += '<div><b>Mode:</b> '+escHTML(sc.r("editorMode") || "chart")+'</div>';
   h += '<div><b>ID:</b> '+escHTML(obj.id || "")+'</div>';
-  h += '<div><b>Dirty:</b> '+(S.editorDirty ? 'Yes' : 'No')+'</div>';
+  h += '<div><b>Dirty:</b> '+(sc.r("editorDirty") ? 'Yes' : 'No')+'</div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
@@ -79,9 +80,9 @@ function renderEditorObjectSummary(obj){
 function renderEditorTimeline(obj){
   var range = typeof getEditorTimelineRange === "function" ? getEditorTimelineRange() : { startSec:0, endSec:16 };
   var bpm = typeof getEditorBpm === "function" ? getEditorBpm() : 80;
-  var grid = typeof buildTimelineGridLines === "function" ? buildTimelineGridLines(range.startSec, range.endSec, bpm, S.editorGridDivision || "1/4") : [];
+  var grid = typeof buildTimelineGridLines === "function" ? buildTimelineGridLines(range.startSec, range.endSec, bpm, sc.r("editorGridDivision") || "1/4") : [];
   var h = '';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(S.editorGridDivision||"1/4")+'</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(sc.r("editorPlayheadSec")||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(sc.r("editorGridDivision")||"1/4")+'</div>';
   h += '<div style="padding:12px;border-radius:12px;background:var(--input-bg)">';
   for(var i=0;i<grid.length;i++){
     h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+escHTML(grid[i].label)+' ('+grid[i].t.toFixed(2)+'s)</div>';
@@ -97,7 +98,7 @@ function renderEditorTimelineToolbar(obj){
   h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
   h += '<button class="btn" onclick="act(\'editorPlayheadLeft\')">\u25c0</button>';
   h += '<button class="btn" onclick="act(\'editorPlayheadRight\')">\u25b6</button>';
-  h += '<button class="btn" onclick="act(\'editorToggleSnap\')">'+(S.editorSnapEnabled?'Snap On':'Snap Off')+'</button>';
+  h += '<button class="btn" onclick="act(\'editorToggleSnap\')">'+(sc.r("editorSnapEnabled")?'Snap On':'Snap Off')+'</button>';
   h += '<button class="btn" onclick="act(\'editorGrid\',\'1/4\')">1/4</button>';
   h += '<button class="btn" onclick="act(\'editorGrid\',\'1/8\')">1/8</button>';
   h += '<button class="btn" onclick="act(\'editorGrid\',\'1/16\')">1/16</button>';
@@ -128,7 +129,7 @@ function renderEditorItemsList(obj){
     for(var e=0;e<entries.length;e++){
       var entry = entries[e];
       var item = entry.item;
-      var selected = String(S.editorSelectedId)===String(item.id);
+      var selected = String(sc.r("editorSelectedId"))===String(item.id);
       h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'" onclick="act(\'editorSelect\',\''+item.id+'\')">';
       h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(String(item.id))+'</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(getEditorItemSummary(entry.kind, item))+'</div>';

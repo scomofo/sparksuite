@@ -2,6 +2,7 @@
 
 // Piano keyboard SVG renderer
 // Draws a 2-octave keyboard (C3-B4) with highlighted notes and finger numbers
+var sc = window.sparkCore;
 function dualPianoSVG(pianoChord,sz){
   sz=sz||300;
   var w=sz,h=sz*0.45;
@@ -101,7 +102,7 @@ function dualGuitarSVG(chord,sz,anchorOn){
 function dualTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
-  var chordName=S.dualChord||"G Major";
+  var chordName=sc.r("dualChord")||"G Major";
   // Find the guitar chord object
   var guitarChord=null;
   for(var i=0;i<D.ALL_CHORDS.length;i++){
@@ -168,7 +169,7 @@ function dualTab(){
   h+='<div class="card" style="flex:1;min-width:200px;max-width:280px;text-align:center">';
   h+='<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127930; Guitar</h3>';
   if(guitarChord){
-    h+='<div class="flex-center">'+dualGuitarSVG(guitarChord,200,S.dualAnchorOn)+'</div>';
+    h+='<div class="flex-center">'+dualGuitarSVG(guitarChord,200,sc.r("dualAnchorOn"))+'</div>';
   }else{
     h+='<p style="color:var(--text-muted);font-size:13px">No guitar diagram available for this chord.</p>';
   }
@@ -182,11 +183,11 @@ function dualTab(){
   h+='<div style="display:flex;align-items:center;justify-content:space-between">';
   h+='<div><h4 style="margin:0;font-size:14px;font-weight:800;color:var(--text-primary)">&#128204; Sticky Anchor</h4>';
   h+='<p style="margin:4px 0 0;font-size:11px;color:var(--text-muted)">'+GUITAR_ANCHOR.instruction+'</p></div>';
-  h+='<button onclick="act(\'toggleAnchor\')" style="padding:8px 16px;border-radius:12px;font-size:12px;font-weight:700;background:'+(S.dualAnchorOn?"#FFE66D":"var(--input-bg)")+';color:'+(S.dualAnchorOn?"#333":"var(--text-muted)")+';border:2px solid '+(S.dualAnchorOn?"#FFE66D":"var(--border)")+'">'+(S.dualAnchorOn?"ON":"OFF")+'</button>';
+  h+='<button onclick="act(\'toggleAnchor\')" style="padding:8px 16px;border-radius:12px;font-size:12px;font-weight:700;background:'+(sc.r("dualAnchorOn")?"#FFE66D":"var(--input-bg)")+';color:'+(sc.r("dualAnchorOn")?"#333":"var(--text-muted)")+';border:2px solid '+(sc.r("dualAnchorOn")?"#FFE66D":"var(--border)")+'">'+(sc.r("dualAnchorOn")?"ON":"OFF")+'</button>';
   h+='</div>';
-  if(S.dualAnchorOn&&isAnchorChord){
+  if(sc.r("dualAnchorOn")&&isAnchorChord){
     h+='<div style="margin-top:10px;background:#FFE66D11;border:1px solid #FFE66D44;border-radius:10px;padding:8px 12px;font-size:12px;color:#FFE66D;font-weight:600">&#9989; Ring finger is anchored on B-string fret 3 for this chord</div>';
-  }else if(S.dualAnchorOn&&!isAnchorChord){
+  }else if(sc.r("dualAnchorOn")&&!isAnchorChord){
     h+='<div style="margin-top:10px;font-size:11px;color:var(--text-muted);font-style:italic">Anchor applies to G, C, Cadd9, and D transitions only</div>';
   }
   h+='</div>';

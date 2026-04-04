@@ -1,9 +1,10 @@
 // ===== ChordSpark: Song-related pages and sections =====
 
 // Helper: check if only one stem is on (solo mode)
+var sc = window.sparkCore;
 function _isStemSolo(name){
   var onCount=0,soloName="";
-  for(var k in S.stemToggles){if(S.stemToggles[k]){onCount++;soloName=k;}}
+  for(var k in sc.r("stemToggles")){if(sc.r("stemToggles")[k]){onCount++;soloName=k;}}
   return onCount===1&&soloName===name;
 }
 
@@ -22,7 +23,7 @@ function strumTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Strum Patterns &#127932;</h2></div><div class="flex-col">';
   for(var i=0;i<STRUM_PATTERNS.length;i++){
-    var sp=STRUM_PATTERNS[i],lk=sp.level>S.level;
+    var sp=STRUM_PATTERNS[i],lk=sp.level>sc.p("level");
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openStrum\',\'"+sp.name+"\')"))+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+sp.name+'</h3><p style="margin:4px 0 0;font-size:12px;color:var(--text-dim)">'+sp.desc+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[sp.level] || '#999')+'">Lvl '+sp.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+sp.bpm+' BPM</div></div></div>';
     h+='<div style="display:flex;gap:4px;margin-top:10px">';
@@ -43,16 +44,16 @@ function songsTab(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var songBrowserState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var songsSubTab = songBrowserState && songBrowserState.songsSubTab ? songBrowserState.songsSubTab : S.songsSubTab;
-  var songFilter = songBrowserState && typeof songBrowserState.songFilter === "string" ? songBrowserState.songFilter : S.songFilter;
-  var songSort = songBrowserState && songBrowserState.songSort ? songBrowserState.songSort : S.songSort;
-  var songSortAsc = songBrowserState && typeof songBrowserState.songSortAsc === "boolean" ? songBrowserState.songSortAsc : S.songSortAsc;
+  var songsSubTab = songBrowserState && songBrowserState.songsSubTab ? songBrowserState.songsSubTab : sc.r("songsSubTab");
+  var songFilter = songBrowserState && typeof songBrowserState.songFilter === "string" ? songBrowserState.songFilter : sc.r("songFilter");
+  var songSort = songBrowserState && songBrowserState.songSort ? songBrowserState.songSort : sc.r("songSort");
+  var songSortAsc = songBrowserState && typeof songBrowserState.songSortAsc === "boolean" ? songBrowserState.songSortAsc : sc.r("songSortAsc");
   var performanceDailyChallenge = songBrowserState && songBrowserState.performanceDailyChallenge
     ? songBrowserState.performanceDailyChallenge
-    : S.performanceDailyChallenge;
+    : sc.r("performanceDailyChallenge");
   var performanceDailyComplete = songBrowserState && typeof songBrowserState.performanceDailyComplete === "boolean"
     ? songBrowserState.performanceDailyComplete
-    : S.performanceDailyComplete;
+    : sc.r("performanceDailyComplete");
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Song Library &#127925;</h2></div>';
   // Sub-tabs: Built-in | Community
   h+='<div class="community-tabs">';
@@ -136,11 +137,11 @@ function songsTab(){
 
   h+='<div class="flex-col">';
   for(var i=0;i<filtered.length;i++){
-    var s=filtered[i],lk=s.level>S.level;
+    var s=filtered[i],lk=s.level>sc.p("level");
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(s.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(s.artist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+s.bpm+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
-      var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",S.performDifficulty);
+      var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",sc.p("performDifficulty"));
       if(_ps.mastery!=="none"){
         h+='<div style="font-size:11px;font-weight:700;color:'+getMasteryColor(_ps.mastery)+'">'+getMasteryIcon(_ps.mastery)+' '+_ps.mastery+'</div>';
       }
@@ -166,9 +167,9 @@ function communitySection(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var songBrowserState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var communityTab = songBrowserState && songBrowserState.communityTab ? songBrowserState.communityTab : S.communityTab;
-  var communitySearch = songBrowserState && typeof songBrowserState.communitySearch === "string" ? songBrowserState.communitySearch : S.communitySearch;
-  var communitySort = songBrowserState && songBrowserState.communitySort ? songBrowserState.communitySort : S.communitySort;
+  var communityTab = songBrowserState && songBrowserState.communityTab ? songBrowserState.communityTab : sc.r("communityTab");
+  var communitySearch = songBrowserState && typeof songBrowserState.communitySearch === "string" ? songBrowserState.communitySearch : sc.r("communitySearch");
+  var communitySort = songBrowserState && songBrowserState.communitySort ? songBrowserState.communitySort : sc.r("communitySort");
   var h='<div class="community-tabs" style="margin-bottom:12px">';
   h+='<button class="community-tab'+(communityTab==="browse"?" active":"")+'" onclick="act(\'communityTab\',\'browse\')">Browse</button>';
   h+='<button class="community-tab'+(communityTab==="submit"?" active":"")+'" onclick="act(\'communityTab\',\'submit\')">Submit</button>';
@@ -180,16 +181,16 @@ function communitySection(){
   h+='<div style="display:flex;gap:8px;margin-bottom:12px"><input class="set-input" style="flex:1" type="text" placeholder="Search songs..." value="'+escHTML(communitySearch)+'" oninput="act(\'communitySearch\',this.value)" aria-label="Search community songs"/>';
   h+='<button onclick="act(\'communitySort\',\''+(communitySort==="votes"?"newest":"votes")+'\')" style="padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;background:var(--input-bg);color:var(--text-muted)">'+(communitySort==="votes"?"&#11088; Top":"&#128337; New")+'</button></div>';
 
-  if(S.communityLoading){
+  if(sc.r("communityLoading")){
     h+='<div class="text-center" style="padding:30px;color:var(--text-muted)">Loading...</div>';
-  } else if(S.communityError){
-    h+='<div class="card text-center"><p style="color:#FF6B6B;font-size:13px">'+escHTML(S.communityError)+'</p><p style="color:var(--text-muted);font-size:12px;margin-top:8px">Make sure the community server is running:<br><code>cd server && npm start</code></p></div>';
-  } else if(S.communitySongs.length===0){
+  } else if(sc.r("communityError")){
+    h+='<div class="card text-center"><p style="color:#FF6B6B;font-size:13px">'+escHTML(sc.r("communityError"))+'</p><p style="color:var(--text-muted);font-size:12px;margin-top:8px">Make sure the community server is running:<br><code>cd server && npm start</code></p></div>';
+  } else if(sc.r("communitySongs").length===0){
     h+='<div class="card text-center"><p style="color:var(--text-muted);font-size:13px">No community songs yet. Be the first to submit!</p></div>';
   } else {
     h+='<div class="flex-col">';
-    for(var i=0;i<S.communitySongs.length;i++){
-      var cs=S.communitySongs[i];
+    for(var i=0;i<sc.r("communitySongs").length;i++){
+      var cs=sc.r("communitySongs")[i];
       h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(cs.artist)+' | '+escHTML(String(cs.bpm))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
       var chords=[];try{chords=JSON.parse(cs.chords);}catch(e){console.error("ChordSpark: failed to parse community song chords",e);}
       if(chords.length){
@@ -207,7 +208,7 @@ function communitySection(){
 
 function communitySubmitForm(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var ss=S.submitSong;
+  var ss=sc.r("submitSong");
   var h='<div class="card"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">Submit a Song</h3>';
   h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(ss.title)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
   h+='<input class="set-input mb12" type="text" placeholder="Artist" value="'+escHTML(ss.artist)+'" oninput="act(\'submitField\',\'artist:\'+this.value)" aria-label="Artist name"/>';
@@ -240,46 +241,46 @@ function importSection(){
   var h='<div class="card mb16">';
   h+='<h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128196; Import Chord Sheet</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Paste a chord sheet using [Am] [G] bracket notation or chord names on their own lines.</p>';
-  h+='<textarea class="import-textarea" id="import-textarea" rows="8" placeholder="[Am]   [G]   [C]   [F]\nVerse lyrics here...\n[Am]   [G]   [C]   [F]\nMore lyrics..." oninput="act(\'importText\',this.value)">'+escHTML(S.importText)+'</textarea>';
+  h+='<textarea class="import-textarea" id="import-textarea" rows="8" placeholder="[Am]   [G]   [C]   [F]\nVerse lyrics here...\n[Am]   [G]   [C]   [F]\nMore lyrics..." oninput="act(\'importText\',this.value)">'+escHTML(sc.p("importText"))+'</textarea>';
   h+='<button class="btn" onclick="act(\'parseImport\')" style="width:100%;padding:10px;font-size:14px;margin-top:10px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">&#128270; Parse Chords</button>';
   h+='</div>';
 
   // Parse result
-  if(S.importError){
-    h+='<div class="card mb16"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(S.importError)+'</p></div>';
+  if(sc.r("importError")){
+    h+='<div class="card mb16"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(sc.r("importError"))+'</p></div>';
   }
-  if(S.importedSong){
+  if(sc.p("importedSong")){
     h+='<div class="card mb16">';
     h+='<h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#9989; Parsed Successfully</h4>';
-    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(S.importedSong.title)+'" oninput="act(\'importTitle\',this.value)"/></div>';
-    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(S.importedSong.artist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
-    h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+S.importedSong.bpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
-    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Chords found ('+S.importedSong.chords.length+'):</div>';
+    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(sc.p("importedSong").title)+'" oninput="act(\'importTitle\',this.value)"/></div>';
+    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(sc.p("importedSong").artist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
+    h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+sc.p("importedSong").bpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
+    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Chords found ('+sc.p("importedSong").chords.length+'):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">';
-    for(var i=0;i<S.importedSong.chords.length;i++){
-      var cn=S.importedSong.chords[i];
+    for(var i=0;i<sc.p("importedSong").chords.length;i++){
+      var cn=sc.p("importedSong").chords[i];
       var known=false;
       for(var j=0;j<D.ALL_CHORDS.length;j++)if(D.ALL_CHORDS[j].name===cn||D.ALL_CHORDS[j].short===cn){known=true;break;}
       h+='<span style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;background:'+(known?"#4ECDC422":"#FF6B6B22")+';color:'+(known?"#4ECDC4":"#FF6B6B")+';border:1px solid '+(known?"#4ECDC4":"#FF6B6B")+'">'+escHTML(cn)+'</span>';
     }
     h+='</div>';
-    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Progression ('+S.importedSong.progression.length+' chords):</div>';
+    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Progression ('+sc.p("importedSong").progression.length+' chords):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;background:var(--input-bg);border-radius:10px;padding:8px">';
-    for(var i=0;i<Math.min(S.importedSong.progression.length,32);i++){
-      h+='<span style="background:var(--card-bg);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--text-primary)">'+escHTML(S.importedSong.progression[i])+'</span>';
+    for(var i=0;i<Math.min(sc.p("importedSong").progression.length,32);i++){
+      h+='<span style="background:var(--card-bg);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--text-primary)">'+escHTML(sc.p("importedSong").progression[i])+'</span>';
     }
-    if(S.importedSong.progression.length>32)h+='<span style="font-size:11px;color:var(--text-muted)">...+'+(S.importedSong.progression.length-32)+' more</span>';
+    if(sc.p("importedSong").progression.length>32)h+='<span style="font-size:11px;color:var(--text-muted)">...+'+(sc.p("importedSong").progression.length-32)+' more</span>';
     h+='</div>';
     h+='<button class="btn" onclick="act(\'saveImport\')" style="width:100%;padding:10px;font-size:14px;background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128190; Save as Song</button>';
     h+='</div>';
   }
 
   // Saved imported songs
-  if(S.importedSongs.length>0){
+  if(sc.p("importedSongs").length>0){
     h+='<div class="card"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#127925; My Imported Songs</h4>';
     h+='<div class="flex-col">';
-    for(var i=0;i<S.importedSongs.length;i++){
-      var sg=S.importedSongs[i];
+    for(var i=0;i<sc.p("importedSongs").length;i++){
+      var sg=sc.p("importedSongs")[i];
       h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--input-bg);border-radius:12px">';
       h+='<div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+escHTML(sg.title)+'</div>';
       h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(sg.artist)+' | '+sg.chords.length+' chords | '+sg.bpm+' BPM</div></div>';
@@ -307,26 +308,26 @@ function stemsSection(){
   }
 
   // Import button
-  if(S.stemStatus==="idle"||S.stemStatus==="error"||S.stemStatus==="ready"){
+  if(sc.r("stemStatus")==="idle"||sc.r("stemStatus")==="error"||sc.r("stemStatus")==="ready"){
     h+='<button onclick="act(\'stemOpenFile\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;padding:12px 28px;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;border:none">&#128193; Import Audio File</button>';
   }
   h+='</div>';
 
   // Error
-  if(S.stemError){
-    h+='<div class="card mb16" style="border:1px solid #FF6B6B"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(S.stemError)+'</p></div>';
+  if(sc.r("stemError")){
+    h+='<div class="card mb16" style="border:1px solid #FF6B6B"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(sc.r("stemError"))+'</p></div>';
   }
 
   // Separating progress
-  if(S.stemStatus==="separating"){
+  if(sc.r("stemStatus")==="separating"){
     h+='<div class="card mb16">';
     h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
     h+='<div style="width:24px;height:24px;border:3px solid var(--border);border-top-color:#4ECDC4;border-radius:50%;animation:spin 1s linear infinite"></div>';
     h+='<div><div style="font-size:14px;font-weight:800;color:var(--text-primary)">Separating stems...</div>';
-    h+='<div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div></div>';
+    h+='<div style="font-size:11px;color:var(--text-muted)">'+(sc.r("stemFile")?escHTML(sc.r("stemFile").fileName):"")+'</div></div></div>';
     // Progress bar
     h+='<div style="background:var(--input-bg);border-radius:8px;height:8px;overflow:hidden;margin-bottom:8px">';
-    h+='<div style="background:linear-gradient(90deg,#4ECDC4,#45B7D1);height:100%;border-radius:8px;width:'+S.stemProgress+'%;transition:width .3s ease"></div></div>';
+    h+='<div style="background:linear-gradient(90deg,#4ECDC4,#45B7D1);height:100%;border-radius:8px;width:'+sc.r("stemProgress")+'%;transition:width .3s ease"></div></div>';
     h+='<div style="display:flex;justify-content:space-between;align-items:center">';
     h+='<span style="font-size:12px;color:var(--text-muted)">This may take 5-10 minutes</span>';
     h+='<button onclick="act(\'stemCancel\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid var(--border);cursor:pointer">Cancel</button>';
@@ -334,12 +335,12 @@ function stemsSection(){
   }
 
   // Ready — show open player button
-  if(S.stemStatus==="ready"&&S.stemPaths){
+  if(sc.r("stemStatus")==="ready"&&sc.r("stemPaths")){
     h+='<div class="card mb16" style="background:linear-gradient(135deg,#4ECDC422,#45B7D122);border:1px solid #4ECDC4">';
     h+='<div style="display:flex;align-items:center;gap:12px">';
     h+='<div style="font-size:28px">&#9989;</div>';
     h+='<div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--text-primary)">Stems Ready!</div>';
-    h+='<div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div>';
+    h+='<div style="font-size:11px;color:var(--text-muted)">'+(sc.r("stemFile")?escHTML(sc.r("stemFile").fileName):"")+'</div></div>';
     h+='<button onclick="act(\'stemOpen\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;border:none">&#127911; Open Player</button>';
     h+='</div></div>';
   }
@@ -364,15 +365,15 @@ function stemsPage(){
     var view = window.sparkCore.getActiveSessionView();
     runtime = view && view.runtimeState ? view.runtimeState : null;
   }
-  var stemPlaying = typeof S.stemPlaying === "boolean" ? S.stemPlaying : !!(runtime && runtime.stemPlaying);
-  var stemCurrentTime = typeof S.stemCurrentTime === "number" ? S.stemCurrentTime : (runtime && typeof runtime.stemCurrentTime === "number" ? runtime.stemCurrentTime : 0);
-  var stemDuration = typeof S.stemDuration === "number" ? S.stemDuration : (runtime && typeof runtime.stemDuration === "number" ? runtime.stemDuration : 0);
+  var stemPlaying = typeof sc.r("stemPlaying") === "boolean" ? sc.r("stemPlaying") : !!(runtime && runtime.stemPlaying);
+  var stemCurrentTime = typeof sc.r("stemCurrentTime") === "number" ? sc.r("stemCurrentTime") : (runtime && typeof runtime.stemCurrentTime === "number" ? runtime.stemCurrentTime : 0);
+  var stemDuration = typeof sc.r("stemDuration") === "number" ? sc.r("stemDuration") : (runtime && typeof runtime.stemDuration === "number" ? runtime.stemDuration : 0);
   var h='<div style="padding:8px 0">';
   // Header
   h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
   h+='<button onclick="act(\'stemBack\')" style="background:var(--input-bg);border:none;width:36px;height:36px;border-radius:12px;font-size:18px;cursor:pointer;color:var(--text-primary)">&#8592;</button>';
   h+='<div style="flex:1"><div style="font-size:16px;font-weight:900;color:var(--text-primary)">&#127911; Stem Player</div>';
-  h+='<div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div></div>';
+  h+='<div style="font-size:11px;color:var(--text-muted)">'+(sc.r("stemFile")?escHTML(sc.r("stemFile").fileName):"")+'</div></div></div>';
 
   // Stem toggles
   h+='<div class="card mb12">';
@@ -381,8 +382,8 @@ function stemsPage(){
   h+='</div>';
   for(var i=0;i<STEM_NAMES.length;i++){
     var name=STEM_NAMES[i];
-    if(!S.stemPaths||!S.stemPaths[name])continue;
-    var on=S.stemToggles[name];
+    if(!sc.r("stemPaths")||!sc.r("stemPaths")[name])continue;
+    var on=sc.r("stemToggles")[name];
     var color=STEM_COLORS[name];
     var icon=STEM_ICONS[name];
     h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;'+(i>0?"border-top:1px solid var(--border);":"")+'">';
@@ -410,8 +411,8 @@ function stemsPage(){
   h+='<div class="card">';
   h+='<div style="display:flex;align-items:center;gap:12px">';
   h+='<span style="font-size:16px">&#128266;</span>';
-  h+='<input type="range" min="0" max="1" step="0.05" value="'+S.stemVolume+'" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:#4ECDC4"/>';
-  h+='<span style="font-size:12px;color:var(--text-muted);font-weight:700;min-width:36px">'+Math.round(S.stemVolume*100)+'%</span>';
+  h+='<input type="range" min="0" max="1" step="0.05" value="'+sc.r("stemVolume")+'" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:#4ECDC4"/>';
+  h+='<span style="font-size:12px;color:var(--text-muted);font-weight:700;min-width:36px">'+Math.round(sc.r("stemVolume")*100)+'%</span>';
   h+='</div></div>';
 
   h+='</div>';
@@ -439,7 +440,7 @@ function performSubTab(){
     h+='<div style="font-size:24px">'+icon+'</div></div></div>';
   }
   h+='<p style="font-size:11px;color:var(--text-muted)">More charts coming soon! MIDI input: '+
-    (S.midiEnabled?'<span style="color:#4ECDC4;font-weight:700">Connected</span>':'<span style="color:#FF6B6B">Off &mdash; enable in Tools</span>')+'</p>';
+    (sc.p("midiEnabled")?'<span style="color:#4ECDC4;font-weight:700">Connected</span>':'<span style="color:#FF6B6B">Off &mdash; enable in Tools</span>')+'</p>';
   h+='</div>';
   h+='<div style="text-align:center;margin-top:12px"><button class="btn btn-sm" onclick="act(\'openPerfStats\')" style="background:var(--input-bg);color:var(--text-secondary)">&#128202; View Stats</button></div>';
   return h;

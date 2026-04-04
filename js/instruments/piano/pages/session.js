@@ -1,8 +1,9 @@
 /* PianoSpark - Guided session flow */
 /* Heart of the overhaul: Spark > Review > New Move > Song Slice > Victory Lap */
 
+var sc = window.sparkCore;
 function pianoSessionPage() {
-  var plan = S.sessionPlan;
+  var plan = sc.r("sessionPlan");
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
 
   var html = '<div class="session-screen">';
@@ -12,15 +13,15 @@ function pianoSessionPage() {
   html += '<div class="session-subtitle">Level ' + plan.level + ' \u2022 ' + plan.bpm + ' BPM</div>';
 
   // Step indicator
-  html += sessionStepIndicator(S.sessionStep);
+  html += sessionStepIndicator(sc.r("sessionStep"));
 
   // Timer
-  if (S.sessionTimer > 0) {
-    html += '<div class="timer-display">' + pianoFormatTime(S.sessionTimer) + '</div>';
+  if (sc.r("sessionTimer") > 0) {
+    html += '<div class="timer-display">' + pianoFormatTime(sc.r("sessionTimer")) + '</div>';
   }
 
   // Render current step
-  switch (S.sessionStep) {
+  switch (sc.r("sessionStep")) {
     case "spark":
       html += renderSpark(plan);
       break;
@@ -42,8 +43,8 @@ function pianoSessionPage() {
 
   // Bottom controls
   html += '<div class="session-btns">';
-  if (S.sessionStep) {
-    html += '<button class="btn" onclick="act(\'pause\')">' + (S.paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
+  if (sc.r("sessionStep")) {
+    html += '<button class="btn" onclick="act(\'pause\')">' + (sc.r("paused") ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
     html += '<button class="btn btn-secondary" onclick="if(confirm(\'End session early?\'))act(\'stop_session\')">End Session</button>';
   }
   html += '</div>';
@@ -56,7 +57,7 @@ function renderSpark(plan) {
   var html = '';
 
   // Warm-up prompt (30s finger exercise before Spark)
-  if (!S.fingerWarmUpDone) {
+  if (!sc.r("fingerWarmUpDone")) {
     var warmUp = getWarmUpExercise(plan.num);
     if (warmUp) {
       html += '<div class="session-step-card" style="border:1px solid var(--warning);border-left:4px solid var(--warning)">';
@@ -119,11 +120,11 @@ function renderNewMove(plan) {
   html += '<h3>\u{1F3AF} New Move</h3>';
 
   // Phase indicator (Watch/Shadow/Try/Refine)
-  html += newMovePhaseIndicator(S.newMovePhase);
+  html += newMovePhaseIndicator(sc.r("newMovePhase"));
 
   var chord = findChord(plan.newMove.chord);
 
-  switch (S.newMovePhase) {
+  switch (sc.r("newMovePhase")) {
     case "watch":
       html += '<div class="watch-overlay">';
       html += '<div class="watch-label">\u{1F440} Watch \u2014 Hands Off!</div>';
@@ -147,11 +148,11 @@ function renderNewMove(plan) {
         html += '<button class="btn btn-sm" onclick="act(\'play_chord\',\'' + chord.short + '\')">\u{1F50A} Play</button>';
       }
       // Delayed feedback area (stickiness #5)
-      if (S.feedbackMessage) {
-        html += delayedFeedbackCard(S.feedbackMessage, true);
+      if (sc.r("feedbackMessage")) {
+        html += delayedFeedbackCard(sc.r("feedbackMessage"), true);
       }
       // Detection
-      if (S.detecting && chord) {
+      if (sc.r("detecting") && chord) {
         var match = getChordMatch(chord);
         html += '<div class="detection-box">';
         html += '<div class="match-pct ' + (match >= 80 ? 'match-good' : match >= 50 ? 'match-ok' : 'match-low') + '">' + match + '%</div>';
@@ -159,7 +160,7 @@ function renderNewMove(plan) {
         html += detectionConfidenceHTML();
         html += '</div>';
       }
-      html += '<button class="btn btn-sm" onclick="act(\'toggle_detect\')">' + (S.detecting ? "\u{1F3A4} Stop" : "\u{1F3A4} Detect") + '</button>';
+      html += '<button class="btn btn-sm" onclick="act(\'toggle_detect\')">' + (sc.r("detecting") ? "\u{1F3A4} Stop" : "\u{1F3A4} Detect") + '</button>';
       html += '<button class="btn btn-accent" style="margin-top:8px" onclick="act(\'advance_phase\')">I Can Play It \u2192</button>';
       break;
 
@@ -167,7 +168,7 @@ function renderNewMove(plan) {
       html += '<div class="session-text">Refine: Focus on clean transitions and consistent finger placement.</div>';
       if (chord) html += pianoSVG(chord);
       // Show transition tip if available
-      var tipKey = S.lastReviewChords.length ? S.lastReviewChords[0] + "_" + plan.newMove.chord : null;
+      var tipKey = sc.r("lastReviewChords").length ? sc.r("lastReviewChords")[0] + "_" + plan.newMove.chord : null;
       var _tips = typeof PIANO_TRANSITION_TIPS !== "undefined" ? PIANO_TRANSITION_TIPS : TRANSITION_TIPS;
       if (tipKey && _tips[tipKey]) {
         html += '<div class="intention-card">\u{1F4A1} ' + escHTML(_tips[tipKey]) + '</div>';
@@ -206,13 +207,13 @@ function renderSongSlice(plan) {
   }
 
   // BPM display
-  html += adaptiveBpmDisplay(S.adaptiveBpm, S.personalBests.bpm);
+  html += adaptiveBpmDisplay(sc.r("adaptiveBpm"), sc.p("personalBests").bpm);
 
   // LH pattern info
   if (plan.lh && plan.lh !== "Resting") {
     var lvlObj = getCurrentLevel();
     if (lvlObj && lvlObj.lhPattern) {
-      html += lhPatternViz(lvlObj.lhPattern, S.adaptiveBpm);
+      html += lhPatternViz(lvlObj.lhPattern, sc.r("adaptiveBpm"));
     }
     html += '<div class="text-muted">LH: ' + escHTML(plan.lh) + '</div>';
   }
@@ -256,27 +257,27 @@ function renderVictoryLap(plan) {
 
 // ── Legacy session (free practice with a single chord) ──
 function legacySessionHTML() {
-  var c = findChord(S.chord);
+  var c = findChord(sc.r("chord"));
   var html = '<div class="session-active card">';
-  html += '<h2>' + (c ? escHTML(c.name) : escHTML(S.chord)) + '</h2>';
-  html += '<div class="timer-display">' + pianoFormatTime(S.timer) + '</div>';
+  html += '<h2>' + (c ? escHTML(c.name) : escHTML(sc.r("chord"))) + '</h2>';
+  html += '<div class="timer-display">' + pianoFormatTime(sc.r("timer")) + '</div>';
   if (c) html += pianoSVG(c);
   html += '<div class="session-btns">';
-  html += '<button class="btn" onclick="act(\'pause\')">' + (S.paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
+  html += '<button class="btn" onclick="act(\'pause\')">' + (sc.r("paused") ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
   html += '<button class="btn btn-secondary" onclick="act(\'stop_session\')">Stop</button>';
   html += '<button class="btn btn-accent" onclick="act(\'play_chord\',\'' + (c ? c.short : '') + '\')">\u{1F50A} Play</button>';
   html += '</div>';
 
-  if (S.detecting && c) {
+  if (sc.r("detecting") && c) {
     var match = getChordMatch(c);
     html += '<div class="detection-box">';
     html += '<div class="match-pct ' + (match >= 80 ? 'match-good' : match >= 50 ? 'match-ok' : 'match-low') + '">' + match + '% match</div>';
-    html += '<div class="detected-notes">' + (S.detectedNotes.length ? "Detected: " + S.detectedNotes.join(" ") : "\u{1F3A4} Listening...") + '</div>';
+    html += '<div class="detected-notes">' + (sc.r("detectedNotes").length ? "Detected: " + sc.r("detectedNotes").join(" ") : "\u{1F3A4} Listening...") + '</div>';
     html += '<div class="coach-tip">' + getCoachFeedback(c) + '</div>';
     html += detectionConfidenceHTML();
     html += '</div>';
   }
-  html += '<button class="btn btn-sm" onclick="act(\'toggle_detect\')">' + (S.detecting ? "\u{1F3A4} Stop Detect" : "\u{1F3A4} Detect Chord") + '</button>';
+  html += '<button class="btn btn-sm" onclick="act(\'toggle_detect\')">' + (sc.r("detecting") ? "\u{1F3A4} Stop Detect" : "\u{1F3A4} Detect Chord") + '</button>';
   html += '</div>';
   return html;
 }

@@ -1,10 +1,11 @@
+var sc = window.sparkCore;
 function skillTreePage(){
   var tree = buildSkillTree();
   var h = '';
   var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
     ? window.sparkCore.getRuntimeState()
     : null;
-  var focus = runtimeState && runtimeState.skillTreeFocus ? runtimeState.skillTreeFocus : (S.skillTreeFocus || "overview");
+  var focus = runtimeState && runtimeState.skillTreeFocus ? runtimeState.skillTreeFocus : (sc.r("skillTreeFocus") || "overview");
 
   h += '<div class="card mb16">';
   h += '<h2>Skill Tree</h2>';

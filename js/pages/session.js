@@ -1,5 +1,6 @@
 // ===== ChordSpark: Active session/screen pages =====
 
+var sc = window.sparkCore;
 function getSparkCoreRuntimeState(){
   if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
   var view = window.sparkCore.getActiveSessionView();
@@ -19,15 +20,15 @@ function findInstrumentChordByName(D, chordName){
 function getLegacySessionRuntime(D){
   var runtime = getSparkCoreRuntimeState();
   return {
-    chord: S.currentChord || findInstrumentChordByName(D, runtime && runtime.legacyPracticeChordName),
-    timer: typeof S.timer === "number" ? S.timer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0)),
-    timerActive: typeof S.timerActive === "boolean" ? S.timerActive : !!(runtime && runtime.legacyPracticeTimerActive)
+    chord: sc.r("currentChord") || findInstrumentChordByName(D, runtime && runtime.legacyPracticeChordName),
+    timer: typeof sc.r("timer") === "number" ? sc.r("timer") : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0)),
+    timerActive: typeof sc.r("timerActive") === "boolean" ? sc.r("timerActive") : !!(runtime && runtime.legacyPracticeTimerActive)
   };
 }
 
 function getLegacyDrillRuntime(D){
   var runtime = getSparkCoreRuntimeState();
-  var drillChords = Array.isArray(S.drillChords) && S.drillChords.length ? S.drillChords : [];
+  var drillChords = Array.isArray(sc.r("drillChords")) && sc.r("drillChords").length ? sc.r("drillChords") : [];
   if (!drillChords.length && runtime && Array.isArray(runtime.legacyDrillChordNames)) {
     for (var i = 0; i < runtime.legacyDrillChordNames.length; i++) {
       var chord = findInstrumentChordByName(D, runtime.legacyDrillChordNames[i]);
@@ -36,25 +37,25 @@ function getLegacyDrillRuntime(D){
   }
   return {
     chords: drillChords,
-    timer: typeof S.drillTimer === "number" ? S.drillTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0))
+    timer: typeof sc.r("drillTimer") === "number" ? sc.r("drillTimer") : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0))
   };
 }
 
 function getLegacyDailyRuntime(){
   var runtime = getSparkCoreRuntimeState();
   return {
-    timer: typeof S.dailyTimer === "number" ? S.dailyTimer : (runtime && typeof runtime.legacyDailyRemainingSec === "number" ? runtime.legacyDailyRemainingSec : (runtime && typeof runtime.legacyDailyDurationSec === "number" ? runtime.legacyDailyDurationSec : 0)),
-    complete: typeof S.dailyComplete === "boolean" ? S.dailyComplete : !!(runtime && runtime.legacyDailyComplete)
+    timer: typeof sc.r("dailyTimer") === "number" ? sc.r("dailyTimer") : (runtime && typeof runtime.legacyDailyRemainingSec === "number" ? runtime.legacyDailyRemainingSec : (runtime && typeof runtime.legacyDailyDurationSec === "number" ? runtime.legacyDailyDurationSec : 0)),
+    complete: typeof sc.r("dailyComplete") === "boolean" ? sc.r("dailyComplete") : !!(runtime && runtime.legacyDailyComplete)
   };
 }
 
 function getSessionMetronomeRuntime(){
   var runtime = getSparkCoreRuntimeState();
   return {
-    active: typeof S.metronomeOn === "boolean" ? S.metronomeOn : !!(runtime && runtime.metronomeActive),
-    bpm: typeof S.metronomeBpm === "number" ? S.metronomeBpm : (runtime && typeof runtime.metronomeBpm === "number" ? runtime.metronomeBpm : 80),
-    beat: typeof S._metroBeat === "number" ? S._metroBeat : (runtime && typeof runtime.metronomeBeat === "number" ? runtime.metronomeBeat : 0),
-    beatsPerBar: typeof S._metroBeats === "number" ? S._metroBeats : (runtime && typeof runtime.metronomeBeatsPerBar === "number" ? runtime.metronomeBeatsPerBar : 4)
+    active: typeof sc.r("metronomeOn") === "boolean" ? sc.r("metronomeOn") : !!(runtime && runtime.metronomeActive),
+    bpm: typeof sc.r("metronomeBpm") === "number" ? sc.r("metronomeBpm") : (runtime && typeof runtime.metronomeBpm === "number" ? runtime.metronomeBpm : 80),
+    beat: typeof sc.r("_metroBeat") === "number" ? sc.r("_metroBeat") : (runtime && typeof runtime.metronomeBeat === "number" ? runtime.metronomeBeat : 0),
+    beatsPerBar: typeof sc.r("_metroBeats") === "number" ? sc.r("_metroBeats") : (runtime && typeof runtime.metronomeBeatsPerBar === "number" ? runtime.metronomeBeatsPerBar : 4)
   };
 }
 
@@ -62,10 +63,10 @@ function getSessionChordDetectRuntime(){
   if (typeof getLegacyChordDetectRuntime === "function") return getLegacyChordDetectRuntime();
   var runtime = getSparkCoreRuntimeState();
   return {
-    active: typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : !!(runtime && runtime.chordDetectActive),
-    notes: Array.isArray(S.detectedNotes) ? S.detectedNotes : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
-    match: typeof S.chordMatch === "number" ? S.chordMatch : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
-    error: S.chordDetectErr || (runtime && runtime.chordDetectError) || ""
+    active: typeof sc.r("chordDetectOn") === "boolean" ? sc.r("chordDetectOn") : !!(runtime && runtime.chordDetectActive),
+    notes: Array.isArray(sc.r("detectedNotes")) ? sc.r("detectedNotes") : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
+    match: typeof sc.r("chordMatch") === "number" ? sc.r("chordMatch") : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
+    error: sc.r("chordDetectErr") || (runtime && runtime.chordDetectError) || ""
   };
 }
 
@@ -79,8 +80,8 @@ function sessionPage(){
   // Check if voicings are available
   var voicings=VOICINGS[c.name];
   var displayChord=c;
-  if(voicings&&S.selectedVoicing>0&&S.selectedVoicing<voicings.length){
-    displayChord=voicings[S.selectedVoicing];
+  if(voicings&&sc.p("selectedVoicing")>0&&sc.p("selectedVoicing")<voicings.length){
+    displayChord=voicings[sc.p("selectedVoicing")];
   }
   var timer = runtime.timer;
   var m=Math.floor(timer/60),s=timer%60;
@@ -90,13 +91,13 @@ function sessionPage(){
   if(voicings&&voicings.length>1){
     h+='<div class="voicing-tabs">';
     for(var i=0;i<voicings.length;i++){
-      h+='<button class="voicing-tab'+(S.selectedVoicing===i?" active":"")+'" onclick="act(\'selectVoicing\',\''+i+'\')">'+voicings[i].label+'</button>';
+      h+='<button class="voicing-tab'+(sc.p("selectedVoicing")===i?" active":"")+'" onclick="act(\'selectVoicing\',\''+i+'\')">'+voicings[i].label+'</button>';
     }
     h+='</div>';
   }
 
   h+='<div class="flex-center mb12">'+ringHTML((1-timer/120)*100,90,7,"#FF6B6B",'<div style="font-size:22px;font-weight:900;color:var(--text-primary)">'+m+':'+(s<10?'0':'')+s+'</div>',"Session timer")+'</div>';
-  var chordKey=c.name+"_v"+S.selectedVoicing;
+  var chordKey=c.name+"_v"+sc.p("selectedVoicing");
   var chordChanged=_prevChordKey!==chordKey;
   var morphClass=(chordChanged&&_prevChordKey)?" chord-morph":"";
   // Only animate on first appearance or chord/voicing change, not every timer tick
@@ -128,8 +129,8 @@ function sessionPage(){
   }else{h+='<div style="text-align:center;color:var(--text-muted);font-size:12px">Enable mic to check your chord</div>';}
   h+='</div></div>';
   h+='<div class="card mb16" style="text-align:left"><h4 style="margin:0 0 6px;color:var(--text-primary);font-size:14px">&#128161; Tips</h4><p style="margin:0;font-size:13px;color:var(--text-label);line-height:1.5">Press firmly behind the fret. Strum each string to check for buzz. Keep your thumb relaxed!</p></div>';
-  if(S.practiceIntention){
-    h+='<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(S.practiceIntention)+', I open ChordSpark.&#8221;</div>';
+  if(sc.p("practiceIntention")){
+    h+='<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(sc.p("practiceIntention"))+', I open ChordSpark.&#8221;</div>';
   }
   h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div></div>';
   return h;
@@ -138,8 +139,8 @@ function sessionPage(){
 function completePage(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var runtime = getLegacySessionRuntime(D);
-  var n=runtime.chord?runtime.chord.name:"",p=S.chordProgress[n]||0;
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+(S.xpToast&&S.xpToast.amount?S.xpToast.amount:10)+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+S.streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="flex-col"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
+  var n=runtime.chord?runtime.chord.name:"",p=sc.p("chordProgress")[n]||0;
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+(sc.r("xpToast")&&sc.r("xpToast").amount?sc.r("xpToast").amount:10)+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+sc.p("streak")+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="flex-col"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
 }
 
 function drillPage(){
@@ -147,7 +148,7 @@ function drillPage(){
   var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   var runtime = getLegacyDrillRuntime(D);
   if(runtime.chords.length<2)return '';
-  var drillIdx = typeof S.drillIdx === "number" ? S.drillIdx : 0;
+  var drillIdx = typeof sc.r("drillIdx") === "number" ? sc.r("drillIdx") : 0;
   var c=runtime.chords[drillIdx],nx=runtime.chords[(drillIdx+1)%2];
   var drillTimer = runtime.timer;
   var drillChanged=_prevChordKey!==c.name;
@@ -155,10 +156,10 @@ function drillPage(){
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button>';
   h+='<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">Switch Drill &#9889;</h2>';
   h+='<div style="display:flex;justify-content:center;gap:20px;align-items:center;margin-bottom:12px"><span id="drill-timer-ring">'+ringHTML((1-drillTimer/60)*100,70,6,"#FF6B6B",'<div style="font-size:18px;font-weight:900;color:var(--text-primary)">'+drillTimer+'s</div>',"Drill timer")+'</span>';
-  h+='<div><div id="drill-switch-count" style="font-size:32px;font-weight:900;color:#4ECDC4">'+S.drillSwitches+'</div><div style="font-size:11px;color:var(--text-muted)">switches</div></div>';
-  h+='<div style="text-align:center"><div id="drill-adaptive-bpm" style="font-size:18px;font-weight:900;color:#FFE66D">'+S.drillAdaptiveBpm+'</div><div style="font-size:11px;color:var(--text-muted)">target BPM</div></div></div>';
-  h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
-  h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+D.LC[S.level]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+UI.chord(c,180,null,drillChanged)+'</div>';
+  h+='<div><div id="drill-switch-count" style="font-size:32px;font-weight:900;color:#4ECDC4">'+sc.r("drillSwitches")+'</div><div style="font-size:11px;color:var(--text-muted)">switches</div></div>';
+  h+='<div style="text-align:center"><div id="drill-adaptive-bpm" style="font-size:18px;font-weight:900;color:#FFE66D">'+sc.r("drillAdaptiveBpm")+'</div><div style="font-size:11px;color:var(--text-muted)">target BPM</div></div></div>';
+  h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[sc.p("level")]+'">';
+  h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+D.LC[sc.p("level")]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+UI.chord(c,180,null,drillChanged)+'</div>';
   _prevChordKey=c.name;
   // Transition tip
   var tip=getTransitionTip(c.name,nx.name);
@@ -173,11 +174,11 @@ function drillPage(){
 }
 
 function drillDonePage(){
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#9889;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Drill Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px"><strong>'+S.drillSwitches+'</strong> switches in 60s</p><button class="btn" onclick="act(\'repeatLegacyPracticeDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9889; Again</button> <button class="btn" onclick="act(\'drillDoneHome\')" style="background:#4ECDC4;color:#fff;margin-left:10px">&#127968; Home</button></div>';
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#9889;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Drill Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px"><strong>'+sc.r("drillSwitches")+'</strong> switches in 60s</p><button class="btn" onclick="act(\'repeatLegacyPracticeDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9889; Again</button> <button class="btn" onclick="act(\'drillDoneHome\')" style="background:#4ECDC4;color:#fff;margin-left:10px">&#127968; Home</button></div>';
 }
 
 function dailyPage(){
-  var dc=S.dailyChallenge;if(!dc)return '';
+  var dc=sc.p("dailyChallenge");if(!dc)return '';
   var runtime = getLegacyDailyRuntime();
   var mx=dc.id==="hold"?30:dc.id==="marathon"?180:60;
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button><div style="font-size:48px;margin-bottom:8px">'+dc.icon+'</div><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">'+dc.title+'</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">'+dc.desc+'</p>';
@@ -195,12 +196,12 @@ function quizPage(){
     var view = window.sparkCore.getActiveSessionView();
     runtime = view && view.runtimeState ? view.runtimeState : null;
   }
-  var quizQuestion = S.quizQ || (runtime && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : null);
-  var quizOptions = Array.isArray(S.quizOpts) && S.quizOpts.length ? S.quizOpts : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
-  var quizAnswer = typeof S.quizAns === "string" ? S.quizAns : (runtime ? runtime.legacyQuizAnswer : null);
-  var quizScore = typeof S.quizScore === "number" ? S.quizScore : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
-  var quizTotal = typeof S.quizTotal === "number" ? S.quizTotal : (runtime && typeof runtime.legacyQuizTotal === "number" ? runtime.legacyQuizTotal : 0);
-  var quizStreak = typeof S.quizStreak === "number" ? S.quizStreak : (runtime && typeof runtime.legacyQuizStreak === "number" ? runtime.legacyQuizStreak : 0);
+  var quizQuestion = sc.r("quizQ") || (runtime && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : null);
+  var quizOptions = Array.isArray(sc.r("quizOpts")) && sc.r("quizOpts").length ? sc.r("quizOpts") : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
+  var quizAnswer = typeof sc.r("quizAns") === "string" ? sc.r("quizAns") : (runtime ? runtime.legacyQuizAnswer : null);
+  var quizScore = typeof sc.r("quizScore") === "number" ? sc.r("quizScore") : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
+  var quizTotal = typeof sc.p("quizTotal") === "number" ? sc.p("quizTotal") : (runtime && typeof runtime.legacyQuizTotal === "number" ? runtime.legacyQuizTotal : 0);
+  var quizStreak = typeof sc.r("quizStreak") === "number" ? sc.r("quizStreak") : (runtime && typeof runtime.legacyQuizStreak === "number" ? runtime.legacyQuizStreak : 0);
   if(!quizQuestion)return '';
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'quiz\')">&#8592; Back</button><div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+quizScore+'/'+quizTotal+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+quizStreak+'</span></div></div>';
   h+='<h2 style="font-size:28px;font-weight:900;color:var(--text-primary);margin:8px 0 4px">Which is...</h2><div style="font-size:36px;font-weight:900;color:#FF6B6B;margin-bottom:16px">'+quizQuestion.name+'?</div>';
@@ -223,10 +224,10 @@ function strumDetailPage(){
     var view = window.sparkCore.getActiveSessionView();
     runtime = view && view.runtimeState ? view.runtimeState : null;
   }
-  var sp = S.selectedStrum || (runtime && runtime.legacyStrumPattern ? runtime.legacyStrumPattern : null); if(!sp)return '';
-  var strumActive = typeof S.strumActive === "boolean" ? S.strumActive : !!(runtime && runtime.legacyStrumActive);
+  var sp = sc.r("selectedStrum") || (runtime && runtime.legacyStrumPattern ? runtime.legacyStrumPattern : null); if(!sp)return '';
+  var strumActive = typeof sc.r("strumActive") === "boolean" ? sc.r("strumActive") : !!(runtime && runtime.legacyStrumActive);
   var curBeat = strumActive
-    ? (typeof S._strumBeat === "number" ? S._strumBeat : (runtime && typeof runtime.legacyStrumBeat === "number" ? runtime.legacyStrumBeat : -1))
+    ? (typeof sc.r("_strumBeat") === "number" ? sc.r("_strumBeat") : (runtime && typeof runtime.legacyStrumBeat === "number" ? runtime.legacyStrumBeat : -1))
     : -1;
   var curDir=curBeat>=0?sp.pattern[curBeat]:"x";
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button>';
@@ -241,7 +242,7 @@ function strumDetailPage(){
   var tones=["classic","nylon","steel","electric","guitar"];
   var toneLabels={"classic":"&#127928; Classic","nylon":"&#127931; Nylon","steel":"&#129529; Steel","electric":"&#9889; Electric","guitar":"&#127930; Guitar"};
   for(var i=0;i<tones.length;i++){
-    var t=tones[i],sel=S.strumTone===t;
+    var t=tones[i],sel=sc.p("strumTone")===t;
     h+='<button onclick="act(\'setTone\',\''+t+'\')" style="padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;background:'+(sel?"#4ECDC4":"var(--input-bg)")+';color:'+(sel?"#fff":"var(--text-muted)")+';border:2px solid '+(sel?"#4ECDC4":"var(--border)")+';transition:all .2s">'+toneLabels[t]+'</button>';
   }
   h+='</div></div>';
@@ -256,10 +257,10 @@ function songDetailPage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var sg = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : S.selectedSong;
+  var sg = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : sc.r("selectedSong");
   if(!sg)return '';
-  var songPlaying = songRuntime && typeof songRuntime.songPlaying === "boolean" ? songRuntime.songPlaying : S.songPlaying;
-  var songBeat = songRuntime && typeof songRuntime.songBeat === "number" ? songRuntime.songBeat : S.songBeat;
+  var songPlaying = songRuntime && typeof songRuntime.songPlaying === "boolean" ? songRuntime.songPlaying : sc.r("songPlaying");
+  var songBeat = songRuntime && typeof songRuntime.songBeat === "number" ? songRuntime.songBeat : sc.r("songBeat");
   var patBeat=songPlaying?(songBeat%sg.pattern.length):-1;
   var curDir=patBeat>=0?sg.pattern[patBeat]:"x";
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(sg.title)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(sg.artist)+' &#8226; '+sg.bpm+' BPM</p>';
@@ -287,7 +288,7 @@ function songDetailPage(){
   var tones=["classic","nylon","steel","electric","guitar"];
   var toneLabels={"classic":"&#127928; Classic","nylon":"&#127931; Nylon","steel":"&#129529; Steel","electric":"&#9889; Electric","guitar":"&#127930; Guitar"};
   for(var i=0;i<tones.length;i++){
-    var t=tones[i],sel=S.strumTone===t;
+    var t=tones[i],sel=sc.p("strumTone")===t;
     h+='<button onclick="act(\'setTone\',\''+t+'\')" style="padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;background:'+(sel?"#4ECDC4":"var(--input-bg)")+';color:'+(sel?"#fff":"var(--text-muted)")+';border:2px solid '+(sel?"#4ECDC4":"var(--border)")+';transition:all .2s">'+toneLabels[t]+'</button>';
   }
   h+='</div></div>';
@@ -301,6 +302,6 @@ function songDonePage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var t=songRuntime && songRuntime.songSessionData ? escHTML(songRuntime.songSessionData.title || "") : (S.selectedSong?escHTML(S.selectedSong.title):"");
+  var t=songRuntime && songRuntime.songSessionData ? escHTML(songRuntime.songSessionData.title || "") : (sc.r("selectedSong")?escHTML(sc.r("selectedSong").title):"");
   return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#127925;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Song Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px">You played <strong>'+t+'</strong></p><div class="card mb20"><div style="font-size:28px;font-weight:900;color:#FFE66D">+40 XP</div></div><button class="btn" onclick="act(\'songDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div>';
 }

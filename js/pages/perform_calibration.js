@@ -1,3 +1,4 @@
+var sc = window.sparkCore;
 function performCalibrationPage(){
   var calibrationView = getPerformanceCalibrationView();
   var source = calibrationView.source;
@@ -37,7 +38,7 @@ function performCalibrationPage(){
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<div><b>Captured Hits:</b> '+((S.performCalibrationHits||[]).length)+'</div>';
+  h += '<div><b>Captured Hits:</b> '+((sc.p("performCalibrationHits")||[]).length)+'</div>';
   h += '<div>Suggested Offset: '+(typeof computeCalibrationOffsetMs==="function" ? computeCalibrationOffsetMs() : 0)+' ms</div>';
   h += '</div>';
 
@@ -53,18 +54,18 @@ function getPerformanceCalibrationView(){
   return {
     source: runtimeState && runtimeState.performanceCalibrationSource
       ? runtimeState.performanceCalibrationSource
-      : (S.performCalibrationSource || "midi"),
+      : (sc.r("performCalibrationSource") || "midi"),
     mode: runtimeState && typeof runtimeState.performanceCalibrationMode === "boolean"
       ? runtimeState.performanceCalibrationMode
-      : !!S.performCalibrationMode,
+      : !!sc.r("performCalibrationMode"),
     globalOffsetMs: runtimeState && typeof runtimeState.performanceTimingOffsetMs === "number"
       ? runtimeState.performanceTimingOffsetMs
-      : (S.performTimingOffsetMs || 0),
+      : (sc.r("performTimingOffsetMs") || 0),
     midiOffsetMs: runtimeState && typeof runtimeState.performanceMidiOffsetMs === "number"
       ? runtimeState.performanceMidiOffsetMs
-      : (S.performMidiOffsetMs || 0),
+      : (sc.r("performMidiOffsetMs") || 0),
     micOffsetMs: runtimeState && typeof runtimeState.performanceMicOffsetMs === "number"
       ? runtimeState.performanceMicOffsetMs
-      : (S.performMicOffsetMs || 0)
+      : (sc.r("performMicOffsetMs") || 0)
   };
 }

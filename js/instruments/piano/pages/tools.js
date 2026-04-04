@@ -1,5 +1,6 @@
 /* PianoSpark - Tools tab (stats, settings, guide) */
 
+var sc = window.sparkCore;
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -9,15 +10,15 @@ function pianoToolsTab() {
     { id:"guide",    label:"Guide" }
   ];
 
-  if (!S._toolTab) S._toolTab = "stats";
+  if (!sc.r("_toolTab")) S._toolTab = "stats";
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
-    var active = S._toolTab === t.id ? " active" : "";
+    var active = sc.r("_toolTab") === t.id ? " active" : "";
     html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="S._toolTab=\'' + t.id + '\';render()">' + t.label + '</div>';
   });
   html += '</div>';
 
-  switch (S._toolTab) {
+  switch (sc.r("_toolTab")) {
     case "stats":    html += statsTab(); break;
     case "settings": html += settingsTab(); break;
     case "clips":    html += clipsTab(); break;
@@ -32,36 +33,36 @@ function statsTab() {
 
   // Overview
   html += '<div class="stats-grid">';
-  html += '<div class="stat-item"><div class="stat-val">' + S.xp + '</div><div class="stat-label">XP</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.streak + '</div><div class="stat-label">Streak</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.completedSessions ? S.completedSessions.length : 0) + '</div><div class="stat-label">Sessions</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.level + '/8</div><div class="stat-label">Level</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + sc.p("xp") + '</div><div class="stat-label">XP</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + sc.p("streak") + '</div><div class="stat-label">Streak</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (sc.p("completedSessions") ? sc.p("completedSessions").length : 0) + '</div><div class="stat-label">Sessions</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + sc.p("level") + '/8</div><div class="stat-label">Level</div></div>';
   html += '</div>';
 
   // Personal bests (stickiness #6 - never compare to others)
   html += '<h3>Personal Bests</h3>';
   html += '<div class="stats-grid">';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.personalBests.bpm || '-') + '</div><div class="stat-label">Best BPM</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.personalBests.streak || '-') + '</div><div class="stat-label">Best Streak</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (sc.p("personalBests").bpm || '-') + '</div><div class="stat-label">Best BPM</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (sc.p("personalBests").streak || '-') + '</div><div class="stat-label">Best Streak</div></div>';
   html += '</div>';
 
   // Finger exercise stats
-  if (S.fingerExercisesDone > 0) {
+  if (sc.p("fingerExercisesDone") > 0) {
     html += '<h3>Finger Training</h3>';
     html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">';
-    html += '<div class="stat-item"><div class="stat-val">' + S.fingerExercisesDone + '</div><div class="stat-label">Exercises</div></div>';
-    html += '<div class="stat-item"><div class="stat-val">' + S.fingerDaysLogged + '</div><div class="stat-label">Days</div></div>';
-    var chordBest = S.fingerStats._chordChangeBest || 0;
+    html += '<div class="stat-item"><div class="stat-val">' + sc.p("fingerExercisesDone") + '</div><div class="stat-label">Exercises</div></div>';
+    html += '<div class="stat-item"><div class="stat-val">' + sc.p("fingerDaysLogged") + '</div><div class="stat-label">Days</div></div>';
+    var chordBest = sc.p("fingerStats")._chordChangeBest || 0;
     html += '<div class="stat-item"><div class="stat-val">' + (chordBest || '-') + '</div><div class="stat-label">Best 60s</div></div>';
     html += '</div>';
   }
 
   // Chord mastery
-  if (!S.chordProg) S.chordProg = {};
+  if (!sc.p("chordProg")) S.chordProg = {};
   html += '<h3>Chord Mastery</h3><div class="mastery-list">';
-  var unlocked = chordsUpToLevel(S.level);
+  var unlocked = chordsUpToLevel(sc.p("level"));
   unlocked.forEach(function(c) {
-    var prog = S.chordProg[c.short] || 0;
+    var prog = sc.p("chordProg")[c.short] || 0;
     html += '<div class="mastery-row">';
     html += '<span class="mastery-name" style="color:' + (c.color || '#888') + '">' + escHTML(c.short) + '</span>';
     html += pianoTierBadgeHTML(prog);
@@ -76,14 +77,14 @@ function statsTab() {
   for (var i = 29; i >= 0; i--) {
     var d = new Date(Date.now() - i * 86400000);
     var ds = d.toDateString();
-    var practiced = S.history.some(function(h) { return new Date(h.ts).toDateString() === ds; });
+    var practiced = sc.p("history").some(function(h) { return new Date(h.ts).toDateString() === ds; });
     html += '<div class="cal-day ' + (practiced ? 'cal-active' : '') + '" title="' + ds + '"></div>';
   }
   html += '</div>';
 
   // Recent history
   html += '<h3>Recent Activity</h3><div class="history-list">';
-  var recent = S.history.slice(-10).reverse();
+  var recent = sc.p("history").slice(-10).reverse();
   recent.forEach(function(h) {
     var d = new Date(h.ts || h.timestamp);
     var time = d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -97,7 +98,7 @@ function statsTab() {
   var BADGES = D.BADGES || [];
   html += '<h3>Badges</h3><div class="badges-grid">';
   BADGES.forEach(function(b) {
-    var earned = S.earned.indexOf(b.id) >= 0;
+    var earned = sc.p("earned").indexOf(b.id) >= 0;
     html += '<div class="badge-card ' + (earned ? 'earned' : 'locked') + '">';
     html += '<span class="badge-icon">' + b.icon + '</span>';
     html += '<span class="badge-label">' + b.label + '</span>';
@@ -114,42 +115,42 @@ function statsTab() {
 function settingsTab() {
   var html = '<div class="card"><h2>Settings</h2>';
 
-  html += '<div class="setting-row"><label>Daily Goal: ' + S.dailyGoal + ' min</label>';
-  html += '<input type="range" min="5" max="60" step="5" value="' + S.dailyGoal + '" onchange="act(\'set_goal\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Daily Goal: ' + sc.p("dailyGoal") + ' min</label>';
+  html += '<input type="range" min="5" max="60" step="5" value="' + sc.p("dailyGoal") + '" onchange="act(\'set_goal\', this.value)"/></div>';
 
-  html += '<div class="setting-row"><label>Volume: ' + Math.round(S.volume * 100) + '%</label>';
-  html += '<input type="range" min="0" max="100" value="' + Math.round(S.volume * 100) + '" onchange="act(\'set_volume\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Volume: ' + Math.round(sc.p("volume") * 100) + '%</label>';
+  html += '<input type="range" min="0" max="100" value="' + Math.round(sc.p("volume") * 100) + '" onchange="act(\'set_volume\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Tone:</label>';
   html += '<select onchange="act(\'set_tone\', this.value)">';
   ["grand","bright","warm","electric"].forEach(function(t) {
-    html += '<option value="' + t + '" ' + (S.tone === t ? "selected" : "") + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>';
+    html += '<option value="' + t + '" ' + (sc.p("tone") === t ? "selected" : "") + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>';
   });
   html += '</select></div>';
 
   html += '<div class="setting-row"><label>Keyboard:</label>';
   html += '<select onchange="act(\'set_keyboard\', this.value)">';
   KEYBOARD_SIZES.forEach(function(ks) {
-    html += '<option value="' + ks.keys + '" ' + (S.keyboardSize === ks.keys ? "selected" : "") + '>' + ks.label + '</option>';
+    html += '<option value="' + ks.keys + '" ' + (sc.p("keyboardSize") === ks.keys ? "selected" : "") + '>' + ks.label + '</option>';
   });
   html += '</select></div>';
 
   html += '<div class="setting-row"><label>Focus Mode:</label>';
-  html += '<button class="btn btn-sm ' + (S.focusMode ? 'btn-accent' : 'btn-secondary') + '" onclick="act(\'toggle_focus\')">' + (S.focusMode ? 'ON' : 'OFF') + '</button></div>';
+  html += '<button class="btn btn-sm ' + (sc.p("focusMode") ? 'btn-accent' : 'btn-secondary') + '" onclick="act(\'toggle_focus\')">' + (sc.p("focusMode") ? 'ON' : 'OFF') + '</button></div>';
 
   html += '<div class="setting-row"><label>Practice Intention:</label></div>';
-  html += '<input class="intention-input" type="text" placeholder="When I [event], I will open PianoSpark" value="' + escHTML(S.practiceIntention) + '" onchange="act(\'set_intention\',this.value)" style="width:100%" />';
+  html += '<input class="intention-input" type="text" placeholder="When I [event], I will open PianoSpark" value="' + escHTML(sc.p("practiceIntention")) + '" onchange="act(\'set_intention\',this.value)" style="width:100%" />';
 
   // ── MIDI ──
   html += '<h3 style="margin-top:20px">MIDI Input</h3>';
   if (!navigator.requestMIDIAccess) {
     html += '<div class="text-muted">Web MIDI API not supported in this browser.</div>';
   } else {
-    var midiBtn = S.midiEnabled ? 'btn-accent' : 'btn-secondary';
-    var midiLabel = S.midiEnabled ? 'MIDI On' : 'MIDI Off';
+    var midiBtn = sc.p("midiEnabled") ? 'btn-accent' : 'btn-secondary';
+    var midiLabel = sc.p("midiEnabled") ? 'MIDI On' : 'MIDI Off';
     html += '<div class="setting-row"><label>MIDI keyboard:</label>';
     html += '<button class="btn btn-sm ' + midiBtn + '" onclick="act(\'toggle_midi\')">' + midiLabel + '</button></div>';
-    if (S.midiEnabled) {
+    if (sc.p("midiEnabled")) {
       var deviceNames = getMidiInputNames();
       html += '<div class="text-muted" style="font-size:0.85em;margin-bottom:8px">';
       html += deviceNames.length ? 'Connected: ' + escHTML(deviceNames.join(', ')) : 'No MIDI devices detected';
@@ -161,23 +162,23 @@ function settingsTab() {
   // ── Audio ──
   html += '<h3 style="margin-top:20px">Audio</h3>';
 
-  html += '<div class="setting-row"><label>Reverb: ' + Math.round((S.reverbAmount || 0) * 100) + '%</label>';
-  html += '<input type="range" min="0" max="100" value="' + Math.round((S.reverbAmount || 0) * 100) + '" oninput="act(\'set_reverb\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Reverb: ' + Math.round((sc.p("reverbAmount") || 0) * 100) + '%</label>';
+  html += '<input type="range" min="0" max="100" value="' + Math.round((sc.p("reverbAmount") || 0) * 100) + '" oninput="act(\'set_reverb\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Metronome sound:</label>';
   html += '<select onchange="act(\'set_metronome_sound\', this.value)">';
   [["sine","Click"],["woodblock","Woodblock"],["clap","Clap"],["hihat","Hi-Hat"]].forEach(function(o) {
-    html += '<option value="' + o[0] + '" ' + (S.metronomeSound === o[0] ? "selected" : "") + '>' + o[1] + '</option>';
+    html += '<option value="' + o[0] + '" ' + (sc.p("metronomeSound") === o[0] ? "selected" : "") + '>' + o[1] + '</option>';
   });
   html += '</select></div>';
 
-  html += '<div class="setting-row"><label>A4 tuning: ' + (S.a4Tuning || 440) + ' Hz</label>';
-  html += '<input type="range" min="432" max="446" step="1" value="' + (S.a4Tuning || 440) + '" oninput="act(\'set_a4_tuning\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>A4 tuning: ' + (sc.p("a4Tuning") || 440) + ' Hz</label>';
+  html += '<input type="range" min="432" max="446" step="1" value="' + (sc.p("a4Tuning") || 440) + '" oninput="act(\'set_a4_tuning\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Chord detection:</label>';
   html += '<select onchange="act(\'set_pitch_detection\', this.value)">';
   [["fft","FFT (polyphonic)"],["yin","YIN (more accurate)"]].forEach(function(o) {
-    html += '<option value="' + o[0] + '" ' + (S.pitchDetectionMode === o[0] ? "selected" : "") + '>' + o[1] + '</option>';
+    html += '<option value="' + o[0] + '" ' + (sc.p("pitchDetectionMode") === o[0] ? "selected" : "") + '>' + o[1] + '</option>';
   });
   html += '</select></div>';
 
@@ -188,7 +189,7 @@ function settingsTab() {
   html += '</div>';
   html += '<div class="setting-row">';
   html += '<button class="btn btn-danger" onclick="if(confirm(\'Reset all progress?\'))act(\'reset\')">Reset Progress</button>';
-  if (S._undoBackup) {
+  if (sc.r("_undoBackup")) {
     html += '<button class="btn" onclick="act(\'undo_reset\')">Undo Reset</button>';
   }
   html += '</div>';
@@ -213,7 +214,7 @@ function clipsTab() {
   }
   html += '</div>';
 
-  var clips = S.practiceClips || [];
+  var clips = sc.p("practiceClips") || [];
   if (!clips.length) {
     html += '<div class="text-muted">No clips yet. Hit Record, play some chords, then stop to save a clip.</div>';
   } else {

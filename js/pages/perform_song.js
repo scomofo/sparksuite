@@ -1,5 +1,6 @@
 /* ===== ChordSpark: Performance Song Detail Page ===== */
 
+var sc = window.sparkCore;
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
@@ -95,7 +96,7 @@ function performSongPage() {
 
   // Audio import
   var songId = (song.title || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  var audioData = S.songAudioData[songId];
+  var audioData = sc.p("songAudioData")[songId];
 
   h += '<div class="card mb20">';
   h += '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Song Audio</div>';
@@ -113,10 +114,10 @@ function performSongPage() {
     }
     h += '</div>';
     h += '<button class="btn btn-sm" onclick="act(\'removeSongAudio\',\'' + songId + '\')" style="background:var(--input-bg);color:var(--text-secondary)">Remove Audio</button>';
-  } else if (S.songAudioImporting) {
+  } else if (sc.r("songAudioImporting")) {
     h += '<div style="margin-bottom:8px">';
-    h += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">Separating stems... ' + (S.songAudioProgress || 0) + '%</div>';
-    h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + (S.songAudioProgress || 0) + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
+    h += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">Separating stems... ' + (sc.r("songAudioProgress") || 0) + '%</div>';
+    h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + (sc.r("songAudioProgress") || 0) + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
     h += '</div>';
   } else {
     h += '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Import an MP3 to play along with the actual song during performance.</p>';
@@ -150,14 +151,14 @@ function getPerformanceSongView() {
   return {
     song: performanceSong && performanceSong.songData
       ? performanceSong.songData
-      : (runtimeState && runtimeState.performanceSongData ? runtimeState.performanceSongData : S.performSongData),
-    songId: performanceSong && performanceSong.songId ? performanceSong.songId : S.performSongId,
-    arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : S.performArrangementType,
-    difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty,
-    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed,
+      : (runtimeState && runtimeState.performanceSongData ? runtimeState.performanceSongData : sc.r("performSongData")),
+    songId: performanceSong && performanceSong.songId ? performanceSong.songId : sc.r("performSongId"),
+    arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : sc.r("performArrangementType"),
+    difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : sc.p("performDifficulty"),
+    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : sc.r("performSpeed"),
     targetTechnique: runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
       ? runtimeState.performanceTargetTechnique
-      : S.performTargetTechnique
+      : sc.r("performTargetTechnique")
   };
 }
 

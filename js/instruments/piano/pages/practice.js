@@ -1,5 +1,6 @@
 /* PianoSpark - Practice tab (home page) */
 
+var sc = window.sparkCore;
 function pianoPracticeTab() {
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var CURRICULUM = D.CURRICULUM || [];
@@ -7,13 +8,13 @@ function pianoPracticeTab() {
   var html = '';
 
   // If-then intention reminder (stickiness #2)
-  if (S.practiceIntention && !S.focusMode) {
-    html += pianoIfThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
+  if (sc.p("practiceIntention") && !sc.p("focusMode")) {
+    html += pianoIfThenCard("When I " + sc.p("practiceIntention") + ", I will open PianoSpark.");
   }
 
   // Daily goal progress
-  var goalMin = S.dailyGoal;
-  var pracMin = Math.floor(S.dailyPracticed / 60);
+  var goalMin = sc.p("dailyGoal");
+  var pracMin = Math.floor(sc.p("dailyPracticed") / 60);
   var goalPct = Math.min(100, (pracMin / goalMin) * 100);
   html += '<div class="card"><div class="daily-goal">';
   html += '<div class="goal-header"><span>Daily Goal: ' + pracMin + '/' + goalMin + ' min</span>';
@@ -38,12 +39,12 @@ function pianoPracticeTab() {
   }
 
   // 8 level tabs
-  var viewLvlNum = S._viewLevel || S.level;
+  var viewLvlNum = sc.r("_viewLevel") || sc.p("level");
   html += '<div class="level-tabs">';
   for (var i = 0; i < CURRICULUM.length; i++) {
     var lvl = CURRICULUM[i];
     var isActive = viewLvlNum === lvl.num;
-    var isLocked = lvl.num > S.level + 1; // can see current + next
+    var isLocked = lvl.num > sc.p("level") + 1; // can see current + next
     var color = levelColor(lvl.num);
     var cls = "level-tab" + (isActive ? " active" : "") + (isLocked ? " locked" : "");
     html += '<div class="' + cls + '" style="color:' + color + ';background:' + color + '15" onclick="' + (isLocked ? '' : "act('view_level'," + lvl.num + ")") + '">';
@@ -66,11 +67,11 @@ function pianoPracticeTab() {
   }
 
   // Chord cards for the viewed level (or all unlocked when viewing current level)
-  var unlocked = (viewLvlNum === S.level) ? chordsUpToLevel(S.level) : chordsForLevel(viewLvlNum);
-  if (!S.chordProg) S.chordProg = {};
+  var unlocked = (viewLvlNum === sc.p("level")) ? chordsUpToLevel(sc.p("level")) : chordsForLevel(viewLvlNum);
+  if (!sc.p("chordProg")) S.chordProg = {};
   html += '<div class="chord-grid">';
   unlocked.forEach(function(c) {
-    var prog = S.chordProg[c.short] || 0;
+    var prog = sc.p("chordProg")[c.short] || 0;
     var tier = pianoTierBadgeHTML(prog);
     var color = c.color || "#888";
     html += pianoClickableDiv(
@@ -88,8 +89,8 @@ function pianoPracticeTab() {
 
   // Custom sets
   html += '<div class="custom-sets"><h4>Custom Practice Sets</h4>';
-  if (S.customSets.length) {
-    S.customSets.forEach(function(set, i) {
+  if (sc.p("customSets").length) {
+    sc.p("customSets").forEach(function(set, i) {
       html += '<div class="custom-set-row">';
       html += '<button class="btn btn-sm" onclick="act(\'drill_custom\',' + i + ')">' + escHTML(set.name) + ' (' + set.chords.length + ')</button>';
       html += '<button class="btn btn-sm btn-danger" onclick="act(\'del_custom\',' + i + ')">\u2715</button>';
@@ -101,14 +102,14 @@ function pianoPracticeTab() {
   // Focus mode toggle
   html += '<div class="setting-row" style="margin-top:12px">';
   html += '<label>Focus Mode:</label>';
-  html += '<button class="btn btn-sm ' + (S.focusMode ? 'btn-accent' : 'btn-secondary') + '" onclick="act(\'toggle_focus\')">' + (S.focusMode ? 'ON' : 'OFF') + '</button>';
+  html += '<button class="btn btn-sm ' + (sc.p("focusMode") ? 'btn-accent' : 'btn-secondary') + '" onclick="act(\'toggle_focus\')">' + (sc.p("focusMode") ? 'ON' : 'OFF') + '</button>';
   html += '</div>';
 
   // Badges
-  if (!S.focusMode) {
+  if (!sc.p("focusMode")) {
     html += '<div class="badges-row">';
     BADGES.forEach(function(b) {
-      var earned = S.earned.indexOf(b.id) >= 0;
+      var earned = sc.p("earned").indexOf(b.id) >= 0;
       html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(b.desc) + '">' + b.icon + '</span>';
     });
     html += '</div>';
@@ -140,8 +141,8 @@ function practicePlanSection(){
 
   // Today's brain-generated practice plan
   if(typeof generateDailyPracticePlan === "function"){
-    if(!S.practicePlan) generateDailyPracticePlan();
-    var plan = S.practicePlan;
+    if(!sc.r("practicePlan")) generateDailyPracticePlan();
+    var plan = sc.r("practicePlan");
     if(plan && plan.items && plan.items.length){
       h += '<div class="card" style="margin-top:12px">';
       h += '<div><b>Today\'s Practice Plan</b></div>';
