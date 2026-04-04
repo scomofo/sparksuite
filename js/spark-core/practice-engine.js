@@ -1,0 +1,105 @@
+// js/spark-core/practice-engine.js
+// Generates drills, builds exercise sets, and analyzes practice results.
+// Delegates to instrument modules via SparkInstrumentAdapter.
+(function() {
+
+  var SparkPracticeEngine = {
+
+    /**
+     * generateDrill(opts) — builds a drill exercise set
+     * opts: { level, skill, count }
+     */
+    generateDrill: function(opts) {
+      opts = opts || {};
+      var skill = opts.skill || null;
+      var level = opts.level || (typeof S !== "undefined" ? S.level : 1);
+      var count = opts.count || 2;
+
+      // Use InstrumentAdapter if available
+      if (typeof SparkInstrumentAdapter !== "undefined") {
+        var drills = SparkInstrumentAdapter.generateDrills(skill, level);
+        if (drills && drills.length > 0) {
+          return drills.slice(0, count);
+        }
+      }
+
+      // Fallback: pull from active instrument's chord pool
+      if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+        var D = SparkInstruments.getActive().getData();
+        var pool = (D.CHORDS && D.CHORDS[level]) || (D.CHORDS && D.CHORDS[1]) || [];
+        if (pool.length >= count) {
+          var selected = [];
+          var used = {};
+          while (selected.length < count && selected.length < pool.length) {
+            var idx = Math.floor(Math.random() * pool.length);
+            if (!used[idx]) {
+              used[idx] = true;
+              selected.push(pool[idx]);
+            }
+          }
+          return selected;
+        }
+        return pool.slice(0, count);
+      }
+
+      return [];
+    },
+
+    /**
+     * buildExerciseSet(opts) — returns exercises for a lesson or skill
+     * opts: { lessonId, skill, maxExercises }
+     */
+    buildExerciseSet: function(opts) {
+      opts = opts || {};
+
+      if (opts.lessonId && typeof SparkInstrumentAdapter !== "undefined") {
+        return SparkInstrumentAdapter.getExercisesForLesson(opts.lessonId);
+      }
+
+      if (typeof SparkInstrumentAdapter !== "undefined") {
+        return SparkInstrumentAdapter.getExercises();
+      }
+
+      return [];
+    },
+
+    /**
+     * analyzeResults(rawResults) — normalizes raw practice data into a summary
+     * rawResults: { correct, total, duration, chordName, type }
+     */
+    analyzeResults: function(rawResults) {
+      rawResults = rawResults || {};
+      var total = rawResults.total || 0;
+      var correct = rawResults.correct || 0;
+      var accuracy = total > 0 ? correct / total : 0;
+
+      // Delegate to instrument-specific analysis if available
+      if (typeof SparkInstrumentAdapter !== "undefined" && rawResults.type === "performance") {
+        var instAnalysis = SparkInstrumentAdapter.analyzePerformance(rawResults);
+        if (instAnalysis && typeof instAnalysis.accuracy === "number") {
+          return instAnalysis;
+        }
+      }
+
+      return {
+        accuracy: Math.round(accuracy * 100),
+        correct: correct,
+        total: total,
+        duration: rawResults.duration || 0,
+        rating: accuracy >= 0.9 ? "excellent" : accuracy >= 0.7 ? "good" : accuracy >= 0.5 ? "fair" : "needs_practice"
+      };
+    },
+
+    /**
+     * getPerformanceConfig() — returns active instrument's performance setup
+     */
+    getPerformanceConfig: function() {
+      if (typeof SparkInstrumentAdapter !== "undefined") {
+        return SparkInstrumentAdapter.getPerformanceConfig();
+      }
+      return {};
+    }
+  };
+
+  window.SparkPracticeEngine = SparkPracticeEngine;
+})();
