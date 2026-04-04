@@ -17,8 +17,12 @@
       }
 
       var D = opts.instrumentData || {};
-      if (!opts.instrumentData && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-        D = SparkInstruments.getActive().getData();
+      if (!opts.instrumentData) {
+        if (typeof SparkInstrumentAdapter !== "undefined") {
+          D = SparkInstrumentAdapter.getCurriculum() || {};
+        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+          D = SparkInstruments.getActive().getData();
+        }
       }
 
       // Resolve instrument identity for contract
@@ -200,8 +204,12 @@
 
       // --- Level-up: all chords at current level mastered ---
       var D = results.instrumentData || {};
-      if (!results.instrumentData && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-        D = SparkInstruments.getActive().getData();
+      if (!results.instrumentData) {
+        if (typeof SparkInstrumentAdapter !== "undefined") {
+          D = SparkInstrumentAdapter.getCurriculum() || {};
+        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+          D = SparkInstruments.getActive().getData();
+        }
       }
       var levelChords = (D.CHORDS && D.CHORDS[S.level]) || [];
       if (levelChords.length > 0) {
