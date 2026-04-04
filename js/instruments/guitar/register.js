@@ -33,6 +33,21 @@
 
     ui: {
       chord: function(chordObj, size, label, animate) {
+        if (typeof stringedChordSVG === "function" && chordObj) {
+          var chart = {
+            name: chordObj.name || label || "chord",
+            instrument: "guitar",
+            stringCount: 6,
+            stringLabels: typeof STRING_NAMES !== "undefined" ? STRING_NAMES : ["E","A","D","G","B","e"],
+            fretCountVisible: 4,
+            startFret: 0,
+            open: chordObj.open || [],
+            muted: chordObj.muted || [],
+            fingers: chordObj.fingers || [],
+            barre: chordObj.barFret ? { fret: chordObj.barFret, fromString: Math.min.apply(null, chordObj.barStrings || [0]), toString: Math.max.apply(null, chordObj.barStrings || [5]) } : null
+          };
+          return stringedChordSVG(chart, { width: size, label: label, animate: animate });
+        }
         return typeof chordSVG === "function" ? chordSVG(chordObj, size, label, animate) : "";
       },
       header: function() {
