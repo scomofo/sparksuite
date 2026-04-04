@@ -64,6 +64,22 @@ No legacy paths have been retired yet. All migrated flows run dual-path for safe
 - Console.debug logs show no discrepancies
 - Then legacy path can be removed
 
+## Visual Refresh (Vibrant Playground)
+
+| Component | V2 Styled | Status |
+|-----------|----------|--------|
+| CSS Foundation | spark-visual-v2.css | Complete |
+| Theme Engine | js/ui/theme.js | Complete |
+| Home Dashboard | sv2HomeDashboard() | Complete |
+| Header/Logo | v2 overrides | Complete |
+| Tab Active State | Instrument colored | Complete |
+| Confetti System | SparkConfetti.burst() | Complete |
+| XP Float | SparkXPFloat.show() | Complete |
+| Session Page | Not yet | Pending |
+| Completion Page | Not yet | Pending |
+| Chord Diagram Glow | Not yet | Pending |
+| Focus Toggle | Not yet | Pending |
+
 ## Remaining Work
 
 1. Add `buildLearningQueue(userContext)` to CurriculumService
