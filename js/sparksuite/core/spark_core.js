@@ -52,6 +52,9 @@
       legacyFingerExerciseId: null,
       legacyFingerExerciseActive: false,
       legacyFingerExerciseCount: 0,
+      legacyStrumPattern: null,
+      legacyStrumActive: false,
+      legacyStrumBeat: -1,
       legacyEarTrainQuestion: null,
       legacyEarTrainOptions: [],
       legacyEarTrainAnswer: null,
@@ -507,6 +510,45 @@
       legacyFingerExerciseActive: true,
       legacyFingerExerciseCount: Object.prototype.hasOwnProperty.call(options, "exerciseCount") ? options.exerciseCount : 0,
       transport: { status: "running", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.openLegacyStrumPattern = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: "legacy_strum_pattern",
+      activeScreen: "strum",
+      activeTab: "strum",
+      legacyStrumPattern: Object.prototype.hasOwnProperty.call(options, "pattern")
+        ? this.cloneValue(options.pattern)
+        : null,
+      legacyStrumActive: false,
+      legacyStrumBeat: -1,
+      transport: { status: "ready", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.syncLegacyStrumRuntimeState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: this.runtimeState.activeFlow || "legacy_strum_pattern",
+      activeScreen: this.runtimeState.activeScreen || "strum",
+      activeTab: "strum",
+      legacyStrumPattern: Object.prototype.hasOwnProperty.call(options, "pattern")
+        ? this.cloneValue(options.pattern)
+        : this.cloneValue(this.runtimeState.legacyStrumPattern),
+      legacyStrumActive: Object.prototype.hasOwnProperty.call(options, "active")
+        ? !!options.active
+        : !!this.runtimeState.legacyStrumActive,
+      legacyStrumBeat: Object.prototype.hasOwnProperty.call(options, "beat")
+        ? options.beat
+        : this.runtimeState.legacyStrumBeat,
+      transport: {
+        status: Object.prototype.hasOwnProperty.call(options, "active")
+          ? (options.active ? "running" : "idle")
+          : ((this.runtimeState.transport && this.runtimeState.transport.status) || "idle"),
+        positionMs: 0
+      }
     });
   };
 

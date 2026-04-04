@@ -415,6 +415,36 @@ test("SparkCore can sync ear training runtime state explicitly", function() {
   assert.strictEqual(answerState.legacyEarTrainAnswer, "G Major");
 });
 
+test("SparkCore can open and sync strum runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+  var pattern = { name: "Island Groove", desc: "Syncopated groove", bpm: 76, pattern: ["D", "D", "U", "U", "D", "U"] };
+
+  var openState = core.openLegacyStrumPattern({ pattern: pattern });
+  assert.strictEqual(openState.activeFlow, "legacy_strum_pattern");
+  assert.strictEqual(openState.activeScreen, "strum");
+  assert.strictEqual(openState.activeTab, "strum");
+  assert.deepStrictEqual(openState.legacyStrumPattern, pattern);
+  assert.strictEqual(openState.legacyStrumActive, false);
+  assert.strictEqual(openState.legacyStrumBeat, -1);
+  assert.strictEqual(openState.transport.status, "ready");
+
+  var playState = core.syncLegacyStrumRuntimeState({
+    active: true,
+    beat: 3
+  });
+  assert.strictEqual(playState.legacyStrumActive, true);
+  assert.strictEqual(playState.legacyStrumBeat, 3);
+  assert.strictEqual(playState.transport.status, "running");
+
+  var stopState = core.syncLegacyStrumRuntimeState({
+    active: false,
+    beat: -1
+  });
+  assert.strictEqual(stopState.legacyStrumActive, false);
+  assert.strictEqual(stopState.legacyStrumBeat, -1);
+  assert.strictEqual(stopState.transport.status, "idle");
+});
+
 test("SparkCore can open, sync, and complete legacy daily challenge runtime explicitly", function() {
   var core = createDefaultSparkCore();
 
@@ -1202,6 +1232,33 @@ test("finger exercise card can fall back to SparkCore finger exercise runtime st
   assert.ok(cardHtml.indexOf("Spider Walk") >= 0);
   assert.ok(cardHtml.indexOf("1:30") >= 0);
   assert.ok(cardHtml.indexOf("Stop") >= 0);
+});
+
+test("strum page can fall back to SparkCore strum runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.strumHandSVG = function(direction, active) { return "<div>" + direction + ":" + active + "</div>"; };
+  global.strumHTML = function(pattern, beat) { return "<div>" + pattern.join("-") + "|" + beat + "</div>"; };
+  S.selectedStrum = undefined;
+  S.strumActive = undefined;
+  S._strumBeat = undefined;
+  S.strumTone = "classic";
+
+  eval(loadJS("js/pages/session.js"));
+
+  core.openLegacyStrumPattern({
+    pattern: { name: "Island Groove", desc: "Syncopated groove", bpm: 76, pattern: ["D", "D", "U", "U", "D", "U"] }
+  });
+  core.syncLegacyStrumRuntimeState({
+    active: true,
+    beat: 2
+  });
+  var strumHtml = strumDetailPage();
+  assert.ok(strumHtml.indexOf("Island Groove") >= 0);
+  assert.ok(strumHtml.indexOf("76 BPM") >= 0);
+  assert.ok(strumHtml.indexOf("D-D-U-U-D-U|2") >= 0);
+  assert.ok(strumHtml.indexOf("Stop") >= 0);
 });
 
 test("ear training page can fall back to SparkCore ear training runtime state", function() {
