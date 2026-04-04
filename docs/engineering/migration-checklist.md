@@ -16,26 +16,27 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 | chord | Yes (via wrapPlan) | Dual-path |
 | drill | Yes (via wrapPlan) | Dual-path |
 
-## Progress Outcomes (Phase 3)
+## Progress Outcomes (Phase 3/6)
 
 | Flow | applySessionOutcome | Status |
 |------|-------------------|--------|
 | quickStart timer complete | Yes | Dual-path |
 | drill timer complete | Yes | Dual-path |
 | performance finish | Yes | Dual-path |
-| guided session complete | No | Legacy-only |
-| daily challenge complete | No | Legacy-only |
-| runner game complete | No | Legacy-only |
-| rhythm game complete | No | Legacy-only |
+| guided session complete | Yes | Dual-path |
+| daily challenge complete | Yes | Dual-path |
+| runner game complete | Yes | Dual-path |
+| rhythm game complete | Yes | Dual-path |
+| practice engine finish | Yes | Dual-path |
 
 ## Instrument Contracts (Phase 4)
 
 | Instrument | Capability Flags | Normalized Methods | Status |
 |-----------|-----------------|-------------------|--------|
-| Guitar | Yes | getData() only | Partial |
-| Ukulele | Yes | getData() only | Partial |
-| Piano | Yes | getData() only | Partial |
-| Bass | Yes | getData() only | Partial |
+| Guitar | Yes | getExercisesForLesson, getPerformanceConfig | Complete |
+| Ukulele | Yes | getExercisesForLesson, getPerformanceConfig | Complete |
+| Piano | Yes | getExercisesForLesson, getPerformanceConfig | Complete |
+| Bass | Yes | getExercisesForLesson, getPerformanceConfig | Complete |
 
 ## Curriculum (Phase 5)
 
@@ -44,7 +45,7 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 | getNextLesson | SparkCurriculumService.getNextLesson | Available |
 | isLessonUnlocked | SparkCurriculumService.isLessonUnlocked | Available |
 | getLessonById | SparkCurriculumService.getLessonById | Available |
-| getReviewTargets | SparkCurriculumService.getReviewTargets | Stub |
+| getReviewTargets | SparkCurriculumService.getReviewTargets | Implemented |
 | SessionEngine guided mode | Uses CurriculumService | Dual-path |
 
 ## Performance Integration (Phase 6)
@@ -52,7 +53,7 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 | Flow | Unified Result Schema | Status |
 |------|---------------------|--------|
 | Performance song finish | SessionResult contract | Dual-path |
-| Practice engine finish | No | Legacy-only |
+| Practice engine finish | SessionResult contract | Dual-path |
 
 ## Legacy Removal (Phase 7)
 
@@ -63,10 +64,11 @@ No legacy paths have been retired yet. All migrated flows run dual-path for safe
 - Console.debug logs show no discrepancies
 - Then legacy path can be removed
 
-## Next Steps
+## Remaining Work
 
-1. Migrate guided session completion to applySessionOutcome
-2. Migrate daily challenge completion to applySessionOutcome
-3. Add normalized methods (getExercisesForLesson, etc.) to instrument contracts
-4. Wire practice engine completion through contracts
+1. Add `buildLearningQueue(userContext)` to CurriculumService
+2. Refactor SessionEngine to ask CurriculumEngine for lesson choices (not just lock check)
+3. Add InstrumentAdapter normalized methods to spark-core (proxy getExercisesForLesson, getPerformanceConfig)
+4. Wire recommendation engine through SparkCore services
 5. Begin retiring legacy paths once dual-path validation passes
+6. Add scriptable smoke checks (automated boot + flow tests)
