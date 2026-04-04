@@ -143,6 +143,16 @@ function tickDy(){
       logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
       checkBadges();saveState();
     }
+    // Route through contract-based progress path
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var dailyResult = SparkContracts.createSessionResult({
+        mode: "daily",
+        duration: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60,
+        accuracy: 1.0,
+        completed: true
+      });
+      SparkProgressOrchestrator.applySessionOutcome(dailyResult);
+    }
     trigC();render();
   }
 }
@@ -235,6 +245,15 @@ function finishRhythm(){
       if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("rhythm","Score: "+S.rhythmScore,xp);saveState();
     }
   }
+  // Route through contract-based progress path
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var rhythmResult = SparkContracts.createSessionResult({
+      mode: "rhythm",
+      accuracy: total > 0 ? hits / total : 0,
+      completed: true
+    });
+    SparkProgressOrchestrator.applySessionOutcome(rhythmResult);
+  }
   render();
 }
 
@@ -322,6 +341,15 @@ function finishRunner(){
     if(S.runnerScore>S.runnerHighScore)S.runnerHighScore=S.runnerScore;
     S.runnerResults=runnerResult;
     if(xp>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("runner","Score: "+S.runnerScore,xp);saveState();}
+  }
+  // Route through contract-based progress path
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var runnerResult = SparkContracts.createSessionResult({
+      mode: "runner",
+      accuracy: S.runnerScore > 0 ? Math.min(1, S.runnerScore / 100) : 0,
+      completed: true
+    });
+    SparkProgressOrchestrator.applySessionOutcome(runnerResult);
   }
   snd("complete");
   render();
