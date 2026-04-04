@@ -15,6 +15,19 @@ function getLegacyTunerRuntime(){
   };
 }
 
+function getLegacyAudioInputRuntime(){
+  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  return {
+    devices: Array.isArray(S.audioInputDevices) && S.audioInputDevices.length ? S.audioInputDevices : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
+    inputId: typeof S.audioInputId === "string" ? S.audioInputId : (runtime ? (runtime.audioInputId || "") : ""),
+    testingId: typeof S.audioTestingId === "string" ? S.audioTestingId : (runtime ? (runtime.audioTestingId || "") : ""),
+    testLevel: typeof S.audioTestLevel === "number" ? S.audioTestLevel : (runtime && typeof runtime.audioTestLevel === "number" ? runtime.audioTestLevel : 0)
+  };
+}
+
 function tunerTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var runtime = getLegacyTunerRuntime();
@@ -42,13 +55,14 @@ function tunerTab(){
   }
   h+='</div></div>';
   // Audio Input Device
+  var audioRuntime = getLegacyAudioInputRuntime();
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127911; Audio Input</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Select your audio input device for the Tuner and Chord Check. Use this to pick your USB guitar cable instead of the default microphone.</p>';
   h+='<button onclick="act(\'refreshAudioInputs\')" class="btn" style="margin-bottom:12px;padding:8px 16px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;border:none;border-radius:10px">&#128260; Refresh Devices</button>';
-  if(S.audioInputDevices.length>0){
+  if(audioRuntime.devices.length>0){
     h+='<div style="display:flex;flex-direction:column;gap:8px">';
-    for(var ai=0;ai<S.audioInputDevices.length;ai++){
-      var ad=S.audioInputDevices[ai],isAI=S.audioInputId===ad.id,isTesting=S.audioTestingId===ad.id;
+    for(var ai=0;ai<audioRuntime.devices.length;ai++){
+      var ad=audioRuntime.devices[ai],isAI=audioRuntime.inputId===ad.id,isTesting=audioRuntime.testingId===ad.id;
       h+='<div style="border-radius:10px;border:2px solid '+(isAI?"#4ECDC4":"var(--border)")+';background:'+(isAI?"#4ECDC422":"var(--input-bg)")+';overflow:hidden">';
       h+='<div style="display:flex;align-items:center;gap:8px;padding:10px 14px">';
       h+='<button onclick="act(\'selectAudioInput\',\''+ad.id+'\')" style="flex:1;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:'+(isAI?"#4ECDC4":"var(--text-primary)")+';background:none;border:none;text-align:left;padding:0;cursor:pointer">'+(isAI?"&#9654; ":"&#9675; ")+escHTML(ad.name)+'</button>';
@@ -60,14 +74,14 @@ function tunerTab(){
       h+='</div>';
       if(isTesting){
         h+='<div style="padding:0 14px 10px">';
-        h+='<div style="background:var(--prog-bg);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px"><div id="audio-test-meter" style="height:100%;width:'+S.audioTestLevel+'%;background:'+(S.audioTestLevel>10?"#4ECDC4":"var(--text-muted)")+';border-radius:6px;transition:width .1s"></div></div>';
-        h+='<div id="audio-test-label" style="font-size:11px;font-weight:600;color:'+(S.audioTestLevel>10?"#4ECDC4":"var(--text-muted)")+'">'+( S.audioTestLevel>10?"Signal detected — strum to confirm":"Listening — strum your guitar...")+'</div>';
+        h+='<div style="background:var(--prog-bg);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px"><div id="audio-test-meter" style="height:100%;width:'+audioRuntime.testLevel+'%;background:'+(audioRuntime.testLevel>10?"#4ECDC4":"var(--text-muted)")+';border-radius:6px;transition:width .1s"></div></div>';
+        h+='<div id="audio-test-label" style="font-size:11px;font-weight:600;color:'+(audioRuntime.testLevel>10?"#4ECDC4":"var(--text-muted)")+'">'+( audioRuntime.testLevel>10?"Signal detected — strum to confirm":"Listening — strum your guitar...")+'</div>';
         h+='</div>';
       }
       h+='</div>';
     }
     h+='</div>';
-    if(S.audioInputId){
+    if(audioRuntime.inputId){
       h+='<button onclick="act(\'selectAudioInput\',\'\')" style="margin-top:8px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:var(--input-bg);color:var(--text-muted);border:1px solid var(--border)">Reset to Default</button>';
     }
   } else {

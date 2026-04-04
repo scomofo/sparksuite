@@ -565,6 +565,32 @@ test("SparkCore can sync stem player runtime state explicitly", function() {
   assert.strictEqual(idleState.stemDuration, 96);
 });
 
+test("SparkCore can sync audio input runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var activeState = core.syncAudioInputRuntimeState({
+    devices: [{ id: "usb", name: "USB Guitar" }],
+    inputId: "usb",
+    testingId: "usb",
+    testLevel: 42
+  });
+  assert.deepStrictEqual(activeState.audioInputDevices, [{ id: "usb", name: "USB Guitar" }]);
+  assert.strictEqual(activeState.audioInputId, "usb");
+  assert.strictEqual(activeState.audioTestingId, "usb");
+  assert.strictEqual(activeState.audioTestLevel, 42);
+
+  var idleState = core.syncAudioInputRuntimeState({
+    devices: [{ id: "default", name: "Default Input" }],
+    inputId: "",
+    testingId: "",
+    testLevel: 0
+  });
+  assert.deepStrictEqual(idleState.audioInputDevices, [{ id: "default", name: "Default Input" }]);
+  assert.strictEqual(idleState.audioInputId, "");
+  assert.strictEqual(idleState.audioTestingId, "");
+  assert.strictEqual(idleState.audioTestLevel, 0);
+});
+
 test("SparkCore can sync metronome runtime state explicitly", function() {
   var core = createDefaultSparkCore();
 
@@ -942,6 +968,48 @@ test("stem player page can fall back to SparkCore stem runtime state", function(
   var stemsHtml = stemsPage();
   assert.ok(stemsHtml.indexOf("0:12 / 1:36") >= 0);
   assert.ok(stemsHtml.indexOf("Pause") >= 0);
+});
+
+test("tools page audio input section can fall back to SparkCore audio runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            STRINGS: [
+              { note: "E", freq: 82.4 },
+              { note: "A", freq: 110.0 }
+            ]
+          };
+        }
+      };
+    }
+  };
+  S.tunerActive = false;
+  S.tunerNote = null;
+  S.tunerFreq = 0;
+  S.tunerCents = 0;
+  S.tunerErr = "";
+  S.audioInputDevices = [];
+  S.audioInputId = undefined;
+  S.audioTestingId = undefined;
+  S.audioTestLevel = undefined;
+
+  eval(loadJS("js/pages/tools.js"));
+
+  core.syncAudioInputRuntimeState({
+    devices: [{ id: "usb", name: "USB Guitar" }],
+    inputId: "usb",
+    testingId: "usb",
+    testLevel: 42
+  });
+  var toolsHtml = tunerTab();
+  assert.ok(toolsHtml.indexOf("USB Guitar") >= 0);
+  assert.ok(toolsHtml.indexOf("width:42%") >= 0);
+  assert.ok(toolsHtml.indexOf("Signal detected") >= 0);
 });
 
 test("session page chord check can fall back to SparkCore chord detect runtime state", function() {

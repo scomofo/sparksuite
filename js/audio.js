@@ -625,6 +625,14 @@ function refreshAudioInputs(){
         nextInputs.push({id:devices[i].deviceId,name:devices[i].label||"Input "+(nextInputs.length+1)});
       }
     }
+    if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
+      window.sparkCore.syncAudioInputRuntimeState({
+        devices: nextInputs,
+        inputId: S.audioInputId || null,
+        testingId: S.audioTestingId || null,
+        testLevel: S.audioTestLevel || 0
+      });
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{audioInputDevices:nextInputs}});
     }else{
@@ -637,6 +645,14 @@ function refreshAudioInputs(){
 var _audioTestStream=null,_audioTestCtx=null,_audioTestAnim=null;
 function testAudioInput(deviceId){
   stopAudioTest();
+  if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
+    window.sparkCore.syncAudioInputRuntimeState({
+      devices: S.audioInputDevices || [],
+      inputId: S.audioInputId || null,
+      testingId: deviceId,
+      testLevel: 0
+    });
+  }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{audioTestingId:deviceId,audioTestLevel:0}});
   }else{
@@ -656,6 +672,14 @@ function testAudioInput(deviceId){
       var peak=0;
       for(var i=0;i<buf.length;i++){var v=Math.abs(buf[i]);if(v>peak)peak=v;}
       S.audioTestLevel=Math.round(Math.min(peak*200,100));
+      if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
+        window.sparkCore.syncAudioInputRuntimeState({
+          devices: S.audioInputDevices || [],
+          inputId: S.audioInputId || null,
+          testingId: deviceId,
+          testLevel: S.audioTestLevel
+        });
+      }
       // Update meter directly to avoid full re-render flicker
       var el=document.getElementById("audio-test-meter");
       var lbl=document.getElementById("audio-test-label");
@@ -670,6 +694,14 @@ function testAudioInput(deviceId){
       _audioTestAnim=requestAnimationFrame(poll);
     }poll();
   }).catch(function(){
+    if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
+      window.sparkCore.syncAudioInputRuntimeState({
+        devices: S.audioInputDevices || [],
+        inputId: S.audioInputId || null,
+        testingId: "",
+        testLevel: 0
+      });
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{audioTestingId:"",audioTestLevel:0}});
     }else{
@@ -679,6 +711,14 @@ function testAudioInput(deviceId){
   });
 }
 function stopAudioTest(){
+  if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
+    window.sparkCore.syncAudioInputRuntimeState({
+      devices: S.audioInputDevices || [],
+      inputId: S.audioInputId || null,
+      testingId: "",
+      testLevel: 0
+    });
+  }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{audioTestingId:"",audioTestLevel:0}});
   }else{
