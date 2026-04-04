@@ -256,7 +256,15 @@
       { title: "Island Loop", artist: "SparkSuite", progression: ["C", "Am", "F", "G"], bpm: 78, focus: "steady island groove" },
       { title: "Sunset Switches", artist: "SparkSuite", progression: ["F", "G", "Em", "Am"], bpm: 74, focus: "clean chord changes" },
       { title: "Palm Arpeggio", artist: "SparkSuite", progression: ["C", "G", "Am", "F"], bpm: 68, focus: "fingerpicked flow" },
-      { title: "Moonlit Picking", artist: "SparkSuite", progression: ["Am", "F", "C", "G"], bpm: 72, focus: "steady arpeggio motion" }
+      { title: "Moonlit Picking", artist: "SparkSuite", progression: ["Am", "F", "C", "G"], bpm: 72, focus: "steady arpeggio motion" },
+      { title: "Somewhere Over the Rainbow", artist: "IZ", progression: ["C", "Em", "Am", "F"], bpm: 80, focus: "gentle fingerpick flow" },
+      { title: "Riptide", artist: "Vance Joy", progression: ["Am", "G", "C", "F"], bpm: 102, focus: "quick strum changes" },
+      { title: "I'm Yours", artist: "Jason Mraz", progression: ["C", "G", "Am", "F"], bpm: 76, focus: "relaxed island groove" },
+      { title: "Hey Soul Sister", artist: "Train", progression: ["C", "G", "Am", "F"], bpm: 97, focus: "upbeat strumming" },
+      { title: "Can't Help Falling in Love", artist: "Elvis", progression: ["C", "Em", "Am", "F", "G"], bpm: 72, focus: "slow waltz feel" },
+      { title: "Count on Me", artist: "Bruno Mars", progression: ["C", "Em", "Am", "G"], bpm: 88, focus: "happy fingerpick" },
+      { title: "Lava", artist: "Disney", progression: ["C", "G7", "F"], bpm: 76, focus: "simple 3-chord island" },
+      { title: "Stand By Me", artist: "Ben E. King", progression: ["C", "Am", "F", "G"], bpm: 120, focus: "steady bass strum" }
     ];
   }
 

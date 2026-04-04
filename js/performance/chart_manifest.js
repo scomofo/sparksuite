@@ -100,6 +100,50 @@
         accentColor: "#1d4ed8",
         badge: "Bass",
         instrument: "bass"
+      },
+      {
+        id: "bass_pocket_groove",
+        title: "Pocket Groove",
+        artist: "SparkSuite Bass",
+        bpm: 90,
+        description: "Bass pocket groove chart with a steady root-fifth feel at 90 BPM.",
+        sourceType: "built_in",
+        accentColor: "#8b5cf6",
+        badge: "Bass",
+        instrument: "bass"
+      },
+      {
+        id: "bass_funk_slap",
+        title: "Funk Slap",
+        artist: "SparkSuite Bass",
+        bpm: 105,
+        description: "Funky slap bass chart with thumb and pop patterns at 105 BPM.",
+        sourceType: "built_in",
+        accentColor: "#ec4899",
+        badge: "Bass",
+        instrument: "bass"
+      },
+      {
+        id: "piano_ballad_keys",
+        title: "Ballad Keys",
+        artist: "SparkSuite Piano",
+        bpm: 72,
+        description: "Gentle piano ballad chart with sustained chords and soft dynamics.",
+        sourceType: "built_in",
+        accentColor: "#3b82f6",
+        badge: "Piano",
+        instrument: "piano"
+      },
+      {
+        id: "piano_pop_chords",
+        title: "Pop Chords",
+        artist: "SparkSuite Piano",
+        bpm: 120,
+        description: "Upbeat pop piano chart with rhythmic chord stabs and syncopation.",
+        sourceType: "built_in",
+        accentColor: "#f59e0b",
+        badge: "Piano",
+        instrument: "piano"
       }
     ]
   };

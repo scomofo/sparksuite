@@ -133,6 +133,9 @@ function homePage(){
   return v2Home + h;
 }
 
+// ===== STUB TABS (games, tools) =====
+function gamesTab(){ return '<div class="card"><div><b>Games</b></div><div class="muted">Mini-games and challenges.</div></div>'; }
+function toolsTab(){ return '<div class="card"><div><b>Tools</b></div><div class="muted">Tuner, metronome, and utilities.</div></div>'; }
 // ===== PRACTICE TAB =====
 function practiceTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};

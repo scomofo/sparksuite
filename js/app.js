@@ -2369,13 +2369,17 @@ window.act=function(a,v){
   if(a==="submitSong"){
     var ss=S.submitSong;
     if(!ss.title.trim()||!ss.artist.trim()||ss.chords.length<2||ss.progression.length<2)return;
+    var _title=ss.title.trim().slice(0,100);
+    var _artist=ss.artist.trim().slice(0,100);
+    var _submittedBy=(ss.submittedBy.trim()||"Anonymous").slice(0,50);
+    var _bpm=Math.max(40,Math.min(200,Number(ss.bpm)||100));
     var body={
-      title:ss.title.trim(),artist:ss.artist.trim(),
+      title:escHTML(_title),artist:escHTML(_artist),
       chords:JSON.stringify(ss.chords),
       progression:JSON.stringify(ss.progression),
       pattern:JSON.stringify(["D","D","U","U","D","U"]),
-      bpm:ss.bpm,level:1,
-      submitted_by:ss.submittedBy.trim()||"Anonymous"
+      bpm:_bpm,level:1,
+      submitted_by:_submittedBy
     };
     fetch(COMMUNITY_URL+"/api/songs",{
       method:"POST",

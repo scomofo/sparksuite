@@ -71,6 +71,42 @@
       prerequisites: ["melody"],
       masteryRequired: 0.88,
       desc: "Blend groove, clean changes, and confidence into a full playthrough."
+    },
+    {
+      id: "uke_09",
+      num: 9,
+      title: "Barre Basics",
+      skill: "barre_chords",
+      prerequisites: ["performance"],
+      masteryRequired: 0.85,
+      desc: "Learn to hold barre shapes cleanly across all four strings."
+    },
+    {
+      id: "uke_10",
+      num: 10,
+      title: "Syncopated Strum",
+      skill: "syncopation",
+      prerequisites: ["barre_chords"],
+      masteryRequired: 0.86,
+      desc: "Add off-beat accents and reggae-style chops to your strumming."
+    },
+    {
+      id: "uke_11",
+      num: 11,
+      title: "Fingerpick Patterns",
+      skill: "advanced_fingerpick",
+      prerequisites: ["fingerpicking"],
+      masteryRequired: 0.88,
+      desc: "Build complex Travis-style and rolling arpeggio patterns."
+    },
+    {
+      id: "uke_12",
+      num: 12,
+      title: "Performance Ready",
+      skill: "full_performance",
+      prerequisites: ["syncopation", "advanced_fingerpick"],
+      masteryRequired: 0.90,
+      desc: "Combine all techniques into a polished, stage-ready performance."
     }
   ];
 })();
