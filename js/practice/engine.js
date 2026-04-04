@@ -84,6 +84,16 @@
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         markPlanComplete: true
       });
+      // Route through contract-based progress path
+      if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+        var practiceResult = SparkContracts.createSessionResult({
+          mode: "practice",
+          instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
+          instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+          completed: true
+        });
+        SparkProgressOrchestrator.applySessionOutcome(practiceResult);
+      }
       return;
     }
 
