@@ -516,6 +516,33 @@ test("SparkCore can open, sync, and complete legacy rhythm runtime explicitly", 
   assert.strictEqual(completeState.transport.status, "completed");
 });
 
+test("SparkCore can sync tuner runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+
+  var activeState = core.syncTunerRuntimeState({
+    active: true,
+    note: "A",
+    freq: 440,
+    cents: 2,
+    error: null
+  });
+  assert.strictEqual(activeState.tunerActive, true);
+  assert.strictEqual(activeState.tunerNote, "A");
+  assert.strictEqual(activeState.tunerFreq, 440);
+  assert.strictEqual(activeState.tunerCents, 2);
+  assert.strictEqual(activeState.tunerError, null);
+
+  var errorState = core.syncTunerRuntimeState({
+    active: false,
+    note: null,
+    freq: 0,
+    cents: 0,
+    error: "Microphone access denied"
+  });
+  assert.strictEqual(errorState.tunerActive, false);
+  assert.strictEqual(errorState.tunerError, "Microphone access denied");
+});
+
 test("legacy session and drill pages can fall back to SparkCore practice runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
@@ -745,6 +772,68 @@ test("rhythm pages can fall back to SparkCore rhythm runtime state", function() 
   var resultsHtml = rhythmResultsPage();
   assert.ok(resultsHtml.indexOf("Results!") >= 0);
   assert.ok(resultsHtml.indexOf(">175<") >= 0);
+});
+
+test("tuner page can fall back to SparkCore tuner runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            STRINGS: [
+              { note: "E", freq: 82.4 },
+              { note: "A", freq: 110.0 },
+              { note: "D", freq: 146.8 },
+              { note: "G", freq: 196.0 },
+              { note: "B", freq: 246.9 },
+              { note: "e", freq: 329.6 }
+            ]
+          };
+        }
+      };
+    }
+  };
+  S.tunerActive = undefined;
+  S.tunerNote = undefined;
+  S.tunerFreq = undefined;
+  S.tunerCents = undefined;
+  S.tunerErr = undefined;
+  S.audioInputDevices = [];
+  S.audioInputId = "";
+  S.audioTestingId = null;
+  S.audioTestLevel = 0;
+
+  eval(loadJS("js/pages/tools.js"));
+
+  core.syncTunerRuntimeState({
+    active: true,
+    note: "A",
+    freq: 440,
+    cents: 2,
+    error: null
+  });
+  var tunerHtml = tunerTab();
+  assert.ok(tunerHtml.indexOf(">A<") >= 0);
+  assert.ok(tunerHtml.indexOf("440 Hz") >= 0);
+  assert.ok(tunerHtml.indexOf("In Tune!") >= 0);
+
+  S.tunerActive = undefined;
+  S.tunerNote = undefined;
+  S.tunerFreq = undefined;
+  S.tunerCents = undefined;
+  S.tunerErr = undefined;
+  core.syncTunerRuntimeState({
+    active: false,
+    note: null,
+    freq: 0,
+    cents: 0,
+    error: "Microphone access denied"
+  });
+  tunerHtml = tunerTab();
+  assert.ok(tunerHtml.indexOf("Microphone access denied") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {

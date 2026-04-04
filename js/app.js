@@ -799,6 +799,13 @@ function completeLegacyRunnerGameRequest(options) {
   return null;
 }
 
+function syncTunerRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncTunerRuntimeState === "function") {
+    return window.sparkCore.syncTunerRuntimeState(options || {});
+  }
+  return null;
+}
+
 function openLegacyRhythmGameRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openLegacyRhythmGame === "function") {
     return window.sparkCore.openLegacyRhythmGame(options || {});
@@ -1623,6 +1630,7 @@ window.act=function(a,v){
   // === Tuner ===
   if(a==="startTuner"){
     if(!AC){
+      syncTunerRuntimeRequest({ active:false, error:"Audio not supported" });
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Audio not supported"}});
       }else{
@@ -1634,6 +1642,7 @@ window.act=function(a,v){
       tunerR.stream=st;var ctx=new AC(),src=ctx.createMediaStreamSource(st),an=ctx.createAnalyser();
       an.fftSize=8192;src.connect(an); // Larger buffer for better low-freq accuracy
       tunerR.ctx=ctx;tunerR.analyser=an;
+      syncTunerRuntimeRequest({ active:true, error:null, note:null, freq:0, cents:0 });
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerActive:true,tunerErr:null}});
       }else{
@@ -1653,8 +1662,10 @@ window.act=function(a,v){
             S.tunerNote=result.note;
             S.tunerFreq=result.freq;
             S.tunerCents=result.cents;
+            syncTunerRuntimeRequest({ active:true, note: result.note, freq: result.freq, cents: result.cents, error:null });
           }else if(f<0){
             S.tunerNote=null;S.tunerFreq=0;S.tunerCents=0;
+            syncTunerRuntimeRequest({ active:true, note:null, freq:0, cents:0, error:null });
           }
           // Targeted UI update instead of full render
           updateTunerUI();
@@ -1662,6 +1673,7 @@ window.act=function(a,v){
         tunerR.anim=requestAnimationFrame(det);
       }det();
     }).catch(function(){
+      syncTunerRuntimeRequest({ active:false, error:"Microphone access denied" });
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Microphone access denied"}});
       }else{
@@ -1674,6 +1686,7 @@ window.act=function(a,v){
     if(tunerR.anim)cancelAnimationFrame(tunerR.anim);
     if(tunerR.stream)tunerR.stream.getTracks().forEach(function(t){t.stop();});
     if(tunerR.ctx)tunerR.ctx.close();
+    syncTunerRuntimeRequest({ active:false, note:null, freq:0, cents:0, error:null });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
         setFields:{tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0}
