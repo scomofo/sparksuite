@@ -74,6 +74,11 @@
       lastDashboardRecommendationId: null,
       lastDashboardRefreshAt: null,
       settingsTheme: null,
+      tunerActive: false,
+      tunerNote: null,
+      tunerFreq: 0,
+      tunerCents: 0,
+      tunerError: null,
       midiEnabled: false,
       midiActiveDeviceId: null,
       midiActiveDeviceName: null,
@@ -674,6 +679,17 @@
       legacyRhythmStartTimeMs: Object.prototype.hasOwnProperty.call(options, "startTimeMs") ? options.startTimeMs : this.runtimeState.legacyRhythmStartTimeMs,
       legacyRhythmResults: this.cloneValue(Object.prototype.hasOwnProperty.call(options, "results") ? (options.results || null) : null),
       transport: { status: "completed", positionMs: 0 }
+    });
+  };
+
+  SparkCore.prototype.syncTunerRuntimeState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      tunerActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.tunerActive,
+      tunerNote: Object.prototype.hasOwnProperty.call(options, "note") ? options.note : this.runtimeState.tunerNote,
+      tunerFreq: Object.prototype.hasOwnProperty.call(options, "freq") ? options.freq : this.runtimeState.tunerFreq,
+      tunerCents: Object.prototype.hasOwnProperty.call(options, "cents") ? options.cents : this.runtimeState.tunerCents,
+      tunerError: Object.prototype.hasOwnProperty.call(options, "error") ? options.error : this.runtimeState.tunerError
     });
   };
 
