@@ -3706,11 +3706,20 @@ function _renderInner(){
   document.getElementById("dark-btn").textContent=S.darkMode?"\uD83C\uDF19":"\u2600\uFE0F";
   var h="";
   if(S.showConfetti){
-    var cols=["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
-    h+='<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
-    for(var i=0;i<40;i++)
-      h+='<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
-    h+='</div>';
+    // Use SparkConfetti if available (v2), else fall back to inline confetti
+    if (typeof SparkConfetti !== "undefined") {
+      if (!S._confettiFired) {
+        S._confettiFired = true;
+        SparkConfetti.burst();
+        setTimeout(function() { S._confettiFired = false; }, 2600);
+      }
+    } else {
+      var cols=["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
+      h+='<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
+      for(var i=0;i<40;i++)
+        h+='<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
+      h+='</div>';
+    }
   }
   if(S.newBadge)
     h+='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:16px 32px;box-shadow:0 8px 30px rgba(255,138,92,.4);animation:sD .5s ease;text-align:center"><div style="font-size:32px">'+S.newBadge.icon+'</div><div style="font-weight:800;font-size:16px;color:#333">'+S.newBadge.label+'</div><div style="font-size:12px;color:#555">'+S.newBadge.desc+'</div></div>';
