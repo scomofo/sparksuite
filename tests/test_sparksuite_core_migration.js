@@ -472,6 +472,50 @@ test("SparkCore can open, sync, and complete legacy runner runtime explicitly", 
   assert.strictEqual(completeState.transport.status, "completed");
 });
 
+test("SparkCore can open, sync, and complete legacy rhythm runtime explicitly", function() {
+  var core = createDefaultSparkCore();
+  var beats = [{ time: 0, type: "D", hit: false, result: null }];
+
+  var openState = core.openLegacyRhythmGame({
+    beats: beats,
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    startTimeMs: 1000
+  });
+  assert.strictEqual(openState.activeFlow, "legacy_rhythm_game");
+  assert.strictEqual(openState.activeScreen, "home");
+  assert.strictEqual(openState.activeTab, "rhythm");
+  assert.strictEqual(openState.legacyRhythmActive, true);
+  assert.strictEqual(openState.transport.status, "running");
+
+  var tickState = core.syncLegacyRhythmRuntimeState({
+    active: true,
+    beats: [{ time: 0, type: "D", hit: true, result: "perfect" }],
+    score: 175,
+    combo: 2,
+    maxCombo: 4,
+    startTimeMs: 1000
+  });
+  assert.strictEqual(tickState.legacyRhythmScore, 175);
+  assert.strictEqual(tickState.legacyRhythmCombo, 2);
+  assert.strictEqual(tickState.legacyRhythmMaxCombo, 4);
+  assert.strictEqual(tickState.transport.status, "running");
+
+  var completeState = core.completeLegacyRhythmGame({
+    beats: [{ time: 0, type: "D", hit: true, result: "perfect" }],
+    score: 175,
+    combo: 0,
+    maxCombo: 4,
+    startTimeMs: 1000,
+    results: { score: 175, accuracy: 100, maxCombo: 4, total: 1, hits: 1 }
+  });
+  assert.strictEqual(completeState.legacyRhythmActive, false);
+  assert.strictEqual(completeState.legacyRhythmScore, 175);
+  assert.deepStrictEqual(completeState.legacyRhythmResults, { score: 175, accuracy: 100, maxCombo: 4, total: 1, hits: 1 });
+  assert.strictEqual(completeState.transport.status, "completed");
+});
+
 test("legacy session and drill pages can fall back to SparkCore practice runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
@@ -650,6 +694,57 @@ test("runner pages can fall back to SparkCore runner runtime state", function() 
   var resultsHtml = runnerResultsPage();
   assert.ok(resultsHtml.indexOf("Game Over!") >= 0);
   assert.ok(resultsHtml.indexOf(">220<") >= 0);
+});
+
+test("rhythm pages can fall back to SparkCore rhythm runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  S.rhythmActive = undefined;
+  S.rhythmBeats = undefined;
+  S.rhythmScore = undefined;
+  S.rhythmCombo = undefined;
+  S.rhythmMaxCombo = undefined;
+  S.rhythmStartTime = undefined;
+  S.rhythmResults = null;
+  S.rhythmBpm = 90;
+
+  eval(loadJS("js/pages/games.js"));
+
+  var rhythmStart = performance.now();
+
+  core.openLegacyRhythmGame({
+    beats: [{ time: 1000, type: "D", hit: false, result: null }],
+    score: 0,
+    combo: 0,
+    maxCombo: 0,
+    startTimeMs: rhythmStart
+  });
+  core.syncLegacyRhythmRuntimeState({
+    active: true,
+    beats: [{ time: 1000, type: "D", hit: false, result: null }],
+    score: 175,
+    combo: 2,
+    maxCombo: 4,
+    startTimeMs: rhythmStart
+  });
+  var rhythmHtml = rhythmGamePage();
+  assert.ok(rhythmHtml.indexOf(">175<") >= 0);
+  assert.ok(rhythmHtml.indexOf(">2x<") >= 0);
+  assert.ok(rhythmHtml.indexOf("rhythm-beat") >= 0);
+
+  S.rhythmResults = null;
+  core.completeLegacyRhythmGame({
+    beats: [{ time: 0, type: "D", hit: true, result: "perfect" }],
+    score: 175,
+    combo: 0,
+    maxCombo: 4,
+    startTimeMs: performance.now(),
+    results: { score: 175, accuracy: 100, maxCombo: 4, total: 1, hits: 1 }
+  });
+  var resultsHtml = rhythmResultsPage();
+  assert.ok(resultsHtml.indexOf("Results!") >= 0);
+  assert.ok(resultsHtml.indexOf(">175<") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {

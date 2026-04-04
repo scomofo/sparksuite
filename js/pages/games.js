@@ -1,9 +1,26 @@
 // ===== ChordSpark: Game tabs =====
 
 // ===== RHYTHM GAME TAB =====
+function getLegacyRhythmRuntime(){
+  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  return {
+    active: typeof S.rhythmActive === "boolean" ? S.rhythmActive : !!(runtime && runtime.legacyRhythmActive),
+    beats: Array.isArray(S.rhythmBeats) ? S.rhythmBeats : (runtime && Array.isArray(runtime.legacyRhythmBeats) ? runtime.legacyRhythmBeats : []),
+    score: typeof S.rhythmScore === "number" ? S.rhythmScore : (runtime && typeof runtime.legacyRhythmScore === "number" ? runtime.legacyRhythmScore : 0),
+    combo: typeof S.rhythmCombo === "number" ? S.rhythmCombo : (runtime && typeof runtime.legacyRhythmCombo === "number" ? runtime.legacyRhythmCombo : 0),
+    maxCombo: typeof S.rhythmMaxCombo === "number" ? S.rhythmMaxCombo : (runtime && typeof runtime.legacyRhythmMaxCombo === "number" ? runtime.legacyRhythmMaxCombo : 0),
+    startTimeMs: typeof S.rhythmStartTime === "number" ? S.rhythmStartTime : (runtime && typeof runtime.legacyRhythmStartTimeMs === "number" ? runtime.legacyRhythmStartTimeMs : 0),
+    results: S.rhythmResults || (runtime ? runtime.legacyRhythmResults : null)
+  };
+}
+
 function rhythmTab(){
-  if(S.rhythmResults)return rhythmResultsPage();
-  if(S.rhythmActive)return rhythmGamePage();
+  var runtime = getLegacyRhythmRuntime();
+  if(runtime.results)return rhythmResultsPage();
+  if(runtime.active)return rhythmGamePage();
   var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Game &#129345;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Tap in time with the beat!</p>';
   h+='<div class="card"><div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
   h+='<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px"><button onclick="act(\'rhythmBpm\',\''+(S.rhythmBpm-10)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">-</button>';
@@ -15,17 +32,18 @@ function rhythmTab(){
 }
 
 function rhythmGamePage(){
-  var elapsed=performance.now()-S.rhythmStartTime;
+  var runtime = getLegacyRhythmRuntime();
+  var elapsed=performance.now()-runtime.startTimeMs;
   var h='<div class="text-center"><h2 style="font-size:18px;font-weight:900;color:var(--text-primary);margin:0 0 8px">&#129345; Tap on the beat!</h2>';
   h+='<div style="display:flex;justify-content:center;gap:20px;margin-bottom:12px">';
-  h+='<div><div style="font-size:24px;font-weight:900;color:#FFE66D">'+S.rhythmScore+'</div><div style="font-size:10px;color:var(--text-muted)">Score</div></div>';
-  h+='<div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+S.rhythmCombo+'x</div><div style="font-size:10px;color:var(--text-muted)">Combo</div></div></div>';
+  h+='<div><div style="font-size:24px;font-weight:900;color:#FFE66D">'+runtime.score+'</div><div style="font-size:10px;color:var(--text-muted)">Score</div></div>';
+  h+='<div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+runtime.combo+'x</div><div style="font-size:10px;color:var(--text-muted)">Combo</div></div></div>';
 
   // Lane visualization
   h+='<div class="rhythm-lane"><div class="rhythm-hit-zone"></div>';
   var laneW=400;
-  for(var i=0;i<S.rhythmBeats.length;i++){
-    var b=S.rhythmBeats[i];
+  for(var i=0;i<runtime.beats.length;i++){
+    var b=runtime.beats[i];
     if(b.hit)continue; // Already hit
     var timeUntil=b.time-elapsed;
     var pct=40+(timeUntil/3000)*360; // 40px = hit zone, scrolls from right
@@ -40,7 +58,8 @@ function rhythmGamePage(){
 }
 
 function rhythmResultsPage(){
-  var r=S.rhythmResults;
+  var runtime = getLegacyRhythmRuntime();
+  var r=runtime.results;
   var h='<div class="text-center" style="padding-top:20px"><div style="font-size:56px;animation:bn .6s ease">&#129345;</div>';
   h+='<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Results!</h2>';
   h+='<div class="card mb16" style="margin-top:12px"><div style="display:flex;justify-content:space-around;text-align:center">';

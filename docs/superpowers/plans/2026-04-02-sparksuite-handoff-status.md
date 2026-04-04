@@ -494,6 +494,7 @@ Primary source plans:
 - Legacy daily challenge runtime now has explicit core-backed timer/completion state too, and the daily page can render the migrated countdown instead of depending only on shell `S.dailyTimer` / `S.dailyComplete`.
 - Legacy daily challenge return/home flow now has an explicit core-backed navigation helper too, so daily exit behavior is no longer just a generic shell back/tab jump.
 - Chord Runner runtime now has explicit core-backed active/score/target/results state too, and the shared runner pages can fall back to the migrated runtime instead of relying only on shell `S.runner*` fields.
+- Legacy rhythm mini-game runtime now has explicit core-backed active/score/beats/results state too, and the shared rhythm pages can fall back to the migrated runtime instead of relying only on shell `S.rhythm*` fields.
   - `js/app.js`
   - `js/pages/session.js`
   - `js/sparksuite/core/spark_core.js`
