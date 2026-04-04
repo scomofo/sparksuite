@@ -132,6 +132,9 @@ function fingerExerciseCard(){
   var fingerExActive = typeof S.fingerExActive === "boolean" ? S.fingerExActive : !!(runtime && runtime.legacyFingerExerciseActive);
   var fingerExId = typeof S.fingerExId === "string" ? S.fingerExId : (runtime ? runtime.legacyFingerExerciseId : null);
   var fingerExTimer = typeof S.fingerExTimer === "number" ? S.fingerExTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : 0);
+  var fingerExCount = typeof S.fingerExCount === "number"
+    ? S.fingerExCount
+    : (runtime && typeof runtime.legacyFingerExerciseCount === "number" ? runtime.legacyFingerExerciseCount : 0);
   var h='<div class="card" style="margin-top:12px">';
   h+='<h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#9995; Finger Exercises</h3>';
 
@@ -147,6 +150,7 @@ function fingerExerciseCard(){
       h+='<div style="font-size:20px;font-weight:900;color:#FF6B6B">'+m+':'+(s<10?'0':'')+s+'</div>';
       h+='</div>';
       h+='<p style="margin:0 0 8px;font-size:12px;color:var(--text-secondary);line-height:1.5">'+escHTML(ex.desc)+'</p>';
+      if(fingerExCount>0)h+='<div style="font-size:11px;color:#4ECDC4;font-weight:700;margin-bottom:6px">&#9989; Completed '+fingerExCount+'x</div>';
       if(ex.goal)h+='<div style="font-size:11px;color:#4ECDC4;font-weight:700">&#127919; '+escHTML(ex.goal)+'</div>';
       h+='<button onclick="act(\'stopFingerEx\')" style="margin-top:8px;background:#FF6B6B;color:#fff;padding:6px 16px;border-radius:10px;font-size:12px;font-weight:700">&#9632; Stop</button>';
       h+='</div>';
@@ -169,6 +173,9 @@ function fingerExerciseCard(){
     for(var ei=0;ei<exs.length;ei++){
       var ex=exs[ei];
       var done=(S.fingerStats&&S.fingerStats[ex.id])||0;
+      if(!done&&runtime&&runtime.legacyFingerExerciseId===ex.id&&typeof runtime.legacyFingerExerciseCount==="number"){
+        done=runtime.legacyFingerExerciseCount;
+      }
       var m=Math.floor(ex.duration/60),s=ex.duration%60;
       h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;'+(ei>0?'border-top:1px solid var(--border);':'')+'">';
       h+='<div style="flex:1">';

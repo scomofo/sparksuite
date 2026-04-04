@@ -321,6 +321,18 @@ test("SparkCore can open legacy practice session and drill runtime explicitly", 
   assert.strictEqual(fingerState.legacyFingerExerciseActive, true);
   assert.strictEqual(fingerState.transport.status, "running");
 
+  var completedFingerState = core.completeLegacyFingerExercise({
+    exerciseId: "spider_walk",
+    durationSec: 90,
+    exerciseCount: 3
+  });
+  assert.strictEqual(completedFingerState.activeFlow, "legacy_finger_exercise");
+  assert.strictEqual(completedFingerState.legacyFingerExerciseId, "spider_walk");
+  assert.strictEqual(completedFingerState.legacyFingerExerciseActive, false);
+  assert.strictEqual(completedFingerState.legacyFingerExerciseCount, 3);
+  assert.strictEqual(completedFingerState.legacyPracticeRemainingSec, 0);
+  assert.strictEqual(completedFingerState.transport.status, "completed");
+
   var completedSessionState = core.completeLegacyPracticeSession({
     mode: "chord",
     chordName: "C",
@@ -1270,6 +1282,17 @@ test("finger exercise card can fall back to SparkCore finger exercise runtime st
   assert.ok(cardHtml.indexOf("Spider Walk") >= 0);
   assert.ok(cardHtml.indexOf("1:30") >= 0);
   assert.ok(cardHtml.indexOf("Stop") >= 0);
+
+  S.fingerExActive = undefined;
+  S.fingerExId = undefined;
+  S.fingerExTimer = undefined;
+  core.completeLegacyFingerExercise({
+    exerciseId: "spider_walk",
+    durationSec: 90,
+    exerciseCount: 3
+  });
+  cardHtml = fingerExerciseCard();
+  assert.ok(cardHtml.indexOf("3x") >= 0);
 });
 
 test("strum page can fall back to SparkCore strum runtime state", function() {
@@ -1339,6 +1362,22 @@ test("quiz page can fall back to SparkCore quiz runtime state", function() {
   assert.ok(quizHtml.indexOf("Not quite!") >= 0);
 });
 
+test("quiz tab can fall back to SparkCore quiz score state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  S.quizCorrect = undefined;
+
+  eval(loadJS("js/pages/practice.js"));
+
+  core.syncLegacyQuizRuntimeState({
+    score: 7,
+    total: 10,
+    streak: 2
+  });
+  var quizTabHtml = quizTab();
+  assert.ok(quizTabHtml.indexOf("Correct: <strong>7</strong>") >= 0);
+});
+
 test("ear training page can fall back to SparkCore ear training runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
@@ -1376,6 +1415,51 @@ test("ear training page can fall back to SparkCore ear training runtime state", 
   var answeredHtml = earTrainPage();
   assert.ok(answeredHtml.indexOf("3/6") >= 0);
   assert.ok(answeredHtml.indexOf("It was C Major") >= 0);
+});
+
+test("song detail page uses SparkCore song runtime for active playback rendering", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.strumHandSVG = function(direction, active) { return "<div>" + direction + ":" + active + "</div>"; };
+  global.strumHTML = function(pattern, beat) { return "<div>" + pattern.join("-") + "|" + beat + "</div>"; };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            ALL_CHORDS: [{ name: "C", short: "C" }, { name: "G", short: "G" }]
+          };
+        },
+        ui: {
+          chord: function(chord) { return "<div>" + chord.name + "</div>"; }
+        }
+      };
+    }
+  };
+  S.selectedSong = undefined;
+  S.songPlaying = undefined;
+  S.songBeat = undefined;
+  S.strumTone = "classic";
+
+  eval(loadJS("js/pages/session.js"));
+
+  core.openSongSession({
+    songData: {
+      title: "Fire Road",
+      artist: "Spark Suite",
+      bpm: 96,
+      chords: ["C", "G"],
+      progression: ["C", "G", "C", "G"],
+      pattern: ["D", "D", "U", "U"]
+    },
+    source: "builtin"
+  });
+  core.syncSongRuntimeState("play", { songBeat: 2 });
+  var songHtml = songDetailPage();
+  assert.ok(songHtml.indexOf("U:true") >= 0);
+  assert.ok(songHtml.indexOf("D-D-U-U|2") >= 0);
+  assert.ok(songHtml.indexOf("Pause") >= 0);
 });
 
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
