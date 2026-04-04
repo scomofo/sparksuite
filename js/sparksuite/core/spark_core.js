@@ -14,7 +14,32 @@
     this.performanceEditorDocument = null;
     this.performanceEditorLibrary = [];
     this.runtimeState = this.createInitialRuntimeState();
+    this.persistedState = {};
   }
+
+  // --- Persisted state accessors ---
+  SparkCore.prototype.getPersistedState = function() {
+    return this.persistedState;
+  };
+
+  SparkCore.prototype.updatePersistedState = function(patch) {
+    if (!patch || typeof patch !== "object") return;
+    for (var key in patch) {
+      if (Object.prototype.hasOwnProperty.call(patch, key)) {
+        this.persistedState[key] = patch[key];
+      }
+    }
+  };
+
+  /** Shorthand read from persistedState */
+  SparkCore.prototype.p = function(key) {
+    return this.persistedState[key];
+  };
+
+  /** Shorthand read from runtimeState */
+  SparkCore.prototype.r = function(key) {
+    return this.runtimeState[key];
+  };
 
   SparkCore.prototype.cloneValue = function(value) {
     if (value == null) return value;

@@ -1,3 +1,12 @@
+// ===== HYDRATE sparkCore.persistedState from S =====
+(function() {
+  if (!window.sparkCore) return;
+  for (var i = 0; i < PERSIST_FIELDS.length; i++) {
+    var k = PERSIST_FIELDS[i];
+    if (S[k] !== undefined) window.sparkCore.persistedState[k] = S[k];
+  }
+})();
+
 // ===== TIMERS =====
 function tickS(){
   if(S.timerActive&&S.timer>0){

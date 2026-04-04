@@ -351,6 +351,14 @@ function saveState(immediate){
 }
 function _doSave(){
   try{
+    // Sync sparkCore.persistedState back to S before saving
+    if(window.sparkCore && window.sparkCore.persistedState){
+      var ps=window.sparkCore.persistedState;
+      for(var i=0;i<PERSIST_FIELDS.length;i++){
+        var k=PERSIST_FIELDS[i];
+        if(ps[k]!==undefined) S[k]=ps[k];
+      }
+    }
     var data=buildPersistedStateSnapshot(S,PERSIST_FIELDS);
     // Cap history at 500 entries
     if(data.history) data.history=capArray(data.history,500);
@@ -373,6 +381,13 @@ function loadState(){
     // Ensure transient UI state has sane defaults
     if(!S.screen)S.screen=SCR.HOME;
     if(!S.tab)S.tab=TAB.PRACTICE;
+    // Hydrate sparkCore.persistedState from S
+    if(window.sparkCore){
+      for(var i=0;i<PERSIST_FIELDS.length;i++){
+        var k=PERSIST_FIELDS[i];
+        if(S[k]!==undefined) window.sparkCore.persistedState[k]=S[k];
+      }
+    }
   }catch(e){console.error("ChordSpark: loadState failed — data may be corrupted",e);}
 }
 
