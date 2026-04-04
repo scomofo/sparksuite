@@ -445,6 +445,33 @@ test("SparkCore can open and sync strum runtime state explicitly", function() {
   assert.strictEqual(stopState.transport.status, "idle");
 });
 
+test("SparkCore can sync quiz runtime state explicitly", function() {
+  var core = createDefaultSparkCore();
+  var question = { name: "C Major", short: "C" };
+  var options = [
+    { name: "C Major", short: "C" },
+    { name: "G Major", short: "G" }
+  ];
+
+  var openState = core.syncLegacyQuizRuntimeState({
+    question: question,
+    options: options,
+    answer: null
+  });
+  assert.strictEqual(openState.activeFlow, "legacy_quiz");
+  assert.strictEqual(openState.activeScreen, "quiz");
+  assert.strictEqual(openState.activeTab, "quiz");
+  assert.deepStrictEqual(openState.legacyQuizQuestion, question);
+  assert.deepStrictEqual(openState.legacyQuizOptions, options);
+  assert.strictEqual(openState.legacyQuizAnswer, null);
+
+  var answerState = core.syncLegacyQuizRuntimeState({
+    answer: "G Major"
+  });
+  assert.strictEqual(answerState.legacyQuizAnswer, "G Major");
+  assert.deepStrictEqual(answerState.legacyQuizOptions, options);
+});
+
 test("SparkCore can open, sync, and complete legacy daily challenge runtime explicitly", function() {
   var core = createDefaultSparkCore();
 
@@ -1259,6 +1286,42 @@ test("strum page can fall back to SparkCore strum runtime state", function() {
   assert.ok(strumHtml.indexOf("76 BPM") >= 0);
   assert.ok(strumHtml.indexOf("D-D-U-U-D-U|2") >= 0);
   assert.ok(strumHtml.indexOf("Stop") >= 0);
+});
+
+test("quiz page can fall back to SparkCore quiz runtime state", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  global.clickableDiv = function() { return ""; };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        ui: {
+          chord: function(chord) { return "<div>" + chord.name + "</div>"; }
+        }
+      };
+    }
+  };
+  S.quizQ = undefined;
+  S.quizOpts = undefined;
+  S.quizAns = undefined;
+  S.quizScore = 2;
+  S.quizTotal = 3;
+  S.quizStreak = 1;
+
+  eval(loadJS("js/pages/session.js"));
+
+  core.syncLegacyQuizRuntimeState({
+    question: { name: "C Major", short: "C" },
+    options: [
+      { name: "C Major", short: "C" },
+      { name: "G Major", short: "G" }
+    ],
+    answer: "G Major"
+  });
+  var quizHtml = quizPage();
+  assert.ok(quizHtml.indexOf("C Major?") >= 0);
+  assert.ok(quizHtml.indexOf("G Major") >= 0);
+  assert.ok(quizHtml.indexOf("Not quite!") >= 0);
 });
 
 test("ear training page can fall back to SparkCore ear training runtime state", function() {

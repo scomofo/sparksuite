@@ -55,6 +55,9 @@
       legacyStrumPattern: null,
       legacyStrumActive: false,
       legacyStrumBeat: -1,
+      legacyQuizQuestion: null,
+      legacyQuizOptions: [],
+      legacyQuizAnswer: null,
       legacyEarTrainQuestion: null,
       legacyEarTrainOptions: [],
       legacyEarTrainAnswer: null,
@@ -549,6 +552,24 @@
           : ((this.runtimeState.transport && this.runtimeState.transport.status) || "idle"),
         positionMs: 0
       }
+    });
+  };
+
+  SparkCore.prototype.syncLegacyQuizRuntimeState = function(options) {
+    options = options || {};
+    return this.updateRuntimeState({
+      activeFlow: this.runtimeState.activeFlow || "legacy_quiz",
+      activeScreen: this.runtimeState.activeScreen || "quiz",
+      activeTab: "quiz",
+      legacyQuizQuestion: Object.prototype.hasOwnProperty.call(options, "question")
+        ? this.cloneValue(options.question)
+        : this.cloneValue(this.runtimeState.legacyQuizQuestion),
+      legacyQuizOptions: Object.prototype.hasOwnProperty.call(options, "options")
+        ? this.cloneValue(options.options || [])
+        : this.cloneValue(this.runtimeState.legacyQuizOptions || []),
+      legacyQuizAnswer: Object.prototype.hasOwnProperty.call(options, "answer")
+        ? options.answer
+        : this.runtimeState.legacyQuizAnswer
     });
   };
 

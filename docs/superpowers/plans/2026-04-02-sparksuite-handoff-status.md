@@ -564,6 +564,12 @@ Primary source plans:
   - `js/pages/session.js`
   - `js/sparksuite/core/spark_core.js`
   - `tests/test_sparksuite_core_migration.js`
+- Quiz runtime now has explicit core-backed question/options/answer state too, and the quiz page can fall back to the migrated runtime instead of relying only on shell `S.quizQ / S.quizOpts / S.quizAns`.
+  - `js/app.js`
+  - `js/instruments/guitar/app.js`
+  - `js/pages/session.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
 - Ukulele launcher support is live, but deeper performance/song-library parity is still early.
   - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
   - Broader dedicated song/chart coverage, richer module-specific screens, and deeper gameplay parity can still expand
