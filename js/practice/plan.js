@@ -74,7 +74,7 @@
 
   function getNextPracticeItem(){
     if(!S.practicePlan) generateDailyPracticePlan();
-
+    if(!S.practicePlan || !S.practicePlan.items) return null;
     for(var i=0;i<S.practicePlan.items.length;i++){
       if(!S.practicePlan.items[i].completed){
         return S.practicePlan.items[i];
@@ -96,7 +96,7 @@
       });
     }
 
-    if(!S.practicePlan) return;
+    if(!S.practicePlan || !S.practicePlan.items) return;
 
     for(var i=0;i<S.practicePlan.items.length;i++){
       if(S.practicePlan.items[i].id===id){

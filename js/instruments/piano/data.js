@@ -1589,10 +1589,13 @@ var _exports = {
   BADGES:BADGES, REWARD_PHASES:REWARD_PHASES, SCALES:SCALES, FINGER_EXERCISES:FINGER_EXERCISES,
   CHORDS:CHORDS, SONGS:SONGS, SESSION_PLANS:SESSION_PLANS, CURRICULUM:CURRICULUM,
   LC:LC, LN:LN, PLAY_STYLES:PLAY_STYLES, CHORD_COLORS:CHORD_COLORS, INJURY_TIPS:INJURY_TIPS,
-  LH_PATTERNS:LH_PATTERNS, TRANSITION_TIPS:TRANSITION_TIPS, PLACEMENT_TESTS:PLACEMENT_TESTS,
+  LH_PATTERNS:LH_PATTERNS, PLACEMENT_TESTS:PLACEMENT_TESTS,
   STYLE_PREFS:STYLE_PREFS, CHORD_NOTES:CHORD_NOTES, NOTE_NAMES:NOTE_NAMES, FLAT_NAMES:FLAT_NAMES
 };
 for (var _k in _exports) { if (_exports.hasOwnProperty(_k) && typeof window[_k] === "undefined") window[_k] = _exports[_k]; }
+// TRANSITION_TIPS: stored under a piano-specific global because js/data.js
+// unconditionally declares its own guitar TRANSITION_TIPS after this file loads.
+window.PIANO_TRANSITION_TIPS = TRANSITION_TIPS;
 
 // Chord/data helper functions needed by piano pages and app engine
 window.allChordKeys = allChordKeys;

@@ -2025,6 +2025,7 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="guidedStop"){
+    clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.metro);clearInterval(T.strum);
     if(S.metronomeOn)stopMetronome();
     applyGuidedNavigationRequest("guided_home");
     S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();return;
@@ -3753,7 +3754,7 @@ function _renderInner(){
   if(S.showShortcuts)h+=shortcutOverlay();
 
   // Onboarding overlay — shown once on first launch
-  if(!S.onboardingDone){
+  if(!S.onboardingDone && !S.activeInstrument){
     h+='<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
     h+='<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
     h+='<h1 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Welcome to SparkSuite!</h1>';
@@ -3974,4 +3975,4 @@ document.getElementById("app").style.display="block";
 // Activate remembered instrument
 if(S.activeInstrument){try{SparkInstruments.activate(S.activeInstrument);}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
 try{if(typeof choosePerformanceDailyChallenge==="function")choosePerformanceDailyChallenge();}catch(e){}
-render();
+// render() moved to index.html after all instrument pages register

@@ -27,7 +27,8 @@ function renderHomeRecommendationCard(arr){
   var h = '<div class="card">';
   h += '<div><b>Recommended Next</b></div>';
   for(var i=0;i<arr.length;i++){
-    h += '<div>'+escHTML(arr[i].title)+'</div>';
+    if(!arr[i]) continue;
+    h += '<div>'+escHTML(arr[i].title || '')+'</div>';
     h += renderHomeRecommendationDetail(arr[i]);
   }
   h += '<button onclick="act(\'openRecommendations\')">View</button>';

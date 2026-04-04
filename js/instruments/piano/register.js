@@ -127,6 +127,25 @@
         if (S.reverbAmount === undefined) S.reverbAmount = 0.3;
         if (S.tone === undefined) S.tone = "grand";
         if (S.metronomeSound === undefined) S.metronomeSound = "click";
+        // Session tracking
+        if (S.completedSessions === undefined) S.completedSessions = [];
+        if (S.lastReviewChords === undefined) S.lastReviewChords = [];
+        if (S.sessions === undefined) S.sessions = 0;
+        if (S.adaptiveBpm === undefined) S.adaptiveBpm = 72;
+        if (S.songsDone === undefined) S.songsDone = [];
+        // Reward engine
+        if (S.totalActions === undefined) S.totalActions = 0;
+        if (S.actionsSinceReward === undefined) S.actionsSinceReward = 0;
+        if (S.nextRewardAt === undefined) S.nextRewardAt = 2;
+        if (S.jackpotsHit === undefined) S.jackpotsHit = 0;
+        // Activity counters
+        if (S.drillsDone === undefined) S.drillsDone = 0;
+        if (S.dailiesDone === undefined) S.dailiesDone = 0;
+        if (S.fingerExercisesDone === undefined) S.fingerExercisesDone = 0;
+        if (S.fingerDaysLogged === undefined) S.fingerDaysLogged = 0;
+        // Build mode
+        if (S.buildChords === undefined) S.buildChords = [];
+        if (S.buildPlaying === undefined) S.buildPlaying = false;
       }
     },
 

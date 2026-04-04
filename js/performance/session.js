@@ -347,6 +347,7 @@ function updatePerformanceFrame() {
   }
 
   // Check if past end of chart
+  if (!S.performChart || !S.performChart.phrases || !S.performChart.phrases.length) { finishPerformance(); return; }
   var lastPhrase = S.performChart.phrases[S.performChart.phrases.length - 1];
   if (lastPhrase && nowSec > lastPhrase.endSec + 1) {
     finishPerformance();
@@ -361,7 +362,7 @@ function _updatePerformDisplay() {
   // Initialize canvas highway on first frame
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas) {
-    ensureSparkHighway(canvas);
+    if (S.performChart) { feedChartToHighway(S.performChart); }
     feedChartToHighway(S.performChart);
     updateSparkHighway(S.performCurrentSec, S.performCombo);
   }

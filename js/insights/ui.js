@@ -27,12 +27,12 @@ function renderStrengthWeaknessCard(pi){
   h += '<div style="margin-top:8px"><b>Strongest</b></div>';
   var strong = pi.strongestSkills || [];
   for(var i=0;i<strong.length;i++){
-    h += '<div>'+escHTML(strong[i].bucket + ': ' + strong[i].id)+' — '+Math.round((strong[i].value || 0)*100)+'%</div>';
+    h += '<div>'+escHTML((strong[i].bucket || '') + ': ' + (strong[i].id || ''))+'  '+Math.round((strong[i].value || 0)*100)+'%</div>';
   }
   h += '<div style="margin-top:8px"><b>Weakest</b></div>';
   var weak = pi.weakestSkills || [];
   for(var j=0;j<weak.length;j++){
-    h += '<div>'+escHTML(weak[j].bucket + ': ' + weak[j].id)+' — '+Math.round((weak[j].value || 0)*100)+'%</div>';
+    h += '<div>'+escHTML((weak[j].bucket || '') + ': ' + (weak[j].id || ''))+'  '+Math.round((weak[j].value || 0)*100)+'%</div>';
   }
   h += '</div>';
   return h;
@@ -70,7 +70,7 @@ function renderRecommendationInsightCard(pi){
 function prettyFocusedTechniqueInsight(insight){
   if(!insight) return "";
   var songLabel = String(insight.songId || "song").replace(/_/g, " ");
-  return insight.techniqueLabel + " is still at " + insight.accuracy + "% in " + songLabel;
+  return (insight.techniqueLabel || "skill") + " is still at " + (insight.accuracy || 0) + "% in " + songLabel;
 }
 
 function renderCareerInsightCard(pi){

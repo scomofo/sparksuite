@@ -1,25 +1,42 @@
 (function(){
 
+  function _ensureCP(){
+    if(typeof ensureCareerProgress === "function") ensureCareerProgress();
+    else{
+      if(!S.careerProgress) S.careerProgress = {};
+      if(!S.careerProgress.unlockedTiers) S.careerProgress.unlockedTiers = {};
+      if(!S.careerProgress.unlockedStages) S.careerProgress.unlockedStages = {};
+      if(!S.careerProgress.unlockedSongs) S.careerProgress.unlockedSongs = {};
+      if(!S.careerProgress.songRatings) S.careerProgress.songRatings = {};
+      if(!S.careerProgress.stageCompletion) S.careerProgress.stageCompletion = {};
+    }
+  }
+
   function unlockCareerTier(id){
+    _ensureCP();
     S.careerProgress.unlockedTiers[id] = true;
     saveState();
   }
 
   function unlockCareerStage(id){
+    _ensureCP();
     S.careerProgress.unlockedStages[id] = true;
     saveState();
   }
 
   function unlockCareerSong(id){
+    _ensureCP();
     S.careerProgress.unlockedSongs[id] = true;
     saveState();
   }
 
   function isCareerSongUnlocked(id){
+    _ensureCP();
     return !!S.careerProgress.unlockedSongs[id];
   }
 
   function evaluateCareerUnlocks(careerId){
+    _ensureCP();
     var career = getCareerItem("careers", careerId || S.activeCareerId);
     if(!career) return;
     for(var t=0;t<career.tiers.length;t++){
@@ -42,6 +59,7 @@
   }
 
   function checkStageCompletion(stageId){
+    _ensureCP();
     var stage = getCareerItem("stages", stageId);
     if(!stage) return false;
     for(var i=0;i<(stage.songs || []).length;i++){
@@ -55,6 +73,7 @@
   }
 
   function hasSongClearedCareer(songId){
+    _ensureCP();
     var ratings = S.careerProgress.songRatings || {};
     for(var key in ratings){
       if(key.indexOf(String(songId) + "::") === 0 && (ratings[key].bestStars || 0) >= 2){

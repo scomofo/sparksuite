@@ -1,7 +1,12 @@
 (function(){
 
+  function _ensureCloudSync(){
+    if(!S.cloudSync) S.cloudSync = { lastSyncStatus: null, lastSyncAt: 0, dirtyKeys: [] };
+  }
+
   async function syncSparkNow(){
     if(!isLoggedInSpark()) return false;
+    _ensureCloudSync();
     try{
       S.cloudSync.lastSyncStatus = "syncing";
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing" });
@@ -36,6 +41,7 @@
 
   async function pullSparkCloud(){
     if(!isLoggedInSpark()) return false;
+    _ensureCloudSync();
     try{
       S.cloudSync.lastSyncStatus = "syncing";
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing" });

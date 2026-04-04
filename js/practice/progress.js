@@ -6,6 +6,7 @@
       SparkProgressBridge.applyPracticeSessionRecord(result);
     }else{
       result.ts = Date.now();
+      if(!Array.isArray(S.practiceHistory)) S.practiceHistory = [];
       S.practiceHistory.push(result);
       updatePracticeTime(result.durationMin || 0);
       updatePracticeStreak();
@@ -15,8 +16,8 @@
 
   function updatePracticeTime(minutes){
     if(!minutes) return;
-    S.totalPracticeMinutes += minutes;
-    S.todayPracticeMinutes += minutes;
+    S.totalPracticeMinutes = (S.totalPracticeMinutes || 0) + minutes;
+    S.todayPracticeMinutes = (S.todayPracticeMinutes || 0) + minutes;
   }
 
   function updatePracticeStreak(){

@@ -13,7 +13,7 @@
         h += '<div style="padding:8px 0;border-top:' + (c ? '1px solid var(--border)' : '0') + ';display:flex;justify-content:space-between;align-items:center;gap:10px">';
         h += '<div><div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(charts[c].title) + '</div>';
         h += '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(charts[c].artist || "") + ' | ' + escHTML(String(charts[c].bpm || "--")) + ' BPM</div></div>';
-        h += '<button class="btn btn-sm" onclick="act(\'openPerform\',\'' + charts[c].id + '\')" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff">Perform</button>';
+        h += '<button class="btn btn-sm" onclick="act(\'openPerform\',\'' + escHTML(charts[c].id) + '\')" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff">Perform</button>';
         h += '</div>';
       }
       h += '</div>';
@@ -123,6 +123,20 @@
         var profile = SparkStorage.load();
         SparkProfile.ensureApp(profile, "bassspark", "bass");
         SparkStorage.save(profile);
+      }
+      if (typeof S !== "undefined") {
+        if (S.completedGuidedSessions === undefined) S.completedGuidedSessions = [];
+        if (S.chordProgress === undefined) S.chordProgress = {};
+        if (S.transitionStats === undefined) S.transitionStats = {};
+        if (S.drillAdaptiveBpm === undefined) S.drillAdaptiveBpm = 60;
+        if (S.drillConsecutiveFast === undefined) S.drillConsecutiveFast = 0;
+        if (S.drillConsecutiveSlow === undefined) S.drillConsecutiveSlow = 0;
+        if (S.drillLastSwitchTime === undefined) S.drillLastSwitchTime = 0;
+        if (S.guidedSession === undefined) S.guidedSession = 1;
+        if (S.guidedPlan === undefined) S.guidedPlan = null;
+        if (S.guidedStep === undefined) S.guidedStep = null;
+        if (S.newMovePhase === undefined) S.newMovePhase = null;
+        if (S.guidedPaused === undefined) S.guidedPaused = false;
       }
     },
 

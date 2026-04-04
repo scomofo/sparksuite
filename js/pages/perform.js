@@ -317,7 +317,7 @@ function performDonePage() {
 
   // Previous best
   var songKey = runtimeState && runtimeState.performanceChartId ? runtimeState.performanceChartId : (S.performChartId || "unknown");
-  var prevBest = S.performSongStats[songKey];
+  var prevBest = (S.performSongStats && S.performSongStats[songKey]) || null;
   if (prevBest && prevBest.runs > 1) {
     h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Previous best: ' + prevBest.bestScore + ' pts / ' + prevBest.bestAccuracy + '% / ' + prevBest.bestStars + ' stars (' + prevBest.runs + ' runs)</div>';
   }

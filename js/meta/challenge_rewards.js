@@ -5,6 +5,8 @@
     if(!ch || !ch.completed || ch.claimed) return false;
     applyChallengeRewards(ch);
     ch.claimed = true;
+    if(!S.challengeRewards) S.challengeRewards = { claimed: {}, packClaimed: {}, eventClaimed: {} };
+    if(!S.challengeRewards.claimed) S.challengeRewards.claimed = {};
     S.challengeRewards.claimed[ch.id] = true;
     saveState();
     return true;

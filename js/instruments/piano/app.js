@@ -1046,10 +1046,12 @@ function act(action, param) {
 
     case "stop_session":
       if (S.screen === SCR.SESSION) {
-        // Stop guided session
+        // Stop guided session — clear both guided and legacy timers
         if (T.sessionStep) { clearInterval(T.sessionStep); T.sessionStep = null; }
+        if (T.session) { clearInterval(T.session); T.session = null; }
         stopMetronome(); stopLHPattern(); stopWatchDemo();
         if (S.detecting) stopDetection();
+        S.active = false;
         S.screen = SCR.HOME;
         S.sessionStep = null;
         S.sessionPlan = null;
