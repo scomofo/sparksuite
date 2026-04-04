@@ -167,6 +167,14 @@
     tagline: "Island strums and 4-string flow",
     skin: { laneCount: 4, labels: ["G", "C", "E", "A"] },
     available: true,
+    capabilities: {
+      stringCount: 4,
+      noteLaneType: "string",
+      chordShapeSupport: true,
+      midiInput: false,
+      capoSupport: false,
+      performanceModes: ["rhythm", "song"]
+    },
 
     getData: function() {
       return {
