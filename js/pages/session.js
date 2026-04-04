@@ -207,15 +207,23 @@ function quizPage(){
 }
 
 function strumDetailPage(){
-  var sp=S.selectedStrum;if(!sp)return '';
-  var curBeat=S.strumActive?S._strumBeat:-1;
+  var runtime = null;
+  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+    var view = window.sparkCore.getActiveSessionView();
+    runtime = view && view.runtimeState ? view.runtimeState : null;
+  }
+  var sp = S.selectedStrum || (runtime && runtime.legacyStrumPattern ? runtime.legacyStrumPattern : null); if(!sp)return '';
+  var strumActive = typeof S.strumActive === "boolean" ? S.strumActive : !!(runtime && runtime.legacyStrumActive);
+  var curBeat = strumActive
+    ? (typeof S._strumBeat === "number" ? S._strumBeat : (runtime && typeof runtime.legacyStrumBeat === "number" ? runtime.legacyStrumBeat : -1))
+    : -1;
   var curDir=curBeat>=0?sp.pattern[curBeat]:"x";
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button>';
   h+='<h2 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:8px 0">'+sp.name+'</h2>';
   h+='<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">'+sp.desc+'</p>';
   h+='<div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:20px">'+sp.bpm+' BPM</div>';
   // Strum hand animation
-  h+='<div class="flex-center mb12">'+strumHandSVG(curDir,S.strumActive)+'</div>';
+  h+='<div class="flex-center mb12">'+strumHandSVG(curDir,strumActive)+'</div>';
   h+='<div class="card mb20" style="padding:24px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sp.pattern,curBeat)+'</div></div>';
   // Tone picker
   h+='<div class="card mb16"><h4 style="margin:0 0 8px;font-size:13px;font-weight:800;color:var(--text-primary)">&#127928; Strum Tone</h4><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
@@ -226,7 +234,7 @@ function strumDetailPage(){
     h+='<button onclick="act(\'setTone\',\''+t+'\')" style="padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;background:'+(sel?"#4ECDC4":"var(--input-bg)")+';color:'+(sel?"#fff":"var(--text-muted)")+';border:2px solid '+(sel?"#4ECDC4":"var(--border)")+';transition:all .2s">'+toneLabels[t]+'</button>';
   }
   h+='</div></div>';
-  h+='<button class="btn" onclick="act(\'toggleStrum\')" style="background:'+(S.strumActive?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(S.strumActive?"var(--text-primary)":"#fff")+'">'+(S.strumActive?"&#9208; Stop":"&#9654; Play Pattern")+'</button></div>';
+  h+='<button class="btn" onclick="act(\'toggleStrum\')" style="background:'+(strumActive?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(strumActive?"var(--text-primary)":"#fff")+'">'+(strumActive?"&#9208; Stop":"&#9654; Play Pattern")+'</button></div>';
   return h;
 }
 

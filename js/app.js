@@ -1532,6 +1532,9 @@ window.act=function(a,v){
   if(a==="openStrum"){
     var sp;for(var i=0;i<STRUM_PATTERNS.length;i++)if(STRUM_PATTERNS[i].name===v)sp=STRUM_PATTERNS[i];
     if(sp&&sp.level<=S.level){
+      if(window.sparkCore && typeof window.sparkCore.openLegacyStrumPattern === "function"){
+        window.sparkCore.openLegacyStrumPattern({ pattern: sp });
+      }
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({
           setFields:{selectedStrum:sp,strumActive:false,_strumBeat:-1,screen:SCR.STRUM},
@@ -1546,6 +1549,13 @@ window.act=function(a,v){
   if(a==="toggleStrum"){
     snd("click");
     var nextStrumActive=!S.strumActive;
+    if(window.sparkCore && typeof window.sparkCore.syncLegacyStrumRuntimeState === "function"){
+      window.sparkCore.syncLegacyStrumRuntimeState({
+        pattern: S.selectedStrum,
+        active: nextStrumActive,
+        beat: nextStrumActive ? 0 : -1
+      });
+    }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
         setFields:nextStrumActive?{strumActive:true,_strumBeat:0}:{strumActive:false,_strumBeat:-1},
@@ -1559,7 +1569,18 @@ window.act=function(a,v){
       var p=S.selectedStrum.pattern,ms=60000/S.selectedStrum.bpm/(p.length>4?2:1);
       var _strumChordName=S.currentChord?S.currentChord.name:"E Major";
       if(p[0]!=="x")strumChord(_strumChordName);render();
-      T.strum=setInterval(function(){S._strumBeat=(S._strumBeat+1)%p.length;if(p[S._strumBeat]!=="x")strumChord(_strumChordName);render();},ms);
+      T.strum=setInterval(function(){
+        S._strumBeat=(S._strumBeat+1)%p.length;
+        if(window.sparkCore && typeof window.sparkCore.syncLegacyStrumRuntimeState === "function"){
+          window.sparkCore.syncLegacyStrumRuntimeState({
+            pattern: S.selectedStrum,
+            active: true,
+            beat: S._strumBeat
+          });
+        }
+        if(p[S._strumBeat]!=="x")strumChord(_strumChordName);
+        render();
+      },ms);
     }else{clearInterval(T.strum);S._strumBeat=-1;render();}return;
   }
   // === Songs ===
