@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SparkSuite Smoke Test</title>
+<style>
+  :root { --svg-nut:#333;--svg-fret:#999;--svg-string:#666;--text-muted:#888;--text-primary:#222;--border:#ddd; }
+  body { font-family: system-ui, sans-serif; background:#f5f5f5; padding:24px; }
+  h1 { font-size:22px; margin-bottom:16px; }
+  .test { padding:6px 12px; margin:2px 0; border-radius:6px; font-size:13px; font-family:monospace; }
+  .pass { background:#e8f5e9; color:#2e7d32; }
+  .fail { background:#fce4ec; color:#c62828; }
+  .skip { background:#fff3e0; color:#e65100; }
+  .summary { padding:16px; border-radius:8px; margin-bottom:16px; font-size:15px; font-weight:700; }
+  .summary.ok { background:#e8f5e9; color:#2e7d32; }
+  .summary.bad { background:#fce4ec; color:#c62828; }
+  h2 { font-size:16px; margin:16px 0 8px; color:#333; }
+</style>
+</head>
+<body>
+<h1>SparkSuite Smoke Test</h1>
+<div id="summary" class="summary">Running...</div>
+<div id="results"></div>
+
+<script>
+// Minimal globals needed by some scripts
+window.S = { level:1, chordProgress:{}, streak:0, sessions:0, xp:0, playerLevel:1,
+  earnedBadges:[], mastery:{chords:{},lessons:{}}, completedLessons:[], unlocks:{},
+  playerAchievements:{}, lastSessionDate:null, dailyGoalMinutes:10, todayPracticeSeconds:0,
+  goalReachedToday:false, goalStreak:0, tab:"practice", screen:"home", soundOn:false,
+  recommendationHistory:[] };
+window.STRING_NAMES = ["E","A","D","G","B","e"];
+window.SparkInstruments = { _instruments:[], _active:null,
+  register:function(c){this._instruments.push(c);},
+  activate:function(id){for(var i=0;i<this._instruments.length;i++){if(this._instruments[i].id===id){this._active=this._instruments[i];return;}}},
+  deactivate:function(){this._active=null;},
+  getActive:function(){return this._active;},
+  getAll:function(){return this._instruments.slice();}
+};
+window.CHORDS = {1:[{name:"C"},{name:"Am"}]};
+window.ALL_CHORDS = [{name:"C"},{name:"Am"}];
+function escHTML(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function saveState(){}
+function logHistory(){}
+function checkBadges(){}
+function _sparkEmit(){}
+function getCurriculumItem(){ return null; }
+function awardXP(){}
+function awardPracticeXP(){}
+function awardSongXP(){}
+function checkLevelUp(){}
+function updateMastery(){}
+function evaluateUnlocks(){}
+function evaluateAchievements(){}
+function updateWeeklyGoal(){}
+function updateChallengeProgressByType(){}
+function awardStreakXP(){}
+</script>
+
+<!-- Load core scripts in order -->
+<script src="../js/spark-core/runtime/contracts.js"></script>
+<script src="../js/spark-core/psychology-engine.js"></script>
+<script src="../js/spark-core/progress-orchestrator.js"></script>
+<script src="../js/spark-core/instrument-adapter.js"></script>
+<script src="../js/spark-core/session-engine.js"></script>
+<script src="../js/spark-core/index.js"></script>
+<script src="../js/curriculum/curriculum_engine.js"></script>
+<script src="../js/ui/stringed_chord_svg.js"></script>
+<script src="../js/instruments/ukulele/chord_normalizer.js"></script>
+<script src="../js/instruments/ukulele/validator.js"></script>
+<script src="../js/instruments/ukulele/ukulele_svg.js"></script>
+<script src="../js/recommend/candidates.js"></script>
+<script src="../js/recommend/scoring.js"></script>
+<script src="../js/recommend/rules.js"></script>
+<script src="../js/recommend/engine.js"></script>
+
+<script>
+var passed=0, failed=0, skipped=0, tests=[];
+function check(name, condition) {
+  if (condition) { passed++; tests.push({name:name,status:"pass"}); }
+  else { failed++; tests.push({name:name,status:"fail"}); }
+}
+function skip(name, reason) {
+  skipped++; tests.push({name:name+" ("+reason+")",status:"skip"});
+}
+
+// === Core Globals ===
+check("SparkCore exists", typeof SparkCore !== "undefined");
+check("SparkCore.version is 0.3.0", SparkCore && SparkCore.version === "0.3.0");
+check("SparkCore.getServices exists", SparkCore && typeof SparkCore.getServices === "function");
+
+// === Services ===
+var svc = SparkCore ? SparkCore.getServices() : {};
+check("getServices returns session", svc && svc.session === SparkSession);
+check("getServices returns psychology", svc && svc.psychology === SparkPsychology);
+check("getServices returns progressOrchestrator", svc && svc.progressOrchestrator === SparkProgressOrchestrator);
+check("getServices returns instrumentAdapter", svc && svc.instrumentAdapter === SparkInstrumentAdapter);
+check("getServices returns curriculum", svc && svc.curriculum === SparkCurriculumService);
+check("getServices returns recommendations", svc && svc.recommendations === SparkRecommendationService);
+
+// === Contracts ===
+check("SparkContracts exists", typeof SparkContracts !== "undefined");
+check("createSessionPlan exists", SparkContracts && typeof SparkContracts.createSessionPlan === "function");
+check("createSessionResult exists", SparkContracts && typeof SparkContracts.createSessionResult === "function");
+check("createProgressOutcome exists", SparkContracts && typeof SparkContracts.createProgressOutcome === "function");
+
+// === Contract Shape Tests ===
+var plan = SparkContracts ? SparkContracts.createSessionPlan({mode:"test"}) : null;
+check("SessionPlan has sessionId", plan && typeof plan.sessionId === "string" && plan.sessionId.length > 0);
+check("SessionPlan has mode", plan && plan.mode === "test");
+check("SessionPlan has estimatedDuration", plan && typeof plan.estimatedDuration === "number");
+
+var result = SparkContracts ? SparkContracts.createSessionResult({mode:"drill",accuracy:0.8}) : null;
+check("SessionResult has mode", result && result.mode === "drill");
+check("SessionResult has accuracy", result && result.accuracy === 0.8);
+
+var outcome = SparkContracts ? SparkContracts.createProgressOutcome({xpEarned:50}) : null;
+check("ProgressOutcome has xpEarned", outcome && outcome.xpEarned === 50);
+
+// === Session Engine ===
+check("SparkSession exists", typeof SparkSession !== "undefined");
+check("SparkSession.buildSession exists", SparkSession && typeof SparkSession.buildSession === "function");
+check("SparkSession.processResults exists", SparkSession && typeof SparkSession.processResults === "function");
+
+// === Progress Orchestrator ===
+check("SparkProgressOrchestrator exists", typeof SparkProgressOrchestrator !== "undefined");
+check("evaluateAll exists", SparkProgressOrchestrator && typeof SparkProgressOrchestrator.evaluateAll === "function");
+check("applySessionOutcome exists", SparkProgressOrchestrator && typeof SparkProgressOrchestrator.applySessionOutcome === "function");
+
+// === Psychology Engine ===
+check("SparkPsychology exists", typeof SparkPsychology !== "undefined");
+check("shouldReward exists", SparkPsychology && typeof SparkPsychology.shouldReward === "function");
+check("getComebackBonus exists", SparkPsychology && typeof SparkPsychology.getComebackBonus === "function");
+
+// === Curriculum Service ===
+check("SparkCurriculumService exists", typeof SparkCurriculumService !== "undefined");
+check("getNextLesson exists", SparkCurriculumService && typeof SparkCurriculumService.getNextLesson === "function");
+check("isLessonUnlocked exists", SparkCurriculumService && typeof SparkCurriculumService.isLessonUnlocked === "function");
+check("getReviewTargets exists", SparkCurriculumService && typeof SparkCurriculumService.getReviewTargets === "function");
+check("buildLearningQueue exists", SparkCurriculumService && typeof SparkCurriculumService.buildLearningQueue === "function");
+
+// === Instrument Adapter ===
+check("SparkInstrumentAdapter exists", typeof SparkInstrumentAdapter !== "undefined");
+check("getExercisesForLesson exists", SparkInstrumentAdapter && typeof SparkInstrumentAdapter.getExercisesForLesson === "function");
+check("getPerformanceConfig exists", SparkInstrumentAdapter && typeof SparkInstrumentAdapter.getPerformanceConfig === "function");
+
+// === Ukulele Chord Pipeline ===
+check("stringedChordSVG exists", typeof stringedChordSVG === "function");
+check("normalizeUkuleleChord exists", typeof normalizeUkuleleChord === "function");
+check("validateChordChart exists", typeof validateChordChart === "function");
+check("ukuleleSVG exists", typeof ukuleleSVG === "function");
+
+// === Ukulele Pipeline Integration ===
+var uke = typeof normalizeUkuleleChord === "function" ? normalizeUkuleleChord({name:"C",frets:[0,0,0,3]}) : null;
+check("Normalize C chord works", uke && uke.stringCount === 4 && uke.fingers.length === 1);
+var errors = uke && typeof validateChordChart === "function" ? validateChordChart(uke) : ["skip"];
+check("C chord validates clean", errors && errors.length === 0);
+var svg = uke && typeof ukuleleSVG === "function" ? ukuleleSVG(uke,{width:100}) : "";
+check("ukuleleSVG renders output", typeof svg === "string" && svg.indexOf("<svg") >= 0);
+
+// === Recommendation Service ===
+check("SparkRecommendationService exists", typeof SparkRecommendationService !== "undefined");
+check("generate exists", SparkRecommendationService && typeof SparkRecommendationService.generate === "function");
+check("getActive exists", SparkRecommendationService && typeof SparkRecommendationService.getActive === "function");
+
+// === Render results ===
+var el = document.getElementById("results");
+var html = "";
+var sections = {"Core Globals":0,"Services":0,"Contracts":0,"Contract Shape Tests":0,
+  "Session Engine":0,"Progress Orchestrator":0,"Psychology Engine":0,
+  "Curriculum Service":0,"Instrument Adapter":0,"Ukulele Chord Pipeline":0,
+  "Ukulele Pipeline Integration":0,"Recommendation Service":0};
+for (var i=0;i<tests.length;i++) {
+  html += '<div class="test '+tests[i].status+'">'+(tests[i].status==="pass"?"PASS":"FAIL")+": "+escHTML(tests[i].name)+"</div>";
+}
+el.innerHTML = html;
+var sum = document.getElementById("summary");
+sum.textContent = passed+" passed, "+failed+" failed"+(skipped?" ("+skipped+" skipped)":"")+" out of "+(passed+failed+skipped)+" checks";
+sum.className = "summary "+(failed===0?"ok":"bad");
+</script>
+</body>
+</html>
