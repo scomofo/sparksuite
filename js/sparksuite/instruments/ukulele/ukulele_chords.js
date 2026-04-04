@@ -68,4 +68,15 @@
   window.SparkUkuleleChordNotes = NOTES;
   window.SparkUkuleleLevelChords = levelChords;
   window.SparkUkuleleAllChords = allChords;
+
+  // Dev validation: check all chords through normalizer + validator
+  if (typeof normalizeUkuleleChord === "function" && typeof validateChordChart === "function") {
+    for (var i = 0; i < allChords.length; i++) {
+      var normalized = normalizeUkuleleChord(allChords[i]);
+      var errors = validateChordChart(normalized);
+      if (errors.length > 0) {
+        console.warn("[UkuleleChords] Validation errors for " + allChords[i].name + ":", errors);
+      }
+    }
+  }
 })();
