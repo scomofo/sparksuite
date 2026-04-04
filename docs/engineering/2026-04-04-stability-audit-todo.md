@@ -1,46 +1,29 @@
 # SparkSuite Stability Audit — 2026-04-04
 
-## What Was Done
+## Completed
 
-Comprehensive crash/stability audit across the entire codebase. 47 files modified across 3 commits.
+### Round 1-5: Crash/Stability Audit (47 files)
+- All instrument state initializations, null guards, timer cleanup, CSS, accessibility, error boundaries
+- See git log for full details
 
-### Crash Fixes (40 files)
-- **All instrument register.js** — Added missing state initializations (piano: 16 vars, guitar: 14, bass: 12, ukulele: 4)
-- **Piano tab nav** — Fixed TAB.GAMES/TAB.TOOLS resolving to undefined; fixed onclick string quoting
-- **Piano TRANSITION_TIPS** — Guitar global was shadowing piano; added PIANO_TRANSITION_TIPS namespace
-- **Piano practice.js** — Removed orphan </div> causing DOM mismatch
-- **Meta systems** — S.playerAchievements, S.careerProgress, S.playerStats, S.metaProgress, S.challengeRewards, S.packCompletion all crash on first access; added init guards
-- **Analytics** — S.analytics sub-arrays crash on .push(); added _ensureAnalytics() guard
-- **Career** — ensureCareerProgress() guard + all unlock functions protected
-- **Cloud** — S.cloudSync guard + snapshot version validation
-- **Performance** — S.performChart null guard in frame update, S.performSongStats guard on results
-- **Practice** — NaN-safe minute increments, S.practicePlan.items null guard
-- **Launcher** — deactivate() now cleans up all timers
-- **Onboarding** — Main overlay no longer conflicts with instrument-specific onboarding
-- **Script load race** — render() moved to after piano page registration in index.html
-- **Songs page** — D.LC[level] fallback color
-- **Levels** — Division-by-zero fix in getLevelProgress()
-- **Session cleanup** — guidedStop timer cleanup, piano stop_session clears T.session
-
-### CSS (styles.css)
-- Added ~95 rules for 65+ missing piano session UI classes
-
-### Quality Improvements (5 files)
-- **Accessibility** — clickableDiv + pianoClickableDiv handle Space key; piano header aria-live
-- **Validation** — Piano BPM clamped 40-200, custom set names max 50 chars
-- **Error boundaries** — pianoPerformPage and pianoPerformanceResultsPage wrapped in try-catch
-- **Dead code** — pianoPerformDonePage delegates to richer pianoPerformanceResultsPage
-- **Persistence** — Keyboard BPM changes now call saveState()
+### Round 6: Content Expansion + P3 Polish (10 files)
+- **Ukulele**: 8 -> 16 chords, 4 -> 12 songs, 8 -> 12 lessons
+- **Bass**: 19 -> 25 songs, 10 -> 20 guided sessions
+- **Performance charts**: 9 -> 13 (added 2 bass, 2 piano)
+- **MIDI import**: File size limit, magic byte validation, try-catch
+- **Song submission**: BPM/length validation, XSS protection
+- **Piano normalizer**: fromPianoSparkSessions replacing TODO
+- **Highway adapter**: Instrument param for piano skin selection
+- **Tab stubs**: gamesTab/toolsTab defined
 
 ---
 
-## TODO — Prioritized
+## TODO — Remaining
 
-### P1 — Should Do Next Session
-- [ ] Bass content depth — more songs, charts, guided sessions
-- [ ] Ukulele breadth — more song/performance depth
-- [ ] Rhythm highway content — more authored charts across instruments
-- [ ] Imported chart robustness — MIDI import edge cases
+### P1 — Content (still gaps vs guitar)
+- [ ] More rhythm highway authored charts (guitar has 4, bass 4, ukulele 3, piano 2)
+- [ ] Bass exercises expansion (only 8 vs guitar/piano depth)
+- [ ] Ukulele performance chart depth (3 charts, could use more)
 
 ### P2 — Architectural (Phase 2)
 - [ ] Reduce S.* dependence — flows should read core state first
@@ -48,9 +31,6 @@ Comprehensive crash/stability audit across the entire codebase. 47 files modifie
 - [ ] Thin bridge layers — some bridges still contain compatibility logic
 - [ ] Pages core-first — utility/tool screens still mostly shell-owned
 
-### P3 — Polish
-- [ ] Piano content normalizer (TODO in spark-core/content-normalizer.js:40)
-- [ ] Piano highway adapter (TODO in performance-core/spark-highway-adapter.js:19)
-- [ ] Song submission validation — chord picker min 2, JSON escaping
-- [ ] Shared gamesTab/toolsTab stubs — latent bug for future instruments
+### P3 — Polish (remaining)
 - [ ] Cloud sync UX — no progress indicator, no conflict resolution
+- [ ] Imported chart edge cases in shared rendering
