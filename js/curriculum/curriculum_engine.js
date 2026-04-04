@@ -100,6 +100,69 @@
 
       // Limit to top 5 review targets
       return targets.slice(0, 5);
+    },
+
+    buildLearningQueue: function(userContext) {
+      userContext = userContext || {};
+      var queue = [];
+
+      // 1. Get review targets (chords needing practice)
+      var reviews = this.getReviewTargets(userContext);
+      for (var i = 0; i < reviews.length && i < 2; i++) {
+        queue.push({
+          type: "review",
+          id: reviews[i].id,
+          label: "Review: " + reviews[i].id,
+          priority: reviews[i].priority,
+          mastery: reviews[i].mastery
+        });
+      }
+
+      // 2. Get next lesson from curriculum
+      var completedLessons = [];
+      if (typeof S !== "undefined") {
+        completedLessons = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
+        if (S.mastery && S.mastery.lessons) {
+          for (var lessonId in S.mastery.lessons) {
+            if (S.mastery.lessons[lessonId] && completedLessons.indexOf(lessonId) === -1) {
+              completedLessons.push(lessonId);
+            }
+          }
+        }
+      }
+
+      // Try to find next lesson from active instrument's curriculum
+      var inst = typeof SparkInstruments !== "undefined" ? SparkInstruments.getActive() : null;
+      if (inst) {
+        var currMap = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
+        if (currMap.length > 0) {
+          var firstLessonId = currMap[0] && currMap[0].id ? currMap[0].id : null;
+          if (firstLessonId) {
+            var nextId = this.getNextLesson(firstLessonId, completedLessons);
+            if (nextId) {
+              var lesson = this.getLessonById(nextId);
+              queue.push({
+                type: "lesson",
+                id: nextId,
+                label: lesson ? lesson.title || nextId : nextId,
+                priority: "normal"
+              });
+            }
+          }
+        }
+      }
+
+      // 3. Add a practice/drill suggestion if queue is short
+      if (queue.length < 3 && reviews.length > 0) {
+        queue.push({
+          type: "drill",
+          id: "review_drill",
+          label: "Drill: " + reviews[0].id + " practice",
+          priority: "low"
+        });
+      }
+
+      return queue;
     }
   };
 
