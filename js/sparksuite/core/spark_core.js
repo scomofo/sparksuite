@@ -2548,6 +2548,340 @@
     return this.updateRuntimeState(next);
   };
 
+  // ---------------------------------------------------------------------------
+  // Progress methods (absorbed from progress_bridge)
+  // All operate on this.persistedState instead of S.*
+  // ---------------------------------------------------------------------------
+
+  /** @private Deep-clone helper */
+  SparkCore.prototype._clone = function(value) {
+    if (value == null) return value;
+    return JSON.parse(JSON.stringify(value));
+  };
+
+  /** @private Check if object has any own keys */
+  SparkCore.prototype._hasOwnKeys = function(value) {
+    for (var key in value) return true;
+    return false;
+  };
+
+  /** @private Update a weak-spot metric bucket */
+  SparkCore.prototype._updateWeakMetric = function(bucket, key, accuracy) {
+    if (!bucket[key]) {
+      bucket[key] = { accuracy: accuracy, attempts: 1 };
+    } else {
+      var prev = bucket[key];
+      prev.accuracy = (prev.accuracy * prev.attempts + accuracy) / (prev.attempts + 1);
+      prev.attempts++;
+    }
+  };
+
+  /** @private Average two unit values (0-1 or 0-100) */
+  SparkCore.prototype._averageUnit = function(prev, next) {
+    if (typeof prev !== "number") return typeof next === "number" ? next : 0;
+    if (typeof next !== "number") return prev;
+    return Math.round((((prev + next) / 2) * 100)) / 100;
+  };
+
+  /** @private Merge instrument skill progress into target */
+  SparkCore.prototype._mergeInstrumentSkillProgress = function(target, incoming) {
+    for (var skillId in incoming) {
+      var next = incoming[skillId] || {};
+      var prev = target[skillId] || null;
+      if (!prev) {
+        target[skillId] = this._clone(next);
+        continue;
+      }
+      target[skillId] = {
+        groove: this._averageUnit(prev.groove, next.groove),
+        timing: this._averageUnit(prev.timing, next.timing),
+        accuracy: this._averageUnit(prev.accuracy, next.accuracy),
+        movement: this._averageUnit(prev.movement, next.movement)
+      };
+    }
+  };
+
+  SparkCore.prototype.applyReward = function(reward) {
+    reward = reward || {};
+    var ps = this.persistedState;
+    var xpDelta = reward.xpDelta || 0;
+    if (xpDelta) ps.xp = (ps.xp || 0) + xpDelta;
+    if (reward.toastAmount) {
+      ps.xpToast = {
+        amount: reward.toastAmount,
+        time: reward.time || Date.now()
+      };
+      if (reward.jackpot) ps.xpToast.jackpot = true;
+    }
+    return {
+      xpDelta: xpDelta,
+      toastAmount: reward.toastAmount || 0,
+      jackpot: !!reward.jackpot
+    };
+  };
+
+  SparkCore.prototype.applySessionOutcome = function(update) {
+    update = update || {};
+    var ps = this.persistedState;
+
+    if (update.streak) {
+      if (update.streak.increment) ps.streak = (ps.streak || 0) + update.streak.increment;
+      if (update.streak.lastSessionDate) ps.lastSessionDate = update.streak.lastSessionDate;
+    }
+
+    if (update.sessionsDelta) ps.sessions = (ps.sessions || 0) + update.sessionsDelta;
+
+    if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
+      this.applyReward({
+        xpDelta: update.xpDelta || 0,
+        toastAmount: update.toastAmount || 0,
+        jackpot: !!update.jackpot
+      });
+    }
+
+    if (update.chordProgress) {
+      if (!ps.chordProgress || typeof ps.chordProgress !== "object") ps.chordProgress = {};
+      for (var chordName in update.chordProgress) {
+        ps.chordProgress[chordName] = Math.min((ps.chordProgress[chordName] || 0) + update.chordProgress[chordName], 100);
+      }
+    }
+
+    if (typeof update.level === "number") ps.level = update.level;
+
+    return {
+      streak: update.streak || null,
+      sessionsDelta: update.sessionsDelta || 0,
+      xpDelta: update.xpDelta || 0,
+      chordProgress: update.chordProgress || null,
+      level: typeof update.level === "number" ? update.level : null
+    };
+  };
+
+  SparkCore.prototype.applyWeakSpotUpdate = function(update) {
+    if (!update) return;
+    var ps = this.persistedState;
+    if (!ps.weakSpots || typeof ps.weakSpots !== "object") ps.weakSpots = {};
+    if (!ps.weakSpots.transitions) ps.weakSpots.transitions = {};
+    if (!ps.weakSpots.chords) ps.weakSpots.chords = {};
+    if (!ps.weakSpots.rhythm) ps.weakSpots.rhythm = {};
+    if (!ps.weakSpots.phrases) ps.weakSpots.phrases = {};
+
+    if (update.transitions) {
+      for (var transitionKey in update.transitions) {
+        this._updateWeakMetric(ps.weakSpots.transitions, transitionKey, update.transitions[transitionKey]);
+      }
+    }
+    if (update.chords) {
+      for (var chordKey in update.chords) {
+        this._updateWeakMetric(ps.weakSpots.chords, chordKey, update.chords[chordKey]);
+      }
+    }
+    if (update.rhythm) {
+      for (var rhythmKey in update.rhythm) {
+        this._updateWeakMetric(ps.weakSpots.rhythm, rhythmKey, update.rhythm[rhythmKey]);
+      }
+    }
+    if (Array.isArray(update.phrases)) {
+      for (var i = 0; i < update.phrases.length; i++) {
+        this._updateWeakMetric(ps.weakSpots.phrases, update.phrases[i].id, update.phrases[i].accuracy);
+      }
+    }
+  };
+
+  SparkCore.prototype.applyAdaptiveUpdate = function(update) {
+    if (!update || !update.exerciseId) return null;
+    var ps = this.persistedState;
+    if (!ps.adaptiveState || typeof ps.adaptiveState !== "object") ps.adaptiveState = {};
+    ps.adaptiveState[update.exerciseId] = {
+      accuracy: update.accuracy,
+      ts: update.ts || Date.now()
+    };
+    return ps.adaptiveState[update.exerciseId];
+  };
+
+  SparkCore.prototype.applyActivityCompletion = function(update) {
+    update = update || {};
+    var ps = this.persistedState;
+    if (update.setFlags) { for (var flagKey in update.setFlags) { ps[flagKey] = update.setFlags[flagKey]; } }
+    if (update.incrementFields) { for (var incrementKey in update.incrementFields) { ps[incrementKey] = (ps[incrementKey] || 0) + update.incrementFields[incrementKey]; } }
+    if (update.maxFields) { for (var maxKey in update.maxFields) { ps[maxKey] = Math.max(ps[maxKey] || 0, update.maxFields[maxKey]); } }
+    if (update.resultFields) { for (var resultKey in update.resultFields) { ps[resultKey] = this._clone(update.resultFields[resultKey]); } }
+    if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
+      this.applyReward({ xpDelta: update.xpDelta || 0, toastAmount: update.toastAmount || 0, jackpot: !!update.jackpot });
+    }
+    if (update.history && typeof logHistory === "function") { logHistory(update.history.type, update.history.detail, update.history.xp || 0); }
+    if (update.emit && typeof _sparkEmit === "function") { _sparkEmit(update.emit.type, this._clone(update.emit.payload || {})); }
+    if (update.checkBadges && typeof checkBadges === "function") { checkBadges(); }
+    if (update.save !== false && typeof saveState === "function") { saveState(); }
+    return { xpDelta: update.xpDelta || 0, setFlags: update.setFlags || null, incrementFields: update.incrementFields || null, maxFields: update.maxFields || null, resultFields: update.resultFields || null };
+  };
+
+  SparkCore.prototype.applyActivityRuntime = function(update) {
+    update = update || {};
+    var ps = this.persistedState;
+    if (update.setFields) { for (var fieldKey in update.setFields) { ps[fieldKey] = update.setFields[fieldKey]; } }
+    if (update.incrementFields) { for (var incrementKey in update.incrementFields) { ps[incrementKey] = (ps[incrementKey] || 0) + update.incrementFields[incrementKey]; } }
+    if (Array.isArray(update.clearIntervals)) { for (var ci = 0; ci < update.clearIntervals.length; ci++) { this.timerManager.stopTimer(update.clearIntervals[ci]); }; }
+    if (Array.isArray(update.clearTimeouts)) { for (var ct = 0; ct < update.clearTimeouts.length; ct++) { this.timerManager.stopTimer(update.clearTimeouts[ct]); }; }
+    if (Array.isArray(update.cancelAnimationFrames) && typeof cancelAnimationFrame === "function") {
+      for (var k = 0; k < update.cancelAnimationFrames.length; k++) { if (update.cancelAnimationFrames[k]) cancelAnimationFrame(update.cancelAnimationFrames[k]); }
+    }
+    return { setFields: update.setFields || null, incrementFields: update.incrementFields || null, clearIntervals: update.clearIntervals || null, clearTimeouts: update.clearTimeouts || null, cancelAnimationFrames: update.cancelAnimationFrames || null };
+  };
+
+  SparkCore.prototype.applySessionStatePatch = function(patch) {
+    patch = patch || {};
+    var ps = this.persistedState;
+    if (patch.guided) {
+      if (!Array.isArray(ps.completedGuidedSessions)) ps.completedGuidedSessions = [];
+      var completedSessionNums = Array.isArray(patch.guided.completedSessionNums) ? patch.guided.completedSessionNums : [];
+      for (var i = 0; i < completedSessionNums.length; i++) { if (ps.completedGuidedSessions.indexOf(completedSessionNums[i]) < 0) { ps.completedGuidedSessions.push(completedSessionNums[i]); } }
+      if (!ps.chordProgress || typeof ps.chordProgress !== "object") ps.chordProgress = {};
+      var chordProgress = patch.guided.chordProgress || {};
+      for (var chordName in chordProgress) { ps.chordProgress[chordName] = Math.min((ps.chordProgress[chordName] || 0) + chordProgress[chordName], 100); }
+      if (patch.guided.nextGuidedSession != null) ps.guidedSession = patch.guided.nextGuidedSession;
+    }
+    if (patch.mastery && patch.mastery.rhythm) {
+      if (!ps.mastery || typeof ps.mastery !== "object") ps.mastery = {};
+      if (!ps.mastery.rhythm || typeof ps.mastery.rhythm !== "object") ps.mastery.rhythm = {};
+      for (var skillId in patch.mastery.rhythm) { var prev = ps.mastery.rhythm[skillId] || 0; ps.mastery.rhythm[skillId] = Math.max(0, Math.min(100, prev + patch.mastery.rhythm[skillId])); }
+    }
+    if (patch.weakSpots) {
+      if (!ps.weakSpots || typeof ps.weakSpots !== "object") ps.weakSpots = {};
+      for (var weakSpotKey in patch.weakSpots) { ps.weakSpots[weakSpotKey] = Array.isArray(patch.weakSpots[weakSpotKey]) ? patch.weakSpots[weakSpotKey].slice() : patch.weakSpots[weakSpotKey]; }
+    }
+    if (patch.bassSkillProgress) {
+      if (!ps.bassSkillProgress || typeof ps.bassSkillProgress !== "object") ps.bassSkillProgress = {};
+      this._mergeInstrumentSkillProgress(ps.bassSkillProgress, patch.bassSkillProgress);
+    }
+    if (patch.ukuleleSkillProgress) {
+      if (!ps.ukuleleSkillProgress || typeof ps.ukuleleSkillProgress !== "object") ps.ukuleleSkillProgress = {};
+      this._mergeInstrumentSkillProgress(ps.ukuleleSkillProgress, patch.ukuleleSkillProgress);
+    }
+    if (patch.xpToast) ps.xpToast = patch.xpToast;
+  };
+
+  SparkCore.prototype.syncPlanToState = function(plan) {
+    if (!plan) return null;
+    this.persistedState.activeSessionPlanId = plan.id;
+    if (plan.flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return this.syncDailyPracticePlanToState(plan);
+    if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.syncGuidedSessionToState(plan);
+    if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.syncPerformanceSongToState(plan);
+    return null;
+  };
+
+  SparkCore.prototype.syncDailyPracticePlanToState = function(plan) {
+    var ps = this.persistedState;
+    var legacyPlan = plan ? plan.toLegacyPracticePlan() : null;
+    ps.practicePlan = legacyPlan;
+    ps.practicePlanDate = legacyPlan ? legacyPlan.generatedDate : null;
+    ps.practicePlanFocus = legacyPlan ? legacyPlan.focus : "";
+    ps.practicePlanComplete = legacyPlan ? legacyPlan.completedItems >= legacyPlan.totalItems : false;
+    return legacyPlan;
+  };
+
+  SparkCore.prototype.syncGuidedSessionToState = function(plan) {
+    var ps = this.persistedState;
+    var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
+    if (!guidedPlan) return null;
+    ps.guidedPlan = guidedPlan;
+    ps.guidedSession = plan.context.guidedSession || guidedPlan.num || ps.guidedSession || 1;
+    ps.guidedStep = "spark";
+    ps.newMovePhase = null;
+    ps.guidedPaused = false;
+    return guidedPlan;
+  };
+
+  SparkCore.prototype.syncPerformanceSongToState = function(plan) {
+    var ps = this.persistedState;
+    var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
+    if (!performanceSong) return null;
+    ps.performSongData = performanceSong.songData || null;
+    ps.performSongId = performanceSong.songId || "";
+    ps.performArrangementType = performanceSong.arrangementType || "chords";
+    if (performanceSong.difficultyId) ps.performDifficulty = performanceSong.difficultyId;
+    return performanceSong;
+  };
+
+  SparkCore.prototype.applyPracticeSessionRecord = function(result) {
+    if (!result) return null;
+    var ps = this.persistedState;
+    var record = this._clone(result);
+    record.ts = record.ts || Date.now();
+    if (!Array.isArray(ps.practiceHistory)) ps.practiceHistory = [];
+    ps.practiceHistory.push(record);
+    var durationMin = record.durationMin || 0;
+    if (durationMin) {
+      ps.totalPracticeMinutes = (ps.totalPracticeMinutes || 0) + durationMin;
+      ps.todayPracticeMinutes = (ps.todayPracticeMinutes || 0) + durationMin;
+    }
+    var today = new Date().toISOString().slice(0, 10);
+    if (ps.lastPracticeDate !== today) {
+      var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      if (ps.lastPracticeDate === yesterday) { ps.practiceStreak = (ps.practiceStreak || 0) + 1; } else { ps.practiceStreak = 1; }
+      ps.lastPracticeDate = today;
+    }
+    return record;
+  };
+
+  SparkCore.prototype.completePlanItem = function(plan, itemId, result) {
+    if (!plan || !Array.isArray(plan.segments)) return { completedItems: 0, totalItems: 0, planCompleted: false };
+    var completedItems = 0;
+    for (var i = 0; i < plan.segments.length; i++) {
+      var segment = plan.segments[i];
+      if (segment.id === itemId) { segment.completed = true; }
+      if (segment.completed) completedItems++;
+    }
+    var itemResultSummary = result ? this.buildLegacyItemResultSummary(result) : null;
+    this.applyItemResultSummary(itemResultSummary);
+    this.syncPlanToState(plan);
+    return { completedItems: completedItems, totalItems: plan.segments.length, planCompleted: completedItems >= plan.segments.length, itemResultSummary: itemResultSummary };
+  };
+
+  SparkCore.prototype.finalizePlan = function(plan, summary) {
+    summary = summary || {};
+    var ps = this.persistedState;
+    this.applySessionStatePatch(summary.sessionStatePatch);
+    ps.practicePlanComplete = true;
+    var completionSummary = summary.completionSummary || this.buildLegacyCompletionSummary(plan, summary.xpAwarded);
+    if (!Array.isArray(ps.practicePlanHistory)) ps.practicePlanHistory = [];
+    ps.practicePlanHistory.push({ date: completionSummary.date, focus: completionSummary.focus, itemCount: completionSummary.itemCount, completedAt: completionSummary.completedAt, sessionId: completionSummary.sessionId, flow: completionSummary.flow, durationSec: completionSummary.durationSec || 0 });
+    if (ps.practicePlanHistory.length > 30) ps.practicePlanHistory.shift();
+    if (summary.xpAwarded) { ps.xp = (ps.xp || 0) + summary.xpAwarded; }
+    if (typeof saveState === "function") saveState();
+  };
+
+  SparkCore.prototype.buildLegacyCompletionSummary = function(plan, xpAwarded) {
+    var ps = this.persistedState;
+    return { sessionId: plan ? plan.id : null, flow: plan ? plan.flow : null, date: plan ? plan.generatedDate : ps.practicePlanDate, focus: plan ? plan.focus : ps.practicePlanFocus, itemCount: plan && Array.isArray(plan.segments) ? plan.segments.length : (ps.practicePlan ? ps.practicePlan.items.length : 0), durationSec: 0, xpAwarded: xpAwarded || 0, completedAt: Date.now() };
+  };
+
+  SparkCore.prototype.buildLegacyItemResultSummary = function(result) {
+    if (!result) return null;
+    return { practiceResult: this._clone(result), weakSpotUpdate: this._buildWeakSpotUpdate(result), adaptiveUpdate: result.exerciseId ? { exerciseId: result.exerciseId, accuracy: result.accuracy, ts: Date.now() } : null };
+  };
+
+  SparkCore.prototype._buildWeakSpotUpdate = function(result) {
+    var update = {};
+    if (result.transitions) update.transitions = this._clone(result.transitions);
+    if (result.chords) update.chords = this._clone(result.chords);
+    if (result.rhythm) update.rhythm = this._clone(result.rhythm);
+    if (Array.isArray(result.phrases)) update.phrases = this._clone(result.phrases);
+    return this._hasOwnKeys(update) ? update : null;
+  };
+
+  SparkCore.prototype.applyItemResultSummary = function(summary) {
+    if (!summary) return;
+    var ps = this.persistedState;
+    if (summary.weakSpotUpdate) this.applyWeakSpotUpdate(summary.weakSpotUpdate);
+    if (summary.adaptiveUpdate) this.applyAdaptiveUpdate(summary.adaptiveUpdate);
+    if (summary.practiceResult) {
+      if (!Array.isArray(ps.practiceHistory)) ps.practiceHistory = [];
+      ps.practiceHistory.push(this._clone(summary.practiceResult));
+    }
+  };
+
+
   function createDefaultSparkCore() {
     var instrumentManager = new SparkInstrumentManager();
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.guitar) {
