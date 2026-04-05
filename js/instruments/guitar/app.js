@@ -304,7 +304,7 @@ function guitarAct(a, v) {
     return true;
   }
 
-  if (a === "guidedStart") {
+  if (a === "start_guided_session") {
     var sessionNum = parseInt(v, 10);
     if (typeof window.openGuidedSessionRequest === "function") {
       var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
