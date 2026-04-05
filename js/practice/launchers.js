@@ -36,6 +36,13 @@
     if(type==="left_hand_pattern" && typeof launchLeftHandItem==="function"){
       return launchLeftHandItem(item);
     }
+    if(item.type==="strum") { if(typeof act==="function") act("tab","strum"); return true; }
+    if(item.type==="song") { if(typeof act==="function"){ if(item.meta&&item.meta.songId){act("selectSong",item.meta.songId);}else{act("tab","songs");} } return true; }
+    if(item.type==="daily") { if(typeof act==="function") act("tab","daily"); return true; }
+    if(item.type==="drill") { if(typeof act==="function") act("tab","drill"); return true; }
+    if(item.type==="quiz") { if(typeof act==="function") act("tab","quiz"); return true; }
+    if(item.type==="ear_training"||item.type==="ear") { if(typeof act==="function") act("tab","ear"); return true; }
+    if(item.type==="scale") { if(typeof act==="function") act("tab","tools"); return true; }
     console.warn("Spark: no launcher for item type", item.type);
     return false;
   }
