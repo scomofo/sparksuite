@@ -1502,7 +1502,22 @@ window.act=function(a,v){
       var _inst = SparkInstruments.getActive();
       var _sessions = _inst && _inst.getData ? (_inst.getData().SESSIONS || []) : (typeof SESSIONS !== "undefined" ? SESSIONS : []);
       if(_gsNum > 0 && _gsNum <= _sessions.length){
-        S.guidedPlan = _sessions[_gsNum - 1];
+        var _rawPlan = _sessions[_gsNum - 1];
+      // Wrap lightweight sessions (ukulele etc) into 5-phase guided format
+      if(!_rawPlan.spark){
+        _rawPlan = {
+          num: _rawPlan.num || _gsNum,
+          title: _rawPlan.title || "Session " + _gsNum,
+          level: _rawPlan.level || 1,
+          bpm: _rawPlan.bpm || 80,
+          spark: {text: _rawPlan.desc || "Practice this skill!"},
+          review: null,
+          newMove: _rawPlan.skill ? {text: "Focus on: " + _rawPlan.skill, chord: null} : null,
+          songSlice: null,
+          victoryLap: {text: "Great work on " + (_rawPlan.title || "this session") + "!"}
+        };
+      }
+      S.guidedPlan = _rawPlan;
         S.guidedSession = _gsNum;
         S.guidedStep = "spark";
         S.newMovePhase = null;
