@@ -2707,7 +2707,7 @@
     update = update || {};
     var ps = this.persistedState;
     if (update.setFlags) { for (var flagKey in update.setFlags) { ps[flagKey] = update.setFlags[flagKey]; } }
-    if (update.incrementFields) { for (var incrementKey in update.incrementFields) { ps[incrementKey] = (ps[incrementKey] || 0) + update.incrementFields[incrementKey]; } }
+    if (update.incrementFields) { for (var incrementKey in update.incrementFields) { ps[incrementKey] = (ps[incrementKey] || 0) + update.incrementFields[incrementKey]; if (typeof S !== "undefined") S[incrementKey] = ps[incrementKey]; } }
     if (update.maxFields) { for (var maxKey in update.maxFields) { ps[maxKey] = Math.max(ps[maxKey] || 0, update.maxFields[maxKey]); } }
     if (update.resultFields) { for (var resultKey in update.resultFields) { ps[resultKey] = this._clone(update.resultFields[resultKey]); } }
     if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
@@ -2723,7 +2723,7 @@
   SparkCore.prototype.applyActivityRuntime = function(update) {
     update = update || {};
     var ps = this.persistedState;
-    if (update.setFields) { for (var fieldKey in update.setFields) { ps[fieldKey] = update.setFields[fieldKey]; } }
+    if (update.setFields) { for (var fieldKey in update.setFields) { ps[fieldKey] = update.setFields[fieldKey]; if (typeof S !== "undefined") S[fieldKey] = update.setFields[fieldKey]; } }
     if (update.incrementFields) { for (var incrementKey in update.incrementFields) { ps[incrementKey] = (ps[incrementKey] || 0) + update.incrementFields[incrementKey]; } }
     if (Array.isArray(update.clearIntervals)) { for (var ci = 0; ci < update.clearIntervals.length; ci++) { this.timerManager.stopTimer(update.clearIntervals[ci]); }; }
     if (Array.isArray(update.clearTimeouts)) { for (var ct = 0; ct < update.clearTimeouts.length; ct++) { this.timerManager.stopTimer(update.clearTimeouts[ct]); }; }
@@ -2777,7 +2777,7 @@
   SparkCore.prototype.syncDailyPracticePlanToState = function(plan) {
     var ps = this.persistedState;
     var legacyPlan = plan ? plan.toLegacyPracticePlan() : null;
-    ps.practicePlan = legacyPlan;
+    ps.practicePlan = legacyPlan; if (typeof S !== "undefined") { S.practicePlan = legacyPlan; }
     ps.practicePlanDate = legacyPlan ? legacyPlan.generatedDate : null;
     ps.practicePlanFocus = legacyPlan ? legacyPlan.focus : "";
     ps.practicePlanComplete = legacyPlan ? legacyPlan.completedItems >= legacyPlan.totalItems : false;
@@ -2788,7 +2788,7 @@
     var ps = this.persistedState;
     var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
     if (!guidedPlan) return null;
-    ps.guidedPlan = guidedPlan;
+    ps.guidedPlan = guidedPlan; if (typeof S !== "undefined") { S.guidedPlan = guidedPlan; }
     ps.guidedSession = plan.context.guidedSession || guidedPlan.num || ps.guidedSession || 1;
     ps.guidedStep = "spark";
     ps.newMovePhase = null;
