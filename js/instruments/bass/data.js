@@ -259,7 +259,15 @@ var BASS_EXERCISES = [
   { id: "B-SHIFT", name: "Position Shift", desc: "Shift hand position up and down the neck", duration: 60, level: 3 },
   { id: "B-MUTE", name: "Muting Exercise", desc: "Practice left and right hand muting", duration: 60, level: 4 },
   { id: "B-GROOVE", name: "Groove w/ Metronome", desc: "Play a groove pattern locked to the click", duration: 90, level: 2 },
-  { id: "B-GHOST", name: "Ghost Notes", desc: "Add ghost notes between beats", duration: 60, level: 5 }
+  { id: "B-GHOST", name: "Ghost Notes", desc: "Add ghost notes between beats", duration: 60, level: 5 },
+  { id: "B-ROOT5", name: "Root-Fifth Lock", desc: "Alternate root and fifth on each chord, locked to metronome clicks", duration: 60, level: 3 },
+  { id: "B-WALK", name: "Walking Quarter Notes", desc: "Walk through chord tones on quarter notes, building bass lines step by step", duration: 90, level: 4 },
+  { id: "B-SYNC", name: "Syncopation Drill", desc: "Play off-beat eighth notes with anticipation, feel the push against the pulse", duration: 60, level: 4 },
+  { id: "B-SLAP", name: "Slap Basics", desc: "Thumb slap technique on E and A strings, focus on clean percussive tone", duration: 60, level: 6 },
+  { id: "B-POP", name: "Pop Technique", desc: "Index finger pop on D and G strings, snap the string for a bright attack", duration: 60, level: 6 },
+  { id: "B-HAMMER", name: "Hammer-On Chains", desc: "Legato hammer-on sequences ascending the neck, smooth connected notes", duration: 60, level: 5 },
+  { id: "B-PULL", name: "Pull-Off Chains", desc: "Legato pull-off sequences descending the neck, maintain even volume", duration: 60, level: 5 },
+  { id: "B-FUNK", name: "Funk Groove", desc: "Combine ghost notes, slap, and pop into a funky groove pattern", duration: 90, level: 6 }
 ];
 
 // ── Expose globals ──
