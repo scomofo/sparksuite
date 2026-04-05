@@ -27,8 +27,9 @@
       if(plan){
         S.practicePlanInstrument = currentInstrument;
         if(typeof saveState === "function") saveState();
+        return plan.toLegacyPracticePlan();
       }
-      return plan ? plan.toLegacyPracticePlan() : null;
+      // fall through to cache / buildPracticePlan() when startSession fails
     }
 
     if(cacheValid) return S.practicePlan;
@@ -41,7 +42,7 @@
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         forceRebuild: true
       });
-      return plan ? plan.toLegacyPracticePlan() : null;
+      if (plan) return plan.toLegacyPracticePlan();
     }
 
     var today = new Date().toISOString().slice(0,10);
