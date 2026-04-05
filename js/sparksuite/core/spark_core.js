@@ -14,7 +14,7 @@
     this.performanceEditorDocument = null;
     this.performanceEditorLibrary = [];
     this.runtimeState = this.createInitialRuntimeState();
-    this.persistedState = {};
+    this.persistedState = typeof Proxy !== "undefined" ? new Proxy({}, { set: function(target, key, value) { target[key] = value; if (typeof S !== "undefined") S[key] = value; return true; } }) : {};
     this.timerManager = new SparkTimerManager(this);
   }
 
