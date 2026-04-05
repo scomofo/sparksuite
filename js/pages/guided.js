@@ -90,6 +90,9 @@ function guidedSessionPage() {
   var plan = guidedView.plan;
   var guidedStep = guidedView.guidedStep;
   var guidedBpm;
+  if (plan && !plan.spark) {
+    plan = {num:plan.num||1,title:plan.title||"Session",level:plan.level||1,bpm:plan.bpm||80,spark:{text:plan.desc||"Practice this skill!"},review:null,newMove:plan.skill?{text:"Focus on: "+plan.skill,chord:null}:null,songSlice:null,victoryLap:{text:"Great work on "+(plan.title||"this session")+"!"}};
+  }
   if (!plan) return '<div class="card text-center"><p>No session loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
   var guidedTitle = firstGuidedTextToken(plan.title, plan.id, "Guided session");
   guidedBpm = normalizeGuidedBpm(plan.bpm, 80);
