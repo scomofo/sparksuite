@@ -21,16 +21,16 @@
 ## TODO — Remaining
 
 ### P1 — Content (still gaps vs guitar)
-- [ ] More rhythm highway authored charts (guitar has 4, bass 4, ukulele 3, piano 2)
-- [ ] Bass exercises expansion (only 8 vs guitar/piano depth)
-- [ ] Ukulele performance chart depth (3 charts, could use more)
+- [x] More rhythm highway authored charts (guitar has 4, bass 4, ukulele 3, piano 2)
+- [x] Bass exercises expansion (only 8 vs guitar/piano depth)
+- [x] Ukulele performance chart depth (3 charts, could use more)
 
 ### P2 — Architectural (Phase 2)
-- [ ] Reduce S.* dependence — flows should read core state first
-- [ ] Move live loops into engine — timer/transport ownership still shell-owned
-- [ ] Thin bridge layers — some bridges still contain compatibility logic
-- [ ] Pages core-first — utility/tool screens still mostly shell-owned
+- [x] Reduce S.* dependence — flows should read core state first
+- [x] Move live loops into engine — timer/transport ownership still shell-owned
+- [x] Thin bridge layers — some bridges still contain compatibility logic
+- [x] Pages core-first — utility/tool screens still mostly shell-owned
 
 ### P3 — Polish (remaining)
-- [ ] Cloud sync UX — no progress indicator, no conflict resolution
-- [ ] Imported chart edge cases in shared rendering
+- [x] Cloud sync UX — no progress indicator, no conflict resolution
+- [x] Imported chart edge cases in shared rendering
