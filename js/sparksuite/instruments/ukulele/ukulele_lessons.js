@@ -7,7 +7,14 @@
       skill: "down_strum",
       prerequisites: [],
       masteryRequired: 0.7,
-      desc: "Lock in steady down-strums on open strings."
+      desc: "Lock in steady down-strums on open strings.",
+      level: 1,
+      bpm: 80,
+      spark: { text: "Every great uke player started right here — a steady down-strum on open strings. No chords yet, no pressure. Just get your right hand moving and feel the rhythm lock in." },
+      review: null,
+      newMove: { text: "Focus on: keeping your wrist loose and your strum landing on the beat every time. One fluid motion — down, down, down.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "That’s the foundation right there. Your strum hand knows what it’s doing now — nice work on First Strum!" }
     },
     {
       id: "uke_02",
@@ -16,7 +23,14 @@
       skill: "basic_chords",
       prerequisites: ["down_strum"],
       masteryRequired: 0.75,
-      desc: "Add C, Am, and F so the first real changes feel easy."
+      desc: "Add C, Am, and F so the first real changes feel easy.",
+      level: 1,
+      bpm: 80,
+      spark: { text: "Three chords and you can play a huge chunk of the uke songbook. C, Am, and F are your ticket — get these shapes under your fingers and the music starts feeling real." },
+      review: null,
+      newMove: { text: "Focus on: placing each finger cleanly before you strum. C, then Am, then F — say the chord name out loud as you land it.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "C, Am, F — you’ve got them. The uke is starting to sound like music. Great work on Starter Chords!" }
     },
     {
       id: "uke_03",
@@ -25,7 +39,14 @@
       skill: "chord_switching",
       prerequisites: ["basic_chords"],
       masteryRequired: 0.8,
-      desc: "Train the common C-Am-F-G movement loop."
+      desc: "Train the common C-Am-F-G movement loop.",
+      level: 1,
+      bpm: 80,
+      spark: { text: "Knowing chords is one thing — changing between them without breaking rhythm is another. The C-Am-F-G loop is everywhere in uke music, and drilling it now will pay off for every song you ever learn." },
+      review: null,
+      newMove: { text: "Focus on: moving your fretting hand early. Start lifting fingers before the beat so the new chord lands on time, not after.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "The loop is flowing. Clean changes, steady rhythm — Smooth Changes is done and you nailed it!" }
     },
     {
       id: "uke_04",
@@ -34,7 +55,14 @@
       skill: "strumming_patterns",
       prerequisites: ["chord_switching"],
       masteryRequired: 0.8,
-      desc: "Move from simple downstrokes into island-style patterns."
+      desc: "Move from simple downstrokes into island-style patterns.",
+      level: 1,
+      bpm: 80,
+      spark: { text: "Straight down-strums got you here — now let’s give your playing that signature ukulele feel. Island-style patterns bring the bounce and life that makes the uke so joyful to play." },
+      review: null,
+      newMove: { text: "Focus on: adding the up-stroke between beats. Down-up-down-up — keep your wrist moving even when you miss strings, and let the rhythm breathe.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "There it is — that island groove. You’ve got real uke rhythm now. Awesome work on Pattern Flow!" }
     },
     {
       id: "uke_05",
@@ -43,7 +71,14 @@
       skill: "songs",
       prerequisites: ["strumming_patterns"],
       masteryRequired: 0.85,
-      desc: "Put rhythm, chords, and confidence together in repertoire."
+      desc: "Put rhythm, chords, and confidence together in repertoire.",
+      level: 2,
+      bpm: 90,
+      spark: { text: "Everything you’ve built — the strum, the chords, the changes — it all comes together in an actual song. This is the moment the practice pays off and playing feels like music." },
+      review: null,
+      newMove: { text: "Focus on: keeping the groove going through chord changes. Don’t stop when you make a mistake — let the rhythm carry you forward and keep playing.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "You played a song! From first strum to real repertoire — that’s a huge milestone. Fantastic work on Play a Song!" }
     },
     {
       id: "uke_06",
@@ -52,7 +87,14 @@
       skill: "fingerpicking",
       prerequisites: ["songs"],
       masteryRequired: 0.85,
-      desc: "Move from broad strums into steady four-string arpeggios."
+      desc: "Move from broad strums into steady four-string arpeggios.",
+      level: 2,
+      bpm: 90,
+      spark: { text: "Strumming fills a room — fingerpicking tells a story. Trading the plectrum motion for individual string arpeggios opens up a whole new side of the ukulele." },
+      review: null,
+      newMove: { text: "Focus on: assigning one finger to each string. Thumb on G, index on C, middle on E, ring on A — build the pattern slowly before adding speed.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "Those arpeggios are sounding beautiful. Your fingerpicking technique is alive — great work on Fingerpicked Motion!" }
     },
     {
       id: "uke_07",
@@ -61,7 +103,14 @@
       skill: "melody",
       prerequisites: ["fingerpicking"],
       masteryRequired: 0.86,
-      desc: "Pull simple lead notes out of chord shapes and connect them musically."
+      desc: "Pull simple lead notes out of chord shapes and connect them musically.",
+      level: 2,
+      bpm: 90,
+      spark: { text: "Your chord shapes already contain melodies waiting to be found. Learning to pull single notes out of familiar shapes is the bridge from rhythm player to all-round musician." },
+      review: null,
+      newMove: { text: "Focus on: letting each note ring cleanly before moving to the next. One finger, one string, one clear tone — connect the dots and hear the melody emerge.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "You’re playing melodies now — not just chords. That’s a whole new dimension to your playing. Excellent work on Melody Notes!" }
     },
     {
       id: "uke_08",
@@ -70,7 +119,14 @@
       skill: "performance",
       prerequisites: ["melody"],
       masteryRequired: 0.88,
-      desc: "Blend groove, clean changes, and confidence into a full playthrough."
+      desc: "Blend groove, clean changes, and confidence into a full playthrough.",
+      level: 2,
+      bpm: 90,
+      spark: { text: "Picture the campfire, the friends, the moment everyone leans in to listen. This session is about putting everything together and playing with the kind of relaxed confidence that makes music feel effortless." },
+      review: null,
+      newMove: { text: "Focus on: playing all the way through without stopping. Groove, changes, melody — trust what you know and commit to the performance from first note to last.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "That was a real performance. Groove, confidence, and music from start to finish — you absolutely nailed Campfire Performance!" }
     },
     {
       id: "uke_09",
@@ -79,7 +135,14 @@
       skill: "barre_chords",
       prerequisites: ["performance"],
       masteryRequired: 0.85,
-      desc: "Learn to hold barre shapes cleanly across all four strings."
+      desc: "Learn to hold barre shapes cleanly across all four strings.",
+      level: 3,
+      bpm: 100,
+      spark: { text: "Barre chords unlock the entire fretboard. Once your index finger can hold cleanly across all four strings, every chord shape you know becomes moveable — your options explode." },
+      review: null,
+      newMove: { text: "Focus on: rolling your index finger slightly toward the nut so the bony edge presses the strings. Apply pressure close to the fret and check each string rings clean before moving on.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "Clean barre shapes — that’s not easy and you did it. The whole fretboard just opened up. Brilliant work on Barre Basics!" }
     },
     {
       id: "uke_10",
@@ -88,7 +151,14 @@
       skill: "syncopation",
       prerequisites: ["barre_chords"],
       masteryRequired: 0.86,
-      desc: "Add off-beat accents and reggae-style chops to your strumming."
+      desc: "Add off-beat accents and reggae-style chops to your strumming.",
+      level: 3,
+      bpm: 100,
+      spark: { text: "Reggae chops and off-beat accents are what give ukulele playing that infectious, head-nodding energy. Hit the upstroke hard on the and-beats and suddenly your rhythm has soul." },
+      review: null,
+      newMove: { text: "Focus on: muting the strings with your fretting hand on the downbeat and strumming the upbeat hard. Chunk-chick — the silence is just as important as the strum.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "That syncopated feel is locked in — you’ve got the reggae chop now. Your rhythm playing just leveled up. Great work on Syncopated Strum!" }
     },
     {
       id: "uke_11",
@@ -97,7 +167,14 @@
       skill: "advanced_fingerpick",
       prerequisites: ["fingerpicking"],
       masteryRequired: 0.88,
-      desc: "Build complex Travis-style and rolling arpeggio patterns."
+      desc: "Build complex Travis-style and rolling arpeggio patterns.",
+      level: 3,
+      bpm: 100,
+      spark: { text: "Travis-style picking and rolling arpeggios transform the uke into something that sounds almost orchestral. These patterns are challenging — but once they click, they feel completely natural." },
+      review: null,
+      newMove: { text: "Focus on: keeping your thumb steady on the bass string while your fingers handle the higher strings independently. Thumb and fingers working separately is the key that unlocks these patterns.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "Rolling arpeggios, Travis patterns — you’re playing at an advanced level now. That took real dedication. Incredible work on Fingerpick Patterns!" }
     },
     {
       id: "uke_12",
@@ -106,7 +183,14 @@
       skill: "full_performance",
       prerequisites: ["syncopation", "advanced_fingerpick"],
       masteryRequired: 0.90,
-      desc: "Combine all techniques into a polished, stage-ready performance."
+      desc: "Combine all techniques into a polished, stage-ready performance.",
+      level: 3,
+      bpm: 100,
+      spark: { text: "This is it — every strum pattern, chord, melody, barre shape, and fingerpicking technique you’ve built comes together in one polished performance. You’re not just a uke player now. You’re a performer." },
+      review: null,
+      newMove: { text: "Focus on: owning every transition between techniques. Move confidently from strumming to picking to barre chords to melody — let each section breathe and trust the whole arc of the performance.", chord: null },
+      songSlice: null,
+      victoryLap: { text: "Stage-ready. All 12 lessons, every technique, one seamless performance. You’ve completed the full ukulele journey — that’s something to be genuinely proud of!" }
     }
   ];
 })();
