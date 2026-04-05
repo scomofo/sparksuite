@@ -1452,6 +1452,7 @@ window.act=function(a,v){
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
   // Switch instrument from v2 dashboard
+  if(a==="practiceStartItem"&&typeof startPracticeItem==="function"){startPracticeItem(v);return;}
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
     S.activeInstrument = v;

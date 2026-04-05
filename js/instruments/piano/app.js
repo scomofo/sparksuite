@@ -985,6 +985,11 @@ function act(action, param) {
       return; // startGuidedSession calls render
 
     // ── Guided sessions ──
+    case "practiceStartItem":
+      if(typeof startPracticeItem==="function"){startPracticeItem(param);}
+      else if(typeof window.startPracticeItem==="function"){window.startPracticeItem(param);}
+      return;
+
     case "start_guided_session":
       startGuidedSession();
       return;
