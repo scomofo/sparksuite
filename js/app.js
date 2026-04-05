@@ -1452,6 +1452,45 @@ window.act=function(a,v){
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
   // Switch instrument from v2 dashboard
+  if(a==="planStartWarmup"){
+      if(typeof act==="function"){S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();}
+      return;
+    }
+    if(a==="planStartTransition"&&v){
+      var parts=v.split("|");
+      if(parts.length>=2){S.drillChords=[];var from=findChordByName(parts[0]);var to=findChordByName(parts[1]);if(from)S.drillChords.push(from);if(to)S.drillChords.push(to);S.drillIdx=0;S.drillTimer=60;S.screen=SCR.DRILL;render();}
+      return;
+    }
+    if(a==="planStartPerformanceSong"&&v){
+      var ps=v.split("|");
+      S.performSongId=ps[0]||"";S.performArrangementType=ps[1]||"chords";S.performDifficulty=ps[2]||"normal";
+      S.screen=SCR.PERFORM_SONG;render();
+      return;
+    }
+    if(a==="planStartPerformancePhrase"&&v){
+      var pp=v.split("|");
+      S.performSongId=pp[0]||"";S.performArrangementType=pp[1]||"chords";S.performDifficulty=pp[2]||"normal";S.performTargetPhrase=pp[3]||null;
+      S.screen=SCR.PERFORM_SONG;render();
+      return;
+    }
+    if(a==="planStartPerformanceTechnique"&&v){
+      var pt=v.split("|");
+      S.performSongId=pt[0]||"";S.performArrangementType=pt[1]||"imported_chart";S.performDifficulty=pt[2]||"normal";S.performTargetTechnique=pt[3]||null;
+      S.screen=SCR.PERFORM_SONG;render();
+      return;
+    }
+    if(a==="planStartRhythm"){
+      S.rhythmBpm=parseInt(v,10)||90;S.rhythmActive=false;S.screen=SCR.HOME;S.tab="games";render();
+      return;
+    }
+    if(a==="planStartRhythmHighway"&&v){
+      S.activeCoreSegmentId=v;S.screen=SCR.RHYTHM_HIGHWAY;render();
+      return;
+    }
+    if(a==="planStartModuleExercise"&&v){
+      try{var me=JSON.parse(v);if(me.instrument&&typeof startModuleExercise==="function"){startModuleExercise(me);}else{S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();}}catch(e){console.warn("planStartModuleExercise parse error",e);}
+      return;
+    }
   if(a==="practiceStartItem"&&typeof startPracticeItem==="function"){startPracticeItem(v);return;}
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
