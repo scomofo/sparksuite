@@ -1491,7 +1491,14 @@ window.act=function(a,v){
       try{var me=JSON.parse(v);if(me.instrument&&typeof startModuleExercise==="function"){startModuleExercise(me);}else{S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();}}catch(e){console.warn("planStartModuleExercise parse error",e);}
       return;
     }
-  if(a==="practiceStartItem"&&typeof startPracticeItem==="function"){startPracticeItem(v);return;}
+  if(a==="start_guided_session"){
+      var _gsNum = parseInt(v, 10) || S.guidedSession || 1;
+      if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+        window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
+      }
+      S.screen = SCR.GUIDED; render(); return;
+    }
+    if(a==="practiceStartItem"&&typeof startPracticeItem==="function"){startPracticeItem(v);return;}
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
     S.activeInstrument = v;

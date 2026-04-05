@@ -157,7 +157,7 @@
       act("start_guided_session", sessionNum);
       return true;
     }
-    act("guidedStart", sessionNum);
+    act("start_guided_session", sessionNum);
     return true;
   }
 
