@@ -1493,10 +1493,23 @@ window.act=function(a,v){
     }
   if(a==="start_guided_session"){
       var _gsNum = parseInt(v, 10) || S.guidedSession || 1;
+      // Try core path first
       if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
-        window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
+        var _gsPlan = window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
+        if(_gsPlan && _gsPlan.context && _gsPlan.context.guidedPlan){ S.screen = SCR.GUIDED; render(); return; }
       }
-      S.screen = SCR.GUIDED; render(); return;
+      // Fallback: build guided plan from instrument SESSIONS data
+      var _inst = SparkInstruments.getActive();
+      var _sessions = _inst && _inst.getData ? (_inst.getData().SESSIONS || []) : (typeof SESSIONS !== "undefined" ? SESSIONS : []);
+      if(_gsNum > 0 && _gsNum <= _sessions.length){
+        S.guidedPlan = _sessions[_gsNum - 1];
+        S.guidedSession = _gsNum;
+        S.guidedStep = "spark";
+        S.newMovePhase = null;
+        S.screen = SCR.GUIDED;
+        render(); return;
+      }
+      S.screen = SCR.HOME; render(); return;
     }
     if(a==="practiceStartItem"&&typeof startPracticeItem==="function"){startPracticeItem(v);return;}
   if(a==="switchInstrument" && v){
