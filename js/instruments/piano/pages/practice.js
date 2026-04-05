@@ -68,7 +68,7 @@ function pianoPracticeTab() {
 
   // Chord cards for the viewed level (or all unlocked when viewing current level)
   var unlocked = (viewLvlNum === sc.p("level")) ? chordsUpToLevel(sc.p("level")) : chordsForLevel(viewLvlNum);
-  if (!sc.p("chordProg")) S.chordProg = {};
+  if (!sc.p("chordProg")) { S.chordProg = {}; if(window.sparkCore) window.sparkCore.persistedState.chordProg = {}; }
   html += '<div class="chord-grid">';
   unlocked.forEach(function(c) {
     var prog = sc.p("chordProg")[c.short] || 0;

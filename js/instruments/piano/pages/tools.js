@@ -10,7 +10,7 @@ function pianoToolsTab() {
     { id:"guide",    label:"Guide" }
   ];
 
-  if (!sc.r("_toolTab")) S._toolTab = "stats";
+  if (!sc.r("_toolTab")) { S._toolTab = "stats"; if(window.sparkCore) window.sparkCore.persistedState._toolTab = "stats"; }
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = sc.r("_toolTab") === t.id ? " active" : "";
@@ -58,7 +58,7 @@ function statsTab() {
   }
 
   // Chord mastery
-  if (!sc.p("chordProg")) S.chordProg = {};
+  if (!sc.p("chordProg")) { S.chordProg = {}; if(window.sparkCore) window.sparkCore.persistedState.chordProg = {}; }
   html += '<h3>Chord Mastery</h3><div class="mastery-list">';
   var unlocked = chordsUpToLevel(sc.p("level"));
   unlocked.forEach(function(c) {

@@ -18,7 +18,7 @@ function pianoGamesTab() {
     { id:"runner",  label:"Runner",  icon:"\u{1F3C3}" }
   ];
 
-  if (!sc.r("_gameTab")) S._gameTab = "drill";
+  if (!sc.r("_gameTab")) { S._gameTab = "drill"; if(window.sparkCore) window.sparkCore.persistedState._gameTab = "drill"; }
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = sc.r("_gameTab") === t.id ? " active" : "";

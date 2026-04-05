@@ -39,9 +39,11 @@
     return typeof S !== "undefined" ? S[key] : undefined;
   };
 
-  /** Shorthand read from runtimeState */
+  /** Shorthand read from runtimeState (falls back to S for unmigrated fields) */
   SparkCore.prototype.r = function(key) {
-    return this.runtimeState[key];
+    var v = this.runtimeState[key];
+    if (v !== undefined) return v;
+    return typeof S !== "undefined" ? S[key] : undefined;
   };
 
   SparkCore.prototype.cloneValue = function(value) {

@@ -23,7 +23,7 @@ function pianoSongsTab() {
     { id:"stems",   label:"\u{1F3A7} Stems" }
   ];
 
-  if (!sc.r("_songTab")) S._songTab = "library";
+  if (!sc.r("_songTab")) { S._songTab = "library"; if(window.sparkCore) window.sparkCore.persistedState._songTab = "library"; }
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = sc.r("_songTab") === t.id ? " active" : "";
@@ -199,7 +199,7 @@ function buildTab() {
   sc.r("buildChords").forEach(function(c, i) {
     html += '<span class="build-chip">' + escHTML(c) + '<button class="chip-remove" onclick="act(\'build_remove\',' + i + ')">\u2715</button></span>';
   });
-  if (!sc.r("buildChords").length) html += '<span class="text-muted">Add chords below</span>';
+  if (!(sc.r("buildChords")||[]).length) html += '<span class="text-muted">Add chords below</span>';
   html += '</div>';
 
   if (sc.r("buildChords").length > 0) {
