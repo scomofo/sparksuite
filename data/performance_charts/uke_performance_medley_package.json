@@ -1,0 +1,18 @@
+{
+  "id": "uke_performance_medley_package",
+  "title": "Performance Medley",
+  "artist": "SparkSuite Ukulele",
+  "packageFormat": "sparksuite_import_v1",
+  "arrangementType": "ukulele_strum",
+  "adapterType": "ukulele",
+  "instrument": "ukulele",
+  "chartImport": {
+    "files": {
+      "notes.chart": "[Song]\n{\n  Name = \"Performance Medley\"\n  Artist = \"SparkSuite Ukulele\"\n  Resolution = 192\n}\n[SyncTrack]\n{\n  0 = B 82000\n}\n[ExpertSingle]\n{\n  0 = N 0 0\n  0 = N 1 0\n  0 = N 2 0\n  0 = N 3 0\n  192 = N 0 0\n  192 = N 1 0\n  192 = N 2 0\n  192 = N 3 0\n  384 = N 0 0\n  384 = N 1 0\n  384 = N 2 0\n  384 = N 3 0\n  576 = N 0 0\n  576 = N 1 0\n  576 = N 2 0\n  576 = N 3 0\n  768 = N 0 0\n  768 = N 1 0\n  768 = N 2 0\n  768 = N 3 0\n  960 = N 0 0\n  960 = N 1 0\n  960 = N 2 0\n  960 = N 3 0\n  1152 = N 0 0\n  1152 = N 1 0\n  1152 = N 2 0\n  1152 = N 3 0\n  1344 = N 0 0\n  1344 = N 1 0\n  1344 = N 2 0\n  1344 = N 3 0\n  1536 = N 0 0\n  1536 = N 1 0\n  1536 = N 2 0\n  1536 = N 3 0\n  1728 = N 0 0\n  1728 = N 1 0\n  1728 = N 2 0\n  1728 = N 3 0\n  1920 = N 0 0\n  1920 = N 1 0\n  1920 = N 2 0\n  1920 = N 3 0\n  2112 = N 0 0\n  2112 = N 1 0\n  2112 = N 2 0\n  2112 = N 3 0\n  2304 = N 0 0\n  2304 = N 1 0\n  2304 = N 2 0\n  2304 = N 3 0\n  2496 = N 0 0\n  2496 = N 1 0\n  2496 = N 2 0\n  2496 = N 3 0\n  2688 = N 0 0\n  2688 = N 1 0\n  2688 = N 2 0\n  2688 = N 3 0\n  2880 = N 0 0\n  2880 = N 1 0\n  2880 = N 2 0\n  2880 = N 3 0\n  3072 = N 0 0\n  3120 = N 1 0\n  3168 = N 2 0\n  3216 = N 3 0\n  3264 = N 3 0\n  3312 = N 2 0\n  3360 = N 1 0\n  3408 = N 0 0\n  3840 = N 0 0\n  3888 = N 1 0\n  3936 = N 2 0\n  3984 = N 3 0\n  4032 = N 3 0\n  4080 = N 2 0\n  4128 = N 1 0\n  4176 = N 0 0\n  4608 = N 0 0\n  4656 = N 1 0\n  4704 = N 2 0\n  4752 = N 3 0\n  4800 = N 3 0\n  4848 = N 2 0\n  4896 = N 1 0\n  4944 = N 0 0\n  5376 = N 0 0\n  5424 = N 1 0\n  5472 = N 2 0\n  5520 = N 3 0\n  5568 = N 3 0\n  5616 = N 2 0\n  5664 = N 1 0\n  5712 = N 0 0\n  6144 = N 0 0\n  6144 = N 1 0\n  6144 = N 2 0\n  6144 = N 3 0\n  6336 = N 0 0\n  6384 = N 1 0\n  6432 = N 2 0\n  6480 = N 3 0\n  6528 = N 0 0\n  6528 = N 1 0\n  6528 = N 2 0\n  6528 = N 3 0\n  6720 = N 0 0\n  6768 = N 1 0\n  6816 = N 2 0\n  6864 = N 3 0\n  6912 = N 0 0\n  6912 = N 1 0\n  6912 = N 2 0\n  6912 = N 3 0\n  7104 = N 0 0\n  7152 = N 1 0\n  7200 = N 2 0\n  7248 = N 3 0\n  7296 = N 0 0\n  7296 = N 1 0\n  7296 = N 2 0\n  7296 = N 3 0\n  7488 = N 0 0\n  7536 = N 1 0\n  7584 = N 2 0\n  7632 = N 3 0\n}\n[Events]\n{\n  0 = E \"section Em Strum\"\n  1536 = E \"section C Strum\"\n  3072 = E \"section G Fingerpick\"\n  4608 = E \"section D Fingerpick\"\n  6144 = E \"section Bridge\"\n}\n",
+      "song.ini": "[song]\nname = Performance Medley\nartist = SparkSuite Ukulele"
+    }
+  },
+  "importOptions": {
+    "trackName": "ExpertSingle"
+  }
+}

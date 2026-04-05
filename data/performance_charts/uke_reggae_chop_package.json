@@ -1,0 +1,18 @@
+{
+  "id": "uke_reggae_chop_package",
+  "title": "Reggae Chop",
+  "artist": "SparkSuite Ukulele",
+  "packageFormat": "sparksuite_import_v1",
+  "arrangementType": "ukulele_strum",
+  "adapterType": "ukulele",
+  "instrument": "ukulele",
+  "chartImport": {
+    "files": {
+      "notes.chart": "[Song]\n{\n  Name = \"Reggae Chop\"\n  Artist = \"SparkSuite Ukulele\"\n  Resolution = 192\n}\n[SyncTrack]\n{\n  0 = B 88000\n}\n[ExpertSingle]\n{\n  96 = N 0 0\n  96 = N 1 0\n  96 = N 2 0\n  96 = N 3 0\n  288 = N 0 0\n  288 = N 1 0\n  288 = N 2 0\n  288 = N 3 0\n  480 = N 0 0\n  480 = N 1 0\n  480 = N 2 0\n  480 = N 3 0\n  672 = N 0 0\n  672 = N 1 0\n  672 = N 2 0\n  672 = N 3 0\n  864 = N 0 0\n  864 = N 1 0\n  864 = N 2 0\n  864 = N 3 0\n  1056 = N 0 0\n  1056 = N 1 0\n  1056 = N 2 0\n  1056 = N 3 0\n  1248 = N 0 0\n  1248 = N 1 0\n  1248 = N 2 0\n  1248 = N 3 0\n  1440 = N 0 0\n  1440 = N 1 0\n  1440 = N 2 0\n  1440 = N 3 0\n  1632 = N 0 0\n  1632 = N 1 0\n  1632 = N 2 0\n  1632 = N 3 0\n  1824 = N 0 0\n  1824 = N 1 0\n  1824 = N 2 0\n  1824 = N 3 0\n  2016 = N 0 0\n  2016 = N 1 0\n  2016 = N 2 0\n  2016 = N 3 0\n  2208 = N 0 0\n  2208 = N 1 0\n  2208 = N 2 0\n  2208 = N 3 0\n  2400 = N 0 0\n  2400 = N 1 0\n  2400 = N 2 0\n  2400 = N 3 0\n  2592 = N 0 0\n  2592 = N 1 0\n  2592 = N 2 0\n  2592 = N 3 0\n  2784 = N 0 0\n  2784 = N 1 0\n  2784 = N 2 0\n  2784 = N 3 0\n  2976 = N 0 0\n  2976 = N 1 0\n  2976 = N 2 0\n  2976 = N 3 0\n  3168 = N 0 0\n  3168 = N 1 0\n  3168 = N 2 0\n  3168 = N 3 0\n  3360 = N 0 0\n  3360 = N 1 0\n  3360 = N 2 0\n  3360 = N 3 0\n  3552 = N 0 0\n  3552 = N 1 0\n  3552 = N 2 0\n  3552 = N 3 0\n  3744 = N 0 0\n  3744 = N 1 0\n  3744 = N 2 0\n  3744 = N 3 0\n  3936 = N 0 0\n  3936 = N 1 0\n  3936 = N 2 0\n  3936 = N 3 0\n  4128 = N 0 0\n  4128 = N 1 0\n  4128 = N 2 0\n  4128 = N 3 0\n  4320 = N 0 0\n  4320 = N 1 0\n  4320 = N 2 0\n  4320 = N 3 0\n  4512 = N 0 0\n  4512 = N 1 0\n  4512 = N 2 0\n  4512 = N 3 0\n  4704 = N 0 0\n  4704 = N 1 0\n  4704 = N 2 0\n  4704 = N 3 0\n  4896 = N 0 0\n  4896 = N 1 0\n  4896 = N 2 0\n  4896 = N 3 0\n  5088 = N 0 0\n  5088 = N 1 0\n  5088 = N 2 0\n  5088 = N 3 0\n  5280 = N 0 0\n  5280 = N 1 0\n  5280 = N 2 0\n  5280 = N 3 0\n  5472 = N 0 0\n  5472 = N 1 0\n  5472 = N 2 0\n  5472 = N 3 0\n  5664 = N 0 0\n  5664 = N 1 0\n  5664 = N 2 0\n  5664 = N 3 0\n  5856 = N 0 0\n  5856 = N 1 0\n  5856 = N 2 0\n  5856 = N 3 0\n  6048 = N 0 0\n  6048 = N 1 0\n  6048 = N 2 0\n  6048 = N 3 0\n}\n[Events]\n{\n  0 = E \"section C\"\n  1536 = E \"section G\"\n  3072 = E \"section Am\"\n  4608 = E \"section F\"\n}\n",
+      "song.ini": "[song]\nname = Reggae Chop\nartist = SparkSuite Ukulele"
+    }
+  },
+  "importOptions": {
+    "trackName": "ExpertSingle"
+  }
+}
