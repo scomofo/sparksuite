@@ -32,9 +32,11 @@
     }
   };
 
-  /** Shorthand read from persistedState */
+  /** Shorthand read from persistedState (falls back to S for unhydrated fields) */
   SparkCore.prototype.p = function(key) {
-    return this.persistedState[key];
+    var v = this.persistedState[key];
+    if (v !== undefined) return v;
+    return typeof S !== "undefined" ? S[key] : undefined;
   };
 
   /** Shorthand read from runtimeState */
