@@ -123,7 +123,26 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
   var notes = track.notes || [];
   var phrases = track.phrases || [];
   var events = [];
-  var bpm = songChart.tempoMap.segments && songChart.tempoMap.segments.length ? songChart.tempoMap.segments[0].bpm : 100;
+  var bpm = 100;
+  if (songChart.tempoMap.segments && songChart.tempoMap.segments.length) {
+    var segs = songChart.tempoMap.segments;
+    if (segs.length === 1) {
+      bpm = segs[0].bpm;
+    } else {
+      var bestBpm = segs[0].bpm;
+      var bestDur = 0;
+      for (var si = 0; si < segs.length; si++) {
+        var segStart = segs[si].startTick !== undefined ? segs[si].startTick : 0;
+        var segEnd = si + 1 < segs.length && segs[si + 1].startTick !== undefined ? segs[si + 1].startTick : segStart;
+        var segDur = segEnd - segStart;
+        if (segDur > bestDur) {
+          bestDur = segDur;
+          bestBpm = segs[si].bpm;
+        }
+      }
+      bpm = bestBpm;
+    }
+  }
 
   for (var i = 0; i < notes.length; i++) {
     var note = notes[i];
@@ -160,16 +179,44 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
       endSec: songChart.tempoMap.tickToSeconds(phrases[j].endTick) + (songChart.song.offsetSec || 0)
     });
   }
-  if (!normalizedPhrases.length) {
-    normalizedPhrases.push({
-      id: 0,
-      name: "Full Song",
-      startSec: 0,
-      endSec: songChart.song.durationSec || (events.length ? events[events.length - 1].t + events[events.length - 1].dur : 0)
-    });
+  if (!normalizedPhrases.length || (normalizedPhrases.length === 1 && normalizedPhrases[0].name === "Full Song")) {
+    var inferredPhrases = [];
+    var GAP_SEC = 2;
+    if (events.length > 1) {
+      var phraseStartIdx = 0;
+      for (var pi = 1; pi < events.length; pi++) {
+        var prevEnd = events[pi - 1].t + (events[pi - 1].dur || 0);
+        if (events[pi].t - prevEnd > GAP_SEC) {
+          inferredPhrases.push({
+            id: inferredPhrases.length,
+            name: "Section " + (inferredPhrases.length + 1),
+            startSec: events[phraseStartIdx].t,
+            endSec: events[pi - 1].t + (events[pi - 1].dur || 0)
+          });
+          phraseStartIdx = pi;
+        }
+      }
+      if (inferredPhrases.length > 0) {
+        inferredPhrases.push({
+          id: inferredPhrases.length,
+          name: "Section " + (inferredPhrases.length + 1),
+          startSec: events[phraseStartIdx].t,
+          endSec: events[events.length - 1].t + (events[events.length - 1].dur || 0)
+        });
+        normalizedPhrases = inferredPhrases;
+      }
+    }
+    if (!normalizedPhrases.length) {
+      normalizedPhrases.push({
+        id: 0,
+        name: "Full Song",
+        startSec: 0,
+        endSec: songChart.song.durationSec || (events.length ? events[events.length - 1].t + events[events.length - 1].dur : 0)
+      });
+    }
   }
 
-  return normalizePerformanceChart({
+  var chartDef = {
     id: options.chartId || songChart.song.id || "imported_chart",
     title: options.title || songChart.song.title || "Imported Chart",
     artist: options.artist || songChart.song.artist || "Unknown Artist",
@@ -181,7 +228,13 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
     events: events,
     phrases: normalizedPhrases,
     sourceFormat: songChart.metadata ? songChart.metadata.sourceFormat : null
-  });
+  };
+  var builtChart = normalizePerformanceChart(chartDef);
+  var lastEvtEnd = builtChart.events.length
+    ? builtChart.events[builtChart.events.length - 1].t + (builtChart.events[builtChart.events.length - 1].dur || 0)
+    : 0;
+  builtChart.durationSec = Math.max(lastEvtEnd, songChart.song.audioDurationSec || 0);
+  return builtChart;
 }
 
 function validatePerformanceChart(chart) {

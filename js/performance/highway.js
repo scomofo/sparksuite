@@ -98,15 +98,37 @@ function getImportedTechniqueBadgeColor(evt) {
 function renderImportedTechniqueOverlay(chart, nowSec, lookaheadSec) {
   if (!chart || !Array.isArray(chart.events)) return "";
   lookaheadSec = typeof lookaheadSec === "number" ? lookaheadSec : 3;
-  var h = "";
-  var count = 0;
+  var preview = [];
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
     if (evt.t < nowSec) continue;
     if (evt.t > nowSec + lookaheadSec) break;
     if (!hasImportedTechniqueFlagsForOverlay(evt.sourceFlags)) continue;
-    h += renderImportedTechniqueToken(evt, nowSec, lookaheadSec, count++);
-    if (count >= 6) break;
+    preview.push(evt);
+  }
+  var h = "";
+  if (preview.length > 6) {
+    var groups = {};
+    var groupOrder = [];
+    for (var gi = 0; gi < preview.length; gi++) {
+      var gEvt = preview[gi];
+      var gLabel = gEvt.sourceLabel || getImportedTechniqueLabel(gEvt) || "Note";
+      if (!groups[gLabel]) {
+        groups[gLabel] = { label: gLabel, count: 0, evt: gEvt };
+        groupOrder.push(gLabel);
+      }
+      groups[gLabel].count++;
+    }
+    var summaries = groupOrder.slice(0, 6);
+    for (var si = 0; si < summaries.length; si++) {
+      var grp = groups[summaries[si]];
+      var displayLabel = grp.count > 1 ? grp.label + " x" + grp.count : grp.label;
+      h += renderImportedTechniqueToken({ id: grp.label, t: grp.evt.t, dur: grp.evt.dur, laneMask: grp.evt.laneMask, sourceFlags: grp.evt.sourceFlags, laneLabel: displayLabel }, nowSec, lookaheadSec, si);
+    }
+  } else {
+    for (var pi = 0; pi < preview.length; pi++) {
+      h += renderImportedTechniqueToken(preview[pi], nowSec, lookaheadSec, pi);
+    }
   }
   return h;
 }
