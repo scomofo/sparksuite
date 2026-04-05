@@ -46,10 +46,10 @@ function drillTab() {
     var chordObj = findChord(c);
     html += '<h2>Drill: ' + escHTML(c) + '</h2>';
     html += '<div class="timer-display">' + pianoFormatTime(sc.r("drillTimer")) + '</div>';
-    html += '<div class="drill-progress">' + (sc.r("drillIdx") + 1) + ' / ' + sc.r("drillChords").length + '</div>';
+    html += '<div class="drill-progress">' + (sc.r("drillIdx") + 1) + ' / ' + (sc.r("drillChords")||[]).length + '</div>';
     if (chordObj) html += pianoSVG(chordObj);
     html += '<div class="drill-dots">';
-    sc.r("drillChords").forEach(function(dc, i) {
+    (sc.r("drillChords")||[]).forEach(function(dc, i) {
       html += '<span class="drill-dot ' + (i === sc.r("drillIdx") ? 'current' : (i < sc.r("drillIdx") ? 'done' : '')) + '">' + escHTML(dc) + '</span>';
     });
     html += '</div>';
@@ -219,7 +219,7 @@ function fingersTab() {
     html += '<div class="timer-display">' + pianoFormatTime(sc.r("chordChangeTimer")) + '</div>';
     html += '<div style="font-size:2rem;font-weight:800;color:var(--accent);margin:8px 0">' + sc.r("chordChangeCount") + '</div>';
     html += '<div class="text-muted">clean changes</div>';
-    if (sc.r("chordChangePair").length === 2) {
+    if ((sc.r("chordChangePair")||[]).length === 2) {
       html += '<div style="font-size:1.2rem;margin:12px 0">' + escHTML(sc.r("chordChangePair")[0]) + ' \u2194 ' + escHTML(sc.r("chordChangePair")[1]) + '</div>';
     }
     html += '<button class="btn btn-lg btn-accent" onclick="act(\'chord_change_tap\')" style="width:100%;padding:20px;margin:8px 0">TAP for each clean change</button>';
@@ -235,7 +235,7 @@ function fingersTab() {
   html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">';
   html += '<div class="stat-item"><div class="stat-val">' + sc.p("fingerExercisesDone") + '</div><div class="stat-label">Done</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + sc.p("fingerDaysLogged") + '</div><div class="stat-label">Days</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + sc.p("fingerBadges").length + '/' + FINGER_BADGES.length + '</div><div class="stat-label">Badges</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (sc.p("fingerBadges")||[]).length + '/' + FINGER_BADGES.length + '</div><div class="stat-label">Badges</div></div>';
   html += '</div>';
 
   // 60-Second Challenge launcher
@@ -249,7 +249,7 @@ function fingersTab() {
   });
   html += '</div>';
   // Personal best
-  var bestCount = sc.p("fingerStats")._chordChangeBest || 0;
+  var bestCount = (sc.p("fingerStats")||{})._chordChangeBest || 0;
   if (bestCount > 0) {
     html += '<div class="text-muted">Personal best: ' + bestCount + ' changes</div>';
   }
@@ -311,7 +311,7 @@ function fingersTab() {
   html += '<h3 style="margin-top:16px">Finger Badges</h3>';
   html += '<div class="badges-row">';
   FINGER_BADGES.forEach(function(b) {
-    var earned = sc.p("fingerBadges").indexOf(b.id) >= 0;
+    var earned = (sc.p("fingerBadges")||[]).indexOf(b.id) >= 0;
     html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(b.desc) + '">' + b.icon + '</span>';
   });
   html += '</div>';

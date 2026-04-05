@@ -197,10 +197,10 @@ function buildTab(){
 
   // Progression display
   h+='<div class="prog-blocks mb12">';
-  if(sc.p("progChords").length===0){
+  if((sc.p("progChords")||[]).length===0){
     h+='<div style="color:var(--text-muted);font-size:13px;padding:12px">Add chords to build a progression...</div>';
   } else {
-    for(var i=0;i<sc.p("progChords").length;i++){
+    for(var i=0;i<(sc.p("progChords")||[]).length;i++){
       var cn=sc.p("progChords")[i];
       var ch=null;for(var j=0;j<D.ALL_CHORDS.length;j++)if(D.ALL_CHORDS[j].name===cn)ch=D.ALL_CHORDS[j];
       var short=ch?ch.short:cn;
@@ -208,7 +208,7 @@ function buildTab(){
       h+='<div class="chord-label">'+short+'</div>';
       h+='<div class="move-btns">';
       if(i>0)h+='<button onclick="act(\'progMove\',\''+i+':left\')">&#8592;</button>';
-      if(i<sc.p("progChords").length-1)h+='<button onclick="act(\'progMove\',\''+i+':right\')">&#8594;</button>';
+      if(i<(sc.p("progChords")||[]).length-1)h+='<button onclick="act(\'progMove\',\''+i+':right\')">&#8594;</button>';
       h+='</div></div>';
     }
   }
@@ -236,7 +236,7 @@ function buildTab(){
   h+='</div></div>';
 
   // Scale Explorer
-  if(sc.p("progChords").length>0){
+  if((sc.p("progChords")||[]).length>0){
     // Detect key from first chord
     var firstChord=sc.p("progChords")[0];
     var scaleKey=null;
@@ -264,7 +264,7 @@ function buildTab(){
   }
 
   // Current chord diagram when playing
-  if(sc.r("progPlaying")&&sc.p("progChords").length>0){
+  if(sc.r("progPlaying")&&(sc.p("progChords")||[]).length>0){
     var cn=sc.p("progChords")[sc.p("progBeat")];
     var ch=null;for(var i=0;i<D.ALL_CHORDS.length;i++)if(D.ALL_CHORDS[i].name===cn)ch=D.ALL_CHORDS[i];
     if(ch){
@@ -277,10 +277,10 @@ function buildTab(){
   h+='<button onclick="act(\'progBpm\',\''+(sc.p("progBpm")-5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">-</button>';
   h+='<div style="text-align:center;min-width:60px"><div style="font-size:20px;font-weight:900;color:var(--text-primary)">'+sc.p("progBpm")+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
   h+='<button onclick="act(\'progBpm\',\''+(sc.p("progBpm")+5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">+</button></div>';
-  var canPlay=sc.p("progChords").length>=2;
+  var canPlay=(sc.p("progChords")||[]).length>=2;
   h+='<div style="display:flex;gap:10px;justify-content:center">';
   h+='<button class="btn" onclick="act(\'progPlay\')" style="background:'+(sc.r("progPlaying")?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(sc.r("progPlaying")?"var(--text-primary)":"#fff")+';opacity:'+(canPlay?1:0.5)+'">'+(sc.r("progPlaying")?"&#9632; Stop":"&#9654; Play")+'</button>';
-  if(sc.p("progChords").length>0)h+='<button class="btn" onclick="act(\'progClear\')" style="background:var(--input-bg);color:var(--text-muted)">Clear</button>';
+  if((sc.p("progChords")||[]).length>0)h+='<button class="btn" onclick="act(\'progClear\')" style="background:var(--input-bg);color:var(--text-muted)">Clear</button>';
   h+='</div></div>';
   return h;
 }

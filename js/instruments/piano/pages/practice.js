@@ -89,8 +89,8 @@ function pianoPracticeTab() {
 
   // Custom sets
   html += '<div class="custom-sets"><h4>Custom Practice Sets</h4>';
-  if (sc.p("customSets").length) {
-    sc.p("customSets").forEach(function(set, i) {
+  if ((sc.p("customSets")||[]).length) {
+    (sc.p("customSets")||[]).forEach(function(set, i) {
       html += '<div class="custom-set-row">';
       html += '<button class="btn btn-sm" onclick="act(\'drill_custom\',' + i + ')">' + escHTML(set.name) + ' (' + set.chords.length + ')</button>';
       html += '<button class="btn btn-sm btn-danger" onclick="act(\'del_custom\',' + i + ')">\u2715</button>';
@@ -109,7 +109,7 @@ function pianoPracticeTab() {
   if (!sc.p("focusMode")) {
     html += '<div class="badges-row">';
     BADGES.forEach(function(b) {
-      var earned = sc.p("earned").indexOf(b.id) >= 0;
+      var earned = (sc.p("earned")||[]).indexOf(b.id) >= 0;
       html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(b.desc) + '">' + b.icon + '</span>';
     });
     html += '</div>';

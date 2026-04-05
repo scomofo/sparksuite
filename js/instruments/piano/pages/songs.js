@@ -132,7 +132,7 @@ function songLibrary() {
         html += '<div class="song-list">';
         lvlSongs.forEach(function(item) {
           var s = item.song, idx = item.origIdx;
-          var done = sc.p("songsDone") && sc.p("songsDone").indexOf(s.title) >= 0;
+          var done = sc.p("songsDone") && (sc.p("songsDone")||[]).indexOf(s.title) >= 0;
           html += pianoClickableDiv(
             locked ? '' : "act('select_song'," + idx + ")",
             '<div class="song-row-inner"><span>' + (done ? "\u2705 " : "") + escHTML(s.title) + '</span><span class="text-muted">' + escHTML(s.artist) + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
@@ -147,7 +147,7 @@ function songLibrary() {
       filtered.forEach(function(item) {
         var s = item.song, idx = item.origIdx;
         var locked = s.level > sc.p("level") + 1;
-        var done = sc.p("songsDone") && sc.p("songsDone").indexOf(s.title) >= 0;
+        var done = sc.p("songsDone") && (sc.p("songsDone")||[]).indexOf(s.title) >= 0;
         html += pianoClickableDiv(
           locked ? '' : "act('select_song'," + idx + ")",
           '<div class="song-row-inner"><span style="' + (locked ? 'opacity:0.4' : '') + '">' + (done ? "\u2705 " : "") + escHTML(s.title) + '</span><span class="text-muted">' + escHTML(s.artist) + ' \u2022 Lvl ' + s.level + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
@@ -196,13 +196,13 @@ function buildTab() {
   html += '<p>Create your own chord progressions.</p>';
 
   html += '<div class="build-chords">';
-  sc.r("buildChords").forEach(function(c, i) {
+  (sc.r("buildChords")||[]).forEach(function(c, i) {
     html += '<span class="build-chip">' + escHTML(c) + '<button class="chip-remove" onclick="act(\'build_remove\',' + i + ')">\u2715</button></span>';
   });
   if (!(sc.r("buildChords")||[]).length) html += '<span class="text-muted">Add chords below</span>';
   html += '</div>';
 
-  if (sc.r("buildChords").length > 0) {
+  if ((sc.r("buildChords")||[]).length > 0) {
     html += '<div class="build-controls">';
     html += '<button class="btn btn-accent" onclick="act(\'build_play\')">' + (sc.r("buildPlaying") ? "\u23F8 Stop" : "\u25B6 Play") + '</button>';
     html += '<button class="btn btn-secondary" onclick="act(\'build_clear\')">Clear</button>';

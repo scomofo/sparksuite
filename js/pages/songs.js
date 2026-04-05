@@ -185,11 +185,11 @@ function communitySection(){
     h+='<div class="text-center" style="padding:30px;color:var(--text-muted)">Loading...</div>';
   } else if(sc.r("communityError")){
     h+='<div class="card text-center"><p style="color:#FF6B6B;font-size:13px">'+escHTML(sc.r("communityError"))+'</p><p style="color:var(--text-muted);font-size:12px;margin-top:8px">Make sure the community server is running:<br><code>cd server && npm start</code></p></div>';
-  } else if(sc.r("communitySongs").length===0){
+  } else if((sc.r("communitySongs")||[]).length===0){
     h+='<div class="card text-center"><p style="color:var(--text-muted);font-size:13px">No community songs yet. Be the first to submit!</p></div>';
   } else {
     h+='<div class="flex-col">';
-    for(var i=0;i<sc.r("communitySongs").length;i++){
+    for(var i=0;i<(sc.r("communitySongs")||[]).length;i++){
       var cs=sc.r("communitySongs")[i];
       h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(cs.artist)+' | '+escHTML(String(cs.bpm))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
       var chords=[];try{chords=JSON.parse(cs.chords);}catch(e){console.error("ChordSpark: failed to parse community song chords",e);}
@@ -254,7 +254,7 @@ function importSection(){
     h+='<h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#9989; Parsed Successfully</h4>';
     h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(sc.p("importedSong").title)+'" oninput="act(\'importTitle\',this.value)"/></div>';
     h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(sc.p("importedSong").artist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
-    h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+sc.p("importedSong").bpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
+    h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+(sc.p("importedSong")||{}).bpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Chords found ('+sc.p("importedSong").chords.length+'):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">';
     for(var i=0;i<sc.p("importedSong").chords.length;i++){
@@ -276,10 +276,10 @@ function importSection(){
   }
 
   // Saved imported songs
-  if(sc.p("importedSongs").length>0){
+  if((sc.p("importedSongs")||[]).length>0){
     h+='<div class="card"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#127925; My Imported Songs</h4>';
     h+='<div class="flex-col">';
-    for(var i=0;i<sc.p("importedSongs").length;i++){
+    for(var i=0;i<(sc.p("importedSongs")||[]).length;i++){
       var sg=sc.p("importedSongs")[i];
       h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--input-bg);border-radius:12px">';
       h+='<div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+escHTML(sg.title)+'</div>';

@@ -159,7 +159,7 @@ function practiceTab(){
   // Guided Session CTA
   var gs=D.SESSIONS[sc.p("guidedSession")-1];
   if(gs){
-    var gsDone=sc.p("completedGuidedSessions")?sc.p("completedGuidedSessions").length:0;
+    var gsDone=sc.p("completedGuidedSessions")?(sc.p("completedGuidedSessions")||[]).length:0;
     h+='<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
     h+='<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
     h+='<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
@@ -247,7 +247,7 @@ function practiceTab(){
   // Badges
   h+='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127942; Badges</h3><div style="display:flex;flex-wrap:wrap;gap:8px">';
   for(var i=0;i<BADGES.length;i++){
-    var b=BADGES[i],e=sc.p("earnedBadges").indexOf(b.id)!==-1;
+    var b=BADGES[i],e=(sc.p("earnedBadges")||[]).indexOf(b.id)!==-1;
     h+='<div style="width:56px;text-align:center;opacity:'+(e?1:0.3)+'" aria-label="Badge: '+b.label+(e?" (earned)":" (locked)")+'"><div style="font-size:24px;filter:'+(e?"none":"grayscale(1)")+'">'+b.icon+'</div><div style="font-size:8px;color:var(--text-label);font-weight:600">'+b.label+'</div></div>';
   }
   h+='</div></div>';
@@ -274,17 +274,17 @@ function customSetsSection(){
     for(var l=1;l<=sc.p("level");l++){
       var cs=D.CHORDS[l]||[];
       for(var i=0;i<cs.length;i++){
-        var c=cs[i],sel=sc.p("customSetChords").indexOf(c.name)!==-1;
+        var c=cs[i],sel=(sc.p("customSetChords")||[]).indexOf(c.name)!==-1;
         h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'toggleSetChord\',\'"+c.name+"\')")+'>'+c.short+'</span>';
       }
     }
     h+='</div>';
-    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(sc.p("customSetChords").length<2||!sc.p("customSetName").trim()?';opacity:0.5':'')+'">'+(sc.p("editingSetIdx")>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
+    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+((sc.p("customSetChords")||[]).length<2||!sc.p("customSetName").trim()?';opacity:0.5':'')+'">'+(sc.p("editingSetIdx")>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
   } else {
-    if(sc.p("customSets").length===0){
+    if((sc.p("customSets")||[]).length===0){
       h+='<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Create custom chord groups to practice together.</p>';
     } else {
-      for(var i=0;i<sc.p("customSets").length;i++){
+      for(var i=0;i<(sc.p("customSets")||[]).length;i++){
         var cs=sc.p("customSets")[i];
         h+='<div class="set-card mb12"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.name)+'</h4><div style="display:flex;gap:6px">';
         h+='<button onclick="act(\'drillCustomSet\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Start drill with '+escHTML(cs.name)+'">&#9889; Drill</button>';
@@ -361,7 +361,7 @@ function getLegacyEarTrainingRuntime(){
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   return {
     question: typeof sc.r("earTrainQ") === "string" ? sc.r("earTrainQ") : (runtime ? runtime.legacyEarTrainQuestion : null),
-    options: Array.isArray(sc.r("earTrainOpts")) && sc.r("earTrainOpts").length ? sc.r("earTrainOpts") : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
+    options: Array.isArray(sc.r("earTrainOpts")) && (sc.r("earTrainOpts")||[]).length ? sc.r("earTrainOpts") : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
     answer: typeof sc.r("earTrainAns") === "string" ? sc.r("earTrainAns") : (runtime ? runtime.legacyEarTrainAnswer : null),
     score: typeof sc.r("earTrainScore") === "number" ? sc.r("earTrainScore") : (runtime && typeof runtime.legacyEarTrainScore === "number" ? runtime.legacyEarTrainScore : 0),
     total: typeof sc.r("earTrainTotal") === "number" ? sc.r("earTrainTotal") : (runtime && typeof runtime.legacyEarTrainTotal === "number" ? runtime.legacyEarTrainTotal : 0),

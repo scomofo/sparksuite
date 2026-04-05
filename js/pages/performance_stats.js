@@ -73,9 +73,9 @@ function performanceStatsPage(){
   }
 
   // Daily challenge history
-  if((focus==="daily"||focus==="overview")&&Array.isArray(sc.p("performanceDailyHistory"))&&sc.p("performanceDailyHistory").length){
-    h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Daily Challenges ('+sc.p("performanceDailyHistory").length+' completed)</h3>';
-    var dh=sc.p("performanceDailyHistory").slice(-5).reverse();
+  if((focus==="daily"||focus==="overview")&&Array.isArray(sc.p("performanceDailyHistory"))&&(sc.p("performanceDailyHistory")||[]).length){
+    h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Daily Challenges ('+(sc.p("performanceDailyHistory")||[]).length+' completed)</h3>';
+    var dh=(sc.p("performanceDailyHistory")||[]).slice(-5).reverse();
     for(var di=0;di<dh.length;di++){
       h+='<div style="font-size:12px;color:var(--text-muted);padding:3px 0">'+escHTML(dh[di].date)+' &mdash; '+escHTML(dh[di].type)+' +'+dh[di].xp+'XP</div>';
     }

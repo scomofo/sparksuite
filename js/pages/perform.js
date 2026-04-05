@@ -177,9 +177,9 @@ function performPage() {
 
   // Input source badge + detected notes
   h += '<div class="perform-input-badge">' + (sc.r("performInputSource") === "midi" ? "MIDI" : "MIC");
-  if (sc.r("performInputNotes") && sc.r("performInputNotes").length) {
+  if (sc.r("performInputNotes") && (sc.r("performInputNotes")||[]).length) {
     h += ' &mdash; ';
-    for (var ni = 0; ni < sc.r("performInputNotes").length; ni++) {
+    for (var ni = 0; ni < (sc.r("performInputNotes")||[]).length; ni++) {
       h += '<span style="background:var(--chip-bg);color:var(--chip-color);padding:2px 6px;border-radius:6px;margin-left:3px;font-size:11px;font-weight:700">' + escHTML(sc.r("performInputNotes")[ni]) + '</span>';
     }
   }

@@ -35,15 +35,15 @@ function statsTab() {
   html += '<div class="stats-grid">';
   html += '<div class="stat-item"><div class="stat-val">' + sc.p("xp") + '</div><div class="stat-label">XP</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + sc.p("streak") + '</div><div class="stat-label">Streak</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + (sc.p("completedSessions") ? sc.p("completedSessions").length : 0) + '</div><div class="stat-label">Sessions</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (sc.p("completedSessions") ? (sc.p("completedSessions")||[]).length : 0) + '</div><div class="stat-label">Sessions</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + sc.p("level") + '/8</div><div class="stat-label">Level</div></div>';
   html += '</div>';
 
   // Personal bests (stickiness #6 - never compare to others)
   html += '<h3>Personal Bests</h3>';
   html += '<div class="stats-grid">';
-  html += '<div class="stat-item"><div class="stat-val">' + (sc.p("personalBests").bpm || '-') + '</div><div class="stat-label">Best BPM</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + (sc.p("personalBests").streak || '-') + '</div><div class="stat-label">Best Streak</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + ((sc.p("personalBests")||{}).bpm || '-') + '</div><div class="stat-label">Best BPM</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + ((sc.p("personalBests")||{}).streak || '-') + '</div><div class="stat-label">Best Streak</div></div>';
   html += '</div>';
 
   // Finger exercise stats
@@ -52,7 +52,7 @@ function statsTab() {
     html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">';
     html += '<div class="stat-item"><div class="stat-val">' + sc.p("fingerExercisesDone") + '</div><div class="stat-label">Exercises</div></div>';
     html += '<div class="stat-item"><div class="stat-val">' + sc.p("fingerDaysLogged") + '</div><div class="stat-label">Days</div></div>';
-    var chordBest = sc.p("fingerStats")._chordChangeBest || 0;
+    var chordBest = (sc.p("fingerStats")||{})._chordChangeBest || 0;
     html += '<div class="stat-item"><div class="stat-val">' + (chordBest || '-') + '</div><div class="stat-label">Best 60s</div></div>';
     html += '</div>';
   }
@@ -77,14 +77,14 @@ function statsTab() {
   for (var i = 29; i >= 0; i--) {
     var d = new Date(Date.now() - i * 86400000);
     var ds = d.toDateString();
-    var practiced = sc.p("history").some(function(h) { return new Date(h.ts).toDateString() === ds; });
+    var practiced = (sc.p("history")||[]).some(function(h) { return new Date(h.ts).toDateString() === ds; });
     html += '<div class="cal-day ' + (practiced ? 'cal-active' : '') + '" title="' + ds + '"></div>';
   }
   html += '</div>';
 
   // Recent history
   html += '<h3>Recent Activity</h3><div class="history-list">';
-  var recent = sc.p("history").slice(-10).reverse();
+  var recent = (sc.p("history")||[]).slice(-10).reverse();
   recent.forEach(function(h) {
     var d = new Date(h.ts || h.timestamp);
     var time = d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -98,7 +98,7 @@ function statsTab() {
   var BADGES = D.BADGES || [];
   html += '<h3>Badges</h3><div class="badges-grid">';
   BADGES.forEach(function(b) {
-    var earned = sc.p("earned").indexOf(b.id) >= 0;
+    var earned = (sc.p("earned")||[]).indexOf(b.id) >= 0;
     html += '<div class="badge-card ' + (earned ? 'earned' : 'locked') + '">';
     html += '<span class="badge-icon">' + b.icon + '</span>';
     html += '<span class="badge-label">' + b.label + '</span>';

@@ -237,7 +237,7 @@ function guidedDonePage() {
   h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + sc.p("streak") + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + (sc.p("completedGuidedSessions") ? sc.p("completedGuidedSessions").length : 0) + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + (sc.p("completedGuidedSessions") ? (sc.p("completedGuidedSessions")||[]).length : 0) + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
   h += '</div></div>';
   h += '<div class="flex-col"><button class="btn" onclick="act(\'guidedStart\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';

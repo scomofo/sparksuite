@@ -22,7 +22,7 @@ function getLegacyAudioInputRuntime(){
     : null;
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   return {
-    devices: Array.isArray(sc.r("audioInputDevices")) && sc.r("audioInputDevices").length ? sc.r("audioInputDevices") : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
+    devices: Array.isArray(sc.r("audioInputDevices")) && (sc.r("audioInputDevices")||[]).length ? sc.r("audioInputDevices") : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
     inputId: typeof sc.r("audioInputId") === "string" ? sc.r("audioInputId") : (runtime ? (runtime.audioInputId || "") : ""),
     testingId: typeof sc.r("audioTestingId") === "string" ? sc.r("audioTestingId") : (runtime ? (runtime.audioTestingId || "") : ""),
     testLevel: typeof sc.r("audioTestLevel") === "number" ? sc.r("audioTestLevel") : (runtime && typeof runtime.audioTestLevel === "number" ? runtime.audioTestLevel : 0)
@@ -318,11 +318,11 @@ function guideTab(){
   h+='<button onclick="act(\'toggleMidi\')" style="padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;background:'+(sc.p("midiEnabled")?"#4ECDC4":"var(--input-bg)")+';color:'+(sc.p("midiEnabled")?"#fff":"var(--text-muted)")+';border:2px solid '+(sc.p("midiEnabled")?"#4ECDC4":"var(--border)")+';transition:all .2s">'+(sc.p("midiEnabled")?"&#9989; On":"Off")+'</button></div>';
   if(sc.p("midiEnabled")){
     h+='<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">MIDI Devices:</div>';
-    if(sc.p("midiDevices").length===0){
+    if((sc.p("midiDevices")||[]).length===0){
       h+='<div style="font-size:12px;color:var(--text-muted);padding:10px;background:var(--input-bg);border-radius:10px;text-align:center">No MIDI output devices found. Connect a device and reload.</div>';
     } else {
       h+='<div style="display:flex;flex-direction:column;gap:6px">';
-      for(var i=0;i<sc.p("midiDevices").length;i++){
+      for(var i=0;i<(sc.p("midiDevices")||[]).length;i++){
         var md=sc.p("midiDevices")[i],isActive=sc.p("midiOutput")&&sc.p("midiOutputId")===md.id;
         h+='<button onclick="act(\'selectMidiDevice\',\''+md.id+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;background:'+(isActive?"#4ECDC422":"var(--input-bg)")+';color:'+(isActive?"#4ECDC4":"var(--text-primary)")+';border:2px solid '+(isActive?"#4ECDC4":"var(--border)")+';text-align:left">'+(isActive?"&#9654; ":"&#9675; ")+escHTML(md.name)+'</button>';
       }

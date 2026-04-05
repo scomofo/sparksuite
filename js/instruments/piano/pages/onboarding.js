@@ -46,7 +46,7 @@ function pianoOnboardingPage() {
       html += dots;
       html += '<div class="style-chips">';
       STYLE_PREFS.forEach(function(sp) {
-        var selected = sc.p("stylePrefs").indexOf(sp) >= 0 ? " selected" : "";
+        var selected = (sc.p("stylePrefs")||[]).indexOf(sp) >= 0 ? " selected" : "";
         html += '<div class="style-chip' + selected + '" onclick="act(\'toggle_style_pref\',\'' + sp + '\')">' + sp + '</div>';
       });
       html += '</div>';

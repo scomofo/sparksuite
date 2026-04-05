@@ -168,7 +168,7 @@ function renderNewMove(plan) {
       html += '<div class="session-text">Refine: Focus on clean transitions and consistent finger placement.</div>';
       if (chord) html += pianoSVG(chord);
       // Show transition tip if available
-      var tipKey = sc.r("lastReviewChords").length ? sc.r("lastReviewChords")[0] + "_" + plan.newMove.chord : null;
+      var tipKey = (sc.r("lastReviewChords")||[]).length ? (sc.r("lastReviewChords")||[])[0] + "_" + plan.newMove.chord : null;
       var _tips = typeof PIANO_TRANSITION_TIPS !== "undefined" ? PIANO_TRANSITION_TIPS : TRANSITION_TIPS;
       if (tipKey && _tips[tipKey]) {
         html += '<div class="intention-card">\u{1F4A1} ' + escHTML(_tips[tipKey]) + '</div>';
@@ -207,7 +207,7 @@ function renderSongSlice(plan) {
   }
 
   // BPM display
-  html += adaptiveBpmDisplay(sc.r("adaptiveBpm"), sc.p("personalBests").bpm);
+  html += adaptiveBpmDisplay(sc.r("adaptiveBpm"), (sc.p("personalBests")||{}).bpm);
 
   // LH pattern info
   if (plan.lh && plan.lh !== "Resting") {
@@ -272,7 +272,7 @@ function legacySessionHTML() {
     var match = getChordMatch(c);
     html += '<div class="detection-box">';
     html += '<div class="match-pct ' + (match >= 80 ? 'match-good' : match >= 50 ? 'match-ok' : 'match-low') + '">' + match + '% match</div>';
-    html += '<div class="detected-notes">' + (sc.r("detectedNotes").length ? "Detected: " + sc.r("detectedNotes").join(" ") : "\u{1F3A4} Listening...") + '</div>';
+    html += '<div class="detected-notes">' + ((sc.r("detectedNotes")||[]).length ? "Detected: " + (sc.r("detectedNotes")||[]).join(" ") : "\u{1F3A4} Listening...") + '</div>';
     html += '<div class="coach-tip">' + getCoachFeedback(c) + '</div>';
     html += detectionConfidenceHTML();
     html += '</div>';

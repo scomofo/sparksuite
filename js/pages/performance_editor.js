@@ -253,7 +253,7 @@ function getPerformanceEditorView() {
       ? documentView.bpm
       : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorBpm")
         ? runtimeState.performanceEditorBpm
-        : (sc.r("performEditorChart") && sc.r("performEditorChart").bpm ? sc.r("performEditorChart").bpm : null)),
+        : (sc.r("performEditorChart") && (sc.r("performEditorChart")||{}).bpm ? (sc.r("performEditorChart")||{}).bpm : null)),
     eventCount: documentView && Object.prototype.hasOwnProperty.call(documentView, "eventCount")
       ? documentView.eventCount
       : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorEventCount")

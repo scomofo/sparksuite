@@ -28,7 +28,7 @@ function getLegacySessionRuntime(D){
 
 function getLegacyDrillRuntime(D){
   var runtime = getSparkCoreRuntimeState();
-  var drillChords = Array.isArray(sc.r("drillChords")) && sc.r("drillChords").length ? sc.r("drillChords") : [];
+  var drillChords = Array.isArray(sc.r("drillChords")) && (sc.r("drillChords")||[]).length ? sc.r("drillChords") : [];
   if (!drillChords.length && runtime && Array.isArray(runtime.legacyDrillChordNames)) {
     for (var i = 0; i < runtime.legacyDrillChordNames.length; i++) {
       var chord = findInstrumentChordByName(D, runtime.legacyDrillChordNames[i]);
@@ -197,7 +197,7 @@ function quizPage(){
     runtime = view && view.runtimeState ? view.runtimeState : null;
   }
   var quizQuestion = sc.r("quizQ") || (runtime && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : null);
-  var quizOptions = Array.isArray(sc.r("quizOpts")) && sc.r("quizOpts").length ? sc.r("quizOpts") : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
+  var quizOptions = Array.isArray(sc.r("quizOpts")) && (sc.r("quizOpts")||[]).length ? sc.r("quizOpts") : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
   var quizAnswer = typeof sc.r("quizAns") === "string" ? sc.r("quizAns") : (runtime ? runtime.legacyQuizAnswer : null);
   var quizScore = typeof sc.r("quizScore") === "number" ? sc.r("quizScore") : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
   var quizTotal = typeof sc.p("quizTotal") === "number" ? sc.p("quizTotal") : (runtime && typeof runtime.legacyQuizTotal === "number" ? runtime.legacyQuizTotal : 0);
