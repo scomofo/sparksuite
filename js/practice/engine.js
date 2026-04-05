@@ -7,7 +7,7 @@
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         forceRebuild: !!opts.forceRebuild
       });
-      return plan ? plan.toLegacyPracticePlan() : null;
+      if (plan) return plan.toLegacyPracticePlan();
     }
 
     var today = new Date().toISOString().slice(0,10);
@@ -21,7 +21,7 @@
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         forceRebuild: true
       });
-      return plan ? plan.toLegacyPracticePlan() : null;
+      if (plan) return plan.toLegacyPracticePlan();
     }
 
     var today = new Date().toISOString().slice(0,10);

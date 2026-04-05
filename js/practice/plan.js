@@ -8,7 +8,7 @@
       var corePlan = window.sparkCore.startSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE
       });
-      return corePlan ? corePlan.toLegacyPracticePlan() : null;
+      if (corePlan) return corePlan.toLegacyPracticePlan();
     }
 
     var weak = getTopWeakSpots();
