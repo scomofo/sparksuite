@@ -174,7 +174,7 @@ var ifThenCard = window.ifThenCard;
 // getChordMatch aliased from PianoAudio above
 var fireMicro = window.fireMicro;
 var escHTML = window.escHTML;
-var saveState = window.saveState;
+var saveState = function(immediate) { return window.saveState(immediate); };
 var showToast = window.showToast || function() {};
 var checkPracticeDate = window.checkPracticeDate || function() {};
 var getRewardPhase = window.getRewardPhase || function() { return null; };
@@ -189,7 +189,7 @@ var chordNoteNames = window.chordNoteNames || function() { return []; };
 var getAvailableExercises = window.getAvailableExercises || function() { return []; };
 var getSessionExercise = window.getSessionExercise || function() { return null; };
 var getWarmUpExercise = window.getWarmUpExercise || function() { return null; };
-var render = window.render;
+var render = function() { return window.render(); };
 
 // ── Utility ──
 function shuffleArray(arr) {
