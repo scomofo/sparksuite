@@ -1390,6 +1390,37 @@ window.act=function(a,v){
     else S.screen=SCR.SKILL_TREE;
     render();return;
   }
+  if(a==="planStartWarmup"){
+    S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();
+    return;
+  }
+  if(a==="planStartTransition"&&v){
+    var parts=v.split("|");
+    if(parts.length>=2){S.drillChords=[];var from=findChordByName(parts[0]);var to=findChordByName(parts[1]);if(from)S.drillChords.push(from);if(to)S.drillChords.push(to);S.drillIdx=0;S.drillTimer=60;S.screen=SCR.DRILL;render();}
+    return;
+  }
+  if(a==="planStartPerformanceSong"&&v){
+    var ps=v.split("|");
+    S.performSongId=ps[0]||"";S.performArrangementType=ps[1]||"chords";S.performDifficulty=ps[2]||"normal";
+    S.screen=SCR.PERFORM_SONG;render();
+    return;
+  }
+  if(a==="planStartPerformancePhrase"&&v){
+    var pp=v.split("|");
+    S.performSongId=pp[0]||"";S.performArrangementType=pp[1]||"chords";S.performDifficulty=pp[2]||"normal";S.performTargetPhrase=pp[3]||null;
+    S.screen=SCR.PERFORM_SONG;render();
+    return;
+  }
+  if(a==="planStartPerformanceTechnique"&&v){
+    var pt=v.split("|");
+    S.performSongId=pt[0]||"";S.performArrangementType=pt[1]||"imported_chart";S.performDifficulty=pt[2]||"normal";S.performTargetTechnique=pt[3]||null;
+    S.screen=SCR.PERFORM_SONG;render();
+    return;
+  }
+  if(a==="planStartRhythm"){
+    S.rhythmBpm=parseInt(v,10)||90;S.rhythmActive=false;S.screen=SCR.HOME;S.tab="games";render();
+    return;
+  }
   if(a==="planStartModuleExercise"){
     var moduleExercise = resolveModuleExerciseLaunchOptions(v);
     var modulePayload = buildModuleExerciseRhythmPayload(moduleExercise);
