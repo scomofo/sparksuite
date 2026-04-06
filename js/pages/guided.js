@@ -178,7 +178,7 @@ function _guidedNewMove(plan) {
 
   // Find chord
   var ch = null;
-  for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
+  for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord || D.ALL_CHORDS[i].short === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
 
   switch (guidedView.newMovePhase) {
     case "watch":
