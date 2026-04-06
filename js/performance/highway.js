@@ -24,6 +24,13 @@ function resolvePerformanceHighwayInstrument(chart) {
 function resolvePerformanceHighwaySkin(chart) {
   var instrument = resolvePerformanceHighwayInstrument(chart);
   if (instrument === "piano" && SparkHighway.PIANO_SKIN) return SparkHighway.PIANO_SKIN;
+  // Fall through to the active instrument's registered skin (bass, ukulele, ...)
+  // before the guitar default, so non-guitar instruments render their own lane
+  // count / colors instead of being forced into a 6-lane guitar highway.
+  if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
+    var active = SparkInstruments.getActive();
+    if (active && active.skin) return active.skin;
+  }
   return SparkHighway.GUITAR_SKIN;
 }
 
