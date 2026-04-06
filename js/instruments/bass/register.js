@@ -36,7 +36,7 @@
     // the inline SVG silhouette so the reference never renders as a broken icon.
     iconImage: "resources/instruments/bass/card.png",
     heroImage: "resources/instruments/bass/hero.jpg",
-    skin: typeof SparkHighway !== "undefined" ? SparkHighway.GUITAR_SKIN : null,
+    skin: { laneCount: 4, noteShape: "circle", laneColors: [[255,50,50],[255,180,0],[50,180,255],[50,255,50]], laneIndicatorStyle: "buttons", laneSpacing: 100, backgroundColors: { top: [10,10,20], bottom: [30,30,50] } },
     available: true,
     capabilities: {
       stringCount: 4,
