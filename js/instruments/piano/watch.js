@@ -27,7 +27,7 @@
 
     var svgWrap = document.createElement("div");
     svgWrap.style.textAlign = "center";
-    svgWrap.innerHTML = (typeof pianoSVG === "function") ? pianoSVG(null, { width: 340, hideKeys: true }) : "";
+    svgWrap.innerHTML = (typeof pianoSVG === "function") ? pianoSVG(null, { width: 340, hideKeys: false }) : "";
     container.appendChild(svgWrap);
 
     var narration = document.createElement("div");
