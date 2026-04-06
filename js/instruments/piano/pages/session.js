@@ -147,6 +147,8 @@ function renderReview(plan) {
 }
 
 function renderNewMove(plan) {
+  if (window._watchCleanup && window._watchCleanup.cleanup) { window._watchCleanup.cleanup(); window._watchCleanup = null; }
+  if (window._shadowCleanup && window._shadowCleanup.cleanup) { window._shadowCleanup.cleanup(); window._shadowCleanup = null; }
   if (!plan.newMove) return '';
 
   var html = '<div class="session-step-card newmove-card">';
@@ -160,18 +162,39 @@ function renderNewMove(plan) {
   switch (S.newMovePhase) {
     case "watch":
       html += '<div class="watch-overlay">';
-      html += '<div class="watch-label">\u{1F440} Watch \u2014 Hands Off!</div>';
-      html += '<div class="session-text">Observe the chord shape and finger placement. Don\'t play yet.</div>';
-      if (chord) html += pianoSVG(chord);
-      html += '<button class="btn btn-sm" onclick="act(\'play_watch_demo\',\'' + plan.newMove.chord + '\')">\u{1F50A} Demo</button>';
+      html += '<div class="watch-label">👀 Watch — Hands Off!</div>';
+      html += '<div class="session-text">Observe the chord shape and finger placement.</div>';
       html += '</div>';
-      html += '<button class="btn btn-accent" onclick="act(\'advance_phase\')">I\'ve Watched \u2192</button>';
+      if (chord && typeof PianoWatch !== "undefined") {
+        html += '<div id="watch-phase-container"></div>';
+        setTimeout(function() {
+          var el = document.getElementById("watch-phase-container");
+          if (el) window._watchCleanup = PianoWatch.watchAnimation(el, chord, {
+            onComplete: function() { act("advance_phase"); },
+            strumFn: function() { if (typeof strumChord === "function") strumChord(chord.name || ""); }
+          });
+        }, 0);
+      } else if (chord) {
+        html += pianoSVG(chord);
+        html += '<button class="btn btn-accent" onclick="act(\x27advance_phase\x27)">I\'ve Watched →</button>';
+      }
       break;
 
     case "shadow":
-      html += '<div class="session-text">\u{1F91A} Mirror slowly. Copy what you saw. No feedback yet.</div>';
-      if (chord) html += pianoSVG(chord);
-      html += '<button class="btn btn-accent" onclick="act(\'advance_phase\')">I\'ve Shadowed \u2192</button>';
+      html += '<div class="session-text">🤚 Tap where each finger goes on the keyboard below.</div>';
+      if (chord && typeof PianoWatch !== "undefined") {
+        html += '<div id="shadow-phase-container"></div>';
+        setTimeout(function() {
+          var el = document.getElementById("shadow-phase-container");
+          if (el) window._shadowCleanup = PianoWatch.shadowQuiz(el, chord, {
+            onComplete: function() { act("advance_phase"); },
+            strumFn: function() { if (typeof strumChord === "function") strumChord(chord.name || ""); }
+          });
+        }, 0);
+      } else if (chord) {
+        html += pianoSVG(chord);
+        html += '<button class="btn btn-accent" onclick="act(\x27advance_phase\x27)">I\'ve Shadowed →</button>';
+      }
       break;
 
     case "try":
