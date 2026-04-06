@@ -210,7 +210,14 @@
         LN: getUkuleleLevelNames(),
         CHORD_NOTES: window.SparkUkuleleChordNotes || {},
         STRINGS: window.SparkUkuleleTuning ? window.SparkUkuleleTuning.strings : [],
-        STRUM_PATTERNS: [{ name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U", "D", "U"] }],
+        STRUM_PATTERNS: [
+          { name: "Down Strum", level: 1, bpm: 70, pattern: ["D", "D", "D", "D"] },
+          { name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U", "D", "U"] },
+          { name: "Calypso", level: 2, bpm: 80, pattern: ["D", ".", "U", "U", ".", "U"] },
+          { name: "Reggae Chop", level: 2, bpm: 72, pattern: [".", "D", ".", "D"] },
+          { name: "Swing Strum", level: 3, bpm: 85, pattern: ["D", ".", "U", ".", "D", "U", ".", "U"] },
+          { name: "Fingerpick Roll", level: 3, bpm: 70, pattern: ["D", "U", "D", "U", "D", "U", "D", "U"] }
+        ],
         FINGER_EXERCISES: window.SparkUkuleleExercises ? window.SparkUkuleleExercises.fingerpicking || [] : [],
         CURRICULUM: window.SparkUkuleleLessons || [],
         SKILL_TREE: window.SparkUkuleleSkillTree || []
@@ -277,10 +284,18 @@
 
     tabs: [
       { id: "practice", label: "Practice", icon: "&#127925;" },
-      { id: "songs", label: "Songs", icon: "&#127926;" },
-      { id: "stats", label: "Stats", icon: "&#128202;" },
-      { id: "guide", label: "Guide", icon: "&#128214;" },
-      { id: "tuner", label: "Tuner", icon: "&#127908;" }
+      { id: "drill",    label: "Drill",    icon: "&#9889;" },
+      { id: "daily",    label: "Daily",    icon: "&#127941;" },
+      { id: "quiz",     label: "Quiz",     icon: "&#129504;" },
+      { id: "ear",      label: "Ear",      icon: "&#128066;" },
+      { id: "strum",    label: "Strum",    icon: "&#127932;" },
+      { id: "songs",    label: "Songs",    icon: "&#127926;" },
+      { id: "rhythm",   label: "Rhythm",   icon: "&#129345;" },
+      { id: "runner",   label: "Runner",   icon: "&#127918;" },
+      { id: "build",    label: "Build",    icon: "&#128295;" },
+      { id: "tuner",    label: "Tuner",    icon: "&#127908;" },
+      { id: "stats",    label: "Stats",    icon: "&#128202;" },
+      { id: "guide",    label: "Guide",    icon: "&#128214;" }
     ],
 
     stemMutePreset: {
