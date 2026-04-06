@@ -362,8 +362,8 @@ function _updatePerformDisplay() {
   // Initialize canvas highway on first frame
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas) {
-    if (S.performChart) { feedChartToHighway(S.performChart); }
-    feedChartToHighway(S.performChart);
+    ensureSparkHighway(canvas);
+    if (S.performChart) feedChartToHighway(S.performChart);
     updateSparkHighway(S.performCurrentSec, S.performCombo);
   }
 

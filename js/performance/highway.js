@@ -6,7 +6,7 @@ function ensureSparkHighway(canvasEl) {
   if (_sparkHighway && _sparkHighway.canvas === canvasEl) return _sparkHighway;
   if (_sparkHighway) _sparkHighway.destroy();
   var _inst = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive() : null;
-  var _skin = (_inst && _inst.skin) ? _inst.skin : SparkHighway.GUITAR_SKIN;
+  var _skin = (_inst && _inst.skin && _inst.skin.laneCount) ? _inst.skin : SparkHighway.GUITAR_SKIN;
   _sparkHighway = new SparkHighway(canvasEl, _skin);
   _sparkHighway._initPromise = _sparkHighway.init();
   return _sparkHighway;
