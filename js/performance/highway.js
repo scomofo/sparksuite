@@ -48,7 +48,13 @@ function destroySparkHighway() {
 
 function feedChartToHighway(chart) {
   if (!_sparkHighway || !chart) return;
-  _sparkHighway.setChart(chart.events || [], chart.phrases || []);
+  var events = chart.events || [];
+  for (var i = 0; i < events.length; i++) {
+    if (events[i].lane === undefined && events[i].laneMask) {
+      for (var b = 0; b < 8; b++) { if (events[i].laneMask & (1 << b)) { events[i].lane = b; break; } }
+    }
+  }
+  _sparkHighway.setChart(events, chart.phrases || []);
 }
 
 function updateSparkHighway(nowSec, combo) {
