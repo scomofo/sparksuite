@@ -363,8 +363,7 @@ function _updatePerformDisplay() {
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas) {
     if (typeof ensureSparkHighway === "function") ensureSparkHighway(canvas, S.performChart);
-    if (S.performChart) { feedChartToHighway(S.performChart); }
-    feedChartToHighway(S.performChart);
+    if (S.performChart) feedChartToHighway(S.performChart);
     updateSparkHighway(S.performCurrentSec, S.performCombo);
   }
 
