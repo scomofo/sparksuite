@@ -470,10 +470,12 @@ function allChordKeys() {
   return Object.keys(CHORDS);
 }
 function allChords() {
-  return allChordKeys().map(function(k) { return CHORDS[k]; });
+  var _pc = (typeof PIANO_DATA !== "undefined" && PIANO_DATA.CHORDS) ? PIANO_DATA.CHORDS : CHORDS;
+  return allChordKeys().map(function(k) { return _pc[k]; });
 }
 function findChord(short) {
-  return CHORDS[short] || null;
+  var _pc = (typeof PIANO_DATA !== "undefined" && PIANO_DATA.CHORDS) ? PIANO_DATA.CHORDS : CHORDS;
+  return _pc[short] || null;
 }
 
 // Get chords for a specific level (introduced at that level)
