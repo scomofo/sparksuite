@@ -165,7 +165,7 @@
     icon: "&#127926;",
     iconImage: "resources/ukulele.png",
     tagline: "Island strums and 4-string flow",
-    skin: { laneCount: 4, labels: ["G", "C", "E", "A"] },
+    skin: { laneCount: 4, noteShape: "circle", laneColors: [[255,50,50],[255,180,0],[50,180,255],[50,255,50]], laneIndicatorStyle: "buttons", laneSpacing: 100, backgroundColors: { top: [10,10,20], bottom: [30,30,50] } },
     available: true,
     capabilities: {
       stringCount: 4,
