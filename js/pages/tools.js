@@ -32,7 +32,8 @@ function getLegacyAudioInputRuntime(){
 function tunerTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var runtime = getLegacyTunerRuntime();
-  var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; Guitar Tuner</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Standard tuning: E A D G B e</p>';
+  var _inst = SparkInstruments.getActive(); var _instName = _inst ? _inst.name : "Guitar"; var _tuning = D.STRINGS ? D.STRINGS.map(function(s){return s.note}).join(" ") : "E A D G B e";
+  var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; ' + escHTML(_instName) + ' Tuner</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Standard tuning: ' + escHTML(_tuning) + '</p>';
   h+='<div id="tuner-strings" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
   for(var i=0;i<D.STRINGS.length;i++){
     var gs=D.STRINGS[i],mt=runtime.note===gs.note,inT=mt&&Math.abs(runtime.cents)<5,tC=inT?"#4ECDC4":mt&&Math.abs(runtime.cents)<15?"#FFE66D":"#FF6B6B";
