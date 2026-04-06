@@ -279,7 +279,8 @@
       { id: "practice", label: "Practice", icon: "&#127925;" },
       { id: "songs", label: "Songs", icon: "&#127926;" },
       { id: "stats", label: "Stats", icon: "&#128202;" },
-      { id: "guide", label: "Guide", icon: "&#128214;" }
+      { id: "guide", label: "Guide", icon: "&#128214;" },
+      { id: "tuner", label: "Tuner", icon: "&#127908;" }
     ],
 
     stemMutePreset: {
