@@ -3,7 +3,6 @@
 
 var sc = window.sparkCore;
 function pianoSessionPage() {
-  window.alert("pianoSessionPage called, step=" + sc.r("sessionStep"));
   var plan = sc.r("sessionPlan");
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
 
@@ -115,7 +114,6 @@ function renderReview(plan) {
 }
 
 function renderNewMove(plan) {
-  window.alert("renderNewMove called, phase=" + sc.r("newMovePhase"));
   if (window._watchCleanup && window._watchCleanup.cleanup) { window._watchCleanup.cleanup(); window._watchCleanup = null; }
   if (window._shadowCleanup && window._shadowCleanup.cleanup) { window._shadowCleanup.cleanup(); window._shadowCleanup = null; }
   if (!plan.newMove) return '';

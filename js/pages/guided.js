@@ -49,7 +49,6 @@ function newMovePhaseIndicator(phase) {
 }
 
 function guidedSessionPage() {
-  window.alert("SHARED guidedSessionPage, step=" + (getGuidedSessionView().guidedStep) + " phase=" + (getGuidedSessionView().newMovePhase));
   var guidedView = getGuidedSessionView();
   var plan = guidedView.plan;
   var guidedStep = guidedView.guidedStep;
