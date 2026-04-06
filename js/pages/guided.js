@@ -166,6 +166,7 @@ function _guidedNewMove(plan) {
       h += '</div>';
       if (ch && UI.shadowQuiz) {
         h += '<div id="shadow-phase-container"></div>';
+        h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:10px 24px;font-weight:700;margin-top:12px">Skip to Try &#8594;</button>';
         setTimeout(function() {
           var el = document.getElementById('shadow-phase-container');
           if (el) window._shadowCleanup = UI.shadowQuiz(el, ch, {onComplete: function(){act('guidedAdvancePhase')}});
