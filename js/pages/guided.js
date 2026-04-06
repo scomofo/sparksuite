@@ -178,7 +178,13 @@ function _guidedNewMove(plan) {
 
   // Find chord
   var ch = null;
-  for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord || D.ALL_CHORDS[i].short === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
+  if (D.ALL_CHORDS && D.ALL_CHORDS.length) {
+    for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord || D.ALL_CHORDS[i].short === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
+  }
+  if (!ch && D.CHORDS) {
+    ch = D.CHORDS[plan.newMove.chord] || null;
+    if (!ch) { for (var k in D.CHORDS) { if (D.CHORDS[k] && D.CHORDS[k].name === plan.newMove.chord) { ch = D.CHORDS[k]; break; } } }
+  }
 
   switch (guidedView.newMovePhase) {
     case "watch":
