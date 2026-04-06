@@ -124,6 +124,8 @@ function _guidedNewMove(plan) {
   var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
   var guidedView = getGuidedSessionView();
   if (!plan.newMove) return '';
+  if (window._watchCleanup && window._watchCleanup.cleanup) { window._watchCleanup.cleanup(); window._watchCleanup = null; }
+  if (window._shadowCleanup && window._shadowCleanup.cleanup) { window._shadowCleanup.cleanup(); window._shadowCleanup = null; }
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FF6B6B;font-weight:800">&#127919; New Move</h3>';
   h += newMovePhaseIndicator(guidedView.newMovePhase);
@@ -136,22 +138,36 @@ function _guidedNewMove(plan) {
     case "watch":
       h += '<div style="background:#FF6B6B11;border-radius:12px;padding:12px;margin-bottom:12px">';
       h += '<div style="font-size:14px;font-weight:800;color:#FF6B6B;margin-bottom:6px">&#128064; Watch \u2014 Hands Off!</div>';
-      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Observe the chord shape and finger placement. Don\'t play yet.</p>';
+      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Observe the chord shape and finger placement. Don't play yet.</p>';
       h += '</div>';
-      if (ch) {
+      if (ch && UI.watchAnimation) {
+        h += '<div id="watch-phase-container"></div>';
+        setTimeout(function() {
+          var el = document.getElementById('watch-phase-container');
+          if (el) window._watchCleanup = UI.watchAnimation(el, ch, {onComplete: function(){act('guidedAdvancePhase')}});
+        }, 0);
+      } else if (ch) {
         h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200, ch.name, true) + '</div>';
-        h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
+        h += '<button onclick="act('previewChord','' + ch.name + '')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
+        h += '<button class="btn" onclick="act('guidedAdvancePhase')" style="background:#FF6B6B;color:#fff;padding:12px 28px;font-weight:800">I've Watched &#8594;</button>';
       }
-      h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#FF6B6B;color:#fff;padding:12px 28px;font-weight:800">I\'ve Watched &#8594;</button>';
       break;
 
     case "shadow":
       h += '<div style="background:#45B7D111;border-radius:12px;padding:12px;margin-bottom:12px">';
-      h += '<div style="font-size:14px;font-weight:800;color:#45B7D1;margin-bottom:6px">&#129306; Shadow \u2014 Mirror Slowly</div>';
-      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Copy what you saw. Place your fingers on the strings. No pressure to be perfect.</p>';
+      h += '<div style="font-size:14px;font-weight:800;color:#45B7D1;margin-bottom:6px">&#129306; Shadow \u2014 Place the Fingers</div>';
+      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Tap where each finger goes on the diagram below.</p>';
       h += '</div>';
-      if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200) + '</div>';
-      h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">I\'ve Shadowed &#8594;</button>';
+      if (ch && UI.shadowQuiz) {
+        h += '<div id="shadow-phase-container"></div>';
+        setTimeout(function() {
+          var el = document.getElementById('shadow-phase-container');
+          if (el) window._shadowCleanup = UI.shadowQuiz(el, ch, {onComplete: function(){act('guidedAdvancePhase')}});
+        }, 0);
+      } else if (ch) {
+        h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200) + '</div>';
+        h += '<button class="btn" onclick="act('guidedAdvancePhase')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">I've Shadowed &#8594;</button>';
+      }
       break;
 
     case "try":
