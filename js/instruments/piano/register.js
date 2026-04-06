@@ -63,6 +63,18 @@
       },
       ring: function(pct, size, color) {
         return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
+      },
+      watchAnimation: function(container, chordObj, options) {
+        if (typeof PianoWatch === "undefined" || !chordObj) return null;
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return PianoWatch.watchAnimation(container, chordObj, options);
+      },
+      shadowQuiz: function(container, chordObj, options) {
+        if (typeof PianoWatch === "undefined" || !chordObj) return null;
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return PianoWatch.shadowQuiz(container, chordObj, options);
       }
     },
 

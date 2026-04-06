@@ -229,6 +229,40 @@
       },
       ring: function(pct, size, color) {
         return typeof ringHTML === "function" ? ringHTML(pct, size, 5, color) : "";
+      },
+      watchAnimation: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var normalized = typeof normalizeUkuleleChord === "function" ? normalizeUkuleleChord(chordObj) : chordObj;
+        var chart = {
+          name: normalized.name || "chord", instrument: "ukulele",
+          stringCount: 4,
+          stringLabels: ["G","C","E","A"],
+          fretCountVisible: 4, startFret: 0,
+          open: normalized.open || [],
+          muted: normalized.muted || [],
+          fingers: normalized.fingers || [],
+          barre: null
+        };
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedWatch(container, chart, options);
+      },
+      shadowQuiz: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var normalized = typeof normalizeUkuleleChord === "function" ? normalizeUkuleleChord(chordObj) : chordObj;
+        var chart = {
+          name: normalized.name || "chord", instrument: "ukulele",
+          stringCount: 4,
+          stringLabels: ["G","C","E","A"],
+          fretCountVisible: 4, startFret: 0,
+          open: normalized.open || [],
+          muted: normalized.muted || [],
+          fingers: normalized.fingers || [],
+          barre: null
+        };
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedShadow(container, chart, options);
       }
     },
 

@@ -97,6 +97,48 @@
       },
       ring: function(pct, size, color) {
         return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
+      },
+      watchAnimation: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var chart = {
+          name: chordObj.name || "chord", instrument: "bass",
+          stringCount: 4,
+          stringLabels: ["E","A","D","G"],
+          fretCountVisible: 5, startFret: 0,
+          open: [false, false, false, false],
+          muted: [],
+          fingers: chordObj.fingers || [],
+          barre: null
+        };
+        if (chordObj.frets) {
+          for (var i = 0; i < 4 && i < chordObj.frets.length; i++) {
+            chart.open[i] = chordObj.frets[i] === 0;
+          }
+        }
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedWatch(container, chart, options);
+      },
+      shadowQuiz: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var chart = {
+          name: chordObj.name || "chord", instrument: "bass",
+          stringCount: 4,
+          stringLabels: ["E","A","D","G"],
+          fretCountVisible: 5, startFret: 0,
+          open: [false, false, false, false],
+          muted: [],
+          fingers: chordObj.fingers || [],
+          barre: null
+        };
+        if (chordObj.frets) {
+          for (var i = 0; i < 4 && i < chordObj.frets.length; i++) {
+            chart.open[i] = chordObj.frets[i] === 0;
+          }
+        }
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedShadow(container, chart, options);
       }
     },
 
