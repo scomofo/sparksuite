@@ -52,7 +52,13 @@
         LN: typeof BASS_LN !== "undefined" ? BASS_LN : {},
         CHORD_NOTES: {},
         STRINGS: typeof BASS_STRINGS !== "undefined" ? BASS_STRINGS : [],
-        STRUM_PATTERNS: [],
+        STRUM_PATTERNS: [
+          { name: "Root Pulse", level: 1, bpm: 70, pattern: ["D", ".", "D", "."] },
+          { name: "Root-Fifth", level: 2, bpm: 75, pattern: ["D", ".", "D", "U"] },
+          { name: "Walking Line", level: 3, bpm: 80, pattern: ["D", "D", "D", "D"] },
+          { name: "Shuffle", level: 4, bpm: 85, pattern: ["D", ".", "U", "D", ".", "U"] },
+          { name: "Syncopated", level: 5, bpm: 90, pattern: ["D", "U", ".", "D", "U", ".", "D", "U"] }
+        ],
         FINGER_EXERCISES: typeof BASS_EXERCISES !== "undefined" ? BASS_EXERCISES : [],
         CURRICULUM: typeof BASS_CURRICULUM !== "undefined" ? BASS_CURRICULUM : [],
         SKILL_TREE: typeof BASS_SKILL_TREE !== "undefined" ? BASS_SKILL_TREE : {}
