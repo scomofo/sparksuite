@@ -106,7 +106,7 @@ function _guidedReview(plan) {
     h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">';
     for (var i = 0; i < plan.review.chords.length; i++) {
       var ch = null;
-      for (var j = 0; j < D.ALL_CHORDS.length; j++) if (D.ALL_CHORDS[j].name === plan.review.chords[i]) { ch = D.ALL_CHORDS[j]; break; }
+      for (var j = 0; j < D.ALL_CHORDS.length; j++) if (D.ALL_CHORDS[j].name === plan.review.chords[i] || D.ALL_CHORDS[j].short === plan.review.chords[i]) { ch = D.ALL_CHORDS[j]; break; }
       if (ch) {
         h += '<div style="text-align:center"><div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:4px">' + ch.short + '</div>';
         h += UI.chord(ch, 100) + '</div>';
@@ -234,7 +234,7 @@ function _guidedVictoryLap(plan) {
   // Show the session's main chord
   var ch = null;
   if (plan.newMove) {
-    for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
+    for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord || D.ALL_CHORDS[i].short === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
   }
   if (ch) {
     h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 160) + '</div>';

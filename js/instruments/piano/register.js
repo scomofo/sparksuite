@@ -20,7 +20,7 @@
       var d = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : {};
       return {
         CHORDS: d.CHORDS || {},
-        ALL_CHORDS: d.ALL_CHORDS || [],
+        ALL_CHORDS: (typeof allChords === "function" ? allChords() : (d.ALL_CHORDS || [])),
         SESSIONS: typeof PIANO_SESSIONS !== "undefined" ? PIANO_SESSIONS : (d.SESSION_PLANS || []),
         SONGS: d.SONGS || (typeof PIANO_SONGS !== "undefined" ? PIANO_SONGS : []),
         LC: d.LC || {},
