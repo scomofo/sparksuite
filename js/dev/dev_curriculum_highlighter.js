@@ -143,4 +143,105 @@
     }
   }, 1000);
 
+
+  // ── Clickable Error Navigation Panel ──
+
+  var navPanel = document.createElement("div");
+  navPanel.id = "spark-dev-error-nav";
+  navPanel.style.cssText = "position:fixed;bottom:0;left:0;z-index:99998;background:rgba(20,0,0,0.92);color:#f87171;font:11px/1.5 monospace;padding:0;max-width:380px;max-height:50vh;overflow-y:auto;border-top-right-radius:8px;transition:height 0.2s;";
+
+  var navToggle = document.createElement("div");
+  navToggle.style.cssText = "padding:6px 12px;cursor:pointer;font-weight:900;font-size:12px;color:#fca5a5;background:rgba(239,68,68,0.15);user-select:none;";
+  navToggle.textContent = "⚠ Curriculum Issues";
+  navPanel.appendChild(navToggle);
+
+  var navList = document.createElement("div");
+  navList.style.cssText = "padding:4px 10px 10px;display:none;";
+  navPanel.appendChild(navList);
+
+  var navOpen = false;
+  navToggle.onclick = function() {
+    navOpen = !navOpen;
+    navList.style.display = navOpen ? "block" : "none";
+    if (navOpen) refreshNavList();
+  };
+
+  function navTo(screen, extra) {
+    if (typeof S === "undefined" || typeof render !== "function") return;
+    if (screen === "skillTree") {
+      S.screen = "skillTree";
+      if (extra && extra.focus) S.skillTreeFocus = extra.focus;
+    } else if (screen === "practice") {
+      S.screen = "home";
+      S.tab = "practice";
+      if (extra && extra.level) S.selectedLevel = extra.level;
+    }
+    render();
+  }
+
+  function makeRow(icon, label, detail, onclick) {
+    var row = document.createElement("div");
+    row.style.cssText = "padding:4px 6px;margin:2px 0;border-radius:4px;cursor:pointer;background:rgba(239,68,68,0.08);pointer-events:auto;";
+    row.onmouseenter = function() { row.style.background = "rgba(239,68,68,0.2)"; };
+    row.onmouseleave = function() { row.style.background = "rgba(239,68,68,0.08)"; };
+    row.onclick = onclick;
+    row.innerHTML = "<span style='font-size:13px'>" + icon + "</span> <strong>" + label + "</strong><br><span style='color:#fca5a5;font-size:10px'>" + detail + "</span>";
+    return row;
+  }
+
+  function refreshNavList() {
+    var issues = getIssues();
+    navList.innerHTML = "";
+    var count = 0;
+
+    // Skills
+    for (var sid in issues.skills) {
+      var msgs = issues.skills[sid];
+      navList.appendChild(makeRow(
+        "🎯", sid, msgs.join("; "),
+        (function(s) { return function() { navTo("skillTree", { focus: "overview" }); }; })(sid)
+      ));
+      count++;
+    }
+
+    // Lessons
+    for (var lid in issues.lessons) {
+      var lmsgs = issues.lessons[lid];
+      // Try to extract level num from lesson id
+      var lvlNum = null;
+      var numMatch = lid.match(/(d+)/);
+      if (numMatch) lvlNum = parseInt(numMatch[1]);
+      navList.appendChild(makeRow(
+        "📖", lid, lmsgs.join("; "),
+        (function(lv) { return function() { if (lv) navTo("practice", { level: lv }); else navTo("skillTree"); }; })(lvlNum)
+      ));
+      count++;
+    }
+
+    // Levels
+    for (var lv in issues.levels) {
+      navList.appendChild(makeRow(
+        "🔢", "Level " + lv, issues.levels[lv].join("; "),
+        (function(l) { return function() { navTo("practice", { level: parseInt(l) }); }; })(lv)
+      ));
+      count++;
+    }
+
+    if (count === 0) {
+      navList.innerHTML = "<div style='color:#4ade80;padding:4px'>✅ No issues</div>";
+    }
+    navToggle.textContent = "⚠ Curriculum Issues (" + count + ")";
+  }
+
+  document.body.appendChild(navPanel);
+  // Refresh on render
+  var origRender = typeof render === "function" ? render : null;
+  if (origRender) {
+    window.render = function() {
+      var result = origRender.apply(this, arguments);
+      if (navOpen) setTimeout(refreshNavList, 100);
+      return result;
+    };
+  }
+  setTimeout(function() { refreshNavList(); navToggle.click(); }, 1500);
 })();
