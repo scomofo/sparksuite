@@ -1,339 +1,154 @@
 # SparkSuite – Repository Guide for Claude / Codex / AI Coding Agents
 
 ## Purpose
+
 SparkSuite is a multi-instrument music learning platform in active migration.
 
-This repo currently contains both:
-- legacy runtime systems that still power parts of the app
-- newer SparkSuite core systems that are becoming the long-term architecture
+This repo contains:
 
-Work in this repository must reflect current reality first, and target architecture second.
+* legacy runtime systems
+* SparkSuite core engines
+* a full instrument generation, validation, and integration pipeline
+
+All work must reflect **real repo structure AND pipeline-driven development**.
 
 ---
 
 ## Core Rule
 
 Prefer:
-- engine-owned logic
-- instrument-owned behavior
-- structured contracts
-- existing adapters, bridges, and registries
+
+* engine-owned logic
+* instrument-owned behavior
+* pipeline-driven content generation
 
 Avoid:
-- UI-driven business logic
-- hardcoded lesson flow in pages
-- duplicate parallel systems
-- docs that describe an idealized repo instead of the real one
+
+* UI-driven business logic
+* manual multi-file instrument setup
+* bypassing validation or generator systems
 
 ---
 
-## Current Repo Structure (Real)
+## Instrument Pipeline System (CRITICAL)
 
-Important directories and systems include:
+SparkSuite includes a full **Instrument Pipeline System**:
 
-- `js/spark-core/`
-  - legacy/core runtime services
-  - includes session, psychology, progress orchestration, storage/profile/content services
-  - `instrument-adapter.js` is a key active abstraction
+    Templates -> Generator -> Validator -> Fix Engine -> Auto-Integration -> CI -> Discovery
 
-- `js/sparksuite/core/`
-  - newer constructor-based SparkSuite core and engine migration layer
+### Key Scripts
 
-- `js/instruments/`
-  - active runtime instruments and registration/integration
-  - current directories include guitar, piano, bass, drums
-  - do not assume every instrument has parity here
+* scripts/generate_instrument_pipeline.js
+* scripts/validate_curriculum.js
+* scripts/suggest_curriculum_fixes.js
+* scripts/apply_generated_instrument.js
 
-- `js/sparksuite/instruments/`
-  - newer SparkSuite instrument content/modules
-  - separate from the active runtime instrument registration layer
+### Key Docs
 
-- `js/performance-core/`
-  - chart, transport, timing, gameplay, and related performance contracts/core support
-
-- `js/performance/`
-  - performance runtime system, pages, adapters, scoring, calibration, recommendations, session flow
-
-- `js/core/`
-  - contracts, persistence, analytics, practice, performance-related shared utilities
-
-- `js/midi/`
-  - MIDI support
-
-- `js/meta/`
-  - gamification and meta progression systems
-
-- `js/progression/`
-  - skill trees, mastery, unlocks, progress UI
-
-- `js/audio.js` and `js/audio/`
-  - audio system
-
-- `content/`
-  - content bundles and schemas
-
-- `data/`
-  - structured data, including performance charts
-
-- `desktop/`
-  - desktop wrapper/integration assets
-
-- `server/`
-  - backend/server code
-
-- `sparkgame/`
-  - game module
-
-- `harmony_knight/`
-  - Flutter sub-app currently housed inside this repository
-
-- `tests/`
-  - regression and migration tests
-
-This is a layered system, not a clean-slate repo.
+* docs/engineering/INSTRUMENT_GENERATOR_PIPELINE.md
+* docs/engineering/CURRICULUM_CONTRACT.md
+* docs/engineering/INSTRUMENT_DEBUG_GUIDE.md
 
 ---
 
-## Architecture Reality
+## Instrument Creation (MANDATORY WORKFLOW)
 
-Two architecture styles currently coexist.
+DO NOT manually create instruments across folders.
 
-### 1. Legacy active runtime
-- centered around `window.SparkCore`
-- service-style globals and orchestration
-- launcher/instrument registry driven
-- `instrument-adapter.js` is part of the real runtime boundary
+Use:
 
-### 2. Newer SparkSuite core direction
-- centered around `js/sparksuite/core/spark_core.js`
-- constructor-based engine composition
-- more explicit engine/module separation
+    node scripts/generate_instrument_pipeline.js --instrument <id> --template <template>
+    node scripts/validate_curriculum.js
+    node scripts/apply_generated_instrument.js --instrument <id>
 
-Do not assume the migration is complete.
-Do not delete or bypass legacy layers casually.
-
-Reference source of truth:
-- `docs/engineering/architecture-map.md`
+If this flow is not used, the implementation is invalid.
 
 ---
 
-## Engines and Systems Already Present
+## Auto-Discovery System
 
-This repo already contains far more than the five-engine simplified story.
+SparkSuite uses **manifest-based auto-discovery** for instruments.
 
-Existing systems include, among others:
-- session engine
-- curriculum engine
-- psychology engine
-- practice engine
-- progress engine
-- analytics engine
-- career engine
-- challenge engine
-- home engine
-- onboarding engine
-- recommend engine
-- editor engine
-- performance/timing/scoring/input/replay/calibration systems
-- progression and meta systems
+### Files
 
-Before creating a new service or engine, verify one does not already exist.
+* js/instruments/instrument_manifest.generated.js
+* js/instruments/discovery_loader.js
+
+### How it works
+
+* Instruments are registered in a manifest
+* Loader dynamically injects scripts at runtime
+* No per-instrument edits to index.html
+
+### Critical Constraint
+
+Browsers cannot scan directories.
+Discovery MUST be manifest-driven, NOT filesystem-driven.
 
 ---
 
-## Instrument Architecture
+## Critical Rules
 
-Instrument behavior currently spans multiple layers.
-
-### Active runtime instrument layer
-Located under `js/instruments/`
-
-This is tied to:
-- launcher registration
-- UI/runtime integration
-- active app behavior
-
-Actual instrument registration follows the `SparkInstruments.register(...)` pattern.
-
-Do not invent a fake interface for these modules.
-
-### SparkSuite instrument content/module layer
-Located under `js/sparksuite/instruments/`
-
-This is the newer module/content direction and may include:
-- curriculum content
-- skills
-- lessons
-- exercises
-- progression data
-- instrument-specific engine-facing structures
-
-### Important rule
-When fixing or adding an instrument, check all relevant layers:
-- runtime registration
-- adapter/bridge layer
-- SparkSuite module/content layer
-- progression/curriculum alignment
-- renderer/data compatibility
-
-Do not fix only one layer and assume the instrument is complete.
+1. DO NOT hardcode instruments into index.html
+2. DO NOT manually wire instruments across multiple systems
+3. ALWAYS use the generator pipeline
+4. VALIDATOR must pass before integration
+5. MANIFEST is the source of truth for discovery
 
 ---
 
-## UI Rule
+## Architecture Reminder
 
-The desired direction is engine-first, but the current app is not yet purely engine-driven.
+* js/instruments/ -- runtime layer
+* js/sparksuite/instruments/ -- module/content layer
+* instrument-adapter.js -- bridge layer
 
-So the practical rule is:
-- do not add new business/progression/curriculum logic to UI if an engine or service boundary already exists
-- keep page/render code thin where possible
-- move logic toward engines incrementally when touching related systems
-
-`js/app.js` is a coordinator and final initialization point.
-Do not turn it into a dumping ground for new logic.
+All three must remain aligned.
 
 ---
 
-## Gameplay Rule
+## Validation Standard
 
-SparkSuite is building toward a rhythm/gameplay-heavy learning loop.
+A valid instrument must satisfy:
 
-Gameplay code must stay separated from rendering where possible.
+    Lesson -> Skill -> Exercise -> Gameplay -> Progress
 
-Prefer:
-- existing chart contracts
-- transport/timing abstractions
-- scoring/input abstractions
-- engine-generated or adapter-generated gameplay payloads
-
-Avoid:
-- hardcoding gameplay generation directly in page renderers
-- mixing note generation, UI rendering, and scoring in the same file
+If any link is missing, the instrument is broken.
 
 ---
 
-## Build / Run / Test Commands
+## Guiding Principle
 
-Use the real commands from `package.json`.
-
-### Run
-- `npm start`
-- `npm run tauri:dev`
-
-### Build
-- `npm run build`
-- `npm run build:mac`
-- `npm run build:portable`
-- `npm run tauri:build`
-- `npm run build:mobile`
-
-### Mobile / Capacitor
-- `npm run cap:sync`
-- `npm run cap:android`
-- `npm run cap:ios`
-
-### Test
-- `npm test`
-
-Do not claim a refactor is safe without considering test impact.
+SparkSuite is a generated, validated, and enforced instrument platform.
 
 ---
 
-## Platform Targets Present
+## Anti-Patterns
 
-This repo targets multiple shells/platforms:
-- Electron
-- Tauri
-- Capacitor/mobile
-- browser runtime
-- desktop wrapper assets
-- Flutter sub-app content in-repo
+Do NOT:
 
-Do not assume there is only one runtime target.
+* copy/paste existing instrument folders
+* create lessons without exercises
+* create skills without gameplay support
+* fix UI without fixing underlying data
+* bypass validator or CI
 
 ---
 
-## Testing Expectations
+## Definition of Done (Instrument)
 
-For meaningful changes, verify at least these questions:
+An instrument is complete when:
 
-1. Does the app still boot?
-2. Does the affected instrument/system still register correctly?
-3. Does the relevant runtime path still work?
-4. Does the change affect existing node tests?
-5. Should tests be updated or extended?
-
-For instrument changes, also verify:
-- lesson list matches supported skills
-- skills match exercise inventory
-- charts/chords/note data match renderer expectations
-- progress state is consistent across old and new paths
+* generated via pipeline
+* validator passes (0 issues)
+* exercises exist for all lesson skills
+* gameplay renders correctly
+* progress updates correctly
+* auto-discovery loads it without manual wiring
 
 ---
 
-## Common Failure Modes
+## Final Rule
 
-1. Updating curriculum content without updating exercises, charts, or progression rules
-2. Fixing only the SparkSuite module layer while the active runtime layer still breaks
-3. Patching a UI symptom while leaving the underlying adapter/registry mismatch
-4. Using the wrong string order or guitar assumptions for ukulele/bass/piano
-5. Creating a parallel abstraction instead of using an existing engine, bridge, or adapter
-6. Writing docs for a target architecture as if it already fully exists
-
----
-
-## Documentation Rule
-
-When writing plans, handoffs, or AI instructions:
-- distinguish current reality from target architecture
-- use real current paths
-- call out migration assumptions explicitly
-- do not describe nonexistent directories or interfaces as if they already exist
-
----
-
-## Change Strategy
-
-When implementing a feature or fix:
-
-1. identify the real active runtime path involved
-2. identify any newer SparkSuite engine/module path involved
-3. patch the smallest correct boundary
-4. preserve compatibility where needed
-5. update or add tests when behavior changes
-6. document migration debt rather than hiding it
-
----
-
-## Definition of a Good Change
-
-A good change in SparkSuite:
-- uses real repo paths
-- respects active adapters, registries, and bridges
-- improves architecture instead of bypassing it
-- reduces duplication where practical
-- keeps UI thinner over time
-- does not silently break Electron, Tauri, mobile, or tests
-
----
-
-## Guidance for AI Coding Agents
-
-Before coding:
-- inspect the actual file path in this repo
-- verify whether there is both a legacy and newer SparkSuite implementation
-- check for an existing bridge, adapter, registry, or engine
-- prefer extending an existing system over inventing a parallel one
-
-If uncertain:
-- align with the real codebase first
-- then move it toward the engine-first target
-- avoid broad rewrites unless explicitly requested
-
----
-
-## Final Principle
-
-Do not pretend the migration is complete.
-
-Your job is to move the real SparkSuite codebase forward without increasing architectural drift.
+If an instrument is not generated, validated, integrated via pipeline,
+and discoverable via manifest, then it is **invalid implementation**.
