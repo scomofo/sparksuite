@@ -13,6 +13,7 @@
     for(var i=0;i<items.length;i++){
       SparkContent[type][items[i].id] = items[i];
     }
+    if(type === "packs" && typeof syncCurriculumStateRequest === "function") syncCurriculumStateRequest();
   }
 
   function getContent(type, id){

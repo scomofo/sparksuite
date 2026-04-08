@@ -59,8 +59,9 @@ function drillTab() {
     if (S.drillIdx > 0) {
       var prev = S.drillChords[S.drillIdx - 1];
       var tipKey = prev + "_" + c;
-      if (TRANSITION_TIPS[tipKey]) {
-        html += '<div class="intention-card" style="margin-top:8px">\u{1F4A1} ' + escHTML(TRANSITION_TIPS[tipKey]) + '</div>';
+      var _tips = typeof PIANO_TRANSITION_TIPS !== "undefined" ? PIANO_TRANSITION_TIPS : TRANSITION_TIPS;
+      if (_tips[tipKey]) {
+        html += '<div class="intention-card" style="margin-top:8px">\u{1F4A1} ' + escHTML(_tips[tipKey]) + '</div>';
       }
     }
   } else {
@@ -106,7 +107,8 @@ function quizTab() {
   var html = '<div class="card"><h2>Chord Quiz</h2>';
   if (S.quizQ) {
     html += '<p>Which chord is shown below?</p>';
-    html += pianoSVG(findChord(S.quizQ.answer), { showFingers: false });
+    var _quizChord = findChord(S.quizQ.answer);
+    html += _quizChord ? pianoSVG(_quizChord, { showFingers: false }) : '<div class="text-muted">(' + escHTML(S.quizQ.answer) + ')</div>';
     html += '<div class="quiz-options">';
     S.quizQ.options.forEach(function(opt) {
       var cls = "btn quiz-btn";

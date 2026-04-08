@@ -37,8 +37,6 @@ function pianoPracticeTab() {
     );
   }
 
-  html += '</div>'; // close card
-
   // 8 level tabs
   var viewLvlNum = S._viewLevel || S.level;
   html += '<div class="level-tabs">';

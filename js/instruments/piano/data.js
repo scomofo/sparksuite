@@ -1184,15 +1184,15 @@ var SONGS = [
   { title:"La Bamba", artist:"Ritchie Valens",
     chords:["C","F","G"], level:2, style:"block", bpm:138,
     progression:["C","F","G","G","C","F","G","G"],
-    practiceStart:65, target:110 },
+    practiceStart:65, target:110, midi:"content/songs/midi/la_bamba.mid" },
   { title:"Let It Be", artist:"The Beatles",
     chords:["C","G","Am","F"], level:3, style:"block", bpm:72,
     progression:["C","G","Am","F","C","G","F","C"],
-    practiceStart:55, target:72 },
+    practiceStart:55, target:72, midi:"content/songs/midi/let_it_be.mid" },
   { title:"Stand By Me", artist:"Ben E. King",
     chords:["C","Am","F","G"], level:3, style:"block", bpm:120,
     progression:["C","C","Am","Am","F","G","C","C"],
-    practiceStart:70, target:100 },
+    practiceStart:70, target:100, midi:"content/songs/midi/stand_by_me.mid" },
   { title:"All of Me", artist:"John Legend",
     chords:["Am","F","C","G"], level:3, style:"block", bpm:63,
     progression:["Am","F","C","G","Am","F","C","G"],
@@ -1280,7 +1280,7 @@ var SONGS = [
   { title:"Knockin' on Heaven's Door", artist:"Bob Dylan",
     chords:["G","D","Am","C"], level:5, style:"block", bpm:69,
     progression:["G","D","Am","Am","G","D","C","C"],
-    practiceStart:55, target:69 }
+    practiceStart:55, target:69, midi:"content/songs/midi/knockin_on_heavens_door.mid" }
 ];
 
 // ── BADGES (expanded 15+) ──
@@ -1582,6 +1582,20 @@ window.PIANO_INJURY_TIPS = INJURY_TIPS;
 window.PIANO_CHORD_COLORS = CHORD_COLORS;
 window.PIANO_LC = LC;
 window.PIANO_LN = LN;
+
+// Direct globals needed by piano pages (IIFE hides vars, pages reference them bare)
+var _exports = {
+  DAILY_TYPES:DAILY_TYPES, FINGER_BADGES:FINGER_BADGES, KEYBOARD_SIZES:KEYBOARD_SIZES,
+  BADGES:BADGES, REWARD_PHASES:REWARD_PHASES, SCALES:SCALES, FINGER_EXERCISES:FINGER_EXERCISES,
+  CHORDS:CHORDS, SONGS:SONGS, SESSION_PLANS:SESSION_PLANS, CURRICULUM:CURRICULUM,
+  LC:LC, LN:LN, PLAY_STYLES:PLAY_STYLES, CHORD_COLORS:CHORD_COLORS, INJURY_TIPS:INJURY_TIPS,
+  LH_PATTERNS:LH_PATTERNS, PLACEMENT_TESTS:PLACEMENT_TESTS,
+  STYLE_PREFS:STYLE_PREFS, CHORD_NOTES:CHORD_NOTES, NOTE_NAMES:NOTE_NAMES, FLAT_NAMES:FLAT_NAMES
+};
+for (var _k in _exports) { if (_exports.hasOwnProperty(_k) && typeof window[_k] === "undefined") window[_k] = _exports[_k]; }
+// TRANSITION_TIPS: stored under a piano-specific global because js/data.js
+// unconditionally declares its own guitar TRANSITION_TIPS after this file loads.
+window.PIANO_TRANSITION_TIPS = TRANSITION_TIPS;
 
 // Chord/data helper functions needed by piano pages and app engine
 window.allChordKeys = allChordKeys;

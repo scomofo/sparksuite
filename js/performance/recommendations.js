@@ -1,5 +1,65 @@
 (function(){
 
+  function syncPerformanceDailyStateWithCore(challenge, isComplete){
+    if(!window.sparkCore||typeof window.sparkCore.syncPerformanceDailyChallengeState!=="function")return;
+    window.sparkCore.syncPerformanceDailyChallengeState(challenge||null, !!isComplete);
+  }
+
+  function getTechniqueAccuracy(bucket){
+    if(!bucket||!bucket.total)return 100;
+    return Math.round(((bucket.hits||0)/bucket.total)*100);
+  }
+
+  function getImportedTechniqueRecommendation(songId, st){
+    if(!st||!st.importedTechniqueTotals)return null;
+    var labels={
+      open:"Open-note timing",
+      tap:"Tap-note consistency",
+      forced:"Forced-note transitions",
+      specialPhrase:"Phrase section control"
+    };
+    var focusedKey = st.lastFocusedTechnique || null;
+    if(focusedKey && st.importedTechniqueTotals[focusedKey] && st.importedTechniqueTotals[focusedKey].total){
+      var focusedBucket = st.importedTechniqueTotals[focusedKey];
+      var focusedAccuracy = getTechniqueAccuracy(focusedBucket);
+      if(focusedAccuracy < 90){
+        return {
+          type:"imported_technique_focus",
+          priority:205-Math.min(focusedAccuracy,100),
+          songId:songId,
+          arrangementType:st.arrangement,
+          difficultyId:st.difficulty,
+          techniqueKey:focusedKey,
+          label:"Stay on " + (labels[focusedKey]||"imported technique"),
+          reason:(labels[focusedKey]||"Imported technique") + " is still only at " + focusedAccuracy + "% during the current focus block"
+        };
+      }
+    }
+    var weakestKey=null;
+    var weakestAccuracy=101;
+    for(var key in st.importedTechniqueTotals){
+      if(!Object.prototype.hasOwnProperty.call(st.importedTechniqueTotals,key))continue;
+      var bucket=st.importedTechniqueTotals[key];
+      if(!bucket||!bucket.total)continue;
+      var acc=getTechniqueAccuracy(bucket);
+      if(acc<weakestAccuracy){
+        weakestAccuracy=acc;
+        weakestKey=key;
+      }
+    }
+    if(!weakestKey||weakestAccuracy>=85)return null;
+    return {
+      type:"imported_technique_focus",
+      priority:140-Math.min(weakestAccuracy,100),
+      songId:songId,
+      arrangementType:st.arrangement,
+      difficultyId:st.difficulty,
+      techniqueKey:weakestKey,
+      label:"Focus " + (labels[weakestKey]||"imported technique"),
+      reason:(labels[weakestKey]||"Imported technique") + " is at " + weakestAccuracy + "% accuracy"
+    };
+  }
+
   function getTodayPerfDateKey(){
     return new Date().toISOString().split("T")[0];
   }
@@ -22,6 +82,8 @@
       if(key.indexOf(songId)!==0)continue;
       var st=S.performanceStats[key];
       if(!st||!st.runs)continue;
+      var techniqueRec=getImportedTechniqueRecommendation(songId,st);
+      if(techniqueRec)recs.push(techniqueRec);
       if(st.bestAccuracy<70){
         recs.push({type:"retry_run",priority:90,songId:songId,arrangementType:st.arrangement,difficultyId:st.difficulty,label:"Retry this run",reason:"Accuracy below 70%"});
       }else if(st.bestAccuracy<90){
@@ -54,17 +116,34 @@
 
   function choosePerformanceDailyChallenge(){
     var today=getTodayPerfDateKey();
-    if(S.performanceDailyChallenge&&S.performanceDailyChallenge.date===today)return S.performanceDailyChallenge;
+    if(S.performanceDailyChallenge&&S.performanceDailyChallenge.date===today){
+      syncPerformanceDailyStateWithCore(S.performanceDailyChallenge, S.performanceDailyComplete);
+      return S.performanceDailyChallenge;
+    }
     var recs=buildGlobalPerformanceRecommendations();
     var challenge;
     if(recs.length){
       var top=recs[0];
-      challenge={id:"perf_"+today,date:today,type:top.type,songId:top.songId,arrangementType:top.arrangementType||"chords",difficultyId:top.difficultyId||"normal",phraseId:null,target:{accuracy:85,stars:3},label:top.label,xp:35,reason:top.reason};
+      challenge={
+        id:"perf_"+today,
+        date:today,
+        type:top.type,
+        songId:top.songId,
+        arrangementType:top.arrangementType||"chords",
+        difficultyId:top.difficultyId||"normal",
+        phraseId:null,
+        techniqueKey:top.techniqueKey||null,
+        target:{accuracy:top.type==="imported_technique_focus"?90:85,stars:3},
+        label:top.label,
+        xp:35,
+        reason:top.reason
+      };
     }else{
       challenge={id:"perf_"+today,date:today,type:"full_run",songId:null,arrangementType:"chords",difficultyId:"easy",phraseId:null,target:{accuracy:75,stars:2},label:"Complete a performance run today",xp:25,reason:"Build consistency"};
     }
     S.performanceDailyChallenge=challenge;
     S.performanceDailyComplete=false;
+    syncPerformanceDailyStateWithCore(challenge, false);
     return challenge;
   }
 
@@ -73,6 +152,7 @@
     S.performanceDailyComplete=true;
     if(!Array.isArray(S.performanceDailyHistory))S.performanceDailyHistory=[];
     S.performanceDailyHistory.push({id:S.performanceDailyChallenge.id,date:S.performanceDailyChallenge.date,type:S.performanceDailyChallenge.type,xp:S.performanceDailyChallenge.xp,completedAt:Date.now()});
+    syncPerformanceDailyStateWithCore(S.performanceDailyChallenge, true);
     saveState();
     return S.performanceDailyChallenge.xp||0;
   }
@@ -81,5 +161,7 @@
   window.buildGlobalPerformanceRecommendations=buildGlobalPerformanceRecommendations;
   window.choosePerformanceDailyChallenge=choosePerformanceDailyChallenge;
   window.markPerformanceDailyComplete=markPerformanceDailyComplete;
+  window.getImportedTechniqueRecommendation=getImportedTechniqueRecommendation;
+  window.getTechniqueAccuracy=getTechniqueAccuracy;
 
 })();

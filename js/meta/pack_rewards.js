@@ -1,6 +1,8 @@
 (function(){
 
   function updatePackCompletion(packId, progress){
+    if(!S.packCompletion) S.packCompletion = { packs: {} };
+    if(!S.packCompletion.packs) S.packCompletion.packs = {};
     if(!S.packCompletion.packs[packId]){
       S.packCompletion.packs[packId] = {
         progress: 0,
@@ -16,6 +18,8 @@
   }
 
   function grantPackCompletionReward(packId){
+    if(!S.challengeRewards) S.challengeRewards = { packClaimed: {} };
+    if(!S.challengeRewards.packClaimed) S.challengeRewards.packClaimed = {};
     var reward = typeof getPackReward === "function" ? getPackReward(packId) : null;
     if(!reward) return;
     if(S.challengeRewards.packClaimed[packId]) return;

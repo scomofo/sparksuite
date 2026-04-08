@@ -12,7 +12,11 @@ function challengeHubPage(){
 function renderActiveChallengesCard(){
   var h = '<div class="card mb16">';
   h += '<div><b>Active Challenges</b></div>';
-  var arr = S.activeChallenges || [];
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var arr = runtimeState && runtimeState.dashboardChallenges ? runtimeState.dashboardChallenges : (S.activeChallenges || []);
   if(!arr.length){
     h += '<div>No active challenges.</div>';
   }

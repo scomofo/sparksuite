@@ -8,8 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="spark-visual.css">
+<link rel="stylesheet" href="spark-visual-v2.css">
 </head>
 <body>
 <div id="no-js" role="alert">
@@ -40,6 +42,7 @@
 <script src="js/core/performance/result_contracts.js"></script>
 <script src="js/core/practice/plan_contracts.js"></script>
 <!-- Spark Suite Core -->
+<script src="js/spark-core/runtime/contracts.js"></script>
 <script src="js/spark-core/profile-schema.js"></script>
 <script src="js/spark-core/storage.js"></script>
 <script src="js/spark-core/events.js"></script>
@@ -50,6 +53,7 @@
 <script src="js/spark-core/psychology-engine.js"></script>
 <script src="js/spark-core/progress-orchestrator.js"></script>
 <script src="js/spark-core/instrument-adapter.js"></script>
+<script src="js/spark-core/practice-engine.js"></script>
 <script src="js/spark-core/session-engine.js"></script>
 <script src="js/spark-core/index.js"></script>
 <!-- Performance Core Contracts -->
@@ -60,12 +64,21 @@
 <script src="js/performance-core/index.js"></script>
 <!-- Launcher -->
 <script src="js/launcher.js"></script>
+<script src="js/ui/stringed_chord_svg.js"></script>
+<script src="js/ui/theme.js"></script>
+<script src="js/ui/confetti.js"></script>
+<script src="js/ui/xp-float.js"></script>
 <!-- Instrument Modules -->
 <script src="js/instruments/guitar/pages.js"></script>
 <script src="js/instruments/guitar/capo.js"></script>
 <script src="js/instruments/guitar/register.js"></script>
 <script src="js/instruments/guitar/app.js"></script>
+<script src="js/instruments/ukulele/chord_normalizer.js"></script>
+<script src="js/instruments/ukulele/validator.js"></script>
+<script src="js/instruments/ukulele/ukulele_svg.js"></script>
+<script src="js/instruments/ukulele/register.js"></script>
 <script src="js/instruments/piano/data.js"></script>
+<script src="js/instruments/piano/audio.js"></script>
 <script src="js/instruments/piano/ui.js"></script>
 <script src="js/instruments/piano/register.js"></script>
 <script src="js/instruments/piano/app.js"></script>
@@ -91,6 +104,7 @@
 <script src="js/performance/difficulties.js"></script>
 <script src="js/performance/arrangements.js"></script>
 <script src="js/performance/adapters.js"></script>
+<script src="js/performance/chart_manifest.js"></script>
 <script src="js/performance/chart.js"></script>
 <script src="js/performance/transport.js"></script>
 <script src="js/performance/input.js"></script>
@@ -103,7 +117,9 @@
 <script src="js/performance/analytics.js"></script>
 <script src="js/performance/badges.js"></script>
 <script src="js/performance/highway.js"></script>
+<script src="js/performance/midi_backing.js"></script>
 <script src="js/pages/perform.js"></script>
+<script src="js/pages/rhythm_highway.js"></script>
 <script src="js/pages/perform_song.js"></script>
 <script src="js/pages/performance_stats.js"></script>
   <script src="js/pages/performance_editor.js"></script>
@@ -116,6 +132,55 @@
 <script src="js/practice/selectors.js"></script>
 <script src="js/analytics/engine.js"></script>
 <script src="js/practice/launchers.js"></script>
+<script src="js/sparksuite/domain/types.js"></script>
+<script src="js/sparksuite/domain/session_segment.js"></script>
+<script src="js/sparksuite/domain/session.js"></script>
+<script src="js/sparksuite/domain/tempo_map.js"></script>
+<script src="js/sparksuite/domain/note_event.js"></script>
+<script src="js/sparksuite/domain/phrase.js"></script>
+<script src="js/sparksuite/domain/chart.js"></script>
+<script src="js/sparksuite/domain/gameplay_result.js"></script>
+<script src="js/sparksuite/domain/engine_preset.js"></script>
+<script src="js/sparksuite/bridges/practice_bridge.js"></script>
+<script src="js/sparksuite/bridges/curriculum_bridge.js"></script>
+<script src="js/sparksuite/bridges/progress_bridge.js"></script>
+<script src="js/sparksuite/bridges/performance_bridge.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_skill_tree.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_lessons.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_chords.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_scales.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_tuning.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_exercises.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_progression.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_module.js"></script>
+<script src="js/sparksuite/instruments/ukulele/ukulele_adapter.js"></script>
+<script src="js/sparksuite/instruments/ukulele/index.js"></script>
+<script src="js/sparksuite/instruments/bass/bass_module.js"></script>
+<script src="js/sparksuite/instruments/bass/bass_adapter.js"></script>
+<script src="js/sparksuite/instruments/bass/index.js"></script>
+<script src="js/sparksuite/instruments/piano/piano_adapter.js"></script>
+<script src="js/sparksuite/instruments/piano/index.js"></script>
+<script src="js/sparksuite/instruments/guitar/guitar_adapter.js"></script>
+<script src="js/sparksuite/instruments/guitar/guitar_chart_library.js"></script>
+<script src="js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"></script>
+<script src="js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"></script>
+<script src="js/sparksuite/instruments/guitar/index.js"></script>
+<script src="js/sparksuite/core/storage.js"></script>
+<script src="js/sparksuite/core/ai_engine.js"></script>
+<script src="js/sparksuite/core/instrument_manager.js"></script>
+<script src="js/sparksuite/core/psychology_engine.js"></script>
+<script src="js/sparksuite/core/curriculum_engine.js"></script>
+<script src="js/sparksuite/core/calibration_engine.js"></script>
+<script src="js/sparksuite/core/timing_engine.js"></script>
+<script src="js/sparksuite/core/chart_io.js"></script>
+<script src="js/sparksuite/core/replay_engine.js"></script>
+<script src="js/sparksuite/core/input_judge.js"></script>
+<script src="js/sparksuite/core/scoring_engine.js"></script>
+<script src="js/sparksuite/core/rhythm_gameplay_engine.js"></script>
+<script src="js/sparksuite/core/practice_engine.js"></script>
+<script src="js/sparksuite/core/progress_engine.js"></script>
+<script src="js/sparksuite/core/session_engine.js"></script>
+<script src="js/sparksuite/core/spark_core.js"></script>
 <script src="js/progression/adaptive.js"></script>
 <script src="js/practice/engine.js"></script>
 <script src="js/pages/analytics.js"></script>
@@ -202,6 +267,7 @@
 <!-- Curriculum -->
 <script src="js/curriculum/curriculum_registry.js"></script>
 <script src="js/curriculum/curriculum_loader.js"></script>
+<script src="js/curriculum/adapters/legacy_curriculum_adapter.js"></script>
 <script src="js/curriculum/curriculum_engine.js"></script>
 <script src="js/curriculum/curriculum_ui.js"></script>
 <!-- Recommendation Engine -->
@@ -288,6 +354,8 @@
   if (typeof pianoOnboardingPage === "function") piano.pages[SCR.ONBOARDING] = pianoOnboardingPage;
   if (typeof pianoStemsPlayerPage === "function") piano.pages[SCR.STEMS] = pianoStemsPlayerPage;
 })();
+  // Initial render — deferred to here so all instrument pages are registered
+  if (typeof render === "function") render();
 </script>
 </body>
 </html>

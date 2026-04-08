@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ukulele Unit Tests</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #fff;
+      color: #333;
+      padding: 20px;
+    }
+
+    header {
+      max-width: 800px;
+      margin: 0 auto 24px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .summary-banner {
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 16px 0;
+    }
+
+    .summary-banner.pass {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #4caf50;
+    }
+
+    .summary-banner.fail {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #f44336;
+    }
+
+    .results {
+      max-width: 800px;
+      margin: 0 auto;
+      list-style: none;
+    }
+
+    .results li {
+      padding: 6px 10px;
+      border-radius: 3px;
+      margin-bottom: 4px;
+      font-size: 14px;
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    .results li.pass {
+      background: #f1f8e9;
+      color: #33691e;
+    }
+
+    .results li.fail {
+      background: #ffcdd2;
+      color: #b71c1c;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ukulele Unit Tests</h1>
+    <p>Automated unit tests for <code>normalizeUkuleleChord()</code> and <code>validateChordChart()</code></p>
+    <div id="summary" class="summary-banner">Running...</div>
+  </header>
+
+  <ul class="results" id="results"></ul>
+
+  <!-- escHTML is required by stringed_chord_svg.js -->
+  <script>
+    function escHTML(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+  </script>
+
+  <!-- Dependencies -->
+  <script src="../js/ui/stringed_chord_svg.js"></script>
+  <script src="../js/instruments/ukulele/chord_normalizer.js"></script>
+  <script src="../js/instruments/ukulele/validator.js"></script>
+
+  <script>
+    // ---------------------------------------------------------------------------
+    // Minimal test runner
+    // ---------------------------------------------------------------------------
+    var passed = 0, failed = 0, results = [];
+
+    function assert(condition, message) {
+      if (condition) { passed++; results.push("PASS: " + message); }
+      else { failed++; results.push("FAIL: " + message); }
+    }
+
+    function assertEqual(actual, expected, message) {
+      assert(actual === expected, message + " (got " + JSON.stringify(actual) + ", expected " + JSON.stringify(expected) + ")");
+    }
+
+    function assertArrayLength(arr, len, message) {
+      assert(arr.length === len, message + " (got length " + arr.length + ", expected " + len + ")");
+    }
+
+    // ---------------------------------------------------------------------------
+    // Tests for normalizeUkuleleChord
+    // ---------------------------------------------------------------------------
+
+    // Test 1: Basic C chord [0,0,0,3]
+    var c = normalizeUkuleleChord({ name: "C", frets: [0,0,0,3] });
+    assertEqual(c.instrument, "ukulele", "C chord: instrument is ukulele");
+    assertEqual(c.stringCount, 4, "C chord: stringCount is 4");
+    assertArrayLength(c.stringLabels, 4, "C chord: 4 string labels");
+    assertEqual(c.stringLabels[0], "G", "C chord: first label is G");
+    assertEqual(c.startFret, 0, "C chord: startFret is 0");
+    assertArrayLength(c.fingers, 1, "C chord: 1 finger");
+    assertEqual(c.fingers[0].stringIndex, 3, "C chord: finger on string 3");
+    assertEqual(c.fingers[0].fret, 3, "C chord: finger at fret 3");
+    assert(c.open[0] === true, "C chord: string 0 is open");
+    assert(c.open[1] === true, "C chord: string 1 is open");
+    assert(c.open[2] === true, "C chord: string 2 is open");
+    assert(c.open[3] === false, "C chord: string 3 is not open");
+
+    // Test 2: Am chord [2,0,0,0]
+    var am = normalizeUkuleleChord({ name: "Am", frets: [2,0,0,0] });
+    assertArrayLength(am.fingers, 1, "Am chord: 1 finger");
+    assertEqual(am.fingers[0].stringIndex, 0, "Am chord: finger on string 0");
+    assertEqual(am.fingers[0].fret, 2, "Am chord: finger at fret 2");
+
+    // Test 3: G chord [0,2,3,2] — 3 fingers
+    var g = normalizeUkuleleChord({ name: "G", frets: [0,2,3,2] });
+    assertArrayLength(g.fingers, 3, "G chord: 3 fingers");
+    assertEqual(g.fingers[0].finger, 1, "G chord: first finger number is 1");
+    assertEqual(g.fingers[1].finger, 2, "G chord: second finger number is 2");
+    assertEqual(g.fingers[2].finger, 3, "G chord: third finger number is 3");
+
+    // Test 4: High position chord — startFret shifts
+    var high = normalizeUkuleleChord({ name: "test", frets: [0,0,7,8] });
+    assert(high.startFret > 0, "High position: startFret shifted above 0");
+
+    // Test 5: Muted string
+    var muted = normalizeUkuleleChord({ name: "test", shape: [-1, 0, 2, 3] });
+    assert(muted.muted.indexOf(0) >= 0, "Muted: string 0 is in muted array");
+    assert(muted.open[0] === false, "Muted: string 0 is not open");
+
+    // Test 6: Accept shape or frets key
+    var s1 = normalizeUkuleleChord({ name: "test", shape: [0,0,0,3] });
+    var s2 = normalizeUkuleleChord({ name: "test", frets: [0,0,0,3] });
+    assertEqual(s1.fingers.length, s2.fingers.length, "shape and frets produce same fingers");
+
+    // Test 7: Accept explicit fingers
+    var explicit = normalizeUkuleleChord({
+      name: "test", frets: [2,0,1,0],
+      fingers: [{stringIndex: 0, fret: 2, finger: 2, color: "#FF0000"}, {stringIndex: 2, fret: 1, finger: 1, color: "#00FF00"}]
+    });
+    assertEqual(explicit.fingers[0].finger, 2, "Explicit fingers: first finger is 2");
+    assertEqual(explicit.fingers[1].finger, 1, "Explicit fingers: second finger is 1");
+
+    // Test 8: All open strings
+    var allOpen = normalizeUkuleleChord({ name: "Am7", frets: [0,0,0,0] });
+    assertArrayLength(allOpen.fingers, 0, "All open: no fingers");
+    assert(allOpen.open.every(function(o) { return o === true; }), "All open: all strings open");
+
+    // ---------------------------------------------------------------------------
+    // Tests for validateChordChart
+    // ---------------------------------------------------------------------------
+
+    // Test 9: Valid C chord passes validation
+    var validC = normalizeUkuleleChord({ name: "C", frets: [0,0,0,3] });
+    var errC = validateChordChart(validC);
+    assertArrayLength(errC, 0, "Valid C chord: no errors");
+
+    // Test 10: null chart returns errors
+    var errNull = validateChordChart(null);
+    assert(errNull.length > 0, "Null chart: has errors");
+
+    // Test 11: Wrong stringCount vs tuning
+    var bad1 = { stringCount: 4, tuning: ["G4"], stringLabels: ["G","C","E","A"], open: [true,true,true,true], muted: [], fingers: [] };
+    var err1 = validateChordChart(bad1);
+    assert(err1.length > 0, "Tuning mismatch: has errors");
+
+    // Test 12: Finger outside string range
+    var bad2 = normalizeUkuleleChord({ name: "test", frets: [0,0,0,3] });
+    bad2.fingers.push({ stringIndex: 5, fret: 2, finger: 1 });
+    var err2 = validateChordChart(bad2);
+    assert(err2.length > 0, "Finger outside range: has errors");
+
+    // Test 13: All standard chords pass validation
+    var standardShapes = {
+      C: [0,0,0,3], Am: [2,0,0,0], F: [2,0,1,0], G: [0,2,3,2],
+      G7: [0,2,1,2], Dm: [2,2,1,0], Em: [0,4,3,2], A: [2,1,0,0]
+    };
+    var allPass = true;
+    for (var name in standardShapes) {
+      var chart = normalizeUkuleleChord({ name: name, frets: standardShapes[name] });
+      var errs = validateChordChart(chart);
+      if (errs.length > 0) { allPass = false; results.push("FAIL: " + name + " has errors: " + errs.join(", ")); failed++; }
+    }
+    if (allPass) { results.push("PASS: All 8 standard ukulele chords pass validation"); passed++; }
+
+    // ---------------------------------------------------------------------------
+    // Render results
+    // ---------------------------------------------------------------------------
+    var summaryEl = document.getElementById("summary");
+    var listEl = document.getElementById("results");
+
+    summaryEl.textContent = passed + " passed, " + failed + " failed";
+    summaryEl.className = "summary-banner " + (failed === 0 ? "pass" : "fail");
+
+    for (var i = 0; i < results.length; i++) {
+      var li = document.createElement("li");
+      var isPassing = results[i].indexOf("PASS:") === 0;
+      li.className = isPassing ? "pass" : "fail";
+      li.textContent = results[i];
+      listEl.appendChild(li);
+    }
+  </script>
+</body>
+</html>

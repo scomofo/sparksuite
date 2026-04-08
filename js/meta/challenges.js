@@ -42,6 +42,8 @@
   function completeChallenge(ch){
     ch.completed = true;
     awardXP(ch.xp, "challenge");
+    if(!S.metaProgress) S.metaProgress = { challengesCompleted: 0 };
+    if(!S.challengeHistory) S.challengeHistory = [];
     S.metaProgress.challengesCompleted++;
     S.challengeHistory.push(ch);
     saveState();

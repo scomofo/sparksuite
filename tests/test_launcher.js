@@ -19,10 +19,19 @@ global.localStorage = (function() {
     clear: function() { store = {}; }
   };
 })();
-global.SparkProfile = { createEmpty: function() { return { schemaVersion: 1, suite: 'spark', userId: 'local-user', apps: {}, suiteRewards: { badges: [], cosmetics: [], challengeProgress: {} } }; } };
+global.SparkProfile = {
+  createEmpty: function() { return { schemaVersion: 1, suite: 'spark', userId: 'local-user', apps: {}, suiteRewards: { badges: [], cosmetics: [], challengeProgress: {} } }; },
+  ensureApp: function(profile, appId, instrument) {
+    profile.apps = profile.apps || {};
+    if (!profile.apps[appId]) {
+      profile.apps[appId] = { instrument: instrument, stats: { level: 1, xp: 0, streakDays: 0 } };
+    }
+  }
+};
 global.SparkStorage = { load: function() { return SparkProfile.createEmpty(); } };
 global.SparkHighway = { GUITAR_SKIN: { laneCount: 6 }, PIANO_SKIN: { laneCount: 24 } };
 global.escHTML = function(s) { return String(s); };
+global.S = { completedLessons: [], mastery: { rhythm: {} } };
 
 function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
@@ -102,6 +111,53 @@ test('renderLauncher returns HTML with instrument cards', function() {
   assert.ok(html.indexOf('Guitar') >= 0);
   assert.ok(html.indexOf('Piano') >= 0);
   assert.ok(html.indexOf('SparkSuite') >= 0);
+});
+
+test('ukulele register adds a selectable launcher instrument', function() {
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_chords.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_scales.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_tuning.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_exercises.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_progression.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_module.js'));
+  eval(loadJS('js/instruments/ukulele/register.js'));
+
+  var all = SparkInstruments.getAll();
+  var ukulele = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === 'ukespark') ukulele = all[i];
+  }
+
+  assert.ok(ukulele);
+  assert.strictEqual(ukulele.instrument, 'ukulele');
+  assert.strictEqual(typeof ukulele.tabRenderers.practice, 'function');
+});
+
+test('bass register exposes a dedicated songs tab renderer', function() {
+  global.getPerformanceChartLibrary = function(options) {
+    if (options && options.instrument === 'bass') {
+      return [{ id: 'bass_midnight_lock_package', title: 'Midnight Lock', artist: 'SparkSuite Bass', bpm: 75 }];
+    }
+    return [];
+  };
+  eval(loadJS('js/instruments/bass/data.js'));
+  eval(loadJS('js/sparksuite/instruments/bass/bass_module.js'));
+  eval(loadJS('js/instruments/bass/register.js'));
+
+  var all = SparkInstruments.getAll();
+  var bass = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === 'bassspark') bass = all[i];
+  }
+
+  assert.ok(bass);
+  assert.strictEqual(bass.instrument, 'bass');
+  assert.strictEqual(typeof bass.tabRenderers.songs, 'function');
+  var html = bass.tabRenderers.songs();
+  assert.ok(html.indexOf('Bass Performance Charts') >= 0);
+  assert.ok(html.indexOf('Midnight Lock') >= 0);
 });
 
 // Summary

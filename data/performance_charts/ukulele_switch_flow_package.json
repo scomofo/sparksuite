@@ -1,0 +1,18 @@
+{
+  "id": "ukulele_switch_flow_package",
+  "title": "Sunset Switches",
+  "artist": "SparkSuite Ukulele",
+  "packageFormat": "sparksuite_import_v1",
+  "arrangementType": "ukulele_strum",
+  "adapterType": "ukulele",
+  "instrument": "ukulele",
+  "chartImport": {
+    "files": {
+      "notes.chart": "[Song]\n{\n  Name = \"Sunset Switches\"\n  Artist = \"SparkSuite Ukulele\"\n  Charter = \"Codex\"\n  Resolution = 192\n}\n[SyncTrack]\n{\n  0 = B 81081\n}\n[ExpertSingle]\n{\n  0 = N 3 0\n  192 = N 0 0\n  384 = N 2 0\n  576 = N 1 0\n  768 = N 3 0\n  960 = N 0 0\n  1152 = N 2 0\n  1344 = N 1 0\n  1536 = N 3 0\n  1728 = N 0 0\n  1920 = N 2 0\n  2112 = N 1 0\n  2304 = N 3 0\n  2496 = N 0 0\n  2688 = N 2 0\n  2880 = N 1 0\n}\n[Events]\n{\n  0 = E \"section Verse\"\n  1536 = E \"section Chorus\"\n}\n",
+      "song.ini": "[song]\nname = Sunset Switches\nartist = SparkSuite Ukulele"
+    }
+  },
+  "importOptions": {
+    "trackName": "ExpertSingle"
+  }
+}

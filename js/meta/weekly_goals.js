@@ -42,6 +42,7 @@
   function completeWeeklyGoal(goal){
     goal.completed = true;
     awardXP(goal.xp, "weekly_goal");
+    if(!S.metaProgress) S.metaProgress = { goalsCompleted: 0, challengesCompleted: 0 };
     S.metaProgress.goalsCompleted++;
     saveState();
   }
