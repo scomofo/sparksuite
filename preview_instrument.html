@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SparkSuite Instrument Preview</title>
+</head>
+<body>
+  <p>Preparing SparkSuite preview…</p>
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var instrument = params.get('instrument');
+      if (!instrument) {
+        document.body.innerHTML = '<p>Missing instrument parameter.</p>';
+        return;
+      }
+
+      var SAVE_KEY = 'chordspark_state';
+      var state = {};
+      try {
+        var raw = localStorage.getItem(SAVE_KEY);
+        state = raw ? JSON.parse(raw) : {};
+      } catch (err) {
+        state = {};
+      }
+
+      state.activeInstrument = instrument;
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+
+      window.location.replace('index.html');
+    })();
+  </script>
+</body>
+</html>
