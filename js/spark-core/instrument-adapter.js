@@ -61,22 +61,26 @@ window.SparkInstrumentAdapter = (function () {
   function getDifficultyRules(context)    { return _proxy("getDifficultyRules", context) || { difficultyAction: "keep" }; }
   function analyzePerformance(sessionData){ return _proxy("analyzePerformance", sessionData) || { accuracy: 0 }; }
   function generateDrills(skill, level)   { return _proxy("generateDrills", skill, level) || []; }
+  function getExercisesForLesson(lessonId) { return _proxy("getExercisesForLesson", lessonId) || []; }
+  function getPerformanceConfig()           { return _proxy("getPerformanceConfig") || {}; }
 
   // -----------------------------------------------------------------------
   // Public API
   // -----------------------------------------------------------------------
   return {
-    getCurriculum:        getCurriculum,
-    getInstrumentType:    getInstrumentType,
-    getAppId:             getAppId,
-    getSessionStructure:  getSessionStructure,
-    getSkillTree:         getSkillTree,
-    getCurriculumMap:     getCurriculumMap,
-    getExercises:         getExercises,
-    getSongs:             getSongs,
-    getDifficultyRules:   getDifficultyRules,
-    analyzePerformance:   analyzePerformance,
-    generateDrills:       generateDrills
+    getCurriculum:         getCurriculum,
+    getInstrumentType:     getInstrumentType,
+    getAppId:              getAppId,
+    getSessionStructure:   getSessionStructure,
+    getSkillTree:          getSkillTree,
+    getCurriculumMap:      getCurriculumMap,
+    getExercises:          getExercises,
+    getSongs:              getSongs,
+    getDifficultyRules:    getDifficultyRules,
+    analyzePerformance:    analyzePerformance,
+    generateDrills:        generateDrills,
+    getExercisesForLesson: getExercisesForLesson,
+    getPerformanceConfig:  getPerformanceConfig
   };
 
 })();

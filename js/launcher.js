@@ -4,6 +4,13 @@
   var _instruments = [];
   var _active = null;
 
+  function renderInstrumentIcon(inst) {
+    if (inst && inst.iconImage) {
+      return '<img class="instrument-icon-image" src="' + escHTML(inst.iconImage) + '" alt="' + escHTML(inst.name || "Instrument") + ' icon">';
+    }
+    return inst && inst.icon ? inst.icon : "&#127925;";
+  }
+
   var SparkInstruments = {
     register: function(config) {
       for (var i = 0; i < _instruments.length; i++) {
@@ -23,6 +30,15 @@
     },
 
     deactivate: function() {
+      // Clean up any running timers before switching instruments
+      if (typeof T !== "undefined") {
+        clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);
+        clearInterval(T.fingerEx);clearInterval(T.strum);clearInterval(T.song);
+        clearInterval(T.metro);clearInterval(T.prog);clearInterval(T.undo);
+        if(T.sessionStep){clearInterval(T.sessionStep);T.sessionStep=null;}
+        if(T.chordChange){clearInterval(T.chordChange);T.chordChange=null;}
+      }
+      if(typeof stopMetronome==="function")try{stopMetronome();}catch(e){}
       _active = null;
     },
 
@@ -76,8 +92,11 @@
         if (inst.available !== false) {
           h += '<div class="launcher-card" ';
           h += 'onclick="SparkInstruments.activate(\'' + inst.id + '\');S.activeInstrument=\'' + inst.id + '\';S.screen=SCR.HOME;S.tab=TAB.PRACTICE;saveState();render()">';
-          h += '<span class="instrument-icon">' + inst.icon + '</span>';
+          h += '<span class="instrument-icon">' + renderInstrumentIcon(inst) + '</span>';
           h += '<div class="instrument-name">' + escHTML(inst.name) + '</div>';
+          if (inst.tagline) {
+            h += '<div class="instrument-tagline">' + escHTML(inst.tagline) + '</div>';
+          }
           if (appStats) {
             h += '<div class="instrument-stats">Lvl ' + (appStats.level || 1) + ' &middot; ' + (appStats.xp || 0) + ' XP</div>';
           } else {
@@ -86,8 +105,11 @@
           h += '</div>';
         } else {
           h += '<div class="launcher-card disabled">';
-          h += '<span class="instrument-icon">' + inst.icon + '</span>';
+          h += '<span class="instrument-icon">' + renderInstrumentIcon(inst) + '</span>';
           h += '<div class="instrument-name">' + escHTML(inst.name) + '</div>';
+          if (inst.tagline) {
+            h += '<div class="instrument-tagline">' + escHTML(inst.tagline) + '</div>';
+          }
           h += '<div class="instrument-stats">Coming Soon</div>';
           h += '</div>';
         }

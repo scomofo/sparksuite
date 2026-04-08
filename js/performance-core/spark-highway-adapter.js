@@ -6,24 +6,26 @@
 (function() {
 
   var PerfHighwayAdapter = {
-    create: function(canvasEl, skinConfig) {
+    create: function(canvasEl, skinConfig, instrument) {
       if (typeof SparkHighway === "undefined") {
         console.error("PerfHighwayAdapter: SparkHighway not loaded");
         return null;
       }
-      return new SparkHighway(canvasEl, skinConfig || SparkHighway.GUITAR_SKIN);
+      var skin = skinConfig;
+      if (!skin && instrument === "piano" && SparkHighway.PIANO_SKIN) {
+        skin = SparkHighway.PIANO_SKIN;
+      }
+      var renderer = new SparkHighway(canvasEl, skin || SparkHighway.GUITAR_SKIN);
+      renderer._initPromise = renderer.init();
+      return renderer;
     },
-
-    // TODO(pianospark): When PianoSpark adopts performance-core, pass
-    // SparkHighway.PIANO_SKIN instead of GUITAR_SKIN. The adapter should
-    // accept an instrument parameter to select the correct skin.
 
     setChart: function(renderer, events, phrases) {
       if (renderer && renderer.setChart) renderer.setChart(events, phrases);
     },
 
     update: function(renderer, currentTimeSec, combo) {
-      if (renderer && renderer.update) renderer.update(currentTimeSec, combo);
+      if (renderer && renderer._ready && renderer.update) renderer.update(currentTimeSec, combo);
     },
 
     notifyHit: function(renderer, x, y, color) {

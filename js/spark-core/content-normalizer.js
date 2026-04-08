@@ -37,9 +37,40 @@
       };
     },
 
-    // TODO(pianospark): Add fromPianoSparkSessions(sessions, appId) normalizer
-    // when PianoSpark adopts spark-core. PianoSpark content follows the same
-    // lesson structure but uses keyboard voicings instead of chord diagrams.
+    fromPianoSparkSessions: function(sessions, appId) {
+      var units = [];
+      for (var i = 0; i < sessions.length; i++) {
+        var s = sessions[i];
+        var lessonId = "guided_session_" + s.num;
+        units.push({
+          id: "unit_session_" + s.num,
+          title: s.title || ("Session " + s.num),
+          lessons: [{
+            id: lessonId,
+            type: "guided",
+            title: s.title,
+            objectives: [s.spark ? s.spark.desc : "", s.newMove ? s.newMove.desc : ""],
+            skills: ["recognition", "switching"],
+            difficulty: s.level || 1,
+            instrumentData: {
+              piano: {
+                voicings: s.newMove ? [s.newMove.voicing || s.newMove.chord] : [],
+                keys: [],
+                audioKeys: []
+              }
+            },
+            rewards: { xp: 30, unlockIds: [] }
+          }]
+        });
+      }
+      return {
+        schemaVersion: 1,
+        appId: appId || "pianospark",
+        instrument: "piano",
+        title: "PianoSpark Guided Sessions",
+        units: units
+      };
+    },
 
     getLessonById: function(content, lessonId) {
       if (!content || !content.units) return null;

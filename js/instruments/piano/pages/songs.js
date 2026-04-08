@@ -1,9 +1,17 @@
 /* PianoSpark - Songs tab */
 
+// Module-level references refreshed each render (used by songLibrary, stylesTab, etc.)
+var _pianoSongsData = {};
+var _pianoSongs = [];
+var _pianoCurriculum = [];
+
 function pianoSongsTab() {
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var CURRICULUM = D.CURRICULUM || [];
-  var SONGS = D.SONGS || [];
+  _pianoSongsData = D;
+  _pianoSongs = D.SONGS || [];
+  _pianoCurriculum = D.CURRICULUM || [];
+  var CURRICULUM = _pianoCurriculum;
+  var SONGS = _pianoSongs;
   var html = '';
 
   // Sub-tabs
@@ -32,6 +40,7 @@ function pianoSongsTab() {
 }
 
 function songLibrary() {
+  var SONGS = _pianoSongs, CURRICULUM = _pianoCurriculum;
   var html = '<div class="card"><h2>Song Library</h2>';
 
   if (S.songIdx !== null && SONGS[S.songIdx]) {

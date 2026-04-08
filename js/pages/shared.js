@@ -1,26 +1,41 @@
 // ===== ChordSpark: Shared rendering helpers =====
 
+function getLegacyChordDetectRuntime(){
+  var runtime = null;
+  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+    var view = window.sparkCore.getActiveSessionView();
+    runtime = view && view.runtimeState ? view.runtimeState : null;
+  }
+  return {
+    active: typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : !!(runtime && runtime.chordDetectActive),
+    notes: Array.isArray(S.detectedNotes) ? S.detectedNotes : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
+    match: typeof S.chordMatch === "number" ? S.chordMatch : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
+    error: S.chordDetectErr || (runtime && runtime.chordDetectError) || ""
+  };
+}
+
 // Build chord check inner HTML (shared by sessionPage and updateChordCheckUI)
 function _buildChordCheckInner(exp){
+  var runtime=getLegacyChordDetectRuntime();
   // Note pills row — fixed height so layout doesn't jump
   var h='<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:10px;min-height:32px">';
   for(var i=0;i<exp.length;i++){
-    var found=S.detectedNotes.indexOf(exp[i])!==-1;
+    var found=runtime.notes.indexOf(exp[i])!==-1;
     h+='<span class="note-pill" style="background:'+(found?"#4ECDC422":"var(--chip-bg)")+';color:'+(found?"#4ECDC4":"var(--text-muted)")+';border:2px solid '+(found?"#4ECDC4":"var(--border)")+'">'+(found?"&#9989;":"&#9675;")+' '+exp[i]+'</span>';
   }
   h+='</div>';
   // Match ring area — always same height to prevent layout shifts
   h+='<div style="text-align:center;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center">';
-  if(S.chordMatch>=0){
-    var mc=S.chordMatch>=80?"#4ECDC4":S.chordMatch>=50?"#FFE66D":"#FF6B6B";
-    var ml=S.chordMatch>=80?"Great!":S.chordMatch>=50?"Getting there...":"Keep trying!";
-    h+=ringHTML(S.chordMatch,70,5,mc,'<div style="font-size:16px;font-weight:900;color:'+mc+'">'+S.chordMatch+'%</div>',"Chord match")+'<div style="font-size:12px;font-weight:700;color:'+mc+';margin-top:4px">'+ml+'</div>';
+  if(runtime.match>=0){
+    var mc=runtime.match>=80?"#4ECDC4":runtime.match>=50?"#FFE66D":"#FF6B6B";
+    var ml=runtime.match>=80?"Great!":runtime.match>=50?"Getting there...":"Keep trying!";
+    h+=ringHTML(runtime.match,70,5,mc,'<div style="font-size:16px;font-weight:900;color:'+mc+'">'+runtime.match+'%</div>',"Chord match")+'<div style="font-size:12px;font-weight:700;color:'+mc+';margin-top:4px">'+ml+'</div>';
   }else{h+='<div style="color:var(--text-muted);font-size:13px">Strum the chord...</div>';}
   h+='</div>';
   // AI Coach feedback — fixed min height
   h+='<div style="min-height:20px">';
-  var tips=getCoachFeedback(S.currentChord?S.currentChord.name:"",S.detectedNotes,exp);
-  if(tips.length>0&&S.chordMatch>=0&&S.chordMatch<100){
+  var tips=getCoachFeedback(S.currentChord?S.currentChord.name:"",runtime.notes,exp);
+  if(tips.length>0&&runtime.match>=0&&runtime.match<100){
     h+='<div style="margin-top:10px;background:var(--input-bg);border-radius:12px;padding:10px">';
     h+='<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:6px">&#129302; Coach Tips:</div>';
     for(var i=0;i<tips.length;i++){
@@ -35,7 +50,8 @@ function _buildChordCheckInner(exp){
 // Update chord check results without full DOM rebuild
 function updateChordCheckUI(){
   var el=document.getElementById("chord-check-results");
-  if(!el||!S.chordDetectOn)return;
+  var runtime=getLegacyChordDetectRuntime();
+  if(!el||!runtime.active)return;
   var exp=getExpectedNotes(S.currentChord?S.currentChord.name:"");
   el.innerHTML=_buildChordCheckInner(exp);
 }
@@ -108,21 +124,33 @@ function updateDailyTimerUI(){
 
 // ===== FINGER EXERCISES CARD =====
 function fingerExerciseCard(){
+  var runtime = null;
+  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+    var view = window.sparkCore.getActiveSessionView();
+    runtime = view && view.runtimeState ? view.runtimeState : null;
+  }
+  var fingerExActive = typeof S.fingerExActive === "boolean" ? S.fingerExActive : !!(runtime && runtime.legacyFingerExerciseActive);
+  var fingerExId = typeof S.fingerExId === "string" ? S.fingerExId : (runtime ? runtime.legacyFingerExerciseId : null);
+  var fingerExTimer = typeof S.fingerExTimer === "number" ? S.fingerExTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : 0);
+  var fingerExCount = typeof S.fingerExCount === "number"
+    ? S.fingerExCount
+    : (runtime && typeof runtime.legacyFingerExerciseCount === "number" ? runtime.legacyFingerExerciseCount : 0);
   var h='<div class="card" style="margin-top:12px">';
   h+='<h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#9995; Finger Exercises</h3>';
 
   // Active exercise
-  if(S.fingerExActive&&S.fingerExId){
+  if(fingerExActive&&fingerExId){
     var ex=null;
-    for(var i=0;i<FINGER_EXERCISES.length;i++)if(FINGER_EXERCISES[i].id===S.fingerExId){ex=FINGER_EXERCISES[i];break;}
+    for(var i=0;i<FINGER_EXERCISES.length;i++)if(FINGER_EXERCISES[i].id===fingerExId){ex=FINGER_EXERCISES[i];break;}
     if(ex){
-      var m=Math.floor(S.fingerExTimer/60),s=S.fingerExTimer%60;
+      var m=Math.floor(fingerExTimer/60),s=fingerExTimer%60;
       h+='<div style="background:var(--input-bg);border-radius:14px;padding:14px;margin-bottom:10px;border-left:4px solid #FF6B6B">';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
       h+='<div style="font-size:14px;font-weight:800;color:var(--text-primary)">'+escHTML(ex.name)+'</div>';
       h+='<div style="font-size:20px;font-weight:900;color:#FF6B6B">'+m+':'+(s<10?'0':'')+s+'</div>';
       h+='</div>';
       h+='<p style="margin:0 0 8px;font-size:12px;color:var(--text-secondary);line-height:1.5">'+escHTML(ex.desc)+'</p>';
+      if(fingerExCount>0)h+='<div style="font-size:11px;color:#4ECDC4;font-weight:700;margin-bottom:6px">&#9989; Completed '+fingerExCount+'x</div>';
       if(ex.goal)h+='<div style="font-size:11px;color:#4ECDC4;font-weight:700">&#127919; '+escHTML(ex.goal)+'</div>';
       h+='<button onclick="act(\'stopFingerEx\')" style="margin-top:8px;background:#FF6B6B;color:#fff;padding:6px 16px;border-radius:10px;font-size:12px;font-weight:700">&#9632; Stop</button>';
       h+='</div>';
@@ -145,6 +173,9 @@ function fingerExerciseCard(){
     for(var ei=0;ei<exs.length;ei++){
       var ex=exs[ei];
       var done=(S.fingerStats&&S.fingerStats[ex.id])||0;
+      if(!done&&runtime&&runtime.legacyFingerExerciseId===ex.id&&typeof runtime.legacyFingerExerciseCount==="number"){
+        done=runtime.legacyFingerExerciseCount;
+      }
       var m=Math.floor(ex.duration/60),s=ex.duration%60;
       h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;'+(ei>0?'border-top:1px solid var(--border);':'')+'">';
       h+='<div style="flex:1">';

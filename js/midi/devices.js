@@ -16,6 +16,9 @@
       if(!S.activeMidiDeviceId && out.length){
         S.activeMidiDeviceId = out[0].id;
       }
+      if(typeof syncMidiSettingsStateRequest === "function"){
+        syncMidiSettingsStateRequest();
+      }
       saveState();
     });
   }

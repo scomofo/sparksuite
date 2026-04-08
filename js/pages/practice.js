@@ -1,6 +1,100 @@
 // ===== ChordSpark: Home page and practice-related tabs =====
 
+function sv2HomeDashboard() {
+  var inst = SparkInstruments.getActive();
+  if (!inst) return "";
+  var D = inst.getData ? inst.getData() : {};
+  var instrumentType = inst.instrument || "guitar";
+  var theme = typeof SparkTheme !== "undefined" ? SparkTheme.get(instrumentType) : null;
+  if (!theme) return "";
+
+  var allInstruments = typeof SparkInstruments !== "undefined" ? SparkInstruments.getAll() : [];
+  var levelNames = D.LN || {};
+  var levelName = levelNames[S.level] || ("Level " + S.level);
+  var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
+  var masteredCount = 0;
+  if (D.ALL_CHORDS) {
+    for (var i = 0; i < D.ALL_CHORDS.length; i++) {
+      if ((S.chordProgress[D.ALL_CHORDS[i].name] || 0) >= 100) masteredCount++;
+    }
+  }
+
+  // Daily goal
+  var goalPct = Math.min(100, Math.round((S.todayPracticeSeconds / (S.dailyGoalMinutes * 60)) * 100));
+  var goalMins = Math.floor(S.todayPracticeSeconds / 60);
+
+  var h = '';
+
+  // Hero card
+  h += '<div class="sv2-home-hero sv2-anim-hero">';
+  h += '<div class="sv2-home-hero__header">';
+  h += '<div class="sv2-icon sv2-icon--lg sv2-anim-glow">' + (inst.icon || "\uD83C\uDFB8") + '</div>';
+  h += '<div class="sv2-home-hero__info">';
+  h += '<h2 class="sv2-home-hero__name">' + escHTML(inst.name) + '</h2>';
+  h += '<div class="sv2-home-hero__level">' + escHTML(levelName) + ' &mdash; Level ' + S.level + '</div>';
+  h += '<div class="sv2-home-hero__badges">';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + S.xp + ' XP</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + S.streak + '</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + masteredCount + '/' + chordCount + ' chords</span>';
+  h += '</div></div></div>';
+
+  // Action buttons inside hero
+  // Build action buttons based on available tabs
+  var instTabs = inst.tabs || [];
+  var hasSongs = false, hasDrill = false;
+  for (var ti = 0; ti < instTabs.length; ti++) {
+    var tabId = typeof instTabs[ti] === "string" ? instTabs[ti] : instTabs[ti].id;
+    if (tabId === "songs") hasSongs = true;
+    if (tabId === "drill") hasDrill = true;
+  }
+  h += '<div class="sv2-home-hero__actions">';
+  h += '<button class="sv2-btn sv2-btn--primary" onclick="act(\'quickStart\')">&#9654; Practice</button>';
+  if (hasSongs) h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'songs\')">\uD83C\uDFB5 Songs</button>';
+  if (hasDrill) h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'drill\')">&#9889; Drill</button>';
+  if (!hasSongs && !hasDrill) h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'stats\')">&#128202; Stats</button>';
+  h += '</div>';
+  h += '</div>';
+
+  // Inactive instruments row
+  var otherInstruments = [];
+  for (var j = 0; j < allInstruments.length; j++) {
+    if (allInstruments[j].id !== inst.id && allInstruments[j].available !== false) {
+      otherInstruments.push(allInstruments[j]);
+    }
+  }
+  if (otherInstruments.length > 0) {
+    h += '<div class="sv2-inst-row sv2-anim-stagger-1">';
+    for (var k = 0; k < otherInstruments.length; k++) {
+      var oi = otherInstruments[k];
+      var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(oi.instrument) : "#888";
+      h += '<div class="sv2-inst-row__item" onclick="act(\'switchInstrument\',\'' + oi.id + '\')">';
+      h += '<div class="sv2-icon sv2-icon--sm" style="background:' + oiColor + '">' + (oi.icon || "\uD83C\uDFB5") + '</div>';
+      h += '<div style="font-size:' + 'var(--text-micro)' + ';color:' + oiColor + ';font-weight:700;font-family:var(--font-body-v2)">' + escHTML(oi.name) + '</div>';
+      h += '</div>';
+    }
+    h += '</div>';
+  }
+
+  // Daily goal
+  h += '<div class="sv2-daily-goal sv2-anim-stagger-2">';
+  h += '<div class="sv2-ring" style="width:40px;height:40px">';
+  var ringR = 16, ringC = 2 * Math.PI * ringR, ringOff = ringC - (goalPct / 100) * ringC;
+  h += '<svg width="40" height="40" style="transform:rotate(-90deg)"><circle cx="20" cy="20" r="' + ringR + '" fill="none" stroke="var(--border)" stroke-width="4"/>';
+  h += '<circle cx="20" cy="20" r="' + ringR + '" fill="none" stroke="var(--inst-primary)" stroke-width="4" stroke-dasharray="' + ringC + '" stroke-dashoffset="' + ringOff + '" stroke-linecap="round" style="transition:stroke-dashoffset 0.8s ease"/></svg>';
+  h += '<div class="sv2-ring__label" style="font-size:10px">' + goalPct + '%</div>';
+  h += '</div>';
+  h += '<div style="flex:1">';
+  h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (S.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + S.dailyGoalMinutes + " min") + '</div>';
+  h += '<div style="font-size:var(--text-micro);color:var(--text-muted)">' + goalMins + ' / ' + S.dailyGoalMinutes + ' min today' + (S.goalStreak > 0 ? " &middot; \uD83D\uDD25 " + S.goalStreak + " day streak" : "") + '</div>';
+  h += '</div></div>';
+
+  return h;
+}
+
 function homePage(){
+  // V2 Dashboard
+  var v2Home = typeof sv2HomeDashboard === "function" && document.body.classList.contains("sv2") ? sv2HomeDashboard() : "";
+
   // Build tab bar from active instrument's tabs array
   var inst = SparkInstruments.getActive();
   var instTabs = inst && inst.tabs ? inst.tabs : [];
@@ -36,9 +130,12 @@ function homePage(){
   };
   var _renderer = _tabRenderers[S.tab] || _sharedTabRenderers[S.tab] || null;
   if (_renderer) h += _renderer();
-  return h;
+  return v2Home + h;
 }
 
+// ===== STUB TABS (games, tools) =====
+function gamesTab(){ return '<div class="card"><div><b>Games</b></div><div class="muted">Mini-games and challenges.</div></div>'; }
+function toolsTab(){ return '<div class="card"><div><b>Tools</b></div><div class="muted">Tuner, metronome, and utilities.</div></div>'; }
 // ===== PRACTICE TAB =====
 function practiceTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
@@ -71,8 +168,8 @@ function practiceTab(){
   }
 
   // Adaptive Practice Plan
-  if(typeof generatePracticePlan==="function"){
-    var plan=generatePracticePlan();
+  if(typeof ensurePracticePlan==="function"){
+    var plan=ensurePracticePlan();
     if(plan&&plan.items&&plan.items.length){
       h+='<div class="card mb20" style="border:2px solid '+(plan.completedItems>=plan.totalItems?"#4ECDC4":"#45B7D1")+'">';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
@@ -245,34 +342,58 @@ function dailyTab(){
 
 // ===== QUIZ TAB =====
 function quizTab(){
-  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#129504;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Correct: <strong>'+S.quizCorrect+'</strong></p><button class="btn" onclick="act(\'startQuiz\')" style="background:linear-gradient(135deg,#45B7D1,#4ECDC4);color:#fff">Start Quiz</button></div></div>';
+  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  var quizScore = typeof S.quizCorrect === "number"
+    ? S.quizCorrect
+    : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
+  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#129504;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Correct: <strong>'+quizScore+'</strong></p><button class="btn" onclick="act(\'startQuiz\')" style="background:linear-gradient(135deg,#45B7D1,#4ECDC4);color:#fff">Start Quiz</button></div></div>';
 }
 
 // ===== EAR TRAINING TAB =====
+function getLegacyEarTrainingRuntime(){
+  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  return {
+    question: typeof S.earTrainQ === "string" ? S.earTrainQ : (runtime ? runtime.legacyEarTrainQuestion : null),
+    options: Array.isArray(S.earTrainOpts) && S.earTrainOpts.length ? S.earTrainOpts : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
+    answer: typeof S.earTrainAns === "string" ? S.earTrainAns : (runtime ? runtime.legacyEarTrainAnswer : null),
+    score: typeof S.earTrainScore === "number" ? S.earTrainScore : (runtime && typeof runtime.legacyEarTrainScore === "number" ? runtime.legacyEarTrainScore : 0),
+    total: typeof S.earTrainTotal === "number" ? S.earTrainTotal : (runtime && typeof runtime.legacyEarTrainTotal === "number" ? runtime.legacyEarTrainTotal : 0),
+    streak: typeof S.earTrainStreak === "number" ? S.earTrainStreak : (runtime && typeof runtime.legacyEarTrainStreak === "number" ? runtime.legacyEarTrainStreak : 0)
+  };
+}
+
 function earTrainTab(){
-  if(S.earTrainQ)return earTrainPage();
-  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Ear Training &#128066;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Listen to a chord, then identify it!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127911;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Score: <strong>'+S.earTrainScore+'</strong> correct all time</p><button class="btn" onclick="act(\'startEarTrain\')" style="background:linear-gradient(135deg,#FF6B6B,#4ECDC4);color:#fff">&#127911; Start Listening</button></div></div>';
+  var runtime = getLegacyEarTrainingRuntime();
+  if(runtime.question)return earTrainPage();
+  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Ear Training &#128066;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Listen to a chord, then identify it!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127911;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Score: <strong>'+runtime.score+'</strong> correct all time</p><button class="btn" onclick="act(\'startEarTrain\')" style="background:linear-gradient(135deg,#FF6B6B,#4ECDC4);color:#fff">&#127911; Start Listening</button></div></div>';
 }
 
 function earTrainPage(){
+  var runtime = getLegacyEarTrainingRuntime();
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'ear\')">&#8592; Back</button>';
-  h+='<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+S.earTrainScore+'/'+S.earTrainTotal+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+S.earTrainStreak+'</span></div></div>';
+  h+='<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+runtime.score+'/'+runtime.total+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+runtime.streak+'</span></div></div>';
   h+='<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">What chord is this?</h2>';
   h+='<button class="btn mb16" onclick="act(\'replayEarTrain\')" style="padding:10px 20px;font-size:14px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#128264; Replay</button>';
   h+='<div style="display:flex;flex-direction:column;gap:8px;max-width:300px;margin:0 auto">';
-  for(var i=0;i<S.earTrainOpts.length;i++){
-    var opt=S.earTrainOpts[i];
-    var isA=S.earTrainAns!==null;
-    var isC=opt===S.earTrainQ;
-    var isP=S.earTrainAns===opt;
+  for(var i=0;i<runtime.options.length;i++){
+    var opt=runtime.options[i];
+    var isA=runtime.answer!==null;
+    var isC=opt===runtime.question;
+    var isP=runtime.answer===opt;
     var bg=isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--input-bg)")):"var(--card-bg)";
     var clr=isA?(isC||isP?"#fff":"var(--text-muted)"):"var(--text-primary)";
     h+='<button class="btn" onclick="act(\'answerEarTrain\',\''+opt+'\')" style="width:100%;padding:14px;font-size:16px;font-weight:700;background:'+bg+';color:'+clr+';border:2px solid '+(isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--border)")):"var(--border)")+'">'+opt+'</button>';
   }
   h+='</div>';
-  if(S.earTrainAns){
-    var ok=S.earTrainAns===S.earTrainQ;
-    h+='<div style="margin-top:16px;font-size:20px;font-weight:800;color:'+(ok?"#4ECDC4":"#FF6B6B")+';animation:bn .4s ease">'+(ok?"&#9989; Correct! +15 XP":"&#10060; It was "+S.earTrainQ)+'</div>';
+  if(runtime.answer){
+    var ok=runtime.answer===runtime.question;
+    h+='<div style="margin-top:16px;font-size:20px;font-weight:800;color:'+(ok?"#4ECDC4":"#FF6B6B")+';animation:bn .4s ease">'+(ok?"&#9989; Correct! +15 XP":"&#10060; It was "+runtime.question)+'</div>';
   }
   h+='</div>';
   return h;
@@ -280,10 +401,15 @@ function earTrainPage(){
 
 // ===== PRACTICE PLAN PAGE (Brain System) =====
 function practicePage(){
-  if(!S.practicePlan) generateDailyPracticePlan();
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  if(!S.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice")) generateDailyPracticePlan();
 
   var stats = getPracticeStats();
-  var plan = S.practicePlan;
+  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    : S.practicePlan;
 
   var h = '<div class="card mb16">';
   h += '<div><b>Practice Stats</b></div>';
@@ -307,7 +433,14 @@ function practicePage(){
 }
 
 function startPracticeItem(id){
-  var plan = S.practicePlan;
+  var plan = null;
+  if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
+    var view = window.sparkCore.getActiveSessionView();
+    if(view && view.plan && view.plan.flow === "daily_practice"){
+      plan = SparkPracticeBridge.toLegacyPlan(view.plan);
+    }
+  }
+  if(!plan) plan = S.practicePlan;
   if(!plan) return;
   for(var i=0;i<plan.items.length;i++){
     if(plan.items[i].id === id){

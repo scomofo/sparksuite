@@ -2,7 +2,7 @@
 
   function awardXP(amount, reason){
     if(!amount) return;
-    S.playerXP += amount;
+    S.playerXP = (S.playerXP || 0) + amount;
     checkLevelUp();
     logXPEvent(amount, reason);
     saveState();

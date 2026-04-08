@@ -6,7 +6,8 @@
   "beatsPerBar": 4,
   "offsetSec": 0,
   "audio": {
-    "type": "silent"
+    "type": "midi",
+    "src": "content/songs/midi/music.mid"
   },
   "phrases": [
     {

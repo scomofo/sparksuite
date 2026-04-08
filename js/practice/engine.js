@@ -1,12 +1,29 @@
 (function(){
 
-  function ensurePracticePlan(){
+  function ensurePracticePlan(opts){
+    opts = opts || {};
+    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+      var plan = window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+        forceRebuild: !!opts.forceRebuild
+      });
+      return plan ? plan.toLegacyPracticePlan() : null;
+    }
+
     var today = new Date().toISOString().slice(0,10);
     if(S.practicePlan && S.practicePlanDate===today) return S.practicePlan;
     return buildPracticePlan();
   }
 
   function buildPracticePlan(){
+    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+      var plan = window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+        forceRebuild: true
+      });
+      return plan ? plan.toLegacyPracticePlan() : null;
+    }
+
     var today = new Date().toISOString().slice(0,10);
     var items = [];
 
@@ -62,12 +79,30 @@
   }
 
   function completePracticePlan(){
+    if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
+      window.sparkCore.completeSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+        markPlanComplete: true
+      });
+      // Route through contract-based progress path
+      if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+        var practiceResult = SparkContracts.createSessionResult({
+          mode: "practice",
+          instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
+          instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+          completed: true
+        });
+        SparkProgressOrchestrator.applySessionOutcome(practiceResult);
+      }
+      return;
+    }
+
     S.practicePlanComplete = true;
     if(!Array.isArray(S.practicePlanHistory)) S.practicePlanHistory = [];
     S.practicePlanHistory.push({
       date: S.practicePlanDate,
       focus: S.practicePlanFocus,
-      itemCount: S.practicePlan ? S.practicePlan.items.length : 0,
+      itemCount: S.practicePlan && S.practicePlan.items ? S.practicePlan.items.length : 0,
       completedAt: Date.now()
     });
     if(S.practicePlanHistory.length > 30) S.practicePlanHistory.shift();

@@ -11,6 +11,7 @@
       progression: song.progression || [],
       pattern: song.pattern || ["D","D","U","U","D","U"],
       leadNotes: song.leadNotes || null,
+      midi: song.midi || null,
       source: "builtin"
     };
   }
@@ -62,7 +63,7 @@
       beatsPerBar: 4,
       offsetSec: 0,
       arrangementType: arrangementType,
-      audio: { type: "silent" },
+      audio: perfSong.midi ? { type: "midi", src: perfSong.midi } : { type: "silent" },
       events: arrangement.events,
       phrases: phrases
     };

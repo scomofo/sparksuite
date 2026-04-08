@@ -9,19 +9,20 @@ function analyticsDashboardPage(){
   h += '<div>Level: '+report.level+'</div>';
   h += '</div>';
 
+  var analytics = S.analytics || {};
   h += '<div class="card">';
   h += '<div><b>Accuracy Trend</b></div>';
-  h += renderLineChart(S.analytics.accuracyHistory, "accuracy", 300, 120);
+  h += renderLineChart(analytics.accuracyHistory || [], "accuracy", 300, 120);
   h += '</div>';
 
   h += '<div class="card">';
   h += '<div><b>Practice Minutes</b></div>';
-  h += renderLineChart(S.analytics.practiceHistory, "minutes", 300, 120);
+  h += renderLineChart(analytics.practiceHistory || [], "minutes", 300, 120);
   h += '</div>';
 
   h += '<div class="card">';
   h += '<div><b>XP Progress</b></div>';
-  h += renderLineChart(S.analytics.xpHistory, "xp", 300, 120);
+  h += renderLineChart(analytics.xpHistory || [], "xp", 300, 120);
   h += '</div>';
 
   return h;

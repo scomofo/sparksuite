@@ -11,6 +11,8 @@
       token: data.token,
       loggedIn: true
     };
+    if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login");
+    else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
     saveState();
     return true;
   }
@@ -22,6 +24,8 @@
       token: null,
       loggedIn: false
     };
+    if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("logout");
+    else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
     saveState();
   }
 

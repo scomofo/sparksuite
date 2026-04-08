@@ -12,6 +12,7 @@
     for(var i=0;i<items.length;i++){
       SparkCurriculum[type][items[i].id] = items[i];
     }
+    if(typeof syncCurriculumStateRequest === "function") syncCurriculumStateRequest();
   }
 
   function getCurriculumItem(type, id){
