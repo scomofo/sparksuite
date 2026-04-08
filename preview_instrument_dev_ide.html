@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="overlay"></div>
+<iframe id="app" style="width:100%;height:100vh;border:0"></iframe>
+
+<script src="js/dev/dev_error_overlay.js"></script>
+<script src="js/dev/dev_validation_highlight.js"></script>
+
+<script>
+const params = new URLSearchParams(location.search);
+const instrument = params.get('instrument');
+
+const key = 'chordspark_state';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(key)||'{}'); } catch {}
+state.activeInstrument = instrument;
+localStorage.setItem(key, JSON.stringify(state));
+
+const iframe = document.getElementById('app');
+iframe.src = 'index.html';
+
+let lastReload = null;
+
+async function checkReload(){
+  try{
+    const r = await fetch('.preview_reload?ts='+Date.now());
+    const t = await r.text();
+    if(lastReload===null){ lastReload=t; return; }
+    if(t!==lastReload){
+      lastReload=t;
+      iframe.src = 'index.html?ts='+Date.now();
+    }
+  }catch{}
+}
+
+setInterval(checkReload,1000);
+</script>
+</body>
+</html>
