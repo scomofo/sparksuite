@@ -1,0 +1,39 @@
+name: Curriculum Guardrails
+
+on:
+  pull_request:
+    paths:
+      - 'js/sparksuite/instruments/**'
+      - 'js/instruments/bass/**'
+      - 'scripts/validate_curriculum.js'
+      - 'scripts/suggest_curriculum_fixes.js'
+      - 'docs/engineering/CURRICULUM_CONTRACT.md'
+      - 'docs/engineering/INSTRUMENT_DEBUG_GUIDE.md'
+  push:
+    branches:
+      - feature/convergence
+    paths:
+      - 'js/sparksuite/instruments/**'
+      - 'js/instruments/bass/**'
+      - 'scripts/validate_curriculum.js'
+      - 'scripts/suggest_curriculum_fixes.js'
+
+jobs:
+  validate-curriculum:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate curriculum integrity
+        run: node scripts/validate_curriculum.js
+
+      - name: Generate curriculum fix suggestions
+        if: always()
+        run: node scripts/suggest_curriculum_fixes.js
