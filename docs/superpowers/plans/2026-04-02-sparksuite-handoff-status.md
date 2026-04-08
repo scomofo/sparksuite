@@ -1,0 +1,626 @@
+# SparkSuite Handoff Status
+
+Updated: 2026-04-02
+
+## Scope
+
+This document tracks implementation status for the SparkSuite core migration, rhythm-highway handoff, performance/runtime convergence, and the follow-on cleanup work completed in this repo.
+
+Primary source plans:
+- `docs/superpowers/plans/2026-04-02-core-engine-skeleton.md`
+- `docs/superpowers/plans/2026-04-01-sparksuite-convergence.md`
+- `docs/superpowers/plans/2026-03-31-rocksmith-performance-mode.md`
+- `docs/superpowers/plans/2026-04-02-progression-system.md`
+- `docs/superpowers/plans/2026-04-02-phase-1-handoff-backlog.md`
+- `docs/superpowers/plans/2026-04-02-phase-2-convergence-backlog.md`
+- `docs/superpowers/plans/2026-04-02-phase-3-platform-backlog.md`
+- `docs/superpowers/plans/2026-04-03-remaining-handoff-backlog.md`
+- SparkSuite ukulele module handoff and fretted-strings tree follow-up
+- Download handoffs for SparkSuite rhythm gameplay and related curriculum extensions
+
+## Completed
+
+- Daily-practice flow now routes through SparkSuite core.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/sparksuite/core/session_engine.js`
+  - `js/sparksuite/core/practice_engine.js`
+  - `js/sparksuite/core/progress_engine.js`
+  - `js/sparksuite/bridges/progress_bridge.js`
+- Guided-session and performance-song session entry now route through SparkCore.
+  - `js/sparksuite/core/session_engine.js`
+  - `js/sparksuite/core/instrument_manager.js`
+  - `js/app.js`
+  - `js/instruments/guitar/app.js`
+  - `js/instruments/bass/app.js`
+- Performance-song completion rewards now also flow back through SparkCore instead of being owned entirely by local performance runtime code.
+  - `js/sparksuite/core/progress_engine.js`
+  - `js/performance/session.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance run stat/progression persistence is now centralized through a SparkSuite bridge instead of being hand-mutated inline in the session orchestrator.
+  - `js/sparksuite/bridges/performance_bridge.js`
+  - `js/performance/session.js`
+  - `tests/test_performance_core.js`
+- Performance daily challenge resolution, legacy performance badge awarding, and standalone performance badge/unlock follow-ons are now also routed through the performance bridge.
+  - `js/sparksuite/bridges/performance_bridge.js`
+  - `js/performance/session.js`
+  - `tests/test_performance_core.js`
+- Performance runtime flag/screen transitions are now also centralized through the performance bridge, even though the live transport/game loop still lives in the performance session runtime.
+  - `js/sparksuite/bridges/performance_bridge.js`
+  - `js/performance/session.js`
+  - `tests/test_performance_core.js`
+- Piano guided-session and performance-song entry now also defer to SparkCore while preserving piano-specific session aliases for the existing UI.
+  - `js/instruments/piano/app.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Piano is now registered as a first-class SparkSuite instrument adapter in the default core runtime.
+  - `js/sparksuite/instruments/piano/piano_adapter.js`
+  - `js/sparksuite/instruments/piano/index.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Bass is now registered as a first-class SparkSuite instrument adapter in the default core runtime.
+  - `js/sparksuite/instruments/bass/bass_adapter.js`
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `js/sparksuite/instruments/bass/index.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Bass now has a real SparkSuite module boundary with authored curriculum/song/rhythm content instead of only a thin adapter on top of legacy runtime data.
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `js/sparksuite/instruments/bass/bass_adapter.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Bass rhythm content now extends into ghost-note and funk/slap chart variants instead of topping out at the first groove and walking slices.
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Bass module-driven practice recommendations now carry module-owned exercise filtering, focus hints, and progress summaries instead of behaving like a flat legacy exercise list.
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
+- First engine-owned rhythm-highway slice is implemented.
+  - `js/sparksuite/core/rhythm_gameplay_engine.js`
+  - `js/sparksuite/core/timing_engine.js`
+  - `js/sparksuite/core/input_judge.js`
+  - `js/sparksuite/core/scoring_engine.js`
+  - `js/sparksuite/core/replay_engine.js`
+  - `js/sparksuite/core/calibration_engine.js`
+  - `js/pages/rhythm_highway.js`
+- Rhythm Highway now has explicit SparkSuite assist presets instead of only one hidden default.
+  - Guided, Balanced, and Challenge assist modes now route through `SparkEnginePresetRegistry`
+  - Start/restart preserve the selected assist mode
+  - `js/sparksuite/domain/engine_preset.js`
+  - `js/pages/rhythm_highway.js`
+  - `js/app.js`
+  - `tests/test_sparksuite_rhythm_core.js`
+- Rhythm Highway now has a first real micro-loop workflow instead of only full-run replay.
+  - The page can build and restart into a looped note window around the current rhythm phrase
+  - Loop replay preserves the selected assist mode and can be cleared back to the full run
+  - `js/pages/rhythm_highway.js`
+  - `js/app.js`
+  - `js/sparksuite/core/rhythm_gameplay_engine.js`
+  - `js/state.js`
+  - `tests/test_sparksuite_rhythm_core.js`
+- Rhythm Highway now honors instrument lane metadata instead of always rendering a 5-lane guitar-only layout.
+  - Bass and ukulele rhythm payloads now carry lane labels/count into the highway page
+  - `js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js`
+  - `js/sparksuite/instruments/bass/bass_module.js`
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `js/pages/rhythm_highway.js`
+  - `tests/test_sparksuite_rhythm_core.js`
+- Chart import parity moved beyond the first `.chart` slice.
+  - `SparkChartIO.fromNotesChart(...)` supports `notes.chart` + `song.ini`
+  - `SparkChartIO.fromMidiBuffer(...)` supports `.mid` import with tempo changes, time signatures, track selection, marker phrases, and channel filtering
+  - `SparkChartIO.fromPackage(...)` supports package-style ingestion of `notes.chart`/`notes.mid` + `song.ini`
+  - `js/sparksuite/core/chart_io.js`
+- Performance mode can ingest package-backed imported charts through the normal chart loader.
+  - `js/performance/chart.js`
+  - `data/performance_charts/demo_imported_package.json`
+  - `js/pages/songs.js`
+- Performance chart discovery now uses a manifest-backed registry instead of a tiny inline list.
+  - `js/performance/chart_manifest.js`
+  - `js/performance/chart.js`
+  - `index.html`
+- Imported chart semantics now survive conversion into performance-mode events.
+  - Preserved fields include `laneMask`, `sourceFlags`, `sourceLabel`, and `sourceSkillId`
+- Imported-technique practice launches now carry their focus all the way through performance song detail, start/retry requests, and the result screen instead of stopping at plan metadata.
+  - Live performance UI also keeps the focused technique visible during the run and highlights when the next focused note is approaching
+  - Phrase retry now prefers the weakest phrase that actually contains the focused imported technique instead of picking an unrelated weak phrase
+  - Focused imported-technique hits and misses now use technique-aware live feedback labels instead of only generic PERFECT/GOOD/MISS badges
+  - Progression stats now remember the currently focused imported technique, and recommendations can continue that focus block when it is still below target
+  - Practice selectors now continue the same focused technique block when planning the next imported-technique drill instead of jumping to a different weak spot too early
+  - Performance daily challenges can now preserve and complete focused imported-technique targets instead of flattening those runs into generic song challenges
+  - The Songs tab performance-daily card now reads that focused challenge from SparkCore runtime and shows the active technique focus, target accuracy, and reason instead of only generic daily copy
+  - Bass performance mode now has a first manifest-backed import/package chart path instead of only guitar and ukulele package coverage
+  - Bass now has multiple manifest-backed performance package charts, so its browser/performance depth is no longer a single-chart exception
+  - The bass instrument now has its own Songs/Performance tab rendering path, so those charts surface as bass content instead of only through the shared mixed-instrument browser
+  - Later-phase bass skills like walking lines, ghost-note groove, slap, pop, and funk now return authored bass-specific exercises from the module instead of falling back to generic exercise IDs
+  - Practice planning now carries authored bass exercise names and focus tags through module recommendations, so later-phase bass work reads like real bass drills instead of anonymous generic exercise IDs
+  - Authored bass module drills can now launch directly into Rhythm Highway from practice planning, so those recommendation cards have a real follow-through path instead of stopping at metadata
+  - Bass module-owned Rhythm Highway guidance now appears on focused drill results, so walking, ghost-note, slap, pop, and groove drills can coach the player with bass-specific next steps instead of only generic lane feedback
+  - Focused bass Rhythm Highway drills now write back into `bassSkillProgress`, so bass-specific planning and recommendation hooks can react to actual drill results instead of only static module metadata
+  - Bass module planning can now pick between multiple authored drills based on the current weakest metric, so later-phase bass recommendations can steer toward turnaround timing, ghost-note control, funk subdivision, or movement work instead of always picking the first exercise in the list
+  - `js/practice/launchers.js`
+  - `js/app.js`
+  - `js/performance/session.js`
+  - `js/pages/perform_song.js`
+  - `js/pages/perform.js`
+  - `js/sparksuite/core/spark_core.js`
+  - Imported `open` and `tap` events keep distinct event types
+  - `js/performance/chart.js`
+- Imported chart semantics now affect performance scoring.
+  - Open notes score from attack timing activity
+  - Tap notes require a real attack cluster
+  - `js/performance/scoring.js`
+  - `js/performance/session.js`
+- Imported chart semantics now affect performance rendering.
+  - Technique preview badges above the highway
+  - Technique-specific hit-burst colors
+  - Time-positioned technique overlay tokens inside the highway region
+  - `js/performance/highway.js`
+  - `js/pages/perform.js`
+- Legacy XP/toast/progression cleanup substantially centralized through bridge helpers.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/practice/progress.js`
+  - `js/practice/weakspots.js`
+  - `js/practice/adaptive.js`
+  - `js/performance/practice_engine.js`
+  - `js/practice/plan.js`
+  - `js/spark-core/session-engine.js`
+  - `js/app.js`
+  - `js/performance/session.js`
+- Shared legacy drill/daily/rhythm/runner/ear-training/song completion bookkeeping is now also centralized through the progress bridge instead of being hand-mutated inline in `js/app.js`.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+  - `tests/test_sparksuite_legacy_bridge_cleanup.js`
+- Dashboard, career, songs-browser, and utility-screen families now have explicit SparkCore-backed entry/refresh/navigation helpers across shared and piano flows.
+  - Includes dashboard section open, dashboard/home return, dashboard refresh/init, dashboard-to-plan entry, explicit practice-plan screen entry, career-song selection, recommendation launch, challenge-claim sync, utility-screen open, utility-family return, skill-tree entry/focus, performance-daily challenge launch, stem-player open/close, and piano calibration entry through shared helpers
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/instruments/piano/app.js`
+  - `js/pages/skill_tree.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Settings, MIDI, MIDI import, cloud, and curriculum utility screens can now prefer core-backed utility snapshots instead of relying only on shell-owned state, with theme, MIDI device/profile summaries, MIDI import summaries/assignments, cloud auth/sync status, and curriculum/pack summaries mirrored into SparkCore from shared and piano actions. Cloud open/sync/pull/login/logout and curriculum/content manifest loading now route through explicit core-backed workflow helpers.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/instruments/piano/app.js`
+  - `js/settings/settings_ui.js`
+  - `js/midi/ui.js`
+  - `js/midi/devices.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Shared mini-activity runtime state for ear training and song playback now also routes through the progress bridge for start/stop/reset-style state transitions instead of direct inline field/timer mutation.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+  - `tests/test_sparksuite_legacy_bridge_cleanup.js`
+- Shared mini-game runtime state for rhythm and runner now also routes through the same bridge helper for start/finish flags and animation-frame cleanup, leaving the live loops local but reducing direct state ownership in `js/app.js`.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+  - `tests/test_sparksuite_legacy_bridge_cleanup.js`
+- Legacy tab resets, strum-mode runtime state, and the session-complete handoff in `js/app.js` now also route their state transitions through the shared runtime helper instead of directly mutating those fields inline.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+- `stopAllTimers()` and the main legacy screen-open/back actions in `js/app.js` now route their broad reset/screen transitions through the shared runtime helper too, reducing one of the last large pockets of inline shell-owned state.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+- Tuner runtime flags, dark-mode toggling, and onboarding completion in `js/app.js` now also route their simple state transitions through the shared runtime helper instead of direct field mutation.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+- Metronome and chord-detect state flips in `js/audio.js` now also route their simple runtime/error state through the shared runtime helper, which pushes another tool boundary away from direct `S.*` mutation.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/audio.js`
+- Audio-input testing and MIDI device/output state in `js/audio.js` now also route their simple setup/selection state through the shared runtime helper, leaving the live signal polling local but reducing more direct shell-owned device state.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/audio.js`
+- Stem playback state in `js/audio.js` now also routes simple play/pause/current-time/duration/reset flags through the shared runtime helper, leaving the actual `Audio` objects local while trimming more direct media-state ownership.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/audio.js`
+- Performance/editor screen-open and selection state in `js/app.js` now also routes more simple performance-song, editor, stats, skill-tree, calibration, and stop-return transitions through the shared runtime helper instead of direct inline screen mutation.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+- Stem-separation UI state and song-audio import status in `js/app.js` now also route their simple status/progress/screen transitions through the shared runtime helper, leaving the Electron file-processing flow local while reducing more shell-owned UI state.
+  - `js/sparksuite/bridges/progress_bridge.js`
+  - `js/app.js`
+- Ukulele now exists as a module-backed instrument instead of a core-engine fork.
+  - New SparkSuite content and adapter files under `js/sparksuite/instruments/ukulele/`
+  - Launcher/onboarding registration in `js/instruments/ukulele/register.js`, `js/onboarding/ui.js`, and `js/onboarding/actions.js`
+  - Default SparkCore registration in `js/sparksuite/core/spark_core.js`
+- Ukulele now has a small authored rhythm chart library and multiple performance chart entries in the shared manifest-backed registry.
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `data/performance_charts/ukulele_island_package.json`
+  - `data/performance_charts/ukulele_switch_flow_package.json`
+  - `data/performance_charts/ukulele_moonlit_picking_package.json`
+  - `js/performance/chart_manifest.js`
+  - `js/instruments/ukulele/register.js`
+- Ukulele rhythm content now extends into melody and performance-focused chart variants instead of stopping at early strum and fingerpick patterns.
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Ukulele authored lesson depth now extends beyond the first strum/chord slice into fingerpicking, melody, and performance lessons, and the practice selector path can advance into those deeper module lessons.
+  - `js/sparksuite/instruments/ukulele/ukulele_lessons.js`
+  - `js/sparksuite/instruments/ukulele/ukulele_exercises.js`
+  - `tests/test_practice_selectors.js`
+- Ukulele module-driven practice recommendations now carry instrument-owned focus hints and richer reasons instead of being only generic shared-selector output.
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
+- Ukulele progression helpers now feed module-owned progress summaries back into recommendation metadata, so deeper lesson suggestions can reflect weak timing/speed/consistency instead of only lesson order.
+  - `js/sparksuite/instruments/ukulele/ukulele_progression.js`
+  - `js/sparksuite/instruments/ukulele/ukulele_module.js`
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
+- Legacy practice selectors now understand the current flat performance stats shape and module-driven instrument candidates.
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
+- Practice selectors now also emit explicit imported-technique focus candidates instead of turning imported chart weak spots only into generic replay advice.
+  - `js/practice/selectors.js`
+  - `tests/test_practice_selectors.js`
+- Imported-technique practice candidates now have an explicit launcher path into performance-song detail with a visible technique-focus hint instead of behaving like dead-end metadata.
+  - `js/practice/launchers.js`
+  - `js/app.js`
+  - `js/pages/perform_song.js`
+  - `tests/test_practice_launchers.js`
+- More legacy practice wrappers now defer to the shared practice engine path instead of duplicating plan ownership.
+  - `js/practice/plan.js`
+  - `js/performance/practice_engine.js`
+  - `js/practice/engine.js`
+  - `tests/test_sparksuite_legacy_bridge_cleanup.js`
+- Phase 2 convergence has started with an engine-owned SparkCore runtime state model instead of only legacy-state projection.
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- The shared practice plan screens can now prefer a core-backed active session view instead of reading only legacy practice-plan state.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/pages/plan.js`
+  - `js/pages/practice.js`
+  - `js/sparksuite/bridges/practice_bridge.js`
+  - `tests/test_sparksuite_core_migration.js`
+- The guided-session page can now prefer the active guided plan from SparkCore instead of relying only on `S.guidedPlan`.
+  - `js/pages/guided.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Guided step progression and new-move phase state can now be tracked in SparkCore runtime state instead of living only in legacy shell fields.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/pages/guided.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance session runtime state now mirrors start/pause/resume/seek/loop/finish into SparkCore, and the perform page can prefer those core-backed transport/control values.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/performance/session.js`
+  - `js/pages/perform.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance control changes in `app.js` now also mirror mode, difficulty, speed, and practice-preset updates into SparkCore runtime state.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `js/pages/perform.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance-song selection and guided-session completion now also mirror their screen/session transitions into SparkCore runtime state.
+  - `js/app.js`
+  - `js/instruments/guitar/app.js`
+  - `js/instruments/bass/app.js`
+  - `js/instruments/piano/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Result screens can now prefer more core-backed outcome data instead of relying only on legacy result fields.
+  - `js/pages/guided.js`
+  - `js/pages/perform.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- The performance-song detail flow can now prefer core-backed selection/runtime state instead of relying only on legacy `S.performSong*` fields.
+  - `js/pages/perform_song.js`
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Global tab/back navigation now also mirrors home/tab runtime state into SparkCore instead of leaving those result-screen exits entirely shell-owned.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Result-screen exit actions now use explicit app actions that mirror guided/performance home transitions into SparkCore runtime state.
+  - `js/app.js`
+  - `js/pages/guided.js`
+  - `js/pages/perform.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance stats/editor/calibration transitions now have explicit SparkCore runtime actions, and stats/calibration exits now use explicit app actions instead of falling through the generic shell back path. The calibration screen can also prefer core-backed source/mode state instead of relying only on legacy calibration fields.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/pages/performance_stats.js`
+  - `js/pages/perform_calibration.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor context now mirrors active chart identity, title, source, and dirty state into SparkCore runtime instead of leaving even that basic editor session context entirely shell-owned.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance stats now have a core-backed view focus, and editor runtime state now also mirrors selected-event context instead of leaving those last basic screen-level selections entirely shell-owned.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/pages/performance_stats.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance song selection now mirrors richer song metadata into SparkCore runtime, and calibration now mirrors applied offset state into core so the calibration screen can prefer core-backed offset values instead of only shell fields.
+  - `js/app.js`
+  - `js/pages/perform_song.js`
+  - `js/pages/perform_calibration.js`
+  - `js/sparksuite/core/spark_core.js`
+- The legacy song/player family now has explicit SparkCore helpers for song open, playback-state sync, completion, and navigation, and the shared song detail/done pages can prefer core-backed song session state instead of reading only shell-owned fields.
+  - `js/app.js`
+  - `js/instruments/guitar/app.js`
+  - `js/pages/session.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Piano’s older in-tab song mode now also mirrors song selection, playback state, and song-exit navigation through the shared song-session helper path instead of remaining a completely separate local runtime island.
+  - `js/instruments/piano/app.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Bass guided completion now also mirrors the guided-done transition through the shared guided navigation helper, and bass has dedicated runtime migration coverage instead of only being indirectly covered by the broader core tests.
+  - `js/instruments/bass/app.js`
+  - `tests/test_bass_runtime_core_migration.js`
+- Legacy guitar/bass timed session and drill flows now also use explicit SparkCore-backed entry/completion/return/retry helpers, and the shared session/drill result pages can prefer core runtime practice state instead of depending only on shell-owned chord/drill selection and generic tab exits.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/instruments/guitar/app.js`
+  - `js/instruments/bass/app.js`
+  - `js/app.js`
+  - `js/pages/session.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_bass_runtime_core_migration.js`
+- The shared songs browser now has a core-backed state slice for subtab, filter, sort, and community browse/search controls, and the songs page can prefer that SparkCore browser state instead of reading only shell-owned fields.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/pages/songs.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Home/dashboard recommendation, insight, and challenge snapshots now have a core-backed state slice too, and the shared home/recommendation/insight/challenge pages can prefer that SparkCore snapshot instead of reading only shell-owned dashboard fields.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/home/home_engine.js`
+  - `js/recommend/ui.js`
+  - `js/insights/ui.js`
+  - `js/meta/challenge_ui.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Dashboard screen entry and recommendation lookup now also have explicit core-backed helpers, so recommendation/insight/challenge/home-dash navigation is less dependent on raw shell-only screen flips.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/recommend/ui.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Piano’s parallel dashboard actions now also mirror into the shared dashboard navigation/snapshot helpers instead of keeping a separate local-only dashboard flow.
+  - `js/instruments/piano/app.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Dashboard-family return paths now also route through the shared dashboard navigation helper, so recommendation/insight/challenge/career exits are less dependent on generic shell back behavior.
+  - `js/sparksuite/core/spark_core.js`
+  - `js/app.js`
+  - `js/instruments/piano/app.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_piano_runtime_core_migration.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance song detail navigation now uses explicit core-backed back/stop transitions, and arrangement changes from the song-detail page now mirror into SparkCore runtime instead of being shell-only settings.
+  - `js/app.js`
+  - `js/pages/perform_song.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance song-detail launch/configuration now carries selected-song metadata through core runtime too, so difficulty/speed/arrangement changes and start-from-song launches preserve richer song context instead of depending only on shell fields.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor runtime now mirrors basic chart metrics like BPM, event count, and phrase count into SparkCore too, so the editor screen depends less on shell-owned chart bookkeeping for its live summary state.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor runtime now also mirrors a compact selected-event summary into SparkCore, so the current event label/time/duration is no longer only implicit in the shell-owned chart object.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor phrases now have explicit core-backed selection state too, including selected phrase id/name/start/end, so phrase focus is no longer just passive shell markup.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor phrase editing and deletion now also flow through the core-backed phrase selection summary, so the current phrase lifecycle is less shell-owned than before.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor synchronization now has a dedicated SparkCore document-sync API instead of relying only on repetitive hand-built `configure_editor` payloads in `js/app.js`, which makes the editor migration cleaner and more platform-shaped.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- SparkCore now keeps a cloned performance-editor chart document and applies the first editor mutations against that core-owned copy, so the legacy shell is starting to follow editor edits instead of owning them outright.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor event selection, editing, and deletion now also route through the core-owned editor document mutation path, so event lifecycle is less shell-owned and closer to the roadmap’s engine-first runtime model.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor save/load/delete now also has a core-owned library path, and the blank editor screen can prefer that core-backed library instead of depending only on `S.performEditorLibrary`.
+  - `js/app.js`
+  - `js/pages/performance_editor.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor export and preview now also use explicit core-backed helpers, so those workflows no longer depend only on the shell-owned chart object at trigger time.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance editor preview launch now also goes through a core-owned preview request, so the preview session carries chart/config/runtime context from SparkCore instead of being only a page-shell handoff.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance retry and phrase-retry launch config now also goes through a SparkCore request helper instead of being hand-built inline in `js/app.js`, which pulls another performance lifecycle path toward the roadmap’s core-owned runtime model.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance calibration request flow now also goes through a SparkCore helper instead of hand-building runtime sync payloads in each calibration action branch, which makes calibration more consistent with the newer core-first performance flows.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance completion payload construction now also has a SparkCore helper, so `finishPerformance()` no longer has to hand-build the core completion request inline before calling `completeSession(...)`.
+  - `js/performance/session.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance result and back/exit navigation now also uses a SparkCore helper, which pulls Songs-home and song-detail return transitions away from one-off `updateRuntimeState(...)` blocks in `js/app.js` and lets `stopPerform` choose its return target from core runtime state instead of shell-owned song flags.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance stats/editor/calibration entry points now also go through explicit SparkCore helpers instead of each app action branch hand-assembling its own open-screen payloads.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance song/detail entry now also has an explicit SparkCore helper, so song selection no longer has to manually pair `startSession(...)` with a separate `select_song` runtime patch in `js/app.js`.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Performance start-from-song now also goes through an explicit SparkCore helper, so the shell no longer hand-assembles the runtime start payload for song-detail launches.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Piano performance song open/start now also leans on the shared SparkCore performance request helpers instead of keeping a fully parallel local launch path.
+  - `js/instruments/piano/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Daily practice open/regenerate/complete actions now also go through explicit SparkCore helpers instead of having `js/app.js` call raw `startSession(...)` and `completeSession(...)` directly for that screen family.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Guided-session open/complete flows now also have explicit SparkCore helpers, and the guitar/bass/piano guided paths now lean on those helpers instead of calling raw guided session APIs directly.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `js/instruments/guitar/app.js`
+  - `js/instruments/bass/app.js`
+  - `js/instruments/piano/app.js`
+  - `tests/test_sparksuite_core_migration.js`
+  - `tests/test_piano_runtime_core_migration.js`
+- Guided stop/done-home navigation now also goes through an explicit SparkCore helper instead of raw `syncGuidedRuntimeState(...)` patches from `js/app.js`.
+  - `js/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Legacy timed practice now has explicit core-backed countdown/pause runtime sync too, so the old session timer is no longer only a shell-owned toggle.
+- Legacy timed practice now has explicit core-backed countdown/pause runtime sync too, and both session and drill pages can render the migrated timer state instead of relying only on shell countdown fields.
+- Legacy daily challenge runtime now has explicit core-backed timer/completion state too, and the daily page can render the migrated countdown instead of depending only on shell `S.dailyTimer` / `S.dailyComplete`.
+- Legacy daily challenge return/home flow now has an explicit core-backed navigation helper too, so daily exit behavior is no longer just a generic shell back/tab jump.
+- Chord Runner runtime now has explicit core-backed active/score/target/results state too, and the shared runner pages can fall back to the migrated runtime instead of relying only on shell `S.runner*` fields.
+- Legacy rhythm mini-game runtime now has explicit core-backed active/score/beats/results state too, and the shared rhythm pages can fall back to the migrated runtime instead of relying only on shell `S.rhythm*` fields.
+- Tuner runtime now has explicit core-backed active/note/frequency/error state too, and the tuner page can fall back to the migrated runtime instead of relying only on shell `S.tuner*` fields.
+  - `js/app.js`
+  - `js/pages/session.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+
+## Partial
+
+- SparkSuite core owns major entry and completion flows, but not every runtime path in the app is fully migrated.
+- SparkCore now exposes an explicit runtime-state API, and some major session screens now consume it, but pages and live loops still partly mirror legacy shell state while the convergence continues.
+- SparkSuite core now owns more of the piano runtime too, but broader piano gameplay/runtime and other legacy instrument flows still have local orchestration paths.
+- Performance session orchestration is much thinner now, but the live transport/game loop still lives outside SparkCore.
+- Rhythm-highway architecture exists and is playable, but later-phase gameplay features are still partial.
+  - broader instrument-specific rhythm libraries
+- Performance imported-chart support is integrated, but the shared `SparkHighway` renderer itself has not been deeply modified.
+  - Current parity is achieved with conversion, scoring, preview, hit-color, and overlay layers
+  - The underlying note sprite renderer still treats imported techniques generically
+- Progression cleanup is significantly better, but the app still persists to legacy `S.*` state.
+- Dashboard, songs-browser, and career-launch surfaces now have explicit SparkCore-backed state and request helpers, including dedicated dashboard-section entry, dashboard/home return routing, utility-screen entry, career-song selection, recommendation-launch, challenge-claim sync, dashboard snapshot refresh/init, and dashboard-to-plan entry paths across shared and piano flows, reducing more of the old shell-only navigation/selection logic.
+- Dashboard recommendations can now surface module-progress work directly, so authored bass/ukulele follow-through is not limited to the practice-plan surface.
+  - `js/recommend/candidates.js`
+  - `js/recommend/scoring.js`
+  - `js/recommend/ui.js`
+  - `tests/test_recommendations.js`
+- Personal insights now carry the active focused imported-technique block too, so analytics surfaces can continue the same song/technique thread instead of showing only generic trends.
+  - `js/insights/recommendations.js`
+  - `js/insights/ui.js`
+  - `js/home/home_cards.js`
+  - `tests/test_insights.js`
+- Home recommendation cards now preserve module-progress and focused-technique detail instead of flattening everything back to generic titles.
+  - `js/home/home_cards.js`
+  - `tests/test_insights.js`
+- Chord-detect runtime now has explicit core-backed active/note-match/error state too, and the legacy session chord-check UI can fall back to the migrated runtime instead of relying only on shell `S.chordDetect*` fields.
+  - `js/audio.js`
+  - `js/pages/shared.js`
+  - `js/pages/session.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Metronome runtime now has explicit core-backed active/BPM/beat state too, and the legacy session metronome card can fall back to the migrated runtime instead of relying only on shell `S.metronome*` fields.
+  - `js/audio.js`
+  - `js/app.js`
+  - `js/pages/session.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Stem-player playback runtime now has explicit core-backed playing/time/duration state too, and the stem player page can fall back to the migrated runtime instead of relying only on shell `S.stem*` fields.
+  - `js/audio.js`
+  - `js/pages/songs.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Audio-input testing runtime now has explicit core-backed device/selection/test-level state too, and the tools page can fall back to the migrated runtime instead of relying only on shell `S.audioInput*` fields.
+  - `js/audio.js`
+  - `js/app.js`
+  - `js/pages/tools.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Guitar finger-exercise runtime now has an explicit core-backed active/exercise/timer state too, and the shared finger-exercise card can fall back to the migrated runtime instead of relying only on shell `S.fingerEx*` fields.
+  - `js/instruments/guitar/app.js`
+  - `js/pages/shared.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Guitar finger-exercise completion now has an explicit core-backed finish path too, and the shared finger-exercise card can fall back to migrated completion counts instead of relying only on shell `S.fingerStats`.
+  - `js/instruments/guitar/app.js`
+  - `js/pages/shared.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Ear-training runtime now has explicit core-backed question/options/answer state too, and the ear-training page can fall back to the migrated runtime instead of relying only on shell `S.earTrain*` fields.
+  - `js/instruments/guitar/app.js`
+  - `js/app.js`
+  - `js/pages/practice.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Quiz and ear-training entry now open through explicit core helpers too instead of starting shell-first and only syncing afterward.
+  - `js/instruments/guitar/app.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Strum-pattern playback now has explicit core-backed selected-pattern/active-beat state too, and the strum page can fall back to the migrated runtime instead of relying only on shell `S.selectedStrum / S.strumActive / S._strumBeat`.
+  - `js/app.js`
+  - `js/pages/session.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Quiz runtime now has explicit core-backed question/options/answer state too, and the quiz page can fall back to the migrated runtime instead of relying only on shell `S.quizQ / S.quizOpts / S.quizAns`.
+  - `js/app.js`
+  - `js/instruments/guitar/app.js`
+  - `js/pages/session.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Quiz and ear-training score/total/streak counters now also have core-backed runtime coverage, so those mini-flows no longer depend only on shell-owned counters for their in-page progress chips.
+  - `js/app.js`
+  - `js/instruments/guitar/app.js`
+  - `js/pages/session.js`
+  - `js/pages/practice.js`
+  - `js/sparksuite/core/spark_core.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Long-tail quiz/song renderers now lean more consistently on core-backed runtime state too, including the quiz home card summary and song-detail playback animation state.
+  - `js/pages/practice.js`
+  - `js/pages/session.js`
+  - `tests/test_sparksuite_core_migration.js`
+- Ukulele launcher support is live, but deeper performance/song-library parity is still early.
+  - Current implementation now covers launcher, onboarding, module-aware practice suggestions, a small authored rhythm library, two manifest-backed performance charts, and a first 4-lane rhythm payload path
+  - Broader dedicated song/chart coverage, richer module-specific screens, and deeper gameplay parity can still expand
+
+## Remaining
+
+- Migrate more non-SparkSuite runtime paths fully under SparkCore ownership.
+- Replace more legacy `S.*` persistence with engine-owned progress/profile objects.
+- Push imported technique semantics deeper into the shared `SparkHighway` renderer.
+- Extend rhythm-highway parity for more instruments and richer authored content.
+- Expand ukulele authored content beyond the current first rhythm-library and two-chart performance slice.
+- Extend imported-chart technique details further into analytics and recommendation surfaces beyond the current first-pass summaries.
+
+## Verification
+
+Regression coverage currently includes:
+- `tests/test_sparksuite_core_migration.js`
+- `tests/test_sparksuite_rhythm_core.js`
+- `tests/test_sparksuite_legacy_bridge_cleanup.js`
+- `tests/test_piano_runtime_core_migration.js`
+- `tests/test_bass_runtime_core_migration.js`
+- `tests/test_performance_core.js`
+
+Current validation command:
+
+```bash
+npm test
+```
+
+## Recommended Next Order
+
+1. Move more runtime ownership from legacy app state into SparkCore and engine-owned domain objects.
+2. Deepen instrument parity, especially broader ukulele song/performance libraries and richer rhythm authoring.
+3. Push imported technique semantics deeper into the shared renderer and analytics surfaces.

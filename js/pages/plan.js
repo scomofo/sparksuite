@@ -1,11 +1,19 @@
 function planPage(){
-  var plan = ensurePracticePlan();
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    : ensurePracticePlan();
+  var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
+    ? true
+    : !!S.practicePlanComplete;
   var h = '';
 
   h += '<div class="card mb16">';
   h += '<h2>Today\'s Practice Plan</h2>';
   h += '<div class="muted">'+escHTML(plan.focus)+'</div>';
-  if(S.practicePlanComplete){
+  if(planCompleted){
     h += '<div style="margin-top:8px;color:var(--success);font-weight:700">Plan completed!</div>';
   }
   h += '</div>';
@@ -16,14 +24,14 @@ function planPage(){
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
     h += '<div style="font-weight:700;font-size:14px">'+escHTML(item.label)+'</div>';
-    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(item.type)+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
+    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
-    h += '<button class="btn btn-sm" onclick="launchPracticePlanItem(S.practicePlan.items['+i+'])" style="background:var(--accent);color:#fff">Go</button>';
+    h += '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(item.id)+'\')" style="background:var(--accent);color:#fff">Go</button>';
     h += '</div>';
     h += '</div>';
   }
 
-  if(!S.practicePlanComplete){
+  if(!planCompleted){
     h += '<div class="card mb16" style="text-align:center">';
     h += '<button class="btn btn-primary" onclick="act(\'completePlan\')">Mark Plan Complete</button>';
     h += '</div>';
@@ -40,8 +48,45 @@ function planPage(){
 function planItemColor(type){
   if(type==="warmup" || type==="finger") return "#f59e0b";
   if(type==="transition") return "#3b82f6";
-  if(type==="performance_song" || type==="performance_phrase") return "#22c55e";
+  if(type==="rhythm_highway") return "#ec4899";
+  if(type==="performance_song" || type==="performance_phrase" || type==="performance_technique") return "#22c55e";
   if(type==="rhythm") return "#ec4899";
+  if(type==="bassline" || type==="groove" || type==="arpeggio" || type==="improv" || type==="melody" || type==="strum_pattern") return "#14b8a6";
+  if(type==="technique") return "#f97316";
   if(type==="lead") return "#8b5cf6";
   return "#6b7280";
+}
+
+function formatPlanItemSubtitle(item){
+  item = item || {};
+  var meta = item.meta || {};
+  var parts = [];
+  if(meta.instrument) parts.push(prettyPlanToken(meta.instrument));
+  if(meta.exerciseFocus) parts.push(prettyPlanToken(meta.exerciseFocus));
+  else if(meta.skill) parts.push(prettyPlanToken(meta.skill));
+  if(item.type) parts.push(prettyPlanToken(item.type));
+  return parts.join(" • ") || String(item.type || "practice");
+}
+
+function prettyPlanToken(value){
+  return String(value || "").replace(/_/g, " ");
+}
+
+function launchPracticePlanItem(itemId){
+  var plan = null;
+  if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
+    var view = window.sparkCore.getActiveSessionView();
+    if(view && view.plan && view.plan.flow === "daily_practice"){
+      plan = SparkPracticeBridge.toLegacyPlan(view.plan);
+    }
+  }
+  if(!plan) plan = S.practicePlan || ensurePracticePlan();
+  if(!plan || !Array.isArray(plan.items)) return;
+
+  for(var i=0;i<plan.items.length;i++){
+    if(plan.items[i].id === itemId){
+      launchPracticeItem(plan.items[i]);
+      return;
+    }
+  }
 }

@@ -34,6 +34,22 @@ function startCalibration() {
   render();
 }
 
+function formatTechniqueFocusLabel(key) {
+  var labels = {
+    open: "Open-note timing",
+    tap: "Tap-note consistency",
+    forced: "Forced-note transitions",
+    specialPhrase: "Phrase section control"
+  };
+  return labels[key] || String(key || "Technique");
+}
+
+function eventMatchesTechniqueFocus(evt, key) {
+  var flags = evt && evt.sourceFlags ? evt.sourceFlags : null;
+  if (!flags || !key) return false;
+  return !!flags[key];
+}
+
 function recordCalibrationTap() {
   if (!S._calibrating) return;
   var expected = S._calibExpectedTime - S._calibBeatMs;
@@ -79,10 +95,23 @@ function cancelCalibration() {
 function performPage() {
   var chart = S.performChart;
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+    ? runtimeState.performanceTargetTechnique
+    : S.performTargetTechnique;
 
-  var nowSec = S.performCurrentSec;
+  var nowSec = runtimeState && typeof runtimeState.transport.positionMs === "number"
+    ? runtimeState.transport.positionMs / 1000
+    : S.performCurrentSec;
   var phrase = getPerformancePhraseForTime(chart, nowSec);
   var phraseName = phrase ? phrase.name : "";
+  var previewEvent = getNextPerformEvent(chart, nowSec);
+  var techniquePreview = typeof getImportedTechniquePreview === "function"
+    ? getImportedTechniquePreview(chart, nowSec, 3)
+    : [];
 
   var h = '<div class="perform-page">';
 
@@ -95,6 +124,12 @@ function performPage() {
   h += '</div>';
   h += '<div class="perform-phrase-name">' + escHTML(phraseName) + '</div>';
   h += '</div>';
+
+  if (targetTechnique) {
+    h += '<div style="display:flex;justify-content:center;padding:4px 12px 0">';
+    h += '<span style="background:linear-gradient(135deg,#FF8A5C,#FFE66D);color:#3a2b00;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:900;letter-spacing:.03em">FOCUS: ' + escHTML(formatTechniqueFocusLabel(targetTechnique).toUpperCase()) + '</span>';
+    h += '</div>';
+  }
 
   // Score strip
   h += '<div class="perform-score-strip">';
@@ -117,6 +152,27 @@ function performPage() {
 
   // Highway
   h += renderPerformanceHighway(chart, nowSec);
+
+  if (techniquePreview.length) {
+    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:6px 12px 0">';
+    for (var ti = 0; ti < techniquePreview.length; ti++) {
+      h += '<span style="background:' + techniquePreview[ti].color + ';color:#fff;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em">'
+        + escHTML(techniquePreview[ti].label) + '</span>';
+    }
+    h += '</div>';
+  }
+
+  if (previewEvent && previewEvent.sourceFlags && hasImportedTechniqueFlags(previewEvent.sourceFlags)) {
+    h += '<div style="text-align:center;padding:4px 12px;margin:4px 12px 0">';
+    h += '<span style="font-size:11px;font-weight:700;color:var(--text-muted)">Technique: ' + escHTML(renderImportedTechniqueFlags(previewEvent.sourceFlags)) + '</span>';
+    h += '</div>';
+  }
+
+  if (targetTechnique && previewEvent && eventMatchesTechniqueFocus(previewEvent, targetTechnique)) {
+    h += '<div style="text-align:center;padding:4px 12px;margin:0 12px 0">';
+    h += '<span style="font-size:11px;font-weight:800;color:#FF8A5C">Focused technique note incoming</span>';
+    h += '</div>';
+  }
 
   // Input source badge + detected notes
   h += '<div class="perform-input-badge">' + (S.performInputSource === "midi" ? "MIDI" : "MIC");
@@ -156,7 +212,8 @@ function performPage() {
   h += '<div class="perform-controls">';
 
   // Pause/Resume
-  if (S.performPaused) {
+  var performPaused = runtimeState && runtimeState.transport ? runtimeState.transport.status === "paused" : S.performPaused;
+  if (performPaused) {
     h += '<button class="btn perform-ctrl-btn" onclick="act(\'resumePerform\')" style="background:#4ECDC4;color:#fff">&#9654; Resume</button>';
   } else {
     h += '<button class="btn perform-ctrl-btn" onclick="act(\'pausePerform\')" style="background:#FFE66D;color:#333">&#9208; Pause</button>';
@@ -164,23 +221,26 @@ function performPage() {
 
   // Mode toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Input</span>';
-  h += '<button class="btn btn-sm' + (S.performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
-  h += '<button class="btn btn-sm' + (S.performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
+  var performMode = runtimeState && runtimeState.performanceInputMode ? runtimeState.performanceInputMode : S.performMode;
+  h += '<button class="btn btn-sm' + (performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
+  h += '<button class="btn btn-sm' + (performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
   h += '</div>';
 
   // Difficulty toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Difficulty</span>';
   var diffs = ["easy", "normal", "pro"];
+  var performDifficulty = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
   for (var d = 0; d < diffs.length; d++) {
-    h += '<button class="btn btn-sm' + (S.performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
+    h += '<button class="btn btn-sm' + (performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
   }
   h += '</div>';
 
   // Speed toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Speed</span>';
   var speeds = [0.5, 0.75, 1.0];
+  var performSpeed = runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed;
   for (var sp = 0; sp < speeds.length; sp++) {
-    h += '<button class="btn btn-sm' + (S.performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
+    h += '<button class="btn btn-sm' + (performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
   }
   h += '</div>';
 
@@ -192,13 +252,17 @@ function performPage() {
     { id: "guitar_quiet", label: "Quiet Guitar" },
     { id: "guitar_solo", label: "Solo Guitar" }
   ];
+  var performPracticePreset = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : S.performPracticePreset;
   for (var pr = 0; pr < presets.length; pr++) {
-    h += '<button class="btn btn-sm' + (S.performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
+    h += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
   }
   h += '</div>';
 
   // Loop phrase
-  if (S.performLoop) {
+  var performLoop = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceLoop")
+    ? runtimeState.performanceLoop
+    : S.performLoop;
+  if (performLoop) {
     h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performClearLoop\')" style="background:#FF6B6B;color:#fff">&#128260; Clear Loop</button>';
   } else {
     h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performLoopPhrase\')" style="background:#4ECDC4;color:#fff">&#128257; Loop Phrase</button>';
@@ -229,7 +293,14 @@ function performPage() {
 }
 
 function performDonePage() {
-  var r = S.performResults;
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var r = runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults;
+  var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+    ? runtimeState.performanceTargetTechnique
+    : S.performTargetTechnique;
   if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
   var h = '<div class="perform-page text-center" style="padding-top:20px">';
@@ -245,8 +316,8 @@ function performDonePage() {
   h += '</div>';
 
   // Previous best
-  var songKey = S.performChartId || "unknown";
-  var prevBest = S.performSongStats[songKey];
+  var songKey = runtimeState && runtimeState.performanceChartId ? runtimeState.performanceChartId : (S.performChartId || "unknown");
+  var prevBest = (S.performSongStats && S.performSongStats[songKey]) || null;
   if (prevBest && prevBest.runs > 1) {
     h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Previous best: ' + prevBest.bestScore + ' pts / ' + prevBest.bestAccuracy + '% / ' + prevBest.bestStars + ' stars (' + prevBest.runs + ' runs)</div>';
   }
@@ -256,8 +327,11 @@ function performDonePage() {
 
   // Mastery badge
   if (typeof getPerformanceStats === "function") {
-    var arrType = (S.performChart && S.performChart.arrangementType) || "chords";
-    var pStats = getPerformanceStats(S.performChartId || "unknown", arrType, S.performDifficulty);
+    var arrType = (S.performChart && S.performChart.arrangementType)
+      || (runtimeState && runtimeState.performanceArrangementType)
+      || "chords";
+    var difficultyId = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
+    var pStats = getPerformanceStats(songKey, arrType, difficultyId);
     if (pStats.mastery !== "none") {
       h += '<div style="margin-bottom:12px"><span style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + ';padding:6px 16px;border-radius:12px;font-size:13px;font-weight:800">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
     }
@@ -291,6 +365,20 @@ function performDonePage() {
     h += '</div>';
   }
 
+  if (r.importedTechniqueSummary && hasImportedTechniqueResultData(r.importedTechniqueSummary)) {
+    h += '<div class="card mb20" style="text-align:left"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Technique Summary</h3>';
+    h += renderImportedTechniqueSummaryRows(r.importedTechniqueSummary);
+    h += '</div>';
+  }
+
+  if (targetTechnique) {
+    h += '<div class="card mb20" style="text-align:left;border:1px solid #FF8A5C44;background:linear-gradient(135deg,#FF8A5C12,#FFE66D12)">';
+    h += '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Technique Focus</div>';
+    h += '<div style="font-size:14px;color:var(--text-primary);font-weight:800">' + escHTML(formatTechniqueFocusLabel(targetTechnique)) + '</div>';
+    h += '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">Keep this same focus on retry so the next run stays aimed at the weak spot.</div>';
+    h += '</div>';
+  }
+
   // Best and weakest phrases
   if (r.phraseStats && r.phraseStats.length > 1) {
     var bestIdx = 0, worstIdx = 0;
@@ -309,13 +397,18 @@ function performDonePage() {
 
   // Buttons
   h += '<div class="flex-col">';
-  h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; Retry</button>';
-  h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; Retry Weakest</button>';
-  h += '<button class="btn" onclick="act(\'tab\',\'songs\')" style="background:#4ECDC4;color:#fff">&#127968; Songs</button>';
+  h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; ' + escHTML(targetTechnique ? ("Retry " + formatTechniqueFocusLabel(targetTechnique)) : "Retry") + '</button>';
+  h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; ' + escHTML(targetTechnique ? ("Retry Weakest " + formatTechniqueFocusLabel(targetTechnique)) : "Retry Weakest") + '</button>';
+  h += '<button class="btn" onclick="act(\'performDoneSongs\')" style="background:#4ECDC4;color:#fff">&#127968; Songs</button>';
   h += '</div>';
 
   // Next step recommendation
-  if(typeof buildPerformanceRecommendationsForSong==="function"&&r.title){
+  var focusedTechniqueRow = targetTechnique ? getTechniqueSummaryRow(r.importedTechniqueSummary, targetTechnique) : null;
+  if (focusedTechniqueRow) {
+    h += '<div class="card" style="margin-top:12px;text-align:left"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Next Step</div>';
+    h += '<div style="font-size:13px;color:var(--text-primary)">' + escHTML("Stay on " + formatTechniqueFocusLabel(targetTechnique)) + '</div>';
+    h += '<div style="font-size:11px;color:var(--text-dim)">' + escHTML("You hit " + focusedTechniqueRow.hits + " of " + focusedTechniqueRow.total + " focused notes. Retry this same target to lock it in.") + '</div></div>';
+  } else if(typeof buildPerformanceRecommendationsForSong==="function"&&r.title){
     var songId=(r.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
     var nextRecs=buildPerformanceRecommendationsForSong(songId);
     if(nextRecs&&nextRecs.length){
@@ -327,4 +420,53 @@ function performDonePage() {
 
   h += '</div>';
   return h;
+}
+
+function getNextPerformEvent(chart, nowSec) {
+  if (!chart || !chart.events) return null;
+  for (var i = 0; i < chart.events.length; i++) {
+    if (chart.events[i].t + (chart.events[i].dur || 0) >= nowSec) return chart.events[i];
+  }
+  return chart.events.length ? chart.events[chart.events.length - 1] : null;
+}
+
+function hasImportedTechniqueFlags(flags) {
+  return !!(flags && (flags.open || flags.tap || flags.forced || flags.specialPhrase));
+}
+
+function hasImportedTechniqueResultData(summary) {
+  if (!summary) return false;
+  for (var key in summary) {
+    if (summary[key] && summary[key].total > 0) return true;
+  }
+  return false;
+}
+
+function renderImportedTechniqueSummaryRows(summary) {
+  var order = ["open", "tap", "forced", "specialPhrase"];
+  var h = "";
+  for (var i = 0; i < order.length; i++) {
+    var row = summary[order[i]];
+    if (!row || !row.total) continue;
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
+    h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(row.label) + '</span>';
+    h += '<span style="font-size:12px;color:var(--text-muted)">' + row.hits + '/' + row.total + ' hit &mdash; ' + row.accuracy + '%</span>';
+    h += '</div>';
+  }
+  return h;
+}
+
+function getTechniqueSummaryRow(summary, key) {
+  if (!summary || !key || !Object.prototype.hasOwnProperty.call(summary, key)) return null;
+  return summary[key] || null;
+}
+
+function renderImportedTechniqueFlags(flags) {
+  var labels = [];
+  if (!flags) return "";
+  if (flags.open) labels.push("Open");
+  if (flags.tap) labels.push("Tap");
+  if (flags.forced) labels.push("Forced");
+  if (flags.specialPhrase) labels.push("Phrase");
+  return labels.join(" • ");
 }

@@ -12,33 +12,96 @@
       var sessionNum = opts.sessionNum || 1;
       var chordName  = opts.chordName || null;
 
-      var D = {};
-      if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-        D = SparkInstruments.getActive().getData();
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[SparkSession] buildSession:", mode, "level:", level);
+      }
+
+      var D = opts.instrumentData || {};
+      if (!opts.instrumentData) {
+        if (typeof SparkInstrumentAdapter !== "undefined") {
+          D = SparkInstrumentAdapter.getCurriculum() || {};
+        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+          D = SparkInstruments.getActive().getData();
+        }
+      }
+
+      // Resolve instrument identity for contract
+      var instrumentId = opts.instrumentId || null;
+      var instrumentType = opts.instrumentType || null;
+      if (!instrumentId && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+        instrumentId = SparkInstruments.getActive().id || null;
+        instrumentType = SparkInstruments.getActive().instrument || null;
+      }
+
+      function wrapPlan(raw) {
+        if (typeof SparkContracts !== "undefined") {
+          return SparkContracts.createSessionPlan({
+            sessionId: raw.sessionId,
+            instrumentId: instrumentId,
+            instrumentType: instrumentType,
+            mode: raw.type || mode,
+            chord: raw.chord,
+            chordName: raw.chordName || (raw.chord ? raw.chord.name : null),
+            estimatedDuration: raw.duration || 120,
+            difficulty: raw.level || level,
+            segments: raw.chords || [],
+            lessonRef: raw.lessonRef || null,
+            metadata: { plan: raw.plan || null, sessionNum: raw.sessionNum || null }
+          });
+        }
+        return raw;
       }
 
       if (mode === "quickStart") {
         var avail = (D.CHORDS && D.CHORDS[level]) || (D.CHORDS && D.CHORDS[1]) || [];
         var chord = avail.length ? avail[Math.floor(Math.random() * avail.length)] : null;
-        return {
+
+        // Prefer chords needing review when CurriculumService is available (Phase 5)
+        if (typeof SparkCurriculumService !== "undefined" && typeof SparkCurriculumService.getReviewTargets === "function" && avail.length > 0) {
+          var reviewTargets = SparkCurriculumService.getReviewTargets();
+          if (reviewTargets.length > 0) {
+            // Try to find a review target chord in the available pool
+            for (var rt = 0; rt < reviewTargets.length; rt++) {
+              for (var ac = 0; ac < avail.length; ac++) {
+                if (avail[ac].name === reviewTargets[rt].id) {
+                  chord = avail[ac];
+                  rt = reviewTargets.length; // break outer loop
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        return wrapPlan({
           type:      "quickStart",
           chord:     chord,
           chordName: chord ? chord.name : null,
           duration:  120,
           level:     level
-        };
+        });
       }
 
       if (mode === "guided") {
         var sessions = D.SESSIONS || [];
         var plan     = sessions[sessionNum - 1] || null;
-        return {
+
+        // Use CurriculumService for lesson resolution when available (Phase 5)
+        var lessonRef = null;
+        if (typeof SparkCurriculumService !== "undefined" && plan && plan.id) {
+          if (SparkCurriculumService.isLessonUnlocked(plan.id)) {
+            lessonRef = plan.id;
+          }
+        }
+
+        return wrapPlan({
           type:       "guided",
           plan:       plan,
           sessionNum: sessionNum,
           duration:   300,
-          level:      level
-        };
+          level:      level,
+          lessonRef:  lessonRef
+        });
       }
 
       if (mode === "chord") {
@@ -47,13 +110,13 @@
         for (var i = 0; i < allChords.length; i++) {
           if (allChords[i].name === chordName) { found = allChords[i]; break; }
         }
-        return {
+        return wrapPlan({
           type:      "chord",
           chord:     found,
           chordName: found ? found.name : chordName,
           duration:  120,
           level:     level
-        };
+        });
       }
 
       if (mode === "drill") {
@@ -65,16 +128,16 @@
           c2 = pool[Math.floor(Math.random() * pool.length)];
           attempts++;
         }
-        return {
+        return wrapPlan({
           type:     "drill",
           chords:   [c1, c2],
           duration: 60,
           level:    level
-        };
+        });
       }
 
       // Fallback — unknown mode returns minimal stub
-      return { type: mode, duration: 120, level: level };
+      return wrapPlan({ type: mode, duration: 120, level: level });
     },
 
     // processResults(results) — handles all post-session state updates.
@@ -82,6 +145,10 @@
     // Returns: { xpEarned, jackpot, leveledUp, newLevel, newBadges, streakUpdated }
     processResults: function(results) {
       results = results || {};
+
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[SparkSession] processResults:", results.type || "session", results.chordName || "-");
+      }
 
       var xpEarned      = 0;
       var jackpot       = false;
@@ -95,31 +162,55 @@
 
       // --- Streak: once per day ---
       var today = new Date().toISOString().slice(0, 10);
+      var sessionUpdate = {
+        streak: null,
+        sessionsDelta: 1,
+        xpDelta: 0,
+        chordProgress: {},
+        level: null
+      };
       if (S.lastSessionDate !== today) {
-        S.streak = (S.streak || 0) + 1;
-        S.lastSessionDate = today;
+        sessionUpdate.streak = {
+          increment: 1,
+          lastSessionDate: today
+        };
         streakUpdated = true;
       }
-
-      // --- Session count ---
-      S.sessions = (S.sessions || 0) + 1;
 
       // --- XP with 1-in-15 jackpot ---
       jackpot  = Math.random() < (1 / 15);
       xpEarned = jackpot ? 50 : 10;
-      S.xp     = (S.xp || 0) + xpEarned;
+      sessionUpdate.xpDelta = xpEarned;
 
       // --- Chord mastery (+34 per session, capped at 100) ---
       var chordName = results.chordName || null;
       if (chordName) {
-        if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
-        S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + 34, 100);
+        sessionUpdate.chordProgress[chordName] = 34;
+      }
+
+      if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
+        SparkProgressBridge.applyLegacySessionOutcome(sessionUpdate);
+      } else {
+        if (sessionUpdate.streak) {
+          S.streak = (S.streak || 0) + sessionUpdate.streak.increment;
+          S.lastSessionDate = sessionUpdate.streak.lastSessionDate;
+        }
+        S.sessions = (S.sessions || 0) + sessionUpdate.sessionsDelta;
+        S.xp = (S.xp || 0) + sessionUpdate.xpDelta;
+        if (chordName) {
+          if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
+          S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+        }
       }
 
       // --- Level-up: all chords at current level mastered ---
-      var D = {};
-      if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-        D = SparkInstruments.getActive().getData();
+      var D = results.instrumentData || {};
+      if (!results.instrumentData) {
+        if (typeof SparkInstrumentAdapter !== "undefined") {
+          D = SparkInstrumentAdapter.getCurriculum() || {};
+        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
+          D = SparkInstruments.getActive().getData();
+        }
       }
       var levelChords = (D.CHORDS && D.CHORDS[S.level]) || [];
       if (levelChords.length > 0) {
@@ -128,7 +219,11 @@
           if ((S.chordProgress[levelChords[i].name] || 0) < 100) { allMastered = false; break; }
         }
         if (allMastered) {
-          S.level++;
+          if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
+            SparkProgressBridge.applyLegacySessionOutcome({ level: (S.level || 1) + 1 });
+          } else {
+            S.level++;
+          }
           leveledUp = true;
           newLevel  = S.level;
         }

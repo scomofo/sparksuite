@@ -168,8 +168,9 @@ function renderNewMove(plan) {
       if (chord) html += pianoSVG(chord);
       // Show transition tip if available
       var tipKey = S.lastReviewChords.length ? S.lastReviewChords[0] + "_" + plan.newMove.chord : null;
-      if (tipKey && TRANSITION_TIPS[tipKey]) {
-        html += '<div class="intention-card">\u{1F4A1} ' + escHTML(TRANSITION_TIPS[tipKey]) + '</div>';
+      var _tips = typeof PIANO_TRANSITION_TIPS !== "undefined" ? PIANO_TRANSITION_TIPS : TRANSITION_TIPS;
+      if (tipKey && _tips[tipKey]) {
+        html += '<div class="intention-card">\u{1F4A1} ' + escHTML(_tips[tipKey]) + '</div>';
       }
       // Voice-Leading Path exercise integration (P-CHORD-4)
       var vlExercise = getSessionExercise(plan.num, "newMove");

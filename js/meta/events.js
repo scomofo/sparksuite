@@ -60,6 +60,8 @@
   }
 
   function grantSeasonalEventRewards(ev){
+    if(!S.challengeRewards) S.challengeRewards = { packClaimed: {}, eventClaimed: {} };
+    if(!S.challengeRewards.eventClaimed) S.challengeRewards.eventClaimed = {};
     if(S.challengeRewards.eventClaimed[ev.id]) return;
     if(ev.rewards && ev.rewards.xp){
       if(typeof awardXP === "function") awardXP(ev.rewards.xp, "seasonal_event");

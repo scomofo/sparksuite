@@ -1,22 +1,34 @@
 /* ===== ChordSpark: Performance Stats Page ===== */
 
 function performanceStatsPage(){
+  var statsView = getPerformanceStatsView();
+  var focus = statsView.focus;
   var h='<div class="perform-page">';
-  h+='<div class="perform-header"><button class="back-btn" onclick="act(\'back\')">&larr; Back</button>';
+  h+='<div class="perform-header"><button class="back-btn" onclick="act(\'performStatsBack\')">&larr; Back</button>';
   h+='<div class="perform-title"><strong>Performance Stats</strong></div></div>';
+  h+='<div class="perform-controls">';
+  h+='<div class="perform-toggle-group"><span class="perform-toggle-label">View</span>';
+  var focuses=["overview","recent","top","weak","daily"];
+  for(var fi=0;fi<focuses.length;fi++){
+    var focusId=focuses[fi];
+    h+='<button class="btn btn-sm'+(focus===focusId?' active':'')+'" onclick="act(\'performStatsFocus\',\''+focusId+'\')">'+focusId+'</button>';
+  }
+  h+='</div></div>';
 
   // Overview
   var totals=typeof getPerformanceTotals==="function"?getPerformanceTotals():{runs:0,songsPlayed:0,masteredSongs:0,avgAccuracy:0,totalStars:0};
-  h+='<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap">';
-  h+='<div><div style="font-size:22px;font-weight:900;color:#FFE66D">'+totals.runs+'</div><div style="font-size:10px;color:var(--text-muted)">Total Runs</div></div>';
-  h+='<div><div style="font-size:22px;font-weight:900;color:#4ECDC4">'+totals.songsPlayed+'</div><div style="font-size:10px;color:var(--text-muted)">Songs Played</div></div>';
-  h+='<div><div style="font-size:22px;font-weight:900;color:#FF6B6B">'+totals.masteredSongs+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div>';
-  h+='<div><div style="font-size:22px;font-weight:900;color:#45B7D1">'+totals.avgAccuracy+'%</div><div style="font-size:10px;color:var(--text-muted)">Avg Accuracy</div></div>';
-  h+='</div></div>';
+  if(focus==="overview"){
+    h+='<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap">';
+    h+='<div><div style="font-size:22px;font-weight:900;color:#FFE66D">'+totals.runs+'</div><div style="font-size:10px;color:var(--text-muted)">Total Runs</div></div>';
+    h+='<div><div style="font-size:22px;font-weight:900;color:#4ECDC4">'+totals.songsPlayed+'</div><div style="font-size:10px;color:var(--text-muted)">Songs Played</div></div>';
+    h+='<div><div style="font-size:22px;font-weight:900;color:#FF6B6B">'+totals.masteredSongs+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div>';
+    h+='<div><div style="font-size:22px;font-weight:900;color:#45B7D1">'+totals.avgAccuracy+'%</div><div style="font-size:10px;color:var(--text-muted)">Avg Accuracy</div></div>';
+    h+='</div></div>';
+  }
 
   // Recent runs
   var recent=typeof getPerformanceRecentRuns==="function"?getPerformanceRecentRuns():[];
-  if(recent.length){
+  if((focus==="recent"||focus==="overview")&&recent.length){
     h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Recent Runs</h3>';
     for(var i=0;i<recent.length;i++){
       var r=recent[i];
@@ -33,7 +45,7 @@ function performanceStatsPage(){
 
   // Top songs
   var top=typeof getPerformanceTopSongs==="function"?getPerformanceTopSongs():[];
-  if(top.length){
+  if((focus==="top"||focus==="overview")&&top.length){
     h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Top Scores</h3>';
     for(var t=0;t<top.length;t++){
       var ts=top[t];
@@ -47,7 +59,7 @@ function performanceStatsPage(){
 
   // Weak songs
   var weak=typeof getPerformanceWeakSongs==="function"?getPerformanceWeakSongs():[];
-  if(weak.length){
+  if((focus==="weak"||focus==="overview")&&weak.length){
     h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Needs Work</h3>';
     for(var w=0;w<weak.length;w++){
       var ws=weak[w];
@@ -60,7 +72,7 @@ function performanceStatsPage(){
   }
 
   // Daily challenge history
-  if(Array.isArray(S.performanceDailyHistory)&&S.performanceDailyHistory.length){
+  if((focus==="daily"||focus==="overview")&&Array.isArray(S.performanceDailyHistory)&&S.performanceDailyHistory.length){
     h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Daily Challenges ('+S.performanceDailyHistory.length+' completed)</h3>';
     var dh=S.performanceDailyHistory.slice(-5).reverse();
     for(var di=0;di<dh.length;di++){
@@ -71,4 +83,16 @@ function performanceStatsPage(){
 
   h+='</div>';
   return h;
+}
+
+function getPerformanceStatsView(){
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  return {
+    focus: runtimeState && runtimeState.performanceStatsFocus
+      ? runtimeState.performanceStatsFocus
+      : "overview"
+  };
 }

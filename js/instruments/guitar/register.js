@@ -7,6 +7,14 @@
     icon: "\uD83C\uDFB8",
     skin: typeof SparkHighway !== "undefined" ? SparkHighway.GUITAR_SKIN : null,
     available: true,
+    capabilities: {
+      stringCount: 6,
+      noteLaneType: "string",
+      chordShapeSupport: true,
+      midiInput: false,
+      capoSupport: true,
+      performanceModes: ["rhythm", "freestyle", "song"]
+    },
 
     getData: function() {
       return {
@@ -33,6 +41,21 @@
 
     ui: {
       chord: function(chordObj, size, label, animate) {
+        if (typeof stringedChordSVG === "function" && chordObj) {
+          var chart = {
+            name: chordObj.name || label || "chord",
+            instrument: "guitar",
+            stringCount: 6,
+            stringLabels: typeof STRING_NAMES !== "undefined" ? STRING_NAMES : ["E","A","D","G","B","e"],
+            fretCountVisible: 4,
+            startFret: 0,
+            open: chordObj.open || [],
+            muted: chordObj.muted || [],
+            fingers: chordObj.fingers || [],
+            barre: chordObj.barFret ? { fret: chordObj.barFret, fromString: Math.min.apply(null, chordObj.barStrings || [0]), toString: Math.max.apply(null, chordObj.barStrings || [5]) } : null
+          };
+          return stringedChordSVG(chart, { width: size, label: label, animate: animate });
+        }
         return typeof chordSVG === "function" ? chordSVG(chordObj, size, label, animate) : "";
       },
       header: function() {
@@ -81,6 +104,22 @@
         var profile = SparkStorage.load();
         SparkProfile.ensureApp(profile, "chordspark", "guitar");
         SparkStorage.save(profile);
+      }
+      if (typeof S !== "undefined") {
+        if (S.completedGuidedSessions === undefined) S.completedGuidedSessions = [];
+        if (S.chordProgress === undefined) S.chordProgress = {};
+        if (S.customSets === undefined) S.customSets = [];
+        if (S.transitionStats === undefined) S.transitionStats = {};
+        if (S.fingerStats === undefined) S.fingerStats = {};
+        if (S.drillAdaptiveBpm === undefined) S.drillAdaptiveBpm = 60;
+        if (S.drillConsecutiveFast === undefined) S.drillConsecutiveFast = 0;
+        if (S.drillConsecutiveSlow === undefined) S.drillConsecutiveSlow = 0;
+        if (S.drillLastSwitchTime === undefined) S.drillLastSwitchTime = 0;
+        if (S.guidedSession === undefined) S.guidedSession = 1;
+        if (S.guidedPlan === undefined) S.guidedPlan = null;
+        if (S.guidedStep === undefined) S.guidedStep = null;
+        if (S.newMovePhase === undefined) S.newMovePhase = null;
+        if (S.guidedPaused === undefined) S.guidedPaused = false;
       }
     },
 
@@ -142,6 +181,28 @@
         return [c1, c2];
       }
       return chords.slice(0, 2);
+    },
+
+    getExercisesForLesson: function(lessonId) {
+      var D = this.getData();
+      if (lessonId && D.CURRICULUM) {
+        for (var i = 0; i < D.CURRICULUM.length; i++) {
+          if (D.CURRICULUM[i].id === lessonId && D.CURRICULUM[i].exercises) {
+            return D.CURRICULUM[i].exercises;
+          }
+        }
+      }
+      return D.FINGER_EXERCISES || [];
+    },
+
+    getPerformanceConfig: function() {
+      return {
+        laneCount: 6,
+        laneLabels: typeof STRING_NAMES !== "undefined" ? STRING_NAMES : ["E","A","D","G","B","e"],
+        defaultBpm: 80,
+        supportedModes: ["rhythm", "freestyle", "song"],
+        inputType: "strum"
+      };
     }
   });
 })();

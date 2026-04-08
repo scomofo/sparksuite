@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.9.1",
+    "date": "2026-04-02",
+    "channel": "beta",
+    "notes": [
+      "Migrated major SparkSuite session flows into SparkCore and shared bridge layers",
+      "Added engine-owned rhythm highway foundations with chart import for notes.chart, notes.mid, and package bundles",
+      "Expanded performance mode with imported-chart conversion, technique-aware scoring, and chart-manifest discovery",
+      "Added ukulele as a real SparkSuite instrument module with launcher integration, curriculum content, and performance chart support",
+      "Centralized more legacy app runtime state through shared progress and performance bridges"
+    ]
+  },
+  {
     "version": "0.9.0",
     "date": "2026-04-01",
     "channel": "beta",

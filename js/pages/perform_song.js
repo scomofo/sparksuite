@@ -1,18 +1,21 @@
 /* ===== ChordSpark: Performance Song Detail Page ===== */
 
 function performSongPage() {
-  var song = S.performSongData;
-  if (!song) return '<div class="perform-page text-center"><p>No song selected.</p><button class="btn" onclick="act(\'tab\',\'songs\')">Back</button></div>';
+  var performanceSongView = getPerformanceSongView();
+  var song = performanceSongView.song;
+  if (!song) return '<div class="perform-page text-center"><p>No song selected.</p><button class="btn" onclick="act(\'performSongBack\')">Back</button></div>';
 
-  var sid = S.performSongId || "unknown";
-  var arrType = S.performArrangementType || "chords";
-  var diff = S.performDifficulty || "normal";
+  var sid = performanceSongView.songId || "unknown";
+  var arrType = performanceSongView.arrangementType || "chords";
+  var diff = performanceSongView.difficultyId || "normal";
+  var speed = performanceSongView.speed;
+  var targetTechnique = performanceSongView.targetTechnique;
 
   var h = '<div class="perform-page">';
 
   // Header
   h += '<div class="perform-header">';
-  h += '<button class="back-btn" onclick="act(\'tab\',\'songs\')">&larr; Back</button>';
+  h += '<button class="back-btn" onclick="act(\'performSongBack\')">&larr; Back</button>';
   h += '<div class="perform-title"><strong>' + escHTML(song.title) + '</strong>';
   h += '<span class="perform-artist">' + escHTML(song.artist || "") + '</span></div>';
   h += '</div>';
@@ -67,7 +70,7 @@ function performSongPage() {
   h += '<div class="perform-toggle-group" style="justify-content:center">';
   var speeds = [0.5, 0.75, 1.0];
   for (var sp = 0; sp < speeds.length; sp++) {
-    h += '<button class="btn btn-sm' + (S.performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
+    h += '<button class="btn btn-sm' + (speed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
   }
   h += '</div></div>';
 
@@ -82,6 +85,12 @@ function performSongPage() {
       }
       h+='</div>';
     }
+  }
+
+  if (targetTechnique) {
+    h += '<div class="card mb20"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Technique Focus</div>';
+    h += '<div style="font-size:14px;color:var(--text-primary);font-weight:800">' + escHTML(formatTechniqueLabel(targetTechnique)) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-dim);margin-top:6px">This practice launch came from an imported-chart weak spot. Keep that technique in focus during the run.</div></div>';
   }
 
   // Audio import
@@ -124,4 +133,40 @@ function performSongPage() {
 
   h += '</div>';
   return h;
+}
+
+function getPerformanceSongView() {
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var performanceSong = coreView
+    && coreView.plan
+    && coreView.plan.flow === "performance_song"
+    && coreView.plan.context
+    ? coreView.plan.context.performanceSong || null
+    : null;
+
+  return {
+    song: performanceSong && performanceSong.songData
+      ? performanceSong.songData
+      : (runtimeState && runtimeState.performanceSongData ? runtimeState.performanceSongData : S.performSongData),
+    songId: performanceSong && performanceSong.songId ? performanceSong.songId : S.performSongId,
+    arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : S.performArrangementType,
+    difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty,
+    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed,
+    targetTechnique: runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+      ? runtimeState.performanceTargetTechnique
+      : S.performTargetTechnique
+  };
+}
+
+function formatTechniqueLabel(key) {
+  var labels = {
+    open: "Open-note timing",
+    tap: "Tap-note consistency",
+    forced: "Forced-note transitions",
+    specialPhrase: "Phrase section control"
+  };
+  return labels[key] || String(key || "Technique");
 }

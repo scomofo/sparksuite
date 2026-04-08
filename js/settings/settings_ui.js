@@ -10,13 +10,19 @@ function settingsPage(){
 }
 
 function renderSettingsCategory(cat){
+  var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
+    ? window.sparkCore.getRuntimeState()
+    : null;
+  var theme = runtimeState && runtimeState.settingsTheme
+    ? runtimeState.settingsTheme
+    : ((S.settings && S.settings.theme) || "dark");
   var h = '<div class="card mb16">';
   h += '<div><b>'+escHTML(cat.title)+'</b></div>';
   if(cat.id === "display"){
     h += '<div style="margin-top:8px">Theme: ';
     var themes = ["dark","light","blue","highcontrast","retro"];
     for(var i=0;i<themes.length;i++){
-      var sel = (S.settings && S.settings.theme) === themes[i];
+      var sel = theme === themes[i];
       h += '<button onclick="act(\'setTheme\',\''+themes[i]+'\')" style="margin:2px;opacity:'+(sel?1:0.5)+'">'+escHTML(themes[i])+'</button>';
     }
     h += '</div>';

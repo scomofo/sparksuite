@@ -3,10 +3,30 @@
   function collectRecommendationCandidates(appType){
     var out = [];
     out = out.concat(getCurriculumCandidates(appType));
+    out = out.concat(getModuleProgressCandidates(appType));
     out = out.concat(getWeakSpotCandidates(appType));
     out = out.concat(getReviewCandidates(appType));
     out = out.concat(getChallengeCandidates(appType));
     out = out.concat(getUnlockOpportunityCandidates(appType));
+    return out;
+  }
+
+  function getModuleProgressCandidates(){
+    var out = [];
+    if(typeof selectInstrumentModuleCandidate!=="function") return out;
+    var candidate = selectInstrumentModuleCandidate();
+    if(!candidate) return out;
+    out.push({
+      id: candidate.id,
+      type: candidate.type,
+      title: candidate.label,
+      source: "module_progress",
+      targetSkill: candidate.meta && candidate.meta.skill ? candidate.meta.skill : "module_progress",
+      level: 1,
+      score: 0,
+      reasons: [candidate.reason || "Continue instrument module progression"],
+      meta: candidate.meta || {}
+    });
     return out;
   }
 

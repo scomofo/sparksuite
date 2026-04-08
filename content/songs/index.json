@@ -1,1 +1,307 @@
-[]
+[
+  {
+    "id": "wonderful_tonight",
+    "title": "Wonderful Tonight",
+    "artist": "Eric Clapton",
+    "chartId": "wonderful_tonight_chords",
+    "midi": "content/songs/midi/wonderful_tonight.mid"
+  },
+  {
+    "id": "knockin_on_heavens_door",
+    "title": "Knockin' on Heaven's Door",
+    "artist": "Bob Dylan",
+    "chartId": "knockin_on_heavens_door_chords",
+    "midi": "content/songs/midi/knockin_on_heavens_door.mid"
+  },
+  {
+    "id": "three_little_birds",
+    "title": "Three Little Birds",
+    "artist": "Bob Marley",
+    "chartId": "three_little_birds_chords",
+    "midi": "content/songs/midi/three_little_birds.mid"
+  },
+  {
+    "id": "la_bamba",
+    "title": "La Bamba",
+    "artist": "Ritchie Valens",
+    "chartId": "la_bamba_chords",
+    "midi": "content/songs/midi/la_bamba.mid"
+  },
+  {
+    "id": "hotel_california",
+    "title": "Hotel California",
+    "artist": "Eagles",
+    "chartId": "hotel_california_chords",
+    "midi": "content/songs/midi/hotel_california.mid"
+  },
+  {
+    "id": "have_you_ever_seen_the_rain",
+    "title": "Have You Ever Seen the Rain",
+    "artist": "CCR",
+    "chartId": "have_you_ever_seen_the_rain_chords",
+    "midi": "content/songs/midi/have_you_ever_seen_the_rain.mid"
+  },
+  {
+    "id": "brown_eyed_girl",
+    "title": "Brown Eyed Girl",
+    "artist": "Van Morrison",
+    "chartId": "brown_eyed_girl_chords",
+    "midi": "content/songs/midi/brown_eyed_girl.mid"
+  },
+  {
+    "id": "bad_moon_rising",
+    "title": "Bad Moon Rising",
+    "artist": "CCR",
+    "chartId": "bad_moon_rising_chords",
+    "midi": "content/songs/midi/bad_moon_rising.mid"
+  },
+  {
+    "id": "achy_breaky_heart",
+    "title": "Achy Breaky Heart",
+    "artist": "Billy Ray Cyrus",
+    "chartId": "achy_breaky_heart_chords",
+    "midi": "content/songs/midi/achy_breaky_heart.mid"
+  },
+  {
+    "id": "jambalaya",
+    "title": "Jambalaya",
+    "artist": "Hank Williams",
+    "chartId": "jambalaya_chords",
+    "midi": "content/songs/midi/jambalaya.mid"
+  },
+  {
+    "id": "stand_by_me",
+    "title": "Stand By Me",
+    "artist": "Ben E. King",
+    "chartId": "stand_by_me_chords",
+    "midi": "content/songs/midi/stand_by_me.mid"
+  },
+  {
+    "id": "love_me_do",
+    "title": "Love Me Do",
+    "artist": "The Beatles",
+    "chartId": "love_me_do_chords",
+    "midi": "content/songs/midi/love_me_do.mid"
+  },
+  {
+    "id": "wish_you_were_here",
+    "title": "Wish You Were Here",
+    "artist": "Pink Floyd",
+    "chartId": "wish_you_were_here_chords",
+    "midi": "content/songs/midi/wish_you_were_here.mid"
+  },
+  {
+    "id": "let_it_be",
+    "title": "Let It Be",
+    "artist": "The Beatles",
+    "chartId": "let_it_be_chords",
+    "midi": "content/songs/midi/let_it_be.mid"
+  },
+  {
+    "id": "get_the_party_started",
+    "title": "Get the Party Started",
+    "artist": "Pink",
+    "chartId": "get_the_party_started_chords",
+    "midi": "content/songs/midi/get_the_party_started.mid"
+  },
+  {
+    "id": "run_through_the_jungle",
+    "title": "Run Through the Jungle",
+    "artist": "CCR",
+    "chartId": "run_through_the_jungle_chords",
+    "midi": "content/songs/midi/run_through_the_jungle.mid"
+  },
+  {
+    "id": "tomorrow_never_knows",
+    "title": "Tomorrow Never Knows",
+    "artist": "The Beatles",
+    "chartId": "tomorrow_never_knows_chords",
+    "midi": "content/songs/midi/tomorrow_never_knows.mid"
+  },
+  {
+    "id": "tears_in_heaven",
+    "title": "Tears in Heaven",
+    "artist": "Eric Clapton",
+    "chartId": "tears_in_heaven_chords",
+    "midi": "content/songs/midi/tears_in_heaven.mid"
+  },
+  {
+    "id": "creep",
+    "title": "Creep",
+    "artist": "Radiohead",
+    "chartId": "creep_chords",
+    "midi": "content/songs/midi/creep.mid"
+  },
+  {
+    "id": "eleanor_rigby",
+    "title": "Eleanor Rigby",
+    "artist": "The Beatles",
+    "chartId": "eleanor_rigby_chords",
+    "midi": "content/songs/midi/eleanor_rigby.mid"
+  },
+  {
+    "id": "boom_boom",
+    "title": "Boom Boom",
+    "artist": "John Lee Hooker",
+    "chartId": "boom_boom_chords",
+    "midi": "content/songs/midi/boom_boom.mid"
+  },
+  {
+    "id": "peter_gunn",
+    "title": "Peter Gunn",
+    "artist": "Henry Mancini",
+    "chartId": "peter_gunn_chords",
+    "midi": "content/songs/midi/peter_gunn.mid"
+  },
+  {
+    "id": "royals",
+    "title": "Royals",
+    "artist": "Lorde",
+    "chartId": "royals_chords",
+    "midi": "content/songs/midi/royals.mid"
+  },
+  {
+    "id": "whole_lotta_love",
+    "title": "Whole Lotta Love",
+    "artist": "Led Zeppelin",
+    "chartId": "whole_lotta_love_chords",
+    "midi": "content/songs/midi/whole_lotta_love.mid"
+  },
+  {
+    "id": "what_i_got",
+    "title": "What I Got",
+    "artist": "Sublime",
+    "chartId": "what_i_got_chords",
+    "midi": "content/songs/midi/what_i_got.mid"
+  },
+  {
+    "id": "music",
+    "title": "Music",
+    "artist": "Madonna",
+    "chartId": "music_chords",
+    "midi": "content/songs/midi/music.mid"
+  },
+  {
+    "id": "get_up_stand_up",
+    "title": "Get Up Stand Up",
+    "artist": "Bob Marley",
+    "chartId": "get_up_stand_up_chords",
+    "midi": "content/songs/midi/get_up_stand_up.mid"
+  },
+  {
+    "id": "chain_of_fools",
+    "title": "Chain of Fools",
+    "artist": "Aretha Franklin",
+    "chartId": "chain_of_fools_chords",
+    "midi": "content/songs/midi/chain_of_fools.mid"
+  },
+  {
+    "id": "moves_like_jagger",
+    "title": "Moves Like Jagger",
+    "artist": "Maroon 5",
+    "chartId": "moves_like_jagger_chords",
+    "midi": "content/songs/midi/moves_like_jagger.mid"
+  },
+  {
+    "id": "come_together",
+    "title": "Come Together",
+    "artist": "The Beatles",
+    "midi": "content/songs/midi/come_together.mid"
+  },
+  {
+    "id": "with_or_without_you",
+    "title": "With or Without You",
+    "artist": "U2",
+    "midi": "content/songs/midi/with_or_without_you.mid"
+  },
+  {
+    "id": "billie_jean",
+    "title": "Billie Jean",
+    "artist": "Michael Jackson",
+    "midi": "content/songs/midi/billie_jean.mid"
+  },
+  {
+    "id": "sunshine_of_your_love",
+    "title": "Sunshine of Your Love",
+    "artist": "Cream",
+    "midi": "content/songs/midi/sunshine_of_your_love.mid"
+  },
+  {
+    "id": "another_one_bites_the_dust",
+    "title": "Another One Bites the Dust",
+    "artist": "Queen",
+    "midi": "content/songs/midi/another_one_bites_the_dust.mid"
+  },
+  {
+    "id": "seven_nation_army",
+    "title": "Seven Nation Army",
+    "artist": "The White Stripes",
+    "midi": "content/songs/midi/seven_nation_army.mid"
+  },
+  {
+    "id": "under_pressure",
+    "title": "Under Pressure",
+    "artist": "Queen & David Bowie",
+    "midi": "content/songs/midi/under_pressure.mid"
+  },
+  {
+    "id": "longview",
+    "title": "Longview",
+    "artist": "Green Day",
+    "midi": "content/songs/midi/longview.mid"
+  },
+  {
+    "id": "zombie",
+    "title": "Zombie",
+    "artist": "The Cranberries",
+    "midi": "content/songs/midi/zombie.mid"
+  },
+  {
+    "id": "pumped_up_kicks",
+    "title": "Pumped Up Kicks",
+    "artist": "Foster the People",
+    "midi": "content/songs/midi/pumped_up_kicks.mid"
+  },
+  {
+    "id": "feel_good_inc",
+    "title": "Feel Good Inc",
+    "artist": "Gorillaz",
+    "midi": "content/songs/midi/feel_good_inc.mid"
+  },
+  {
+    "id": "higher_ground",
+    "title": "Higher Ground",
+    "artist": "Stevie Wonder",
+    "midi": "content/songs/midi/higher_ground.mid"
+  },
+  {
+    "id": "come_as_you_are",
+    "title": "Come As You Are",
+    "artist": "Nirvana",
+    "midi": "content/songs/midi/come_as_you_are.mid"
+  },
+  {
+    "id": "hysteria",
+    "title": "Hysteria",
+    "artist": "Muse",
+    "midi": "content/songs/midi/hysteria.mid"
+  },
+  {
+    "id": "money",
+    "title": "Money",
+    "artist": "Pink Floyd",
+    "midi": "content/songs/midi/money.mid"
+  },
+  {
+    "id": "smells_like_teen_spirit",
+    "title": "Smells Like Teen Spirit",
+    "artist": "Nirvana",
+    "midi": "content/songs/midi/smells_like_teen_spirit.mid"
+  },
+  {
+    "id": "sweet_child_o_mine",
+    "title": "Sweet Child O' Mine",
+    "artist": "Guns N' Roses",
+    "midi": "content/songs/midi/sweet_child_o_mine.mid"
+  }
+]

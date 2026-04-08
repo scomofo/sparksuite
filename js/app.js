@@ -2,8 +2,15 @@
 function tickS(){
   if(S.timerActive&&S.timer>0){
     S.timer--;
-    if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
-    else if(S.timer%30===0&&S.timer>0){S.xp+=5;} // silent XP accrual when toast skipped
+    syncLegacyPracticeRuntimeRequest("tick", {
+      remainingSec: S.timer,
+      timerActive: S.timerActive,
+      mode: S.lastChordName ? "chord" : "quickStart",
+      chordName: S.currentChord ? S.currentChord.name : null,
+      durationSec: 120
+    });
+    if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
+    else if(S.timer%30===0&&S.timer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}} // silent XP accrual when toast skipped
     if(S.timer===60)fireMicro("halfway","Halfway there!","&#128170;");
     addPracticeSecond();
     render();T.session=setTimeout(tickS,1000);
@@ -11,13 +18,35 @@ function tickS(){
     S.timerActive=false;clearTimeout(T.session);
     if(S.metronomeOn)stopMetronome();
     if(S.chordDetectOn)stopChordDetect();
+    if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeSession === "function"){
+      window.sparkCore.completeLegacyPracticeSession({
+        mode: S.lastChordName ? "chord" : "quickStart",
+        chordName: S.currentChord ? S.currentChord.name : null,
+        durationSec: 120
+      });
+    }
     // Delegate all completion logic to SparkSession
     var outcome=SparkSession.processResults({
       type:"session",
       chordName:S.currentChord?S.currentChord.name:null,
       duration:120
     });
-    S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
+    // Route through contract-based progress path (Phase 3 migration)
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var sessionResult = SparkContracts.createSessionResult({
+        mode: S.lastChordName ? "chord" : "quickStart",
+        chordName: S.currentChord ? S.currentChord.name : null,
+        duration: 120,
+        accuracy: 0.75,
+        completed: true
+      });
+      var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult);
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[App] ProgressOutcome:", progressOutcome);
+      }
+    }
+    if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
+    else S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
     if(outcome.jackpot){snd("levelup");}else{snd("complete");}
     if(outcome.leveledUp)snd("levelup");
     trigC();S.screen=SCR.COMPLETE;render();
@@ -27,32 +56,104 @@ function tickS(){
 function tickD(){
   if(S.screen===SCR.DRILL&&S.drillTimer>0){
     S.drillTimer--;
-    if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");S.xp+=5;S.xpToast={amount:5,time:Date.now()};saveState();}
-    else if(S.drillTimer%30===0&&S.drillTimer>0){S.xp+=5;}
+    syncLegacyPracticeRuntimeRequest("tick", {
+      remainingSec: S.drillTimer,
+      timerActive: true,
+      mode: "drill",
+      chordNames: S.drillChords.map(function(c){ return c.name; }),
+      durationSec: 60
+    });
+    if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
+    else if(S.drillTimer%30===0&&S.drillTimer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}}
     addPracticeSecond();
     if(!updateDrillTimerUI())render(); // partial update if elements exist
     T.drill=setTimeout(tickD,1000);
   } else if(S.screen===SCR.DRILL&&S.drillTimer<=0){
-    clearTimeout(T.drill);snd("complete");S.drillCount++;S.xp+=20;
-    S.xpToast={amount:20,time:Date.now()};
+    clearTimeout(T.drill);snd("complete");
     var detail=S.drillChords.map(function(c){return c.name;}).join(" / ");
-    logHistory("drill",detail,20);
-    _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
-    checkBadges();saveState();trigC();S.screen=SCR.DRILL_DONE;render();
+    if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function"){
+      window.sparkCore.completeLegacyPracticeDrill({
+        durationSec: 60,
+        chordNames: S.drillChords.map(function(c){return c.name;})
+      });
+    }
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:20,
+        toastAmount:20,
+        incrementFields:{drillCount:1},
+        history:{type:"drill",detail:detail,xp:20},
+        emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
+        checkBadges:true
+      });
+    }else{
+      S.drillCount++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{S.xp+=20;S.xpToast={amount:20,time:Date.now()};}
+      logHistory("drill",detail,20);
+      _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
+      checkBadges();saveState();
+    }
+    // Route through contract-based progress path (Phase 6 migration)
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var drillSessionResult = SparkContracts.createSessionResult({
+        mode: "drill",
+        chordName: S.drillChords && S.drillChords[0] ? S.drillChords[0].name : null,
+        duration: 60,
+        accuracy: 0.75,
+        completed: true
+      });
+      var drillProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(drillSessionResult);
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[App] Drill ProgressOutcome:", drillProgressOutcome);
+      }
+    }
+    trigC();S.screen=SCR.DRILL_DONE;render();
   }
 }
 
 function tickDy(){
   if(S.screen===SCR.DAILY&&S.dailyTimer>0&&!S.dailyComplete){
     S.dailyTimer--;addPracticeSecond();
+    syncLegacyDailyRuntimeRequest("tick", {
+      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
+      remainingSec: S.dailyTimer,
+      timerActive: true,
+      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+    });
     if(!updateDailyTimerUI())render(); // partial update if elements exist
     T.daily=setTimeout(tickDy,1000);
   } else if(S.screen===SCR.DAILY&&S.dailyTimer<=0&&!S.dailyComplete){
-    clearTimeout(T.daily);snd("complete");S.dailyComplete=true;S.dailyDone++;
+    clearTimeout(T.daily);snd("complete");
     var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
-    S.xp+=xp;S.xpToast={amount:xp,time:Date.now()};
-    logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
-    checkBadges();saveState();trigC();render();
+    completeLegacyDailyChallengeRequest({
+      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
+      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+    });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:xp,
+        toastAmount:xp,
+        setFlags:{dailyComplete:true},
+        incrementFields:{dailyDone:1},
+        history:{type:"daily",detail:S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp:xp},
+        checkBadges:true
+      });
+    }else{
+      S.dailyComplete=true;S.dailyDone++;
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp,toastAmount:xp});else{S.xp+=xp;S.xpToast={amount:xp,time:Date.now()};}
+      logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
+      checkBadges();saveState();
+    }
+    // Route through contract-based progress path
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var dailyResult = SparkContracts.createSessionResult({
+        mode: "daily",
+        duration: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60,
+        accuracy: 1.0,
+        completed: true
+      });
+      SparkProgressOrchestrator.applySessionOutcome(dailyResult);
+    }
+    trigC();render();
   }
 }
 
@@ -69,7 +170,15 @@ function genQ(){
     attempts++;
   }
   opts=shuffle(opts);
-  S.quizQ=q;S.quizOpts=opts;S.quizAns=null;render();
+  S.quizQ=q;S.quizOpts=opts;S.quizAns=null;
+  if(window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function"){
+    window.sparkCore.syncLegacyQuizRuntimeState({
+      question: q,
+      options: opts,
+      answer: null
+    });
+  }
+  render();
 }
 
 // ===== RHYTHM GAME =====
@@ -89,19 +198,62 @@ function rhythmTick(){
       S.rhythmCombo=0;
     }
   }
+  syncLegacyRhythmRuntimeRequest({
+    active: S.rhythmActive,
+    beats: S.rhythmBeats,
+    score: S.rhythmScore,
+    combo: S.rhythmCombo,
+    maxCombo: S.rhythmMaxCombo,
+    startTimeMs: S.rhythmStartTime
+  });
   render();
   _rhythmAnim=requestAnimationFrame(rhythmTick);
 }
 
 function finishRhythm(){
-  S.rhythmActive=false;
-  if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);
   var total=S.rhythmBeats.length,hits=0;
   for(var i=0;i<total;i++)if(S.rhythmBeats[i].result==="perfect"||S.rhythmBeats[i].result==="good")hits++;
   var acc=total>0?Math.round((hits/total)*100):0;
-  S.rhythmResults={score:S.rhythmScore,accuracy:acc,maxCombo:S.rhythmMaxCombo,total:total,hits:hits};
+  var rhythmResult={score:S.rhythmScore,accuracy:acc,maxCombo:S.rhythmMaxCombo,total:total,hits:hits};
+  completeLegacyRhythmGameRequest({
+    beats: S.rhythmBeats,
+    score: S.rhythmScore,
+    combo: S.rhythmCombo,
+    maxCombo: S.rhythmMaxCombo,
+    startTimeMs: S.rhythmStartTime,
+    results: rhythmResult
+  });
+  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+    SparkProgressBridge.applyLegacyActivityRuntime({
+      setFields:{rhythmActive:false,rhythmResults:rhythmResult},
+      cancelAnimationFrames:_rhythmAnim?[_rhythmAnim]:[]
+    });
+  }else{
+    S.rhythmActive=false;
+    if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);
+    S.rhythmResults=rhythmResult;
+  }
+  _rhythmAnim=null;
   var xp=Math.round(S.rhythmScore/10);
-  if(xp>0){S.xp+=xp;logHistory("rhythm","Score: "+S.rhythmScore,xp);saveState();}
+  if(xp>0){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:xp,
+        history:{type:"rhythm",detail:"Score: "+S.rhythmScore,xp:xp}
+      });
+    }else{
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("rhythm","Score: "+S.rhythmScore,xp);saveState();
+    }
+  }
+  // Route through contract-based progress path
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var rhythmResult = SparkContracts.createSessionResult({
+      mode: "rhythm",
+      accuracy: total > 0 ? hits / total : 0,
+      completed: true
+    });
+    SparkProgressOrchestrator.applySessionOutcome(rhythmResult);
+  }
   render();
 }
 
@@ -142,15 +294,63 @@ function changeRunnerTarget(){
       S.runnerObstacles[i].isTarget=S.runnerObstacles[i].name===S.runnerTarget.name;
     }
   }
+  syncLegacyRunnerRuntimeRequest({
+    active: S.runnerActive,
+    targetName: S.runnerTarget ? S.runnerTarget.name : null,
+    score: S.runnerScore,
+    combo: S.runnerCombo,
+    maxCombo: S.runnerMaxCombo,
+    lives: S.runnerLives,
+    distance: Math.floor(S.runnerDistance/100),
+    obstacles: S.runnerObstacles
+  });
 }
 
 function finishRunner(){
-  S.runnerActive=false;
-  if(_runnerAnim)cancelAnimationFrame(_runnerAnim);
-  if(S.runnerScore>S.runnerHighScore)S.runnerHighScore=S.runnerScore;
-  S.runnerResults={score:S.runnerScore,maxCombo:S.runnerMaxCombo,distance:Math.floor(S.runnerDistance/100)};
+  var runnerResult={score:S.runnerScore,maxCombo:S.runnerMaxCombo,distance:Math.floor(S.runnerDistance/100)};
+  completeLegacyRunnerGameRequest({
+    targetName: S.runnerTarget ? S.runnerTarget.name : null,
+    score: S.runnerScore,
+    combo: S.runnerCombo,
+    maxCombo: S.runnerMaxCombo,
+    lives: S.runnerLives,
+    distance: runnerResult.distance,
+    obstacles: S.runnerObstacles,
+    results: runnerResult
+  });
+  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+    SparkProgressBridge.applyLegacyActivityRuntime({
+      setFields:{runnerActive:false,runnerResults:runnerResult},
+      cancelAnimationFrames:_runnerAnim?[_runnerAnim]:[]
+    });
+  }else{
+    S.runnerActive=false;
+    if(_runnerAnim)cancelAnimationFrame(_runnerAnim);
+    S.runnerResults=runnerResult;
+  }
+  _runnerAnim=null;
   var xp=Math.round(S.runnerScore/20);
-  if(xp>0){S.xp+=xp;logHistory("runner","Score: "+S.runnerScore,xp);saveState();}
+  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+    SparkProgressBridge.applyLegacyActivityCompletion({
+      xpDelta:xp>0?xp:0,
+      maxFields:{runnerHighScore:S.runnerScore},
+      resultFields:{runnerResults:runnerResult},
+      history:xp>0?{type:"runner",detail:"Score: "+S.runnerScore,xp:xp}:null
+    });
+  }else{
+    if(S.runnerScore>S.runnerHighScore)S.runnerHighScore=S.runnerScore;
+    S.runnerResults=runnerResult;
+    if(xp>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("runner","Score: "+S.runnerScore,xp);saveState();}
+  }
+  // Route through contract-based progress path
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var runnerSessionResult = SparkContracts.createSessionResult({
+      mode: "runner",
+      accuracy: S.runnerScore > 0 ? Math.min(1, S.runnerScore / 100) : 0,
+      completed: true
+    });
+    SparkProgressOrchestrator.applySessionOutcome(runnerSessionResult);
+  }
   snd("complete");
   render();
 }
@@ -189,6 +389,17 @@ function runnerTick(){
     spawnRunnerObstacle();
     S.runnerLastSpawn=now;
   }
+
+  syncLegacyRunnerRuntimeRequest({
+    active: S.runnerActive,
+    targetName: S.runnerTarget ? S.runnerTarget.name : null,
+    score: S.runnerScore,
+    combo: S.runnerCombo,
+    maxCombo: S.runnerMaxCombo,
+    lives: S.runnerLives,
+    distance: Math.floor(S.runnerDistance/100),
+    obstacles: S.runnerObstacles
+  });
 
   render();
   _runnerAnim=requestAnimationFrame(runnerTick);
@@ -287,12 +498,30 @@ function stopAllTimers(){
   clearInterval(T.strum);clearInterval(T.song);clearInterval(T.metro);clearInterval(T.prog);
   if(S.metronomeOn){stopMetronome();S.metronomeOn=false;}
   if(S.chordDetectOn)stopChordDetect();
-  if(S.rhythmActive){S.rhythmActive=false;if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);}
-  if(S.runnerActive){S.runnerActive=false;if(_runnerAnim)cancelAnimationFrame(_runnerAnim);}
-  if(S.progPlaying){S.progPlaying=false;}
-  cleanupStems();S.stemPlaying=false;
-  S.timerActive=false;S.strumActive=false;S.songPlaying=false;
+  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+    SparkProgressBridge.applyLegacyActivityRuntime({
+      setFields:{
+        rhythmActive:false,
+        runnerActive:false,
+        progPlaying:false,
+        stemPlaying:false,
+        timerActive:false,
+        strumActive:false,
+        songPlaying:false
+      },
+      cancelAnimationFrames:[_rhythmAnim,_runnerAnim]
+    });
+  }else{
+    if(S.rhythmActive){S.rhythmActive=false;if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);}
+    if(S.runnerActive){S.runnerActive=false;if(_runnerAnim)cancelAnimationFrame(_runnerAnim);}
+    if(S.progPlaying){S.progPlaying=false;}
+    S.timerActive=false;S.strumActive=false;S.songPlaying=false;
+    S.stemPlaying=false;
+  }
+  _rhythmAnim=null;_runnerAnim=null;
+  cleanupStems();
   if(!_performStopping&&(S.performPlaying||S.performPaused)){stopPerformance();}
+  if(typeof stopSparkRhythmHighway==="function")stopSparkRhythmHighway();
 }
 
 // Helper to emit suite events safely
@@ -300,46 +529,1094 @@ function _sparkEmit(type, payload) {
   if (typeof SparkEvents !== "undefined") SparkEvents.emit(type, payload);
 }
 
+function syncPerformanceEditorDocumentState(chart, options) {
+  if (!window.sparkCore) return;
+  if (typeof window.sparkCore.syncPerformanceEditorDocument === "function") {
+    window.sparkCore.syncPerformanceEditorDocument(chart, options || {});
+    return;
+  }
+  if (typeof window.sparkCore.syncPerformanceRuntimeState !== "function") return;
+
+  options = options || {};
+  var events = chart && Array.isArray(chart.events) ? chart.events : [];
+  var phrases = chart && Array.isArray(chart.phrases) ? chart.phrases : [];
+  var selectedEvent = options.selectedEvent || null;
+  var selectedPhrase = options.selectedPhrase || null;
+  var selectedEventId = Object.prototype.hasOwnProperty.call(options, "selectedEventId")
+    ? options.selectedEventId
+    : (selectedEvent ? selectedEvent.id : (S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null));
+  var selectedPhraseId = Object.prototype.hasOwnProperty.call(options, "selectedPhraseId")
+    ? options.selectedPhraseId
+    : (selectedPhrase ? selectedPhrase.id : null);
+
+  window.sparkCore.syncPerformanceRuntimeState(options.action || "configure_editor", {
+    mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : S.performEditorMode,
+    snap: Object.prototype.hasOwnProperty.call(options, "snap") ? options.snap : S.performEditorSnap,
+    chartId: chart && chart.id ? chart.id : null,
+    chartTitle: chart && chart.title ? chart.title : null,
+    source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (chart ? "existing" : "blank"),
+    dirty: Object.prototype.hasOwnProperty.call(options, "dirty") ? !!options.dirty : !!S.performEditorDirty,
+    selectedEventId: selectedEventId,
+    selectedEventLabel: Object.prototype.hasOwnProperty.call(options, "selectedEventLabel")
+      ? options.selectedEventLabel
+      : (selectedEvent ? (selectedEvent.laneLabel || selectedEvent.chord || selectedEvent.note || "?") : null),
+    selectedEventTime: Object.prototype.hasOwnProperty.call(options, "selectedEventTime")
+      ? options.selectedEventTime
+      : (selectedEvent ? (selectedEvent.t || 0) : null),
+    selectedEventDuration: Object.prototype.hasOwnProperty.call(options, "selectedEventDuration")
+      ? options.selectedEventDuration
+      : (selectedEvent ? (selectedEvent.dur || 0) : null),
+    selectedPhraseId: selectedPhraseId,
+    selectedPhraseName: Object.prototype.hasOwnProperty.call(options, "selectedPhraseName")
+      ? options.selectedPhraseName
+      : (selectedPhrase ? selectedPhrase.name : null),
+    selectedPhraseStart: Object.prototype.hasOwnProperty.call(options, "selectedPhraseStart")
+      ? options.selectedPhraseStart
+      : (selectedPhrase ? selectedPhrase.startSec : null),
+    selectedPhraseEnd: Object.prototype.hasOwnProperty.call(options, "selectedPhraseEnd")
+      ? options.selectedPhraseEnd
+      : (selectedPhrase ? selectedPhrase.endSec : null),
+    bpm: Object.prototype.hasOwnProperty.call(options, "bpm")
+      ? options.bpm
+      : (chart && chart.bpm ? chart.bpm : null),
+    eventCount: Object.prototype.hasOwnProperty.call(options, "eventCount")
+      ? options.eventCount
+      : events.length,
+    phraseCount: Object.prototype.hasOwnProperty.call(options, "phraseCount")
+      ? options.phraseCount
+      : phrases.length
+  });
+}
+
+function applyPerformanceEditorCoreMutation(action, payload) {
+  if (!window.sparkCore || typeof window.sparkCore.applyPerformanceEditorMutation !== "function") return null;
+  return window.sparkCore.applyPerformanceEditorMutation(action, payload || {});
+}
+
+function syncPerformanceEditorLibraryState(library) {
+  var nextLibrary = Array.isArray(library) ? library : [];
+  S.performEditorLibrary = nextLibrary;
+  return nextLibrary;
+}
+
+function getPerformanceEditorExportData() {
+  if (window.sparkCore && typeof window.sparkCore.getPerformanceEditorExportData === "function") {
+    return window.sparkCore.getPerformanceEditorExportData();
+  }
+  if (!S.performEditorChart) return { chart: null, json: "", fileName: "chart.json" };
+  return {
+    chart: S.performEditorChart,
+    json: JSON.stringify(S.performEditorChart, null, 2),
+    fileName: (S.performEditorChart.title || "chart").replace(/\s+/g, "_") + ".json"
+  };
+}
+
+function getPerformanceEditorPreviewChart() {
+  if (window.sparkCore && typeof window.sparkCore.getPerformanceEditorPreviewChart === "function") {
+    return window.sparkCore.getPerformanceEditorPreviewChart();
+  }
+  return S.performEditorChart || null;
+}
+
+function getPerformanceEditorPreviewRequest() {
+  if (window.sparkCore && typeof window.sparkCore.startPerformanceEditorPreview === "function") {
+    return window.sparkCore.startPerformanceEditorPreview();
+  }
+  var chart = getPerformanceEditorPreviewChart();
+  if (!chart) return null;
+  return {
+    chart: chart,
+    chartId: chart.id || "generated",
+    arrangementType: chart.arrangementType || S.performArrangementType || "chords",
+    difficulty: S.performDifficulty || "normal",
+    speed: S.performSpeed || 1,
+    mode: S.performMode || "midi",
+    preset: S.performPracticePreset || null
+  };
+}
+
+function getPerformanceRetryRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.startPerformanceRetrySession === "function") {
+    return window.sparkCore.startPerformanceRetrySession(options || {});
+  }
+  options = options || {};
+  return {
+    chart: Object.prototype.hasOwnProperty.call(options, "chart") ? options.chart : null,
+    chartId: Object.prototype.hasOwnProperty.call(options, "chartId") ? options.chartId : (S.performChartId || "generated"),
+    arrangementType: Object.prototype.hasOwnProperty.call(options, "arrangementType") ? options.arrangementType : S.performArrangementType,
+    difficulty: Object.prototype.hasOwnProperty.call(options, "difficulty") ? options.difficulty : S.performDifficulty,
+    speed: Object.prototype.hasOwnProperty.call(options, "speed") ? options.speed : S.performSpeed,
+    mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : S.performMode,
+    preset: Object.prototype.hasOwnProperty.call(options, "preset") ? options.preset : S.performPracticePreset,
+    countIn: Object.prototype.hasOwnProperty.call(options, "countIn") ? !!options.countIn : !!S.performCountIn,
+    targetPhraseIndex: Object.prototype.hasOwnProperty.call(options, "targetPhraseIndex") ? options.targetPhraseIndex : null
+  };
+}
+
+function applyPerformanceCalibrationRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.applyPerformanceCalibrationRequest === "function") {
+    return window.sparkCore.applyPerformanceCalibrationRequest(action, options || {});
+  }
+  options = options || {};
+  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
+    window.sparkCore.syncPerformanceRuntimeState(action, {
+      source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (S.performCalibrationSource || "midi"),
+      appliedOffsetMs: Object.prototype.hasOwnProperty.call(options, "appliedOffsetMs") ? options.appliedOffsetMs : null,
+      globalOffsetMs: Object.prototype.hasOwnProperty.call(options, "globalOffsetMs") ? options.globalOffsetMs : (S.performTimingOffsetMs || 0),
+      midiOffsetMs: Object.prototype.hasOwnProperty.call(options, "midiOffsetMs") ? options.midiOffsetMs : (S.performMidiOffsetMs || 0),
+      micOffsetMs: Object.prototype.hasOwnProperty.call(options, "micOffsetMs") ? options.micOffsetMs : (S.performMicOffsetMs || 0)
+    });
+  }
+  return options;
+}
+
+function applyPerformanceNavigationRequest(target, options) {
+  if (window.sparkCore && typeof window.sparkCore.applyPerformanceNavigationRequest === "function") {
+    return window.sparkCore.applyPerformanceNavigationRequest(target, options || {});
+  }
+  return null;
+}
+
+function openPerformanceStatsRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceStats === "function") {
+    return window.sparkCore.openPerformanceStats(options || {});
+  }
+  return null;
+}
+
+function openPerformanceEditorRequest(chart, options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceEditor === "function") {
+    return window.sparkCore.openPerformanceEditor(chart || null, options || {});
+  }
+  return null;
+}
+
+function openPerformanceCalibrationRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceCalibration === "function") {
+    return window.sparkCore.openPerformanceCalibration(options || {});
+  }
+  return applyPerformanceCalibrationRequest("open_calibration", options || {});
+}
+
+function openPerformanceSongSelectionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceSongSelection === "function") {
+    return window.sparkCore.openPerformanceSongSelection(options || {});
+  }
+  return null;
+}
+
+function startSelectedPerformanceSongRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.startSelectedPerformanceSong === "function") {
+    return window.sparkCore.startSelectedPerformanceSong(options || {});
+  }
+  return getPerformanceRetryRequest(options || {});
+}
+
+function openDailyPracticePlanRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openDailyPracticePlan === "function") {
+    return window.sparkCore.openDailyPracticePlan(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+    return window.sparkCore.startSession({
+      flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+      forceRebuild: !!(options && options.forceRebuild)
+    });
+  }
+  return null;
+}
+
+function openDashboardPracticePlanRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openDashboardPracticePlan === "function") {
+    return window.sparkCore.openDashboardPracticePlan(options || {});
+  }
+  return openDailyPracticePlanRequest(options || {});
+}
+
+function openPracticePlanScreenRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openPracticePlanScreen === "function") {
+    return window.sparkCore.openPracticePlanScreen(options || {});
+  }
+  return openDashboardPracticePlanRequest(options || {});
+}
+
+function resolveModuleExerciseLaunchOptions(rawValue) {
+  if (!rawValue) return null;
+  if (typeof rawValue === "object") return rawValue;
+  try {
+    return JSON.parse(String(rawValue));
+  } catch (err) {
+    return null;
+  }
+}
+
+function getInstrumentModuleForLaunch(instrumentId) {
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
+    var active = SparkInstruments.getActive();
+    if (active && (!instrumentId || active.instrument === instrumentId || active.id === instrumentId)) return active;
+  }
+  var map = {
+    bass: window.SparkBassModule,
+    ukulele: window.SparkUkuleleModule,
+    guitar: window.SparkGuitarModule,
+    piano: window.SparkPianoModule
+  };
+  return instrumentId ? (map[instrumentId] || null) : null;
+}
+
+function buildModuleExerciseRhythmPayload(options) {
+  options = options || {};
+  var module = getInstrumentModuleForLaunch(options.instrument);
+  if (!module || typeof module.getRhythmAdapter !== "function") return null;
+  var rhythmAdapter = module.getRhythmAdapter();
+  if (!rhythmAdapter || typeof rhythmAdapter.createPayload !== "function") return null;
+  return rhythmAdapter.createPayload({
+    segment: {
+      id: options.exerciseId || options.lessonId || "module_rhythm_exercise",
+      type: SparkSessionSegmentTypes ? SparkSessionSegmentTypes.RHYTHM_HIGHWAY : "rhythm_highway",
+      meta: {
+        skill: options.exerciseFocus || options.skill || null
+      }
+    },
+    curriculum: {
+      nextLessonId: options.lessonId || null
+    },
+    instrumentContext: {
+      instrumentType: options.instrument || null
+    }
+  });
+}
+
+function openLegacyPracticeSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeSession === "function") {
+    return window.sparkCore.openLegacyPracticeSession(options || {});
+  }
+  return null;
+}
+
+function openLegacyPracticeDrillRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeDrill === "function") {
+    return window.sparkCore.openLegacyPracticeDrill(options || {});
+  }
+  return null;
+}
+
+function syncLegacyPracticeRuntimeRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
+    return window.sparkCore.syncLegacyPracticeRuntimeState(action, options || {});
+  }
+  return null;
+}
+
+function repeatLegacyPracticeSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.repeatLegacyPracticeSession === "function") {
+    return window.sparkCore.repeatLegacyPracticeSession(options || {});
+  }
+  return openLegacyPracticeSessionRequest(options || {});
+}
+
+function repeatLegacyPracticeDrillRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.repeatLegacyPracticeDrill === "function") {
+    return window.sparkCore.repeatLegacyPracticeDrill(options || {});
+  }
+  return openLegacyPracticeDrillRequest(options || {});
+}
+
+function openLegacyDailyChallengeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openLegacyDailyChallenge === "function") {
+    return window.sparkCore.openLegacyDailyChallenge(options || {});
+  }
+  return null;
+}
+
+function syncLegacyDailyRuntimeRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.syncLegacyDailyRuntimeState === "function") {
+    return window.sparkCore.syncLegacyDailyRuntimeState(action, options || {});
+  }
+  return null;
+}
+
+function completeLegacyDailyChallengeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeLegacyDailyChallenge === "function") {
+    return window.sparkCore.completeLegacyDailyChallenge(options || {});
+  }
+  return null;
+}
+
+function openLegacyRunnerGameRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openLegacyRunnerGame === "function") {
+    return window.sparkCore.openLegacyRunnerGame(options || {});
+  }
+  return null;
+}
+
+function syncLegacyRunnerRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncLegacyRunnerRuntimeState === "function") {
+    return window.sparkCore.syncLegacyRunnerRuntimeState(options || {});
+  }
+  return null;
+}
+
+function completeLegacyRunnerGameRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeLegacyRunnerGame === "function") {
+    return window.sparkCore.completeLegacyRunnerGame(options || {});
+  }
+  return null;
+}
+
+function syncTunerRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncTunerRuntimeState === "function") {
+    return window.sparkCore.syncTunerRuntimeState(options || {});
+  }
+  return null;
+}
+
+function syncAudioInputRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncAudioInputRuntimeState === "function") {
+    return window.sparkCore.syncAudioInputRuntimeState(options || {});
+  }
+  return null;
+}
+
+function syncMetronomeRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncMetronomeRuntimeState === "function") {
+    return window.sparkCore.syncMetronomeRuntimeState(options || {});
+  }
+  return null;
+}
+
+function openLegacyRhythmGameRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openLegacyRhythmGame === "function") {
+    return window.sparkCore.openLegacyRhythmGame(options || {});
+  }
+  return null;
+}
+
+function syncLegacyRhythmRuntimeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncLegacyRhythmRuntimeState === "function") {
+    return window.sparkCore.syncLegacyRhythmRuntimeState(options || {});
+  }
+  return null;
+}
+
+function completeLegacyRhythmGameRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeLegacyRhythmGame === "function") {
+    return window.sparkCore.completeLegacyRhythmGame(options || {});
+  }
+  return null;
+}
+
+function returnFromLegacyDailyChallengeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.returnFromLegacyDailyChallenge === "function") {
+    return window.sparkCore.returnFromLegacyDailyChallenge(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeFlow: "legacy_daily_challenge",
+      activeScreen: "home",
+      activeTab: options && options.activeTab ? options.activeTab : "daily",
+      legacyDailyTimerActive: false,
+      transport: { status: "idle", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
+function completeDailyPracticePlanRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeDailyPracticePlan === "function") {
+    return window.sparkCore.completeDailyPracticePlan(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+    return window.sparkCore.completeSession({
+      flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+      markPlanComplete: true,
+      itemId: options && Object.prototype.hasOwnProperty.call(options, "itemId") ? options.itemId : undefined
+    });
+  }
+  return null;
+}
+
+function openGuidedSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openGuidedSession === "function") {
+    return window.sparkCore.openGuidedSession(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+    return window.sparkCore.startSession({
+      flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      sessionNum: options && Object.prototype.hasOwnProperty.call(options, "sessionNum") ? options.sessionNum : undefined
+    });
+  }
+  return null;
+}
+
+function openSongSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openSongSession === "function") {
+    return window.sparkCore.openSongSession(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    options = options || {};
+    return window.sparkCore.updateRuntimeState({
+      activeFlow: "song_session",
+      activeScreen: options.targetScreen || "song",
+      activeTab: "songs",
+      songSessionData: options.songData || null,
+      songSessionSource: options.source || "builtin",
+      songPlaying: !!options.songPlaying,
+      songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat") ? options.songBeat : 0,
+      transport: { status: options.songPlaying ? "running" : "ready", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
+function openCareerSongSelectionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openCareerSongSelection === "function") {
+    return window.sparkCore.openCareerSongSelection(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceSongSelection === "function") {
+    return window.sparkCore.openPerformanceSongSelection(options || {});
+  }
+  return null;
+}
+
+function openPerformanceDailyChallengeRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.openPerformanceDailyChallenge === "function") {
+    return window.sparkCore.openPerformanceDailyChallenge(options || {});
+  }
+  return openPerformanceSongSelectionRequest(options || {});
+}
+
+function syncSongRuntimeRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.syncSongRuntimeState === "function") {
+    return window.sparkCore.syncSongRuntimeState(action, options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    options = options || {};
+    return window.sparkCore.updateRuntimeState({
+      activeFlow: "song_session",
+      activeScreen: options.targetScreen || (action === "complete" ? "song_done" : "song"),
+      activeTab: "songs",
+      songSessionData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : window.sparkCore.getRuntimeState().songSessionData,
+      songSessionSource: options.source || window.sparkCore.getRuntimeState().songSessionSource || "builtin",
+      songPlaying: action === "play" ? true : !!options.songPlaying,
+      songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat") ? options.songBeat : 0,
+      transport: {
+        status: action === "complete" ? "completed" : (action === "play" ? "running" : "ready"),
+        positionMs: 0
+      }
+    });
+  }
+  return null;
+}
+
+function applySongNavigationRequest(target, options) {
+  if (window.sparkCore && typeof window.sparkCore.applySongNavigationRequest === "function") {
+    return window.sparkCore.applySongNavigationRequest(target, options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeFlow: "song_session",
+      activeScreen: target === "song_done" ? "song_done" : (target === "song_detail" ? "song" : "home"),
+      activeTab: "songs",
+      songPlaying: false,
+      transport: { status: target === "song_done" ? "completed" : "idle", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
+function applySongBrowserRequest(action, options) {
+  if (window.sparkCore && typeof window.sparkCore.applySongBrowserRequest === "function") {
+    return window.sparkCore.applySongBrowserRequest(action, options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    options = options || {};
+    return window.sparkCore.updateRuntimeState({
+      activeTab: "songs",
+      songsSubTab: Object.prototype.hasOwnProperty.call(options, "songsSubTab") ? options.songsSubTab : S.songsSubTab,
+      songFilter: Object.prototype.hasOwnProperty.call(options, "songFilter") ? options.songFilter : S.songFilter,
+      songSort: Object.prototype.hasOwnProperty.call(options, "songSort") ? options.songSort : S.songSort,
+      songSortAsc: Object.prototype.hasOwnProperty.call(options, "songSortAsc") ? !!options.songSortAsc : !!S.songSortAsc,
+      communityTab: Object.prototype.hasOwnProperty.call(options, "communityTab") ? options.communityTab : S.communityTab,
+      communitySearch: Object.prototype.hasOwnProperty.call(options, "communitySearch") ? options.communitySearch : S.communitySearch,
+      communitySort: Object.prototype.hasOwnProperty.call(options, "communitySort") ? options.communitySort : S.communitySort
+    });
+  }
+  return null;
+}
+
+function applyDashboardRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.applyDashboardRequest === "function") {
+    return window.sparkCore.applyDashboardRequest(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    options = options || {};
+    return window.sparkCore.updateRuntimeState({
+      dashboardRecommendations: Object.prototype.hasOwnProperty.call(options, "recommendations") ? options.recommendations : (S.recommendations || []),
+      dashboardInsights: Object.prototype.hasOwnProperty.call(options, "insights") ? options.insights : (S.personalInsights || null),
+      dashboardChallenges: Object.prototype.hasOwnProperty.call(options, "challenges") ? options.challenges : (S.activeChallenges || []),
+      lastDashboardRefreshAt: Object.prototype.hasOwnProperty.call(options, "refreshedAt") ? options.refreshedAt : Date.now()
+    });
+  }
+  return null;
+}
+
+function refreshDashboardSnapshotRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.refreshDashboardSnapshot === "function") {
+    return window.sparkCore.refreshDashboardSnapshot(options || {});
+  }
+  return applyDashboardRequest(options || {});
+}
+
+function initializeDashboardChallengesRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.initializeDashboardChallenges === "function") {
+    return window.sparkCore.initializeDashboardChallenges(options || {});
+  }
+  return applyDashboardRequest(options || {});
+}
+
+function applyDashboardNavigationRequest(target) {
+  if (window.sparkCore && typeof window.sparkCore.applyDashboardNavigationRequest === "function") {
+    return window.sparkCore.applyDashboardNavigationRequest(target);
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    var screen = "home_dash";
+    if (target === "recommendations") screen = "recommendations";
+    else if (target === "insights") screen = "insights";
+    else if (target === "challenges") screen = "challenges";
+    else if (target === "career") screen = "career";
+    return window.sparkCore.updateRuntimeState({ activeScreen: screen });
+  }
+  return null;
+}
+
+function openDashboardSectionRequest(target) {
+  if (window.sparkCore && typeof window.sparkCore.openDashboardSection === "function") {
+    return window.sparkCore.openDashboardSection(target);
+  }
+  return applyDashboardNavigationRequest(target);
+}
+
+function returnFromHomeFamilyRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.returnFromHomeFamily === "function") {
+    return window.sparkCore.returnFromHomeFamily(options || {});
+  }
+  if (options && options.currentScreen) {
+    var currentScreen = options.currentScreen;
+    var isDashboardFamily = currentScreen === "recommendations"
+      || currentScreen === "insights"
+      || currentScreen === "challenges"
+      || currentScreen === "career"
+      || currentScreen === "home_dash";
+    if (isDashboardFamily) return applyDashboardNavigationRequest("dashboard_back");
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeScreen: "home",
+      activeTab: S.tab || null,
+      transport: { status: "idle", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
+function openUtilityScreenRequest(target) {
+  if (window.sparkCore && typeof window.sparkCore.openUtilityScreen === "function") {
+    return window.sparkCore.openUtilityScreen(target);
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeScreen: target || "home",
+      activeTab: S.tab || null
+    });
+  }
+  return null;
+}
+
+function syncSettingsStateRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.syncSettingsState === "function") {
+    return window.sparkCore.syncSettingsState(options || {});
+  }
+  return null;
+}
+
+function buildMidiSettingsRuntimePayload() {
+  var activeDevice = typeof getActiveMidiDevice === "function" ? getActiveMidiDevice() : null;
+  var activeProfile = typeof getActiveMidiProfile === "function" ? getActiveMidiProfile() : null;
+  var profileIds = S.midiProfiles ? Object.keys(S.midiProfiles) : [];
+  var profileOptions = [];
+  var i;
+  for (i = 0; i < profileIds.length; i++) {
+    var id = profileIds[i];
+    var profile = S.midiProfiles[id];
+    if (!profile) continue;
+    profileOptions.push({
+      id: id,
+      name: profile.name || "Unnamed Profile",
+      type: profile.type || "default"
+    });
+  }
+  return {
+    midiEnabled: !!S.midiEnabled,
+    activeDeviceId: S.activeMidiDeviceId || null,
+    activeDeviceName: activeDevice ? (activeDevice.name || null) : null,
+    activeProfileId: S.activeMidiProfileId || null,
+    activeProfileName: activeProfile ? (activeProfile.name || null) : null,
+    deviceOptions: Array.isArray(S.midiDevices) ? S.midiDevices.map(function(device) {
+      return {
+        id: device.id,
+        name: device.name || "MIDI Input"
+      };
+    }) : [],
+    profileOptions: profileOptions
+  };
+}
+
+function syncMidiSettingsStateRequest(options) {
+  var payload = buildMidiSettingsRuntimePayload();
+  var key;
+  options = options || {};
+  for (key in options) {
+    if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncMidiSettingsState === "function") {
+    return window.sparkCore.syncMidiSettingsState(payload);
+  }
+  return null;
+}
+
+function buildCloudSettingsRuntimePayload() {
+  return {
+    loggedIn: !!(S.cloudAuth && S.cloudAuth.loggedIn && S.cloudAuth.token),
+    email: S.cloudAuth ? (S.cloudAuth.email || null) : null,
+    lastSyncStatus: S.cloudSync ? (S.cloudSync.lastSyncStatus || "idle") : "idle",
+    lastSyncAt: S.cloudSync ? (S.cloudSync.lastSyncAt || null) : null
+  };
+}
+
+function syncCloudSettingsStateRequest(options) {
+  var payload = buildCloudSettingsRuntimePayload();
+  var key;
+  options = options || {};
+  for (key in options) {
+    if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncCloudSettingsState === "function") {
+    return window.sparkCore.syncCloudSettingsState(payload);
+  }
+  return null;
+}
+
+function applyCloudWorkflowRequest(action, options) {
+  var payload = buildCloudSettingsRuntimePayload();
+  var key;
+  options = options || {};
+  for (key in options) {
+    if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
+  }
+  if (window.sparkCore && typeof window.sparkCore.applyCloudWorkflowRequest === "function") {
+    return window.sparkCore.applyCloudWorkflowRequest(action, payload);
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncCloudSettingsState === "function") {
+    return window.sparkCore.syncCloudSettingsState(payload);
+  }
+  return null;
+}
+
+function buildCurriculumRuntimePayload() {
+  var curriculums = (window.SparkCurriculum && SparkCurriculum.curriculums) || {};
+  var packs = (window.SparkContent && SparkContent.packs) || {};
+  var curriculumIds = Object.keys(curriculums);
+  var packIds = Object.keys(packs);
+  return {
+    curriculums: curriculumIds.map(function(id) {
+      var cur = curriculums[id] || {};
+      return {
+        id: id,
+        title: cur.title || id,
+        trackCount: Array.isArray(cur.tracks) ? cur.tracks.length : 0
+      };
+    }),
+    packs: packIds.map(function(id) {
+      var pack = packs[id] || {};
+      return {
+        id: id,
+        title: pack.title || id,
+        type: pack.type || "pack"
+      };
+    })
+  };
+}
+
+function syncCurriculumStateRequest(options) {
+  var payload = buildCurriculumRuntimePayload();
+  var key;
+  options = options || {};
+  for (key in options) {
+    if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncCurriculumState === "function") {
+    return window.sparkCore.syncCurriculumState(payload);
+  }
+  return null;
+}
+
+function buildMidiImportRuntimePayload(options) {
+  var normalizedMidi = (options && Object.prototype.hasOwnProperty.call(options, "normalizedMidi"))
+    ? options.normalizedMidi
+    : S.importedMidi;
+  var assignments = (options && Object.prototype.hasOwnProperty.call(options, "assignments"))
+    ? options.assignments
+    : S.importedMidiAssignments;
+  var seedChart = (options && Object.prototype.hasOwnProperty.call(options, "seedChart"))
+    ? options.seedChart
+    : S.importedMidiSeedPreview;
+  var tracks = normalizedMidi && Array.isArray(normalizedMidi.tracks) ? normalizedMidi.tracks : [];
+  return {
+    summary: normalizedMidi ? {
+      sourceName: normalizedMidi.sourceName || null,
+      trackCount: tracks.length,
+      tracks: tracks.map(function(track) {
+        return {
+          id: track.id,
+          name: track.name || track.id || "Track",
+          noteCount: Array.isArray(track.notes) ? track.notes.length : 0
+        };
+      })
+    } : null,
+    assignments: assignments || {},
+    seedMode: (options && Object.prototype.hasOwnProperty.call(options, "seedMode")) ? options.seedMode : null,
+    seedTitle: seedChart && seedChart.title ? seedChart.title : null
+  };
+}
+
+function syncMidiImportStateRequest(options) {
+  var payload = buildMidiImportRuntimePayload(options || {});
+  if (window.sparkCore && typeof window.sparkCore.syncMidiImportState === "function") {
+    return window.sparkCore.syncMidiImportState(payload);
+  }
+  return null;
+}
+
+function openSkillTreeRequest() {
+  if (window.sparkCore && typeof window.sparkCore.openSkillTree === "function") {
+    return window.sparkCore.openSkillTree();
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeScreen: "skill_tree",
+      activeTab: S.tab || null
+    });
+  }
+  return null;
+}
+
+function setSkillTreeFocusRequest(focus) {
+  if (window.sparkCore && typeof window.sparkCore.setSkillTreeFocus === "function") {
+    return window.sparkCore.setSkillTreeFocus(focus);
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeScreen: "skill_tree",
+      activeTab: S.tab || null,
+      skillTreeFocus: focus || "overview"
+    });
+  }
+  return null;
+}
+
+function openStemPlayerRequest() {
+  if (window.sparkCore && typeof window.sparkCore.openStemPlayer === "function") {
+    return window.sparkCore.openStemPlayer();
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeScreen: "stems",
+      activeTab: "songs",
+      songsSubTab: "stems"
+    });
+  }
+  return null;
+}
+
+function closeStemPlayerRequest() {
+  if (window.sparkCore && typeof window.sparkCore.closeStemPlayer === "function") {
+    return window.sparkCore.closeStemPlayer();
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeScreen: "home",
+      activeTab: "songs",
+      songsSubTab: "stems",
+      transport: { status: "idle", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
+function returnFromUtilityFamilyRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.returnFromUtilityFamily === "function") {
+    return window.sparkCore.returnFromUtilityFamily(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+    return window.sparkCore.updateRuntimeState({
+      activeScreen: "home",
+      activeTab: S.tab || null,
+      transport: { status: "idle", positionMs: 0 }
+    });
+  }
+  return null;
+}
+
+function applyDashboardChallengeRewardRequest(challengeId) {
+  if (window.sparkCore && typeof window.sparkCore.applyDashboardChallengeReward === "function") {
+    return window.sparkCore.applyDashboardChallengeReward(challengeId);
+  }
+  return null;
+}
+
+function completeSongSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeSongSession === "function") {
+    return window.sparkCore.completeSongSession(options || {});
+  }
+  return syncSongRuntimeRequest("complete", options || {});
+}
+
+function completeGuidedSessionRequest(options) {
+  if (window.sparkCore && typeof window.sparkCore.completeGuidedSession === "function") {
+    return window.sparkCore.completeGuidedSession(options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+    var result = window.sparkCore.completeSession({
+      flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      markPlanComplete: true
+    });
+    if (typeof window.sparkCore.syncGuidedRuntimeState === "function") {
+      window.sparkCore.syncGuidedRuntimeState({
+        activeScreen: "guided_done",
+        guidedStep: null,
+        guidedNewMovePhase: null,
+        transport: { status: "completed", positionMs: 0 }
+      });
+    }
+    return result;
+  }
+  // Route through contract-based progress path (Phase 6 migration)
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var guidedResult = SparkContracts.createSessionResult({
+      mode: "guided",
+      instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
+      instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+      duration: 300,
+      accuracy: 0.75,
+      completed: true
+    });
+    var guidedOutcome = SparkProgressOrchestrator.applySessionOutcome(guidedResult);
+    if (typeof console !== "undefined" && console.debug) {
+      console.debug("[App] Guided ProgressOutcome:", guidedOutcome);
+    }
+  }
+  return null;
+}
+
+function applyGuidedNavigationRequest(target, options) {
+  if (window.sparkCore && typeof window.sparkCore.applyGuidedNavigationRequest === "function") {
+    return window.sparkCore.applyGuidedNavigationRequest(target, options || {});
+  }
+  if (window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function") {
+    if (target === "guided_home") {
+      return window.sparkCore.syncGuidedRuntimeState({
+        activeScreen: "home",
+        guidedStep: null,
+        guidedNewMovePhase: null,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if (target === "guided_done") {
+      return window.sparkCore.syncGuidedRuntimeState({
+        activeScreen: "guided_done",
+        guidedStep: null,
+        guidedNewMovePhase: null,
+        transport: { status: "completed", positionMs: 0 }
+      });
+    }
+  }
+  return null;
+}
+
 // ===== ACTION DISPATCHER =====
 window.act=function(a,v){
   // Delegate to active instrument's handler first
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
+  // Switch instrument from v2 dashboard
+  if(a==="switchInstrument" && v){
+    SparkInstruments.activate(v);
+    S.activeInstrument = v;
+    S.screen = SCR.HOME;
+    S.tab = TAB.PRACTICE;
+    saveState();
+    render();
+    return;
+  }
   if(a==="tab"){
-    S.tab=v;S.screen=SCR.HOME;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{tab:v,screen:SCR.HOME,earTrainQ:null,earTrainAns:null,selectedVoicing:0}
+      });
+    }else{
+      S.tab=v;S.screen=SCR.HOME;
+      S.earTrainQ=null;S.earTrainAns=null;S.selectedVoicing=0;
+    }
+    if(window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function"){
+      window.sparkCore.updateRuntimeState({
+        activeScreen: "home",
+        activeTab: v || null,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
     stopAllTimers();
-    S.earTrainQ=null;S.earTrainAns=null;S.selectedVoicing=0;
     if(v===TAB.SONGS&&S.songsSubTab==="community")fetchCommunity();
     render();return;
   }
   if(a==="selLevel"&&parseInt(v)<=S.level){S.selectedLevel=parseInt(v);render();return;}
   if(a==="toggleTimer"){
     S.timerActive=!S.timerActive;
+    syncLegacyPracticeRuntimeRequest(S.timerActive ? "resume" : "pause", {
+      remainingSec: S.timer,
+      timerActive: S.timerActive,
+      mode: S.lastChordName ? "chord" : "quickStart",
+      chordName: S.currentChord ? S.currentChord.name : null,
+      durationSec: 120
+    });
     if(S.timerActive)T.session=setTimeout(tickS,1000);else clearTimeout(T.session);
     render();return;
   }
+  if(a==="completeSessionHome"){
+    if(window.sparkCore && typeof window.sparkCore.returnFromLegacyPracticeFamily === "function"){
+      window.sparkCore.returnFromLegacyPracticeFamily({ activeTab: "practice" });
+    }
+    act("tab","practice");
+    return;
+  }
+  if(a==="drillDoneHome"){
+    if(window.sparkCore && typeof window.sparkCore.returnFromLegacyPracticeFamily === "function"){
+      window.sparkCore.returnFromLegacyPracticeFamily({ activeTab: "practice" });
+    }
+    act("tab","drill");
+    return;
+  }
   if(a==="doneSession"){
     clearTimeout(T.session);if(S.metronomeOn)stopMetronome();if(S.chordDetectOn)stopChordDetect();
-    S.timerActive=true;S.timer=0;tickS();return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{timerActive:true,timer:0}
+      });
+    }else{
+      S.timerActive=true;S.timer=0;
+    }
+    syncLegacyPracticeRuntimeRequest("set_remaining", {
+      remainingSec: 0,
+      timerActive: true,
+      mode: S.lastChordName ? "chord" : "quickStart",
+      chordName: S.currentChord ? S.currentChord.name : null,
+      durationSec: 120
+    });
+    tickS();return;
   }
   if(a==="startDaily"&&S.dailyChallenge){
     var t=S.dailyChallenge.id==="hold"?30:S.dailyChallenge.id==="marathon"?180:60;
-    S.dailyTimer=t;S.dailyComplete=false;snd("start");S.screen=SCR.DAILY;render();T.daily=setTimeout(tickDy,1000);return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{dailyTimer:t,dailyComplete:false,screen:SCR.DAILY}
+      });
+    }else{
+      S.dailyTimer=t;S.dailyComplete=false;S.screen=SCR.DAILY;
+    }
+    openLegacyDailyChallengeRequest({
+      challengeId: S.dailyChallenge.id,
+      durationSec: t
+    });
+    snd("start");render();T.daily=setTimeout(tickDy,1000);return;
   }
   if(a==="completeDaily"){
-    clearTimeout(T.daily);snd("complete");S.dailyComplete=true;S.dailyDone++;
+    clearTimeout(T.daily);snd("complete");
     var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
-    S.xp+=xp;
-    logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
-    checkBadges();saveState();trigC();render();return;
+    completeLegacyDailyChallengeRequest({
+      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
+      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+    });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:xp,
+        setFlags:{dailyComplete:true},
+        incrementFields:{dailyDone:1},
+        history:{type:"daily",detail:S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp:xp},
+        checkBadges:true
+      });
+    }else{
+      S.dailyComplete=true;S.dailyDone++;
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;
+      logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
+      checkBadges();saveState();
+    }
+    trigC();render();return;
+  }
+  if(a==="dailyDoneHome"){
+    returnFromLegacyDailyChallengeRequest({ activeTab: "daily" });
+    act("tab","daily");
+    return;
   }
   if(a==="replayEarTrain"&&S.earTrainQ){strumChord(S.earTrainQ);return;}
   if(a==="answerEarTrain"&&S.earTrainAns===null){
-    S.earTrainAns=v;
-    var ok=v===S.earTrainQ;
-    if(ok){snd("correct");S.earTrainScore++;S.earTrainStreak++;S.xp+=15;logHistory("ear",S.earTrainQ,15);checkBadges();saveState();}
-    else{snd("wrong");S.earTrainStreak=0;}
-    S.earTrainTotal++;render();
+    var earTrainOk=v===S.earTrainQ;
+    var nextEarTrainTotal=(S.earTrainTotal||0)+1;
+    var nextEarTrainScore=(S.earTrainScore||0)+(earTrainOk?1:0);
+    var nextEarTrainStreak=earTrainOk?((S.earTrainStreak||0)+1):0;
+    if(window.sparkCore&&typeof window.sparkCore.syncLegacyEarTrainingRuntimeState==="function"){
+      window.sparkCore.syncLegacyEarTrainingRuntimeState({
+        question: S.earTrainQ,
+        options: S.earTrainOpts,
+        answer: v,
+        score: nextEarTrainScore,
+        total: nextEarTrainTotal,
+        streak: nextEarTrainStreak
+      });
+    }
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{earTrainAns:v},
+        incrementFields:{earTrainTotal:1}
+      });
+    }else{
+      S.earTrainAns=v;
+      S.earTrainTotal++;
+    }
+    var ok=earTrainOk;
+    if(ok){
+      snd("correct");
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+        SparkProgressBridge.applyLegacyActivityCompletion({
+          xpDelta:15,
+          incrementFields:{earTrainScore:1,earTrainStreak:1},
+          history:{type:"ear",detail:S.earTrainQ,xp:15},
+          checkBadges:true
+        });
+      }else{
+        S.earTrainScore++;S.earTrainStreak++;
+        if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:15});else S.xp+=15;logHistory("ear",S.earTrainQ,15);checkBadges();saveState();
+      }
+    }
+    else{
+      snd("wrong");
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({
+          setFields:{earTrainStreak:0}
+        });
+      }else{
+        S.earTrainStreak=0;
+      }
+    }
+    render();
     setTimeout(function(){act("startEarTrain");},1500);
     return;
   }
@@ -350,46 +1627,165 @@ window.act=function(a,v){
   // === Strum ===
   if(a==="openStrum"){
     var sp;for(var i=0;i<STRUM_PATTERNS.length;i++)if(STRUM_PATTERNS[i].name===v)sp=STRUM_PATTERNS[i];
-    if(sp&&sp.level<=S.level){S.selectedStrum=sp;S.strumActive=false;S._strumBeat=-1;clearInterval(T.strum);S.screen=SCR.STRUM;render();}return;
+    if(sp&&sp.level<=S.level){
+      if(window.sparkCore && typeof window.sparkCore.openLegacyStrumPattern === "function"){
+        window.sparkCore.openLegacyStrumPattern({ pattern: sp });
+      }
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({
+          setFields:{selectedStrum:sp,strumActive:false,_strumBeat:-1,screen:SCR.STRUM},
+          clearIntervals:["strum"]
+        });
+      }else{
+        S.selectedStrum=sp;S.strumActive=false;S._strumBeat=-1;clearInterval(T.strum);S.screen=SCR.STRUM;
+      }
+      render();
+    }return;
   }
   if(a==="toggleStrum"){
-    snd("click");S.strumActive=!S.strumActive;
+    snd("click");
+    var nextStrumActive=!S.strumActive;
+    if(window.sparkCore && typeof window.sparkCore.syncLegacyStrumRuntimeState === "function"){
+      window.sparkCore.syncLegacyStrumRuntimeState({
+        pattern: S.selectedStrum,
+        active: nextStrumActive,
+        beat: nextStrumActive ? 0 : -1
+      });
+    }
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:nextStrumActive?{strumActive:true,_strumBeat:0}:{strumActive:false,_strumBeat:-1},
+        clearIntervals:nextStrumActive?[]:["strum"]
+      });
+    }else{
+      S.strumActive=nextStrumActive;
+      if(!S.strumActive){clearInterval(T.strum);S._strumBeat=-1;}
+    }
     if(S.strumActive){
       var p=S.selectedStrum.pattern,ms=60000/S.selectedStrum.bpm/(p.length>4?2:1);
       var _strumChordName=S.currentChord?S.currentChord.name:"E Major";
-      S._strumBeat=0;if(p[0]!=="x")strumChord(_strumChordName);render();
-      T.strum=setInterval(function(){S._strumBeat=(S._strumBeat+1)%p.length;if(p[S._strumBeat]!=="x")strumChord(_strumChordName);render();},ms);
+      if(p[0]!=="x")strumChord(_strumChordName);render();
+      T.strum=setInterval(function(){
+        S._strumBeat=(S._strumBeat+1)%p.length;
+        if(window.sparkCore && typeof window.sparkCore.syncLegacyStrumRuntimeState === "function"){
+          window.sparkCore.syncLegacyStrumRuntimeState({
+            pattern: S.selectedStrum,
+            active: true,
+            beat: S._strumBeat
+          });
+        }
+        if(p[S._strumBeat]!=="x")strumChord(_strumChordName);
+        render();
+      },ms);
     }else{clearInterval(T.strum);S._strumBeat=-1;render();}return;
   }
   // === Songs ===
   if(a==="songsSubTab"){
     S.songsSubTab=v;
+    applySongBrowserRequest("songs_subtab", { songsSubTab: S.songsSubTab });
     if(v==="community")fetchCommunity();
     render();return;
   }
   if(a==="toggleSong"){
-    snd("click");S.songPlaying=!S.songPlaying;
+    snd("click");
+    var nextSongPlaying=!S.songPlaying;
+    syncSongRuntimeRequest(nextSongPlaying ? "play" : "pause", {
+      songData: S.selectedSong,
+      source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
+      songBeat: nextSongPlaying ? 0 : S.songBeat
+    });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:nextSongPlaying?{songPlaying:true,songBeat:0}:{songPlaying:false},
+        clearIntervals:nextSongPlaying?[]:["song"]
+      });
+    }else{
+      S.songPlaying=nextSongPlaying;
+      if(S.songPlaying)S.songBeat=0;
+      else clearInterval(T.song);
+    }
     if(S.songPlaying){
-      var ms=60000/S.selectedSong.bpm;S.songBeat=0;
+      var ms=60000/S.selectedSong.bpm;
       var cn=S.selectedSong.progression[0];strumChord(CHORD_NAME_MAP[cn]||cn);
       render();
-      T.song=setInterval(function(){S.songBeat=(S.songBeat+1)%S.selectedSong.progression.length;var cn=S.selectedSong.progression[S.songBeat];strumChord(CHORD_NAME_MAP[cn]||cn);render();},ms);
-    }else{clearInterval(T.song);render();}return;
+      T.song=setInterval(function(){
+        S.songBeat=(S.songBeat+1)%S.selectedSong.progression.length;
+        syncSongRuntimeRequest("tick", { songBeat: S.songBeat });
+        var cn=S.selectedSong.progression[S.songBeat];strumChord(CHORD_NAME_MAP[cn]||cn);render();
+      },ms);
+    }else{render();}return;
   }
   if(a==="completeSong"){
-    S.songPlaying=false;clearInterval(T.song);snd("complete");S.songsPlayed++;S.xp+=40;
-    logHistory("song",S.selectedSong?S.selectedSong.title:"Song",40);
-    _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{songPlaying:false},
+        clearIntervals:["song"]
+      });
+    }else{
+      S.songPlaying=false;clearInterval(T.song);
+    }
+    snd("complete");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:40,
+        incrementFields:{songsPlayed:1},
+        history:{type:"song",detail:S.selectedSong?S.selectedSong.title:"Song",xp:40},
+        emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 }},
+        checkBadges:true
+      });
+    }else{
+      S.songsPlayed++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:40});else S.xp+=40;
+      logHistory("song",S.selectedSong?S.selectedSong.title:"Song",40);
+      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
+      checkBadges();saveState();
+    }
+    completeSongSessionRequest({
+      songData: S.selectedSong,
+      source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
+      songBeat: S.songBeat
+    });
     fireMicro("full_song","Rockstar!","&#127908;");
-    checkBadges();saveState();trigC();S.screen=SCR.SONG_DONE;render();return;
+    trigC();S.screen=SCR.SONG_DONE;render();return;
+  }
+  if(a==="songBack"){
+    applySongNavigationRequest("songs_home");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
+  }
+  if(a==="songDoneHome"){
+    applySongNavigationRequest("songs_home");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
   }
   // === Tuner ===
   if(a==="startTuner"){
-    if(!AC){S.tunerErr="Audio not supported";render();return;}
+    if(!AC){
+      syncTunerRuntimeRequest({ active:false, error:"Audio not supported" });
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Audio not supported"}});
+      }else{
+        S.tunerErr="Audio not supported";
+      }
+      render();return;
+    }
     navigator.mediaDevices.getUserMedia(getAudioConstraint()).then(function(st){
       tunerR.stream=st;var ctx=new AC(),src=ctx.createMediaStreamSource(st),an=ctx.createAnalyser();
       an.fftSize=8192;src.connect(an); // Larger buffer for better low-freq accuracy
-      tunerR.ctx=ctx;tunerR.analyser=an;S.tunerActive=true;S.tunerErr=null;
+      tunerR.ctx=ctx;tunerR.analyser=an;
+      syncTunerRuntimeRequest({ active:true, error:null, note:null, freq:0, cents:0 });
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerActive:true,tunerErr:null}});
+      }else{
+        S.tunerActive=true;S.tunerErr=null;
+      }
       _tunerHistory=[];_tunerStableCount=0;_tunerLastStableNote="";
       render();
       var buf=new Float32Array(an.fftSize);
@@ -404,68 +1800,190 @@ window.act=function(a,v){
             S.tunerNote=result.note;
             S.tunerFreq=result.freq;
             S.tunerCents=result.cents;
+            syncTunerRuntimeRequest({ active:true, note: result.note, freq: result.freq, cents: result.cents, error:null });
           }else if(f<0){
             S.tunerNote=null;S.tunerFreq=0;S.tunerCents=0;
+            syncTunerRuntimeRequest({ active:true, note:null, freq:0, cents:0, error:null });
           }
           // Targeted UI update instead of full render
           updateTunerUI();
         }
         tunerR.anim=requestAnimationFrame(det);
       }det();
-    }).catch(function(){S.tunerErr="Microphone access denied";render();});return;
+    }).catch(function(){
+      syncTunerRuntimeRequest({ active:false, error:"Microphone access denied" });
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Microphone access denied"}});
+      }else{
+        S.tunerErr="Microphone access denied";
+      }
+      render();
+    });return;
   }
   if(a==="stopTuner"){
-    S.tunerActive=false;
     if(tunerR.anim)cancelAnimationFrame(tunerR.anim);
     if(tunerR.stream)tunerR.stream.getTracks().forEach(function(t){t.stop();});
     if(tunerR.ctx)tunerR.ctx.close();
-    S.tunerNote=null;S.tunerFreq=0;S.tunerCents=0;render();return;
+    syncTunerRuntimeRequest({ active:false, note:null, freq:0, cents:0, error:null });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0}
+      });
+    }else{
+      S.tunerActive=false;
+      S.tunerNote=null;S.tunerFreq=0;S.tunerCents=0;
+    }
+    render();return;
   }
   if(a==="toggleMetro"){if(S.metronomeOn)stopMetronome();else startMetronome();return;}
   if(a==="metroBpm"){
     var b=parseInt(v);
     if(b>=40&&b<=200){
       S.metronomeBpm=b;
-      if(S.metronomeOn){clearInterval(T.metro);var ms=60000/b;T.metro=setInterval(function(){S._metroBeat=(S._metroBeat+1)%S._metroBeats;metroClick(S._metroBeat===0);render();},ms);}
+      syncMetronomeRuntimeRequest({
+        active: !!S.metronomeOn,
+        bpm: S.metronomeBpm,
+        beat: S._metroBeat,
+        beatsPerBar: S._metroBeats
+      });
+      if(S.metronomeOn){
+        clearTimeout(T.metro);
+        T.metro=null;
+        if(typeof _metroNextTime==="number"&&audioCtx)_metroNextTime=audioCtx.currentTime;
+        _metroSchedule();
+      }
       render();
     }return;
   }
   if(a==="toggleChordDetect"){if(S.chordDetectOn)stopChordDetect();else startChordDetect();return;}
   // Dark mode toggle
-  if(a==="toggleDark"){S.darkMode=!S.darkMode;saveState();applyTheme();render();return;}
+  if(a==="toggleDark"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{darkMode:!S.darkMode},save:false});
+    }else{
+      S.darkMode=!S.darkMode;
+    }
+    saveState();applyTheme();render();return;
+  }
   // Onboarding
   if(a==="setIntention"){S.practiceIntention=v||"";return;}
-  if(a==="completeOnboarding"){S.onboardingDone=true;saveState();render();return;}
-  // New system screens
-  if(a==="openRecommendations"){S.screen=SCR.RECOMMENDATIONS;render();return;}
-  if(a==="openCareer"){S.screen=SCR.CAREER;render();return;}
-  if(a==="openCareerSong"){
-    if(typeof getContent==="function")S.currentSong=getContent("songs",v);
-    S.screen=SCR.PERFORM_SONG;render();return;
+  if(a==="completeOnboarding"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{onboardingDone:true},save:false});
+    }else{
+      S.onboardingDone=true;
+    }
+    saveState();render();return;
   }
-  if(a==="openInsights"){S.screen=SCR.INSIGHTS;render();return;}
-  if(a==="openChallengeHub"){S.screen=SCR.CHALLENGES;render();return;}
-  if(a==="openHomeDash"){S.screen=SCR.HOME_DASH;render();return;}
-  if(a==="openSettings"){S.screen=SCR.SETTINGS;render();return;}
+  // New system screens
+  if(a==="openRecommendations"){
+    openDashboardSectionRequest("recommendations");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.RECOMMENDATIONS}});
+    else S.screen=SCR.RECOMMENDATIONS;
+    render();return;
+  }
+  if(a==="openCareer"){
+    openDashboardSectionRequest("career");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CAREER}});
+    else S.screen=SCR.CAREER;
+    render();return;
+  }
+  if(a==="openCareerSong"){
+    var nextSong=null;
+    if(typeof getCareerItem==="function")nextSong=getCareerItem("songs",v);
+    if(nextSong){
+      openCareerSongSelectionRequest({
+        songId: v,
+        songData: nextSong,
+        songTitle: nextSong.title || null,
+        arrangementType: S.performArrangementType || "chords",
+        difficultyId: S.performDifficulty || "normal"
+      });
+      S.performSongData = nextSong;
+      S.performSongId = v;
+    }
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{currentSong:nextSong,performSongData:nextSong,performSongId:v,screen:SCR.PERFORM_SONG}});
+    }else{
+      S.currentSong=nextSong;
+      S.performSongData=nextSong;
+      S.performSongId=v;
+      S.screen=SCR.PERFORM_SONG;
+    }
+    render();return;
+  }
+  if(a==="openInsights"){
+    openDashboardSectionRequest("insights");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.INSIGHTS}});
+    else S.screen=SCR.INSIGHTS;
+    render();return;
+  }
+  if(a==="openChallengeHub"){
+    openDashboardSectionRequest("challenges");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CHALLENGES}});
+    else S.screen=SCR.CHALLENGES;
+    render();return;
+  }
+  if(a==="openHomeDash"){
+    openDashboardSectionRequest("home_dash");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME_DASH}});
+    else S.screen=SCR.HOME_DASH;
+    render();return;
+  }
+  if(a==="openSettings"){
+    openUtilityScreenRequest("settings");
+    syncSettingsStateRequest({ theme: S.settings ? S.settings.theme : null });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SETTINGS}});
+    else S.screen=SCR.SETTINGS;
+    render();return;
+  }
   if(a==="openOnboarding"){if(typeof startOnboarding==="function")startOnboarding();return;}
   if(a==="resumeOnboarding"){if(typeof continueOnboarding==="function")continueOnboarding();return;}
   if(a==="refreshHome"){
     if(typeof generateRecommendations==="function")generateRecommendations();
     if(typeof generatePersonalInsights==="function")generatePersonalInsights();
+    refreshDashboardSnapshotRequest({
+      recommendations: S.recommendations || [],
+      insights: S.personalInsights || null,
+      challenges: S.activeChallenges || [],
+      refreshedAt: Date.now()
+    });
     render();return;
   }
   if(a==="launchRecommendation"){if(typeof launchRecommendationById==="function")launchRecommendationById(v);return;}
-  if(a==="claimChallengeReward"){if(typeof claimChallengeReward==="function")claimChallengeReward(v);render();return;}
-  if(a==="initChallenges"){if(typeof initializeChallengesForCurrentCycle==="function")initializeChallengesForCurrentCycle();render();return;}
-  if(a==="openPracticePlan"){S.screen=SCR.PLAN;render();return;}
+  if(a==="claimChallengeReward"){
+    if(typeof claimChallengeReward==="function")claimChallengeReward(v);
+    applyDashboardChallengeRewardRequest(v);
+    render();return;
+  }
+  if(a==="initChallenges"){
+    if(typeof initializeChallengesForCurrentCycle==="function")initializeChallengesForCurrentCycle();
+    initializeDashboardChallengesRequest({
+      recommendations: S.recommendations || [],
+      insights: S.personalInsights || null,
+      challenges: S.activeChallenges || [],
+      refreshedAt: Date.now()
+    });
+    render();return;
+  }
+  if(a==="openPracticePlan"){
+    openPracticePlanScreenRequest();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PLAN}});
+    else S.screen=SCR.PLAN;
+    render();return;
+  }
   if(a==="setTheme"){if(S.settings)S.settings.theme=v;if(typeof applyThemeSetting==="function")applyThemeSetting();saveState();render();return;}
   // Song sorting
   if(a==="songSort"){
     if(S.songSort===v){S.songSortAsc=!S.songSortAsc;}
     else{S.songSort=v;S.songSortAsc=true;}
+    applySongBrowserRequest("song_sort", {
+      songSort: S.songSort,
+      songSortAsc: S.songSortAsc
+    });
     render();return;
   }
-  if(a==="songFilter"){S.songFilter=v||"";render();return;}
+  if(a==="songFilter"){S.songFilter=v||"";applySongBrowserRequest("song_filter", { songFilter: S.songFilter });render();return;}
   // Stem solo
   if(a==="stemSolo"){
     for(var sk in S.stemToggles)S.stemToggles[sk]=(sk===v);
@@ -482,18 +2000,34 @@ window.act=function(a,v){
     if(idx<steps.length-1){
       S.guidedStep=steps[idx+1];
       if(S.guidedStep==="newMove")S.newMovePhase="watch";
+      if(window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function"){
+        window.sparkCore.syncGuidedRuntimeState({
+          guidedStep: S.guidedStep,
+          guidedNewMovePhase: S.newMovePhase || null
+        });
+      }
     }
     render();return;
   }
   if(a==="guidedAdvancePhase"){
     var phases=["watch","shadow","try","refine"];
     var pi=phases.indexOf(S.newMovePhase);
-    if(pi<phases.length-1){S.newMovePhase=phases[pi+1];}
+    if(pi<phases.length-1){
+      S.newMovePhase=phases[pi+1];
+      if(window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function"){
+        window.sparkCore.syncGuidedRuntimeState({
+          guidedStep: S.guidedStep,
+          guidedNewMovePhase: S.newMovePhase
+        });
+      }
+    }
     else{act("guidedNext");return;} // refine done → advance to songSlice
     render();return;
   }
   if(a==="guidedStop"){
+    clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.metro);clearInterval(T.strum);
     if(S.metronomeOn)stopMetronome();
+    applyGuidedNavigationRequest("guided_home");
     S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();return;
   }
   // Dual instrument
@@ -560,8 +2094,29 @@ window.act=function(a,v){
         beats.push({time:(r*pat.length+i)*ms/2,type:pat[i],hit:false,result:null});
       }
     }
-    S.rhythmBeats=beats;S.rhythmScore=0;S.rhythmCombo=0;S.rhythmMaxCombo=0;
-    S.rhythmActive=true;S.rhythmResults=null;S.rhythmStartTime=performance.now();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{
+          rhythmBeats:beats,
+          rhythmScore:0,
+          rhythmCombo:0,
+          rhythmMaxCombo:0,
+          rhythmActive:true,
+          rhythmResults:null,
+          rhythmStartTime:performance.now()
+        }
+      });
+    }else{
+      S.rhythmBeats=beats;S.rhythmScore=0;S.rhythmCombo=0;S.rhythmMaxCombo=0;
+      S.rhythmActive=true;S.rhythmResults=null;S.rhythmStartTime=performance.now();
+    }
+    openLegacyRhythmGameRequest({
+      beats: beats,
+      score: 0,
+      combo: 0,
+      maxCombo: 0,
+      startTimeMs: S.rhythmStartTime
+    });
     render();_rhythmAnim=requestAnimationFrame(rhythmTick);
     return;
   }
@@ -584,6 +2139,14 @@ window.act=function(a,v){
     }else{
       S.rhythmCombo=0;snd("wrong");
     }
+    syncLegacyRhythmRuntimeRequest({
+      active: S.rhythmActive,
+      beats: S.rhythmBeats,
+      score: S.rhythmScore,
+      combo: S.rhythmCombo,
+      maxCombo: S.rhythmMaxCombo,
+      startTimeMs: S.rhythmStartTime
+    });
     render();return;
   }
   // === Progression Builder ===
@@ -739,14 +2302,23 @@ window.act=function(a,v){
   if(a==="playImport"){
     var idx=parseInt(v);
     if(idx>=0&&idx<S.importedSongs.length){
-      S.selectedSong=S.importedSongs[idx];S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
-      S.screen=SCR.SONG;render();
+      openSongSessionRequest({ songData: S.importedSongs[idx], source: "imported" });
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({
+          setFields:{selectedSong:S.importedSongs[idx],songPlaying:false,songBeat:0,screen:SCR.SONG},
+          clearIntervals:["song"]
+        });
+      }else{
+        S.selectedSong=S.importedSongs[idx];S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
+        S.screen=SCR.SONG;
+      }
+      render();
     }return;
   }
   // === Community ===
-  if(a==="communityTab"){S.communityTab=v;render();return;}
-  if(a==="communitySearch"){S.communitySearch=v;fetchCommunity();return;}
-  if(a==="communitySort"){S.communitySort=v;fetchCommunity();return;}
+  if(a==="communityTab"){S.communityTab=v;applySongBrowserRequest("community_tab", { communityTab: S.communityTab });render();return;}
+  if(a==="communitySearch"){S.communitySearch=v;applySongBrowserRequest("community_search", { communitySearch: S.communitySearch });fetchCommunity();return;}
+  if(a==="communitySort"){S.communitySort=v;applySongBrowserRequest("community_sort", { communitySort: S.communitySort });fetchCommunity();return;}
   if(a==="voteSong"){
     fetch(COMMUNITY_URL+"/api/songs/"+v+"/vote",{method:"POST"}).then(function(){fetchCommunity();}).catch(function(){});
     return;
@@ -763,8 +2335,17 @@ window.act=function(a,v){
         pattern:JSON.parse(song.pattern||'["D","D","U","U","D","U"]')
       };
       if(!Array.isArray(parsed.chords)||!Array.isArray(parsed.progression)){throw new Error("Invalid song data");}
-      S.selectedSong=parsed;S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
-      S.screen=SCR.SONG;render();
+      openSongSessionRequest({ songData: parsed, source: "community" });
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({
+          setFields:{selectedSong:parsed,songPlaying:false,songBeat:0,screen:SCR.SONG},
+          clearIntervals:["song"]
+        });
+      }else{
+        S.selectedSong=parsed;S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
+        S.screen=SCR.SONG;
+      }
+      render();
     }catch(e){
       console.warn("ChordSpark: Failed to parse community song:",e.message);
       S.communityError="Could not load song: invalid data";render();
@@ -788,13 +2369,17 @@ window.act=function(a,v){
   if(a==="submitSong"){
     var ss=S.submitSong;
     if(!ss.title.trim()||!ss.artist.trim()||ss.chords.length<2||ss.progression.length<2)return;
+    var _title=ss.title.trim().slice(0,100);
+    var _artist=ss.artist.trim().slice(0,100);
+    var _submittedBy=(ss.submittedBy.trim()||"Anonymous").slice(0,50);
+    var _bpm=Math.max(40,Math.min(200,Number(ss.bpm)||100));
     var body={
-      title:ss.title.trim(),artist:ss.artist.trim(),
+      title:escHTML(_title),artist:escHTML(_artist),
       chords:JSON.stringify(ss.chords),
       progression:JSON.stringify(ss.progression),
       pattern:JSON.stringify(["D","D","U","U","D","U"]),
-      bpm:ss.bpm,level:1,
-      submitted_by:ss.submittedBy.trim()||"Anonymous"
+      bpm:_bpm,level:1,
+      submitted_by:_submittedBy
     };
     fetch(COMMUNITY_URL+"/api/songs",{
       method:"POST",
@@ -812,10 +2397,39 @@ window.act=function(a,v){
   // === Chord Runner ===
   if(a==="startRunner"){
     var av=CHORDS[S.level]||CHORDS[1];
-    S.runnerTarget=av[Math.floor(Math.random()*av.length)];
-    S.runnerActive=true;S.runnerScore=0;S.runnerCombo=0;S.runnerMaxCombo=0;
-    S.runnerLives=3;S.runnerObstacles=[];S.runnerSpeed=2;S.runnerDistance=0;
-    S.runnerResults=null;S.runnerStartTime=Date.now();S.runnerLastSpawn=0;
+    var runnerTarget=av[Math.floor(Math.random()*av.length)];
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({
+        setFields:{
+          runnerTarget:runnerTarget,
+          runnerActive:true,
+          runnerScore:0,
+          runnerCombo:0,
+          runnerMaxCombo:0,
+          runnerLives:3,
+          runnerObstacles:[],
+          runnerSpeed:2,
+          runnerDistance:0,
+          runnerResults:null,
+          runnerStartTime:Date.now(),
+          runnerLastSpawn:0
+        }
+      });
+    }else{
+      S.runnerTarget=runnerTarget;
+      S.runnerActive=true;S.runnerScore=0;S.runnerCombo=0;S.runnerMaxCombo=0;
+      S.runnerLives=3;S.runnerObstacles=[];S.runnerSpeed=2;S.runnerDistance=0;
+      S.runnerResults=null;S.runnerStartTime=Date.now();S.runnerLastSpawn=0;
+    }
+    openLegacyRunnerGameRequest({
+      targetName: runnerTarget ? runnerTarget.name : null,
+      score: 0,
+      combo: 0,
+      maxCombo: 0,
+      lives: 3,
+      distance: 0,
+      obstacles: []
+    });
     _runnerObstId=0;
     snd("start");render();_runnerAnim=requestAnimationFrame(runnerTick);
     return;
@@ -849,19 +2463,44 @@ window.act=function(a,v){
     }else{
       S.runnerCombo=0;
     }
+    syncLegacyRunnerRuntimeRequest({
+      active: S.runnerActive,
+      targetName: S.runnerTarget ? S.runnerTarget.name : null,
+      score: S.runnerScore,
+      combo: S.runnerCombo,
+      maxCombo: S.runnerMaxCombo,
+      lives: S.runnerLives,
+      distance: Math.floor(S.runnerDistance/100),
+      obstacles: S.runnerObstacles
+    });
     render();return;
   }
   // === Stem Separation ===
   if(a==="stemOpenFile"){
     if(!window.electron)return;
-    S.stemError=null;render();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemError:null}});
+    }else{
+      S.stemError=null;
+    }
+    render();
     window.electron.stems.openFile().then(function(result){
       if(!result)return;
-      S.stemFile=result;S.stemError=null;S.stemStatus="idle";render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemFile:result,stemError:null,stemStatus:"idle"}});
+      }else{
+        S.stemFile=result;S.stemError=null;S.stemStatus="idle";
+      }
+      render();
       // Check cache first
       window.electron.stems.checkCache(result.filePath).then(function(cached){
         if(cached){
-          S.stemPaths=cached;S.stemStatus="ready";render();
+          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPaths:cached,stemStatus:"ready"}});
+          }else{
+            S.stemPaths=cached;S.stemStatus="ready";
+          }
+          render();
           // Pre-load audio URLs
           _loadStemFileUrls(cached);
         } else {
@@ -873,35 +2512,66 @@ window.act=function(a,v){
   }
   if(a==="stemSeparate"){
     if(!window.electron||!S.stemFile)return;
-    S.stemStatus="separating";S.stemProgress=0;S.stemError=null;render();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"separating",stemProgress:0,stemError:null}});
+    }else{
+      S.stemStatus="separating";S.stemProgress=0;S.stemError=null;
+    }
+    render();
     // Listen for progress
     var removeProgress=window.electron.stems.onProgress(function(data){
       // Estimate progress from stderr output
       if(data.line){
         // demucs.cpp outputs segment info; rough estimate
-        S.stemProgress=Math.min(95,S.stemProgress+2);
+        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemProgress:Math.min(95,S.stemProgress+2)},save:false});
+        }else{
+          S.stemProgress=Math.min(95,S.stemProgress+2);
+        }
         render();
       }
     });
     window.electron.stems.separate(S.stemFile.filePath).then(function(result){
       removeProgress();
-      S.stemPaths=result.stemPaths;S.stemStatus="ready";S.stemProgress=100;render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPaths:result.stemPaths,stemStatus:"ready",stemProgress:100}});
+      }else{
+        S.stemPaths=result.stemPaths;S.stemStatus="ready";S.stemProgress=100;
+      }
+      render();
       _loadStemFileUrls(result.stemPaths);
     }).catch(function(err){
       removeProgress();
-      S.stemStatus="error";S.stemError=err.message||"Separation failed";render();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"error",stemError:err.message||"Separation failed"}});
+      }else{
+        S.stemStatus="error";S.stemError=err.message||"Separation failed";
+      }
+      render();
     });
     return;
   }
   if(a==="stemCancel"){
     if(window.electron)window.electron.stems.cancel();
-    S.stemStatus="idle";S.stemProgress=0;render();return;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"idle",stemProgress:0}});
+    }else{
+      S.stemStatus="idle";S.stemProgress=0;
+    }
+    render();return;
   }
   if(a==="stemOpen"){
-    S.screen=SCR.STEMS;render();return;
+    openStemPlayerRequest();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.STEMS}});
+    else S.screen=SCR.STEMS;
+    render();return;
   }
   if(a==="stemBack"){
-    cleanupStems();S.screen=SCR.HOME;S.tab=TAB.SONGS;S.songsSubTab="stems";render();return;
+    cleanupStems();
+    closeStemPlayerRequest();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS,songsSubTab:"stems"}});
+    else {S.screen=SCR.HOME;S.tab=TAB.SONGS;S.songsSubTab="stems";}
+    render();return;
   }
   if(a==="stemToggle"){
     S.stemToggles[v]=!S.stemToggles[v];
@@ -932,12 +2602,23 @@ window.act=function(a,v){
   if(a==="refreshAudioInputs"){refreshAudioInputs();return;}
   if(a==="testAudioInput"){testAudioInput(v);return;}
   if(a==="stopAudioTest"){stopAudioTest();render();return;}
-  if(a==="selectAudioInput"){stopAudioTest();S.audioInputId=v;saveState();render();return;}
+  if(a==="selectAudioInput"){
+    stopAudioTest();
+    S.audioInputId=v;
+    syncAudioInputRuntimeRequest({
+      devices: S.audioInputDevices || [],
+      inputId: S.audioInputId || null,
+      testingId: "",
+      testLevel: 0
+    });
+    saveState();render();return;
+  }
   // === MIDI ===
   if(a==="toggleMidi"){
     S.midiEnabled=!S.midiEnabled;
     if(S.midiEnabled){initMIDI();}
     else{S.midiOutput=null;S.midiDevices=[];}
+    syncMidiSettingsStateRequest();
     saveState();render();return;
   }
   if(a==="selectMidiDevice"){selectMIDIDevice(v);saveState();render();return;}
@@ -962,33 +2643,278 @@ window.act=function(a,v){
     var songIdx=parseInt(v);
     if(!isNaN(songIdx)&&SONGS[songIdx]){
       var chart=buildPerformanceChartFromSong(SONGS[songIdx],"builtin","rhythm_chords");
-      if(chart){S.performArrangementType="rhythm_chords";startPerformance(chart);return;}
+      if(chart){
+        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performArrangementType:"rhythm_chords"}});
+        }else{
+          S.performArrangementType="rhythm_chords";
+        }
+        startPerformance(chart);return;
+      }
     }
     return;
   }
   if(a==="openPerformSong"){
     var sgIdx=parseInt(v);
     if(!isNaN(sgIdx)&&SONGS[sgIdx]){
-      S.performSongData=SONGS[sgIdx];
-      S.performSongId=SONGS[sgIdx].title.toLowerCase().replace(/[^a-z0-9]+/g,"_");
-      S.screen=SCR.PERFORM_SONG;render();
+      var selectedSongId=(SONGS[sgIdx].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
+      }else{
+        S.performTargetTechnique=null;
+      }
+      if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+        openPerformanceSongSelectionRequest({
+          songIndex: sgIdx,
+          songId: selectedSongId,
+          songTitle: SONGS[sgIdx].title || null,
+          targetTechnique: null,
+          arrangementType: S.performArrangementType || "chords",
+          difficultyId: S.performDifficulty || "normal"
+        });
+      } else {
+        S.performSongData=SONGS[sgIdx];
+        S.performSongId=selectedSongId;
+        S.performTargetTechnique=null;
+      }
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+      }else{
+        S.screen=SCR.PERFORM_SONG;
+      }
+      render();
     }
     return;
   }
-  if(a==="openPerfStats"){S.screen=SCR.PERF_STATS;render();return;}
-  if(a==="openEditor"){S.performEditorChart=null;S.performEditorDirty=false;S.screen=SCR.PERF_EDITOR;render();return;}
-  if(a==="openSkillTree"){S.screen=SCR.SKILL_TREE;render();return;}
-  if(a==="skillTreeFocus"){S.skillTreeFocus=v||"overview";render();return;}
-  if(a==="openPlan"){S.screen=SCR.PLAN;render();return;}
-  if(a==="openPerformCalibration"){S.screen=SCR.PERFORM_CALIBRATE;render();return;}
-  if(a==="performCalibrateSource"){S.performCalibrationSource=v||"midi";render();return;}
-  if(a==="performCalibrationStart"){startPerformanceCalibrationRun();render();return;}
-  if(a==="performCalibrationStop"){stopPerformanceCalibration();render();return;}
-  if(a==="performCalibrationApply"){applyCalibrationOffset();render();return;}
+  if(a==="planStartPerformanceSong"){
+    var parts=String(v||"").split("|");
+    var songId=parts[0]||"";
+    var arrangementType=parts[1]||"chords";
+    var difficultyId=parts[2]||"normal";
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
+    }else{
+      S.performTargetTechnique=null;
+    }
+    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+      openPerformanceSongSelectionRequest({
+        songId: songId,
+        targetTechnique: null,
+        arrangementType: arrangementType,
+        difficultyId: difficultyId
+      });
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+      }else{
+        S.screen=SCR.PERFORM_SONG;
+      }
+      render();return;
+    }
+    for(var psi=0;psi<SONGS.length;psi++){
+      var planSongId=(SONGS[psi].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
+      if(planSongId===songId){
+        S.performSongData=SONGS[psi];
+        S.performSongId=songId;
+        S.performArrangementType=arrangementType;
+        S.performDifficulty=difficultyId;
+        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+        }else{
+          S.screen=SCR.PERFORM_SONG;
+        }
+        render();return;
+      }
+    }
+    return;
+  }
+  if(a==="planStartPerformancePhrase"){
+    var phraseParts=String(v||"").split("|");
+    var phraseSongId=phraseParts[0]||"";
+    var phraseArrangementType=phraseParts[1]||"chords";
+    var phraseDifficultyId=phraseParts[2]||"normal";
+    var phraseId=phraseParts[3];
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetPhrase:phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null}});
+    }else{
+      S.performTargetPhrase=phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null;
+    }
+    act("planStartPerformanceSong", phraseSongId + "|" + phraseArrangementType + "|" + phraseDifficultyId);
+    return;
+  }
+  if(a==="planStartPerformanceTechnique"){
+    var techniqueParts=String(v||"").split("|");
+    var techniqueSongId=techniqueParts[0]||"";
+    var techniqueArrangementType=techniqueParts[1]||"imported_chart";
+    var techniqueDifficultyId=techniqueParts[2]||"normal";
+    var techniqueKey=techniqueParts[3]||null;
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:techniqueKey}});
+    }else{
+      S.performTargetTechnique=techniqueKey;
+    }
+    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+      openPerformanceSongSelectionRequest({
+        songId: techniqueSongId,
+        arrangementType: techniqueArrangementType,
+        difficultyId: techniqueDifficultyId,
+        targetTechnique: techniqueKey
+      });
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+      }else{
+        S.screen=SCR.PERFORM_SONG;
+      }
+      render();return;
+    }
+    act("planStartPerformanceSong", techniqueSongId + "|" + techniqueArrangementType + "|" + techniqueDifficultyId);
+    return;
+  }
+  if(a==="openPerfStats"){
+    openPerformanceStatsRequest({ focus: "overview" });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERF_STATS}});
+    else S.screen=SCR.PERF_STATS;
+    render();return;
+  }
+  if(a==="openEditor"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performEditorChart:null,performEditorDirty:false,screen:SCR.PERF_EDITOR}});
+    }else{
+      S.performEditorChart=null;S.performEditorDirty=false;S.screen=SCR.PERF_EDITOR;
+    }
+    openPerformanceEditorRequest(null, {
+      action: "open_editor",
+      source: "blank",
+      dirty: false,
+      mode: S.performEditorMode || "chords",
+      snap: S.performEditorSnap || "1/8",
+      selectedEventId: null,
+      selectedPhraseId: null
+    });
+    render();return;
+  }
+  if(a==="openSkillTree"){
+    openSkillTreeRequest();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SKILL_TREE}});
+    else S.screen=SCR.SKILL_TREE;
+    render();return;
+  }
+  if(a==="planStartModuleExercise"){
+    var moduleExercise = resolveModuleExerciseLaunchOptions(v);
+    var modulePayload = buildModuleExerciseRhythmPayload(moduleExercise);
+    if(modulePayload && typeof startRhythmHighwayPayload==="function"){
+      startRhythmHighwayPayload(modulePayload, S.rhythmHighwayPreset, {
+        source: "module_exercise",
+        label: moduleExercise && (moduleExercise.exerciseName || moduleExercise.lessonId || moduleExercise.skill) || "Module exercise",
+        instrument: moduleExercise && moduleExercise.instrument || null,
+        exerciseId: moduleExercise && moduleExercise.exerciseId || null,
+        exerciseFocus: moduleExercise && (moduleExercise.exerciseFocus || moduleExercise.skill) || null
+      });
+      return;
+    }
+    act("tab", TAB.PRACTICE);
+    return;
+  }
+  if(a==="planStartRhythmHighway"){
+    if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v,S.rhythmHighwayPreset))return;
+    render();return;
+  }
+  if(a==="rhythmHighwayPreset"){
+    S.rhythmHighwayPreset=v||"spark_learning";
+    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function"){
+      startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset);
+      return;
+    }
+    render();return;
+  }
+  if(a==="skillTreeFocus"){
+    S.skillTreeFocus=v||"overview";
+    setSkillTreeFocusRequest(S.skillTreeFocus);
+    render();return;
+  }
+  if(a==="openPlan"){
+    if(window.sparkCore){
+      openPracticePlanScreenRequest();
+    }
+    S.screen=SCR.PLAN;render();return;
+  }
+  if(a==="openPerformCalibration"){
+    openPerformanceCalibrationRequest();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_CALIBRATE}});
+    else S.screen=SCR.PERFORM_CALIBRATE;
+    render();return;
+  }
+  if(a==="performCalibrateSource"){
+    applyPerformanceCalibrationRequest("calibration_source", { source: v||"midi" });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performCalibrationSource:v||"midi"}});
+    else S.performCalibrationSource=v||"midi";
+    render();return;
+  }
+  if(a==="performCalibrationStart"){
+    var calStartSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(S.performCalibrationSource||"midi");
+    applyPerformanceCalibrationRequest("calibration_start", { source: calStartSource });
+    startPerformanceCalibrationRun();render();return;
+  }
+  if(a==="performCalibrationStop"){
+    applyPerformanceCalibrationRequest("calibration_stop");
+    stopPerformanceCalibration();render();return;
+  }
+  if(a==="performCalibrationApply"){
+    var appliedOffset=applyCalibrationOffset();
+    applyPerformanceCalibrationRequest("calibration_apply", {
+      source: S.performCalibrationSource || "midi",
+      appliedOffsetMs: appliedOffset,
+      globalOffsetMs: S.performTimingOffsetMs || 0,
+      midiOffsetMs: S.performMidiOffsetMs || 0,
+      micOffsetMs: S.performMicOffsetMs || 0
+    });
+    render();return;
+  }
   if(a==="performCalibrationReset"){
-    if(S.performCalibrationSource==="midi")S.performMidiOffsetMs=0;
-    if(S.performCalibrationSource==="mic")S.performMicOffsetMs=0;
-    S.performCalibrationHits=[];saveState();render();return;
+    var resetSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(S.performCalibrationSource||"midi");
+    var resetPatch={performCalibrationHits:[]};
+    if(resetSource==="midi")resetPatch.performMidiOffsetMs=0;
+    if(resetSource==="mic")resetPatch.performMicOffsetMs=0;
+    applyPerformanceCalibrationRequest("calibration_reset", {
+      source: resetSource,
+      globalOffsetMs: S.performTimingOffsetMs || 0,
+      midiOffsetMs: resetSource==="midi" ? 0 : (S.performMidiOffsetMs || 0),
+      micOffsetMs: resetSource==="mic" ? 0 : (S.performMicOffsetMs || 0)
+    });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:resetPatch,save:false});
+    }else{
+      if(resetPatch.performMidiOffsetMs===0)S.performMidiOffsetMs=0;
+      if(resetPatch.performMicOffsetMs===0)S.performMicOffsetMs=0;
+      S.performCalibrationHits=[];
+    }
+    saveState();render();return;
+  }
+  if(a==="performStatsBack"){
+    applyPerformanceNavigationRequest("songs_home");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
+  }
+  if(a==="performStatsFocus"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("configure_stats", {
+        focus: v || "overview"
+      });
+    }
+    render();return;
+  }
+  if(a==="performCalibrationBack"){
+    if(typeof stopPerformanceCalibration==="function")stopPerformanceCalibration();
+    applyPerformanceNavigationRequest("songs_home", { performanceCalibrationMode: false });
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
   }
   if(a==="performCalibrateTap"){
     var nowMs=performance.now();
@@ -998,40 +2924,133 @@ window.act=function(a,v){
     var targetMs=startMs+(beatIdx*interval);
     recordCalibrationHit(targetMs,nowMs);render();return;
   }
-  if(a==="completePlan"){completePracticePlan();render();return;}
-  if(a==="regeneratePlan"){buildPracticePlan();render();return;}
-  if(a==="editorBack"){S.screen=SCR.HOME;S.tab=TAB.SONGS;render();return;}
-  if(a==="editorMode"){S.performEditorMode=v;render();return;}
-  if(a==="editorSnap"){S.performEditorSnap=v;render();return;}
+  if(a==="completePlan"){
+    if(window.sparkCore){
+      completeDailyPracticePlanRequest();
+    } else {
+      completePracticePlan();
+    }
+    render();return;
+  }
+  if(a==="regeneratePlan"){
+    if(window.sparkCore){
+      openDailyPracticePlanRequest({ forceRebuild: true });
+    } else {
+      buildPracticePlan();
+    }
+    render();return;
+  }
+  if(a==="editorBack"){
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      window.sparkCore.syncPerformanceRuntimeState("close_editor", { screen: "home" });
+    }
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    else {S.screen=SCR.HOME;S.tab=TAB.SONGS;}
+    render();return;
+  }
+  if(a==="editorMode"){
+    syncPerformanceEditorDocumentState(S.performEditorChart, { mode: v });
+    S.performEditorMode=v;render();return;
+  }
+  if(a==="editorSnap"){
+    syncPerformanceEditorDocumentState(S.performEditorChart, { snap: v });
+    S.performEditorSnap=v;render();return;
+  }
   if(a==="editorNew"){
-    S.performEditorChart={id:"custom_"+Date.now(),title:"New Chart",artist:"Custom",bpm:90,beatsPerBar:4,arrangementType:S.performEditorMode,events:[],phrases:[{id:0,name:"Phrase 1",startSec:0,endSec:8}]};
+    var newEditorChartResult=applyPerformanceEditorCoreMutation("new_blank", { mode: S.performEditorMode });
+    S.performEditorChart=newEditorChartResult&&newEditorChartResult.chart
+      ? newEditorChartResult.chart
+      : {id:"custom_"+Date.now(),title:"New Chart",artist:"Custom",bpm:90,beatsPerBar:4,arrangementType:S.performEditorMode,events:[],phrases:[{id:0,name:"Phrase 1",startSec:0,endSec:8}]};
+    syncPerformanceEditorDocumentState(S.performEditorChart, {
+      source: "blank",
+      dirty: true,
+      selectedEventId: null,
+      selectedPhraseId: null
+    });
     S.performEditorDirty=true;render();return;
   }
   if(a==="editorFromSong"){
     if(S.performSongData){
       var chart=buildPerformanceChartFromSong(S.performSongData,"builtin",S.performEditorMode);
-      if(chart){S.performEditorChart=chart;S.performEditorDirty=true;render();}
+      if(chart){
+        S.performEditorChart=chart;
+        syncPerformanceEditorDocumentState(chart, {
+          source: "song",
+          dirty: true,
+          selectedEventId: null,
+          selectedPhraseId: null
+        });
+        S.performEditorDirty=true;render();
+      }
     }
     return;
   }
-  if(a==="editorTitle"){if(S.performEditorChart){S.performEditorChart.title=v;S.performEditorDirty=true;render();}return;}
-  if(a==="editorBpm"){if(S.performEditorChart){S.performEditorChart.bpm=parseInt(v)||90;S.performEditorDirty=true;render();}return;}
-  if(a==="editorSelectEvent"){S.performEditorSelectedEventId=parseInt(v);render();return;}
+  if(a==="editorTitle"){
+    if(S.performEditorChart){
+      var titleMutation=applyPerformanceEditorCoreMutation("set_title", { title: v });
+      S.performEditorChart=titleMutation&&titleMutation.chart ? titleMutation.chart : S.performEditorChart;
+      S.performEditorChart.title=v;
+      syncPerformanceEditorDocumentState(S.performEditorChart, { source: "existing", dirty: true });
+      S.performEditorDirty=true;render();
+    }
+    return;
+  }
+  if(a==="editorBpm"){
+    if(S.performEditorChart){
+      var bpmValue=parseInt(v)||90;
+      var bpmMutation=applyPerformanceEditorCoreMutation("set_bpm", { bpm: bpmValue });
+      S.performEditorChart=bpmMutation&&bpmMutation.chart ? bpmMutation.chart : S.performEditorChart;
+      S.performEditorChart.bpm=bpmValue;
+      syncPerformanceEditorDocumentState(S.performEditorChart, { source: "existing", dirty: true });
+      S.performEditorDirty=true;render();
+    }
+    return;
+  }
+  if(a==="editorSelectEvent"){
+    S.performEditorSelectedEventId=parseInt(v);
+    var selectedEventMutation=applyPerformanceEditorCoreMutation("select_event", { id: S.performEditorSelectedEventId });
+    if(selectedEventMutation&&selectedEventMutation.chart)S.performEditorChart=selectedEventMutation.chart;
+    var selectedEditorEvent=null;
+    if(S.performEditorChart&&S.performEditorChart.events){
+      for(var selectedIdx=0;selectedIdx<S.performEditorChart.events.length;selectedIdx++){
+        if(S.performEditorChart.events[selectedIdx].id===S.performEditorSelectedEventId){selectedEditorEvent=S.performEditorChart.events[selectedIdx];break;}
+      }
+    }
+    syncPerformanceEditorDocumentState(S.performEditorChart, {
+      source: S.performEditorChart ? "existing" : "blank",
+      dirty: !!S.performEditorDirty,
+      selectedEventId: S.performEditorSelectedEventId,
+      selectedEvent: selectedEditorEvent
+    });
+    render();return;
+  }
   if(a==="editorAddEvent"){
     if(S.performEditorChart){
-      var evts=S.performEditorChart.events;
-      var maxId=0;for(var ei=0;ei<evts.length;ei++)if(evts[ei].id>maxId)maxId=evts[ei].id;
-      var lastT=evts.length?evts[evts.length-1].t+evts[evts.length-1].dur:0;
-      var beatDur=60/(S.performEditorChart.bpm||90);
-      evts.push({id:maxId+1,t:lastT,dur:beatDur,type:S.performEditorMode==="lead"?"note":"chord",chord:"",laneLabel:"?",notes:[],strum:"down"});
+      var addEventMutation=applyPerformanceEditorCoreMutation("add_event", { mode: S.performEditorMode });
+      if(addEventMutation&&addEventMutation.chart)S.performEditorChart=addEventMutation.chart;
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "existing",
+        dirty: true,
+        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+        selectedEvent: null
+      });
       S.performEditorDirty=true;render();
     }
     return;
   }
   if(a==="editorDeleteEvent"){
     if(S.performEditorChart){
-      S.performEditorChart.events=S.performEditorChart.events.filter(function(e){return e.id!==parseInt(v);});
+      var deleteEventId=parseInt(v);
+      var deleteEventMutation=applyPerformanceEditorCoreMutation("delete_event", { id: deleteEventId });
+      if(deleteEventMutation&&deleteEventMutation.chart)S.performEditorChart=deleteEventMutation.chart;
+      else S.performEditorChart.events=S.performEditorChart.events.filter(function(e){return e.id!==deleteEventId;});
       if(S.performEditorSelectedEventId===parseInt(v))S.performEditorSelectedEventId=null;
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "existing",
+        dirty: true,
+        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+        selectedEvent: null
+      });
       S.performEditorDirty=true;render();
     }
     return;
@@ -1040,14 +3059,20 @@ window.act=function(a,v){
     try{
       var p=JSON.parse(v);
       if(S.performEditorChart){
+        var editorMutation=applyPerformanceEditorCoreMutation("update_event", p);
+        if(editorMutation&&editorMutation.chart)S.performEditorChart=editorMutation.chart;
         for(var ee=0;ee<S.performEditorChart.events.length;ee++){
           if(S.performEditorChart.events[ee].id===p.id){
-            if(p.prop==="label"){S.performEditorChart.events[ee].laneLabel=p.val;S.performEditorChart.events[ee].chord=p.val;}
-            if(p.prop==="t")S.performEditorChart.events[ee].t=parseFloat(p.val)||0;
-            if(p.prop==="dur")S.performEditorChart.events[ee].dur=parseFloat(p.val)||0;
+            var editedEvent=S.performEditorChart.events[ee];
             break;
           }
         }
+        syncPerformanceEditorDocumentState(S.performEditorChart, {
+          source: "existing",
+          dirty: true,
+          selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+          selectedEvent: editedEvent || null
+        });
         S.performEditorDirty=true;render();
       }
     }catch(e){}
@@ -1055,55 +3080,149 @@ window.act=function(a,v){
   }
   if(a==="editorAddPhrase"){
     if(S.performEditorChart){
+      var addPhraseMutation=applyPerformanceEditorCoreMutation("add_phrase");
+      if(addPhraseMutation&&addPhraseMutation.chart)S.performEditorChart=addPhraseMutation.chart;
       var ph=S.performEditorChart.phrases;
-      var lastEnd=ph.length?ph[ph.length-1].endSec:0;
-      ph.push({id:ph.length,name:"Phrase "+(ph.length+1),startSec:lastEnd,endSec:lastEnd+8});
+      var addedPhrase=ph[ph.length-1];
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "existing",
+        dirty: true,
+        selectedPhraseId: addedPhrase.id,
+        selectedPhrase: addedPhrase
+      });
+      S.performEditorDirty=true;render();
+    }
+    return;
+  }
+  if(a==="editorSelectPhrase"){
+    var selectedPhraseId=parseInt(v,10);
+    var selectedPhraseMutation=applyPerformanceEditorCoreMutation("select_phrase", { id: selectedPhraseId });
+    if(selectedPhraseMutation&&selectedPhraseMutation.chart)S.performEditorChart=selectedPhraseMutation.chart;
+    var selectedPhrase=null;
+    if(S.performEditorChart&&S.performEditorChart.phrases){
+      for(var phraseIndex=0;phraseIndex<S.performEditorChart.phrases.length;phraseIndex++){
+        if(S.performEditorChart.phrases[phraseIndex].id===selectedPhraseId){selectedPhrase=S.performEditorChart.phrases[phraseIndex];break;}
+      }
+    }
+    syncPerformanceEditorDocumentState(S.performEditorChart, {
+      source: S.performEditorChart ? "existing" : "blank",
+      dirty: !!S.performEditorDirty,
+      selectedPhraseId: selectedPhrase ? selectedPhrase.id : null,
+      selectedPhrase: selectedPhrase
+    });
+    render();return;
+  }
+  if(a==="editorPhrase"){
+    try{
+      var phrasePatch=JSON.parse(v);
+      var updatedPhrase=null;
+      if(S.performEditorChart&&S.performEditorChart.phrases){
+        var phraseMutation=applyPerformanceEditorCoreMutation("update_phrase", phrasePatch);
+        if(phraseMutation&&phraseMutation.chart)S.performEditorChart=phraseMutation.chart;
+        for(var phraseEditIndex=0;phraseEditIndex<S.performEditorChart.phrases.length;phraseEditIndex++){
+          if(S.performEditorChart.phrases[phraseEditIndex].id===phrasePatch.id){
+            updatedPhrase=S.performEditorChart.phrases[phraseEditIndex];
+            break;
+          }
+        }
+        syncPerformanceEditorDocumentState(S.performEditorChart, {
+          source: "existing",
+          dirty: true,
+          selectedPhraseId: updatedPhrase ? updatedPhrase.id : null,
+          selectedPhrase: updatedPhrase
+        });
+        S.performEditorDirty=true;render();
+      }
+    }catch(e){}
+    return;
+  }
+  if(a==="editorDeletePhrase"){
+    var deletePhraseId=parseInt(v,10);
+    if(S.performEditorChart&&S.performEditorChart.phrases){
+      var deletePhraseMutation=applyPerformanceEditorCoreMutation("delete_phrase", { id: deletePhraseId });
+      if(deletePhraseMutation&&deletePhraseMutation.chart)S.performEditorChart=deletePhraseMutation.chart;
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "existing",
+        dirty: true,
+        selectedPhraseId: null,
+        selectedPhrase: null
+      });
       S.performEditorDirty=true;render();
     }
     return;
   }
   if(a==="editorSave"){
     if(S.performEditorChart){
-      if(!Array.isArray(S.performEditorLibrary))S.performEditorLibrary=[];
-      var exists=-1;
-      for(var si=0;si<S.performEditorLibrary.length;si++){
-        if(S.performEditorLibrary[si].id===S.performEditorChart.id){exists=si;break;}
-      }
       var copy=JSON.parse(JSON.stringify(S.performEditorChart));
-      if(exists>=0)S.performEditorLibrary[exists]=copy;
-      else S.performEditorLibrary.push(copy);
+      var saveMutation=applyPerformanceEditorCoreMutation("save_to_library");
+      if(saveMutation&&Array.isArray(saveMutation.library))syncPerformanceEditorLibraryState(saveMutation.library);
+      else{
+        if(!Array.isArray(S.performEditorLibrary))S.performEditorLibrary=[];
+        var exists=-1;
+        for(var si=0;si<S.performEditorLibrary.length;si++){
+          if(S.performEditorLibrary[si].id===S.performEditorChart.id){exists=si;break;}
+        }
+        if(exists>=0)S.performEditorLibrary[exists]=copy;
+        else S.performEditorLibrary.push(copy);
+      }
+      syncPerformanceEditorDocumentState(copy, {
+        source: "library",
+        dirty: false,
+        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null
+      });
       S.performEditorDirty=false;saveState();render();
     }
     return;
   }
   if(a==="editorLoad"){
     var idx=parseInt(v);
-    if(S.performEditorLibrary&&S.performEditorLibrary[idx]){
-      S.performEditorChart=JSON.parse(JSON.stringify(S.performEditorLibrary[idx]));
+    var loadMutation=applyPerformanceEditorCoreMutation("load_from_library", { index: idx });
+    if(loadMutation&&Array.isArray(loadMutation.library))syncPerformanceEditorLibraryState(loadMutation.library);
+    if((loadMutation&&loadMutation.chart) || (S.performEditorLibrary&&S.performEditorLibrary[idx])){
+      S.performEditorChart=loadMutation&&loadMutation.chart ? loadMutation.chart : JSON.parse(JSON.stringify(S.performEditorLibrary[idx]));
+      syncPerformanceEditorDocumentState(S.performEditorChart, {
+        source: "library",
+        dirty: false,
+        selectedEventId: null,
+        selectedPhraseId: null
+      });
       S.performEditorDirty=false;S.performEditorSelectedEventId=null;render();
     }
     return;
   }
   if(a==="editorDelete"){
     var di=parseInt(v);
+    var deleteMutation=applyPerformanceEditorCoreMutation("delete_from_library", { index: di });
+    if(deleteMutation&&Array.isArray(deleteMutation.library)){
+      syncPerformanceEditorLibraryState(deleteMutation.library);
+      saveState();render();
+      return;
+    }
     if(S.performEditorLibrary&&S.performEditorLibrary[di]){
       S.performEditorLibrary.splice(di,1);saveState();render();
     }
     return;
   }
   if(a==="editorExport"){
-    if(S.performEditorChart){
-      var json=JSON.stringify(S.performEditorChart,null,2);
+    var exportData=getPerformanceEditorExportData();
+    if(exportData.chart){
+      var json=exportData.json;
       var blob=new Blob([json],{type:"application/json"});
       var url=URL.createObjectURL(blob);
-      var a2=document.createElement("a");a2.href=url;a2.download=(S.performEditorChart.title||"chart").replace(/\s+/g,"_")+".json";
+      var a2=document.createElement("a");a2.href=url;a2.download=exportData.fileName;
       document.body.appendChild(a2);a2.click();document.body.removeChild(a2);URL.revokeObjectURL(url);
     }
     return;
   }
   if(a==="editorPreview"){
-    if(S.performEditorChart&&S.performEditorChart.events&&S.performEditorChart.events.length){
-      startPerformance(S.performEditorChart);
+    var previewRequest=getPerformanceEditorPreviewRequest();
+    if(previewRequest&&previewRequest.chart&&previewRequest.chart.events&&previewRequest.chart.events.length){
+      startPerformance(previewRequest.chart,{
+        difficulty:previewRequest.difficulty,
+        speed:previewRequest.speed,
+        preset:previewRequest.preset,
+        mode:previewRequest.mode
+      });
     }
     return;
   }
@@ -1114,29 +3233,62 @@ window.act=function(a,v){
       for(var di=0;di<SONGS.length;di++){
         var dsid=(SONGS[di].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
         if(dsid===ch.songId){
+          openPerformanceDailyChallengeRequest({
+            songId: ch.songId,
+            songData: SONGS[di],
+            songTitle: SONGS[di].title || null,
+            arrangementType: ch.arrangementType||"chords",
+            difficultyId: ch.difficultyId||"normal",
+            songIndex: di,
+            targetTechnique: ch.techniqueKey||null
+          });
           S.performSongData=SONGS[di];S.performSongId=ch.songId;
           S.performArrangementType=ch.arrangementType||"chords";
           S.performDifficulty=ch.difficultyId||"normal";
-          S.screen=SCR.PERFORM_SONG;render();return;
+          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
+          else S.screen=SCR.PERFORM_SONG;
+          render();return;
         }
       }
     }
-    S.tab=TAB.SONGS;S.screen=SCR.HOME;render();return;
+    openPerformanceDailyChallengeRequest({});
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tab:TAB.SONGS,screen:SCR.HOME}});
+    else {S.tab=TAB.SONGS;S.screen=SCR.HOME;}
+    render();return;
   }
-  if(a==="performArrangement"){S.performArrangementType=v||"chords";saveState();render();return;}
+  if(a==="performArrangement"){
+    S.performArrangementType=v||"chords";
+    if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
+      var arrangementState = window.sparkCore.getRuntimeState();
+      window.sparkCore.syncPerformanceRuntimeState("configure", {
+        arrangementType: S.performArrangementType,
+        songIndex: arrangementState.performanceSongIndex,
+        songTitle: arrangementState.performanceSongTitle
+      });
+    }
+    saveState();render();return;
+  }
   if(a==="importSongAudio"){
     if(!window.electron||!window.electron.stems){alert("Stem separation requires the desktop app.");return;}
     var importSongId=v;
     window.electron.stems.openFile().then(function(result){
       if(!result)return;
-      S.songAudioImporting=true;
-      S.songAudioProgress=0;
-      S.songAudioImportingSongId=importSongId;
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:true,songAudioProgress:0,songAudioImportingSongId:importSongId}});
+      }else{
+        S.songAudioImporting=true;
+        S.songAudioProgress=0;
+        S.songAudioImportingSongId=importSongId;
+      }
       render();
 
       var unsubProgress=window.electron.stems.onProgress(function(data){
         if(data&&data.progress!=null){
-          S.songAudioProgress=Math.round(data.progress);
+          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioProgress:Math.round(data.progress)},save:false});
+          }else{
+            S.songAudioProgress=Math.round(data.progress);
+          }
           render();
         }
       });
@@ -1148,7 +3300,14 @@ window.act=function(a,v){
         return window.electron.stems.separate(result.filePath);
       }).then(function(stemPaths){
         unsubProgress();
-        if(!stemPaths){S.songAudioImporting=false;render();return;}
+        if(!stemPaths){
+          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false}});
+          }else{
+            S.songAudioImporting=false;
+          }
+          render();return;
+        }
 
         var stemNames=Object.keys(stemPaths);
         var urlMap={};
@@ -1162,8 +3321,12 @@ window.act=function(a,v){
               stemUrls:urlMap,
               importedAt:new Date().toISOString()
             };
-            S.songAudioImporting=false;
-            S.songAudioProgress=0;
+            if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+              SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0},save:false});
+            }else{
+              S.songAudioImporting=false;
+              S.songAudioProgress=0;
+            }
             saveState();
             render();
             return;
@@ -1177,8 +3340,12 @@ window.act=function(a,v){
         loadNextUrl(0);
       }).catch(function(err){
         unsubProgress();
-        S.songAudioImporting=false;
-        S.songAudioProgress=0;
+        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0}});
+        }else{
+          S.songAudioImporting=false;
+          S.songAudioProgress=0;
+        }
         alert("Stem separation failed: "+(err.message||err));
         render();
       });
@@ -1190,19 +3357,108 @@ window.act=function(a,v){
     saveState();render();return;
   }
   if(a==="performStartFromSong"){
-    if(S.performSongData){
-      var chart=buildPerformanceChartFromSong(S.performSongData,"builtin",S.performArrangementType);
-      if(chart)startPerformance(chart,{difficulty:S.performDifficulty,speed:S.performSpeed});
+    var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+      ? window.sparkCore.getActiveSessionView()
+      : null;
+    var performanceSong = coreView
+      && coreView.plan
+      && coreView.plan.flow === "performance_song"
+      && coreView.plan.context
+      ? coreView.plan.context.performanceSong || null
+      : null;
+    var selectedSong = performanceSong && performanceSong.songData ? performanceSong.songData : S.performSongData;
+    var selectedSongIndex = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceSongIndex")
+      ? coreView.runtimeState.performanceSongIndex
+      : null;
+    var selectedSongTitle = coreView && coreView.runtimeState && coreView.runtimeState.performanceSongTitle
+      ? coreView.runtimeState.performanceSongTitle
+      : (selectedSong && selectedSong.title ? selectedSong.title : null);
+    var arrangementType = performanceSong && performanceSong.arrangementType ? performanceSong.arrangementType : S.performArrangementType;
+    var difficultyId = coreView && coreView.runtimeState && coreView.runtimeState.performanceDifficultyId
+      ? coreView.runtimeState.performanceDifficultyId
+      : S.performDifficulty;
+    var speed = coreView && coreView.runtimeState && coreView.runtimeState.performanceSpeed
+      ? coreView.runtimeState.performanceSpeed
+      : S.performSpeed;
+    var targetTechnique = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceTargetTechnique")
+      ? coreView.runtimeState.performanceTargetTechnique
+      : S.performTargetTechnique;
+    if(selectedSong){
+      var chart=buildPerformanceChartFromSong(selectedSong,"builtin",arrangementType);
+      if(chart){
+        var startRequest = startSelectedPerformanceSongRequest({
+          chart: chart,
+          chartId: chart.id || null,
+          songIndex: selectedSongIndex,
+          songTitle: selectedSongTitle,
+          difficulty: difficultyId,
+          arrangementType: arrangementType,
+          speed: speed,
+          targetTechnique: targetTechnique,
+          preset: S.performPracticePreset,
+          mode: S.performMode,
+          countIn: !!S.performCountIn
+        });
+        startPerformance(chart,{difficulty:startRequest.difficulty,speed:startRequest.speed,preset:startRequest.preset,mode:startRequest.mode});
+      }
     }
     return;
   }
+  if(a==="performSongBack"){
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
+    }else{
+      S.performTargetTechnique=null;
+    }
+    applyPerformanceNavigationRequest("songs_home");
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+    }
+    render();return;
+  }
   if(a==="pausePerform"){pausePerformance();return;}
   if(a==="resumePerform"){resumePerformance();return;}
-  if(a==="stopPerform"){stopPerformance();if(S.performSongData){S.screen=SCR.PERFORM_SONG;}else{S.screen=SCR.HOME;S.tab=TAB.SONGS;}render();return;}
-  if(a==="performMode"){S.performMode=v;S.performInputSource=v;PerformanceInput.start(v);saveState();render();return;}
-  if(a==="performDifficulty"){applyPerformanceDifficultyToState(v||"normal");saveState();render();return;}
+  if(a==="stopPerform"){
+    stopPerformance();
+    var performanceStopState = applyPerformanceNavigationRequest("return_after_stop");
+    var shouldReturnToSong = performanceStopState && performanceStopState.activeScreen === "performance_song";
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:shouldReturnToSong?{screen:SCR.PERFORM_SONG}:{screen:SCR.HOME,tab:TAB.SONGS}});
+    }else{
+      if(shouldReturnToSong){S.screen=SCR.PERFORM_SONG;}else{S.screen=SCR.HOME;S.tab=TAB.SONGS;}
+    }
+    render();return;
+  }
+  if(a==="performMode"){
+    S.performMode=v;S.performInputSource=v;PerformanceInput.start(v);
+    if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
+      window.sparkCore.syncPerformanceRuntimeState("configure", { mode: v });
+    }
+    saveState();render();return;
+  }
+  if(a==="performDifficulty"){
+    applyPerformanceDifficultyToState(v||"normal");
+    if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
+      window.sparkCore.syncPerformanceRuntimeState("configure", {
+        difficulty: S.performDifficulty,
+        songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
+        songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
+      });
+    }
+    saveState();render();return;
+  }
   if(a==="performSpeed"){
-    S.performSpeed=parseFloat(v);PerformanceTransport.setSpeed(S.performSpeed);saveState();render();return;
+    S.performSpeed=parseFloat(v);PerformanceTransport.setSpeed(S.performSpeed);
+    if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
+      window.sparkCore.syncPerformanceRuntimeState("configure", {
+        speed: S.performSpeed,
+        songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
+        songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
+      });
+    }
+    saveState();render();return;
   }
   if(a==="performLoopPhrase"){
     var ph=getPerformancePhraseForTime(S.performChart,S.performCurrentSec);
@@ -1210,15 +3466,46 @@ window.act=function(a,v){
     return;
   }
   if(a==="performClearLoop"){clearPerformanceLoop();return;}
-  if(a==="performPracticePreset"){applyPerformanceStemPreset(v);render();return;}
+  if(a==="performPracticePreset"){
+    applyPerformanceStemPreset(v);
+    if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
+      window.sparkCore.syncPerformanceRuntimeState("configure", { preset: S.performPracticePreset });
+    }
+    render();return;
+  }
   if(a==="performCalibrate"){startCalibration();return;}
   if(a==="performCalibrateTap"){recordCalibrationTap();return;}
-  if(a==="performRetry"){startPerformance(S.performChartId);return;}
+  if(a==="performRetry"){
+    var retryRequest=getPerformanceRetryRequest({
+      chartId: S.performChartId
+    });
+    startPerformance(retryRequest.chartId,{
+      difficulty:retryRequest.difficulty,
+      speed:retryRequest.speed,
+      preset:retryRequest.preset,
+      mode:retryRequest.mode,
+      targetTechnique: retryRequest.targetTechnique
+    });return;
+  }
   if(a==="performDebug"){S.performDebug=!S.performDebug;render();return;}
   if(a==="performRetryPhrase"){
     if(S.performChart&&S.performResults&&S.performResults.phraseStats){
-      var weakIdx=0,weakAvg=Infinity;
+      var targetTechnique = null;
+      if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
+        var coreView = window.sparkCore.getActiveSessionView();
+        if(coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceTargetTechnique")){
+          targetTechnique = coreView.runtimeState.performanceTargetTechnique;
+        }
+      }
+      if(!targetTechnique) targetTechnique = S.performTargetTechnique || null;
+      var candidateIndices = null;
+      if(targetTechnique && typeof getPerformancePhraseIndicesForTechnique === "function"){
+        candidateIndices = getPerformancePhraseIndicesForTechnique(S.performChart, targetTechnique);
+        if(!candidateIndices || !candidateIndices.length) candidateIndices = null;
+      }
+      var weakIdx=candidateIndices && candidateIndices.length ? candidateIndices[0] : 0,weakAvg=Infinity;
       for(var wi=0;wi<S.performResults.phraseStats.length;wi++){
+        if(candidateIndices && candidateIndices.indexOf(wi) === -1) continue;
         var wp=S.performResults.phraseStats[wi];
         var wa=wp.total>0?wp.scoreSum/wp.total:0;
         if(wa<weakAvg){weakAvg=wa;weakIdx=wi;}
@@ -1226,10 +3513,16 @@ window.act=function(a,v){
       var weakPhrase=S.performChart.phrases[weakIdx];
       if(weakPhrase){
         S.performTargetPhrase=weakIdx;
-        startPerformance(S.performChartId||S.performChart,{
-          mode:S.performMode,
-          difficulty:S.performDifficulty,
-          speed:S.performSpeed
+        var retryPhraseRequest=getPerformanceRetryRequest({
+          chart: S.performChart,
+          chartId: S.performChartId || (S.performChart && S.performChart.id) || "generated",
+          targetPhraseIndex: weakIdx
+        });
+        startPerformance(retryPhraseRequest.chartId||retryPhraseRequest.chart,{
+          mode:retryPhraseRequest.mode,
+          difficulty:retryPhraseRequest.difficulty,
+          speed:retryPhraseRequest.speed,
+          targetTechnique: retryPhraseRequest.targetTechnique
         });
         // Set loop after start (chart needs to load first) - use setTimeout to let it resolve
         setTimeout(function(){
@@ -1243,52 +3536,145 @@ window.act=function(a,v){
     }
     return;
   }
-  if(a==="completePlanItem"){if(typeof markPracticePlanItem==="function")markPracticePlanItem(v);render();return;}
+  if(a==="performDoneSongs"){
+    applyPerformanceNavigationRequest("songs_home");
+    act("tab","songs");
+    return;
+  }
+  if(a==="guidedDoneHome"){
+    applyGuidedNavigationRequest("guided_home");
+    act("tab","practice");
+    return;
+  }
+  if(a==="completePlanItem"){
+    if(window.sparkCore){
+      completeDailyPracticePlanRequest({ itemId: v });
+    } else if(typeof markPracticePlanItem==="function"){
+      markPracticePlanItem(v);
+    }
+    render();return;
+  }
+  if(a==="rhythmHighwayLane"){
+    var laneMask=(1<<parseInt(v,10));
+    S.rhythmHighwayHeldMask=(S.rhythmHighwayHeldMask&laneMask)?(S.rhythmHighwayHeldMask&~laneMask):(S.rhythmHighwayHeldMask|laneMask);
+    render();return;
+  }
+  if(a==="rhythmHighwayStrum"){
+    if(typeof _sparkRhythmHighwayStrum==="function")_sparkRhythmHighwayStrum();
+    render();return;
+  }
+  if(a==="rhythmHighwayLoopWindow"){
+    if(typeof _createRhythmHighwayLoopSpec==="function" && S.activeCoreSegmentId){
+      var segment = window.sparkCore && typeof window.sparkCore.getSegmentById==="function" ? window.sparkCore.getSegmentById(S.activeCoreSegmentId) : null;
+      var payload = segment && segment.meta ? segment.meta.gameplayPayload : null;
+      var loopSpec = _createRhythmHighwayLoopSpec(payload, S.rhythmHighwaySnapshot);
+      if(loopSpec && typeof startRhythmHighwaySegment==="function"){
+        S.rhythmHighwayLoop=loopSpec;
+        startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,loopSpec);
+        return;
+      }
+    }
+    render();return;
+  }
+  if(a==="rhythmHighwayClearLoop"){
+    S.rhythmHighwayLoop=null;
+    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function"){
+      startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,null);
+      return;
+    }
+    render();return;
+  }
+  if(a==="restartRhythmHighway"){
+    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,S.rhythmHighwayLoop);
+    return;
+  }
   // === MIDI Device/Profile Actions ===
-  if(a==="setMidiDevice"){S.activeMidiDeviceId=v;saveState();render();return;}
-  if(a==="setMidiProfile"){if(typeof setActiveMidiProfile==="function")setActiveMidiProfile(v);render();return;}
-  if(a==="createDefaultPianoProfile"){if(typeof createDefaultPianoProfile==="function")createDefaultPianoProfile();render();return;}
-  if(a==="createDefaultGuitarProfile"){if(typeof createDefaultGuitarProfile==="function")createDefaultGuitarProfile();render();return;}
-  if(a==="openMidiSettings"){S.screen=SCR.MIDI_SETTINGS;render();return;}
+  if(a==="setMidiDevice"){S.activeMidiDeviceId=v;syncMidiSettingsStateRequest();saveState();render();return;}
+  if(a==="setMidiProfile"){if(typeof setActiveMidiProfile==="function")setActiveMidiProfile(v);syncMidiSettingsStateRequest();render();return;}
+  if(a==="createDefaultPianoProfile"){if(typeof createDefaultPianoProfile==="function")createDefaultPianoProfile();syncMidiSettingsStateRequest();render();return;}
+  if(a==="createDefaultGuitarProfile"){if(typeof createDefaultGuitarProfile==="function")createDefaultGuitarProfile();syncMidiSettingsStateRequest();render();return;}
+  if(a==="openMidiSettings"){
+    openUtilityScreenRequest("midi_settings");
+    syncMidiSettingsStateRequest();
+    S.screen=SCR.MIDI_SETTINGS;render();return;
+  }
   // === MIDI Import Actions ===
-  if(a==="openMidiImport"){S.screen=SCR.MIDI_IMPORT;render();return;}
+  if(a==="openMidiImport"){
+    openUtilityScreenRequest("midi_import");
+    syncMidiImportStateRequest();
+    S.screen=SCR.MIDI_IMPORT;render();return;
+  }
   if(a==="importMidiFile"){if(typeof handleMidiImport==="function")handleMidiImport(v);return;}
   if(a==="assignMidiTrack"){
     var parts=String(v).split("|");
     if(typeof setMidiTrackAssignment==="function")setMidiTrackAssignment(parts[0],parts[1]);
+    syncMidiImportStateRequest();
     render();return;
   }
   if(a==="buildMidiSeedChart"){
     if(typeof buildSeedChartFromImportedMidi==="function"){
       var chart=buildSeedChartFromImportedMidi(S.importedMidi,S.importedMidiAssignments,v);
       S.importedMidiSeedPreview=chart;
+      syncMidiImportStateRequest({ seedMode: v, seedChart: chart });
       if(chart&&typeof openEditor==="function"){openEditor("chart",chart);}
       else{render();}
     }return;
   }
   // === Cloud Sync Actions ===
-  if(a==="cloudSync"){if(typeof syncSparkNow==="function")syncSparkNow();return;}
-  if(a==="cloudPull"){if(typeof pullSparkCloud==="function")pullSparkCloud();return;}
-  if(a==="cloudLogout"){if(typeof logoutSpark==="function")logoutSpark();render();return;}
+  if(a==="cloudSync"){applyCloudWorkflowRequest("sync_start",{lastSyncStatus:"syncing"});if(typeof syncSparkNow==="function")syncSparkNow();return;}
+  if(a==="cloudPull"){applyCloudWorkflowRequest("pull_start",{lastSyncStatus:"syncing"});if(typeof pullSparkCloud==="function")pullSparkCloud();return;}
+  if(a==="cloudLogout"){if(typeof logoutSpark==="function")logoutSpark();applyCloudWorkflowRequest("logout");render();return;}
   if(a==="cloudLoginPrompt"){
     var email=prompt("Email:");
     var password=prompt("Password:");
     if(email&&password&&typeof loginSpark==="function"){
-      loginSpark(email,password).then(function(){render();});
+      loginSpark(email,password).then(function(){applyCloudWorkflowRequest("login");render();});
     }return;
   }
-  if(a==="openCloudSettings"){S.screen=SCR.CLOUD_SETTINGS;render();return;}
+  if(a==="openCloudSettings"){openUtilityScreenRequest("cloud_settings");applyCloudWorkflowRequest("open");S.screen=SCR.CLOUD_SETTINGS;render();return;}
   // === Desktop Actions ===
   if(a==="checkUpdates"){if(typeof checkForDesktopUpdates==="function")checkForDesktopUpdates();return;}
   if(a==="exportBackup"){if(typeof exportFullBackupDesktopAware==="function")exportFullBackupDesktopAware();return;}
   if(a==="exportFeedback"){if(typeof exportFeedbackDesktopAware==="function")exportFeedbackDesktopAware();return;}
   // === Curriculum ===
-  if(a==="openCurriculum"){S.screen=SCR.CURRICULUM;render();return;}
+  if(a==="openCurriculum"){
+    openUtilityScreenRequest("curriculum");
+    syncCurriculumStateRequest();
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CURRICULUM}});
+    else S.screen=SCR.CURRICULUM;
+    render();return;
+  }
   // === Back ===
   if(a==="back"){
-    stopAllTimers();
-    S.selectedVoicing=0;S.screen=SCR.HOME;render();
-  }
+      var _dashboardBack = S.screen===SCR.RECOMMENDATIONS||S.screen===SCR.INSIGHTS||S.screen===SCR.CHALLENGES||S.screen===SCR.CAREER||S.screen===SCR.HOME_DASH;
+      var _utilityBack = S.screen===SCR.SETTINGS||S.screen===SCR.CLOUD_SETTINGS||S.screen===SCR.CURRICULUM||S.screen===SCR.MIDI_SETTINGS||S.screen===SCR.MIDI_IMPORT;
+      var _dailyBack = S.screen===SCR.DAILY;
+      if(S.screen===SCR.SONG||S.screen===SCR.SONG_DONE){
+        applySongNavigationRequest("songs_home");
+      }
+      if(_dailyBack){
+        returnFromLegacyDailyChallengeRequest({ activeTab: "daily" });
+      }
+      if(_utilityBack){
+        returnFromUtilityFamilyRequest({
+          currentScreen: S.screen===SCR.SETTINGS ? "settings"
+            : S.screen===SCR.CLOUD_SETTINGS ? "cloud_settings"
+            : S.screen===SCR.CURRICULUM ? "curriculum"
+            : S.screen===SCR.MIDI_SETTINGS ? "midi_settings"
+            : "midi_import"
+        });
+      }else if(!_dailyBack){
+        returnFromHomeFamilyRequest({ currentScreen: _dashboardBack ? "home_dash" : "home" });
+      }
+      stopAllTimers();
+      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:_dashboardBack?SCR.HOME_DASH:SCR.HOME,tab:_dailyBack?TAB.DAILY:S.tab}});
+      }else{
+        S.selectedVoicing=0;S.screen=_dashboardBack?SCR.HOME_DASH:SCR.HOME;
+        if(_dailyBack)S.tab=TAB.DAILY;
+      }
+      render();
+    }
 };
 
 // ===== RENDER =====
@@ -1323,6 +3709,10 @@ function _renderInner(){
     var _inst = SparkInstruments.getActive();
     logoText.textContent = _inst ? _inst.name + "Spark" : "SparkSuite";
   }
+  // Apply instrument theme (v2 neon system)
+  if (typeof SparkTheme !== "undefined" && _inst) {
+    SparkTheme.apply(_inst.instrument || "guitar");
+  }
 
   document.getElementById("hdr-xp").textContent=S.xp;
   document.getElementById("hdr-str").textContent=S.streak;
@@ -1331,11 +3721,20 @@ function _renderInner(){
   document.getElementById("dark-btn").textContent=S.darkMode?"\uD83C\uDF19":"\u2600\uFE0F";
   var h="";
   if(S.showConfetti){
-    var cols=["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
-    h+='<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
-    for(var i=0;i<40;i++)
-      h+='<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
-    h+='</div>';
+    // Use SparkConfetti if available (v2), else fall back to inline confetti
+    if (typeof SparkConfetti !== "undefined") {
+      if (!S._confettiFired) {
+        S._confettiFired = true;
+        SparkConfetti.burst();
+        setTimeout(function() { S._confettiFired = false; }, 2600);
+      }
+    } else {
+      var cols=["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
+      h+='<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
+      for(var i=0;i<40;i++)
+        h+='<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
+      h+='</div>';
+    }
   }
   if(S.newBadge)
     h+='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:16px 32px;box-shadow:0 8px 30px rgba(255,138,92,.4);animation:sD .5s ease;text-align:center"><div style="font-size:32px">'+S.newBadge.icon+'</div><div style="font-weight:800;font-size:16px;color:#333">'+S.newBadge.label+'</div><div style="font-size:12px;color:#555">'+S.newBadge.desc+'</div></div>';
@@ -1359,7 +3758,7 @@ function _renderInner(){
   if(S.showShortcuts)h+=shortcutOverlay();
 
   // Onboarding overlay — shown once on first launch
-  if(!S.onboardingDone){
+  if(!S.onboardingDone && !S.activeInstrument){
     h+='<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
     h+='<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
     h+='<h1 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Welcome to SparkSuite!</h1>';
@@ -1395,6 +3794,7 @@ function _renderInner(){
   _sharedPages[SCR.GUIDED_DONE] = typeof guidedDonePage === "function" ? guidedDonePage : null;
   _sharedPages[SCR.PERFORM] = typeof performPage === "function" ? performPage : null;
   _sharedPages[SCR.PERFORM_DONE] = typeof performDonePage === "function" ? performDonePage : null;
+  _sharedPages[SCR.RHYTHM_HIGHWAY] = typeof rhythmHighwayPage === "function" ? rhythmHighwayPage : null;
   _sharedPages[SCR.PERFORM_SONG] = typeof performSongPage === "function" ? performSongPage : null;
   _sharedPages[SCR.PERF_STATS] = typeof performanceStatsPage === "function" ? performanceStatsPage : null;
   _sharedPages[SCR.PERF_EDITOR] = typeof performanceEditorPage === "function" ? performanceEditorPage : null;
@@ -1452,6 +3852,7 @@ document.addEventListener("keydown",function(e){
   // Space - pause/resume
   if(key===" "){
     e.preventDefault();
+    if(S.screen===SCR.RHYTHM_HIGHWAY){act("rhythmHighwayStrum");return;}
     if(S.screen===SCR.SESSION){act("toggleTimer");return;}
     if(S.screen===SCR.STRUM){act("toggleStrum");return;}
     if(S.screen===SCR.SONG){act("toggleSong");return;}
@@ -1492,7 +3893,13 @@ document.addEventListener("keydown",function(e){
 
   // Enter - context-sensitive confirm
   if(key==="Enter"){
+    if(S.screen===SCR.RHYTHM_HIGHWAY){act("rhythmHighwayStrum");return;}
     if(S.screen===SCR.DRILL){act("drillSwitch");return;}
+    return;
+  }
+
+  if(S.screen===SCR.RHYTHM_HIGHWAY&&key>="1"&&key<="5"){
+    act("rhythmHighwayLane", String(parseInt(key,10)-1));
     return;
   }
 
@@ -1572,4 +3979,4 @@ document.getElementById("app").style.display="block";
 // Activate remembered instrument
 if(S.activeInstrument){try{SparkInstruments.activate(S.activeInstrument);}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
 try{if(typeof choosePerformanceDailyChallenge==="function")choosePerformanceDailyChallenge();}catch(e){}
-render();
+// render() moved to index.html after all instrument pages register

@@ -14,8 +14,18 @@
     return String(songId) + "::" + String(arrangementType || "default");
   }
 
+  function ensureCareerProgress(){
+    if(!S.careerProgress) S.careerProgress = {};
+    if(!S.careerProgress.songRatings) S.careerProgress.songRatings = {};
+    if(!S.careerProgress.unlockedTiers) S.careerProgress.unlockedTiers = {};
+    if(!S.careerProgress.unlockedStages) S.careerProgress.unlockedStages = {};
+    if(!S.careerProgress.unlockedSongs) S.careerProgress.unlockedSongs = {};
+    if(!S.careerProgress.stageCompletion) S.careerProgress.stageCompletion = {};
+  }
+
   function updateSongCareerRating(result){
     if(!result || !result.songId) return 0;
+    ensureCareerProgress();
     var stars = getStarsForPerformance(result);
     var key = getCareerSongKey(result.songId, result.arrangementType);
     if(!S.careerProgress.songRatings[key]){
@@ -36,5 +46,6 @@
   window.getStarsForPerformance = getStarsForPerformance;
   window.updateSongCareerRating = updateSongCareerRating;
   window.getCareerSongKey = getCareerSongKey;
+  window.ensureCareerProgress = ensureCareerProgress;
 
 })();

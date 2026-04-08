@@ -27,11 +27,38 @@ function renderHomeRecommendationCard(arr){
   var h = '<div class="card">';
   h += '<div><b>Recommended Next</b></div>';
   for(var i=0;i<arr.length;i++){
-    h += '<div>'+escHTML(arr[i].title)+'</div>';
+    if(!arr[i]) continue;
+    h += '<div>'+escHTML(arr[i].title || '')+'</div>';
+    h += renderHomeRecommendationDetail(arr[i]);
   }
   h += '<button onclick="act(\'openRecommendations\')">View</button>';
   h += '</div>';
   return h;
+}
+
+function renderHomeRecommendationDetail(item){
+  if(!item) return "";
+  if(item.source === "module_progress" && item.meta){
+    var parts = [];
+    if(item.meta.recommendationFocus){
+      parts.push("Focus: " + item.meta.recommendationFocus.replace(/_/g, " "));
+    }
+    var summary = item.meta.progressSummary;
+    if(summary && summary.weakestMetric && typeof summary[summary.weakestMetric] === "number"){
+      parts.push("Weakest: " + summary.weakestMetric.replace(/_/g, " ") + " " + Math.round(summary[summary.weakestMetric] * 100) + "%");
+    }
+    if(parts.length){
+      return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(parts.join(" | ")) + '</div>';
+    }
+  }
+  if(item.type === "performance_technique" && item.meta){
+    var technique = item.meta.techniqueKey ? String(item.meta.techniqueKey).replace(/_/g, " ") : "technique";
+    var accuracy = typeof item.meta.techniqueAccuracy === "number" ? item.meta.techniqueAccuracy + "%" : null;
+    var bits = ["Technique: " + technique];
+    if(accuracy) bits.push("Accuracy: " + accuracy);
+    return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
+  }
+  return "";
 }
 
 function renderHomeChallengeCard(arr){
@@ -75,15 +102,25 @@ function renderHomePackCard(data){
 function renderHomeInsightCard(data){
   var h = '<div class="card">';
   h += '<div><b>Insights</b></div>';
+  var focused = data && data.recommendationQuality ? data.recommendationQuality.focusedTechnique : null;
+  if(focused){
+    h += '<div>Focus: '+escHTML(buildHomeFocusedTechniqueLabel(focused))+'</div>';
+  }
   var ws = (data && data.weakestSkills) || [];
   if(ws.length){
     h += '<div>Weakest: '+escHTML(ws[0].bucket+': '+ws[0].id)+'</div>';
-  }else{
+  }else if(!focused){
     h += '<div>Practice more to see insights.</div>';
   }
   h += '<button onclick="act(\'openInsights\')">View</button>';
   h += '</div>';
   return h;
+}
+
+function buildHomeFocusedTechniqueLabel(focused){
+  if(!focused) return "";
+  var songLabel = String(focused.songId || "song").replace(/_/g, " ");
+  return focused.techniqueLabel + " " + focused.accuracy + "% in " + songLabel;
 }
 
 function renderHomeEventCard(data){
