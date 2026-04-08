@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script src="js/dev/dev_reload_client.js"></script>
+<script src="js/dev/dev_overlay_final.js"></script>
+<script>
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const instrument = params.get('instrument');
+
+  const key = 'chordspark_state';
+  let state = {};
+  try {
+    state = JSON.parse(localStorage.getItem(key) || '{}');
+  } catch {}
+
+  state.activeInstrument = instrument;
+  localStorage.setItem(key, JSON.stringify(state));
+
+  window.location.replace('index.html?dev=1');
+})();
+</script>
+</body>
+</html>
