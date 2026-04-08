@@ -1,0 +1,42 @@
+name: Curriculum Guardrails
+
+on:
+  pull_request:
+    paths:
+      - 'js/instruments/**'
+      - 'js/sparksuite/instruments/**'
+      - 'js/curriculum/**'
+      - 'js/sparksuite/core/curriculum_engine.js'
+      - 'js/sparksuite/bridges/curriculum_bridge.js'
+      - 'js/data.js'
+      - 'js/progression/**'
+      - 'content/**'
+  push:
+    branches: [feature/convergence, master]
+    paths:
+      - 'js/instruments/**'
+      - 'js/sparksuite/instruments/**'
+      - 'js/curriculum/**'
+      - 'js/data.js'
+      - 'content/**'
+
+jobs:
+  curriculum-check:
+    name: Validate curriculum integrity
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run existing tests
+        run: npm test
+
+      - name: Validate curriculum contracts
+        run: node tests/test_curriculum_guardrails.js
