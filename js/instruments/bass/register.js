@@ -1,5 +1,31 @@
 // js/instruments/bass/register.js
 (function() {
+  function renderBassSongsTab() {
+    var songs = (window.SparkBassModule && window.SparkBassModule.getSongs()) || (typeof BASS_SONGS !== "undefined" ? BASS_SONGS : []);
+    var charts = typeof getPerformanceChartLibrary === "function"
+      ? getPerformanceChartLibrary({ instrument: "bass" })
+      : [];
+    var h = '<div class="card mb12"><div style="font-size:18px;font-weight:900;color:var(--text-primary)">Bass Songs & Performance</div>';
+    h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Lock into pocket-driven bass charts and song studies that feel like real low-end parts.</div></div>';
+    if (charts.length) {
+      h += '<div class="card mb12"><div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Bass Performance Charts</div>';
+      for (var c = 0; c < charts.length; c++) {
+        h += '<div style="padding:8px 0;border-top:' + (c ? '1px solid var(--border)' : '0') + ';display:flex;justify-content:space-between;align-items:center;gap:10px">';
+        h += '<div><div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(charts[c].title) + '</div>';
+        h += '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(charts[c].artist || "") + ' | ' + escHTML(String(charts[c].bpm || "--")) + ' BPM</div></div>';
+        h += '<button class="btn btn-sm" onclick="act(\'openPerform\',\'' + escHTML(charts[c].id) + '\')" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff">Perform</button>';
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    for (var i = 0; i < songs.length; i++) {
+      h += '<div class="card mb12"><div style="font-size:15px;font-weight:800;color:var(--text-primary)">' + escHTML(songs[i].title) + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML(songs[i].artist || "") + ' | ' + escHTML((songs[i].chords || []).join(" - ")) + '</div>';
+      h += '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">' + escHTML(String(songs[i].bpm || "--")) + ' BPM | Difficulty ' + escHTML(String(songs[i].difficulty || songs[i].level || 1)) + '</div></div>';
+    }
+    return h;
+  }
+
   SparkInstruments.register({
     id: "bassspark",
     instrument: "bass",
@@ -7,6 +33,14 @@
     icon: "\uD83C\uDFB8",
     skin: typeof SparkHighway !== "undefined" ? SparkHighway.GUITAR_SKIN : null,
     available: true,
+    capabilities: {
+      stringCount: 4,
+      noteLaneType: "string",
+      chordShapeSupport: true,
+      midiInput: false,
+      capoSupport: false,
+      performanceModes: ["rhythm", "song"]
+    },
 
     getData: function() {
       return {
@@ -27,6 +61,27 @@
 
     ui: {
       chord: function(chordObj, size, label, animate) {
+        if (typeof stringedChordSVG === "function" && chordObj) {
+          var chart = {
+            name: chordObj.name || label || "chord",
+            instrument: "bass",
+            stringCount: 4,
+            stringLabels: ["E", "A", "D", "G"],
+            fretCountVisible: 5,
+            startFret: 0,
+            open: [false, false, false, false],
+            muted: [],
+            fingers: chordObj.fingers || [],
+            barre: null
+          };
+          // Build open array from frets if available
+          if (chordObj.frets) {
+            for (var i = 0; i < 4 && i < chordObj.frets.length; i++) {
+              chart.open[i] = chordObj.frets[i] === 0;
+            }
+          }
+          return stringedChordSVG(chart, { width: size, label: label, animate: animate });
+        }
         return typeof bassSVG === "function" ? bassSVG(chordObj, size, label, animate) : "";
       },
       header: function() {
@@ -42,6 +97,10 @@
 
     act: function(a, v) {
       return bassAct(a, v);
+    },
+
+    tabRenderers: {
+      songs: renderBassSongsTab
     },
 
     pages: {},
@@ -64,6 +123,20 @@
         var profile = SparkStorage.load();
         SparkProfile.ensureApp(profile, "bassspark", "bass");
         SparkStorage.save(profile);
+      }
+      if (typeof S !== "undefined") {
+        if (S.completedGuidedSessions === undefined) S.completedGuidedSessions = [];
+        if (S.chordProgress === undefined) S.chordProgress = {};
+        if (S.transitionStats === undefined) S.transitionStats = {};
+        if (S.drillAdaptiveBpm === undefined) S.drillAdaptiveBpm = 60;
+        if (S.drillConsecutiveFast === undefined) S.drillConsecutiveFast = 0;
+        if (S.drillConsecutiveSlow === undefined) S.drillConsecutiveSlow = 0;
+        if (S.drillLastSwitchTime === undefined) S.drillLastSwitchTime = 0;
+        if (S.guidedSession === undefined) S.guidedSession = 1;
+        if (S.guidedPlan === undefined) S.guidedPlan = null;
+        if (S.guidedStep === undefined) S.guidedStep = null;
+        if (S.newMovePhase === undefined) S.newMovePhase = null;
+        if (S.guidedPaused === undefined) S.guidedPaused = false;
       }
     },
 
@@ -111,6 +184,28 @@
       var D = this.getData();
       var chords = D.CHORDS[level] || D.CHORDS[1] || [];
       return chords.slice(0, 2);
+    },
+
+    getExercisesForLesson: function(lessonId) {
+      var D = this.getData();
+      if (lessonId && D.CURRICULUM) {
+        for (var i = 0; i < D.CURRICULUM.length; i++) {
+          if (D.CURRICULUM[i].id === lessonId && D.CURRICULUM[i].exercises) {
+            return D.CURRICULUM[i].exercises;
+          }
+        }
+      }
+      return D.FINGER_EXERCISES || [];
+    },
+
+    getPerformanceConfig: function() {
+      return {
+        laneCount: 4,
+        laneLabels: ["E", "A", "D", "G"],
+        defaultBpm: 70,
+        supportedModes: ["rhythm", "song"],
+        inputType: "pluck"
+      };
     }
   });
 })();

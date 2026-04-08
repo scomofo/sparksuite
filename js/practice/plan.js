@@ -1,6 +1,16 @@
 (function(){
 
   function generateDailyPracticePlan(){
+    if(typeof ensurePracticePlan === "function" && ensurePracticePlan !== generateDailyPracticePlan){
+      return ensurePracticePlan();
+    }
+    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+      var corePlan = window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE
+      });
+      return corePlan ? corePlan.toLegacyPracticePlan() : null;
+    }
+
     var weak = getTopWeakSpots();
 
     var items = [];
@@ -64,7 +74,7 @@
 
   function getNextPracticeItem(){
     if(!S.practicePlan) generateDailyPracticePlan();
-
+    if(!S.practicePlan || !S.practicePlan.items) return null;
     for(var i=0;i<S.practicePlan.items.length;i++){
       if(!S.practicePlan.items[i].completed){
         return S.practicePlan.items[i];
@@ -75,7 +85,18 @@
   }
 
   function completePracticeItem(id, result){
-    if(!S.practicePlan) return;
+    if(typeof markPracticePlanItem === "function" && markPracticePlanItem !== completePracticeItem && result == null){
+      return markPracticePlanItem(id);
+    }
+    if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
+      return window.sparkCore.completeSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+        itemId: id,
+        result: result
+      });
+    }
+
+    if(!S.practicePlan || !S.practicePlan.items) return;
 
     for(var i=0;i<S.practicePlan.items.length;i++){
       if(S.practicePlan.items[i].id===id){
@@ -95,6 +116,17 @@
 
   // Weekly plan generator
   function generateWeeklyPracticePlan(){
+    if(typeof buildPracticePlan === "function" && buildPracticePlan !== generateDailyPracticePlan){
+      var sharedDays = [];
+      for(var d=0; d<7; d++){
+        sharedDays.push(buildPracticePlan());
+      }
+      S.weeklyPracticePlan = {
+        weekStart: new Date().toISOString().slice(0,10),
+        days: sharedDays
+      };
+      return S.weeklyPracticePlan;
+    }
     var days = [];
     for(var i=0;i<7;i++){
       days.push(generateDailyPracticePlan());

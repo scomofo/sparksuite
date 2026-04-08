@@ -48,7 +48,9 @@ function newMovePhaseIndicator(phase) {
 }
 
 function guidedSessionPage() {
-  var plan = S.guidedPlan;
+  var guidedView = getGuidedSessionView();
+  var plan = guidedView.plan;
+  var guidedStep = guidedView.guidedStep;
   if (!plan) return '<div class="card text-center"><p>No session loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
   var h = '<div class="text-center">';
@@ -56,10 +58,10 @@ function guidedSessionPage() {
   h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(plan.title) + '</h2>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + plan.bpm + ' BPM</div>';
 
-  h += guidedStepIndicator(S.guidedStep);
+  h += guidedStepIndicator(guidedStep);
 
   // Render current step
-  switch (S.guidedStep) {
+  switch (guidedStep) {
     case "spark": h += _guidedSpark(plan); break;
     case "review": h += _guidedReview(plan); break;
     case "newMove": h += _guidedNewMove(plan); break;
@@ -116,16 +118,17 @@ function _guidedReview(plan) {
 function _guidedNewMove(plan) {
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var guidedView = getGuidedSessionView();
   if (!plan.newMove) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FF6B6B;font-weight:800">&#127919; New Move</h3>';
-  h += newMovePhaseIndicator(S.newMovePhase);
+  h += newMovePhaseIndicator(guidedView.newMovePhase);
 
   // Find chord
   var ch = null;
   for (var i = 0; i < D.ALL_CHORDS.length; i++) if (D.ALL_CHORDS[i].name === plan.newMove.chord) { ch = D.ALL_CHORDS[i]; break; }
 
-  switch (S.newMovePhase) {
+  switch (guidedView.newMovePhase) {
     case "watch":
       h += '<div style="background:#FF6B6B11;border-radius:12px;padding:12px;margin-bottom:12px">';
       h += '<div style="font-size:14px;font-weight:800;color:#FF6B6B;margin-bottom:6px">&#128064; Watch \u2014 Hands Off!</div>';
@@ -217,20 +220,48 @@ function _guidedVictoryLap(plan) {
 }
 
 function guidedDonePage() {
-  var plan = S.guidedPlan;
+  var guidedView = getGuidedSessionView();
+  var plan = guidedView.plan;
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var lastOutcome = coreView && coreView.lastSessionOutcome ? coreView.lastSessionOutcome : null;
   var title = plan ? plan.title : "";
   var num = plan ? plan.num : 0;
+  var xpAwarded = lastOutcome && typeof lastOutcome.xpAwarded === "number" ? lastOutcome.xpAwarded : 30;
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127881;</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Session ' + num + ' Complete!</h2>';
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(title) + '</p>';
   h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+30</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + S.streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + (S.completedGuidedSessions ? S.completedGuidedSessions.length : 0) + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
   h += '</div></div>';
   h += '<div class="flex-col"><button class="btn" onclick="act(\'guidedStart\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
-  h += '<button class="btn" onclick="act(\'tab\',\'practice\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';
+  h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';
   h += '</div>';
   return h;
+}
+
+function getGuidedSessionView() {
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var plan = coreView
+    && coreView.plan
+    && coreView.plan.flow === "guided_session"
+    && coreView.plan.context
+    ? coreView.plan.context.guidedPlan || null
+    : null;
+
+  return {
+    plan: plan || S.guidedPlan || null,
+    guidedStep: coreView && coreView.runtimeState && coreView.runtimeState.guidedStep
+      ? coreView.runtimeState.guidedStep
+      : (S.guidedStep || "spark"),
+    newMovePhase: coreView && coreView.runtimeState && coreView.runtimeState.guidedNewMovePhase
+      ? coreView.runtimeState.guidedNewMovePhase
+      : (S.newMovePhase || null)
+  };
 }

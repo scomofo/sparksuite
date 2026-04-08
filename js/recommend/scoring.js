@@ -4,6 +4,8 @@
     var score = 0;
     score += scoreWeakSpotWeight(candidate);
     score += scoreCurriculumWeight(candidate);
+    score += scoreModuleProgressWeight(candidate);
+    score += scoreModuleProgressSeverityWeight(candidate);
     score += scoreVarietyWeight(candidate);
     score += scoreUnlockWeight(candidate);
     score += scoreGoalWeight(candidate);
@@ -20,6 +22,19 @@
   function scoreCurriculumWeight(candidate){
     if(candidate.source === "curriculum") return 35;
     return 0;
+  }
+
+  function scoreModuleProgressWeight(candidate){
+    if(candidate.source === "module_progress") return 30;
+    return 0;
+  }
+
+  function scoreModuleProgressSeverityWeight(candidate){
+    if(candidate.source !== "module_progress" || !candidate.meta || !candidate.meta.progressSummary) return 0;
+    var summary = candidate.meta.progressSummary;
+    var metric = summary.weakestMetric;
+    if(!metric || typeof summary[metric] !== "number") return 0;
+    return Math.max(0, Math.round((1 - summary[metric]) * 20));
   }
 
   function scoreVarietyWeight(candidate){

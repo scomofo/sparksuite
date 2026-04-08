@@ -37,6 +37,19 @@
     return /piano/i.test(typeof APP_NAME !== "undefined" ? APP_NAME : "") ? "piano" : "guitar";
   }
 
+  // Service wrapper for engine-first architecture
+  window.SparkRecommendationService = {
+    generate: function(appType) {
+      return generateRecommendations(appType);
+    },
+    recordUse: function(candidate) {
+      return recordRecommendationUse(candidate);
+    },
+    getActive: function() {
+      return (typeof S !== "undefined" && Array.isArray(S.recommendations)) ? S.recommendations : [];
+    }
+  };
+
   window.generateRecommendations = generateRecommendations;
   window.recordRecommendationUse = recordRecommendationUse;
 

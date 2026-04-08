@@ -26,6 +26,7 @@
 
   function setMidiTrackAssignment(trackId, role){
     S.importedMidiAssignments[trackId] = role;
+    if(typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest();
   }
 
   window.autoAssignMidiTracks = autoAssignMidiTracks;

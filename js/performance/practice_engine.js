@@ -37,6 +37,16 @@
   }
 
   function generatePracticePlan() {
+    if (typeof ensurePracticePlan === "function") {
+      return ensurePracticePlan();
+    }
+    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+      var corePlan = window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE
+      });
+      return corePlan ? corePlan.toLegacyPracticePlan() : null;
+    }
+
     var today = new Date().toISOString().split("T")[0];
     if (S.practicePlanDate === today && S.practicePlan) return S.practicePlan;
 
@@ -129,6 +139,13 @@
   }
 
   function markPracticePlanItem(itemId) {
+    if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
+      return window.sparkCore.completeSession({
+        flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+        itemId: itemId
+      });
+    }
+
     if (!S.practicePlan || !S.practicePlan.items) return;
     for (var i = 0; i < S.practicePlan.items.length; i++) {
       if (S.practicePlan.items[i].id === itemId) {

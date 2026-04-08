@@ -134,7 +134,8 @@ function shuffle(arr){
 
 // Helper for accessible clickable divs
 function clickableDiv(onclick,extra){
-  return ' tabindex="0" role="button" onclick="'+onclick+'" onkeydown="if(event.key===\'Enter\'){'+onclick+'}"'+(extra?' '+extra:'');
+  var k='if(event.key==="Enter"||event.key===" "){event.preventDefault();'+onclick+'}';
+  return ' tabindex="0" role="button" onclick="'+onclick+'" onkeydown="'+k+'"'+(extra?' '+extra:'');
 }
 
 // ===== CHORD MASTERY TIERS =====

@@ -1,39 +1,68 @@
 // ===== ChordSpark: Tool and info tabs =====
 
 // ===== TUNER TAB =====
+function getLegacyTunerRuntime(){
+  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  return {
+    active: typeof S.tunerActive === "boolean" ? S.tunerActive : !!(runtime && runtime.tunerActive),
+    note: Object.prototype.hasOwnProperty.call(S, "tunerNote") ? S.tunerNote : (runtime ? runtime.tunerNote : null),
+    freq: typeof S.tunerFreq === "number" ? S.tunerFreq : (runtime && typeof runtime.tunerFreq === "number" ? runtime.tunerFreq : 0),
+    cents: typeof S.tunerCents === "number" ? S.tunerCents : (runtime && typeof runtime.tunerCents === "number" ? runtime.tunerCents : 0),
+    error: typeof S.tunerErr === "string" ? S.tunerErr : (runtime ? runtime.tunerError : null)
+  };
+}
+
+function getLegacyAudioInputRuntime(){
+  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  return {
+    devices: Array.isArray(S.audioInputDevices) && S.audioInputDevices.length ? S.audioInputDevices : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
+    inputId: typeof S.audioInputId === "string" ? S.audioInputId : (runtime ? (runtime.audioInputId || "") : ""),
+    testingId: typeof S.audioTestingId === "string" ? S.audioTestingId : (runtime ? (runtime.audioTestingId || "") : ""),
+    testLevel: typeof S.audioTestLevel === "number" ? S.audioTestLevel : (runtime && typeof runtime.audioTestLevel === "number" ? runtime.audioTestLevel : 0)
+  };
+}
+
 function tunerTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var runtime = getLegacyTunerRuntime();
   var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; Guitar Tuner</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Standard tuning: E A D G B e</p>';
   h+='<div id="tuner-strings" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
   for(var i=0;i<D.STRINGS.length;i++){
-    var gs=D.STRINGS[i],mt=S.tunerNote===gs.note,inT=mt&&Math.abs(S.tunerCents)<5,tC=inT?"#4ECDC4":mt&&Math.abs(S.tunerCents)<15?"#FFE66D":"#FF6B6B";
+    var gs=D.STRINGS[i],mt=runtime.note===gs.note,inT=mt&&Math.abs(runtime.cents)<5,tC=inT?"#4ECDC4":mt&&Math.abs(runtime.cents)<15?"#FFE66D":"#FF6B6B";
     h+='<div style="background:'+(mt?tC+"22":"var(--chip-bg)")+';border:2px solid '+(mt?tC:"var(--border)")+';border-radius:12px;padding:8px 14px;text-align:center;min-width:44px"><div style="font-size:18px;font-weight:800;color:'+(mt?tC:"var(--text-muted)")+'">'+gs.note+'</div><div style="font-size:9px;color:var(--text-muted)">'+gs.freq+'Hz</div></div>';
   }
   h+='</div>';
-  if(S.tunerActive){
-    var inT=Math.abs(S.tunerCents)<5,tC=inT?"#4ECDC4":Math.abs(S.tunerCents)<15?"#FFE66D":"#FF6B6B";
-    h+='<div id="tuner-note-display" style="font-size:72px;font-weight:900;color:'+tC+';line-height:1">'+(S.tunerNote||"&#8212;")+'</div><div id="tuner-freq-display" style="font-size:16px;color:var(--text-muted);margin:4px 0 16px">'+(S.tunerFreq>0?S.tunerFreq+" Hz":"Play a note...")+'</div>';
-    h+='<div style="position:relative;height:40px;background:var(--input-bg);border-radius:20px;margin:0 auto 16px;max-width:300px;overflow:hidden"><div style="position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--text-primary);z-index:2"></div><div id="tuner-needle" style="position:absolute;left:'+(50+S.tunerCents/2)+'%;top:4px;bottom:4px;width:12px;border-radius:6px;background:'+tC+';transition:left .15s;transform:translateX(-50%);z-index:3"></div><div style="position:absolute;top:50%;left:16px;transform:translateY(-50%);font-size:11px;color:var(--text-muted)">&#9837; flat</div><div style="position:absolute;top:50%;right:16px;transform:translateY(-50%);font-size:11px;color:var(--text-muted)">sharp &#9839;</div></div>';
+  if(runtime.active){
+    var inT=Math.abs(runtime.cents)<5,tC=inT?"#4ECDC4":Math.abs(runtime.cents)<15?"#FFE66D":"#FF6B6B";
+    h+='<div id="tuner-note-display" style="font-size:72px;font-weight:900;color:'+tC+';line-height:1">'+(runtime.note||"&#8212;")+'</div><div id="tuner-freq-display" style="font-size:16px;color:var(--text-muted);margin:4px 0 16px">'+(runtime.freq>0?runtime.freq+" Hz":"Play a note...")+'</div>';
+    h+='<div style="position:relative;height:40px;background:var(--input-bg);border-radius:20px;margin:0 auto 16px;max-width:300px;overflow:hidden"><div style="position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--text-primary);z-index:2"></div><div id="tuner-needle" style="position:absolute;left:'+(50+runtime.cents/2)+'%;top:4px;bottom:4px;width:12px;border-radius:6px;background:'+tC+';transition:left .15s;transform:translateX(-50%);z-index:3"></div><div style="position:absolute;top:50%;left:16px;transform:translateY(-50%);font-size:11px;color:var(--text-muted)">&#9837; flat</div><div style="position:absolute;top:50%;right:16px;transform:translateY(-50%);font-size:11px;color:var(--text-muted)">sharp &#9839;</div></div>';
     h+='<div id="tuner-status" style="font-size:14px;font-weight:700;color:'+tC+';margin-bottom:16px">';
-    if(!S.tunerFreq)h+="&#128266; Listening...";
+    if(!runtime.freq)h+="&#128266; Listening...";
     else if(inT)h+="&#9989; In Tune!";
-    else if(S.tunerCents>0)h+="&#11015; Too sharp (+"+S.tunerCents+"&#162;) &#8595;";
-    else h+="&#11014; Too flat ("+S.tunerCents+"&#162;) &#8593;";
+    else if(runtime.cents>0)h+="&#11015; Too sharp (+"+runtime.cents+"&#162;) &#8595;";
+    else h+="&#11014; Too flat ("+runtime.cents+"&#162;) &#8593;";
     h+='</div><button class="btn" onclick="act(\'stopTuner\')" style="background:#FF6B6B;color:#fff">Stop Tuner</button>';
   } else {
     h+='<div style="font-size:64px;margin-bottom:12px;opacity:.3">&#127908;</div>';
-    if(S.tunerErr)h+='<p style="color:#FF6B6B;font-size:13px;margin-bottom:12px">'+S.tunerErr+'</p>';
+    if(runtime.error)h+='<p style="color:#FF6B6B;font-size:13px;margin-bottom:12px">'+runtime.error+'</p>';
     h+='<button class="btn" onclick="act(\'startTuner\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">&#127908; Start Tuner</button>';
   }
   h+='</div></div>';
   // Audio Input Device
+  var audioRuntime = getLegacyAudioInputRuntime();
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127911; Audio Input</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Select your audio input device for the Tuner and Chord Check. Use this to pick your USB guitar cable instead of the default microphone.</p>';
   h+='<button onclick="act(\'refreshAudioInputs\')" class="btn" style="margin-bottom:12px;padding:8px 16px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;border:none;border-radius:10px">&#128260; Refresh Devices</button>';
-  if(S.audioInputDevices.length>0){
+  if(audioRuntime.devices.length>0){
     h+='<div style="display:flex;flex-direction:column;gap:8px">';
-    for(var ai=0;ai<S.audioInputDevices.length;ai++){
-      var ad=S.audioInputDevices[ai],isAI=S.audioInputId===ad.id,isTesting=S.audioTestingId===ad.id;
+    for(var ai=0;ai<audioRuntime.devices.length;ai++){
+      var ad=audioRuntime.devices[ai],isAI=audioRuntime.inputId===ad.id,isTesting=audioRuntime.testingId===ad.id;
       h+='<div style="border-radius:10px;border:2px solid '+(isAI?"#4ECDC4":"var(--border)")+';background:'+(isAI?"#4ECDC422":"var(--input-bg)")+';overflow:hidden">';
       h+='<div style="display:flex;align-items:center;gap:8px;padding:10px 14px">';
       h+='<button onclick="act(\'selectAudioInput\',\''+ad.id+'\')" style="flex:1;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:'+(isAI?"#4ECDC4":"var(--text-primary)")+';background:none;border:none;text-align:left;padding:0;cursor:pointer">'+(isAI?"&#9654; ":"&#9675; ")+escHTML(ad.name)+'</button>';
@@ -45,14 +74,14 @@ function tunerTab(){
       h+='</div>';
       if(isTesting){
         h+='<div style="padding:0 14px 10px">';
-        h+='<div style="background:var(--prog-bg);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px"><div id="audio-test-meter" style="height:100%;width:'+S.audioTestLevel+'%;background:'+(S.audioTestLevel>10?"#4ECDC4":"var(--text-muted)")+';border-radius:6px;transition:width .1s"></div></div>';
-        h+='<div id="audio-test-label" style="font-size:11px;font-weight:600;color:'+(S.audioTestLevel>10?"#4ECDC4":"var(--text-muted)")+'">'+( S.audioTestLevel>10?"Signal detected — strum to confirm":"Listening — strum your guitar...")+'</div>';
+        h+='<div style="background:var(--prog-bg);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px"><div id="audio-test-meter" style="height:100%;width:'+audioRuntime.testLevel+'%;background:'+(audioRuntime.testLevel>10?"#4ECDC4":"var(--text-muted)")+';border-radius:6px;transition:width .1s"></div></div>';
+        h+='<div id="audio-test-label" style="font-size:11px;font-weight:600;color:'+(audioRuntime.testLevel>10?"#4ECDC4":"var(--text-muted)")+'">'+( audioRuntime.testLevel>10?"Signal detected — strum to confirm":"Listening — strum your guitar...")+'</div>';
         h+='</div>';
       }
       h+='</div>';
     }
     h+='</div>';
-    if(S.audioInputId){
+    if(audioRuntime.inputId){
       h+='<button onclick="act(\'selectAudioInput\',\'\')" style="margin-top:8px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:var(--input-bg);color:var(--text-muted);border:1px solid var(--border)">Reset to Default</button>';
     }
   } else {

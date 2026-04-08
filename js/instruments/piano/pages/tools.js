@@ -34,7 +34,7 @@ function statsTab() {
   html += '<div class="stats-grid">';
   html += '<div class="stat-item"><div class="stat-val">' + S.xp + '</div><div class="stat-label">XP</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + S.streak + '</div><div class="stat-label">Streak</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.completedSessions.length + '</div><div class="stat-label">Sessions</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (S.completedSessions ? S.completedSessions.length : 0) + '</div><div class="stat-label">Sessions</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + S.level + '/8</div><div class="stat-label">Level</div></div>';
   html += '</div>';
 
@@ -85,7 +85,7 @@ function statsTab() {
   html += '<h3>Recent Activity</h3><div class="history-list">';
   var recent = S.history.slice(-10).reverse();
   recent.forEach(function(h) {
-    var d = new Date(h.ts);
+    var d = new Date(h.ts || h.timestamp);
     var time = d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     html += '<div class="history-row"><span>' + h.type + (h.chord ? ": " + h.chord : "") + (h.session ? " (S" + h.session + ")" : "") + '</span><span class="text-muted">' + time + '</span></div>';
   });

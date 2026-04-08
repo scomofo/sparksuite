@@ -118,6 +118,7 @@ var S={
   performDebug:false,
   performPracticeMode:"full",
   performTargetPhrase:null,
+  performTargetTechnique:null,
   performSongStats:{},
   performArrangementType:"chords",
   performanceStats:{},
@@ -235,6 +236,15 @@ var S={
   // Desktop Info (Phase 6)
   desktopInfo:{channel:"dev", version:"dev", buildNumber:0, lastUpdateCheckAt:null, updateStatus:"idle", lastBackupAt:null},
   feedbackDraft:{text:"", email:""},
+
+  // Core-owned rhythm highway runtime (transient)
+  activeCoreSegmentId:null,
+  rhythmHighwayPreset:"spark_learning",
+  rhythmHighwayLoop:null,
+  rhythmHighwayHeldMask:0,
+  rhythmHighwaySnapshot:null,
+  rhythmHighwayResult:null,
+  rhythmHighwayFeedback:"",
 
   // Release info (loaded at runtime)
   releaseInfo:null,
@@ -360,6 +370,9 @@ function loadState(){
     if(!Array.isArray(S.customSets))S.customSets=[];
     if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
     if(!Array.isArray(S.importedSongs))S.importedSongs=[];
+    // Ensure transient UI state has sane defaults
+    if(!S.screen)S.screen=SCR.HOME;
+    if(!S.tab)S.tab=TAB.PRACTICE;
   }catch(e){console.error("ChordSpark: loadState failed — data may be corrupted",e);}
 }
 

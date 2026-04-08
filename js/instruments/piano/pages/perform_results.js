@@ -2,6 +2,12 @@
 /* Performance results page with phrase breakdown and retry options */
 
 function pianoPerformanceResultsPage(){
+  try{ return _pianoPerformResultsInner(); }catch(e){
+    console.error("Piano results render error:",e);
+    return '<div class="card"><p>Results error: '+escHTML(String(e.message||e))+'</p><button class="btn" onclick="act(&apos;stopPerform&apos;)">Back</button></div>';
+  }
+}
+function _pianoPerformResultsInner(){
   var r = S.performResults || S.performanceResult;
   if(!r) return '<div class="card">No result</div>';
 
@@ -26,6 +32,7 @@ function pianoPerformanceResultsPage(){
     var weakestAcc = 999;
     for(var i=0;i<r.phrases.length;i++){
       var p = r.phrases[i];
+      if(!p) continue;
       var pAcc = p.total ? Math.round((p.hits / p.total) * 100) : 0;
       if(pAcc < weakestAcc){ weakestAcc = pAcc; weakestId = p.phraseId; }
       var color = pAcc >= 90 ? '#5a9e6a' : pAcc >= 70 ? '#d4a843' : '#c44';

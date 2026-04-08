@@ -11,10 +11,11 @@
   }
 
   function generatePerformanceReport(){
+    var stats = S.playerStats || {};
     return {
-      songsPlayed: S.playerStats.songsCompleted || 0,
+      songsPlayed: stats.songsCompleted || 0,
       avgAccuracy: getAverageAccuracy(),
-      bestStreak: S.playerStats.streakBest || 0
+      bestStreak: stats.streakBest || 0
     };
   }
 

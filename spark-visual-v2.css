@@ -1,0 +1,310 @@
+/* ═══════════════════════════════════════════════════════════════════
+   SparkSuite Visual v2 — Vibrant Playground (Neon Edition)
+   Non-destructive layer over existing styles.css and spark-visual.css
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ===== Instrument Theme Variables ===== */
+:root {
+  /* Default to guitar */
+  --inst-primary: #ff2d55;
+  --inst-glow: rgba(255,45,85,0.3);
+  --inst-tint: #1a0015;
+  --inst-primary-rgb: 255,45,85;
+  --inst-gradient: linear-gradient(135deg, #ff2d55, #ff6666);
+
+  /* Spacing scale (4px base) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-8: 48px;
+
+  /* Type scale */
+  --text-hero: 28px;
+  --text-heading: 18px;
+  --text-subheading: 14px;
+  --text-body: 13px;
+  --text-caption: 11px;
+  --text-micro: 9px;
+  --text-stat: 24px;
+
+  /* Font families */
+  --font-display-v2: 'Space Grotesk', 'Syne', sans-serif;
+  --font-body-v2: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
+  --font-mono-v2: 'JetBrains Mono', 'DM Sans', Consolas, monospace;
+
+  /* V2 overrides */
+  --radius-v2: 16px;
+  --radius-sm-v2: 10px;
+  --radius-pill: 20px;
+}
+
+/* ===== V2 Dark Base (overrides warm ember when v2 active) ===== */
+body.sv2 {
+  --bg: #0a0a12;
+  --bg-subtle: #10101a;
+  --card-bg: #141420;
+  --raised-bg: #1a1a28;
+  --border: #1e1e30;
+  --border-light: #2a2a3e;
+  --input-bg: #1a1a28;
+  --tab-bg: #141420;
+  --tab-inactive: #555;
+  --tab-active-bg: var(--inst-primary);
+  --tab-active-color: #fff;
+  --prog-bg: #1e1e30;
+  --chip-bg: #1a1a28;
+  --chip-color: #888;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(var(--inst-primary-rgb), 0.04), transparent 70%);
+}
+
+/* ===== V2 Component Classes ===== */
+
+/* Card */
+.sv2-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-v2);
+  padding: var(--sp-4);
+  transition: all 0.3s ease;
+}
+
+/* Instrument-themed card */
+.sv2-card--inst {
+  border-color: rgba(var(--inst-primary-rgb), 0.15);
+  background: linear-gradient(160deg, var(--inst-tint), var(--card-bg));
+  box-shadow: 0 4px 24px rgba(var(--inst-primary-rgb), 0.08);
+  position: relative;
+  overflow: hidden;
+}
+.sv2-card--inst::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--inst-primary-rgb), 0.08), transparent 70%);
+  pointer-events: none;
+}
+
+/* Buttons */
+.sv2-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: var(--sp-3) var(--sp-5);
+  border: none;
+  border-radius: var(--radius-sm-v2);
+  font-family: var(--font-body-v2);
+  font-size: var(--text-subheading);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.sv2-btn:active { transform: scale(0.97); }
+
+.sv2-btn--primary {
+  background: var(--inst-gradient);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(var(--inst-primary-rgb), 0.3);
+}
+.sv2-btn--primary:hover {
+  box-shadow: 0 6px 24px rgba(var(--inst-primary-rgb), 0.4);
+  transform: translateY(-1px);
+}
+
+.sv2-btn--ghost {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.sv2-btn--ghost:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+}
+
+/* Badge pills */
+.sv2-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 3px var(--sp-2);
+  border-radius: 6px;
+  font-size: var(--text-micro);
+  font-weight: 700;
+  font-family: var(--font-body-v2);
+  background: rgba(var(--inst-primary-rgb), 0.12);
+  color: var(--inst-primary);
+}
+
+/* Icon container (replaces raw emoji) */
+.sv2-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-v2);
+  background: var(--inst-gradient);
+  box-shadow: 0 4px 16px rgba(var(--inst-primary-rgb), 0.3);
+  flex-shrink: 0;
+}
+.sv2-icon--sm { width: 32px; height: 32px; font-size: 16px; border-radius: 10px; }
+.sv2-icon--md { width: 48px; height: 48px; font-size: 24px; }
+.sv2-icon--lg { width: 56px; height: 56px; font-size: 28px; }
+
+/* Progress ring */
+.sv2-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.sv2-ring__label {
+  position: absolute;
+  font-family: var(--font-mono-v2);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Stat number */
+.sv2-stat {
+  font-family: var(--font-mono-v2);
+  font-size: var(--text-stat);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Section heading */
+.sv2-heading {
+  font-family: var(--font-display-v2);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ===== Home Dashboard V2 ===== */
+
+.sv2-home-hero {
+  border-radius: var(--radius-pill);
+  padding: var(--sp-5);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(var(--inst-primary-rgb), 0.15);
+  background: linear-gradient(160deg, var(--inst-tint), rgba(var(--inst-primary-rgb), 0.03), var(--card-bg));
+  margin-bottom: var(--sp-4);
+}
+.sv2-home-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(var(--inst-primary-rgb), 0.12), transparent 70%);
+  pointer-events: none;
+}
+
+.sv2-home-hero__header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  position: relative;
+  z-index: 1;
+}
+
+.sv2-home-hero__info { flex: 1; }
+
+.sv2-home-hero__name {
+  font-family: var(--font-display-v2);
+  font-size: var(--text-hero);
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.sv2-home-hero__level {
+  font-size: var(--text-caption);
+  color: rgba(255,255,255,0.5);
+  margin-top: 2px;
+}
+
+.sv2-home-hero__badges {
+  display: flex;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.sv2-home-hero__actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  position: relative;
+  z-index: 1;
+}
+.sv2-home-hero__actions .sv2-btn { flex: 1; font-size: var(--text-caption); padding: var(--sp-3); }
+.sv2-home-hero__actions .sv2-btn--primary { border-radius: var(--radius-sm-v2); }
+
+/* Inactive instrument row */
+.sv2-inst-row {
+  display: flex;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+.sv2-inst-row__item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm-v2);
+  padding: var(--sp-2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.sv2-inst-row__item:hover {
+  border-color: rgba(var(--inst-primary-rgb), 0.3);
+  background: var(--raised-bg);
+}
+.sv2-inst-row__item .sv2-icon--sm {
+  width: 28px; height: 28px; font-size: 14px; border-radius: 8px;
+}
+
+/* Daily goal card */
+.sv2-daily-goal {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-v2);
+  padding: var(--sp-3);
+}
+
+/* ===== V2 Animations ===== */
+@keyframes sv2-slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes sv2-popIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  70% { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes sv2-pulseGlow {
+  0%, 100% { box-shadow: 0 4px 16px rgba(var(--inst-primary-rgb), 0.2); }
+  50% { box-shadow: 0 4px 24px rgba(var(--inst-primary-rgb), 0.4); }
+}
+@keyframes sv2-stagger1 { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+@keyframes sv2-stagger2 { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+@keyframes sv2-stagger3 { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+
+.sv2-anim-hero { animation: sv2-slideUp 0.4s ease-out both; }
+.sv2-anim-stagger-1 { animation: sv2-stagger1 0.3s ease-out 0.1s both; }
+.sv2-anim-stagger-2 { animation: sv2-stagger2 0.3s ease-out 0.2s both; }
+.sv2-anim-stagger-3 { animation: sv2-stagger3 0.3s ease-out 0.3s both; }
+.sv2-anim-badge { animation: sv2-popIn 0.3s ease-out both; }
+.sv2-anim-glow { animation: sv2-pulseGlow 3s ease-in-out infinite; }

@@ -125,6 +125,40 @@
       }
 
       return result;
+    },
+
+    /**
+     * applySessionOutcome(sessionResult)
+     * Single entry point for post-session state updates.
+     * During dual-path migration: READ-ONLY observer that builds a ProgressOutcome
+     * from current state WITHOUT running evaluateAll (legacy processResults already did that).
+     * When legacy path is retired, this will become the sole progression driver.
+     */
+    applySessionOutcome: function(sessionResult) {
+      sessionResult = sessionResult || {};
+
+      // During dual-path phase: do NOT call evaluateAll — the legacy processResults
+      // path already ran it. Instead, snapshot current state into a ProgressOutcome
+      // for contract validation and debug logging.
+      var xpSnapshot = typeof S !== "undefined" ? (S.xp || 0) : 0;
+      var levelSnapshot = typeof S !== "undefined" ? (S.playerLevel || S.level || 1) : 1;
+
+      if (typeof SparkContracts !== "undefined") {
+        return SparkContracts.createProgressOutcome({
+          xpEarned: 0, // Not awarding — legacy path already did
+          levelUps: [],
+          masteryChanges: {},
+          unlocks: [],
+          achievements: [],
+          streakChanges: null,
+          comebackBonus: 0,
+          nextRecommendation: null,
+          _dualPath: true,
+          _stateSnapshot: { xp: xpSnapshot, level: levelSnapshot }
+        });
+      }
+
+      return { _dualPath: true, xp: xpSnapshot, level: levelSnapshot };
     }
   };
 

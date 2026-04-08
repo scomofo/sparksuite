@@ -22,7 +22,8 @@
   function getLevelProgress(){
     var current = xpForLevel(S.playerLevel);
     var next = xpForLevel(S.playerLevel + 1);
-    var progress = (S.playerXP - current) / (next - current);
+    var denom = (next - current) || 1;
+    var progress = (S.playerXP - current) / denom;
     return Math.max(0, Math.min(1, progress));
   }
 
