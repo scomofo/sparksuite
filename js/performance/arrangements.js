@@ -39,7 +39,7 @@
 
     return {
       id: perfSong.id + "_chords",
-      mode: "chords",
+      mode: "performance",
       bpm: perfSong.bpm,
       events: events
     };
@@ -129,7 +129,7 @@
 
     return {
       id: perfSong.id + "_rhythm",
-      mode: "rhythm_chords",
+      mode: "performance",
       bpm: bpm,
       events: events
     };
@@ -181,7 +181,7 @@
 
     return {
       id: (perfSong.id || "lead") + "_lead",
-      mode: "lead",
+      mode: "performance",
       bpm: bpm,
       events: events
     };
