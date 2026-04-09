@@ -28,11 +28,14 @@
     var brainAnalysis = null;
     if (typeof SparkLearningBrain !== "undefined" && typeof S !== "undefined" && S.skillGraph) {
       var flowState = null;
-      if (typeof SparkFlowEngine !== "undefined" && typeof S.performCombo !== "undefined") {
+      if (typeof SparkFlowEngine !== "undefined") {
+        var recentEvents = (S.lastSessionEvents && S.lastSessionEvents.length) ? S.lastSessionEvents : [];
+        var missCount = 0;
+        for (var ei = 0; ei < recentEvents.length; ei++) { if (recentEvents[ei] && recentEvents[ei].type === "miss") missCount++; }
         flowState = SparkFlowEngine.buildFlowState({
           accuracy: S.performAccuracy || 0,
           combo: S.performCombo || 0,
-          missStreak: 0,
+          missStreak: missCount,
           timingConsistency: (S.playerProfile && S.playerProfile.consistency) || 0
         });
       }
