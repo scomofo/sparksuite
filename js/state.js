@@ -155,6 +155,10 @@ var S={
   dailyPlanItems:null,
   dailyPlanProgress:[],
 
+  // Feel system calibration (user-configurable device offsets)
+  audioOffsetMs:0,
+  visualOffsetMs:0,
+
   // Skill tree
   skillTreeFocus:"overview",
   skillTreeSelectedNode:null,
