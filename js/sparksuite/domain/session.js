@@ -6,7 +6,11 @@
     this.generatedDate = input.generatedDate || new Date().toISOString().slice(0, 10);
     this.instrumentId = input.instrumentId || null;
     this.focus = input.focus || "Well-rounded practice";
+    this.lesson = Object.prototype.hasOwnProperty.call(input, "lesson") ? input.lesson : null;
+    this.difficulty = Object.prototype.hasOwnProperty.call(input, "difficulty") ? input.difficulty : null;
     this.segments = Array.isArray(input.segments) ? input.segments : [];
+    this.exercises = Array.isArray(input.exercises) ? input.exercises : [];
+    this.rewards = Object.prototype.hasOwnProperty.call(input, "rewards") ? input.rewards : [];
     this.context = input.context || {};
   }
 

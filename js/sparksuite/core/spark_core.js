@@ -227,11 +227,14 @@
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return "guided_session";
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return "performance_song";
     if (flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return "daily_practice";
+    if (flow === "legacy_practice_session") return "session";
+    if (flow === "legacy_practice_drill") return "drill";
     return flow || null;
   };
 
   SparkCore.prototype.startSession = function(input) {
     input = input || {};
+    if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
     var flow = input.flow || this.aiEngine.suggestNextFlow();
     var today = new Date().toISOString().slice(0, 10);
     if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today) {
@@ -347,6 +350,44 @@
       transport: { status: "ready", positionMs: 0 }
     });
     SparkProgressBridge.syncPlanToState(plan);
+    return plan;
+  };
+
+  SparkCore.prototype.startLegacyPracticeSession = function(input) {
+    input = input || {};
+    var instrumentContext = this.instrumentManager.getActiveContext();
+    var plan = input.mode === "drill"
+      ? this.sessionEngine.buildLegacyPracticeDrill({
+        instrumentContext: instrumentContext,
+        level: input.level,
+        chordNames: input.chordNames
+      })
+      : this.sessionEngine.buildLegacyPracticeSession({
+        instrumentContext: instrumentContext,
+        level: input.level,
+        mode: input.mode,
+        chordName: input.chordName
+      });
+    var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
+
+    this.currentPlan = plan;
+    this.storage.setCurrentPlanId(plan.id);
+    this.updateRuntimeState({
+      activeFlow: plan.flow,
+      activeInstrumentId: plan.instrumentType || plan.instrumentId || null,
+      activeInstrumentType: instrumentContext.instrumentType || null,
+      activePlanId: plan.id,
+      activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
+      activeScreen: this.deriveRuntimeScreen(plan.flow),
+      activeTab: "practice",
+      legacyPracticeMode: legacy.mode || null,
+      legacyPracticeChordName: Object.prototype.hasOwnProperty.call(legacy, "chordName") ? legacy.chordName : null,
+      legacyPracticeTimerActive: false,
+      legacyPracticeDurationSec: legacy.durationSec || null,
+      legacyPracticeRemainingSec: legacy.durationSec || null,
+      legacyDrillChordNames: this.cloneValue(legacy.chordNames || null),
+      transport: { status: "ready", positionMs: 0 }
+    });
     return plan;
   };
 
