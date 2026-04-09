@@ -3,16 +3,16 @@
     if (!skillGraph) return null;
 
     if (skillGraph.timing < 0.6) {
-      return { type: "timing_drill", mode: "practice", tempo: 60, pattern: "D D D D", lane: null, duration: 30, label: "Timing: Steady Beat" };
+      return { type: "timing_drill", mode: "practice", tempo: 60, pattern: "D D D D", lane: null, duration: 30 };
     }
 
     var weakLane = findWeakLane(skillGraph.laneAccuracy);
     if (weakLane !== null) {
-      return { type: "lane_drill", mode: "practice", tempo: 80, pattern: "D D D D", lane: weakLane, duration: 30, label: "Lane Focus: Lane " + (weakLane + 1) };
+      return { type: "lane_drill", mode: "practice", tempo: 80, pattern: "D D D D", lane: weakLane, duration: 30 };
     }
 
     if (skillGraph.chordAccuracy < 0.7) {
-      return { type: "chord_drill", mode: "practice", tempo: 70, pattern: "D D U U D U", lane: null, duration: 30, label: "Chord Transitions" };
+      return { type: "chord_drill", mode: "practice", tempo: 70, pattern: "D D U U D U", lane: null, duration: 30 };
     }
 
     return null;
