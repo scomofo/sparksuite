@@ -158,6 +158,8 @@ var S={
   // Feel system calibration (user-configurable device offsets)
   audioOffsetMs:0,
   visualOffsetMs:0,
+  playerProfile:null,
+  feelPreset:"arcade",
 
   // Skill tree
   skillTreeFocus:"overview",
