@@ -415,6 +415,7 @@ function maybeScorePendingEvents(nowSec) {
       S.performCombo = 0;
       S.performLastHitDirection = "miss";
       S.performLastHitDelta = 0;
+      if(typeof SparkSessionRuntime!=="undefined")SparkSessionRuntime.recordEvent({type:"miss",deltaMs:Math.round(deltaMs),result:"miss",eventId:evt.id||null,timestamp:Date.now()});
       if (evt.sourceFlags && targetTechnique && evt.sourceFlags[targetTechnique] && typeof buildPerformanceFeedbackLabel === "function") {
         S.performLastHitLabel = buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique);
         S.performLastHitTime = Date.now();
@@ -460,6 +461,7 @@ function maybeScorePendingEvents(nowSec) {
         if (typeof SparkDynamicTiming !== "undefined") {
           SparkDynamicTiming.recordDelta(deltaMs);
         }
+        if(typeof SparkSessionRuntime!=="undefined")SparkSessionRuntime.recordEvent({type:"hit",deltaMs:Math.round(deltaMs),result:result.grade,score:result.score,eventId:evt.id||null,timestamp:Date.now()});
 
         _updatePerformanceAccuracy(chart);
       }
