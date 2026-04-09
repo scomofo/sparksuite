@@ -1881,6 +1881,7 @@ window.act=function(a,v){
     else S.screen=SCR.HOME_DASH;
     render();return;
   }
+  if(a==="openDailyPlan"){if(typeof SparkDailyPlanGenerator!=="undefined"&&S.skillGraph){S.dailyPlanItems=SparkDailyPlanGenerator.generate(S.skillGraph,typeof SONGS!=="undefined"?SONGS:[]);S.screen=SCR.PLAN;}render();return;}
   if(a==="openSkillDashboard"){S.screen=SCR.SKILL_DASHBOARD;render();return;}
   if(a==="openSettings"){
     openUtilityScreenRequest("settings");
