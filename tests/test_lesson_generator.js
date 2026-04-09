@@ -55,7 +55,7 @@ test("lesson has required fields", function() {
   var sg = SkillTracker.create();
   sg.timing = 0.3;
   var lesson = LessonGen.generate(sg);
-  assert.ok(lesson.label, "should have label");
+  assert.ok(lesson.type, "should have type");
   assert.ok(lesson.pattern, "should have pattern");
   assert.ok(typeof lesson.duration === "number", "should have numeric duration");
 });

@@ -102,7 +102,7 @@
     return new SessionPlan({
       flow: "legacy_practice_session",
       instrumentId: instrumentContext.appId || null,
-      focus: segmentLabel,
+      focus: chordName || mode,
       lesson: chordName ? { id: chordName } : null,
       difficulty: level,
       segments: [SparkSessionSegment.create({
@@ -137,7 +137,7 @@
     return new SessionPlan({
       flow: "legacy_practice_drill",
       instrumentId: instrumentContext.appId || null,
-      focus: chordNames.length ? ("Drill " + chordNames.join(" / ")) : "Chord drill",
+      focus: "chord_transition",
       lesson: chordNames.length ? { id: chordNames.join("_") } : null,
       difficulty: parseLevel(context.level),
       segments: [SparkSessionSegment.create({
@@ -175,7 +175,7 @@
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       instrumentId: instrumentContext.appId || null,
-      focus: guidedPlan ? guidedPlan.title || ("Session " + sessionNum) : "Guided session",
+      focus: "guided",
       lesson: guidedPlan,
       difficulty: guidedPlan ? guidedPlan.level || null : null,
       segments: guidedPlan ? [SparkSessionSegment.create({
@@ -208,12 +208,12 @@
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
       instrumentId: instrumentContext.appId || null,
-      focus: song ? "Perform " + (song.title || "song") : "Performance song",
+      focus: "performance",
       lesson: song ? { id: songId } : null,
       difficulty: difficultyId,
       segments: song ? [SparkSessionSegment.create({
         id: "performance_song_" + songId,
-        type: SparkSessionSegmentTypes.PERFORMANCE_SONG,
+        type: "song",
         durationSec: estimateSongDurationSec(song),
         meta: {
           songId: songId,

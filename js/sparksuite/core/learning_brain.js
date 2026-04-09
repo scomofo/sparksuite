@@ -44,12 +44,12 @@
 
     // Fallback: manual generation
     if (focusSkill === "timing") {
-      return { type: "timing_drill", mode: "practice", tempo: 60, pattern: "D D D D", lane: null, duration: 30, label: "Timing: Steady Beat" };
+      return { type: "timing_drill", mode: "practice", tempo: 60, pattern: "D D D D", lane: null, duration: 30 };
     }
     if (focusSkill === "chordAccuracy") {
-      return { type: "chord_drill", mode: "practice", tempo: 70, pattern: "D D U U D U", lane: null, duration: 30, label: "Chord Transitions" };
+      return { type: "chord_drill", mode: "practice", tempo: 70, pattern: "D D U U D U", lane: null, duration: 30 };
     }
-    return { type: "rhythm_drill", mode: "practice", tempo: 70, pattern: "D U D U", lane: null, duration: 30, label: "Rhythm Practice" };
+    return { type: "rhythm_drill", mode: "practice", tempo: 70, pattern: "D U D U", lane: null, duration: 30 };
   }
 
   // Build a complete adaptive session
@@ -67,7 +67,6 @@
       segments.push({
         type: "song",
         mode: "performance",
-        label: songList[songIdx].title || "Song",
         song: songList[songIdx],
         duration: 120
       });
@@ -82,7 +81,6 @@
         pattern: "D U D U D U D U",
         lane: null,
         duration: 30,
-        label: "Challenge: Fast Strums"
       });
     }
 
