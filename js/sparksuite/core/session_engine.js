@@ -24,35 +24,55 @@
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.buildPerformanceSongSession(context);
     if (flow !== SparkSessionTypes.FLOW_DAILY_PRACTICE) return this.buildEmptySession(flow, context);
 
-    // Inject LearningBrain analysis
+    // 1. Analyze user via LearningBrain + FlowEngine
     var brainAnalysis = null;
     if (typeof SparkLearningBrain !== "undefined" && typeof S !== "undefined" && S.skillGraph) {
       var flowState = null;
-      if (typeof S.performCombo !== "undefined") {
-        flowState = { accuracy: S.performAccuracy || 0, combo: S.performCombo || 0, missStreak: 0, timingConsistency: 0 };
+      if (typeof SparkFlowEngine !== "undefined" && typeof S.performCombo !== "undefined") {
+        flowState = SparkFlowEngine.buildFlowState({
+          accuracy: S.performAccuracy || 0,
+          combo: S.performCombo || 0,
+          missStreak: 0,
+          timingConsistency: (S.playerProfile && S.playerProfile.consistency) || 0
+        });
       }
       brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, flowState);
     }
 
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
+    var difficulty = "easy";
+    if (typeof S !== "undefined" && S.skillGraph) {
+      var sk = S.skillGraph;
+      var avg = ((sk.timing || 0) + (sk.rhythm || 0) + (sk.chordAccuracy || 0)) / 3;
+      difficulty = avg > 0.8 ? "hard" : avg > 0.6 ? "medium" : "easy";
+    }
+
+    var segments = [];
+    var exercises = [];
+
+    // 2. Inject practice if brain recommends it
+    if (brainAnalysis && (brainAnalysis.recommendation === "targeted_practice" || brainAnalysis.recommendation === "easy_practice" || brainAnalysis.recommendation === "practice")) {
+      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis.focusSkill, S.skillGraph) : null;
+      if (brainDrill) {
+        var pn = normalizeSegment({ id: "brain_" + Date.now(), type: "practice", durationSec: brainDrill.duration || 30, meta: { skill: brainAnalysis.focusSkill, gameplayPayload: brainDrill } });
+        segments.push(pn.segment);
+        exercises.push(pn.exercise);
+      }
+    }
+
+    // 3. Merge practice plan segments
     var practicePlan = this.practiceEngine.buildDailyPracticePlan({
       curriculum: curriculumContext,
       instrumentContext: context.instrumentContext || {}
     });
+    if (practicePlan.segments) { for (var pi = 0; pi < practicePlan.segments.length; pi++) segments.push(practicePlan.segments[pi]); }
+    if (practicePlan.exercises) { for (var pe = 0; pe < practicePlan.exercises.length; pe++) exercises.push(practicePlan.exercises[pe]); }
 
-    var segments = practicePlan.segments;
-
-    // Inject brain-recommended segment if applicable
-    if (brainAnalysis && (brainAnalysis.recommendation === "targeted_practice" || brainAnalysis.recommendation === "easy_practice")) {
-      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis.focusSkill, S.skillGraph) : null;
-      if (brainDrill) {
-        segments.unshift(SparkSessionSegment.create({
-          id: "brain_" + Date.now(),
-          type: SparkSessionSegmentTypes.PRACTICE || "practice",
-          durationSec: brainDrill.duration || 30,
-          meta: { skill: brainAnalysis.focusSkill, gameplayPayload: brainDrill }
-        }));
-      }
+    // 4. Inject challenge if brain recommends it
+    if (brainAnalysis && brainAnalysis.recommendation === "challenge") {
+      var cn = normalizeSegment({ id: "challenge_" + Date.now(), type: "challenge", durationSec: 30, meta: { skill: brainAnalysis.focusSkill, pattern: "D U D U D U D U" } });
+      segments.push(cn.segment);
+      exercises.push(cn.exercise);
     }
 
     return new SessionPlan({
@@ -60,14 +80,11 @@
       instrumentId: context.instrumentContext ? context.instrumentContext.appId : null,
       focus: practicePlan.focus,
       lesson: curriculumContext.nextLesson || null,
-      difficulty: curriculumContext.nextLesson ? curriculumContext.nextLesson.level || null : null,
+      difficulty: difficulty,
       segments: segments,
-      exercises: segments,
-      rewards: [],
-      context: {
-        curriculum: curriculumContext,
-        brainAnalysis: brainAnalysis
-      }
+      exercises: exercises,
+      rewards: practicePlan.rewards || [{ type: "xp", amount: 40 }],
+      context: { curriculum: curriculumContext, brainAnalysis: brainAnalysis }
     });
   };
 
