@@ -1,4 +1,11 @@
 (function() {
+  function normalizeSegmentType(type) {
+    if (type === "rhythm_highway" || type === "rhythm" || type === "finger" || type === "warmup" || type === "transition") return "practice";
+    if (type === "performance_song" || type === "performance_phrase") return "song";
+    if (type === "challenge") return "challenge";
+    return "practice";
+  }
+
   function PracticeEngine(psychologyEngine) {
     this.psychologyEngine = psychologyEngine;
   }
@@ -7,9 +14,34 @@
     context = context || {};
     var segments = SparkPracticeBridge.buildDailyPracticeSegments(context);
     segments = this.attachGameplayPayloads(segments, context);
+    var focus = this.psychologyEngine.getFocusLabel(segments);
     return {
-      segments: segments,
-      focus: this.psychologyEngine.getFocusLabel(segments)
+      segments: segments.map(function(seg, i) {
+        return { id: seg.id || ("seg_" + i), type: normalizeSegmentType(seg.type), exerciseIds: [seg.id || ("ex_" + i)] };
+      }),
+      exercises: segments.map(function(seg, i) {
+        return {
+          id: seg.id || ("ex_" + i),
+          type: normalizeSegmentType(seg.type),
+          difficulty: seg.difficulty || "normal",
+          data: {
+            core: {
+              skill: (seg.meta && seg.meta.skill) || null,
+              chords: (seg.meta && seg.meta.chords) || null,
+              pattern: (seg.meta && seg.meta.pattern) || null,
+              instrument: (seg.meta && seg.meta.instrument) || null,
+              durationSec: seg.durationSec || 60
+            },
+            gameplay: {
+              payload: (seg.meta && seg.meta.gameplayPayload) || null,
+              preset: (seg.meta && seg.meta.enginePreset) || null,
+              chartId: (seg.meta && seg.meta.chartId) || null
+            }
+          }
+        };
+      }),
+      focus: focus,
+      rewards: { xp: segments.length * 10 }
     };
   };
 
