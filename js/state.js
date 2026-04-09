@@ -154,6 +154,8 @@ var S={
   recommendedLesson:null,
   dailyPlanItems:null,
   dailyPlanProgress:[],
+  dailyPlanExercises:null,
+  lastSessionEvents:[],
 
   // Feel system calibration (user-configurable device offsets)
   audioOffsetMs:0,

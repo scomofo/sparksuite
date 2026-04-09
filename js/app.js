@@ -1881,7 +1881,16 @@ window.act=function(a,v){
     else S.screen=SCR.HOME_DASH;
     render();return;
   }
-  if(a==="openDailyPlan"){if(typeof SparkDailyPlanGenerator!=="undefined"&&S.skillGraph){S.dailyPlanItems=SparkDailyPlanGenerator.generate(S.skillGraph,typeof SONGS!=="undefined"?SONGS:[]);S.screen=SCR.PLAN;}render();return;}
+  if(a==="openDailyPlan"){
+    // Route through SessionRuntime (single authoritative path)
+    if(typeof SparkSessionRuntime!=="undefined"){
+      var session=SparkSessionRuntime.startSessionLoop({flow:typeof SparkSessionTypes!=="undefined"?SparkSessionTypes.FLOW_DAILY_PRACTICE:"daily_practice",context:{instrumentContext:SparkInstruments.getActiveContext()}});
+      if(session){S.dailyPlanItems=session.segments;S.dailyPlanExercises=session.exercises;}
+    }else if(typeof SparkDailyPlanGenerator!=="undefined"&&S.skillGraph){
+      S.dailyPlanItems=SparkDailyPlanGenerator.generate(S.skillGraph,typeof SONGS!=="undefined"?SONGS:[]);
+    }
+    S.screen=SCR.PLAN;render();return;
+  }
   if(a==="openSkillDashboard"){S.screen=SCR.SKILL_DASHBOARD;render();return;}
   if(a==="openSettings"){
     openUtilityScreenRequest("settings");
