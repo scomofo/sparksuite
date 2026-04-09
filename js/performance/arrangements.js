@@ -7,6 +7,16 @@
     var effectiveBpm = perfSong._effectiveBpm || perfSong.bpm || 100;
     var barDur = (60 / effectiveBpm) * 4; // 4 beats per bar
 
+
+    // Build chord-to-lane map from unique chords in order of first appearance
+    var chordLaneMap = {};
+    var nextLane = 0;
+    for (var ci = 0; ci < perfSong.progression.length; ci++) {
+      if (chordLaneMap[perfSong.progression[ci]] == null) {
+        chordLaneMap[perfSong.progression[ci]] = nextLane % 6;
+        nextLane++;
+      }
+    }
     // Each progression entry = one bar, strum on beat 1
     for (var i = 0; i < perfSong.progression.length; i++) {
       var chord = perfSong.progression[i];
@@ -20,6 +30,7 @@
         dur: barDur,
         type: "chord",
         chord: chord,
+        lane: chordLaneMap[chord],
         laneLabel: chord,
         notes: notes,
         strum: "down"
@@ -61,7 +72,7 @@
     return phrases;
   }
 
-  function expandStrumPattern(pattern, barDur, chordName, chordNotes, startSec, phraseId) {
+  function expandStrumPattern(pattern, barDur, chordName, chordNotes, startSec, phraseId, lane) {
     if (!pattern || !pattern.length) return [];
     var slotDur = barDur / pattern.length;
     var events = [];
@@ -73,6 +84,7 @@
         dur: slotDur * 0.8,
         type: "strum",
         chord: chordName,
+        lane: lane != null ? lane : 0,
         laneLabel: (dir === "U" ? "\u2191 " : "\u2193 ") + chordName,
         notes: chordNotes || [],
         strum: dir,
@@ -91,6 +103,16 @@
     var events = [];
     var evtId = 1;
 
+    // Build chord-to-lane map from unique chords in order of first appearance
+    var chordLaneMap = {};
+    var nextLane = 0;
+    for (var ci = 0; ci < perfSong.progression.length; ci++) {
+      if (chordLaneMap[perfSong.progression[ci]] == null) {
+        chordLaneMap[perfSong.progression[ci]] = nextLane % 6;
+        nextLane++;
+      }
+    }
+
     for (var i = 0; i < perfSong.progression.length; i++) {
       var chord = perfSong.progression[i];
       var notes = [];
@@ -98,7 +120,7 @@
         notes = CHORD_NOTES[chord].slice();
       }
       var barStart = i * barDur;
-      var strums = expandStrumPattern(pattern, barDur, chord, notes, barStart, 0);
+      var strums = expandStrumPattern(pattern, barDur, chord, notes, barStart, 0, chordLaneMap[chord]);
       for (var j = 0; j < strums.length; j++) {
         strums[j].id = evtId++;
         events.push(strums[j]);
@@ -150,6 +172,7 @@
         type: "note",
         note: n.note || n,
         midiNote: n.midi || null,
+        lane: n.lane != null ? n.lane : (n.midi ? n.midi % 6 : i % 6),
         laneLabel: typeof n === "string" ? n : (n.note || "?"),
         notes: [typeof n === "string" ? n : (n.note || "")],
         strum: null

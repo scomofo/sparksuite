@@ -95,9 +95,9 @@ class IntervalClassification {
     final interval = semitones.abs() % 12;
     switch (interval) {
       case 0: // Unison
-      case 5: // Perfect 4th
       case 7: // Perfect 5th
         return IntervalQuality.perfectConsonance;
+      case 5: // Perfect 4th — dissonance in 2-voice species counterpoint
       case 3: // Minor 3rd
       case 4: // Major 3rd
       case 8: // Minor 6th
