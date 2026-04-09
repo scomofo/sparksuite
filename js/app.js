@@ -3512,6 +3512,8 @@ window.act=function(a,v){
     S.rhythmHighwayHeldMask=(S.rhythmHighwayHeldMask&laneMask)?(S.rhythmHighwayHeldMask&~laneMask):(S.rhythmHighwayHeldMask|laneMask);
     render();return;
   }
+  if(a==="practiceTempoDown"){if(typeof adjustPracticeTempo==="function")adjustPracticeTempo(-10);render();return;}
+  if(a==="practiceTempoUp"){if(typeof adjustPracticeTempo==="function")adjustPracticeTempo(10);render();return;}
   if(a==="rhythmHighwayStrum"){
     if(typeof _sparkRhythmHighwayStrum==="function")_sparkRhythmHighwayStrum();
     render();return;
