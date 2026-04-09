@@ -153,6 +153,7 @@ var S={
   performComboPulseAt:0,
   recommendedLesson:null,
   dailyPlanItems:null,
+  dailyPlanProgress:[],
 
   // Skill tree
   skillTreeFocus:"overview",
