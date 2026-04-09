@@ -223,6 +223,14 @@
     return this.runtimeState;
   };
 
+
+  function _normalizeSegType(type) {
+    if (!type) return "practice";
+    if (type === "rhythm_highway" || type === "rhythm" || type === "finger" || type === "warmup" || type === "transition" || type === "guided_session") return "practice";
+    if (type === "performance_song" || type === "performance_phrase") return "song";
+    if (type === "challenge") return "challenge";
+    return "practice";
+  }
   SparkCore.prototype.deriveRuntimeScreen = function(flow) {
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return "guided_session";
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return "performance_song";
@@ -299,6 +307,34 @@
       arrangementType: input.arrangementType,
       difficultyId: input.difficultyId
     });
+    // Validate session plan contract
+    if (plan && !plan.exercises) {
+      // Legacy V1 plan — normalize it
+      plan.exercises = (plan.segments || []).map(function(seg, i) {
+        return {
+          id: seg.id || ("ex_" + i),
+          type: _normalizeSegType(seg.type),
+          difficulty: seg.difficulty || "normal",
+          data: {
+            core: {
+              skill: (seg.meta && seg.meta.skill) || null,
+              chords: (seg.meta && seg.meta.chords) || null,
+              pattern: (seg.meta && seg.meta.pattern) || null,
+              instrument: (seg.meta && seg.meta.instrument) || null,
+              durationSec: seg.durationSec || 60
+            },
+            gameplay: {
+              payload: (seg.meta && seg.meta.gameplayPayload) || null,
+              preset: (seg.meta && seg.meta.enginePreset) || null,
+              chartId: (seg.meta && seg.meta.chartId) || null
+            }
+          }
+        };
+      });
+      plan.segments = (plan.segments || []).map(function(seg, i) {
+        return { id: seg.id || ("seg_" + i), type: _normalizeSegType(seg.type), exerciseIds: [seg.id || ("ex_" + i)] };
+      });
+    }
     this.currentPlan = plan;
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
