@@ -1,4 +1,18 @@
 (function() {
+  var _normId = 0;
+  function _nid() { return "ex_" + Date.now() + "_" + (++_normId); }
+  function normalizeSegment(raw) {
+    var exId = raw.id || _nid();
+    var segType = (typeof SparkSessionSegmentTypes !== "undefined" && SparkSessionSegmentTypes.normalize)
+      ? SparkSessionSegmentTypes.normalize(raw.type) : (raw.type || "practice");
+    return {
+      segment: { id: raw.id || ("seg_" + exId), type: segType, exerciseIds: [exId] },
+      exercise: { id: exId, type: segType, difficulty: raw.difficulty || "normal",
+        data: { core: { skill: (raw.meta && raw.meta.skill) || null, chords: (raw.meta && raw.meta.chords) || (raw.meta && raw.meta.chordNames) || (raw.meta && raw.meta.chordName ? [raw.meta.chordName] : null), pattern: (raw.meta && raw.meta.pattern) || null, instrument: (raw.meta && raw.meta.instrument) || null, durationSec: raw.durationSec || 60, sessionNum: (raw.meta && raw.meta.guidedSession) || null, songId: (raw.meta && raw.meta.songId) || null, arrangementType: (raw.meta && raw.meta.arrangementType) || null, difficultyId: (raw.meta && raw.meta.difficultyId) || null, mode: (raw.meta && raw.meta.mode) || null },
+          gameplay: { payload: (raw.meta && raw.meta.gameplayPayload) || null, preset: (raw.meta && raw.meta.enginePreset) || null, chartId: (raw.meta && raw.meta.chartId) || null } } }
+    };
+  }
+
   function SessionEngine(practiceEngine, curriculumEngine) {
     this.practiceEngine = practiceEngine;
     this.curriculumEngine = curriculumEngine;
@@ -35,7 +49,6 @@
         segments.unshift(SparkSessionSegment.create({
           id: "brain_" + Date.now(),
           type: SparkSessionSegmentTypes.PRACTICE || "practice",
-          label: brainDrill.label,
           durationSec: brainDrill.duration || 30,
           meta: { skill: brainAnalysis.focusSkill, gameplayPayload: brainDrill }
         }));
@@ -79,7 +92,6 @@
       segments: [SparkSessionSegment.create({
         id: "legacy_practice_" + (chordName || mode || "session"),
         type: SparkSessionSegmentTypes.TRANSITION,
-        label: segmentLabel,
         durationSec: 120,
         meta: {
           mode: mode,
@@ -119,7 +131,6 @@
       segments: [SparkSessionSegment.create({
         id: "legacy_practice_drill_" + (chordNames.join("_") || "default"),
         type: SparkSessionSegmentTypes.TRANSITION,
-        label: chordNames.length ? chordNames.join(" / ") : "Chord drill",
         durationSec: 60,
         meta: {
           mode: "drill",
@@ -165,8 +176,6 @@
       segments: guidedPlan ? [SparkSessionSegment.create({
         id: "guided_session_" + sessionNum,
         type: SparkSessionSegmentTypes.GUIDED_SESSION,
-        label: guidedPlan.title || ("Session " + sessionNum),
-        desc: guidedPlan.spark ? guidedPlan.spark.text || guidedPlan.spark.desc || "" : "",
         durationSec: 300,
         meta: {
           guidedSession: sessionNum
@@ -204,8 +213,6 @@
       segments: song ? [SparkSessionSegment.create({
         id: "performance_song_" + songId,
         type: SparkSessionSegmentTypes.PERFORMANCE_SONG,
-        label: song.title || "Performance song",
-        desc: song.artist || "",
         durationSec: estimateSongDurationSec(song),
         meta: {
           songId: songId,
