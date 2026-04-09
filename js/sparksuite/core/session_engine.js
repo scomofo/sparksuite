@@ -98,28 +98,23 @@
       ? findChordByName(instrumentData.ALL_CHORDS || [], context.chordName)
       : pickQuickStartChord(instrumentData, level);
     var chordName = chord && chord.name ? chord.name : (context.chordName || null);
-    var segmentLabel = chordName ? ("Practice " + chordName) : "Practice";
 
     return new SessionPlan({
       flow: "legacy_practice_session",
       instrumentId: instrumentContext.appId || null,
       focus: segmentLabel,
-      lesson: chordName ? { id: chordName, title: segmentLabel } : null,
+      lesson: chordName ? { id: chordName } : null,
       difficulty: level,
       segments: [SparkSessionSegment.create({
         id: "legacy_practice_" + (chordName || mode || "session"),
-        type: SparkSessionSegmentTypes.TRANSITION,
+        type: "practice",
         durationSec: 120,
         meta: {
           mode: mode,
           chordName: chordName
         }
       })],
-      exercises: [{
-        type: mode,
-        chordName: chordName,
-        durationSec: 120
-      }],
+      exercises: [n.exercise],
       rewards: [{ type: "xp", amount: 10 }],
       context: {
         legacyPractice: {
@@ -143,25 +138,18 @@
       flow: "legacy_practice_drill",
       instrumentId: instrumentContext.appId || null,
       focus: chordNames.length ? ("Drill " + chordNames.join(" / ")) : "Chord drill",
-      lesson: chordNames.length ? { id: chordNames.join("_"), title: chordNames.join(" / ") } : null,
+      lesson: chordNames.length ? { id: chordNames.join("_") } : null,
       difficulty: parseLevel(context.level),
       segments: [SparkSessionSegment.create({
         id: "legacy_practice_drill_" + (chordNames.join("_") || "default"),
-        type: SparkSessionSegmentTypes.TRANSITION,
+        type: "practice",
         durationSec: 60,
         meta: {
           mode: "drill",
           chordNames: chordNames
         }
       })],
-      exercises: chordNames.map(function(chordName, index) {
-        return {
-          id: "drill_chord_" + index,
-          type: "drill",
-          chordName: chordName,
-          durationSec: 60
-        };
-      }),
+      exercises: [n.exercise],
       rewards: [{ type: "xp", amount: 20 }],
       context: {
         legacyPractice: {
@@ -192,17 +180,13 @@
       difficulty: guidedPlan ? guidedPlan.level || null : null,
       segments: guidedPlan ? [SparkSessionSegment.create({
         id: "guided_session_" + sessionNum,
-        type: SparkSessionSegmentTypes.GUIDED_SESSION,
+        type: "practice",
         durationSec: 300,
         meta: {
           guidedSession: sessionNum
         }
       })] : [],
-      exercises: guidedPlan ? [{
-        type: SparkSessionSegmentTypes.GUIDED_SESSION,
-        sessionNum: sessionNum,
-        durationSec: 300
-      }] : [],
+      exercises: exs,
       rewards: [{ type: "xp", amount: 30 }],
       context: {
         guidedPlan: guidedPlan,
@@ -225,7 +209,7 @@
       flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
       instrumentId: instrumentContext.appId || null,
       focus: song ? "Perform " + (song.title || "song") : "Performance song",
-      lesson: song ? { id: songId, title: song.title || "Performance song" } : null,
+      lesson: song ? { id: songId } : null,
       difficulty: difficultyId,
       segments: song ? [SparkSessionSegment.create({
         id: "performance_song_" + songId,
@@ -237,12 +221,7 @@
           difficultyId: difficultyId
         }
       })] : [],
-      exercises: song ? [{
-        type: SparkSessionSegmentTypes.PERFORMANCE_SONG,
-        songId: songId,
-        arrangementType: arrangementType,
-        difficultyId: difficultyId
-      }] : [],
+      exercises: exs,
       rewards: [{ type: "xp", amount: 5 }],
       context: {
         performanceSong: {
