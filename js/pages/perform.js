@@ -135,12 +135,19 @@ function performPage() {
   h += '<div class="perform-score-strip">';
   h += '<div class="perform-stat"><span class="perform-stat-val">' + S.performScore + '</span><span class="perform-stat-label">Score</span></div>';
   h += '<div class="perform-stat"><span class="perform-stat-val">' + S.performAccuracy + '%</span><span class="perform-stat-label">Accuracy</span></div>';
-  h += '<div class="perform-stat"><span class="perform-stat-val">' + S.performCombo + 'x</span><span class="perform-stat-label">Combo</span></div>';
+  var comboPulseActive = S.performComboPulseAt && (Date.now() - S.performComboPulseAt < 600);
+  var comboStyle = comboPulseActive ? 'font-size:28px;color:#FFE66D;text-shadow:0 0 12px rgba(255,230,109,.6)' : '';
+  h += '<div class="perform-stat"><span class="perform-stat-val" style="' + comboStyle + '">' + S.performCombo + 'x</span><span class="perform-stat-label">Combo</span></div>';
   h += '</div>';
 
   // Hit feedback
   if (S.performLastHitLabel && Date.now() - S.performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
-    h += '<div class="perform-hit-feedback">' + escHTML(S.performLastHitLabel) + '</div>';
+    var feedbackColor = "#4ECDC4";
+    var feedbackText = S.performLastHitLabel;
+    if (S.performLastHitDirection === "early") { feedbackColor = "#FFE66D"; feedbackText += " (Early)"; }
+    else if (S.performLastHitDirection === "late") { feedbackColor = "#FF6B6B"; feedbackText += " (Late)"; }
+    else if (S.performLastHitDirection === "perfect") { feedbackColor = "#4ECDC4"; feedbackText += "!"; }
+    h += '<div class="perform-hit-feedback" style="color:' + feedbackColor + '">' + escHTML(feedbackText) + '</div>';
   }
 
   // Count-in overlay
