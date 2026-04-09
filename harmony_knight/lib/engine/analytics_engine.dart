@@ -63,6 +63,11 @@ class AnalyticsEngine {
 
     // Flush any remaining engagement points.
     _emitEngagementPoint(wasOffTask: false);
+
+    // Compute summary values before clearing.
+    final offTaskCount = _pendingPoints.where((p) => p.wasOffTask).length;
+    final hyperfocusDetected = _pendingPoints.any((p) => p.wasHyperfocused);
+
     for (final point in _pendingPoints) {
       await _persistence.recordEngagement(point);
     }
@@ -86,9 +91,8 @@ class AnalyticsEngine {
       notesPlayed: notesPlayed,
       correctNotes: correctNotes,
       accuracy: notesPlayed > 0 ? correctNotes / notesPlayed : 0,
-      offTaskCount: _pendingPoints.where((p) => p.wasOffTask).length,
-      hyperfocusDetected:
-          _pendingPoints.any((p) => p.wasHyperfocused),
+      offTaskCount: offTaskCount,
+      hyperfocusDetected: hyperfocusDetected,
     );
   }
 

@@ -181,7 +181,7 @@ class DuelEngine {
       8: 'minor 6th', 9: 'major 6th', 10: 'minor 7th', 11: 'major 7th',
       12: 'octave',
     };
-    return names[semitones.abs() % 13] ?? 'interval';
+    return names[semitones.abs() % 12] ?? 'interval';
   }
 }
 

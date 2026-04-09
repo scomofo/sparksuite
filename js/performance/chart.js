@@ -25,6 +25,13 @@ var PERFORMANCE_CHART_LIBRARY_FALLBACK = [
   }
 ];
 
+function _laneFromMask(mask) {
+  for (var i = 0; i < 6; i++) {
+    if (mask & (1 << i)) return i;
+  }
+  return 0;
+}
+
 function loadPerformanceChart(chartId) {
   return fetch("data/performance_charts/" + chartId + ".json")
     .then(function(r) {
@@ -134,12 +141,14 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
     var importFlags = cloneImportFlags(note.flags);
     var eventType = deriveImportedPerformanceEventType(note, eventNotes);
     var laneLabel = note.label || formatPitchClasses(eventNotes) || maskToLaneLabel(note.laneMask, importFlags);
+    var noteLane = note.lane != null ? note.lane : _laneFromMask(note.laneMask || 0);
     events.push({
       id: note.id || ("spark_evt_" + i),
       t: startSec,
       dur: Math.max(0.05, endSec - startSec),
       type: eventType,
       chord: note.label || formatPitchClasses(eventNotes),
+      lane: noteLane,
       laneLabel: laneLabel,
       notes: eventNotes,
       strum: eventType === "tap" ? "tap" : (importFlags.open ? "open" : "down"),
@@ -301,7 +310,9 @@ function clonePerformanceChart(chart) {
 }
 
 function pickSparkPerformanceTrack(songChart) {
-  if (songChart.tracks.guitar) return songChart.tracks.guitar;
+  if (songChart.metadata && songChart.metadata.defaultTrackId && songChart.tracks[songChart.metadata.defaultTrackId]) {
+    return songChart.tracks[songChart.metadata.defaultTrackId];
+  }
   for (var key in songChart.tracks) {
     if (songChart.tracks[key]) return songChart.tracks[key];
   }
