@@ -102,6 +102,21 @@
         totalNotes: summary.totalNotes || 0
       });
     }
+    // Log session completion for playtesting metrics
+    if (typeof SparkEventLogger !== "undefined") {
+      SparkEventLogger.log("session_complete", {
+        accuracy: summary.accuracy || 0,
+        totalNotes: summary.totalNotes || 0,
+        xpAwarded: summary.xpAwarded || 0
+      });
+    }
+
+    if (typeof SparkDynamicTiming !== "undefined") {
+      SparkDynamicTiming.updateDynamicOffset();
+      if (!S.playerProfile) S.playerProfile = SparkDynamicTiming.createProfile();
+      SparkDynamicTiming.updateProfile(S.playerProfile);
+    }
+
     // Generate lesson recommendation
     if (typeof SparkLessonGenerator !== "undefined" && S.skillGraph) {
       S.recommendedLesson = SparkLessonGenerator.generate(S.skillGraph);

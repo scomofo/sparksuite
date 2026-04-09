@@ -457,6 +457,10 @@ function maybeScorePendingEvents(nowSec) {
           S.performLastHitDirection = "early";
         }
 
+        if (typeof SparkDynamicTiming !== "undefined") {
+          SparkDynamicTiming.recordDelta(deltaMs);
+        }
+
         _updatePerformanceAccuracy(chart);
       }
     }
