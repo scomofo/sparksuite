@@ -146,6 +146,13 @@ var S={
   performEditorPlayheadSec:0,
   performEditorLibrary:[],
 
+  skillGraph:null,
+  skillGraphSnapshot:null,
+  performLastHitDelta:0,
+  performLastHitDirection:"",
+  performComboPulseAt:0,
+  recommendedLesson:null,
+
   // Skill tree
   skillTreeFocus:"overview",
   skillTreeSelectedNode:null,
@@ -292,6 +299,8 @@ var S={
   dailyPracticePlan:[],
 };
 
+if(!S.skillGraph && typeof SparkSkillTracker!=="undefined") S.skillGraph=SparkSkillTracker.create();
+
 var T={session:null,drill:null,daily:null,song:null,strum:null,metro:null,undo:null,rhythm:null,prog:null};
 
 // Undo backup
@@ -330,6 +339,7 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "packCompletion","challengeRewards",
   "settings","sparkProfile","tutorialProgress",
   "onboarding","firstRun","dailyPracticePlan",
+  "songProgression","songLibraryBrowser","lastPracticeRecommendation",
   // Piano-specific persistence
   "lastPractice","chordProg","earned","dailyGoal","dailyPracticed","songsDone","volume","tone",
   "currentSession","lhLevel","keyboardSize","stylePrefs","onboardingComplete",
