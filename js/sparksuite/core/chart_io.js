@@ -551,7 +551,7 @@
         tick: first.tick,
         tickLength: first.tickLength,
         laneMask: laneMask,
-        lane: 0,
+        lane: primaryLaneFromMask(laneMask, laneCount),
         flags: {
           midiNotes: pitches,
           source: "midi"
