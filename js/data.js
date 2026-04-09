@@ -22,6 +22,7 @@ var SCR={
   HOME_DASH:"homeDash",
   SETTINGS:"settings",
   ONBOARDING:"onboarding",
+  SKILL_DASHBOARD:"skillDashboard",
   LAUNCHER:"launcher"
 };
 var TAB={
