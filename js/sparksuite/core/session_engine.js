@@ -10,11 +10,37 @@
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.buildPerformanceSongSession(context);
     if (flow !== SparkSessionTypes.FLOW_DAILY_PRACTICE) return this.buildEmptySession(flow, context);
 
+    // Inject LearningBrain analysis
+    var brainAnalysis = null;
+    if (typeof SparkLearningBrain !== "undefined" && typeof S !== "undefined" && S.skillGraph) {
+      var flowState = null;
+      if (typeof S.performCombo !== "undefined") {
+        flowState = { accuracy: S.performAccuracy || 0, combo: S.performCombo || 0, missStreak: 0, timingConsistency: 0 };
+      }
+      brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, flowState);
+    }
+
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
     var practicePlan = this.practiceEngine.buildDailyPracticePlan({
       curriculum: curriculumContext,
       instrumentContext: context.instrumentContext || {}
     });
+
+    var segments = practicePlan.segments;
+
+    // Inject brain-recommended segment if applicable
+    if (brainAnalysis && (brainAnalysis.recommendation === "targeted_practice" || brainAnalysis.recommendation === "easy_practice")) {
+      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis.focusSkill, S.skillGraph) : null;
+      if (brainDrill) {
+        segments.unshift(SparkSessionSegment.create({
+          id: "brain_" + Date.now(),
+          type: SparkSessionSegmentTypes.PRACTICE || "practice",
+          label: brainDrill.label,
+          durationSec: brainDrill.duration || 30,
+          meta: { skill: brainAnalysis.focusSkill, gameplayPayload: brainDrill }
+        }));
+      }
+    }
 
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
@@ -22,11 +48,12 @@
       focus: practicePlan.focus,
       lesson: curriculumContext.nextLesson || null,
       difficulty: curriculumContext.nextLesson ? curriculumContext.nextLesson.level || null : null,
-      segments: practicePlan.segments,
-      exercises: practicePlan.segments,
+      segments: segments,
+      exercises: segments,
       rewards: [],
       context: {
-        curriculum: curriculumContext
+        curriculum: curriculumContext,
+        brainAnalysis: brainAnalysis
       }
     });
   };

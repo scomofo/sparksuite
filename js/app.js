@@ -3576,23 +3576,15 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="launchRecommendedLesson"){
-    if(S.recommendedLesson && typeof startPlayableRhythmHighwayPayload === "function"){
-      var lesson = S.recommendedLesson;
-      var drillChart = {
-        chartId: lesson.type + "_drill",
-        chart: {
-          chartId: lesson.type,
-          tempo: lesson.tempo,
-          lanes: (typeof buildFallbackLanes === "function") ? buildFallbackLanes() : [],
-          notes: []
-        },
+    if(S.recommendedLesson && window.sparkCore && typeof window.sparkCore.startPracticeFromLesson === "function"){
+      window.sparkCore.startPracticeFromLesson(S.recommendedLesson);
+    } else if(S.recommendedLesson && typeof startPlayableRhythmHighwayPayload === "function"){
+      // Fallback: direct launch if SparkCore method not available
+      startPlayableRhythmHighwayPayload({
+        chartId: S.recommendedLesson.type + "_drill",
+        chart: { chartId: S.recommendedLesson.type, tempo: S.recommendedLesson.tempo, lanes: (typeof buildFallbackLanes === "function") ? buildFallbackLanes() : [], notes: [] },
         mode: "practice"
-      };
-      startPlayableRhythmHighwayPayload(drillChart, {
-        source: "lesson_generator",
-        label: lesson.label,
-        instrument: S.instrument || "guitar"
-      });
+      }, { source: "lesson_generator", label: S.recommendedLesson.label, instrument: S.instrument || "guitar" });
     }
     return;
   }

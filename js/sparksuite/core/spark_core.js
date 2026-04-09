@@ -2599,6 +2599,28 @@
     return this.updateRuntimeState(next);
   };
 
+  SparkCore.prototype.startPracticeFromLesson = function(lesson) {
+    if (!lesson) return false;
+    var payload = {
+      chartId: lesson.type + "_drill",
+      chart: {
+        chartId: lesson.type,
+        tempo: lesson.tempo,
+        lanes: [],
+        notes: []
+      },
+      mode: "practice"
+    };
+    if (typeof startPlayableRhythmHighwayPayload === "function") {
+      return startPlayableRhythmHighwayPayload(payload, {
+        source: "lesson_generator",
+        label: lesson.label,
+        instrument: this.runtimeState.activeInstrumentId || "guitar"
+      });
+    }
+    return false;
+  };
+
   function createDefaultSparkCore() {
     var instrumentManager = new SparkInstrumentManager();
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.guitar) {
