@@ -1,3 +1,31 @@
+/**
+ * SessionPlan Contract (V2 — canonical)
+ *
+ * {
+ *   id: string,
+ *   flow: string,              // FLOW_DAILY_PRACTICE | FLOW_GUIDED_SESSION | FLOW_PERFORMANCE_SONG
+ *   segments: [{
+ *     id: string,
+ *     type: string,            // "practice" | "song" | "challenge"
+ *     exerciseIds: string[]
+ *   }],
+ *   exercises: [{
+ *     id: string,
+ *     type: string,            // "practice" | "song" | "challenge"
+ *     difficulty: string,
+ *     data: {
+ *       core: { skill, chords, pattern, instrument, durationSec },
+ *       gameplay: { payload, preset, chartId }
+ *     }
+ *   }],
+ *   rewards: { xp: number },
+ *   difficulty: string,
+ *   instrumentId: string
+ * }
+ *
+ * UI presentation (label, desc, reason) is NOT part of this contract.
+ * UI layers derive display text from exercise.data.core fields.
+ */
 (function() {
   function SessionPlan(input) {
     input = input || {};
