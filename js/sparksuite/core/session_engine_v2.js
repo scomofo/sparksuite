@@ -7,6 +7,15 @@
 
   SessionEngineV2.prototype.buildSession = function(flow, context) {
     context = context || {};
+
+    // V2 reference: Learning Brain analysis for focus skill
+    var focus = "timing";
+    if (typeof SparkLearningBrain !== "undefined" && typeof S !== "undefined" && S.skillGraph) {
+      var analysis = SparkLearningBrain.analyzeUser(S.skillGraph, null);
+      if (analysis && analysis.focusSkill) focus = analysis.focusSkill;
+    }
+    context._learningBrainFocus = focus;
+
     if (flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return this.buildDailyPracticeSession(context);
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.buildGuidedSession(context);
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.buildPerformanceSongSession(context);
@@ -17,11 +26,22 @@
     var curriculumContext = this.curriculumEngine && typeof this.curriculumEngine.getDailyPracticeContext === "function"
       ? this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {})
       : {};
+    // V2 reference: resolve instrument module for exercise delegation
+    var instrumentId = context.instrumentContext ? context.instrumentContext.appId : null;
+    var instrumentModule = (typeof SparkInstruments !== "undefined" && instrumentId)
+      ? SparkInstruments.getModule(instrumentId)
+      : null;
+
+    // V2 reference: instrument-driven exercise building (future path)
+    // If instrumentModule.buildRhythmExercise() or instrumentModule.buildSongExercise()
+    // become available, delegate exercise creation to the instrument module.
+    // For now, use PracticeEngineV2 as the exercise builder.
+
     var practicePlan = this.practiceEngine && typeof this.practiceEngine.buildDailyPracticePlan === "function"
       ? this.practiceEngine.buildDailyPracticePlan({
         curriculum: curriculumContext,
         instrumentContext: context.instrumentContext || {},
-        difficulty: resolveDifficulty(curriculumContext.nextLesson || null, this.psychologyEngine, context, null)
+        difficulty: deriveDifficulty(typeof S !== "undefined" ? S.skillGraph : null)
       })
       : { focus: "practice", segments: [], exercises: [], rewards: { xp: 0 } };
     var lesson = curriculumContext.nextLesson || null;
@@ -29,8 +49,8 @@
 
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-      instrumentId: context.instrumentContext ? context.instrumentContext.appId : null,
-      focus: practicePlan.focus || "practice",
+      instrumentId: instrumentId,
+      focus: context._learningBrainFocus || practicePlan.focus || "practice",
       lesson: lesson,
       difficulty: difficulty,
       segments: Array.isArray(practicePlan.segments) ? practicePlan.segments : [],
@@ -141,6 +161,16 @@
       rewards: createRewards(0)
     });
   };
+
+  // V2 reference: derive difficulty from skill graph
+  function deriveDifficulty(skillGraph) {
+    if (!skillGraph) return "easy";
+    var skills = [skillGraph.timing || 0, skillGraph.rhythm || 0, skillGraph.chordAccuracy || 0];
+    var avg = (skills[0] + skills[1] + skills[2]) / 3;
+    if (avg > 0.8) return "hard";
+    if (avg > 0.6) return "medium";
+    return "easy";
+  }
 
   function createSegment(id, type, exerciseIds) {
     return {
