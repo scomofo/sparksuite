@@ -70,6 +70,19 @@
       h += '</div>';
     }
 
+    // Unlocked content
+    if (typeof SparkMasteryEngine !== "undefined" && sg) {
+      var unlocks = SparkMasteryEngine.getUnlocks(sg);
+      if (unlocks.length > 0) {
+        h += '<div class="card mb16">';
+        h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:8px">Unlocked</div>';
+        for (var ui = 0; ui < unlocks.length; ui++) {
+          h += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span style="color:#4ECDC4">✓</span><span style="color:var(--text-secondary)">' + escHTML(unlocks[ui].label) + '</span></div>';
+        }
+        h += '</div>';
+      }
+    }
+
     h += '</div>';
     return h;
   }
