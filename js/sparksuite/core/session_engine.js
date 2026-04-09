@@ -105,16 +105,8 @@
       focus: chordName || mode,
       lesson: chordName ? { id: chordName } : null,
       difficulty: level,
-      segments: [SparkSessionSegment.create({
-        id: "legacy_practice_" + (chordName || mode || "session"),
-        type: "practice",
-        durationSec: 120,
-        meta: {
-          mode: mode,
-          chordName: chordName
-        }
-      })],
-      exercises: [n.exercise],
+      segments: [normalizeSegment({id: "legacy_practice_" + (chordName || mode || "session"), type: "practice", durationSec: 120, meta: {mode: mode, chordName: chordName}}).segment],
+      exercises: [normalizeSegment({id: "legacy_practice_" + (chordName || mode || "session"), type: "practice", durationSec: 120, meta: {mode: mode, chordName: chordName}}).exercise],
       rewards: [{ type: "xp", amount: 10 }],
       context: {
         legacyPractice: {
@@ -140,16 +132,8 @@
       focus: "chord_transition",
       lesson: chordNames.length ? { id: chordNames.join("_") } : null,
       difficulty: parseLevel(context.level),
-      segments: [SparkSessionSegment.create({
-        id: "legacy_practice_drill_" + (chordNames.join("_") || "default"),
-        type: "practice",
-        durationSec: 60,
-        meta: {
-          mode: "drill",
-          chordNames: chordNames
-        }
-      })],
-      exercises: [n.exercise],
+      segments: [normalizeSegment({id: "legacy_practice_drill_" + (chordNames.join("_") || "default"), type: "practice", durationSec: 60, meta: {mode: "drill", chordNames: chordNames}}).segment],
+      exercises: [normalizeSegment({id: "legacy_practice_drill_" + (chordNames.join("_") || "default"), type: "practice", durationSec: 60, meta: {mode: "drill", chordNames: chordNames}}).exercise],
       rewards: [{ type: "xp", amount: 20 }],
       context: {
         legacyPractice: {
@@ -178,15 +162,8 @@
       focus: "guided",
       lesson: guidedPlan,
       difficulty: guidedPlan ? guidedPlan.level || null : null,
-      segments: guidedPlan ? [SparkSessionSegment.create({
-        id: "guided_session_" + sessionNum,
-        type: "practice",
-        durationSec: 300,
-        meta: {
-          guidedSession: sessionNum
-        }
-      })] : [],
-      exercises: exs,
+      segments: guidedPlan ? [normalizeSegment({id: "guided_session_" + sessionNum, type: "practice", durationSec: 300, meta: {guidedSession: sessionNum}}).segment] : [],
+      exercises: guidedPlan ? [normalizeSegment({id: "guided_session_" + sessionNum, type: "practice", durationSec: 300, meta: {guidedSession: sessionNum}}).exercise] : [],
       rewards: [{ type: "xp", amount: 30 }],
       context: {
         guidedPlan: guidedPlan,
@@ -211,17 +188,8 @@
       focus: "performance",
       lesson: song ? { id: songId } : null,
       difficulty: difficultyId,
-      segments: song ? [SparkSessionSegment.create({
-        id: "performance_song_" + songId,
-        type: "song",
-        durationSec: estimateSongDurationSec(song),
-        meta: {
-          songId: songId,
-          arrangementType: arrangementType,
-          difficultyId: difficultyId
-        }
-      })] : [],
-      exercises: exs,
+      segments: song ? [normalizeSegment({id: "performance_song_" + songId, type: "song", durationSec: estimateSongDurationSec(song), meta: {songId: songId, arrangementType: arrangementType, difficultyId: difficultyId}}).segment] : [],
+      exercises: song ? [normalizeSegment({id: "performance_song_" + songId, type: "song", durationSec: estimateSongDurationSec(song), meta: {songId: songId, arrangementType: arrangementType, difficultyId: difficultyId}}).exercise] : [],
       rewards: [{ type: "xp", amount: 5 }],
       context: {
         performanceSong: {
