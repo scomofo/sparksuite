@@ -38,6 +38,7 @@ function resetState() {
   global.sparkCoreCalls = [];
   global.guidedNavigationCalls = [];
   global.legacyPracticeCalls = [];
+  global.legacyStartCalls = [];
   global.confettiCalls = 0;
 
   global.render = function() { renderCalls++; };
@@ -114,6 +115,49 @@ function resetState() {
     return { activeScreen: "guided_done" };
   };
 
+  global.sparkCore = {
+    startSession: function(payload) {
+      legacyStartCalls.push(payload);
+      if (payload.mode === "quickStart") {
+        return {
+          context: {
+            legacyPractice: {
+              mode: "quickStart",
+              chordName: "E",
+              chord: { name: "E" },
+              durationSec: 120
+            }
+          }
+        };
+      }
+      if (payload.mode === "chord") {
+        return {
+          context: {
+            legacyPractice: {
+              mode: "chord",
+              chordName: payload.chordName || "A",
+              chord: { name: payload.chordName || "A" },
+              durationSec: 120
+            }
+          }
+        };
+      }
+      if (payload.mode === "drill") {
+        return {
+          context: {
+            legacyPractice: {
+              mode: "drill",
+              chords: [{ name: "E" }, { name: "A" }],
+              chordNames: ["E", "A"],
+              durationSec: 60
+            }
+          }
+        };
+      }
+      return null;
+    }
+  };
+
   global.SparkProgressBridge = null;
   global.SparkSession = {
     buildSession: function(options) {
@@ -166,6 +210,10 @@ test("quickStart and drill entry delegate to shared legacy practice helpers", fu
   bassAct("quickStart");
   bassAct("startDrill");
 
+  assert.deepStrictEqual(legacyStartCalls, [
+    { mode: "quickStart", level: undefined },
+    { mode: "drill", level: undefined }
+  ]);
   assert.deepStrictEqual(legacyPracticeCalls, [
     { fn: "openLegacyPracticeSession", payload: { mode: "quickStart", chordName: "E", durationSec: 120 } },
     { fn: "openLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } }
@@ -182,6 +230,10 @@ test("legacy practice replay actions delegate to shared retry helpers", function
   bassAct("repeatLegacyPracticeSession");
   bassAct("repeatLegacyPracticeDrill");
 
+  assert.deepStrictEqual(legacyStartCalls, [
+    { mode: "chord", chordName: "A", level: undefined },
+    { mode: "drill", level: undefined }
+  ]);
   assert.deepStrictEqual(legacyPracticeCalls.slice(0, 4), [
     { fn: "repeatLegacyPracticeSession", payload: { mode: "chord", chordName: "A", durationSec: 120 } },
     { fn: "openLegacyPracticeSession", payload: { mode: "chord", chordName: "A", durationSec: 120 } },

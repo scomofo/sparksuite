@@ -670,6 +670,33 @@ test("piano midi import actions mirror into shared midi import sync helper", fun
   assert.strictEqual(midiImportSyncCalls[midiImportSyncCalls.length - 1].seedMode, "piano_left_hand");
 });
 
+test("piano midi import can launch a playable highway preview", function() {
+  S.importedMidi = {
+    sourceName: "lesson.mid",
+    tracks: [
+      { id: "t1", name: "Piano RH", notes: [{}, {}] }
+    ]
+  };
+  S.importedMidiAssignments = { t1: "melody" };
+  global.buildPlayablePayloadFromImportedMidi = function(_midi, options) {
+    return {
+      chart: { title: "Imported Playable Chart" },
+      adapterType: options.adapterType
+    };
+  };
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    performanceStarts.push({ payload: payload, options: options });
+  };
+
+  pianoAct("buildMidiPlayableChart", "guitar");
+
+  assert.strictEqual(midiImportSyncCalls[midiImportSyncCalls.length - 1].seedMode, "playable_highway");
+  assert.strictEqual(midiImportSyncCalls[midiImportSyncCalls.length - 1].seedTitle, "Imported Playable Chart");
+  assert.strictEqual(performanceStarts.length, 1);
+  assert.strictEqual(performanceStarts[0].options.source, "midi_import");
+  assert.strictEqual(performanceStarts[0].options.instrument, "guitar");
+});
+
 test("piano midi actions mirror into shared midi settings sync helper", function() {
   pianoAct("setMidiDevice", "dev_1");
   pianoAct("setMidiProfile", "profile_1");

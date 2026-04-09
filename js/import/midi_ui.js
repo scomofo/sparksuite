@@ -39,6 +39,9 @@
       h += '<button onclick="act(\'buildMidiSeedChart\', \'piano_melody\')">Build Piano Melody Seed</button> ';
       h += '<button onclick="act(\'buildMidiSeedChart\', \'guitar_single_note\')">Build Guitar Lead Seed</button>';
       h += '</div>';
+      h += '<div style="margin-top:10px">';
+      h += '<button onclick="act(\'buildMidiPlayableChart\', \'guitar\')">Preview Playable Highway</button>';
+      h += '</div>';
 
       h += '</div>';
 

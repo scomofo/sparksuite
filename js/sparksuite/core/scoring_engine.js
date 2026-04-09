@@ -6,8 +6,13 @@
       combo: 0,
       maxCombo: 0,
       hits: 0,
+      perfectHits: 0,
+      goodHits: 0,
+      okHits: 0,
       misses: 0,
       total: 0,
+      judgedHits: 0,
+      totalTimingOffsetMs: 0,
       specialPhraseHits: 0,
       weakReasons: {},
       laneErrors: {},
@@ -34,6 +39,11 @@
     }
 
     this.state.hits++;
+    if (judgement === "perfect") this.state.perfectHits++;
+    else if (judgement === "good") this.state.goodHits++;
+    else this.state.okHits++;
+    this.state.judgedHits++;
+    this.state.totalTimingOffsetMs += Math.abs(resolution.diffMs || 0);
     this.state.combo++;
     if (this.state.combo > this.state.maxCombo) this.state.maxCombo = this.state.combo;
     if (note.skillId) bump(this.state.skillHits, note.skillId);
@@ -52,18 +62,26 @@
 
   ScoringEngine.prototype.toSummary = function() {
     var accuracy = this.state.total > 0 ? this.state.hits / this.state.total : 0;
+    var averageTimingOffsetMs = this.state.judgedHits > 0 ? this.state.totalTimingOffsetMs / this.state.judgedHits : 0;
+    var missWindowMs = this.preset && this.preset.hitWindowMs ? this.preset.hitWindowMs.miss : 100;
+    var timing = this.state.judgedHits > 0
+      ? Math.max(0, 1 - (averageTimingOffsetMs / Math.max(1, missWindowMs)))
+      : 0;
     return {
       gameplay: {
         score: this.state.score,
         maxCombo: this.state.maxCombo,
         accuracy: Number(accuracy.toFixed(2)),
+        timing: Number(timing.toFixed(2)),
+        mistakes: this.state.misses,
         starPowerUses: 0,
         specialPhraseHits: this.state.specialPhraseHits
       },
       learning: {
         weakReasons: this.state.weakReasons,
         laneErrors: this.state.laneErrors,
-        skillHits: this.state.skillHits
+        skillHits: this.state.skillHits,
+        timingMs: Number(averageTimingOffsetMs.toFixed(2))
       }
     };
   };

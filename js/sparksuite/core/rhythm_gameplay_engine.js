@@ -58,6 +58,7 @@
         tick: note.tick,
         tickLength: note.tickLength,
         timeSec: note.timeSec,
+        lane: note.lane != null ? note.lane : laneFromMask(note.laneMask),
         laneMask: note.laneMask,
         label: note.label,
         flags: note.flags,
@@ -82,7 +83,12 @@
     return new SparkGameplayResult({
       gameplay: summary.gameplay,
       learning: buildLearningSummary(summary.learning),
-      replay: this.replayEngine.export()
+      replay: this.replayEngine.export(),
+      output: {
+        accuracy: summary.gameplay.accuracy,
+        timing: summary.gameplay.timing,
+        mistakes: summary.gameplay.mistakes
+      }
     });
   };
 
@@ -94,7 +100,8 @@
   };
 
   function buildNoteStates(chart, timingEngine) {
-    var notes = chart && chart.tracks && chart.tracks.guitar ? chart.tracks.guitar.notes : [];
+    var track = getChartTrack(chart);
+    var notes = track.notes || [];
     var out = [];
     for (var i = 0; i < notes.length; i++) {
       out.push({
@@ -102,6 +109,7 @@
         tick: notes[i].tick,
         tickLength: notes[i].tickLength,
         timeSec: timingEngine.tickToSeconds(chart.tempoMap, notes[i].tick),
+        lane: notes[i].lane != null ? notes[i].lane : laneFromMask(notes[i].laneMask),
         laneMask: notes[i].laneMask,
         flags: notes[i].flags || {},
         label: notes[i].label || "",
@@ -136,5 +144,55 @@
     };
   }
 
+  function mapChartToPerformanceNotes(chart, timingEngine) {
+    var notes = buildNoteStates(chart, timingEngine || new SparkTimingEngine(new SparkCalibrationEngine()));
+    var mapped = [];
+    for (var i = 0; i < notes.length; i++) {
+      mapped.push({
+        time: Math.round(notes[i].timeSec * 1000),
+        type: notes[i].flags && notes[i].flags.tap ? "note" : "chord",
+        value: notes[i].label || notes[i].laneMask,
+        lane: notes[i].lane != null ? notes[i].lane : laneFromMask(notes[i].laneMask),
+        laneMask: notes[i].laneMask,
+        skillId: notes[i].skillId || null
+      });
+    }
+    return mapped;
+  }
+
+  function scorePerformanceInput(inputModel, noteModel, timingWindow) {
+    timingWindow = timingWindow || { perfect: 50, good: 100 };
+    var delta = Math.abs((inputModel.timestamp || 0) - (noteModel.time || 0));
+    if (delta < timingWindow.perfect) return "perfect";
+    if (delta < timingWindow.good) return "good";
+    return "miss";
+  }
+
   window.SparkRhythmGameplayEngine = RhythmGameplayEngine;
+  window.SparkPerformanceEngine = RhythmGameplayEngine;
+  window.SparkPerformanceNoteMapper = {
+    fromChart: mapChartToPerformanceNotes
+  };
+  window.SparkPerformanceTimingWindow = {
+    score: scorePerformanceInput
+  };
+  window.SparkPerformanceInputHandler = window.SparkInputJudge;
+  window.SparkPerformanceScoringSystem = window.SparkScoringEngine;
+
+  function getChartTrack(chart) {
+    if (!chart || !chart.tracks) return { notes: [], phrases: [] };
+    var trackId = chart.metadata && chart.metadata.defaultTrackId ? chart.metadata.defaultTrackId : null;
+    if (trackId && chart.tracks[trackId]) return chart.tracks[trackId];
+    for (var key in chart.tracks) {
+      if (chart.tracks[key]) return chart.tracks[key];
+    }
+    return { notes: [], phrases: [] };
+  }
+
+  function laneFromMask(laneMask) {
+    for (var i = 0; i < 32; i++) {
+      if (laneMask & (1 << i)) return i;
+    }
+    return 0;
+  }
 })();

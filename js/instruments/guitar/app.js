@@ -1,29 +1,33 @@
 // js/instruments/guitar/app.js — guitar-specific act() handler
 (function() {
 
+function requestLegacyPracticePlan(options) {
+  if (!window.sparkCore || typeof window.sparkCore.startSession !== "function") return null;
+  return window.sparkCore.startSession(options || {});
+}
+
+function extractLegacyPractice(plan) {
+  return plan && plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : null;
+}
+
 function guitarAct(a, v) {
   var D = SparkInstruments.getActive().getData();
 
   if (a === "quickStart") {
-    var session;
-    if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {
-      session = SparkCore.startSession({ mode: "quickStart", level: S.level });
-    } else {
-      session = SparkSession.buildSession({ mode: "quickStart", level: S.level });
-    }
+    var session = extractLegacyPractice(requestLegacyPracticePlan({ mode: "quickStart", level: S.level }));
     if (!session) return true;
     if (typeof window.openLegacyPracticeSessionRequest === "function") {
       window.openLegacyPracticeSessionRequest({
         mode: "quickStart",
         chordName: session.chordName,
-        durationSec: session.duration
+        durationSec: session.durationSec
       });
     }
     S.sessionMicros = [];
     S.lastChordName = session.chordName;
     snd("start");
     S.currentChord = session.chord;
-    S.timer = session.duration;
+    S.timer = session.durationSec;
     S.timerActive = true;
     S.selectedVoicing = 0;
     S.screen = SCR.SESSION;
@@ -35,24 +39,19 @@ function guitarAct(a, v) {
   }
 
   if (a === "resumeSession") {
-    var session;
-    if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {
-      session = SparkCore.startSession({ mode: "chord", chordName: S.lastChordName });
-    } else {
-      session = SparkSession.buildSession({ mode: "chord", chordName: S.lastChordName });
-    }
+    var session = extractLegacyPractice(requestLegacyPracticePlan({ mode: "chord", chordName: S.lastChordName, level: S.level }));
     if (!session) { act("quickStart"); return true; }
     if (typeof window.openLegacyPracticeSessionRequest === "function") {
       window.openLegacyPracticeSessionRequest({
         mode: "chord",
         chordName: session.chordName,
-        durationSec: session.duration
+        durationSec: session.durationSec
       });
     }
     S.sessionMicros = [];
     snd("start");
     S.currentChord = session.chord;
-    S.timer = session.duration;
+    S.timer = session.durationSec;
     S.timerActive = true;
     S.selectedVoicing = 0;
     if (typeof _prevChordKey !== "undefined") _prevChordKey = session.chordName;
@@ -65,25 +64,20 @@ function guitarAct(a, v) {
   }
 
   if (a === "startSession") {
-    var session;
-    if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {
-      session = SparkCore.startSession({ mode: "chord", chordName: v });
-    } else {
-      session = SparkSession.buildSession({ mode: "chord", chordName: v });
-    }
+    var session = extractLegacyPractice(requestLegacyPracticePlan({ mode: "chord", chordName: v, level: S.level }));
     if (!session) return true;
     if (typeof window.openLegacyPracticeSessionRequest === "function") {
       window.openLegacyPracticeSessionRequest({
         mode: "chord",
         chordName: session.chordName,
-        durationSec: session.duration
+        durationSec: session.durationSec
       });
     }
     S.sessionMicros = [];
     S.lastChordName = session.chordName;
     snd("start");
     S.currentChord = session.chord;
-    S.timer = session.duration;
+    S.timer = session.durationSec;
     S.timerActive = true;
     S.selectedVoicing = 0;
     if (typeof _prevChordKey !== "undefined") _prevChordKey = session.chordName;
@@ -96,22 +90,17 @@ function guitarAct(a, v) {
   }
 
   if (a === "startDrill") {
-    var session;
-    if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {
-      session = SparkCore.startSession({ mode: "drill", level: S.level });
-    } else {
-      session = SparkSession.buildSession({ mode: "drill", level: S.level });
-    }
+    var session = extractLegacyPractice(requestLegacyPracticePlan({ mode: "drill", level: S.level }));
     if (!session) return true;
     if (typeof window.openLegacyPracticeDrillRequest === "function") {
       window.openLegacyPracticeDrillRequest({
-        durationSec: session.duration,
+        durationSec: session.durationSec,
         chordNames: session.chords ? session.chords.map(function(ch) { return ch.name; }) : []
       });
     }
     S.drillChords = session.chords;
     S.drillIdx = 0;
-    S.drillTimer = session.duration;
+    S.drillTimer = session.durationSec;
     S.drillSwitches = 0;
     S.drillLastSwitchTime = Date.now();
     S.drillAdaptiveBpm = 60;
@@ -190,21 +179,21 @@ function guitarAct(a, v) {
 
   if (a === "drillTransition") {
     var parts = v.split("|");
-    var c1 = null, c2 = null;
-    for (var i = 0; i < D.ALL_CHORDS.length; i++) {
-      if (D.ALL_CHORDS[i].name === parts[0]) c1 = D.ALL_CHORDS[i];
-      if (D.ALL_CHORDS[i].name === parts[1]) c2 = D.ALL_CHORDS[i];
-    }
-    if (c1 && c2) {
+    var session = extractLegacyPractice(requestLegacyPracticePlan({
+      mode: "drill",
+      level: S.level,
+      chordNames: parts
+    }));
+    if (session && session.chords && session.chords.length >= 2) {
       if (typeof window.openLegacyPracticeDrillRequest === "function") {
         window.openLegacyPracticeDrillRequest({
           durationSec: 60,
-          chordNames: [c1.name, c2.name]
+          chordNames: session.chordNames || session.chords.map(function(ch) { return ch.name; })
         });
       }
-      S.drillChords = [c1, c2]; S.drillIdx = 0; S.drillTimer = 60; S.drillSwitches = 0; S.drillLastSwitchTime = Date.now();
+      S.drillChords = session.chords; S.drillIdx = 0; S.drillTimer = session.durationSec; S.drillSwitches = 0; S.drillLastSwitchTime = Date.now();
       S.drillAdaptiveBpm = 60; S.drillConsecutiveFast = 0; S.drillConsecutiveSlow = 0;
-      _prevChordKey = c1.name;
+      _prevChordKey = session.chords[0].name;
       snd("start"); S.screen = SCR.DRILL; render(); T.drill = setTimeout(tickD, 1000);
     }
     return true;
@@ -315,30 +304,7 @@ function guitarAct(a, v) {
         S.screen = SCR.GUIDED; snd("start"); render(); saveState();
         return true;
       }
-    } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-      var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
-      var corePlan = window.sparkCore.startSession({
-        flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
-        sessionNum: guidedSession
-      });
-      if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
-        S.screen = SCR.GUIDED; snd("start"); render(); saveState();
-        return true;
-      }
     }
-    var plan = D.SESSIONS[(isNaN(sessionNum) ? S.guidedSession || 1 : sessionNum) - 1];
-    if (!plan) { S.guidedSession = 1; plan = D.SESSIONS[0]; }
-    if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
-      SparkProgressBridge.syncGuidedSessionToState({
-        context: {
-          guidedPlan: plan,
-          guidedSession: plan && plan.num ? plan.num : (S.guidedSession || 1)
-        }
-      });
-    } else {
-      S.guidedPlan = plan; S.guidedStep = "spark"; S.newMovePhase = null; S.guidedPaused = false;
-    }
-    S.screen = SCR.GUIDED; snd("start"); render();
     return true;
   }
 
@@ -349,59 +315,7 @@ function guitarAct(a, v) {
       snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
       trigC(); S.screen = SCR.GUIDED_DONE; render();
       return true;
-    } else if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-      var guidedResult = window.sparkCore.completeSession({
-        flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
-        markPlanComplete: true
-      });
-      if (typeof window.sparkCore.syncGuidedRuntimeState === "function") {
-        window.sparkCore.syncGuidedRuntimeState({
-          activeScreen: "guided_done",
-          guidedStep: null,
-          guidedNewMovePhase: null,
-          transport: { status: "completed", positionMs: 0 }
-        });
-      }
-      snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
-      trigC(); S.screen = SCR.GUIDED_DONE; render();
-      return true;
     }
-    var plan = S.guidedPlan;
-    if (plan) {
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applySessionStatePatch === "function") {
-        var guidedPatch = {
-          guided: {
-            completedSessionNums: [plan.num],
-            nextGuidedSession: Math.min(D.SESSIONS.length, plan.num + 1),
-            chordProgress: {}
-          }
-        };
-        if (plan.newMove && plan.newMove.chord) guidedPatch.guided.chordProgress[plan.newMove.chord] = 25;
-        SparkProgressBridge.applySessionStatePatch(guidedPatch);
-      } else {
-        if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
-        if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
-        if (plan.newMove && plan.newMove.chord) {
-          S.chordProgress[plan.newMove.chord] = Math.min((S.chordProgress[plan.newMove.chord] || 0) + 25, 100);
-        }
-        S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
-      }
-      // Route through SparkSession for full progression cascade
-      var outcome = SparkSession.processResults({
-        type: "guided",
-        chordName: plan.newMove ? plan.newMove.chord : null,
-        duration: 300
-      });
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ toastAmount: outcome.xpEarned, jackpot: outcome.jackpot });
-      else S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
-      if (outcome.jackpot) snd("levelup"); else snd("complete");
-      if (outcome.leveledUp) snd("levelup");
-    } else {
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ toastAmount: 30 });
-      else S.xpToast = { amount: 30, time: Date.now() };
-      snd("complete");
-    }
-    trigC(); S.screen = SCR.GUIDED_DONE; render();
     return true;
   }
 
@@ -485,18 +399,15 @@ function guitarAct(a, v) {
     var idx = parseInt(v);
     if (idx >= 0 && idx < S.customSets.length) {
       var cs = S.customSets[idx];
-      var pool = [];
-      for (var i = 0; i < cs.chords.length; i++) {
-        for (var j = 0; j < D.ALL_CHORDS.length; j++) {
-          if (D.ALL_CHORDS[j].name === cs.chords[i]) { pool.push(D.ALL_CHORDS[j]); break; }
-        }
-      }
-      if (pool.length < 2) return true;
-      var c1 = pool[Math.floor(Math.random() * pool.length)], c2 = c1, n = 0;
-      while (c2.name === c1.name && pool.length > 1 && n < 20) { c2 = pool[Math.floor(Math.random() * pool.length)]; n++; }
-      S.drillChords = [c1, c2]; S.drillIdx = 0; S.drillTimer = 60; S.drillSwitches = 0; S.drillLastSwitchTime = Date.now();
+      var session = extractLegacyPractice(requestLegacyPracticePlan({
+        mode: "drill",
+        level: S.level,
+        chordNames: cs.chords
+      }));
+      if (!session || !session.chords || session.chords.length < 2) return true;
+      S.drillChords = session.chords; S.drillIdx = 0; S.drillTimer = session.durationSec; S.drillSwitches = 0; S.drillLastSwitchTime = Date.now();
       S.drillAdaptiveBpm = 60; S.drillConsecutiveFast = 0; S.drillConsecutiveSlow = 0;
-      _prevChordKey = c1.name;
+      _prevChordKey = session.chords[0].name;
       snd("start"); S.screen = SCR.DRILL; render(); T.drill = setTimeout(tickD, 1000);
     }
     return true;

@@ -71,17 +71,21 @@
       var targets = [];
       var chordMastery = {};
       var lessonMastery = {};
+      var chordProgress = {};
 
       // Read mastery data from global state or userContext
       if (typeof S !== "undefined" && S.mastery) {
         chordMastery = S.mastery.chords || {};
         lessonMastery = S.mastery.lessons || {};
       }
+      if (typeof S !== "undefined" && S.chordProgress) {
+        chordProgress = S.chordProgress || {};
+      }
       if (userContext.chordMastery) chordMastery = userContext.chordMastery;
       if (userContext.lessonMastery) lessonMastery = userContext.lessonMastery;
+      if (userContext.chordProgress) chordProgress = userContext.chordProgress;
 
       // Find chords below mastery threshold (below 75 = needs review)
-      var chordProgress = (typeof S !== "undefined" && S.chordProgress) ? S.chordProgress : {};
       for (var chordName in chordProgress) {
         if (!Object.prototype.hasOwnProperty.call(chordProgress, chordName)) continue;
         var progress = chordProgress[chordName];
@@ -105,6 +109,8 @@
     buildLearningQueue: function(userContext) {
       userContext = userContext || {};
       var queue = [];
+      var nextLesson = userContext.nextLesson || null;
+      var nextLessonId = userContext.nextLessonId || null;
 
       // 1. Get review targets (chords needing practice)
       var reviews = this.getReviewTargets(userContext);
@@ -119,8 +125,8 @@
       }
 
       // 2. Get next lesson from curriculum
-      var completedLessons = [];
-      if (typeof S !== "undefined") {
+      var completedLessons = Array.isArray(userContext.completedLessons) ? userContext.completedLessons.slice() : [];
+      if (!completedLessons.length && typeof S !== "undefined") {
         completedLessons = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
         if (S.mastery && S.mastery.lessons) {
           for (var lessonId in S.mastery.lessons) {
@@ -131,25 +137,32 @@
         }
       }
 
-      // Try to find next lesson from active instrument's curriculum map
-      // currMap is an array of lesson/level objects (not a curriculum root ID),
-      // so iterate directly for the first incomplete lesson.
-      var inst = typeof SparkInstruments !== "undefined" ? SparkInstruments.getActive() : null;
-      if (inst) {
-        var currMap = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
+      if (!nextLessonId || !nextLesson) {
+        // Try to find next lesson from the explicit curriculum map first,
+        // then fall back to the active instrument.
+        var currMap = Array.isArray(userContext.curriculumMap) ? userContext.curriculumMap : null;
+        if (!currMap) {
+          var inst = typeof SparkInstruments !== "undefined" ? SparkInstruments.getActive() : null;
+          currMap = inst && typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
+        }
         for (var ci = 0; ci < currMap.length; ci++) {
           var cmItem = currMap[ci];
           var cmId = cmItem && cmItem.id ? cmItem.id : null;
           if (cmId && completedLessons.indexOf(cmId) === -1) {
-            queue.push({
-              type: "lesson",
-              id: cmId,
-              label: cmItem.title || cmItem.name || cmId,
-              priority: "normal"
-            });
+            nextLessonId = cmId;
+            nextLesson = cmItem;
             break;
           }
         }
+      }
+
+      if (nextLessonId) {
+        queue.push({
+          type: "lesson",
+          id: nextLessonId,
+          label: nextLesson && (nextLesson.title || nextLesson.name) ? (nextLesson.title || nextLesson.name) : nextLessonId,
+          priority: "normal"
+        });
       }
 
       // 3. Add a practice/drill suggestion if queue is short

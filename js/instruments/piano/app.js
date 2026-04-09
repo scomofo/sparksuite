@@ -1870,6 +1870,30 @@ function act(action, param) {
     }
 
     // ── Cloud Sync actions ──
+    case "buildMidiPlayableChart": {
+      var playablePayload = typeof buildPlayablePayloadFromImportedMidi === "function"
+        ? buildPlayablePayloadFromImportedMidi(S.importedMidi, {
+            assignments: S.importedMidiAssignments,
+            adapterType: param || "guitar"
+          })
+        : null;
+      S.importedMidiPlayablePreview = playablePayload;
+      if (typeof syncMidiImportStateRequest === "function") {
+        syncMidiImportStateRequest({
+          seedMode: "playable_highway",
+          seedTitle: playablePayload && playablePayload.chart ? playablePayload.chart.title : null
+        });
+      }
+      if(playablePayload && typeof startPlayableRhythmHighwayPayload === "function"){
+        startPlayableRhythmHighwayPayload(playablePayload, {
+          source: "midi_import",
+          instrument: param || "guitar",
+          label: playablePayload.chart ? playablePayload.chart.title : "Imported Playable Chart"
+        });
+      }
+      break;
+    }
+
     case "cloudSync":
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing" });
       if(typeof syncSparkNow === "function") syncSparkNow();
