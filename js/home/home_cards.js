@@ -143,3 +143,19 @@ function renderHomeSystemCard(data){
   h += '</div>';
   return h;
 }
+
+function renderHomeDailyPlanCard(){
+  if(typeof SparkDailyPlanGenerator==="undefined"||!S.skillGraph) return "";
+  var dailyPlan=SparkDailyPlanGenerator.generate(S.skillGraph,typeof SONGS!=="undefined"?SONGS:[]);
+  var totalMin=Math.ceil(SparkDailyPlanGenerator.estimateDuration(dailyPlan)/60);
+  var h='<div class="card mb16" onclick="act(\'openDailyPlan\')" style="cursor:pointer;background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(99,102,241,.08));border:1px solid rgba(78,205,196,.22)">';
+  h+='<div style="font-size:15px;font-weight:900;color:var(--text-primary);margin-bottom:6px">Today\'s Plan</div>';
+  h+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">'+dailyPlan.length+' activities \u00b7 ~'+totalMin+' min</div>';
+  for(var dpi=0;dpi<dailyPlan.length;dpi++){
+    var item=dailyPlan[dpi];
+    var icon=item.type==="warmup"?"\uD83C\uDFB5":item.type==="song"?"\uD83C\uDFB8":item.type==="challenge"?"\uD83D\uDD25":"\uD83C\uDFAF";
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span>'+icon+'</span><span style="color:var(--text-secondary)">'+escHTML(item.label)+'</span></div>';
+  }
+  h+='</div>';
+  return h;
+}

@@ -152,6 +152,7 @@ var S={
   performLastHitDirection:"",
   performComboPulseAt:0,
   recommendedLesson:null,
+  dailyPlanItems:null,
 
   // Skill tree
   skillTreeFocus:"overview",
