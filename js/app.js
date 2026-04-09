@@ -2591,14 +2591,8 @@ window.act=function(a,v){
   // === Undo ===
   if(a==="undoReset"){undoReset();return;}
   // === Performance Mode ===
-  if(a==="openPerform"){
-    if(typeof SparkSessionRuntime!=="undefined"&&typeof SparkEventLogger!=="undefined")SparkEventLogger.log("session_start",{source:"openPerform",chart:v});
-    startPerformance(v);return;
-  }
-  if(a==="startPerform"){
-    if(typeof SparkSessionRuntime!=="undefined"&&typeof SparkEventLogger!=="undefined")SparkEventLogger.log("session_start",{source:"startPerform",chart:v});
-    startPerformance(v);return;
-  }
+  if(a==="openPerform"){if(typeof SparkExecutionGateway!=="undefined"){SparkExecutionGateway.runDirectExercise(v,{source:"openPerform"});}else{startPerformance(v);}return;}
+  if(a==="startPerform"){if(typeof SparkExecutionGateway!=="undefined"){SparkExecutionGateway.runDirectExercise(v,{source:"startPerform"});}else{startPerformance(v);}return;}
   if(a==="performSong"){
     var songIdx=parseInt(v);
     if(!isNaN(songIdx)&&SONGS[songIdx]){
