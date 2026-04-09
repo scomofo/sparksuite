@@ -1,38 +1,231 @@
-# SparkSuite – Repository Guide for Claude / Codex / AI Coding Agents
+# SparkSuite -- CLAUDE.md (Architecture Enforcement Guide)
 
-## Purpose
+## PURPOSE
+Defines how all AI agents (Claude, Codex, etc.) must interact with SparkSuite.
 
-SparkSuite is a multi-instrument music learning platform in active migration.
-
-This repo contains:
-
-* legacy runtime systems
-* SparkSuite core engines
-* a full instrument generation, validation, and integration pipeline
-
-All work must reflect **real repo structure AND pipeline-driven development**.
+SparkSuite is a **system-driven adaptive learning engine**, NOT a UI-driven app.
 
 ---
 
-## Core Rule
+# CORE RULE (NON-NEGOTIABLE)
 
-Prefer:
+```text
+SessionEngine -> SessionPlan -> UI renders
+```
 
-* engine-owned logic
-* instrument-owned behavior
-* pipeline-driven content generation
+* UI NEVER makes decisions
+* UI NEVER constructs sessions
+* UI NEVER mutates session data
 
-Avoid:
-
-* UI-driven business logic
-* manual multi-file instrument setup
-* bypassing validation or generator systems
+If UI makes decisions -> architecture is broken
 
 ---
 
-## Instrument Pipeline System (CRITICAL)
+# SYSTEM LAYERS
 
-SparkSuite includes a full **Instrument Pipeline System**:
+## 1. SessionEngine (ORCHESTRATOR)
+
+ONLY source of truth for what the user does.
+
+Responsible for:
+
+* building SessionPlan
+* sequencing segments
+* injecting practice / song / challenge
+* integrating LearningBrain + Flow
+
+```js
+const session = SessionEngineV2.buildSession({
+  user,
+  instrument,
+  lesson,
+  recentEvents
+});
+```
+
+---
+
+## 2. PracticeEngine (PURE GENERATOR)
+
+Returns ONLY:
+
+```js
+{
+  segments,
+  exercises
+}
+```
+
+Rules:
+
+* NO UI fields
+* NO labels / descriptions
+* NO rendering concerns
+* MUST be deterministic
+
+---
+
+## 3. LearningBrain
+
+Responsible for:
+
+* weakest skill detection
+* emotion detection (frustrated / bored / engaged)
+* recommendation (practice / challenge / balanced)
+
+---
+
+## 4. Flow System
+
+Responsible for:
+
+* difficulty adjustment
+* maintaining engagement
+
+---
+
+## 5. Instrument Layer
+
+Responsible for:
+
+* exercise construction
+* gameplay payload generation
+
+```js
+instrument.buildSongExercise()
+instrument.buildRhythmExercise()
+instrument.buildChallengeExercise()
+```
+
+---
+
+# SESSION PLAN CONTRACT (STRICT V2)
+
+```js
+{
+  id,
+  flow,
+  instrumentId,
+  lesson,
+  difficulty,
+
+  segments: [
+    {
+      id,
+      type, // "practice" | "song" | "challenge"
+      exerciseIds: []
+    }
+  ],
+
+  exercises: [
+    {
+      id,
+      type,
+      data
+    }
+  ],
+
+  rewards
+}
+```
+
+---
+
+# FORBIDDEN IN CORE (CRITICAL)
+
+The following MUST NEVER appear in:
+
+* SessionEngine
+* PracticeEngine
+* LearningBrain
+
+NO label, title, description, subtitle, UI flags, display fields
+
+If present -> REMOVE immediately
+
+---
+
+# RUNTIME LOOP (MANDATORY)
+
+```js
+function startSessionLoop(user) {
+  const session = SessionEngineV2.buildSession({
+    user,
+    instrument,
+    lesson,
+    recentEvents: user.lastEvents || []
+  });
+
+  runSession(session);
+}
+```
+
+---
+
+## Gameplay -> Event Capture
+
+```js
+state.events.push(event);
+```
+
+---
+
+## Session Completion
+
+```js
+user.lastEvents = state.events;
+startSessionLoop(user);
+```
+
+---
+
+# UI CONTRACT
+
+UI MUST ONLY:
+
+```js
+render(sessionPlan);
+```
+
+UI MUST NOT:
+
+* generate exercises
+* choose next step
+* modify session
+* inject data
+
+---
+
+# ARCHITECTURAL RULES
+
+## 1. No Bypass
+
+If anything runs without SessionEngine -> WRONG
+
+---
+
+## 2. No Duplication
+
+If logic exists in UI AND engine -> WRONG
+
+---
+
+## 3. Normalization Required
+
+* segments reference exercises
+* exercises hold all data
+
+---
+
+## 4. Single Source of Truth
+
+SessionPlan is the ONLY source of runtime structure
+
+---
+
+# INSTRUMENT PIPELINE SYSTEM (CRITICAL)
+
+SparkSuite includes a full Instrument Pipeline System:
 
     Templates -> Generator -> Validator -> Fix Engine -> Auto-Integration -> CI -> Discovery
 
@@ -43,61 +236,22 @@ SparkSuite includes a full **Instrument Pipeline System**:
 * scripts/suggest_curriculum_fixes.js
 * scripts/apply_generated_instrument.js
 
-### Key Docs
-
-* docs/engineering/INSTRUMENT_GENERATOR_PIPELINE.md
-* docs/engineering/CURRICULUM_CONTRACT.md
-* docs/engineering/INSTRUMENT_DEBUG_GUIDE.md
+DO NOT manually create instruments across folders. Use the pipeline.
 
 ---
 
-## Instrument Creation (MANDATORY WORKFLOW)
+# AUTO-DISCOVERY SYSTEM
 
-DO NOT manually create instruments across folders.
-
-Use:
-
-    node scripts/generate_instrument_pipeline.js --instrument <id> --template <template>
-    node scripts/validate_curriculum.js
-    node scripts/apply_generated_instrument.js --instrument <id>
-
-If this flow is not used, the implementation is invalid.
-
----
-
-## Auto-Discovery System
-
-SparkSuite uses **manifest-based auto-discovery** for instruments.
-
-### Files
+SparkSuite uses manifest-based auto-discovery for instruments.
 
 * js/instruments/instrument_manifest.generated.js
 * js/instruments/discovery_loader.js
 
-### How it works
-
-* Instruments are registered in a manifest
-* Loader dynamically injects scripts at runtime
-* No per-instrument edits to index.html
-
-### Critical Constraint
-
-Browsers cannot scan directories.
 Discovery MUST be manifest-driven, NOT filesystem-driven.
 
 ---
 
-## Critical Rules
-
-1. DO NOT hardcode instruments into index.html
-2. DO NOT manually wire instruments across multiple systems
-3. ALWAYS use the generator pipeline
-4. VALIDATOR must pass before integration
-5. MANIFEST is the source of truth for discovery
-
----
-
-## Architecture Reminder
+# ARCHITECTURE LAYERS
 
 * js/instruments/ -- runtime layer
 * js/sparksuite/instruments/ -- module/content layer
@@ -107,7 +261,7 @@ All three must remain aligned.
 
 ---
 
-## Validation Standard
+# VALIDATION STANDARD
 
 A valid instrument must satisfy:
 
@@ -117,100 +271,64 @@ If any link is missing, the instrument is broken.
 
 ---
 
-## Guiding Principle
+# DEVELOPMENT PRIORITIES
 
-SparkSuite is a generated, validated, and enforced instrument platform.
+When modifying the system:
 
----
-
-## Anti-Patterns
-
-Do NOT:
-
-* copy/paste existing instrument folders
-* create lessons without exercises
-* create skills without gameplay support
-* fix UI without fixing underlying data
-* bypass validator or CI
+1. Update engines FIRST
+2. Maintain SessionPlan contract
+3. Keep UI passive
+4. Avoid shortcuts
 
 ---
 
-## Definition of Done (Instrument)
-
-An instrument is complete when:
-
-* generated via pipeline
-* validator passes (0 issues)
-* exercises exist for all lesson skills
-* gameplay renders correctly
-* progress updates correctly
-* auto-discovery loads it without manual wiring
-
----
-
-## Final Rule
-
-If an instrument is not generated, validated, integrated via pipeline,
-and discoverable via manifest, then it is **invalid implementation**.
-
----
+# CODING GUIDELINES
 
 ## 1. Think Before Coding
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+* State assumptions explicitly. If uncertain, ask.
+* If multiple interpretations exist, present them.
+* If a simpler approach exists, say so.
 
 ## 2. Simplicity First
 
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+* No features beyond what was asked.
+* No abstractions for single-use code.
+* No error handling for impossible scenarios.
 
 ## 3. Surgical Changes
 
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
+* Touch only what you must.
+* Match existing style.
+* Remove only what YOUR changes made unused.
 
 ## 4. Goal-Driven Execution
 
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+* Transform tasks into verifiable goals.
+* State a brief plan with verification steps.
 
 ---
 
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+# DESIGN PHILOSOPHY
+
+SparkSuite is:
+
+* system-first
+* adaptive
+* engine-driven
+* data-normalized
+
+NOT:
+
+* screen-driven
+* manually sequenced
+* UI-controlled
+
+---
+
+# FINAL RULE
+
+If it works but violates these rules -> it is technical debt.
+If it follows these rules -> it scales cleanly.
+
+This file is the source of truth for architecture enforcement.
