@@ -169,6 +169,7 @@
         chartPromise.then(function (chart) {
           // 4. Store active session state
           self._activeChart = chart;
+          self._sessionStartWallTime = performance.now();
           self._activeUserId = params.userId;
           if (chart && params.title && chart.songChart && chart.songChart.song) chart.songChart.song.title = params.title;
           if (chart && params.artist && chart.songChart && chart.songChart.song) chart.songChart.song.artist = params.artist;
