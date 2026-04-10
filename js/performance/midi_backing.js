@@ -11,7 +11,7 @@
   var _midiStartTime = 0;    // AudioContext time when playback started
   var _midiOffsetSec = 0;    // Seek offset
   var _midiSpeed = 1;
-  var _midiVolume = 0.35;
+  var _midiVolume = 0.18;
   var _midiLoaded = false;
   var _midiSrc = null;
 
