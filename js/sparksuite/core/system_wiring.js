@@ -7,7 +7,8 @@
 (function () {
   "use strict";
 
-  if (typeof SparkCore === "undefined") return;
+  var SparkCore = window.SparkCoreRuntime;
+  if (typeof SparkCore === "undefined" || !SparkCore) return;
 
   // ---------------------------------------------------------------
   // initPlayAlongSystems
