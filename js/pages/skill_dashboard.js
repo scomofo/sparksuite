@@ -1,0 +1,139 @@
+(function() {
+
+  function skillDashboardPage() {
+    var sg = S.skillGraph;
+    if (!sg) return '<div class="text-center"><p>No skill data yet. Play some sessions first!</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+
+    var h = '<div style="max-width:480px;margin:0 auto;padding:16px">';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+    h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">&larr; Back</button>';
+    h += '<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:0">Skill Dashboard</h2>';
+    h += '<div style="width:60px"></div>';
+    h += '</div>';
+
+    // Current skill levels
+    var skills = [
+      { key: "timing", label: "Timing", color: "#4ECDC4" },
+      { key: "rhythm", label: "Rhythm", color: "#FFE66D" },
+      { key: "chordAccuracy", label: "Chords", color: "#FF8A5C" }
+    ];
+
+    h += '<div class="card mb16">';
+    h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Current Levels</div>';
+    for (var i = 0; i < skills.length; i++) {
+      var sk = skills[i];
+      var val = Math.round((sg[sk.key] || 0) * 100);
+      var mastery = val >= 80 ? "Gold" : val >= 60 ? "Silver" : val >= 40 ? "Bronze" : "\u2014";
+      var masteryColor = val >= 80 ? "#FFE66D" : val >= 60 ? "#C0C0C0" : val >= 40 ? "#CD7F32" : "var(--text-muted)";
+      h += '<div style="margin-bottom:10px">';
+      h += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text-secondary);font-weight:700">' + escHTML(sk.label) + '</span><span style="color:' + masteryColor + ';font-weight:800">' + mastery + ' \u00b7 ' + val + '%</span></div>';
+      h += '<div style="height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden"><div style="height:100%;width:' + val + '%;border-radius:4px;background:' + sk.color + ';transition:width .3s"></div></div>';
+      h += '</div>';
+    }
+    h += '</div>';
+
+    // Lane accuracy
+    h += '<div class="card mb16">';
+    h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Lane Accuracy</div>';
+    var laneColors = ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316", "#a855f7"];
+    var laneLabels = ["G", "R", "Y", "B", "O", "P"];
+    h += '<div style="display:flex;gap:8px;justify-content:center">';
+    for (var li = 0; li < 6; li++) {
+      var lv = Math.round((sg.laneAccuracy[li] || 0) * 100);
+      h += '<div style="text-align:center;flex:1"><div style="height:60px;display:flex;align-items:end;justify-content:center"><div style="width:100%;border-radius:4px 4px 0 0;background:' + laneColors[li] + ';height:' + Math.max(4, lv * 0.6) + 'px;opacity:.85"></div></div>';
+      h += '<div style="font-size:10px;font-weight:800;color:' + laneColors[li] + ';margin-top:4px">' + laneLabels[li] + '</div>';
+      h += '<div style="font-size:10px;color:var(--text-muted)">' + lv + '%</div></div>';
+    }
+    h += '</div></div>';
+
+    // Trend charts (canvas-based)
+    if (sg.history && sg.history.length >= 2) {
+      h += '<div class="card mb16">';
+      h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Trends (Last ' + sg.history.length + ' Sessions)</div>';
+      for (var si = 0; si < skills.length; si++) {
+        var sk2 = skills[si];
+        h += '<div style="margin-bottom:12px"><div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">' + escHTML(sk2.label) + '</div>';
+        h += '<canvas id="skill-chart-' + sk2.key + '" width="400" height="80" style="width:100%;height:80px;border-radius:8px;background:rgba(255,255,255,.03)"></canvas></div>';
+      }
+      h += '</div>';
+    }
+
+    // Weakest skill recommendation
+    if (typeof SparkSkillTracker !== "undefined") {
+      var weakest = SparkSkillTracker.getWeakestSkill(sg);
+      var weakLane = SparkSkillTracker.getWeakestLane(sg);
+      h += '<div class="card mb16" style="background:linear-gradient(180deg,rgba(255,138,92,.1),rgba(255,138,92,.04));border:1px solid rgba(255,138,92,.22)">';
+      h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:6px">Focus Area</div>';
+      var focusLabel = weakest === "timing" ? "Timing" : weakest === "rhythm" ? "Rhythm" : "Chord Accuracy";
+      h += '<div style="font-size:12px;color:var(--text-secondary)">Weakest skill: <strong style="color:var(--text-primary)">' + escHTML(focusLabel) + '</strong> (' + Math.round((sg[weakest] || 0) * 100) + '%)</div>';
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Weakest lane: <strong style="color:var(--text-primary)">Lane ' + (weakLane + 1) + '</strong> (' + Math.round((sg.laneAccuracy[weakLane] || 0) * 100) + '%)</div>';
+      h += '</div>';
+    }
+
+    // Unlocked content
+    if (typeof SparkMasteryEngine !== "undefined" && sg) {
+      var unlocks = SparkMasteryEngine.getUnlocks(sg);
+      if (unlocks.length > 0) {
+        h += '<div class="card mb16">';
+        h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:8px">Unlocked</div>';
+        for (var ui = 0; ui < unlocks.length; ui++) {
+          h += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span style="color:#4ECDC4">✓</span><span style="color:var(--text-secondary)">' + escHTML(unlocks[ui].label) + '</span></div>';
+        }
+        h += '</div>';
+      }
+    }
+
+    h += '</div>';
+    return h;
+  }
+
+  // Draw trend line on canvas after render
+  function drawSkillCharts() {
+    var sg = S.skillGraph;
+    if (!sg || !sg.history || sg.history.length < 2) return;
+
+    var skills = [
+      { key: "timing", color: "#4ECDC4" },
+      { key: "rhythm", color: "#FFE66D" },
+      { key: "chordAccuracy", color: "#FF8A5C" }
+    ];
+
+    for (var i = 0; i < skills.length; i++) {
+      var canvas = document.getElementById("skill-chart-" + skills[i].key);
+      if (!canvas) continue;
+      var ctx = canvas.getContext("2d");
+      var w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      var data = [];
+      for (var j = 0; j < sg.history.length; j++) {
+        data.push(sg.history[j].skills[skills[i].key] || 0);
+      }
+
+      // Draw line
+      ctx.strokeStyle = skills[i].color;
+      ctx.lineWidth = 2;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      for (var k = 0; k < data.length; k++) {
+        var x = (k / (data.length - 1)) * (w - 20) + 10;
+        var y = h - 10 - (data[k] * (h - 20));
+        if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Draw dots
+      ctx.fillStyle = skills[i].color;
+      for (var d = 0; d < data.length; d++) {
+        var dx = (d / (data.length - 1)) * (w - 20) + 10;
+        var dy = h - 10 - (data[d] * (h - 20));
+        ctx.beginPath();
+        ctx.arc(dx, dy, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  window.skillDashboardPage = skillDashboardPage;
+  window.drawSkillCharts = drawSkillCharts;
+})();
