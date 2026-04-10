@@ -1545,7 +1545,7 @@ function act(action, param) {
       saveState();render();
       break;
     case "performStart": {
-      var chart = buildPerformanceChartFromSong(S.performSongData, S.performArrangementType);
+      var chart = buildPerformanceChartFromSong(S.performSongData, "builtin", S.performArrangementType);
       var startRequest = typeof window.startSelectedPerformanceSongRequest === "function"
         ? window.startSelectedPerformanceSongRequest({
             chart: chart,
@@ -1575,7 +1575,7 @@ function act(action, param) {
       return;
     case "performRetry":
       if(S.performSongData){
-        var chart = buildPerformanceChartFromSong(S.performSongData, S.performArrangementType);
+        var chart = buildPerformanceChartFromSong(S.performSongData, "builtin", S.performArrangementType);
         var retryRequest = typeof window.getPerformanceRetryRequest === "function"
           ? window.getPerformanceRetryRequest({
               chart: chart,
