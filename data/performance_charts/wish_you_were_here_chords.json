@@ -42,7 +42,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "down"
+      "strum": "down",
+      "lane": 0
     },
     {
       "id": 2,
@@ -56,7 +57,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 3,
@@ -70,7 +72,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "up"
+      "strum": "up",
+      "lane": 0
     },
     {
       "id": 4,
@@ -84,7 +87,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 5,
@@ -98,7 +102,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "up"
+      "strum": "up",
+      "lane": 0
     },
     {
       "id": 6,
@@ -112,7 +117,8 @@
         "E"
       ],
       "laneLabel": "A",
-      "strum": "down"
+      "strum": "down",
+      "lane": 2
     },
     {
       "id": 7,
@@ -126,7 +132,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "down"
+      "strum": "down",
+      "lane": 0
     },
     {
       "id": 8,
@@ -140,7 +147,8 @@
         "E"
       ],
       "laneLabel": "A",
-      "strum": "up"
+      "strum": "up",
+      "lane": 2
     },
     {
       "id": 9,
@@ -154,7 +162,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 10,
@@ -168,7 +177,8 @@
         "G"
       ],
       "laneLabel": "C",
-      "strum": "down"
+      "strum": "down",
+      "lane": 3
     },
     {
       "id": 11,
@@ -182,7 +192,8 @@
         "A"
       ],
       "laneLabel": "D",
-      "strum": "up"
+      "strum": "up",
+      "lane": 4
     },
     {
       "id": 12,
@@ -196,7 +207,8 @@
         "E"
       ],
       "laneLabel": "Am",
-      "strum": "down"
+      "strum": "down",
+      "lane": 5
     },
     {
       "id": 13,
@@ -210,7 +222,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "up"
+      "strum": "up",
+      "lane": 1
     },
     {
       "id": 14,
@@ -224,7 +237,8 @@
         "A"
       ],
       "laneLabel": "D",
-      "strum": "down"
+      "strum": "down",
+      "lane": 4
     },
     {
       "id": 15,
@@ -238,7 +252,8 @@
         "G"
       ],
       "laneLabel": "C",
-      "strum": "down"
+      "strum": "down",
+      "lane": 3
     },
     {
       "id": 16,
@@ -252,7 +267,8 @@
         "E"
       ],
       "laneLabel": "Am",
-      "strum": "up"
+      "strum": "up",
+      "lane": 5
     },
     {
       "id": 17,
@@ -266,7 +282,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "down"
+      "strum": "down",
+      "lane": 0
     },
     {
       "id": 18,
@@ -280,7 +297,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 19,
@@ -294,7 +312,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "up"
+      "strum": "up",
+      "lane": 0
     },
     {
       "id": 20,
@@ -308,7 +327,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 21,
@@ -322,7 +342,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "up"
+      "strum": "up",
+      "lane": 0
     },
     {
       "id": 22,
@@ -336,7 +357,8 @@
         "E"
       ],
       "laneLabel": "A",
-      "strum": "down"
+      "strum": "down",
+      "lane": 2
     },
     {
       "id": 23,
@@ -350,7 +372,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "down"
+      "strum": "down",
+      "lane": 0
     },
     {
       "id": 24,
@@ -364,7 +387,8 @@
         "E"
       ],
       "laneLabel": "A",
-      "strum": "up"
+      "strum": "up",
+      "lane": 2
     },
     {
       "id": 25,
@@ -378,7 +402,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 26,
@@ -392,7 +417,8 @@
         "G"
       ],
       "laneLabel": "C",
-      "strum": "down"
+      "strum": "down",
+      "lane": 3
     },
     {
       "id": 27,
@@ -406,7 +432,8 @@
         "A"
       ],
       "laneLabel": "D",
-      "strum": "up"
+      "strum": "up",
+      "lane": 4
     },
     {
       "id": 28,
@@ -420,7 +447,8 @@
         "E"
       ],
       "laneLabel": "Am",
-      "strum": "down"
+      "strum": "down",
+      "lane": 5
     },
     {
       "id": 29,
@@ -434,7 +462,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "up"
+      "strum": "up",
+      "lane": 1
     },
     {
       "id": 30,
@@ -448,7 +477,8 @@
         "A"
       ],
       "laneLabel": "D",
-      "strum": "down"
+      "strum": "down",
+      "lane": 4
     },
     {
       "id": 31,
@@ -462,7 +492,8 @@
         "G"
       ],
       "laneLabel": "C",
-      "strum": "down"
+      "strum": "down",
+      "lane": 3
     },
     {
       "id": 32,
@@ -476,7 +507,8 @@
         "E"
       ],
       "laneLabel": "Am",
-      "strum": "up"
+      "strum": "up",
+      "lane": 5
     },
     {
       "id": 33,
@@ -490,7 +522,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "down"
+      "strum": "down",
+      "lane": 0
     },
     {
       "id": 34,
@@ -504,7 +537,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 35,
@@ -518,7 +552,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "up"
+      "strum": "up",
+      "lane": 0
     },
     {
       "id": 36,
@@ -532,7 +567,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 37,
@@ -546,7 +582,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "up"
+      "strum": "up",
+      "lane": 0
     },
     {
       "id": 38,
@@ -560,7 +597,8 @@
         "E"
       ],
       "laneLabel": "A",
-      "strum": "down"
+      "strum": "down",
+      "lane": 2
     },
     {
       "id": 39,
@@ -574,7 +612,8 @@
         "B"
       ],
       "laneLabel": "Em",
-      "strum": "down"
+      "strum": "down",
+      "lane": 0
     },
     {
       "id": 40,
@@ -588,7 +627,8 @@
         "E"
       ],
       "laneLabel": "A",
-      "strum": "up"
+      "strum": "up",
+      "lane": 2
     },
     {
       "id": 41,
@@ -602,7 +642,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "down"
+      "strum": "down",
+      "lane": 1
     },
     {
       "id": 42,
@@ -616,7 +657,8 @@
         "G"
       ],
       "laneLabel": "C",
-      "strum": "down"
+      "strum": "down",
+      "lane": 3
     },
     {
       "id": 43,
@@ -630,7 +672,8 @@
         "A"
       ],
       "laneLabel": "D",
-      "strum": "up"
+      "strum": "up",
+      "lane": 4
     },
     {
       "id": 44,
@@ -644,7 +687,8 @@
         "E"
       ],
       "laneLabel": "Am",
-      "strum": "down"
+      "strum": "down",
+      "lane": 5
     },
     {
       "id": 45,
@@ -658,7 +702,8 @@
         "D"
       ],
       "laneLabel": "G",
-      "strum": "up"
+      "strum": "up",
+      "lane": 1
     },
     {
       "id": 46,
@@ -672,7 +717,8 @@
         "A"
       ],
       "laneLabel": "D",
-      "strum": "down"
+      "strum": "down",
+      "lane": 4
     },
     {
       "id": 47,
@@ -686,7 +732,8 @@
         "G"
       ],
       "laneLabel": "C",
-      "strum": "down"
+      "strum": "down",
+      "lane": 3
     },
     {
       "id": 48,
@@ -700,7 +747,8 @@
         "E"
       ],
       "laneLabel": "Am",
-      "strum": "up"
+      "strum": "up",
+      "lane": 5
     }
   ]
 }
