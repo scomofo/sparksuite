@@ -261,17 +261,21 @@ function getPrimaryPerformanceLane(laneMask) {
 
 function assignLegacyPerformanceLanes(chart) {
   if (!chart || !Array.isArray(chart.events) || !chart.events.length) return;
+  var shouldReassignCollapsed = shouldReassignCollapsedPerformanceLanes(chart.events);
   var laneMap = {};
   var nextLane = 0;
   var laneCount = getPerformanceLaneCount(chart);
 
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
-    if (!evt || evt.lane != null) continue;
-    if (typeof evt.laneMask === "number" && evt.laneMask > 0) continue;
+    if (!evt) continue;
     if (evt.sourceFlags && evt.sourceFlags.open) continue;
     if (String(evt.type || "").toLowerCase() === "open") continue;
     if (typeof evt.laneLabel === "string" && evt.laneLabel.toLowerCase() === "open") continue;
+    if (!shouldReassignCollapsed) {
+      if (evt.lane != null) continue;
+      if (typeof evt.laneMask === "number" && evt.laneMask > 0) continue;
+    }
 
     var key = getPerformanceLaneKey(evt);
     if (!key) continue;
@@ -282,6 +286,41 @@ function assignLegacyPerformanceLanes(chart) {
     evt.lane = laneMap[key];
     evt.laneMask = 1 << evt.lane;
   }
+}
+
+function shouldReassignCollapsedPerformanceLanes(events) {
+  if (!Array.isArray(events) || events.length < 2) return false;
+  var keys = {};
+  var assignedLanes = {};
+  var keyCount = 0;
+  var laneCount = 0;
+
+  for (var i = 0; i < events.length; i++) {
+    var evt = events[i];
+    if (!evt || isCollapsedPerformanceOpenEvent(evt)) continue;
+    var key = getPerformanceLaneKey(evt);
+    if (!key) continue;
+    if (!Object.prototype.hasOwnProperty.call(keys, key)) {
+      keys[key] = true;
+      keyCount++;
+    }
+    var lane = typeof evt.lane === "number" && evt.lane >= 0
+      ? evt.lane
+      : getPrimaryPerformanceLane(evt.laneMask);
+    if (lane != null && !Object.prototype.hasOwnProperty.call(assignedLanes, lane)) {
+      assignedLanes[lane] = true;
+      laneCount++;
+    }
+  }
+
+  return keyCount > 1 && laneCount <= 1;
+}
+
+function isCollapsedPerformanceOpenEvent(evt) {
+  if (!evt) return false;
+  if (evt.sourceFlags && evt.sourceFlags.open) return true;
+  if (String(evt.type || "").toLowerCase() === "open") return true;
+  return typeof evt.laneLabel === "string" && evt.laneLabel.toLowerCase() === "open";
 }
 
 function getPerformanceLaneKey(evt) {

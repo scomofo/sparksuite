@@ -22,6 +22,7 @@ function feedChartToHighway(chart) {
 
 function ensurePerformanceHighwayLaneData(chart) {
   if (!chart || !Array.isArray(chart.events)) return chart;
+  var shouldReassignCollapsed = shouldReassignCollapsedHighwayLanes(chart.events);
   var laneMap = {};
   var nextLane = 0;
   var laneCount = chart && chart.metadata && typeof chart.metadata.laneCount === "number" && chart.metadata.laneCount > 0
@@ -31,7 +32,20 @@ function ensurePerformanceHighwayLaneData(chart) {
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
     if (!evt) continue;
-    if (evt.lane == null) {
+    if (shouldReassignCollapsed && !isPerformanceOpenEvent(evt)) {
+      var reassignedKey = getPerformanceLaneAssignmentKey(evt);
+      if (reassignedKey) {
+        if (laneMap[reassignedKey] == null) {
+          laneMap[reassignedKey] = nextLane % laneCount;
+          nextLane++;
+        }
+        evt.lane = laneMap[reassignedKey];
+        evt.laneMask = 1 << evt.lane;
+      } else {
+        evt.lane = null;
+        evt.laneMask = 0;
+      }
+    } else if (evt.lane == null) {
       if (typeof evt.laneMask === "number" && evt.laneMask > 0) {
         evt.lane = getPrimaryLaneIndex(evt.laneMask);
       } else if (!isPerformanceOpenEvent(evt)) {
@@ -56,6 +70,34 @@ function ensurePerformanceHighwayLaneData(chart) {
     }
   }
   return chart;
+}
+
+function shouldReassignCollapsedHighwayLanes(events) {
+  if (!Array.isArray(events) || events.length < 2) return false;
+  var keys = {};
+  var assignedLanes = {};
+  var keyCount = 0;
+  var laneCount = 0;
+
+  for (var i = 0; i < events.length; i++) {
+    var evt = events[i];
+    if (!evt || isPerformanceOpenEvent(evt)) continue;
+    var key = getPerformanceLaneAssignmentKey(evt);
+    if (!key) continue;
+    if (!Object.prototype.hasOwnProperty.call(keys, key)) {
+      keys[key] = true;
+      keyCount++;
+    }
+    var lane = typeof evt.lane === "number" && evt.lane >= 0
+      ? evt.lane
+      : getPrimaryLaneIndex(evt.laneMask);
+    if (lane != null && !Object.prototype.hasOwnProperty.call(assignedLanes, lane)) {
+      assignedLanes[lane] = true;
+      laneCount++;
+    }
+  }
+
+  return keyCount > 1 && laneCount <= 1;
 }
 
 function isPerformanceOpenEvent(evt) {

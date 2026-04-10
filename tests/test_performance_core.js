@@ -236,6 +236,27 @@ test('normalizePerformanceChart assigns lanes for legacy direct chart events wit
   assert.strictEqual(chart.events[2].laneMask, 1);
 });
 
+test('normalizePerformanceChart repairs charts whose non-open events were pre-collapsed to lane 0', function() {
+  var chart = normalizePerformanceChart({
+    id: 'collapsed_direct_chart',
+    title: 'Collapsed Direct Chart',
+    bpm: 120,
+    phrases: [{ id: 0, name: 'Full Song', startSec: 0, endSec: 8 }],
+    events: [
+      { id: 1, t: 0, dur: 2, type: 'chord', chord: 'Em', laneLabel: 'Em', lane: 0, laneMask: 1, notes: ['E', 'G', 'B'] },
+      { id: 2, t: 2, dur: 2, type: 'chord', chord: 'G', laneLabel: 'G', lane: 0, laneMask: 1, notes: ['G', 'B', 'D'] },
+      { id: 3, t: 4, dur: 2, type: 'chord', chord: 'D', laneLabel: 'D', lane: 0, laneMask: 1, notes: ['D', 'F#', 'A'] }
+    ]
+  });
+
+  assert.strictEqual(chart.events[0].lane, 0);
+  assert.strictEqual(chart.events[0].laneMask, 1);
+  assert.strictEqual(chart.events[1].lane, 1);
+  assert.strictEqual(chart.events[1].laneMask, 2);
+  assert.strictEqual(chart.events[2].lane, 2);
+  assert.strictEqual(chart.events[2].laneMask, 4);
+});
+
 test('ensurePerformanceHighwayLaneData repairs missing lane metadata before rendering', function() {
   var chart = {
     metadata: { laneCount: 5 },
@@ -254,6 +275,26 @@ test('ensurePerformanceHighwayLaneData repairs missing lane metadata before rend
   assert.strictEqual(chart.events[1].laneMask, 2);
   assert.strictEqual(chart.events[2].lane, null);
   assert.strictEqual(chart.events[2].laneMask, 0);
+});
+
+test('ensurePerformanceHighwayLaneData repairs renderer-bound charts whose lanes collapsed to zero', function() {
+  var chart = {
+    metadata: { laneCount: 5 },
+    events: [
+      { id: 1, t: 0, dur: 2, type: 'chord', chord: 'Em', laneLabel: 'Em', lane: 0, laneMask: 1, notes: ['E', 'G', 'B'] },
+      { id: 2, t: 2, dur: 2, type: 'chord', chord: 'G', laneLabel: 'G', lane: 0, laneMask: 1, notes: ['G', 'B', 'D'] },
+      { id: 3, t: 4, dur: 2, type: 'chord', chord: 'D', laneLabel: 'D', lane: 0, laneMask: 1, notes: ['D', 'F#', 'A'] }
+    ]
+  };
+
+  ensurePerformanceHighwayLaneData(chart);
+
+  assert.strictEqual(chart.events[0].lane, 0);
+  assert.strictEqual(chart.events[0].laneMask, 1);
+  assert.strictEqual(chart.events[1].lane, 1);
+  assert.strictEqual(chart.events[1].laneMask, 2);
+  assert.strictEqual(chart.events[2].lane, 2);
+  assert.strictEqual(chart.events[2].laneMask, 4);
 });
 
 test('buildRhythmChordArrangement stamps lane metadata onto generated events', function() {
