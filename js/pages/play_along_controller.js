@@ -829,4 +829,61 @@
     S.playAlongSectionIndex = current;
   }
 
+
+  // ---- Spotify Connect ----
+
+  window.sparkPlayAlongConnectSpotify = function() {
+    // Check if auth manager exists
+    if (typeof SparkSpotifyAuthManager === "undefined") {
+      alert("Spotify integration not loaded.");
+      return;
+    }
+
+    var authManager = new SparkSpotifyAuthManager();
+
+    // Check if already connected
+    if (authManager.isConnected()) {
+      authManager.getValidToken().then(function(token) {
+        if (token && window.sparkCore && typeof window.sparkCore.initSpotify === "function") {
+          window.sparkCore.initSpotify(token);
+          if (typeof render === "function") render();
+        }
+      });
+      return;
+    }
+
+    // Need to configure first — check if client ID is set
+    var clientId = localStorage.getItem("sparksuite_spotify_client_id");
+    if (!clientId) {
+      clientId = prompt("Enter your Spotify Client ID (from developer.spotify.com):");
+      if (!clientId) return;
+      localStorage.setItem("sparksuite_spotify_client_id", clientId.trim());
+    }
+
+    // Determine redirect URI based on environment
+    var redirectUri = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "") + "index.html";
+    if (redirectUri.indexOf("file://") === 0) {
+      redirectUri = "http://localhost:3456/callback";
+    }
+
+    SparkSpotifyAuthManager.configure({
+      clientId: clientId.trim(),
+      redirectUri: redirectUri
+    });
+
+    // Start OAuth flow
+    var url = authManager.getAuthUrl();
+    if (typeof window.electron !== "undefined" && window.electron.shell) {
+      // Desktop: open in system browser
+      window.electron.shell.openExternal(url);
+    } else {
+      window.location.href = url;
+    }
+  };
+
+  // Handle spotifyConnect action from act() dispatcher
+  window.handleSpotifyConnectAction = function() {
+    window.sparkPlayAlongConnectSpotify();
+  };
+
 })();

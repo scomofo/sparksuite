@@ -1448,6 +1448,8 @@ window.act=function(a,v){
   // Delegate to active instrument's handler first
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
+  // Spotify connect
+  if(a==="spotifyConnect"){ if(typeof sparkPlayAlongConnectSpotify==="function") sparkPlayAlongConnectSpotify(); return; }
   // Switch instrument from v2 dashboard
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
