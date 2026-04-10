@@ -25,6 +25,11 @@
       };
       self._cache[trackId] = analysis;
       return analysis;
+    }).catch(function() {
+      console.warn("[TrackAnalyzer] Audio features unavailable, using defaults");
+      var fallback = { trackId: trackId, bpm: 120, key: 0, mode: 1, timeSignature: 4, energy: 0.5, danceability: 0.5, valence: 0.5 };
+      self._cache[trackId] = fallback;
+      return fallback;
     });
   };
 
