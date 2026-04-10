@@ -1,5 +1,12 @@
 (function(){
 
+  function getPreferredPerformanceArrangement(song, fallbackArrangement) {
+    if (song && typeof song.preferredPerformanceArrangement === "string" && song.preferredPerformanceArrangement) {
+      return song.preferredPerformanceArrangement;
+    }
+    return fallbackArrangement || "chords";
+  }
+
   function buildPerformanceSongFromBuiltin(song) {
     if (!song) return null;
     return {
@@ -12,6 +19,7 @@
       pattern: song.pattern || ["D","D","U","U","D","U"],
       leadNotes: song.leadNotes || null,
       midi: song.midi || null,
+      preferredPerformanceArrangement: getPreferredPerformanceArrangement(song, "chords"),
       source: "builtin"
     };
   }
@@ -26,6 +34,7 @@
       chords: song.chords || [],
       progression: song.progression || [],
       pattern: song.pattern || ["D","D","U","U","D","U"],
+      preferredPerformanceArrangement: getPreferredPerformanceArrangement(song, "chords"),
       source: "imported"
     };
   }
@@ -69,6 +78,7 @@
     };
   }
 
+  window.getPreferredPerformanceArrangement = getPreferredPerformanceArrangement;
   window.buildPerformanceSongFromBuiltin = buildPerformanceSongFromBuiltin;
   window.buildPerformanceSongFromImported = buildPerformanceSongFromImported;
   window.buildPerformanceChartFromSong = buildPerformanceChartFromSong;

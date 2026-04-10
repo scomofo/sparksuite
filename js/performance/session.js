@@ -3,6 +3,63 @@
 var _performRAF = null;
 var _performStopping = false;
 
+function buildPerformanceLaneDebugSnapshot(chart, nowSec) {
+  if (!chart || !Array.isArray(chart.events)) {
+    return { events: [], collapsed: false, distinctKeys: 0, distinctLanes: 0 };
+  }
+
+  var snapshot = [];
+  var keys = {};
+  var lanes = {};
+  var distinctKeys = 0;
+  var distinctLanes = 0;
+
+  for (var i = 0; i < chart.events.length; i++) {
+    var evt = chart.events[i];
+    if (!evt) continue;
+    if (typeof evt.t === "number" && evt.t + 0.05 < nowSec) continue;
+
+    var key = "";
+    if (typeof evt.chord === "string" && evt.chord) key = evt.chord;
+    else if (typeof evt.laneLabel === "string" && evt.laneLabel) key = evt.laneLabel;
+    else if (typeof evt.note === "string" && evt.note) key = evt.note;
+    else if (Array.isArray(evt.notes) && evt.notes.length) key = evt.notes.join("+");
+
+    var lane = (typeof evt.lane === "number" && evt.lane >= 0)
+      ? evt.lane
+      : ((typeof evt.laneMask === "number" && evt.laneMask > 0 && typeof getPrimaryLaneIndex === "function")
+        ? getPrimaryLaneIndex(evt.laneMask)
+        : null);
+
+    if (key && !Object.prototype.hasOwnProperty.call(keys, key)) {
+      keys[key] = true;
+      distinctKeys++;
+    }
+    if (lane != null && !Object.prototype.hasOwnProperty.call(lanes, lane)) {
+      lanes[lane] = true;
+      distinctLanes++;
+    }
+
+    snapshot.push({
+      id: evt.id || ("evt_" + i),
+      t: typeof evt.t === "number" ? evt.t : null,
+      chord: evt.chord || "",
+      laneLabel: evt.laneLabel || "",
+      lane: lane,
+      laneMask: typeof evt.laneMask === "number" ? evt.laneMask : null
+    });
+
+    if (snapshot.length >= 6) break;
+  }
+
+  return {
+    events: snapshot,
+    distinctKeys: distinctKeys,
+    distinctLanes: distinctLanes,
+    collapsed: distinctKeys > 1 && distinctLanes <= 1
+  };
+}
+
 function startPerformanceCountIn(chart, speed, onDone) {
   var bpm = chart.bpm || 90;
   var beatSec = (60 / bpm) / (speed || 1);
@@ -119,6 +176,7 @@ function startPerformance(chartIdOrChart, opts) {
       S.performLastHitLabel = "";
       S.performLastHitTime = 0;
       S.performPhraseStats = createEmptyPhraseStats(chart);
+      S.performLaneDebugSnapshot = buildPerformanceLaneDebugSnapshot(chart, 0);
       if (opts.mode) S.performMode = opts.mode;
       if (opts.difficulty) S.performDifficulty = opts.difficulty;
       if (opts.speed) S.performSpeed = opts.speed;
@@ -359,6 +417,8 @@ function updatePerformanceFrame() {
 }
 
 function _updatePerformDisplay() {
+  S.performLaneDebugSnapshot = buildPerformanceLaneDebugSnapshot(S.performChart, S.performCurrentSec || 0);
+
   // Initialize canvas highway on first frame
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas && !_sparkHighway) ensureSparkHighway(canvas);
@@ -386,6 +446,11 @@ function _updatePerformDisplay() {
   var importedOverlayEl = document.getElementById("perform-imported-overlay");
   if (importedOverlayEl && typeof renderImportedTechniqueOverlay === "function") {
     importedOverlayEl.innerHTML = renderImportedTechniqueOverlay(S.performChart, S.performCurrentSec, 3);
+  }
+
+  var laneDebugEl = document.getElementById("perform-lane-debug");
+  if (laneDebugEl && typeof renderPerformanceLaneDebug === "function") {
+    laneDebugEl.innerHTML = renderPerformanceLaneDebug(S.performLaneDebugSnapshot);
   }
 }
 

@@ -92,6 +92,32 @@ function cancelCalibration() {
   render();
 }
 
+function renderPerformanceLaneDebug(snapshot) {
+  snapshot = snapshot || {};
+  var events = Array.isArray(snapshot.events) ? snapshot.events : [];
+  if (!events.length) return "";
+
+  var h = '<div style="margin:6px 12px 0;padding:8px 10px;border-radius:10px;background:rgba(8,12,20,.9);border:1px solid rgba(255,255,255,.08)">';
+  h += '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">';
+  h += '<strong style="font-size:11px;letter-spacing:.04em;color:#cbd5e1">LANE DEBUG</strong>';
+  h += '<span style="font-size:11px;color:' + (snapshot.collapsed ? '#ff8a5c' : '#8be9a8') + ';font-weight:800">';
+  h += snapshot.collapsed ? 'WARNING: distinct chords collapsing to one lane' : ('keys ' + (snapshot.distinctKeys || 0) + ' / lanes ' + (snapshot.distinctLanes || 0));
+  h += '</span></div>';
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">';
+  for (var i = 0; i < events.length; i++) {
+    var evt = events[i];
+    h += '<span style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);padding:4px 6px;border-radius:8px;font-size:10px;color:#e5e7eb">';
+    h += escHTML(evt.chord || evt.laneLabel || evt.id || ("evt" + i));
+    h += ' ';
+    h += '<strong style="color:#ffe66d">L' + (evt.lane == null ? '-' : evt.lane) + '</strong>';
+    h += ' ';
+    h += '<span style="color:#94a3b8">M' + (evt.laneMask == null ? '-' : evt.laneMask) + '</span>';
+    h += '</span>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
 function performPage() {
   var chart = S.performChart;
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
@@ -207,6 +233,8 @@ function performPage() {
     }
     h += '<div style="text-align:center;padding:4px 12px;background:#FFE66D22;border-radius:8px;margin:4px 12px"><span style="font-size:11px;font-weight:700;color:#FFE66D">&#128257; Looping: ' + escHTML(loopPhrase ? loopPhrase.name : 'Phrase') + '</span></div>';
   }
+
+  h += '<div id="perform-lane-debug">' + renderPerformanceLaneDebug(S.performLaneDebugSnapshot) + '</div>';
 
   // Controls
   h += '<div class="perform-controls">';

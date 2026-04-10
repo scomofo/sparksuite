@@ -60,12 +60,14 @@ eval(loadJS('js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js'));
 eval(loadJS('js/performance/chart_manifest.js'));
 eval(loadJS('js/performance/chart.js'));
 eval(loadJS('js/performance/arrangements.js'));
+eval(loadJS('js/performance/adapters.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway.js'));
 eval(loadJS('js/performance/progression.js'));
 eval(loadJS('js/performance/badges.js'));
 eval(loadJS('js/performance/recommendations.js'));
 eval(loadJS('js/sparksuite/ui/note_mapper.js'));
+eval(loadJS('js/data.js'));
 
 console.log('\n--- PerformanceCore: Chart Contract ---');
 
@@ -275,6 +277,34 @@ test('ensurePerformanceHighwayLaneData repairs missing lane metadata before rend
   assert.strictEqual(chart.events[1].laneMask, 2);
   assert.strictEqual(chart.events[2].lane, null);
   assert.strictEqual(chart.events[2].laneMask, 0);
+});
+
+test('getPreferredPerformanceArrangement honors song-authored arrangement preference', function() {
+  assert.strictEqual(getPreferredPerformanceArrangement({ preferredPerformanceArrangement: 'lead' }, 'chords'), 'lead');
+  assert.strictEqual(getPreferredPerformanceArrangement({}, 'chords'), 'chords');
+});
+
+test('Peter Gunn lead arrangement produces multiple lanes instead of a single chord lane', function() {
+  var peter = null;
+  for (var i = 0; i < SONGS.length; i++) {
+    if (SONGS[i].title === 'Peter Gunn') {
+      peter = SONGS[i];
+      break;
+    }
+  }
+  assert.ok(peter, 'Peter Gunn song should exist');
+  assert.strictEqual(getPreferredPerformanceArrangement(peter, 'chords'), 'lead');
+
+  var chart = buildPerformanceChartFromSong(peter, 'builtin', 'lead');
+  assert.ok(chart, 'lead chart should be created');
+  assert.strictEqual(chart.arrangementType, 'lead');
+  assert.ok(chart.events.length >= 8, 'lead chart should contain multiple riff notes');
+
+  var lanes = {};
+  for (var j = 0; j < chart.events.length; j++) {
+    lanes[chart.events[j].lane] = true;
+  }
+  assert.ok(Object.keys(lanes).length >= 3, 'lead chart should span multiple lanes');
 });
 
 test('ensurePerformanceHighwayLaneData repairs renderer-bound charts whose lanes collapsed to zero', function() {

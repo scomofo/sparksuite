@@ -56,6 +56,12 @@ function performSongPage() {
   h += '<button class="btn btn-sm' + (arrType === "lead" ? " active" : "") + '" onclick="act(\'performArrangement\',\'lead\')">&#127925; Lead</button>';
   h += '</div></div>';
 
+  if (song.preferredPerformanceArrangement === "lead" && song.leadNotes && song.leadNotes.length) {
+    h += '<div class="card mb20" style="font-size:12px;color:var(--text-muted)">';
+    h += 'This song is authored as a riff-first performance. <strong style="color:var(--text-primary)">Lead</strong> is the recommended arrangement.';
+    h += '</div>';
+  }
+
   // Difficulty selector
   h += '<div class="card mb20"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Difficulty</div>';
   h += '<div class="perform-toggle-group" style="justify-content:center">';

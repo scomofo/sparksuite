@@ -2683,7 +2683,10 @@ window.act=function(a,v){
   if(a==="performSong"){
     var songIdx=parseInt(v);
     if(!isNaN(songIdx)&&SONGS[songIdx]){
-      var chart=buildPerformanceChartFromSong(SONGS[songIdx],"builtin");
+      var performSongArrangement = typeof getPreferredPerformanceArrangement === "function"
+        ? getPreferredPerformanceArrangement(SONGS[songIdx], "chords")
+        : "chords";
+      var chart=buildPerformanceChartFromSong(SONGS[songIdx],"builtin",performSongArrangement);
       if(chart){startPerformance(chart);return;}
     }
     return;
@@ -2718,12 +2721,17 @@ window.act=function(a,v){
           songId: selectedSongId,
           songTitle: SONGS[sgIdx].title || null,
           targetTechnique: null,
-          arrangementType: S.performArrangementType || "chords",
+          arrangementType: (typeof getPreferredPerformanceArrangement === "function"
+            ? getPreferredPerformanceArrangement(SONGS[sgIdx], S.performArrangementType || "chords")
+            : (S.performArrangementType || "chords")),
           difficultyId: S.performDifficulty || "normal"
         });
       } else {
         S.performSongData=SONGS[sgIdx];
         S.performSongId=selectedSongId;
+        S.performArrangementType = typeof getPreferredPerformanceArrangement === "function"
+          ? getPreferredPerformanceArrangement(SONGS[sgIdx], S.performArrangementType || "chords")
+          : (S.performArrangementType || "chords");
         S.performTargetTechnique=null;
       }
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
