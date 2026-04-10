@@ -307,6 +307,32 @@ test('Peter Gunn lead arrangement produces multiple lanes instead of a single ch
   assert.ok(Object.keys(lanes).length >= 3, 'lead chart should span multiple lanes');
 });
 
+test('Seven Nation Army lead arrangement uses groove-spaced riff notes across multiple lanes', function() {
+  var seven = null;
+  for (var i = 0; i < SONGS.length; i++) {
+    if (SONGS[i].title === 'Seven Nation Army') {
+      seven = SONGS[i];
+      break;
+    }
+  }
+  assert.ok(seven, 'Seven Nation Army song should exist');
+  assert.strictEqual(getPreferredPerformanceArrangement(seven, 'chords'), 'lead');
+
+  var chart = buildPerformanceChartFromSong(seven, 'builtin', 'lead');
+  assert.ok(chart, 'lead chart should be created');
+  assert.strictEqual(chart.arrangementType, 'lead');
+  assert.ok(chart.events.length >= 16, 'lead chart should contain a repeated riff phrase');
+  assert.strictEqual(chart.events[0].t, 0);
+  assert.strictEqual(chart.events[1].t, 0.48);
+  assert.strictEqual(chart.events[7].t, 3.55);
+
+  var lanes = {};
+  for (var j = 0; j < chart.events.length; j++) {
+    lanes[chart.events[j].lane] = true;
+  }
+  assert.ok(Object.keys(lanes).length >= 4, 'riff should span at least four lanes');
+});
+
 test('ensurePerformanceHighwayLaneData repairs renderer-bound charts whose lanes collapsed to zero', function() {
   var chart = {
     metadata: { laneCount: 5 },
