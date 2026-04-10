@@ -674,6 +674,7 @@ function applyPerformanceNavigationRequest(target, options) {
   if (window.sparkCore && typeof window.sparkCore.applyPerformanceNavigationRequest === "function") {
     return window.sparkCore.applyPerformanceNavigationRequest(target, options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] applyPerformanceNavigationRequest");
   return null;
 }
 
@@ -681,6 +682,7 @@ function openPerformanceStatsRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openPerformanceStats === "function") {
     return window.sparkCore.openPerformanceStats(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openPerformanceStatsRequest");
   return null;
 }
 
@@ -688,6 +690,7 @@ function openPerformanceEditorRequest(chart, options) {
   if (window.sparkCore && typeof window.sparkCore.openPerformanceEditor === "function") {
     return window.sparkCore.openPerformanceEditor(chart || null, options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openPerformanceEditorRequest");
   return null;
 }
 
@@ -702,6 +705,7 @@ function openPerformanceSongSelectionRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openPerformanceSongSelection === "function") {
     return window.sparkCore.openPerformanceSongSelection(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openPerformanceSongSelectionRequest");
   return null;
 }
 
@@ -722,6 +726,7 @@ function openDailyPracticePlanRequest(options) {
       forceRebuild: !!(options && options.forceRebuild)
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openDailyPracticePlanRequest");
   return null;
 }
 
@@ -745,6 +750,7 @@ function resolveModuleExerciseLaunchOptions(rawValue) {
   try {
     return JSON.parse(String(rawValue));
   } catch (err) {
+    if (typeof console !== "undefined") console.warn("[No Handler] openPracticePlanScreenRequest");
     return null;
   }
 }
@@ -790,6 +796,7 @@ function openLegacyPracticeSessionRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeSession === "function") {
     return window.sparkCore.openLegacyPracticeSession(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openLegacyPracticeSessionRequest");
   return null;
 }
 
@@ -797,6 +804,7 @@ function openLegacyPracticeDrillRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeDrill === "function") {
     return window.sparkCore.openLegacyPracticeDrill(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openLegacyPracticeDrillRequest");
   return null;
 }
 
@@ -804,6 +812,7 @@ function syncLegacyPracticeRuntimeRequest(action, options) {
   if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
     return window.sparkCore.syncLegacyPracticeRuntimeState(action, options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncLegacyPracticeRuntimeRequest");
   return null;
 }
 
@@ -825,6 +834,7 @@ function openLegacyDailyChallengeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openLegacyDailyChallenge === "function") {
     return window.sparkCore.openLegacyDailyChallenge(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openLegacyDailyChallengeRequest");
   return null;
 }
 
@@ -832,6 +842,7 @@ function syncLegacyDailyRuntimeRequest(action, options) {
   if (window.sparkCore && typeof window.sparkCore.syncLegacyDailyRuntimeState === "function") {
     return window.sparkCore.syncLegacyDailyRuntimeState(action, options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncLegacyDailyRuntimeRequest");
   return null;
 }
 
@@ -839,6 +850,7 @@ function completeLegacyDailyChallengeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeLegacyDailyChallenge === "function") {
     return window.sparkCore.completeLegacyDailyChallenge(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] completeLegacyDailyChallengeRequest");
   return null;
 }
 
@@ -846,6 +858,7 @@ function openLegacyRunnerGameRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openLegacyRunnerGame === "function") {
     return window.sparkCore.openLegacyRunnerGame(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openLegacyRunnerGameRequest");
   return null;
 }
 
@@ -853,6 +866,7 @@ function syncLegacyRunnerRuntimeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncLegacyRunnerRuntimeState === "function") {
     return window.sparkCore.syncLegacyRunnerRuntimeState(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncLegacyRunnerRuntimeRequest");
   return null;
 }
 
@@ -860,6 +874,7 @@ function completeLegacyRunnerGameRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeLegacyRunnerGame === "function") {
     return window.sparkCore.completeLegacyRunnerGame(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] completeLegacyRunnerGameRequest");
   return null;
 }
 
@@ -867,6 +882,7 @@ function syncTunerRuntimeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncTunerRuntimeState === "function") {
     return window.sparkCore.syncTunerRuntimeState(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncTunerRuntimeRequest");
   return null;
 }
 
@@ -874,6 +890,7 @@ function syncAudioInputRuntimeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncAudioInputRuntimeState === "function") {
     return window.sparkCore.syncAudioInputRuntimeState(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncAudioInputRuntimeRequest");
   return null;
 }
 
@@ -881,6 +898,7 @@ function syncMetronomeRuntimeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncMetronomeRuntimeState === "function") {
     return window.sparkCore.syncMetronomeRuntimeState(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncMetronomeRuntimeRequest");
   return null;
 }
 
@@ -888,6 +906,7 @@ function openLegacyRhythmGameRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openLegacyRhythmGame === "function") {
     return window.sparkCore.openLegacyRhythmGame(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openLegacyRhythmGameRequest");
   return null;
 }
 
@@ -895,6 +914,7 @@ function syncLegacyRhythmRuntimeRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncLegacyRhythmRuntimeState === "function") {
     return window.sparkCore.syncLegacyRhythmRuntimeState(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncLegacyRhythmRuntimeRequest");
   return null;
 }
 
@@ -902,6 +922,7 @@ function completeLegacyRhythmGameRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.completeLegacyRhythmGame === "function") {
     return window.sparkCore.completeLegacyRhythmGame(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] completeLegacyRhythmGameRequest");
   return null;
 }
 
@@ -918,6 +939,7 @@ function returnFromLegacyDailyChallengeRequest(options) {
       transport: { status: "idle", positionMs: 0 }
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] returnFromLegacyDailyChallengeRequest");
   return null;
 }
 
@@ -932,6 +954,7 @@ function completeDailyPracticePlanRequest(options) {
       itemId: options && Object.prototype.hasOwnProperty.call(options, "itemId") ? options.itemId : undefined
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] completeDailyPracticePlanRequest");
   return null;
 }
 
@@ -945,6 +968,7 @@ function openGuidedSessionRequest(options) {
       sessionNum: options && Object.prototype.hasOwnProperty.call(options, "sessionNum") ? options.sessionNum : undefined
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openGuidedSessionRequest");
   return null;
 }
 
@@ -975,6 +999,7 @@ function openCareerSongSelectionRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.openPerformanceSongSelection === "function") {
     return window.sparkCore.openPerformanceSongSelection(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openCareerSongSelectionRequest");
   return null;
 }
 
@@ -1021,6 +1046,7 @@ function applySongNavigationRequest(target, options) {
       transport: { status: target === "song_done" ? "completed" : "idle", positionMs: 0 }
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] applySongNavigationRequest");
   return null;
 }
 
@@ -1057,6 +1083,7 @@ function applyDashboardRequest(options) {
       lastDashboardRefreshAt: Object.prototype.hasOwnProperty.call(options, "refreshedAt") ? options.refreshedAt : Date.now()
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] applyDashboardRequest");
   return null;
 }
 
@@ -1086,6 +1113,7 @@ function applyDashboardNavigationRequest(target) {
     else if (target === "career") screen = "career";
     return window.sparkCore.updateRuntimeState({ activeScreen: screen });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] applyDashboardNavigationRequest");
   return null;
 }
 
@@ -1129,6 +1157,7 @@ function openUtilityScreenRequest(target) {
       activeTab: S.tab || null
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openUtilityScreenRequest");
   return null;
 }
 
@@ -1136,6 +1165,7 @@ function syncSettingsStateRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncSettingsState === "function") {
     return window.sparkCore.syncSettingsState(options || {});
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncSettingsStateRequest");
   return null;
 }
 
@@ -1181,6 +1211,7 @@ function syncMidiSettingsStateRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncMidiSettingsState === "function") {
     return window.sparkCore.syncMidiSettingsState(payload);
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncMidiSettingsStateRequest");
   return null;
 }
 
@@ -1203,6 +1234,7 @@ function syncCloudSettingsStateRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncCloudSettingsState === "function") {
     return window.sparkCore.syncCloudSettingsState(payload);
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncCloudSettingsStateRequest");
   return null;
 }
 
@@ -1219,6 +1251,7 @@ function applyCloudWorkflowRequest(action, options) {
   if (window.sparkCore && typeof window.sparkCore.syncCloudSettingsState === "function") {
     return window.sparkCore.syncCloudSettingsState(payload);
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] applyCloudWorkflowRequest");
   return null;
 }
 
@@ -1257,6 +1290,7 @@ function syncCurriculumStateRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncCurriculumState === "function") {
     return window.sparkCore.syncCurriculumState(payload);
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncCurriculumStateRequest");
   return null;
 }
 
@@ -1294,6 +1328,7 @@ function syncMidiImportStateRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.syncMidiImportState === "function") {
     return window.sparkCore.syncMidiImportState(payload);
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] syncMidiImportStateRequest");
   return null;
 }
 
@@ -1307,6 +1342,7 @@ function openSkillTreeRequest() {
       activeTab: S.tab || null
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openSkillTreeRequest");
   return null;
 }
 
@@ -1321,6 +1357,7 @@ function setSkillTreeFocusRequest(focus) {
       skillTreeFocus: focus || "overview"
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] setSkillTreeFocusRequest");
   return null;
 }
 
@@ -1335,6 +1372,7 @@ function openStemPlayerRequest() {
       songsSubTab: "stems"
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] openStemPlayerRequest");
   return null;
 }
 
@@ -1350,6 +1388,7 @@ function closeStemPlayerRequest() {
       transport: { status: "idle", positionMs: 0 }
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] closeStemPlayerRequest");
   return null;
 }
 
@@ -1364,6 +1403,7 @@ function returnFromUtilityFamilyRequest(options) {
       transport: { status: "idle", positionMs: 0 }
     });
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] returnFromUtilityFamilyRequest");
   return null;
 }
 
@@ -1371,6 +1411,7 @@ function applyDashboardChallengeRewardRequest(challengeId) {
   if (window.sparkCore && typeof window.sparkCore.applyDashboardChallengeReward === "function") {
     return window.sparkCore.applyDashboardChallengeReward(challengeId);
   }
+  if (typeof console !== "undefined") console.warn("[No Handler] applyDashboardChallengeRewardRequest");
   return null;
 }
 
