@@ -987,9 +987,9 @@
 
 
   window.sparkPlayAlongSaveClientId = function() {
-    var input = document.getElementById(spotify-client-id-input);
+    var input = document.getElementById("spotify-client-id-input");
     if (!input || !input.value.trim()) return;
-    localStorage.setItem(sparksuite_spotify_client_id, input.value.trim());
+    localStorage.setItem("sparksuite_spotify_client_id", input.value.trim());
     sparkPlayAlongConnectSpotify();
   };
 
