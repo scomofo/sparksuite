@@ -61,7 +61,7 @@
     return phrases;
   }
 
-  function expandStrumPattern(pattern, barDur, chordName, chordNotes, startSec, phraseId) {
+  function expandStrumPattern(pattern, barDur, chordName, chordNotes, startSec, phraseId, lane) {
     if (!pattern || !pattern.length) return [];
     var slotDur = barDur / pattern.length;
     var events = [];
@@ -98,7 +98,17 @@
         notes = CHORD_NOTES[chord].slice();
       }
       var barStart = i * barDur;
-      var strums = expandStrumPattern(pattern, barDur, chord, notes, barStart, 0);
+      var chordLane = 0;
+      // Distribute lanes by unique chord
+      if (!perfSong._laneMap) {
+        perfSong._laneMap = {};
+        var _nl = 0;
+        for (var k = 0; k < perfSong.progression.length; k++) {
+          if (perfSong._laneMap[perfSong.progression[k]] == null) { perfSong._laneMap[perfSong.progression[k]] = _nl; _nl++; }
+        }
+      }
+      chordLane = perfSong._laneMap[chord] || 0;
+      var strums = expandStrumPattern(pattern, barDur, chord, notes, barStart, 0, chordLane);
       for (var j = 0; j < strums.length; j++) {
         strums[j].id = evtId++;
         events.push(strums[j]);
