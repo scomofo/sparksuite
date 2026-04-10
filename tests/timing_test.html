@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SparkSuite Timing Test Harness</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a1a;color:#eee;font-family:monospace;padding:20px}
+h1{font-size:20px;margin-bottom:16px;color:#4ECDC4}
+.card{background:#252525;border-radius:10px;padding:14px;margin-bottom:12px}
+.card h3{font-size:14px;margin-bottom:8px}
+button{background:#333;color:#eee;border:1px solid #555;border-radius:6px;padding:8px 16px;cursor:pointer;font-family:monospace;margin-right:6px}
+button:hover{background:#444}
+.pass{color:#4ECDC4;font-weight:bold}.fail{color:#FF6B6B;font-weight:bold}
+.running{color:#FFE66D;font-weight:bold}.pending{color:#666}
+#time-display{font-size:36px;font-weight:bold;color:#4ECDC4;margin:12px 0}
+#log{background:#111;border-radius:6px;padding:10px;max-height:200px;overflow-y:auto;font-size:11px;line-height:1.5;white-space:pre}
+canvas{border-radius:8px;background:#111;display:block;margin:8px 0}
+.controls{display:flex;gap:8px;margin:8px 0;align-items:center}
+</style>
+</head>
+<body>
+<h1>SparkSuite Timing Test Harness</h1>
+<div class="card">
+<h3>Audio Source</h3>
+<div class="controls">
+<input type="file" id="audio-file" accept="audio/*">
+<button onclick="generateTone()">Generate 10s Tone</button>
+</div>
+<div class="controls">
+<button onclick="doPlay()">Play</button>
+<button onclick="doPause()">Pause</button>
+<button onclick="doStop()">Stop</button>
+<button onclick="runDriftTest()">Run 60s Drift Test</button>
+</div>
+<div id="time-display">0 ms</div>
+</div>
+<div class="card"><h3>Step 1: Time Verification <span id="s1" class="pending">(pending)</span></h3><div id="s1-detail" style="font-size:11px;color:#888"></div></div>
+<div class="card"><h3>Step 2: Note Rendering <span id="s2" class="pending">(pending)</span></h3><canvas id="highway" width="800" height="160"></canvas><div id="s2-detail" style="font-size:11px;color:#888"></div></div>
+<div class="card"><h3>Step 3: Hit Detection (press SPACE) <span id="s3" class="pending">(pending)</span></h3><div id="s3-detail" style="font-size:11px;color:#888"></div></div>
+<div class="card"><h3>Step 4: Drift Test <span id="s4" class="pending">(pending)</span></h3><div id="s4-detail" style="font-size:11px;color:#888"></div></div>
+<div class="card"><h3>Log</h3><div id="log"></div></div>
+<script src="../js/sparksuite/audio/audio_engine.js"></script>
+<script>
+var engine=null;
+var testChart=[{time:2000,lane:1,hit:false},{time:4000,lane:2,hit:false},{time:6000,lane:3,hit:false}];
+var animFrame=null,lastLogTime=0,s1Samples=[],hitResults=[];
+var LANE_COLORS=["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4"];
+
+function log(m){var e=document.getElementById("log");e.textContent+=m+"\n";e.scrollTop=e.scrollHeight;}
+function setStatus(id,s,t){var e=document.getElementById(id);e.className=s;e.textContent="("+s+(t?" - "+t:"")+")";}
+
+function generateTone(){
+  var AC=window.AudioContext||window.webkitAudioContext;var ctx=new AC();var sr=ctx.sampleRate;
+  var buf=ctx.createBuffer(1,sr*10,sr);var data=buf.getChannelData(0);
+  for(var i=0;i<data.length;i++)data[i]=Math.sin(2*Math.PI*440*i/sr)*0.3;
+  engine=new SparkAudioEngine();engine.buffer=buf;engine.ctx=ctx;
+  engine.gainNode=ctx.createGain();engine.gainNode.connect(ctx.destination);
+  log("Generated 10s 440Hz tone.");
+}
+
+document.getElementById("audio-file").onchange=function(e){
+  var file=e.target.files[0];if(!file)return;
+  engine=new SparkAudioEngine();
+  file.arrayBuffer().then(function(ab){return engine.load(ab);}).then(function(){
+    log("Loaded: "+file.name+" ("+engine.getDurationSec().toFixed(1)+"s)");
+  });
+};
+
+function doPlay(){
+  if(!engine||!engine.buffer){log("No audio");return;}
+  engine.resume().then(function(){
+    engine.play(0);testChart.forEach(function(n){n.hit=false;});
+    hitResults=[];s1Samples=[];
+    setStatus("s1","running");setStatus("s2","running");setStatus("s3","running");
+    startLoop();log("Playing...");
+  });
+}
+function doPause(){if(engine)engine.stop();stopLoop();log("Stopped");}
+function doStop(){doPause();}
+function startLoop(){stopLoop();animFrame=requestAnimationFrame(loop);}
+function stopLoop(){if(animFrame)cancelAnimationFrame(animFrame);animFrame=null;}
+
+function loop(){
+  if(!engine)return;var timeMs=engine.getTimeMs();
+  document.getElementById("time-display").textContent=timeMs.toFixed(0)+" ms";
+  var now=Date.now();
+  if(now-lastLogTime>200){s1Samples.push(timeMs);lastLogTime=now;
+    if(s1Samples.length>=10){var ok=true;
+      for(var i=1;i<s1Samples.length;i++){if(s1Samples[i]<=s1Samples[i-1]){ok=false;break;}}
+      setStatus("s1",ok?"pass":"fail",ok?s1Samples.length+" monotonic":"non-monotonic at "+i);
+    }
+  }
+  var cv=document.getElementById("highway");var c=cv.getContext("2d");
+  c.clearRect(0,0,800,160);c.strokeStyle="#fff";c.lineWidth=2;
+  c.beginPath();c.moveTo(100,0);c.lineTo(100,160);c.stroke();
+  var nd=Infinity,nn=null;
+  for(var n=0;n<testChart.length;n++){
+    var note=testChart[n];var x=100+(note.time-timeMs)*0.3;var y=note.lane*40+10;
+    if(x>-30&&x<830){c.fillStyle=note.hit?"#4ECDC4":LANE_COLORS[note.lane];c.fillRect(x,y,30,35);
+      c.fillStyle="#fff";c.font="10px monospace";c.fillText(note.time+"ms",x,y-2);}
+    if(!note.hit){var d=note.time-timeMs;if(Math.abs(d)<Math.abs(nd)){nd=d;nn=note;}}
+  }
+  if(nn)document.getElementById("s2-detail").textContent="Nearest: t="+nn.time+" now="+timeMs.toFixed(0)+" delta="+nd.toFixed(1);
+  if(nn&&nd<0&&Math.abs(nd)<500)setStatus("s2","pass","scrolling");
+  var ah=testChart.every(function(x){return x.hit;});
+  if(ah&&hitResults.length===3){
+    var avg=hitResults.reduce(function(a,b){return a+b;},0)/hitResults.length;
+    var g=hitResults.every(function(d){return Math.abs(d)<80;});
+    setStatus("s3",g?"pass":"fail","avg "+avg.toFixed(1)+"ms");
+  }
+  animFrame=requestAnimationFrame(loop);
+}
+
+document.addEventListener("keydown",function(e){
+  if(e.code!=="Space"||!engine||!engine.isPlaying())return;e.preventDefault();
+  var it=engine.getTimeMs();var bn=null,bd=Infinity;
+  for(var i=0;i<testChart.length;i++){if(testChart[i].hit)continue;
+    var d=it-testChart[i].time;if(Math.abs(d)<Math.abs(bd)&&Math.abs(d)<200){bd=d;bn=testChart[i];}}
+  if(bn){bn.hit=true;hitResults.push(bd);
+    var r=Math.abs(bd)<40?"PERFECT":(Math.abs(bd)<80?"GOOD":"LATE");
+    log("HIT: n="+bn.time+" in="+it.toFixed(0)+" d="+bd.toFixed(1)+"ms "+r);
+    document.getElementById("s3-detail").textContent="Last: "+bd.toFixed(1)+"ms ("+r+") | "+hitResults.length+"/3";
+  }else{log("MISS at "+it.toFixed(0)+"ms");}
+});
+
+function runDriftTest(){
+  log("60s drift test...");setStatus("s4","running");
+  var AC=window.AudioContext||window.webkitAudioContext;var ctx=new AC();var sr=ctx.sampleRate;
+  var buf=ctx.createBuffer(1,sr*65,sr);var data=buf.getChannelData(0);
+  for(var i=0;i<data.length;i++)data[i]=Math.sin(2*Math.PI*440*i/sr)*0.2;
+  var te=new SparkAudioEngine();te.buffer=buf;te.ctx=ctx;
+  te.gainNode=ctx.createGain();te.gainNode.connect(ctx.destination);te.play(0);
+  var sw=Date.now(),md=0,sc=0;
+  var iv=setInterval(function(){
+    var el=Date.now()-sw;var am=te.getTimeMs();var dv=Math.abs(am-el);if(dv>md)md=dv;sc++;
+    document.getElementById("s4-detail").textContent=(el/1000).toFixed(0)+"s | dev: "+dv.toFixed(1)+"ms | max: "+md.toFixed(1)+"ms";
+    if(el>=60000){clearInterval(iv);te.stop();
+      log("Done. "+sc+" samples. Max: "+md.toFixed(1)+"ms");
+      setStatus("s4",md<5?"pass":"fail",md.toFixed(1)+"ms");}
+  },1000);
+}
+log("Ready. Generate tone or load file, then Play. SPACE=hit.");
+</script>
+</body>
+</html>
