@@ -124,6 +124,8 @@
 
     return new Promise(function (resolve, reject) {
       try {
+        // Auto-init if not done yet
+        if (!self.learnerModel && typeof self.initPlayAlongSystems === "function") self.initPlayAlongSystems();
         // 1. Load learner model and get RL decision
         var model = self.learnerModel.load(params.userId);
         var decision = self.policyEngine.decide(model, {
@@ -525,7 +527,7 @@
       this.playbackEngine.start(params.trackUri, {
         audioOffsetMs: params.audioOffsetMs || 0,
         deviceId: params.deviceId
-      });
+      }).catch(function(e) { console.warn("[PlayAlong] Spotify playback failed (open Spotify app):", e.message); });
     }
   };
 
