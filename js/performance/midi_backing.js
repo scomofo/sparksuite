@@ -11,7 +11,7 @@
   var _midiStartTime = 0;    // AudioContext time when playback started
   var _midiOffsetSec = 0;    // Seek offset
   var _midiSpeed = 1;
-  var _midiVolume = 0.18;
+  var _midiVolume = 0.5;
   var _midiLoaded = false;
   var _midiSrc = null;
 
@@ -205,8 +205,8 @@
       osc.type = n.midi < 48 ? "triangle" : "sine"; // Bass = triangle, treble = sine
       osc.frequency.value = midiToFreq(n.midi);
 
-      var noteScale = Math.min(1, 30 / (_midiNotes.length || 1));
-      var vol = n.vel * 0.15 * noteScale;
+      var noteScale = Math.min(1, 200 / (_midiNotes.length || 1));
+      var vol = n.vel * 0.4 * noteScale;
       gain.gain.setValueAtTime(0, startAt);
       gain.gain.linearRampToValueAtTime(vol, startAt + 0.01);
       gain.gain.setValueAtTime(vol * 0.8, endAt - Math.min(0.05, noteDur * 0.3));
