@@ -215,7 +215,7 @@ test('getPerformanceChartLibrary can filter the manifest by instrument', functio
 
 test('getPerformanceChartLibrary can filter the manifest by bass instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'bass' });
-  assert.strictEqual(library.length, 2);
+  assert.strictEqual(library.length, 4);
   assert.strictEqual(library[0].instrument, 'bass');
   assert.strictEqual(library[0].id, 'bass_midnight_lock_package');
   assert.strictEqual(library[1].id, 'bass_afterglow_walk_package');
