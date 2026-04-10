@@ -14,6 +14,7 @@
    */
   SparkCore.prototype.initSpotify = function(token) {
     this.spotifyClient = new SparkSpotifyClient(token);
+    this.spotifySearch = new SparkSpotifySearch(this.spotifyClient);
     this.trackAnalyzer = new SparkTrackAnalyzer(this.spotifyClient);
     this.playbackEngine = new SparkPlaybackEngine(this.spotifyClient);
     this.chartService = new SparkChartGenerationService({
