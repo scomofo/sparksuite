@@ -657,7 +657,7 @@
       render();
       sparkPlayAlongStartLoop();
       return true;
-    });
+    }).catch(function(err) { console.error("[PlayAlong] Failed:", err); });
   }
 
   function applySelectedDrillState() {
