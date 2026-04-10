@@ -954,7 +954,7 @@
     // Determine redirect URI based on environment
     var redirectUri = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "") + "index.html";
     if (redirectUri.indexOf("file://") === 0) {
-      redirectUri = "https://localhost:3456/callback";
+      redirectUri = "http://localhost:3456/callback";
     }
 
     SparkSpotifyAuthManager.configure({
