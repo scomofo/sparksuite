@@ -1,9 +1,9 @@
-node_modules/
-dist/
-www/
-resources/
-.freesound_token.json
-.claude/
-nul
-nul
 *.zip
+.claude/
+.env.local
+.freesound_token.json
+dist/
+node_modules/
+nul
+resources/
+www/

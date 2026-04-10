@@ -36,7 +36,9 @@
           + "<div class=\"song-item-info\">"
           + "<strong class=\"song-item-name\">" + name + "</strong>"
           + "<span class=\"song-item-artist\">" + artist + "</span>"
-          + "</div></div>";
+          + "</div>"
+          + "<button class=\"btn btn-sm\" onclick=\"event.stopPropagation();sparkPlayAlongSaveTrack(" + i + ")\">Save</button>"
+          + "</div>";
       }
       if (resultsEl) resultsEl.innerHTML = html;
     });
@@ -84,6 +86,87 @@
     if (!item || !item.params) return false;
     clearSelectedDrillState();
     launchPlayAlongSession(clonePlainObject(item.params));
+    return true;
+  };
+
+  window.sparkPlayAlongSaveTrack = function(index) {
+    var track = window._playAlongResults && window._playAlongResults[index];
+    if (!track) return Promise.resolve(false);
+
+    function persistSavedTrack(saved) {
+      var tracks = Array.isArray(S.spotifySavedTracks) ? S.spotifySavedTracks.slice() : [];
+      var replaced = false;
+      for (var i = 0; i < tracks.length; i++) {
+        if (tracks[i] && tracks[i].trackId === saved.trackId) {
+          tracks[i] = saved;
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced) tracks.unshift(saved);
+      S.spotifySavedTracks = tracks.slice(0, 20);
+      if (typeof saveState === "function") saveState();
+      render();
+      return true;
+    }
+
+    var baseSaved = {
+      trackId: track.id,
+      trackUri: track.uri || null,
+      title: track.name || "Spotify Track",
+      artist: track.artist || "",
+      image: track.image || null,
+      duration: track.duration || 0,
+      bpm: null,
+      source: "spotify",
+      savedAt: Date.now(),
+      params: {
+        trackId: track.id,
+        trackUri: track.uri || null,
+        title: track.name || null,
+        artist: track.artist || null,
+        difficulty: S.spotifyDifficulty || "easy",
+        instrument: "guitar"
+      }
+    };
+
+    if (!window.sparkCore || !window.sparkCore.spotifyClient || typeof window.sparkCore.spotifyClient.getAudioFeatures !== "function") {
+      return Promise.resolve(persistSavedTrack(baseSaved));
+    }
+
+    return window.sparkCore.spotifyClient.getAudioFeatures(track.id).then(function(features) {
+      if (features && typeof features.tempo === "number") {
+        baseSaved.bpm = Math.round(features.tempo);
+      }
+      return persistSavedTrack(baseSaved);
+    }).catch(function() {
+      return persistSavedTrack(baseSaved);
+    });
+  };
+
+  window.sparkPlayAlongLaunchSaved = function(index) {
+    var tracks = Array.isArray(S.spotifySavedTracks) ? S.spotifySavedTracks : [];
+    var item = tracks[index] || null;
+    if (!item || !item.params) return false;
+    clearSelectedDrillState();
+    launchPlayAlongSession(clonePlainObject(item.params));
+    return true;
+  };
+
+  window.sparkPlayAlongRemoveSaved = function(index) {
+    var tracks = Array.isArray(S.spotifySavedTracks) ? S.spotifySavedTracks.slice() : [];
+    if (index < 0 || index >= tracks.length) return false;
+    tracks.splice(index, 1);
+    S.spotifySavedTracks = tracks;
+    if (typeof saveState === "function") saveState();
+    render();
+    return true;
+  };
+
+  window.sparkPlayAlongClearSaved = function() {
+    S.spotifySavedTracks = [];
+    if (typeof saveState === "function") saveState();
+    render();
     return true;
   };
 
@@ -855,7 +938,7 @@
     // Need to configure first — check if client ID is set
     var clientId = localStorage.getItem("sparksuite_spotify_client_id");
     if (!clientId) {
-      clientId = prompt("Enter your Spotify Client ID (from developer.spotify.com):");
+      clientId = prompt("Enter your Spotify Client ID:");
       if (!clientId) return;
       localStorage.setItem("sparksuite_spotify_client_id", clientId.trim());
     }
@@ -863,7 +946,7 @@
     // Determine redirect URI based on environment
     var redirectUri = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "") + "index.html";
     if (redirectUri.indexOf("file://") === 0) {
-      redirectUri = "http://localhost:3456/callback";
+      redirectUri = "https://localhost:3456/callback";
     }
 
     SparkSpotifyAuthManager.configure({
