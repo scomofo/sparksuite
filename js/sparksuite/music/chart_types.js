@@ -60,7 +60,7 @@
         time: Math.round(timeMs),
         timeMs: Math.round(timeMs),
         type: "note",
-        lane: n.lane != null ? n.lane : null,
+        lane: n.lane != null ? n.lane : (n.laneMask > 0 ? Math.log2(n.laneMask & -n.laneMask) | 0 : 0),
         duration: Math.round(durMs),
         durationMs: Math.round(durMs),
         velocity: 1,
