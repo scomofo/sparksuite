@@ -13,10 +13,6 @@ function planPage(){
   h += '<div class="card mb16">';
   h += '<h2>Today\'s Practice Plan</h2>';
   h += '<div class="muted">'+escHTML(plan.focus)+'</div>';
-  var curriculumSummary = formatPlanCurriculumSummary(plan.curriculum);
-  if(curriculumSummary){
-    h += '<div class="muted" style="margin-top:6px">'+escHTML(curriculumSummary)+'</div>';
-  }
   if(planCompleted){
     h += '<div style="margin-top:8px;color:var(--success);font-weight:700">Plan completed!</div>';
   }
@@ -74,27 +70,6 @@ function formatPlanItemSubtitle(item){
 
 function prettyPlanToken(value){
   return String(value || "").replace(/_/g, " ");
-}
-
-function formatPlanCurriculumSummary(curriculum){
-  curriculum = curriculum || {};
-  var parts = [];
-  var nextLesson = curriculum.nextLesson;
-  if(nextLesson && (nextLesson.title || nextLesson.name)){
-    parts.push("Next lesson: " + (nextLesson.title || nextLesson.name));
-  }else if(curriculum.nextLessonId){
-    parts.push("Next lesson: " + prettyPlanToken(curriculum.nextLessonId));
-  }
-  if(Array.isArray(curriculum.reviewTargets) && curriculum.reviewTargets.length){
-    var labels = [];
-    for(var i=0;i<curriculum.reviewTargets.length && i<2;i++){
-      labels.push(prettyPlanToken(curriculum.reviewTargets[i].id));
-    }
-    if(labels.length){
-      parts.push("Review: " + labels.join(", "));
-    }
-  }
-  return parts.join(" • ");
 }
 
 function launchPracticePlanItem(itemId){

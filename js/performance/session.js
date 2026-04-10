@@ -362,8 +362,8 @@ function _updatePerformDisplay() {
   // Initialize canvas highway on first frame
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas) {
-    ensureSparkHighway(canvas);
     if (S.performChart) { feedChartToHighway(S.performChart); }
+    feedChartToHighway(S.performChart);
     updateSparkHighway(S.performCurrentSec, S.performCombo);
   }
 
@@ -413,9 +413,6 @@ function maybeScorePendingEvents(nowSec) {
       evt._score = 0;
       updatePhraseStats(S.performPhraseStats, evt, evt._result);
       S.performCombo = 0;
-      S.performLastHitDirection = "miss";
-      S.performLastHitDelta = 0;
-      if(typeof SparkSessionRuntime!=="undefined")SparkSessionRuntime.recordEvent({type:"miss",deltaMs:Math.round(deltaMs),result:"miss",eventId:evt.id||null,timestamp:Date.now()});
       if (evt.sourceFlags && targetTechnique && evt.sourceFlags[targetTechnique] && typeof buildPerformanceFeedbackLabel === "function") {
         S.performLastHitLabel = buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique);
         S.performLastHitTime = Date.now();
@@ -438,9 +435,6 @@ function maybeScorePendingEvents(nowSec) {
 
         S.performCombo++;
         if (S.performCombo > S.performMaxCombo) S.performMaxCombo = S.performCombo;
-        if (S.performCombo > 0 && S.performCombo % 10 === 0) {
-          S.performComboPulseAt = Date.now();
-        }
 
         var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
         S.performScore += Math.round(100 * result.score * comboMult);
@@ -449,19 +443,6 @@ function maybeScorePendingEvents(nowSec) {
           ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
           : (result.grade.toUpperCase() + "!");
         S.performLastHitTime = Date.now();
-        S.performLastHitDelta = Math.round(deltaMs);
-        if (Math.abs(deltaMs) < 30) {
-          S.performLastHitDirection = "perfect";
-        } else if (deltaMs > 0) {
-          S.performLastHitDirection = "late";
-        } else {
-          S.performLastHitDirection = "early";
-        }
-
-        if (typeof SparkDynamicTiming !== "undefined") {
-          SparkDynamicTiming.recordDelta(deltaMs);
-        }
-        if(typeof SparkSessionRuntime!=="undefined")SparkSessionRuntime.recordEvent({type:"hit",deltaMs:Math.round(deltaMs),result:result.grade,score:result.score,eventId:evt.id||null,timestamp:Date.now()});
 
         _updatePerformanceAccuracy(chart);
       }

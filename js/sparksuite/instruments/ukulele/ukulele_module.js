@@ -202,10 +202,6 @@
     return 4;
   };
 
-  UkuleleRhythmAdapter.prototype.getAdapterType = function() {
-    return "ukulele";
-  };
-
   UkuleleRhythmAdapter.prototype.getLaneLabels = function() {
     return ["G", "C", "E", "A"];
   };
@@ -216,7 +212,6 @@
 
   UkuleleRhythmAdapter.prototype.createPayload = function(context) {
     var chartDefinition = selectUkuleleChartDefinition(context);
-    var songChart = this.chartIO.fromExerciseDefinition(chartDefinition, this);
     return {
       chartId: chartDefinition.id,
       adapterType: "ukulele",
@@ -229,12 +224,7 @@
         showChordNames: true,
         failDisabled: true
       },
-      songChart: songChart,
-      chart: this.chartIO.toLaneChart(songChart, this, {
-        chartId: chartDefinition.id,
-        laneCount: this.getLaneCount(),
-        laneLabels: this.getLaneLabels()
-      })
+      songChart: this.chartIO.fromExerciseDefinition(chartDefinition, this)
     };
   };
 

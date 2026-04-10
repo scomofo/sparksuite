@@ -18,16 +18,37 @@ function tickS(){
     S.timerActive=false;clearTimeout(T.session);
     if(S.metronomeOn)stopMetronome();
     if(S.chordDetectOn)stopChordDetect();
-    var outcome = window.sparkCore && typeof window.sparkCore.completeSession === "function"
-      ? window.sparkCore.completeSession({
-        flow: "legacy_practice_session",
-        markPlanComplete: true,
+    if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeSession === "function"){
+      window.sparkCore.completeLegacyPracticeSession({
         mode: S.lastChordName ? "chord" : "quickStart",
         chordName: S.currentChord ? S.currentChord.name : null,
         durationSec: 120
-      })
-      : null;
-    if(outcome&&outcome.audioCue==="levelup"){snd("levelup");}else{snd("complete");}
+      });
+    }
+    // Delegate all completion logic to SparkSession
+    var outcome=SparkSession.processResults({
+      type:"session",
+      chordName:S.currentChord?S.currentChord.name:null,
+      duration:120
+    });
+    // Route through contract-based progress path (Phase 3 migration)
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var sessionResult = SparkContracts.createSessionResult({
+        mode: S.lastChordName ? "chord" : "quickStart",
+        chordName: S.currentChord ? S.currentChord.name : null,
+        duration: 120,
+        accuracy: 0.75,
+        completed: true
+      });
+      var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult);
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[App] ProgressOutcome:", progressOutcome);
+      }
+    }
+    if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
+    else S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
+    if(outcome.jackpot){snd("levelup");}else{snd("complete");}
+    if(outcome.leveledUp)snd("levelup");
     trigC();S.screen=SCR.COMPLETE;render();
   }
 }
@@ -49,13 +70,41 @@ function tickD(){
     T.drill=setTimeout(tickD,1000);
   } else if(S.screen===SCR.DRILL&&S.drillTimer<=0){
     clearTimeout(T.drill);snd("complete");
-    if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
-      window.sparkCore.completeSession({
-        flow: "legacy_practice_drill",
-        markPlanComplete: true,
+    var detail=S.drillChords.map(function(c){return c.name;}).join(" / ");
+    if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function"){
+      window.sparkCore.completeLegacyPracticeDrill({
         durationSec: 60,
         chordNames: S.drillChords.map(function(c){return c.name;})
       });
+    }
+    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta:20,
+        toastAmount:20,
+        incrementFields:{drillCount:1},
+        history:{type:"drill",detail:detail,xp:20},
+        emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
+        checkBadges:true
+      });
+    }else{
+      S.drillCount++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{S.xp+=20;S.xpToast={amount:20,time:Date.now()};}
+      logHistory("drill",detail,20);
+      _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
+      checkBadges();saveState();
+    }
+    // Route through contract-based progress path (Phase 6 migration)
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var drillSessionResult = SparkContracts.createSessionResult({
+        mode: "drill",
+        chordName: S.drillChords && S.drillChords[0] ? S.drillChords[0].name : null,
+        duration: 60,
+        accuracy: 0.75,
+        completed: true
+      });
+      var drillProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(drillSessionResult);
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[App] Drill ProgressOutcome:", drillProgressOutcome);
+      }
     }
     trigC();S.screen=SCR.DRILL_DONE;render();
   }
@@ -1881,17 +1930,6 @@ window.act=function(a,v){
     else S.screen=SCR.HOME_DASH;
     render();return;
   }
-  if(a==="openDailyPlan"){
-    // Route through SessionRuntime (single authoritative path)
-    if(typeof SparkSessionRuntime!=="undefined"){
-      var session=SparkSessionRuntime.startSessionLoop({flow:typeof SparkSessionTypes!=="undefined"?SparkSessionTypes.FLOW_DAILY_PRACTICE:"daily_practice",context:{instrumentContext:SparkInstruments.getActiveContext()}});
-      if(session){S.dailyPlanItems=session.segments;S.dailyPlanExercises=session.exercises;}
-    }else if(typeof SparkDailyPlanGenerator!=="undefined"&&S.skillGraph){
-      S.dailyPlanItems=SparkDailyPlanGenerator.generate(S.skillGraph,typeof SONGS!=="undefined"?SONGS:[]);
-    }
-    S.screen=SCR.PLAN;render();return;
-  }
-  if(a==="openSkillDashboard"){S.screen=SCR.SKILL_DASHBOARD;render();return;}
   if(a==="openSettings"){
     openUtilityScreenRequest("settings");
     syncSettingsStateRequest({ theme: S.settings ? S.settings.theme : null });
@@ -2591,8 +2629,8 @@ window.act=function(a,v){
   // === Undo ===
   if(a==="undoReset"){undoReset();return;}
   // === Performance Mode ===
-  if(a==="openPerform"){if(typeof SparkExecutionGateway!=="undefined"){SparkExecutionGateway.runDirectExercise(v,{source:"openPerform"});}else{startPerformance(v);}return;}
-  if(a==="startPerform"){if(typeof SparkExecutionGateway!=="undefined"){SparkExecutionGateway.runDirectExercise(v,{source:"startPerform"});}else{startPerformance(v);}return;}
+  if(a==="openPerform"){startPerformance(v);return;}
+  if(a==="startPerform"){startPerformance(v);return;}
   if(a==="performSong"){
     var songIdx=parseInt(v);
     if(!isNaN(songIdx)&&SONGS[songIdx]){
@@ -3521,8 +3559,6 @@ window.act=function(a,v){
     S.rhythmHighwayHeldMask=(S.rhythmHighwayHeldMask&laneMask)?(S.rhythmHighwayHeldMask&~laneMask):(S.rhythmHighwayHeldMask|laneMask);
     render();return;
   }
-  if(a==="practiceTempoDown"){if(typeof adjustPracticeTempo==="function")adjustPracticeTempo(-10);render();return;}
-  if(a==="practiceTempoUp"){if(typeof adjustPracticeTempo==="function")adjustPracticeTempo(10);render();return;}
   if(a==="rhythmHighwayStrum"){
     if(typeof _sparkRhythmHighwayStrum==="function")_sparkRhythmHighwayStrum();
     render();return;
@@ -3547,55 +3583,6 @@ window.act=function(a,v){
       return;
     }
     render();return;
-  }
-  if(a==="rhythmHighwayToggleSlowMode"){
-    if(typeof _togglePlayableRhythmHighwaySlowMode==="function" && _togglePlayableRhythmHighwaySlowMode())return;
-    render();return;
-  }
-  if(a==="rhythmHighwayPracticeLoopWindow"){
-    if(typeof _togglePlayableRhythmHighwayLoopWindow==="function" && _togglePlayableRhythmHighwayLoopWindow())return;
-    render();return;
-  }
-  if(a==="rhythmHighwayClearPracticeLoop"){
-    if(typeof _clearPlayableRhythmHighwayLoop==="function" && _clearPlayableRhythmHighwayLoop())return;
-    render();return;
-  }
-  if(a==="rhythmHighwayAudioOffsetDelta"){
-    if(typeof _adjustPlayableRhythmHighwayAudioOffset==="function" && _adjustPlayableRhythmHighwayAudioOffset(parseInt(v,10)||0))return;
-    render();return;
-  }
-  if(a==="progressionMapSong"){
-    if(typeof _openProgressionMapSong==="function" && _openProgressionMapSong(v))return;
-    render();return;
-  }
-  if(a==="songLibraryFilter"){
-    if(!S.songLibraryBrowser||typeof S.songLibraryBrowser!=="object")S.songLibraryBrowser={query:"",filter:"all"};
-    S.songLibraryBrowser.filter=String(v||"all").toLowerCase();
-    saveState();
-    render();return;
-  }
-  if(a==="songLibrarySearch"){
-    if(!S.songLibraryBrowser||typeof S.songLibraryBrowser!=="object")S.songLibraryBrowser={query:"",filter:"all"};
-    S.songLibraryBrowser.query=String(v||"");
-    saveState();
-    render();return;
-  }
-  if(a==="songFlowContinue"){
-    if(typeof _continuePlayableSongFlow==="function" && _continuePlayableSongFlow())return;
-    render();return;
-  }
-  if(a==="launchRecommendedLesson"){
-    if(S.recommendedLesson && window.sparkCore && typeof window.sparkCore.startPracticeFromLesson === "function"){
-      window.sparkCore.startPracticeFromLesson(S.recommendedLesson);
-    } else if(S.recommendedLesson && typeof startPlayableRhythmHighwayPayload === "function"){
-      // Fallback: direct launch if SparkCore method not available
-      startPlayableRhythmHighwayPayload({
-        chartId: S.recommendedLesson.type + "_drill",
-        chart: { chartId: S.recommendedLesson.type, tempo: S.recommendedLesson.tempo, lanes: (typeof buildFallbackLanes === "function") ? buildFallbackLanes() : [], notes: [] },
-        mode: "practice"
-      }, { source: "lesson_generator", label: S.recommendedLesson.label, instrument: S.instrument || "guitar" });
-    }
-    return;
   }
   if(a==="restartRhythmHighway"){
     if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,S.rhythmHighwayLoop);
@@ -3631,28 +3618,6 @@ window.act=function(a,v){
       syncMidiImportStateRequest({ seedMode: v, seedChart: chart });
       if(chart&&typeof openEditor==="function"){openEditor("chart",chart);}
       else{render();}
-    }return;
-  }
-  if(a==="buildMidiPlayableChart"){
-    if(typeof buildPlayablePayloadFromImportedMidi==="function"){
-      var playablePayload=buildPlayablePayloadFromImportedMidi(S.importedMidi,{
-        assignments:S.importedMidiAssignments,
-        adapterType:v||"guitar"
-      });
-      S.importedMidiPlayablePreview=playablePayload;
-      syncMidiImportStateRequest({
-        seedMode:"playable_highway",
-        seedTitle: playablePayload && playablePayload.chart ? playablePayload.chart.title : null
-      });
-      if(playablePayload&&typeof startPlayableRhythmHighwayPayload==="function"){
-        startPlayableRhythmHighwayPayload(playablePayload,{
-          source:"midi_import",
-          instrument:v||"guitar",
-          label: playablePayload.chart ? playablePayload.chart.title : "Imported Playable Chart"
-        });
-      }else{
-        render();
-      }
     }return;
   }
   // === Cloud Sync Actions ===
@@ -3847,7 +3812,6 @@ function _renderInner(){
   _sharedPages[SCR.MIDI_IMPORT] = typeof midiImportPage === "function" ? midiImportPage : null;
   _sharedPages[SCR.CLOUD_SETTINGS] = typeof cloudSettingsPage === "function" ? cloudSettingsPage : null;
   _sharedPages[SCR.CURRICULUM] = typeof curriculumPage === "function" ? curriculumPage : null;
-  _sharedPages[SCR.SKILL_DASHBOARD] = typeof skillDashboardPage === "function" ? skillDashboardPage : null;
 
   // Instrument override: if active instrument provides a page for this screen, use it
   var _instrumentPage = SparkInstruments.getPage(S.screen);
@@ -3865,7 +3829,6 @@ function _renderInner(){
   app.innerHTML=h;
   // Focus management for modal overlays
   if(S.showShortcuts){var cb=document.getElementById("shortcut-close-btn");if(cb)cb.focus();}
-  if(S.screen===SCR.SKILL_DASHBOARD && typeof drawSkillCharts==="function") drawSkillCharts();
 }
 
 // ===== KEYBOARD SHORTCUTS =====
@@ -3935,12 +3898,9 @@ document.addEventListener("keydown",function(e){
     return;
   }
 
-  if(S.screen===SCR.RHYTHM_HIGHWAY){
-    var mappedLane = typeof _mapRhythmHighwayKeyToLane === "function" ? _mapRhythmHighwayKeyToLane(key) : -1;
-    if(mappedLane >= 0){
-      act("rhythmHighwayLane", String(mappedLane));
-      return;
-    }
+  if(S.screen===SCR.RHYTHM_HIGHWAY&&key>="1"&&key<="5"){
+    act("rhythmHighwayLane", String(parseInt(key,10)-1));
+    return;
   }
 
   // Arrow keys - BPM adjustment

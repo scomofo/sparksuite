@@ -1,334 +1,301 @@
-# SparkSuite -- CLAUDE.md (Architecture Enforcement Guide)
+# SparkSuite – Claude / AI Coding Agent Guide
 
-## PURPOSE
-Defines how all AI agents (Claude, Codex, etc.) must interact with SparkSuite.
+## Purpose
+SparkSuite is an **engine-driven music learning platform**.
 
-SparkSuite is a **system-driven adaptive learning engine**, NOT a UI-driven app.
+The system is NOT UI-first.
+The system is NOT feature-first.
 
----
+The system is:
 
-# CORE RULE (NON-NEGOTIABLE)
+Core Engine → Session → UI renders output
 
-```text
-SessionEngine -> SessionPlan -> UI renders
-```
-
-* UI NEVER makes decisions
-* UI NEVER constructs sessions
-* UI NEVER mutates session data
-
-If UI makes decisions -> architecture is broken
+This document defines how AI agents must operate within this repository.
 
 ---
 
-# SYSTEM LAYERS
+# 🔥 Core Rule (Non-Negotiable)
 
-## 1. SessionEngine (ORCHESTRATOR)
+## ❌ DO NOT:
+- Put logic in UI components
+- Add business logic to app.js
+- Hardcode lesson flow in pages
+- Create "quick utilities" that bypass engines
+- Couple gameplay logic directly to rendering
 
-ONLY source of truth for what the user does.
-
-Responsible for:
-
-* building SessionPlan
-* sequencing segments
-* injecting practice / song / challenge
-* integrating LearningBrain + Flow
-
-```js
-const session = SessionEngineV2.buildSession({
-  user,
-  instrument,
-  lesson,
-  recentEvents
-});
-```
+## ✅ DO:
+- Route ALL logic through core engines
+- Extend via engines or instrument modules
+- Keep UI as a dumb renderer of session state
 
 ---
 
-## 2. PracticeEngine (PURE GENERATOR)
+# 🧠 Architecture Overview
 
-Returns ONLY:
+SparkCore
+  ├── SessionEngine
+  ├── CurriculumEngine
+  ├── PsychologyEngine
+  ├── PracticeEngine
+  ├── ProgressEngine
+  ├── InstrumentManager
+  ├── Storage
+  └── AIEngine
+        ↓
+Instrument Modules
+        ↓
+Session Plan
+        ↓
+UI Rendering Layer
 
-```js
-{
-  segments,
-  exercises
-}
-```
-
-Rules:
-
-* NO UI fields
-* NO labels / descriptions
-* NO rendering concerns
-* MUST be deterministic
-
----
-
-## 3. LearningBrain
-
-Responsible for:
-
-* weakest skill detection
-* emotion detection (frustrated / bored / engaged)
-* recommendation (practice / challenge / balanced)
+Reference architecture defined in core skeleton doc.
 
 ---
 
-## 4. Flow System
+# ⚙️ Engine Responsibilities
 
-Responsible for:
+## SessionEngine
+- Builds sessions
+- Orchestrates all engines
+- Returns SessionPlan
 
-* difficulty adjustment
-* maintaining engagement
+## CurriculumEngine
+- Determines WHAT to learn next
+- Skill trees
+- Prerequisites
+- Lesson sequencing
+
+## PsychologyEngine
+- Determines HOW learning is delivered
+- Difficulty scaling
+- Session structure
+- Reward timing
+- Flow state
+
+## PracticeEngine
+- Generates exercises
+- Evaluates performance
+- Handles gameplay logic abstraction
+
+## ProgressEngine
+- Tracks mastery
+- XP, levels, streaks
+- Unlocks
+
+## InstrumentManager
+- Registers and loads instrument modules
+- No instrument logic in core
+
+## AIEngine (future)
+- Coaching
+- Feedback
+- Adaptive generation
 
 ---
 
-## 5. Instrument Layer
+# 🎸 Instrument Module Standard
 
-Responsible for:
+Each instrument must be self-contained.
 
-* exercise construction
-* gameplay payload generation
+Example:
 
-```js
-instrument.buildSongExercise()
-instrument.buildRhythmExercise()
-instrument.buildChallengeExercise()
-```
+instruments/guitar/
+instruments/piano/
+instruments/ukulele/
 
----
+Each module MUST expose:
 
-# SESSION PLAN CONTRACT (STRICT V2)
-
-```js
 {
   id,
-  flow,
-  instrumentId,
-  lesson,
+  name,
+  getSkillTree(),
+  getLessons(),
+  getExercises(skill),
+  getChords(),
+  getScales(),
+  getTuning()
+}
+
+## Critical Rule
+Adding a new instrument must NOT require changes to core engines.
+
+---
+
+# 🎮 Gameplay Model (Guitar Hero Inspired)
+
+Gameplay is NOT hardcoded.
+
+PracticeEngine outputs abstract exercises:
+
+{
+  type: "note_highway" | "chord" | "strum" | "pattern",
   difficulty,
-
-  segments: [
-    {
-      id,
-      type, // "practice" | "song" | "challenge"
-      exerciseIds: []
-    }
-  ],
-
-  exercises: [
-    {
-      id,
-      type,
-      data
-    }
-  ],
-
-  rewards
+  tempo,
+  data
 }
-```
+
+UI layer decides how to render:
+- Note highway
+- Chord prompts
+- Rhythm lanes
 
 ---
 
-# FORBIDDEN IN CORE (CRITICAL)
+# 🔄 Data Flow
 
-The following MUST NEVER appear in:
-
-* SessionEngine
-* PracticeEngine
-* LearningBrain
-
-NO label, title, description, subtitle, UI flags, display fields
-
-If present -> REMOVE immediately
-
----
-
-# RUNTIME LOOP (MANDATORY)
-
-```js
-function startSessionLoop(user) {
-  const session = SessionEngineV2.buildSession({
-    user,
-    instrument,
-    lesson,
-    recentEvents: user.lastEvents || []
-  });
-
-  runSession(session);
-}
-```
+User Profile
+    ↓
+SparkCore.startSession()
+    ↓
+SessionEngine
+    ↓
+Curriculum → Psychology → Practice
+    ↓
+SessionPlan
+    ↓
+UI renders
+    ↓
+User plays
+    ↓
+Results
+    ↓
+SessionEngine.processResults()
+    ↓
+Progress + Difficulty updated
 
 ---
 
-## Gameplay -> Event Capture
+# 🧱 Domain Models
 
-```js
-state.events.push(event);
-```
+Located in:
 
----
+js/sparksuite/domain/
 
-## Session Completion
+Key objects:
+- SessionPlan
+- Skill
+- Lesson
+- Performance
+- Reward
 
-```js
-user.lastEvents = state.events;
-startSessionLoop(user);
-```
-
----
-
-# UI CONTRACT
-
-UI MUST ONLY:
-
-```js
-render(sessionPlan);
-```
-
-UI MUST NOT:
-
-* generate exercises
-* choose next step
-* modify session
-* inject data
+These must remain UI-independent.
 
 ---
 
-# ARCHITECTURAL RULES
+# 🚧 Migration Rules (VERY IMPORTANT)
 
-## 1. No Bypass
+We are currently migrating from:
 
-If anything runs without SessionEngine -> WRONG
+❌ Old:
+UI → decides everything
 
----
+✅ New:
+Engine → decides everything
+UI → renders
 
-## 2. No Duplication
-
-If logic exists in UI AND engine -> WRONG
-
----
-
-## 3. Normalization Required
-
-* segments reference exercises
-* exercises hold all data
+## Migration Strategy
+- Wrap existing flows through SparkCore
+- Move logic incrementally into engines
+- DO NOT rewrite entire app at once
 
 ---
 
-## 4. Single Source of Truth
+# 🧪 Testing Expectations
 
-SessionPlan is the ONLY source of runtime structure
+When adding features:
+- Can session be generated without UI?
+- Can engine run in isolation?
+- Does it work across instruments?
 
----
-
-# INSTRUMENT PIPELINE SYSTEM (CRITICAL)
-
-SparkSuite includes a full Instrument Pipeline System:
-
-    Templates -> Generator -> Validator -> Fix Engine -> Auto-Integration -> CI -> Discovery
-
-### Key Scripts
-
-* scripts/generate_instrument_pipeline.js
-* scripts/validate_curriculum.js
-* scripts/suggest_curriculum_fixes.js
-* scripts/apply_generated_instrument.js
-
-DO NOT manually create instruments across folders. Use the pipeline.
+If not → architecture violation
 
 ---
 
-# AUTO-DISCOVERY SYSTEM
+# 🧩 Adding Features
 
-SparkSuite uses manifest-based auto-discovery for instruments.
+## Add to:
+- CurriculumEngine → learning decisions
+- PsychologyEngine → difficulty & flow
+- PracticeEngine → exercise generation
+- ProgressEngine → tracking
 
-* js/instruments/instrument_manifest.generated.js
-* js/instruments/discovery_loader.js
-
-Discovery MUST be manifest-driven, NOT filesystem-driven.
-
----
-
-# ARCHITECTURE LAYERS
-
-* js/instruments/ -- runtime layer
-* js/sparksuite/instruments/ -- module/content layer
-* instrument-adapter.js -- bridge layer
-
-All three must remain aligned.
+## NEVER add to:
+- UI components
+- Pages
+- Random helpers
 
 ---
 
-# VALIDATION STANDARD
-
-A valid instrument must satisfy:
-
-    Lesson -> Skill -> Exercise -> Gameplay -> Progress
-
-If any link is missing, the instrument is broken.
-
----
-
-# DEVELOPMENT PRIORITIES
-
-When modifying the system:
-
-1. Update engines FIRST
-2. Maintain SessionPlan contract
-3. Keep UI passive
-4. Avoid shortcuts
-
----
-
-# CODING GUIDELINES
-
-## 1. Think Before Coding
-
-* State assumptions explicitly. If uncertain, ask.
-* If multiple interpretations exist, present them.
-* If a simpler approach exists, say so.
-
-## 2. Simplicity First
-
-* No features beyond what was asked.
-* No abstractions for single-use code.
-* No error handling for impossible scenarios.
-
-## 3. Surgical Changes
-
-* Touch only what you must.
-* Match existing style.
-* Remove only what YOUR changes made unused.
-
-## 4. Goal-Driven Execution
-
-* Transform tasks into verifiable goals.
-* State a brief plan with verification steps.
-
----
-
-# DESIGN PHILOSOPHY
+# 🧠 Design Philosophy
 
 SparkSuite is:
 
-* system-first
-* adaptive
-* engine-driven
-* data-normalized
+- Engine-first
+- Data-driven
+- Modular
+- Instrument-agnostic
+- Psychology-aware
 
 NOT:
 
-* screen-driven
-* manually sequenced
-* UI-controlled
+- Page-driven
+- Hardcoded
+- UI-controlled
 
 ---
 
-# FINAL RULE
+# ⚠️ Common Failure Modes (Avoid These)
 
-If it works but violates these rules -> it is technical debt.
-If it follows these rules -> it scales cleanly.
+1. UI deciding lesson flow
+2. Instrument logic leaking into core
+3. Duplicating logic across instruments
+4. Tight coupling between gameplay + rendering
+5. “Quick fixes” outside engines
 
-This file is the source of truth for architecture enforcement.
+---
+
+# 🚀 Definition of Done
+
+A feature is complete when:
+
+- It lives in the correct engine/module
+- It works across multiple instruments
+- It requires zero UI logic changes to function
+- It can be tested via SessionEngine
+
+---
+
+# 🧭 Guiding Principle
+
+If you remove the UI, SparkSuite should still function.
+
+If that is not true, the architecture is wrong.
+
+---
+
+# 📌 Immediate Priority
+
+Current focus:
+
+1. Core engine scaffold (SparkCore + engines)
+2. Route one full session through engine
+3. Migrate guitar gameplay into PracticeEngine
+4. Validate instrument modularity (guitar → ukulele test)
+
+---
+
+# 🤖 Instructions for AI Agents
+
+When implementing anything:
+
+1. Identify which engine owns the responsibility
+2. Implement there
+3. Expose via SessionEngine
+4. Return structured data
+5. Let UI render it
+
+If unsure → default to engine, NOT UI
+
+---
+
+End of file.

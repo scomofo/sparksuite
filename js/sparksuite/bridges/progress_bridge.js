@@ -83,45 +83,6 @@
       S.xp += summary.xpAwarded;
     }
 
-    // Initialize skill graph if needed
-    if (typeof SparkSkillTracker !== "undefined" && !S.skillGraph) {
-      S.skillGraph = SparkSkillTracker.create();
-    }
-    // Update skill graph
-    if (typeof SparkSkillTracker !== "undefined" && S.skillGraph) {
-      var prevSnapshot = S.skillGraph.history.length > 0
-        ? S.skillGraph.history[S.skillGraph.history.length - 1].skills
-        : { timing: S.skillGraph.timing, rhythm: S.skillGraph.rhythm, chordAccuracy: S.skillGraph.chordAccuracy };
-      S.skillGraphSnapshot = { timing: prevSnapshot.timing, rhythm: prevSnapshot.rhythm, chordAccuracy: prevSnapshot.chordAccuracy };
-      SparkSkillTracker.update(S.skillGraph, {
-        avgAbsDelta: summary.avgAbsDelta || 50,
-        accuracy: summary.accuracy || 0,
-        chordHits: summary.chordHits || 0,
-        chordAttempts: summary.chordAttempts || summary.totalNotes || 0,
-        laneErrors: summary.laneErrors || {},
-        totalNotes: summary.totalNotes || 0
-      });
-    }
-    // Log session completion for playtesting metrics
-    if (typeof SparkEventLogger !== "undefined") {
-      SparkEventLogger.log("session_complete", {
-        accuracy: summary.accuracy || 0,
-        totalNotes: summary.totalNotes || 0,
-        xpAwarded: summary.xpAwarded || 0
-      });
-    }
-
-    if (typeof SparkDynamicTiming !== "undefined") {
-      SparkDynamicTiming.updateDynamicOffset();
-      if (!S.playerProfile) S.playerProfile = SparkDynamicTiming.createProfile();
-      SparkDynamicTiming.updateProfile(S.playerProfile);
-    }
-
-    // Generate lesson recommendation
-    if (typeof SparkLessonGenerator !== "undefined" && S.skillGraph) {
-      S.recommendedLesson = SparkLessonGenerator.generate(S.skillGraph);
-    }
-
     if (typeof saveState === "function") saveState();
   }
 

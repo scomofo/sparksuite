@@ -4,8 +4,6 @@
   ProgressEngine.prototype.completeSession = function(plan, payload) {
     payload = payload || {};
     if (!plan) return { completedItems: 0, totalItems: 0, planCompleted: false, xpAwarded: 0 };
-    if (plan.flow === "legacy_practice_session") return completeLegacyPracticeSession(plan, payload);
-    if (plan.flow === "legacy_practice_drill") return completeLegacyPracticeDrill(plan, payload);
     if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return completeGuidedSession(plan, payload);
     if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return completePerformanceSong(plan, payload);
 
@@ -29,10 +27,8 @@
       var sessionStatePatch = {
         xpToast: { amount: 20, time: Date.now() }
       };
-      var streakPatch = buildDailyStreakPatch();
-      if (streakPatch) sessionStatePatch.streak = streakPatch;
       if (payload.gameplayResult) {
-        xpAwarded = computeDailyPracticeXP(payload.gameplayResult.gameplay);
+        xpAwarded += Math.max(0, Math.round(((payload.gameplayResult.gameplay && payload.gameplayResult.gameplay.accuracy) || 0) * 20));
         sessionStatePatch = mergeSessionStatePatch(sessionStatePatch, buildGameplayLearningPatch(payload.gameplayResult.learning, payload.gameplayContext, payload.gameplayResult.gameplay));
         sessionStatePatch.xpToast.amount = xpAwarded;
       }
@@ -42,7 +38,7 @@
           type: "session",
           xpAwarded: xpAwarded,
           duration: summary.durationSec,
-          streakUpdated: !!streakPatch
+          streakUpdated: false
         });
       }
       SparkProgressBridge.finalizePlan(plan, {
@@ -53,7 +49,6 @@
       progress.xpAwarded = xpAwarded;
       progress.sessionStatePatch = sessionStatePatch;
       progress.completionSummary = completionSummary;
-      progress.streakUpdated = !!streakPatch;
     } else if (typeof saveState === "function") {
       saveState();
     }
@@ -107,77 +102,6 @@
     progress.sessionStatePatch = sessionStatePatch;
     if (typeof saveState === "function") saveState();
     return progress;
-  }
-
-  function completeLegacyPracticeSession(plan, payload) {
-    payload = payload || {};
-    var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
-    var outcome = typeof SparkSession !== "undefined" && typeof SparkSession.processResults === "function"
-      ? SparkSession.processResults({
-        type: payload.mode || legacy.mode || "session",
-        chordName: Object.prototype.hasOwnProperty.call(payload, "chordName") ? payload.chordName : legacy.chordName,
-        duration: Object.prototype.hasOwnProperty.call(payload, "durationSec") ? payload.durationSec : (legacy.durationSec || 120),
-        accuracy: payload.accuracy
-      })
-      : { xpEarned: 10, jackpot: false, leveledUp: false };
-
-    return {
-      completedItems: 1,
-      totalItems: 1,
-      planCompleted: true,
-      xpAwarded: outcome.xpEarned || 0,
-      audioCue: outcome.jackpot || outcome.leveledUp ? "levelup" : "complete",
-      jackpot: !!outcome.jackpot,
-      leveledUp: !!outcome.leveledUp,
-      completionSummary: buildCompletionSummary(plan, outcome.xpEarned || 0, legacy.durationSec || 120)
-    };
-  }
-
-  function completeLegacyPracticeDrill(plan, payload) {
-    payload = payload || {};
-    var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
-    var detail = Array.isArray(legacy.chordNames) ? legacy.chordNames.join(" / ") : "";
-
-    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
-      SparkProgressBridge.applyLegacyActivityCompletion({
-        xpDelta: 20,
-        toastAmount: 20,
-        incrementFields: { drillCount: 1 },
-        history: { type: "drill", detail: detail, xp: 20 },
-        emit: { type: "practice_session_completed", payload: { appId: "chordspark", type: "drill", xp: 20, detail: detail } },
-        checkBadges: true
-      });
-    } else {
-      if (typeof S !== "undefined") {
-        S.drillCount = (S.drillCount || 0) + 1;
-        S.xp = (S.xp || 0) + 20;
-        S.xpToast = { amount: 20, time: Date.now() };
-      }
-      if (typeof logHistory === "function") logHistory("drill", detail, 20);
-      if (typeof _sparkEmit === "function") {
-        _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
-      }
-      if (typeof checkBadges === "function") checkBadges();
-      if (typeof saveState === "function") saveState();
-    }
-
-    if (typeof SparkProgressOrchestrator !== "undefined") {
-      SparkProgressOrchestrator.evaluateAll({
-        type: "drill",
-        xpAwarded: 20,
-        duration: Object.prototype.hasOwnProperty.call(payload, "durationSec") ? payload.durationSec : (legacy.durationSec || 60),
-        streakUpdated: false
-      });
-    }
-
-    return {
-      completedItems: 1,
-      totalItems: 1,
-      planCompleted: true,
-      xpAwarded: 20,
-      audioCue: "complete",
-      completionSummary: buildCompletionSummary(plan, 20, legacy.durationSec || 60)
-    };
   }
 
   function completePerformanceSong(plan, payload) {
@@ -296,25 +220,6 @@
     };
   }
 
-  function computeDailyPracticeXP(gameplay) {
-    gameplay = gameplay || {};
-    var accuracy = typeof gameplay.accuracy === "number" ? gameplay.accuracy : 0;
-    var maxCombo = typeof gameplay.maxCombo === "number" ? gameplay.maxCombo : 0;
-    return Math.max(20, Math.floor((accuracy * 50) + (maxCombo * 2)));
-  }
-
-  function buildDailyStreakPatch() {
-    if (typeof S === "undefined") return null;
-    var today = new Date().toISOString().slice(0, 10);
-    if (S.lastSessionDate === today) return null;
-    var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    return {
-      increment: S.lastSessionDate === yesterday ? 1 : 1,
-      resetTo: S.lastSessionDate === yesterday ? null : 1,
-      lastSessionDate: today
-    };
-  }
-
   function buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded) {
     var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
     return {
@@ -334,8 +239,6 @@
   function mergeSessionStatePatch(basePatch, nextPatch) {
     basePatch = basePatch || {};
     nextPatch = nextPatch || {};
-
-    if (nextPatch.streak) basePatch.streak = nextPatch.streak;
 
     if (nextPatch.guided) basePatch.guided = nextPatch.guided;
 

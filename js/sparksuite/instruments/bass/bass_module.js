@@ -229,10 +229,6 @@
     return 4;
   };
 
-  BassRhythmAdapter.prototype.getAdapterType = function() {
-    return "bass";
-  };
-
   BassRhythmAdapter.prototype.getLaneLabels = function() {
     return ["E", "A", "D", "G"];
   };
@@ -243,7 +239,6 @@
 
   BassRhythmAdapter.prototype.createPayload = function(context) {
     var chartDefinition = selectBassChartDefinition(context);
-    var songChart = this.chartIO.fromExerciseDefinition(chartDefinition, this);
     return {
       chartId: chartDefinition.id,
       adapterType: "bass",
@@ -256,12 +251,7 @@
         showChordNames: false,
         failDisabled: true
       },
-      songChart: songChart,
-      chart: this.chartIO.toLaneChart(songChart, this, {
-        chartId: chartDefinition.id,
-        laneCount: this.getLaneCount(),
-        laneLabels: this.getLaneLabels()
-      })
+      songChart: this.chartIO.fromExerciseDefinition(chartDefinition, this)
     };
   };
 

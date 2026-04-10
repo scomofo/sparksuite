@@ -5,8 +5,6 @@
     this.tick = input.tick || 0;
     this.tickLength = input.tickLength || 0;
     this.laneMask = input.laneMask || 0;
-    this.lane = input.lane != null ? input.lane : null;
-    this.stringIndex = input.stringIndex != null ? input.stringIndex : null;
     this.flags = input.flags || {};
     this.difficulty = input.difficulty || "easy";
     this.instrument = input.instrument || "guitar";

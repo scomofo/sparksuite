@@ -194,43 +194,6 @@ test("startSession returns a SessionPlan and syncs the legacy practice plan", fu
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "session_1");
 });
 
-test("SparkCurriculumBridge and SparkCore expose richer curriculum handoff context", function() {
-  S.chordProgress = { C: 22, G: 58, D: 92 };
-  global.SparkCurriculumService = {
-    getReviewTargets: function(ctx) {
-      return [
-        { type: "chord", id: "C", mastery: ctx.chordProgress.C, priority: "high" },
-        { type: "chord", id: "G", mastery: ctx.chordProgress.G, priority: "medium" }
-      ];
-    },
-    buildLearningQueue: function(ctx) {
-      return [
-        { type: "review", id: "C", label: "Review: C", priority: "high", mastery: ctx.chordProgress.C },
-        { type: "lesson", id: ctx.nextLessonId, label: ctx.nextLesson.title, priority: "normal" }
-      ];
-    }
-  };
-
-  var bridgeContext = {
-    curriculumMap: SparkInstrumentAdapter.getCurriculum().SESSIONS,
-    chordProgress: S.chordProgress
-  };
-  var queue = SparkCurriculumBridge.buildLearningQueue(bridgeContext);
-  var core = createDefaultSparkCore();
-  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
-
-  assert.strictEqual(queue.length, 2);
-  assert.strictEqual(queue[0].id, "C");
-  assert.strictEqual(queue[1].id, "session_1");
-  assert.strictEqual(queue[1].label, "First Spark");
-  assert.strictEqual(plan.context.curriculum.nextLessonId, "session_1");
-  assert.strictEqual(plan.context.curriculum.nextLesson.title, "First Spark");
-  assert.strictEqual(plan.context.curriculum.reviewTargets.length, 2);
-  assert.strictEqual(plan.context.curriculum.reviewTargets[0].id, "C");
-  assert.strictEqual(plan.context.curriculum.learningQueue[1].label, "First Spark");
-  assert.strictEqual(plan.toLegacyPracticePlan().curriculum.nextLesson.title, "First Spark");
-});
-
 test("SparkCore exposes engine-owned runtime state for active session context", function() {
   var core = createDefaultSparkCore();
   var initialState = core.getRuntimeState();
@@ -408,20 +371,6 @@ test("SparkCore can open legacy practice session and drill runtime explicitly", 
   assert.strictEqual(repeatedDrillState.activeScreen, "drill");
   assert.strictEqual(repeatedDrillState.transport.status, "running");
   assert.deepStrictEqual(repeatedDrillState.legacyDrillChordNames, ["C", "G"]);
-});
-
-test("SparkCore startSession can build a legacy practice handoff contract", function() {
-  var core = createDefaultSparkCore();
-  var plan = core.startSession({ mode: "quickStart", level: 1 });
-
-  assert.ok(plan instanceof SessionPlan);
-  assert.strictEqual(plan.flow, "legacy_practice_session");
-  assert.ok(Array.isArray(plan.segments));
-  assert.ok(Array.isArray(plan.exercises));
-  assert.ok(Array.isArray(plan.rewards));
-  assert.ok(plan.context.legacyPractice);
-  assert.strictEqual(core.getRuntimeState().activeFlow, "legacy_practice_session");
-  assert.strictEqual(core.getRuntimeState().activeScreen, "session");
 });
 
 test("SparkCore can sync legacy practice runtime countdown and pause state explicitly", function() {
@@ -2907,37 +2856,14 @@ test("completeSession returns engine-owned rhythm learning summary while bridge 
     }
   });
 
-  assert.strictEqual(result.xpAwarded, 25);
+  assert.strictEqual(result.xpAwarded, 30);
   assert.deepStrictEqual(result.sessionStatePatch.mastery.rhythm, { gtr_alt_strum_basic: 8 });
   assert.deepStrictEqual(result.sessionStatePatch.weakSpots.rhythmHighway, ["late_strums"]);
   assert.strictEqual(result.completionSummary.flow, "daily_practice");
-  assert.strictEqual(result.completionSummary.xpAwarded, 25);
+  assert.strictEqual(result.completionSummary.xpAwarded, 30);
   assert.strictEqual(core.getLastSessionOutcome(), result);
   assert.strictEqual(S.mastery.rhythm.gtr_alt_strum_basic, 8);
   assert.deepStrictEqual(S.weakSpots.rhythmHighway, ["late_strums"]);
-});
-
-test("completeSession updates daily streak and performance-based xp for rhythm handoffs", function() {
-  var core = createDefaultSparkCore();
-  S.lastSessionDate = "2026-04-08";
-  S.streak = 4;
-
-  var result = core.completeSession({
-    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-    markPlanComplete: true,
-    gameplayResult: {
-      gameplay: { accuracy: 0.92, maxCombo: 14 },
-      learning: { weakAreas: [] }
-    }
-  });
-
-  assert.strictEqual(result.xpAwarded, 74);
-  assert.strictEqual(result.streakUpdated, true);
-  assert.strictEqual(result.sessionStatePatch.streak.lastSessionDate, "2026-04-09");
-  assert.strictEqual(S.streak, 5);
-  assert.strictEqual(S.lastSessionDate, "2026-04-09");
-  assert.strictEqual(S.xp, 74);
-  assert.strictEqual(S.xpToast.amount, 74);
 });
 
 test("startSession routes guided sessions through core and syncs guided state", function() {
@@ -3037,8 +2963,8 @@ test("ukulele rhythm adapter selects richer chart variants as lessons progress",
   assert.strictEqual(patternPayload.chartId, "uke_island_pattern_01");
   assert.strictEqual(melodyPayload.chartId, "uke_melody_lift_01");
   assert.strictEqual(performancePayload.chartId, "uke_stage_flow_01");
-  assert.ok(patternPayload.songChart.tracks[patternPayload.adapterType].notes.length >= 8);
-  assert.ok(performancePayload.songChart.tracks[performancePayload.adapterType].notes.length >= 12);
+  assert.ok(patternPayload.songChart.tracks.guitar.notes.length >= 8);
+  assert.ok(performancePayload.songChart.tracks.guitar.notes.length >= 12);
 });
 
 test("createDefaultSparkCore registers piano as a first-class instrument adapter", function() {
@@ -3110,19 +3036,6 @@ test("createDefaultSparkCore registers bass as a first-class instrument adapter"
   assert.strictEqual(S.performDifficulty, "hard");
 });
 
-test("instrument manager exposes a registerInstrument alias for isolated adapters", function() {
-  var manager = new SparkInstrumentManager();
-  var factory = function() {
-    return {
-      getCurriculumMap: function() { return [{ id: "test_01", title: "Test Session" }]; }
-    };
-  };
-
-  manager.registerInstrument("test", factory);
-
-  assert.strictEqual(manager.adapters.test, factory);
-});
-
 test("bass rhythm adapter selects richer chart variants as sessions progress", function() {
   var adapter = new SparkBassRhythmAdapter();
   var rootPayload = adapter.createPayload({
@@ -3147,8 +3060,8 @@ test("bass rhythm adapter selects richer chart variants as sessions progress", f
   assert.strictEqual(ghostPayload.chartId, "bass_ghost_grid_01");
   assert.strictEqual(funkPayload.chartId, "bass_funk_push_01");
   assert.strictEqual(rootPayload.songChart.metadata.laneCount, 4);
-  assert.ok(walkingPayload.songChart.tracks[walkingPayload.adapterType].notes.length >= 6);
-  assert.ok(funkPayload.songChart.tracks[funkPayload.adapterType].notes.length >= 16);
+  assert.ok(walkingPayload.songChart.tracks.guitar.notes.length >= 6);
+  assert.ok(funkPayload.songChart.tracks.guitar.notes.length >= 16);
 });
 
 test("SparkBassModule exposes authored advanced exercises for later-phase bass skills", function() {
@@ -3231,53 +3144,6 @@ test("completeSession can carry focused bass rhythm drill progress into bass ski
   assert.ok(result.sessionStatePatch.bassSkillProgress.walking_bass);
   assert.ok(result.sessionStatePatch.bassSkillProgress.walking_bass.timing < result.sessionStatePatch.bassSkillProgress.walking_bass.accuracy);
   assert.ok(S.bassSkillProgress.walking_bass);
-});
-
-test("completeSession can carry focused ukulele rhythm drill progress into ukulele skill state", function() {
-  SparkInstrumentAdapter = {
-    getAppId: function() { return "ukespark"; },
-    getInstrumentType: function() { return "ukulele"; },
-    getCurriculumMap: function() { return SparkUkuleleLessons; },
-    getCurriculum: function() { return { SESSIONS: SparkUkuleleLessons }; },
-    getSongs: function() { return SparkUkuleleModule.getSongs(); }
-  };
-
-  var core = createDefaultSparkCore();
-  var plan = core.startSession({
-    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE
-  });
-
-  plan.segments = [
-    SparkSessionSegment.create({
-      id: "uke_island_pattern_01",
-      type: SparkSessionSegmentTypes.RHYTHM_HIGHWAY,
-      label: "Island Pattern 01",
-      meta: {}
-    })
-  ];
-
-  var result = core.completeSession({
-    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-    itemId: "uke_island_pattern_01",
-    gameplayContext: {
-      instrument: "ukulele",
-      exerciseFocus: "strumming_patterns"
-    },
-    gameplayResult: {
-      gameplay: {
-        accuracy: 0.81,
-        maxCombo: 14
-      },
-      learning: {
-        weakAreas: ["late_strums"]
-      }
-    }
-  });
-
-  assert.ok(result.sessionStatePatch.ukuleleSkillProgress);
-  assert.ok(result.sessionStatePatch.ukuleleSkillProgress.strumming_patterns);
-  assert.ok(result.sessionStatePatch.ukuleleSkillProgress.strumming_patterns.timing < result.sessionStatePatch.ukuleleSkillProgress.strumming_patterns.accuracy);
-  assert.ok(S.ukuleleSkillProgress.strumming_patterns);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

@@ -7,7 +7,6 @@ const { spawn } = require('child_process');
 
 let mainWindow;
 let demucsProcess = null;
-let ffmpegProcess = null;
 
 function getResourcePath() {
   // In production: resources are in process.resourcesPath/resources/
@@ -25,119 +24,6 @@ function getStemsDir() {
 
 function hashFilePath(filePath) {
   return crypto.createHash('md5').update(filePath).digest('hex').substring(0, 12);
-}
-
-function getFfmpegBinaryPath() {
-  var resDir = getResourcePath();
-  var candidates = process.platform === 'win32'
-    ? [
-        path.join(resDir, 'ffmpeg.exe'),
-        path.join(resDir, 'resources', 'ffmpeg.exe'),
-        'ffmpeg.exe',
-        'ffmpeg'
-      ]
-    : [
-        path.join(resDir, 'ffmpeg'),
-        path.join(resDir, 'resources', 'ffmpeg'),
-        'ffmpeg'
-      ];
-
-  for (var i = 0; i < candidates.length; i++) {
-    if (candidates[i].indexOf(path.sep) >= 0) {
-      if (fs.existsSync(candidates[i])) return candidates[i];
-      continue;
-    }
-    return candidates[i];
-  }
-  return null;
-}
-
-function convertAudioTo44100(inputPath, outputPath) {
-  var ffmpegBin = getFfmpegBinaryPath();
-  if (!ffmpegBin) {
-    return Promise.reject(new Error('ffmpeg not found'));
-  }
-
-  return new Promise((resolve, reject) => {
-    ffmpegProcess = spawn(ffmpegBin, [
-      '-y',
-      '-i', inputPath,
-      '-ar', '44100',
-      '-ac', '2',
-      '-vn',
-      outputPath
-    ], {
-      windowsHide: true
-    });
-
-    var stderr = '';
-
-    ffmpegProcess.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    ffmpegProcess.on('error', (err) => {
-      ffmpegProcess = null;
-      reject(new Error('Failed to start ffmpeg: ' + err.message));
-    });
-
-    ffmpegProcess.on('close', (code) => {
-      ffmpegProcess = null;
-      if (code === 0 && fs.existsSync(outputPath)) {
-        resolve(outputPath);
-      } else {
-        reject(new Error('ffmpeg exited with code ' + code + ': ' + stderr.slice(-500)));
-      }
-    });
-  });
-}
-
-function runDemucsProcess(demucsBin, modelFile, inputPath, outputDir, startTime, resolve, reject) {
-  var numThreads = Math.max(1, Math.min(os.cpus().length, 8));
-  demucsProcess = spawn(demucsBin, [modelFile, inputPath, outputDir + path.sep, String(numThreads)], {
-    windowsHide: true
-  });
-
-  var stderr = '';
-
-  demucsProcess.stdout.on('data', (data) => {
-    var line = data.toString().trim();
-    if (line && mainWindow) {
-      mainWindow.webContents.send('stems:progress', { type: 'stdout', line: line });
-    }
-  });
-
-  demucsProcess.stderr.on('data', (data) => {
-    stderr += data.toString();
-    var line = data.toString().trim();
-    if (line && mainWindow) {
-      mainWindow.webContents.send('stems:progress', { type: 'stderr', line: line });
-    }
-  });
-
-  demucsProcess.on('error', (err) => {
-    demucsProcess = null;
-    reject(new Error('Failed to start demucs: ' + err.message));
-  });
-
-  demucsProcess.on('close', async (code) => {
-    demucsProcess = null;
-    if (code === 0) {
-      var stemNames = ['drums', 'bass', 'other', 'vocals', 'guitar', 'piano'];
-      var stemPaths = {};
-      for (var i = 0; i < stemNames.length; i++) {
-        var stemFile = path.join(outputDir, 'target_' + i + '_' + stemNames[i] + '.wav');
-        if (fs.existsSync(stemFile)) {
-          stemPaths[stemNames[i]] = stemFile;
-        }
-      }
-      var elapsed = Math.round((Date.now() - startTime) / 1000);
-      resolve({ stemPaths: stemPaths, elapsed: elapsed });
-      return;
-    }
-
-    reject(new Error('Demucs exited with code ' + code + ': ' + stderr.slice(-500)));
-  });
 }
 
 function createWindow() {
@@ -241,54 +127,53 @@ ipcMain.handle('stems:separate', async (event, filePath) => {
   var outputDir = path.join(getStemsDir(), hash);
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
-  var normalizedInput = resolvedInput;
-  var tempResampledPath = path.join(outputDir, 'input_44100.wav');
-  var ffmpegBin = getFfmpegBinaryPath();
-
-  if (ffmpegBin) {
-    try {
-      if (mainWindow) {
-        mainWindow.webContents.send('stems:progress', { type: 'stdout', line: 'Preparing audio at 44.1kHz for Demucs...' });
-      }
-      normalizedInput = await convertAudioTo44100(resolvedInput, tempResampledPath);
-    } catch (err) {
-      if (mainWindow) {
-        mainWindow.webContents.send('stems:progress', { type: 'stderr', line: 'ffmpeg preprocessing failed, falling back to original audio.' });
-      }
-      normalizedInput = resolvedInput;
-    }
-  }
-
   return new Promise((resolve, reject) => {
+    // Spawn demucs: demucs.exe <model> <input> <output_dir> <num_threads>
+    var numThreads = Math.max(1, Math.min(os.cpus().length, 8));
+    demucsProcess = spawn(demucsBin, [modelFile, resolvedInput, outputDir + path.sep, String(numThreads)], {
+      windowsHide: true
+    });
+
+    var stderr = '';
     var startTime = Date.now();
-    runDemucsProcess(demucsBin, modelFile, normalizedInput, outputDir, startTime, resolve, async function(err) {
-      var message = err && err.message ? err.message : String(err || '');
-      var needs44100 = message.indexOf('only supports the following sample rate (Hz): 44100') >= 0;
 
-      if (!needs44100 || normalizedInput === tempResampledPath || !ffmpegBin) {
-        if (needs44100 && !ffmpegBin) {
-          reject(new Error(
-            'Demucs requires 44.1kHz audio, and ffmpeg was not found to convert it automatically.\n' +
-            'Install ffmpeg on PATH or place ffmpeg' + (process.platform === 'win32' ? '.exe' : '') + ' in the resources/ folder.\n' +
-            'Original error: ' + message
-          ));
-          return;
-        }
-        reject(err);
-        return;
+    demucsProcess.stdout.on('data', (data) => {
+      var line = data.toString().trim();
+      if (line && mainWindow) {
+        mainWindow.webContents.send('stems:progress', { type: 'stdout', line: line });
       }
+    });
 
-      try {
-        if (mainWindow) {
-          mainWindow.webContents.send('stems:progress', { type: 'stdout', line: 'Resampling unsupported audio to 44.1kHz and retrying Demucs...' });
+    demucsProcess.stderr.on('data', (data) => {
+      stderr += data.toString();
+      var line = data.toString().trim();
+      if (line && mainWindow) {
+        // Try to extract progress from stderr output
+        mainWindow.webContents.send('stems:progress', { type: 'stderr', line: line });
+      }
+    });
+
+    demucsProcess.on('error', (err) => {
+      demucsProcess = null;
+      reject(new Error('Failed to start demucs: ' + err.message));
+    });
+
+    demucsProcess.on('close', (code) => {
+      demucsProcess = null;
+      if (code === 0) {
+        // Collect output stem paths
+        var stemNames = ['drums', 'bass', 'other', 'vocals', 'guitar', 'piano'];
+        var stemPaths = {};
+        for (var i = 0; i < stemNames.length; i++) {
+          var stemFile = path.join(outputDir, 'target_' + i + '_' + stemNames[i] + '.wav');
+          if (fs.existsSync(stemFile)) {
+            stemPaths[stemNames[i]] = stemFile;
+          }
         }
-        normalizedInput = await convertAudioTo44100(resolvedInput, tempResampledPath);
-        runDemucsProcess(demucsBin, modelFile, normalizedInput, outputDir, startTime, resolve, reject);
-      } catch (convertErr) {
-        reject(new Error(
-          'Demucs requires 44.1kHz audio. Automatic conversion failed.\n' +
-          (convertErr && convertErr.message ? convertErr.message : String(convertErr))
-        ));
+        var elapsed = Math.round((Date.now() - startTime) / 1000);
+        resolve({ stemPaths: stemPaths, elapsed: elapsed });
+      } else {
+        reject(new Error('Demucs exited with code ' + code + ': ' + stderr.slice(-500)));
       }
     });
   });
@@ -299,10 +184,6 @@ ipcMain.on('stems:cancel', () => {
   if (demucsProcess) {
     demucsProcess.kill();
     demucsProcess = null;
-  }
-  if (ffmpegProcess) {
-    ffmpegProcess.kill();
-    ffmpegProcess = null;
   }
 });
 
