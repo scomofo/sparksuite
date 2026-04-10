@@ -22,7 +22,10 @@ var SCR={
   HOME_DASH:"homeDash",
   SETTINGS:"settings",
   ONBOARDING:"onboarding",
-  LAUNCHER:"launcher"
+  LAUNCHER:"launcher",
+  PLAY_ALONG:"playAlong",
+  PLAY_ALONG_SESSION:"playAlongSession",
+  PLAY_ALONG_RESULTS:"playAlongResults"
 };
 var TAB={
   PRACTICE:"practice",DRILL:"drill",DAILY:"daily",QUIZ:"quiz",

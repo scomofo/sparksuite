@@ -155,6 +155,14 @@ function practiceTab(){
   h+='<button class="btn" onclick="act(\'openPlan\')" style="background:var(--accent);color:#fff;font-weight:700">&#128218; Today\'s Practice Plan</button>';
   h+='</div>';
 
+
+  // Play Along CTA
+  h+='<div class="card mb12" style="background:linear-gradient(135deg,#1DB954,#191414);border:none;text-align:center;padding:16px">';
+  h+='<div style="font-size:24px;margin-bottom:4px">&#127911;</div>';
+  h+='<div style="font-size:15px;font-weight:900;color:#fff">Play Along</div>';
+  h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">Search any song, play along in real time</div>';
+  h+='<button onclick="openPlayAlong()" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Find a Song &#9654;</button>';
+  h+='</div>';
   // Guided Session CTA
   var gs=D.SESSIONS[S.guidedSession-1];
   if(gs){

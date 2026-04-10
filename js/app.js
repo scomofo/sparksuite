@@ -3812,6 +3812,9 @@ function _renderInner(){
   _sharedPages[SCR.MIDI_IMPORT] = typeof midiImportPage === "function" ? midiImportPage : null;
   _sharedPages[SCR.CLOUD_SETTINGS] = typeof cloudSettingsPage === "function" ? cloudSettingsPage : null;
   _sharedPages[SCR.CURRICULUM] = typeof curriculumPage === "function" ? curriculumPage : null;
+  _sharedPages[SCR.PLAY_ALONG] = typeof playAlongPage === "function" ? playAlongPage : null;
+  _sharedPages[SCR.PLAY_ALONG_SESSION] = typeof playAlongSessionPage === "function" ? playAlongSessionPage : null;
+  _sharedPages[SCR.PLAY_ALONG_RESULTS] = typeof playAlongResultsPage === "function" ? playAlongResultsPage : null;
 
   // Instrument override: if active instrument provides a page for this screen, use it
   var _instrumentPage = SparkInstruments.getPage(S.screen);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://i.scdn.co; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456 https://api.spotify.com https://accounts.spotify.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com">
 <title>SparkSuite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -181,10 +181,94 @@
 <script src="js/sparksuite/core/progress_engine.js"></script>
 <script src="js/sparksuite/core/session_engine.js"></script>
 <script src="js/sparksuite/core/spark_core.js"></script>
+<!-- SparkSuite Play-Along System -->
+<script src="js/sparksuite/core/spark_log.js"></script>
+<script src="js/sparksuite/core/time_source.js"></script>
+<script src="js/sparksuite/core/validators.js"></script>
+<script src="js/sparksuite/core/practice_intelligence.js"></script>
+<script src="js/sparksuite/music/chart_types.js"></script>
+<script src="js/sparksuite/music/pattern_library.js"></script>
+<script src="js/sparksuite/music/chord_library.js"></script>
+<script src="js/sparksuite/music/spotify_client.js"></script>
+<script src="js/sparksuite/music/track_analyzer.js"></script>
+<script src="js/sparksuite/music/chord_progression_engine.js"></script>
+<script src="js/sparksuite/music/chart_builder.js"></script>
+<script src="js/sparksuite/music/difficulty_scaler.js"></script>
+<script src="js/sparksuite/music/chart_generation_service.js"></script>
+<script src="js/sparksuite/music/playback_engine.js"></script>
+<script src="js/sparksuite/music/sync_engine.js"></script>
+<script src="js/sparksuite/music/drift_corrector.js"></script>
+<script src="js/sparksuite/music/latency_calibrator.js"></script>
+<script src="js/sparksuite/music/spotify_search.js"></script>
+<script src="js/sparksuite/music/track_selector.js"></script>
+<script src="js/sparksuite/audio/audio_engine.js"></script>
+<script src="js/sparksuite/audio/audio_loader.js"></script>
+<script src="js/sparksuite/audio/audio_transport.js"></script>
+<script src="js/sparksuite/audio/audio_scheduler.js"></script>
+<script src="js/sparksuite/audio/beat_detector.js"></script>
+<script src="js/sparksuite/audio/audio_chart_generator.js"></script>
+<script src="js/sparksuite/audio/stem_loader.js"></script>
+<script src="js/sparksuite/audio/stem_mixer.js"></script>
+<script src="js/sparksuite/audio/stem_controller.js"></script>
+<script src="js/sparksuite/audio/source_separator.js"></script>
+<script src="js/sparksuite/audio/part_classifier.js"></script>
+<script src="js/sparksuite/audio/multi_chart_builder.js"></script>
+<script src="js/sparksuite/auth/token_store.js"></script>
+<script src="js/sparksuite/auth/spotify_auth_manager.js"></script>
+<script src="js/sparksuite/auth/callback_handler.js"></script>
+<script src="js/sparksuite/input/mic_input.js"></script>
+<script src="js/sparksuite/input/pitch_detector.js"></script>
+<script src="js/sparksuite/input/input_note_mapper.js"></script>
+<script src="js/sparksuite/input/chord_detector.js"></script>
+<script src="js/sparksuite/input/harmonic_analyzer.js"></script>
+<script src="js/sparksuite/input/chord_stabilizer.js"></script>
+<script src="js/sparksuite/analysis/performance_tracker.js"></script>
+<script src="js/sparksuite/analysis/performance_analyzer.js"></script>
+<script src="js/sparksuite/analysis/heatmap_generator.js"></script>
+<script src="js/sparksuite/analysis/heatmap_renderer.js"></script>
+<script src="js/sparksuite/analysis/chord_confidence.js"></script>
+<script src="js/sparksuite/analysis/chord_heatmap.js"></script>
+<script src="js/sparksuite/analysis/style_analyzer.js"></script>
+<script src="js/sparksuite/ai/skill_extractor.js"></script>
+<script src="js/sparksuite/ai/lesson_builder.js"></script>
+<script src="js/sparksuite/ai/lesson_planner.js"></script>
+<script src="js/sparksuite/ai/feedback_rules.js"></script>
+<script src="js/sparksuite/ai/feedback_engine.js"></script>
+<script src="js/sparksuite/ai/voice_input.js"></script>
+<script src="js/sparksuite/ai/voice_command_router.js"></script>
+<script src="js/sparksuite/ai/tts_engine.js"></script>
+<script src="js/sparksuite/ai/voice_queue.js"></script>
+<script src="js/sparksuite/ai/voice_coach.js"></script>
+<script src="js/sparksuite/ai/fretboard_mapper.js"></script>
+<script src="js/sparksuite/ai/tab_generator.js"></script>
+<script src="js/sparksuite/ai/note_sequence_builder.js"></script>
+<script src="js/sparksuite/ai/fingering_optimizer.js"></script>
+<script src="js/sparksuite/ai/chord_predictor.js"></script>
+<script src="js/sparksuite/ai/drill_generator.js"></script>
+<script src="js/sparksuite/ai/learner_model.js"></script>
+<script src="js/sparksuite/ai/reward_model.js"></script>
+<script src="js/sparksuite/ai/policy_engine.js"></script>
+<script src="js/sparksuite/ui/fretboard_renderer.js"></script>
+<script src="js/sparksuite/ui/chord_renderer.js"></script>
+<script src="js/sparksuite/ui/note_mapper.js"></script>
+<script src="js/sparksuite/ui/fretboard_overlay.js"></script>
+<script src="js/sparksuite/ui/song_list_item.js"></script>
+<script src="js/sparksuite/ui/song_picker.js"></script>
+<script src="js/sparksuite/ui/connect_spotify_button.js"></script>
+<script src="js/sparksuite/ui/connection_status.js"></script>
+<script src="js/sparksuite/ui/debug_overlay.js"></script>
+<script src="js/sparksuite/network/session_server.js"></script>
+<script src="js/sparksuite/network/session_client.js"></script>
+<script src="js/sparksuite/debug/debug_state.js"></script>
+<script src="js/sparksuite/debug/debug_dashboard.js"></script>
+<script src="js/sparksuite/core/spotify_integration.js"></script>
+<script src="js/sparksuite/core/system_wiring.js"></script>
 <script src="js/progression/adaptive.js"></script>
 <script src="js/practice/engine.js"></script>
 <script src="js/pages/analytics.js"></script>
 <script src="js/pages/plan.js"></script>
+<script src="js/pages/play_along.js"></script>
+<script src="js/pages/play_along_controller.js"></script>
 <script src="js/progression/mastery.js"></script>
 <script src="js/progression/unlocks.js"></script>
 <script src="js/progression/tree.js"></script>
