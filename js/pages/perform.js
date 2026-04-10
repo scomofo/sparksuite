@@ -179,6 +179,48 @@ function performPage() {
   // Highway
   h += renderPerformanceHighway(chart, nowSec);
 
+  // Chord indicator panel
+  var currentChord = null;
+  var nextChord = null;
+  if (chart && chart.events) {
+    for (var ci = 0; ci < chart.events.length; ci++) {
+      var evt = chart.events[ci];
+      if (evt.type === "chord" || evt.type === "strum") {
+        if (evt.t <= nowSec && evt.t + (evt.dur || 2) > nowSec) {
+          currentChord = evt.chord || evt.laneLabel || null;
+        }
+        if (!nextChord && evt.t > nowSec) {
+          nextChord = evt.chord || evt.laneLabel || null;
+        }
+      }
+    }
+  }
+  if (currentChord || nextChord) {
+    h += "<div class=perform-chord-indicator style=display:flex;align-items:center;justify-content:center;gap:16px;padding:8px;background:rgba(0,0,0,0.3);border-radius:12px;margin:6px 12px>";
+    if (currentChord) {
+      var chordObj = typeof findChord === "function" ? findChord(currentChord) : null;
+      h += "<div style=text-align:center>";
+      h += "<div style=font-size:28px;font-weight:900;color:#4ECDC4>" + escHTML(currentChord) + "</div>";
+      h += "<div style=font-size:10px;color:var(--text-dim)>NOW</div>";
+      if (chordObj && typeof chordSVG === "function") {
+        h += "<div style=margin-top:4px>" + chordSVG(chordObj, 80) + "</div>";
+      }
+      h += "</div>";
+    }
+    if (nextChord && nextChord !== currentChord) {
+      h += "<div style=text-align:center;opacity:0.5>";
+      h += "<div style=font-size:18px;font-weight:700;color:#45B7D1>" + escHTML(nextChord) + "</div>";
+      h += "<div style=font-size:10px;color:var(--text-dim)>NEXT</div>";
+      var nextObj = typeof findChord === "function" ? findChord(nextChord) : null;
+      if (nextObj && typeof chordSVG === "function") {
+        h += "<div style=margin-top:4px>" + chordSVG(nextObj, 60) + "</div>";
+      }
+      h += "</div>";
+    }
+    h += "</div>";
+  }
+
+
   if (techniquePreview.length) {
     h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:6px 12px 0">';
     for (var ti = 0; ti < techniquePreview.length; ti++) {
