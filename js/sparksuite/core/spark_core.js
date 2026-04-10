@@ -13,6 +13,11 @@
     this.lastSessionOutcome = null;
     this.performanceEditorDocument = null;
     this.performanceEditorLibrary = [];
+    this.spotifyClient = null;
+    this.trackAnalyzer = null;
+    this.chartService = null;
+    this.playbackEngine = null;
+    this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
   }
 
@@ -78,6 +83,10 @@
       legacyRunnerScore: 0,
       legacyRunnerCombo: 0,
       legacyRunnerMaxCombo: 0,
+      spotifyConnected: false,
+      spotifyTrackId: null,
+      spotifyPlaying: false,
+      spotifyDifficulty: "easy",
       legacyRunnerLives: 0,
       legacyRunnerDistance: 0,
       legacyRunnerObstacles: [],

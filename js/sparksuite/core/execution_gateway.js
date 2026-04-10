@@ -1,72 +1,143 @@
 (function() {
   /**
-   * SparkExecutionGateway — unified execution layer for all gameplay entry points.
+   * SparkExecutionGateway -- unified execution layer for all gameplay entry points.
    *
-   * Two modes:
-   *   1. Session-driven: SparkSessionRuntime.startSessionLoop() -> runSegment()
-   *   2. Direct (ad-hoc): runDirectExercise() for retry, preview, import, etc.
-   *
-   * ALL gameplay goes through this contract. No raw startPerformance/startRhythmHighway
-   * calls should exist outside this gateway.
+   * Canonical flow:
+   *   Session -> segments -> exerciseIds -> exercises -> runExercise()
    */
 
   function normalizeToExercise(input) {
-    // Already V2 exercise
     if (input && input.id && input.data) return input;
 
-    var id = "ex_adhoc_" + Date.now();
-    var type = "practice";
-
-    // Detect type from input shape
-    if (input && (input.songId || input.song || input.arrangementType)) type = "song";
-    else if (input && input.chartId) type = "song";
-    else if (typeof input === "string") type = "song"; // chartId string
+    var meta = input && input.meta ? input.meta : {};
+    var id = (input && input.id) || ("ex_adhoc_" + Date.now());
+    var type = inferExerciseType(input);
 
     return {
       id: id,
       type: type,
-      difficulty: (input && input.difficulty) || (input && input.difficultyId) || "normal",
+      difficulty: (input && input.difficulty) || meta.difficultyId || meta.difficulty || "normal",
       data: {
         core: {
-          songId: (input && input.songId) || (typeof input === "string" ? input : null),
-          chartId: (input && input.chartId) || (typeof input === "string" ? input : null),
-          arrangementType: (input && input.arrangementType) || null,
-          difficultyId: (input && input.difficultyId) || (input && input.difficulty) || null,
-          speed: (input && input.speed) || null,
-          mode: (input && input.mode) || null,
-          preset: (input && input.preset) || null,
-          durationSec: (input && input.durationSec) || 120
+          songId: (input && input.songId) || meta.songId || (typeof input === "string" ? input : null),
+          chartId: (input && input.chartId) || meta.chartId || (typeof input === "string" ? input : null),
+          arrangementType: (input && input.arrangementType) || meta.arrangementType || null,
+          difficultyId: (input && input.difficultyId) || meta.difficultyId || (input && input.difficulty) || null,
+          speed: (input && input.speed) || meta.speed || null,
+          mode: (input && input.mode) || meta.mode || null,
+          preset: (input && input.preset) || meta.enginePreset || meta.preset || null,
+          durationSec: (input && input.durationSec) || meta.durationSec || 120,
+          skill: meta.skill || null,
+          instrument: meta.instrument || null,
+          chords: meta.chords || meta.chordNames || (meta.chordName ? [meta.chordName] : null),
+          pattern: meta.pattern || null
         },
         gameplay: {
-          payload: (input && input.gameplayPayload) || null,
+          payload: (input && input.gameplayPayload) || meta.gameplayPayload || null,
           chart: (input && input.chart) || (input && input.events ? input : null),
-          preset: (input && input.preset) || null
+          preset: (input && input.preset) || meta.enginePreset || meta.preset || null
         }
       }
     };
+  }
+
+  function inferExerciseType(input) {
+    if (typeof input === "string") return "song";
+    if (input && input.type) {
+      if (input.type === "performance_song" || input.type === "performance_phrase" || input.type === "performance_technique") return "song";
+      if (input.type === "challenge") return "challenge";
+      if (input.type === "song") return "song";
+      if (input.type === "rhythm_highway" || input.type === "rhythm" || input.type === "warmup" || input.type === "transition" || input.type === "finger" || input.type === "practice") return "practice";
+    }
+    if (input && (input.songId || input.song || input.arrangementType || input.chartId)) return "song";
+    if (input && input.spotifyTrackUri) return "song";
+    return "practice";
+  }
+
+  function findSegmentById(session, segmentId) {
+    var segments = session && Array.isArray(session.segments) ? session.segments : [];
+    for (var i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === segmentId) return segments[i];
+    }
+    return null;
+  }
+
+  function findExerciseById(session, exerciseId) {
+    var exercises = session && Array.isArray(session.exercises) ? session.exercises : [];
+    for (var i = 0; i < exercises.length; i++) {
+      if (exercises[i] && exercises[i].id === exerciseId) return exercises[i];
+    }
+    return null;
+  }
+
+  function resolveSegmentExercises(session, segment) {
+    var resolved = [];
+    var ids = segment && Array.isArray(segment.exerciseIds) ? segment.exerciseIds : [];
+    var i;
+
+    for (i = 0; i < ids.length; i++) {
+      var exercise = findExerciseById(session, ids[i]);
+      if (exercise) resolved.push(exercise);
+    }
+
+    return resolved;
+  }
+
+  function resolvePrimaryExercise(session, segment) {
+    var exercises = resolveSegmentExercises(session, segment);
+    return exercises.length ? exercises[0] : null;
+  }
+
+  function failExecution(message, detail) {
+    if (typeof console !== "undefined" && console.error) {
+      console.error("SparkExecutionGateway: " + message, detail || null);
+    }
+    throw new Error("SparkExecutionGateway: " + message);
+  }
+
+  function runSessionSegment(session, segment, options) {
+    options = options || {};
+    if (!session || !segment) return false;
+
+    var exercises = resolveSegmentExercises(session, segment);
+    if (!exercises.length) {
+      failExecution("segment requires resolved exercises", segment && segment.id ? segment.id : null);
+    }
+
+    return runExercise(exercises[0], mergeLaunchOptions(options, {
+      session: session,
+      segment: segment,
+      exerciseIndex: 0,
+      exerciseCount: exercises.length
+    }));
+  }
+
+  function runSessionSegmentById(session, segmentId, options) {
+    return runSessionSegment(session, findSegmentById(session, segmentId), options);
+  }
+
+  function runPlanItem(item, options) {
+    options = options || {};
+
+    var activeView = (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function")
+      ? window.sparkCore.getActiveSessionView()
+      : null;
+    var session = activeView && activeView.plan ? activeView.plan : null;
+    var segment = session && item && item.id ? findSegmentById(session, item.id) : null;
+
+    if (session && segment) {
+      return runSessionSegment(session, segment, mergeLaunchOptions(options, {
+        source: options.source || "plan_item"
+      }));
+    }
+
+    return runDirectExercise(item, options);
   }
 
   function runDirectExercise(input, options) {
     options = options || {};
     var exercise = normalizeToExercise(input);
 
-    var session = {
-      id: "adhoc_" + Date.now(),
-      flow: "adhoc",
-      segments: [{
-        id: "seg_adhoc",
-        type: exercise.type,
-        exerciseIds: [exercise.id]
-      }],
-      exercises: [exercise],
-      rewards: [],
-      meta: {
-        adhoc: true,
-        source: options.source || "direct"
-      }
-    };
-
-    // Log through event system
     if (typeof SparkEventLogger !== "undefined") {
       SparkEventLogger.log("direct_exercise", {
         source: options.source || "direct",
@@ -75,59 +146,174 @@
       });
     }
 
-    // Dispatch to appropriate launcher
-    if (exercise.type === "song") {
-      return _launchSongDirect(exercise, input, options);
-    }
-    return _launchPracticeDirect(exercise, input, options);
+    return runExercise(exercise, mergeLaunchOptions(options, {
+      source: options.source || "direct",
+      directInput: input,
+      segment: options.segment || null
+    }));
   }
 
-  function _launchSongDirect(exercise, originalInput, options) {
-    var chartIdOrChart = originalInput;
-    var opts = {};
+  function runPlayablePayload(payload, options) {
+    options = options || {};
+    if (!payload) return false;
 
-    // Extract options from exercise data
-    if (exercise.data && exercise.data.core) {
-      if (exercise.data.core.difficulty) opts.difficulty = exercise.data.core.difficulty;
-      if (exercise.data.core.speed) opts.speed = exercise.data.core.speed;
-      if (exercise.data.core.preset) opts.preset = exercise.data.core.preset;
-      if (exercise.data.core.mode) opts.mode = exercise.data.core.mode;
+    return runDirectExercise({
+      id: options.exerciseId || ("ex_playable_" + Date.now()),
+      type: "practice",
+      gameplayPayload: payload,
+      chartId: payload.chartId || (payload.chart && payload.chart.chartId) || null,
+      instrument: options.instrument || payload.adapterType || null,
+      meta: {
+        skill: options.exerciseFocus || null,
+        enginePreset: options.preset || null,
+        audioOffsetMs: options.audioOffsetMs != null ? options.audioOffsetMs : null
+      }
+    }, mergeLaunchOptions(options, {
+      source: options.source || "playable_payload"
+    }));
+  }
+
+  function runRhythmHighwaySegment(segmentId, options) {
+    options = options || {};
+
+    var activeView = (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function")
+      ? window.sparkCore.getActiveSessionView()
+      : null;
+    var session = activeView && activeView.plan ? activeView.plan : null;
+    var segment = session ? findSegmentById(session, segmentId) : null;
+
+    if (session && segment) {
+      return runSessionSegment(session, segment, mergeLaunchOptions(options, {
+        source: options.source || "rhythm_segment"
+      }));
     }
 
-    // Merge caller options
-    if (options.difficulty) opts.difficulty = options.difficulty;
-    if (options.speed) opts.speed = options.speed;
-    if (options.preset) opts.preset = options.preset;
-    if (options.mode) opts.mode = options.mode;
-    if (options.targetTechnique) opts.targetTechnique = options.targetTechnique;
-
-    if (typeof startPerformance === "function") {
-      startPerformance(chartIdOrChart, opts);
-      return true;
-    }
     return false;
   }
 
-  function _launchPracticeDirect(exercise, originalInput, options) {
-    if (exercise.data && exercise.data.gameplay && exercise.data.gameplay.payload) {
-      if (typeof startPlayableRhythmHighwayPayload === "function") {
-        startPlayableRhythmHighwayPayload(exercise.data.gameplay.payload, {
-          source: options.source || "direct",
-          instrument: options.instrument || "guitar"
+  function runExercise(exercise, options) {
+    options = options || {};
+    if (!exercise || !exercise.data) return false;
+
+    if (exercise.type === "song") return launchSongExercise(exercise, options);
+    if (exercise.type === "challenge") return launchChallengeExercise(exercise, options);
+    return launchPracticeExercise(exercise, options);
+  }
+
+  function launchSongExercise(exercise, options) {
+    var core = exercise.data && exercise.data.core ? exercise.data.core : {};
+    var gameplay = exercise.data && exercise.data.gameplay ? exercise.data.gameplay : {};
+    var launchTarget = gameplay.chart || core.songId || core.chartId || options.directInput || null;
+    var launchOptions = {};
+
+    if (core.difficulty) launchOptions.difficulty = core.difficulty;
+    if (core.difficultyId) launchOptions.difficulty = core.difficultyId;
+    if (core.speed) launchOptions.speed = core.speed;
+    if (core.preset) launchOptions.preset = core.preset;
+    if (core.mode) launchOptions.mode = core.mode;
+    if (core.arrangementType) launchOptions.arrangementType = core.arrangementType;
+
+    if (options.difficulty) launchOptions.difficulty = options.difficulty;
+    if (options.speed) launchOptions.speed = options.speed;
+    if (options.preset) launchOptions.preset = options.preset;
+    if (options.mode) launchOptions.mode = options.mode;
+    if (options.arrangementType) launchOptions.arrangementType = options.arrangementType;
+    if (options.targetTechnique) launchOptions.targetTechnique = options.targetTechnique;
+    if (typeof options.onComplete === "function") launchOptions.onComplete = options.onComplete;
+
+    // Spotify play-along: if exercise has a playAlongChart, launch via SparkPlaybackEngine
+    if (gameplay.playAlongChart && typeof window.sparkCore !== "undefined" && window.sparkCore.playbackEngine) {
+      if (typeof startPlayableRhythmHighwayPayload === "function" && gameplay.chart) {
+        var spotifyPayload = {
+          songChart: gameplay.chart,
+          chartId: gameplay.chart.metadata ? gameplay.chart.metadata.source : "spotify",
+          enginePreset: gameplay.preset || "spark_learning",
+          laneCount: (gameplay.chart.metadata && gameplay.chart.metadata.laneCount) || 4,
+          adapterType: core.instrument || "guitar",
+          spotifyTrackUri: core.spotifyTrackUri,
+          playAlongChart: gameplay.playAlongChart
+        };
+        startPlayableRhythmHighwayPayload(spotifyPayload, {
+          source: "spotify_play_along",
+          label: gameplay.chart.song ? gameplay.chart.song.title : "Spotify Track",
+          instrument: core.instrument || "guitar"
         });
         return true;
       }
     }
-    if (options.segmentId && typeof startRhythmHighwaySegment === "function") {
-      startRhythmHighwaySegment(options.segmentId, options.preset || null, options.loopSpec || null);
+
+    if (launchTarget && typeof startPerformance === "function") {
+      startPerformance(launchTarget, launchOptions);
       return true;
     }
     return false;
   }
 
+  function launchPracticeExercise(exercise, options) {
+    var core = exercise.data && exercise.data.core ? exercise.data.core : {};
+    var gameplay = exercise.data && exercise.data.gameplay ? exercise.data.gameplay : {};
+    var payload = gameplay.payload || null;
+
+    if (!payload) {
+      failExecution("practice exercise missing gameplay payload", exercise && exercise.id ? exercise.id : null);
+    }
+
+    if (payload && typeof startPlayableRhythmHighwayPayload === "function") {
+      startPlayableRhythmHighwayPayload(payload, {
+        source: options.source || "exercise",
+        label: options.label || core.skill || core.chartId || core.songId || "Practice",
+        instrument: options.instrument || core.instrument || (payload && payload.adapterType) || "guitar",
+        segmentId: options.segment ? options.segment.id : (options.segmentId || null),
+        exerciseId: exercise.id,
+        exerciseFocus: core.skill || null,
+        song: options.song || null,
+        playlist: Array.isArray(options.playlist) ? options.playlist.slice() : null,
+        options: mergeLaunchOptions(options.options || {}, buildPlayableLaunchOptions(core, gameplay, options))
+      });
+      return true;
+    }
+
+    return false;
+  }
+
+  function launchChallengeExercise(exercise, options) {
+    return launchPracticeExercise(exercise, options);
+  }
+
+  function buildPlayableLaunchOptions(core, gameplay, options) {
+    var result = {};
+    var audioOffsetMs = options.audioOffsetMs;
+    if (audioOffsetMs == null && core) audioOffsetMs = core.audioOffsetMs;
+    if (audioOffsetMs == null && gameplay) audioOffsetMs = gameplay.audioOffsetMs;
+    if (audioOffsetMs != null) result.audioOffsetMs = audioOffsetMs;
+    return result;
+  }
+
+  function mergeLaunchOptions(base, patch) {
+    var result = {};
+    var key;
+    base = base || {};
+    patch = patch || {};
+    for (key in base) {
+      if (Object.prototype.hasOwnProperty.call(base, key)) result[key] = base[key];
+    }
+    for (key in patch) {
+      if (Object.prototype.hasOwnProperty.call(patch, key)) result[key] = patch[key];
+    }
+    return result;
+  }
+
   var SparkExecutionGateway = {
+    normalizeToExercise: normalizeToExercise,
+    resolveSegmentExercises: resolveSegmentExercises,
+    resolvePrimaryExercise: resolvePrimaryExercise,
+    runExercise: runExercise,
+    runSessionSegment: runSessionSegment,
+    runSessionSegmentById: runSessionSegmentById,
+    runPlanItem: runPlanItem,
     runDirectExercise: runDirectExercise,
-    normalizeToExercise: normalizeToExercise
+    runPlayablePayload: runPlayablePayload,
+    runRhythmHighwaySegment: runRhythmHighwaySegment
   };
 
   if (typeof window !== "undefined") window.SparkExecutionGateway = SparkExecutionGateway;

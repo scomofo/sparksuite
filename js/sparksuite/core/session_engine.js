@@ -22,6 +22,7 @@
     context = context || {};
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.buildGuidedSession(context);
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.buildPerformanceSongSession(context);
+    if (flow === SparkSessionTypes.FLOW_SPOTIFY_PLAY_ALONG) return this.buildSpotifyPlayAlongSession(context);
     if (flow !== SparkSessionTypes.FLOW_DAILY_PRACTICE) return this.buildEmptySession(flow, context);
 
     // 1. Analyze user via LearningBrain + FlowEngine
@@ -39,15 +40,17 @@
           timingConsistency: (S.playerProfile && S.playerProfile.consistency) || 0
         });
       }
-      brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, flowState);
+      brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, flowState, S.weakSpots || null);
     }
 
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
-    var difficulty = "easy";
-    if (typeof S !== "undefined" && S.skillGraph) {
+    var difficulty = brainAnalysis && brainAnalysis.recommendedDifficultyId
+      ? brainAnalysis.recommendedDifficultyId
+      : "easy";
+    if ((!brainAnalysis || !brainAnalysis.recommendedDifficultyId) && typeof S !== "undefined" && S.skillGraph) {
       var sk = S.skillGraph;
       var avg = ((sk.timing || 0) + (sk.rhythm || 0) + (sk.chordAccuracy || 0)) / 3;
-      difficulty = avg > 0.8 ? "hard" : avg > 0.6 ? "medium" : "easy";
+      difficulty = avg > 0.8 ? "hard" : avg > 0.6 ? "normal" : "easy";
     }
 
     var segments = [];
@@ -55,9 +58,21 @@
 
     // 2. Inject practice if brain recommends it
     if (brainAnalysis && (brainAnalysis.recommendation === "targeted_practice" || brainAnalysis.recommendation === "easy_practice" || brainAnalysis.recommendation === "practice")) {
-      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis.focusSkill, S.skillGraph) : null;
+      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis, S.skillGraph) : null;
       if (brainDrill) {
-        var pn = normalizeSegment({ id: "brain_" + Date.now(), type: "practice", durationSec: brainDrill.duration || 30, meta: { skill: brainAnalysis.focusSkill, gameplayPayload: brainDrill } });
+        var pn = normalizeSegment({
+          id: "brain_" + Date.now(),
+          type: "practice",
+          durationSec: brainDrill.duration || 30,
+          meta: {
+            skill: brainAnalysis.focusSkill,
+            gameplayPayload: brainDrill,
+            difficultyId: brainAnalysis.recommendedDifficultyId || difficulty,
+            lane: brainDrill.lane,
+            recommendationFocus: brainAnalysis.focusSkill,
+            weakArea: brainAnalysis.primaryWeakArea || null
+          }
+        });
         segments.push(pn.segment);
         exercises.push(pn.exercise);
       }
@@ -73,7 +88,19 @@
 
     // 4. Inject challenge if brain recommends it
     if (brainAnalysis && brainAnalysis.recommendation === "challenge") {
-      var cn = normalizeSegment({ id: "challenge_" + Date.now(), type: "challenge", durationSec: 30, meta: { skill: brainAnalysis.focusSkill, pattern: "D U D U D U D U" } });
+      var challengePattern = brainAnalysis.drillType === "lane_drill" ? "D - U - D - U -" : "D U D U D U D U";
+      var cn = normalizeSegment({
+        id: "challenge_" + Date.now(),
+        type: "challenge",
+        durationSec: 30,
+        meta: {
+          skill: brainAnalysis.focusSkill,
+          pattern: challengePattern,
+          difficultyId: "hard",
+          weakArea: brainAnalysis.primaryWeakArea || null,
+          recommendationFocus: brainAnalysis.focusSkill
+        }
+      });
       segments.push(cn.segment);
       exercises.push(cn.exercise);
     }
@@ -81,13 +108,22 @@
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
       instrumentId: context.instrumentContext ? context.instrumentContext.appId : null,
-      focus: practicePlan.focus,
+      focus: brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : practicePlan.focus,
       lesson: curriculumContext.nextLesson || null,
       difficulty: difficulty,
       segments: segments,
       exercises: exercises,
       rewards: practicePlan.rewards || [{ type: "xp", amount: 40 }],
-      context: { curriculum: curriculumContext, brainAnalysis: brainAnalysis }
+      context: {
+        curriculum: curriculumContext,
+        brainAnalysis: brainAnalysis,
+        smartCoach: brainAnalysis ? {
+          message: brainAnalysis.coachMessage,
+          weakLane: brainAnalysis.weakLane,
+          weakArea: brainAnalysis.primaryWeakArea || null,
+          recommendedDifficultyId: brainAnalysis.recommendedDifficultyId || difficulty
+        } : null
+      }
     });
   };
 
@@ -202,6 +238,78 @@
           difficultyId: difficultyId
         }
       }
+    });
+  };
+
+
+  /**
+   * Build a Spotify play-along session.
+   * Context must include: { trackId, difficulty, instrument, instrumentContext }
+   * Returns a SessionPlan with a single "song" segment backed by a SparkPlayAlongChart.
+   *
+   * NOTE: This returns a Promise because chart generation is async (Spotify API).
+   */
+  SessionEngine.prototype.buildSpotifyPlayAlongSession = function(context) {
+    context = context || {};
+    var trackId = context.trackId;
+    var difficulty = context.difficulty || "easy";
+    var instrument = context.instrument || "guitar";
+    var instrumentContext = context.instrumentContext || {};
+
+    if (!trackId) return Promise.resolve(this.buildEmptySession("spotify_play_along", context));
+
+    var chartService = (typeof SparkChartGenerationService !== "undefined" && window.sparkChartService)
+      ? window.sparkChartService : null;
+    if (!chartService) return Promise.resolve(this.buildEmptySession("spotify_play_along", context));
+
+    return chartService.generate({
+      trackId: trackId,
+      difficulty: difficulty,
+      instrument: instrument
+    }).then(function(playAlongChart) {
+      var segId = "spotify_" + trackId + "_" + difficulty;
+      var exId = "ex_spotify_" + trackId + "_" + difficulty;
+
+      return new SessionPlan({
+        flow: "spotify_play_along",
+        instrumentId: instrumentContext.appId || null,
+        focus: "play_along",
+        lesson: { id: trackId, type: "song" },
+        difficulty: difficulty,
+        segments: [{
+          id: segId,
+          type: "song",
+          exerciseIds: [exId]
+        }],
+        exercises: [{
+          id: exId,
+          type: "song",
+          difficulty: difficulty,
+          data: {
+            core: {
+              songId: trackId,
+              instrument: instrument,
+              durationSec: playAlongChart.songChart ? (playAlongChart.songChart.song.durationSec || 240) : 240,
+              spotifyTrackUri: playAlongChart.trackUri
+            },
+            gameplay: {
+              payload: null,
+              chart: playAlongChart.songChart,
+              preset: "spark_learning",
+              playAlongChart: playAlongChart
+            }
+          }
+        }],
+        rewards: [{ type: "xp", amount: 25 }],
+        context: {
+          spotifyPlayAlong: {
+            trackId: trackId,
+            difficulty: difficulty,
+            instrument: instrument,
+            playAlongChart: playAlongChart
+          }
+        }
+      });
     });
   };
 
