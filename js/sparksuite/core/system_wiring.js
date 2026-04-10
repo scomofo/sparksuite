@@ -16,13 +16,13 @@
   SparkCore.prototype.initPlayAlongSystems = function () {
     // Audio pipeline
     this.audioEngine = new SparkAudioEngine();
-    this.audioTransport = new SparkAudioTransport();
-    this.audioScheduler = new SparkAudioScheduler();
+    this.audioTransport = new SparkAudioTransport(this.audioEngine);
+    this.audioScheduler = new SparkAudioScheduler(this.audioEngine);
 
     // Stem handling
     this.stemLoader = new SparkStemLoader();
     this.stemMixer = new SparkStemMixer();
-    this.stemController = new SparkStemController();
+    this.stemController = new SparkStemController(this.stemMixer);
     this.sourceSeparator = new SparkSourceSeparator();
 
     // Beat and chart
@@ -124,6 +124,7 @@
           trackId: params.trackId,
           instrument: params.instrument
         });
+        if (typeof SparkDebugState !== "undefined") SparkDebugState.update({ rlAction: decision.action });
         var difficulty = decision.difficulty || params.difficulty || "medium";
 
         // 2. Reset trackers
@@ -195,6 +196,17 @@
       this.voiceCoach.markSectionBoundaries(chart.sections, timeMs);
     }
 
+    // Update debug state
+    if (typeof SparkDebugState !== "undefined") {
+      SparkDebugState.update({
+        time: timeMs,
+        expected: visible.length ? (visible[0].lane != null ? visible[0].lane : visible[0].chord) : null,
+        bpm: (self._activeChart && self._activeChart.getBpm) ? self._activeChart.getBpm() : 0,
+        audioMode: self.audioEngine && self.audioEngine.isPlaying() ? "local" : (self.stemMixer && self.stemMixer.isPlaying() ? "stems" : "spotify"),
+        latencyMs: self.latencyCalibrator ? self.latencyCalibrator.getOffset() : 0
+      });
+    }
+
     return {
       timeMs: timeMs,
       inputTimeMs: inputTimeMs,
@@ -215,7 +227,18 @@
     var delta = null;
 
     if (!chart || !chart.timeline) {
-      return { result: null, chordResult: null, delta: null };
+      // Update debug state with input
+    if (typeof SparkDebugState !== "undefined") {
+      SparkDebugState.update({
+        detected: inputEvent.note || null,
+        chord: inputEvent.chord || null,
+        confidence: inputEvent.confidence || 0,
+        delta: nearestDelta || 0,
+        accuracy: self.performanceTracker ? self.performanceTracker.getAccuracy() : 0
+      });
+    }
+
+    return { result: null, chordResult: null, delta: null };
     }
 
     // Find nearest expected note
@@ -288,8 +311,8 @@
     var reward = this.rewardModel.compute(performance);
 
     // 6. Update learner model
-    this.policyEngine.update(this.learnerModel, reward, performance);
-    this.learnerModel.save(this._activeUserId);
+    var updatedModel = this.policyEngine.update(model, performance);
+    this.learnerModel.save(userId, updatedModel);
 
     // 7. Generate feedback
     var feedback = this.feedbackEngine.generate(performance, style);
