@@ -510,6 +510,7 @@
   // ---------------------------------------------------------------
 
   SparkCore.prototype._startAudioForSession = function (params, chart) {
+    console.log("[PlayAlong] _startAudioForSession:", params.audioFile ? "local" : (params.stems ? "stems" : (params.trackUri ? "spotify:" + params.trackUri : "none")));
     this._pausedPlaybackTimeMs = null;
     if (params.audioFile) {
       SparkTimeSource.bind(this.audioEngine);
@@ -520,6 +521,7 @@
       SparkTimeSource.bind(this.stemMixer);
       this.stemMixer.play();
     } else if (params.trackUri && this.playbackEngine && typeof this.playbackEngine.start === "function") {
+      console.log("[PlayAlong] Starting Spotify playback:", params.trackUri);
       this.playbackEngine.start(params.trackUri, {
         audioOffsetMs: params.audioOffsetMs || 0,
         deviceId: params.deviceId
