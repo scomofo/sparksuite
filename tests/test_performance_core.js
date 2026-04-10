@@ -64,6 +64,7 @@ eval(loadJS('js/performance/highway.js'));
 eval(loadJS('js/performance/progression.js'));
 eval(loadJS('js/performance/badges.js'));
 eval(loadJS('js/performance/recommendations.js'));
+eval(loadJS('js/sparksuite/ui/note_mapper.js'));
 
 console.log('\n--- PerformanceCore: Chart Contract ---');
 
@@ -471,6 +472,24 @@ test('convertSparkSongChartToPerformanceChart preserves imported technique flags
   assert.strictEqual(performanceChart.events[1].strum, 'tap');
   assert.strictEqual(performanceChart.events[1].sourceFlags.tap, true);
   assert.strictEqual(performanceChart.events[1].sourceFlags.forced, true);
+});
+
+test('SparkNoteMapper preserves open notes and derives strings from laneMask', function() {
+  var mapper = new SparkNoteMapper();
+  var openMapped = mapper.mapToFretboard({
+    id: 'open_evt',
+    type: 'open',
+    laneMask: 0,
+    sourceFlags: { open: true }
+  });
+  var maskedMapped = mapper.mapToFretboard({
+    id: 'masked_evt',
+    type: 'note',
+    laneMask: 4
+  });
+
+  assert.strictEqual(openMapped.positions[0].string, null);
+  assert.strictEqual(maskedMapped.positions[0].string, 2);
 });
 
 test('scorePerformanceEvent allows imported open events to score from attack timing activity', function() {

@@ -5,6 +5,14 @@
    */
   function NoteMapper() {}
 
+  function getPrimaryLaneFromMask(laneMask) {
+    if (typeof laneMask !== "number" || laneMask <= 0) return null;
+    for (var lane = 0; lane < 32; lane++) {
+      if (laneMask & (1 << lane)) return lane;
+    }
+    return null;
+  }
+
   /**
    * Map a timeline event to fretboard coordinates.
    * @param {Object} event - { type, lane, chord, notes }
@@ -24,10 +32,12 @@
       };
     }
 
-    // Single note: map lane to string
+    // Single note: prefer explicit lane, then derive from laneMask.
+    // Open or unmapped notes should stay null instead of collapsing to string 0.
+    var stringIndex = typeof event.lane === "number" ? event.lane : getPrimaryLaneFromMask(event.laneMask);
     return {
       type: "note",
-      positions: [{ string: event.lane || 0, fret: 0 }]
+      positions: [{ string: stringIndex, fret: 0 }]
     };
   };
 
