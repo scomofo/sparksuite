@@ -53,9 +53,72 @@
     if (!window.sparkCore) return;
 
     clearSelectedDrillState();
+
+    // Check for cached chart
+    var hasCached = window.sparkCore.chartService &&
+      typeof window.sparkCore.chartService.hasCachedChart === "function" &&
+      window.sparkCore.chartService.hasCachedChart(track.id);
+
+    if (hasCached) {
+      launchPlayAlongSession({
+        trackId: track.id,
+        trackUri: track.uri || null,
+        title: track.name || null,
+        artist: track.artist || null,
+        difficulty: difficulty,
+        instrument: "guitar"
+      });
+      return;
+    }
+
+    // No cached chart -- show upload prompt
+    var resultsEl = document.getElementById("play-along-results");
+    if (!resultsEl) return;
+    var songLabel = (track.name || "this track") + (track.artist ? " by " + track.artist : "");
+    var promptHtml = "<div class=\"play-along-upload-prompt\">"
+      + "<p>Drop an audio file to build an accurate chart for <strong>" + escapeForAttr(songLabel) + "</strong></p>"
+      + "<input type=\"file\" id=\"play-along-audio-input\" accept=\"audio/*\" />"
+      + "<button class=\"btn btn-sm\" id=\"play-along-skip-btn\">Skip (use default)</button>"
+      + "</div>";
+    resultsEl.innerHTML = promptHtml;
+
+    var fileInput = document.getElementById("play-along-audio-input");
+    var skipBtn = document.getElementById("play-along-skip-btn");
+
+    if (fileInput) {
+      fileInput.addEventListener("change", function() {
+        var file = fileInput.files && fileInput.files[0];
+        if (file) {
+          sparkPlayAlongSelectWithFile(index, file);
+        }
+      });
+    }
+
+    if (skipBtn) {
+      skipBtn.addEventListener("click", function() {
+        launchPlayAlongSession({
+          trackId: track.id,
+          trackUri: track.uri || null,
+          title: track.name || null,
+          artist: track.artist || null,
+          difficulty: difficulty,
+          instrument: "guitar"
+        });
+      });
+    }
+  };
+
+  window.sparkPlayAlongSelectWithFile = function(index, file) {
+    var track = window._playAlongResults && window._playAlongResults[index];
+    if (!track || !file) return;
+    var difficulty = S.spotifyDifficulty || "easy";
+    if (!window.sparkCore) return;
+
+    clearSelectedDrillState();
     launchPlayAlongSession({
       trackId: track.id,
       trackUri: track.uri || null,
+      audioFile: file,
       title: track.name || null,
       artist: track.artist || null,
       difficulty: difficulty,

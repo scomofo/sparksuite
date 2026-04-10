@@ -1,7 +1,7 @@
 (function() {
   /**
-   * SparkChartGenerationService — orchestrates the full chart pipeline:
-   *   TrackAnalyzer → ChordProgressionEngine → ChartBuilder → DifficultyScaler
+   * SparkChartGenerationService -- orchestrates the full chart pipeline:
+   *   TrackAnalyzer -> ChordProgressionEngine -> ChartBuilder -> DifficultyScaler
    *
    * This is the single entry point for generating a playable chart from a Spotify track ID.
    */
@@ -31,6 +31,22 @@
       return Promise.resolve(this._chartCache[cacheKey]);
     }
 
+    // Check localStorage for a persisted chart
+    var storageKey = "sparksuite_chart_" + cacheKey;
+    try {
+      var stored = localStorage.getItem(storageKey);
+      if (stored) {
+        var parsed = JSON.parse(stored);
+        var restoredChart = (typeof SparkPlayAlongChart !== "undefined" && SparkPlayAlongChart.fromJSON)
+          ? SparkPlayAlongChart.fromJSON(parsed)
+          : parsed;
+        self._chartCache[cacheKey] = restoredChart;
+        return Promise.resolve(restoredChart);
+      }
+    } catch (e) {
+      // Ignore corrupt localStorage entry
+    }
+
     return this.analyzer.analyzeWithMetadata(trackId).then(function(analysis) {
       analysis.instrument = instrument;
 
@@ -57,8 +73,68 @@
       chart = self.scaler.apply(chart, difficulty);
 
       self._chartCache[cacheKey] = chart;
+
+      // Persist to localStorage
+      self.cacheChart(trackId, chart, difficulty, instrument);
+
       return chart;
     });
+  };
+
+  /**
+   * Persist a chart to localStorage keyed by track ID + difficulty + instrument.
+   */
+  ChartGenerationService.prototype.cacheChart = function(trackId, chart, difficulty, instrument) {
+    if (!trackId || !chart) return;
+    var diff = difficulty || "easy";
+    var inst = instrument || "guitar";
+    var storageKey = "sparksuite_chart_" + trackId + "_" + diff + "_" + inst;
+    try {
+      var json = (chart && typeof chart.toJSON === "function") ? chart.toJSON() : chart;
+      localStorage.setItem(storageKey, JSON.stringify(json));
+    } catch (e) {
+      // Storage full or unavailable
+    }
+  };
+
+  /**
+   * Check if a cached chart exists in localStorage for a given track ID.
+   * Returns true if ANY difficulty/instrument combo is cached.
+   */
+  ChartGenerationService.prototype.hasCachedChart = function(trackId) {
+    if (!trackId) return false;
+    var prefix = "sparksuite_chart_" + trackId + "_";
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (key && key.indexOf(prefix) === 0) return true;
+      }
+    } catch (e) {
+      // localStorage unavailable
+    }
+    return false;
+  };
+
+  /**
+   * Remove cached charts from localStorage.
+   * If trackId is provided, removes all charts for that track.
+   * If no trackId, removes ALL sparksuite chart caches.
+   */
+  ChartGenerationService.prototype.clearCache = function(trackId) {
+    this._chartCache = {};
+    try {
+      var prefix = trackId ? ("sparksuite_chart_" + trackId + "_") : "sparksuite_chart_";
+      var toRemove = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (key && key.indexOf(prefix) === 0) toRemove.push(key);
+      }
+      for (var j = 0; j < toRemove.length; j++) {
+        localStorage.removeItem(toRemove[j]);
+      }
+    } catch (e) {
+      // localStorage unavailable
+    }
   };
 
   /**
@@ -73,10 +149,6 @@
     ]).then(function(charts) {
       return { easy: charts[0], normal: charts[1], hard: charts[2] };
     });
-  };
-
-  ChartGenerationService.prototype.clearCache = function() {
-    this._chartCache = {};
   };
 
   window.SparkChartGenerationService = ChartGenerationService;

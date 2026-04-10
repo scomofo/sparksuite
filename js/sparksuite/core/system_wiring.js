@@ -167,6 +167,15 @@
         }
 
         chartPromise.then(function (chart) {
+          // Cache generated chart to localStorage if we have a track ID
+          if (self.chartService && params.trackId && chart) {
+            var diff = difficulty || params.difficulty || "easy";
+            var inst = params.instrument || "guitar";
+            if (typeof self.chartService.cacheChart === "function") {
+              self.chartService.cacheChart(params.trackId, chart, diff, inst);
+            }
+          }
+
           // 4. Store active session state
           self._activeChart = chart;
           self._sessionStartWallTime = performance.now();
