@@ -989,6 +989,7 @@ function openSongSessionRequest(options) {
       transport: { status: options.songPlaying ? "running" : "ready", positionMs: 0 }
     });
   }
+  console.warn("[No Handler] openSongSessionRequest");
   return null;
 }
 
@@ -1030,6 +1031,7 @@ function syncSongRuntimeRequest(action, options) {
       }
     });
   }
+  console.warn("[No Handler] syncSongRuntimeRequest");
   return null;
 }
 
@@ -1067,6 +1069,7 @@ function applySongBrowserRequest(action, options) {
       communitySort: Object.prototype.hasOwnProperty.call(options, "communitySort") ? options.communitySort : S.communitySort
     });
   }
+  console.warn("[No Handler] applySongBrowserRequest");
   return null;
 }
 
@@ -1144,6 +1147,7 @@ function returnFromHomeFamilyRequest(options) {
       transport: { status: "idle", positionMs: 0 }
     });
   }
+  console.warn("[No Handler] returnFromHomeFamilyRequest");
   return null;
 }
 
@@ -1456,6 +1460,7 @@ function completeGuidedSessionRequest(options) {
       console.debug("[App] Guided ProgressOutcome:", guidedOutcome);
     }
   }
+  console.warn("[No Handler] completeGuidedSessionRequest");
   return null;
 }
 
@@ -1481,6 +1486,7 @@ function applyGuidedNavigationRequest(target, options) {
       });
     }
   }
+  console.warn("[No Handler] applyGuidedNavigationRequest");
   return null;
 }
 
