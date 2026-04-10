@@ -962,14 +962,16 @@
       redirectUri: redirectUri
     });
 
-    // Start OAuth flow
-    var url = authManager.getAuthUrl();
-    if (typeof window.electron !== "undefined" && window.electron.shell) {
-      // Desktop: open in system browser
-      window.electron.shell.openExternal(url);
-    } else {
-      window.location.href = url;
-    }
+    // Start OAuth flow (PKCE - getAuthUrl is async)
+    authManager.getAuthUrl().then(function(url) {
+      if (typeof window.electron !== "undefined" && window.electron.shell) {
+        window.electron.shell.openExternal(url);
+      } else {
+        window.location.href = url;
+      }
+    }).catch(function(err) {
+      console.error("Spotify auth URL generation failed:", err);
+    });
   };
 
 
