@@ -71,6 +71,12 @@
       this.spotifySearch = new SparkSpotifySearch(this.spotifyClient);
     }
 
+    // Chord stabilizer
+    this.chordStabilizer = new SparkChordStabilizer();
+
+    // Bind single time source (AudioEngine is master clock)
+    SparkTimeSource.bind(this.audioEngine);
+
     SparkLog.info("SYSTEM", "All play-along subsystems initialized");
   };
 
@@ -79,15 +85,14 @@
   // ---------------------------------------------------------------
 
   SparkCore.prototype.getPlaybackTimeMs = function () {
-    if (this.audioEngine && typeof this.audioEngine.getCurrentTimeMs === "function") {
-      return this.audioEngine.getCurrentTimeMs();
+    // Single time source: SparkTimeSource (bound in initPlayAlongSystems)
+    if (typeof SparkTimeSource !== "undefined" && SparkTimeSource.isPlaying()) {
+      return SparkTimeSource.getTimeMs();
     }
-    if (this.stemMixer && typeof this.stemMixer.getCurrentTimeMs === "function") {
-      return this.stemMixer.getCurrentTimeMs();
-    }
-    if (this.playbackEngine && typeof this.playbackEngine.getCurrentTimeMs === "function") {
-      return this.playbackEngine.getCurrentTimeMs();
-    }
+    // Fallback chain if TimeSource not yet bound
+    if (this.audioEngine && this.audioEngine.isPlaying()) return this.audioEngine.getTimeMs();
+    if (this.stemMixer && this.stemMixer.isPlaying()) return this.stemMixer.getTimeMs();
+    if (this.playbackEngine && this.playbackEngine.isPlaying()) return this.playbackEngine.getTimeMs();
     return 0;
   };
 
@@ -428,10 +433,12 @@
 
   SparkCore.prototype._startAudioForSession = function (params, chart) {
     if (params.audioFile) {
+      SparkTimeSource.bind(this.audioEngine);
       this.audioEngine.play();
     } else if (params.stems) {
       this.stemMixer.loadStems(params.stems);
       this.stemController.attach(this.stemMixer);
+      SparkTimeSource.bind(this.stemMixer);
       this.stemMixer.play();
     } else if (params.trackUri && this.playbackEngine) {
       this.playbackEngine.play(params.trackUri);
