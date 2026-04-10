@@ -270,18 +270,10 @@ ipcMain.handle('sparkgame:charter', async (event, mp3Path, instrument, difficult
   });
 });
 
-// ===== SPOTIFY OAUTH CALLBACK SERVER (HTTPS) =====
-var https_mod = require("https");
-var fs_mod = require("fs");
+// ===== SPOTIFY OAUTH CALLBACK SERVER =====
+var http_mod = require("http");
 var urlMod = require("url");
-var _sslOpts = null;
-try {
-  _sslOpts = {
-    key: fs_mod.readFileSync(path.join(__dirname, "certs", "localhost-key.pem")),
-    cert: fs_mod.readFileSync(path.join(__dirname, "certs", "localhost-cert.pem"))
-  };
-} catch(e) { console.warn("SSL certs not found"); }
-function _handleCb(req, res) {
+http_mod.createServer(function(req, res) {
   var parsed = urlMod.parse(req.url, true);
   if (parsed.pathname === "/callback" && parsed.query.code) {
     if (mainWindow) mainWindow.webContents.send("spotify:callback", parsed.query.code);
@@ -290,12 +282,9 @@ function _handleCb(req, res) {
     return;
   }
   res.writeHead(404); res.end("Not found");
-}
-if (_sslOpts) {
-  https_mod.createServer(_sslOpts, _handleCb).listen(3456, function() {
-    console.log("Spotify callback: https://localhost:3456");
-  });
-}
+}).listen(3456, "127.0.0.1", function() {
+  console.log("Spotify callback: http://127.0.0.1:3456");
+});
 
 // ===== APP LIFECYCLE =====
 
