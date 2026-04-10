@@ -270,28 +270,32 @@ ipcMain.handle('sparkgame:charter', async (event, mp3Path, instrument, difficult
   });
 });
 
-// ===== SPOTIFY OAUTH CALLBACK SERVER =====
-
-var http = require("http");
+// ===== SPOTIFY OAUTH CALLBACK SERVER (HTTPS) =====
+var https_mod = require("https");
+var fs_mod = require("fs");
 var urlMod = require("url");
-
-var callbackServer = http.createServer(function(req, res) {
+var _sslOpts = null;
+try {
+  _sslOpts = {
+    key: fs_mod.readFileSync(path.join(__dirname, "certs", "localhost-key.pem")),
+    cert: fs_mod.readFileSync(path.join(__dirname, "certs", "localhost-cert.pem"))
+  };
+} catch(e) { console.warn("SSL certs not found"); }
+function _handleCb(req, res) {
   var parsed = urlMod.parse(req.url, true);
   if (parsed.pathname === "/callback" && parsed.query.code) {
-    if (mainWindow) {
-      mainWindow.webContents.send("spotify:callback", parsed.query.code);
-    }
+    if (mainWindow) mainWindow.webContents.send("spotify:callback", parsed.query.code);
     res.writeHead(200, {"Content-Type": "text/html"});
-    res.end('<html><body style="background:#1a1a1a;color:#4ECDC4;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>Connected!</h1><p>You can close this tab and return to SparkSuite.</p></div></body></html>');
+    res.end("<html><body style=background:#1a1a1a;color:#4ECDC4;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0><div style=text-align:center><h1>Connected!</h1><p>Return to SparkSuite.</p></div></body></html>");
     return;
   }
-  res.writeHead(404);
-  res.end("Not found");
-});
-
-callbackServer.listen(3456, function() {
-  console.log("Spotify callback server on " + (sslOptions.key ? "https" : "http") + "://localhost:3456");
-});
+  res.writeHead(404); res.end("Not found");
+}
+if (_sslOpts) {
+  https_mod.createServer(_sslOpts, _handleCb).listen(3456, function() {
+    console.log("Spotify callback: https://localhost:3456");
+  });
+}
 
 // ===== APP LIFECYCLE =====
 
