@@ -290,7 +290,7 @@ var callbackServer = http.createServer(function(req, res) {
 });
 
 callbackServer.listen(3456, function() {
-  console.log("Spotify callback server on http://localhost:3456");
+  console.log("Spotify callback server on " + (sslOptions.key ? "https" : "http") + "://localhost:3456");
 });
 
 // ===== APP LIFECYCLE =====
