@@ -163,6 +163,15 @@ function practiceTab(){
   h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">Search any song, play along in real time</div>';
   h+='<button onclick="openPlayAlong()" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Find a Song &#9654;</button>';
   h+='</div>';
+  h+='</div>';
+
+  // Progress Dashboard CTA
+  h+='<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
+  h+='<div style="font-size:24px;margin-bottom:4px">&#128200;</div>';
+  h+='<div style="font-size:15px;font-weight:900;color:#fff">Your Progress</div>';
+  h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">Skills, mastery, and practice goals</div>';
+  h+='<button onclick="S.screen=SCR.PROGRESS;render()" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">View Progress &#9654;</button>';
+  h+='</div>';
 
   if (S.lastBrainAnalysis || (S.personalInsights && S.personalInsights.coach)) {
     var coachMsg = S.personalInsights && S.personalInsights.coach ? S.personalInsights.coach.message : "";

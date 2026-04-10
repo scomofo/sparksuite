@@ -2295,7 +2295,7 @@ window.act=function(a,v){
             goalReachedToday:"boolean",goalStreak:"number",focusMode:"boolean",
             runnerHighScore:"number"
           };
-          var arrayFields=["history","customSets","earnedBadges","importedSongs"];
+          var arrayFields=["history","customSets","earnedBadges","importedSongs","spotifySavedTracks"];
           var objectFields=["chordProgress","transitionStats"];
           for(var k in imported.data){
             if(PERSIST_FIELDS.indexOf(k)===-1)continue;
@@ -2308,6 +2308,7 @@ window.act=function(a,v){
           if(!Array.isArray(S.history))S.history=[];
           if(!Array.isArray(S.customSets))S.customSets=[];
           if(!Array.isArray(S.importedSongs))S.importedSongs=[];
+          if(!Array.isArray(S.spotifySavedTracks))S.spotifySavedTracks=[];
           if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
           saveState();
           S.importMsg={ok:true,text:"Progress imported successfully!"};
@@ -3884,6 +3885,7 @@ function _renderInner(){
   _sharedPages[SCR.MIDI_IMPORT] = typeof midiImportPage === "function" ? midiImportPage : null;
   _sharedPages[SCR.CLOUD_SETTINGS] = typeof cloudSettingsPage === "function" ? cloudSettingsPage : null;
   _sharedPages[SCR.CURRICULUM] = typeof curriculumPage === "function" ? curriculumPage : null;
+  _sharedPages[SCR.PROGRESS] = typeof progressDashboardPage === "function" ? progressDashboardPage : null;
   _sharedPages[SCR.PLAY_ALONG] = typeof playAlongPage === "function" ? playAlongPage : null;
   _sharedPages[SCR.PLAY_ALONG_SESSION] = typeof playAlongSessionPage === "function" ? playAlongSessionPage : null;
   _sharedPages[SCR.PLAY_ALONG_RESULTS] = typeof playAlongResultsPage === "function" ? playAlongResultsPage : null;

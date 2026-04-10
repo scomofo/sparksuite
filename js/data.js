@@ -25,7 +25,8 @@ var SCR={
   LAUNCHER:"launcher",
   PLAY_ALONG:"playAlong",
   PLAY_ALONG_SESSION:"playAlongSession",
-  PLAY_ALONG_RESULTS:"playAlongResults"
+  PLAY_ALONG_RESULTS:"playAlongResults",
+  PROGRESS:"progress"
 };
 var TAB={
   PRACTICE:"practice",DRILL:"drill",DAILY:"daily",QUIZ:"quiz",
