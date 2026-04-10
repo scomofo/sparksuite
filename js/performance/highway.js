@@ -2,6 +2,8 @@
 
 var _sparkHighway = null;
 
+installSparkHighwayLanePatch();
+
 function ensureSparkHighway(canvasEl) {
   if (_sparkHighway && _sparkHighway.canvas === canvasEl) return _sparkHighway;
   if (_sparkHighway) _sparkHighway.destroy();
@@ -22,15 +24,24 @@ function feedChartToHighway(chart) {
 
 function ensurePerformanceHighwayLaneData(chart) {
   if (!chart || !Array.isArray(chart.events)) return chart;
-  var shouldReassignCollapsed = shouldReassignCollapsedHighwayLanes(chart.events);
+  repairPerformanceHighwayEventLanes(
+    chart.events,
+    chart && chart.metadata && typeof chart.metadata.laneCount === "number" && chart.metadata.laneCount > 0
+      ? chart.metadata.laneCount
+      : 5
+  );
+  return chart;
+}
+
+function repairPerformanceHighwayEventLanes(events, laneCount) {
+  if (!Array.isArray(events)) return events;
+  var shouldReassignCollapsed = shouldReassignCollapsedHighwayLanes(events);
   var laneMap = {};
   var nextLane = 0;
-  var laneCount = chart && chart.metadata && typeof chart.metadata.laneCount === "number" && chart.metadata.laneCount > 0
-    ? chart.metadata.laneCount
-    : 5;
+  laneCount = typeof laneCount === "number" && laneCount > 0 ? laneCount : 5;
 
-  for (var i = 0; i < chart.events.length; i++) {
-    var evt = chart.events[i];
+  for (var i = 0; i < events.length; i++) {
+    var evt = events[i];
     if (!evt) continue;
     if (shouldReassignCollapsed && !isPerformanceOpenEvent(evt)) {
       var reassignedKey = getPerformanceLaneAssignmentKey(evt);
@@ -69,7 +80,22 @@ function ensurePerformanceHighwayLaneData(chart) {
       evt.laneMask = evt.lane >= 0 ? (1 << evt.lane) : 0;
     }
   }
-  return chart;
+  return events;
+}
+
+function installSparkHighwayLanePatch() {
+  if (typeof SparkHighway === "undefined" || !SparkHighway.prototype) return;
+  if (SparkHighway.prototype._performanceLaneRepairPatched) return;
+  var originalSetChart = SparkHighway.prototype.setChart;
+  if (typeof originalSetChart !== "function") return;
+  SparkHighway.prototype.setChart = function(events, phrases) {
+    var laneCount = this && this.skin && typeof this.skin.laneCount === "number" && this.skin.laneCount > 0
+      ? this.skin.laneCount
+      : 5;
+    repairPerformanceHighwayEventLanes(events, laneCount);
+    return originalSetChart.call(this, events, phrases);
+  };
+  SparkHighway.prototype._performanceLaneRepairPatched = true;
 }
 
 function shouldReassignCollapsedHighwayLanes(events) {

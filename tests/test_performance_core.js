@@ -297,6 +297,23 @@ test('ensurePerformanceHighwayLaneData repairs renderer-bound charts whose lanes
   assert.strictEqual(chart.events[2].laneMask, 4);
 });
 
+test('repairPerformanceHighwayEventLanes can fix direct SparkHighway setChart event arrays', function() {
+  var events = [
+    { id: 1, t: 0, dur: 2, type: 'chord', chord: 'Em', laneLabel: 'Em', lane: 0, laneMask: 1, notes: ['E', 'G', 'B'] },
+    { id: 2, t: 2, dur: 2, type: 'chord', chord: 'G', laneLabel: 'G', lane: 0, laneMask: 1, notes: ['G', 'B', 'D'] },
+    { id: 3, t: 4, dur: 2, type: 'chord', chord: 'D', laneLabel: 'D', lane: 0, laneMask: 1, notes: ['D', 'F#', 'A'] }
+  ];
+
+  repairPerformanceHighwayEventLanes(events, 5);
+
+  assert.strictEqual(events[0].lane, 0);
+  assert.strictEqual(events[0].laneMask, 1);
+  assert.strictEqual(events[1].lane, 1);
+  assert.strictEqual(events[1].laneMask, 2);
+  assert.strictEqual(events[2].lane, 2);
+  assert.strictEqual(events[2].laneMask, 4);
+});
+
 test('buildRhythmChordArrangement stamps lane metadata onto generated events', function() {
   var arrangement = buildRhythmChordArrangement({
     id: 'arr_song',
