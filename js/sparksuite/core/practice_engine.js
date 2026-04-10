@@ -12,56 +12,70 @@
 
   PracticeEngine.prototype.buildDailyPracticePlan = function(context) {
     context = context || {};
-    var segments = SparkPracticeBridge.buildDailyPracticeSegments(context);
-    segments = this.attachGameplayPayloads(segments, context);
-    var focus = this.psychologyEngine.getFocusLabel(segments);
-    return {
-      segments: segments.map(function(seg, i) {
-        return { id: seg.id || ("seg_" + i), type: normalizeSegmentType(seg.type), exerciseIds: [seg.id || ("ex_" + i)] };
-      }),
-      exercises: segments.map(function(seg, i) {
-        return {
-          id: seg.id || ("ex_" + i),
-          type: normalizeSegmentType(seg.type),
-          difficulty: seg.difficulty || "normal",
-          data: {
-            core: {
-              skill: (seg.meta && seg.meta.skill) || null,
-              chords: (seg.meta && seg.meta.chords) || null,
-              pattern: (seg.meta && seg.meta.pattern) || null,
-              instrument: (seg.meta && seg.meta.instrument) || null,
-              durationSec: seg.durationSec || 60
-            },
-            gameplay: {
-              payload: (seg.meta && seg.meta.gameplayPayload) || null,
-              preset: (seg.meta && seg.meta.enginePreset) || null,
-              chartId: (seg.meta && seg.meta.chartId) || null
-            }
-          }
-        };
-      }),
-      focus: focus,
-      rewards: { xp: segments.length * 10 }
-    };
-  };
-
-  PracticeEngine.prototype.attachGameplayPayloads = function(segments, context) {
-    context = context || {};
+    var rawSegments = SparkPracticeBridge.buildDailyPracticeSegments(context);
     var instrumentContext = context.instrumentContext || {};
     var rhythmAdapter = instrumentContext.rhythmAdapter || null;
-    if (!rhythmAdapter) return segments;
 
-    for (var i = 0; i < segments.length; i++) {
-      if (segments[i].type !== SparkSessionSegmentTypes.RHYTHM_HIGHWAY) continue;
-      segments[i].meta.gameplayPayload = rhythmAdapter.createPayload({
-        segment: segments[i],
-        curriculum: context.curriculum || null,
-        instrumentContext: instrumentContext
+    var segments = [];
+    var exercises = [];
+
+    for (var i = 0; i < rawSegments.length; i++) {
+      var seg = rawSegments[i];
+      var exId = seg.id || ("ex_" + i);
+      var segType = normalizeSegmentType(seg.type);
+
+      // Build gameplay payload from instrument adapter (not mutation)
+      var gameplayPayload = null;
+      var enginePreset = null;
+      var chartId = null;
+      if (rhythmAdapter && seg.type === (typeof SparkSessionSegmentTypes !== "undefined" ? SparkSessionSegmentTypes.RHYTHM_HIGHWAY : "rhythm_highway")) {
+        gameplayPayload = rhythmAdapter.createPayload({
+          segment: seg,
+          curriculum: context.curriculum || null,
+          instrumentContext: instrumentContext
+        });
+        enginePreset = gameplayPayload ? gameplayPayload.enginePreset : null;
+        chartId = gameplayPayload ? gameplayPayload.chartId : null;
+      } else if (seg.meta) {
+        gameplayPayload = seg.meta.gameplayPayload || null;
+        enginePreset = seg.meta.enginePreset || null;
+        chartId = seg.meta.chartId || null;
+      }
+
+      segments.push({
+        id: seg.id || ("seg_" + i),
+        type: segType,
+        exerciseIds: [exId]
       });
-      segments[i].meta.enginePreset = segments[i].meta.gameplayPayload.enginePreset;
-      segments[i].meta.chartId = segments[i].meta.gameplayPayload.chartId;
+
+      exercises.push({
+        id: exId,
+        type: segType,
+        difficulty: seg.difficulty || "normal",
+        data: {
+          core: {
+            skill: (seg.meta && seg.meta.skill) || null,
+            chords: (seg.meta && seg.meta.chords) || null,
+            pattern: (seg.meta && seg.meta.pattern) || null,
+            instrument: (seg.meta && seg.meta.instrument) || null,
+            durationSec: seg.durationSec || 60
+          },
+          gameplay: {
+            payload: gameplayPayload,
+            preset: enginePreset,
+            chartId: chartId
+          }
+        }
+      });
     }
-    return segments;
+
+    var focus = this.psychologyEngine.getFocusLabel(rawSegments);
+    return {
+      segments: segments,
+      exercises: exercises,
+      focus: focus,
+      rewards: { xp: exercises.length * 10 }
+    };
   };
 
   window.SparkSuitePracticeEngine = PracticeEngine;
