@@ -954,7 +954,7 @@
     // Determine redirect URI based on environment
     var redirectUri = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "") + "index.html";
     if (redirectUri.indexOf("file://") === 0) {
-      redirectUri = "https://localhost:3456/callback";
+      redirectUri = "http://localhost:3456/callback";
     }
 
     SparkSpotifyAuthManager.configure({
@@ -972,6 +972,17 @@
     }).catch(function(err) {
       console.error("Spotify auth URL generation failed:", err);
     });
+
+    if (window.electron && window.electron.spotify && window.electron.spotify.onCallback) {
+      window.electron.spotify.onCallback(function(code) {
+        authManager.exchangeCode(code).then(function(tokenData) {
+          if (tokenData && tokenData.access_token && window.sparkCore) {
+            window.sparkCore.initSpotify(tokenData.access_token);
+            if (typeof render === "function") render();
+          }
+        });
+      });
+    }
   };
 
 

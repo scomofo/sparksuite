@@ -270,6 +270,29 @@ ipcMain.handle('sparkgame:charter', async (event, mp3Path, instrument, difficult
   });
 });
 
+// ===== SPOTIFY OAUTH CALLBACK SERVER =====
+
+var http = require("http");
+var urlMod = require("url");
+
+var callbackServer = http.createServer(function(req, res) {
+  var parsed = urlMod.parse(req.url, true);
+  if (parsed.pathname === "/callback" && parsed.query.code) {
+    if (mainWindow) {
+      mainWindow.webContents.send("spotify:callback", parsed.query.code);
+    }
+    res.writeHead(200, {"Content-Type": "text/html"});
+    res.end('<html><body style="background:#1a1a1a;color:#4ECDC4;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>Connected!</h1><p>You can close this tab and return to SparkSuite.</p></div></body></html>');
+    return;
+  }
+  res.writeHead(404);
+  res.end("Not found");
+});
+
+callbackServer.listen(3456, function() {
+  console.log("Spotify callback server on http://localhost:3456");
+});
+
 // ===== APP LIFECYCLE =====
 
 app.whenReady().then(createWindow);

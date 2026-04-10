@@ -16,6 +16,11 @@ contextBridge.exposeInMainWorld('electron', {
   shell: {
     openExternal: function(url) { return ipcRenderer.invoke("shell:openExternal", url); }
   },
+  spotify: {
+    onCallback: function(cb) {
+      ipcRenderer.on("spotify:callback", function(event, code) { cb(code); });
+    }
+  },
   sparkgame: {
     launch: function(chartData) { return ipcRenderer.invoke('sparkgame:launch', chartData); },
     charter: function(mp3Path, instrument, difficulty) { return ipcRenderer.invoke('sparkgame:charter', mp3Path, instrument, difficulty); }
