@@ -505,7 +505,7 @@
     return SparkAudioLoader.fromFile(audioFile).then(function (audioData) {
       return self.audioEngine.load(audioData);
     }).then(function () {
-      return self.audioChartGenerator.generate(trackId, difficulty, instrument);
+      return self.audioChartGenerator.generate(self.audioEngine.buffer, { trackId: trackId || audioFile.name, difficulty: difficulty, instrument: instrument || "guitar", title: audioFile.name || "Local Track" });
     });
   };
 
