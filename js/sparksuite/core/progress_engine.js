@@ -281,5 +281,80 @@
     }
   }
 
+
+  /**
+   * Update mastery for a specific skill based on session performance.
+   * Stores per-skill mastery in S.skillGraph (or creates it).
+   * Uses exponential moving average to smooth over sessions.
+   *
+   * @param {string} skillId - e.g. "chord_switching", "timing", "rhythm"
+   * @param {Object} performance - { accuracy, timing, consistency }
+   * @returns {Object} { skillId, mastery, delta, previous }
+   */
+  ProgressEngine.prototype.updateMastery = function(skillId, performance) {
+    performance = performance || {};
+    var alpha = 0.2; // learning rate
+    var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
+
+    var prev = graph[skillId] || 0;
+    var sessionMastery = (
+      (performance.accuracy || 0) * 0.4 +
+      (performance.timing || 0) * 0.3 +
+      (performance.consistency || 0) * 0.3
+    );
+    sessionMastery = Math.max(0, Math.min(1, sessionMastery));
+
+    var updated = prev * (1 - alpha) + sessionMastery * alpha;
+    updated = Math.round(updated * 1000) / 1000;
+
+    // Persist
+    if (typeof S !== "undefined") {
+      if (!S.skillGraph) S.skillGraph = {};
+      S.skillGraph[skillId] = updated;
+      if (typeof saveState === "function") saveState();
+    }
+
+    return {
+      skillId: skillId,
+      mastery: updated,
+      delta: Math.round((updated - prev) * 1000) / 1000,
+      previous: prev,
+      accuracy: performance.accuracy || 0,
+      timing: performance.timing || 0,
+      consistency: performance.consistency || 0
+    };
+  };
+
+  /**
+   * Update mastery for multiple skills from a session outcome.
+   * @param {Array} skills - [{ id, accuracy, timing, consistency }]
+   * @returns {Array} mastery results
+   */
+  ProgressEngine.prototype.updateMasteryBatch = function(skills) {
+    if (!Array.isArray(skills)) return [];
+    var results = [];
+    for (var i = 0; i < skills.length; i++) {
+      results.push(this.updateMastery(skills[i].id, skills[i]));
+    }
+    return results;
+  };
+
+  /**
+   * Get current mastery for a skill.
+   * @param {string} skillId
+   * @returns {number} 0-1
+   */
+  ProgressEngine.prototype.getMastery = function(skillId) {
+    return (typeof S !== "undefined" && S.skillGraph && S.skillGraph[skillId]) || 0;
+  };
+
+  /**
+   * Get full skill graph.
+   * @returns {Object} { skillId: mastery }
+   */
+  ProgressEngine.prototype.getSkillGraph = function() {
+    return (typeof S !== "undefined" && S.skillGraph) ? JSON.parse(JSON.stringify(S.skillGraph)) : {};
+  };
+
   window.SparkSuiteProgressEngine = ProgressEngine;
 })();

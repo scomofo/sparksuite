@@ -15,5 +15,44 @@
     return typeof SparkPsychology !== "undefined" ? SparkPsychology.shouldReward(sessionCount) : false;
   };
 
+  /**
+   * Get recommended difficulty for a user.
+   * Delegates to LearningBrain if available, else derives from skillGraph.
+   */
+  PsychologyEngine.prototype.getDifficulty = function(skillGraph, flowState) {
+    if (typeof SparkLearningBrain !== "undefined") {
+      var analysis = SparkLearningBrain.analyzeUser(skillGraph, flowState, null);
+      if (analysis && analysis.recommendedDifficultyId) return analysis.recommendedDifficultyId;
+    }
+    if (!skillGraph) return "easy";
+    var avg = ((skillGraph.timing || 0) + (skillGraph.rhythm || 0) + (skillGraph.chordAccuracy || 0)) / 3;
+    return avg > 0.8 ? "hard" : avg > 0.6 ? "normal" : "easy";
+  };
+
+  /**
+   * Adjust difficulty based on session performance.
+   * Returns updated difficulty string.
+   */
+  PsychologyEngine.prototype.adjustDifficulty = function(currentDifficulty, performance) {
+    if (!performance) return currentDifficulty;
+    var accuracy = performance.accuracy || 0;
+    if (accuracy < 0.5 && currentDifficulty !== "easy") return "easy";
+    if (accuracy > 0.9 && currentDifficulty === "easy") return "normal";
+    if (accuracy > 0.9 && currentDifficulty === "normal") return "hard";
+    if (accuracy < 0.6 && currentDifficulty === "hard") return "normal";
+    return currentDifficulty;
+  };
+
+  /**
+   * Get session structure recommendation.
+   * Returns analysis object from LearningBrain if available.
+   */
+  PsychologyEngine.prototype.getSessionStructure = function(skillGraph, flowState, weakSpots) {
+    if (typeof SparkLearningBrain !== "undefined") {
+      return SparkLearningBrain.analyzeUser(skillGraph, flowState, weakSpots);
+    }
+    return null;
+  };
+
   window.SparkSuitePsychologyEngine = PsychologyEngine;
 })();
