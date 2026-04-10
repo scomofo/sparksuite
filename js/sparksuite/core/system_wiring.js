@@ -207,16 +207,17 @@
     var visibleNotes = [];
     var prediction = null;
 
-    if (chart && chart.timeline) {
+    if (chart) {
+      var timeline = chart.timeline || (typeof chart.getTimeline === "function" ? chart.getTimeline() : []);
       var windowStart = timeMs - 500;
       var windowEnd = timeMs + 3000;
-      visibleNotes = chart.timeline.filter(function (note) {
+      visibleNotes = timeline.filter(function (note) {
         return note.time >= windowStart && note.time <= windowEnd;
       });
     }
 
     if (this.chordPredictor && typeof this.chordPredictor.predictWindow === "function") {
-      prediction = this.chordPredictor.predictWindow(timeMs, chart && chart.timeline ? chart.timeline : [], 3000);
+      prediction = this.chordPredictor.predictWindow(timeMs, chart ? (chart.timeline || (typeof chart.getTimeline === "function" ? chart.getTimeline() : [])) : [], 3000);
     }
 
     if (this.voiceCoach && chart && chart.sections && chart.sections.length) {
