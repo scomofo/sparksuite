@@ -1,3 +1,4 @@
+function normalizeSongId(song){return String(song&&song.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"");}
 /* ───────── PianoSpark – app.js (instrument module) ───────── */
 /* Wrapped for SparkSuite: helpers exposed globally, act/render namespaced */
 (function() {
