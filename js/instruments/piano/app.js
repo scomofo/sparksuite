@@ -175,7 +175,7 @@ var ifThenCard = window.ifThenCard;
 // getChordMatch aliased from PianoAudio above
 var fireMicro = window.fireMicro;
 var escHTML = window.escHTML;
-var saveState = window.saveState;
+var saveState = function() { if (window.saveState) window.saveState(); };
 var showToast = window.showToast || function() {};
 var checkPracticeDate = window.checkPracticeDate || function() {};
 var getRewardPhase = window.getRewardPhase || function() { return null; };
