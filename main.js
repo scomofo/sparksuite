@@ -50,7 +50,7 @@ function createWindow() {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
+        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https://i.scdn.co; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456 https://api.spotify.com https://accounts.spotify.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self' blob:"]
       }
     });
   });
