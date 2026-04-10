@@ -236,6 +236,26 @@ test('normalizePerformanceChart assigns lanes for legacy direct chart events wit
   assert.strictEqual(chart.events[2].laneMask, 1);
 });
 
+test('ensurePerformanceHighwayLaneData repairs missing lane metadata before rendering', function() {
+  var chart = {
+    metadata: { laneCount: 5 },
+    events: [
+      { id: 1, t: 0, dur: 2, type: 'chord', chord: 'Em', laneLabel: 'Em', notes: ['E', 'G', 'B'] },
+      { id: 2, t: 2, dur: 2, type: 'chord', chord: 'G', laneLabel: 'G', notes: ['G', 'B', 'D'] },
+      { id: 3, t: 4, dur: 2, type: 'open', laneLabel: 'Open', notes: [] }
+    ]
+  };
+
+  ensurePerformanceHighwayLaneData(chart);
+
+  assert.strictEqual(chart.events[0].lane, 0);
+  assert.strictEqual(chart.events[0].laneMask, 1);
+  assert.strictEqual(chart.events[1].lane, 1);
+  assert.strictEqual(chart.events[1].laneMask, 2);
+  assert.strictEqual(chart.events[2].lane, null);
+  assert.strictEqual(chart.events[2].laneMask, 0);
+});
+
 test('buildRhythmChordArrangement stamps lane metadata onto generated events', function() {
   var arrangement = buildRhythmChordArrangement({
     id: 'arr_song',

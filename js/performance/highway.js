@@ -16,7 +16,62 @@ function destroySparkHighway() {
 
 function feedChartToHighway(chart) {
   if (!_sparkHighway || !chart) return;
+  ensurePerformanceHighwayLaneData(chart);
   _sparkHighway.setChart(chart.events || [], chart.phrases || []);
+}
+
+function ensurePerformanceHighwayLaneData(chart) {
+  if (!chart || !Array.isArray(chart.events)) return chart;
+  var laneMap = {};
+  var nextLane = 0;
+  var laneCount = chart && chart.metadata && typeof chart.metadata.laneCount === "number" && chart.metadata.laneCount > 0
+    ? chart.metadata.laneCount
+    : 5;
+
+  for (var i = 0; i < chart.events.length; i++) {
+    var evt = chart.events[i];
+    if (!evt) continue;
+    if (evt.lane == null) {
+      if (typeof evt.laneMask === "number" && evt.laneMask > 0) {
+        evt.lane = getPrimaryLaneIndex(evt.laneMask);
+      } else if (!isPerformanceOpenEvent(evt)) {
+        var key = getPerformanceLaneAssignmentKey(evt);
+        if (key) {
+          if (laneMap[key] == null) {
+            laneMap[key] = nextLane % laneCount;
+            nextLane++;
+          }
+          evt.lane = laneMap[key];
+          evt.laneMask = 1 << evt.lane;
+        } else {
+          evt.lane = null;
+          evt.laneMask = 0;
+        }
+      } else {
+        evt.lane = null;
+        evt.laneMask = 0;
+      }
+    } else if (typeof evt.laneMask !== "number") {
+      evt.laneMask = evt.lane >= 0 ? (1 << evt.lane) : 0;
+    }
+  }
+  return chart;
+}
+
+function isPerformanceOpenEvent(evt) {
+  if (!evt) return false;
+  if (evt.sourceFlags && evt.sourceFlags.open) return true;
+  if (String(evt.type || "").toLowerCase() === "open") return true;
+  return typeof evt.laneLabel === "string" && evt.laneLabel.toLowerCase() === "open";
+}
+
+function getPerformanceLaneAssignmentKey(evt) {
+  if (!evt) return "";
+  if (typeof evt.chord === "string" && evt.chord) return evt.chord;
+  if (typeof evt.laneLabel === "string" && evt.laneLabel) return evt.laneLabel;
+  if (typeof evt.note === "string" && evt.note) return evt.note;
+  if (Array.isArray(evt.notes) && evt.notes.length) return evt.notes.join("+");
+  return "";
 }
 
 function updateSparkHighway(nowSec, combo) {
