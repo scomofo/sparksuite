@@ -282,21 +282,83 @@
   }
 
 
+
+  // --- Mastery constants and helpers ---
+
+  var MASTERY_LEVELS = {
+    NEW: 0,
+    LEARNING: 0.5,
+    COMFORTABLE: 0.7,
+    SOLID: 0.85,
+    MASTERED: 0.95
+  };
+
+  var DECAY_RATE = 0.02;
+  var ALPHA = 0.2;
+
+  function normalizeSkillRecord(raw) {
+    if (raw === null || raw === undefined) {
+      return {
+        mastery: 0,
+        accuracy: 0,
+        timing: 0,
+        consistency: 0,
+        confidence: 0.5,
+        lastPracticed: Date.now(),
+        attempts: 0
+      };
+    }
+    if (typeof raw === "number") {
+      return {
+        mastery: raw,
+        accuracy: 0,
+        timing: 0,
+        consistency: 0,
+        confidence: 0.5,
+        lastPracticed: Date.now(),
+        attempts: 1
+      };
+    }
+    return raw;
+  }
+
+  function applyDecay(skill) {
+    var now = Date.now();
+    var days = (now - (skill.lastPracticed || now)) / (1000 * 60 * 60 * 24);
+    if (days < 0.5) {
+      skill.decay = 0;
+      return skill;
+    }
+    var loss = days * DECAY_RATE;
+    skill.mastery = Math.max(0, skill.mastery - loss);
+    skill.decay = loss;
+    return skill;
+  }
+
+  function computeConfidence(prev, performance) {
+    var variance = Math.abs((performance.accuracy || 0) - (prev.accuracy || 0));
+    var stability = Math.max(0, 1 - variance);
+    return prev.confidence * 0.7 + stability * 0.3;
+  }
+
+  // --- Mastery methods ---
+
   /**
    * Update mastery for a specific skill based on session performance.
-   * Stores per-skill mastery in S.skillGraph (or creates it).
-   * Uses exponential moving average to smooth over sessions.
+   * Stores per-skill record in S.skillGraph (or creates it).
+   * Uses exponential moving average with decay and confidence tracking.
    *
    * @param {string} skillId - e.g. "chord_switching", "timing", "rhythm"
    * @param {Object} performance - { accuracy, timing, consistency }
-   * @returns {Object} { skillId, mastery, delta, previous }
+   * @returns {Object} { skillId, mastery, confidence, delta, previous, level, record }
    */
   ProgressEngine.prototype.updateMastery = function(skillId, performance) {
     performance = performance || {};
-    var alpha = 0.2; // learning rate
     var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
 
-    var prev = graph[skillId] || 0;
+    var prev = normalizeSkillRecord(graph[skillId]);
+    prev = applyDecay(prev);
+
     var sessionMastery = (
       (performance.accuracy || 0) * 0.4 +
       (performance.timing || 0) * 0.3 +
@@ -304,24 +366,37 @@
     );
     sessionMastery = Math.max(0, Math.min(1, sessionMastery));
 
-    var updated = prev * (1 - alpha) + sessionMastery * alpha;
-    updated = Math.round(updated * 1000) / 1000;
+    var newMastery = prev.mastery * (1 - ALPHA) + sessionMastery * ALPHA;
+    newMastery = Math.round(newMastery * 1000) / 1000;
+
+    var confidence = computeConfidence(prev, performance);
+    confidence = Math.round(confidence * 1000) / 1000;
+
+    var record = {
+      mastery: newMastery,
+      accuracy: performance.accuracy || 0,
+      timing: performance.timing || 0,
+      consistency: performance.consistency || 0,
+      confidence: confidence,
+      lastPracticed: Date.now(),
+      attempts: (prev.attempts || 0) + 1
+    };
 
     // Persist
     if (typeof S !== "undefined") {
       if (!S.skillGraph) S.skillGraph = {};
-      S.skillGraph[skillId] = updated;
+      S.skillGraph[skillId] = record;
       if (typeof saveState === "function") saveState();
     }
 
     return {
       skillId: skillId,
-      mastery: updated,
-      delta: Math.round((updated - prev) * 1000) / 1000,
-      previous: prev,
-      accuracy: performance.accuracy || 0,
-      timing: performance.timing || 0,
-      consistency: performance.consistency || 0
+      mastery: newMastery,
+      confidence: confidence,
+      delta: Math.round((newMastery - prev.mastery) * 1000) / 1000,
+      previous: prev.mastery,
+      level: ProgressEngine.prototype.getMasteryLevel(newMastery),
+      record: record
     };
   };
 
@@ -340,21 +415,89 @@
   };
 
   /**
-   * Get current mastery for a skill.
+   * Get current mastery value for a skill (after decay).
    * @param {string} skillId
    * @returns {number} 0-1
    */
   ProgressEngine.prototype.getMastery = function(skillId) {
-    return (typeof S !== "undefined" && S.skillGraph && S.skillGraph[skillId]) || 0;
+    var skill = this.getSkill(skillId);
+    return skill.mastery || 0;
   };
 
   /**
-   * Get full skill graph.
-   * @returns {Object} { skillId: mastery }
+   * Get full normalized and decayed skill record.
+   * @param {string} skillId
+   * @returns {Object} skill record
+   */
+  ProgressEngine.prototype.getSkill = function(skillId) {
+    var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
+    var raw = graph[skillId];
+    var skill = normalizeSkillRecord(raw);
+    skill = applyDecay(skill);
+    return skill;
+  };
+
+  /**
+   * Get mastery level label from a mastery value.
+   * @param {number} mastery - 0-1
+   * @returns {string} level name
+   */
+  ProgressEngine.prototype.getMasteryLevel = function(mastery) {
+    if (mastery >= MASTERY_LEVELS.MASTERED) return "MASTERED";
+    if (mastery >= MASTERY_LEVELS.SOLID) return "SOLID";
+    if (mastery >= MASTERY_LEVELS.COMFORTABLE) return "COMFORTABLE";
+    if (mastery >= MASTERY_LEVELS.LEARNING) return "LEARNING";
+    return "NEW";
+  };
+
+  /**
+   * Check if a skill is mastered (mastery >= 0.85 and confidence >= 0.7).
+   * @param {string} skillId
+   * @returns {boolean}
+   */
+  ProgressEngine.prototype.isMastered = function(skillId) {
+    var skill = this.getSkill(skillId);
+    return skill.mastery >= 0.85 && skill.confidence >= 0.7;
+  };
+
+  /**
+   * Get skills that have decayed beyond a threshold.
+   * @param {number} [threshold=0.05] - minimum decay to include
+   * @returns {Array} sorted by decay descending
+   */
+  ProgressEngine.prototype.getDecayedSkills = function(threshold) {
+    if (threshold === undefined) threshold = 0.05;
+    var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
+    var results = [];
+    for (var skillId in graph) {
+      if (!graph.hasOwnProperty(skillId)) continue;
+      var skill = normalizeSkillRecord(graph[skillId]);
+      skill = applyDecay(skill);
+      if (skill.decay > threshold) {
+        results.push({ skillId: skillId, decay: skill.decay, mastery: skill.mastery, record: skill });
+      }
+    }
+    results.sort(function(a, b) { return b.decay - a.decay; });
+    return results;
+  };
+
+  /**
+   * Get full skill graph with all records normalized and decayed.
+   * @returns {Object} { skillId: record }
    */
   ProgressEngine.prototype.getSkillGraph = function() {
-    return (typeof S !== "undefined" && S.skillGraph) ? JSON.parse(JSON.stringify(S.skillGraph)) : {};
+    var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
+    var result = {};
+    for (var skillId in graph) {
+      if (!graph.hasOwnProperty(skillId)) continue;
+      var skill = normalizeSkillRecord(graph[skillId]);
+      skill = applyDecay(skill);
+      result[skillId] = skill;
+    }
+    return result;
   };
+
+  ProgressEngine.MASTERY_LEVELS = MASTERY_LEVELS;
 
   window.SparkSuiteProgressEngine = ProgressEngine;
 })();
