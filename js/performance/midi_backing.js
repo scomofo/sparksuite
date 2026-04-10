@@ -195,7 +195,8 @@
       var startAt = now + noteStart;
       var endAt = startAt + noteDur;
 
-      // Simple sine+triangle layered tone
+      if (_midiOscs.length > 128) continue;
+      // Scaled tone
       var osc = _midiCtx.createOscillator();
       var gain = _midiCtx.createGain();
       osc.connect(gain);
@@ -204,10 +205,11 @@
       osc.type = n.midi < 48 ? "triangle" : "sine"; // Bass = triangle, treble = sine
       osc.frequency.value = midiToFreq(n.midi);
 
-      var vol = n.vel * 0.3;
+      var noteScale = Math.min(1, 30 / (_midiNotes.length || 1));
+      var vol = n.vel * 0.15 * noteScale;
       gain.gain.setValueAtTime(0, startAt);
-      gain.gain.linearRampToValueAtTime(vol, startAt + 0.005);
-      gain.gain.setValueAtTime(vol, endAt - 0.02);
+      gain.gain.linearRampToValueAtTime(vol, startAt + 0.01);
+      gain.gain.setValueAtTime(vol * 0.8, endAt - Math.min(0.05, noteDur * 0.3));
       gain.gain.exponentialRampToValueAtTime(0.001, endAt);
 
       osc.start(startAt);
