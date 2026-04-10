@@ -297,12 +297,17 @@ var SONGS=[
   {title:"Tears in Heaven",artist:"Eric Clapton",chords:["A","E","F#m","D","E7","A/C#"],level:8,pattern:["D","x","D","U","x","U","D","U"],bpm:80,midi:"content/songs/midi/tears_in_heaven.mid",progression:["A","E","F#m","A/C#","D","E7","A","A"]},
   // --- One-Chord Songs ---
   {title:"Tomorrow Never Knows",artist:"The Beatles",chords:["C"],level:4,pattern:["D","D","U","U","D","U"],bpm:125,midi:"content/songs/midi/tomorrow_never_knows.mid",progression:["C","C","C","C","C","C","C","C"]},
-  {title:"Smokestack Lightning",artist:"Howlin' Wolf",chords:["E"],level:2,pattern:["D","U","D","U","D","U","D","U"],bpm:130,progression:["E","E","E","E","E","E","E","E"]},
+  {title:"Smokestack Lightning",artist:"Howlin' Wolf",chords:["E"],level:2,pattern:["D","U","D","U","D","U","D","U"],bpm:130,progression:["E","E","E","E","E","E","E","E"],mode:"riff",preferredPerformanceArrangement:"lead",leadNotes:[
+    {note:"E",t:0.00,dur:0.30,lane:0,laneMask:1},{note:"E",t:0.46,dur:0.30,lane:0,laneMask:1},{note:"G",t:0.92,dur:0.30,lane:2,laneMask:4},{note:"A",t:1.38,dur:0.30,lane:1,laneMask:2},{note:"G",t:1.84,dur:0.30,lane:2,laneMask:4},{note:"E",t:2.30,dur:0.30,lane:0,laneMask:1},{note:"E",t:2.77,dur:0.30,lane:0,laneMask:1},
+    {note:"E",t:3.69,dur:0.30,lane:0,laneMask:1},{note:"E",t:4.15,dur:0.30,lane:0,laneMask:1},{note:"G",t:4.61,dur:0.30,lane:2,laneMask:4},{note:"A",t:5.07,dur:0.30,lane:1,laneMask:2},{note:"G",t:5.53,dur:0.30,lane:2,laneMask:4},{note:"E",t:5.99,dur:0.30,lane:0,laneMask:1},{note:"E",t:6.46,dur:0.30,lane:0,laneMask:1},
+    {note:"E",t:7.38,dur:0.30,lane:0,laneMask:1},{note:"E",t:7.84,dur:0.30,lane:0,laneMask:1},{note:"G",t:8.30,dur:0.30,lane:2,laneMask:4},{note:"A",t:8.76,dur:0.30,lane:1,laneMask:2},{note:"G",t:9.22,dur:0.30,lane:2,laneMask:4},{note:"E",t:9.68,dur:0.30,lane:0,laneMask:1},{note:"E",t:10.15,dur:0.30,lane:0,laneMask:1},
+    {note:"E",t:11.07,dur:0.30,lane:0,laneMask:1},{note:"E",t:11.53,dur:0.30,lane:0,laneMask:1},{note:"G",t:11.99,dur:0.30,lane:2,laneMask:4},{note:"A",t:12.45,dur:0.30,lane:1,laneMask:2},{note:"G",t:12.91,dur:0.30,lane:2,laneMask:4},{note:"E",t:13.37,dur:0.30,lane:0,laneMask:1},{note:"E",t:13.84,dur:0.30,lane:0,laneMask:1}
+  ]},
   {title:"Coconut",artist:"Harry Nilsson",chords:["C7"],level:5,pattern:["D","D","U","U","D","U"],bpm:118,progression:["C7","C7","C7","C7","C7","C7","C7","C7"]},
   {title:"Run Through the Jungle",artist:"CCR",chords:["Dm"],level:6,pattern:["D","D","U","U","D","U"],bpm:130,midi:"content/songs/midi/run_through_the_jungle.mid",progression:["Dm","Dm","Dm","Dm","Dm","Dm","Dm","Dm"]},
   {title:"Get the Party Started",artist:"P!nk",chords:["Bm"],level:8,pattern:["D","x","D","U","x","U","D","U"],bpm:130,midi:"content/songs/midi/get_the_party_started.mid",progression:["Bm","Bm","Bm","Bm","Bm","Bm","Bm","Bm"]},
   {title:"The Beat Goes On",artist:"Sonny & Cher",chords:["Em"],level:1,pattern:["D","D","U","U","D","U"],bpm:130,progression:["Em","Em","Em","Em","Em","Em","Em","Em"]},
-  {title:"Peter Gunn",artist:"Duane Eddy",chords:["E"],level:2,pattern:["D","U","D","U","D","U","D","U"],bpm:130,midi:"content/songs/midi/peter_gunn.mid",progression:["E","E","E","E","E","E","E","E"],preferredPerformanceArrangement:"lead",leadNotes:[
+  {title:"Peter Gunn",artist:"Duane Eddy",chords:["E"],level:2,pattern:["D","U","D","U","D","U","D","U"],bpm:130,midi:"content/songs/midi/peter_gunn.mid",progression:["E","E","E","E","E","E","E","E"],mode:"riff",preferredPerformanceArrangement:"lead",leadNotes:[
     {note:"E",t:0.00,dur:0.32,lane:0,laneMask:1},
     {note:"G",t:0.48,dur:0.28,lane:2,laneMask:4},
     {note:"A",t:0.98,dur:0.28,lane:1,laneMask:2},
@@ -332,7 +337,7 @@ var SONGS=[
     {note:"G",t:12.43,dur:0.28,lane:2,laneMask:4},
     {note:"E",t:12.90,dur:0.44,lane:0,laneMask:1}
   ]},
-  {title:"Seven Nation Army",artist:"The White Stripes",chords:["E","G","D","C","B"],level:3,pattern:["D","x","D","U","x","U","D","U"],bpm:124,progression:["E","E","E","E","E","E","E","E"],preferredPerformanceArrangement:"lead",leadNotes:[
+  {title:"Seven Nation Army",artist:"The White Stripes",chords:["E","G","D","C","B"],level:3,pattern:["D","x","D","U","x","U","D","U"],bpm:124,progression:["E","E","E","E","E","E","E","E"],mode:"riff",preferredPerformanceArrangement:"lead",leadNotes:[
     {note:"E",t:0.00,dur:0.34,lane:2,laneMask:4},
     {note:"E",t:0.48,dur:0.30,lane:2,laneMask:4},
     {note:"G",t:0.98,dur:0.34,lane:0,laneMask:1},
@@ -350,12 +355,24 @@ var SONGS=[
     {note:"B",t:7.06,dur:0.34,lane:1,laneMask:2},
     {note:"E",t:7.59,dur:0.52,lane:0,laneMask:1}
   ]},
-  {title:"Mannish Boy",artist:"Muddy Waters",chords:["E"],level:2,pattern:["D","D","U","U","D","U"],bpm:80,progression:["E","E","E","E","E","E","E","E"]},
-  {title:"Boom Boom",artist:"John Lee Hooker",chords:["E"],level:2,pattern:["D","U","D","U","D","U","D","U"],bpm:135,midi:"content/songs/midi/boom_boom.mid",progression:["E","E","E","E","E","E","E","E"]},
+  {title:"Mannish Boy",artist:"Muddy Waters",chords:["E"],level:2,pattern:["D","D","U","U","D","U"],bpm:80,progression:["E","E","E","E","E","E","E","E"],mode:"riff",preferredPerformanceArrangement:"lead",leadNotes:[
+    {note:"E",t:0.00,dur:0.50,lane:0,laneMask:1},{note:"E",t:0.75,dur:0.50,lane:0,laneMask:1},{note:"G",t:1.50,dur:0.50,lane:2,laneMask:4},{note:"A",t:2.25,dur:0.50,lane:1,laneMask:2},{note:"A",t:3.00,dur:0.50,lane:1,laneMask:2},{note:"G",t:3.75,dur:0.50,lane:2,laneMask:4},{note:"E",t:4.50,dur:0.50,lane:0,laneMask:1},
+    {note:"E",t:6.00,dur:0.50,lane:0,laneMask:1},{note:"E",t:6.75,dur:0.50,lane:0,laneMask:1},{note:"G",t:7.50,dur:0.50,lane:2,laneMask:4},{note:"A",t:8.25,dur:0.50,lane:1,laneMask:2},{note:"A",t:9.00,dur:0.50,lane:1,laneMask:2},{note:"G",t:9.75,dur:0.50,lane:2,laneMask:4},{note:"E",t:10.50,dur:0.50,lane:0,laneMask:1}
+  ]},
+  {title:"Boom Boom",artist:"John Lee Hooker",chords:["E"],level:2,pattern:["D","U","D","U","D","U","D","U"],bpm:135,midi:"content/songs/midi/boom_boom.mid",progression:["E","E","E","E","E","E","E","E"],mode:"riff",preferredPerformanceArrangement:"lead",leadNotes:[
+    {note:"E",t:0.00,dur:0.25,lane:0,laneMask:1},{note:"E",t:0.44,dur:0.25,lane:0,laneMask:1},{note:"G",t:0.89,dur:0.25,lane:2,laneMask:4},{note:"E",t:1.33,dur:0.25,lane:0,laneMask:1},
+    {note:"E",t:1.78,dur:0.25,lane:0,laneMask:1},{note:"E",t:2.22,dur:0.25,lane:0,laneMask:1},{note:"G",t:2.67,dur:0.25,lane:2,laneMask:4},{note:"E",t:3.11,dur:0.25,lane:0,laneMask:1},
+    {note:"E",t:3.56,dur:0.25,lane:0,laneMask:1},{note:"E",t:4.00,dur:0.25,lane:0,laneMask:1},{note:"G",t:4.45,dur:0.25,lane:2,laneMask:4},{note:"E",t:4.89,dur:0.25,lane:0,laneMask:1},
+    {note:"E",t:5.34,dur:0.25,lane:0,laneMask:1},{note:"E",t:5.78,dur:0.25,lane:0,laneMask:1},{note:"G",t:6.23,dur:0.25,lane:2,laneMask:4},{note:"E",t:6.67,dur:0.25,lane:0,laneMask:1}
+  ]},
   {title:"Within You Without You",artist:"The Beatles",chords:["C"],level:4,pattern:["D","D","U","U","D","U"],bpm:110,progression:["C","C","C","C","C","C","C","C"]},
   {title:"Who is He",artist:"Bill Withers",chords:["Em"],level:1,pattern:["D","x","D","U","x","U","D","U"],bpm:105,progression:["Em","Em","Em","Em","Em","Em","Em","Em"]},
   {title:"Jump into the Fire",artist:"Harry Nilsson",chords:["E"],level:2,pattern:["D","U","D","U","D","U","D","U"],bpm:135,progression:["E","E","E","E","E","E","E","E"]},
-  {title:"Fever",artist:"Peggy Lee",chords:["Am"],level:2,pattern:["D","x","D","U","x","U","D","U"],bpm:115,progression:["Am","Am","Am","Am","Am","Am","Am","Am"]},
+  {title:"Fever",artist:"Peggy Lee",chords:["Am"],level:2,pattern:["D","x","D","U","x","U","D","U"],bpm:115,progression:["Am","Am","Am","Am","Am","Am","Am","Am"],mode:"riff",preferredPerformanceArrangement:"lead",leadNotes:[
+    {note:"A",t:0.00,dur:0.35,lane:0,laneMask:1},{note:"C",t:0.52,dur:0.35,lane:1,laneMask:2},{note:"E",t:1.04,dur:0.35,lane:2,laneMask:4},{note:"A",t:1.56,dur:0.35,lane:0,laneMask:1},{note:"E",t:2.08,dur:0.35,lane:2,laneMask:4},{note:"C",t:2.60,dur:0.35,lane:1,laneMask:2},{note:"A",t:3.12,dur:0.35,lane:0,laneMask:1},
+    {note:"A",t:3.64,dur:0.35,lane:0,laneMask:1},{note:"C",t:4.16,dur:0.35,lane:1,laneMask:2},{note:"E",t:4.68,dur:0.35,lane:2,laneMask:4},{note:"A",t:5.20,dur:0.35,lane:0,laneMask:1},{note:"E",t:5.72,dur:0.35,lane:2,laneMask:4},{note:"C",t:6.24,dur:0.35,lane:1,laneMask:2},{note:"A",t:6.76,dur:0.35,lane:0,laneMask:1},
+    {note:"A",t:7.28,dur:0.35,lane:0,laneMask:1},{note:"C",t:7.80,dur:0.35,lane:1,laneMask:2},{note:"E",t:8.32,dur:0.35,lane:2,laneMask:4},{note:"A",t:8.84,dur:0.35,lane:0,laneMask:1},{note:"E",t:9.36,dur:0.35,lane:2,laneMask:4},{note:"C",t:9.88,dur:0.35,lane:1,laneMask:2},{note:"A",t:10.40,dur:0.35,lane:0,laneMask:1}
+  ]},
   {title:"Its All Good",artist:"Bob Dylan",chords:["Gm"],level:8,pattern:["D","D","U","U","D","U"],bpm:100,progression:["Gm","Gm","Gm","Gm","Gm","Gm","Gm","Gm"]},
   {title:"Shakedown Street",artist:"Grateful Dead",chords:["A"],level:3,pattern:["D","x","U","x","U","D","x","U"],bpm:110,progression:["A","A","A","A","A","A","A","A"]},
   // --- Two-Chord Songs ---
