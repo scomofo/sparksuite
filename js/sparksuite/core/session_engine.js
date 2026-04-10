@@ -27,6 +27,7 @@
 
     // 1. Analyze user via LearningBrain + FlowEngine
     var brainAnalysis = null;
+    // DEPRECATED: direct LearningBrain usage — new code must use psychologyEngine.analyzeUser()
     if (typeof SparkLearningBrain !== "undefined" && typeof S !== "undefined" && S.skillGraph) {
       var flowState = null;
       if (typeof SparkFlowEngine !== "undefined") {
@@ -40,7 +41,7 @@
           timingConsistency: (S.playerProfile && S.playerProfile.consistency) || 0
         });
       }
-      brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, flowState, S.weakSpots || null);
+      brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, flowState, S.weakSpots || null); // DEPRECATED: route through PsychologyEngine
     }
 
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
@@ -58,7 +59,7 @@
 
     // 2. Inject practice if brain recommends it
     if (brainAnalysis && (brainAnalysis.recommendation === "targeted_practice" || brainAnalysis.recommendation === "easy_practice" || brainAnalysis.recommendation === "practice")) {
-      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis, S.skillGraph) : null;
+      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis, S.skillGraph) : null; // DEPRECATED: route through PsychologyEngine
       if (brainDrill) {
         var pn = normalizeSegment({
           id: "brain_" + Date.now(),

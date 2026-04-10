@@ -54,5 +54,28 @@
     return null;
   };
 
+
+  /**
+   * Analyze user state. Pass-through to LearningBrain.
+   * New code MUST call this instead of SparkLearningBrain directly.
+   */
+  PsychologyEngine.prototype.analyzeUser = function(skillGraph, flowState, weakSpots) {
+    if (typeof SparkLearningBrain !== "undefined") {
+      return SparkLearningBrain.analyzeUser(skillGraph, flowState, weakSpots || null);
+    }
+    return null;
+  };
+
+  /**
+   * Generate targeted practice from weakness analysis.
+   * Pass-through to LearningBrain.
+   */
+  PsychologyEngine.prototype.generatePracticeFromWeakness = function(analysis, skillGraph) {
+    if (typeof SparkLearningBrain !== "undefined") {
+      return SparkLearningBrain.generatePracticeFromWeakness(analysis, skillGraph);
+    }
+    return null;
+  };
+
   window.SparkSuitePsychologyEngine = PsychologyEngine;
 })();
