@@ -7,10 +7,6 @@
     return 5;
   };
 
-  GuitarRhythmAdapter.prototype.getAdapterType = function() {
-    return "guitar";
-  };
-
   GuitarRhythmAdapter.prototype.getLaneLabels = function() {
     return ["G", "R", "Y", "B", "O"];
   };
@@ -35,12 +31,7 @@
         showChordNames: true,
         failDisabled: true
       },
-      songChart: songChart,
-      chart: this.chartIO.toLaneChart(songChart, this, {
-        chartId: chartId,
-        laneCount: this.getLaneCount(),
-        laneLabels: this.getLaneLabels()
-      })
+      songChart: songChart
     };
   };
 

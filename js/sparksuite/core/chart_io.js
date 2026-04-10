@@ -8,8 +8,6 @@
     var tempoMap = new SparkTempoMap({ ppq: ppq, bpm: bpm });
     var notes = [];
     var phrases = [];
-    var adapterType = getAdapterType(adapter);
-    var laneCount = getLaneCount(adapter);
 
     var rawNotes = Array.isArray(definition.notes) ? definition.notes : [];
     for (var i = 0; i < rawNotes.length; i++) {
@@ -19,11 +17,9 @@
         tick: Math.round((row.beat || 0) * ppq),
         tickLength: Math.round((row.lengthBeats || 0) * ppq),
         laneMask: row.laneMask || 0,
-        lane: resolveLane(row, laneCount),
-        stringIndex: row.stringIndex != null ? row.stringIndex : null,
         flags: row.flags || {},
         difficulty: definition.difficulty || "easy",
-        instrument: adapterType,
+        instrument: "guitar",
         label: row.label || "",
         skillId: row.skillId || null
       }));
@@ -41,7 +37,7 @@
       }));
     }
 
-    return buildSongChart({
+    return new SparkSongChart({
       song: {
         id: definition.id,
         title: definition.title || definition.id || "Rhythm Exercise",
@@ -49,13 +45,18 @@
         durationSec: definition.durationSec || ((definition.totalBeats || 16) * (60 / bpm))
       },
       tempoMap: tempoMap,
-      notes: notes,
-      phrases: phrases,
-      sourceFormat: "spark_exercise_v1",
-      laneCount: laneCount,
-      chartId: definition.id,
-      enginePreset: definition.enginePreset || "spark_learning",
-      adapterType: adapterType
+      tracks: {
+        guitar: {
+          notes: notes,
+          phrases: phrases
+        }
+      },
+      metadata: {
+        sourceFormat: "spark_exercise_v1",
+        laneCount: adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5,
+        chartId: definition.id,
+        enginePreset: definition.enginePreset || "spark_learning"
+      }
     });
   };
 
@@ -65,13 +66,11 @@
     var iniMeta = parseSongIni(options.songIni || "");
     var songMeta = parseSongSection(sections.Song || [], iniMeta);
     var syncMeta = parseSyncTrack(sections.SyncTrack || [], songMeta.ppq);
-    var notesMeta = parseNoteTrack(selectNoteTrack(sections, options.trackName), songMeta.ppq, adapter);
+    var notesMeta = parseNoteTrack(selectNoteTrack(sections, options.trackName), songMeta.ppq);
     var phrases = buildPhrases(notesMeta, songMeta.ppq);
     var durationSec = syncMeta.tempoMap.tickToSeconds(notesMeta.lastTickEnd);
-    var adapterType = getAdapterType(adapter);
-    var laneCount = getLaneCount(adapter);
 
-    return buildSongChart({
+    return new SparkSongChart({
       song: {
         id: songMeta.id,
         title: songMeta.title,
@@ -81,22 +80,26 @@
         durationSec: Math.max(songMeta.durationSec || 0, durationSec + songMeta.offsetSec)
       },
       tempoMap: syncMeta.tempoMap,
-      notes: notesMeta.notes,
-      phrases: phrases,
-      sourceFormat: "notes_chart_v1",
-      laneCount: laneCount,
-      chartId: songMeta.id,
-      enginePreset: options.enginePreset || "spark_learning",
-      trackName: notesMeta.trackName,
-      timeSignatures: syncMeta.timeSignatures,
-      adapterType: adapterType
+      tracks: {
+        guitar: {
+          notes: notesMeta.notes,
+          phrases: phrases
+        }
+      },
+      metadata: {
+        sourceFormat: "notes_chart_v1",
+        laneCount: adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5,
+        chartId: songMeta.id,
+        enginePreset: options.enginePreset || "spark_learning",
+        trackName: notesMeta.trackName,
+        timeSignatures: syncMeta.timeSignatures
+      }
     });
   };
 
   ChartIO.prototype.fromMidiBuffer = function(buffer, adapter, options) {
     options = options || {};
-    var laneCount = getLaneCount(adapter);
-    var adapterType = getAdapterType(adapter);
+    var laneCount = adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5;
     var iniMeta = parseSongIni(options.songIni || "");
     var midiMeta = parseMidiBuffer(buffer);
     var selectedTrack = selectMidiTrack(midiMeta.tracks, options);
@@ -105,11 +108,11 @@
       ppq: midiMeta.ppq,
       segments: midiMeta.tempoSegments.length ? midiMeta.tempoSegments : [{ tick: 0, bpm: 120 }]
     });
-    var noteEvents = buildMidiLaneEvents(selectedNotes, laneCount, adapterType);
+    var noteEvents = buildMidiLaneEvents(selectedNotes, laneCount);
     var lastTickEnd = getLastTickEnd(selectedNotes) || selectedTrack.lastTickEnd || midiMeta.lastTickEnd || 0;
     var chartId = iniMeta.id || toChartId(options.title || selectedTrack.name || "imported_midi");
 
-    return buildSongChart({
+    return new SparkSongChart({
       song: {
         id: chartId,
         title: iniMeta.name || options.title || selectedTrack.name || "Imported MIDI",
@@ -119,20 +122,25 @@
         durationSec: Math.max(numberOr(iniMeta.duration, 0), tempoMap.tickToSeconds(lastTickEnd))
       },
       tempoMap: tempoMap,
-      notes: noteEvents,
-      phrases: buildMidiPhrases(selectedTrack.markers, lastTickEnd, midiMeta.ppq),
-      sourceFormat: "notes_mid_v1",
-      laneCount: laneCount,
-      chartId: chartId,
-      enginePreset: options.enginePreset || "spark_learning",
-      trackName: selectedTrack.name || options.trackName || "midi",
-      trackIndex: selectedTrack.index,
-      selectedChannels: getAvailableChannels(selectedNotes),
-      availableChannels: selectedTrack.channels,
-      sourceTrackCount: midiMeta.tracks.length,
-      midiFormat: midiMeta.format,
-      timeSignatures: midiMeta.timeSignatures,
-      adapterType: adapterType
+      tracks: {
+        guitar: {
+          notes: noteEvents,
+          phrases: buildMidiPhrases(selectedTrack.markers, lastTickEnd, midiMeta.ppq)
+        }
+      },
+      metadata: {
+        sourceFormat: "notes_mid_v1",
+        laneCount: laneCount,
+        chartId: chartId,
+        enginePreset: options.enginePreset || "spark_learning",
+        trackName: selectedTrack.name || options.trackName || "midi",
+        trackIndex: selectedTrack.index,
+        selectedChannels: getAvailableChannels(selectedNotes),
+        availableChannels: selectedTrack.channels,
+        sourceTrackCount: midiMeta.tracks.length,
+        midiFormat: midiMeta.format,
+        timeSignatures: midiMeta.timeSignatures
+      }
     });
   };
 
@@ -162,40 +170,6 @@
 
   ChartIO.prototype.parseSongIni = function(iniText) {
     return parseSongIni(iniText);
-  };
-
-  ChartIO.prototype.toLaneChart = function(songChart, adapter, payloadOptions) {
-    payloadOptions = payloadOptions || {};
-    if (!songChart) return null;
-    var track = pickChartTrack(songChart);
-    var laneCount = payloadOptions.laneCount || getLaneCount(adapter);
-    var laneLabels = payloadOptions.laneLabels || (adapter && adapter.getLaneLabels ? adapter.getLaneLabels() : null) || buildDefaultLaneLabels(laneCount);
-    var lanes = [];
-    var notes = [];
-    var i;
-    for (i = 0; i < laneCount; i++) {
-      lanes.push({
-        lane: i,
-        label: laneLabels[i] || ("Lane " + (i + 1)),
-        input: buildLaneInputBinding(i)
-      });
-    }
-    for (i = 0; i < track.notes.length; i++) {
-      notes.push({
-        id: track.notes[i].id || ("note_" + (i + 1)),
-        time: Math.round(songChart.tempoMap.tickToSeconds(track.notes[i].tick) * 1000),
-        lane: noteToLane(track.notes[i], laneCount),
-        duration: Math.round(songChart.tempoMap.tickToSeconds(track.notes[i].tick + (track.notes[i].tickLength || 0)) * 1000) - Math.round(songChart.tempoMap.tickToSeconds(track.notes[i].tick) * 1000),
-        velocity: 1,
-        label: track.notes[i].label || ""
-      });
-    }
-    return {
-      chartId: payloadOptions.chartId || (songChart.metadata && songChart.metadata.chartId) || (songChart.song && songChart.song.id) || "chart",
-      tempo: getChartTempo(songChart.tempoMap),
-      lanes: lanes,
-      notes: notes
-    };
   };
 
   function parseChartSections(chartText) {
@@ -384,14 +358,12 @@
     };
   }
 
-  function parseNoteTrack(trackInfo, ppq, adapter) {
+  function parseNoteTrack(trackInfo, ppq) {
     var grouped = {};
     var specialPhrases = [];
     var lines = trackInfo.lines || [];
     var difficulty = trackInfo.name || "ExpertSingle";
     var lastTickEnd = 0;
-    var adapterType = getAdapterType(adapter);
-    var laneCount = getLaneCount(adapter);
 
     for (var i = 0; i < lines.length; i++) {
       var noteEvent = parseTrackEvent(lines[i]);
@@ -404,14 +376,13 @@
             tick: noteEvent.tick,
             tickLength: noteEvent.length,
             laneMask: 0,
-            lane: 0,
             flags: {},
             difficulty: difficulty,
-            instrument: adapterType,
+            instrument: "guitar",
             label: ""
           });
         }
-        applyLaneToEvent(grouped[key], noteEvent.value, laneCount);
+        applyLaneToEvent(grouped[key], noteEvent.value);
         lastTickEnd = Math.max(lastTickEnd, noteEvent.tick + noteEvent.length);
       } else if (noteEvent.kind === "S" && noteEvent.value === 2) {
         specialPhrases.push({
@@ -443,10 +414,9 @@
     };
   }
 
-  function applyLaneToEvent(noteEvent, laneValue, laneCount) {
+  function applyLaneToEvent(noteEvent, laneValue) {
     if (laneValue >= 0 && laneValue <= 4) {
-      noteEvent.lane = clampLane(laneValue, laneCount);
-      noteEvent.laneMask = noteEvent.laneMask | (1 << noteEvent.lane);
+      noteEvent.laneMask = noteEvent.laneMask | (1 << laneValue);
       return;
     }
     if (laneValue === 5) {
@@ -516,7 +486,7 @@
     return phrases.length ? phrases : buildDefaultPhrase(lastTickEnd, ppq);
   }
 
-  function buildMidiLaneEvents(rawNotes, laneCount, adapterType) {
+  function buildMidiLaneEvents(rawNotes, laneCount) {
     var grouped = {};
     for (var i = 0; i < rawNotes.length; i++) {
       var note = rawNotes[i];
@@ -551,13 +521,12 @@
         tick: first.tick,
         tickLength: first.tickLength,
         laneMask: laneMask,
-        lane: primaryLaneFromMask(laneMask, laneCount),
         flags: {
           midiNotes: pitches,
           source: "midi"
         },
         difficulty: "midi",
-        instrument: adapterType,
+        instrument: "guitar",
         label: bucket.length > 1 ? "Chord" : midiPitchLabel(first.midi)
       }));
     }
@@ -975,100 +944,6 @@
   function numberOr(value, fallback) {
     var parsed = parseFloat(value);
     return isNaN(parsed) ? fallback : parsed;
-  }
-
-  function buildSongChart(input) {
-    var trackId = input.adapterType || "guitar";
-    var tracks = {};
-    tracks[trackId] = {
-      instrument: trackId,
-      notes: input.notes || [],
-      phrases: input.phrases || []
-    };
-    return new SparkSongChart({
-      song: input.song || {},
-      tempoMap: input.tempoMap || null,
-      tracks: tracks,
-      metadata: {
-        sourceFormat: input.sourceFormat || null,
-        laneCount: input.laneCount || 5,
-        chartId: input.chartId || null,
-        enginePreset: input.enginePreset || "spark_learning",
-        trackName: input.trackName,
-        trackIndex: input.trackIndex,
-        selectedChannels: input.selectedChannels,
-        availableChannels: input.availableChannels,
-        sourceTrackCount: input.sourceTrackCount,
-        midiFormat: input.midiFormat,
-        timeSignatures: input.timeSignatures,
-        adapterType: trackId,
-        defaultTrackId: trackId
-      }
-    });
-  }
-
-  function getAdapterType(adapter) {
-    if (!adapter) return "guitar";
-    if (typeof adapter.getAdapterType === "function") return String(adapter.getAdapterType() || "guitar");
-    if (typeof adapter.adapterType === "string" && adapter.adapterType) return adapter.adapterType;
-    var ctor = adapter.constructor && adapter.constructor.name ? String(adapter.constructor.name).toLowerCase() : "";
-    if (ctor.indexOf("ukulele") >= 0) return "ukulele";
-    if (ctor.indexOf("bass") >= 0) return "bass";
-    if (ctor.indexOf("piano") >= 0) return "piano";
-    return "guitar";
-  }
-
-  function getLaneCount(adapter) {
-    return adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5;
-  }
-
-  function pickChartTrack(songChart) {
-    var trackId = songChart && songChart.metadata ? songChart.metadata.defaultTrackId : null;
-    if (trackId && songChart.tracks && songChart.tracks[trackId]) return songChart.tracks[trackId];
-    for (var key in (songChart && songChart.tracks ? songChart.tracks : {})) {
-      if (songChart.tracks[key]) return songChart.tracks[key];
-    }
-    return { notes: [], phrases: [] };
-  }
-
-  function resolveLane(note, laneCount) {
-    if (note && note.lane != null) return clampLane(note.lane, laneCount);
-    if (note && note.stringIndex != null) return clampLane(note.stringIndex, laneCount);
-    if (note && typeof note.laneMask === "number" && note.laneMask > 0) return primaryLaneFromMask(note.laneMask, laneCount);
-    return 0;
-  }
-
-  function noteToLane(note, laneCount) {
-    return resolveLane(note, laneCount);
-  }
-
-  function clampLane(lane, laneCount) {
-    lane = parseInt(lane, 10);
-    if (isNaN(lane) || lane < 0) return 0;
-    return Math.min(lane, Math.max(0, (laneCount || 1) - 1));
-  }
-
-  function primaryLaneFromMask(laneMask, laneCount) {
-    var max = Math.max(1, laneCount || 1);
-    for (var i = 0; i < max; i++) {
-      if (laneMask & (1 << i)) return i;
-    }
-    return 0;
-  }
-
-  function getChartTempo(tempoMap) {
-    return tempoMap && tempoMap.segments && tempoMap.segments.length ? tempoMap.segments[0].bpm : 100;
-  }
-
-  function buildDefaultLaneLabels(laneCount) {
-    var labels = [];
-    for (var i = 0; i < laneCount; i++) labels.push("Lane " + (i + 1));
-    return labels;
-  }
-
-  function buildLaneInputBinding(index) {
-    var keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
-    return keys[index] || String(index + 1);
   }
 
   window.SparkChartIO = ChartIO;
