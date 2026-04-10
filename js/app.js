@@ -2867,6 +2867,22 @@ window.act=function(a,v){
     if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v,S.rhythmHighwayPreset))return;
     render();return;
   }
+  if(a==="planStartWarmup"){
+    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+      window.sparkCore.startSession({flow:"daily_practice",forceRebuild:true});
+    }
+    S.screen=SCR.SESSION;render();return;
+  }
+  if(a==="planStartTransition"){
+    if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
+      window.sparkCore.startSession({flow:"daily_practice",forceRebuild:true});
+    }
+    S.screen=SCR.SESSION;render();return;
+  }
+  if(a==="planStartRhythm"){
+    S.rhythmBpm=parseInt(v)||90;
+    S.tab=TAB.RHYTHM;S.screen=SCR.HOME;render();return;
+  }
   if(a==="rhythmHighwayPreset"){
     S.rhythmHighwayPreset=v||"spark_learning";
     if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function"){
