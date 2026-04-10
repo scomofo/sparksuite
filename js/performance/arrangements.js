@@ -1,16 +1,36 @@
 (function(){
 
+  function toLaneMask(lane) {
+    return typeof lane === "number" && lane >= 0 ? (1 << lane) : 0;
+  }
+
+  function buildChordLaneMap(progression) {
+    var laneMap = {};
+    var nextLane = 0;
+    for (var i = 0; i < progression.length; i++) {
+      var chord = progression[i];
+      if (laneMap[chord] == null) {
+        laneMap[chord] = nextLane;
+        nextLane++;
+      }
+    }
+    return laneMap;
+  }
+
   function buildChordArrangement(perfSong) {
     if (!perfSong || !perfSong.progression || !perfSong.progression.length) return null;
 
     var events = [];
     var effectiveBpm = perfSong._effectiveBpm || perfSong.bpm || 100;
     var barDur = (60 / effectiveBpm) * 4; // 4 beats per bar
+    var laneMap = perfSong._laneMap || buildChordLaneMap(perfSong.progression);
+    perfSong._laneMap = laneMap;
 
     // Each progression entry = one bar, strum on beat 1
     for (var i = 0; i < perfSong.progression.length; i++) {
       var chord = perfSong.progression[i];
       var notes = [];
+      var lane = laneMap[chord];
       if (typeof CHORD_NOTES !== "undefined" && CHORD_NOTES[chord]) {
         notes = CHORD_NOTES[chord].slice();
       }
@@ -20,6 +40,8 @@
         dur: barDur,
         type: "chord",
         chord: chord,
+        lane: lane,
+        laneMask: toLaneMask(lane),
         laneLabel: chord,
         notes: notes,
         strum: "down"
@@ -73,6 +95,8 @@
         dur: slotDur * 0.8,
         type: "strum",
         chord: chordName,
+        lane: lane,
+        laneMask: toLaneMask(lane),
         laneLabel: (dir === "U" ? "\u2191 " : "\u2193 ") + chordName,
         notes: chordNotes || [],
         strum: dir,
@@ -90,6 +114,8 @@
     var pattern = perfSong.pattern || ["D","D","U","U","D","U"];
     var events = [];
     var evtId = 1;
+    var laneMap = perfSong._laneMap || buildChordLaneMap(perfSong.progression);
+    perfSong._laneMap = laneMap;
 
     for (var i = 0; i < perfSong.progression.length; i++) {
       var chord = perfSong.progression[i];
@@ -98,16 +124,7 @@
         notes = CHORD_NOTES[chord].slice();
       }
       var barStart = i * barDur;
-      var chordLane = 0;
-      // Distribute lanes by unique chord
-      if (!perfSong._laneMap) {
-        perfSong._laneMap = {};
-        var _nl = 0;
-        for (var k = 0; k < perfSong.progression.length; k++) {
-          if (perfSong._laneMap[perfSong.progression[k]] == null) { perfSong._laneMap[perfSong.progression[k]] = _nl; _nl++; }
-        }
-      }
-      chordLane = perfSong._laneMap[chord] || 0;
+      var chordLane = laneMap[chord];
       var strums = expandStrumPattern(pattern, barDur, chord, notes, barStart, 0, chordLane);
       for (var j = 0; j < strums.length; j++) {
         strums[j].id = evtId++;
@@ -153,6 +170,10 @@
 
     for (var i = 0; i < noteSequence.length; i++) {
       var n = noteSequence[i];
+      var lane = typeof n === "object" && n ? (typeof n.lane === "number" ? n.lane : null) : null;
+      var laneMask = typeof n === "object" && n && typeof n.laneMask === "number"
+        ? n.laneMask
+        : toLaneMask(lane);
       events.push({
         id: i + 1,
         t: typeof n.t === "number" ? n.t : i * beatDur * 0.5,
@@ -160,6 +181,8 @@
         type: "note",
         note: n.note || n,
         midiNote: n.midi || null,
+        lane: lane,
+        laneMask: laneMask,
         laneLabel: typeof n === "string" ? n : (n.note || "?"),
         notes: [typeof n === "string" ? n : (n.note || "")],
         strum: null

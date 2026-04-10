@@ -233,6 +233,13 @@ function normalizePerformanceChart(chart) {
   chart.events.sort(function(a, b) { return a.t - b.t; });
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
+    if (evt.lane == null) {
+      if (typeof evt.laneMask === "number" && evt.laneMask > 0) evt.lane = getPrimaryPerformanceLane(evt.laneMask);
+      else evt.lane = null;
+    }
+    if (typeof evt.laneMask !== "number") {
+      evt.laneMask = typeof evt.lane === "number" && evt.lane >= 0 ? (1 << evt.lane) : 0;
+    }
     evt.phraseId = _findPhraseIdForTime(chart, evt.t);
     evt._hit = false;
     evt._miss = false;
@@ -241,6 +248,14 @@ function normalizePerformanceChart(chart) {
     evt._score = 0;
   }
   return chart;
+}
+
+function getPrimaryPerformanceLane(laneMask) {
+  if (typeof laneMask !== "number" || laneMask <= 0) return null;
+  for (var i = 0; i < 32; i++) {
+    if (laneMask & (1 << i)) return i;
+  }
+  return null;
 }
 
 function _findPhraseIdForTime(chart, sec) {

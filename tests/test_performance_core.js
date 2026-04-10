@@ -59,6 +59,7 @@ eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_module.js'));
 eval(loadJS('js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js'));
 eval(loadJS('js/performance/chart_manifest.js'));
 eval(loadJS('js/performance/chart.js'));
+eval(loadJS('js/performance/arrangements.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway.js'));
 eval(loadJS('js/performance/progression.js'));
@@ -196,6 +197,36 @@ test('normalizePerformanceChartDefinition imports package-backed performance cha
   assert.strictEqual(performanceChart.artist, 'Performance Loader');
   assert.strictEqual(performanceChart.events.length, 2);
   assert.strictEqual(performanceChart.events[0]._scored, false);
+});
+
+test('normalizePerformanceChart derives lane from laneMask and preserves open notes', function() {
+  var chart = normalizePerformanceChart({
+    id: 'lane_chart',
+    title: 'Lane Chart',
+    bpm: 120,
+    phrases: [{ id: 0, name: 'Full Song', startSec: 0, endSec: 2 }],
+    events: [
+      { id: 'masked', t: 0, dur: 0.2, type: 'note', laneMask: 8, laneLabel: 'B', notes: ['B'] },
+      { id: 'open', t: 1, dur: 0.2, type: 'open', laneMask: 0, laneLabel: 'Open', notes: [] }
+    ]
+  });
+
+  assert.strictEqual(chart.events[0].lane, 3);
+  assert.strictEqual(chart.events[1].lane, null);
+});
+
+test('buildRhythmChordArrangement stamps lane metadata onto generated events', function() {
+  var arrangement = buildRhythmChordArrangement({
+    id: 'arr_song',
+    bpm: 120,
+    progression: ['C', 'Am'],
+    pattern: ['D', 'U']
+  });
+
+  assert.ok(arrangement.events.length > 0);
+  assert.strictEqual(typeof arrangement.events[0].lane, 'number');
+  assert.strictEqual(typeof arrangement.events[0].laneMask, 'number');
+  assert.notStrictEqual(arrangement.events[0].laneMask, 0);
 });
 
 test('getPerformanceChartLibrary includes package-backed entries for the perform browser', function() {
