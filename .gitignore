@@ -2,6 +2,7 @@
 .claude/
 .env.local
 .freesound_token.json
+.superpowers/
 dist/
 node_modules/
 nul

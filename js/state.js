@@ -290,6 +290,7 @@ var S={
 
   // Daily practice plan (for home dashboard)
   dailyPracticePlan:[],
+  spotifySavedTracks:[],
 };
 
 var T={session:null,drill:null,daily:null,song:null,strum:null,metro:null,undo:null,rhythm:null,prog:null};
@@ -340,7 +341,7 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "performanceHistory","performanceMastery",
   "reverbAmount","metronomeSound","a4Tuning","pitchDetectionMode",
   "completedCurriculumLessons","editorLibrary",
-  "releaseInfo","profile","onboardingFlow"];
+  "releaseInfo","profile","onboardingFlow","spotifySavedTracks"];
 
 // Debounced save — prevents localStorage thrashing on rapid actions (drills, quizzes)
 var _saveTimer=null;

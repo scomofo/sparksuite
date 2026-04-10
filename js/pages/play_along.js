@@ -31,6 +31,7 @@
     var demos = typeof window.getSparkPlayAlongDemos === "function" ? window.getSparkPlayAlongDemos() : [];
     var recent = getPlayAlongRecentEntries();
     var bookmarks = getPlayAlongBookmarks();
+    var savedTracks = getPlayAlongSavedTracks();
 
     h += "<div>";
     h += "<button class='btn' onclick=\"S.screen='home';S.tab='practice';render()\">&#8592; Back</button>";
@@ -50,6 +51,26 @@
     // Search
     h += "<input id='play-along-search' type='text' placeholder='Search any song...' class='input' oninput='sparkPlayAlongSearch(this.value)' style='width:100%;margin-bottom:8px'>";
     h += "<div id='play-along-results'></div>";
+
+    if (savedTracks.length > 0) {
+      h += "<div class='card' style='margin:12px 0'>";
+      h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Saved Spotify Songs</div>";
+      for (var si = 0; si < savedTracks.length; si++) {
+        var saved = savedTracks[si];
+        h += "<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:" + (si === 0 ? "none" : "1px solid var(--border)") + "'>";
+        h += "<div>";
+        h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary)'>" + escPlayAlong(saved.title || saved.trackId || "Saved Track") + "</div>";
+        h += "<div style='font-size:11px;color:var(--text-muted)'>" + escPlayAlong((saved.artist || "Unknown Artist") + (saved.bpm ? " | " + saved.bpm + " BPM" : "")) + "</div>";
+        h += "</div>";
+        h += "<div style='display:flex;gap:6px'>";
+        h += "<button class='btn btn-sm' onclick='sparkPlayAlongLaunchSaved(" + si + ")'>Play</button>";
+        h += "<button class='btn btn-sm' onclick='sparkPlayAlongRemoveSaved(" + si + ")'>Remove</button>";
+        h += "</div>";
+        h += "</div>";
+      }
+      h += "<div style='text-align:right;margin-top:8px'><button class='btn btn-sm' onclick='sparkPlayAlongClearSaved()'>Clear Saved</button></div>";
+      h += "</div>";
+    }
 
     // Recent tracks
     if (recent.length > 0) {
@@ -403,6 +424,10 @@
 
   function getPlayAlongBookmarks() {
     return Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks : [];
+  }
+
+  function getPlayAlongSavedTracks() {
+    return Array.isArray(S.spotifySavedTracks) ? S.spotifySavedTracks : [];
   }
 
   function buildPlayAlongRecentMeta(item) {

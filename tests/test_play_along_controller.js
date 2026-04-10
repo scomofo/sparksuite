@@ -20,7 +20,9 @@ function resetState() {
     screen: "playAlongSession",
     playAlongPaused: false,
     playAlongLoop: false,
-    playAlongSectionIndex: 0
+    playAlongSectionIndex: 0,
+    spotifyDifficulty: "easy",
+    spotifySavedTracks: []
   };
   global.SCR = {
     PLAY_ALONG: "playAlong",
@@ -64,8 +66,14 @@ function resetState() {
         { name: "Verse", startMs: 2000, endMs: 6000 },
         { name: "Chorus", startMs: 6000, endMs: 9000 }
       ]
+    },
+    spotifyClient: {
+      getAudioFeatures: function() {
+        return Promise.resolve({ tempo: 124.4 });
+      }
     }
   };
+  global.saveState = function() {};
   global.getSparkPlayAlongDemos = function() {
     return [{
       trackId: "demo_song_1",
@@ -252,6 +260,46 @@ test("sparkPlayAlongLaunchRecent replays remembered params", async function() {
 
   assert.strictEqual(ok, true);
   assert.strictEqual(sparkCore.startedWith.trackId, "demo_song_1");
+});
+
+test("sparkPlayAlongSaveTrack persists a searchable Spotify track with bpm metadata", async function() {
+  window._playAlongResults = [{
+    id: "spotify_track_1",
+    uri: "spotify:track:spotify_track_1",
+    name: "Seven Nation Army",
+    artist: "The White Stripes",
+    duration: 231000,
+    image: "https://example.com/cover.jpg"
+  }];
+
+  var ok = await sparkPlayAlongSaveTrack(0);
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(S.spotifySavedTracks.length, 1);
+  assert.strictEqual(S.spotifySavedTracks[0].trackId, "spotify_track_1");
+  assert.strictEqual(S.spotifySavedTracks[0].bpm, 124);
+  assert.strictEqual(S.spotifySavedTracks[0].params.trackId, "spotify_track_1");
+});
+
+test("sparkPlayAlongLaunchSaved replays a saved Spotify song", async function() {
+  S.spotifySavedTracks = [{
+    trackId: "spotify_track_1",
+    title: "Seven Nation Army",
+    params: {
+      trackId: "spotify_track_1",
+      trackUri: "spotify:track:spotify_track_1",
+      title: "Seven Nation Army",
+      artist: "The White Stripes",
+      difficulty: "easy",
+      instrument: "guitar"
+    }
+  }];
+
+  var ok = sparkPlayAlongLaunchSaved(0);
+  await Promise.resolve();
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(sparkCore.startedWith.trackId, "spotify_track_1");
 });
 
 test("adaptive coach hint escalates after repeated low-accuracy loop reps", function() {

@@ -39,6 +39,13 @@ function resetState() {
       transportMode: "generated",
       params: { trackId: "demo_song_1" }
     }],
+    spotifySavedTracks: [{
+      trackId: "spotify_track_1",
+      title: "Seven Nation Army",
+      artist: "The White Stripes",
+      bpm: 124,
+      params: { trackId: "spotify_track_1" }
+    }],
     playAlongBookmarks: [{
       trackId: "demo_song_1",
       title: "Sunrise Drive",
@@ -154,6 +161,10 @@ test("playAlongPage shows featured demo songs", function() {
 test("playAlongPage shows recent songs", function() {
   var html = playAlongPage();
 
+  assert.ok(html.indexOf("Saved Spotify Songs") >= 0);
+  assert.ok(html.indexOf("Seven Nation Army") >= 0);
+  assert.ok(html.indexOf("124 BPM") >= 0);
+  assert.ok(html.indexOf("Clear Saved") >= 0);
   assert.ok(html.indexOf("Recent Songs") >= 0);
   assert.ok(html.indexOf("Replay") >= 0);
   assert.ok(html.indexOf("Remove") >= 0);
