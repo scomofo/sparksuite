@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld('electron', {
       return function() { ipcRenderer.removeListener('stems:progress', handler); };
     }
   },
+  shell: {
+    openExternal: function(url) { return ipcRenderer.invoke("shell:openExternal", url); }
+  },
   sparkgame: {
     launch: function(chartData) { return ipcRenderer.invoke('sparkgame:launch', chartData); },
     charter: function(mp3Path, instrument, difficulty) { return ipcRenderer.invoke('sparkgame:charter', mp3Path, instrument, difficulty); }

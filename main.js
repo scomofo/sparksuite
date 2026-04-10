@@ -63,6 +63,11 @@ function createWindow() {
 // ===== STEM SEPARATION IPC =====
 
 // Open file dialog for audio files
+const { shell } = require("electron");
+ipcMain.handle("shell:openExternal", async (event, url) => {
+  await shell.openExternal(url);
+});
+
 ipcMain.handle('stems:openFile', async () => {
   var result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openFile'],
