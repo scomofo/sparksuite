@@ -3,6 +3,7 @@ function homeDashboardPage(){
   var cards = [];
   cards.push(renderHomeProfileCard(data.profile));
   cards.push(renderHomePracticeCard(data.practice));
+  cards.push(renderHomePlayAlongCard(data.playAlong));
   cards.push(renderHomeRecommendationCard(data.recommendations));
   cards.push(renderHomeChallengeCard(data.challenges));
   cards.push(renderHomeCareerCard(data.career));

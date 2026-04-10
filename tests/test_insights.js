@@ -28,7 +28,8 @@ function resetState() {
     recommendationHistory: [],
     performanceStats: {},
     personalInsights: null,
-    lastInsightRun: null
+    lastInsightRun: null,
+    playAlongRecent: []
   };
   global.escHTML = function(value) { return String(value); };
   global.getWeakestMasterySkills = function() { return []; };
@@ -42,6 +43,7 @@ resetState();
 eval(loadJS("js/insights/recommendations.js"));
 eval(loadJS("js/insights/engine.js"));
 eval(loadJS("js/insights/ui.js"));
+eval(loadJS("js/home/home_engine.js"));
 eval(loadJS("js/home/home_cards.js"));
 
 console.log("\n--- Insights ---");
@@ -163,6 +165,142 @@ test("renderHomeRecommendationCard surfaces focused imported-technique recommend
 
   assert.ok(html.indexOf("Technique: tap") >= 0);
   assert.ok(html.indexOf("Accuracy: 38%") >= 0);
+});
+
+test("renderHomePlayAlongCard surfaces recent resume context", function() {
+  var html = renderHomePlayAlongCard({
+    recent: [{
+      trackId: "demo_song_1",
+      title: "Sunrise Drive",
+      artist: "SparkSuite Demo",
+      transportMode: "generated"
+    }],
+    outcome: {
+      accuracy: 0.82
+    },
+    transportMode: "generated",
+    weakAreas: ["lane_2", "late"],
+    hasDrill: true,
+    weakSection: { sectionLabel: "Chorus" },
+    bookmarks: [{ sectionLabel: "Verse", title: "Sunrise Drive" }]
+  });
+
+  assert.ok(html.indexOf("Last song: Sunrise Drive") >= 0);
+  assert.ok(html.indexOf("Resume Song") >= 0);
+  assert.ok(html.indexOf("Last accuracy: 82%") >= 0);
+  assert.ok(html.indexOf("Weak spots: lane_2 | late") >= 0);
+  assert.ok(html.indexOf("Run Last Drill") >= 0);
+  assert.ok(html.indexOf("Jump To Weak Section") >= 0);
+  assert.ok(html.indexOf("Weak section: Chorus") >= 0);
+  assert.ok(html.indexOf("Bookmarks") >= 0);
+});
+
+test("renderSmartCoachCard includes execution trace and recent play-along context", function() {
+  S.playAlongRecent = [{ title: "Sunrise Drive" }];
+  global.window.sparkCore = {
+    runtimeState: {
+      lastExecutionTrace: {
+        source: "play_along_resume"
+      }
+    }
+  };
+
+  var html = renderSmartCoachCard({
+    recommendationQuality: {
+      smartCoach: {
+        focusSkill: "timing"
+      }
+    },
+    coach: {
+      message: "Tighten your timing before increasing speed."
+    }
+  });
+
+  assert.ok(html.indexOf("Latest execution: play_along_resume") >= 0);
+  assert.ok(html.indexOf("Recent play along: Sunrise Drive") >= 0);
+});
+
+test("buildHomeDashboardData carries play-along summary", function() {
+  S.playAlongRecent = [{ title: "Sunrise Drive", transportMode: "generated" }];
+  S.playAlongBookmarks = [{ sectionLabel: "Verse", title: "Sunrise Drive" }];
+  global.window.sparkCore = {
+    runtimeState: {
+      playAlongTransportMode: "generated",
+      lastExecutionTrace: { source: "play_along_resume" }
+    },
+    lastSessionOutcome: {
+      accuracy: 0.81,
+      performance: {
+        weakAreas: ["lane_2", "late"]
+      },
+      drills: [{ label: "Fix timing" }],
+      sectionSummary: {
+        sectionLabel: "Chorus"
+      }
+    }
+  };
+  global.getIncompleteChallenges = function() { return []; };
+  global.getActiveSeasonalEvent = function() { return null; };
+
+  var data = buildHomeDashboardData();
+
+  assert.strictEqual(data.playAlong.recent[0].title, "Sunrise Drive");
+  assert.strictEqual(data.system.executionTrace.source, "play_along_resume");
+  assert.strictEqual(data.system.transportMode, "generated");
+  assert.deepStrictEqual(data.playAlong.weakAreas, ["lane_2", "late"]);
+  assert.strictEqual(data.playAlong.hasDrill, true);
+  assert.strictEqual(data.playAlong.weakSection.sectionLabel, "Chorus");
+  assert.strictEqual(data.playAlong.bookmarks[0].sectionLabel, "Verse");
+});
+
+test("generatePersonalInsights carries play-along summary", function() {
+  S.playAlongRecent = [{ title: "Sunrise Drive", transportMode: "generated" }];
+  S.playAlongBookmarks = [{ sectionLabel: "Verse", title: "Sunrise Drive" }];
+  global.window.sparkCore = {
+    lastSessionOutcome: {
+      accuracy: 0.74,
+      performance: {
+        weakAreas: ["lane_2", "late"]
+      },
+      drills: [{ label: "Fix timing" }],
+      sectionSummary: {
+        sectionLabel: "Chorus"
+      }
+    }
+  };
+
+  var insights = generatePersonalInsights();
+
+  assert.strictEqual(insights.playAlongSummary.recentTitle, "Sunrise Drive");
+  assert.strictEqual(insights.playAlongSummary.accuracy, 74);
+  assert.deepStrictEqual(insights.playAlongSummary.weakAreas, ["lane_2", "late"]);
+  assert.strictEqual(insights.playAlongSummary.hasDrill, true);
+  assert.strictEqual(insights.playAlongSummary.weakSection, "Chorus");
+  assert.strictEqual(insights.playAlongSummary.bookmarks[0].sectionLabel, "Verse");
+});
+
+test("renderSmartCoachCard includes play-along weak spot carryover", function() {
+  var html = renderSmartCoachCard({
+    recommendationQuality: {
+      smartCoach: {
+        focusSkill: "timing"
+      }
+    },
+    coach: {
+      message: "Tighten your timing before increasing speed."
+    },
+    playAlongSummary: {
+      accuracy: 74,
+      weakAreas: ["lane_2", "late"],
+      weakSection: "Chorus",
+      bookmarks: [{ sectionLabel: "Verse" }]
+    }
+  });
+
+  assert.ok(html.indexOf("Last play-along accuracy: 74%") >= 0);
+  assert.ok(html.indexOf("Play-along weak spots: lane 2 | late") >= 0);
+  assert.ok(html.indexOf("Weak section: Chorus") >= 0);
+  assert.ok(html.indexOf("Saved section: Verse") >= 0);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

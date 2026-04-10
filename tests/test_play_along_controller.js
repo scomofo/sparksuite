@@ -1,0 +1,407 @@
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+
+var passed = 0;
+var failed = 0;
+var tests = [];
+
+function test(name, fn) {
+  tests.push({ name: name, fn: fn });
+}
+
+function loadJS(file) {
+  global.eval(fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
+}
+
+function resetState() {
+  global.window = global;
+  global.S = {
+    screen: "playAlongSession",
+    playAlongPaused: false,
+    playAlongLoop: false,
+    playAlongSectionIndex: 0
+  };
+  global.SCR = {
+    PLAY_ALONG: "playAlong",
+    PLAY_ALONG_SESSION: "playAlongSession",
+    PLAY_ALONG_RESULTS: "playAlongResults"
+  };
+  global.render = function() {};
+  global.setTimeout = function(fn) { fn(); return 1; };
+  global.cancelAnimationFrame = function() {};
+  global._rafCallback = null;
+  global.requestAnimationFrame = function(fn) { global._rafCallback = fn; return 13; };
+  global._playAlongAnimFrame = 12;
+  global.document = {
+    getElementById: function() { return null; }
+  };
+  global.sparkCore = {
+    lastSessionOutcome: null,
+    getPlaybackTimeMs: function() { return 1234; },
+    completePlayAlongSession: function() {
+      return {
+        accuracy: 0.72,
+        timing: 0.81,
+        consistency: 0.65,
+        feedback: ["Nice work"],
+        drills: [{ label: "Fix timing" }]
+      };
+    },
+    _activeParams: { trackId: "abc" },
+    startPlayAlongSession: function(params) {
+      this.startedWith = params;
+      return Promise.resolve(true);
+    },
+    audioEngine: {
+      buffer: { duration: 10 },
+      stop: function() { global._audioStopped = true; },
+      play: function(offsetSec) { global._audioPlayedAt = offsetSec; },
+      setPlaybackRate: function(rate) { global._audioRate = rate; }
+    },
+    _activeChart: {
+      sections: [
+        { name: "Verse", startMs: 2000, endMs: 6000 },
+        { name: "Chorus", startMs: 6000, endMs: 9000 }
+      ]
+    }
+  };
+  global.getSparkPlayAlongDemos = function() {
+    return [{
+      trackId: "demo_song_1",
+      title: "Sunrise Drive",
+      artist: "SparkSuite Demo",
+      audioOffsetMs: 24,
+      difficulty: "easy",
+      instrument: "guitar"
+    }];
+  };
+  global._audioStopped = false;
+  global._audioPlayedAt = null;
+  global._audioRate = null;
+}
+
+function bootstrap() {
+  resetState();
+  loadJS("js/pages/play_along_controller.js");
+}
+
+console.log("=== Play Along Controller Tests ===");
+
+test("sparkPlayAlongStop stores outcome for results screen", function() {
+  sparkPlayAlongStop();
+
+  assert.ok(sparkCore.lastSessionOutcome);
+  assert.strictEqual(sparkCore.lastSessionOutcome.accuracy, 0.72);
+  assert.strictEqual(S.screen, SCR.PLAY_ALONG_RESULTS);
+});
+
+test("sparkPlayAlongReplay reuses active params", async function() {
+  await sparkPlayAlongReplay();
+  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc" });
+  assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
+});
+
+test("sparkPlayAlongStartDrill relaunches current session into drill loop", async function() {
+  sparkCore.lastSessionOutcome = {
+    drills: [{ label: "Fix timing", startMs: 3200, endMs: 5200, speed: 0.75 }]
+  };
+
+  var ok = sparkPlayAlongStartDrill(0);
+  await Promise.resolve();
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(S.playAlongSelectedDrill.label, "Fix timing");
+  assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
+  assert.strictEqual(S.playAlongLoop, true);
+  assert.deepStrictEqual(S.playAlongLoopRange, { startMs: 3200, endMs: 5200 });
+  assert.strictEqual(S.playAlongSpeed, "0.75");
+  assert.strictEqual(global._audioRate, 0.75);
+  assert.strictEqual(global._audioPlayedAt, 3.2);
+  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc" });
+});
+
+test("sparkPlayAlongTogglePause stores current position and resumes local audio", function() {
+  var paused = sparkPlayAlongTogglePause();
+
+  assert.strictEqual(paused, true);
+  assert.strictEqual(S.playAlongPaused, true);
+  assert.strictEqual(sparkCore._pausedPlaybackTimeMs, 1234);
+  assert.strictEqual(global._audioStopped, true);
+
+  var resumed = sparkPlayAlongTogglePause();
+
+  assert.strictEqual(resumed, false);
+  assert.strictEqual(S.playAlongPaused, false);
+  assert.strictEqual(global._audioPlayedAt, 1.234);
+  assert.strictEqual(sparkCore._pausedPlaybackTimeMs, null);
+});
+
+test("sparkPlayAlongToggleLoop derives first section loop window", function() {
+  var looped = sparkPlayAlongToggleLoop();
+
+  assert.strictEqual(looped, true);
+  assert.strictEqual(S.playAlongLoop, true);
+  assert.deepStrictEqual(S.playAlongLoopRange, { startMs: 2000, endMs: 6000 });
+
+  var disabled = sparkPlayAlongToggleLoop();
+
+  assert.strictEqual(disabled, false);
+  assert.strictEqual(S.playAlongLoop, false);
+  assert.strictEqual(S.playAlongLoopRange, null);
+});
+
+test("sparkPlayAlongSetLoopTarget prefers section when requested", function() {
+  S.playAlongSelectedDrill = { label: "Fix timing", startMs: 3200, endMs: 5200 };
+
+  var ok = sparkPlayAlongSetLoopTarget("section");
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(S.playAlongLoopTarget, "section");
+  assert.deepStrictEqual(S.playAlongLoopRange, { startMs: 2000, endMs: 6000 });
+});
+
+test("sparkPlayAlongReplay preserves selected drill loop context", async function() {
+  S.playAlongSelectedDrill = { label: "Fix timing", startMs: 3200, endMs: 5200, speed: 0.75 };
+  S.playAlongLoop = true;
+  S.playAlongLoopRange = { startMs: 3200, endMs: 5200 };
+
+  await sparkPlayAlongReplay();
+  await Promise.resolve();
+
+  assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
+  assert.strictEqual(S.playAlongLoop, true);
+  assert.deepStrictEqual(S.playAlongLoopRange, { startMs: 3200, endMs: 5200 });
+  assert.strictEqual(global._audioPlayedAt, 3.2);
+});
+
+test("drill loop auto-stops when target reps are completed", function() {
+  var frameCalls = 0;
+  sparkCore.getPlaybackTimeMs = function() { return 5300; };
+  sparkCore.processPlayAlongFrame = function() {
+    frameCalls++;
+    return { timeMs: 5300, visibleNotes: [] };
+  };
+  sparkCore.completePlayAlongSession = function() {
+    return {
+      accuracy: 0.9,
+      timing: 0.9,
+      consistency: 0.9,
+      feedback: [],
+      drills: []
+    };
+  };
+  S.playAlongSelectedDrill = { label: "Fix timing", startMs: 3200, endMs: 5200, repetitions: 2 };
+  S.playAlongLoop = true;
+  S.playAlongLoopRange = { startMs: 3200, endMs: 5200 };
+  S.playAlongLoopIteration = 2;
+
+  sparkPlayAlongStartLoop();
+  global._rafCallback();
+
+  assert.strictEqual(frameCalls, 0);
+  assert.strictEqual(S.screen, SCR.PLAY_ALONG_RESULTS);
+  assert.strictEqual(S.playAlongLoop, false);
+  assert.strictEqual(S.playAlongLoopProgress, 100);
+  assert.ok(sparkCore.lastSessionOutcome);
+  assert.ok(sparkCore.lastSessionOutcome.drillSummary);
+  assert.strictEqual(sparkCore.lastSessionOutcome.drillSummary.metTarget, true);
+});
+
+test("sparkPlayAlongLaunchDemo launches curated song metadata", async function() {
+  var ok = sparkPlayAlongLaunchDemo(0);
+  await Promise.resolve();
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
+  assert.deepStrictEqual(sparkCore.startedWith, {
+    trackId: "demo_song_1",
+    trackUri: null,
+    title: "Sunrise Drive",
+    artist: "SparkSuite Demo",
+    audioOffsetMs: 24,
+    difficulty: "easy",
+    instrument: "guitar"
+  });
+});
+
+test("launch remembers recent play along songs", async function() {
+  sparkPlayAlongLaunchDemo(0);
+  await Promise.resolve();
+
+  assert.ok(Array.isArray(S.playAlongRecent));
+  assert.strictEqual(S.playAlongRecent.length, 1);
+  assert.strictEqual(S.playAlongRecent[0].title, "Sunrise Drive");
+  assert.strictEqual(S.playAlongRecent[0].transportMode, "generated");
+});
+
+test("sparkPlayAlongLaunchRecent replays remembered params", async function() {
+  S.playAlongRecent = [{
+    trackId: "demo_song_1",
+    title: "Sunrise Drive",
+    params: {
+      trackId: "demo_song_1",
+      title: "Sunrise Drive",
+      difficulty: "easy",
+      instrument: "guitar"
+    }
+  }];
+
+  var ok = sparkPlayAlongLaunchRecent(0);
+  await Promise.resolve();
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(sparkCore.startedWith.trackId, "demo_song_1");
+});
+
+test("adaptive coach hint escalates after repeated low-accuracy loop reps", function() {
+  sparkCore.performanceTracker = {
+    getAccuracy: function() { return 0.5; }
+  };
+  sparkCore.processPlayAlongFrame = function() {
+    return { timeMs: 4000, visibleNotes: [] };
+  };
+  S.playAlongLoop = true;
+  S.playAlongLoopRange = { startMs: 3200, endMs: 5200 };
+  S.playAlongLoopIteration = 3;
+
+  sparkPlayAlongStartLoop();
+  global._rafCallback();
+
+  assert.ok(S.playAlongCoachHint.indexOf("multiple reps") >= 0);
+});
+
+test("section navigation advances and seeks to the next section", function() {
+  var ok = sparkPlayAlongNextSection();
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(S.playAlongSectionIndex, 1);
+  assert.strictEqual(S.playAlongCurrentSection, "Section: Chorus");
+  assert.strictEqual(global._audioPlayedAt, 6);
+});
+
+test("section loop target follows selected section index", function() {
+  S.playAlongLoopTarget = "section";
+  S.playAlongSectionIndex = 1;
+
+  var ok = sparkPlayAlongSetLoopTarget("section");
+
+  assert.strictEqual(ok, true);
+  assert.deepStrictEqual(S.playAlongLoopRange, { startMs: 6000, endMs: 9000 });
+});
+
+test("recent history can remove a single entry and clear all entries", function() {
+  S.playAlongRecent = [
+    { trackId: "a", params: { trackId: "a" } },
+    { trackId: "b", params: { trackId: "b" } }
+  ];
+
+  assert.strictEqual(sparkPlayAlongRemoveRecent(0), true);
+  assert.strictEqual(S.playAlongRecent.length, 1);
+  assert.strictEqual(S.playAlongRecent[0].trackId, "b");
+
+  assert.strictEqual(sparkPlayAlongClearRecent(), true);
+  assert.deepStrictEqual(S.playAlongRecent, []);
+});
+
+test("bookmark current section stores replayable section entry", function() {
+  sparkCore._activeParams = {
+    trackId: "demo_song_1",
+    title: "Sunrise Drive",
+    instrument: "guitar"
+  };
+  S.playAlongSectionIndex = 1;
+
+  var ok = sparkPlayAlongBookmarkCurrentSection();
+
+  assert.strictEqual(ok, true);
+  assert.ok(Array.isArray(S.playAlongBookmarks));
+  assert.strictEqual(S.playAlongBookmarks[0].sectionLabel, "Chorus");
+  assert.strictEqual(S.playAlongBookmarks[0].params.trackId, "demo_song_1");
+});
+
+test("launch bookmark restores section loop context", async function() {
+  S.playAlongBookmarks = [{
+    trackId: "demo_song_1",
+    sectionIndex: 1,
+    sectionLabel: "Chorus",
+    params: {
+      trackId: "demo_song_1",
+      title: "Sunrise Drive",
+      difficulty: "easy",
+      instrument: "guitar"
+    }
+  }];
+
+  var ok = sparkPlayAlongLaunchBookmark(0);
+  await Promise.resolve();
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(S.playAlongSectionIndex, 1);
+  assert.strictEqual(S.playAlongLoop, true);
+  assert.strictEqual(S.playAlongLoopTarget, "section");
+  assert.strictEqual(sparkCore.startedWith.trackId, "demo_song_1");
+});
+
+test("jump to weak section relaunches current session at stored section", async function() {
+  sparkCore.lastSessionOutcome = {
+    sectionSummary: {
+      sectionIndex: 1,
+      sectionLabel: "Chorus"
+    }
+  };
+  sparkCore._activeParams = {
+    trackId: "demo_song_1",
+    title: "Sunrise Drive",
+    difficulty: "easy",
+    instrument: "guitar"
+  };
+
+  var ok = await sparkPlayAlongJumpToWeakSection();
+  await Promise.resolve();
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(S.playAlongSectionIndex, 1);
+  assert.strictEqual(S.playAlongLoop, true);
+  assert.strictEqual(S.playAlongLoopTarget, "section");
+  assert.strictEqual(sparkCore.startedWith.trackId, "demo_song_1");
+});
+
+test("jump to section recommendation resolves params from recent history", async function() {
+  S.playAlongRecent = [{
+    trackId: "demo_song_1",
+    params: {
+      trackId: "demo_song_1",
+      title: "Sunrise Drive",
+      difficulty: "easy",
+      instrument: "guitar"
+    }
+  }];
+
+  var ok = await sparkPlayAlongJumpToSectionRecommendation("demo_song_1", 1);
+  await Promise.resolve();
+
+  assert.strictEqual(ok, true);
+  assert.strictEqual(S.playAlongSectionIndex, 1);
+  assert.strictEqual(S.playAlongLoopTarget, "section");
+  assert.strictEqual(sparkCore.startedWith.trackId, "demo_song_1");
+});
+
+Promise.resolve().then(async function() {
+  for (var i = 0; i < tests.length; i++) {
+    try {
+      bootstrap();
+      await tests[i].fn();
+      passed++;
+      console.log("  PASS: " + tests[i].name);
+    } catch (err) {
+      failed++;
+      console.error("  FAIL: " + tests[i].name + " -- " + err.message);
+    }
+  }
+  console.log("\n" + passed + " passed, " + failed + " failed");
+  if (failed > 0) process.exit(1);
+}).catch(function(err) {
+  console.error(err);
+  process.exit(1);
+});

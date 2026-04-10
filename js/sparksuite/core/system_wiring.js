@@ -86,6 +86,9 @@
   // ---------------------------------------------------------------
 
   SparkCore.prototype.getPlaybackTimeMs = function () {
+    if (typeof this._pausedPlaybackTimeMs === "number") {
+      return this._pausedPlaybackTimeMs;
+    }
     // Single time source: SparkTimeSource (bound in initPlayAlongSystems)
     if (typeof SparkTimeSource !== "undefined" && SparkTimeSource.isPlaying()) {
       return SparkTimeSource.getTimeMs();
@@ -116,6 +119,8 @@
   SparkCore.prototype.startPlayAlongSession = function (params) {
     var self = this;
     params = params || {};
+    this._activeParams = JSON.parse(JSON.stringify(params));
+    this._pausedPlaybackTimeMs = null;
 
     return new Promise(function (resolve, reject) {
       try {
@@ -127,6 +132,12 @@
         });
         if (typeof SparkDebugState !== "undefined") SparkDebugState.update({ rlAction: decision.action });
         var difficulty = decision.difficulty || params.difficulty || "medium";
+        if (typeof self.updateRuntimeState === "function") {
+          self.updateRuntimeState({
+            playAlongTransportMode: params.audioFile ? "local" : (params.stems ? "stems" : (params.trackUri ? "spotify" : "generated")),
+            playAlongTrackId: params.trackId || null
+          });
+        }
 
         // 2. Reset trackers
         self.performanceTracker.reset();
@@ -144,7 +155,11 @@
             params.audioFile, params.trackId, difficulty, params.instrument
           );
         } else if (params.trackId && self.chartService) {
-          chartPromise = self.chartService.generate(params.trackId, difficulty, params.instrument);
+          chartPromise = self.chartService.generate({
+            trackId: params.trackId,
+            difficulty: difficulty,
+            instrument: params.instrument
+          });
         } else {
           chartPromise = Promise.resolve(null);
         }
@@ -153,6 +168,15 @@
           // 4. Store active session state
           self._activeChart = chart;
           self._activeUserId = params.userId;
+          if (chart && params.title && chart.songChart && chart.songChart.song) chart.songChart.song.title = params.title;
+          if (chart && params.artist && chart.songChart && chart.songChart.song) chart.songChart.song.artist = params.artist;
+          if (chart && params.trackUri && !chart.trackUri) chart.trackUri = params.trackUri;
+          if (chart && chart.audio) {
+            if (params.audioOffsetMs != null) {
+              chart.audio.offset_ms = params.audioOffsetMs;
+              chart.audio.offsetMs = params.audioOffsetMs;
+            }
+          }
 
           // 5. Start audio
           self._startAudioForSession(params, chart);
@@ -190,21 +214,25 @@
     }
 
     if (this.chordPredictor && typeof this.chordPredictor.predictWindow === "function") {
-      prediction = this.chordPredictor.predictWindow(timeMs, timeMs + 3000);
+      prediction = this.chordPredictor.predictWindow(timeMs, chart && chart.timeline ? chart.timeline : [], 3000);
     }
 
-    if (this.voiceCoach && chart && chart.sections) {
-      this.voiceCoach.markSectionBoundaries(chart.sections, timeMs);
+    if (this.voiceCoach && chart && chart.sections && chart.sections.length) {
+      if (isNearSectionBoundary(chart.sections, timeMs)) {
+        if (typeof this.voiceCoach.markSectionBoundary === "function") this.voiceCoach.markSectionBoundary();
+      } else if (typeof this.voiceCoach.clearSectionBoundary === "function") {
+        this.voiceCoach.clearSectionBoundary();
+      }
     }
 
     // Update debug state
     if (typeof SparkDebugState !== "undefined") {
       SparkDebugState.update({
         time: timeMs,
-        expected: visible.length ? (visible[0].lane != null ? visible[0].lane : visible[0].chord) : null,
-        bpm: (self._activeChart && self._activeChart.getBpm) ? self._activeChart.getBpm() : 0,
-        audioMode: self.audioEngine && self.audioEngine.isPlaying() ? "local" : (self.stemMixer && self.stemMixer.isPlaying() ? "stems" : "spotify"),
-        latencyMs: self.latencyCalibrator ? self.latencyCalibrator.getOffset() : 0
+        expected: visibleNotes.length ? (visibleNotes[0].lane != null ? visibleNotes[0].lane : visibleNotes[0].chord) : null,
+        bpm: (this._activeChart && this._activeChart.getBpm) ? this._activeChart.getBpm() : 0,
+        audioMode: this.audioEngine && this.audioEngine.isPlaying() ? "local" : (this.stemMixer && this.stemMixer.isPlaying() ? "stems" : "spotify"),
+        latencyMs: this.latencyCalibrator ? this.latencyCalibrator.getOffset() : 0
       });
     }
 
@@ -229,17 +257,17 @@
 
     if (!chart || !chart.timeline) {
       // Update debug state with input
-    if (typeof SparkDebugState !== "undefined") {
-      SparkDebugState.update({
-        detected: inputEvent.note || null,
-        chord: inputEvent.chord || null,
-        confidence: inputEvent.confidence || 0,
-        delta: nearestDelta || 0,
-        accuracy: self.performanceTracker ? self.performanceTracker.getAccuracy() : 0
-      });
-    }
+      if (typeof SparkDebugState !== "undefined") {
+        SparkDebugState.update({
+          detected: inputEvent.note || null,
+          chord: inputEvent.chord || null,
+          confidence: inputEvent.confidence || 0,
+          delta: 0,
+          accuracy: this.performanceTracker ? this.performanceTracker.getAccuracy() : 0
+        });
+      }
 
-    return { result: null, chordResult: null, delta: null };
+      return { result: null, chordResult: null, delta: null };
     }
 
     // Find nearest expected note
@@ -271,7 +299,7 @@
 
     // Voice coach evaluation
     if (this.voiceCoach && result) {
-      this.voiceCoach.evaluate(result);
+      this.voiceCoach.evaluate(result, inputEvent.time || this.getInputTimeMs());
     }
 
     return {
@@ -286,6 +314,9 @@
   // ---------------------------------------------------------------
 
   SparkCore.prototype.completePlayAlongSession = function () {
+    var userId = this._activeUserId || null;
+    var model = null;
+
     // 1. Stop all audio
     if (this.audioEngine && typeof this.audioEngine.stop === "function") {
       this.audioEngine.stop();
@@ -300,40 +331,63 @@
     // 2. Performance summary
     var performance = this.performanceTracker.getSummary();
     var events = this.performanceTracker.getEvents ? this.performanceTracker.getEvents() : [];
+    if (!Array.isArray(events) || !events.length) {
+      events = Array.isArray(performance) ? performance.slice() : [];
+    }
+    var performanceSummary = summarizePerformanceEvents(
+      Array.isArray(performance) ? performance : events,
+      this.performanceTracker && typeof this.performanceTracker.getAccuracy === "function"
+        ? this.performanceTracker.getAccuracy()
+        : null
+    );
 
     // 3. Heatmap and clusters
     var heatmap = this.heatmapGenerator.generate(events);
     var clusters = this.heatmapGenerator.findClusters ? this.heatmapGenerator.findClusters(heatmap) : [];
 
     // 4. Style analysis
-    var style = this.styleAnalyzer.analyze(events);
+    var style = this.styleAnalyzer.analyze(performanceSummary, {});
 
     // 5. Compute reward
-    var reward = this.rewardModel.compute(performance);
+    var reward = this.rewardModel.compute(performanceSummary);
 
     // 6. Update learner model
-    var updatedModel = this.policyEngine.update(model, performance);
-    this.learnerModel.save(userId, updatedModel);
+    if (userId && this.learnerModel && typeof this.learnerModel.load === "function") {
+      model = this.learnerModel.load(userId);
+    } else if (this.learnerModel && typeof this.learnerModel.toJSON === "function") {
+      model = this.learnerModel.toJSON();
+    }
+
+    var updatedModel = this.policyEngine && typeof this.policyEngine.update === "function"
+      ? this.policyEngine.update(model, performanceSummary)
+      : model;
+    if (userId && this.learnerModel && typeof this.learnerModel.save === "function") {
+      this.learnerModel.save(userId, updatedModel);
+    }
 
     // 7. Generate feedback
-    var feedback = this.feedbackEngine.generate(performance, style);
+    var feedback = this.feedbackEngine.generate(performanceSummary, style);
 
     // 8. Drills for weak areas
-    var drills = this.drillGenerator.generate(performance.weakAreas || []);
+    var drills = this.drillGenerator.generate(clusters, this._activeChart);
 
     // 9. Voice coach final message
     if (this.voiceCoach && typeof this.voiceCoach.sessionComplete === "function") {
-      this.voiceCoach.sessionComplete(performance);
+      this.voiceCoach.sessionComplete(performanceSummary);
     }
 
     // 10. Compute accuracy
     var accuracy = this._computeAvgTiming(events);
 
-    var model = this.learnerModel.toJSON ? this.learnerModel.toJSON() : null;
+    model = this.learnerModel && typeof this.learnerModel.toJSON === "function"
+      ? this.learnerModel.toJSON()
+      : updatedModel;
 
     return {
-      accuracy: accuracy,
-      performance: performance,
+      accuracy: performanceSummary.accuracy,
+      timing: performanceSummary.timing,
+      consistency: performanceSummary.consistency,
+      performance: performanceSummary,
       reward: reward,
       heatmap: heatmap,
       clusters: clusters,
@@ -456,6 +510,7 @@
   // ---------------------------------------------------------------
 
   SparkCore.prototype._startAudioForSession = function (params, chart) {
+    this._pausedPlaybackTimeMs = null;
     if (params.audioFile) {
       SparkTimeSource.bind(this.audioEngine);
       this.audioEngine.play();
@@ -464,8 +519,11 @@
       this.stemController.attach(this.stemMixer);
       SparkTimeSource.bind(this.stemMixer);
       this.stemMixer.play();
-    } else if (params.trackUri && this.playbackEngine) {
-      this.playbackEngine.play(params.trackUri);
+    } else if (params.trackUri && this.playbackEngine && typeof this.playbackEngine.start === "function") {
+      this.playbackEngine.start(params.trackUri, {
+        audioOffsetMs: params.audioOffsetMs || 0,
+        deviceId: params.deviceId
+      });
     }
   };
 
@@ -481,5 +539,57 @@
     }
     return sum / events.length;
   };
+
+  function isNearSectionBoundary(sections, timeMs) {
+    for (var i = 0; i < sections.length; i++) {
+      var start = sections[i] && sections[i].start != null ? sections[i].start : null;
+      if (start == null) continue;
+      if (Math.abs(start - timeMs) <= 150) return true;
+    }
+    return false;
+  }
+
+  function summarizePerformanceEvents(events, accuracyOverride) {
+    events = Array.isArray(events) ? events : [];
+    var total = events.length;
+    var hits = 0;
+    var sumAbsError = 0;
+    var varianceSeed = [];
+    var weakAreas = [];
+    for (var i = 0; i < events.length; i++) {
+      var event = events[i] || {};
+      if (event.hit) hits++;
+      var err = Math.abs(event.error || 0);
+      sumAbsError += err;
+      varianceSeed.push(err);
+      if (!event.hit) {
+        if (event.lane != null && weakAreas.indexOf("lane_" + event.lane) < 0) weakAreas.push("lane_" + event.lane);
+        if (event.judgement && weakAreas.indexOf(event.judgement) < 0) weakAreas.push(event.judgement);
+      }
+    }
+    var accuracy = typeof accuracyOverride === "number" ? accuracyOverride : (total ? hits / total : 0);
+    var avgAbsError = total ? (sumAbsError / total) : 0;
+    var timing = Math.max(0, Math.min(1, 1 - (avgAbsError / 200)));
+    var consistency = 1;
+    if (varianceSeed.length > 1) {
+      var mean = avgAbsError;
+      var variance = 0;
+      for (var j = 0; j < varianceSeed.length; j++) {
+        variance += Math.pow(varianceSeed[j] - mean, 2);
+      }
+      variance = variance / varianceSeed.length;
+      consistency = Math.max(0, Math.min(1, 1 - (Math.sqrt(variance) / 200)));
+    }
+    return {
+      totalEvents: total,
+      hits: hits,
+      misses: Math.max(0, total - hits),
+      accuracy: accuracy,
+      timing: timing,
+      consistency: consistency,
+      avgTiming: avgAbsError,
+      weakAreas: weakAreas
+    };
+  }
 
 })();

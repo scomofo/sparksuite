@@ -3565,8 +3565,7 @@ window.act=function(a,v){
   }
   if(a==="rhythmHighwayLoopWindow"){
     if(typeof _createRhythmHighwayLoopSpec==="function" && S.activeCoreSegmentId){
-      var segment = window.sparkCore && typeof window.sparkCore.getSegmentById==="function" ? window.sparkCore.getSegmentById(S.activeCoreSegmentId) : null;
-      var payload = segment && segment.meta ? segment.meta.gameplayPayload : null;
+      var payload = typeof _resolveRhythmHighwayPayload==="function" ? _resolveRhythmHighwayPayload(S.activeCoreSegmentId) : null;
       var loopSpec = _createRhythmHighwayLoopSpec(payload, S.rhythmHighwaySnapshot);
       if(loopSpec && typeof startRhythmHighwaySegment==="function"){
         S.rhythmHighwayLoop=loopSpec;

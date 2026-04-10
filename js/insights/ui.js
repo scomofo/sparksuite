@@ -17,6 +17,7 @@ function insightsDashboardPage(){
   h += renderMasteryTrendCard(pi);
   h += renderPracticeTrendCard(pi);
   h += renderRecommendationInsightCard(pi);
+  h += renderSmartCoachCard(pi);
   h += renderCareerInsightCard(pi);
   return h;
 }
@@ -62,6 +63,47 @@ function renderRecommendationInsightCard(pi){
   if(rq.focusedTechnique){
     h += '<div style="margin-top:8px;color:#8fd5c4"><b>Focused Technique</b></div>';
     h += '<div>' + escHTML(prettyFocusedTechniqueInsight(rq.focusedTechnique)) + '</div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function renderSmartCoachCard(pi){
+  var smartCoach = pi && pi.recommendationQuality ? pi.recommendationQuality.smartCoach : null;
+  var coach = pi && pi.coach ? pi.coach : null;
+  var trace = window.sparkCore && window.sparkCore.runtimeState ? window.sparkCore.runtimeState.lastExecutionTrace : (window.__sparkExecutionTrace || null);
+  var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent : [];
+  var latest = recent.length ? recent[0] : null;
+  if (!smartCoach && !(coach && coach.message)) return '';
+  var h = '<div class="card mb16">';
+  h += '<div><b>Smart Coach</b></div>';
+  if (coach && coach.message) {
+    h += '<div style="margin-top:8px;color:#8fd5c4">' + escHTML(coach.message) + '</div>';
+  }
+  if (smartCoach) {
+    if (smartCoach.focusSkill) h += '<div style="margin-top:8px">Focus: ' + escHTML(String(smartCoach.focusSkill).replace(/_/g, " ")) + '</div>';
+    if (smartCoach.weakArea) h += '<div>Weak area: ' + escHTML(String(smartCoach.weakArea).replace(/_/g, " ")) + '</div>';
+    if (smartCoach.recommendedDifficultyId) h += '<div>Suggested difficulty: ' + escHTML(smartCoach.recommendedDifficultyId) + '</div>';
+  }
+  if (trace) {
+    h += '<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">Latest execution: ' + escHTML(trace.source || trace.status || "unknown") + '</div>';
+  }
+  if (latest) {
+    h += '<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">Recent play along: ' + escHTML(latest.title || latest.trackId || "song") + '</div>';
+  }
+  if (pi && pi.playAlongSummary) {
+    if (pi.playAlongSummary.accuracy != null) {
+      h += '<div style="font-size:12px;color:var(--text-muted)">Last play-along accuracy: ' + escHTML(String(pi.playAlongSummary.accuracy)) + '%</div>';
+    }
+    if (pi.playAlongSummary.weakAreas && pi.playAlongSummary.weakAreas.length) {
+      h += '<div style="font-size:12px;color:var(--text-muted)">Play-along weak spots: ' + escHTML(pi.playAlongSummary.weakAreas.join(" | ").replace(/lane_/g, "lane ")) + '</div>';
+    }
+    if (pi.playAlongSummary.weakSection) {
+      h += '<div style="font-size:12px;color:var(--text-muted)">Weak section: ' + escHTML(pi.playAlongSummary.weakSection) + '</div>';
+    }
+    if (pi.playAlongSummary.bookmarks && pi.playAlongSummary.bookmarks.length) {
+      h += '<div style="font-size:12px;color:var(--text-muted)">Saved section: ' + escHTML(pi.playAlongSummary.bookmarks[0].sectionLabel || "Section") + '</div>';
+    }
   }
   h += '</div>';
   return h;

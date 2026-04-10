@@ -33,6 +33,20 @@ function resetState() {
     dailyChallenges: [],
     recommendationHistory: [],
     recommendationSettings: { maxSuggestions: 5 },
+    playAlongRecent: [{
+      trackId: "demo_song_1",
+      title: "Sunrise Drive",
+      transportMode: "generated",
+      params: { trackId: "demo_song_1", title: "Sunrise Drive" }
+    }],
+    playAlongBookmarks: [{
+      trackId: "demo_song_1",
+      title: "Sunrise Drive",
+      sectionIndex: 1,
+      sectionLabel: "Chorus",
+      startMs: 6000,
+      params: { trackId: "demo_song_1", title: "Sunrise Drive" }
+    }],
     bassSkillProgress: {
       walking_bass: {
         groove: 0.79,
@@ -43,6 +57,17 @@ function resetState() {
     }
   };
   global.saveState = function() {};
+  global.window.sparkCore = {
+    lastSessionOutcome: {
+      performance: {
+        weakAreas: ["lane_2", "late"]
+      },
+      sectionSummary: {
+        sectionIndex: 1,
+        sectionLabel: "Chorus"
+      }
+    }
+  };
   global.getAverageMastery = function() { return 1; };
   global.getTopWeakSpots = function() { return null; };
   global.getCurriculumItem = function() { return null; };
@@ -131,15 +156,34 @@ test("collectRecommendationCandidates includes module-progress recommendation ca
   assert.ok(candidate.reasons[0].indexOf("48%") >= 0);
 });
 
-test("generateRecommendations prioritizes module-progress candidates ahead of generic challenges", function() {
+test("collectRecommendationCandidates includes play-along weak-section and bookmark candidates", function() {
+  var candidates = collectRecommendationCandidates("guitar");
+  var weakSection = null;
+  var bookmark = null;
+  for (var i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "play_along") weakSection = candidates[i];
+    if (candidates[i].source === "play_along_bookmark") bookmark = candidates[i];
+  }
+
+  assert.ok(weakSection);
+  assert.strictEqual(weakSection.meta.sectionLabel, "Chorus");
+  assert.strictEqual(weakSection.meta.trackTitle, "Sunrise Drive");
+  assert.deepStrictEqual(weakSection.meta.weakAreas, ["lane_2", "late"]);
+  assert.ok(bookmark);
+  assert.strictEqual(bookmark.meta.sectionLabel, "Chorus");
+});
+
+test("generateRecommendations prioritizes play-along recovery and module-progress ahead of generic challenges", function() {
   S.dailyChallenges = [{ id: "daily_walk", type: "practice", completed: false }];
 
   var recommendations = generateRecommendations("guitar");
 
   assert.ok(recommendations.length >= 2);
-  assert.strictEqual(recommendations[0].source, "module_progress");
-  assert.strictEqual(recommendations[0].meta.exerciseId, "bass_turnaround_01");
-  assert.strictEqual(S.recommendations[0].source, "module_progress");
+  assert.strictEqual(recommendations[0].source, "play_along");
+  assert.strictEqual(recommendations[0].meta.sectionLabel, "Chorus");
+  assert.strictEqual(recommendations[1].source, "module_progress");
+  assert.strictEqual(recommendations[1].meta.exerciseId, "bass_turnaround_01");
+  assert.strictEqual(S.recommendations[0].source, "play_along");
 });
 
 test("module-progress scoring increases when the weakest metric is lower", function() {
@@ -193,6 +237,49 @@ test("recommendationsPage renders module-progress focus and weakest metric detai
 
   assert.ok(html.indexOf("Focus: walking") >= 0);
   assert.ok(html.indexOf("Weakest: timing 48%") >= 0);
+});
+
+test("recommendationsPage renders play-along section recommendation details", function() {
+  global.escHTML = function(value) { return String(value); };
+  S.recommendations = [{
+    id: "playalong_weak_section_demo_song_1_1",
+    type: "play_along_section",
+    title: "Play Along: Fix Chorus",
+    source: "play_along",
+    reasons: ["Recent play-along weak section needs another pass"],
+    meta: {
+      trackTitle: "Sunrise Drive",
+      sectionLabel: "Chorus",
+      weakAreas: ["lane_2", "late"]
+    }
+  }];
+
+  var html = recommendationsPage();
+
+  assert.ok(html.indexOf("Song: Sunrise Drive") >= 0);
+  assert.ok(html.indexOf("Section: Chorus") >= 0);
+  assert.ok(html.indexOf("Weak: lane_2 | late") >= 0);
+});
+
+test("launchRecommendationById routes play-along recommendation through section jump helper", function() {
+  var called = null;
+  global.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {
+    called = { trackId: trackId, sectionIndex: sectionIndex };
+    return true;
+  };
+  S.recommendations = [{
+    id: "playalong_weak_section_demo_song_1_1",
+    type: "play_along_section",
+    source: "play_along",
+    meta: {
+      trackId: "demo_song_1",
+      sectionIndex: 1
+    }
+  }];
+
+  launchRecommendationById("playalong_weak_section_demo_song_1_1");
+
+  assert.deepStrictEqual(called, { trackId: "demo_song_1", sectionIndex: 1 });
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

@@ -54,6 +54,15 @@
     return weakest;
   }
 
+  function getStrongestSkill(sg) {
+    var skills = { timing: sg.timing, rhythm: sg.rhythm, chordAccuracy: sg.chordAccuracy };
+    var strongest = null, highest = -1;
+    for (var key in skills) {
+      if (skills[key] > highest) { highest = skills[key]; strongest = key; }
+    }
+    return strongest;
+  }
+
   function getSkillDelta(sg, previousSnapshot) {
     return {
       timing: Math.round((sg.timing - (previousSnapshot.timing || 0)) * 100) / 100,
@@ -62,10 +71,27 @@
     };
   }
 
+  function summarize(sg) {
+    if (!sg) return null;
+    var weakestSkill = getWeakestSkill(sg);
+    var strongestSkill = getStrongestSkill(sg);
+    var weakestLane = getWeakestLane(sg);
+    return {
+      weakestSkill: weakestSkill,
+      weakestValue: weakestSkill ? sg[weakestSkill] || 0 : 0,
+      strongestSkill: strongestSkill,
+      strongestValue: strongestSkill ? sg[strongestSkill] || 0 : 0,
+      weakestLane: weakestLane,
+      weakestLaneValue: sg.laneAccuracy && sg.laneAccuracy[weakestLane] != null ? sg.laneAccuracy[weakestLane] : null
+    };
+  }
+
   var SparkSkillTracker = {
     create: create, update: update,
     getWeakestSkill: getWeakestSkill, getWeakestLane: getWeakestLane,
-    getSkillDelta: getSkillDelta
+    getStrongestSkill: getStrongestSkill,
+    getSkillDelta: getSkillDelta,
+    summarize: summarize
   };
 
   if (typeof window !== "undefined") window.SparkSkillTracker = SparkSkillTracker;

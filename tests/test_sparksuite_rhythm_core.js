@@ -75,6 +75,7 @@ eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_exercises.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_progression.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_module.js"));
 eval(loadJS("js/sparksuite/core/practice_engine.js"));
+eval(loadJS("js/sparksuite/core/execution_gateway.js"));
 global.requestAnimationFrame = function() { return 1; };
 global.cancelAnimationFrame = function() {};
 global.render = function() {};
@@ -493,17 +494,62 @@ test("practice engine upgrades rhythm candidates into rhythm_highway segments wi
   var practiceEngine = new SparkSuitePracticeEngine({
     getFocusLabel: function(segments) { return segments[0].type; }
   });
-  var segments = practiceEngine.buildDailyPracticePlan({
+  var plan = practiceEngine.buildDailyPracticePlan({
     instrumentContext: {
       rhythmAdapter: new SparkGuitarRhythmAdapter()
     },
     curriculum: {}
-  }).segments;
+  });
+  var segments = plan.segments;
 
   assert.strictEqual(segments.length, 1);
   assert.strictEqual(segments[0].type, "rhythm_highway");
   assert.ok(segments[0].meta.gameplayPayload);
   assert.strictEqual(segments[0].meta.gameplayPayload.chartId, "power_chords_01");
+  assert.ok(Array.isArray(plan.exercises));
+  assert.strictEqual(plan.exercises.length, 1);
+  assert.deepStrictEqual(segments[0].exerciseIds, [plan.exercises[0].id]);
+  assert.strictEqual(plan.exercises[0].data.gameplay.payload.chartId, "power_chords_01");
+});
+
+test("rhythm highway segment payload resolves from session exercises", function() {
+  var practiceEngine = new SparkSuitePracticeEngine({
+    getFocusLabel: function(segments) { return segments[0].type; }
+  });
+  var practicePlan = practiceEngine.buildDailyPracticePlan({
+    instrumentContext: {
+      appId: "chordspark",
+      rhythmAdapter: new SparkGuitarRhythmAdapter()
+    },
+    curriculum: {}
+  });
+  window.sparkCore = {
+    currentPlan: new SessionPlan({
+      flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+      instrumentId: "chordspark",
+      segments: practicePlan.segments,
+      exercises: practicePlan.exercises,
+      context: {
+        curriculum: {}
+      }
+    }),
+    getSegmentById: function(segmentId) {
+      var segments = this.currentPlan.segments || [];
+      for (var i = 0; i < segments.length; i++) {
+        if (segments[i].id === segmentId) return segments[i];
+      }
+      return null;
+    },
+    getActiveSessionView: function() {
+      return { plan: this.currentPlan, runtimeState: {} };
+    }
+  };
+
+  var segment = window.sparkCore.currentPlan.segments[0];
+  var payload = _resolveRhythmHighwayPayload(segment.id);
+
+  assert.ok(payload);
+  assert.strictEqual(payload.chartId, "power_chords_01");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

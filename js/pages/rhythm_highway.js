@@ -15,14 +15,16 @@
   ];
 
   function startRhythmHighwaySegment(segmentId, presetName, loopSpec) {
-    if (!window.sparkCore || typeof window.sparkCore.getSegmentById !== "function") return false;
-    var segment = window.sparkCore.getSegmentById(segmentId);
-    if (!segment || !segment.meta || !segment.meta.gameplayPayload) return false;
-    return startRhythmHighwayPayload(segment.meta.gameplayPayload, presetName, {
+    var launchData = resolveRhythmHighwayLaunchData(segmentId);
+    if (!launchData || !launchData.payload) return false;
+    return startRhythmHighwayPayload(launchData.payload, presetName, {
       segmentId: segmentId,
       loopSpec: loopSpec || null,
       source: "core_segment",
-      label: segment.label || (segment.meta && segment.meta.skill) || null
+      label: launchData.label || null,
+      instrument: launchData.instrument || null,
+      exerciseId: launchData.exercise ? launchData.exercise.id : null,
+      exerciseFocus: launchData.exerciseFocus || null
     });
   }
 
@@ -275,6 +277,42 @@
     return JSON.parse(JSON.stringify(S.rhythmHighwayLaunchContext));
   }
 
+  function resolveRhythmHighwayLaunchData(segmentId) {
+    var segment = window.sparkCore && typeof window.sparkCore.getSegmentById === "function"
+      ? window.sparkCore.getSegmentById(segmentId)
+      : null;
+    var activeView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+      ? window.sparkCore.getActiveSessionView()
+      : null;
+    var session = activeView && activeView.plan ? activeView.plan : null;
+    var exercise = null;
+    var payload = null;
+    var core = null;
+
+    if (window.SparkExecutionGateway && typeof window.SparkExecutionGateway.resolvePrimaryExercise === "function" && session && segment) {
+      exercise = window.SparkExecutionGateway.resolvePrimaryExercise(session, segment);
+    }
+
+    if (exercise && exercise.data) {
+      core = exercise.data.core || {};
+      payload = exercise.data.gameplay ? exercise.data.gameplay.payload || null : null;
+    }
+
+    return {
+      segment: segment,
+      exercise: exercise,
+      payload: payload,
+      label: (segment && segment.label) || (core && (core.skill || core.chartId || core.songId)) || null,
+      instrument: (core && core.instrument) || null,
+      exerciseFocus: (core && core.skill) || null
+    };
+  }
+
+  function resolveRhythmHighwayPayload(segmentId) {
+    var launchData = resolveRhythmHighwayLaunchData(segmentId);
+    return launchData ? launchData.payload || null : null;
+  }
+
   function resolveRhythmHighwayPresetName(name) {
     var presets = window.SparkEnginePresetRegistry && typeof SparkEnginePresetRegistry.all === "function"
       ? SparkEnginePresetRegistry.all()
@@ -443,5 +481,6 @@
   window._buildRhythmHighwayLoopPayload = buildRhythmHighwayLoopPayload;
   window._createRhythmHighwayLoopSpec = createRhythmHighwayLoopSpec;
   window._getRhythmHighwayLaneLabels = getRhythmHighwayLaneLabels;
+  window._resolveRhythmHighwayPayload = resolveRhythmHighwayPayload;
   window.rhythmHighwayPage = rhythmHighwayPage;
 })();

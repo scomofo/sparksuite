@@ -58,6 +58,15 @@ function renderHomeRecommendationDetail(item){
     if(accuracy) bits.push("Accuracy: " + accuracy);
     return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
   }
+  if((item.source === "play_along" || item.source === "play_along_bookmark") && item.meta){
+    var playBits = [];
+    if(item.meta.trackTitle) playBits.push("Song: " + item.meta.trackTitle);
+    if(item.meta.sectionLabel) playBits.push("Section: " + item.meta.sectionLabel);
+    if(item.meta.weakAreas && item.meta.weakAreas.length) playBits.push("Weak: " + item.meta.weakAreas.join(" | "));
+    if(playBits.length){
+      return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(playBits.join(" | ")) + '</div>';
+    }
+  }
   return "";
 }
 
@@ -140,6 +149,72 @@ function renderHomeSystemCard(data){
   h += '<div><b>System</b></div>';
   h += '<div>Version: '+escHTML(data.version)+'</div>';
   h += '<div>Cloud: '+escHTML(data.cloudStatus)+'</div>';
+  if (data.transportMode) {
+    h += '<div>Transport: '+escHTML(data.transportMode)+'</div>';
+  }
+  if (data.executionTrace) {
+    h += '<div style="margin-top:8px;color:#8fd5c4">Trace: '+escHTML(data.executionTrace.source || data.executionTrace.status || "unknown")+'</div>';
+    if (data.executionTrace.exerciseType) {
+      h += '<div style="font-size:12px;color:var(--text-muted)">Exercise: '+escHTML(data.executionTrace.exerciseType)+'</div>';
+    }
+    if (data.executionTrace.flow) {
+      h += '<div style="font-size:12px;color:var(--text-muted)">Flow: '+escHTML(data.executionTrace.flow)+'</div>';
+    }
+  }
+  if (data.recentPlayAlong && data.recentPlayAlong.length) {
+    h += '<div style="margin-top:8px"><b>Recent Play Along</b></div>';
+    for (var i = 0; i < data.recentPlayAlong.length; i++) {
+      var item = data.recentPlayAlong[i];
+      h += '<div style="font-size:12px;color:var(--text-muted)">'+escHTML(item.title || item.trackId || "song")+'</div>';
+    }
+  }
+  h += '</div>';
+  return h;
+}
+
+function renderHomePlayAlongCard(data){
+  data = data || {};
+  var recent = Array.isArray(data.recent) ? data.recent : [];
+  var bookmarks = Array.isArray(data.bookmarks) ? data.bookmarks : [];
+  var latest = recent.length ? recent[0] : null;
+  var outcome = data.outcome || null;
+  var weakAreas = Array.isArray(data.weakAreas) ? data.weakAreas : [];
+  var h = '<div class="card">';
+  h += '<div><b>Play Along</b></div>';
+  if(latest){
+    h += '<div>Last song: '+escHTML(latest.title || latest.trackId || "Recent Song")+'</div>';
+    if(latest.artist) h += '<div style="font-size:12px;color:var(--text-muted)">'+escHTML(latest.artist)+'</div>';
+    if(data.transportMode || latest.transportMode){
+      h += '<div style="font-size:12px;color:var(--text-muted)">Transport: '+escHTML(data.transportMode || latest.transportMode)+'</div>';
+    }
+    if(outcome && typeof outcome.accuracy === "number"){
+      h += '<div style="font-size:12px;color:#8fd5c4">Last accuracy: '+Math.round((outcome.accuracy <= 1 ? outcome.accuracy * 100 : outcome.accuracy))+'%</div>';
+    }
+    if(weakAreas.length){
+      h += '<div style="font-size:12px;color:var(--text-muted)">Weak spots: '+escHTML(weakAreas.join(" | "))+'</div>';
+    }
+    if(data.weakSection && data.weakSection.sectionLabel){
+      h += '<div style="font-size:12px;color:var(--text-muted)">Weak section: '+escHTML(data.weakSection.sectionLabel)+'</div>';
+    }
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">';
+    h += '<button onclick="sparkPlayAlongLaunchRecent(0)">Resume Song</button>';
+    if(data.weakSection){
+      h += '<button onclick="sparkPlayAlongJumpToWeakSection()">Jump To Weak Section</button>';
+    }
+    if(data.hasDrill){
+      h += '<button onclick="sparkPlayAlongStartDrill(0)">Run Last Drill</button>';
+    }
+    h += '</div>';
+    if(bookmarks.length){
+      h += '<div style="margin-top:8px;font-size:12px;color:var(--text-muted)"><b>Bookmarks</b></div>';
+      for(var i=0;i<bookmarks.length;i++){
+        h += '<div style="font-size:12px;color:var(--text-muted)">'+escHTML((bookmarks[i].sectionLabel || "Section") + " in " + (bookmarks[i].title || bookmarks[i].trackId || "song"))+'</div>';
+      }
+    }
+  }else{
+    h += '<div>No recent play-along songs yet.</div>';
+    h += '<button onclick="openPlayAlong()">Start Play Along</button>';
+  }
   h += '</div>';
   return h;
 }

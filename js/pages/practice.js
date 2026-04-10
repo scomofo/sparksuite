@@ -163,6 +163,23 @@ function practiceTab(){
   h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">Search any song, play along in real time</div>';
   h+='<button onclick="openPlayAlong()" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Find a Song &#9654;</button>';
   h+='</div>';
+
+  if (S.lastBrainAnalysis || (S.personalInsights && S.personalInsights.coach)) {
+    var coachMsg = S.personalInsights && S.personalInsights.coach ? S.personalInsights.coach.message : "";
+    var focusSkill = S.recommendedFocus || (S.lastBrainAnalysis && S.lastBrainAnalysis.focusSkill) || null;
+    var focusLabel = focusSkill ? String(focusSkill).replace(/_/g, " ") : "consistency";
+    h += '<div class="card mb12" style="border:2px solid #45B7D1">';
+    h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:6px">&#129504; Smart Coach</div>';
+    if (coachMsg) h += '<div style="font-size:12px;color:#8fd5c4;margin-bottom:8px">' + escHTML(coachMsg) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-dim)">Recommended focus: <strong style="color:var(--text-primary)">' + escHTML(focusLabel) + '</strong></div>';
+    if (S.lastBrainAnalysis && S.lastBrainAnalysis.recommendedDifficultyId) {
+      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">Suggested difficulty: <strong style="color:var(--text-primary)">' + escHTML(S.lastBrainAnalysis.recommendedDifficultyId) + '</strong></div>';
+    }
+    if (S.lastBrainAnalysis && S.lastBrainAnalysis.weakLane != null) {
+      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">Weak lane: <strong style="color:var(--text-primary)">' + (S.lastBrainAnalysis.weakLane + 1) + '</strong></div>';
+    }
+    h += '</div>';
+  }
   // Guided Session CTA
   var gs=D.SESSIONS[S.guidedSession-1];
   if(gs){

@@ -94,6 +94,21 @@
     this._playing = false;
   };
 
+  AudioEngine.prototype.pause = function() {
+    if (!this._playing) return;
+    this.offset = this.getTimeSec();
+    this.stop();
+  };
+
+  AudioEngine.prototype.seek = function(offsetSec) {
+    offsetSec = Math.max(0, offsetSec || 0);
+    var wasPlaying = this._playing;
+    this.offset = offsetSec;
+    if (wasPlaying) {
+      this.play(offsetSec);
+    }
+  };
+
   /**
    * Get current playback position in seconds.
    * THIS IS THE MASTER CLOCK -- use for all gameplay timing.
@@ -123,6 +138,17 @@
    */
   AudioEngine.prototype.setVolume = function(vol) {
     this.gainNode.gain.value = Math.max(0, Math.min(1, vol));
+  };
+
+  AudioEngine.prototype.setPlaybackRate = function(rate) {
+    rate = Math.max(0.25, Math.min(4, rate || 1));
+    var currentSec = this.getTimeSec();
+    this._speed = rate;
+    if (this._playing) {
+      this.play(currentSec);
+    } else {
+      this.offset = currentSec;
+    }
   };
 
   AudioEngine.prototype.onEnded = function(callback) {

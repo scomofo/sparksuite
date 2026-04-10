@@ -77,15 +77,24 @@
       }
     });
 
+    var sections = buildSectionsFromChords(chords, durationMs);
+
     return new SparkPlayAlongChart({
       trackId: trackId,
-      trackUri: "spotify:track:" + trackId,
+      trackUri: analysis.trackUri || ("spotify:track:" + trackId),
       difficulty: difficulty,
       instrument: analysis.instrument || "guitar",
-      audio: { bpm: bpm, key: analysis.key, mode: analysis.mode, timeSignature: analysis.timeSignature },
+      audio: {
+        bpm: bpm,
+        key: analysis.key,
+        mode: analysis.mode,
+        timeSignature: analysis.timeSignature,
+        offset_ms: analysis.audioOffsetMs || 0,
+        offsetMs: analysis.audioOffsetMs || 0
+      },
       songChart: songChart,
       chords: chords,
-      sections: [],
+      sections: sections,
       techniques: [],
       targets: {},
       curriculum: {}
@@ -109,6 +118,31 @@
       hash |= 0;
     }
     return hash;
+  }
+
+  function buildSectionsFromChords(chords, durationMs) {
+    if (Array.isArray(chords) && chords.length) {
+      var sections = [];
+      for (var i = 0; i < chords.length; i += 4) {
+        var first = chords[i];
+        var last = chords[Math.min(i + 3, chords.length - 1)];
+        if (!first) continue;
+        var startMs = first.time != null ? first.time : 0;
+        var lastEnd = last && last.duration != null ? (last.time + last.duration) : ((i + 4) * 2000);
+        sections.push({
+          name: i === 0 ? "intro" : ("section_" + (sections.length + 1)),
+          startMs: Math.round(startMs),
+          endMs: Math.round(Math.max(startMs + 1000, lastEnd))
+        });
+      }
+      return sections;
+    }
+
+    return [{
+      name: "section_1",
+      startMs: 0,
+      endMs: Math.round(durationMs || 180000)
+    }];
   }
 
   window.SparkChartBuilder = ChartBuilder;

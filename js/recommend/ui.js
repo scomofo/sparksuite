@@ -16,6 +16,7 @@ function recommendationsPage(){
     h += '<div style="font-size:12px;color:#aaa">Type: ' + escHTML(arr[i].type) + ' | Source: ' + escHTML(arr[i].source) + '</div>';
     h += '<div style="font-size:12px;color:#aaa">Reason: ' + escHTML((arr[i].reasons || []).join(", ")) + '</div>';
     h += renderRecommendationModuleProgress(arr[i]);
+    h += renderRecommendationPlayAlongDetail(arr[i]);
     h += '<button onclick="act(\'launchRecommendation\', \''+arr[i].id+'\')">Start</button>';
     h += '</div>';
   }
@@ -33,6 +34,17 @@ function renderRecommendationModuleProgress(recommendation){
   if(summary && summary.weakestMetric && typeof summary[summary.weakestMetric] === "number"){
     bits.push("Weakest: " + summary.weakestMetric.replace(/_/g, " ") + " " + Math.round(summary[summary.weakestMetric] * 100) + "%");
   }
+  if(!bits.length) return "";
+  return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
+}
+
+function renderRecommendationPlayAlongDetail(recommendation){
+  if(!recommendation || !recommendation.meta) return "";
+  if(recommendation.source !== "play_along" && recommendation.source !== "play_along_bookmark") return "";
+  var bits = [];
+  if(recommendation.meta.trackTitle) bits.push("Song: " + recommendation.meta.trackTitle);
+  if(recommendation.meta.sectionLabel) bits.push("Section: " + recommendation.meta.sectionLabel);
+  if(recommendation.meta.weakAreas && recommendation.meta.weakAreas.length) bits.push("Weak: " + recommendation.meta.weakAreas.join(" | "));
   if(!bits.length) return "";
   return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
 }
@@ -57,6 +69,14 @@ function launchRecommendationById(id){
   for(var i=0;i<arr.length;i++){
     if(arr[i].id === id){
       recordRecommendationUse(arr[i]);
+      if(arr[i].source === "play_along" && typeof sparkPlayAlongJumpToSectionRecommendation === "function"){
+        sparkPlayAlongJumpToSectionRecommendation(arr[i].meta && arr[i].meta.trackId, arr[i].meta && arr[i].meta.sectionIndex);
+        return;
+      }
+      if(arr[i].source === "play_along_bookmark" && typeof sparkPlayAlongLaunchBookmarkByKey === "function"){
+        sparkPlayAlongLaunchBookmarkByKey(arr[i].meta && arr[i].meta.trackId, arr[i].meta && arr[i].meta.sectionIndex);
+        return;
+      }
       if(typeof launchPracticeItem === "function") launchPracticeItem(arr[i]);
       return;
     }

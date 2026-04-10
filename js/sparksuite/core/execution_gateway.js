@@ -89,6 +89,11 @@
   }
 
   function failExecution(message, detail) {
+    publishExecutionTrace({
+      level: "error",
+      message: message,
+      detail: detail || null
+    });
     if (typeof console !== "undefined" && console.error) {
       console.error("SparkExecutionGateway: " + message, detail || null);
     }
@@ -103,6 +108,14 @@
     if (!exercises.length) {
       failExecution("segment requires resolved exercises", segment && segment.id ? segment.id : null);
     }
+
+    publishExecutionTrace({
+      level: "info",
+      message: "runSessionSegment",
+      source: options.source || "session",
+      segmentId: segment.id,
+      exerciseCount: exercises.length
+    });
 
     return runExercise(exercises[0], mergeLaunchOptions(options, {
       session: session,
@@ -145,6 +158,14 @@
         exerciseId: exercise.id
       });
     }
+
+    publishExecutionTrace({
+      level: "info",
+      message: "runDirectExercise",
+      source: options.source || "direct",
+      exerciseType: exercise.type,
+      exerciseId: exercise.id
+    });
 
     return runExercise(exercise, mergeLaunchOptions(options, {
       source: options.source || "direct",
@@ -223,6 +244,12 @@
 
     // Spotify play-along: if exercise has a playAlongChart, launch via SparkPlaybackEngine
     if (gameplay.playAlongChart && typeof window.sparkCore !== "undefined" && window.sparkCore.playbackEngine) {
+      publishExecutionTrace({
+        level: "info",
+        message: "launchSongExercise.spotify_play_along",
+        exerciseId: exercise.id,
+        source: options.source || "song"
+      });
       if (typeof startPlayableRhythmHighwayPayload === "function" && gameplay.chart) {
         var spotifyPayload = {
           songChart: gameplay.chart,
@@ -243,6 +270,12 @@
     }
 
     if (launchTarget && typeof startPerformance === "function") {
+      publishExecutionTrace({
+        level: "info",
+        message: "launchSongExercise.performance",
+        exerciseId: exercise.id,
+        source: options.source || "song"
+      });
       startPerformance(launchTarget, launchOptions);
       return true;
     }
@@ -259,6 +292,13 @@
     }
 
     if (payload && typeof startPlayableRhythmHighwayPayload === "function") {
+      publishExecutionTrace({
+        level: "info",
+        message: "launchPracticeExercise.playable",
+        exerciseId: exercise.id,
+        source: options.source || "practice",
+        chartId: core.chartId || null
+      });
       startPlayableRhythmHighwayPayload(payload, {
         source: options.source || "exercise",
         label: options.label || core.skill || core.chartId || core.songId || "Practice",
@@ -301,6 +341,16 @@
       if (Object.prototype.hasOwnProperty.call(patch, key)) result[key] = patch[key];
     }
     return result;
+  }
+
+  function publishExecutionTrace(trace) {
+    if (typeof window === "undefined") return;
+    window.__sparkExecutionTrace = trace;
+    if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+      window.sparkCore.updateRuntimeState({
+        lastExecutionTrace: trace
+      });
+    }
   }
 
   var SparkExecutionGateway = {

@@ -20,8 +20,22 @@
 
     // Build session through the engine (single authoritative path)
     if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-      var flow = options.flow || (typeof SparkSessionTypes !== "undefined" ? SparkSessionTypes.FLOW_DAILY_PRACTICE : "daily_practice");
-      _activeSession = window.sparkCore.startSession(flow, options.context || {});
+      var startInput = {};
+      var key;
+      for (key in options) {
+        if (Object.prototype.hasOwnProperty.call(options, key) && key !== "context") startInput[key] = options[key];
+      }
+      if (options.context && typeof options.context === "object") {
+        for (key in options.context) {
+          if (Object.prototype.hasOwnProperty.call(options.context, key) && !Object.prototype.hasOwnProperty.call(startInput, key)) {
+            startInput[key] = options.context[key];
+          }
+        }
+      }
+      if (!startInput.flow) {
+        startInput.flow = (typeof SparkSessionTypes !== "undefined" ? SparkSessionTypes.FLOW_DAILY_PRACTICE : "daily_practice");
+      }
+      _activeSession = window.sparkCore.startSession(startInput);
     } else if (typeof SparkSuiteSessionEngine !== "undefined") {
       // Fallback: direct engine call
       var engine = new SparkSuiteSessionEngine(
@@ -107,36 +121,20 @@
   // --- Internal launchers (delegate to existing functions) ---
 
   function _launchPractice(segment, exercise) {
-    var payload = null;
-    if (exercise && exercise.data && exercise.data.gameplay && exercise.data.gameplay.payload) {
-      payload = exercise.data.gameplay.payload;
-    }
-
-    // Try playable rhythm highway for practice drills
-    if (payload && typeof startPlayableRhythmHighwayPayload === "function") {
-      return startPlayableRhythmHighwayPayload(payload, {
-        source: "session_runtime",
-        label: (exercise && exercise.data && exercise.data.core && exercise.data.core.skill) || "Practice",
-        segmentId: segment.id
+    if (window.SparkExecutionGateway && typeof window.SparkExecutionGateway.runSessionSegment === "function" && _activeSession) {
+      return window.SparkExecutionGateway.runSessionSegment(_activeSession, segment, {
+        source: "session_runtime"
       });
-    }
-
-    // Try rhythm highway segment
-    if (segment.id && typeof startRhythmHighwaySegment === "function") {
-      return startRhythmHighwaySegment(segment.id);
     }
 
     return false;
   }
 
   function _launchSong(segment, exercise) {
-    var songId = exercise && exercise.data && exercise.data.core ? exercise.data.core.songId : null;
-    var arrangementType = exercise && exercise.data && exercise.data.core ? exercise.data.core.arrangementType : "chords";
-    var difficultyId = exercise && exercise.data && exercise.data.core ? exercise.data.core.difficultyId : "normal";
-
-    if (typeof startPerformance === "function" && songId) {
-      startPerformance(songId, { difficulty: difficultyId, arrangementType: arrangementType });
-      return true;
+    if (window.SparkExecutionGateway && typeof window.SparkExecutionGateway.runSessionSegment === "function" && _activeSession) {
+      return window.SparkExecutionGateway.runSessionSegment(_activeSession, segment, {
+        source: "session_runtime"
+      });
     }
     return false;
   }

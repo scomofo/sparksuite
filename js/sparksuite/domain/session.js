@@ -7,6 +7,10 @@
     this.instrumentId = input.instrumentId || null;
     this.focus = input.focus || "Well-rounded practice";
     this.segments = Array.isArray(input.segments) ? input.segments : [];
+    this.exercises = Array.isArray(input.exercises) ? input.exercises : [];
+    this.lesson = input.lesson || null;
+    this.difficulty = input.difficulty || null;
+    this.rewards = Object.prototype.hasOwnProperty.call(input, "rewards") ? input.rewards : [];
     this.context = input.context || {};
   }
 

@@ -5,14 +5,23 @@
 
   function previewEditorObject(){
     if(!S.editorObject) return false;
-    if(Array.isArray(S.editorObject.events) && typeof startPerformance==="function"){
+    if(Array.isArray(S.editorObject.events) && window.SparkExecutionGateway && typeof window.SparkExecutionGateway.runDirectExercise==="function"){
       S.editorPreviewOrigin = {
         screen: SCR.EDITOR,
         mode: S.editorMode
       };
-      startPerformance(S.editorObject, {
-        difficulty:S.performDifficulty || "normal",
-        speed:S.performSpeed || 1
+      window.SparkExecutionGateway.runDirectExercise({
+        id: "editor_preview",
+        type: "song",
+        chart: S.editorObject,
+        meta: {
+          difficultyId: S.performDifficulty || "normal",
+          speed: S.performSpeed || 1
+        }
+      }, {
+        source: "editor_preview",
+        difficulty: S.performDifficulty || "normal",
+        speed: S.performSpeed || 1
       });
       return true;
     }

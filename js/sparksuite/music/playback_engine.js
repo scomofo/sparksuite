@@ -44,6 +44,10 @@
     return this.spotify.pause();
   };
 
+  PlaybackEngine.prototype.pause = function() {
+    return this.stop();
+  };
+
   PlaybackEngine.prototype.seekTo = function(positionMs) {
     var self = this;
     return this.spotify.seek(positionMs).then(function() {
@@ -69,6 +73,18 @@
 
   PlaybackEngine.prototype.isPlaying = function() {
     return this._playing;
+  };
+
+  PlaybackEngine.prototype.resume = function(positionMs, options) {
+    options = options || {};
+    positionMs = positionMs || this._lastSpotifyMs || 0;
+    if (!this._trackUri) return Promise.resolve(false);
+    var self = this;
+    return this.start(this._trackUri, options).then(function() {
+      return self.seekTo(positionMs).then(function() {
+        return true;
+      });
+    });
   };
 
   PlaybackEngine.prototype.onSync = function(callback) {

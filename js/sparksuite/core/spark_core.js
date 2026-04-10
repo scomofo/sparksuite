@@ -2620,8 +2620,8 @@
       },
       mode: "practice"
     };
-    if (typeof startPlayableRhythmHighwayPayload === "function") {
-      return startPlayableRhythmHighwayPayload(payload, {
+    if (window.SparkExecutionGateway && typeof window.SparkExecutionGateway.runPlayablePayload === "function") {
+      return window.SparkExecutionGateway.runPlayablePayload(payload, {
         source: "lesson_generator",
         label: lesson.label,
         instrument: this.runtimeState.activeInstrumentId || "guitar"

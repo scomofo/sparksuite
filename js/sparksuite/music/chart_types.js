@@ -19,7 +19,7 @@
     this.instrument = input.instrument || "guitar";
     this.songChart = input.songChart || null;
     this.chords = input.chords || [];
-    this.sections = input.sections || [];
+    this.sections = normalizeSections(input.sections || []);
     this.techniques = input.techniques || [];
     this.targets = input.targets || {};
     this.curriculum = input.curriculum || {};
@@ -56,14 +56,22 @@
       var timeMs = (n.tick / ppq) * (60000 / bpm);
       var durMs = (n.tickLength / ppq) * (60000 / bpm);
       timeline.push({
+        id: n.id || ("pla_" + i),
         time: Math.round(timeMs),
+        timeMs: Math.round(timeMs),
         type: "note",
-        lane: n.lane != null ? n.lane : 0,
+        lane: n.lane != null ? n.lane : null,
         duration: Math.round(durMs),
-        velocity: 1
+        durationMs: Math.round(durMs),
+        velocity: 1,
+        label: n.label || null
       });
     }
     return timeline;
+  };
+
+  PlayAlongChart.prototype.getSections = function() {
+    return normalizeSections(this.sections || []);
   };
 
   PlayAlongChart.prototype.toJSON = function() {
@@ -85,4 +93,22 @@
 
   window.SparkChartDifficulty = SparkChartDifficulty;
   window.SparkPlayAlongChart = PlayAlongChart;
+
+  function normalizeSections(sections) {
+    var normalized = [];
+    for (var i = 0; i < sections.length; i++) {
+      var section = sections[i] || {};
+      var startMs = section.startMs != null ? section.startMs : section.start;
+      var endMs = section.endMs != null ? section.endMs : section.end;
+      if (startMs == null || endMs == null || endMs <= startMs) continue;
+      normalized.push({
+        name: section.name || ("section_" + (i + 1)),
+        startMs: Math.round(startMs),
+        endMs: Math.round(endMs),
+        start: Math.round(startMs),
+        end: Math.round(endMs)
+      });
+    }
+    return normalized;
+  }
 })();

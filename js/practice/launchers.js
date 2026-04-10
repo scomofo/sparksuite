@@ -2,6 +2,8 @@
 
   function launchPracticeItem(item){
     if(!item) return false;
+    if(item.type==="play_along_section") return launchPlayAlongSectionItem(item);
+    if(item.type==="play_along_bookmark") return launchPlayAlongBookmarkItem(item);
     if(item.type==="warmup") return launchWarmupItem(item);
     if(item.type==="transition") return launchTransitionItem(item);
     if(item.type==="rhythm_highway") return launchRhythmHighwayItem(item);
@@ -96,6 +98,22 @@
     return true;
   }
 
+  function launchPlayAlongSectionItem(item){
+    if(!item || !item.meta) return false;
+    if(typeof sparkPlayAlongJumpToSectionRecommendation === "function"){
+      return sparkPlayAlongJumpToSectionRecommendation(item.meta.trackId, item.meta.sectionIndex);
+    }
+    return false;
+  }
+
+  function launchPlayAlongBookmarkItem(item){
+    if(!item || !item.meta) return false;
+    if(typeof sparkPlayAlongLaunchBookmarkByKey === "function"){
+      return sparkPlayAlongLaunchBookmarkByKey(item.meta.trackId, item.meta.sectionIndex);
+    }
+    return false;
+  }
+
   function isModuleExerciseItem(item){
     if(!item || !item.meta || !item.meta.instrument || !item.meta.exerciseId) return false;
     var types = {
@@ -135,6 +153,8 @@
   window.launchRhythmHighwayItem = launchRhythmHighwayItem;
   window.launchFingerItem = launchFingerItem;
   window.launchModuleExerciseItem = launchModuleExerciseItem;
+  window.launchPlayAlongSectionItem = launchPlayAlongSectionItem;
+  window.launchPlayAlongBookmarkItem = launchPlayAlongBookmarkItem;
   window.launchPracticePlanItem = launchPracticeItem;
 
 })();

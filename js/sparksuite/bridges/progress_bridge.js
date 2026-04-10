@@ -83,6 +83,31 @@
       S.xp += summary.xpAwarded;
     }
 
+    if (typeof SparkLearningBrain !== "undefined" && typeof SparkLearningBrain.analyzeUser === "function" && S.skillGraph) {
+      var brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, null, S.weakSpots || null);
+      S.lastBrainAnalysis = brainAnalysis;
+      S.recommendedFocus = brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : (completionSummary.focus || null);
+      S.personalInsights = {
+        weakestSkills: brainAnalysis && brainAnalysis.focusSkill ? [{ id: brainAnalysis.focusSkill, value: brainAnalysis.confidence || 0 }] : [],
+        strongestSkills: brainAnalysis && brainAnalysis.strongestSkill ? [{ id: brainAnalysis.strongestSkill, value: brainAnalysis.strongestValue || 0 }] : [],
+        masteryTrend: {},
+        practiceTrend: {},
+        recommendationQuality: {
+          smartCoach: {
+            focusSkill: brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : (completionSummary.focus || null),
+            weakArea: brainAnalysis ? brainAnalysis.primaryWeakArea || null : null,
+            weakLane: brainAnalysis ? brainAnalysis.weakLane : null,
+            recommendedDifficultyId: brainAnalysis ? brainAnalysis.recommendedDifficultyId || null : null
+          }
+        },
+        careerTrend: {},
+        packProgress: {},
+        coach: {
+          message: brainAnalysis && brainAnalysis.coachMessage ? brainAnalysis.coachMessage : ""
+        }
+      };
+    }
+
     if (typeof saveState === "function") saveState();
   }
 

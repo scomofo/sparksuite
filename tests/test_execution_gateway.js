@@ -53,5 +53,17 @@ test("runDirectExercise calls startPerformance for songs", function() {
   delete global.startPerformance;
 });
 
+test("runDirectExercise publishes execution trace", function() {
+  global.startPerformance = function() {};
+  global.window.sparkCore = {
+    updateRuntimeState: function(patch) { this.patch = patch; }
+  };
+  GW.runDirectExercise("chart_id", { source: "trace_test" });
+  assert.ok(global.window.__sparkExecutionTrace);
+  assert.strictEqual(global.window.__sparkExecutionTrace.source, "trace_test");
+  assert.strictEqual(global.window.sparkCore.patch.lastExecutionTrace.source, "trace_test");
+  delete global.startPerformance;
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

@@ -4,6 +4,7 @@
     var out = [];
     out = out.concat(getCurriculumCandidates(appType));
     out = out.concat(getModuleProgressCandidates(appType));
+    out = out.concat(getPlayAlongCandidates(appType));
     out = out.concat(getWeakSpotCandidates(appType));
     out = out.concat(getReviewCandidates(appType));
     out = out.concat(getChallengeCandidates(appType));
@@ -86,6 +87,60 @@
         score: 0,
         reasons: ["Weak phrase detected"],
         meta: { weakSpot: weak.phrases[p].key }
+      });
+    }
+    return out;
+  }
+
+  function getPlayAlongCandidates(){
+    var out = [];
+    var outcome = window.sparkCore && window.sparkCore.lastSessionOutcome ? window.sparkCore.lastSessionOutcome : null;
+    var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent : [];
+    var latest = recent.length ? recent[0] : null;
+    var bookmarks = Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks : [];
+    var weakAreas = outcome && outcome.performance && Array.isArray(outcome.performance.weakAreas)
+      ? outcome.performance.weakAreas.slice(0, 2)
+      : [];
+    if (latest && outcome && outcome.sectionSummary) {
+      out.push({
+        id: "playalong_weak_section_" + (latest.trackId || "recent") + "_" + Number(outcome.sectionSummary.sectionIndex || 0),
+        type: "play_along_section",
+        title: "Play Along: Fix " + (outcome.sectionSummary.sectionLabel || "weak section"),
+        source: "play_along",
+        targetSkill: "play_along_section",
+        level: 1,
+        score: 0,
+        reasons: ["Recent play-along weak section needs another pass"],
+        meta: {
+          action: "weak_section",
+          trackId: latest.trackId || null,
+          trackTitle: latest.title || latest.trackId || "Recent Song",
+          sectionIndex: Number(outcome.sectionSummary.sectionIndex || 0),
+          sectionLabel: outcome.sectionSummary.sectionLabel || "Weak section",
+          weakAreas: weakAreas,
+          transportMode: latest.transportMode || null
+        }
+      });
+    }
+    if (bookmarks.length) {
+      var bookmark = bookmarks[0];
+      out.push({
+        id: "playalong_bookmark_" + (bookmark.trackId || "song") + "_" + Number(bookmark.sectionIndex || 0),
+        type: "play_along_bookmark",
+        title: "Replay bookmark: " + (bookmark.sectionLabel || "Saved section"),
+        source: "play_along_bookmark",
+        targetSkill: "play_along_bookmark",
+        level: 1,
+        score: 0,
+        reasons: ["Saved section ready for another focused run"],
+        meta: {
+          action: "bookmark",
+          trackId: bookmark.trackId || null,
+          trackTitle: bookmark.title || bookmark.trackId || "Saved Song",
+          sectionIndex: Number(bookmark.sectionIndex || 0),
+          sectionLabel: bookmark.sectionLabel || "Saved section",
+          startMs: bookmark.startMs != null ? bookmark.startMs : null
+        }
       });
     }
     return out;

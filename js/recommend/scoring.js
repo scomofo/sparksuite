@@ -16,6 +16,8 @@
 
   function scoreWeakSpotWeight(candidate){
     if(candidate.source === "weakspot") return 40;
+    if(candidate.source === "play_along") return 38;
+    if(candidate.source === "play_along_bookmark") return 28;
     return 0;
   }
 
@@ -51,6 +53,7 @@
 
   function scoreGoalWeight(candidate){
     if(candidate.source === "challenge") return 20;
+    if(candidate.source === "play_along" && candidate.meta && candidate.meta.weakAreas && candidate.meta.weakAreas.length) return 12;
     return 0;
   }
 
