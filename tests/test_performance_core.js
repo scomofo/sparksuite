@@ -215,6 +215,27 @@ test('normalizePerformanceChart derives lane from laneMask and preserves open no
   assert.strictEqual(chart.events[1].lane, null);
 });
 
+test('normalizePerformanceChart assigns lanes for legacy direct chart events with only lane labels', function() {
+  var chart = normalizePerformanceChart({
+    id: 'legacy_direct_chart',
+    title: 'Legacy Direct Chart',
+    bpm: 120,
+    phrases: [{ id: 0, name: 'Full Song', startSec: 0, endSec: 8 }],
+    events: [
+      { id: 1, t: 0, dur: 2, type: 'chord', chord: 'Em', laneLabel: 'Em', notes: ['E', 'G', 'B'] },
+      { id: 2, t: 2, dur: 2, type: 'chord', chord: 'G', laneLabel: 'G', notes: ['G', 'B', 'D'] },
+      { id: 3, t: 4, dur: 2, type: 'chord', chord: 'Em', laneLabel: 'Em', notes: ['E', 'G', 'B'] }
+    ]
+  });
+
+  assert.strictEqual(chart.events[0].lane, 0);
+  assert.strictEqual(chart.events[0].laneMask, 1);
+  assert.strictEqual(chart.events[1].lane, 1);
+  assert.strictEqual(chart.events[1].laneMask, 2);
+  assert.strictEqual(chart.events[2].lane, 0);
+  assert.strictEqual(chart.events[2].laneMask, 1);
+});
+
 test('buildRhythmChordArrangement stamps lane metadata onto generated events', function() {
   var arrangement = buildRhythmChordArrangement({
     id: 'arr_song',

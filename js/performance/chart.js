@@ -230,6 +230,7 @@ function validatePerformanceChart(chart) {
 function normalizePerformanceChart(chart) {
   if (!chart.phrases) chart.phrases = [];
   if (!chart.events) chart.events = [];
+  assignLegacyPerformanceLanes(chart);
   chart.events.sort(function(a, b) { return a.t - b.t; });
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
@@ -256,6 +257,47 @@ function getPrimaryPerformanceLane(laneMask) {
     if (laneMask & (1 << i)) return i;
   }
   return null;
+}
+
+function assignLegacyPerformanceLanes(chart) {
+  if (!chart || !Array.isArray(chart.events) || !chart.events.length) return;
+  var laneMap = {};
+  var nextLane = 0;
+  var laneCount = getPerformanceLaneCount(chart);
+
+  for (var i = 0; i < chart.events.length; i++) {
+    var evt = chart.events[i];
+    if (!evt || evt.lane != null) continue;
+    if (typeof evt.laneMask === "number" && evt.laneMask > 0) continue;
+    if (evt.sourceFlags && evt.sourceFlags.open) continue;
+    if (String(evt.type || "").toLowerCase() === "open") continue;
+    if (typeof evt.laneLabel === "string" && evt.laneLabel.toLowerCase() === "open") continue;
+
+    var key = getPerformanceLaneKey(evt);
+    if (!key) continue;
+    if (laneMap[key] == null) {
+      laneMap[key] = nextLane % laneCount;
+      nextLane++;
+    }
+    evt.lane = laneMap[key];
+    evt.laneMask = 1 << evt.lane;
+  }
+}
+
+function getPerformanceLaneKey(evt) {
+  if (!evt) return "";
+  if (typeof evt.chord === "string" && evt.chord) return evt.chord;
+  if (typeof evt.laneLabel === "string" && evt.laneLabel) return evt.laneLabel;
+  if (typeof evt.note === "string" && evt.note) return evt.note;
+  if (Array.isArray(evt.notes) && evt.notes.length) return evt.notes.join("+");
+  return "";
+}
+
+function getPerformanceLaneCount(chart) {
+  if (chart && chart.metadata && typeof chart.metadata.laneCount === "number" && chart.metadata.laneCount > 0) {
+    return chart.metadata.laneCount;
+  }
+  return 5;
 }
 
 function _findPhraseIdForTime(chart, sec) {
