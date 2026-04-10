@@ -938,9 +938,17 @@
     // Need to configure first — check if client ID is set
     var clientId = localStorage.getItem("sparksuite_spotify_client_id");
     if (!clientId) {
-      clientId = prompt("Enter your Spotify Client ID:");
-      if (!clientId) return;
-      localStorage.setItem("sparksuite_spotify_client_id", clientId.trim());
+      // Show inline input instead of prompt (blocked in Electron)
+      var container = document.getElementById("play-along-results") || document.getElementById("app");
+      if (container) {
+        container.innerHTML = "<div class=card style=padding:20px;text-align:center>" +
+          "<div style=font-size:14px;font-weight:700;margin-bottom:8px>Spotify Client ID</div>" +
+          "<div style=font-size:12px;color:var(--text-dim);margin-bottom:12px>Get yours at developer.spotify.com/dashboard</div>" +
+          "<input id=spotify-client-id-input class=input type=text placeholder=Paste client ID here style=width:100%;margin-bottom:8px>" +
+          "<button class=btn onclick=sparkPlayAlongSaveClientId() style=background:var(--accent);color:#fff>Save and Connect</button>" +
+          "</div>";
+      }
+      return;
     }
 
     // Determine redirect URI based on environment
@@ -962,6 +970,14 @@
     } else {
       window.location.href = url;
     }
+  };
+
+
+  window.sparkPlayAlongSaveClientId = function() {
+    var input = document.getElementById(spotify-client-id-input);
+    if (!input || !input.value.trim()) return;
+    localStorage.setItem(sparksuite_spotify_client_id, input.value.trim());
+    sparkPlayAlongConnectSpotify();
   };
 
   // Handle spotifyConnect action from act() dispatcher
