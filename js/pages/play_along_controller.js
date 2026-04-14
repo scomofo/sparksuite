@@ -106,14 +106,7 @@
   // ---- Toggle Debug ----
 
   window.sparkPlayAlongToggleDebug = function() {
-    window._playAlongDebug = !window._playAlongDebug;
-
-    if (window._playAlongDebug && typeof SparkDebugDashboard !== "undefined") {
-      window._playAlongDashboard = new SparkDebugDashboard(document.body);
-      window._playAlongDashboard.show();
-    } else if (!window._playAlongDebug && window._playAlongDashboard) {
-      window._playAlongDashboard.hide();
-    }
+    return playAlongActions.toggleDebugDashboard();
   };
 
   // ---- Play Again ----
