@@ -69,23 +69,15 @@
   SparkPlayAlongActionService.prototype.createControllerBindings = function(onRender, onStartLoop) {
     var self = this;
     var stateService = this.stateService;
-    var launchPreparedSession = stateService && typeof stateService.launchPreparedSession === "function"
-      ? function(params) {
-        return stateService.launchPreparedSession(params, onRender, onStartLoop);
-      }
-      : function() { return false; };
+    var launchPreparedSession = function(params) {
+      return stateService.launchPreparedSession(params, onRender, onStartLoop);
+    };
     var bindings = {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
-      again: stateService && typeof stateService.replayOrShowHome === "function"
-        ? stateService.replayOrShowHome.bind(stateService, launchPreparedSession, onRender)
-        : function() { return false; },
-      replayDrill: stateService && typeof stateService.replayDrill === "function"
-        ? stateService.replayDrill.bind(stateService, launchPreparedSession)
-        : function() { return false; },
-      replayFullSong: stateService && typeof stateService.replayFullSong === "function"
-        ? stateService.replayFullSong.bind(stateService, launchPreparedSession)
-        : function() { return false; },
+      again: stateService.replayOrShowHome.bind(stateService, launchPreparedSession, onRender),
+      replayDrill: stateService.replayDrill.bind(stateService, launchPreparedSession),
+      replayFullSong: stateService.replayFullSong.bind(stateService, launchPreparedSession),
       launchDemo: function(value) {
         return self.handleDemoLaunch(value, launchPreparedSession);
       },
@@ -152,25 +144,17 @@
       startDrill: function(value) {
         return stateService.startDrill(value, launchPreparedSession, onRender);
       },
-      openHome: function() {
-        return stateService && typeof stateService.showHome === "function"
-          ? stateService.showHome(onRender)
-          : false;
-      },
+      openHome: stateService.showHome.bind(stateService, onRender),
       connectSpotify: function() {
         return self.connectSpotifyAndRender(onRender);
       },
       saveSpotifyClientId: function() {
         return self.saveSpotifyClientIdAndConnectAndRender(onRender);
       },
-      jumpToWeakSection: stateService && typeof stateService.launchWeakSection === "function"
-        ? stateService.launchWeakSection.bind(stateService, launchPreparedSession)
-        : function() { return false; },
-      jumpToSectionRecommendation: stateService && typeof stateService.launchSectionRecommendation === "function"
-        ? function(first, second) {
-          return stateService.launchSectionRecommendation(first, second, launchPreparedSession);
-        }
-        : function() { return false; },
+      jumpToWeakSection: stateService.launchWeakSection.bind(stateService, launchPreparedSession),
+      jumpToSectionRecommendation: function(first, second) {
+        return stateService.launchSectionRecommendation(first, second, launchPreparedSession);
+      },
       searchSelectWithFile: function(index, file) {
         return self.handleSearchSelectionWithFile(index, file, launchPreparedSession);
       }
