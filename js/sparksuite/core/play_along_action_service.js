@@ -373,7 +373,11 @@
       artist: overrides.artist != null ? overrides.artist : (track.artist || null),
       audioOffsetMs: overrides.audioOffsetMs != null ? overrides.audioOffsetMs : (track.audioOffsetMs || 0),
       difficulty: overrides.difficulty || track.difficulty || this.getDifficulty(),
-      instrument: overrides.instrument || track.instrument || this.getInstrumentId()
+      instrument: overrides.instrument || track.instrument || (
+        this.stateService && typeof this.stateService.getInstrumentId === "function"
+          ? this.stateService.getInstrumentId()
+          : "guitar"
+      )
     };
     if (Object.prototype.hasOwnProperty.call(overrides, "audioFile")) {
       params.audioFile = overrides.audioFile;
@@ -434,7 +438,12 @@
     var params;
     if (!file) return false;
     params = this.stateService && typeof this.stateService.prepareLocalFileLaunch === "function"
-      ? this.stateService.prepareLocalFileLaunch(file, this.getInstrumentId())
+      ? this.stateService.prepareLocalFileLaunch(
+        file,
+        this.stateService && typeof this.stateService.getInstrumentId === "function"
+          ? this.stateService.getInstrumentId()
+          : "guitar"
+      )
       : null;
     if (typeof onLaunchPrepared === "function") {
       onLaunchPrepared(params);
@@ -709,12 +718,6 @@
       ? window.getSparkPlayAlongDemos()
       : [];
     return demos[index] || null;
-  };
-
-  SparkPlayAlongActionService.prototype.getInstrumentId = function() {
-    return this.stateService && typeof this.stateService.getInstrumentId === "function"
-      ? this.stateService.getInstrumentId()
-      : "guitar";
   };
 
   SparkPlayAlongActionService.prototype.getDemoLaunchParams = function(index) {
