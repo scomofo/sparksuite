@@ -21,12 +21,6 @@
     return true;
   }
 
-  function renderAfter(action) {
-    var result = typeof action === "function" ? action() : action;
-    requestRender();
-    return result;
-  }
-
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
@@ -94,9 +88,9 @@
   // ---- Set Difficulty ----
 
   window.sparkPlayAlongSetDifficulty = function(level) {
-    return renderAfter(function() {
-      return playAlongActions.setDifficulty(level);
-    });
+    var result = playAlongActions.setDifficulty(level);
+    requestRender();
+    return result;
   };
 
   // ---- Load Local File ----
@@ -156,21 +150,15 @@
   };
 
   window.sparkPlayAlongTogglePause = function() {
-    return renderAfter(function() {
-      return playAlongState.togglePauseTransport();
-    });
+    return playAlongState.togglePause(requestRender);
   };
 
   window.sparkPlayAlongToggleLoop = function() {
-    playAlongState.clearError();
-    return renderAfter(function() {
-      playAlongState.toggleLoop();
-      return playAlongState.isLoopEnabled();
-    });
+    return playAlongState.toggleLoopWithRender(requestRender);
   };
 
   window.sparkPlayAlongSetLoopTarget = function(target) {
-    return renderOnSuccess(playAlongState.setLoopTarget(target));
+    return playAlongState.setLoopTargetWithRender(target, requestRender);
   };
 
   window.sparkPlayAlongPrevSection = function() {
@@ -182,7 +170,7 @@
   };
 
   window.sparkPlayAlongBookmarkCurrentSection = function() {
-    return renderOnSuccess(playAlongState.saveCurrentSectionBookmark());
+    return playAlongState.saveCurrentSectionBookmarkWithRender(requestRender);
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {

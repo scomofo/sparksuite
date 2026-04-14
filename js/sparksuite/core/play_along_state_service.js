@@ -460,6 +460,12 @@
     return this.isPaused();
   };
 
+  SparkPlayAlongStateService.prototype.togglePause = function(onRender) {
+    var result = this.togglePauseTransport();
+    if (typeof onRender === "function") onRender();
+    return result;
+  };
+
   SparkPlayAlongStateService.prototype.getOutcomeFeedback = function() {
     var outcome = this.getLastOutcome();
     return outcome && Array.isArray(outcome.feedback) ? outcome.feedback : [];
@@ -948,11 +954,25 @@
     return !!state.playAlongLoop;
   };
 
+  SparkPlayAlongStateService.prototype.toggleLoopWithRender = function(onRender) {
+    this.clearError();
+    this.toggleLoop();
+    if (typeof onRender === "function") onRender();
+    return this.isLoopEnabled();
+  };
+
   SparkPlayAlongStateService.prototype.setLoopTarget = function(target) {
     var state = getPlayAlongState();
     if (!state || (target !== "drill" && target !== "section")) return false;
     state.playAlongLoopTarget = target;
     state.playAlongLoopRange = this.resolveLoopRange();
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.setLoopTargetWithRender = function(target, onRender) {
+    var changed = this.setLoopTarget(target);
+    if (!changed) return false;
+    if (typeof onRender === "function") onRender();
     return true;
   };
 
@@ -1195,6 +1215,13 @@
     var bookmark = this.buildCurrentSectionBookmark();
     if (!bookmark) return false;
     this.rememberBookmark(bookmark);
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.saveCurrentSectionBookmarkWithRender = function(onRender) {
+    var changed = this.saveCurrentSectionBookmark();
+    if (!changed) return false;
+    if (typeof onRender === "function") onRender();
     return true;
   };
 
