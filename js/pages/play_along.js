@@ -73,16 +73,16 @@
     var outcome = playAlongState.getLastOutcome();
     return {
       outcome: outcome,
-      accuracy: asPercent(outcome && outcome.accuracy),
-      timing: asPercent(outcome && outcome.timing),
-      consistency: asPercent(outcome && outcome.consistency),
+      accuracy: playAlongState.getOutcomePercent("accuracy"),
+      timing: playAlongState.getOutcomePercent("timing"),
+      consistency: playAlongState.getOutcomePercent("consistency"),
       feedback: playAlongState.getOutcomeFeedback(),
       drills: playAlongState.getOutcomeDrills(),
       suggestedDifficulty: playAlongState.getSuggestedDifficulty(),
       suggestedMode: playAlongState.getSuggestedMode(),
       drillSummary: outcome && outcome.drillSummary ? outcome.drillSummary : null,
-      nextAction: getPlayAlongNextAction(outcome),
-      weakAreas: getPlayAlongWeakAreas(outcome),
+      nextAction: playAlongState.getNextAction(),
+      weakAreas: playAlongState.getWeakAreas(),
       sectionSummary: playAlongState.getSectionSummary()
     };
   }
@@ -144,7 +144,7 @@
         h += "<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:" + (ri === 0 ? "none" : "1px solid var(--border)") + "'>";
         h += "<div>";
         h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary)'>" + escPlayAlong(item.title || item.trackId || "Recent Song") + "</div>";
-        h += "<div style='font-size:11px;color:var(--text-muted)'>" + escPlayAlong(buildPlayAlongRecentMeta(item)) + "</div>";
+        h += "<div style='font-size:11px;color:var(--text-muted)'>" + escPlayAlong(playAlongState.getRecentMeta(item)) + "</div>";
         h += "</div>";
         h += "<div style='display:flex;gap:6px'>";
         h += "<button class='btn btn-sm' onclick='sparkPlayAlongLaunchRecent(" + ri + ")'>Replay</button>";
@@ -410,11 +410,6 @@
     return h;
   };
 
-  function asPercent(value) {
-    if (typeof value !== "number") return 0;
-    return value <= 1 ? Math.round(value * 100) : Math.round(value);
-  }
-
   function formatPlayAlongMs(ms) {
     ms = Math.max(0, Math.round(ms || 0));
     var totalSec = Math.floor(ms / 1000);
@@ -431,57 +426,6 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
-  }
-
-  function buildPlayAlongRecentMeta(item) {
-    var bits = [];
-    if (item.artist) bits.push(item.artist);
-    if (item.transportMode) bits.push(item.transportMode);
-    if (item.difficulty) bits.push(item.difficulty);
-    return bits.join(" | ");
-  }
-
-  function getPlayAlongNextAction(outcome) {
-    if (!outcome) return null;
-    var drillSummary = outcome.drillSummary || null;
-    if (drillSummary) {
-      if (drillSummary.metTarget) {
-        return {
-          primaryAction: "full_song",
-          message: "The drill target is complete. Take the same section back into the full-song run while the timing is fresh."
-        };
-      }
-      return {
-        primaryAction: "drill",
-        message: "Stay on the focused loop until the target reps are clean and consistent."
-      };
-    }
-    if (typeof outcome.accuracy === "number" && outcome.accuracy < 0.75) {
-      return {
-        primaryAction: "drill",
-        message: "Accuracy is still a bit low. Use a focused drill next instead of another full-song attempt."
-      };
-    }
-    return {
-      primaryAction: "full_song",
-      message: "You are in a good spot to run the song again at full length."
-    };
-  }
-
-  function getPlayAlongWeakAreas(outcome) {
-    var performance = outcome && outcome.performance ? outcome.performance : null;
-    var weakAreas = performance && Array.isArray(performance.weakAreas) ? performance.weakAreas : [];
-    var labels = [];
-    for (var i = 0; i < weakAreas.length; i++) {
-      var value = weakAreas[i];
-      if (!value) continue;
-      if (String(value).indexOf("lane_") === 0) {
-        labels.push("Lane " + (Number(String(value).split("_")[1]) + 1));
-      } else {
-        labels.push(String(value).replace(/_/g, " "));
-      }
-    }
-    return labels;
   }
 
   window.sparkPlayAlongBackToHome = sparkPlayAlongBackToHome;

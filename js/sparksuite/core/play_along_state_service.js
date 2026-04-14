@@ -70,6 +70,11 @@
     return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
   }
 
+  function asPercent(value) {
+    if (typeof value !== "number") return 0;
+    return value <= 1 ? Math.round(value * 100) : Math.round(value);
+  }
+
   function SparkPlayAlongStateService() {}
 
   SparkPlayAlongStateService.prototype.cloneValue = function(value) {
@@ -355,6 +360,11 @@
     return outcome && Array.isArray(outcome.feedback) ? outcome.feedback : [];
   };
 
+  SparkPlayAlongStateService.prototype.getOutcomePercent = function(key) {
+    var outcome = this.getLastOutcome();
+    return asPercent(outcome && outcome[key]);
+  };
+
   SparkPlayAlongStateService.prototype.getSuggestedDifficulty = function() {
     var outcome = this.getLastOutcome();
     return outcome && outcome.suggestedDifficulty ? outcome.suggestedDifficulty : "";
@@ -363,6 +373,63 @@
   SparkPlayAlongStateService.prototype.getSuggestedMode = function() {
     var outcome = this.getLastOutcome();
     return outcome && outcome.suggestedMode ? outcome.suggestedMode : "";
+  };
+
+  SparkPlayAlongStateService.prototype.getRecentMeta = function(item) {
+    var bits = [];
+    if (!item) return "";
+    if (item.artist) bits.push(item.artist);
+    if (item.transportMode) bits.push(item.transportMode);
+    if (item.difficulty) bits.push(item.difficulty);
+    return bits.join(" | ");
+  };
+
+  SparkPlayAlongStateService.prototype.getNextAction = function() {
+    var outcome = this.getLastOutcome();
+    var drillSummary;
+    if (!outcome) return null;
+    drillSummary = outcome.drillSummary || null;
+    if (drillSummary) {
+      if (drillSummary.metTarget) {
+        return {
+          primaryAction: "full_song",
+          message: "The drill target is complete. Take the same section back into the full-song run while the timing is fresh."
+        };
+      }
+      return {
+        primaryAction: "drill",
+        message: "Stay on the focused loop until the target reps are clean and consistent."
+      };
+    }
+    if (typeof outcome.accuracy === "number" && outcome.accuracy < 0.75) {
+      return {
+        primaryAction: "drill",
+        message: "Accuracy is still a bit low. Use a focused drill next instead of another full-song attempt."
+      };
+    }
+    return {
+      primaryAction: "full_song",
+      message: "You are in a good spot to run the song again at full length."
+    };
+  };
+
+  SparkPlayAlongStateService.prototype.getWeakAreas = function() {
+    var outcome = this.getLastOutcome();
+    var performance = outcome && outcome.performance ? outcome.performance : null;
+    var weakAreas = performance && Array.isArray(performance.weakAreas) ? performance.weakAreas : [];
+    var labels = [];
+    var i;
+    var value;
+    for (i = 0; i < weakAreas.length; i++) {
+      value = weakAreas[i];
+      if (!value) continue;
+      if (String(value).indexOf("lane_") === 0) {
+        labels.push("Lane " + (Number(String(value).split("_")[1]) + 1));
+      } else {
+        labels.push(String(value).replace(/_/g, " "));
+      }
+    }
+    return labels;
   };
 
   SparkPlayAlongStateService.prototype.clearError = function() {
