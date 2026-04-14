@@ -85,7 +85,10 @@
         return stateService.launchRecent(value, launchPreparedSession);
       },
       saveTrack: function(value) {
-        return self.saveSearchResultAndRender(value, onRender);
+        return self.saveSearchResult(value).then(function(saved) {
+          if (saved && typeof onRender === "function") onRender();
+          return saved;
+        });
       },
       launchSaved: function(value) {
         return stateService.launchSaved(value, launchPreparedSession);
@@ -115,7 +118,9 @@
         return stateService.clearBookmarksWithRender(onRender);
       },
       setDifficulty: function(value) {
-        return self.setDifficultyAndRender(value, onRender);
+        var result = self.setDifficulty(value);
+        if (typeof onRender === "function") onRender();
+        return result;
       },
       loadFile: function(value) {
         return self.handleLocalFileLaunch(value, launchPreparedSession);
@@ -171,12 +176,6 @@
 
   SparkPlayAlongActionService.prototype.setDifficulty = function(level) {
     return this.stateService.setDifficulty(level);
-  };
-
-  SparkPlayAlongActionService.prototype.setDifficultyAndRender = function(level, onRender) {
-    var result = this.setDifficulty(level);
-    if (typeof onRender === "function") onRender();
-    return result;
   };
 
   SparkPlayAlongActionService.prototype.setSearchResults = function(results) {
@@ -375,13 +374,6 @@
       onLaunchPrepared(params);
     }
     return !!params;
-  };
-
-  SparkPlayAlongActionService.prototype.saveSearchResultAndRender = function(index, onRender) {
-    return this.saveSearchResult(index).then(function(saved) {
-      if (saved && typeof onRender === "function") onRender();
-      return saved;
-    });
   };
 
   SparkPlayAlongActionService.prototype.bindUploadPromptHandlers = function(index, onSelectWithFile, onSkip) {
