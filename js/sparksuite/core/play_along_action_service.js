@@ -392,6 +392,12 @@
     });
   };
 
+  SparkPlayAlongActionService.prototype.saveSpotifyClientIdAndConnect = function(onConnected) {
+    if (!this.saveSpotifyClientIdFromPrompt()) return false;
+    this.connectSpotify(onConnected);
+    return true;
+  };
+
   SparkPlayAlongActionService.prototype.createSavedTrack = function(track) {
     if (!track) return null;
     return {

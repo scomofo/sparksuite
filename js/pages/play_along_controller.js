@@ -344,8 +344,9 @@
   };
 
   window.sparkPlayAlongSaveClientId = function() {
-    if (!playAlongActions.saveSpotifyClientIdFromPrompt()) return;
-    sparkPlayAlongConnectSpotify();
+    return playAlongActions.saveSpotifyClientIdAndConnect(function() {
+      if (typeof render === "function") render();
+    });
   };
 
   // Handle spotifyConnect action from act() dispatcher
