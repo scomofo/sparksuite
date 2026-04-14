@@ -10,9 +10,7 @@
   }
 
   function launchPreparedParams(params) {
-    if (!params) return false;
-    playAlongState.launchSession(params, playAlongActions.getInstrumentId(), requestRender, sparkPlayAlongStartLoop);
-    return true;
+    return playAlongActions.launchPreparedParams(params, requestRender, sparkPlayAlongStartLoop);
   }
 
   // ---- Search ----

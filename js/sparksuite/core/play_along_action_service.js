@@ -48,6 +48,12 @@
     return getPlayAlongInstrumentId();
   };
 
+  SparkPlayAlongActionService.prototype.launchPreparedParams = function(params, onRender, onStartLoop) {
+    if (!params || !this.stateService || typeof this.stateService.launchSession !== "function") return false;
+    this.stateService.launchSession(params, this.getInstrumentId(), onRender, onStartLoop);
+    return true;
+  };
+
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
     if (this.stateService && typeof this.stateService.cloneValue === "function") {
       return this.stateService.cloneValue(value);
