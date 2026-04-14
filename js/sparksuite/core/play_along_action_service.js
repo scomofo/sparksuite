@@ -1,8 +1,4 @@
 (function() {
-  function getPlayAlongCore() {
-    return typeof window !== "undefined" ? window.sparkCore || null : null;
-  }
-
   function escapeHtml(value) {
     if (!value) return "";
     return String(value)
@@ -224,7 +220,9 @@
     if (this.stateService && typeof this.stateService.setDifficulty === "function") {
       return this.stateService.setDifficulty(level);
     }
-    var core = getPlayAlongCore();
+    var core = this.stateService && typeof this.stateService.getCore === "function"
+      ? this.stateService.getCore()
+      : null;
     if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
       state = SparkState.getRoot();
     } else if (typeof globalThis !== "undefined" && globalThis.__sparkState) {
@@ -280,7 +278,9 @@
   };
 
   SparkPlayAlongActionService.prototype.searchTracks = function(query, onResults) {
-    var core = getPlayAlongCore();
+    var core = this.stateService && typeof this.stateService.getCore === "function"
+      ? this.stateService.getCore()
+      : null;
     var self = this;
     if (!query || query.length < 2) {
       if (typeof onResults === "function") onResults(this.clearSearchResults());
@@ -354,7 +354,9 @@
   };
 
   SparkPlayAlongActionService.prototype.hasCachedChart = function(trackId) {
-    var core = getPlayAlongCore();
+    var core = this.stateService && typeof this.stateService.getCore === "function"
+      ? this.stateService.getCore()
+      : null;
     return !!(core && core.chartService &&
       typeof core.chartService.hasCachedChart === "function" &&
       core.chartService.hasCachedChart(trackId));
@@ -673,7 +675,9 @@
   };
 
   SparkPlayAlongActionService.prototype.enrichSavedTrack = function(track) {
-    var core = getPlayAlongCore();
+    var core = this.stateService && typeof this.stateService.getCore === "function"
+      ? this.stateService.getCore()
+      : null;
     var saved = this.createSavedTrack(track);
     if (!saved) return Promise.resolve(null);
     if (!core || !core.spotifyClient || typeof core.spotifyClient.getAudioFeatures !== "function") {
