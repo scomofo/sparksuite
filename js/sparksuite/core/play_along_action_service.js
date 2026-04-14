@@ -73,8 +73,28 @@
       return stateService.launchPreparedSession(params, onRender, onStartLoop);
     };
     var bindings = {
-      search: this.searchAndRenderTracks.bind(this),
-      toggleDebug: this.toggleDebugDashboard.bind(this),
+      search: function(query) {
+        var resultsEl = self.getSearchResultsContainer();
+        if (!self.searchTracks(query, function(tracks) {
+          self.renderSearchResults(resultsEl, tracks);
+        })) {
+          self.clearSearchResultsMarkup(resultsEl);
+          return false;
+        }
+        return true;
+      },
+      toggleDebug: function() {
+        window._playAlongDebug = !window._playAlongDebug;
+
+        if (window._playAlongDebug && typeof SparkDebugDashboard !== "undefined") {
+          window._playAlongDashboard = new SparkDebugDashboard(document.body);
+          window._playAlongDashboard.show();
+        } else if (!window._playAlongDebug && window._playAlongDashboard) {
+          window._playAlongDashboard.hide();
+        }
+
+        return !!window._playAlongDebug;
+      },
       again: stateService.replayOrShowHome.bind(stateService, launchPreparedSession, onRender),
       replayDrill: stateService.replayDrill.bind(stateService, launchPreparedSession),
       replayFullSong: stateService.replayFullSong.bind(stateService, launchPreparedSession),
@@ -227,17 +247,6 @@
       var results = self.setSearchResults(tracks || []);
       if (typeof onResults === "function") onResults(results);
     });
-    return true;
-  };
-
-  SparkPlayAlongActionService.prototype.searchAndRenderTracks = function(query) {
-    var resultsEl = this.getSearchResultsContainer();
-    if (!this.searchTracks(query, function(tracks) {
-      this.renderSearchResults(resultsEl, tracks);
-    }.bind(this))) {
-      this.clearSearchResultsMarkup(resultsEl);
-      return false;
-    }
     return true;
   };
 
@@ -536,19 +545,6 @@
 
       return true;
     });
-  };
-
-  SparkPlayAlongActionService.prototype.toggleDebugDashboard = function() {
-    window._playAlongDebug = !window._playAlongDebug;
-
-    if (window._playAlongDebug && typeof SparkDebugDashboard !== "undefined") {
-      window._playAlongDashboard = new SparkDebugDashboard(document.body);
-      window._playAlongDashboard.show();
-    } else if (!window._playAlongDebug && window._playAlongDashboard) {
-      window._playAlongDashboard.hide();
-    }
-
-    return !!window._playAlongDebug;
   };
 
   SparkPlayAlongActionService.prototype.createSavedTrack = function(track) {
