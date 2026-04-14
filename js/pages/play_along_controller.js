@@ -9,6 +9,24 @@
     if (typeof render === "function") render();
   }
 
+  function withRender(fn, context) {
+    return function(value) {
+      return fn.call(context, value, requestRender);
+    };
+  }
+
+  function withLaunch(fn, context) {
+    return function(value) {
+      return fn.call(context, value, launchPreparedParams);
+    };
+  }
+
+  function withLaunchAndRender(fn, context) {
+    return function(value) {
+      return fn.call(context, value, launchPreparedParams, requestRender);
+    };
+  }
+
   window.sparkPlayAlongStop = playAlongRenderer.finishSessionResults.bind(playAlongRenderer, requestRender);
   window.sparkPlayAlongStartLoop = playAlongRenderer.startSessionLoop.bind(playAlongRenderer, window.sparkPlayAlongStop);
 
@@ -16,9 +34,7 @@
 
   // ---- Search ----
 
-  window.sparkPlayAlongSearch = function(query) {
-    return playAlongActions.searchAndRenderTracks(query);
-  };
+  window.sparkPlayAlongSearch = playAlongActions.searchAndRenderTracks.bind(playAlongActions);
 
   // ---- Select Track ----
 
@@ -34,21 +50,13 @@
     return playAlongActions.handleDemoLaunch(index, launchPreparedParams);
   };
 
-  window.sparkPlayAlongLaunchRecent = function(index) {
-    return playAlongState.launchRecent(index, launchPreparedParams);
-  };
+  window.sparkPlayAlongLaunchRecent = withLaunch(playAlongState.launchRecent, playAlongState);
 
-  window.sparkPlayAlongSaveTrack = function(index) {
-    return playAlongActions.saveSearchResultAndRender(index, requestRender);
-  };
+  window.sparkPlayAlongSaveTrack = withRender(playAlongActions.saveSearchResultAndRender, playAlongActions);
 
-  window.sparkPlayAlongLaunchSaved = function(index) {
-    return playAlongState.launchSaved(index, launchPreparedParams);
-  };
+  window.sparkPlayAlongLaunchSaved = withLaunch(playAlongState.launchSaved, playAlongState);
 
-  window.sparkPlayAlongRemoveSaved = function(index) {
-    return playAlongState.removeSavedTrackWithRender(index, requestRender);
-  };
+  window.sparkPlayAlongRemoveSaved = withRender(playAlongState.removeSavedTrackWithRender, playAlongState);
 
   window.sparkPlayAlongClearSaved = playAlongState.clearSavedTracksWithRender.bind(playAlongState, requestRender);
 
@@ -60,23 +68,17 @@
     return playAlongState.launchBookmarkByKey(trackId, sectionIndex, launchPreparedParams);
   };
 
-  window.sparkPlayAlongRemoveRecent = function(index) {
-    return playAlongState.removeRecentWithRender(index, requestRender);
-  };
+  window.sparkPlayAlongRemoveRecent = withRender(playAlongState.removeRecentWithRender, playAlongState);
 
   window.sparkPlayAlongClearRecent = playAlongState.clearRecentWithRender.bind(playAlongState, requestRender);
 
-  window.sparkPlayAlongRemoveBookmark = function(index) {
-    return playAlongState.removeBookmarkWithRender(index, requestRender);
-  };
+  window.sparkPlayAlongRemoveBookmark = withRender(playAlongState.removeBookmarkWithRender, playAlongState);
 
   window.sparkPlayAlongClearBookmarks = playAlongState.clearBookmarksWithRender.bind(playAlongState, requestRender);
 
   // ---- Set Difficulty ----
 
-  window.sparkPlayAlongSetDifficulty = function(level) {
-    return playAlongActions.setDifficultyAndRender(level, requestRender);
-  };
+  window.sparkPlayAlongSetDifficulty = withRender(playAlongActions.setDifficultyAndRender, playAlongActions);
 
   // ---- Load Local File ----
 
@@ -128,9 +130,7 @@
 
   window.sparkPlayAlongPickNew = playAlongState.resetToHome.bind(playAlongState, requestRender);
 
-  window.sparkPlayAlongStartDrill = function(index) {
-    return playAlongState.startDrill(index, launchPreparedParams, requestRender);
-  };
+  window.sparkPlayAlongStartDrill = withLaunchAndRender(playAlongState.startDrill, playAlongState);
 
   // ---- Navigation Helper ----
 
