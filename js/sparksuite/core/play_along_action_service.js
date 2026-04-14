@@ -196,11 +196,17 @@
         return stateService.launchSectionRecommendation(first, second, launchPreparedSession);
       },
       searchSelectWithFile: function(index, file) {
-        return self.handleSearchSelectionWithFile(index, file, launchPreparedSession);
+        if (!file) return false;
+        launchPreparedSession(self.prepareSearchLaunch(index, { audioFile: file }));
+        return true;
       }
     };
     bindings.searchSelect = function(index) {
-      return self.handleSearchSelection(index, launchPreparedSession, bindings.searchSelectWithFile);
+      if (self.shouldUseCachedSearchChart(index)) {
+        launchPreparedSession(self.prepareSearchLaunch(index));
+        return true;
+      }
+      return self.showSearchUploadPromptForIndex(index, bindings.searchSelectWithFile, launchPreparedSession);
     };
     return bindings;
   };
@@ -362,24 +368,6 @@
     var container = this.getSearchResultsContainer();
     if (!container) return false;
     return this.showSearchUploadPrompt(container, index, onSelectWithFile, onSkipLaunch);
-  };
-
-  SparkPlayAlongActionService.prototype.handleSearchSelection = function(index, onLaunchPrepared, onSelectWithFile) {
-    if (this.shouldUseCachedSearchChart(index)) {
-      if (typeof onLaunchPrepared === "function") {
-        onLaunchPrepared(this.prepareSearchLaunch(index));
-      }
-      return true;
-    }
-    return this.showSearchUploadPromptForIndex(index, onSelectWithFile, onLaunchPrepared);
-  };
-
-  SparkPlayAlongActionService.prototype.handleSearchSelectionWithFile = function(index, file, onLaunchPrepared) {
-    if (!file) return false;
-    if (typeof onLaunchPrepared === "function") {
-      onLaunchPrepared(this.prepareSearchLaunch(index, { audioFile: file }));
-    }
-    return true;
   };
 
   SparkPlayAlongActionService.prototype.bindUploadPromptHandlers = function(index, onSelectWithFile, onSkip) {
