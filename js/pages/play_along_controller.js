@@ -12,24 +12,15 @@
   window.sparkPlayAlongStop = playAlongRenderer.createStopHandler(requestRender);
   window.sparkPlayAlongStartLoop = playAlongRenderer.createStartLoopHandler(window.sparkPlayAlongStop);
 
-  var launchPreparedParams = playAlongActions.createLaunchHandler(requestRender, sparkPlayAlongStartLoop);
-  function withRender(fn, context) {
-    return playAlongActions.createRenderHandler(fn, context, requestRender);
-  }
-  function withRenderOnly(fn, context) {
-    return playAlongActions.createRenderOnlyHandler(fn, context, requestRender);
-  }
-  function withLaunch(fn, context) {
-    return playAlongActions.createLaunchCallback(fn, context, launchPreparedParams);
-  }
-  function withLaunchAndRender(fn, context) {
-    return playAlongActions.createLaunchAndRenderCallback(fn, context, launchPreparedParams, requestRender);
-  }
-  function withLaunchPair(fn, context) {
-    return playAlongActions.createLaunchPairCallback(fn, context, launchPreparedParams);
-  }
-  window.sparkPlayAlongSelectWithFile = playAlongActions.createSearchSelectionWithFileHandler(launchPreparedParams);
-  window.sparkPlayAlongSelect = playAlongActions.createSearchSelectionHandler(launchPreparedParams, window.sparkPlayAlongSelectWithFile);
+  var controllerBindings = playAlongActions.createControllerBindings(requestRender, window.sparkPlayAlongStartLoop);
+  var launchPreparedParams = controllerBindings.launchPreparedParams;
+  var withRender = controllerBindings.withRender;
+  var withRenderOnly = controllerBindings.withRenderOnly;
+  var withLaunch = controllerBindings.withLaunch;
+  var withLaunchAndRender = controllerBindings.withLaunchAndRender;
+  var withLaunchPair = controllerBindings.withLaunchPair;
+  window.sparkPlayAlongSelectWithFile = controllerBindings.searchSelectWithFile;
+  window.sparkPlayAlongSelect = controllerBindings.searchSelect;
 
   // ---- Search ----
 
