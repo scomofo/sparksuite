@@ -312,6 +312,13 @@
     return this.getReplayParams();
   };
 
+  SparkPlayAlongStateService.prototype.replayDrill = function(onLaunchPrepared) {
+    var params = this.prepareReplayDrillLaunch();
+    if (!params) return false;
+    if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.replayOrShowHome = function(onLaunchPrepared, onRender) {
     var params = this.getReplayParams();
     if (params) {
@@ -811,6 +818,13 @@
   SparkPlayAlongStateService.prototype.prepareBookmarkLaunchByKey = function(trackId, sectionIndex) {
     var index = this.findBookmarkIndex(trackId, sectionIndex);
     return index >= 0 ? this.prepareBookmarkLaunchByIndex(index) : null;
+  };
+
+  SparkPlayAlongStateService.prototype.launchBookmarkByKey = function(trackId, sectionIndex, onLaunchPrepared) {
+    var params = this.prepareBookmarkLaunchByKey(trackId, sectionIndex);
+    if (!params) return false;
+    if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+    return true;
   };
 
   SparkPlayAlongStateService.prototype.prepareFullSongReplay = function() {

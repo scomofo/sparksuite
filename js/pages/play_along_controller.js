@@ -83,9 +83,7 @@
   };
 
   window.sparkPlayAlongLaunchBookmarkByKey = function(trackId, sectionIndex) {
-    return launchFrom(function() {
-      return playAlongState.prepareBookmarkLaunchByKey(trackId, sectionIndex);
-    });
+    return playAlongState.launchBookmarkByKey(trackId, sectionIndex, launchPreparedParams);
   };
 
   window.sparkPlayAlongRemoveRecent = function(index) {
@@ -163,9 +161,7 @@
   };
 
   window.sparkPlayAlongReplayDrill = function() {
-    return launchFrom(function() {
-      return playAlongState.prepareReplayDrillLaunch();
-    });
+    return playAlongState.replayDrill(launchPreparedParams);
   };
 
   window.sparkPlayAlongReplayFullSong = function() {
