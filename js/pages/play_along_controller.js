@@ -96,7 +96,7 @@
   window.sparkPlayAlongConnectSpotify = controllerBindings.connectSpotify;
 
   window.sparkPlayAlongSaveClientId = controllerBindings.saveSpotifyClientId;
-  window.sparkPlayAlongReplay = window.sparkPlayAlongAgain;
-  window.handleSpotifyConnectAction = window.sparkPlayAlongConnectSpotify;
+  window.sparkPlayAlongReplay = controllerBindings.replay;
+  window.handleSpotifyConnectAction = controllerBindings.spotifyConnectAction;
 
 })();

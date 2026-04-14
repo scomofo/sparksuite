@@ -124,6 +124,21 @@
     var showHome = this.stateService && typeof this.stateService.showHome === "function"
       ? this.stateService.showHome
       : function() { return false; };
+    var withRender = function(fn, context) {
+      return self.createRenderHandler(fn, context, onRender);
+    };
+    var withRenderOnly = function(fn, context) {
+      return self.createRenderOnlyHandler(fn, context, onRender);
+    };
+    var withLaunch = function(fn, context) {
+      return self.createLaunchCallback(fn, context, launchPreparedParams);
+    };
+    var withLaunchAndRender = function(fn, context) {
+      return self.createLaunchAndRenderCallback(fn, context, launchPreparedParams, onRender);
+    };
+    var withLaunchPair = function(fn, context) {
+      return self.createLaunchPairCallback(fn, context, launchPreparedParams);
+    };
     return {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
@@ -131,24 +146,38 @@
       again: replayOrShowHome,
       replayDrill: replayDrill,
       replayFullSong: replayFullSong,
-      withRender: function(fn, context) {
-        return self.createRenderHandler(fn, context, onRender);
-      },
-      withRenderOnly: function(fn, context) {
-        return self.createRenderOnlyHandler(fn, context, onRender);
-      },
-      withLaunch: function(fn, context) {
-        return self.createLaunchCallback(fn, context, launchPreparedParams);
-      },
-      withLaunchAndRender: function(fn, context) {
-        return self.createLaunchAndRenderCallback(fn, context, launchPreparedParams, onRender);
-      },
-      withLaunchPair: function(fn, context) {
-        return self.createLaunchPairCallback(fn, context, launchPreparedParams);
-      },
-      openHome: self.createRenderOnlyHandler(showHome, self.stateService, onRender),
-      connectSpotify: self.createRenderOnlyHandler(self.connectSpotifyAndRender, self, onRender),
-      saveSpotifyClientId: self.createRenderOnlyHandler(self.saveSpotifyClientIdAndConnectAndRender, self, onRender),
+      withRender: withRender,
+      withRenderOnly: withRenderOnly,
+      withLaunch: withLaunch,
+      withLaunchAndRender: withLaunchAndRender,
+      withLaunchPair: withLaunchPair,
+      launchDemo: withLaunch(self.handleDemoLaunch, self),
+      launchRecent: withLaunch(self.stateService.launchRecent, self.stateService),
+      saveTrack: withRender(self.saveSearchResultAndRender, self),
+      launchSaved: withLaunch(self.stateService.launchSaved, self.stateService),
+      removeSaved: withRender(self.stateService.removeSavedTrackWithRender, self.stateService),
+      clearSaved: withRenderOnly(self.stateService.clearSavedTracksWithRender, self.stateService),
+      launchBookmark: withLaunch(self.stateService.launchBookmark, self.stateService),
+      launchBookmarkByKey: withLaunchPair(self.stateService.launchBookmarkByKey, self.stateService),
+      removeRecent: withRender(self.stateService.removeRecentWithRender, self.stateService),
+      clearRecent: withRenderOnly(self.stateService.clearRecentWithRender, self.stateService),
+      removeBookmark: withRender(self.stateService.removeBookmarkWithRender, self.stateService),
+      clearBookmarks: withRenderOnly(self.stateService.clearBookmarksWithRender, self.stateService),
+      setDifficulty: withRender(self.setDifficultyAndRender, self),
+      loadFile: withLaunch(self.handleLocalFileLaunch, self),
+      togglePause: withRenderOnly(self.stateService.togglePause, self.stateService),
+      toggleLoop: withRenderOnly(self.stateService.toggleLoopWithRender, self.stateService),
+      setLoopTarget: withRender(self.stateService.setLoopTargetWithRender, self.stateService),
+      prevSection: withRenderOnly(self.stateService.prevSection, self.stateService),
+      nextSection: withRenderOnly(self.stateService.nextSection, self.stateService),
+      bookmarkCurrentSection: withRenderOnly(self.stateService.saveCurrentSectionBookmarkWithRender, self.stateService),
+      pickNew: withRenderOnly(self.stateService.resetToHome, self.stateService),
+      startDrill: withLaunchAndRender(self.stateService.startDrill, self.stateService),
+      openHome: withRenderOnly(showHome, self.stateService),
+      connectSpotify: withRenderOnly(self.connectSpotifyAndRender, self),
+      saveSpotifyClientId: withRenderOnly(self.saveSpotifyClientIdAndConnectAndRender, self),
+      replay: replayOrShowHome,
+      spotifyConnectAction: withRenderOnly(self.connectSpotifyAndRender, self),
       jumpToWeakSection: launchWeakSection,
       jumpToSectionRecommendation: launchSectionRecommendation,
       searchSelectWithFile: selectWithFile,
