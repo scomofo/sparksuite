@@ -31,8 +31,10 @@
     return true;
   };
 
-  SparkPlayAlongRenderer.prototype.finishSessionResults = function(onStop, onRender) {
-    if (typeof onStop === "function") onStop();
+  SparkPlayAlongRenderer.prototype.finishSessionResults = function(onRender) {
+    if (this.stateService && typeof this.stateService.stopSessionForResults === "function") {
+      this.stateService.stopSessionForResults();
+    }
     if (typeof onRender === "function") onRender();
     this.scheduleResultsHeatmap();
     return true;

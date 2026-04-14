@@ -100,9 +100,7 @@
   // ---- Stop ----
 
   window.sparkPlayAlongStop = function() {
-    return playAlongRenderer.finishSessionResults(function() {
-      playAlongState.stopSessionForResults();
-    }, requestRender);
+    return playAlongRenderer.finishSessionResults(requestRender);
   };
 
   // ---- Toggle Debug ----
