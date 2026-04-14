@@ -311,46 +311,43 @@
   // ---- Spotify Connect ----
 
   window.sparkPlayAlongConnectSpotify = function() {
-    // Check if auth manager exists
-    if (typeof SparkSpotifyAuthManager === "undefined") {
+    var authManager = playAlongActions.createSpotifyAuthManager();
+    if (!authManager) {
       alert("Spotify integration not loaded.");
       return;
     }
 
-    var authManager = new SparkSpotifyAuthManager();
-
     // Check if already connected
-    if (authManager.isConnected()) {
-      authManager.getValidToken().then(function(token) {
-        if (token && playAlongState.initSpotify(token)) {
+    playAlongActions.resumeSpotifyConnection(authManager, function(token) {
+      if (token && playAlongState.initSpotify(token)) {
+        if (typeof render === "function") render();
+      }
+    }).then(function(reused) {
+      var clientId;
+      var container;
+      if (reused) return;
+
+    // Need to configure first — check if client ID is set
+      clientId = playAlongActions.getSpotifyClientId();
+      if (!clientId) {
+        container = document.getElementById("play-along-results") || document.getElementById("app");
+        playAlongActions.showSpotifyClientIdPrompt(container);
+        return;
+      }
+
+      if (!playAlongActions.configureSpotifyAuth(clientId)) return;
+
+      playAlongActions.requestSpotifyAuthUrl(authManager).then(function(url) {
+        playAlongActions.openSpotifyAuthUrl(url);
+      }).catch(function(err) {
+        console.error("Spotify auth URL generation failed:", err);
+      });
+
+      playAlongActions.bindSpotifyCallback(authManager, function(tokenData) {
+        if (tokenData && tokenData.access_token && playAlongState.initSpotify(tokenData.access_token)) {
           if (typeof render === "function") render();
         }
       });
-      return;
-    }
-
-    // Need to configure first — check if client ID is set
-    var clientId = playAlongActions.getSpotifyClientId();
-    if (!clientId) {
-      // Show inline input instead of prompt (blocked in Electron)
-      var container = document.getElementById("play-along-results") || document.getElementById("app");
-      playAlongActions.showSpotifyClientIdPrompt(container);
-      return;
-    }
-
-    if (!playAlongActions.configureSpotifyAuth(clientId)) return;
-
-    // Start OAuth flow (PKCE - getAuthUrl is async)
-    authManager.getAuthUrl().then(function(url) {
-      playAlongActions.openSpotifyAuthUrl(url);
-    }).catch(function(err) {
-      console.error("Spotify auth URL generation failed:", err);
-    });
-
-    playAlongActions.bindSpotifyCallback(authManager, function(tokenData) {
-      if (tokenData && tokenData.access_token && playAlongState.initSpotify(tokenData.access_token)) {
-        if (typeof render === "function") render();
-      }
     });
   };
 

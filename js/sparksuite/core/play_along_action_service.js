@@ -210,6 +210,11 @@
     return true;
   };
 
+  SparkPlayAlongActionService.prototype.createSpotifyAuthManager = function() {
+    if (typeof SparkSpotifyAuthManager === "undefined") return null;
+    return new SparkSpotifyAuthManager();
+  };
+
   SparkPlayAlongActionService.prototype.buildSpotifyClientIdPromptMarkup = function() {
     return "<div class=card style=padding:20px;text-align:center>"
       + "<div style=font-size:14px;font-weight:700;margin-bottom:8px>Spotify Client ID</div>"
@@ -262,6 +267,23 @@
       });
     });
     return true;
+  };
+
+  SparkPlayAlongActionService.prototype.resumeSpotifyConnection = function(authManager, onToken) {
+    if (!authManager || typeof authManager.isConnected !== "function" || !authManager.isConnected()) {
+      return Promise.resolve(false);
+    }
+    return authManager.getValidToken().then(function(token) {
+      if (typeof onToken === "function") onToken(token);
+      return !!token;
+    });
+  };
+
+  SparkPlayAlongActionService.prototype.requestSpotifyAuthUrl = function(authManager) {
+    if (!authManager || typeof authManager.getAuthUrl !== "function") {
+      return Promise.reject(new Error("Spotify auth manager unavailable"));
+    }
+    return authManager.getAuthUrl();
   };
 
   SparkPlayAlongActionService.prototype.createSavedTrack = function(track) {
