@@ -51,12 +51,7 @@
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
-    var resultsEl = playAlongActions.getSearchResultsContainer();
-    if (!playAlongActions.searchTracks(query, function(tracks) {
-      playAlongActions.renderSearchResults(resultsEl, tracks);
-    })) {
-      playAlongActions.clearSearchResultsMarkup(resultsEl);
-    }
+    return playAlongActions.searchAndRenderTracks(query);
   };
 
   // ---- Select Track ----

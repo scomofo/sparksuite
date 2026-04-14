@@ -126,6 +126,17 @@
     return true;
   };
 
+  SparkPlayAlongActionService.prototype.searchAndRenderTracks = function(query) {
+    var resultsEl = this.getSearchResultsContainer();
+    if (!this.searchTracks(query, function(tracks) {
+      this.renderSearchResults(resultsEl, tracks);
+    }.bind(this))) {
+      this.clearSearchResultsMarkup(resultsEl);
+      return false;
+    }
+    return true;
+  };
+
   SparkPlayAlongActionService.prototype.buildSearchResultsMarkup = function(tracks) {
     var html = "";
     var i;
