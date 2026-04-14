@@ -39,6 +39,14 @@
     return this.startSessionLoop.bind(this, onStopLoop);
   };
 
+  SparkPlayAlongRenderer.prototype.createControllerBindings = function(onRender) {
+    var stop = this.createStopHandler(onRender);
+    return {
+      stop: stop,
+      startLoop: this.createStartLoopHandler(stop)
+    };
+  };
+
   SparkPlayAlongRenderer.prototype.finishSessionResults = function(onRender) {
     if (this.stateService && typeof this.stateService.stopSessionForResults === "function") {
       this.stateService.stopSessionForResults();

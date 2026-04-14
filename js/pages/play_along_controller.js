@@ -9,8 +9,9 @@
     if (typeof render === "function") render();
   }
 
-  window.sparkPlayAlongStop = playAlongRenderer.createStopHandler(requestRender);
-  window.sparkPlayAlongStartLoop = playAlongRenderer.createStartLoopHandler(window.sparkPlayAlongStop);
+  var rendererBindings = playAlongRenderer.createControllerBindings(requestRender);
+  window.sparkPlayAlongStop = rendererBindings.stop;
+  window.sparkPlayAlongStartLoop = rendererBindings.startLoop;
 
   var controllerBindings = playAlongActions.createControllerBindings(requestRender, window.sparkPlayAlongStartLoop);
   window.sparkPlayAlongSelectWithFile = controllerBindings.searchSelectWithFile;
@@ -22,37 +23,37 @@
 
   // ---- Select Track ----
 
-  window.sparkPlayAlongLaunchDemo = controllerBindings.withLaunch(playAlongActions.handleDemoLaunch, playAlongActions);
+  window.sparkPlayAlongLaunchDemo = controllerBindings.launchDemo;
 
-  window.sparkPlayAlongLaunchRecent = controllerBindings.withLaunch(playAlongState.launchRecent, playAlongState);
+  window.sparkPlayAlongLaunchRecent = controllerBindings.launchRecent;
 
-  window.sparkPlayAlongSaveTrack = controllerBindings.withRender(playAlongActions.saveSearchResultAndRender, playAlongActions);
+  window.sparkPlayAlongSaveTrack = controllerBindings.saveTrack;
 
-  window.sparkPlayAlongLaunchSaved = controllerBindings.withLaunch(playAlongState.launchSaved, playAlongState);
+  window.sparkPlayAlongLaunchSaved = controllerBindings.launchSaved;
 
-  window.sparkPlayAlongRemoveSaved = controllerBindings.withRender(playAlongState.removeSavedTrackWithRender, playAlongState);
+  window.sparkPlayAlongRemoveSaved = controllerBindings.removeSaved;
 
-  window.sparkPlayAlongClearSaved = controllerBindings.withRenderOnly(playAlongState.clearSavedTracksWithRender, playAlongState);
+  window.sparkPlayAlongClearSaved = controllerBindings.clearSaved;
 
-  window.sparkPlayAlongLaunchBookmark = controllerBindings.withLaunch(playAlongState.launchBookmark, playAlongState);
+  window.sparkPlayAlongLaunchBookmark = controllerBindings.launchBookmark;
 
-  window.sparkPlayAlongLaunchBookmarkByKey = controllerBindings.withLaunchPair(playAlongState.launchBookmarkByKey, playAlongState);
+  window.sparkPlayAlongLaunchBookmarkByKey = controllerBindings.launchBookmarkByKey;
 
-  window.sparkPlayAlongRemoveRecent = controllerBindings.withRender(playAlongState.removeRecentWithRender, playAlongState);
+  window.sparkPlayAlongRemoveRecent = controllerBindings.removeRecent;
 
-  window.sparkPlayAlongClearRecent = controllerBindings.withRenderOnly(playAlongState.clearRecentWithRender, playAlongState);
+  window.sparkPlayAlongClearRecent = controllerBindings.clearRecent;
 
-  window.sparkPlayAlongRemoveBookmark = controllerBindings.withRender(playAlongState.removeBookmarkWithRender, playAlongState);
+  window.sparkPlayAlongRemoveBookmark = controllerBindings.removeBookmark;
 
-  window.sparkPlayAlongClearBookmarks = controllerBindings.withRenderOnly(playAlongState.clearBookmarksWithRender, playAlongState);
+  window.sparkPlayAlongClearBookmarks = controllerBindings.clearBookmarks;
 
   // ---- Set Difficulty ----
 
-  window.sparkPlayAlongSetDifficulty = controllerBindings.withRender(playAlongActions.setDifficultyAndRender, playAlongActions);
+  window.sparkPlayAlongSetDifficulty = controllerBindings.setDifficulty;
 
   // ---- Load Local File ----
 
-  window.sparkPlayAlongLoadFile = controllerBindings.withLaunch(playAlongActions.handleLocalFileLaunch, playAlongActions);
+  window.sparkPlayAlongLoadFile = controllerBindings.loadFile;
 
   // ---- Toggle Debug ----
 
@@ -66,25 +67,25 @@
 
   window.sparkPlayAlongReplayFullSong = controllerBindings.replayFullSong;
 
-  window.sparkPlayAlongTogglePause = controllerBindings.withRenderOnly(playAlongState.togglePause, playAlongState);
+  window.sparkPlayAlongTogglePause = controllerBindings.togglePause;
 
-  window.sparkPlayAlongToggleLoop = controllerBindings.withRenderOnly(playAlongState.toggleLoopWithRender, playAlongState);
+  window.sparkPlayAlongToggleLoop = controllerBindings.toggleLoop;
 
-  window.sparkPlayAlongSetLoopTarget = controllerBindings.withRender(playAlongState.setLoopTargetWithRender, playAlongState);
+  window.sparkPlayAlongSetLoopTarget = controllerBindings.setLoopTarget;
 
-  window.sparkPlayAlongPrevSection = controllerBindings.withRenderOnly(playAlongState.prevSection, playAlongState);
+  window.sparkPlayAlongPrevSection = controllerBindings.prevSection;
 
-  window.sparkPlayAlongNextSection = controllerBindings.withRenderOnly(playAlongState.nextSection, playAlongState);
+  window.sparkPlayAlongNextSection = controllerBindings.nextSection;
 
-  window.sparkPlayAlongBookmarkCurrentSection = controllerBindings.withRenderOnly(playAlongState.saveCurrentSectionBookmarkWithRender, playAlongState);
+  window.sparkPlayAlongBookmarkCurrentSection = controllerBindings.bookmarkCurrentSection;
 
   window.sparkPlayAlongJumpToWeakSection = controllerBindings.jumpToWeakSection;
 
   window.sparkPlayAlongJumpToSectionRecommendation = controllerBindings.jumpToSectionRecommendation;
 
-  window.sparkPlayAlongPickNew = controllerBindings.withRenderOnly(playAlongState.resetToHome, playAlongState);
+  window.sparkPlayAlongPickNew = controllerBindings.pickNew;
 
-  window.sparkPlayAlongStartDrill = controllerBindings.withLaunchAndRender(playAlongState.startDrill, playAlongState);
+  window.sparkPlayAlongStartDrill = controllerBindings.startDrill;
 
   // ---- Navigation Helper ----
 
