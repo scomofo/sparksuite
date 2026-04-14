@@ -235,6 +235,12 @@
     }.bind(this));
   };
 
+  SparkPlayAlongActionService.prototype.showSearchUploadPromptForIndex = function(index, onSelectWithFile, onSkipLaunch) {
+    var container = this.getSearchResultsContainer();
+    if (!container) return false;
+    return this.showSearchUploadPrompt(container, index, onSelectWithFile, onSkipLaunch);
+  };
+
   SparkPlayAlongActionService.prototype.bindUploadPromptHandlers = function(index, onSelectWithFile, onSkip) {
     var track = this.getSearchResult(index);
     var fileInput = document.getElementById("play-along-audio-input");

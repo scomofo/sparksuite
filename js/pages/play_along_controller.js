@@ -62,9 +62,7 @@
       return;
     }
 
-    var resultsEl = playAlongActions.getSearchResultsContainer();
-    if (!resultsEl) return;
-    playAlongActions.showSearchUploadPrompt(resultsEl, index, sparkPlayAlongSelectWithFile, function(params) {
+    return playAlongActions.showSearchUploadPromptForIndex(index, sparkPlayAlongSelectWithFile, function(params) {
       launchPreparedParams(params);
     });
   };
