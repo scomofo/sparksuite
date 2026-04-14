@@ -76,6 +76,12 @@
     return level;
   };
 
+  SparkPlayAlongActionService.prototype.setDifficultyAndRender = function(level, onRender) {
+    var result = this.setDifficulty(level);
+    if (typeof onRender === "function") onRender();
+    return result;
+  };
+
   SparkPlayAlongActionService.prototype.setSearchResults = function(results) {
     this.searchResults = Array.isArray(results) ? results.slice() : [];
     return this.searchResults;

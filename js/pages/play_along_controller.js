@@ -82,9 +82,7 @@
   // ---- Set Difficulty ----
 
   window.sparkPlayAlongSetDifficulty = function(level) {
-    var result = playAlongActions.setDifficulty(level);
-    requestRender();
-    return result;
+    return playAlongActions.setDifficultyAndRender(level, requestRender);
   };
 
   // ---- Load Local File ----
