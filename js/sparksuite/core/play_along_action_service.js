@@ -71,9 +71,6 @@
 
   SparkPlayAlongActionService.prototype.createControllerBindings = function(onRender, onStartLoop) {
     var self = this;
-    onRender = typeof onRender === "function" ? onRender : function() {
-      if (typeof render === "function") render();
-    };
     var launchPreparedSession = this.stateService && typeof this.stateService.launchPreparedSession === "function"
       ? function(params) {
         return self.stateService.launchPreparedSession(params, onRender, onStartLoop);
