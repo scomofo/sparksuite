@@ -80,17 +80,10 @@
   };
 
   window.sparkPlayAlongLaunchDemo = function(index) {
-    var demo = playAlongActions.getDemo(index);
-    if (!demo) return false;
+    var params = playAlongActions.getDemoLaunchParams(index);
+    if (!params) return false;
     playAlongState.resetSelectedDrillState();
-    launchPlayAlongSession(playAlongActions.buildLaunchParams(demo, {
-      trackId: demo.trackId,
-      trackUri: demo.trackUri || null,
-      title: demo.title || null,
-      audioOffsetMs: demo.audioOffsetMs || 0,
-      difficulty: demo.difficulty || playAlongActions.getDifficulty(),
-      instrument: demo.instrument || "guitar"
-    }));
+    launchPlayAlongSession(params);
     return true;
   };
 
@@ -103,13 +96,9 @@
   };
 
   window.sparkPlayAlongSaveTrack = function(index) {
-    var track = playAlongActions.getSearchResult(index);
-    if (!track) return Promise.resolve(false);
-
-    return playAlongActions.enrichSavedTrack(track).then(function(saved) {
-      if (!playAlongState.saveTrack(saved)) return false;
-      render();
-      return true;
+    return playAlongActions.saveSearchResult(index).then(function(saved) {
+      if (saved) render();
+      return saved;
     });
   };
 

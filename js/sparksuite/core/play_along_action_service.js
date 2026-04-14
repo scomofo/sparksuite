@@ -174,9 +174,33 @@
     });
   };
 
+  SparkPlayAlongActionService.prototype.saveSearchResult = function(index) {
+    var self = this;
+    var track = this.getSearchResult(index);
+    if (!track || !this.stateService || typeof this.stateService.saveTrack !== "function") {
+      return Promise.resolve(false);
+    }
+    return this.enrichSavedTrack(track).then(function(saved) {
+      return !!self.stateService.saveTrack(saved);
+    });
+  };
+
   SparkPlayAlongActionService.prototype.getDemo = function(index) {
     var demos = getPlayAlongDemos();
     return demos[index] || null;
+  };
+
+  SparkPlayAlongActionService.prototype.getDemoLaunchParams = function(index) {
+    var demo = this.getDemo(index);
+    if (!demo) return null;
+    return this.buildLaunchParams(demo, {
+      trackId: demo.trackId,
+      trackUri: demo.trackUri || null,
+      title: demo.title || null,
+      audioOffsetMs: demo.audioOffsetMs || 0,
+      difficulty: demo.difficulty || this.getDifficulty(),
+      instrument: demo.instrument || "guitar"
+    });
   };
 
   window.SparkPlayAlongActionService = SparkPlayAlongActionService;
