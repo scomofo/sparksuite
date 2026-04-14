@@ -245,19 +245,15 @@
     };
   };
 
-  SparkPlayAlongActionService.prototype.bindGlobals = function(target, onRender, rendererBindings) {
-    if (!target || !rendererBindings) return null;
+  SparkPlayAlongActionService.prototype.bootstrapGlobals = function(target, renderer, onRender) {
+    if (!renderer || typeof renderer.createControllerBindings !== "function") return null;
     onRender = this.getRenderCallback(onRender);
+    if (!target) return null;
+    var rendererBindings = renderer.createControllerBindings(onRender);
     var controllerBindings = this.createControllerBindings(onRender, rendererBindings.startLoop);
     var globals = this.createGlobalBindings(controllerBindings, rendererBindings);
     Object.assign(target, globals);
     return globals;
-  };
-
-  SparkPlayAlongActionService.prototype.bootstrapGlobals = function(target, renderer, onRender) {
-    if (!renderer || typeof renderer.createControllerBindings !== "function") return null;
-    onRender = this.getRenderCallback(onRender);
-    return this.bindGlobals(target, onRender, renderer.createControllerBindings(onRender));
   };
 
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
