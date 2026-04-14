@@ -143,31 +143,6 @@
     var showHome = this.stateService && typeof this.stateService.showHome === "function"
       ? this.stateService.showHome
       : function() { return false; };
-    var withRender = function(fn, context) {
-      return function(value) {
-        return fn.call(context, value, onRender);
-      };
-    };
-    var withRenderOnly = function(fn, context) {
-      return function() {
-        return fn.call(context, onRender);
-      };
-    };
-    var withLaunch = function(fn, context) {
-      return function(value) {
-        return fn.call(context, value, launchPreparedParams);
-      };
-    };
-    var withLaunchAndRender = function(fn, context) {
-      return function(value) {
-        return fn.call(context, value, launchPreparedParams, onRender);
-      };
-    };
-    var withLaunchPair = function(fn, context) {
-      return function(first, second) {
-        return fn.call(context, first, second, launchPreparedParams);
-      };
-    };
     return {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
@@ -175,38 +150,85 @@
       again: replayOrShowHome,
       replayDrill: replayDrill,
       replayFullSong: replayFullSong,
-      withRender: withRender,
-      withRenderOnly: withRenderOnly,
-      withLaunch: withLaunch,
-      withLaunchAndRender: withLaunchAndRender,
-      withLaunchPair: withLaunchPair,
-      launchDemo: withLaunch(self.handleDemoLaunch, self),
-      launchRecent: withLaunch(self.stateService.launchRecent, self.stateService),
-      saveTrack: withRender(self.saveSearchResultAndRender, self),
-      launchSaved: withLaunch(self.stateService.launchSaved, self.stateService),
-      removeSaved: withRender(self.stateService.removeSavedTrackWithRender, self.stateService),
-      clearSaved: withRenderOnly(self.stateService.clearSavedTracksWithRender, self.stateService),
-      launchBookmark: withLaunch(self.stateService.launchBookmark, self.stateService),
-      launchBookmarkByKey: withLaunchPair(self.stateService.launchBookmarkByKey, self.stateService),
-      removeRecent: withRender(self.stateService.removeRecentWithRender, self.stateService),
-      clearRecent: withRenderOnly(self.stateService.clearRecentWithRender, self.stateService),
-      removeBookmark: withRender(self.stateService.removeBookmarkWithRender, self.stateService),
-      clearBookmarks: withRenderOnly(self.stateService.clearBookmarksWithRender, self.stateService),
-      setDifficulty: withRender(self.setDifficultyAndRender, self),
-      loadFile: withLaunch(self.handleLocalFileLaunch, self),
-      togglePause: withRenderOnly(self.stateService.togglePause, self.stateService),
-      toggleLoop: withRenderOnly(self.stateService.toggleLoopWithRender, self.stateService),
-      setLoopTarget: withRender(self.stateService.setLoopTargetWithRender, self.stateService),
-      prevSection: withRenderOnly(self.stateService.prevSection, self.stateService),
-      nextSection: withRenderOnly(self.stateService.nextSection, self.stateService),
-      bookmarkCurrentSection: withRenderOnly(self.stateService.saveCurrentSectionBookmarkWithRender, self.stateService),
-      pickNew: withRenderOnly(self.stateService.resetToHome, self.stateService),
-      startDrill: withLaunchAndRender(self.stateService.startDrill, self.stateService),
-      openHome: withRenderOnly(showHome, self.stateService),
-      connectSpotify: withRenderOnly(self.connectSpotifyAndRender, self),
-      saveSpotifyClientId: withRenderOnly(self.saveSpotifyClientIdAndConnectAndRender, self),
+      launchDemo: function(value) {
+        return self.handleDemoLaunch(value, launchPreparedParams);
+      },
+      launchRecent: function(value) {
+        return self.stateService.launchRecent(value, launchPreparedParams);
+      },
+      saveTrack: function(value) {
+        return self.saveSearchResultAndRender(value, onRender);
+      },
+      launchSaved: function(value) {
+        return self.stateService.launchSaved(value, launchPreparedParams);
+      },
+      removeSaved: function(value) {
+        return self.stateService.removeSavedTrackWithRender(value, onRender);
+      },
+      clearSaved: function() {
+        return self.stateService.clearSavedTracksWithRender(onRender);
+      },
+      launchBookmark: function(value) {
+        return self.stateService.launchBookmark(value, launchPreparedParams);
+      },
+      launchBookmarkByKey: function(first, second) {
+        return self.stateService.launchBookmarkByKey(first, second, launchPreparedParams);
+      },
+      removeRecent: function(value) {
+        return self.stateService.removeRecentWithRender(value, onRender);
+      },
+      clearRecent: function() {
+        return self.stateService.clearRecentWithRender(onRender);
+      },
+      removeBookmark: function(value) {
+        return self.stateService.removeBookmarkWithRender(value, onRender);
+      },
+      clearBookmarks: function() {
+        return self.stateService.clearBookmarksWithRender(onRender);
+      },
+      setDifficulty: function(value) {
+        return self.setDifficultyAndRender(value, onRender);
+      },
+      loadFile: function(value) {
+        return self.handleLocalFileLaunch(value, launchPreparedParams);
+      },
+      togglePause: function() {
+        return self.stateService.togglePause(onRender);
+      },
+      toggleLoop: function() {
+        return self.stateService.toggleLoopWithRender(onRender);
+      },
+      setLoopTarget: function(value) {
+        return self.stateService.setLoopTargetWithRender(value, onRender);
+      },
+      prevSection: function() {
+        return self.stateService.prevSection(onRender);
+      },
+      nextSection: function() {
+        return self.stateService.nextSection(onRender);
+      },
+      bookmarkCurrentSection: function() {
+        return self.stateService.saveCurrentSectionBookmarkWithRender(onRender);
+      },
+      pickNew: function() {
+        return self.stateService.resetToHome(onRender);
+      },
+      startDrill: function(value) {
+        return self.stateService.startDrill(value, launchPreparedParams, onRender);
+      },
+      openHome: function() {
+        return showHome.call(self.stateService, onRender);
+      },
+      connectSpotify: function() {
+        return self.connectSpotifyAndRender(onRender);
+      },
+      saveSpotifyClientId: function() {
+        return self.saveSpotifyClientIdAndConnectAndRender(onRender);
+      },
       replay: replayOrShowHome,
-      spotifyConnectAction: withRenderOnly(self.connectSpotifyAndRender, self),
+      spotifyConnectAction: function() {
+        return self.connectSpotifyAndRender(onRender);
+      },
       jumpToWeakSection: launchWeakSection,
       jumpToSectionRecommendation: launchSectionRecommendation,
       searchSelectWithFile: selectWithFile,
