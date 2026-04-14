@@ -94,12 +94,7 @@
   // ---- Game Loop ----
 
   window.sparkPlayAlongStartLoop = function() {
-    playAlongState.startRenderLoop({
-      enforceLoopWindow: enforceLoopWindow,
-      onFrame: function(result) {
-        playAlongRenderer.renderFrame(result, playAlongState.getActiveChart());
-      }
-    });
+    return playAlongRenderer.startSessionLoop(sparkPlayAlongStop);
   };
 
   // ---- Stop ----
@@ -186,10 +181,6 @@
   window.openPlayAlong = function() {
     return playAlongState.showHome(requestRender);
   };
-
-  function enforceLoopWindow() {
-    return playAlongState.enforceLoopWindow(sparkPlayAlongStop);
-  }
 
   // ---- Spotify Connect ----
 

@@ -38,6 +38,27 @@
     return true;
   };
 
+  SparkPlayAlongRenderer.prototype.startSessionLoop = function(onStopLoop) {
+    var self = this;
+    if (!this.stateService || typeof this.stateService.startRenderLoop !== "function") {
+      return false;
+    }
+    return this.stateService.startRenderLoop({
+      enforceLoopWindow: function() {
+        if (!self.stateService || typeof self.stateService.enforceLoopWindow !== "function") {
+          return false;
+        }
+        return self.stateService.enforceLoopWindow(onStopLoop);
+      },
+      onFrame: function(result) {
+        var chart = self.stateService && typeof self.stateService.getActiveChart === "function"
+          ? self.stateService.getActiveChart()
+          : null;
+        self.renderFrame(result, chart);
+      }
+    });
+  };
+
   SparkPlayAlongRenderer.prototype.renderFrame = function(result, chart) {
     this.renderHighway(result);
     this.renderFretboard(result);
