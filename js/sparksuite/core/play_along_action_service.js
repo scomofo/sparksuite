@@ -106,6 +106,33 @@
     return true;
   };
 
+  SparkPlayAlongActionService.prototype.buildSearchResultsMarkup = function(tracks) {
+    var html = "";
+    var i;
+    var track;
+    var name;
+    var artist;
+    var imgTag;
+    tracks = Array.isArray(tracks) ? tracks : [];
+    for (i = 0; i < tracks.length; i++) {
+      track = tracks[i] || {};
+      name = escapeHtml(track.name || "");
+      artist = escapeHtml(track.artist || "");
+      imgTag = track.image
+        ? "<img src=\"" + escapeHtml(track.image) + "\" width=\"40\" height=\"40\" class=\"song-item-art\"/>"
+        : "";
+      html += "<div class=\"song-item\" onclick=\"sparkPlayAlongSelect(" + i + ")\">"
+        + imgTag
+        + "<div class=\"song-item-info\">"
+        + "<strong class=\"song-item-name\">" + name + "</strong>"
+        + "<span class=\"song-item-artist\">" + artist + "</span>"
+        + "</div>"
+        + "<button class=\"btn btn-sm\" onclick=\"event.stopPropagation();sparkPlayAlongSaveTrack(" + i + ")\">Save</button>"
+        + "</div>";
+    }
+    return html;
+  };
+
   SparkPlayAlongActionService.prototype.hasCachedChart = function(trackId) {
     var core = getPlayAlongCore();
     return !!(core && core.chartService &&

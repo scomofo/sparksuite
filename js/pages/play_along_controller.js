@@ -10,24 +10,7 @@
   window.sparkPlayAlongSearch = function(query) {
     var resultsEl = document.getElementById("play-along-results");
     if (!playAlongActions.searchTracks(query, function(tracks) {
-      var html = "";
-      for (var i = 0; i < tracks.length; i++) {
-        var t = tracks[i];
-        var name = escapeForAttr(t.name || "");
-        var artist = escapeForAttr(t.artist || "");
-        var imgTag = t.image
-          ? "<img src=\"" + escapeForAttr(t.image) + "\" width=\"40\" height=\"40\" class=\"song-item-art\"/>"
-          : "";
-        html += "<div class=\"song-item\" onclick=\"sparkPlayAlongSelect(" + i + ")\">"
-          + imgTag
-          + "<div class=\"song-item-info\">"
-          + "<strong class=\"song-item-name\">" + name + "</strong>"
-          + "<span class=\"song-item-artist\">" + artist + "</span>"
-          + "</div>"
-          + "<button class=\"btn btn-sm\" onclick=\"event.stopPropagation();sparkPlayAlongSaveTrack(" + i + ")\">Save</button>"
-          + "</div>";
-      }
-      if (resultsEl) resultsEl.innerHTML = html;
+      if (resultsEl) resultsEl.innerHTML = playAlongActions.buildSearchResultsMarkup(tracks);
     })) {
       if (resultsEl) resultsEl.innerHTML = "";
     }
@@ -335,17 +318,6 @@
     playAlongState.writeValue("screen", SCR.PLAY_ALONG);
     render();
   };
-
-  // ---- Utility ----
-
-  function escapeForAttr(str) {
-    if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/"/g, "&quot;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-  }
 
   function launchPlayAlongSession(params) {
     if (!params) return Promise.resolve(false);
