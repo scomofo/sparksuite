@@ -107,12 +107,6 @@
     return true;
   };
 
-  SparkPlayAlongActionService.prototype.createLaunchHandler = function(onRender, onStartLoop) {
-    return function(params) {
-      return this.launchPreparedParams(params, onRender, onStartLoop);
-    }.bind(this);
-  };
-
   SparkPlayAlongActionService.prototype.createRenderHandler = function(fn, context, onRender) {
     return function(value) {
       return fn.call(context, value, onRender);
@@ -143,18 +137,6 @@
     };
   };
 
-  SparkPlayAlongActionService.prototype.createSearchSelectionHandler = function(onLaunchPrepared, onSelectWithFile) {
-    return function(index) {
-      return this.handleSearchSelection(index, onLaunchPrepared, onSelectWithFile);
-    }.bind(this);
-  };
-
-  SparkPlayAlongActionService.prototype.createSearchSelectionWithFileHandler = function(onLaunchPrepared) {
-    return function(index, file) {
-      return this.handleSearchSelectionWithFile(index, file, onLaunchPrepared);
-    }.bind(this);
-  };
-
   SparkPlayAlongActionService.prototype.getRenderCallback = function(onRender) {
     if (typeof onRender === "function") return onRender;
     return function() {
@@ -165,8 +147,12 @@
   SparkPlayAlongActionService.prototype.createControllerBindings = function(onRender, onStartLoop) {
     var self = this;
     onRender = this.getRenderCallback(onRender);
-    var launchPreparedParams = this.createLaunchHandler(onRender, onStartLoop);
-    var selectWithFile = this.createSearchSelectionWithFileHandler(launchPreparedParams);
+    var launchPreparedParams = function(params) {
+      return self.launchPreparedParams(params, onRender, onStartLoop);
+    };
+    var selectWithFile = function(index, file) {
+      return self.handleSearchSelectionWithFile(index, file, launchPreparedParams);
+    };
     var replayOrShowHome = this.stateService && typeof this.stateService.replayOrShowHome === "function"
       ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedParams, onRender)
       : function() { return false; };
@@ -242,7 +228,9 @@
       jumpToWeakSection: launchWeakSection,
       jumpToSectionRecommendation: launchSectionRecommendation,
       searchSelectWithFile: selectWithFile,
-      searchSelect: this.createSearchSelectionHandler(launchPreparedParams, selectWithFile)
+      searchSelect: function(index) {
+        return self.handleSearchSelection(index, launchPreparedParams, selectWithFile);
+      }
     };
   };
 
