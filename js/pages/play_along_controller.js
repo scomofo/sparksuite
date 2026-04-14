@@ -32,10 +32,6 @@
     return result;
   }
 
-  function stepSection(delta) {
-    return playAlongState.stepSection(delta, requestRender);
-  }
-
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
@@ -205,11 +201,11 @@
   };
 
   window.sparkPlayAlongPrevSection = function() {
-    return stepSection(-1);
+    return playAlongState.prevSection(requestRender);
   };
 
   window.sparkPlayAlongNextSection = function() {
-    return stepSection(1);
+    return playAlongState.nextSection(requestRender);
   };
 
   window.sparkPlayAlongBookmarkCurrentSection = function() {

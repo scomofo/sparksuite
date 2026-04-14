@@ -1137,5 +1137,13 @@
     return true;
   };
 
+  SparkPlayAlongStateService.prototype.prevSection = function(onAfterStep) {
+    return this.stepSection(-1, onAfterStep);
+  };
+
+  SparkPlayAlongStateService.prototype.nextSection = function(onAfterStep) {
+    return this.stepSection(1, onAfterStep);
+  };
+
   window.SparkPlayAlongStateService = SparkPlayAlongStateService;
 })();
