@@ -1,7 +1,29 @@
 (function(){
+  function insightRecommendationRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function insightRecommendationRead(path, fallback){
+    var root = insightRecommendationRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    if(!cursor) return fallback;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
 
   function buildRecommendationInsights(){
-    var hist = S.recommendationHistory || [];
+    var hist = insightRecommendationRead("recommendationHistory", []);
     var counts = {};
     for(var i=0;i<hist.length;i++){
       var src = hist[i].source || "unknown";
@@ -15,7 +37,9 @@
   }
 
   function buildFocusedTechniqueInsight(){
-    var perf = S.performanceStats || {};
+    var perf = window.sparkCore && typeof window.sparkCore.getLegacyPracticeAnalyticsSnapshot === "function"
+      ? (window.sparkCore.getLegacyPracticeAnalyticsSnapshot().performanceStats || {})
+      : insightRecommendationRead("performanceStats", {});
     var best = null;
     for(var key in perf){
       if(!Object.prototype.hasOwnProperty.call(perf, key)) continue;

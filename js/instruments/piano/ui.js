@@ -1,6 +1,21 @@
 /* ───────── PianoSpark – ui.js ───────── */
 /* Enhanced: voice-leading, chord type colors, session indicators, rewards */
 
+function pianoUiEarnedBadges() {
+  if (typeof SparkState !== "undefined" && typeof SparkState.ensureArray === "function") {
+    return SparkState.ensureArray(["earned"]);
+  }
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function" && typeof SparkState.write === "function") {
+    var earned = SparkState.read(["earned"], null);
+    if (!Array.isArray(earned)) {
+      earned = [];
+      SparkState.write(["earned"], earned);
+    }
+    return earned;
+  }
+  return [];
+}
+
 // ── Piano keyboard SVG ──
 function pianoSVG(chordObj, opts) {
   if (!opts) opts = {};
@@ -249,10 +264,11 @@ function pianoCheckBadges() {
   var _D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var BADGES = _D.BADGES || [];
   var newBadges = [];
+  var earned = pianoUiEarnedBadges();
   for (var i = 0; i < BADGES.length; i++) {
     var b = BADGES[i];
-    if (b.check && b.check() && S.earned.indexOf(b.id) < 0) {
-      S.earned.push(b.id);
+    if (b.check && b.check() && earned.indexOf(b.id) < 0) {
+      earned.push(b.id);
       newBadges.push(b.id);
     }
   }

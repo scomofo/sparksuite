@@ -4,6 +4,24 @@
   var _instruments = [];
   var _active = null;
 
+  function launcherStateWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    return value;
+  }
+
+  function openInstrumentFromLauncher(instrumentId) {
+    if (window.SparkInstruments && typeof SparkInstruments.activate === "function") {
+      SparkInstruments.activate(instrumentId);
+    }
+    launcherStateWrite(["activeInstrument"], instrumentId);
+    launcherStateWrite(["screen"], SCR.HOME);
+    launcherStateWrite(["tab"], TAB.PRACTICE);
+    if (typeof saveState === "function") saveState();
+    if (typeof render === "function") render();
+  }
+
   function renderInstrumentIcon(inst) {
     if (inst && inst.iconImage) {
       return '<img class="instrument-icon-image" src="' + escHTML(inst.iconImage) + '" alt="' + escHTML(inst.name || "Instrument") + ' icon">';
@@ -91,7 +109,7 @@
 
         if (inst.available !== false) {
           h += '<div class="launcher-card" ';
-          h += 'onclick="SparkInstruments.activate(\'' + inst.id + '\');S.activeInstrument=\'' + inst.id + '\';S.screen=SCR.HOME;S.tab=TAB.PRACTICE;saveState();render()">';
+          h += 'onclick="openInstrumentFromLauncher(\'' + inst.id + '\')">';
           h += '<span class="instrument-icon">' + renderInstrumentIcon(inst) + '</span>';
           h += '<div class="instrument-name">' + escHTML(inst.name) + '</div>';
           if (inst.tagline) {
@@ -121,4 +139,5 @@
   };
 
   window.SparkInstruments = SparkInstruments;
+  window.openInstrumentFromLauncher = openInstrumentFromLauncher;
 })();

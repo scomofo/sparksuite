@@ -10,7 +10,11 @@
     { id: "fingerpicking", category: "picking", label: "Fingerpicking" },
     { id: "scales", category: "lead", label: "Scales" },
     { id: "melody", category: "lead", label: "Melody" },
+    { id: "barre_chords", category: "chords", label: "Barre Chords" },
+    { id: "syncopation", category: "rhythm", label: "Syncopation" },
+    { id: "advanced_fingerpick", category: "picking", label: "Advanced Fingerpicking" },
     { id: "songs", category: "repertoire", label: "Songs" },
-    { id: "performance", category: "performance", label: "Performance" }
+    { id: "performance", category: "performance", label: "Performance" },
+    { id: "full_performance", category: "performance", label: "Full Performance" }
   ];
 })();

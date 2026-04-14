@@ -1,5 +1,50 @@
 // js/instruments/guitar/register.js
 (function() {
+  function guitarRegisterRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function guitarRegisterRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = guitarRegisterRoot();
+    if (!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function guitarRegisterWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = guitarRegisterRoot();
+    if (root) root[path] = value;
+    return value;
+  }
+
+  function guitarRegisterEnsureArray(path) {
+    var current = guitarRegisterRead(path, null);
+    if (Array.isArray(current)) return current;
+    current = [];
+    guitarRegisterWrite(path, current);
+    return current;
+  }
+
+  function guitarRegisterEnsureObject(path) {
+    var current = guitarRegisterRead(path, null);
+    if (current && typeof current === "object" && !Array.isArray(current)) return current;
+    current = {};
+    guitarRegisterWrite(path, current);
+    return current;
+  }
+
   SparkInstruments.register({
     id: "chordspark",
     instrument: "guitar",
@@ -105,22 +150,20 @@
         SparkProfile.ensureApp(profile, "chordspark", "guitar");
         SparkStorage.save(profile);
       }
-      if (typeof S !== "undefined") {
-        if (S.completedGuidedSessions === undefined) S.completedGuidedSessions = [];
-        if (S.chordProgress === undefined) S.chordProgress = {};
-        if (S.customSets === undefined) S.customSets = [];
-        if (S.transitionStats === undefined) S.transitionStats = {};
-        if (S.fingerStats === undefined) S.fingerStats = {};
-        if (S.drillAdaptiveBpm === undefined) S.drillAdaptiveBpm = 60;
-        if (S.drillConsecutiveFast === undefined) S.drillConsecutiveFast = 0;
-        if (S.drillConsecutiveSlow === undefined) S.drillConsecutiveSlow = 0;
-        if (S.drillLastSwitchTime === undefined) S.drillLastSwitchTime = 0;
-        if (S.guidedSession === undefined) S.guidedSession = 1;
-        if (S.guidedPlan === undefined) S.guidedPlan = null;
-        if (S.guidedStep === undefined) S.guidedStep = null;
-        if (S.newMovePhase === undefined) S.newMovePhase = null;
-        if (S.guidedPaused === undefined) S.guidedPaused = false;
-      }
+      guitarRegisterEnsureArray("completedGuidedSessions");
+      guitarRegisterEnsureObject("chordProgress");
+      guitarRegisterEnsureArray("customSets");
+      guitarRegisterEnsureObject("transitionStats");
+      guitarRegisterEnsureObject("fingerStats");
+      if (guitarRegisterRead("drillAdaptiveBpm", null) === null) guitarRegisterWrite("drillAdaptiveBpm", 60);
+      if (guitarRegisterRead("drillConsecutiveFast", null) === null) guitarRegisterWrite("drillConsecutiveFast", 0);
+      if (guitarRegisterRead("drillConsecutiveSlow", null) === null) guitarRegisterWrite("drillConsecutiveSlow", 0);
+      if (guitarRegisterRead("drillLastSwitchTime", null) === null) guitarRegisterWrite("drillLastSwitchTime", 0);
+      if (guitarRegisterRead("guidedSession", null) === null) guitarRegisterWrite("guidedSession", 1);
+      if (guitarRegisterRead("guidedPlan", undefined) === undefined) guitarRegisterWrite("guidedPlan", null);
+      if (guitarRegisterRead("guidedStep", undefined) === undefined) guitarRegisterWrite("guidedStep", null);
+      if (guitarRegisterRead("newMovePhase", undefined) === undefined) guitarRegisterWrite("newMovePhase", null);
+      if (guitarRegisterRead("guidedPaused", undefined) === undefined) guitarRegisterWrite("guidedPaused", false);
     },
 
     // ── InstrumentModule interface ──
@@ -132,7 +175,8 @@
         var skills = CapoHelpers.CAPO_SKILLS;
         for (var i = 0; i < skills.length; i++) {
           var sk = skills[i];
-          var mastery = S.mastery && S.mastery.capo ? (S.mastery.capo[sk.id] || 0) : 0;
+          var masteryState = guitarRegisterRead("mastery", {}) || {};
+          var mastery = masteryState.capo ? (masteryState.capo[sk.id] || 0) : 0;
           capoNodes.push({
             id: sk.id, branch: "capo", label: sk.name,
             status: mastery > 0 ? (mastery >= 90 ? "mastered" : "developing") : "available",

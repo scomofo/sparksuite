@@ -1,6 +1,42 @@
 // js/spark-core/session-engine.js
 (function() {
 
+  function getStateFacade() {
+    return typeof SparkState !== "undefined" ? SparkState : null;
+  }
+
+  function getSessionRoot() {
+    var stateFacade = getStateFacade();
+    if (stateFacade && typeof stateFacade.getRoot === "function") {
+      var sparkRoot = stateFacade.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function readSessionState(path, fallback) {
+    var stateFacade = getStateFacade();
+    if (stateFacade && typeof stateFacade.read === "function") {
+      return stateFacade.read([path], fallback);
+    }
+    var root = getSessionRoot();
+    if (!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function writeSessionState(path, value) {
+    var stateFacade = getStateFacade();
+    if (stateFacade && typeof stateFacade.write === "function") {
+      return stateFacade.write([path], value);
+    }
+    var root = getSessionRoot();
+    if (root) root[path] = value;
+    return value;
+  }
+
   var SparkSession = {
 
     // buildSession(opts) — returns a session plan object for the given mode.
@@ -8,7 +44,8 @@
     buildSession: function(opts) {
       opts = opts || {};
       var mode       = opts.mode || "quickStart";
-      var level      = opts.level || (typeof S !== "undefined" ? S.level : 1);
+      var stateFacade = getStateFacade();
+      var level      = opts.level || (stateFacade && typeof stateFacade.getLevel === "function" ? stateFacade.getLevel() : readSessionState("level", 1));
       var sessionNum = opts.sessionNum || 1;
       var chordName  = opts.chordName || null;
 
@@ -153,10 +190,11 @@
       var xpEarned      = 0;
       var jackpot       = false;
       var leveledUp     = false;
-      var newLevel      = typeof S !== "undefined" ? S.level : 1;
+      var stateFacade   = getStateFacade();
+      var newLevel      = stateFacade && typeof stateFacade.getLevel === "function" ? stateFacade.getLevel() : readSessionState("level", 1);
       var streakUpdated = false;
 
-      if (typeof S === "undefined") {
+      if (!stateFacade && !getSessionRoot()) {
         return { xpEarned: xpEarned, jackpot: jackpot, leveledUp: leveledUp, newLevel: newLevel, newBadges: [], streakUpdated: streakUpdated };
       }
 
@@ -169,7 +207,8 @@
         chordProgress: {},
         level: null
       };
-      if (S.lastSessionDate !== today) {
+      var lastSessionDate = stateFacade ? stateFacade.read(["lastSessionDate"], null) : readSessionState("lastSessionDate", null);
+      if (lastSessionDate !== today) {
         sessionUpdate.streak = {
           increment: 1,
           lastSessionDate: today
@@ -192,14 +231,30 @@
         SparkProgressBridge.applyLegacySessionOutcome(sessionUpdate);
       } else {
         if (sessionUpdate.streak) {
-          S.streak = (S.streak || 0) + sessionUpdate.streak.increment;
-          S.lastSessionDate = sessionUpdate.streak.lastSessionDate;
+          if (stateFacade) {
+            stateFacade.increment(["streak"], sessionUpdate.streak.increment);
+            stateFacade.write(["lastSessionDate"], sessionUpdate.streak.lastSessionDate);
+          } else {
+            writeSessionState("streak", (readSessionState("streak", 0) || 0) + sessionUpdate.streak.increment);
+            writeSessionState("lastSessionDate", sessionUpdate.streak.lastSessionDate);
+          }
         }
-        S.sessions = (S.sessions || 0) + sessionUpdate.sessionsDelta;
-        S.xp = (S.xp || 0) + sessionUpdate.xpDelta;
+        if (stateFacade) {
+          stateFacade.increment(["sessions"], sessionUpdate.sessionsDelta);
+          stateFacade.increment(["xp"], sessionUpdate.xpDelta);
+        } else {
+          writeSessionState("sessions", (readSessionState("sessions", 0) || 0) + sessionUpdate.sessionsDelta);
+          writeSessionState("xp", (readSessionState("xp", 0) || 0) + sessionUpdate.xpDelta);
+        }
         if (chordName) {
-          if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
-          S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+          if (stateFacade && typeof stateFacade.incrementChordProgress === "function") {
+            stateFacade.incrementChordProgress(chordName, sessionUpdate.chordProgress[chordName], 100);
+          } else {
+            var chordProgressState = readSessionState("chordProgress", {});
+            if (typeof chordProgressState !== "object" || chordProgressState === null) chordProgressState = {};
+            chordProgressState[chordName] = Math.min((chordProgressState[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+            writeSessionState("chordProgress", chordProgressState);
+          }
         }
       }
 
@@ -212,20 +267,26 @@
           D = SparkInstruments.getActive().getData();
         }
       }
-      var levelChords = (D.CHORDS && D.CHORDS[S.level]) || [];
+      var activeLevel = stateFacade && typeof stateFacade.getLevel === "function" ? stateFacade.getLevel() : readSessionState("level", 1);
+      var chordProgress = stateFacade && typeof stateFacade.getChordProgress === "function" ? stateFacade.getChordProgress() : readSessionState("chordProgress", {});
+      var levelChords = (D.CHORDS && D.CHORDS[activeLevel]) || [];
       if (levelChords.length > 0) {
         var allMastered = true;
         for (var i = 0; i < levelChords.length; i++) {
-          if ((S.chordProgress[levelChords[i].name] || 0) < 100) { allMastered = false; break; }
+          if ((chordProgress[levelChords[i].name] || 0) < 100) { allMastered = false; break; }
         }
         if (allMastered) {
           if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
-            SparkProgressBridge.applyLegacySessionOutcome({ level: (S.level || 1) + 1 });
+            SparkProgressBridge.applyLegacySessionOutcome({ level: activeLevel + 1 });
           } else {
-            S.level++;
+            if (stateFacade && typeof stateFacade.setLevel === "function") {
+              stateFacade.setLevel(activeLevel + 1);
+            } else {
+              writeSessionState("level", activeLevel + 1);
+            }
           }
           leveledUp = true;
-          newLevel  = S.level;
+          newLevel  = stateFacade && typeof stateFacade.getLevel === "function" ? stateFacade.getLevel() : readSessionState("level", 1);
         }
       }
 
@@ -249,11 +310,15 @@
       // --- Check badges ---
       var newBadges = [];
       if (typeof checkBadges === "function") {
-        var beforeBadges = Array.isArray(S.earnedBadges) ? S.earnedBadges.slice() : [];
+        var beforeEarnedBadges = stateFacade && typeof stateFacade.getEarnedBadges === "function"
+          ? stateFacade.getEarnedBadges().slice()
+          : (Array.isArray(readSessionState("earnedBadges", [])) ? readSessionState("earnedBadges", []).slice() : []);
         checkBadges();
-        var afterBadges  = Array.isArray(S.earnedBadges) ? S.earnedBadges : [];
+        var afterBadges  = stateFacade && typeof stateFacade.getEarnedBadges === "function"
+          ? stateFacade.getEarnedBadges()
+          : (Array.isArray(readSessionState("earnedBadges", [])) ? readSessionState("earnedBadges", []) : []);
         for (var b = 0; b < afterBadges.length; b++) {
-          if (beforeBadges.indexOf(afterBadges[b]) < 0) newBadges.push(afterBadges[b]);
+          if (beforeEarnedBadges.indexOf(afterBadges[b]) < 0) newBadges.push(afterBadges[b]);
         }
       }
 

@@ -1,13 +1,62 @@
 (function(){
 
-  function updateMastery(skillType, skillId, accuracy){
-    if(!S.mastery[skillType]) S.mastery[skillType] = {};
-    if(!S.mastery[skillType][skillId]){
-      S.mastery[skillType][skillId] = accuracy;
-    }else{
-      var prev = S.mastery[skillType][skillId];
-      S.mastery[skillType][skillId] = (prev * 0.7) + (accuracy * 0.3);
+  function masteryRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
     }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function masteryRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = masteryRoot();
+    if(!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function masteryWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = masteryRoot();
+    if(!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if(parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function ensureMasteryBucket(skillType){
+    var mastery = masteryRead("mastery", null);
+    if(!mastery || typeof mastery !== "object" || Array.isArray(mastery)) mastery = {};
+    if(!mastery[skillType] || typeof mastery[skillType] !== "object" || Array.isArray(mastery[skillType])) mastery[skillType] = {};
+    masteryWrite("mastery", mastery);
+    return mastery[skillType];
+  }
+
+  function updateMastery(skillType, skillId, accuracy){
+    var bucket = ensureMasteryBucket(skillType);
+    if(!bucket[skillId]){
+      bucket[skillId] = accuracy;
+    }else{
+      var prev = bucket[skillId];
+      bucket[skillId] = (prev * 0.7) + (accuracy * 0.3);
+    }
+    masteryWrite(["mastery", skillType], bucket);
   }
 
   function updateMasteryFromPerformance(result){
@@ -39,12 +88,11 @@
   }
 
   function getMastery(skillType, skillId){
-    if(!S.mastery[skillType]) return 0;
-    return S.mastery[skillType][skillId] || 0;
+    return masteryRead(["mastery", skillType, skillId], 0) || 0;
   }
 
   function getAverageMastery(skillType){
-    var bucket = S.mastery[skillType] || {};
+    var bucket = masteryRead(["mastery", skillType], {}) || {};
     var total = 0;
     var count = 0;
     for(var k in bucket){

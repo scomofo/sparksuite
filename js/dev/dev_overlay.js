@@ -2,6 +2,33 @@
 // Lightweight dev overlay for instrument debugging.
 // Activated by: ?dev=1 query param OR localStorage spark_dev_overlay=true
 (function() {
+  function devOverlayRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function devOverlayRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = devOverlayRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (!cursor) return fallback;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   var enabled = false;
   if (typeof window !== "undefined") {
     if (window.location && window.location.search.indexOf("dev=1") >= 0) enabled = true;
@@ -19,7 +46,7 @@
     lines.push("⚙ SPARK DEV");
 
     // Active instrument
-    var inst = typeof S !== "undefined" ? S.activeInstrument : null;
+    var inst = devOverlayRead("activeInstrument", null);
     if (inst) {
       lines.push("Instrument: " + (inst.name || inst.id || "?"));
       lines.push("ID: " + (inst.id || "?"));
@@ -28,10 +55,8 @@
     }
 
     // Screen and tab
-    if (typeof S !== "undefined") {
-      lines.push("Screen: " + (S.screen || "?"));
-      lines.push("Tab: " + (S.tab || "?"));
-    }
+    lines.push("Screen: " + (devOverlayRead("screen", "?") || "?"));
+    lines.push("Tab: " + (devOverlayRead("tab", "?") || "?"));
 
     // Manifest status
     var manifest = window.SPARK_INSTRUMENT_MANIFEST || [];

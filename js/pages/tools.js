@@ -1,30 +1,85 @@
 // ===== ChordSpark: Tool and info tabs =====
 
+function toolsStateRead(path, fallback){
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if(!root && typeof globalThis !== "undefined"){
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  if(!cursor) return fallback;
+  for(i = 0; i < parts.length; i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function getToolsCoreView(){
+  if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
+  return window.sparkCore.getActiveSessionView() || null;
+}
+
+function getToolsRuntimeState(){
+  var view = getToolsCoreView();
+  return view && view.runtimeState ? view.runtimeState : null;
+}
+
+function getToolsPlayerSnapshot(){
+  var view = getToolsCoreView();
+  return view && view.player ? view.player : {
+    xp: toolsStateRead("xp", 0),
+    level: toolsStateRead("level", 1),
+    sessions: toolsStateRead("sessions", 0),
+    streak: toolsStateRead("streak", 0)
+  };
+}
+
+function getToolsProgressSnapshot(){
+  var view = getToolsCoreView();
+  return view && view.progress ? view.progress : {
+    transitionStats: toolsStateRead("transitionStats", {}),
+    quizCorrect: toolsStateRead("quizCorrect", 0),
+    quizTotal: toolsStateRead("quizTotal", 0)
+  };
+}
+
+function getToolsSettingsSnapshot(){
+  var runtime = getToolsRuntimeState();
+  return {
+    focusMode: typeof toolsStateRead("focusMode", null) === "boolean" ? toolsStateRead("focusMode", null) : !!(runtime && runtime.focusMode),
+    midiEnabled: typeof toolsStateRead("midiEnabled", null) === "boolean" ? toolsStateRead("midiEnabled", null) : !!(runtime && runtime.midiEnabled),
+    midiDevices: Array.isArray(toolsStateRead("midiDevices", [])) ? toolsStateRead("midiDevices", []) : (runtime && Array.isArray(runtime.midiDevices) ? runtime.midiDevices : []),
+    midiOutput: toolsStateRead("midiOutput", null) || (runtime ? runtime.midiOutput : null),
+    midiOutputId: toolsStateRead("midiOutputId", "") || (runtime ? (runtime.midiOutputId || "") : "")
+  };
+}
+
 // ===== TUNER TAB =====
 function getLegacyTunerRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  var runtime = getToolsRuntimeState();
   return {
-    active: typeof S.tunerActive === "boolean" ? S.tunerActive : !!(runtime && runtime.tunerActive),
-    note: Object.prototype.hasOwnProperty.call(S, "tunerNote") ? S.tunerNote : (runtime ? runtime.tunerNote : null),
-    freq: typeof S.tunerFreq === "number" ? S.tunerFreq : (runtime && typeof runtime.tunerFreq === "number" ? runtime.tunerFreq : 0),
-    cents: typeof S.tunerCents === "number" ? S.tunerCents : (runtime && typeof runtime.tunerCents === "number" ? runtime.tunerCents : 0),
-    error: typeof S.tunerErr === "string" ? S.tunerErr : (runtime ? runtime.tunerError : null)
+    active: typeof toolsStateRead("tunerActive", null) === "boolean" ? toolsStateRead("tunerActive", null) : !!(runtime && runtime.tunerActive),
+    note: toolsStateRead("tunerNote", null),
+    freq: typeof toolsStateRead("tunerFreq", null) === "number" ? toolsStateRead("tunerFreq", null) : (runtime && typeof runtime.tunerFreq === "number" ? runtime.tunerFreq : 0),
+    cents: typeof toolsStateRead("tunerCents", null) === "number" ? toolsStateRead("tunerCents", null) : (runtime && typeof runtime.tunerCents === "number" ? runtime.tunerCents : 0),
+    error: typeof toolsStateRead("tunerErr", null) === "string" ? toolsStateRead("tunerErr", null) : (runtime ? runtime.tunerError : null)
   };
 }
 
 function getLegacyAudioInputRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  var runtime = getToolsRuntimeState();
   return {
-    devices: Array.isArray(S.audioInputDevices) && S.audioInputDevices.length ? S.audioInputDevices : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
-    inputId: typeof S.audioInputId === "string" ? S.audioInputId : (runtime ? (runtime.audioInputId || "") : ""),
-    testingId: typeof S.audioTestingId === "string" ? S.audioTestingId : (runtime ? (runtime.audioTestingId || "") : ""),
-    testLevel: typeof S.audioTestLevel === "number" ? S.audioTestLevel : (runtime && typeof runtime.audioTestLevel === "number" ? runtime.audioTestLevel : 0)
+    devices: Array.isArray(toolsStateRead("audioInputDevices", [])) && toolsStateRead("audioInputDevices", []).length ? toolsStateRead("audioInputDevices", []) : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
+    inputId: typeof toolsStateRead("audioInputId", null) === "string" ? toolsStateRead("audioInputId", null) : (runtime ? (runtime.audioInputId || "") : ""),
+    testingId: typeof toolsStateRead("audioTestingId", null) === "string" ? toolsStateRead("audioTestingId", null) : (runtime ? (runtime.audioTestingId || "") : ""),
+    testLevel: typeof toolsStateRead("audioTestLevel", null) === "number" ? toolsStateRead("audioTestLevel", null) : (runtime && typeof runtime.audioTestLevel === "number" ? runtime.audioTestLevel : 0)
   };
 }
 
@@ -94,8 +149,10 @@ function tunerTab(){
 // ===== STATS TAB =====
 function statsTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var player = getToolsPlayerSnapshot();
+  var progress = getToolsProgressSnapshot();
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats</h2></div>';
-  var hist=S.history||[];
+  var hist=toolsStateRead("history", [])||[];
 
   // Summary cards
   var totalXP=0,totalSessions=0,practiceDays={};
@@ -109,7 +166,7 @@ function statsTab(){
 
   h+='<div style="text-align:center;margin-bottom:12px"><button class="btn" onclick="act(\'openSkillTree\')" style="background:var(--accent);color:#fff">&#127795; Skill Tree</button></div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
-  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FF6B6B">'+S.xp+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Total XP</div></div>';
+  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FF6B6B">'+player.xp+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Total XP</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+totalSessions+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Activities</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#45B7D1">'+dayCount+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Practice Days</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FFE66D">'+avgXP+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Avg XP/Day</div></div>';
@@ -165,7 +222,7 @@ function statsTab(){
   h+='</div></div>';
 
   // Transition difficulty
-  var ts=S.transitionStats;
+  var ts=progress.transitionStats||{};
   var transitions=[];
   for(var k in ts)if(ts[k].attempts>=2)transitions.push({key:k,avg:ts[k].avgTime,best:ts[k].best,attempts:ts[k].attempts});
   transitions.sort(function(a,b){return b.avg-a.avg;});
@@ -205,13 +262,13 @@ function statsTab(){
   h+='</div>';
 
   // Quiz accuracy
-  if(S.quizCorrect>0||S.quizTotal>0){
+  if((progress.quizCorrect||0)>0||(progress.quizTotal||0)>0){
     var qTotal=0,qCorrect=0;
     for(var i=0;i<hist.length;i++)if(hist[i].type==="quiz"){qTotal++;qCorrect++;}
     var acc=qTotal>0?Math.round((qCorrect/qTotal)*100):0;
     h+='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#129504; Quiz Accuracy</h3>';
     h+='<div class="flex-center">'+ringHTML(acc,80,6,"#4ECDC4",'<div style="font-size:20px;font-weight:900;color:var(--text-primary)">'+acc+'%</div>',"Quiz accuracy")+'</div>';
-    h+='<div style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:8px">'+S.quizCorrect+' correct answers</div></div>';
+    h+='<div style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:8px">'+(progress.quizCorrect||0)+' correct answers</div></div>';
   }
 
   // Cross-app progress (reads PianoSpark export from localStorage)
@@ -222,6 +279,7 @@ function statsTab(){
 
 function crossAppProgressCard(){
   var h='';
+  var player = getToolsPlayerSnapshot();
   try{
     var raw=localStorage.getItem("pianospark_jeeves_export");
     if(!raw)return '';
@@ -232,8 +290,8 @@ function crossAppProgressCard(){
     h+='<div style="flex:1;background:var(--input-bg);border-radius:12px;padding:12px;text-align:center">';
     h+='<div style="font-size:20px;margin-bottom:4px">&#127930;</div>';
     h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Guitar</div>';
-    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+S.xp+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
-    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+S.level+'</div>';
+    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+player.xp+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
+    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+player.level+'</div>';
     h+='</div>';
     // Piano stats
     h+='<div style="flex:1;background:var(--input-bg);border-radius:12px;padding:12px;text-align:center">';
@@ -244,9 +302,9 @@ function crossAppProgressCard(){
     h+='</div>';
     h+='</div>';
     // Combined stats
-    var totalXP=(S.xp||0)+(ps.xp||0);
-    var totalSessions=(S.sessions||0)+(ps.sessions||0);
-    var combinedStreak=Math.max(S.streak||0,ps.streak||0);
+    var totalXP=(player.xp||0)+(ps.xp||0);
+    var totalSessions=(player.sessions||0)+(ps.sessions||0);
+    var combinedStreak=Math.max(player.streak||0,ps.streak||0);
     h+='<div style="display:flex;justify-content:space-around;text-align:center">';
     h+='<div><div style="font-size:20px;font-weight:900;color:#FFE66D">'+totalXP+'</div><div style="font-size:10px;color:var(--text-muted)">Combined XP</div></div>';
     h+='<div><div style="font-size:20px;font-weight:900;color:#4ECDC4">'+totalSessions+'</div><div style="font-size:10px;color:var(--text-muted)">Total Sessions</div></div>';
@@ -260,6 +318,7 @@ function crossAppProgressCard(){
 function guideTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var settings = getToolsSettingsSnapshot();
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128214; How to Read Chord Charts</h2></div>';
   h+='<div class="card mb16"><div class="flex-center mb12">'+UI.chord(D.CHORDS[1][0],200)+'</div><div style="text-align:center;font-size:13px;color:var(--text-dim);font-weight:600">Example: E Major</div></div>';
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127912; Chart Legend</h3>';
@@ -309,20 +368,20 @@ function guideTab(){
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 8px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128065; Focus Mode</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Simplify the interface &mdash; show only core practice tabs to reduce distractions.</p>';
   h+='<div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:var(--text-primary)">Focus Mode</span>';
-  h+='<button onclick="act(\'toggleFocus\')" style="padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;background:'+(S.focusMode?"#4ECDC4":"var(--input-bg)")+';color:'+(S.focusMode?"#fff":"var(--text-muted)")+';border:2px solid '+(S.focusMode?"#4ECDC4":"var(--border)")+';transition:all .2s">'+(S.focusMode?"&#9989; On":"Off")+'</button></div></div>';
+  h+='<button onclick="act(\'toggleFocus\')" style="padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;background:'+(settings.focusMode?"#4ECDC4":"var(--input-bg)")+';color:'+(settings.focusMode?"#fff":"var(--text-muted)")+';border:2px solid '+(settings.focusMode?"#4ECDC4":"var(--border)")+';transition:all .2s">'+(settings.focusMode?"&#9989; On":"Off")+'</button></div></div>';
   // MIDI Output
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127929; MIDI Output</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Send chord notes to your DAW or virtual instrument via Web MIDI. Connect a MIDI device, enable below, then play any chord.</p>';
   h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:var(--text-primary)">Enable MIDI</span>';
-  h+='<button onclick="act(\'toggleMidi\')" style="padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;background:'+(S.midiEnabled?"#4ECDC4":"var(--input-bg)")+';color:'+(S.midiEnabled?"#fff":"var(--text-muted)")+';border:2px solid '+(S.midiEnabled?"#4ECDC4":"var(--border)")+';transition:all .2s">'+(S.midiEnabled?"&#9989; On":"Off")+'</button></div>';
-  if(S.midiEnabled){
+  h+='<button onclick="act(\'toggleMidi\')" style="padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;background:'+(settings.midiEnabled?"#4ECDC4":"var(--input-bg)")+';color:'+(settings.midiEnabled?"#fff":"var(--text-muted)")+';border:2px solid '+(settings.midiEnabled?"#4ECDC4":"var(--border)")+';transition:all .2s">'+(settings.midiEnabled?"&#9989; On":"Off")+'</button></div>';
+  if(settings.midiEnabled){
     h+='<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">MIDI Devices:</div>';
-    if(S.midiDevices.length===0){
+    if(settings.midiDevices.length===0){
       h+='<div style="font-size:12px;color:var(--text-muted);padding:10px;background:var(--input-bg);border-radius:10px;text-align:center">No MIDI output devices found. Connect a device and reload.</div>';
     } else {
       h+='<div style="display:flex;flex-direction:column;gap:6px">';
-      for(var i=0;i<S.midiDevices.length;i++){
-        var md=S.midiDevices[i],isActive=S.midiOutput&&S.midiOutputId===md.id;
+      for(var i=0;i<settings.midiDevices.length;i++){
+        var md=settings.midiDevices[i],isActive=settings.midiOutput&&settings.midiOutputId===md.id;
         h+='<button onclick="act(\'selectMidiDevice\',\''+md.id+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;background:'+(isActive?"#4ECDC422":"var(--input-bg)")+';color:'+(isActive?"#4ECDC4":"var(--text-primary)")+';border:2px solid '+(isActive?"#4ECDC4":"var(--border)")+';text-align:left">'+(isActive?"&#9654; ":"&#9675; ")+escHTML(md.name)+'</button>';
       }
       h+='</div>';

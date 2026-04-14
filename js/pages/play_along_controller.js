@@ -2,30 +2,105 @@
 // Glue layer connecting play-along page UI to SparkCore play-along pipeline.
 (function() {
 
-  var LANE_COLORS = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFE66D", "#96CEB4"];
-  var HIT_LINE_X = 100;
-  var PX_PER_MS = 0.3;
-  var NOTE_WIDTH = 30;
-  var NOTE_HEIGHT = 50;
-  var LANE_HEIGHT = 60;
-  var LANE_OFFSET_Y = 10;
+  function playAlongControllerRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+      ? SparkState.getRoot()
+      : (typeof globalThis !== "undefined" ? globalThis.__sparkState || null : null);
+    if (!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function playAlongControllerWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+      ? SparkState.getRoot()
+      : (typeof globalThis !== "undefined" ? globalThis.__sparkState || null : null);
+    if (!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if (parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  var playAlongState = new SparkPlayAlongStateService({
+    persist: typeof saveState === "function" ? saveState : null
+  });
+  var playAlongActions = new SparkPlayAlongActionService({
+    stateService: playAlongState,
+    getInstrumentId: getPlayAlongInstrumentId
+  });
+  var playAlongRenderer = new SparkPlayAlongRenderer({
+    stateService: playAlongState
+  });
+
+  function getPlayAlongInstrumentId() {
+    var runtime = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
+      ? window.sparkCore.getRuntimeState()
+      : null;
+    if (runtime && runtime.activeInstrumentId) return runtime.activeInstrumentId;
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+    if (active && active.appId) return active.appId;
+    return "guitar";
+  }
+
+  function getActivePlayAlongParams() {
+    if (!window.sparkCore) return null;
+    return typeof window.sparkCore.getActivePlayAlongParams === "function"
+      ? window.sparkCore.getActivePlayAlongParams()
+      : (window.sparkCore._activeParams || null);
+  }
+
+  function getActivePlayAlongChart() {
+    if (!window.sparkCore) return null;
+    return typeof window.sparkCore.getActivePlayAlongChart === "function"
+      ? window.sparkCore.getActivePlayAlongChart()
+      : (window.sparkCore._activeChart || null);
+  }
+
+  function getLastPlayAlongOutcome() {
+    return window.sparkCore && typeof window.sparkCore.getLastSessionOutcome === "function"
+      ? window.sparkCore.getLastSessionOutcome()
+      : (window.sparkCore ? window.sparkCore.lastSessionOutcome : null);
+  }
+
+  function clearPlayAlongError() {
+    playAlongControllerWrite("playAlongError", null);
+  }
+
+  function setPlayAlongError(err) {
+    var message = err && err.message ? err.message : err;
+    playAlongControllerWrite("playAlongError", {
+      message: message ? String(message) : "Unable to start play-along session.",
+      source: "play_along_session",
+      retryable: true
+    });
+  }
 
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
     var resultsEl = document.getElementById("play-along-results");
-    if (!query || query.length < 2) {
-      if (resultsEl) resultsEl.innerHTML = "";
-      window._playAlongResults = [];
-      return;
-    }
-    if (!window.sparkCore || !window.sparkCore.spotifySearch) return;
-
-    window.sparkCore.spotifySearch.searchDebounced(query, function(tracks) {
-      window._playAlongResults = tracks || [];
+    if (!playAlongActions.searchTracks(query, function(tracks) {
       var html = "";
-      for (var i = 0; i < window._playAlongResults.length; i++) {
-        var t = window._playAlongResults[i];
+      for (var i = 0; i < tracks.length; i++) {
+        var t = tracks[i];
         var name = escapeForAttr(t.name || "");
         var artist = escapeForAttr(t.artist || "");
         var imgTag = t.image
@@ -41,46 +116,28 @@
           + "</div>";
       }
       if (resultsEl) resultsEl.innerHTML = html;
-    });
+    })) {
+      if (resultsEl) resultsEl.innerHTML = "";
+    }
   };
 
   // ---- Select Track ----
 
   window.sparkPlayAlongSelect = function(index) {
-    var track = window._playAlongResults && window._playAlongResults[index];
+    var track = playAlongActions.getSearchResult(index);
     if (!track) return;
-    var difficulty = S.spotifyDifficulty || "easy";
     if (!window.sparkCore) return;
 
     clearSelectedDrillState();
 
-    // Check for cached chart
-    var hasCached = window.sparkCore.chartService &&
-      typeof window.sparkCore.chartService.hasCachedChart === "function" &&
-      window.sparkCore.chartService.hasCachedChart(track.id);
-
-    if (hasCached) {
-      launchPlayAlongSession({
-        trackId: track.id,
-        trackUri: track.uri || null,
-        title: track.name || null,
-        artist: track.artist || null,
-        difficulty: difficulty,
-        instrument: "guitar"
-      });
+    if (playAlongActions.hasCachedChart(track.id)) {
+      launchPlayAlongSession(playAlongActions.buildLaunchParams(track));
       return;
     }
 
-    // No cached chart -- show upload prompt
     var resultsEl = document.getElementById("play-along-results");
     if (!resultsEl) return;
-    var songLabel = (track.name || "this track") + (track.artist ? " by " + track.artist : "");
-    var promptHtml = "<div class=\"play-along-upload-prompt\">"
-      + "<p>Drop an audio file to build an accurate chart for <strong>" + escapeForAttr(songLabel) + "</strong></p>"
-      + "<input type=\"file\" id=\"play-along-audio-input\" accept=\"audio/*\" />"
-      + "<button class=\"btn btn-sm\" id=\"play-along-skip-btn\">Skip (use default)</button>"
-      + "</div>";
-    resultsEl.innerHTML = promptHtml;
+    resultsEl.innerHTML = playAlongActions.buildUploadPromptMarkup(track);
 
     var fileInput = document.getElementById("play-along-audio-input");
     var skipBtn = document.getElementById("play-along-skip-btn");
@@ -96,192 +153,114 @@
 
     if (skipBtn) {
       skipBtn.addEventListener("click", function() {
-        launchPlayAlongSession({
-          trackId: track.id,
-          trackUri: track.uri || null,
-          title: track.name || null,
-          artist: track.artist || null,
-          difficulty: difficulty,
-          instrument: "guitar"
-        });
+        launchPlayAlongSession(playAlongActions.buildLaunchParams(track));
       });
     }
   };
 
   window.sparkPlayAlongSelectWithFile = function(index, file) {
-    var track = window._playAlongResults && window._playAlongResults[index];
+    var track = playAlongActions.getSearchResult(index);
     if (!track || !file) return;
-    var difficulty = S.spotifyDifficulty || "easy";
     if (!window.sparkCore) return;
 
     clearSelectedDrillState();
-    launchPlayAlongSession({
-      trackId: track.id,
-      trackUri: track.uri || null,
+    launchPlayAlongSession(playAlongActions.buildLaunchParams(track, {
       audioFile: file,
-      title: track.name || null,
-      artist: track.artist || null,
-      difficulty: difficulty,
-      instrument: "guitar"
-    });
+    }));
   };
 
   window.sparkPlayAlongLaunchDemo = function(index) {
-    var demos = typeof window.getSparkPlayAlongDemos === "function" ? window.getSparkPlayAlongDemos() : [];
-    var demo = demos[index] || null;
+    var demo = playAlongActions.getDemo(index);
     if (!demo) return false;
     clearSelectedDrillState();
-    launchPlayAlongSession({
+    launchPlayAlongSession(playAlongActions.buildLaunchParams(demo, {
       trackId: demo.trackId,
       trackUri: demo.trackUri || null,
       title: demo.title || null,
-      artist: demo.artist || null,
       audioOffsetMs: demo.audioOffsetMs || 0,
-      difficulty: demo.difficulty || (S.spotifyDifficulty || "easy"),
+      difficulty: demo.difficulty || playAlongActions.getDifficulty(),
       instrument: demo.instrument || "guitar"
-    });
+    }));
     return true;
   };
 
   window.sparkPlayAlongLaunchRecent = function(index) {
-    var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent : [];
-    var item = recent[index] || null;
-    if (!item || !item.params) return false;
+    var params = playAlongActions.getRecentLaunchParams(index);
+    if (!params) return false;
     clearSelectedDrillState();
-    launchPlayAlongSession(clonePlainObject(item.params));
+    launchPlayAlongSession(params);
     return true;
   };
 
   window.sparkPlayAlongSaveTrack = function(index) {
-    var track = window._playAlongResults && window._playAlongResults[index];
+    var track = playAlongActions.getSearchResult(index);
     if (!track) return Promise.resolve(false);
 
     function persistSavedTrack(saved) {
-      var tracks = Array.isArray(S.spotifySavedTracks) ? S.spotifySavedTracks.slice() : [];
-      var replaced = false;
-      for (var i = 0; i < tracks.length; i++) {
-        if (tracks[i] && tracks[i].trackId === saved.trackId) {
-          tracks[i] = saved;
-          replaced = true;
-          break;
-        }
-      }
-      if (!replaced) tracks.unshift(saved);
-      S.spotifySavedTracks = tracks.slice(0, 20);
-      if (typeof saveState === "function") saveState();
+      if (!playAlongState.saveTrack(saved)) return false;
       render();
       return true;
     }
 
-    var baseSaved = {
-      trackId: track.id,
-      trackUri: track.uri || null,
-      title: track.name || "Spotify Track",
-      artist: track.artist || "",
-      image: track.image || null,
-      duration: track.duration || 0,
-      bpm: null,
-      source: "spotify",
-      savedAt: Date.now(),
-      params: {
-        trackId: track.id,
-        trackUri: track.uri || null,
-        title: track.name || null,
-        artist: track.artist || null,
-        difficulty: S.spotifyDifficulty || "easy",
-        instrument: "guitar"
-      }
-    };
-
-    if (!window.sparkCore || !window.sparkCore.spotifyClient || typeof window.sparkCore.spotifyClient.getAudioFeatures !== "function") {
-      return Promise.resolve(persistSavedTrack(baseSaved));
-    }
-
-    return window.sparkCore.spotifyClient.getAudioFeatures(track.id).then(function(features) {
-      if (features && typeof features.tempo === "number") {
-        baseSaved.bpm = Math.round(features.tempo);
-      }
-      return persistSavedTrack(baseSaved);
-    }).catch(function() {
-      return persistSavedTrack(baseSaved);
+    return playAlongActions.enrichSavedTrack(track).then(function(saved) {
+      return persistSavedTrack(saved);
     });
   };
 
   window.sparkPlayAlongLaunchSaved = function(index) {
-    var tracks = Array.isArray(S.spotifySavedTracks) ? S.spotifySavedTracks : [];
-    var item = tracks[index] || null;
-    if (!item || !item.params) return false;
+    var params = playAlongActions.getSavedLaunchParams(index);
+    if (!params) return false;
     clearSelectedDrillState();
-    launchPlayAlongSession(clonePlainObject(item.params));
+    launchPlayAlongSession(params);
     return true;
   };
 
   window.sparkPlayAlongRemoveSaved = function(index) {
-    var tracks = Array.isArray(S.spotifySavedTracks) ? S.spotifySavedTracks.slice() : [];
-    if (index < 0 || index >= tracks.length) return false;
-    tracks.splice(index, 1);
-    S.spotifySavedTracks = tracks;
-    if (typeof saveState === "function") saveState();
+    if (!playAlongState.removeSavedTrack(index)) return false;
     render();
     return true;
   };
 
   window.sparkPlayAlongClearSaved = function() {
-    S.spotifySavedTracks = [];
-    if (typeof saveState === "function") saveState();
+    if (!playAlongState.clearSavedTracks()) return false;
     render();
     return true;
   };
 
   window.sparkPlayAlongLaunchBookmark = function(index) {
-    var bookmarks = Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks : [];
-    var item = bookmarks[index] || null;
+    var item = playAlongActions.getBookmark(index);
     if (!item || !item.params) return false;
-    clearSelectedDrillState();
-    S.playAlongLoop = true;
-    S.playAlongLoopTarget = "section";
-    S.playAlongSectionIndex = item.sectionIndex || 0;
+    clearPlayAlongError();
+    playAlongState.prepareBookmarkLaunch(item);
     launchPlayAlongSession(clonePlainObject(item.params));
     return true;
   };
 
   window.sparkPlayAlongLaunchBookmarkByKey = function(trackId, sectionIndex) {
-    var bookmarks = Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks : [];
-    for (var i = 0; i < bookmarks.length; i++) {
-      var item = bookmarks[i];
-      if (item && item.trackId === trackId && Number(item.sectionIndex) === Number(sectionIndex)) {
-        return window.sparkPlayAlongLaunchBookmark(i);
-      }
-    }
-    return false;
+    var index = playAlongActions.findBookmarkIndex(trackId, sectionIndex);
+    return index >= 0 ? window.sparkPlayAlongLaunchBookmark(index) : false;
   };
 
   window.sparkPlayAlongRemoveRecent = function(index) {
-    var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent.slice() : [];
-    if (index < 0 || index >= recent.length) return false;
-    recent.splice(index, 1);
-    S.playAlongRecent = recent;
+    if (!playAlongState.removeRecent(index)) return false;
     render();
     return true;
   };
 
   window.sparkPlayAlongClearRecent = function() {
-    S.playAlongRecent = [];
+    if (!playAlongState.clearRecent()) return false;
     render();
     return true;
   };
 
   window.sparkPlayAlongRemoveBookmark = function(index) {
-    var bookmarks = Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks.slice() : [];
-    if (index < 0 || index >= bookmarks.length) return false;
-    bookmarks.splice(index, 1);
-    S.playAlongBookmarks = bookmarks;
+    if (!playAlongState.removeBookmark(index)) return false;
     render();
     return true;
   };
 
   window.sparkPlayAlongClearBookmarks = function() {
-    S.playAlongBookmarks = [];
+    if (!playAlongState.clearBookmarks()) return false;
     render();
     return true;
   };
@@ -289,10 +268,7 @@
   // ---- Set Difficulty ----
 
   window.sparkPlayAlongSetDifficulty = function(level) {
-    S.spotifyDifficulty = level;
-    if (window.sparkCore) {
-      window.sparkCore.updateRuntimeState({ spotifyDifficulty: level });
-    }
+    playAlongActions.setDifficulty(level);
     render();
   };
 
@@ -305,147 +281,38 @@
     clearSelectedDrillState();
     launchPlayAlongSession({
       audioFile: file,
-      difficulty: S.spotifyDifficulty || "easy",
-      instrument: "guitar"
+      difficulty: playAlongControllerRead("spotifyDifficulty", "easy") || "easy",
+      instrument: getPlayAlongInstrumentId()
     });
   };
 
   // ---- Game Loop ----
 
   window.sparkPlayAlongStartLoop = function() {
-    if (window._playAlongAnimFrame) {
-      cancelAnimationFrame(window._playAlongAnimFrame);
-    }
-
-    function loop() {
-      if (!window.sparkCore) return;
-
-      if (enforceLoopWindow()) {
-        return;
+    if (!window.sparkCore || typeof window.sparkCore.startPlayAlongRenderLoop !== "function") return;
+    window.sparkCore.startPlayAlongRenderLoop({
+      enforceLoopWindow: enforceLoopWindow,
+      onFrame: function(result) {
+        playAlongRenderer.renderFrame(result, {
+          chart: getActivePlayAlongChart()
+        });
       }
-      var result = window.sparkCore.processPlayAlongFrame();
-
-      if (result) {
-        renderHighway(result);
-        renderFretboard(result);
-        updateSessionTelemetry(result);
-        updateDebugState(result);
-      }
-
-      window._playAlongAnimFrame = requestAnimationFrame(loop);
-    }
-
-    window._playAlongAnimFrame = requestAnimationFrame(loop);
+    });
   };
-
-  // ---- Highway Renderer ----
-
-  function renderHighway(result) {
-    var canvas = document.getElementById("play-along-canvas");
-    if (!canvas) return;
-    var ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    var w = canvas.width;
-    var h = canvas.height;
-
-    // Clear
-    ctx.clearRect(0, 0, w, h);
-
-    // Hit line
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(HIT_LINE_X, 0);
-    ctx.lineTo(HIT_LINE_X, h);
-    ctx.stroke();
-
-    // Draw visible notes
-    var notes = result.visibleNotes || result.notes || [];
-    var currentTimeMs = result.timeMs != null ? result.timeMs : (result.currentTimeMs != null ? result.currentTimeMs : (result.time || 0));
-
-    for (var i = 0; i < notes.length; i++) {
-      var note = notes[i];
-      var x = HIT_LINE_X + (note.time - currentTimeMs) * PX_PER_MS;
-      var lane = typeof note.lane === "number" ? note.lane : 0;
-      var y = lane * LANE_HEIGHT + LANE_OFFSET_Y;
-      var color = LANE_COLORS[lane] || LANE_COLORS[0];
-
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, NOTE_WIDTH, NOTE_HEIGHT);
-    }
-  }
-
-  // ---- Fretboard Renderer ----
-
-  function renderFretboard(result) {
-    var canvas = document.getElementById("play-along-fretboard");
-    if (!canvas) return;
-    if (window.sparkFretboardRenderer && typeof window.sparkFretboardRenderer.draw === "function") {
-      window.sparkFretboardRenderer.draw(canvas, result);
-    }
-  }
-
-  // ---- Debug State ----
-
-  function updateDebugState(result) {
-    if (typeof SparkDebugState !== "undefined" && SparkDebugState.update) {
-      SparkDebugState.update(result);
-    }
-  }
-
-  function updateSessionTelemetry(result) {
-    var range = S.playAlongLoopRange || null;
-    var timeMs = result && result.timeMs != null ? result.timeMs : (window.sparkCore && typeof window.sparkCore.getPlaybackTimeMs === "function" ? window.sparkCore.getPlaybackTimeMs() : 0);
-    S.playAlongNowMs = timeMs;
-    S.playAlongCurrentSection = resolveCurrentSectionLabel(window.sparkCore && window.sparkCore._activeChart, timeMs);
-
-    var timeEl = document.getElementById("play-along-session-time");
-    if (timeEl) {
-      timeEl.textContent = formatMs(timeMs);
-    }
-
-    var sectionEl = document.getElementById("play-along-session-section");
-    if (sectionEl) {
-      sectionEl.textContent = S.playAlongCurrentSection || "Section: Intro";
-    }
-
-    if (!range || range.startMs == null || range.endMs == null || range.endMs <= range.startMs) return;
-    var clamped = Math.max(range.startMs, Math.min(range.endMs, timeMs));
-    var pct = Math.round(((clamped - range.startMs) / (range.endMs - range.startMs)) * 100);
-    S.playAlongLoopProgress = pct;
-
-    var repsEl = document.getElementById("play-along-loop-reps");
-    if (repsEl) {
-      repsEl.textContent = formatRepStatus();
-    }
-
-    var progressEl = document.getElementById("play-along-loop-progress");
-    if (progressEl) {
-      progressEl.textContent = "Loop Progress: " + pct + "%";
-    }
-
-    var hint = updateCoachHint();
-    var hintEl = document.getElementById("play-along-coach-hint");
-    if (hintEl) {
-      hintEl.textContent = hint;
-    }
-  }
 
   // ---- Stop ----
 
   window.sparkPlayAlongStop = function() {
     var outcome = null;
-    if (window._playAlongAnimFrame) {
-      cancelAnimationFrame(window._playAlongAnimFrame);
-      window._playAlongAnimFrame = null;
+    if (window.sparkCore && typeof window.sparkCore.stopPlayAlongRenderLoop === "function") {
+      window.sparkCore.stopPlayAlongRenderLoop();
     }
     if (window.sparkCore) {
       outcome = window.sparkCore.completePlayAlongSession();
-      outcome = enrichOutcomeWithLoopSummary(outcome);
+      outcome = playAlongState.enrichOutcomeWithLoopSummary(outcome, buildCurrentSectionBookmark());
       window.sparkCore.lastSessionOutcome = outcome;
     }
-    S.screen = SCR.PLAY_ALONG_RESULTS;
+    playAlongControllerWrite("screen", SCR.PLAY_ALONG_RESULTS);
     render();
 
     // Draw heatmap after render
@@ -473,10 +340,11 @@
   // ---- Play Again ----
 
   window.sparkPlayAlongAgain = function() {
-    if (window.sparkCore && window.sparkCore._activeParams) {
-      launchPlayAlongSession(window.sparkCore._activeParams);
+    var params = getActivePlayAlongParams();
+    if (params) {
+      launchPlayAlongSession(params);
     } else {
-      S.screen = SCR.PLAY_ALONG;
+      playAlongControllerWrite("screen", SCR.PLAY_ALONG);
       render();
     }
   };
@@ -486,7 +354,7 @@
   };
 
   window.sparkPlayAlongReplayDrill = function() {
-    var outcome = window.sparkCore && window.sparkCore.lastSessionOutcome ? window.sparkCore.lastSessionOutcome : null;
+    var outcome = getLastPlayAlongOutcome();
     var drills = outcome && Array.isArray(outcome.drills) ? outcome.drills : [];
     if (drills.length > 0) {
       return window.sparkPlayAlongStartDrill(0);
@@ -495,48 +363,35 @@
   };
 
   window.sparkPlayAlongReplayFullSong = function() {
-    S.playAlongSelectedDrill = null;
-    S.playAlongLoop = false;
-    S.playAlongLoopRange = null;
-    S.playAlongLoopTarget = "section";
-    S.playAlongLoopIteration = 0;
-    S.playAlongLoopProgress = 0;
-    S.playAlongCoachHint = "";
-    if (window.sparkCore && window.sparkCore._activeParams) {
-      return launchPlayAlongSession(clonePlainObject(window.sparkCore._activeParams));
-    }
-    return false;
+    var params = getActivePlayAlongParams();
+    if (!playAlongState.prepareFullSongReplay() || !params) return false;
+    clearPlayAlongError();
+    return launchPlayAlongSession(clonePlainObject(params));
   };
 
   window.sparkPlayAlongTogglePause = function() {
     if (!window.sparkCore) return false;
 
-    if (S.playAlongPaused) {
+    if (playAlongState.getStateValue("playAlongPaused", false)) {
       resumePlayAlongTransport();
-      S.playAlongPaused = false;
+      playAlongState.togglePaused();
     } else {
       pausePlayAlongTransport();
-      S.playAlongPaused = true;
+      playAlongState.togglePaused();
     }
     render();
-    return S.playAlongPaused;
+    return playAlongState.getStateValue("playAlongPaused", false);
   };
 
   window.sparkPlayAlongToggleLoop = function() {
-    S.playAlongLoop = !S.playAlongLoop;
-    if (S.playAlongLoop) {
-      S.playAlongLoopRange = resolveLoopRange();
-    } else {
-      S.playAlongLoopRange = null;
-    }
+    clearPlayAlongError();
+    playAlongState.toggleLoop();
     render();
-    return !!S.playAlongLoop;
+    return !!playAlongState.getStateValue("playAlongLoop", false);
   };
 
   window.sparkPlayAlongSetLoopTarget = function(target) {
-    if (target !== "drill" && target !== "section") return false;
-    S.playAlongLoopTarget = target;
-    S.playAlongLoopRange = resolveLoopRange();
+    if (!playAlongState.setLoopTarget(target)) return false;
     render();
     return true;
   };
@@ -558,23 +413,23 @@
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {
-    var outcome = window.sparkCore && window.sparkCore.lastSessionOutcome ? window.sparkCore.lastSessionOutcome : null;
+    var outcome = getLastPlayAlongOutcome();
     var sectionSummary = outcome && outcome.sectionSummary ? outcome.sectionSummary : null;
-    if (!sectionSummary || !window.sparkCore || !window.sparkCore._activeParams) return false;
+    var params = getActivePlayAlongParams();
+    if (!sectionSummary || !params) return false;
     clearSelectedDrillState();
-    S.playAlongLoop = true;
-    S.playAlongLoopTarget = "section";
-    S.playAlongSectionIndex = Number(sectionSummary.sectionIndex || 0);
-    return launchPlayAlongSession(clonePlainObject(window.sparkCore._activeParams));
+    playAlongState.activateSectionLoop(sectionSummary.sectionIndex || 0);
+    return launchPlayAlongSession(clonePlainObject(params));
   };
 
   window.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {
     var params = null;
-    if (window.sparkCore && window.sparkCore._activeParams && window.sparkCore._activeParams.trackId === trackId) {
-      params = clonePlainObject(window.sparkCore._activeParams);
+    var activeParams = getActivePlayAlongParams();
+    if (activeParams && activeParams.trackId === trackId) {
+      params = clonePlainObject(activeParams);
     }
     if (!params) {
-      var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent : [];
+      var recent = playAlongState.getRecent();
       for (var i = 0; i < recent.length; i++) {
         if (recent[i] && recent[i].trackId === trackId && recent[i].params) {
           params = clonePlainObject(recent[i].params);
@@ -584,33 +439,29 @@
     }
     if (!params) return false;
     clearSelectedDrillState();
-    S.playAlongLoop = true;
-    S.playAlongLoopTarget = "section";
-    S.playAlongSectionIndex = Number(sectionIndex || 0);
+    playAlongState.activateSectionLoop(sectionIndex || 0);
     return launchPlayAlongSession(params);
   };
 
   window.sparkPlayAlongPickNew = function() {
     clearSelectedDrillState();
-    S.screen = SCR.PLAY_ALONG;
+    playAlongControllerWrite("screen", SCR.PLAY_ALONG);
     render();
   };
 
   window.sparkPlayAlongStartDrill = function(index) {
-    var outcome = window.sparkCore && window.sparkCore.lastSessionOutcome ? window.sparkCore.lastSessionOutcome : null;
+    var outcome = getLastPlayAlongOutcome();
     var drills = outcome && Array.isArray(outcome.drills) ? outcome.drills : [];
     var drill = drills[index] || null;
     if (!drill) return false;
-    S.playAlongSelectedDrill = drill;
-    S.playAlongLoop = true;
-    S.playAlongLoopTarget = "drill";
-    S.playAlongLoopRange = resolveLoopRange();
-    S.playAlongPaused = false;
-    if (window.sparkCore && window.sparkCore._activeParams) {
-      launchPlayAlongSession(window.sparkCore._activeParams);
+    playAlongState.selectDrill(drill);
+    clearPlayAlongError();
+    var params = getActivePlayAlongParams();
+    if (params) {
+      launchPlayAlongSession(params);
       return true;
     }
-    S.screen = SCR.PLAY_ALONG;
+    playAlongControllerWrite("screen", SCR.PLAY_ALONG);
     render();
     return true;
   };
@@ -618,7 +469,7 @@
   // ---- Navigation Helper ----
 
   window.openPlayAlong = function() {
-    S.screen = SCR.PLAY_ALONG;
+    playAlongControllerWrite("screen", SCR.PLAY_ALONG);
     render();
   };
 
@@ -635,344 +486,102 @@
 
   function pausePlayAlongTransport() {
     var core = window.sparkCore;
-    var pausedMs = typeof core.getPlaybackTimeMs === "function" ? core.getPlaybackTimeMs() : 0;
-    core._pausedPlaybackTimeMs = pausedMs;
-    if (core.audioEngine && typeof core.audioEngine.pause === "function") core.audioEngine.pause();
-    else if (core.audioEngine && typeof core.audioEngine.stop === "function") core.audioEngine.stop();
-    if (core.stemMixer && typeof core.stemMixer.pause === "function") core.stemMixer.pause();
-    else if (core.stemMixer && typeof core.stemMixer.stop === "function") core.stemMixer.stop();
-    if (core.playbackEngine && typeof core.playbackEngine.pause === "function") core.playbackEngine.pause();
-    else if (core.playbackEngine && typeof core.playbackEngine.stop === "function") core.playbackEngine.stop();
+    if (!core || typeof core.pausePlayAlongTransport !== "function") return;
+    core.pausePlayAlongTransport();
   }
 
   function resumePlayAlongTransport() {
     var core = window.sparkCore;
-    var offsetMs = typeof core._pausedPlaybackTimeMs === "number" ? core._pausedPlaybackTimeMs : 0;
-    var params = core._activeParams || {};
-
-    if (core.audioEngine && core.audioEngine.buffer && typeof core.audioEngine.play === "function") {
-      core.audioEngine.play(offsetMs / 1000);
-    } else if (core.stemMixer && typeof core.stemMixer.seek === "function") {
-      core.stemMixer.seek(offsetMs / 1000);
-      if (!core.stemMixer.isPlaying || !core.stemMixer.isPlaying()) {
-        core.stemMixer.play(offsetMs / 1000);
-      }
-    } else if (params.trackUri && core.playbackEngine && typeof core.playbackEngine.resume === "function") {
-      core.playbackEngine.resume(offsetMs, {
-        audioOffsetMs: params.audioOffsetMs || 0,
-        deviceId: params.deviceId
-      }).catch(function() {});
-    } else if (params.trackUri && core.playbackEngine && typeof core.playbackEngine.start === "function") {
-      core.playbackEngine.start(params.trackUri, {
-        audioOffsetMs: params.audioOffsetMs || 0,
-        deviceId: params.deviceId
-      }).then(function() {
-        if (typeof core.playbackEngine.seekTo === "function") {
-          return core.playbackEngine.seekTo(offsetMs);
-        }
-      }).catch(function() {});
-    }
-    core._pausedPlaybackTimeMs = null;
+    if (!core || typeof core.resumePlayAlongTransport !== "function") return;
+    core.resumePlayAlongTransport();
   }
 
   function resolveLoopRange() {
-    var selected = S.playAlongSelectedDrill || null;
-    var target = S.playAlongLoopTarget || (selected ? "drill" : "section");
-    if (target === "drill" && selected && selected.startMs != null && selected.endMs != null) {
-      return { startMs: selected.startMs, endMs: selected.endMs };
-    }
-
-    var chart = window.sparkCore && window.sparkCore._activeChart;
-    if (chart && Array.isArray(chart.sections) && chart.sections.length) {
-      syncPlayAlongSectionIndex();
-      var section = chart.sections[S.playAlongSectionIndex || 0] || {};
-      var startMs = section.startMs != null ? section.startMs : section.start;
-      var endMs = section.endMs != null ? section.endMs : section.end;
-      if (startMs != null && endMs != null && endMs > startMs) {
-        return { startMs: startMs, endMs: endMs };
-      }
-    }
-
-    return null;
+    return playAlongState.resolveLoopRange();
   }
 
   function clearSelectedDrillState() {
-    S.playAlongSelectedDrill = null;
-    S.playAlongLoop = false;
-    S.playAlongLoopRange = null;
-    S.playAlongLoopTarget = null;
-    S.playAlongPaused = false;
-    S.playAlongLoopIteration = 0;
-    S.playAlongLoopProgress = 0;
-    S.playAlongCoachHint = "";
-    S.playAlongCurrentSection = "";
-    S.playAlongNowMs = 0;
-    S.playAlongSectionIndex = 0;
+    clearPlayAlongError();
+    playAlongState.clearSelectedDrillState();
   }
 
   function launchPlayAlongSession(params) {
     if (!window.sparkCore || !params) return Promise.resolve(false);
+    if (!params.instrument) params.instrument = getPlayAlongInstrumentId();
+    clearPlayAlongError();
     rememberPlayAlongLaunch(params);
     return window.sparkCore.startPlayAlongSession(params).then(function() {
-      S.screen = SCR.PLAY_ALONG_SESSION;
-      S.playAlongPaused = false;
+      playAlongControllerWrite("screen", SCR.PLAY_ALONG_SESSION);
+      playAlongControllerWrite("playAlongPaused", false);
       applySelectedDrillState();
       render();
       sparkPlayAlongStartLoop();
       return true;
-    }).catch(function(err) { console.error("[PlayAlong] Failed:", err); });
+    }).catch(function(err) {
+      console.error("[PlayAlong] Failed:", err);
+      setPlayAlongError(err);
+      playAlongControllerWrite("screen", SCR.PLAY_ALONG);
+      render();
+      return false;
+    });
   }
 
   function applySelectedDrillState() {
-    var selected = S.playAlongSelectedDrill || null;
-    if (!selected) {
-      if (!S.playAlongLoopTarget) S.playAlongLoopTarget = "section";
-      syncPlayAlongSectionIndex();
-      S.playAlongLoopRange = S.playAlongLoop ? resolveLoopRange() : null;
-      return;
-    }
-
-    S.playAlongLoop = true;
-    S.playAlongLoopTarget = "drill";
-    S.playAlongLoopRange = resolveLoopRange();
-    S.playAlongLoopIteration = 1;
-    S.playAlongLoopProgress = 0;
-    if (selected.speed != null) {
-      S.playAlongSpeed = String(selected.speed);
-      setPlayAlongPlaybackRate(selected.speed);
-    } else {
-      S.playAlongSpeed = "1.0";
-    }
-
-    if (S.playAlongLoopRange && S.playAlongLoopRange.startMs != null) {
-      seekPlayAlongToMs(S.playAlongLoopRange.startMs);
-    }
+    playAlongState.applySelectedDrillState({
+      seekToMs: seekPlayAlongToMs,
+      setPlaybackRate: setPlayAlongPlaybackRate
+    });
   }
 
   function setPlayAlongPlaybackRate(speed) {
     var core = window.sparkCore;
-    if (!core || typeof speed !== "number" || !isFinite(speed) || speed <= 0) return;
-    if (core.audioEngine && typeof core.audioEngine.setPlaybackRate === "function") {
-      core.audioEngine.setPlaybackRate(speed);
-    }
-    if (core.stemMixer && typeof core.stemMixer.setPlaybackRate === "function") {
-      core.stemMixer.setPlaybackRate(speed);
-    }
+    if (!core || typeof core.setPlayAlongPlaybackRate !== "function") return;
+    core.setPlayAlongPlaybackRate(speed);
   }
 
   function enforceLoopWindow() {
-    if (!S.playAlongLoop || S.playAlongPaused || !window.sparkCore) return false;
-    var range = S.playAlongLoopRange || resolveLoopRange();
-    if (!range || range.startMs == null || range.endMs == null || range.endMs <= range.startMs) return false;
-    S.playAlongLoopRange = range;
-
-    var nowMs = typeof window.sparkCore.getPlaybackTimeMs === "function" ? window.sparkCore.getPlaybackTimeMs() : 0;
-    if (nowMs < range.endMs) return false;
-
-    var selected = S.playAlongSelectedDrill || null;
-    var targetReps = selected && selected.repetitions != null ? Number(selected.repetitions) : null;
-    var currentRep = Math.max(1, Number(S.playAlongLoopIteration || 1));
-    if (targetReps != null && targetReps > 0 && currentRep >= targetReps) {
-      S.playAlongLoop = false;
-      S.playAlongLoopProgress = 100;
-      sparkPlayAlongStop();
-      return true;
-    }
-
-    S.playAlongLoopIteration = Math.max(1, Number(S.playAlongLoopIteration || 1)) + 1;
-    S.playAlongLoopProgress = 0;
-    seekPlayAlongToMs(range.startMs);
-    return false;
+    if (!window.sparkCore) return false;
+    return playAlongState.enforceLoopWindow({
+      getPlaybackTimeMs: function() {
+        return typeof window.sparkCore.getPlaybackTimeMs === "function" ? window.sparkCore.getPlaybackTimeMs() : 0;
+      },
+      seekToMs: seekPlayAlongToMs,
+      stopLoop: sparkPlayAlongStop
+    });
   }
 
   function seekPlayAlongToMs(targetMs) {
     var core = window.sparkCore;
-    if (!core) return false;
-
-    core._pausedPlaybackTimeMs = targetMs;
-
-    if (core.audioEngine && core.audioEngine.buffer && typeof core.audioEngine.play === "function") {
-      core.audioEngine.play(targetMs / 1000);
-      core._pausedPlaybackTimeMs = null;
-      return true;
-    }
-
-    if (core.stemMixer && typeof core.stemMixer.seek === "function") {
-      core.stemMixer.seek(targetMs / 1000);
-      core._pausedPlaybackTimeMs = null;
-      return true;
-    }
-
-    if (core.playbackEngine && typeof core.playbackEngine.seekTo === "function") {
-      core.playbackEngine.seekTo(targetMs).then(function() {
-        core._pausedPlaybackTimeMs = null;
-      }).catch(function() {});
-      return true;
-    }
-
-    return false;
-  }
-
-  function formatRepStatus() {
-    var current = Math.max(1, Number(S.playAlongLoopIteration || 1));
-    var selected = S.playAlongSelectedDrill || null;
-    var target = selected && selected.repetitions != null ? selected.repetitions : null;
-    return target != null ? ("Rep " + current + " / " + target) : ("Rep " + current);
-  }
-
-  function updateCoachHint() {
-    var core = window.sparkCore;
-    var accuracy = core && core.performanceTracker && typeof core.performanceTracker.getAccuracy === "function"
-      ? core.performanceTracker.getAccuracy()
-      : null;
-    var hint = "";
-    var currentRep = Math.max(1, Number(S.playAlongLoopIteration || 1));
-    if (typeof accuracy === "number") {
-      if (accuracy < 0.55) hint = currentRep >= 2 ? "Accuracy is still low after multiple reps. Slow the drill down and keep the loop tight." : (S.playAlongSelectedDrill ? "Stay in the loop and clean up the timing before speeding up." : "Accuracy is slipping. Try a loop or drop to 0.75x.");
-      else if (accuracy < 0.75) hint = currentRep >= 3 ? "You are improving, but not enough yet. Give this section two more focused reps." : (S.playAlongLoop ? "One more clean rep will help lock this in." : "You are close. Loop this section for another pass.");
-      else if (accuracy >= 0.9 && S.playAlongSelectedDrill) hint = currentRep >= 2 ? "Strong recovery. Finish the last rep, then return to the full song." : "Great control. Finish the target reps, then move back to the full song.";
-    }
-    S.playAlongCoachHint = hint;
-    return hint;
-  }
-
-  function enrichOutcomeWithLoopSummary(outcome) {
-    outcome = outcome || {};
-    var selected = S.playAlongSelectedDrill || null;
-    var range = S.playAlongLoopRange || null;
-    var currentBookmark = buildCurrentSectionBookmark();
-    if (!selected && !range) return outcome;
-    outcome.drillSummary = {
-      label: selected ? (selected.label || selected.focus || selected.type || "Focused Practice") : "Loop Practice",
-      completedReps: Math.max(0, Number(S.playAlongLoopIteration || 0)),
-      targetReps: selected && selected.repetitions != null ? selected.repetitions : null,
-      metTarget: !!(selected && selected.repetitions != null && Number(S.playAlongLoopIteration || 0) >= Number(selected.repetitions || 0)),
-      loopWindowLabel: range && range.startMs != null && range.endMs != null ? (formatMs(range.startMs) + " - " + formatMs(range.endMs)) : null
-    };
-    if (currentBookmark) {
-      outcome.sectionSummary = {
-        sectionIndex: currentBookmark.sectionIndex,
-        sectionLabel: currentBookmark.sectionLabel,
-        startMs: currentBookmark.startMs,
-        endMs: currentBookmark.endMs
-      };
-    }
-    return outcome;
-  }
-
-  function formatMs(ms) {
-    ms = Math.max(0, Math.round(ms || 0));
-    var totalSec = Math.floor(ms / 1000);
-    var minutes = Math.floor(totalSec / 60);
-    var seconds = totalSec % 60;
-    return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
-  }
-
-  function resolveCurrentSectionLabel(chart, timeMs) {
-    if (!chart || !Array.isArray(chart.sections) || !chart.sections.length) return "Section: Intro";
-    for (var i = 0; i < chart.sections.length; i++) {
-      var section = chart.sections[i] || {};
-      var startMs = section.startMs != null ? section.startMs : section.start;
-      var endMs = section.endMs != null ? section.endMs : section.end;
-      if (startMs == null || endMs == null) continue;
-      if (timeMs >= startMs && timeMs < endMs) {
-        S.playAlongSectionIndex = i;
-        return "Section: " + (section.name || ("Part " + (i + 1)));
-      }
-    }
-    S.playAlongSectionIndex = Math.max(0, chart.sections.length - 1);
-    return "Section: " + ((chart.sections[chart.sections.length - 1] && chart.sections[chart.sections.length - 1].name) || "Outro");
+    if (!core || typeof core.seekPlayAlongToMs !== "function") return false;
+    return core.seekPlayAlongToMs(targetMs);
   }
 
   function rememberPlayAlongLaunch(params) {
-    if (!params || params.audioFile) return;
-    var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent.slice() : [];
-    var normalizedParams = clonePlainObject(params);
-    var entry = {
-      trackId: normalizedParams.trackId || null,
-      title: normalizedParams.title || normalizedParams.trackId || "Untitled Song",
-      artist: normalizedParams.artist || null,
-      difficulty: normalizedParams.difficulty || null,
-      instrument: normalizedParams.instrument || null,
-      transportMode: normalizedParams.trackUri ? "spotify" : (normalizedParams.stems ? "stems" : "generated"),
-      params: normalizedParams
-    };
-    recent = recent.filter(function(item) {
-      return !!item && item.trackId !== entry.trackId;
-    });
-    recent.unshift(entry);
-    S.playAlongRecent = recent.slice(0, 5);
+    playAlongState.rememberLaunch(params);
   }
 
   function clonePlainObject(value) {
-    return JSON.parse(JSON.stringify(value || {}));
+    return playAlongState.cloneValue(value);
   }
 
   function buildCurrentSectionBookmark() {
-    var chart = window.sparkCore && window.sparkCore._activeChart;
-    var params = window.sparkCore && window.sparkCore._activeParams ? window.sparkCore._activeParams : null;
-    var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
-    if (!params || !sections.length) return null;
-    syncPlayAlongSectionIndex();
-    var index = Number(S.playAlongSectionIndex || 0);
-    var section = sections[index] || null;
-    if (!section) return null;
-    return {
-      trackId: params.trackId || null,
-      title: params.title || (chart && chart.trackId) || "Untitled Song",
-      artist: params.artist || null,
-      sectionIndex: index,
-      sectionLabel: section.name || ("Part " + (index + 1)),
-      startMs: section.startMs != null ? section.startMs : section.start,
-      endMs: section.endMs != null ? section.endMs : section.end,
-      params: clonePlainObject(params)
-    };
+    return playAlongState.buildCurrentSectionBookmark();
   }
 
   function rememberPlayAlongBookmark(bookmark) {
-    if (!bookmark) return;
-    var bookmarks = Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks.slice() : [];
-    bookmarks = bookmarks.filter(function(item) {
-      return !(item && item.trackId === bookmark.trackId && item.sectionIndex === bookmark.sectionIndex);
-    });
-    bookmarks.unshift(bookmark);
-    S.playAlongBookmarks = bookmarks.slice(0, 8);
+    playAlongState.rememberBookmark(bookmark);
   }
 
   function stepPlayAlongSection(delta) {
-    var chart = window.sparkCore && window.sparkCore._activeChart;
-    var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
-    if (!sections.length) return false;
-    var index = Number(S.playAlongSectionIndex || 0);
-    if (!isFinite(index)) index = 0;
-    index += delta;
-    if (index < 0 || index >= sections.length) return false;
-    S.playAlongSectionIndex = index;
-    if (S.playAlongLoopTarget === "section") {
-      S.playAlongLoopRange = resolveLoopRange();
-    }
-    var section = sections[index] || {};
-    var startMs = section.startMs != null ? section.startMs : section.start;
-    if (startMs != null) {
-      seekPlayAlongToMs(startMs);
-      S.playAlongNowMs = startMs;
-      S.playAlongCurrentSection = "Section: " + (section.name || ("Part " + (index + 1)));
-    }
-    render();
-    return true;
+    return playAlongState.stepSection(delta, {
+      seekToMs: seekPlayAlongToMs,
+      onAfterStep: render
+    });
   }
 
   function syncPlayAlongSectionIndex() {
-    var chart = window.sparkCore && window.sparkCore._activeChart;
-    var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
-    if (!sections.length) {
-      S.playAlongSectionIndex = 0;
-      return;
-    }
-    var current = Number(S.playAlongSectionIndex || 0);
-    if (!isFinite(current) || current < 0) current = 0;
-    if (current >= sections.length) current = sections.length - 1;
-    S.playAlongSectionIndex = current;
+    var chart = getActivePlayAlongChart();
+    playAlongState.syncSectionIndex(chart);
   }
 
 

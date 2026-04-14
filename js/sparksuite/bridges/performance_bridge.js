@@ -1,4 +1,78 @@
 (function() {
+  function performanceBridgeRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function performanceBridgeRead(path, fallback) {
+    var root = performanceBridgeRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    if (!cursor) return fallback;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function performanceBridgeWrite(path, value) {
+    var root = performanceBridgeRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    if (!cursor || !parts.length) return value;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function performanceBridgeIncrement(path, delta) {
+    delta = typeof delta === "number" ? delta : 0;
+    return performanceBridgeWrite(path, (performanceBridgeRead(path, 0) || 0) + delta);
+  }
+
+  function performanceBridgeEnsureArray(path) {
+    var current = performanceBridgeRead(path, null);
+    if (!Array.isArray(current)) {
+      current = [];
+      performanceBridgeWrite(path, current);
+    }
+    return current;
+  }
+
+  function performanceBridgeEnsureObject(path) {
+    var current = performanceBridgeRead(path, null);
+    if (!current || typeof current !== "object" || Array.isArray(current)) {
+      current = {};
+      performanceBridgeWrite(path, current);
+    }
+    return current;
+  }
+
+  function performanceBridgePatch(fields) {
+    fields = fields || {};
+    for (var key in fields) {
+      performanceBridgeWrite(key, fields[key]);
+    }
+  }
+
   function buildPerformanceSummary(plan) {
     if (!plan || !Array.isArray(plan.segments)) return { durationSec: 0 };
 
@@ -20,9 +94,9 @@
     var difficulty = payload.difficulty || "normal";
     var arrangementType = chart.arrangementType || payload.arrangementType || "chords";
 
-    if (!S.performSongStats || typeof S.performSongStats !== "object") S.performSongStats = {};
-    if (!S.performSongStats[chartId]) {
-      S.performSongStats[chartId] = {
+    var performSongStats = performanceBridgeEnsureObject("performSongStats");
+    if (!performSongStats[chartId]) {
+      performSongStats[chartId] = {
         bestScore: 0,
         bestAccuracy: 0,
         bestStars: 0,
@@ -31,7 +105,7 @@
       };
     }
 
-    var songStats = S.performSongStats[chartId];
+    var songStats = performSongStats[chartId];
     songStats.runs++;
     if (results.score > songStats.bestScore) songStats.bestScore = results.score;
     if (results.accuracy > songStats.bestAccuracy) songStats.bestAccuracy = results.accuracy;
@@ -103,87 +177,97 @@
     payload = payload || {};
 
     if (action === "start") {
-      S.performChart = payload.chart || null;
-      S.performChartId = payload.chartId || "";
-      S.performPlaying = true;
-      S.performPaused = false;
-      S.performCurrentSec = 0;
-      S.performStartSec = 0;
-      S.performScore = 0;
-      S.performCombo = 0;
-      S.performMaxCombo = 0;
-      S.performAccuracy = 0;
-      S.performPhraseIdx = 0;
-      S.performResults = null;
-      S.performStarRating = 0;
-      S.performLoop = null;
-      S.performLastHitLabel = "";
-      S.performLastHitTime = 0;
-      if (payload.phraseStats) S.performPhraseStats = payload.phraseStats;
-      if (payload.mode) S.performMode = payload.mode;
-      if (payload.difficulty) S.performDifficulty = payload.difficulty;
-      if (payload.speed) S.performSpeed = payload.speed;
-      if (payload.preset) S.performPracticePreset = payload.preset;
-      S.performInputSource = S.performMode;
-      S.screen = payload.screen || SCR.PERFORM;
+      performanceBridgePatch({
+        performChart: payload.chart || null,
+        performChartId: payload.chartId || "",
+        performPlaying: true,
+        performPaused: false,
+        performCurrentSec: 0,
+        performStartSec: 0,
+        performScore: 0,
+        performCombo: 0,
+        performMaxCombo: 0,
+        performAccuracy: 0,
+        performPhraseIdx: 0,
+        performResults: null,
+        performStarRating: 0,
+        performLoop: null,
+        performLastHitLabel: "",
+        performLastHitTime: 0,
+        screen: payload.screen || SCR.PERFORM
+      });
+      if (payload.phraseStats) performanceBridgeWrite("performPhraseStats", payload.phraseStats);
+      if (payload.mode) performanceBridgeWrite("performMode", payload.mode);
+      if (payload.difficulty) performanceBridgeWrite("performDifficulty", payload.difficulty);
+      if (payload.speed) performanceBridgeWrite("performSpeed", payload.speed);
+      if (payload.preset) performanceBridgeWrite("performPracticePreset", payload.preset);
+      performanceBridgeWrite("performInputSource", performanceBridgeRead("performMode", null));
       return;
     }
 
     if (action === "start_failed") {
-      S.screen = payload.screen || SCR.HOME;
-      if (payload.tab != null) S.tab = payload.tab;
+      performanceBridgeWrite("screen", payload.screen || SCR.HOME);
+      if (payload.tab != null) performanceBridgeWrite("tab", payload.tab);
       return;
     }
 
     if (action === "stop") {
-      S.performPlaying = false;
-      S.performPaused = false;
-      if (payload.screen) S.screen = payload.screen;
-      if (payload.tab != null) S.tab = payload.tab;
+      performanceBridgePatch({
+        performPlaying: false,
+        performPaused: false
+      });
+      if (payload.screen) performanceBridgeWrite("screen", payload.screen);
+      if (payload.tab != null) performanceBridgeWrite("tab", payload.tab);
       return;
     }
 
     if (action === "pause") {
-      S.performPaused = true;
-      S.performPlaying = false;
+      performanceBridgePatch({
+        performPaused: true,
+        performPlaying: false
+      });
       return;
     }
 
     if (action === "resume") {
-      S.performPaused = false;
-      S.performPlaying = true;
+      performanceBridgePatch({
+        performPaused: false,
+        performPlaying: true
+      });
       return;
     }
 
     if (action === "seek") {
-      S.performCurrentSec = payload.sec || 0;
+      performanceBridgeWrite("performCurrentSec", payload.sec || 0);
       return;
     }
 
     if (action === "set_loop") {
-      S.performLoop = payload.loop || null;
+      performanceBridgeWrite("performLoop", payload.loop || null);
       return;
     }
 
     if (action === "clear_loop") {
-      S.performLoop = null;
+      performanceBridgeWrite("performLoop", null);
       return;
     }
 
     if (action === "finish") {
       if (payload.results) {
-        S.performResults = payload.results;
-        S.performStarRating = payload.results.stars || 0;
+        performanceBridgeWrite("performResults", payload.results);
+        performanceBridgeWrite("performStarRating", payload.results.stars || 0);
       }
-      S.performPlaying = false;
-      S.performPaused = false;
-      S.screen = payload.screen || SCR.PERFORM_DONE;
+      performanceBridgePatch({
+        performPlaying: false,
+        performPaused: false,
+        screen: payload.screen || SCR.PERFORM_DONE
+      });
     }
   }
 
   function applyPerformanceDailyChallenge(summary, chart, results) {
-    if (!S.performanceDailyChallenge || S.performanceDailyComplete) return 0;
-    var dc = S.performanceDailyChallenge;
+    if (!performanceBridgeRead("performanceDailyChallenge", null) || performanceBridgeRead("performanceDailyComplete", false)) return 0;
+    var dc = performanceBridgeRead("performanceDailyChallenge", null);
     var completed = false;
     if (dc.type === "full_run" && summary.totalEvents > 0) completed = true;
     if (dc.type === "retry_run" && summary.accuracy >= 70) completed = true;
@@ -207,18 +291,19 @@
   }
 
   function applyLegacyPerformanceBadges(summary, chart) {
-    if (!Array.isArray(S.earnedBadges)) return [];
+    var earnedBadges = performanceBridgeEnsureArray("earnedBadges");
+    var performanceStats = performanceBridgeEnsureObject("performanceStats");
     var awarded = [];
 
     function award(id) {
-      if (S.earnedBadges.indexOf(id) >= 0) return;
-      S.earnedBadges.push(id);
+      if (earnedBadges.indexOf(id) >= 0) return;
+      earnedBadges.push(id);
       awarded.push(id);
-      S.newBadge = null;
+      performanceBridgeWrite("newBadge", null);
       if (typeof BADGES !== "undefined" && Array.isArray(BADGES)) {
         for (var bi = 0; bi < BADGES.length; bi++) {
           if (BADGES[bi].id === id) {
-            S.newBadge = BADGES[bi];
+            performanceBridgeWrite("newBadge", BADGES[bi]);
             break;
           }
         }
@@ -230,13 +315,13 @@
     if (summary.stars >= 5) award("perf_5star");
 
     var totalRuns = 0;
-    for (var key in S.performanceStats) {
-      if (S.performanceStats[key] && S.performanceStats[key].runs) totalRuns += S.performanceStats[key].runs;
+    for (var key in performanceStats) {
+      if (performanceStats[key] && performanceStats[key].runs) totalRuns += performanceStats[key].runs;
     }
     if (totalRuns >= 10) award("perf_10runs");
 
-    for (var masteryKey in S.performanceStats) {
-      if (S.performanceStats[masteryKey] && S.performanceStats[masteryKey].mastery === "mastered") {
+    for (var masteryKey in performanceStats) {
+      if (performanceStats[masteryKey] && performanceStats[masteryKey].mastery === "mastered") {
         award("perf_mastered");
         break;
       }
@@ -244,8 +329,8 @@
 
     if (chart && chart.arrangementType === "rhythm_chords") award("perf_rhythm");
     if (summary.difficultyId === "pro" && summary.stars >= 3) award("perf_pro");
-    if (S.performanceDailyComplete) award("perf_daily");
-    if (Array.isArray(S.performanceDailyHistory) && S.performanceDailyHistory.length >= 3) award("perf_streak3");
+    if (performanceBridgeRead("performanceDailyComplete", false)) award("perf_daily");
+    if (performanceBridgeEnsureArray("performanceDailyHistory").length >= 3) award("perf_streak3");
 
     if (typeof SONGS !== "undefined" && Array.isArray(SONGS)) {
       var playedSongs = 0;
@@ -254,8 +339,8 @@
         if (!SONGS[si].progression || !SONGS[si].progression.length) continue;
         totalSongs++;
         var sid = (SONGS[si].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-        for (var pk in S.performanceStats) {
-          if (pk.indexOf(sid) === 0 && S.performanceStats[pk].runs > 0) {
+        for (var pk in performanceStats) {
+          if (pk.indexOf(sid) === 0 && performanceStats[pk].runs > 0) {
             playedSongs++;
             break;
           }
@@ -288,12 +373,12 @@
       return window.SparkProgressBridge.applyLegacyReward(reward);
     }
     reward = reward || {};
-    if (reward.xpDelta) S.xp = (S.xp || 0) + reward.xpDelta;
+    if (reward.xpDelta) performanceBridgeIncrement("xp", reward.xpDelta);
     if (reward.toastAmount) {
-      S.xpToast = {
+      performanceBridgeWrite("xpToast", {
         amount: reward.toastAmount,
         time: Date.now()
-      };
+      });
     }
     return reward;
   }

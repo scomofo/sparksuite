@@ -1,5 +1,32 @@
 (function(){
 
+  function skillTreeRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function skillTreeRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = skillTreeRoot();
+    if(!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   function buildSkillTree(){
     return {
       branches: [
@@ -31,7 +58,7 @@
 
       for(var j=0;j<level.chords.length;j++){
         var chordName = level.chords[j];
-        var prog = S.chordProgress && S.chordProgress[chordName] || 0;
+        var prog = skillTreeRead(["chordProgress", chordName], 0) || 0;
 
         levelNode.children.push({
           id:"chord_" + chordName.replace(/\s+/g,"_"),
@@ -51,7 +78,7 @@
 
   function buildTransitionBranch(){
     var nodes = [];
-    var ts = S.transitionStats || {};
+    var ts = skillTreeRead("transitionStats", {}) || {};
 
     for(var key in ts){
       var row = ts[key];
@@ -72,7 +99,7 @@
 
   function buildSongBranch(){
     var nodes = [];
-    var perf = S.performanceStats || {};
+    var perf = skillTreeRead("performanceStats", {}) || {};
 
     for(var songId in perf){
       var overview = getSongMasteryOverview(songId);
@@ -91,7 +118,7 @@
   }
 
   function buildRhythmBranch(){
-    var rr = S.rhythmResults;
+    var rr = skillTreeRead("rhythmResults", null);
     var progress = rr && typeof rr.accuracy==="number" ? rr.accuracy : 0;
 
     return {
@@ -129,7 +156,7 @@
   }
 
   function getProgressStatus(progress, levelNum){
-    if(levelNum > (S.level || 1)) return "locked";
+    if(levelNum > (skillTreeRead("level", 1) || 1)) return "locked";
     if(progress >= 90) return "mastered";
     if(progress >= 25) return "developing";
     return "available";
@@ -146,14 +173,14 @@
     if(!level || !Array.isArray(level.chords) || !level.chords.length) return 0;
     var sum = 0;
     for(var i=0;i<level.chords.length;i++){
-      sum += (S.chordProgress && S.chordProgress[level.chords[i]] || 0);
+      sum += (skillTreeRead(["chordProgress", level.chords[i]], 0) || 0);
     }
     return Math.round(sum / level.chords.length);
   }
 
   function getChordLevelStatus(level){
     var progress = getChordLevelProgress(level);
-    if(level.num > (S.level || 1)) return "locked";
+    if(level.num > (skillTreeRead("level", 1) || 1)) return "locked";
     return getSimpleMasteryStatus(progress);
   }
 
@@ -170,7 +197,7 @@
   }
 
   function getSongMasteryOverview(songId){
-    var perf = S.performanceStats || {};
+    var perf = skillTreeRead("performanceStats", {}) || {};
     var songStats = perf[songId];
     if(!songStats) return { title:songId, progress:0, status:"locked", mastered:false, bestStars:0 };
 
@@ -206,7 +233,7 @@
   }
 
   function isLeadReady(){
-    var perf = S.performanceStats || {};
+    var perf = skillTreeRead("performanceStats", {}) || {};
     var masteredCount = 0;
 
     for(var songId in perf){
@@ -216,7 +243,7 @@
       }
     }
 
-    return masteredCount >= 2 || (S.level || 1) >= 4;
+    return masteredCount >= 2 || (skillTreeRead("level", 1) || 1) >= 4;
   }
 
   window.buildSkillTree = buildSkillTree;

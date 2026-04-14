@@ -25,6 +25,7 @@ function loadJS(file) {
 function resetState() {
   global.window = global;
   global.S = {
+    level: 2,
     guidedSession: 2,
     screen: "home",
     metronomeOn: false,
@@ -39,6 +40,7 @@ function resetState() {
   global.guidedNavigationCalls = [];
   global.legacyPracticeCalls = [];
   global.confettiCalls = 0;
+  global.bridgeCompletionCalls = [];
 
   global.render = function() { renderCalls++; };
   global.saveState = function() { saveStateCalls++; };
@@ -113,8 +115,74 @@ function resetState() {
     guidedNavigationCalls.push(target);
     return { activeScreen: "guided_done" };
   };
+  global.__sparkState = global.S;
 
-  global.SparkProgressBridge = null;
+  global.window.sparkCore = {
+    startLegacyPracticeSession: function(options) {
+      sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+      if (options.mode === "drill") {
+        return {
+          context: {
+            legacyPractice: {
+              mode: "drill",
+              chords: [{ name: "E" }, { name: "A" }],
+              chordNames: ["E", "A"],
+              durationSec: 60
+            }
+          }
+        };
+      }
+      return {
+        context: {
+          legacyPractice: {
+            mode: options.mode || "quickStart",
+            chord: { name: options.chordName || "E" },
+            chordName: options.chordName || "E",
+            durationSec: 120
+          }
+        }
+      };
+    },
+    openLegacyPracticeSession: function(payload) {
+      sparkCoreCalls.push({ fn: "openLegacyPracticeSession", payload: payload });
+      return payload;
+    },
+    openLegacyPracticeDrill: function(payload) {
+      sparkCoreCalls.push({ fn: "openLegacyPracticeDrill", payload: payload });
+      return payload;
+    }
+  };
+
+  global.SparkProgressBridge = {
+    applyLegacyActivityCompletion: function(payload) {
+      bridgeCompletionCalls.push(payload);
+      if (payload.incrementFields) {
+        Object.keys(payload.incrementFields).forEach(function(key) {
+          S[key] = (S[key] || 0) + payload.incrementFields[key];
+        });
+      }
+      if (payload.resultFields) {
+        Object.keys(payload.resultFields).forEach(function(key) {
+          S[key] = payload.resultFields[key];
+        });
+      }
+      if (typeof payload.xpDelta === "number") S.xp = (S.xp || 0) + payload.xpDelta;
+      if (payload.toastAmount) S.xpToast = { amount: payload.toastAmount, time: 1, jackpot: !!payload.jackpot };
+      if (payload.save !== false) saveState();
+      return payload;
+    },
+    applySessionStatePatch: function(payload) {
+      if (payload && payload.guided) {
+        if (Array.isArray(payload.guided.completedSessionNums)) {
+          payload.guided.completedSessionNums.forEach(function(num) {
+            if (S.completedGuidedSessions.indexOf(num) < 0) S.completedGuidedSessions.push(num);
+          });
+        }
+        if (typeof payload.guided.nextGuidedSession === "number") S.guidedSession = payload.guided.nextGuidedSession;
+      }
+      return payload;
+    }
+  };
   global.SparkSession = {
     buildSession: function(options) {
       if (options.mode === "quickStart") {
@@ -166,10 +234,16 @@ test("quickStart and drill entry delegate to shared legacy practice helpers", fu
   bassAct("quickStart");
   bassAct("startDrill");
 
-  assert.deepStrictEqual(legacyPracticeCalls, [
+  assert.deepStrictEqual(sparkCoreCalls.slice(0, 4), [
+    { fn: "startLegacyPracticeSession", payload: { mode: "quickStart", level: 2 } },
     { fn: "openLegacyPracticeSession", payload: { mode: "quickStart", chordName: "E", durationSec: 120 } },
+    { fn: "startLegacyPracticeSession", payload: { mode: "drill", level: 2 } },
     { fn: "openLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } }
   ]);
+  assert.deepStrictEqual(legacyPracticeCalls, []);
+  assert.strictEqual(S.lastChordName, "E");
+  assert.strictEqual(S.timer, 120);
+  assert.strictEqual(S.drillTimer, 60);
   assert.strictEqual(S.screen, "drill");
 });
 
@@ -182,12 +256,34 @@ test("legacy practice replay actions delegate to shared retry helpers", function
   bassAct("repeatLegacyPracticeSession");
   bassAct("repeatLegacyPracticeDrill");
 
-  assert.deepStrictEqual(legacyPracticeCalls.slice(0, 4), [
+  assert.deepStrictEqual(legacyPracticeCalls.slice(0, 2), [
     { fn: "repeatLegacyPracticeSession", payload: { mode: "chord", chordName: "A", durationSec: 120 } },
+    { fn: "repeatLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } }
+  ]);
+  assert.deepStrictEqual(sparkCoreCalls.slice(0, 4), [
+    { fn: "startLegacyPracticeSession", payload: { mode: "chord", chordName: "A" } },
     { fn: "openLegacyPracticeSession", payload: { mode: "chord", chordName: "A", durationSec: 120 } },
-    { fn: "repeatLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } },
+    { fn: "startLegacyPracticeSession", payload: { mode: "drill", level: 2 } },
     { fn: "openLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } }
   ]);
+});
+
+test("guidedComplete fallback uses shared completion bookkeeping helper", function() {
+  S.screen = "guided";
+  S.guidedPlan = { num: 2, newMove: { chord: "A" } };
+  global.completeGuidedSessionRequest = null;
+  global.applyGuidedNavigationRequest = null;
+  global.window.sparkCore.completeSession = null;
+
+  bassAct("guidedComplete");
+
+  assert.strictEqual(bridgeCompletionCalls.length, 1);
+  assert.strictEqual(bridgeCompletionCalls[0].toastAmount, 30);
+  assert.deepStrictEqual(S.completedGuidedSessions, [2]);
+  assert.strictEqual(S.guidedSession, 2);
+  assert.strictEqual(S.xpToast.amount, 30);
+  assert.strictEqual(S.screen, "guided_done");
+  assert.strictEqual(confettiCalls, 1);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

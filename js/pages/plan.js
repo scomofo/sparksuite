@@ -1,3 +1,10 @@
+function planStateRead(path, fallback){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+    return SparkState.read(path, fallback);
+  }
+  return fallback;
+}
+
 function planPage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
@@ -7,7 +14,7 @@ function planPage(){
     : ensurePracticePlan();
   var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
     ? true
-    : !!S.practicePlanComplete;
+    : !!planStateRead(["practicePlanComplete"], false);
   var h = '';
 
   h += '<div class="card mb16">';
@@ -80,7 +87,7 @@ function launchPracticePlanItem(itemId){
       plan = SparkPracticeBridge.toLegacyPlan(view.plan);
     }
   }
-  if(!plan) plan = S.practicePlan || ensurePracticePlan();
+  if(!plan) plan = planStateRead(["practicePlan"], null) || ensurePracticePlan();
   if(!plan || !Array.isArray(plan.items)) return;
 
   for(var i=0;i<plan.items.length;i++){

@@ -3,13 +3,58 @@
 
 (function(){
 
+  function editorInspectorRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorInspectorRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorInspectorRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function editorInspectorWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = editorInspectorRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor || !parts.length) return value;
+    for(i=0;i<parts.length-1;i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length-1]] = value;
+    return value;
+  }
+
   function getSelectedEditorItem(){
-    var obj = S.editorObject;
-    if(!obj || S.editorSelectedId==null) return null;
+    var obj = editorInspectorRead("editorObject", null);
+    var selectedId = editorInspectorRead("editorSelectedId", null);
+    if(!obj || selectedId==null) return null;
     var buckets = [obj.events || [], obj.phrases || [], obj.steps || []];
     for(var b=0;b<buckets.length;b++){
       for(var i=0;i<buckets[b].length;i++){
-        if(String(buckets[b][i].id)===String(S.editorSelectedId)){
+        if(String(buckets[b][i].id)===String(selectedId)){
           return buckets[b][i];
         }
       }
@@ -18,8 +63,9 @@
   }
 
   function getSelectedEditorItemKind(){
-    var obj = S.editorObject;
-    if(!obj || S.editorSelectedId==null) return null;
+    var obj = editorInspectorRead("editorObject", null);
+    var selectedId = editorInspectorRead("editorSelectedId", null);
+    if(!obj || selectedId==null) return null;
     var groups = [
       { kind:"event", arr:obj.events || [] },
       { kind:"phrase", arr:obj.phrases || [] },
@@ -27,7 +73,7 @@
     ];
     for(var g=0;g<groups.length;g++){
       for(var i=0;i<groups[g].arr.length;i++){
-        if(String(groups[g].arr[i].id)===String(S.editorSelectedId)){
+        if(String(groups[g].arr[i].id)===String(selectedId)){
           return groups[g].kind;
         }
       }
@@ -109,7 +155,7 @@
       }
     }
     normalizeSelectedEditorItem(item);
-    S.editorDirty = true;
+    editorInspectorWrite("editorDirty", true);
     return true;
   }
 

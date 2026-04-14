@@ -1,4 +1,32 @@
 (function(){
+  function performanceDifficultyRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function performanceDifficultyWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = performanceDifficultyRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (!cursor || !parts.length) return value;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   var PERFORMANCE_DIFFICULTIES = {
     easy: {
       id: "easy",
@@ -51,12 +79,10 @@
 
   function applyPerformanceDifficultyToState(id) {
     var diff = getPerformanceDifficulty(id);
-    if (typeof S !== "undefined") {
-      S.performDifficulty = diff.id;
-      S.performWindowPerfectMs = diff.perfectMs;
-      S.performWindowGoodMs = diff.goodMs;
-      S.performWindowMissMs = diff.missMs;
-    }
+    performanceDifficultyWrite("performDifficulty", diff.id);
+    performanceDifficultyWrite("performWindowPerfectMs", diff.perfectMs);
+    performanceDifficultyWrite("performWindowGoodMs", diff.goodMs);
+    performanceDifficultyWrite("performWindowMissMs", diff.missMs);
     return diff;
   }
 

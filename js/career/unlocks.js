@@ -1,43 +1,75 @@
 (function(){
 
+  function careerUnlockRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function careerUnlockRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = careerUnlockRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function careerUnlockWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = careerUnlockRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
+  function getCareerProgressState(){
+    return careerUnlockRead("careerProgress", null);
+  }
+
   function _ensureCP(){
     if(typeof ensureCareerProgress === "function") ensureCareerProgress();
     else{
-      if(!S.careerProgress) S.careerProgress = {};
-      if(!S.careerProgress.unlockedTiers) S.careerProgress.unlockedTiers = {};
-      if(!S.careerProgress.unlockedStages) S.careerProgress.unlockedStages = {};
-      if(!S.careerProgress.unlockedSongs) S.careerProgress.unlockedSongs = {};
-      if(!S.careerProgress.songRatings) S.careerProgress.songRatings = {};
-      if(!S.careerProgress.stageCompletion) S.careerProgress.stageCompletion = {};
+      var careerProgress = getCareerProgressState();
+      if(!careerProgress || typeof careerProgress !== "object") careerProgress = {};
+      if(!careerProgress.unlockedTiers) careerProgress.unlockedTiers = {};
+      if(!careerProgress.unlockedStages) careerProgress.unlockedStages = {};
+      if(!careerProgress.unlockedSongs) careerProgress.unlockedSongs = {};
+      if(!careerProgress.songRatings) careerProgress.songRatings = {};
+      if(!careerProgress.stageCompletion) careerProgress.stageCompletion = {};
+      careerUnlockWrite("careerProgress", careerProgress);
     }
   }
 
   function unlockCareerTier(id){
     _ensureCP();
-    S.careerProgress.unlockedTiers[id] = true;
+    getCareerProgressState().unlockedTiers[id] = true;
     saveState();
   }
 
   function unlockCareerStage(id){
     _ensureCP();
-    S.careerProgress.unlockedStages[id] = true;
+    getCareerProgressState().unlockedStages[id] = true;
     saveState();
   }
 
   function unlockCareerSong(id){
     _ensureCP();
-    S.careerProgress.unlockedSongs[id] = true;
+    getCareerProgressState().unlockedSongs[id] = true;
     saveState();
   }
 
   function isCareerSongUnlocked(id){
     _ensureCP();
-    return !!S.careerProgress.unlockedSongs[id];
+    return !!getCareerProgressState().unlockedSongs[id];
   }
 
   function evaluateCareerUnlocks(careerId){
     _ensureCP();
-    var career = getCareerItem("careers", careerId || S.activeCareerId);
+    var careerProgress = getCareerProgressState();
+    var career = getCareerItem("careers", careerId || careerUnlockRead("activeCareerId", null));
     if(!career) return;
     for(var t=0;t<career.tiers.length;t++){
       var tier = getCareerItem("tiers", career.tiers[t]);
@@ -49,7 +81,7 @@
         if(t===0 && s===0){
           unlockCareerStage(stage.id);
         }
-        if(S.careerProgress.unlockedStages[stage.id]){
+        if(careerProgress.unlockedStages[stage.id]){
           for(var i=0;i<(stage.songs || []).length;i++){
             unlockCareerSong(stage.songs[i]);
           }
@@ -67,14 +99,14 @@
         return false;
       }
     }
-    S.careerProgress.stageCompletion[stageId] = true;
+    getCareerProgressState().stageCompletion[stageId] = true;
     saveState();
     return true;
   }
 
   function hasSongClearedCareer(songId){
     _ensureCP();
-    var ratings = S.careerProgress.songRatings || {};
+    var ratings = getCareerProgressState().songRatings || {};
     for(var key in ratings){
       if(key.indexOf(String(songId) + "::") === 0 && (ratings[key].bestStars || 0) >= 2){
         return true;

@@ -1,5 +1,33 @@
 (function(){
 
+  function analyticsStateRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function analyticsStateRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = analyticsStateRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function getAnalyticsSnapshot(){
+    return {
+      transitionStats: analyticsStateRead("transitionStats", {}) || {},
+      performanceStats: analyticsStateRead("performanceStats", {}) || {},
+      streak: analyticsStateRead("streak", 0),
+      level: analyticsStateRead("level", 0),
+      history: Array.isArray(analyticsStateRead("history", [])) ? analyticsStateRead("history", []) : [],
+      rhythmResults: analyticsStateRead("rhythmResults", null),
+      sessions: analyticsStateRead("sessions", 0)
+    };
+  }
+
   function buildAnalyticsSummary(){
     var summary = createAnalyticsSummaryShell
       ? createAnalyticsSummaryShell()
@@ -23,7 +51,7 @@
   }
 
   function getWeakTransitions(){
-    var ts = S.transitionStats || {};
+    var ts = getAnalyticsSnapshot().transitionStats || {};
     var arr = [];
     for(var key in ts){
       var row = ts[key];
@@ -43,7 +71,7 @@
   }
 
   function getWeakSongs(){
-    var perf = S.performanceStats || {};
+    var perf = getAnalyticsSnapshot().performanceStats || {};
     var out = [];
     for(var songId in perf){
       var bestAcc = 999;
@@ -69,7 +97,7 @@
   }
 
   function getWeakPhrases(){
-    var perf = S.performanceStats || {};
+    var perf = getAnalyticsSnapshot().performanceStats || {};
     var out = [];
     for(var songId in perf){
       for(var arrangementType in perf[songId]){
@@ -96,25 +124,26 @@
   }
 
   function getStrongSkills(){
+    var state = getAnalyticsSnapshot();
     var out = [];
-    if(S.streak){
+    if(state.streak){
       out.push({
         label:"Practice streak",
-        value:S.streak
+        value:state.streak
       });
     }
-    if(S.level){
+    if(state.level){
       out.push({
         label:"Current level",
-        value:S.level
+        value:state.level
       });
     }
-    if(S.performanceStats){
+    if(state.performanceStats){
       var masteredSongs = 0;
-      for(var songId in S.performanceStats){
-        for(var arrangementType in S.performanceStats[songId]){
-          for(var difficultyId in S.performanceStats[songId][arrangementType]){
-            var bucket = S.performanceStats[songId][arrangementType][difficultyId];
+      for(var songId in state.performanceStats){
+        for(var arrangementType in state.performanceStats[songId]){
+          for(var difficultyId in state.performanceStats[songId][arrangementType]){
+            var bucket = state.performanceStats[songId][arrangementType][difficultyId];
             if(bucket && bucket.mastered) masteredSongs++;
           }
         }
@@ -130,27 +159,29 @@
   }
 
   function getRecentImprovement(){
+    var state = getAnalyticsSnapshot();
     var out = [];
-    if(S.history && S.history.length >= 2){
+    if(state.history && state.history.length >= 2){
       out.push({
         label:"Recent activity",
         value:"Consistent recent practice logged"
       });
     }
-    if(S.rhythmResults && typeof S.rhythmResults.accuracy==="number"){
+    if(state.rhythmResults && typeof state.rhythmResults.accuracy==="number"){
       out.push({
         label:"Rhythm benchmark",
-        value:S.rhythmResults.accuracy + "% accuracy"
+        value:state.rhythmResults.accuracy + "% accuracy"
       });
     }
     return out.slice(0,5);
   }
 
   function getPracticeConsistency(){
+    var state = getAnalyticsSnapshot();
     return {
-      streak:S.streak || 0,
-      sessions:S.sessions || 0,
-      historyCount:(S.history || []).length
+      streak:state.streak || 0,
+      sessions:state.sessions || 0,
+      historyCount:(state.history || []).length
     };
   }
 

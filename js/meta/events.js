@@ -1,10 +1,61 @@
 (function(){
 
+  function seasonalEventRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function seasonalEventRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = seasonalEventRoot();
+    if(!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function seasonalEventWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = seasonalEventRoot();
+    if(!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if(parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function ensureSeasonalRewardClaims(){
+    var challengeRewards = seasonalEventRead("challengeRewards", null);
+    if(!challengeRewards || typeof challengeRewards !== "object" || Array.isArray(challengeRewards)){
+      challengeRewards = { packClaimed: {}, eventClaimed: {} };
+    }
+    if(!challengeRewards.packClaimed || typeof challengeRewards.packClaimed !== "object") challengeRewards.packClaimed = {};
+    if(!challengeRewards.eventClaimed || typeof challengeRewards.eventClaimed !== "object") challengeRewards.eventClaimed = {};
+    seasonalEventWrite("challengeRewards", challengeRewards);
+    return challengeRewards.eventClaimed;
+  }
+
   function activateSeasonalEvent(eventId){
     var ev = typeof getSeasonalEvent === "function" ? getSeasonalEvent(eventId) : null;
     if(!ev) return false;
-    S.activeEventId = eventId;
-    S.seasonalEvents = [cloneEventForState(ev)];
+    seasonalEventWrite("activeEventId", eventId);
+    seasonalEventWrite("seasonalEvents", [cloneEventForState(ev)]);
     saveState();
     return true;
   }
@@ -24,10 +75,11 @@
   }
 
   function getActiveSeasonalEvent(){
-    if(!S.activeEventId) return null;
-    var arr = S.seasonalEvents || [];
+    var activeEventId = seasonalEventRead("activeEventId", null);
+    if(!activeEventId) return null;
+    var arr = seasonalEventRead("seasonalEvents", []) || [];
     for(var i=0;i<arr.length;i++){
-      if(arr[i].id === S.activeEventId) return arr[i];
+      if(arr[i].id === activeEventId) return arr[i];
     }
     return null;
   }
@@ -60,16 +112,16 @@
   }
 
   function grantSeasonalEventRewards(ev){
-    if(!S.challengeRewards) S.challengeRewards = { packClaimed: {}, eventClaimed: {} };
-    if(!S.challengeRewards.eventClaimed) S.challengeRewards.eventClaimed = {};
-    if(S.challengeRewards.eventClaimed[ev.id]) return;
+    var eventClaimed = ensureSeasonalRewardClaims();
+    if(eventClaimed[ev.id]) return;
     if(ev.rewards && ev.rewards.xp){
       if(typeof awardXP === "function") awardXP(ev.rewards.xp, "seasonal_event");
     }
     if(ev.rewards && ev.rewards.skillPoints && typeof awardSkillPoint === "function"){
       for(var i=0;i<ev.rewards.skillPoints;i++) awardSkillPoint();
     }
-    S.challengeRewards.eventClaimed[ev.id] = true;
+    eventClaimed[ev.id] = true;
+    seasonalEventWrite(["challengeRewards", "eventClaimed"], eventClaimed);
     saveState();
   }
 

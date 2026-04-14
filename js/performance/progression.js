@@ -1,9 +1,54 @@
 (function(){
 
+  function performanceProgressionRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function performanceProgressionRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = performanceProgressionRoot();
+    if (!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function performanceProgressionWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = performanceProgressionRoot();
+    if (!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if (parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   function getPerformanceStats(songId, arrangementType, difficulty) {
     var key = songId + "_" + (arrangementType || "chords") + "_" + (difficulty || "normal");
-    if (!S.performanceStats[key]) {
-      S.performanceStats[key] = {
+    var stats = performanceProgressionRead(["performanceStats", key], null);
+    if (!stats) {
+      stats = {
         songId: songId,
         arrangement: arrangementType || "chords",
         difficulty: difficulty || "normal",
@@ -17,8 +62,9 @@
         lastFocusedTechnique: null,
         focusedTechniqueRuns: {}
       };
+      performanceProgressionWrite(["performanceStats", key], stats);
     }
-    return S.performanceStats[key];
+    return stats;
   }
 
   function updatePerformanceStats(songId, arrangementType, difficulty, results) {
@@ -88,27 +134,32 @@
   function checkPerformanceUnlocks(songId, arrangementType, difficulty, stats) {
     var unlocks = [];
     var key = songId + "_" + arrangementType + "_" + difficulty;
+    var performanceUnlocks = performanceProgressionRead("performanceUnlocks", null);
+    if (!performanceUnlocks || typeof performanceUnlocks !== "object" || Array.isArray(performanceUnlocks)) {
+      performanceUnlocks = {};
+      performanceProgressionWrite("performanceUnlocks", performanceUnlocks);
+    }
 
-    if (!S.performanceUnlocks[key + "_first"] && stats.runs === 1) {
-      S.performanceUnlocks[key + "_first"] = true;
+    if (!performanceUnlocks[key + "_first"] && stats.runs === 1) {
+      performanceUnlocks[key + "_first"] = true;
       unlocks.push({ type: "first_clear", label: "First Clear!", xp: 15 });
     }
-    if (!S.performanceUnlocks[key + "_3star"] && stats.bestStars >= 3) {
-      S.performanceUnlocks[key + "_3star"] = true;
+    if (!performanceUnlocks[key + "_3star"] && stats.bestStars >= 3) {
+      performanceUnlocks[key + "_3star"] = true;
       unlocks.push({ type: "3_star", label: "3 Stars!", xp: 10 });
     }
-    if (!S.performanceUnlocks[key + "_5star"] && stats.bestStars >= 5) {
-      S.performanceUnlocks[key + "_5star"] = true;
+    if (!performanceUnlocks[key + "_5star"] && stats.bestStars >= 5) {
+      performanceUnlocks[key + "_5star"] = true;
       unlocks.push({ type: "5_star", label: "5 Stars!", xp: 25 });
     }
-    if (!S.performanceUnlocks[key + "_mastery"] && stats.mastery === "mastered") {
-      S.performanceUnlocks[key + "_mastery"] = true;
+    if (!performanceUnlocks[key + "_mastery"] && stats.mastery === "mastered") {
+      performanceUnlocks[key + "_mastery"] = true;
       unlocks.push({ type: "mastery", label: "Mastered!", xp: 50 });
     }
 
     // Award XP for unlocks
     for (var i = 0; i < unlocks.length; i++) {
-      S.xp += unlocks[i].xp;
+      performanceProgressionWrite("xp", (performanceProgressionRead("xp", 0) || 0) + unlocks[i].xp);
     }
 
     return unlocks;

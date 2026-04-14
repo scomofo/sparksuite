@@ -1,5 +1,53 @@
 /* PianoSpark - Games tab (drill, daily, quiz, ear, rhythm, runner) */
 
+function pianoGameRead(path, fallback) {
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  if (!cursor) return fallback;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function pianoGameWrite(path, value) {
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+    return SparkState.write(path, value);
+  }
+  if (!cursor || !parts.length) return value;
+  for (i = 0; i < parts.length - 1; i++) {
+    if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+    cursor = cursor[parts[i]];
+  }
+  cursor[parts[parts.length - 1]] = value;
+  return value;
+}
+
+function setPianoGameTab(tabId) {
+  pianoGameWrite("_gameTab", tabId || "drill");
+  render();
+}
+
 function pianoGamesTab() {
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var DAILY_TYPES = D.DAILY_TYPES || [];
@@ -17,15 +65,15 @@ function pianoGamesTab() {
     { id:"runner",  label:"Runner",  icon:"\u{1F3C3}" }
   ];
 
-  if (!S._gameTab) S._gameTab = "drill";
+  var activeGameTab = pianoGameRead("_gameTab", "drill") || "drill";
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
-    var active = S._gameTab === t.id ? " active" : "";
-    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="S._gameTab=\'' + t.id + '\';render()">' + t.icon + ' ' + t.label + '</div>';
+    var active = activeGameTab === t.id ? " active" : "";
+    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="setPianoGameTab(\'' + t.id + '\')">' + t.icon + ' ' + t.label + '</div>';
   });
   html += '</div>';
 
-  switch (S._gameTab) {
+  switch (activeGameTab) {
     case "drill":   html += drillTab(); break;
     case "fingers": html += fingersTab(); break;
     case "daily":   html += dailyTab(); break;
@@ -40,24 +88,29 @@ function pianoGamesTab() {
 // ── Drill ──
 function drillTab() {
   var html = '<div class="card">';
-  if (S.drillActive) {
-    var c = S.drillChords[S.drillIdx];
+  var drillActive = !!pianoGameRead("drillActive", false);
+  var drillChords = Array.isArray(pianoGameRead("drillChords", [])) ? pianoGameRead("drillChords", []) : [];
+  var drillIdx = pianoGameRead("drillIdx", 0);
+  var drillTimer = pianoGameRead("drillTimer", 0);
+  var activeLevel = pianoGameRead("level", 1);
+  if (drillActive) {
+    var c = drillChords[drillIdx];
     var chordObj = findChord(c);
     html += '<h2>Drill: ' + escHTML(c) + '</h2>';
-    html += '<div class="timer-display">' + pianoFormatTime(S.drillTimer) + '</div>';
-    html += '<div class="drill-progress">' + (S.drillIdx + 1) + ' / ' + S.drillChords.length + '</div>';
+    html += '<div class="timer-display">' + pianoFormatTime(drillTimer) + '</div>';
+    html += '<div class="drill-progress">' + (drillIdx + 1) + ' / ' + drillChords.length + '</div>';
     if (chordObj) html += pianoSVG(chordObj);
     html += '<div class="drill-dots">';
-    S.drillChords.forEach(function(dc, i) {
-      html += '<span class="drill-dot ' + (i === S.drillIdx ? 'current' : (i < S.drillIdx ? 'done' : '')) + '">' + escHTML(dc) + '</span>';
+    drillChords.forEach(function(dc, i) {
+      html += '<span class="drill-dot ' + (i === drillIdx ? 'current' : (i < drillIdx ? 'done' : '')) + '">' + escHTML(dc) + '</span>';
     });
     html += '</div>';
     html += '<button class="btn" onclick="act(\'drill_next\')">Next \u27A1</button>';
     html += '<button class="btn btn-secondary" onclick="act(\'stop_drill\')">Stop</button>';
     html += '<button class="btn btn-accent" onclick="act(\'play_chord\',\'' + c + '\')">\u{1F50A}</button>';
     // Transition stats
-    if (S.drillIdx > 0) {
-      var prev = S.drillChords[S.drillIdx - 1];
+    if (drillIdx > 0) {
+      var prev = drillChords[drillIdx - 1];
       var tipKey = prev + "_" + c;
       var _tips = typeof PIANO_TRANSITION_TIPS !== "undefined" ? PIANO_TRANSITION_TIPS : TRANSITION_TIPS;
       if (_tips[tipKey]) {
@@ -67,7 +120,7 @@ function drillTab() {
   } else {
     html += '<h2>Chord Drill</h2>';
     html += '<p>Rapidly switch between chords to build muscle memory.</p>';
-    html += '<button class="btn" onclick="act(\'start_drill\',\'level\')">Level ' + S.level + ' Chords</button>';
+    html += '<button class="btn" onclick="act(\'start_drill\',\'level\')">Level ' + activeLevel + ' Chords</button>';
     html += '<button class="btn" onclick="act(\'start_drill\',\'all\')">All Learned</button>';
     html += '<button class="btn" onclick="act(\'start_drill\',\'random\')">Random Mix</button>';
   }
@@ -78,15 +131,20 @@ function drillTab() {
 // ── Daily ──
 function dailyTab() {
   var html = '<div class="card">';
-  if (S.dailyActive && S.dailyType) {
-    var dt = DAILY_TYPES.find(function(d) { return d.id === S.dailyType; });
+  var dailyActive = !!pianoGameRead("dailyActive", false);
+  var dailyType = pianoGameRead("dailyType", null);
+  var dailyTimer = pianoGameRead("dailyTimer", 0);
+  var dailyScore = pianoGameRead("dailyScore", 0);
+  var activeChord = pianoGameRead("chord", null);
+  if (dailyActive && dailyType) {
+    var dt = DAILY_TYPES.find(function(d) { return d.id === dailyType; });
     html += '<h2>' + (dt ? dt.name : "Challenge") + '</h2>';
-    html += '<div class="timer-display">' + pianoFormatTime(S.dailyTimer) + '</div>';
-    html += '<div class="daily-score">Score: ' + S.dailyScore + '</div>';
-    if (S.dailyType === "blind") {
-      html += pianoSVG(findChord(S.chord), { hideKeys: true });
-    } else if (S.chord) {
-      html += pianoSVG(findChord(S.chord));
+    html += '<div class="timer-display">' + pianoFormatTime(dailyTimer) + '</div>';
+    html += '<div class="daily-score">Score: ' + dailyScore + '</div>';
+    if (dailyType === "blind") {
+      html += pianoSVG(findChord(activeChord), { hideKeys: true });
+    } else if (activeChord) {
+      html += pianoSVG(findChord(activeChord));
     }
     html += '<button class="btn" onclick="act(\'daily_action\')">Next</button>';
     html += '<button class="btn btn-secondary" onclick="act(\'stop_daily\')">Stop</button>';
@@ -96,7 +154,7 @@ function dailyTab() {
       html += pianoClickableDiv("act('start_daily','" + dt.id + "')",
         '<strong>' + dt.name + '</strong><br><span class="text-muted">' + dt.desc + '</span>', "daily-card");
     });
-    html += '<div class="text-muted">Completed: ' + S.dailiesDone + '</div>';
+    html += '<div class="text-muted">Completed: ' + pianoGameRead("dailiesDone", 0) + '</div>';
   }
   html += '</div>';
   return html;
@@ -105,30 +163,33 @@ function dailyTab() {
 // ── Quiz (with delayed feedback - stickiness #5) ──
 function quizTab() {
   var html = '<div class="card"><h2>Chord Quiz</h2>';
-  if (S.quizQ) {
+  var quizQ = pianoGameRead("quizQ", null);
+  var quizAns = pianoGameRead("quizAns", null);
+  var quizCorrect = pianoGameRead("quizCorrect", 0);
+  if (quizQ) {
     html += '<p>Which chord is shown below?</p>';
-    var _quizChord = findChord(S.quizQ.answer);
-    html += _quizChord ? pianoSVG(_quizChord, { showFingers: false }) : '<div class="text-muted">(' + escHTML(S.quizQ.answer) + ')</div>';
+    var _quizChord = findChord(quizQ.answer);
+    html += _quizChord ? pianoSVG(_quizChord, { showFingers: false }) : '<div class="text-muted">(' + escHTML(quizQ.answer) + ')</div>';
     html += '<div class="quiz-options">';
-    S.quizQ.options.forEach(function(opt) {
+    quizQ.options.forEach(function(opt) {
       var cls = "btn quiz-btn";
-      if (S.quizAns) {
-        if (opt === S.quizQ.answer) cls += " correct";
-        else if (opt === S.quizAns && opt !== S.quizQ.answer) cls += " wrong";
+      if (quizAns) {
+        if (opt === quizQ.answer) cls += " correct";
+        else if (opt === quizAns && opt !== quizQ.answer) cls += " wrong";
       }
-      html += '<button class="' + cls + '" onclick="act(\'quiz_answer\',\'' + opt + '\')" ' + (S.quizAns ? "disabled" : "") + '>' + escHTML(opt) + '</button>';
+      html += '<button class="' + cls + '" onclick="act(\'quiz_answer\',\'' + opt + '\')" ' + (quizAns ? "disabled" : "") + '>' + escHTML(opt) + '</button>';
     });
     html += '</div>';
-    if (S.quizAns) {
-      var correct = S.quizAns === S.quizQ.answer;
-      html += '<div class="quiz-result ' + (correct ? 'correct' : 'wrong') + '">' + (correct ? "\u2705 Correct!" : "\u274C It was " + S.quizQ.answer) + '</div>';
+    if (quizAns) {
+      var correct = quizAns === quizQ.answer;
+      html += '<div class="quiz-result ' + (correct ? 'correct' : 'wrong') + '">' + (correct ? "\u2705 Correct!" : "\u274C It was " + quizQ.answer) + '</div>';
       html += '<button class="btn" onclick="act(\'next_quiz\')">Next Question</button>';
     }
-    html += '<div class="text-muted">Score: ' + S.quizCorrect + '</div>';
+    html += '<div class="text-muted">Score: ' + quizCorrect + '</div>';
   } else {
     html += '<p>Test your chord knowledge!</p>';
     html += '<button class="btn" onclick="act(\'start_quiz\')">Start Quiz</button>';
-    html += '<div class="text-muted">Total correct: ' + S.quizCorrect + '</div>';
+    html += '<div class="text-muted">Total correct: ' + quizCorrect + '</div>';
   }
   html += '</div>';
   return html;
@@ -137,20 +198,23 @@ function quizTab() {
 // ── Ear Training ──
 function earTrainTab() {
   var html = '<div class="card"><h2>Ear Training</h2>';
-  if (S.earChord) {
+  var earChord = pianoGameRead("earChord", null);
+  var earRevealed = !!pianoGameRead("earRevealed", false);
+  var activeLevel = pianoGameRead("level", 1);
+  if (earChord) {
     html += '<p>Listen and identify the chord:</p>';
     html += '<button class="btn btn-accent" onclick="act(\'ear_play\')">\u{1F50A} Play Again</button>';
     html += '<div class="quiz-options">';
-    var pool = chordsUpToLevel(Math.min(S.level + 1, 8)).slice(0, 12);
+    var pool = chordsUpToLevel(Math.min(activeLevel + 1, 8)).slice(0, 12);
     pool.forEach(function(c) {
       var cls = "btn quiz-btn";
-      if (S.earRevealed && c.short === S.earChord) cls += " correct";
-      html += '<button class="' + cls + '" onclick="act(\'ear_guess\',\'' + c.short + '\')" ' + (S.earRevealed ? "disabled" : "") + '>' + escHTML(c.short) + '</button>';
+      if (earRevealed && c.short === earChord) cls += " correct";
+      html += '<button class="' + cls + '" onclick="act(\'ear_guess\',\'' + c.short + '\')" ' + (earRevealed ? "disabled" : "") + '>' + escHTML(c.short) + '</button>';
     });
     html += '</div>';
-    if (S.earRevealed) {
-      html += '<div class="reveal-box">It was: <strong>' + escHTML(S.earChord) + '</strong></div>';
-      html += pianoSVG(findChord(S.earChord));
+    if (earRevealed) {
+      html += '<div class="reveal-box">It was: <strong>' + escHTML(earChord) + '</strong></div>';
+      html += pianoSVG(findChord(earChord));
       html += '<button class="btn" onclick="act(\'next_ear\')">Next</button>';
     }
   } else {
@@ -164,12 +228,17 @@ function earTrainTab() {
 // ── Rhythm Game ──
 function rhythmTab() {
   var html = '<div class="card"><h2>Rhythm Game</h2>';
-  if (S.rhythmActive) {
+  var rhythmActive = !!pianoGameRead("rhythmActive", false);
+  var rhythmScore = pianoGameRead("rhythmScore", 0);
+  var rhythmCombo = pianoGameRead("rhythmCombo", 0);
+  var rhythmBeat = pianoGameRead("rhythmBeat", 0);
+  var bpm = pianoGameRead("bpm", 72);
+  if (rhythmActive) {
     html += '<div class="rhythm-display">';
-    html += '<div class="rhythm-score">Score: ' + S.rhythmScore + ' | Combo: ' + S.rhythmCombo + 'x</div>';
+    html += '<div class="rhythm-score">Score: ' + rhythmScore + ' | Combo: ' + rhythmCombo + 'x</div>';
     html += '<div class="rhythm-track">';
     for (var i = 0; i < 4; i++) {
-      html += '<div class="rhythm-beat ' + (S.rhythmBeat % 4 === i ? 'beat-active' : '') + '"></div>';
+      html += '<div class="rhythm-beat ' + (rhythmBeat % 4 === i ? 'beat-active' : '') + '"></div>';
     }
     html += '</div>';
     html += '<button class="btn btn-lg btn-accent rhythm-hit" onclick="act(\'rhythm_hit\')">HIT!</button>';
@@ -177,8 +246,8 @@ function rhythmTab() {
     html += '</div>';
   } else {
     html += '<p>Hit the beat in time with the music!</p>';
-    html += '<div class="setting-row"><label>BPM: ' + S.bpm + '</label>';
-    html += '<input type="range" min="60" max="180" value="' + S.bpm + '" onchange="act(\'set_bpm\', this.value)"/></div>';
+    html += '<div class="setting-row"><label>BPM: ' + bpm + '</label>';
+    html += '<input type="range" min="60" max="180" value="' + bpm + '" onchange="act(\'set_bpm\', this.value)"/></div>';
     html += '<button class="btn" onclick="act(\'start_rhythm\')">Start Game</button>';
   }
   html += '</div>';
@@ -188,10 +257,13 @@ function rhythmTab() {
 // ── Runner Game ──
 function runnerTab() {
   var html = '<div class="card"><h2>Chord Runner</h2>';
-  if (S.runnerActive) {
+  var runnerActive = !!pianoGameRead("runnerActive", false);
+  var runnerScore = pianoGameRead("runnerScore", 0);
+  var runnerTarget = pianoGameRead("runnerTarget", null);
+  if (runnerActive) {
     html += '<div class="runner-display">';
-    html += '<div class="runner-score">Score: ' + S.runnerScore + '</div>';
-    html += '<div class="runner-target">Play: <strong>' + (S.runnerTarget ? escHTML(S.runnerTarget) : "...") + '</strong></div>';
+    html += '<div class="runner-score">Score: ' + runnerScore + '</div>';
+    html += '<div class="runner-target">Play: <strong>' + (runnerTarget ? escHTML(runnerTarget) : "...") + '</strong></div>';
     html += '<div class="runner-lanes">';
     var options = getRunnerOptions();
     options.forEach(function(opt) {
@@ -211,15 +283,24 @@ function runnerTab() {
 // ── Finger Exercises Tab ──
 function fingersTab() {
   var html = '<div class="card">';
+  var chordChangeActive = !!pianoGameRead("chordChangeActive", false);
+  var chordChangeTimer = pianoGameRead("chordChangeTimer", 0);
+  var chordChangeCount = pianoGameRead("chordChangeCount", 0);
+  var chordChangePair = Array.isArray(pianoGameRead("chordChangePair", [])) ? pianoGameRead("chordChangePair", []) : [];
+  var fingerExercisesDone = pianoGameRead("fingerExercisesDone", 0);
+  var fingerDaysLogged = pianoGameRead("fingerDaysLogged", 0);
+  var fingerBadges = Array.isArray(pianoGameRead("fingerBadges", [])) ? pianoGameRead("fingerBadges", []) : [];
+  var fingerStats = pianoGameRead("fingerStats", {}) || {};
+  var currentSession = pianoGameRead("currentSession", 1);
 
   // 60-Second Chord Change Challenge
-  if (S.chordChangeActive) {
+  if (chordChangeActive) {
     html += '<h2>60-Second Challenge</h2>';
-    html += '<div class="timer-display">' + pianoFormatTime(S.chordChangeTimer) + '</div>';
-    html += '<div style="font-size:2rem;font-weight:800;color:var(--accent);margin:8px 0">' + S.chordChangeCount + '</div>';
+    html += '<div class="timer-display">' + pianoFormatTime(chordChangeTimer) + '</div>';
+    html += '<div style="font-size:2rem;font-weight:800;color:var(--accent);margin:8px 0">' + chordChangeCount + '</div>';
     html += '<div class="text-muted">clean changes</div>';
-    if (S.chordChangePair.length === 2) {
-      html += '<div style="font-size:1.2rem;margin:12px 0">' + escHTML(S.chordChangePair[0]) + ' \u2194 ' + escHTML(S.chordChangePair[1]) + '</div>';
+    if (chordChangePair.length === 2) {
+      html += '<div style="font-size:1.2rem;margin:12px 0">' + escHTML(chordChangePair[0]) + ' \u2194 ' + escHTML(chordChangePair[1]) + '</div>';
     }
     html += '<button class="btn btn-lg btn-accent" onclick="act(\'chord_change_tap\')" style="width:100%;padding:20px;margin:8px 0">TAP for each clean change</button>';
     html += '<button class="btn btn-secondary" onclick="act(\'stop_chord_change\')">Stop</button>';
@@ -232,9 +313,9 @@ function fingersTab() {
 
   // Stats summary
   html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">';
-  html += '<div class="stat-item"><div class="stat-val">' + S.fingerExercisesDone + '</div><div class="stat-label">Done</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.fingerDaysLogged + '</div><div class="stat-label">Days</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.fingerBadges.length + '/' + FINGER_BADGES.length + '</div><div class="stat-label">Badges</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + fingerExercisesDone + '</div><div class="stat-label">Done</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + fingerDaysLogged + '</div><div class="stat-label">Days</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + fingerBadges.length + '/' + FINGER_BADGES.length + '</div><div class="stat-label">Badges</div></div>';
   html += '</div>';
 
   // 60-Second Challenge launcher
@@ -248,14 +329,14 @@ function fingersTab() {
   });
   html += '</div>';
   // Personal best
-  var bestCount = S.fingerStats._chordChangeBest || 0;
+  var bestCount = fingerStats._chordChangeBest || 0;
   if (bestCount > 0) {
     html += '<div class="text-muted">Personal best: ' + bestCount + ' changes</div>';
   }
   html += '</div>';
 
   // Exercise tiers
-  var available = getAvailableExercises(S.currentSession);
+  var available = getAvailableExercises(currentSession);
   for (var tier = 1; tier <= 4; tier++) {
     var tierExercises = available.filter(function(ex) { return ex.tier === tier; });
     if (!tierExercises.length) continue;
@@ -265,7 +346,7 @@ function fingersTab() {
     html += '<h3>' + tierIcons[tier] + ' Tier ' + tier + ': ' + tierNames[tier] + '</h3>';
 
     tierExercises.forEach(function(ex) {
-      var stats = S.fingerStats[ex.id] || { completions: 0, lastDone: null };
+      var stats = fingerStats[ex.id] || { completions: 0, lastDone: null };
       var doneToday = stats.lastDone && new Date(stats.lastDone).toDateString() === new Date().toDateString();
       html += '<div class="finger-exercise-card' + (doneToday ? ' done' : '') + '">';
       html += '<div class="finger-exercise-header">';
@@ -310,7 +391,7 @@ function fingersTab() {
   html += '<h3 style="margin-top:16px">Finger Badges</h3>';
   html += '<div class="badges-row">';
   FINGER_BADGES.forEach(function(b) {
-    var earned = S.fingerBadges.indexOf(b.id) >= 0;
+    var earned = fingerBadges.indexOf(b.id) >= 0;
     html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(b.desc) + '">' + b.icon + '</span>';
   });
   html += '</div>';
@@ -320,7 +401,7 @@ function fingersTab() {
 }
 
 function _getChordChangePairs() {
-  var unlocked = chordsUpToLevel(S.level).map(function(c) { return c.short; });
+  var unlocked = chordsUpToLevel(pianoGameRead("level", 1)).map(function(c) { return c.short; });
   var pairs = [];
   // Generate common pairs from unlocked chords
   var commonPairs = [["C","Am"],["C","F"],["C","G"],["Am","Em"],["Am","Dm"],
@@ -340,9 +421,10 @@ function _getChordChangePairs() {
 }
 
 function getRunnerOptions() {
-  if (!S.runnerTarget) return ["C", "Am", "F"];
-  var all = chordsUpToLevel(S.level).map(function(c) { return c.short; });
-  var opts = [S.runnerTarget];
+  var runnerTarget = pianoGameRead("runnerTarget", null);
+  if (!runnerTarget) return ["C", "Am", "F"];
+  var all = chordsUpToLevel(pianoGameRead("level", 1)).map(function(c) { return c.short; });
+  var opts = [runnerTarget];
   while (opts.length < 3 && all.length >= 3) {
     var r = all[Math.floor(Math.random() * all.length)];
     if (opts.indexOf(r) < 0) opts.push(r);
@@ -352,4 +434,8 @@ function getRunnerOptions() {
     var tmp = opts[i]; opts[i] = opts[j]; opts[j] = tmp;
   }
   return opts;
+}
+
+if (typeof window !== "undefined") {
+  window.setPianoGameTab = setPianoGameTab;
 }

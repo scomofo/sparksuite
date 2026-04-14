@@ -4,6 +4,44 @@ var audioCtx=null;
 var tunerR={stream:null,analyser:null,ctx:null,anim:null};
 var chordR={stream:null,analyser:null,ctx:null,anim:null};
 
+function getAudioStateFacade(){
+  return typeof SparkState !== "undefined" ? SparkState : null;
+}
+
+function getAudioStateRoot(){
+  var facade=getAudioStateFacade();
+  if(facade&&typeof facade.getRoot==="function")return facade.getRoot();
+  if(typeof globalThis!=="undefined"&&globalThis.__sparkState)return globalThis.__sparkState;
+  return null;
+}
+
+function audioRead(path, fallback){
+  var facade=getAudioStateFacade();
+  if(facade&&typeof facade.read==="function")return facade.read(path, fallback);
+  var root=getAudioStateRoot();
+  if(!root)return fallback;
+  var parts=Array.isArray(path)?path:[path],cursor=root;
+  for(var i=0;i<parts.length;i++){
+    if(cursor==null||!Object.prototype.hasOwnProperty.call(cursor, parts[i]))return fallback;
+    cursor=cursor[parts[i]];
+  }
+  return cursor==null?fallback:cursor;
+}
+
+function audioWrite(path, value){
+  var facade=getAudioStateFacade();
+  if(facade&&typeof facade.write==="function")return facade.write(path, value);
+  var root=getAudioStateRoot();
+  if(!root)return value;
+  var parts=Array.isArray(path)?path:[path],cursor=root;
+  for(var i=0;i<parts.length-1;i++){
+    if(!cursor[parts[i]]||typeof cursor[parts[i]]!=="object")cursor[parts[i]]={};
+    cursor=cursor[parts[i]];
+  }
+  cursor[parts[parts.length-1]]=value;
+  return value;
+}
+
 // ===== GUITAR WAV AUDIO =====
 // Maps chord names (full) to WAV file stems for real guitar samples
 var CHORD_FILE_MAP={
@@ -28,7 +66,7 @@ var _guitarAudioReady=false;
 
 function preloadGuitarAudio(){
   // Only preload if guitar tone is active to avoid ERR_FILE_NOT_FOUND spam
-  if(typeof S!=="undefined"&&S.strumTone!=="guitar")return;
+  if(audioRead("strumTone","classic")!=="guitar")return;
   var keys=Object.keys(CHORD_FILE_MAP);
   for(var i=0;i<keys.length;i++){
     var fileStem=CHORD_FILE_MAP[keys[i]];
@@ -88,7 +126,7 @@ var GUITAR_STRING_NOTES=[
 ];
 
 function snd(type){
-  if(!S.soundOn)return;
+  if(!audioRead("soundOn", true))return;
   try{
     if(!audioCtx&&AC)audioCtx=new AC();
     if(!audioCtx)return;
@@ -132,13 +170,13 @@ function strumChord(chordName){
     if(!notes||notes.length===0){console.warn("ChordSpark: No notes for chord:",chordName);return;}
     sendMIDINotes(chordName);
     // Use real guitar WAV when "guitar" tone is selected
-    if(S.strumTone==="guitar"){
+    if(audioRead("strumTone","classic")==="guitar"){
       if(playGuitarChord(chordName))return;
       // Fall through to synth if WAV not available
       console.log("ChordSpark: Guitar WAV not available for",chordName,"- using synth");
     }
     if(!audioCtx){console.warn("ChordSpark: No AudioContext available");return;}
-    var tone=STRUM_TONES[S.strumTone]||STRUM_TONES.classic;
+    var tone=STRUM_TONES[audioRead("strumTone","classic")]||STRUM_TONES.classic;
     var freqs=[];
     for(var i=0;i<notes.length;i++){
       var base=NOTE_FREQ[notes[i]];
@@ -173,7 +211,7 @@ function strumChord(chordName){
 
 // ===== METRONOME =====
 function metroClick(accent){
-  if(!S.soundOn)return;
+  if(!audioRead("soundOn", true))return;
   try{
     if(!audioCtx&&AC)audioCtx=new AC();
     if(!audioCtx)return;
@@ -191,18 +229,20 @@ var _metroNextTime=0;
 var _metroLookahead=0.1; // seconds to look ahead
 var _metroScheduleInterval=25; // ms between scheduler calls
 function startMetronome(){
+  var bpm=audioRead("metronomeBpm", 80);
+  var beatsPerBar=audioRead("_metroBeats", 4);
   if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
     window.sparkCore.syncMetronomeRuntimeState({
       active:true,
-      bpm:S.metronomeBpm,
+      bpm:bpm,
       beat:0,
-      beatsPerBar:S._metroBeats
+      beatsPerBar:beatsPerBar
     });
   }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{metronomeOn:true,_metroBeat:0}});
   }else{
-    S.metronomeOn=true;S._metroBeat=0;
+    audioWrite("metronomeOn",true);audioWrite("_metroBeat",0);
   }
   if(!audioCtx&&AC)audioCtx=new AC();
   if(audioCtx)_metroNextTime=audioCtx.currentTime;
@@ -210,18 +250,22 @@ function startMetronome(){
   render();
 }
 function _metroSchedule(){
-  if(!S.metronomeOn)return;
+  var metronomeOn=audioRead("metronomeOn", false);
+  var bpm=audioRead("metronomeBpm", 80);
+  var beat=audioRead("_metroBeat", 0);
+  var beatsPerBar=audioRead("_metroBeats", 4);
+  if(!metronomeOn)return;
   if(audioCtx){
-    var secPerBeat=60/S.metronomeBpm;
+    var secPerBeat=60/bpm;
     while(_metroNextTime<audioCtx.currentTime+_metroLookahead){
-      metroClick(S._metroBeat===0);
-      S._metroBeat=(S._metroBeat+1)%S._metroBeats;
+      metroClick(beat===0);
+      beat=audioWrite("_metroBeat",(beat+1)%beatsPerBar);
       if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
         window.sparkCore.syncMetronomeRuntimeState({
           active:true,
-          bpm:S.metronomeBpm,
-          beat:S._metroBeat,
-          beatsPerBar:S._metroBeats
+          bpm:bpm,
+          beat:beat,
+          beatsPerBar:beatsPerBar
         });
       }
       _metroNextTime+=secPerBeat;
@@ -232,18 +276,20 @@ function _metroSchedule(){
 }
 
 function stopMetronome(){
+  var bpm=audioRead("metronomeBpm", 80);
+  var beatsPerBar=audioRead("_metroBeats", 4);
   if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
     window.sparkCore.syncMetronomeRuntimeState({
       active:false,
-      bpm:S.metronomeBpm,
+      bpm:bpm,
       beat:0,
-      beatsPerBar:S._metroBeats
+      beatsPerBar:beatsPerBar
     });
   }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{metronomeOn:false},clearTimeouts:["metro"]});
   }else{
-    S.metronomeOn=false;clearTimeout(T.metro);T.metro=null;
+    audioWrite("metronomeOn",false);clearTimeout(T.metro);T.metro=null;
   }
   render();
 }
@@ -479,7 +525,7 @@ function startChordDetect(){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectErr:"Audio not supported"}});
     }else{
-      S.chordDetectErr="Audio not supported";
+      audioWrite("chordDetectErr","Audio not supported");
     }
     render();return;
   }
@@ -497,32 +543,33 @@ function startChordDetect(){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectOn:true,chordDetectErr:null}});
     }else{
-      S.chordDetectOn=true;S.chordDetectErr=null;
+      audioWrite("chordDetectOn",true);audioWrite("chordDetectErr",null);
     }
     render();
     function det(){
-      if(!S.chordDetectOn)return;
+      if(!audioRead("chordDetectOn", false))return;
       _chordFrameCount++;
       // Only process every Nth frame to reduce CPU and improve stability
       if(_chordFrameCount%_chordUpdateInterval===0){
         var rawNotes=detectFromFFT(an,ctx.sampleRate);
         var found=getStableChordNotes(rawNotes);
-        S.detectedNotes=found;
-        if(S.screen===SCR.PERFORM&&S.performMode==="mic"&&typeof PerformanceInput!=="undefined"){PerformanceInput.onMicUpdate(S.detectedNotes);}
-        var expected=getExpectedNotes(S.currentChord?S.currentChord.name:"");
+        audioWrite("detectedNotes",found);
+        if(audioRead("screen", null)===SCR.PERFORM&&audioRead("performMode","midi")==="mic"&&typeof PerformanceInput!=="undefined"){PerformanceInput.onMicUpdate(found);}
+        var currentChord=audioRead("currentChord", null);
+        var expected=getExpectedNotes(currentChord?currentChord.name:"");
         if(expected.length>0&&found.length>0){
           var hits=0;for(var i=0;i<expected.length;i++)if(found.indexOf(expected[i])!==-1)hits++;
           // Penalize wrong notes: extra notes not in the chord reduce score
           var wrong=0;for(var i=0;i<found.length;i++)if(expected.indexOf(found[i])===-1)wrong++;
           var accuracy=hits/expected.length;
           var penalty=wrong>0?wrong/(found.length+expected.length):0;
-          S.chordMatch=Math.max(0,Math.round((accuracy-penalty)*100));
-        }else{S.chordMatch=-1;}
+          audioWrite("chordMatch",Math.max(0,Math.round((accuracy-penalty)*100)));
+        }else{audioWrite("chordMatch",-1);}
         if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
           window.sparkCore.syncChordDetectRuntimeState({
             active:true,
             notes:found,
-            match:S.chordMatch,
+            match:audioRead("chordMatch", -1),
             error:null
           });
         }
@@ -538,7 +585,7 @@ function startChordDetect(){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectErr:"Microphone access denied"}});
     }else{
-      S.chordDetectErr="Microphone access denied";
+      audioWrite("chordDetectErr","Microphone access denied");
     }
     render();
   });
@@ -553,7 +600,7 @@ function stopChordDetect(){
       setFields:{chordDetectOn:false,detectedNotes:[],chordMatch:-1}
     });
   }else{
-    S.chordDetectOn=false;S.detectedNotes=[];S.chordMatch=-1;
+    audioWrite("chordDetectOn",false);audioWrite("detectedNotes",[]);audioWrite("chordMatch",-1);
   }
   if(chordR.anim)cancelAnimationFrame(chordR.anim);
   if(chordR.stream)chordR.stream.getTracks().forEach(function(t){t.stop();});
@@ -607,8 +654,9 @@ function getCoachFeedback(chordName,detectedNotes,expectedNotes){
 
 // ===== AUDIO INPUT DEVICE SELECTION =====
 function getAudioConstraint(){
-  if(S.audioInputId){
-    return {audio:{deviceId:{exact:S.audioInputId}}};
+  var audioInputId=audioRead("audioInputId","");
+  if(audioInputId){
+    return {audio:{deviceId:{exact:audioInputId}}};
   }
   return {audio:true};
 }
@@ -628,15 +676,15 @@ function refreshAudioInputs(){
     if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
       window.sparkCore.syncAudioInputRuntimeState({
         devices: nextInputs,
-        inputId: S.audioInputId || null,
-        testingId: S.audioTestingId || null,
-        testLevel: S.audioTestLevel || 0
+        inputId: audioRead("audioInputId", "") || null,
+        testingId: audioRead("audioTestingId", "") || null,
+        testLevel: audioRead("audioTestLevel", 0) || 0
       });
     }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{audioInputDevices:nextInputs}});
     }else{
-      S.audioInputDevices=nextInputs;
+      audioWrite("audioInputDevices",nextInputs);
     }
     render();
   }).catch(function(){});
@@ -645,10 +693,12 @@ function refreshAudioInputs(){
 var _audioTestStream=null,_audioTestCtx=null,_audioTestAnim=null;
 function testAudioInput(deviceId){
   stopAudioTest();
+  var audioInputDevices=audioRead("audioInputDevices", []) || [];
+  var audioInputId=audioRead("audioInputId", "") || null;
   if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
     window.sparkCore.syncAudioInputRuntimeState({
-      devices: S.audioInputDevices || [],
-      inputId: S.audioInputId || null,
+      devices: audioInputDevices,
+      inputId: audioInputId,
       testingId: deviceId,
       testLevel: 0
     });
@@ -656,7 +706,7 @@ function testAudioInput(deviceId){
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{audioTestingId:deviceId,audioTestLevel:0}});
   }else{
-    S.audioTestingId=deviceId;S.audioTestLevel=0;
+    audioWrite("audioTestingId",deviceId);audioWrite("audioTestLevel",0);
   }
   render();
   navigator.mediaDevices.getUserMedia({audio:{deviceId:{exact:deviceId}}}).then(function(st){
@@ -667,37 +717,37 @@ function testAudioInput(deviceId){
     an.fftSize=512;src.connect(an);
     var buf=new Float32Array(an.fftSize);
     function poll(){
-      if(S.audioTestingId!==deviceId)return;
+      if(audioRead("audioTestingId","")!==deviceId)return;
       an.getFloatTimeDomainData(buf);
       var peak=0;
       for(var i=0;i<buf.length;i++){var v=Math.abs(buf[i]);if(v>peak)peak=v;}
-      S.audioTestLevel=Math.round(Math.min(peak*200,100));
+      var testLevel=audioWrite("audioTestLevel",Math.round(Math.min(peak*200,100)));
       if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
         window.sparkCore.syncAudioInputRuntimeState({
-          devices: S.audioInputDevices || [],
-          inputId: S.audioInputId || null,
+          devices: audioRead("audioInputDevices", []) || [],
+          inputId: audioRead("audioInputId", "") || null,
           testingId: deviceId,
-          testLevel: S.audioTestLevel
+          testLevel: testLevel
         });
       }
       // Update meter directly to avoid full re-render flicker
       var el=document.getElementById("audio-test-meter");
       var lbl=document.getElementById("audio-test-label");
       if(el){
-        el.style.width=S.audioTestLevel+"%";
-        el.style.background=S.audioTestLevel>10?"#4ECDC4":"var(--text-muted)";
+        el.style.width=testLevel+"%";
+        el.style.background=testLevel>10?"#4ECDC4":"var(--text-muted)";
       }
       if(lbl){
-        lbl.textContent=S.audioTestLevel>10?"Signal detected — strum to confirm":"No signal — try another device";
-        lbl.style.color=S.audioTestLevel>10?"#4ECDC4":"var(--text-muted)";
+        lbl.textContent=testLevel>10?"Signal detected - strum to confirm":"No signal - try another device";
+        lbl.style.color=testLevel>10?"#4ECDC4":"var(--text-muted)";
       }
       _audioTestAnim=requestAnimationFrame(poll);
     }poll();
   }).catch(function(){
     if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
       window.sparkCore.syncAudioInputRuntimeState({
-        devices: S.audioInputDevices || [],
-        inputId: S.audioInputId || null,
+        devices: audioRead("audioInputDevices", []) || [],
+        inputId: audioRead("audioInputId", "") || null,
         testingId: "",
         testLevel: 0
       });
@@ -705,7 +755,7 @@ function testAudioInput(deviceId){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{audioTestingId:"",audioTestLevel:0}});
     }else{
-      S.audioTestingId="";S.audioTestLevel=0;
+      audioWrite("audioTestingId","");audioWrite("audioTestLevel",0);
     }
     render();
   });
@@ -713,8 +763,8 @@ function testAudioInput(deviceId){
 function stopAudioTest(){
   if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
     window.sparkCore.syncAudioInputRuntimeState({
-      devices: S.audioInputDevices || [],
-      inputId: S.audioInputId || null,
+      devices: audioRead("audioInputDevices", []) || [],
+      inputId: audioRead("audioInputId", "") || null,
       testingId: "",
       testLevel: 0
     });
@@ -722,7 +772,7 @@ function stopAudioTest(){
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{audioTestingId:"",audioTestLevel:0}});
   }else{
-    S.audioTestingId="";S.audioTestLevel=0;
+    audioWrite("audioTestingId","");audioWrite("audioTestLevel",0);
   }
   if(_audioTestAnim)cancelAnimationFrame(_audioTestAnim);
   if(_audioTestStream)_audioTestStream.getTracks().forEach(function(t){t.stop();});
@@ -739,8 +789,9 @@ function initMIDI(){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{midiEnabled:false}});
     }else{
-      S.midiEnabled=false;
+      audioWrite("midiEnabled",false);
     }
+    if(typeof syncMidiSettingsStateRequest==="function")syncMidiSettingsStateRequest({midiEnabled:false});
     return;
   }
   navigator.requestMIDIAccess().then(function(access){
@@ -749,8 +800,9 @@ function initMIDI(){
     _setupMIDIInputs();
     access.onstatechange=function(){updateMIDIDevices();_setupMIDIInputs();render();};
     var nextMidiOutput = null;
-    if(S.midiOutputId){
-      var out=_midiAccess.outputs.get(S.midiOutputId);
+    var midiOutputId=audioRead("midiOutputId","");
+    if(midiOutputId){
+      var out=_midiAccess.outputs.get(midiOutputId);
       if(out)nextMidiOutput=out;
     }
     if(!nextMidiOutput){
@@ -759,17 +811,20 @@ function initMIDI(){
       });
     }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{midiOutput:nextMidiOutput}});
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{midiEnabled:true,midiOutput:nextMidiOutput}});
     }else{
-      S.midiOutput=nextMidiOutput;
+      audioWrite("midiEnabled",true);
+      audioWrite("midiOutput",nextMidiOutput);
     }
+    if(typeof syncMidiSettingsStateRequest==="function")syncMidiSettingsStateRequest({midiEnabled:true});
     render();
   }).catch(function(){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{midiEnabled:false}});
     }else{
-      S.midiEnabled=false;
+      audioWrite("midiEnabled",false);
     }
+    if(typeof syncMidiSettingsStateRequest==="function")syncMidiSettingsStateRequest({midiEnabled:false});
     render();
   });
 }
@@ -785,7 +840,7 @@ function _setupMIDIInputs(){
 function _handleMIDIMessage(event){
   var cmd=event.data[0]&0xf0,note=event.data[1],vel=event.data[2];
   // Forward to performance input when perform mode is active
-  if(S.screen===SCR.PERFORM&&typeof PerformanceInput!=="undefined"){PerformanceInput.onMidiMessage(event);}
+  if(audioRead("screen",null)===SCR.PERFORM&&typeof PerformanceInput!=="undefined"){PerformanceInput.onMidiMessage(event);}
   if(cmd===0x90&&vel>0){
     // Note On
     _midiInputNotes[note]=true;
@@ -810,22 +865,23 @@ function _processMIDIChord(){
   }
   if(unique.length>=2){
     // Feed into chord detection
-    S.detectedNotes=unique;
+    audioWrite("detectedNotes",unique);
     // Forward to performance input in mic mode
-    if(S.screen===SCR.PERFORM&&S.performMode==="mic"&&typeof PerformanceInput!=="undefined"){PerformanceInput.onMicUpdate(unique);}
-    var expected=getExpectedNotes(S.currentChord?S.currentChord.name:"");
+    if(audioRead("screen",null)===SCR.PERFORM&&audioRead("performMode","midi")==="mic"&&typeof PerformanceInput!=="undefined"){PerformanceInput.onMicUpdate(unique);}
+    var currentChord=audioRead("currentChord",null);
+    var expected=getExpectedNotes(currentChord?currentChord.name:"");
     if(expected.length>0){
       var hits=0;for(var i=0;i<expected.length;i++)if(unique.indexOf(expected[i])!==-1)hits++;
       var wrong=0;for(var i=0;i<unique.length;i++)if(expected.indexOf(unique[i])===-1)wrong++;
       var accuracy=hits/expected.length;
       var penalty=wrong>0?wrong/(unique.length+expected.length):0;
-      S.chordMatch=Math.max(0,Math.round((accuracy-penalty)*100));
+      audioWrite("chordMatch",Math.max(0,Math.round((accuracy-penalty)*100)));
     }
     if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
       window.sparkCore.syncChordDetectRuntimeState({
-        active:!!S.chordDetectOn,
+        active:!!audioRead("chordDetectOn",false),
         notes:unique,
-        match:S.chordMatch,
+        match:audioRead("chordMatch",-1),
         error:null
       });
     }
@@ -842,8 +898,9 @@ function updateMIDIDevices(){
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{midiDevices:nextMidiDevices}});
   }else{
-    S.midiDevices=nextMidiDevices;
+    audioWrite("midiDevices",nextMidiDevices);
   }
+  if(typeof syncMidiSettingsStateRequest==="function")syncMidiSettingsStateRequest();
 }
 
 function selectMIDIDevice(id){
@@ -853,18 +910,20 @@ function selectMIDIDevice(id){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{midiOutput:out,midiOutputId:id},save:false});
     }else{
-      S.midiOutput=out;S.midiOutputId=id;
+      audioWrite("midiOutput",out);audioWrite("midiOutputId",id);
     }
+    if(typeof syncMidiSettingsStateRequest==="function")syncMidiSettingsStateRequest();
     saveState();
   }
   render();
 }
 
 function sendMIDINotes(chordName){
-  if(!S.midiEnabled||!S.midiOutput)return;
+  var midiEnabled=audioRead("midiEnabled",false);
+  var out=audioRead("midiOutput",null);
+  if(!midiEnabled||!out)return;
   var notes=CHORD_NOTES[chordName];
   if(!notes||notes.length===0)return;
-  var out=S.midiOutput;
   var midiNotes=[];
   for(var i=0;i<notes.length;i++){
     var noteIdx=NOTE_NAMES.indexOf(notes[i]);
@@ -898,8 +957,9 @@ function loadStemUrls(urlMap){
     var audio=new Audio();
     audio.preload="auto";
     audio.src=urlMap[name];
-    audio.muted=!S.stemToggles[name];
-    audio.volume=S.stemVolume;
+    var stemToggles=audioRead("stemToggles",{})||{};
+    audio.muted=!stemToggles[name];
+    audio.volume=audioRead("stemVolume",1);
     _stemAudios[name]=audio;
   }
   // Use first stem for duration/time tracking
@@ -912,7 +972,7 @@ function loadStemUrls(urlMap){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemDuration:first.duration}});
       }else{
-        S.stemDuration=first.duration;
+        audioWrite("stemDuration",first.duration);
       }
       render();
     });
@@ -928,14 +988,14 @@ function playStems(){
   if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
     window.sparkCore.syncStemPlayerRuntimeState({
       playing:true,
-      currentTime:S.stemCurrentTime||0,
-      duration:S.stemDuration||0
+      currentTime:audioRead("stemCurrentTime",0)||0,
+      duration:audioRead("stemDuration",0)||0
     });
   }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPlaying:true}});
   }else{
-    S.stemPlaying=true;
+    audioWrite("stemPlaying",true);
   }
   // Update time display
   clearInterval(_stemTimeUpdater);
@@ -946,19 +1006,19 @@ function playStems(){
         window.sparkCore.syncStemPlayerRuntimeState({
           playing:!first.ended,
           currentTime:first.currentTime,
-          duration:first.duration||S.stemDuration||0
+          duration:first.duration||audioRead("stemDuration",0)||0
         });
       }
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemCurrentTime:first.currentTime},save:false});
       }else{
-        S.stemCurrentTime=first.currentTime;
+        audioWrite("stemCurrentTime",first.currentTime);
       }
       if(first.ended){
         if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
           SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPlaying:false},save:false});
         }else{
-          S.stemPlaying=false;
+          audioWrite("stemPlaying",false);
         }
         clearInterval(_stemTimeUpdater);
       }
@@ -976,14 +1036,14 @@ function pauseStems(){
   if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
     window.sparkCore.syncStemPlayerRuntimeState({
       playing:false,
-      currentTime:S.stemCurrentTime||0,
-      duration:S.stemDuration||0
+      currentTime:audioRead("stemCurrentTime",0)||0,
+      duration:audioRead("stemDuration",0)||0
     });
   }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPlaying:false}});
   }else{
-    S.stemPlaying=false;
+    audioWrite("stemPlaying",false);
   }
   clearInterval(_stemTimeUpdater);
   render();
@@ -996,15 +1056,15 @@ function seekStems(time){
   }
   if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
     window.sparkCore.syncStemPlayerRuntimeState({
-      playing:!!S.stemPlaying,
+      playing:!!audioRead("stemPlaying",false),
       currentTime:time,
-      duration:S.stemDuration||0
+      duration:audioRead("stemDuration",0)||0
     });
   }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemCurrentTime:time},save:false});
   }else{
-    S.stemCurrentTime=time;
+    audioWrite("stemCurrentTime",time);
   }
   render();
 }
@@ -1047,8 +1107,8 @@ function cleanupStems(){
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPlaying:false,stemCurrentTime:0,stemDuration:0}});
   }else{
-    S.stemPlaying=false;
-    S.stemCurrentTime=0;
-    S.stemDuration=0;
+    audioWrite("stemPlaying",false);
+    audioWrite("stemCurrentTime",0);
+    audioWrite("stemDuration",0);
   }
 }

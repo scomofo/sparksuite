@@ -1,7 +1,28 @@
 /* PianoSpark - Onboarding (5 screens) */
 
+function pianoOnboardingStateRead(path, fallback) {
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (!cursor) return fallback;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
 function pianoOnboardingPage() {
-  var step = S.onboardingStep || 0;
+  var step = pianoOnboardingStateRead("onboardingStep", 0) || 0;
 
   // Step dots
   var dots = '<div class="onboarding-dots">';
@@ -28,7 +49,7 @@ function pianoOnboardingPage() {
       html += dots;
       html += '<div class="keyboard-sizes">';
       KEYBOARD_SIZES.forEach(function(ks) {
-        var selected = S.keyboardSize === ks.keys ? " selected" : "";
+        var selected = pianoOnboardingStateRead("keyboardSize", null) === ks.keys ? " selected" : "";
         html += '<div class="keyboard-size-btn' + selected + '" onclick="act(\'set_keyboard\',' + ks.keys + ')">';
         html += '<strong>' + ks.label + '</strong>';
         if (!ks.lhAvailable) html += '<br><span class="text-muted">RH only \u2014 LH bass not available</span>';
@@ -45,7 +66,8 @@ function pianoOnboardingPage() {
       html += dots;
       html += '<div class="style-chips">';
       STYLE_PREFS.forEach(function(sp) {
-        var selected = S.stylePrefs.indexOf(sp) >= 0 ? " selected" : "";
+        var stylePrefs = pianoOnboardingStateRead("stylePrefs", []);
+        var selected = stylePrefs.indexOf(sp) >= 0 ? " selected" : "";
         html += '<div class="style-chip' + selected + '" onclick="act(\'toggle_style_pref\',\'' + sp + '\')">' + sp + '</div>';
       });
       html += '</div>';
@@ -58,7 +80,7 @@ function pianoOnboardingPage() {
       html += dots;
       html += '<div class="intention-template">Complete this sentence:</div>';
       html += '<div style="font-weight:700;margin:8px 0">"When I <span style="color:var(--accent)">[daily event]</span>, I will open PianoSpark."</div>';
-      html += '<input class="intention-input" type="text" placeholder="e.g. finish dinner" value="' + escHTML(S.practiceIntention) + '" onchange="act(\'set_intention\',this.value)" />';
+      html += '<input class="intention-input" type="text" placeholder="e.g. finish dinner" value="' + escHTML(pianoOnboardingStateRead("practiceIntention", "")) + '" onchange="act(\'set_intention\',this.value)" />';
       html += '<div class="text-muted" style="margin-top:8px">Examples: finish dinner, morning coffee is ready, sit down after work</div>';
       html += '<div style="margin-top:16px"><button class="btn btn-accent" onclick="act(\'onboard_next\')">Next</button></div>';
       break;
@@ -68,8 +90,8 @@ function pianoOnboardingPage() {
       html += '<h2>Ready to Play!</h2>';
       html += '<p>Session 1 awaits. You\'ll learn your first chord in under 2 minutes.</p>';
       html += dots;
-      if (S.practiceIntention) {
-        html += pianoIfThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
+      if (pianoOnboardingStateRead("practiceIntention", "")) {
+        html += pianoIfThenCard("When I " + pianoOnboardingStateRead("practiceIntention", "") + ", I will open PianoSpark.");
       }
       html += '<div style="margin-top:16px"><button class="btn btn-lg btn-accent" onclick="act(\'onboard_complete\')">Start Your First Session</button></div>';
       break;
@@ -86,7 +108,7 @@ function pianoOnboardingPage() {
 
 // Placement test screen
 function placementTestPage() {
-  var testIdx = S._placementIdx || 0;
+  var testIdx = pianoOnboardingStateRead("_placementIdx", 0) || 0;
   if (testIdx >= PLACEMENT_TESTS.length) testIdx = PLACEMENT_TESTS.length - 1;
   var test = PLACEMENT_TESTS[testIdx];
 

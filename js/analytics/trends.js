@@ -1,5 +1,28 @@
 (function(){
 
+  function analyticsTrendRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function analyticsTrendRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = analyticsTrendRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   function average(arr, field){
     if(!arr.length) return 0;
     var total = 0;
@@ -10,21 +33,21 @@
   }
 
   function getAverageAccuracy(){
-    return average(S.analytics.accuracyHistory || [], "accuracy");
+    return average((analyticsTrendRead(["analytics","accuracyHistory"], []) || []), "accuracy");
   }
 
   function getAveragePracticeMinutes(){
-    return average(S.analytics.practiceHistory || [], "minutes");
+    return average((analyticsTrendRead(["analytics","practiceHistory"], []) || []), "minutes");
   }
 
   function getRecentAccuracyTrend(){
-    var arr = S.analytics.accuracyHistory || [];
+    var arr = analyticsTrendRead(["analytics","accuracyHistory"], []) || [];
     if(arr.length < 2) return 0;
     return arr[arr.length-1].accuracy - arr[arr.length-2].accuracy;
   }
 
   function getXPTrend(){
-    var arr = S.analytics.xpHistory || [];
+    var arr = analyticsTrendRead(["analytics","xpHistory"], []) || [];
     if(arr.length < 2) return 0;
     return arr[arr.length-1].xp - arr[arr.length-2].xp;
   }

@@ -1,4 +1,33 @@
 (function(){
+  function editorRegionRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorRegionRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorRegionRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function editorRegionWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = editorRegionRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
   function getBarDurationSec(){
     return getGridStepSec("1/1", getEditorBpm());
   }
@@ -18,21 +47,22 @@
     endBar = Math.max(startBar, endBar || startBar);
     var startSec = barIndexToStartSec(startBar);
     var endSec = barIndexToStartSec(endBar + 1);
-    S.editorSelectedRegion = {
+    editorRegionWrite("editorSelectedRegion", {
       startBar:startBar,
       endBar:endBar,
       startSec:startSec,
       endSec:endSec
-    };
+    });
     clearEditorSelection();
     selectItemsInTimeRange(startSec, endSec);
     return true;
   }
 
   function selectItemsInTimeRange(startSec, endSec){
-    if(!S.editorObject) return false;
+    var editorObject = editorRegionRead("editorObject", null);
+    if(!editorObject) return false;
     var added = 0;
-    var events = S.editorObject.events || [];
+    var events = editorObject.events || [];
     for(var i=0;i<events.length;i++){
       var t = events[i].t || 0;
       if(t >= startSec && t < endSec){
@@ -40,7 +70,7 @@
         added++;
       }
     }
-    var phrases = S.editorObject.phrases || [];
+    var phrases = editorObject.phrases || [];
     for(var p=0;p<phrases.length;p++){
       var ps = phrases[p].startSec || 0;
       var pe = phrases[p].endSec || 0;
@@ -53,22 +83,24 @@
   }
 
   function deleteSelectedRegion(){
-    if(!S.editorSelectedRegion) return false;
+    if(!editorRegionRead("editorSelectedRegion", null)) return false;
     markEditorCheckpoint("Delete Region");
     deleteSelectedEditorItems();
-    S.editorSelectedRegion = null;
+    editorRegionWrite("editorSelectedRegion", null);
     return true;
   }
 
   function duplicateSelectedRegion(insertAtBar){
-    if(!S.editorSelectedRegion) return false;
+    var selectedRegion = editorRegionRead("editorSelectedRegion", null);
+    var editorObject = editorRegionRead("editorObject", {}) || {};
+    if(!selectedRegion) return false;
     markEditorCheckpoint("Duplicate Region");
-    var startSec = S.editorSelectedRegion.startSec;
-    var endSec = S.editorSelectedRegion.endSec;
-    var insertSec = barIndexToStartSec(insertAtBar || (S.editorSelectedRegion.endBar + 1));
+    var startSec = selectedRegion.startSec;
+    var endSec = selectedRegion.endSec;
+    var insertSec = barIndexToStartSec(insertAtBar || (selectedRegion.endBar + 1));
     var delta = insertSec - startSec;
-    var sourceEvents = (S.editorObject.events || []).slice();
-    var sourcePhrases = (S.editorObject.phrases || []).slice();
+    var sourceEvents = (editorObject.events || []).slice();
+    var sourcePhrases = (editorObject.phrases || []).slice();
     for(var i=0;i<sourceEvents.length;i++){
       var e = sourceEvents[i];
       if((e.t || 0) >= startSec && (e.t || 0) < endSec){
@@ -94,7 +126,8 @@
   }
 
   function shiftSelectedRegionBars(deltaBars){
-    if(!S.editorSelectedRegion || !deltaBars) return false;
+    var selectedRegion = editorRegionRead("editorSelectedRegion", null);
+    if(!selectedRegion || !deltaBars) return false;
     markEditorCheckpoint("Shift Region");
     var deltaSec = getBarDurationSec() * deltaBars;
     var items = getSelectedEditorItems ? getSelectedEditorItems() : [];
@@ -107,11 +140,12 @@
         items[i].endSec = snapTimeSec(Math.max(items[i].startSec || 0, (items[i].endSec || 0) + deltaSec));
       }
     }
-    S.editorSelectedRegion.startBar += deltaBars;
-    S.editorSelectedRegion.endBar += deltaBars;
-    S.editorSelectedRegion.startSec = barIndexToStartSec(S.editorSelectedRegion.startBar);
-    S.editorSelectedRegion.endSec = barIndexToStartSec(S.editorSelectedRegion.endBar + 1);
-    S.editorDirty = true;
+    selectedRegion.startBar += deltaBars;
+    selectedRegion.endBar += deltaBars;
+    selectedRegion.startSec = barIndexToStartSec(selectedRegion.startBar);
+    selectedRegion.endSec = barIndexToStartSec(selectedRegion.endBar + 1);
+    editorRegionWrite("editorSelectedRegion", selectedRegion);
+    editorRegionWrite("editorDirty", true);
     return true;
   }
 

@@ -1,7 +1,14 @@
+function careerUiRead(path, fallback){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+    return SparkState.read(path, fallback);
+  }
+  return fallback;
+}
+
 function careerPage(){
   var h = '<div class="card">';
   h += '<div><b>Career Mode</b></div>';
-  var career = getCareerItem("careers", S.activeCareerId);
+  var career = getCareerItem("careers", careerUiRead(["activeCareerId"], null));
   if(!career){
     h += '<div>No career loaded.</div></div>';
     return h;

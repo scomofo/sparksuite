@@ -24,6 +24,7 @@ function resetState() {
     spotifyDifficulty: "easy",
     spotifySavedTracks: []
   };
+  global.__sparkState = global.S;
   global.SCR = {
     PLAY_ALONG: "playAlong",
     PLAY_ALONG_SESSION: "playAlongSession",
@@ -40,6 +41,7 @@ function resetState() {
   };
   global.sparkCore = {
     lastSessionOutcome: null,
+    getLastSessionOutcome: function() { return this.lastSessionOutcome; },
     getPlaybackTimeMs: function() { return 1234; },
     completePlayAlongSession: function() {
       return {
@@ -51,6 +53,7 @@ function resetState() {
       };
     },
     _activeParams: { trackId: "abc" },
+    getActivePlayAlongParams: function() { return this._activeParams; },
     startPlayAlongSession: function(params) {
       this.startedWith = params;
       return Promise.resolve(true);
@@ -67,9 +70,62 @@ function resetState() {
         { name: "Chorus", startMs: 6000, endMs: 9000 }
       ]
     },
+    getActivePlayAlongChart: function() { return this._activeChart; },
+    startPlayAlongRenderLoop: function(options) {
+      var self = this;
+      this._renderLoopOptions = options || {};
+      this._playAlongLoopFrameId = requestAnimationFrame(function loop() {
+        var result;
+        if (self._renderLoopOptions && typeof self._renderLoopOptions.enforceLoopWindow === "function" && self._renderLoopOptions.enforceLoopWindow()) {
+          self._playAlongLoopFrameId = null;
+          return;
+        }
+        result = typeof self.processPlayAlongFrame === "function" ? self.processPlayAlongFrame() : null;
+        if (result && self._renderLoopOptions && typeof self._renderLoopOptions.onFrame === "function") {
+          self._renderLoopOptions.onFrame(result);
+        }
+        self._playAlongLoopFrameId = requestAnimationFrame(loop);
+      });
+      return this._playAlongLoopFrameId;
+    },
+    stopPlayAlongRenderLoop: function() {
+      this._playAlongLoopFrameId = null;
+    },
+    pausePlayAlongTransport: function() {
+      this._pausedPlaybackTimeMs = this.getPlaybackTimeMs();
+      if (this.audioEngine && typeof this.audioEngine.stop === "function") this.audioEngine.stop();
+      return this._pausedPlaybackTimeMs;
+    },
+    resumePlayAlongTransport: function() {
+      var offsetMs = typeof this._pausedPlaybackTimeMs === "number" ? this._pausedPlaybackTimeMs : 0;
+      if (this.audioEngine && this.audioEngine.buffer && typeof this.audioEngine.play === "function") {
+        this.audioEngine.play(offsetMs / 1000);
+      }
+      this._pausedPlaybackTimeMs = null;
+      return offsetMs;
+    },
+    seekPlayAlongToMs: function(targetMs) {
+      this._pausedPlaybackTimeMs = targetMs;
+      if (this.audioEngine && this.audioEngine.buffer && typeof this.audioEngine.play === "function") {
+        this.audioEngine.play(targetMs / 1000);
+        this._pausedPlaybackTimeMs = null;
+      }
+      return true;
+    },
+    setPlayAlongPlaybackRate: function(rate) {
+      if (this.audioEngine && typeof this.audioEngine.setPlaybackRate === "function") {
+        this.audioEngine.setPlaybackRate(rate);
+      }
+      return true;
+    },
     spotifyClient: {
       getAudioFeatures: function() {
         return Promise.resolve({ tempo: 124.4 });
+      }
+    },
+    spotifySearch: {
+      searchDebounced: function(query, cb) {
+        cb(global._searchResults || []);
       }
     }
   };
@@ -91,6 +147,9 @@ function resetState() {
 
 function bootstrap() {
   resetState();
+  loadJS("js/sparksuite/core/play_along_state_service.js");
+  loadJS("js/sparksuite/core/play_along_action_service.js");
+  loadJS("js/sparksuite/core/play_along_renderer.js");
   loadJS("js/pages/play_along_controller.js");
 }
 
@@ -106,7 +165,7 @@ test("sparkPlayAlongStop stores outcome for results screen", function() {
 
 test("sparkPlayAlongReplay reuses active params", async function() {
   await sparkPlayAlongReplay();
-  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc" });
+  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc", instrument: "guitar" });
   assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
 });
 
@@ -126,7 +185,7 @@ test("sparkPlayAlongStartDrill relaunches current session into drill loop", asyn
   assert.strictEqual(S.playAlongSpeed, "0.75");
   assert.strictEqual(global._audioRate, 0.75);
   assert.strictEqual(global._audioPlayedAt, 3.2);
-  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc" });
+  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc", instrument: "guitar" });
 });
 
 test("sparkPlayAlongTogglePause stores current position and resumes local audio", function() {
@@ -263,7 +322,7 @@ test("sparkPlayAlongLaunchRecent replays remembered params", async function() {
 });
 
 test("sparkPlayAlongSaveTrack persists a searchable Spotify track with bpm metadata", async function() {
-  window._playAlongResults = [{
+  global._searchResults = [{
     id: "spotify_track_1",
     uri: "spotify:track:spotify_track_1",
     name: "Seven Nation Army",
@@ -271,6 +330,8 @@ test("sparkPlayAlongSaveTrack persists a searchable Spotify track with bpm metad
     duration: 231000,
     image: "https://example.com/cover.jpg"
   }];
+  sparkPlayAlongSearch("seven");
+  await Promise.resolve();
 
   var ok = await sparkPlayAlongSaveTrack(0);
 

@@ -25,6 +25,7 @@ function loadJS(file) {
 function resetState() {
   global.window = global;
   global.S = { guidedSession: 1 };
+  global.__sparkState = global.S;
   global.TAB = { PRACTICE: "practice" };
   global._acts = [];
   global.act = function(name, value) {

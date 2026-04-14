@@ -3,6 +3,59 @@
 /* Wrapped in IIFE to avoid clobbering shared audio.js globals */
 (function(){
 
+function pianoAudioStateRoot() {
+  if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+    var sparkRoot = SparkState.getRoot();
+    if (sparkRoot) return sparkRoot;
+  }
+  if (typeof globalThis !== "undefined") {
+    return globalThis.__sparkState || globalThis.S || null;
+  }
+  return null;
+}
+
+function pianoAudioStateRead(path, fallback) {
+  var root = pianoAudioStateRoot();
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  if (!cursor) return fallback;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function pianoAudioStateWrite(path, value) {
+  var root = pianoAudioStateRoot();
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+    return SparkState.write(path, value);
+  }
+  if (!cursor || !parts.length) return value;
+  for (i = 0; i < parts.length - 1; i++) {
+    if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+    cursor = cursor[parts[i]];
+  }
+  cursor[parts[parts.length - 1]] = value;
+  return value;
+}
+
+function pianoAudioStateEnsureArray(path) {
+  var current = pianoAudioStateRead(path, null);
+  if (!Array.isArray(current)) {
+    current = [];
+    pianoAudioStateWrite(path, current);
+  }
+  return current;
+}
+
 var audioCtx = null;
 var masterGain = null;
 var reverbNode = null;   // ConvolverNode
@@ -22,13 +75,13 @@ function ensureAudio() {
     reverbNode = audioCtx.createConvolver();
     reverbNode.buffer = _buildImpulseResponse(audioCtx, 1.8, 3.0);
     reverbGain = audioCtx.createGain();
-    reverbGain.gain.value = (S.reverbAmount !== undefined ? S.reverbAmount : 0.18) * 0.4;
+    reverbGain.gain.value = (pianoAudioStateRead("reverbAmount", 0.18) !== undefined ? pianoAudioStateRead("reverbAmount", 0.18) : 0.18) * 0.4;
     reverbNode.connect(reverbGain);
     reverbGain.connect(audioCtx.destination);
 
     // masterGain feeds both paths
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = S.volume;
+    masterGain.gain.value = pianoAudioStateRead("volume", 0.8);
     masterGain.connect(dryGain);
     masterGain.connect(reverbNode);
   }
@@ -53,13 +106,14 @@ function _buildImpulseResponse(ctx, duration, decay) {
 }
 
 function setReverb(amount) {
-  S.reverbAmount = Math.max(0, Math.min(1, amount));
-  if (reverbGain) reverbGain.gain.value = S.reverbAmount * 0.4; // 0.4 = max wet
+  var nextAmount = Math.max(0, Math.min(1, amount));
+  pianoAudioStateWrite("reverbAmount", nextAmount);
+  if (reverbGain) reverbGain.gain.value = nextAmount * 0.4; // 0.4 = max wet
   saveState();
 }
 
 function setVolume(v) {
-  S.volume = v;
+  pianoAudioStateWrite("volume", v);
   if (masterGain) masterGain.gain.value = v;
 }
 
@@ -125,7 +179,7 @@ function playNote(midi, duration, delay, velocity) {
   if (velocity === undefined) velocity = 0.8;
   velocity = Math.max(0.01, Math.min(1, velocity));
   var ctx = ensureAudio();
-  var t = TONES[S.tone] || TONES.grand;
+  var t = TONES[pianoAudioStateRead("tone", "grand")] || TONES.grand;
   var freq = midiToFreq(midi);
   var now = ctx.currentTime + delay;
 
@@ -448,7 +502,7 @@ var metronomeBeat = 0;
 // metronomeSound: "sine" (default) | "woodblock" | "clap" | "hihat"
 
 function _metronomeClick(ctx, now, isAccent) {
-  var sound = S.metronomeSound || "sine";
+  var sound = pianoAudioStateRead("metronomeSound", "sine") || "sine";
   var g = ctx.createGain();
   g.connect(masterGain);
 
@@ -587,31 +641,31 @@ function startDetection() {
     analyserNode.fftSize = 8192;
     analyserNode.smoothingTimeConstant = 0.4;
     _micSourceNode.connect(analyserNode);
-    S.detecting = true;
+    pianoAudioStateWrite("detecting", true);
     detectionHistory = [];
     _detectionFrameCount = 0;
     resetDetectionConfidence();
     detectLoop();
   }).catch(function(e) {
     console.error("Mic access denied:", e);
-    S.detecting = false;
+    pianoAudioStateWrite("detecting", false);
     showToast("Microphone access denied. Check browser permissions.");
     render();
   });
 }
 
 function stopDetection() {
-  S.detecting = false;
+  pianoAudioStateWrite("detecting", false);
   if (_micSourceNode) { _micSourceNode.disconnect(); _micSourceNode = null; }
   if (_yinNode) { _yinNode.disconnect(); _yinNode = null; }
   if (micStream) { micStream.getTracks().forEach(function(t) { t.stop(); }); micStream = null; }
   if (detectionAnimFrame) { cancelAnimationFrame(detectionAnimFrame); detectionAnimFrame = null; }
   analyserNode = null;
-  S.detectedNotes = [];
+  pianoAudioStateWrite("detectedNotes", []);
 }
 
 function detectLoop() {
-  if (!S.detecting || !analyserNode) return;
+  if (!pianoAudioStateRead("detecting", false) || !analyserNode) return;
   _detectionFrameCount++;
   if (_detectionFrameCount % 4 !== 0) {
     detectionAnimFrame = requestAnimationFrame(detectLoop);
@@ -664,7 +718,7 @@ function detectLoop() {
 
   // Convert accepted peaks to pitch-class note names, respecting A4 tuning
   var notes = [];
-  var a4 = S.a4Tuning || 440;
+  var a4 = pianoAudioStateRead("a4Tuning", 440) || 440;
   accepted.forEach(function(p) {
     var midi = Math.round(12 * Math.log2(p.freq / a4) + 69);
     var noteName = NOTE_NAMES[midi % 12];
@@ -688,11 +742,11 @@ function detectLoop() {
     if (count >= 5) stable.push(n);
   }
 
-  S.detectedNotes = stable;
+  pianoAudioStateWrite("detectedNotes", stable);
 
   // Auto-score against the active chord if one is in play
-  var activeChordShort = S.chord ||
-    (S.sessionPlan && S.sessionPlan.newMove && S.sessionPlan.newMove.chord) || null;
+  var activeChordShort = pianoAudioStateRead("chord", null) ||
+    (pianoAudioStateRead("sessionPlan", null) && pianoAudioStateRead("sessionPlan", null).newMove && pianoAudioStateRead("sessionPlan", null).newMove.chord) || null;
   if (activeChordShort && stable.length > 0) {
     var activeChordObj = findChord(activeChordShort);
     if (activeChordObj) recordDetectionScore(getChordMatch(activeChordObj));
@@ -702,7 +756,8 @@ function detectLoop() {
 }
 
 function getChordMatch(chordObj) {
-  if (!chordObj || !S.detectedNotes.length) return 0;
+  var detectedNotes = pianoAudioStateRead("detectedNotes", []);
+  if (!chordObj || !detectedNotes.length) return 0;
   var target = CHORD_NOTES[chordObj.short] || [];
   if (!target.length) return 0;
   var matched = 0;
@@ -712,7 +767,7 @@ function getChordMatch(chordObj) {
     var flatIdx = FLAT_NAMES.indexOf(n);
     var idx = sharpIdx >= 0 ? sharpIdx : flatIdx;
     if (idx < 0) continue;
-    var found = S.detectedNotes.some(function(dn) {
+    var found = detectedNotes.some(function(dn) {
       var dnSharp = NOTE_NAMES.indexOf(dn);
       var dnFlat = FLAT_NAMES.indexOf(dn);
       var dnIdx = dnSharp >= 0 ? dnSharp : dnFlat;
@@ -723,7 +778,7 @@ function getChordMatch(chordObj) {
   // Recall: fraction of target notes detected
   var recall = matched / target.length;
   // Precision: fraction of detected notes that belong to the chord
-  var precision = matched / S.detectedNotes.length;
+  var precision = matched / detectedNotes.length;
   if (matched === 0) return 0;
   // Weighted score: prioritise recall (playing all notes) but penalise extra wrong notes
   var score = (3 * precision * recall) / (precision + 2 * recall);
@@ -732,13 +787,14 @@ function getChordMatch(chordObj) {
 
 function getCoachFeedback(chordObj) {
   if (!chordObj) return "";
+  var detectedNotes = pianoAudioStateRead("detectedNotes", []);
   var target = CHORD_NOTES[chordObj.short] || [];
   var missing = target.filter(function(n) {
     var sharpIdx = NOTE_NAMES.indexOf(n);
     var flatIdx = FLAT_NAMES.indexOf(n);
     var idx = sharpIdx >= 0 ? sharpIdx : flatIdx;
     if (idx < 0) return true;
-    return !S.detectedNotes.some(function(dn) {
+    return !detectedNotes.some(function(dn) {
       var dnSharp = NOTE_NAMES.indexOf(dn);
       var dnFlat = FLAT_NAMES.indexOf(dn);
       return (dnSharp >= 0 ? dnSharp : dnFlat) === idx;
@@ -847,7 +903,7 @@ function startYinDetection() {
         // Convert to pitch classes with majority vote
         var pcCount = {};
         recentFreqs.forEach(function(f) {
-          var a4 = S.a4Tuning || 440;
+          var a4 = pianoAudioStateRead("a4Tuning", 440) || 440;
           var midi = Math.round(12 * Math.log2(f / a4) + 69);
           var pc = midiToNote(midi);
           if (pc) pcCount[pc] = (pcCount[pc] || 0) + 1;
@@ -855,10 +911,10 @@ function startYinDetection() {
         var stable = Object.keys(pcCount).filter(function(pc) {
           return pcCount[pc] >= 6;
         });
-        S.detectedNotes = stable;
+        pianoAudioStateWrite("detectedNotes", stable);
 
-        var activeChordShort = S.chord ||
-          (S.sessionPlan && S.sessionPlan.newMove && S.sessionPlan.newMove.chord) || null;
+        var activeChordShort = pianoAudioStateRead("chord", null) ||
+          (pianoAudioStateRead("sessionPlan", null) && pianoAudioStateRead("sessionPlan", null).newMove && pianoAudioStateRead("sessionPlan", null).newMove.chord) || null;
         if (activeChordShort && stable.length > 0) {
           var co = findChord(activeChordShort);
           if (co) recordDetectionScore(getChordMatch(co));
@@ -870,12 +926,12 @@ function startYinDetection() {
         }
       };
 
-      S.detecting = true;
+      pianoAudioStateWrite("detecting", true);
       resetDetectionConfidence();
       render();
     }).catch(function(e) {
       console.error("Mic access denied:", e);
-      S.detecting = false;
+      pianoAudioStateWrite("detecting", false);
       showToast("Microphone access denied. Check browser permissions.");
       render();
     });
@@ -883,7 +939,7 @@ function startYinDetection() {
 }
 
 function stopYinDetection() {
-  stopDetection(); // handles _yinNode cleanup, mic stream, and S.detecting
+  stopDetection(); // handles _yinNode cleanup, mic stream, and detecting state
 }
 
 // ── Practice clip recording ──
@@ -924,13 +980,13 @@ function startRecording() {
     var blob = new Blob(_recordChunks, { type: "audio/webm" });
     var url = URL.createObjectURL(blob);
     var duration = Math.round((Date.now() - _recordingStartTime) / 1000);
-    if (!S.practiceClips) S.practiceClips = [];
+    var practiceClips = pianoAudioStateEnsureArray("practiceClips");
     // Keep last 5 clips (object URLs persist for the session)
-    if (S.practiceClips.length >= 5) {
-      URL.revokeObjectURL(S.practiceClips[0].url);
-      S.practiceClips.shift();
+    if (practiceClips.length >= 5) {
+      URL.revokeObjectURL(practiceClips[0].url);
+      practiceClips.shift();
     }
-    S.practiceClips.push({ url: url, duration: duration, ts: Date.now() });
+    practiceClips.push({ url: url, duration: duration, ts: Date.now() });
     render();
   };
 
@@ -958,14 +1014,15 @@ function isRecording() {
 
 function playClip(url) {
   var audio = new Audio(url);
-  audio.volume = S.volume;
+  audio.volume = pianoAudioStateRead("volume", 0.8);
   audio.play().catch(function() { showToast("Could not play clip."); });
 }
 
 function deleteClip(idx) {
-  if (!S.practiceClips || !S.practiceClips[idx]) return;
-  URL.revokeObjectURL(S.practiceClips[idx].url);
-  S.practiceClips.splice(idx, 1);
+  var practiceClips = pianoAudioStateRead("practiceClips", []);
+  if (!practiceClips || !practiceClips[idx]) return;
+  URL.revokeObjectURL(practiceClips[idx].url);
+  practiceClips.splice(idx, 1);
   render();
 }
 
@@ -980,9 +1037,9 @@ function startMidi() {
   }
   navigator.requestMIDIAccess().then(function(access) {
     midiAccess = access;
-    S.midiEnabled = true;
-    // Stop mic detection — MIDI and mic use the same S.detectedNotes
-    if (S.detecting) stopDetection();
+    pianoAudioStateWrite("midiEnabled", true);
+    // Stop mic detection — MIDI and mic use the same detectedNotes
+    if (pianoAudioStateRead("detecting", false)) stopDetection();
     _attachMidiListeners();
     // Re-attach when devices connect/disconnect
     access.onstatechange = _attachMidiListeners;
@@ -1001,8 +1058,8 @@ function stopMidi() {
   }
   midiAccess = null;
   midiNotesHeld = {};
-  S.midiEnabled = false;
-  S.detectedNotes = [];
+  pianoAudioStateWrite("midiEnabled", false);
+  pianoAudioStateWrite("detectedNotes", []);
   saveState();
   render();
 }
@@ -1036,18 +1093,18 @@ function _handleMidiMessage(event) {
   }
 
   // Forward to performance input if in performance mode
-  if(typeof PerformanceInput!=="undefined" && S.screen===SCR.PERFORM){
+  if(typeof PerformanceInput!=="undefined" && pianoAudioStateRead("screen", null)===SCR.PERFORM){
     try{ PerformanceInput.onMidiMessage(event); }catch(e){}
   }
 
-  // Rebuild S.detectedNotes from held pitch classes
+  // Rebuild detected notes from held pitch classes
   var held = Object.keys(midiNotesHeld).map(Number);
   var noteNames = [];
   held.forEach(function(n) {
     var name = midiToNote(n);
     if (name && noteNames.indexOf(name) < 0) noteNames.push(name);
   });
-  S.detectedNotes = noteNames;
+  pianoAudioStateWrite("detectedNotes", noteNames);
   render();
 }
 
@@ -1073,14 +1130,15 @@ function loadStemUrls(urlMap) {
     var audio = new Audio();
     audio.preload = "auto";
     audio.src = urlMap[name];
-    audio.muted = !S.stemToggles[name];
-    audio.volume = S.stemVolume;
+    var stemToggles = pianoAudioStateRead("stemToggles", {}) || {};
+    audio.muted = !stemToggles[name];
+    audio.volume = pianoAudioStateRead("stemVolume", 1);
     _stemAudios[name] = audio;
   }
   var first = _stemAudios[keys[0]];
   if (first) {
     first.addEventListener("loadedmetadata", function() {
-      S.stemDuration = first.duration;
+      pianoAudioStateWrite("stemDuration", first.duration);
       render();
     });
   }
@@ -1098,12 +1156,13 @@ function _loadStemFileUrls(paths) {
         loaded++;
         if (loaded === names.length) {
           loadStemUrls(urlMap);
-          S.stemStatus = "ready";
+          pianoAudioStateWrite("stemStatus", "ready");
+          var stemToggles = pianoAudioStateRead("stemToggles", {}) || {};
           for (var j = 0; j < STEM_NAMES.length; j++) {
             var sn = STEM_NAMES[j];
-            if (urlMap[sn]) setStemMuted(sn, !S.stemToggles[sn]);
+            if (urlMap[sn]) setStemMuted(sn, !stemToggles[sn]);
           }
-          setStemVolume(S.stemVolume);
+          setStemVolume(pianoAudioStateRead("stemVolume", 1));
         }
       });
     })(names[i]);
@@ -1116,13 +1175,13 @@ function playStems() {
   for (var i = 0; i < keys.length; i++) {
     _stemAudios[keys[i]].play().catch(function(){});
   }
-  S.stemPlaying = true;
+  pianoAudioStateWrite("stemPlaying", true);
   clearInterval(_stemTimeUpdater);
   _stemTimeUpdater = setInterval(function() {
     var first = _stemAudios[Object.keys(_stemAudios)[0]];
     if (first) {
-      S.stemCurrentTime = first.currentTime;
-      if (first.ended) { S.stemPlaying = false; clearInterval(_stemTimeUpdater); }
+      pianoAudioStateWrite("stemCurrentTime", first.currentTime);
+      if (first.ended) { pianoAudioStateWrite("stemPlaying", false); clearInterval(_stemTimeUpdater); }
       render();
     }
   }, 250);
@@ -1132,7 +1191,7 @@ function playStems() {
 function pauseStems() {
   var keys = Object.keys(_stemAudios);
   for (var i = 0; i < keys.length; i++) _stemAudios[keys[i]].pause();
-  S.stemPlaying = false;
+  pianoAudioStateWrite("stemPlaying", false);
   clearInterval(_stemTimeUpdater);
   render();
 }
@@ -1140,7 +1199,7 @@ function pauseStems() {
 function seekStems(time) {
   var keys = Object.keys(_stemAudios);
   for (var i = 0; i < keys.length; i++) _stemAudios[keys[i]].currentTime = time;
-  S.stemCurrentTime = time;
+  pianoAudioStateWrite("stemCurrentTime", time);
   render();
 }
 
@@ -1172,9 +1231,9 @@ function cleanupStems() {
   }
   _stemAudios = {};
   clearInterval(_stemTimeUpdater);
-  S.stemPlaying = false;
-  S.stemCurrentTime = 0;
-  S.stemDuration = 0;
+  pianoAudioStateWrite("stemPlaying", false);
+  pianoAudioStateWrite("stemCurrentTime", 0);
+  pianoAudioStateWrite("stemDuration", 0);
 }
 
 // ── Expose as PianoAudio namespace (avoids clobbering shared audio.js) ──

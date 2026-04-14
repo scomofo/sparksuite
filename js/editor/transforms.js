@@ -1,6 +1,36 @@
 (function(){
+  function editorTransformRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorTransformRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorTransformRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function editorTransformWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = editorTransformRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
   function duplicateBarRange(startBar, endBar, insertAtBar){
-    if(!S.editorObject || !Array.isArray(S.editorObject.events)) return false;
+    var editorObject = editorTransformRead("editorObject", null);
+    if(!editorObject || !Array.isArray(editorObject.events)) return false;
     markEditorCheckpoint("Duplicate Bars");
     var bpm = getEditorBpm();
     var barSec = getGridStepSec("1/1", bpm);
@@ -8,8 +38,8 @@
     var endSec = endBar * barSec;
     var insertSec = (insertAtBar - 1) * barSec;
     var copied = [];
-    for(var i=0;i<S.editorObject.events.length;i++){
-      var e = S.editorObject.events[i];
+    for(var i=0;i<editorObject.events.length;i++){
+      var e = editorObject.events[i];
       if((e.t || 0) >= startSec && (e.t || 0) < endSec){
         var c = JSON.parse(JSON.stringify(e));
         c.id = (c.id || "evt") + "_dup_" + Date.now() + "_" + i;
@@ -20,7 +50,7 @@
     for(var j=0;j<copied.length;j++){
       addEditorItem("event", copied[j]);
     }
-    S.editorDirty = true;
+    editorTransformWrite("editorDirty", true);
     return copied.length > 0;
   }
 
@@ -32,8 +62,9 @@
     var dur = (item.endSec || 0) - (item.startSec || 0);
     var offset = dur;
     var copied = [];
-    for(var i=0;i<(S.editorObject.events || []).length;i++){
-      var e = S.editorObject.events[i];
+    var editorObject = editorTransformRead("editorObject", {}) || {};
+    for(var i=0;i<(editorObject.events || []).length;i++){
+      var e = editorObject.events[i];
       if((e.t || 0) >= (item.startSec || 0) && (e.t || 0) < (item.endSec || 0)){
         var c = JSON.parse(JSON.stringify(e));
         c.id = (c.id || "evt") + "_phrdup_" + Date.now() + "_" + i;
@@ -50,28 +81,30 @@
       startSec:(item.startSec || 0) + offset,
       endSec:(item.endSec || 0) + offset
     });
-    S.editorDirty = true;
+    editorTransformWrite("editorDirty", true);
     return true;
   }
 
   function deleteSelectedEditorItems(){
     markEditorCheckpoint("Delete Selection");
-    var ids = (S.editorSelectionIds || []).slice();
-    if(!ids.length && S.editorSelectedId!=null) ids = [String(S.editorSelectedId)];
+    var ids = (editorTransformRead("editorSelectionIds", []) || []).slice();
+    var selectedId = editorTransformRead("editorSelectedId", null);
+    if(!ids.length && selectedId!=null) ids = [String(selectedId)];
     for(var i=0;i<ids.length;i++){
       var kind = getEditorItemKindById(ids[i]);
       if(kind) removeEditorItem(kind, ids[i]);
     }
     clearEditorSelection();
-    S.editorDirty = true;
+    editorTransformWrite("editorDirty", true);
   }
 
   function getEditorItemKindById(id){
-    if(!S.editorObject) return null;
+    var editorObject = editorTransformRead("editorObject", null);
+    if(!editorObject) return null;
     var groups = [
-      { kind:"event", arr:S.editorObject.events || [] },
-      { kind:"phrase", arr:S.editorObject.phrases || [] },
-      { kind:"step", arr:S.editorObject.steps || [] }
+      { kind:"event", arr:editorObject.events || [] },
+      { kind:"phrase", arr:editorObject.phrases || [] },
+      { kind:"step", arr:editorObject.steps || [] }
     ];
     for(var g=0;g<groups.length;g++){
       for(var i=0;i<groups[g].arr.length;i++){
@@ -84,7 +117,7 @@
   function nudgeSelectedEditorGroup(direction, multiplier){
     multiplier = multiplier || 1;
     var items = getSelectedEditorItems ? getSelectedEditorItems() : [];
-    var step = getGridStepSec(S.editorGridDivision || "1/4", getEditorBpm()) * multiplier;
+    var step = getGridStepSec(editorTransformRead("editorGridDivision", "1/4") || "1/4", getEditorBpm()) * multiplier;
     for(var i=0;i<items.length;i++){
       var kind = getEditorItemKindById(items[i].id);
       if(kind==="event"){
@@ -103,7 +136,7 @@
         snapPhraseBounds(items[i]);
       }
     }
-    S.editorDirty = true;
+    editorTransformWrite("editorDirty", true);
   }
 
   window.duplicateBarRange = duplicateBarRange;

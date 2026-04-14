@@ -27,6 +27,7 @@ global.S = {
   performSpeed: 1,
   performPracticePreset: 'full_mix'
 };
+global.__sparkState = global.S;
 global.SCR = { PERFORM: 'perform', PERFORM_DONE: 'performDone', HOME: 'home' };
 global.BADGES = [
   { id: 'perf_first', label: 'First Performance', icon: 'A' },

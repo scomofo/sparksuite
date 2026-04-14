@@ -1,7 +1,81 @@
 (function() {
+  function getStateFacade() {
+    return typeof SparkState !== "undefined" ? SparkState : null;
+  }
+
+  function getBridgeRoot() {
+    var stateFacade = getStateFacade();
+    if (stateFacade && typeof stateFacade.getRoot === "function") {
+      var sparkRoot = stateFacade.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function bridgeRead(path, fallback) {
+    var stateFacade = getStateFacade();
+    var root = getBridgeRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (stateFacade && typeof stateFacade.read === "function") return stateFacade.read(path, fallback);
+    if (!cursor) return fallback;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function bridgeWrite(path, value) {
+    var stateFacade = getStateFacade();
+    var root = getBridgeRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (stateFacade && typeof stateFacade.write === "function") return stateFacade.write(path, value);
+    if (!cursor || !parts.length) return value;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function bridgeIncrement(path, delta) {
+    var stateFacade = getStateFacade();
+    if (stateFacade && typeof stateFacade.increment === "function") return stateFacade.increment(path, delta);
+    delta = typeof delta === "number" ? delta : 0;
+    return bridgeWrite(path, (bridgeRead(path, 0) || 0) + delta);
+  }
+
+  function bridgeEnsureArray(path) {
+    var current = bridgeRead(path, null);
+    if (!Array.isArray(current)) {
+      current = [];
+      bridgeWrite(path, current);
+    }
+    return current;
+  }
+
+  function bridgeEnsureObject(path) {
+    var current = bridgeRead(path, null);
+    if (!current || typeof current !== "object" || Array.isArray(current)) {
+      current = {};
+      bridgeWrite(path, current);
+    }
+    return current;
+  }
+
   function syncPlanToState(plan) {
     if (!plan) return null;
-    S.activeSessionPlanId = plan.id;
+    var stateFacade = getStateFacade();
+    if (stateFacade && typeof stateFacade.setCurrentPlanId === "function") stateFacade.setCurrentPlanId(plan.id);
+    else bridgeWrite("activeSessionPlanId", plan.id);
     if (plan.flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return syncDailyPracticePlanToState(plan);
     if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return syncGuidedSessionToState(plan);
     if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return syncPerformanceSongToState(plan);
@@ -10,31 +84,31 @@
 
   function syncDailyPracticePlanToState(plan) {
     var legacyPlan = plan ? plan.toLegacyPracticePlan() : null;
-    S.practicePlan = legacyPlan;
-    S.practicePlanDate = legacyPlan ? legacyPlan.generatedDate : null;
-    S.practicePlanFocus = legacyPlan ? legacyPlan.focus : "";
-    S.practicePlanComplete = legacyPlan ? legacyPlan.completedItems >= legacyPlan.totalItems : false;
+    bridgeWrite("practicePlan", legacyPlan);
+    bridgeWrite("practicePlanDate", legacyPlan ? legacyPlan.generatedDate : null);
+    bridgeWrite("practicePlanFocus", legacyPlan ? legacyPlan.focus : "");
+    bridgeWrite("practicePlanComplete", legacyPlan ? legacyPlan.completedItems >= legacyPlan.totalItems : false);
     return legacyPlan;
   }
 
   function syncGuidedSessionToState(plan) {
     var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
     if (!guidedPlan) return null;
-    S.guidedPlan = guidedPlan;
-    S.guidedSession = plan.context.guidedSession || guidedPlan.num || S.guidedSession || 1;
-    S.guidedStep = "spark";
-    S.newMovePhase = null;
-    S.guidedPaused = false;
+    bridgeWrite("guidedPlan", guidedPlan);
+    bridgeWrite("guidedSession", plan.context.guidedSession || guidedPlan.num || bridgeRead("guidedSession", 1) || 1);
+    bridgeWrite("guidedStep", "spark");
+    bridgeWrite("newMovePhase", null);
+    bridgeWrite("guidedPaused", false);
     return guidedPlan;
   }
 
   function syncPerformanceSongToState(plan) {
     var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
     if (!performanceSong) return null;
-    S.performSongData = performanceSong.songData || null;
-    S.performSongId = performanceSong.songId || "";
-    S.performArrangementType = performanceSong.arrangementType || "chords";
-    if (performanceSong.difficultyId) S.performDifficulty = performanceSong.difficultyId;
+    bridgeWrite("performSongData", performanceSong.songData || null);
+    bridgeWrite("performSongId", performanceSong.songId || "");
+    bridgeWrite("performArrangementType", performanceSong.arrangementType || "chords");
+    if (performanceSong.difficultyId) bridgeWrite("performDifficulty", performanceSong.difficultyId);
     return performanceSong;
   }
 
@@ -65,10 +139,10 @@
   function finalizePlan(plan, summary) {
     summary = summary || {};
     applySessionStatePatch(summary.sessionStatePatch);
-    S.practicePlanComplete = true;
+    bridgeWrite("practicePlanComplete", true);
     var completionSummary = summary.completionSummary || buildLegacyCompletionSummary(plan, summary.xpAwarded);
-    if (!Array.isArray(S.practicePlanHistory)) S.practicePlanHistory = [];
-    S.practicePlanHistory.push({
+    var practicePlanHistory = bridgeEnsureArray("practicePlanHistory");
+    practicePlanHistory.push({
       date: completionSummary.date,
       focus: completionSummary.focus,
       itemCount: completionSummary.itemCount,
@@ -77,17 +151,17 @@
       flow: completionSummary.flow,
       durationSec: completionSummary.durationSec || 0
     });
-    if (S.practicePlanHistory.length > 30) S.practicePlanHistory.shift();
+    if (practicePlanHistory.length > 30) practicePlanHistory.shift();
 
     if (summary.xpAwarded) {
-      S.xp += summary.xpAwarded;
+      bridgeIncrement("xp", summary.xpAwarded);
     }
 
-    if (typeof SparkLearningBrain !== "undefined" && typeof SparkLearningBrain.analyzeUser === "function" && S.skillGraph) {
-      var brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, null, S.weakSpots || null);
-      S.lastBrainAnalysis = brainAnalysis;
-      S.recommendedFocus = brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : (completionSummary.focus || null);
-      S.personalInsights = {
+    if (typeof SparkLearningBrain !== "undefined" && typeof SparkLearningBrain.analyzeUser === "function" && bridgeRead("skillGraph", null)) {
+      var brainAnalysis = SparkLearningBrain.analyzeUser(bridgeRead("skillGraph", null), null, bridgeRead("weakSpots", null) || null);
+      bridgeWrite("lastBrainAnalysis", brainAnalysis);
+      bridgeWrite("recommendedFocus", brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : (completionSummary.focus || null));
+      bridgeWrite("personalInsights", {
         weakestSkills: brainAnalysis && brainAnalysis.focusSkill ? [{ id: brainAnalysis.focusSkill, value: brainAnalysis.confidence || 0 }] : [],
         strongestSkills: brainAnalysis && brainAnalysis.strongestSkill ? [{ id: brainAnalysis.strongestSkill, value: brainAnalysis.strongestValue || 0 }] : [],
         masteryTrend: {},
@@ -105,7 +179,7 @@
         coach: {
           message: brainAnalysis && brainAnalysis.coachMessage ? brainAnalysis.coachMessage : ""
         }
-      };
+      });
     }
 
     if (typeof saveState === "function") saveState();
@@ -115,52 +189,52 @@
     patch = patch || {};
 
     if (patch.guided) {
-      if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
+      var completedGuidedSessions = bridgeEnsureArray("completedGuidedSessions");
       var completedSessionNums = Array.isArray(patch.guided.completedSessionNums) ? patch.guided.completedSessionNums : [];
       for (var i = 0; i < completedSessionNums.length; i++) {
-        if (S.completedGuidedSessions.indexOf(completedSessionNums[i]) < 0) {
-          S.completedGuidedSessions.push(completedSessionNums[i]);
+        if (completedGuidedSessions.indexOf(completedSessionNums[i]) < 0) {
+          completedGuidedSessions.push(completedSessionNums[i]);
         }
       }
 
-      if (!S.chordProgress || typeof S.chordProgress !== "object") S.chordProgress = {};
+      var chordProgressState = bridgeEnsureObject("chordProgress");
       var chordProgress = patch.guided.chordProgress || {};
       for (var chordName in chordProgress) {
-        S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + chordProgress[chordName], 100);
+        chordProgressState[chordName] = Math.min((chordProgressState[chordName] || 0) + chordProgress[chordName], 100);
       }
 
-      if (patch.guided.nextGuidedSession != null) S.guidedSession = patch.guided.nextGuidedSession;
+      if (patch.guided.nextGuidedSession != null) bridgeWrite("guidedSession", patch.guided.nextGuidedSession);
     }
 
     if (patch.mastery && patch.mastery.rhythm) {
-      if (!S.mastery || typeof S.mastery !== "object") S.mastery = {};
-      if (!S.mastery.rhythm || typeof S.mastery.rhythm !== "object") S.mastery.rhythm = {};
+      var mastery = bridgeEnsureObject("mastery");
+      if (!mastery.rhythm || typeof mastery.rhythm !== "object") mastery.rhythm = {};
       for (var skillId in patch.mastery.rhythm) {
-        var prev = S.mastery.rhythm[skillId] || 0;
-        S.mastery.rhythm[skillId] = Math.max(0, Math.min(100, prev + patch.mastery.rhythm[skillId]));
+        var prev = mastery.rhythm[skillId] || 0;
+        mastery.rhythm[skillId] = Math.max(0, Math.min(100, prev + patch.mastery.rhythm[skillId]));
       }
     }
 
     if (patch.weakSpots) {
-      if (!S.weakSpots || typeof S.weakSpots !== "object") S.weakSpots = {};
+      var weakSpots = bridgeEnsureObject("weakSpots");
       for (var weakSpotKey in patch.weakSpots) {
-        S.weakSpots[weakSpotKey] = Array.isArray(patch.weakSpots[weakSpotKey])
+        weakSpots[weakSpotKey] = Array.isArray(patch.weakSpots[weakSpotKey])
           ? patch.weakSpots[weakSpotKey].slice()
           : patch.weakSpots[weakSpotKey];
       }
     }
 
     if (patch.bassSkillProgress) {
-      if (!S.bassSkillProgress || typeof S.bassSkillProgress !== "object") S.bassSkillProgress = {};
-      mergeInstrumentSkillProgress(S.bassSkillProgress, patch.bassSkillProgress);
+      var bassSkillProgress = bridgeEnsureObject("bassSkillProgress");
+      mergeInstrumentSkillProgress(bassSkillProgress, patch.bassSkillProgress);
     }
 
     if (patch.ukuleleSkillProgress) {
-      if (!S.ukuleleSkillProgress || typeof S.ukuleleSkillProgress !== "object") S.ukuleleSkillProgress = {};
-      mergeInstrumentSkillProgress(S.ukuleleSkillProgress, patch.ukuleleSkillProgress);
+      var ukuleleSkillProgress = bridgeEnsureObject("ukuleleSkillProgress");
+      mergeInstrumentSkillProgress(ukuleleSkillProgress, patch.ukuleleSkillProgress);
     }
 
-    if (patch.xpToast) S.xpToast = patch.xpToast;
+    if (patch.xpToast) bridgeWrite("xpToast", patch.xpToast);
   }
 
   function mergeInstrumentSkillProgress(target, incoming) {
@@ -189,13 +263,16 @@
   function applyLegacyReward(reward) {
     reward = reward || {};
     var xpDelta = reward.xpDelta || 0;
-    if (xpDelta) S.xp = (S.xp || 0) + xpDelta;
+    if (xpDelta) {
+      bridgeIncrement(["xp"], xpDelta);
+    }
     if (reward.toastAmount) {
-      S.xpToast = {
+      var nextToast = {
         amount: reward.toastAmount,
         time: reward.time || Date.now()
       };
-      if (reward.jackpot) S.xpToast.jackpot = true;
+      if (reward.jackpot) nextToast.jackpot = true;
+      bridgeWrite(["xpToast"], nextToast);
     }
     return {
       xpDelta: xpDelta,
@@ -210,24 +287,25 @@
     var record = clone(result);
     record.ts = record.ts || Date.now();
 
-    if (!Array.isArray(S.practiceHistory)) S.practiceHistory = [];
-    S.practiceHistory.push(record);
+    var practiceHistory = bridgeEnsureArray("practiceHistory");
+    practiceHistory.push(record);
 
     var durationMin = record.durationMin || 0;
     if (durationMin) {
-      S.totalPracticeMinutes = (S.totalPracticeMinutes || 0) + durationMin;
-      S.todayPracticeMinutes = (S.todayPracticeMinutes || 0) + durationMin;
+      bridgeIncrement("totalPracticeMinutes", durationMin);
+      bridgeIncrement("todayPracticeMinutes", durationMin);
     }
 
     var today = new Date().toISOString().slice(0, 10);
-    if (S.lastPracticeDate !== today) {
+    var lastPracticeDate = bridgeRead("lastPracticeDate", null);
+    if (lastPracticeDate !== today) {
       var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-      if (S.lastPracticeDate === yesterday) {
-        S.practiceStreak = (S.practiceStreak || 0) + 1;
+      if (lastPracticeDate === yesterday) {
+        bridgeIncrement("practiceStreak", 1);
       } else {
-        S.practiceStreak = 1;
+        bridgeWrite("practiceStreak", 1);
       }
-      S.lastPracticeDate = today;
+      bridgeWrite("lastPracticeDate", today);
     }
 
     return record;
@@ -237,11 +315,17 @@
     update = update || {};
 
     if (update.streak) {
-      if (update.streak.increment) S.streak = (S.streak || 0) + update.streak.increment;
-      if (update.streak.lastSessionDate) S.lastSessionDate = update.streak.lastSessionDate;
+      if (update.streak.increment) {
+        bridgeIncrement(["streak"], update.streak.increment);
+      }
+      if (update.streak.lastSessionDate) {
+        bridgeWrite(["lastSessionDate"], update.streak.lastSessionDate);
+      }
     }
 
-    if (update.sessionsDelta) S.sessions = (S.sessions || 0) + update.sessionsDelta;
+    if (update.sessionsDelta) {
+      bridgeIncrement(["sessions"], update.sessionsDelta);
+    }
 
     if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
       applyLegacyReward({
@@ -252,13 +336,22 @@
     }
 
     if (update.chordProgress) {
-      if (!S.chordProgress || typeof S.chordProgress !== "object") S.chordProgress = {};
       for (var chordName in update.chordProgress) {
-        S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + update.chordProgress[chordName], 100);
+        var stateFacade = getStateFacade();
+        if (stateFacade && typeof stateFacade.incrementChordProgress === "function") {
+          stateFacade.incrementChordProgress(chordName, update.chordProgress[chordName], 100);
+        } else {
+          var chordProgress = bridgeEnsureObject("chordProgress");
+          chordProgress[chordName] = Math.min((chordProgress[chordName] || 0) + update.chordProgress[chordName], 100);
+        }
       }
     }
 
-    if (typeof update.level === "number") S.level = update.level;
+    if (typeof update.level === "number") {
+      var stateFacade = getStateFacade();
+      if (stateFacade && typeof stateFacade.setLevel === "function") stateFacade.setLevel(update.level);
+      else bridgeWrite("level", update.level);
+    }
 
     return {
       streak: update.streak || null,
@@ -274,25 +367,25 @@
 
     if (update.setFlags) {
       for (var flagKey in update.setFlags) {
-        S[flagKey] = update.setFlags[flagKey];
+        bridgeWrite(flagKey, update.setFlags[flagKey]);
       }
     }
 
     if (update.incrementFields) {
       for (var incrementKey in update.incrementFields) {
-        S[incrementKey] = (S[incrementKey] || 0) + update.incrementFields[incrementKey];
+        bridgeIncrement(incrementKey, update.incrementFields[incrementKey]);
       }
     }
 
     if (update.maxFields) {
       for (var maxKey in update.maxFields) {
-        S[maxKey] = Math.max(S[maxKey] || 0, update.maxFields[maxKey]);
+        bridgeWrite(maxKey, Math.max(bridgeRead(maxKey, 0) || 0, update.maxFields[maxKey]));
       }
     }
 
     if (update.resultFields) {
       for (var resultKey in update.resultFields) {
-        S[resultKey] = clone(update.resultFields[resultKey]);
+        bridgeWrite(resultKey, clone(update.resultFields[resultKey]));
       }
     }
 
@@ -334,13 +427,13 @@
 
     if (update.setFields) {
       for (var fieldKey in update.setFields) {
-        S[fieldKey] = update.setFields[fieldKey];
+        bridgeWrite(fieldKey, update.setFields[fieldKey]);
       }
     }
 
     if (update.incrementFields) {
       for (var incrementKey in update.incrementFields) {
-        S[incrementKey] = (S[incrementKey] || 0) + update.incrementFields[incrementKey];
+        bridgeIncrement(incrementKey, update.incrementFields[incrementKey]);
       }
     }
 
@@ -383,9 +476,9 @@
     return {
       sessionId: plan ? plan.id : null,
       flow: plan ? plan.flow : null,
-      date: plan ? plan.generatedDate : S.practicePlanDate,
-      focus: plan ? plan.focus : S.practicePlanFocus,
-      itemCount: plan && Array.isArray(plan.segments) ? plan.segments.length : (S.practicePlan ? S.practicePlan.items.length : 0),
+      date: plan ? plan.generatedDate : bridgeRead("practicePlanDate", null),
+      focus: plan ? plan.focus : bridgeRead("practicePlanFocus", ""),
+      itemCount: plan && Array.isArray(plan.segments) ? plan.segments.length : (bridgeRead("practicePlan", null) ? bridgeRead(["practicePlan","items"], []).length : 0),
       durationSec: 0,
       xpAwarded: xpAwarded || 0,
       completedAt: Date.now()
@@ -413,8 +506,7 @@
     if (summary.adaptiveUpdate) applyAdaptiveUpdate(summary.adaptiveUpdate);
 
     if (summary.practiceResult) {
-      if (!Array.isArray(S.practiceHistory)) S.practiceHistory = [];
-      S.practiceHistory.push(clone(summary.practiceResult));
+      bridgeEnsureArray("practiceHistory").push(clone(summary.practiceResult));
     }
   }
 
@@ -429,42 +521,42 @@
 
   function applyWeakSpotUpdate(update) {
     if (!update) return;
-    if (!S.weakSpots || typeof S.weakSpots !== "object") S.weakSpots = {};
-    if (!S.weakSpots.transitions) S.weakSpots.transitions = {};
-    if (!S.weakSpots.chords) S.weakSpots.chords = {};
-    if (!S.weakSpots.rhythm) S.weakSpots.rhythm = {};
-    if (!S.weakSpots.phrases) S.weakSpots.phrases = {};
+    var weakSpots = bridgeEnsureObject("weakSpots");
+    if (!weakSpots.transitions) weakSpots.transitions = {};
+    if (!weakSpots.chords) weakSpots.chords = {};
+    if (!weakSpots.rhythm) weakSpots.rhythm = {};
+    if (!weakSpots.phrases) weakSpots.phrases = {};
 
     if (update.transitions) {
       for (var transitionKey in update.transitions) {
-        updateWeakMetric(S.weakSpots.transitions, transitionKey, update.transitions[transitionKey]);
+        updateWeakMetric(weakSpots.transitions, transitionKey, update.transitions[transitionKey]);
       }
     }
     if (update.chords) {
       for (var chordKey in update.chords) {
-        updateWeakMetric(S.weakSpots.chords, chordKey, update.chords[chordKey]);
+        updateWeakMetric(weakSpots.chords, chordKey, update.chords[chordKey]);
       }
     }
     if (update.rhythm) {
       for (var rhythmKey in update.rhythm) {
-        updateWeakMetric(S.weakSpots.rhythm, rhythmKey, update.rhythm[rhythmKey]);
+        updateWeakMetric(weakSpots.rhythm, rhythmKey, update.rhythm[rhythmKey]);
       }
     }
     if (Array.isArray(update.phrases)) {
       for (var i = 0; i < update.phrases.length; i++) {
-        updateWeakMetric(S.weakSpots.phrases, update.phrases[i].id, update.phrases[i].accuracy);
+        updateWeakMetric(weakSpots.phrases, update.phrases[i].id, update.phrases[i].accuracy);
       }
     }
   }
 
   function applyAdaptiveUpdate(update) {
     if (!update || !update.exerciseId) return null;
-    if (!S.adaptiveState || typeof S.adaptiveState !== "object") S.adaptiveState = {};
-    S.adaptiveState[update.exerciseId] = {
+    var adaptiveState = bridgeEnsureObject("adaptiveState");
+    adaptiveState[update.exerciseId] = {
       accuracy: update.accuracy,
       ts: update.ts || Date.now()
     };
-    return S.adaptiveState[update.exerciseId];
+    return adaptiveState[update.exerciseId];
   }
 
   function updateWeakMetric(bucket, key, accuracy) {

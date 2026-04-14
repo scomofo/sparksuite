@@ -1,8 +1,15 @@
 (function() {
   function CalibrationEngine() {}
 
+  function calibrationEngineRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    return fallback;
+  }
+
   CalibrationEngine.prototype.getOffsetMs = function(instrumentType) {
-    if (instrumentType === "guitar") return S.performAudioOffsetMs || 0;
+    if (instrumentType === "guitar") return calibrationEngineRead(["performAudioOffsetMs"], 0);
     return 0;
   };
 

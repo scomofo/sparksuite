@@ -3,12 +3,57 @@
 
 (function(){
 
+  function editorStateRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorStateRead(path, fallback){
+    var root = editorStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    if(!cursor) return fallback;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function editorStateWrite(path, value){
+    var root = editorStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    if(!cursor || !parts.length) return value;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   function openEditor(mode, object){
-    S.editorMode = mode || "chart";
-    S.editorObject = object ? deepClone(object) : createEmptyEditorObject(S.editorMode);
-    S.editorDirty = false;
-    S.editorSelectedId = null;
-    S.screen = SCR.EDITOR;
+    var editorMode = mode || "chart";
+    editorStateWrite("editorMode", editorMode);
+    editorStateWrite("editorObject", object ? deepClone(object) : createEmptyEditorObject(editorMode));
+    editorStateWrite("editorDirty", false);
+    editorStateWrite("editorSelectedId", null);
+    editorStateWrite("screen", SCR.EDITOR);
   }
 
   function createEmptyEditorObject(mode){
@@ -53,46 +98,52 @@
   }
 
   function updateEditorField(path, value){
-    if(!S.editorObject) return;
-    setByPath(S.editorObject, path, value);
-    S.editorDirty = true;
+    var editorObject = editorStateRead("editorObject", null);
+    if(!editorObject) return;
+    setByPath(editorObject, path, value);
+    editorStateWrite("editorObject", editorObject);
+    editorStateWrite("editorDirty", true);
   }
 
   function addEditorItem(kind, item){
-    if(!S.editorObject) return;
+    var editorObject = editorStateRead("editorObject", null);
+    if(!editorObject) return;
     if(kind==="event"){
-      if(!Array.isArray(S.editorObject.events)) S.editorObject.events = [];
-      S.editorObject.events.push(item);
-      S.editorObject.events.sort(function(a,b){ return (a.t||0) - (b.t||0); });
+      if(!Array.isArray(editorObject.events)) editorObject.events = [];
+      editorObject.events.push(item);
+      editorObject.events.sort(function(a,b){ return (a.t||0) - (b.t||0); });
     }
     if(kind==="phrase"){
-      if(!Array.isArray(S.editorObject.phrases)) S.editorObject.phrases = [];
-      S.editorObject.phrases.push(item);
+      if(!Array.isArray(editorObject.phrases)) editorObject.phrases = [];
+      editorObject.phrases.push(item);
     }
     if(kind==="step"){
-      if(!Array.isArray(S.editorObject.steps)) S.editorObject.steps = [];
-      S.editorObject.steps.push(item);
+      if(!Array.isArray(editorObject.steps)) editorObject.steps = [];
+      editorObject.steps.push(item);
     }
-    S.editorDirty = true;
+    editorStateWrite("editorObject", editorObject);
+    editorStateWrite("editorDirty", true);
   }
 
   function removeEditorItem(kind, id){
-    if(!S.editorObject) return;
-    if(kind==="event" && Array.isArray(S.editorObject.events)){
-      S.editorObject.events = S.editorObject.events.filter(function(x){ return String(x.id)!==String(id); });
+    var editorObject = editorStateRead("editorObject", null);
+    if(!editorObject) return;
+    if(kind==="event" && Array.isArray(editorObject.events)){
+      editorObject.events = editorObject.events.filter(function(x){ return String(x.id)!==String(id); });
     }
-    if(kind==="phrase" && Array.isArray(S.editorObject.phrases)){
-      S.editorObject.phrases = S.editorObject.phrases.filter(function(x){ return String(x.id)!==String(id); });
+    if(kind==="phrase" && Array.isArray(editorObject.phrases)){
+      editorObject.phrases = editorObject.phrases.filter(function(x){ return String(x.id)!==String(id); });
     }
-    if(kind==="step" && Array.isArray(S.editorObject.steps)){
-      S.editorObject.steps = S.editorObject.steps.filter(function(x){ return String(x.id)!==String(id); });
+    if(kind==="step" && Array.isArray(editorObject.steps)){
+      editorObject.steps = editorObject.steps.filter(function(x){ return String(x.id)!==String(id); });
     }
-    if(String(S.editorSelectedId)===String(id)) S.editorSelectedId = null;
-    S.editorDirty = true;
+    editorStateWrite("editorObject", editorObject);
+    if(String(editorStateRead("editorSelectedId", null))===String(id)) editorStateWrite("editorSelectedId", null);
+    editorStateWrite("editorDirty", true);
   }
 
   function selectEditorItem(id){
-    S.editorSelectedId = id;
+    editorStateWrite("editorSelectedId", id);
   }
 
   function defaultArrangementType(){
@@ -117,7 +168,7 @@
   /* Handoff 7: default item creators */
 
   function addDefaultEditorEvent(){
-    if(!S.editorObject) return;
+    if(!editorStateRead("editorObject", null)) return;
     addEditorItem("event", {
       id:"evt_" + Date.now(),
       t:0,
@@ -129,8 +180,9 @@
   }
 
   function addDefaultEditorPhrase(){
-    if(!S.editorObject) return;
-    var idx = Array.isArray(S.editorObject.phrases) ? S.editorObject.phrases.length : 0;
+    var editorObject = editorStateRead("editorObject", null);
+    if(!editorObject) return;
+    var idx = Array.isArray(editorObject.phrases) ? editorObject.phrases.length : 0;
     addEditorItem("phrase", {
       id:"phrase_" + Date.now(),
       name:"Phrase " + (idx + 1),
@@ -140,7 +192,7 @@
   }
 
   function addDefaultEditorStep(){
-    if(!S.editorObject) return;
+    if(!editorStateRead("editorObject", null)) return;
     addEditorItem("step", {
       id:"step_" + Date.now(),
       dur:1
@@ -150,7 +202,8 @@
   /* Handoff 8: ChordSpark-specific default event at playhead */
 
   function addSeededDefaultEventAtPlayhead(){
-    var arrangement = S.editorObject && S.editorObject.arrangementType || "chords";
+    var editorObject = editorStateRead("editorObject", null);
+    var arrangement = editorObject && editorObject.arrangementType || "chords";
     if(arrangement==="rhythm_chords"){
       addEventAtPlayhead({
         type:"strum",
@@ -187,5 +240,7 @@
   window.addDefaultEditorPhrase = addDefaultEditorPhrase;
   window.addDefaultEditorStep = addDefaultEditorStep;
   window.addSeededDefaultEventAtPlayhead = addSeededDefaultEventAtPlayhead;
+  window.editorStateRead = editorStateRead;
+  window.editorStateWrite = editorStateWrite;
 
 })();

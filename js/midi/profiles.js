@@ -1,13 +1,55 @@
 (function(){
 
+  function midiProfileRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function midiProfileRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = midiProfileRoot();
+    if(!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function midiProfileWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = midiProfileRoot();
+    if(!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if(parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   function createMidiProfile(name, type){
     var id = generateId("midi_profile");
+    var activeMidiDeviceId = midiProfileRead("activeMidiDeviceId", null);
+    var inputLatencyMs = midiProfileRead("inputLatencyMs", 0);
     var profile = {
       id: id,
       name: name || "New Profile",
       type: type || "default", // guitar | piano | custom
-      deviceId: S.activeMidiDeviceId || null,
-      inputLatencyMs: S.inputLatencyMs || 0,
+      deviceId: activeMidiDeviceId || null,
+      inputLatencyMs: inputLatencyMs || 0,
       channelMap: {},
       noteRange: {
         min: 0,
@@ -17,26 +59,27 @@
       stringMap: {},   // for guitar
       keyMap: {}       // custom remaps if needed
     };
-    S.midiProfiles[id] = profile;
-    S.activeMidiProfileId = id;
+    midiProfileWrite(["midiProfiles", id], profile);
+    midiProfileWrite("activeMidiProfileId", id);
     saveState();
     return profile;
   }
 
   function getActiveMidiProfile(){
-    if(!S.activeMidiProfileId) return null;
-    return S.midiProfiles[S.activeMidiProfileId] || null;
+    var activeMidiProfileId = midiProfileRead("activeMidiProfileId", null);
+    if(!activeMidiProfileId) return null;
+    return midiProfileRead(["midiProfiles", activeMidiProfileId], null);
   }
 
   function saveMidiProfile(profile){
     if(!profile || !profile.id) return;
-    S.midiProfiles[profile.id] = profile;
+    midiProfileWrite(["midiProfiles", profile.id], profile);
     saveState();
   }
 
   function setActiveMidiProfile(id){
-    if(!S.midiProfiles[id]) return;
-    S.activeMidiProfileId = id;
+    if(!midiProfileRead(["midiProfiles", id], null)) return;
+    midiProfileWrite("activeMidiProfileId", id);
     saveState();
   }
 

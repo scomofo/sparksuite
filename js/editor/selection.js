@@ -1,59 +1,80 @@
 (function(){
+  function editorSelectionState(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
   function clearEditorSelection(){
-    S.editorSelectionIds = [];
-    S.editorPrimarySelectionId = null;
-    S.editorSelectedId = null;
+    var state = editorSelectionState();
+    if(!state) return;
+    state.editorSelectionIds = [];
+    state.editorPrimarySelectionId = null;
+    state.editorSelectedId = null;
   }
 
   function selectSingleEditorItem(id){
-    S.editorSelectionIds = [String(id)];
-    S.editorPrimarySelectionId = String(id);
-    S.editorSelectedId = String(id);
-    S.editorSelectionMode = "single";
+    var state = editorSelectionState();
+    if(!state) return;
+    state.editorSelectionIds = [String(id)];
+    state.editorPrimarySelectionId = String(id);
+    state.editorSelectedId = String(id);
+    state.editorSelectionMode = "single";
   }
 
   function toggleEditorSelection(id){
+    var state = editorSelectionState();
+    if(!state) return;
     id = String(id);
-    if(!Array.isArray(S.editorSelectionIds)) S.editorSelectionIds = [];
-    var idx = S.editorSelectionIds.indexOf(id);
+    if(!Array.isArray(state.editorSelectionIds)) state.editorSelectionIds = [];
+    var idx = state.editorSelectionIds.indexOf(id);
     if(idx >= 0){
-      S.editorSelectionIds.splice(idx, 1);
-      if(S.editorPrimarySelectionId===id){
-        S.editorPrimarySelectionId = S.editorSelectionIds.length ? S.editorSelectionIds[0] : null;
-        S.editorSelectedId = S.editorPrimarySelectionId;
+      state.editorSelectionIds.splice(idx, 1);
+      if(state.editorPrimarySelectionId===id){
+        state.editorPrimarySelectionId = state.editorSelectionIds.length ? state.editorSelectionIds[0] : null;
+        state.editorSelectedId = state.editorPrimarySelectionId;
       }
     }else{
-      S.editorSelectionIds.push(id);
-      S.editorPrimarySelectionId = id;
-      S.editorSelectedId = id;
+      state.editorSelectionIds.push(id);
+      state.editorPrimarySelectionId = id;
+      state.editorSelectedId = id;
     }
-    S.editorSelectionMode = S.editorSelectionIds.length > 1 ? "multi" : "single";
+    state.editorSelectionMode = state.editorSelectionIds.length > 1 ? "multi" : "single";
   }
 
   function addEditorSelection(id){
+    var state = editorSelectionState();
+    if(!state) return;
     id = String(id);
-    if(!Array.isArray(S.editorSelectionIds)) S.editorSelectionIds = [];
-    if(S.editorSelectionIds.indexOf(id) < 0){
-      S.editorSelectionIds.push(id);
+    if(!Array.isArray(state.editorSelectionIds)) state.editorSelectionIds = [];
+    if(state.editorSelectionIds.indexOf(id) < 0){
+      state.editorSelectionIds.push(id);
     }
-    S.editorPrimarySelectionId = id;
-    S.editorSelectedId = id;
-    S.editorSelectionMode = S.editorSelectionIds.length > 1 ? "multi" : "single";
+    state.editorPrimarySelectionId = id;
+    state.editorSelectedId = id;
+    state.editorSelectionMode = state.editorSelectionIds.length > 1 ? "multi" : "single";
   }
 
   function isEditorItemSelected(id){
-    return Array.isArray(S.editorSelectionIds) && S.editorSelectionIds.indexOf(String(id)) >= 0;
+    var state = editorSelectionState();
+    return !!state && Array.isArray(state.editorSelectionIds) && state.editorSelectionIds.indexOf(String(id)) >= 0;
   }
 
   function getSelectedEditorItems(){
-    if(!S.editorObject || !Array.isArray(S.editorSelectionIds)) return [];
+    var state = editorSelectionState();
+    if(!state || !state.editorObject || !Array.isArray(state.editorSelectionIds)) return [];
     var out = [];
     var groups = []
-      .concat(S.editorObject.events || [])
-      .concat(S.editorObject.phrases || [])
-      .concat(S.editorObject.steps || []);
+      .concat(state.editorObject.events || [])
+      .concat(state.editorObject.phrases || [])
+      .concat(state.editorObject.steps || []);
     for(var i=0;i<groups.length;i++){
-      if(S.editorSelectionIds.indexOf(String(groups[i].id)) >= 0){
+      if(state.editorSelectionIds.indexOf(String(groups[i].id)) >= 0){
         out.push(groups[i]);
       }
     }

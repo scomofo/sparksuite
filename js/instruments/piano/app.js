@@ -25,7 +25,7 @@ window.pickReviewChords = function() { return pickReviewChords(); };
 // Map piano numeric SCR to SparkSuite string SCR for act() compatibility
 var _pianoSCR = typeof PIANO_SCR !== "undefined" ? PIANO_SCR : {};
 // Override local SCR/TAB references to use SparkSuite's string constants
-// Piano act() does S.screen = SCR.SESSION etc, which needs to produce the
+// Piano act() writes screen ids like SCR.SESSION, which need to produce the
 // string value that SparkSuite's router understands
 var SCR = {
   HOME: "home", SESSION: "session", ONBOARDING: "onboarding",
@@ -42,6 +42,17 @@ var TAB = { PRACTICE: "practice", GAMES: "games", SONGS: "songs", TOOLS: "tools"
 // Timer holder (piano uses T.session, T.drill, etc.)
 if (typeof window.T === "undefined") window.T = {};
 var T = window.T;
+
+function pianoAppState() {
+  if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+    var sparkRoot = SparkState.getRoot();
+    if (sparkRoot) return sparkRoot;
+  }
+  if (typeof globalThis !== "undefined") {
+    return globalThis.__sparkState || globalThis.S || null;
+  }
+  return null;
+}
 
 // ── Piano audio aliases (from PianoAudio namespace to avoid clobbering shared audio.js) ──
 var _pa = typeof PianoAudio !== "undefined" ? PianoAudio : {};
@@ -111,14 +122,17 @@ var SCALES = _pd.SCALES || [];
 // ── Piano helper functions (formerly in helpers.js) ──
 function getCurrentSessionPlan() {
   var plans = typeof PIANO_SESSIONS !== "undefined" ? PIANO_SESSIONS : [];
-  if (!S || S.currentSession < 1 || S.currentSession > plans.length) return null;
-  return plans[S.currentSession - 1];
+  var state = pianoAppState();
+  if (!state || state.currentSession < 1 || state.currentSession > plans.length) return null;
+  return plans[state.currentSession - 1];
 }
 
 function getCurrentLevel() {
   var curriculum = typeof PIANO_CURRICULUM !== "undefined" ? PIANO_CURRICULUM : [];
+  var state = pianoAppState();
+  if (!state) return curriculum[0] || null;
   for (var i = 0; i < curriculum.length; i++) {
-    if (curriculum[i].num === S.level) return curriculum[i];
+    if (curriculum[i].num === state.level) return curriculum[i];
   }
   return curriculum[0] || null;
 }
@@ -135,33 +149,35 @@ function levelForSession(sessionNum) {
 }
 
 function addXP(n) {
-  if (typeof S !== "undefined") {
-    S.xp = (S.xp || 0) + n;
-    if (typeof saveState === "function") saveState();
-  }
+  var state = pianoAppState();
+  if (!state) return;
+  state.xp = (state.xp || 0) + n;
+  if (typeof saveState === "function") saveState();
 }
 
 function addHistory(type, detail) {
-  if (typeof S === "undefined") return;
-  if (!Array.isArray(S.history)) S.history = [];
+  var state = pianoAppState();
+  if (!state) return;
+  if (!Array.isArray(state.history)) state.history = [];
   var entry = { type: type, ts: Date.now() };
   if (detail && detail.chord !== undefined) entry.chord = detail.chord;
   if (detail && detail.dur !== undefined) entry.dur = detail.dur;
   if (detail && detail.chords !== undefined) entry.chords = detail.chords;
   if (detail && detail.score !== undefined) entry.score = detail.score;
   if (detail && detail.session !== undefined) entry.session = detail.session;
-  S.history.push(entry);
+  state.history.push(entry);
   if (typeof saveState === "function") saveState();
 }
 
 function recordTransition(fromChord, toChord, wasClean, timeMs) {
-  if (typeof S === "undefined") return;
-  if (!S.transitionStats) S.transitionStats = {};
+  var state = pianoAppState();
+  if (!state) return;
+  if (!state.transitionStats) state.transitionStats = {};
   var key = fromChord + "_" + toChord;
-  if (!S.transitionStats[key]) {
-    S.transitionStats[key] = { attempts: 0, clean: 0, avgMs: 0 };
+  if (!state.transitionStats[key]) {
+    state.transitionStats[key] = { attempts: 0, clean: 0, avgMs: 0 };
   }
-  var stat = S.transitionStats[key];
+  var stat = state.transitionStats[key];
   stat.attempts++;
   if (wasClean) stat.clean++;
   stat.avgMs = Math.round((stat.avgMs * (stat.attempts - 1) + timeMs) / stat.attempts);
@@ -203,50 +219,56 @@ function shuffleArray(arr) {
 
 // ── Timer ticks ──
 function tickSession() {
-  if (S.paused || !S.active) return;
-  S.timer--;
+  var state = pianoAppState();
+  if (!state || state.paused || !state.active) return;
+  state.timer--;
   addPracticeSecond();
-  if (S.timer % 30 === 0 && S.timer > 0) addXP(5);
-  var elapsed = S.practiceLen - S.timer;
-  var msg = pianoFireMicro(elapsed, S.practiceLen);
+  if (state.timer % 30 === 0 && state.timer > 0) addXP(5);
+  var elapsed = state.practiceLen - state.timer;
+  var msg = pianoFireMicro(elapsed, state.practiceLen);
   if (msg) showToast(msg);
-  if (S.timer <= 0) { completeLegacySession(); return; }
+  if (state.timer <= 0) { completeLegacySession(); return; }
   render();
 }
 
 function completeLegacySession() {
+  var state = pianoAppState();
+  if (!state) return;
   if (T.session) { clearInterval(T.session); T.session = null; }
-  S.active = false;
-  S.sessions++;
+  state.active = false;
+  state.sessions++;
   addXP(20);
-  var prog = (S.chordProg[S.chord] || 0) + 15;
-  S.chordProg[S.chord] = Math.min(100, prog);
-  addHistory("session", { chord: S.chord, dur: S.practiceLen });
+  var prog = (state.chordProg[state.chord] || 0) + 15;
+  state.chordProg[state.chord] = Math.min(100, prog);
+  addHistory("session", { chord: state.chord, dur: state.practiceLen });
   checkPracticeDate();
   checkLevelUp();
   checkReward("session_complete");
   var badges = pianoCheckBadges();
   if (badges.length) showToast("Badge earned! " + badges.map(function(b) { return BADGES.find(function(x) { return x.id === b; }).icon; }).join(" "));
   else playSound("complete");
-  if (S.detecting) stopDetection();
+  if (state.detecting) stopDetection();
   saveState();
   render();
 }
 
 function tickDrill() {
-  if (!S.drillActive) return;
-  S.drillTimer--;
+  var state = pianoAppState();
+  if (!state || !state.drillActive) return;
+  state.drillTimer--;
   addPracticeSecond();
-  if (S.drillTimer <= 0) { completeDrill(); return; }
+  if (state.drillTimer <= 0) { completeDrill(); return; }
   render();
 }
 
 function completeDrill() {
+  var state = pianoAppState();
+  if (!state) return;
   if (T.drill) { clearInterval(T.drill); T.drill = null; }
-  S.drillActive = false;
-  S.drillsDone++;
+  state.drillActive = false;
+  state.drillsDone++;
   addXP(30);
-  addHistory("drill", { chords: S.drillChords.join(",") });
+  addHistory("drill", { chords: state.drillChords.join(",") });
   checkPracticeDate();
   checkReward("drill_complete");
   pianoCheckBadges();
@@ -256,19 +278,22 @@ function completeDrill() {
 }
 
 function tickDaily() {
-  if (!S.dailyActive) return;
-  S.dailyTimer--;
+  var state = pianoAppState();
+  if (!state || !state.dailyActive) return;
+  state.dailyTimer--;
   addPracticeSecond();
-  if (S.dailyTimer <= 0) { completeDaily(); return; }
+  if (state.dailyTimer <= 0) { completeDaily(); return; }
   render();
 }
 
 function completeDaily() {
+  var state = pianoAppState();
+  if (!state) return;
   if (T.daily) { clearInterval(T.daily); T.daily = null; }
-  S.dailyActive = false;
-  S.dailiesDone++;
+  state.dailyActive = false;
+  state.dailiesDone++;
   addXP(40);
-  addHistory("daily", { score: S.dailyScore });
+  addHistory("daily", { score: state.dailyScore });
   checkPracticeDate();
   checkReward("daily_complete");
   pianoCheckBadges();
@@ -279,10 +304,11 @@ function completeDaily() {
 
 // ── Guided session step timer ──
 function tickSessionStep() {
-  if (S.paused) return;
-  S.sessionTimer--;
+  var state = pianoAppState();
+  if (!state || state.paused) return;
+  state.sessionTimer--;
   addPracticeSecond();
-  if (S.sessionTimer <= 0) {
+  if (state.sessionTimer <= 0) {
     advanceSessionStep();
     return;
   }
@@ -291,16 +317,17 @@ function tickSessionStep() {
 
 // ── Level up check (8 levels) ──
 function checkLevelUp() {
-  if (S.level >= 8) return;
+  var state = pianoAppState();
+  if (!state || state.level >= 8) return;
   // Level up when all sessions for current level are completed
-  var curr = CURRICULUM[S.level - 1];
+  var curr = CURRICULUM[state.level - 1];
   if (!curr) return;
   var parts = curr.sessions.split("-");
   var lastSession = parseInt(parts.length > 1 ? parts[1] : parts[0]);
-  if (S.currentSession > lastSession) {
-    S.level = Math.min(8, S.level + 1);
+  if (state.currentSession > lastSession) {
+    state.level = Math.min(8, state.level + 1);
     playSound("levelup");
-    showToast("Level Up! You're now Level " + S.level + ": " + LN[S.level] + "!");
+    showToast("Level Up! You're now Level " + state.level + ": " + LN[state.level] + "!");
     pianoShowConfetti();
     pianoCheckBadges();
     saveState();
@@ -309,10 +336,12 @@ function checkLevelUp() {
 
 // ── Reward engine (stickiness #1 + #4) ──
 function checkReward(actionType) {
-  S.totalActions++;
-  S.actionsSinceReward++;
+  var state = pianoAppState();
+  if (!state) return;
+  state.totalActions++;
+  state.actionsSinceReward++;
 
-  var phase = getRewardPhase(S.currentSession);
+  var phase = getRewardPhase(state.currentSession);
   if (!phase) return;
 
   var shouldReward = false;
@@ -323,14 +352,14 @@ function checkReward(actionType) {
     shouldReward = true;
     xpAmount = phase.xpPerAction || 25;
   } else if (phase.schedule === "VR-2-3") {
-    if (S.actionsSinceReward >= S.nextRewardAt) {
+    if (state.actionsSinceReward >= state.nextRewardAt) {
       shouldReward = true;
-      S.nextRewardAt = 2 + Math.floor(Math.random() * 2); // 2-3
+      state.nextRewardAt = 2 + Math.floor(Math.random() * 2); // 2-3
     }
   } else if (phase.schedule === "VR-5-8") {
-    if (S.actionsSinceReward >= S.nextRewardAt) {
+    if (state.actionsSinceReward >= state.nextRewardAt) {
       shouldReward = true;
-      S.nextRewardAt = 5 + Math.floor(Math.random() * 4); // 5-8
+      state.nextRewardAt = 5 + Math.floor(Math.random() * 4); // 5-8
       if (Math.random() < (phase.jackpotChance || 0)) {
         isJackpot = true;
         xpAmount = 25 * (phase.jackpotMultiplier || 10);
@@ -348,10 +377,10 @@ function checkReward(actionType) {
   }
 
   if (shouldReward) {
-    S.actionsSinceReward = 0;
+    state.actionsSinceReward = 0;
     addXP(xpAmount);
     if (isJackpot) {
-      S.jackpotsHit++;
+      state.jackpotsHit++;
       playSound("jackpot");
       showToast("JACKPOT! +" + xpAmount + " XP!");
     } else {
@@ -362,26 +391,28 @@ function checkReward(actionType) {
 
 // ── Adaptive difficulty (stickiness #6) ──
 function adaptBpm(wasClean) {
+  var state = pianoAppState();
+  if (!state) return;
   if (wasClean) {
-    S._cleanStreak = (S._cleanStreak || 0) + 1;
-    S._missStreak = 0;
-    if (S._cleanStreak >= 3) {
-      S.adaptiveBpm = Math.min(200, S.adaptiveBpm + 3);
-      S._cleanStreak = 0;
-      if (S.adaptiveBpm > S.personalBests.bpm) {
-        S.personalBests.bpm = S.adaptiveBpm;
-        if (S.earned.indexOf("speed_demon") < 0) {
-          S.earned.push("speed_demon");
+    state._cleanStreak = (state._cleanStreak || 0) + 1;
+    state._missStreak = 0;
+    if (state._cleanStreak >= 3) {
+      state.adaptiveBpm = Math.min(200, state.adaptiveBpm + 3);
+      state._cleanStreak = 0;
+      if (state.adaptiveBpm > state.personalBests.bpm) {
+        state.personalBests.bpm = state.adaptiveBpm;
+        if (state.earned.indexOf("speed_demon") < 0) {
+          state.earned.push("speed_demon");
           showToast("New personal best BPM!");
         }
       }
     }
   } else {
-    S._missStreak = (S._missStreak || 0) + 1;
-    S._cleanStreak = 0;
-    if (S._missStreak >= 2) {
-      S.adaptiveBpm = Math.max(40, S.adaptiveBpm - 5);
-      S._missStreak = 0;
+    state._missStreak = (state._missStreak || 0) + 1;
+    state._cleanStreak = 0;
+    if (state._missStreak >= 2) {
+      state.adaptiveBpm = Math.max(40, state.adaptiveBpm - 5);
+      state._missStreak = 0;
     }
   }
   saveState();
@@ -389,8 +420,10 @@ function adaptBpm(wasClean) {
 
 // ── Interleaving (stickiness #8) ──
 function pickReviewChords() {
+  var state = pianoAppState();
+  if (!state) return ["C"];
   // Select chords from 3-5 sessions ago, not yesterday
-  var targetSession = Math.max(1, S.currentSession - Math.floor(Math.random() * 3 + 3));
+  var targetSession = Math.max(1, state.currentSession - Math.floor(Math.random() * 3 + 3));
   var plan = SESSION_PLANS[targetSession - 1];
   if (!plan) return ["C"];
 
@@ -404,19 +437,20 @@ function pickReviewChords() {
 
   // Ensure at least 2 chords — use shuffle-slice to avoid infinite loop
   if (chords.length < 2) {
-    var available = chordsUpToLevel(S.level).map(function(c) { return c.short; })
+    var available = chordsUpToLevel(state.level).map(function(c) { return c.short; })
       .filter(function(c) { return chords.indexOf(c) < 0; });
     shuffleArray(available);
     while (chords.length < 2 && available.length > 0) chords.push(available.shift());
   }
 
   // Don't repeat what was just reviewed
-  return chords.filter(function(ch) { return S.lastReviewChords.indexOf(ch) < 0; }).slice(0, 3);
+  return chords.filter(function(ch) { return state.lastReviewChords.indexOf(ch) < 0; }).slice(0, 3);
 }
 
 // ── Quiz generation ──
 function genQuiz() {
-  var pool = typeof chordsUpToLevel === "function" ? chordsUpToLevel(Math.min((S.level || 1) + 1, 8)) : [];
+  var state = pianoAppState();
+  var pool = typeof chordsUpToLevel === "function" ? chordsUpToLevel(Math.min(((state && state.level) || 1) + 1, 8)) : [];
   if (pool.length < 4) pool = typeof chordsUpToLevel === "function" ? chordsUpToLevel(3) : [];
   if (!pool.length) return { answer: "C", options: ["C", "F", "G", "Am"] };
   var answer = pool[Math.floor(Math.random() * pool.length)].short;
@@ -432,39 +466,43 @@ function genQuiz() {
 
 // ── Runner game ──
 function spawnRunnerTarget() {
-  var pool = chordsUpToLevel(S.level).map(function(c) { return c.short; });
-  S.runnerTarget = pool[Math.floor(Math.random() * pool.length)];
+  var state = pianoAppState();
+  if (!state) return;
+  var pool = chordsUpToLevel(state.level).map(function(c) { return c.short; });
+  state.runnerTarget = pool[Math.floor(Math.random() * pool.length)];
 }
 
 // ── Rhythm game ──
 function rhythmTick() {
-  if (!S.rhythmActive) return;
-  S.rhythmBeat++;
+  var state = pianoAppState();
+  if (!state || !state.rhythmActive) return;
+  state.rhythmBeat++;
   playSound("tick");
   render();
 }
 
 // ── Song playback ──
 function songTick() {
-  if (!S.songPlaying || S.songIdx === null) return;
-  var song = SONGS[S.songIdx];
+  var state = pianoAppState();
+  if (!state || !state.songPlaying || state.songIdx === null) return;
+  var song = SONGS[state.songIdx];
   if (!song) return;
-  S.songChordIdx++;
-  if (S.songChordIdx >= song.progression.length) {
-    S.songChordIdx = 0;
-    if (!S.songsDone) S.songsDone = [];
-    if (S.songsDone.indexOf(song.title) < 0) {
-      S.songsDone.push(song.title);
+  state.songChordIdx++;
+  if (state.songChordIdx >= song.progression.length) {
+    state.songChordIdx = 0;
+    if (!state.songsDone) state.songsDone = [];
+    if (state.songsDone.indexOf(song.title) < 0) {
+      state.songsDone.push(song.title);
       addXP(15);
       pianoCheckBadges();
     }
   }
-  var chord = song.progression[S.songChordIdx];
+  var chord = song.progression[state.songChordIdx];
   if (typeof window.syncSongRuntimeRequest === "function") {
     window.syncSongRuntimeRequest("tick", {
       songData: song,
       source: "builtin",
-      songBeat: S.songChordIdx
+      songBeat: state.songChordIdx
     });
   }
   playChordByName(chord, song.style || "block");
@@ -474,17 +512,20 @@ function songTick() {
 // ── Build playback ──
 var buildIdx = 0;
 function buildTick() {
-  if (!S.buildPlaying || !S.buildChords.length) return;
-  if (buildIdx >= S.buildChords.length) buildIdx = 0;
-  playChordByName(S.buildChords[buildIdx], "block");
+  var state = pianoAppState();
+  if (!state || !state.buildPlaying || !state.buildChords.length) return;
+  if (buildIdx >= state.buildChords.length) buildIdx = 0;
+  playChordByName(state.buildChords[buildIdx], "block");
   buildIdx++;
   render();
 }
 
 // ── Guided session flow ──
 function startGuidedSession() {
+  var state = pianoAppState();
+  if (!state) return;
   if (typeof window.openGuidedSessionRequest === "function") {
-    var guidedSession = parseInt(S.currentSession, 10);
+    var guidedSession = parseInt(state.currentSession, 10);
     if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
     var corePlan = window.openGuidedSessionRequest({
       sessionNum: guidedSession
@@ -498,7 +539,7 @@ function startGuidedSession() {
       return;
     }
   } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-    var guidedSession = parseInt(S.currentSession, 10);
+    var guidedSession = parseInt(state.currentSession, 10);
     if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
     var corePlan = window.sparkCore.startSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
@@ -517,14 +558,14 @@ function startGuidedSession() {
   var plan = getCurrentSessionPlan();
   if (!plan) { showToast("No more sessions!"); render(); return; }
 
-  S.sessionPlan = plan;
-  S.screen = SCR.SESSION;
-  S.sessionStep = "spark";
-  S.newMovePhase = null;
-  S.feedbackMessage = "";
-  S.adaptiveBpm = plan.bpm;
-  S.paused = false;
-  S.fingerWarmUpDone = false;
+  state.sessionPlan = plan;
+  state.screen = SCR.SESSION;
+  state.sessionStep = "spark";
+  state.newMovePhase = null;
+  state.feedbackMessage = "";
+  state.adaptiveBpm = plan.bpm;
+  state.paused = false;
+  state.fingerWarmUpDone = false;
 
   checkPracticeDate();
   playSound("start");
@@ -533,71 +574,77 @@ function startGuidedSession() {
 }
 
 function syncPianoGuidedPlanFromCore(plan) {
+  var state = pianoAppState();
   var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
-  if (!guidedPlan) return null;
+  if (!state || !guidedPlan) return null;
 
-  var guidedSession = plan.context.guidedSession || guidedPlan.num || S.currentSession || 1;
-  S.guidedPlan = guidedPlan;
-  S.guidedSession = guidedSession;
-  S.currentSession = guidedSession;
-  S.sessionPlan = guidedPlan;
-  S.screen = SCR.SESSION;
-  S.sessionStep = "spark";
-  S.guidedStep = "spark";
-  S.newMovePhase = null;
-  S.feedbackMessage = "";
-  S.adaptiveBpm = guidedPlan.bpm || S.bpm;
-  S.paused = false;
-  S.guidedPaused = false;
-  S.fingerWarmUpDone = false;
+  var guidedSession = plan.context.guidedSession || guidedPlan.num || state.currentSession || 1;
+  state.guidedPlan = guidedPlan;
+  state.guidedSession = guidedSession;
+  state.currentSession = guidedSession;
+  state.sessionPlan = guidedPlan;
+  state.screen = SCR.SESSION;
+  state.sessionStep = "spark";
+  state.guidedStep = "spark";
+  state.newMovePhase = null;
+  state.feedbackMessage = "";
+  state.adaptiveBpm = guidedPlan.bpm || state.bpm;
+  state.paused = false;
+  state.guidedPaused = false;
+  state.fingerWarmUpDone = false;
   return guidedPlan;
 }
 
 function syncPianoPerformanceSongFromCore(plan) {
+  var state = pianoAppState();
   var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
-  if (!performanceSong) return null;
+  if (!state || !performanceSong) return null;
 
-  S.performSongData = performanceSong.songData || null;
-  S.performSongId = performanceSong.songId || normalizeSongId(performanceSong.songData);
-  S.performArrangementType = performanceSong.arrangementType || S.performArrangementType || "block_chords";
-  if (performanceSong.difficultyId) S.performDifficulty = performanceSong.difficultyId;
-  S.screen = SCR.PERFORM_SONG;
+  state.performSongData = performanceSong.songData || null;
+  state.performSongId = performanceSong.songId || normalizeSongId(performanceSong.songData);
+  state.performArrangementType = performanceSong.arrangementType || state.performArrangementType || "block_chords";
+  if (performanceSong.difficultyId) state.performDifficulty = performanceSong.difficultyId;
+  state.screen = SCR.PERFORM_SONG;
   return performanceSong;
 }
 
 function advanceSessionStep() {
+  var state = pianoAppState();
+  if (!state) return;
   if (T.sessionStep) { clearInterval(T.sessionStep); T.sessionStep = null; }
   stopMetronome();
   stopLHPattern();
   stopWatchDemo();
 
   var steps = ["spark","review","newMove","songSlice","victoryLap"];
-  var idx = steps.indexOf(S.sessionStep);
+  var idx = steps.indexOf(state.sessionStep);
 
   // Record what was reviewed so we don't repeat it and can show transition tips
-  if (S.sessionStep === "review" && S.sessionPlan && S.sessionPlan.review) {
-    S.lastReviewChords = S.sessionPlan.review.chords || [];
+  if (state.sessionStep === "review" && state.sessionPlan && state.sessionPlan.review) {
+    state.lastReviewChords = state.sessionPlan.review.chords || [];
   }
 
   if (idx < steps.length - 1) {
-    S.sessionStep = steps[idx + 1];
-    S.sessionTimer = 0;
+    state.sessionStep = steps[idx + 1];
+    state.sessionTimer = 0;
 
     // Set up phase for New Move
-    if (S.sessionStep === "newMove") {
-      S.newMovePhase = "watch";
+    if (state.sessionStep === "newMove") {
+      state.newMovePhase = "watch";
     }
   }
   render();
 }
 
 function advanceNewMovePhase() {
+  var state = pianoAppState();
+  if (!state) return;
   var phases = ["watch","shadow","try","refine"];
-  var idx = phases.indexOf(S.newMovePhase);
+  var idx = phases.indexOf(state.newMovePhase);
   if (idx < phases.length - 1) {
-    S.newMovePhase = phases[idx + 1];
-    S.feedbackMessage = "";
-    if (S.detecting) stopDetection();
+    state.newMovePhase = phases[idx + 1];
+    state.feedbackMessage = "";
+    if (state.detecting) stopDetection();
   } else {
     // Done with New Move, advance to next session step
     advanceSessionStep();
@@ -607,12 +654,14 @@ function advanceNewMovePhase() {
 }
 
 function completeGuidedSession() {
+  var state = pianoAppState();
+  if (!state) return;
   if (T.sessionStep) { clearInterval(T.sessionStep); T.sessionStep = null; }
   stopMetronome();
   stopLHPattern();
-  if (S.detecting) stopDetection();
+  if (state.detecting) stopDetection();
 
-  var plan = S.sessionPlan;
+  var plan = state.sessionPlan;
   if (typeof window.completeGuidedSessionRequest === "function") {
     var guidedResult = window.completeGuidedSessionRequest();
     syncPianoGuidedCompletionFromCore(guidedResult, plan);
@@ -629,10 +678,10 @@ function completeGuidedSession() {
       showToast("Session " + (plan ? plan.num : "") + " complete!");
     }
     playSound(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
-    S.screen = SCR.HOME;
-    S.sessionStep = null;
-    S.sessionPlan = null;
-    S.newMovePhase = null;
+    state.screen = SCR.HOME;
+    state.sessionStep = null;
+    state.sessionPlan = null;
+    state.newMovePhase = null;
     saveState();
     render();
     return;
@@ -663,10 +712,10 @@ function completeGuidedSession() {
       showToast("Session " + (plan ? plan.num : "") + " complete!");
     }
     playSound(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
-    S.screen = SCR.HOME;
-    S.sessionStep = null;
-    S.sessionPlan = null;
-    S.newMovePhase = null;
+    state.screen = SCR.HOME;
+    state.sessionStep = null;
+    state.sessionPlan = null;
+    state.newMovePhase = null;
     saveState();
     render();
     return;
@@ -674,26 +723,26 @@ function completeGuidedSession() {
 
   if (plan) {
     // Mark session complete
-    if (S.completedSessions.indexOf(plan.num) < 0) {
-      S.completedSessions.push(plan.num);
+    if (state.completedSessions.indexOf(plan.num) < 0) {
+      state.completedSessions.push(plan.num);
     }
-    S.sessions++;
-    S.currentSession = Math.min(50, plan.num + 1);
+    state.sessions++;
+    state.currentSession = Math.min(50, plan.num + 1);
 
     // Progress chord
     if (plan.newMove && plan.newMove.chord) {
-      var prog = (S.chordProg[plan.newMove.chord] || 0) + 15;
-      S.chordProg[plan.newMove.chord] = Math.min(100, prog);
+      var prog = (state.chordProg[plan.newMove.chord] || 0) + 15;
+      state.chordProg[plan.newMove.chord] = Math.min(100, prog);
     }
 
     addXP(50);
     addHistory("guided_session", { session: plan.num, chord: plan.newMove ? plan.newMove.chord : null });
 
     // Update LH level
-    var newLvl = CURRICULUM[Math.min(S.level, 8) - 1];
+    var newLvl = CURRICULUM[Math.min(state.level, 8) - 1];
     if (newLvl && newLvl.lhPattern) {
       var patIdx = LH_PATTERNS.findIndex(function(p) { return p.id === newLvl.lhPattern; });
-      if (patIdx >= 0 && patIdx + 1 > S.lhLevel) S.lhLevel = patIdx + 1;
+      if (patIdx >= 0 && patIdx + 1 > state.lhLevel) state.lhLevel = patIdx + 1;
     }
   }
 
@@ -713,77 +762,81 @@ function completeGuidedSession() {
     playSound("complete");
   }
 
-  S.screen = SCR.HOME;
-  S.sessionStep = null;
-  S.sessionPlan = null;
-  S.newMovePhase = null;
+  state.screen = SCR.HOME;
+  state.sessionStep = null;
+  state.sessionPlan = null;
+  state.newMovePhase = null;
   saveState();
   render();
 }
 
 function syncPianoGuidedCompletionFromCore(result, plan) {
+  var state = pianoAppState();
   var guidedPatch = result && result.sessionStatePatch ? result.sessionStatePatch.guided : null;
-  if (!Array.isArray(S.completedSessions)) S.completedSessions = [];
-  if (!S.chordProg || typeof S.chordProg !== "object") S.chordProg = {};
+  if (!state) return;
+  if (!Array.isArray(state.completedSessions)) state.completedSessions = [];
+  if (!state.chordProg || typeof state.chordProg !== "object") state.chordProg = {};
 
   if (guidedPatch && Array.isArray(guidedPatch.completedSessionNums)) {
     for (var i = 0; i < guidedPatch.completedSessionNums.length; i++) {
-      if (S.completedSessions.indexOf(guidedPatch.completedSessionNums[i]) < 0) {
-        S.completedSessions.push(guidedPatch.completedSessionNums[i]);
+      if (state.completedSessions.indexOf(guidedPatch.completedSessionNums[i]) < 0) {
+        state.completedSessions.push(guidedPatch.completedSessionNums[i]);
       }
     }
-  } else if (plan && S.completedSessions.indexOf(plan.num) < 0) {
-    S.completedSessions.push(plan.num);
+  } else if (plan && state.completedSessions.indexOf(plan.num) < 0) {
+    state.completedSessions.push(plan.num);
   }
 
   if (guidedPatch && guidedPatch.chordProgress) {
     for (var chordName in guidedPatch.chordProgress) {
-      S.chordProg[chordName] = Math.min((S.chordProg[chordName] || 0) + guidedPatch.chordProgress[chordName], 100);
+      state.chordProg[chordName] = Math.min((state.chordProg[chordName] || 0) + guidedPatch.chordProgress[chordName], 100);
     }
   } else if (plan && plan.newMove && plan.newMove.chord) {
-    S.chordProg[plan.newMove.chord] = Math.min((S.chordProg[plan.newMove.chord] || 0) + 15, 100);
+    state.chordProg[plan.newMove.chord] = Math.min((state.chordProg[plan.newMove.chord] || 0) + 15, 100);
   }
 
   if (guidedPatch && guidedPatch.nextGuidedSession != null) {
-    S.currentSession = guidedPatch.nextGuidedSession;
-    S.guidedSession = guidedPatch.nextGuidedSession;
+    state.currentSession = guidedPatch.nextGuidedSession;
+    state.guidedSession = guidedPatch.nextGuidedSession;
   } else if (plan && plan.num != null) {
-    S.currentSession = Math.min(50, plan.num + 1);
-    S.guidedSession = S.currentSession;
+    state.currentSession = Math.min(50, plan.num + 1);
+    state.guidedSession = state.currentSession;
   }
 
   if (plan) {
-    var newLvl = CURRICULUM[Math.min(S.level, 8) - 1];
+    var newLvl = CURRICULUM[Math.min(state.level, 8) - 1];
     if (newLvl && newLvl.lhPattern) {
       var patIdx = LH_PATTERNS.findIndex(function(p) { return p.id === newLvl.lhPattern; });
-      if (patIdx >= 0 && patIdx + 1 > S.lhLevel) S.lhLevel = patIdx + 1;
+      if (patIdx >= 0 && patIdx + 1 > state.lhLevel) state.lhLevel = patIdx + 1;
     }
   }
 }
 
 // ── Finger exercise helpers ──
 function completeFingerExercise(exerciseId) {
-  if (!S.fingerStats[exerciseId]) {
-    S.fingerStats[exerciseId] = { completions: 0, lastDone: null, bestTrillSpeed: 0 };
+  var state = pianoAppState();
+  if (!state) return;
+  if (!state.fingerStats[exerciseId]) {
+    state.fingerStats[exerciseId] = { completions: 0, lastDone: null, bestTrillSpeed: 0 };
   }
-  var stats = S.fingerStats[exerciseId];
+  var stats = state.fingerStats[exerciseId];
   stats.completions++;
   var today = new Date().toDateString();
   var wasNewDay = !stats.lastDone || new Date(stats.lastDone).toDateString() !== today;
   stats.lastDone = Date.now();
-  S.fingerExercisesDone++;
+  state.fingerExercisesDone++;
 
   // Track days — skip exerciseId since its lastDone was just updated
   if (wasNewDay) {
     var anyDoneToday = false;
-    for (var id in S.fingerStats) {
+    for (var id in state.fingerStats) {
       if (id.charAt(0) === '_') continue;
       if (id === exerciseId) continue;
-      if (S.fingerStats[id].lastDone && new Date(S.fingerStats[id].lastDone).toDateString() === today) {
+      if (state.fingerStats[id].lastDone && new Date(state.fingerStats[id].lastDone).toDateString() === today) {
         anyDoneToday = true; break;
       }
     }
-    if (!anyDoneToday) S.fingerDaysLogged++;
+    if (!anyDoneToday) state.fingerDaysLogged++;
   }
 
   addXP(10);
@@ -793,9 +846,10 @@ function completeFingerExercise(exerciseId) {
 }
 
 function tickChordChange() {
-  if (!S.chordChangeActive) return;
-  S.chordChangeTimer--;
-  if (S.chordChangeTimer <= 0) {
+  var state = pianoAppState();
+  if (!state || !state.chordChangeActive) return;
+  state.chordChangeTimer--;
+  if (state.chordChangeTimer <= 0) {
     finishChordChange();
     return;
   }
@@ -803,27 +857,29 @@ function tickChordChange() {
 }
 
 function finishChordChange() {
+  var state = pianoAppState();
+  if (!state) return;
   if (T.chordChange) { clearInterval(T.chordChange); T.chordChange = null; }
-  S.chordChangeActive = false;
+  state.chordChangeActive = false;
 
   // Record result
-  if (!S.fingerStats._chordChangeBest) S.fingerStats._chordChangeBest = 0;
-  if (S.chordChangeCount > S.fingerStats._chordChangeBest) {
-    S.fingerStats._chordChangeBest = S.chordChangeCount;
-    showToast("New personal best: " + S.chordChangeCount + " changes!");
+  if (!state.fingerStats._chordChangeBest) state.fingerStats._chordChangeBest = 0;
+  if (state.chordChangeCount > state.fingerStats._chordChangeBest) {
+    state.fingerStats._chordChangeBest = state.chordChangeCount;
+    showToast("New personal best: " + state.chordChangeCount + " changes!");
   }
 
   // Record pair-specific best
-  if (S.chordChangePair.length === 2) {
-    var pairKey = "_cc_" + S.chordChangePair[0] + "_" + S.chordChangePair[1];
-    if (!S.fingerStats[pairKey]) S.fingerStats[pairKey] = { best: 0 };
-    if (S.chordChangeCount > S.fingerStats[pairKey].best) {
-      S.fingerStats[pairKey].best = S.chordChangeCount;
+  if (state.chordChangePair.length === 2) {
+    var pairKey = "_cc_" + state.chordChangePair[0] + "_" + state.chordChangePair[1];
+    if (!state.fingerStats[pairKey]) state.fingerStats[pairKey] = { best: 0 };
+    if (state.chordChangeCount > state.fingerStats[pairKey].best) {
+      state.fingerStats[pairKey].best = state.chordChangeCount;
     }
   }
 
-  addXP(Math.floor(S.chordChangeCount / 2));
-  addHistory("chord_change", { score: S.chordChangeCount, chords: S.chordChangePair.join(",") });
+  addXP(Math.floor(state.chordChangeCount / 2));
+  addHistory("chord_change", { score: state.chordChangeCount, chords: state.chordChangePair.join(",") });
   checkFingerBadges();
   checkReward("chord_change");
   playSound("complete");
@@ -832,39 +888,41 @@ function finishChordChange() {
 }
 
 function checkFingerBadges() {
+  var state = pianoAppState();
+  if (!state) return;
   var newBadges = [];
   function check(id, cond) {
-    if (cond && S.fingerBadges.indexOf(id) < 0) {
-      S.fingerBadges.push(id);
+    if (cond && state.fingerBadges.indexOf(id) < 0) {
+      state.fingerBadges.push(id);
       newBadges.push(id);
     }
   }
 
   // Table Tapper: 7 days of off-instrument exercises
-  check("table_tapper", S.fingerDaysLogged >= 7);
+  check("table_tapper", state.fingerDaysLogged >= 7);
 
   // Spider Fingers: all Tier 2 exercises completed at least once
   var tier2 = getExercisesByTier(2);
   var allTier2Done = tier2.length > 0 && tier2.every(function(ex) {
-    return S.fingerStats[ex.id] && S.fingerStats[ex.id].completions > 0;
+    return state.fingerStats[ex.id] && state.fingerStats[ex.id].completions > 0;
   });
   check("spider_fingers", allTier2Done);
 
   // 30 Club / 60 Club
-  var best = S.fingerStats._chordChangeBest || 0;
+  var best = state.fingerStats._chordChangeBest || 0;
   check("thirty_club", best >= 30);
   check("sixty_club", best >= 60);
 
   // Pinky Power: trill exercise done 5+ times
-  var trillStats = S.fingerStats["P-ADV-3"];
+  var trillStats = state.fingerStats["P-ADV-3"];
   check("pinky_power", trillStats && trillStats.completions >= 5);
 
   // Cortot Master: Independence Gauntlet done 3+ times
-  var gauntletStats = S.fingerStats["P-ADV-4"];
+  var gauntletStats = state.fingerStats["P-ADV-4"];
   check("cortot_master", gauntletStats && gauntletStats.completions >= 3);
 
   // Thumb Ninja: thumb under exercise done 5+ times
-  var thumbStats = S.fingerStats["P-ADV-2"];
+  var thumbStats = state.fingerStats["P-ADV-2"];
   check("thumb_ninja", thumbStats && thumbStats.completions >= 5);
 
   if (newBadges.length) {
@@ -880,107 +938,109 @@ function checkFingerBadges() {
 
 // ── Action dispatcher ──
 function act(action, param) {
+  var state = pianoAppState();
+  if (!state) return;
   var _handled = true;
   switch (action) {
     case "tab":
-      S.tab = param;
-      if (S.songPlaying) {
-        S.songPlaying = false;
+      state.tab = param;
+      if (state.songPlaying) {
+        state.songPlaying = false;
         if (T.song) { clearInterval(T.song); T.song = null; }
       }
-      if (S.buildPlaying) {
-        S.buildPlaying = false;
+      if (state.buildPlaying) {
+        state.buildPlaying = false;
         if (T.build) { clearInterval(T.build); T.build = null; }
         buildIdx = 0;
       }
       break;
 
     case "toggle_dark":
-      S.darkMode = !S.darkMode;
-      document.body.classList.toggle("dark", S.darkMode);
+      state.darkMode = !state.darkMode;
+      document.body.classList.toggle("dark", state.darkMode);
       saveState();
       break;
 
     case "toggle_focus":
-      S.focusMode = !S.focusMode;
-      document.body.classList.toggle("focus-mode", S.focusMode);
+      state.focusMode = !state.focusMode;
+      document.body.classList.toggle("focus-mode", state.focusMode);
       saveState();
       break;
 
     case "view_level":
-      S._viewLevel = parseInt(param);
+      state._viewLevel = parseInt(param);
       break;
 
     // ── Onboarding ──
     case "onboard_never":
-      S.currentSession = 1;
-      S.onboardingStep = 1;
+      state.currentSession = 1;
+      state.onboardingStep = 1;
       break;
 
     case "onboard_placement":
-      S._placementIdx = 0;
-      S._inPlacement = true;
+      state._placementIdx = 0;
+      state._inPlacement = true;
       break;
 
     case "placement_pass":
-      S._placementIdx = (S._placementIdx || 0) + 1;
-      if (S._placementIdx >= PLACEMENT_TESTS.length) {
+      state._placementIdx = (state._placementIdx || 0) + 1;
+      if (state._placementIdx >= PLACEMENT_TESTS.length) {
         // Passed all - start at session 21+
-        S.currentSession = PLACEMENT_TESTS[PLACEMENT_TESTS.length - 1].passesTo || 21;
-        S.level = levelForSession(S.currentSession);
-        S._inPlacement = false;
-        S.onboardingStep = 1;
+        state.currentSession = PLACEMENT_TESTS[PLACEMENT_TESTS.length - 1].passesTo || 21;
+        state.level = levelForSession(state.currentSession);
+        state._inPlacement = false;
+        state.onboardingStep = 1;
       }
       break;
 
     case "placement_fail": {
-      var test = PLACEMENT_TESTS[S._placementIdx || 0];
-      S.currentSession = test ? test.failsTo : 1;
-      S.level = levelForSession(S.currentSession);
-      S._inPlacement = false;
-      S.onboardingStep = 1;
+      var test = PLACEMENT_TESTS[state._placementIdx || 0];
+      state.currentSession = test ? test.failsTo : 1;
+      state.level = levelForSession(state.currentSession);
+      state._inPlacement = false;
+      state.onboardingStep = 1;
       break;
     }
 
     case "skip_placement":
-      S.currentSession = 1;
-      S.level = 1;
-      S._inPlacement = false;
-      S.onboardingStep = 1;
+      state.currentSession = 1;
+      state.level = 1;
+      state._inPlacement = false;
+      state.onboardingStep = 1;
       break;
 
     case "onboard_next":
-      S.onboardingStep = (S.onboardingStep || 0) + 1;
-      if (S.onboardingStep > 4) S.onboardingStep = 4;
+      state.onboardingStep = (state.onboardingStep || 0) + 1;
+      if (state.onboardingStep > 4) state.onboardingStep = 4;
       break;
 
     case "onboard_back":
-      S.onboardingStep = Math.max(0, (S.onboardingStep || 0) - 1);
+      state.onboardingStep = Math.max(0, (state.onboardingStep || 0) - 1);
       break;
 
     case "set_keyboard":
-      S.keyboardSize = parseInt(param);
+      state.keyboardSize = parseInt(param);
       break;
 
     case "toggle_style_pref": {
-      var idx = S.stylePrefs.indexOf(param);
-      if (idx >= 0) S.stylePrefs.splice(idx, 1);
-      else S.stylePrefs.push(param);
+      var idx = state.stylePrefs.indexOf(param);
+      if (idx >= 0) state.stylePrefs.splice(idx, 1);
+      else state.stylePrefs.push(param);
       break;
     }
 
     case "set_intention":
-      S.practiceIntention = param || "";
+      state.practiceIntention = param || "";
       saveState();
       break;
 
     case "onboard_complete":
-      S.onboardingComplete = true;
+      state.onboardingComplete = true;
       // Mark completed sessions up to current
-      for (var cs = 1; cs < S.currentSession; cs++) {
-        if (S.completedSessions.indexOf(cs) < 0) S.completedSessions.push(cs);
+      for (var cs = 1; cs < state.currentSession; cs++) {
+        if (state.completedSessions.indexOf(cs) < 0) state.completedSessions.push(cs);
       }
-      S.level = levelForSession(S.currentSession);
+      state.level = levelForSession(state.currentSession);
       saveState();
       startGuidedSession();
       return; // startGuidedSession calls render
@@ -1007,14 +1067,14 @@ function act(action, param) {
       return;
 
     case "go_home":
-      var _pianoDashboardScreen = S.screen === SCR.RECOMMENDATIONS || S.screen === SCR.INSIGHTS || S.screen === SCR.CHALLENGES || S.screen === SCR.CAREER || S.screen === SCR.HOME_DASH;
-      var _pianoUtilityScreen = S.screen === SCR.SETTINGS || S.screen === SCR.CURRICULUM || S.screen === SCR.CLOUD_SETTINGS || S.screen === SCR.MIDI_SETTINGS || S.screen === SCR.MIDI_IMPORT;
+      var _pianoDashboardScreen = state.screen === SCR.RECOMMENDATIONS || state.screen === SCR.INSIGHTS || state.screen === SCR.CHALLENGES || state.screen === SCR.CAREER || state.screen === SCR.HOME_DASH;
+      var _pianoUtilityScreen = state.screen === SCR.SETTINGS || state.screen === SCR.CURRICULUM || state.screen === SCR.CLOUD_SETTINGS || state.screen === SCR.MIDI_SETTINGS || state.screen === SCR.MIDI_IMPORT;
       if (_pianoUtilityScreen && typeof returnFromUtilityFamilyRequest === "function") {
         returnFromUtilityFamilyRequest({
-          currentScreen: S.screen === SCR.SETTINGS ? "settings"
-            : S.screen === SCR.CURRICULUM ? "curriculum"
-            : S.screen === SCR.CLOUD_SETTINGS ? "cloud_settings"
-            : S.screen === SCR.MIDI_SETTINGS ? "midi_settings"
+          currentScreen: state.screen === SCR.SETTINGS ? "settings"
+            : state.screen === SCR.CURRICULUM ? "curriculum"
+            : state.screen === SCR.CLOUD_SETTINGS ? "cloud_settings"
+            : state.screen === SCR.MIDI_SETTINGS ? "midi_settings"
             : "midi_import"
         });
       } else if (typeof returnFromHomeFamilyRequest === "function") {
@@ -1022,23 +1082,23 @@ function act(action, param) {
           currentScreen: _pianoDashboardScreen ? "home_dash" : "home"
         });
       }
-      S.screen = _pianoDashboardScreen ? SCR.HOME_DASH : SCR.HOME;
-      S.sessionStep = null;
-      S.sessionPlan = null;
+      state.screen = _pianoDashboardScreen ? SCR.HOME_DASH : SCR.HOME;
+      state.sessionStep = null;
+      state.sessionPlan = null;
       break;
     case "openCalibration":
       if (typeof openPerformanceCalibrationRequest === "function") {
         openPerformanceCalibrationRequest();
       }
-      S.screen = SCR.CALIBRATION;
+      state.screen = SCR.CALIBRATION;
       break;
 
     // ── Legacy practice ──
     case "start_session":
-      S.chord = param;
-      S.timer = S.practiceLen;
-      S.active = true;
-      S.paused = false;
+      state.chord = param;
+      state.timer = state.practiceLen;
+      state.active = true;
+      state.paused = false;
       checkPracticeDate();
       playSound("start");
       if (T.session) clearInterval(T.session);
@@ -1046,53 +1106,53 @@ function act(action, param) {
       break;
 
     case "stop_session":
-      if (S.screen === SCR.SESSION) {
+      if (state.screen === SCR.SESSION) {
         // Stop guided session — clear both guided and legacy timers
         if (T.sessionStep) { clearInterval(T.sessionStep); T.sessionStep = null; }
         if (T.session) { clearInterval(T.session); T.session = null; }
         stopMetronome(); stopLHPattern(); stopWatchDemo();
-        if (S.detecting) stopDetection();
-        S.active = false;
-        S.screen = SCR.HOME;
-        S.sessionStep = null;
-        S.sessionPlan = null;
+        if (state.detecting) stopDetection();
+        state.active = false;
+        state.screen = SCR.HOME;
+        state.sessionStep = null;
+        state.sessionPlan = null;
       } else {
         if (T.session) { clearInterval(T.session); T.session = null; }
-        S.active = false;
-        if (S.detecting) stopDetection();
+        state.active = false;
+        if (state.detecting) stopDetection();
         stopMetronome();
       }
       break;
 
     case "pause":
-      S.paused = !S.paused;
+      state.paused = !state.paused;
       break;
 
     case "play_chord": {
-      var chordToPlay = param ? findChord(param) : (S.chord ? findChord(S.chord) : null);
+      var chordToPlay = param ? findChord(param) : (state.chord ? findChord(state.chord) : null);
       if (chordToPlay) playChord(chordToPlay);
       checkReward("play_chord");
       break;
     }
 
     case "toggle_detect":
-      if (S.detecting) {
-        if (S.pitchDetectionMode === "yin") stopYinDetection();
+      if (state.detecting) {
+        if (state.pitchDetectionMode === "yin") stopYinDetection();
         else stopDetection();
       } else {
-        if (S.midiEnabled) stopMidi(); // mic and MIDI share S.detectedNotes
-        if (S.pitchDetectionMode === "yin") startYinDetection();
+        if (state.midiEnabled) stopMidi(); // mic and MIDI share detected-note runtime
+        if (state.pitchDetectionMode === "yin") startYinDetection();
         else startDetection();
       }
       break;
 
     case "set_pitch_detection":
-      S.pitchDetectionMode = param; // "fft" | "yin"
+      state.pitchDetectionMode = param; // "fft" | "yin"
       saveState();
       break;
 
     case "toggle_midi":
-      if (S.midiEnabled) stopMidi();
+      if (state.midiEnabled) stopMidi();
       else startMidi();
       break;
 
@@ -1110,7 +1170,7 @@ function act(action, param) {
       break;
 
     case "set_practice_len":
-      S.practiceLen = parseInt(param);
+      state.practiceLen = parseInt(param);
       saveState();
       break;
 
@@ -1118,13 +1178,13 @@ function act(action, param) {
     case "start_drill": {
       var chords = [];
       if (param === "level") {
-        chords = chordsForLevel(S.level).map(function(c) { return c.short; });
-        if (chords.length < 2) chords = chordsUpToLevel(S.level).map(function(c) { return c.short; });
+        chords = chordsForLevel(state.level).map(function(c) { return c.short; });
+        if (chords.length < 2) chords = chordsUpToLevel(state.level).map(function(c) { return c.short; });
       } else if (param === "all") {
-        chords = chordsUpToLevel(S.level).filter(function(c) { return (S.chordProg[c.short] || 0) > 0; }).map(function(c) { return c.short; });
-        if (chords.length < 3) chords = chordsUpToLevel(S.level).slice(0, 6).map(function(c) { return c.short; });
+        chords = chordsUpToLevel(state.level).filter(function(c) { return (state.chordProg[c.short] || 0) > 0; }).map(function(c) { return c.short; });
+        if (chords.length < 3) chords = chordsUpToLevel(state.level).slice(0, 6).map(function(c) { return c.short; });
       } else if (param === "random") {
-        var all = chordsUpToLevel(S.level).map(function(c) { return c.short; });
+        var all = chordsUpToLevel(state.level).map(function(c) { return c.short; });
         for (var ri = all.length - 1; ri > 0; ri--) {
           var rj = Math.floor(Math.random() * (ri + 1));
           var rt = all[ri]; all[ri] = all[rj]; all[rj] = rt;
@@ -1135,10 +1195,10 @@ function act(action, param) {
         var dj = Math.floor(Math.random() * (di + 1));
         var dtmp = chords[di]; chords[di] = chords[dj]; chords[dj] = dtmp;
       }
-      S.drillChords = chords;
-      S.drillIdx = 0;
-      S.drillTimer = 30;
-      S.drillActive = true;
+      state.drillChords = chords;
+      state.drillIdx = 0;
+      state.drillTimer = 30;
+      state.drillActive = true;
       playSound("start");
       if (T.drill) clearInterval(T.drill);
       T.drill = setInterval(tickDrill, 1000);
@@ -1146,12 +1206,12 @@ function act(action, param) {
     }
 
     case "drill_custom": {
-      var set = S.customSets[parseInt(param)];
+      var set = state.customSets[parseInt(param)];
       if (set) {
-        S.drillChords = set.chords.slice();
-        S.drillIdx = 0;
-        S.drillTimer = 30;
-        S.drillActive = true;
+        state.drillChords = set.chords.slice();
+        state.drillIdx = 0;
+        state.drillTimer = 30;
+        state.drillActive = true;
         playSound("start");
         if (T.drill) clearInterval(T.drill);
         T.drill = setInterval(tickDrill, 1000);
@@ -1160,27 +1220,27 @@ function act(action, param) {
     }
 
     case "drill_next":
-      S.drillIdx++;
-      if (S.drillIdx >= S.drillChords.length) S.drillIdx = 0;
-      playChordByName(S.drillChords[S.drillIdx]);
+      state.drillIdx++;
+      if (state.drillIdx >= state.drillChords.length) state.drillIdx = 0;
+      playChordByName(state.drillChords[state.drillIdx]);
       checkReward("drill_chord");
       break;
 
     case "stop_drill":
       if (T.drill) { clearInterval(T.drill); T.drill = null; }
-      S.drillActive = false;
+      state.drillActive = false;
       break;
 
     // ── Daily ──
     case "start_daily": {
       var dt = DAILY_TYPES.find(function(d) { return d.id === param; });
       if (!dt) break;
-      S.dailyType = param;
-      S.dailyTimer = dt.dur;
-      S.dailyActive = true;
-      S.dailyScore = 0;
-      var dPool = chordsUpToLevel(S.level).map(function(c) { return c.short; });
-      S.chord = dPool[Math.floor(Math.random() * dPool.length)];
+      state.dailyType = param;
+      state.dailyTimer = dt.dur;
+      state.dailyActive = true;
+      state.dailyScore = 0;
+      var dPool = chordsUpToLevel(state.level).map(function(c) { return c.short; });
+      state.chord = dPool[Math.floor(Math.random() * dPool.length)];
       playSound("start");
       if (T.daily) clearInterval(T.daily);
       T.daily = setInterval(tickDaily, 1000);
@@ -1188,9 +1248,9 @@ function act(action, param) {
     }
 
     case "daily_action": {
-      S.dailyScore++;
-      var daPool = chordsUpToLevel(S.level).map(function(c) { return c.short; });
-      S.chord = daPool[Math.floor(Math.random() * daPool.length)];
+      state.dailyScore++;
+      var daPool = chordsUpToLevel(state.level).map(function(c) { return c.short; });
+      state.chord = daPool[Math.floor(Math.random() * daPool.length)];
       playSound("tick");
       checkReward("daily_action");
       break;
@@ -1198,21 +1258,21 @@ function act(action, param) {
 
     case "stop_daily":
       if (T.daily) { clearInterval(T.daily); T.daily = null; }
-      S.dailyActive = false;
+      state.dailyActive = false;
       break;
 
     // ── Quiz ──
     case "start_quiz":
-      S.quizQ = genQuiz();
-      S.quizAns = null;
+      state.quizQ = genQuiz();
+      state.quizAns = null;
       break;
 
     case "quiz_answer":
-      if (S.quizAns) break;
-      S.quizAns = param;
-      S.quizTotal = (S.quizTotal || 0) + 1;
-      if (param === S.quizQ.answer) {
-        S.quizCorrect++;
+      if (state.quizAns) break;
+      state.quizAns = param;
+      state.quizTotal = (state.quizTotal || 0) + 1;
+      if (param === state.quizQ.answer) {
+        state.quizCorrect++;
         addXP(10);
         playSound("complete");
         checkReward("quiz_correct");
@@ -1224,27 +1284,27 @@ function act(action, param) {
       break;
 
     case "next_quiz":
-      S.quizQ = genQuiz();
-      S.quizAns = null;
+      state.quizQ = genQuiz();
+      state.quizAns = null;
       break;
 
     // ── Ear training ──
     case "start_ear": {
-      var ePool = chordsUpToLevel(Math.min(S.level + 1, 8));
+      var ePool = chordsUpToLevel(Math.min(state.level + 1, 8));
       var ec = ePool[Math.floor(Math.random() * ePool.length)];
-      S.earChord = ec.short;
-      S.earRevealed = false;
+      state.earChord = ec.short;
+      state.earRevealed = false;
       playChord(ec);
       break;
     }
 
     case "ear_play":
-      if (S.earChord) playChordByName(S.earChord);
+      if (state.earChord) playChordByName(state.earChord);
       break;
 
     case "ear_guess":
-      S.earRevealed = true;
-      if (param === S.earChord) {
+      state.earRevealed = true;
+      if (param === state.earChord) {
         addXP(10);
         playSound("complete");
         checkReward("ear_correct");
@@ -1254,21 +1314,21 @@ function act(action, param) {
       break;
 
     case "next_ear": {
-      var nePool = chordsUpToLevel(Math.min(S.level + 1, 8));
+      var nePool = chordsUpToLevel(Math.min(state.level + 1, 8));
       var nec = nePool[Math.floor(Math.random() * nePool.length)];
-      S.earChord = nec.short;
-      S.earRevealed = false;
+      state.earChord = nec.short;
+      state.earRevealed = false;
       playChord(nec);
       break;
     }
 
     // ── Styles ──
     case "select_style":
-      S.styleIdx = parseInt(param);
+      state.styleIdx = parseInt(param);
       break;
 
     case "play_style": {
-      var ps = PLAY_STYLES[S.styleIdx];
+      var ps = PLAY_STYLES[state.styleIdx];
       if (!ps) break;
       var demoChord = findChord("C");
       if (demoChord) playChord(demoChord, ps.id);
@@ -1276,7 +1336,7 @@ function act(action, param) {
     }
 
     case "start_metronome":
-      startMetronome(S.adaptiveBpm || S.bpm);
+      startMetronome(state.adaptiveBpm || state.bpm);
       break;
 
     case "stop_metronome":
@@ -1285,20 +1345,20 @@ function act(action, param) {
 
     // ── Songs ──
     case "song_sort":
-      if (S.songSort === param) { S.songSortAsc = !S.songSortAsc; }
-      else { S.songSort = param; S.songSortAsc = true; }
+      if (state.songSort === param) { state.songSortAsc = !state.songSortAsc; }
+      else { state.songSort = param; state.songSortAsc = true; }
       break;
     case "song_filter":
-      S.songFilter = param || "";
+      state.songFilter = param || "";
       break;
     case "select_song":
-      S.songIdx = parseInt(param);
-      S.songChordIdx = 0;
-      S.songPlaying = false;
-      S.bpm = SONGS[parseInt(param)].bpm;
-      if (typeof window.openSongSessionRequest === "function" && SONGS[S.songIdx]) {
+      state.songIdx = parseInt(param);
+      state.songChordIdx = 0;
+      state.songPlaying = false;
+      state.bpm = SONGS[parseInt(param)].bpm;
+      if (typeof window.openSongSessionRequest === "function" && SONGS[state.songIdx]) {
         window.openSongSessionRequest({
-          songData: SONGS[S.songIdx],
+          songData: SONGS[state.songIdx],
           source: "builtin",
           songBeat: 0
         });
@@ -1306,37 +1366,37 @@ function act(action, param) {
       break;
 
     case "play_song":
-      if (S.songPlaying) {
-        S.songPlaying = false;
-        if (typeof window.syncSongRuntimeRequest === "function" && SONGS[S.songIdx]) {
+      if (state.songPlaying) {
+        state.songPlaying = false;
+        if (typeof window.syncSongRuntimeRequest === "function" && SONGS[state.songIdx]) {
           window.syncSongRuntimeRequest("pause", {
-            songData: SONGS[S.songIdx],
+            songData: SONGS[state.songIdx],
             source: "builtin",
-            songBeat: S.songChordIdx
+            songBeat: state.songChordIdx
           });
         }
         if (T.song) { clearInterval(T.song); T.song = null; }
         stopMetronome();
         if (typeof stopMidiBacking === "function") stopMidiBacking();
       } else {
-        S.songPlaying = true;
-        var song = SONGS[S.songIdx];
+        state.songPlaying = true;
+        var song = SONGS[state.songIdx];
         if (song) {
           if (typeof window.syncSongRuntimeRequest === "function") {
             window.syncSongRuntimeRequest("play", {
               songData: song,
               source: "builtin",
-              songBeat: S.songChordIdx
+              songBeat: state.songChordIdx
             });
           }
-          var interval = (60000 / S.bpm) * 2;
+          var interval = (60000 / state.bpm) * 2;
           playChordByName(song.progression[0], song.style || "block");
           T.song = setInterval(songTick, interval);
-          startMetronome(S.bpm);
+          startMetronome(state.bpm);
           // Play MIDI backing track if available
           if (song.midi && typeof loadMidiBacking === "function") {
             loadMidiBacking(song.midi).then(function() {
-              if (S.songPlaying) playMidiBacking(0, 1);
+              if (state.songPlaying) playMidiBacking(0, 1);
             }).catch(function() {});
           }
         }
@@ -1347,8 +1407,8 @@ function act(action, param) {
       if (typeof window.applySongNavigationRequest === "function") {
         window.applySongNavigationRequest("songs_home");
       }
-      S.songIdx = null;
-      S.songPlaying = false;
+      state.songIdx = null;
+      state.songPlaying = false;
       if (T.song) { clearInterval(T.song); T.song = null; }
       stopMetronome();
       break;
@@ -1356,13 +1416,13 @@ function act(action, param) {
     // ── Stems ──
     case "stemOpenFile":
       if (!window.electron) break;
-      S.stemError = null; render();
+      state.stemError = null; render();
       window.electron.stems.openFile().then(function(result) {
         if (!result) return;
-        S.stemFile = result; S.stemStatus = "idle"; render();
+        state.stemFile = result; state.stemStatus = "idle"; render();
         window.electron.stems.checkCache(result.filePath).then(function(cached) {
           if (cached) {
-            S.stemPaths = cached;
+            state.stemPaths = cached;
             _loadStemFileUrls(cached);
           } else {
             act("stemSeparate");
@@ -1371,55 +1431,55 @@ function act(action, param) {
       });
       break;
     case "stemSeparate":
-      if (!window.electron || !S.stemFile) break;
-      S.stemStatus = "separating"; S.stemProgress = 0; S.stemError = null; render();
+      if (!window.electron || !state.stemFile) break;
+      state.stemStatus = "separating"; state.stemProgress = 0; state.stemError = null; render();
       var removeProgress = window.electron.stems.onProgress(function(data) {
         var match = data.line.match(/(\d+)%/);
-        if (match) { S.stemProgress = parseInt(match[1]); render(); }
+        if (match) { state.stemProgress = parseInt(match[1]); render(); }
       });
-      window.electron.stems.separate(S.stemFile.filePath).then(function(result) {
+      window.electron.stems.separate(state.stemFile.filePath).then(function(result) {
         removeProgress();
-        S.stemPaths = result.stemPaths;
+        state.stemPaths = result.stemPaths;
         _loadStemFileUrls(result.stemPaths);
         render();
       }).catch(function(err) {
         removeProgress();
-        S.stemStatus = "error"; S.stemError = err.message; render();
+        state.stemStatus = "error"; state.stemError = err.message; render();
       });
       break;
     case "stemCancel":
       if (window.electron) window.electron.stems.cancel();
-      S.stemStatus = "idle"; S.stemProgress = 0; render();
+      state.stemStatus = "idle"; state.stemProgress = 0; render();
       break;
     case "stemOpen":
       if (typeof openStemPlayerRequest === "function") {
         openStemPlayerRequest();
       }
-      S.screen = SCR.STEM_PLAYER; render(); break;
+      state.screen = SCR.STEM_PLAYER; render(); break;
     case "stemBack":
       if (typeof closeStemPlayerRequest === "function") {
         closeStemPlayerRequest();
       }
-      cleanupStems(); S.screen = SCR.HOME; S.tab = TAB.SONGS; S._songTab = "stems"; render();
+      cleanupStems(); state.screen = SCR.HOME; state.tab = TAB.SONGS; state._songTab = "stems"; render();
       break;
     case "stemToggle":
-      S.stemToggles[param] = !S.stemToggles[param];
-      setStemMuted(param, !S.stemToggles[param]);
+      state.stemToggles[param] = !state.stemToggles[param];
+      setStemMuted(param, !state.stemToggles[param]);
       break;
     case "stemSolo":
-      for (var sk in S.stemToggles) S.stemToggles[sk] = (sk === param);
-      for (var sk in S.stemToggles) setStemMuted(sk, !S.stemToggles[sk]);
+      for (var sk in state.stemToggles) state.stemToggles[sk] = (sk === param);
+      for (var sk2 in state.stemToggles) setStemMuted(sk2, !state.stemToggles[sk2]);
       break;
     case "stemAll":
-      for (var sk in S.stemToggles) { S.stemToggles[sk] = true; setStemMuted(sk, false); }
+      for (var sk3 in state.stemToggles) { state.stemToggles[sk3] = true; setStemMuted(sk3, false); }
       break;
     case "stemPlay":
-      if (S.stemPlaying) pauseStems(); else playStems();
+      if (state.stemPlaying) pauseStems(); else playStems();
       break;
     case "stemSeek":
       seekStems(parseFloat(param)); break;
     case "stemVolume":
-      S.stemVolume = parseFloat(param); setStemVolume(S.stemVolume); break;
+      state.stemVolume = parseFloat(param); setStemVolume(state.stemVolume); break;
 
     // ── Practice Plan ──
     case "openPlan":
@@ -1428,7 +1488,7 @@ function act(action, param) {
       } else if (typeof openDashboardPracticePlanRequest === "function") {
         openDashboardPracticePlanRequest();
       }
-      S.screen = SCR.PLAN; break;
+      state.screen = SCR.PLAN; break;
     case "completePlan":
       completePracticePlan(); break;
     case "regeneratePlan":
@@ -1445,7 +1505,7 @@ function act(action, param) {
             songId: normalizeSongId(song),
             songTitle: song.title || null,
             arrangementType: "block_chords",
-            difficultyId: S.performDifficulty || "normal"
+            difficultyId: state.performDifficulty || "normal"
           });
           if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
             var coreView = window.sparkCore.getActiveSessionView();
@@ -1460,17 +1520,17 @@ function act(action, param) {
             songIndex: idx,
             songId: normalizeSongId(song),
             arrangementType: "block_chords",
-            difficultyId: S.performDifficulty || "normal"
+            difficultyId: state.performDifficulty || "normal"
           });
           if (corePlan && corePlan.context && corePlan.context.performanceSong) {
             syncPianoPerformanceSongFromCore(corePlan);
             break;
           }
         }
-        S.performSongData = song;
-        S.performSongId = normalizeSongId(song);
-        S.performArrangementType = "block_chords";
-        S.screen = SCR.PERFORM_SONG;
+        state.performSongData = song;
+        state.performSongId = normalizeSongId(song);
+        state.performArrangementType = "block_chords";
+        state.screen = SCR.PERFORM_SONG;
       }
       break;
     }
@@ -1478,16 +1538,16 @@ function act(action, param) {
       applyPerformanceDifficultyToState(param || "normal");
       if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
         window.sparkCore.syncPerformanceRuntimeState("configure", {
-          difficulty: S.performDifficulty
+          difficulty: state.performDifficulty
         });
       }
       saveState();
       break;
     case "performArrangement":
-      S.performArrangementType = param || "block_chords";
+      state.performArrangementType = param || "block_chords";
       if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
         window.sparkCore.syncPerformanceRuntimeState("configure", {
-          arrangementType: S.performArrangementType
+          arrangementType: state.performArrangementType
         });
       }
       saveState();
@@ -1497,12 +1557,12 @@ function act(action, param) {
       var importSongId=param;
       window.electron.stems.openFile().then(function(result){
         if(!result)return;
-        S.songAudioImporting=true;
-        S.songAudioProgress=0;
+        state.songAudioImporting=true;
+        state.songAudioProgress=0;
         render();
 
         var unsubProgress=window.electron.stems.onProgress(function(data){
-          if(data&&data.progress!=null){S.songAudioProgress=Math.round(data.progress);render();}
+          if(data&&data.progress!=null){state.songAudioProgress=Math.round(data.progress);render();}
         });
 
         window.electron.stems.checkCache(result.filePath).then(function(cached){
@@ -1510,19 +1570,19 @@ function act(action, param) {
           return window.electron.stems.separate(result.filePath);
         }).then(function(stemPaths){
           unsubProgress();
-          if(!stemPaths){S.songAudioImporting=false;render();return;}
+          if(!stemPaths){state.songAudioImporting=false;render();return;}
           var stemNames=Object.keys(stemPaths);
           var urlMap={};
           function loadNext(idx){
             if(idx>=stemNames.length){
-              S.songAudioData[importSongId]={
+              state.songAudioData[importSongId]={
                 mp3Path:result.filePath,
                 detectedBpm:null,
                 stemPaths:stemPaths,
                 stemUrls:urlMap,
                 importedAt:new Date().toISOString()
               };
-              S.songAudioImporting=false;
+              state.songAudioImporting=false;
               saveState();render();
               return;
             }
@@ -1534,36 +1594,36 @@ function act(action, param) {
           loadNext(0);
         }).catch(function(err){
           unsubProgress();
-          S.songAudioImporting=false;
+          state.songAudioImporting=false;
           alert("Stem separation failed: "+(err.message||err));
           render();
         });
       });
       break;
     case "removeSongAudio":
-      delete S.songAudioData[param];
+      delete state.songAudioData[param];
       saveState();render();
       break;
     case "performStart": {
-      var chart = buildPerformanceChartFromSong(S.performSongData, "builtin", S.performArrangementType);
+      var chart = buildPerformanceChartFromSong(state.performSongData, "builtin", state.performArrangementType);
       var startRequest = typeof window.startSelectedPerformanceSongRequest === "function"
         ? window.startSelectedPerformanceSongRequest({
             chart: chart,
             chartId: chart && chart.id ? chart.id : null,
-            songTitle: S.performSongData && S.performSongData.title ? S.performSongData.title : null,
-            difficulty: S.performDifficulty,
-            arrangementType: S.performArrangementType,
-            speed: S.performSpeed || 1,
-            preset: S.performPracticePreset || null,
-            mode: S.performMode || "midi",
-            countIn: !!S.performCountIn
+            songTitle: state.performSongData && state.performSongData.title ? state.performSongData.title : null,
+            difficulty: state.performDifficulty,
+            arrangementType: state.performArrangementType,
+            speed: state.performSpeed || 1,
+            preset: state.performPracticePreset || null,
+            mode: state.performMode || "midi",
+            countIn: !!state.performCountIn
           })
         : null;
       startPerformance(chart, {
-        difficulty:startRequest && startRequest.difficulty ? startRequest.difficulty : S.performDifficulty,
-        speed:startRequest && startRequest.speed ? startRequest.speed : (S.performSpeed || 1),
-        preset:startRequest ? startRequest.preset : (S.performPracticePreset || null),
-        mode:startRequest && startRequest.mode ? startRequest.mode : (S.performMode || "midi")
+        difficulty:startRequest && startRequest.difficulty ? startRequest.difficulty : state.performDifficulty,
+        speed:startRequest && startRequest.speed ? startRequest.speed : (state.performSpeed || 1),
+        preset:startRequest ? startRequest.preset : (state.performPracticePreset || null),
+        mode:startRequest && startRequest.mode ? startRequest.mode : (state.performMode || "midi")
       });
       return;
     }
@@ -1574,24 +1634,24 @@ function act(action, param) {
       resumePerformance();
       return;
     case "performRetry":
-      if(S.performSongData){
-        var chart = buildPerformanceChartFromSong(S.performSongData, "builtin", S.performArrangementType);
+      if(state.performSongData){
+        var chart = buildPerformanceChartFromSong(state.performSongData, "builtin", state.performArrangementType);
         var retryRequest = typeof window.getPerformanceRetryRequest === "function"
           ? window.getPerformanceRetryRequest({
               chart: chart,
               chartId: chart && chart.id ? chart.id : null,
-              difficulty: S.performDifficulty,
-              arrangementType: S.performArrangementType,
-              speed: S.performSpeed || 1,
-              mode: S.performMode || "midi",
-              preset: S.performPracticePreset || null
+              difficulty: state.performDifficulty,
+              arrangementType: state.performArrangementType,
+              speed: state.performSpeed || 1,
+              mode: state.performMode || "midi",
+              preset: state.performPracticePreset || null
             })
           : null;
         startPerformance(chart, {
-          difficulty:retryRequest && retryRequest.difficulty ? retryRequest.difficulty : S.performDifficulty,
-          speed:retryRequest && retryRequest.speed ? retryRequest.speed : (S.performSpeed || 1),
-          preset:retryRequest ? retryRequest.preset : (S.performPracticePreset || null),
-          mode:retryRequest && retryRequest.mode ? retryRequest.mode : (S.performMode || "midi")
+          difficulty:retryRequest && retryRequest.difficulty ? retryRequest.difficulty : state.performDifficulty,
+          speed:retryRequest && retryRequest.speed ? retryRequest.speed : (state.performSpeed || 1),
+          preset:retryRequest ? retryRequest.preset : (state.performPracticePreset || null),
+          mode:retryRequest && retryRequest.mode ? retryRequest.mode : (state.performMode || "midi")
         });
       }
       return;
@@ -1600,108 +1660,108 @@ function act(action, param) {
       if (typeof window.applyPerformanceNavigationRequest === "function") {
         window.applyPerformanceNavigationRequest("songs_home");
       }
-      S.screen = SCR.HOME;
-      S.tab = TAB.SONGS;
+      state.screen = SCR.HOME;
+      state.tab = TAB.SONGS;
       render();
       return;
 
     // ── Rhythm ──
     case "start_rhythm":
-      S.rhythmActive = true;
-      S.rhythmScore = 0;
-      S.rhythmCombo = 0;
-      S.rhythmBeat = 0;
-      S._rhythmStart = performance.now();
-      S._rhythmInterval = 60000 / S.bpm;
+      state.rhythmActive = true;
+      state.rhythmScore = 0;
+      state.rhythmCombo = 0;
+      state.rhythmBeat = 0;
+      state._rhythmStart = performance.now();
+      state._rhythmInterval = 60000 / state.bpm;
       if (T.rhythm) clearInterval(T.rhythm);
-      T.rhythm = setInterval(rhythmTick, S._rhythmInterval);
-      startMetronome(S.bpm);
+      T.rhythm = setInterval(rhythmTick, state._rhythmInterval);
+      startMetronome(state.bpm);
       break;
 
     case "rhythm_hit": {
-      var elapsed = performance.now() - S._rhythmStart;
-      var beatInterval = S._rhythmInterval;
+      var elapsed = performance.now() - state._rhythmStart;
+      var beatInterval = state._rhythmInterval;
       var beatPhase = (elapsed % beatInterval) / beatInterval;
       var accuracy = Math.min(beatPhase, 1 - beatPhase);
       if (accuracy < 0.15) {
-        S.rhythmScore += 10 * (S.rhythmCombo + 1);
-        S.rhythmCombo++;
+        state.rhythmScore += 10 * (state.rhythmCombo + 1);
+        state.rhythmCombo++;
         playSound("tick");
       } else if (accuracy < 0.3) {
-        S.rhythmScore += 5;
-        S.rhythmCombo = 0;
+        state.rhythmScore += 5;
+        state.rhythmCombo = 0;
       } else {
-        S.rhythmCombo = 0;
+        state.rhythmCombo = 0;
         playSound("wrong");
       }
       break;
     }
 
     case "stop_rhythm":
-      S.rhythmActive = false;
+      state.rhythmActive = false;
       if (T.rhythm) { clearInterval(T.rhythm); T.rhythm = null; }
       stopMetronome();
-      addXP(Math.floor(S.rhythmScore / 10));
-      addHistory("rhythm", { score: S.rhythmScore });
+      addXP(Math.floor(state.rhythmScore / 10));
+      addHistory("rhythm", { score: state.rhythmScore });
       break;
 
     // ── Runner ──
     case "start_runner":
-      S.runnerActive = true;
-      S.runnerScore = 0;
+      state.runnerActive = true;
+      state.runnerScore = 0;
       spawnRunnerTarget();
       if (T.runner) clearInterval(T.runner);
       T.runner = setInterval(function() {
-        S.runnerScore = Math.max(0, S.runnerScore - 1);
+        state.runnerScore = Math.max(0, state.runnerScore - 1);
         spawnRunnerTarget();
         render();
       }, 4000);
       break;
 
     case "runner_pick":
-      if (param === S.runnerTarget) {
-        S.runnerScore += 10;
+      if (param === state.runnerTarget) {
+        state.runnerScore += 10;
         playSound("tick");
         addXP(2);
         checkReward("runner_correct");
       } else {
-        S.runnerScore = Math.max(0, S.runnerScore - 5);
+        state.runnerScore = Math.max(0, state.runnerScore - 5);
         playSound("wrong");
       }
       spawnRunnerTarget();
       break;
 
     case "stop_runner":
-      S.runnerActive = false;
+      state.runnerActive = false;
       if (T.runner) { clearInterval(T.runner); T.runner = null; }
-      addHistory("runner", { score: S.runnerScore });
+      addHistory("runner", { score: state.runnerScore });
       break;
 
     // ── Build ──
     case "build_add":
-      S.buildChords.push(param);
+      state.buildChords.push(param);
       break;
 
     case "build_remove":
-      S.buildChords.splice(parseInt(param), 1);
+      state.buildChords.splice(parseInt(param), 1);
       break;
 
     case "build_clear":
-      S.buildChords = [];
-      S.buildPlaying = false;
+      state.buildChords = [];
+      state.buildPlaying = false;
       if (T.build) { clearInterval(T.build); T.build = null; }
       break;
 
     case "build_play":
-      if (S.buildPlaying) {
-        S.buildPlaying = false;
+      if (state.buildPlaying) {
+        state.buildPlaying = false;
         if (T.build) { clearInterval(T.build); T.build = null; }
         buildIdx = 0;
       } else {
-        S.buildPlaying = true;
+        state.buildPlaying = true;
         buildIdx = 0;
         buildTick();
-        T.build = setInterval(buildTick, (60000 / S.bpm) * 2);
+        T.build = setInterval(buildTick, (60000 / state.bpm) * 2);
       }
       break;
 
@@ -1719,19 +1779,19 @@ function act(action, param) {
         break;
       }
       if (invalid.length) showToast("Skipped unknown: " + invalid.join(", "));
-      S.customSets.push({ name: name.trim().slice(0, 50), chords: valid });
+      state.customSets.push({ name: name.trim().slice(0, 50), chords: valid });
       saveState();
       break;
     }
 
     case "del_custom":
-      S.customSets.splice(parseInt(param), 1);
+      state.customSets.splice(parseInt(param), 1);
       saveState();
       break;
 
     // ── Settings ──
     case "set_bpm":
-      S.bpm = Math.max(40, Math.min(200, parseInt(param) || 72));
+      state.bpm = Math.max(40, Math.min(200, parseInt(param) || 72));
       break;
 
     case "set_volume":
@@ -1744,22 +1804,22 @@ function act(action, param) {
       break;
 
     case "set_tone":
-      S.tone = param;
+      state.tone = param;
       saveState();
       break;
 
     case "set_metronome_sound":
-      S.metronomeSound = param; // "sine" | "woodblock" | "clap" | "hihat"
+      state.metronomeSound = param; // "sine" | "woodblock" | "clap" | "hihat"
       saveState();
       break;
 
     case "set_a4_tuning":
-      S.a4Tuning = Math.max(432, Math.min(446, parseInt(param)));
+      state.a4Tuning = Math.max(432, Math.min(446, parseInt(param)));
       saveState();
       break;
 
     case "set_goal":
-      S.dailyGoal = parseInt(param);
+      state.dailyGoal = parseInt(param);
       saveState();
       break;
 
@@ -1773,12 +1833,12 @@ function act(action, param) {
 
     // ── Finger exercises ──
     case "complete_warmup":
-      S.fingerWarmUpDone = true;
+      state.fingerWarmUpDone = true;
       completeFingerExercise(param || "P-OFF-1");
       break;
 
     case "skip_warmup":
-      S.fingerWarmUpDone = true;
+      state.fingerWarmUpDone = true;
       break;
 
     case "complete_finger_exercise":
@@ -1788,10 +1848,10 @@ function act(action, param) {
     case "start_chord_change": {
       var parts = param.split(",");
       if (parts.length !== 2) break;
-      S.chordChangePair = parts;
-      S.chordChangeCount = 0;
-      S.chordChangeTimer = 60;
-      S.chordChangeActive = true;
+      state.chordChangePair = parts;
+      state.chordChangeCount = 0;
+      state.chordChangeTimer = 60;
+      state.chordChangeActive = true;
       playSound("start");
       if (T.chordChange) clearInterval(T.chordChange);
       T.chordChange = setInterval(tickChordChange, 1000);
@@ -1799,8 +1859,8 @@ function act(action, param) {
     }
 
     case "chord_change_tap":
-      if (!S.chordChangeActive) break;
-      S.chordChangeCount++;
+      if (!state.chordChangeActive) break;
+      state.chordChangeCount++;
       playSound("tick");
       break;
 
@@ -1810,7 +1870,7 @@ function act(action, param) {
 
     // ── MIDI Device/Profile actions ──
     case "setMidiDevice":
-      S.activeMidiDeviceId = param;
+      state.activeMidiDeviceId = param;
       if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       saveState();
       break;
@@ -1835,7 +1895,7 @@ function act(action, param) {
         openUtilityScreenRequest("midi_settings");
       }
       if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
-      S.screen = SCR.MIDI_SETTINGS;
+      state.screen = SCR.MIDI_SETTINGS;
       break;
 
     case "openMidiImport":
@@ -1843,7 +1903,7 @@ function act(action, param) {
         openUtilityScreenRequest("midi_import");
       }
       if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest();
-      S.screen = SCR.MIDI_IMPORT;
+      state.screen = SCR.MIDI_IMPORT;
       break;
 
     // ── MIDI Import actions ──
@@ -1860,9 +1920,9 @@ function act(action, param) {
 
     case "buildMidiSeedChart": {
       var seedChart = typeof buildSeedChartFromImportedMidi === "function"
-        ? buildSeedChartFromImportedMidi(S.importedMidi, S.importedMidiAssignments, param)
+        ? buildSeedChartFromImportedMidi(state.importedMidi, state.importedMidiAssignments, param)
         : null;
-      S.importedMidiSeedPreview = seedChart;
+      state.importedMidiSeedPreview = seedChart;
       if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest({ seedMode: param, seedChart: seedChart });
       if(seedChart && typeof openEditor === "function"){
         openEditor("chart", seedChart);
@@ -1899,7 +1959,7 @@ function act(action, param) {
         openUtilityScreenRequest("cloud_settings");
       }
       if (typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("open");
-      S.screen = SCR.CLOUD_SETTINGS;
+      state.screen = SCR.CLOUD_SETTINGS;
       break;
 
     case "openCurriculum":
@@ -1909,7 +1969,7 @@ function act(action, param) {
       if (typeof syncCurriculumStateRequest === "function") {
         syncCurriculumStateRequest();
       }
-      S.screen = SCR.CURRICULUM;
+      state.screen = SCR.CURRICULUM;
       break;
 
     // ── Desktop / Release actions ──
@@ -1930,7 +1990,7 @@ function act(action, param) {
       if (typeof openDashboardSectionRequest === "function") {
         openDashboardSectionRequest("recommendations");
       }
-      S.screen = SCR.RECOMMENDATIONS;
+      state.screen = SCR.RECOMMENDATIONS;
       break;
     case "launchRecommendation":
       if(typeof launchRecommendationById === "function") launchRecommendationById(param);
@@ -1941,7 +2001,7 @@ function act(action, param) {
       if (typeof openDashboardSectionRequest === "function") {
         openDashboardSectionRequest("career");
       }
-      S.screen = SCR.CAREER;
+      state.screen = SCR.CAREER;
       break;
     case "openCareerSong":
       if(typeof getCareerItem === "function"){
@@ -1951,16 +2011,16 @@ function act(action, param) {
             songId: param,
             songData: cSong,
             songTitle: cSong.title || null,
-            arrangementType: S.performArrangementType || "block_chords",
-            difficultyId: S.performDifficulty || "normal"
+            arrangementType: state.performArrangementType || "block_chords",
+            difficultyId: state.performDifficulty || "normal"
           });
         }
         if(cSong){
-          S.performSongData = cSong;
-          S.performSongId = param;
+          state.performSongData = cSong;
+          state.performSongId = param;
         }
       }
-      S.screen = SCR.PERFORM_SONG;
+      state.screen = SCR.PERFORM_SONG;
       break;
 
     // ── Insights ──
@@ -1968,7 +2028,7 @@ function act(action, param) {
       if (typeof openDashboardSectionRequest === "function") {
         openDashboardSectionRequest("insights");
       }
-      S.screen = SCR.INSIGHTS;
+      state.screen = SCR.INSIGHTS;
       break;
 
     // ── Challenge hub ──
@@ -1976,7 +2036,7 @@ function act(action, param) {
       if (typeof openDashboardSectionRequest === "function") {
         openDashboardSectionRequest("challenges");
       }
-      S.screen = SCR.CHALLENGES;
+      state.screen = SCR.CHALLENGES;
       break;
     case "claimChallengeReward":
       if(typeof claimChallengeReward === "function") claimChallengeReward(param);
@@ -1991,16 +2051,16 @@ function act(action, param) {
       if (typeof openDashboardSectionRequest === "function") {
         openDashboardSectionRequest("home_dash");
       }
-      S.screen = SCR.HOME_DASH;
+      state.screen = SCR.HOME_DASH;
       break;
     case "refreshHome":
       if(typeof generateRecommendations === "function") generateRecommendations();
       if(typeof generatePersonalInsights === "function") generatePersonalInsights();
       if (typeof refreshDashboardSnapshotRequest === "function") {
         refreshDashboardSnapshotRequest({
-          recommendations: S.recommendations || [],
-          insights: S.personalInsights || null,
-          challenges: S.activeChallenges || [],
+          recommendations: state.recommendations || [],
+          insights: state.personalInsights || null,
+          challenges: state.activeChallenges || [],
           refreshedAt: Date.now()
         });
       }
@@ -2009,9 +2069,9 @@ function act(action, param) {
       if(typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();
       if (typeof initializeDashboardChallengesRequest === "function") {
         initializeDashboardChallengesRequest({
-          recommendations: S.recommendations || [],
-          insights: S.personalInsights || null,
-          challenges: S.activeChallenges || [],
+          recommendations: state.recommendations || [],
+          insights: state.personalInsights || null,
+          challenges: state.activeChallenges || [],
           refreshedAt: Date.now()
         });
       }
@@ -2019,7 +2079,7 @@ function act(action, param) {
 
     // ── Practice plan ──
     case "openPracticePlan":
-      S.screen = SCR.PLAN;
+      state.screen = SCR.PLAN;
       break;
 
     // ── Onboarding flow ──
@@ -2035,7 +2095,7 @@ function act(action, param) {
       if (typeof openUtilityScreenRequest === "function") {
         openUtilityScreenRequest("settings");
       }
-      S.screen = SCR.SETTINGS;
+      state.screen = SCR.SETTINGS;
       break;
 
     default:
@@ -2052,10 +2112,12 @@ function act(action, param) {
 function render() {
   var root = document.getElementById("app");
   if (!root) return;
+  var state = pianoAppState();
+  if (!state) return;
 
   // Onboarding check
-  if (!S.onboardingComplete) {
-    if (S._inPlacement) {
+  if (!state.onboardingComplete) {
+    if (state._inPlacement) {
       root.innerHTML = placementTestPage();
     } else {
       root.innerHTML = (typeof pianoOnboardingPage === "function" ? pianoOnboardingPage() : "");
@@ -2064,111 +2126,111 @@ function render() {
   }
 
   // Session screen
-  if (S.screen === SCR.SESSION && S.sessionPlan) {
+  if (state.screen === SCR.SESSION && state.sessionPlan) {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoSessionPage === "function" ? pianoSessionPage() : "");
     return;
   }
 
   // Stem player screen
-  if (S.screen === SCR.STEM_PLAYER) {
+  if (state.screen === SCR.STEM_PLAYER) {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoStemsPlayerPage === "function" ? pianoStemsPlayerPage() : "");
     return;
   }
 
   // Practice plan screen
-  if (S.screen === SCR.PLAN) {
+  if (state.screen === SCR.PLAN) {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPlanPage === "function" ? pianoPlanPage() : "");
     return;
   }
 
   // MIDI settings screen
-  if (S.screen === SCR.MIDI_SETTINGS && typeof midiSettingsPage === "function") {
+  if (state.screen === SCR.MIDI_SETTINGS && typeof midiSettingsPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiSettingsPage();
     return;
   }
 
   // MIDI import screen
-  if (S.screen === SCR.MIDI_IMPORT && typeof midiImportPage === "function") {
+  if (state.screen === SCR.MIDI_IMPORT && typeof midiImportPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiImportPage();
     return;
   }
 
   // Cloud settings screen
-  if (S.screen === SCR.CLOUD_SETTINGS && typeof cloudSettingsPage === "function") {
+  if (state.screen === SCR.CLOUD_SETTINGS && typeof cloudSettingsPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + cloudSettingsPage();
     return;
   }
 
   // Curriculum screen
-  if (S.screen === SCR.CURRICULUM && typeof curriculumPage === "function") {
+  if (state.screen === SCR.CURRICULUM && typeof curriculumPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + curriculumPage();
     return;
   }
 
   // Performance mode screens
-  if (S.screen === SCR.PERFORM_SONG) {
+  if (state.screen === SCR.PERFORM_SONG) {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformSongPage === "function" ? pianoPerformSongPage() : "");
     return;
   }
-  if (S.screen === SCR.PERFORM) {
+  if (state.screen === SCR.PERFORM) {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformPage === "function" ? pianoPerformPage() : "");
     return;
   }
-  if (S.screen === SCR.PERFORM_DONE) {
+  if (state.screen === SCR.PERFORM_DONE) {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformDonePage === "function" ? pianoPerformDonePage() : "");
     return;
   }
 
   // Calibration screen
-  if (S.screen === SCR.CALIBRATION && typeof calibrationPage === "function") {
+  if (state.screen === SCR.CALIBRATION && typeof calibrationPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<div style="padding:8px"><button class="btn" onclick="act(\'go_home\')">Back</button></div>' + calibrationPage();
     return;
   }
 
   // Onboarding flow screen (new)
-  if (S.screen === SCR.ONBOARDING_FLOW && typeof onboardingFlowPage === "function") {
+  if (state.screen === SCR.ONBOARDING_FLOW && typeof onboardingFlowPage === "function") {
     root.innerHTML = onboardingFlowPage();
     return;
   }
 
   // Home dashboard screen
-  if (S.screen === SCR.HOME_DASH && typeof homeDashboardPage === "function") {
+  if (state.screen === SCR.HOME_DASH && typeof homeDashboardPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + homeDashboardPage();
     return;
   }
 
   // Recommendations screen
-  if (S.screen === SCR.RECOMMENDATIONS && typeof recommendationsPage === "function") {
+  if (state.screen === SCR.RECOMMENDATIONS && typeof recommendationsPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + recommendationsPage();
     return;
   }
 
   // Career mode screen
-  if (S.screen === SCR.CAREER && typeof careerPage === "function") {
+  if (state.screen === SCR.CAREER && typeof careerPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + careerPage();
     return;
   }
 
   // Insights dashboard screen
-  if (S.screen === SCR.INSIGHTS && typeof insightsDashboardPage === "function") {
+  if (state.screen === SCR.INSIGHTS && typeof insightsDashboardPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + insightsDashboardPage();
     return;
   }
 
   // Challenge hub screen
-  if (S.screen === SCR.CHALLENGES && typeof challengeHubPage === "function") {
+  if (state.screen === SCR.CHALLENGES && typeof challengeHubPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + challengeHubPage();
     return;
   }
 
   // Settings screen
-  if (S.screen === SCR.SETTINGS && typeof settingsPage === "function") {
+  if (state.screen === SCR.SETTINGS && typeof settingsPage === "function") {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + settingsPage();
     return;
   }
 
   // Legacy active session
-  if (S.active && S.chord) {
+  if (state.active && state.chord) {
     root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "") + legacySessionHTML();
     return;
   }
@@ -2176,7 +2238,7 @@ function render() {
   // Home screen with tabs
   var html = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "");
   html += '<main class="tab-content">';
-  switch (S.tab) {
+  switch (state.tab) {
     case TAB.PRACTICE: html += typeof pianoPracticeTab === "function" ? pianoPracticeTab() : ""; break;
     case TAB.GAMES:    html += typeof pianoGamesTab === "function" ? pianoGamesTab() : ""; break;
     case TAB.SONGS:    html += typeof pianoSongsTab === "function" ? pianoSongsTab() : ""; break;
@@ -2197,19 +2259,21 @@ window.fireMicro = typeof fireMicro !== "undefined" ? fireMicro : window.fireMic
 // ── Keyboard shortcuts ──
 document.addEventListener("keydown", function(e) {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+  var state = pianoAppState();
+  if (!state) return;
 
   switch (e.key) {
     case " ":
       e.preventDefault();
       // In perform mode: spacebar = simulate note hit for testing
-      if (S.screen === SCR.PERFORM && S.performPlaying && S.performChart && !S.performPaused) {
+      if (state.screen === SCR.PERFORM && state.performPlaying && state.performChart && !state.performPaused) {
         var nowSec = PerformanceTransport.now();
-        var chart = S.performChart;
+        var chart = state.performChart;
         for (var si = 0; si < chart.events.length; si++) {
           var evt = chart.events[si];
           if (evt._scored) continue;
           var delta = Math.abs(nowSec - evt.t) * 1000;
-          if (delta < (S.performWindowMissMs || 220)) {
+          if (delta < (state.performWindowMissMs || 220)) {
             // Inject the exact target data the scorer expects
             if (evt.target && Array.isArray(evt.target.midi) && evt.target.midi.length) {
               // Block chord: scorer checks heldMidiNotes
@@ -2233,21 +2297,21 @@ document.addEventListener("keydown", function(e) {
         }
         break;
       }
-      if (S.active || S.screen === SCR.SESSION) act("pause");
+      if (state.active || state.screen === SCR.SESSION) act("pause");
       break;
     case "ArrowLeft":
-      S.bpm = Math.max(40, S.bpm - 5);
-      S.adaptiveBpm = Math.max(40, S.adaptiveBpm - 5);
+      state.bpm = Math.max(40, state.bpm - 5);
+      state.adaptiveBpm = Math.max(40, state.adaptiveBpm - 5);
       saveState(); render();
       break;
     case "ArrowRight":
-      S.bpm = Math.min(200, S.bpm + 5);
-      S.adaptiveBpm = Math.min(200, S.adaptiveBpm + 5);
+      state.bpm = Math.min(200, state.bpm + 5);
+      state.adaptiveBpm = Math.min(200, state.adaptiveBpm + 5);
       saveState(); render();
       break;
     case "m": case "M":
       if (metronomeInterval) stopMetronome();
-      else startMetronome(S.adaptiveBpm || S.bpm);
+      else startMetronome(state.adaptiveBpm || state.bpm);
       break;
     case "d": case "D":
       act("toggle_dark");

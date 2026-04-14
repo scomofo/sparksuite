@@ -1,13 +1,54 @@
 (function(){
 
+  function getDesktopBridgeRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function desktopBridgeRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = getDesktopBridgeRoot();
+    if (!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function desktopBridgeWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = getDesktopBridgeRoot();
+    if (!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if (parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   function isDesktopBuild() {
     return typeof window.sparkDesktop !== 'undefined';
   }
 
   async function exportEditorObjectDesktopAware() {
-    if (!S.performEditorChart) return false;
+    var chart = desktopBridgeRead("performEditorChart", null);
+    if (!chart) return false;
     if (isDesktopBuild()) {
-      var result = await window.sparkDesktop.saveJson(S.performEditorChart);
+      var result = await window.sparkDesktop.saveJson(chart);
       return !!(result && result.ok);
     }
     // Fall back to browser export if available
@@ -24,19 +65,19 @@
 
   async function checkForDesktopUpdates(){
     if(!isDesktopBuild() || !window.sparkDesktop.checkForUpdates) return false;
-    S.desktopInfo.updateStatus = "checking";
+    desktopBridgeWrite(["desktopInfo", "updateStatus"], "checking");
     if(typeof render === "function") render();
     var result = await window.sparkDesktop.checkForUpdates();
     if(!result || !result.ok){
-      S.desktopInfo.updateStatus = "error";
+      desktopBridgeWrite(["desktopInfo", "updateStatus"], "error");
       saveState();
       return false;
     }
-    S.desktopInfo.lastUpdateCheckAt = Date.now();
-    S.desktopInfo.updateStatus = result.updateAvailable ? "available" : "none";
-    S.desktopInfo.version = result.currentVersion || S.desktopInfo.version;
-    S.desktopInfo.latestVersion = result.latestVersion || null;
-    S.desktopInfo.updateNotes = result.notes || "";
+    desktopBridgeWrite(["desktopInfo", "lastUpdateCheckAt"], Date.now());
+    desktopBridgeWrite(["desktopInfo", "updateStatus"], result.updateAvailable ? "available" : "none");
+    desktopBridgeWrite(["desktopInfo", "version"], result.currentVersion || desktopBridgeRead(["desktopInfo", "version"], null));
+    desktopBridgeWrite(["desktopInfo", "latestVersion"], result.latestVersion || null);
+    desktopBridgeWrite(["desktopInfo", "updateNotes"], result.notes || "");
     saveState();
     if(typeof render === "function") render();
     return true;
@@ -45,9 +86,9 @@
   function buildFullLocalBackup(){
     return {
       exportedAt: Date.now(),
-      app: (S.releaseInfo && S.releaseInfo.appId) || "chordspark",
-      version: (S.releaseInfo && S.releaseInfo.version) || "dev",
-      state: S
+      app: desktopBridgeRead(["releaseInfo", "appId"], "chordspark") || "chordspark",
+      version: desktopBridgeRead(["releaseInfo", "version"], "dev") || "dev",
+      state: getDesktopBridgeRoot()
     };
   }
 
@@ -56,7 +97,7 @@
     if(isDesktopBuild()){
       var result = await window.sparkDesktop.saveJson(payload);
       if(result && result.ok){
-        S.desktopInfo.lastBackupAt = Date.now();
+        desktopBridgeWrite(["desktopInfo", "lastBackupAt"], Date.now());
         saveState();
         return true;
       }

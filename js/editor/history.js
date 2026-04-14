@@ -1,89 +1,159 @@
 (function(){
+  function editorHistoryRoot(){
+    if(typeof window !== "undefined" && typeof window.editorStateRead === "function" && typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sharedRoot = SparkState.getRoot();
+      if(sharedRoot) return sharedRoot;
+    }
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorHistoryRead(path, fallback){
+    if(typeof window !== "undefined" && typeof window.editorStateRead === "function"){
+      return window.editorStateRead(path, fallback);
+    }
+    var root = editorHistoryRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    if(!cursor) return fallback;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function editorHistoryWrite(path, value){
+    if(typeof window !== "undefined" && typeof window.editorStateWrite === "function"){
+      return window.editorStateWrite(path, value);
+    }
+    var root = editorHistoryRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    if(!cursor || !parts.length) return value;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function editorHistoryEnsureArray(path){
+    var current = editorHistoryRead(path, null);
+    if(!Array.isArray(current)){
+      current = [];
+      editorHistoryWrite(path, current);
+    }
+    return current;
+  }
+
   function beginEditorTransaction(label){
-    if(!S.editorObject) return false;
-    if(S.editorTransaction) return true;
-    S.editorTransaction = {
+    if(!editorHistoryRead("editorObject", null)) return false;
+    if(editorHistoryRead("editorTransaction", null)) return true;
+    editorHistoryWrite("editorTransaction", {
       label: label || "Edit",
       before: createEditorHistoryEntry(label || "Edit")
-    };
+    });
     return true;
   }
 
   function commitEditorTransaction(label){
-    if(!S.editorObject) return false;
-    var entry = createEditorHistoryEntry(label || (S.editorTransaction && S.editorTransaction.label) || "Edit");
-    if(S.editorTransaction && sameEditorHistoryState(S.editorTransaction.before, entry)){
-      S.editorTransaction = null;
+    var editorTransaction = editorHistoryRead("editorTransaction", null);
+    var editorObject = editorHistoryRead("editorObject", null);
+    if(!editorObject) return false;
+    var entry = createEditorHistoryEntry(label || (editorTransaction && editorTransaction.label) || "Edit");
+    if(editorTransaction && sameEditorHistoryState(editorTransaction.before, entry)){
+      editorHistoryWrite("editorTransaction", null);
       return false;
     }
-    pushUndoEntry(S.editorTransaction ? S.editorTransaction.before : entry);
-    S.editorRedoStack = [];
-    S.editorTransaction = null;
-    S.editorLastCommittedHash = hashEditorObjectState(S.editorObject);
+    pushUndoEntry(editorTransaction ? editorTransaction.before : entry);
+    editorHistoryWrite("editorRedoStack", []);
+    editorHistoryWrite("editorTransaction", null);
+    editorHistoryWrite("editorLastCommittedHash", hashEditorObjectState(editorObject));
     return true;
   }
 
   function cancelEditorTransaction(){
-    S.editorTransaction = null;
+    editorHistoryWrite("editorTransaction", null);
     return true;
   }
 
   function createEditorHistoryEntry(label){
     return {
       label: label || "Edit",
-      object: deepCloneEditorObject(S.editorObject),
-      selectedId: S.editorSelectedId || null,
-      selectionIds: Array.isArray(S.editorSelectionIds) ? S.editorSelectionIds.slice() : [],
+      object: deepCloneEditorObject(editorHistoryRead("editorObject", null)),
+      selectedId: editorHistoryRead("editorSelectedId", null) || null,
+      selectionIds: Array.isArray(editorHistoryRead("editorSelectionIds", [])) ? editorHistoryRead("editorSelectionIds", []).slice() : [],
       ts: Date.now()
     };
   }
 
   function pushUndoEntry(entry){
     if(!entry) return false;
-    if(!Array.isArray(S.editorUndoStack)) S.editorUndoStack = [];
-    S.editorUndoStack.push(entry);
-    var maxLen = S.editorHistoryLimit || 100;
-    if(S.editorUndoStack.length > maxLen){
-      S.editorUndoStack = S.editorUndoStack.slice(S.editorUndoStack.length - maxLen);
+    var editorUndoStack = editorHistoryEnsureArray("editorUndoStack");
+    editorUndoStack.push(entry);
+    var maxLen = editorHistoryRead("editorHistoryLimit", 100) || 100;
+    if(editorUndoStack.length > maxLen){
+      editorUndoStack = editorUndoStack.slice(editorUndoStack.length - maxLen);
+      editorHistoryWrite("editorUndoStack", editorUndoStack);
     }
     return true;
   }
 
   function pushRedoEntry(entry){
     if(!entry) return false;
-    if(!Array.isArray(S.editorRedoStack)) S.editorRedoStack = [];
-    S.editorRedoStack.push(entry);
-    var maxLen = S.editorHistoryLimit || 100;
-    if(S.editorRedoStack.length > maxLen){
-      S.editorRedoStack = S.editorRedoStack.slice(S.editorRedoStack.length - maxLen);
+    var editorRedoStack = editorHistoryEnsureArray("editorRedoStack");
+    editorRedoStack.push(entry);
+    var maxLen = editorHistoryRead("editorHistoryLimit", 100) || 100;
+    if(editorRedoStack.length > maxLen){
+      editorRedoStack = editorRedoStack.slice(editorRedoStack.length - maxLen);
+      editorHistoryWrite("editorRedoStack", editorRedoStack);
     }
     return true;
   }
 
   function undoEditorChange(){
-    if(!Array.isArray(S.editorUndoStack) || !S.editorUndoStack.length || !S.editorObject) return false;
+    var editorUndoStack = editorHistoryRead("editorUndoStack", []);
+    if(!Array.isArray(editorUndoStack) || !editorUndoStack.length || !editorHistoryRead("editorObject", null)) return false;
     pushRedoEntry(createEditorHistoryEntry("Redo Point"));
-    var entry = S.editorUndoStack.pop();
+    var entry = editorUndoStack.pop();
     restoreEditorHistoryEntry(entry);
-    S.editorDirty = true;
+    editorHistoryWrite("editorDirty", true);
     return true;
   }
 
   function redoEditorChange(){
-    if(!Array.isArray(S.editorRedoStack) || !S.editorRedoStack.length || !S.editorObject) return false;
+    var editorRedoStack = editorHistoryRead("editorRedoStack", []);
+    if(!Array.isArray(editorRedoStack) || !editorRedoStack.length || !editorHistoryRead("editorObject", null)) return false;
     pushUndoEntry(createEditorHistoryEntry("Undo Point"));
-    var entry = S.editorRedoStack.pop();
+    var entry = editorRedoStack.pop();
     restoreEditorHistoryEntry(entry);
-    S.editorDirty = true;
+    editorHistoryWrite("editorDirty", true);
     return true;
   }
 
   function restoreEditorHistoryEntry(entry){
     if(!entry) return false;
-    S.editorObject = deepCloneEditorObject(entry.object);
-    S.editorSelectedId = entry.selectedId || null;
-    S.editorSelectionIds = Array.isArray(entry.selectionIds) ? entry.selectionIds.slice() : [];
-    S.editorPrimarySelectionId = S.editorSelectedId || (S.editorSelectionIds[0] || null);
+    var selectionIds = Array.isArray(entry.selectionIds) ? entry.selectionIds.slice() : [];
+    editorHistoryWrite("editorObject", deepCloneEditorObject(entry.object));
+    editorHistoryWrite("editorSelectedId", entry.selectedId || null);
+    editorHistoryWrite("editorSelectionIds", selectionIds);
+    editorHistoryWrite("editorPrimarySelectionId", (entry.selectedId || null) || (selectionIds[0] || null));
     return true;
   }
 
@@ -109,9 +179,9 @@
   }
 
   function markEditorCheckpoint(label){
-    if(!S.editorObject) return false;
+    if(!editorHistoryRead("editorObject", null)) return false;
     pushUndoEntry(createEditorHistoryEntry(label || "Checkpoint"));
-    S.editorRedoStack = [];
+    editorHistoryWrite("editorRedoStack", []);
     return true;
   }
 

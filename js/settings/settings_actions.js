@@ -1,3 +1,3 @@
-// Settings actions - handled in app.js act() dispatcher
-// case "openSettings": S.screen = SCR.SETTINGS; render(); return;
-// case "setTheme": S.settings.theme = param; applyThemeSetting(); saveState(); render(); return;
+// Settings actions are handled in app.js act() dispatcher.
+// Example route: open the settings screen and render.
+// Example theme flow: update theme state, apply it, persist it, then render.

@@ -1,5 +1,20 @@
 (function(){
 
+  function getMidiAssignmentsStore(){
+    if(typeof SparkState!=="undefined"&&typeof SparkState.ensureObject==="function"){
+      return SparkState.ensureObject(["importedMidiAssignments"]);
+    }
+    if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"&&typeof SparkState.write==="function"){
+      var store = SparkState.read(["importedMidiAssignments"], null);
+      if(!store || typeof store!=="object" || Array.isArray(store)){
+        store = {};
+        SparkState.write(["importedMidiAssignments"], store);
+      }
+      return store;
+    }
+    return {};
+  }
+
   function autoAssignMidiTracks(normalizedMidi, appType){
     var assignments = {};
     var tracks = normalizedMidi.tracks || [];
@@ -25,7 +40,7 @@
   }
 
   function setMidiTrackAssignment(trackId, role){
-    S.importedMidiAssignments[trackId] = role;
+    getMidiAssignmentsStore()[trackId] = role;
     if(typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest();
   }
 

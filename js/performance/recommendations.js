@@ -1,5 +1,38 @@
 (function(){
 
+  function performanceRecommendationRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function performanceRecommendationRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = performanceRecommendationRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function performanceRecommendationWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = performanceRecommendationRoot();
+    if(root) root[path]=value;
+    return value;
+  }
+
+  function getPerformanceStatsSnapshot(){
+    if(window.sparkCore&&typeof window.sparkCore.getLegacyPracticeAnalyticsSnapshot==="function"){
+      var analytics=window.sparkCore.getLegacyPracticeAnalyticsSnapshot();
+      if(analytics&&analytics.performanceStats)return analytics.performanceStats;
+    }
+    return performanceRecommendationRead("performanceStats", {})||{};
+  }
+
   function syncPerformanceDailyStateWithCore(challenge, isComplete){
     if(!window.sparkCore||typeof window.sparkCore.syncPerformanceDailyChallengeState!=="function")return;
     window.sparkCore.syncPerformanceDailyChallengeState(challenge||null, !!isComplete);
@@ -76,11 +109,11 @@
 
   function buildPerformanceRecommendationsForSong(songId){
     var recs=[];
-    if(!S.performanceStats)return recs;
+    var performanceStats=getPerformanceStatsSnapshot();
     // Check all keys that start with this songId
-    for(var key in S.performanceStats){
+    for(var key in performanceStats){
       if(key.indexOf(songId)!==0)continue;
-      var st=S.performanceStats[key];
+      var st=performanceStats[key];
       if(!st||!st.runs)continue;
       var techniqueRec=getImportedTechniqueRecommendation(songId,st);
       if(techniqueRec)recs.push(techniqueRec);
@@ -98,15 +131,16 @@
   function buildGlobalPerformanceRecommendations(){
     var recs=[];
     var ids=getAllPerformanceSongIds();
+    var performanceStats=getPerformanceStatsSnapshot();
     for(var i=0;i<ids.length;i++){
       recs=recs.concat(buildPerformanceRecommendationsForSong(ids[i]));
     }
     // Suggest rhythm for mastered chord songs
-    for(var key in(S.performanceStats||{})){
-      var st=S.performanceStats[key];
+    for(var key in performanceStats){
+      var st=performanceStats[key];
       if(st&&st.arrangement==="chords"&&st.mastery==="mastered"){
         var rhythmKey=key.replace("_chords_","_rhythm_chords_");
-        if(!S.performanceStats[rhythmKey]){
+        if(!performanceStats[rhythmKey]){
           recs.push({type:"try_rhythm",priority:85,songId:st.songId,arrangementType:"rhythm_chords",difficultyId:"easy",label:"Try rhythm arrangement",reason:"Chord mode mastered"});
         }
       }
@@ -116,9 +150,11 @@
 
   function choosePerformanceDailyChallenge(){
     var today=getTodayPerfDateKey();
-    if(S.performanceDailyChallenge&&S.performanceDailyChallenge.date===today){
-      syncPerformanceDailyStateWithCore(S.performanceDailyChallenge, S.performanceDailyComplete);
-      return S.performanceDailyChallenge;
+    var activeChallenge = performanceRecommendationRead("performanceDailyChallenge", null);
+    var isComplete = !!performanceRecommendationRead("performanceDailyComplete", false);
+    if(activeChallenge&&activeChallenge.date===today){
+      syncPerformanceDailyStateWithCore(activeChallenge, isComplete);
+      return activeChallenge;
     }
     var recs=buildGlobalPerformanceRecommendations();
     var challenge;
@@ -141,20 +177,23 @@
     }else{
       challenge={id:"perf_"+today,date:today,type:"full_run",songId:null,arrangementType:"chords",difficultyId:"easy",phraseId:null,target:{accuracy:75,stars:2},label:"Complete a performance run today",xp:25,reason:"Build consistency"};
     }
-    S.performanceDailyChallenge=challenge;
-    S.performanceDailyComplete=false;
+    performanceRecommendationWrite("performanceDailyChallenge", challenge);
+    performanceRecommendationWrite("performanceDailyComplete", false);
     syncPerformanceDailyStateWithCore(challenge, false);
     return challenge;
   }
 
   function markPerformanceDailyComplete(){
-    if(!S.performanceDailyChallenge||S.performanceDailyComplete)return 0;
-    S.performanceDailyComplete=true;
-    if(!Array.isArray(S.performanceDailyHistory))S.performanceDailyHistory=[];
-    S.performanceDailyHistory.push({id:S.performanceDailyChallenge.id,date:S.performanceDailyChallenge.date,type:S.performanceDailyChallenge.type,xp:S.performanceDailyChallenge.xp,completedAt:Date.now()});
-    syncPerformanceDailyStateWithCore(S.performanceDailyChallenge, true);
+    var challenge = performanceRecommendationRead("performanceDailyChallenge", null);
+    var isComplete = !!performanceRecommendationRead("performanceDailyComplete", false);
+    var history = Array.isArray(performanceRecommendationRead("performanceDailyHistory", [])) ? performanceRecommendationRead("performanceDailyHistory", []) : [];
+    if(!challenge||isComplete)return 0;
+    performanceRecommendationWrite("performanceDailyComplete", true);
+    history.push({id:challenge.id,date:challenge.date,type:challenge.type,xp:challenge.xp,completedAt:Date.now()});
+    performanceRecommendationWrite("performanceDailyHistory", history);
+    syncPerformanceDailyStateWithCore(challenge, true);
     saveState();
-    return S.performanceDailyChallenge.xp||0;
+    return challenge.xp||0;
   }
 
   window.buildPerformanceRecommendationsForSong=buildPerformanceRecommendationsForSong;

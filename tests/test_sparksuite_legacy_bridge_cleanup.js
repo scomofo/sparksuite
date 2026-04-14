@@ -51,6 +51,7 @@ function resetState() {
     runnerHighScore: 0,
     runnerResults: null
   };
+  global.__sparkState = global.S;
   global.T = {};
   global.SparkSessionTypes = {
     FLOW_DAILY_PRACTICE: "daily_practice"
@@ -96,6 +97,7 @@ function resetState() {
 
 resetState();
 
+eval(loadJS("js/sparksuite/core/state_facade.js"));
 eval(loadJS("js/sparksuite/bridges/progress_bridge.js"));
 eval(loadJS("js/practice/progress.js"));
 global.Math.random = function() { return 1; };
@@ -111,9 +113,11 @@ global.SparkInstruments = {
     };
   }
 };
+eval(loadJS("js/performance/analytics.js"));
 eval(loadJS("js/performance/practice_engine.js"));
 var performanceGeneratePracticePlan = generatePracticePlan;
 var performanceMarkPracticePlanItem = markPracticePlanItem;
+eval(loadJS("js/performance/recommendations.js"));
 eval(loadJS("js/spark-core/session-engine.js"));
 eval(loadJS("js/practice/weakspots.js"));
 eval(loadJS("js/practice/adaptive.js"));
@@ -132,6 +136,85 @@ test("performance practice generator delegates to sparkCore when available", fun
   assert.strictEqual(sparkCoreCalls.length, 1);
   assert.strictEqual(sparkCoreCalls[0].fn, "startSession");
   assert.strictEqual(sparkCoreCalls[0].payload.flow, "daily_practice");
+});
+
+test("performance practice helpers can read analytics from sparkCore snapshots", function() {
+  global.sparkCore = {
+    getLegacyPracticeAnalyticsSnapshot: function() {
+      return {
+        transitionStats: {
+          "G->C": { attempts: 4, success: 2 }
+        },
+        chordProgress: {
+          "E Major": 34,
+          "A Major": 91
+        },
+        performanceStats: {
+          fire_road_chords_normal: {
+            songId: "fire_road",
+            runs: 3,
+            bestAccuracy: 72,
+            arrangement: "chords",
+            difficulty: "normal"
+          }
+        }
+      };
+    }
+  };
+
+  var transitions = getWeakTransitions();
+  var chords = getWeakChords();
+  var songs = getWeakPerformanceSongs();
+
+  assert.strictEqual(transitions.length, 1);
+  assert.strictEqual(transitions[0].from, "G");
+  assert.strictEqual(transitions[0].to, "C");
+  assert.strictEqual(chords.length, 1);
+  assert.strictEqual(chords[0].chord, "E Major");
+  assert.strictEqual(chords[0].mastery, 34);
+  assert.strictEqual(songs.length, 1);
+  assert.strictEqual(songs[0].songId, "fire_road");
+  assert.strictEqual(songs[0].accuracy, 72);
+});
+
+test("performance analytics and recommendations can read sparkCore snapshots", function() {
+  global.SONGS = [
+    { title: "Fire Road", progression: ["C", "G"] }
+  ];
+  global.sparkCore = {
+    getLegacyPracticeAnalyticsSnapshot: function() {
+      return {
+        performanceStats: {
+          fire_road_chords_normal: {
+            songId: "fire_road",
+            arrangement: "chords",
+            difficulty: "normal",
+            bestScore: 640,
+            bestAccuracy: 68,
+            bestStars: 2,
+            mastery: "developing",
+            lastPlayed: "2026-04-13T10:00:00.000Z",
+            runs: 2
+          }
+        }
+      };
+    }
+  };
+
+  var totals = getPerformanceTotals();
+  var recent = getPerformanceRecentRuns();
+  var weak = getPerformanceWeakSongs();
+  var recs = buildPerformanceRecommendationsForSong("fire_road");
+
+  assert.strictEqual(totals.runs, 2);
+  assert.strictEqual(totals.songsPlayed, 1);
+  assert.strictEqual(totals.avgAccuracy, 68);
+  assert.strictEqual(recent.length, 1);
+  assert.strictEqual(recent[0].songId, "fire_road");
+  assert.strictEqual(weak.length, 1);
+  assert.strictEqual(weak[0].bestAccuracy, 68);
+  assert.strictEqual(recs[0].type, "retry_run");
+  assert.strictEqual(recs[0].songId, "fire_road");
 });
 
 test("performance practice item completion delegates to sparkCore when available", function() {
@@ -200,6 +283,22 @@ test("practice progress recorder delegates session bookkeeping to the bridge", f
   assert.strictEqual(S.practiceStreak, 1);
 });
 
+test("practice progress recorder prefers sparkCore helper when available", function() {
+  var calls = 0;
+  global.sparkCore = {
+    recordLegacyPracticeSession: function(result) {
+      calls++;
+      S.practiceHistory.push({ id: result.id, via: "core" });
+    }
+  };
+
+  recordPracticeSession({ id: "practice_core", durationMin: 4 });
+
+  assert.strictEqual(calls, 1);
+  assert.strictEqual(S.practiceHistory.length, 1);
+  assert.strictEqual(S.practiceHistory[0].via, "core");
+});
+
 test("spark session processResults delegates session progression writes to the bridge", function() {
   S.level = 1;
   S.streak = 0;
@@ -232,11 +331,49 @@ test("practice weak-spot updater delegates to bridge helper", function() {
   assert.strictEqual(S.weakSpots.phrases["phrase_2"].attempts, 1);
 });
 
+test("practice weak-spot updater prefers sparkCore helper when available", function() {
+  var calls = 0;
+  global.sparkCore = {
+    updateLegacyWeakSpotsFromPerformance: function(result) {
+      calls++;
+      S.weakSpots = {
+        transitions: { "G->C": { accuracy: result.transitions["G->C"], attempts: 1 } },
+        chords: {},
+        rhythm: {},
+        phrases: {}
+      };
+    }
+  };
+
+  updateWeakSpotsFromPerformance({
+    transitions: { "G->C": 0.61 }
+  });
+
+  assert.strictEqual(calls, 1);
+  assert.strictEqual(S.weakSpots.transitions["G->C"].attempts, 1);
+});
+
 test("practice adaptive updater delegates to bridge helper", function() {
   updateAdaptiveFromResult({ exerciseId: "rhythm_1", accuracy: 0.82 });
 
   assert.strictEqual(S.adaptiveState.rhythm_1.accuracy, 0.82);
   assert.ok(S.adaptiveState.rhythm_1.ts);
+});
+
+test("practice adaptive updater prefers sparkCore helper when available", function() {
+  var calls = 0;
+  global.sparkCore = {
+    updateLegacyAdaptiveFromResult: function(result) {
+      calls++;
+      S.adaptiveState[result.exerciseId] = { accuracy: result.accuracy, ts: 123 };
+    }
+  };
+
+  updateAdaptiveFromResult({ exerciseId: "rhythm_1", accuracy: 0.82 });
+
+  assert.strictEqual(calls, 1);
+  assert.strictEqual(S.adaptiveState.rhythm_1.accuracy, 0.82);
+  assert.strictEqual(S.adaptiveState.rhythm_1.ts, 123);
 });
 
 test("legacy activity completion helper centralizes drill and daily bookkeeping", function() {

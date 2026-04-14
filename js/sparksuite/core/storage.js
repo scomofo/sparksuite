@@ -1,12 +1,30 @@
 (function() {
   function SparkSuiteStorage() {}
 
+  function getSparkSuiteStorageRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      return SparkState.getRoot();
+    }
+    if (typeof globalThis !== "undefined" && globalThis.__sparkState) return globalThis.__sparkState;
+    return null;
+  }
+
   SparkSuiteStorage.prototype.getCurrentPlanId = function() {
-    return S.activeSessionPlanId || null;
+    if (typeof SparkState !== "undefined" && typeof SparkState.getCurrentPlanId === "function") {
+      return SparkState.getCurrentPlanId();
+    }
+    var root = getSparkSuiteStorageRoot();
+    return root ? (root.activeSessionPlanId || null) : null;
   };
 
   SparkSuiteStorage.prototype.setCurrentPlanId = function(planId) {
-    S.activeSessionPlanId = planId || null;
+    if (typeof SparkState !== "undefined" && typeof SparkState.setCurrentPlanId === "function") {
+      return SparkState.setCurrentPlanId(planId || null);
+    }
+    var root = getSparkSuiteStorageRoot();
+    if (!root) return planId || null;
+    root.activeSessionPlanId = planId || null;
+    return root.activeSessionPlanId;
   };
 
   window.SparkSuiteStorage = SparkSuiteStorage;

@@ -31,6 +31,7 @@ function resetState() {
     lastInsightRun: null,
     playAlongRecent: []
   };
+  global.__sparkState = global.S;
   global.escHTML = function(value) { return String(value); };
   global.getWeakestMasterySkills = function() { return []; };
   global.getStrongestMasterySkills = function() { return []; };
@@ -202,6 +203,17 @@ test("renderSmartCoachCard includes execution trace and recent play-along contex
       lastExecutionTrace: {
         source: "play_along_resume"
       }
+    },
+    getPlayAlongDashboardView: function() {
+      return {
+        recent: [{ title: "Sunrise Drive" }],
+        bookmarks: [],
+        outcome: null,
+        transportMode: null,
+        weakAreas: [],
+        hasDrill: false,
+        weakSection: null
+      };
     }
   };
 
@@ -221,22 +233,30 @@ test("renderSmartCoachCard includes execution trace and recent play-along contex
 });
 
 test("buildHomeDashboardData carries play-along summary", function() {
-  S.playAlongRecent = [{ title: "Sunrise Drive", transportMode: "generated" }];
-  S.playAlongBookmarks = [{ sectionLabel: "Verse", title: "Sunrise Drive" }];
   global.window.sparkCore = {
     runtimeState: {
       playAlongTransportMode: "generated",
       lastExecutionTrace: { source: "play_along_resume" }
     },
-    lastSessionOutcome: {
-      accuracy: 0.81,
-      performance: {
-        weakAreas: ["lane_2", "late"]
-      },
-      drills: [{ label: "Fix timing" }],
-      sectionSummary: {
-        sectionLabel: "Chorus"
-      }
+    getPlayAlongDashboardView: function() {
+      return {
+        recent: [{ title: "Sunrise Drive", transportMode: "generated" }],
+        bookmarks: [{ sectionLabel: "Verse", title: "Sunrise Drive" }],
+        outcome: {
+          accuracy: 0.81,
+          performance: {
+            weakAreas: ["lane_2", "late"]
+          },
+          drills: [{ label: "Fix timing" }],
+          sectionSummary: {
+            sectionLabel: "Chorus"
+          }
+        },
+        transportMode: "generated",
+        weakAreas: ["lane_2", "late"],
+        hasDrill: true,
+        weakSection: { sectionLabel: "Chorus" }
+      };
     }
   };
   global.getIncompleteChallenges = function() { return []; };
@@ -254,18 +274,26 @@ test("buildHomeDashboardData carries play-along summary", function() {
 });
 
 test("generatePersonalInsights carries play-along summary", function() {
-  S.playAlongRecent = [{ title: "Sunrise Drive", transportMode: "generated" }];
-  S.playAlongBookmarks = [{ sectionLabel: "Verse", title: "Sunrise Drive" }];
   global.window.sparkCore = {
-    lastSessionOutcome: {
-      accuracy: 0.74,
-      performance: {
-        weakAreas: ["lane_2", "late"]
-      },
-      drills: [{ label: "Fix timing" }],
-      sectionSummary: {
-        sectionLabel: "Chorus"
-      }
+    getPlayAlongDashboardView: function() {
+      return {
+        recent: [{ title: "Sunrise Drive", transportMode: "generated" }],
+        bookmarks: [{ sectionLabel: "Verse", title: "Sunrise Drive" }],
+        outcome: {
+          accuracy: 0.74,
+          performance: {
+            weakAreas: ["lane_2", "late"]
+          },
+          drills: [{ label: "Fix timing" }],
+          sectionSummary: {
+            sectionLabel: "Chorus"
+          }
+        },
+        transportMode: "generated",
+        weakAreas: ["lane_2", "late"],
+        hasDrill: true,
+        weakSection: { sectionLabel: "Chorus" }
+      };
     }
   };
 

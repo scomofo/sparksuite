@@ -1,5 +1,57 @@
 (function() {
 
+  function progressDashboardRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function progressDashboardRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = progressDashboardRoot();
+    if (!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function progressDashboardWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = progressDashboardRoot();
+    if (!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if (parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function progressDashboardGoHome() {
+    progressDashboardWrite("screen", SCR.HOME);
+    progressDashboardWrite("tab", TAB.PRACTICE);
+    render();
+  }
+
+  function progressDashboardPracticeSkill(skillId) {
+    progressDashboardWrite("reviewSkill", skillId || null);
+    progressDashboardWrite("screen", SCR.SESSION);
+    render();
+  }
+
   function formatRelativeTime(timestamp) {
     if (!timestamp) return "never";
     var now = Date.now();
@@ -33,7 +85,7 @@
     var pe = window.sparkCore && window.sparkCore.progressEngine;
     if (!pe) {
       return "<div class=\"text-center\"><p>Progress engine not available.</p>" +
-        "<button class=\"btn\" onclick=\"S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render()\">Back</button></div>";
+        "<button class=\"btn\" onclick=\"progressDashboardGoHome()\">Back</button></div>";
     }
 
     var skillGraph = pe.getSkillGraph();
@@ -44,7 +96,7 @@
 
     // Header
     h += "<div style=\"display:flex;align-items:center;justify-content:space-between;margin-bottom:16px\">";
-    h += "<button class=\"btn\" onclick=\"S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render()\" style=\"background:var(--card-bg);color:var(--text-dim)\">&larr; Back</button>";
+    h += "<button class=\"btn\" onclick=\"progressDashboardGoHome()\" style=\"background:var(--card-bg);color:var(--text-dim)\">&larr; Back</button>";
     h += "<h2 style=\"font-size:22px;font-weight:900;color:var(--text-primary);margin:0\">Your Progress</h2>";
     h += "<div style=\"width:60px\"></div>";
     h += "</div>";
@@ -54,10 +106,10 @@
     h += "<div style=\"display:flex;justify-content:space-around;text-align:center\">";
 
     var stats = [
-      { icon: "&#9733;", value: S.xp, label: "XP" },
-      { icon: "&#9650;", value: S.level, label: "Level" },
-      { icon: "&#128293;", value: S.streak + " days", label: "Streak" },
-      { icon: "&#9654;", value: S.sessions, label: "Sessions" }
+      { icon: "&#9733;", value: progressDashboardRead("xp", 0) || 0, label: "XP" },
+      { icon: "&#9650;", value: progressDashboardRead("level", 1) || 1, label: "Level" },
+      { icon: "&#128293;", value: (progressDashboardRead("streak", 0) || 0) + " days", label: "Streak" },
+      { icon: "&#9654;", value: progressDashboardRead("sessions", 0) || 0, label: "Sessions" }
     ];
     for (var si = 0; si < stats.length; si++) {
       var st = stats[si];
@@ -72,8 +124,8 @@
     h += "</div>";
 
     // Daily Goal Card
-    var todaySec = S.todayPracticeSeconds || 0;
-    var goalMin = S.dailyGoalMinutes || 15;
+    var todaySec = progressDashboardRead("todayPracticeSeconds", 0) || 0;
+    var goalMin = progressDashboardRead("dailyGoalMinutes", 15) || 15;
     var goalSec = goalMin * 60;
     var pct = Math.min(100, Math.round((todaySec / goalSec) * 100));
     var todayMin = Math.floor(todaySec / 60);
@@ -156,7 +208,7 @@
         h += "<div style=\"font-size:12px;font-weight:700;color:var(--text-primary)\">" + capitalizeSkill(ds.skillId) + "</div>";
         h += "<div style=\"font-size:10px;color:#FF8A5C\">Decayed " + decayPct + "%</div>";
         h += "</div>";
-        h += "<button class=\"btn\" style=\"font-size:11px;padding:4px 12px\" onclick=\"S.reviewSkill=&quot;" + ds.skillId + "&quot;;S.screen=SCR.SESSION;render()\">Practice Now</button>";
+        h += "<button class=\"btn\" style=\"font-size:11px;padding:4px 12px\" onclick=\"progressDashboardPracticeSkill(&quot;" + ds.skillId + "&quot;)\">Practice Now</button>";
         h += "</div>";
       }
 
@@ -194,5 +246,8 @@
     h += "</div>";
     return h;
   };
+
+  window.progressDashboardGoHome = progressDashboardGoHome;
+  window.progressDashboardPracticeSkill = progressDashboardPracticeSkill;
 
 })();

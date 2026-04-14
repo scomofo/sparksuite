@@ -1,6 +1,70 @@
 // js/instruments/bass/app.js — Bass instrument action handler
 (function() {
 
+  function bassStateRead(path, fallback) {
+    var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+      ? SparkState.getRoot()
+      : null;
+    if (!root && typeof globalThis !== "undefined") {
+      root = globalThis.__sparkState || globalThis.S || null;
+    }
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    if (!cursor) return fallback;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function bassStateWrite(path, value) {
+    var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+      ? SparkState.getRoot()
+      : null;
+    if (!root && typeof globalThis !== "undefined") {
+      root = globalThis.__sparkState || globalThis.S || null;
+    }
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    if (!cursor || !parts.length) return value;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function bassStateIncrement(path, delta) {
+    delta = typeof delta === "number" ? delta : 0;
+    return bassStateWrite(path, (bassStateRead(path, 0) || 0) + delta);
+  }
+
+  function bassStateEnsureArray(path) {
+    var current = bassStateRead(path, null);
+    if (!Array.isArray(current)) {
+      current = [];
+      bassStateWrite(path, current);
+    }
+    return current;
+  }
+
+  function bassPatchState(fields) {
+    fields = fields || {};
+    for (var key in fields) {
+      bassStateWrite(key, fields[key]);
+    }
+  }
+
   function queueSessionTick() {
     clearTimeout(T.session);
     if (typeof tickS === "function") T.session = setTimeout(tickS, 1000);
@@ -11,27 +75,129 @@
     if (typeof tickD === "function") T.drill = setTimeout(tickD, 1000);
   }
 
+  function buildLegacyPracticePlan(options) {
+    if (window.sparkCore && typeof window.sparkCore.startLegacyPracticeSession === "function") {
+      return window.sparkCore.startLegacyPracticeSession(options || {});
+    }
+    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+      return window.sparkCore.startSession(options || {});
+    }
+    if (typeof SparkSession !== "undefined" && typeof SparkSession.buildSession === "function") {
+      return SparkSession.buildSession(options || {});
+    }
+    return null;
+  }
+
+  function getLegacyPracticeContext(plan) {
+    return plan && plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : plan;
+  }
+
+  function openLegacyPracticeSessionRuntime(options) {
+    if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeSession === "function") {
+      return window.sparkCore.openLegacyPracticeSession(options || {});
+    }
+    if (typeof window.openLegacyPracticeSessionRequest === "function") {
+      return window.openLegacyPracticeSessionRequest(options || {});
+    }
+    return null;
+  }
+
+  function openLegacyPracticeDrillRuntime(options) {
+    if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeDrill === "function") {
+      return window.sparkCore.openLegacyPracticeDrill(options || {});
+    }
+    if (typeof window.openLegacyPracticeDrillRequest === "function") {
+      return window.openLegacyPracticeDrillRequest(options || {});
+    }
+    return null;
+  }
+
+  function openGuidedSessionRuntime(sessionNum) {
+    var guidedSession = parseInt(sessionNum, 10);
+    if (isNaN(guidedSession) || guidedSession < 1) guidedSession = bassStateRead("guidedSession", 1) || 1;
+    if (typeof window.openGuidedSessionRequest === "function") {
+      return window.openGuidedSessionRequest({ sessionNum: guidedSession });
+    }
+    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+      return window.sparkCore.startSession({
+        flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+        sessionNum: guidedSession
+      });
+    }
+    return null;
+  }
+
+  function applyGuidedDoneNavigation() {
+    if (typeof window.applyGuidedNavigationRequest === "function") {
+      return window.applyGuidedNavigationRequest("guided_done");
+    }
+    if (window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function") {
+      return window.sparkCore.syncGuidedRuntimeState({
+        activeScreen: "guided_done",
+        guidedStep: null,
+        guidedNewMovePhase: null,
+        transport: { status: "completed", positionMs: 0 }
+      });
+    }
+    return null;
+  }
+
+  function applyLegacyCompletionUpdate(update) {
+    update = update || {};
+    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
+      return SparkProgressBridge.applyLegacyActivityCompletion(update);
+    }
+
+    if (update.setFlags) {
+      for (var flagKey in update.setFlags) bassStateWrite(flagKey, update.setFlags[flagKey]);
+    }
+    if (update.incrementFields) {
+      for (var incrementKey in update.incrementFields) {
+        bassStateIncrement(incrementKey, update.incrementFields[incrementKey]);
+      }
+    }
+    if (update.resultFields) {
+      for (var resultKey in update.resultFields) bassStateWrite(resultKey, update.resultFields[resultKey]);
+    }
+    if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
+      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") {
+        SparkProgressBridge.applyLegacyReward({
+          xpDelta: update.xpDelta || 0,
+          toastAmount: update.toastAmount || 0,
+          jackpot: !!update.jackpot
+        });
+      } else {
+        bassStateIncrement("xp", update.xpDelta || 0);
+        if (update.toastAmount || update.jackpot) {
+          bassStateWrite("xpToast", { amount: update.toastAmount || 0, time: Date.now(), jackpot: !!update.jackpot });
+        }
+      }
+    }
+    if (update.save !== false) saveState();
+    return update;
+  }
+
   function bassAct(a, v) {
     var D = SparkInstruments.getActive().getData();
 
     if (a === "quickStart") {
-      var session = SparkSession.buildSession({ mode: "quickStart", level: S.level });
+      var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "quickStart", level: bassStateRead("level", 1) }));
       if (!session) return true;
-      if (typeof window.openLegacyPracticeSessionRequest === "function") {
-        window.openLegacyPracticeSessionRequest({
-          mode: "quickStart",
-          chordName: session.chordName,
-          durationSec: session.duration
-        });
-      }
-      S.sessionMicros = [];
-      S.lastChordName = session.chordName;
+      openLegacyPracticeSessionRuntime({
+        mode: "quickStart",
+        chordName: session.chordName,
+        durationSec: session.durationSec != null ? session.durationSec : session.duration
+      });
+      bassPatchState({
+        sessionMicros: [],
+        lastChordName: session.chordName,
+        currentChord: session.chord,
+        timer: session.durationSec != null ? session.durationSec : session.duration,
+        timerActive: true,
+        selectedVoicing: 0,
+        screen: SCR.SESSION
+      });
       snd("start");
-      S.currentChord = session.chord;
-      S.timer = session.duration;
-      S.timerActive = true;
-      S.selectedVoicing = 0;
-      S.screen = SCR.SESSION;
       render();
       queueSessionTick();
       saveState();
@@ -39,22 +205,22 @@
     }
 
     if (a === "resumeSession") {
-      var session = SparkSession.buildSession({ mode: "chord", chordName: S.lastChordName });
+      var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "chord", chordName: bassStateRead("lastChordName", null) }));
       if (!session) { act("quickStart"); return true; }
-      if (typeof window.openLegacyPracticeSessionRequest === "function") {
-        window.openLegacyPracticeSessionRequest({
-          mode: "chord",
-          chordName: session.chordName,
-          durationSec: session.duration
-        });
-      }
-      S.sessionMicros = [];
+      openLegacyPracticeSessionRuntime({
+        mode: "chord",
+        chordName: session.chordName,
+        durationSec: session.durationSec != null ? session.durationSec : session.duration
+      });
+      bassPatchState({
+        sessionMicros: [],
+        currentChord: session.chord,
+        timer: session.durationSec != null ? session.durationSec : session.duration,
+        timerActive: true,
+        selectedVoicing: 0,
+        screen: SCR.SESSION
+      });
       snd("start");
-      S.currentChord = session.chord;
-      S.timer = session.duration;
-      S.timerActive = true;
-      S.selectedVoicing = 0;
-      S.screen = SCR.SESSION;
       render();
       queueSessionTick();
       saveState();
@@ -62,23 +228,23 @@
     }
 
     if (a === "startSession") {
-      var session = SparkSession.buildSession({ mode: "chord", chordName: v });
+      var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "chord", chordName: v }));
       if (!session) return true;
-      if (typeof window.openLegacyPracticeSessionRequest === "function") {
-        window.openLegacyPracticeSessionRequest({
-          mode: "chord",
-          chordName: session.chordName,
-          durationSec: session.duration
-        });
-      }
-      S.sessionMicros = [];
-      S.lastChordName = session.chordName;
+      openLegacyPracticeSessionRuntime({
+        mode: "chord",
+        chordName: session.chordName,
+        durationSec: session.durationSec != null ? session.durationSec : session.duration
+      });
+      bassPatchState({
+        sessionMicros: [],
+        lastChordName: session.chordName,
+        currentChord: session.chord,
+        timer: session.durationSec != null ? session.durationSec : session.duration,
+        timerActive: true,
+        selectedVoicing: 0,
+        screen: SCR.SESSION
+      });
       snd("start");
-      S.currentChord = session.chord;
-      S.timer = session.duration;
-      S.timerActive = true;
-      S.selectedVoicing = 0;
-      S.screen = SCR.SESSION;
       render();
       queueSessionTick();
       saveState();
@@ -86,32 +252,33 @@
     }
 
     if (a === "startDrill") {
-      var session = SparkSession.buildSession({ mode: "drill", level: S.level });
+      var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "drill", level: bassStateRead("level", 1) }));
       if (!session) return true;
-      if (typeof window.openLegacyPracticeDrillRequest === "function") {
-        window.openLegacyPracticeDrillRequest({
-          durationSec: session.duration,
-          chordNames: session.chords ? session.chords.map(function(ch) { return ch.name; }) : []
-        });
-      }
-      S.drillChords = session.chords;
-      S.drillIdx = 0;
-      S.drillTimer = session.duration;
-      S.drillSwitches = 0;
-      S.drillLastSwitchTime = Date.now();
-      S.drillAdaptiveBpm = 60;
-      S.drillConsecutiveFast = 0;
-      S.drillConsecutiveSlow = 0;
+      openLegacyPracticeDrillRuntime({
+        durationSec: session.durationSec != null ? session.durationSec : session.duration,
+        chordNames: session.chordNames || (session.chords ? session.chords.map(function(ch) { return ch.name; }) : [])
+      });
+      bassPatchState({
+        drillChords: session.chords,
+        drillIdx: 0,
+        drillTimer: session.durationSec != null ? session.durationSec : session.duration,
+        drillSwitches: 0,
+        drillLastSwitchTime: Date.now(),
+        drillAdaptiveBpm: 60,
+        drillConsecutiveFast: 0,
+        drillConsecutiveSlow: 0,
+        screen: SCR.DRILL
+      });
       snd("start");
-      S.screen = SCR.DRILL;
       render();
       queueDrillTick();
       return true;
     }
 
     if (a === "repeatLegacyPracticeSession") {
-      var repeatChordName = S.currentChord ? S.currentChord.name : (S.lastChordName || null);
-      var repeatDuration = typeof S.timer === "number" ? S.timer : 120;
+      var currentChord = bassStateRead("currentChord", null);
+      var repeatChordName = currentChord ? currentChord.name : (bassStateRead("lastChordName", null) || null);
+      var repeatDuration = typeof bassStateRead("timer", null) === "number" ? bassStateRead("timer", null) : 120;
       if (typeof window.repeatLegacyPracticeSessionRequest === "function") {
         window.repeatLegacyPracticeSessionRequest({
           mode: repeatChordName ? "chord" : "quickStart",
@@ -126,8 +293,8 @@
     if (a === "repeatLegacyPracticeDrill") {
       if (typeof window.repeatLegacyPracticeDrillRequest === "function") {
         window.repeatLegacyPracticeDrillRequest({
-          durationSec: typeof S.drillTimer === "number" ? S.drillTimer : 60,
-          chordNames: S.drillChords ? S.drillChords.map(function(ch) { return ch.name; }) : []
+          durationSec: typeof bassStateRead("drillTimer", null) === "number" ? bassStateRead("drillTimer", null) : 60,
+          chordNames: bassStateRead("drillChords", null) ? bassStateRead("drillChords", null).map(function(ch) { return ch.name; }) : []
         });
       }
       return bassAct("startDrill");
@@ -135,63 +302,45 @@
 
     if (a === "guidedStart") {
       var sessionNum = parseInt(v, 10);
-      if (typeof window.openGuidedSessionRequest === "function") {
-        var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
-        var corePlan = window.openGuidedSessionRequest({
-          sessionNum: guidedSession
-        });
-        if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
-          S.screen = SCR.GUIDED;
-          snd("start");
-          render();
-          saveState();
-          return true;
-        }
-      } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-        var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
-        var corePlan = window.sparkCore.startSession({
-          flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
-          sessionNum: guidedSession
-        });
-        if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
-          S.screen = SCR.GUIDED;
-          snd("start");
-          render();
-          saveState();
-          return true;
-        }
+      var corePlan = openGuidedSessionRuntime(sessionNum);
+      if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+        bassStateWrite("screen", SCR.GUIDED);
+        snd("start");
+        render();
+        saveState();
+        return true;
       }
-      var plan = D.SESSIONS[(isNaN(sessionNum) ? S.guidedSession || 1 : sessionNum) - 1];
-      if (!plan) { S.guidedSession = 1; plan = D.SESSIONS[0]; }
+      var plan = D.SESSIONS[(isNaN(sessionNum) ? bassStateRead("guidedSession", 1) || 1 : sessionNum) - 1];
+      if (!plan) { bassStateWrite("guidedSession", 1); plan = D.SESSIONS[0]; }
       if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
         SparkProgressBridge.syncGuidedSessionToState({
           context: {
             guidedPlan: plan,
-            guidedSession: plan && plan.num ? plan.num : (S.guidedSession || 1)
+            guidedSession: plan && plan.num ? plan.num : (bassStateRead("guidedSession", 1) || 1)
           }
         });
       } else {
-        S.guidedPlan = plan;
-        S.guidedStep = "spark";
-        S.newMovePhase = null;
-        S.guidedPaused = false;
+        bassPatchState({
+          guidedPlan: plan,
+          guidedStep: "spark",
+          newMovePhase: null,
+          guidedPaused: false
+        });
       }
-      S.screen = SCR.GUIDED;
+      bassStateWrite("screen", SCR.GUIDED);
       snd("start");
       render();
       return true;
     }
 
     if (a === "guidedComplete") {
-      if (S.metronomeOn) stopMetronome();
+      if (bassStateRead("metronomeOn", false)) stopMetronome();
       if (typeof window.completeGuidedSessionRequest === "function") {
         var guidedResult = window.completeGuidedSessionRequest();
-        if (typeof window.applyGuidedNavigationRequest === "function") {
-          window.applyGuidedNavigationRequest("guided_done");
-        }
+        applyGuidedDoneNavigation();
         snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
         trigC();
-        S.screen = SCR.GUIDED_DONE;
+        bassStateWrite("screen", SCR.GUIDED_DONE);
         render();
         return true;
       } else if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
@@ -199,24 +348,14 @@
           flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
           markPlanComplete: true
         });
-        if (typeof window.sparkCore.syncGuidedRuntimeState === "function") {
-          window.sparkCore.syncGuidedRuntimeState({
-            activeScreen: "guided_done",
-            guidedStep: null,
-            guidedNewMovePhase: null,
-            transport: { status: "completed", positionMs: 0 }
-          });
-        }
-        if (typeof window.applyGuidedNavigationRequest === "function") {
-          window.applyGuidedNavigationRequest("guided_done");
-        }
+        applyGuidedDoneNavigation();
         snd(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
         trigC();
-        S.screen = SCR.GUIDED_DONE;
+        bassStateWrite("screen", SCR.GUIDED_DONE);
         render();
         return true;
       }
-      var plan = S.guidedPlan;
+      var plan = bassStateRead("guidedPlan", null);
       if (plan) {
         if (window.SparkProgressBridge && typeof SparkProgressBridge.applySessionStatePatch === "function") {
           SparkProgressBridge.applySessionStatePatch({
@@ -227,26 +366,31 @@
             }
           });
         } else {
-          if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
-          if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
-          S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
+          var completedGuidedSessions = bassStateEnsureArray("completedGuidedSessions");
+          if (completedGuidedSessions.indexOf(plan.num) < 0) completedGuidedSessions.push(plan.num);
+          bassStateWrite("guidedSession", Math.min(D.SESSIONS.length, plan.num + 1));
         }
         var outcome = SparkSession.processResults({
           type: "guided",
           chordName: plan.newMove ? plan.newMove.chord : null,
           duration: 300
         });
-        if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ toastAmount: outcome.xpEarned, jackpot: outcome.jackpot });
-        else S.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
+        applyLegacyCompletionUpdate({
+          toastAmount: outcome.xpEarned,
+          jackpot: outcome.jackpot,
+          save: true
+        });
         if (outcome.jackpot) snd("levelup"); else snd("complete");
         if (outcome.leveledUp) snd("levelup");
       } else {
-        if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ toastAmount: 30 });
-        else S.xpToast = { amount: 30, time: Date.now() };
+        applyLegacyCompletionUpdate({
+          toastAmount: 30,
+          save: true
+        });
         snd("complete");
       }
       trigC();
-      S.screen = SCR.GUIDED_DONE;
+      bassStateWrite("screen", SCR.GUIDED_DONE);
       render();
       return true;
     }

@@ -4,6 +4,44 @@ var _calibTaps = [];
 var _calibInterval = null;
 var _calibBeat = 0;
 
+function getPerformStateFacade() {
+  return typeof SparkState !== "undefined" ? SparkState : null;
+}
+
+function getPerformStateRoot() {
+  var facade = getPerformStateFacade();
+  if (facade && typeof facade.getRoot === "function") return facade.getRoot();
+  if (typeof globalThis !== "undefined" && globalThis.__sparkState) return globalThis.__sparkState;
+  return null;
+}
+
+function performRead(path, fallback) {
+  var facade = getPerformStateFacade();
+  if (facade && typeof facade.read === "function") return facade.read(path, fallback);
+  var root = getPerformStateRoot();
+  if (!root) return fallback;
+  var parts = Array.isArray(path) ? path : [path], cursor = root;
+  for (var i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function performWrite(path, value) {
+  var facade = getPerformStateFacade();
+  if (facade && typeof facade.write === "function") return facade.write(path, value);
+  var root = getPerformStateRoot();
+  if (!root) return value;
+  var parts = Array.isArray(path) ? path : [path], cursor = root;
+  for (var i = 0; i < parts.length - 1; i++) {
+    if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+    cursor = cursor[parts[i]];
+  }
+  cursor[parts[parts.length - 1]] = value;
+  return value;
+}
+
 function startCalibration() {
   _calibTaps = [];
   _calibBeat = 0;
@@ -11,18 +49,18 @@ function startCalibration() {
   var beatMs = 60000 / bpm;
   var totalBeats = (typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.latency.calibrationTaps : 8;
 
-  S._calibrating = true;
-  S._calibBeatMs = beatMs;
-  S._calibTotalBeats = totalBeats;
-  S._calibCurrentBeat = 0;
-  S._calibExpectedTime = Date.now() + beatMs;
+  performWrite("_calibrating", true);
+  performWrite("_calibBeatMs", beatMs);
+  performWrite("_calibTotalBeats", totalBeats);
+  performWrite("_calibCurrentBeat", 0);
+  performWrite("_calibExpectedTime", Date.now() + beatMs);
 
   // Play metronome clicks
   _calibInterval = setInterval(function() {
     _calibBeat++;
-    S._calibCurrentBeat = _calibBeat;
-    if (S.soundOn && typeof metroClick === "function") metroClick(_calibBeat === 1);
-    S._calibExpectedTime = Date.now() + beatMs;
+    performWrite("_calibCurrentBeat", _calibBeat);
+    if (performRead("soundOn", true) && typeof metroClick === "function") metroClick(_calibBeat === 1);
+    performWrite("_calibExpectedTime", Date.now() + beatMs);
     render();
     if (_calibBeat >= totalBeats) {
       clearInterval(_calibInterval);
@@ -51,8 +89,8 @@ function eventMatchesTechniqueFocus(evt, key) {
 }
 
 function recordCalibrationTap() {
-  if (!S._calibrating) return;
-  var expected = S._calibExpectedTime - S._calibBeatMs;
+  if (!performRead("_calibrating", false)) return;
+  var expected = performRead("_calibExpectedTime", 0) - performRead("_calibBeatMs", 0);
   var actual = Date.now();
   var offset = actual - expected;
   _calibTaps.push(offset);
@@ -60,7 +98,7 @@ function recordCalibrationTap() {
 }
 
 function finishCalibration() {
-  S._calibrating = false;
+  performWrite("_calibrating", false);
   if (_calibTaps.length < 3) {
     render();
     return;
@@ -76,18 +114,18 @@ function finishCalibration() {
   var minOff = (typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.latency.minOffsetMs : -200;
   avg = Math.max(minOff, Math.min(maxOff, Math.round(avg)));
 
-  if (S.performMode === "midi") {
-    S.performMidiOffsetMs = avg;
+  if (performRead("performMode", "midi") === "midi") {
+    performWrite("performMidiOffsetMs", avg);
   } else {
-    S.performAudioOffsetMs = avg;
+    performWrite("performAudioOffsetMs", avg);
   }
-  S.performCalibrated = true;
+  performWrite("performCalibrated", true);
   saveState();
   render();
 }
 
 function cancelCalibration() {
-  S._calibrating = false;
+  performWrite("_calibrating", false);
   if (_calibInterval) { clearInterval(_calibInterval); _calibInterval = null; }
   render();
 }
@@ -119,7 +157,7 @@ function renderPerformanceLaneDebug(snapshot) {
 }
 
 function performPage() {
-  var chart = S.performChart;
+  var chart = performRead("performChart", null);
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
@@ -127,11 +165,35 @@ function performPage() {
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
     ? runtimeState.performanceTargetTechnique
-    : S.performTargetTechnique;
+    : performRead("performTargetTechnique", null);
 
   var nowSec = runtimeState && typeof runtimeState.transport.positionMs === "number"
     ? runtimeState.transport.positionMs / 1000
-    : S.performCurrentSec;
+    : performRead("performCurrentSec", 0);
+  var performScore = performRead("performScore", 0);
+  var performAccuracy = performRead("performAccuracy", 0);
+  var performCombo = performRead("performCombo", 0);
+  var performLastHitLabel = performRead("performLastHitLabel", "");
+  var performLastHitTime = performRead("performLastHitTime", 0);
+  var performCountdownActive = performRead("performCountdownActive", false);
+  var performCountdownBeats = performRead("performCountdownBeats", 0);
+  var performInputSource = performRead("performInputSource", "midi");
+  var performInputNotes = performRead("performInputNotes", []) || [];
+  var performDebug = performRead("performDebug", false);
+  var performMaxCombo = performRead("performMaxCombo", 0);
+  var performLoopState = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceLoop")
+    ? runtimeState.performanceLoop
+    : performRead("performLoop", null);
+  var performLaneDebugSnapshot = performRead("performLaneDebugSnapshot", null);
+  var performModeState = runtimeState && runtimeState.performanceInputMode ? runtimeState.performanceInputMode : performRead("performMode", "midi");
+  var performDifficultyState = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : performRead("performDifficulty", "normal");
+  var performSpeedState = runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : performRead("performSpeed", 1);
+  var performPracticePresetState = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : performRead("performPracticePreset", null);
+  var calibrating = performRead("_calibrating", false);
+  var calibCurrentBeat = performRead("_calibCurrentBeat", 0);
+  var calibTotalBeats = performRead("_calibTotalBeats", 8);
+  var performMidiOffsetMs = performRead("performMidiOffsetMs", 0);
+  var performAudioOffsetMs = performRead("performAudioOffsetMs", 0);
   var phrase = getPerformancePhraseForTime(chart, nowSec);
   var phraseName = phrase ? phrase.name : "";
   var previewEvent = getNextPerformEvent(chart, nowSec);
@@ -159,20 +221,20 @@ function performPage() {
 
   // Score strip
   h += '<div class="perform-score-strip">';
-  h += '<div class="perform-stat"><span class="perform-stat-val">' + S.performScore + '</span><span class="perform-stat-label">Score</span></div>';
-  h += '<div class="perform-stat"><span class="perform-stat-val">' + S.performAccuracy + '%</span><span class="perform-stat-label">Accuracy</span></div>';
-  h += '<div class="perform-stat"><span class="perform-stat-val">' + S.performCombo + 'x</span><span class="perform-stat-label">Combo</span></div>';
+  h += '<div class="perform-stat"><span class="perform-stat-val">' + performScore + '</span><span class="perform-stat-label">Score</span></div>';
+  h += '<div class="perform-stat"><span class="perform-stat-val">' + performAccuracy + '%</span><span class="perform-stat-label">Accuracy</span></div>';
+  h += '<div class="perform-stat"><span class="perform-stat-val">' + performCombo + 'x</span><span class="perform-stat-label">Combo</span></div>';
   h += '</div>';
 
   // Hit feedback
-  if (S.performLastHitLabel && Date.now() - S.performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
-    h += '<div class="perform-hit-feedback">' + escHTML(S.performLastHitLabel) + '</div>';
+  if (performLastHitLabel && Date.now() - performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
+    h += '<div class="perform-hit-feedback">' + escHTML(performLastHitLabel) + '</div>';
   }
 
   // Count-in overlay
-  if (S.performCountdownActive && S.performCountdownBeats > 0) {
+  if (performCountdownActive && performCountdownBeats > 0) {
     h += '<div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;z-index:20;background:rgba(0,0,0,.6);pointer-events:none">';
-    h += '<div data-count-in style="font-size:72px;font-weight:900;color:#FFE66D;text-shadow:0 4px 20px rgba(0,0,0,.5)">' + S.performCountdownBeats + '</div>';
+    h += '<div data-count-in style="font-size:72px;font-weight:900;color:#FFE66D;text-shadow:0 4px 20px rgba(0,0,0,.5)">' + performCountdownBeats + '</div>';
     h += '</div>';
   }
 
@@ -243,46 +305,46 @@ function performPage() {
   }
 
   // Input source badge + detected notes
-  h += '<div class="perform-input-badge">' + (S.performInputSource === "midi" ? "MIDI" : "MIC");
-  if (S.performInputNotes && S.performInputNotes.length) {
+  h += '<div class="perform-input-badge">' + (performInputSource === "midi" ? "MIDI" : "MIC");
+  if (performInputNotes && performInputNotes.length) {
     h += ' &mdash; ';
-    for (var ni = 0; ni < S.performInputNotes.length; ni++) {
-      h += '<span style="background:var(--chip-bg);color:var(--chip-color);padding:2px 6px;border-radius:6px;margin-left:3px;font-size:11px;font-weight:700">' + escHTML(S.performInputNotes[ni]) + '</span>';
+    for (var ni = 0; ni < performInputNotes.length; ni++) {
+      h += '<span style="background:var(--chip-bg);color:var(--chip-color);padding:2px 6px;border-radius:6px;margin-left:3px;font-size:11px;font-weight:700">' + escHTML(performInputNotes[ni]) + '</span>';
     }
   }
   h += '</div>';
 
   // Debug overlay
-  if (S.performDebug) {
+  if (performDebug) {
     var debugPhrase = getPerformancePhraseForTime(chart, nowSec);
     h += '<div style="background:rgba(0,0,0,.85);color:#0f0;font-family:monospace;font-size:11px;padding:8px;border-radius:6px;margin:4px 12px">';
     h += 'time: ' + nowSec.toFixed(2) + 's | phrase: ' + (debugPhrase ? debugPhrase.name : '-') + '<br>';
-    h += 'speed: ' + S.performSpeed + ' | diff: ' + S.performDifficulty + '<br>';
-    h += 'combo: ' + S.performCombo + '/' + S.performMaxCombo + ' | score: ' + S.performScore + '<br>';
-    h += 'notes: [' + (S.performInputNotes || []).join(',') + ']<br>';
-    h += 'loop: ' + (S.performLoop ? S.performLoop.startSec.toFixed(1) + '-' + S.performLoop.endSec.toFixed(1) : 'off') + '<br>';
-    h += 'windows: P' + S.performWindowPerfectMs + '/G' + S.performWindowGoodMs + '/M' + S.performWindowMissMs;
+    h += 'speed: ' + performSpeedState + ' | diff: ' + performDifficultyState + '<br>';
+    h += 'combo: ' + performCombo + '/' + performMaxCombo + ' | score: ' + performScore + '<br>';
+    h += 'notes: [' + (performInputNotes || []).join(',') + ']<br>';
+    h += 'loop: ' + (performLoopState ? performLoopState.startSec.toFixed(1) + '-' + performLoopState.endSec.toFixed(1) : 'off') + '<br>';
+    h += 'windows: P' + performRead("performWindowPerfectMs", 0) + '/G' + performRead("performWindowGoodMs", 0) + '/M' + performRead("performWindowMissMs", 0);
     h += '</div>';
   }
 
   // Loop practice banner
-  if (S.performLoop) {
+  if (performLoopState) {
     var loopPhrase = null;
     if (chart && chart.phrases) {
       for (var li = 0; li < chart.phrases.length; li++) {
-        if (chart.phrases[li].id === S.performLoop.phraseId) { loopPhrase = chart.phrases[li]; break; }
+        if (chart.phrases[li].id === performLoopState.phraseId) { loopPhrase = chart.phrases[li]; break; }
       }
     }
     h += '<div style="text-align:center;padding:4px 12px;background:#FFE66D22;border-radius:8px;margin:4px 12px"><span style="font-size:11px;font-weight:700;color:#FFE66D">&#128257; Looping: ' + escHTML(loopPhrase ? loopPhrase.name : 'Phrase') + '</span></div>';
   }
 
-  h += '<div id="perform-lane-debug">' + renderPerformanceLaneDebug(S.performLaneDebugSnapshot) + '</div>';
+  h += '<div id="perform-lane-debug">' + renderPerformanceLaneDebug(performLaneDebugSnapshot) + '</div>';
 
   // Controls
   h += '<div class="perform-controls">';
 
   // Pause/Resume
-  var performPaused = runtimeState && runtimeState.transport ? runtimeState.transport.status === "paused" : S.performPaused;
+  var performPaused = runtimeState && runtimeState.transport ? runtimeState.transport.status === "paused" : performRead("performPaused", false);
   if (performPaused) {
     h += '<button class="btn perform-ctrl-btn" onclick="act(\'resumePerform\')" style="background:#4ECDC4;color:#fff">&#9654; Resume</button>';
   } else {
@@ -291,7 +353,7 @@ function performPage() {
 
   // Mode toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Input</span>';
-  var performMode = runtimeState && runtimeState.performanceInputMode ? runtimeState.performanceInputMode : S.performMode;
+  var performMode = performModeState;
   h += '<button class="btn btn-sm' + (performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
   h += '<button class="btn btn-sm' + (performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
   h += '</div>';
@@ -299,7 +361,7 @@ function performPage() {
   // Difficulty toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Difficulty</span>';
   var diffs = ["easy", "normal", "pro"];
-  var performDifficulty = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
+  var performDifficulty = performDifficultyState;
   for (var d = 0; d < diffs.length; d++) {
     h += '<button class="btn btn-sm' + (performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
   }
@@ -308,7 +370,7 @@ function performPage() {
   // Speed toggle
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Speed</span>';
   var speeds = [0.5, 0.75, 1.0];
-  var performSpeed = runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed;
+  var performSpeed = performSpeedState;
   for (var sp = 0; sp < speeds.length; sp++) {
     h += '<button class="btn btn-sm' + (performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
   }
@@ -322,16 +384,14 @@ function performPage() {
     { id: "guitar_quiet", label: "Quiet Guitar" },
     { id: "guitar_solo", label: "Solo Guitar" }
   ];
-  var performPracticePreset = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : S.performPracticePreset;
+  var performPracticePreset = performPracticePresetState;
   for (var pr = 0; pr < presets.length; pr++) {
     h += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
   }
   h += '</div>';
 
   // Loop phrase
-  var performLoop = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceLoop")
-    ? runtimeState.performanceLoop
-    : S.performLoop;
+  var performLoop = performLoopState;
   if (performLoop) {
     h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performClearLoop\')" style="background:#FF6B6B;color:#fff">&#128260; Clear Loop</button>';
   } else {
@@ -340,7 +400,7 @@ function performPage() {
 
   // Calibration
   h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performCalibrate\')" style="background:var(--input-bg);color:var(--text-secondary)">&#9201; Calibrate</button>';
-  var curOffset = S.performMode === "midi" ? S.performMidiOffsetMs : S.performAudioOffsetMs;
+  var curOffset = performModeState === "midi" ? performMidiOffsetMs : performAudioOffsetMs;
   if (curOffset !== 0) {
     h += '<span style="font-size:10px;color:var(--text-muted);margin-left:4px">offset: ' + curOffset + 'ms</span>';
   }
@@ -348,10 +408,10 @@ function performPage() {
   h += '</div>'; // .perform-controls
 
   // Calibration section
-  if (S._calibrating) {
+  if (calibrating) {
     h += '<div class="card" style="margin:8px 12px;text-align:center">';
     h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Calibrating...</div>';
-    h += '<div style="font-size:48px;font-weight:900;color:#FFE66D;animation:bn .3s ease">' + (S._calibCurrentBeat || 0) + '/' + (S._calibTotalBeats || 8) + '</div>';
+    h += '<div style="font-size:48px;font-weight:900;color:#FFE66D;animation:bn .3s ease">' + calibCurrentBeat + '/' + calibTotalBeats + '</div>';
     h += '<p style="font-size:12px;color:var(--text-muted)">Tap spacebar or click when you hear the beat</p>';
     h += '<button class="btn" onclick="recordCalibrationTap()" style="background:#4ECDC4;color:#fff;padding:16px 32px;font-size:16px">TAP</button>';
     h += ' <button class="btn btn-sm" onclick="cancelCalibration()" style="margin-left:8px">Cancel</button>';
@@ -367,11 +427,15 @@ function performDonePage() {
     ? window.sparkCore.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var r = runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults;
+  var r = runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : performRead("performResults", null);
   var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
     ? runtimeState.performanceTargetTechnique
-    : S.performTargetTechnique;
+    : performRead("performTargetTechnique", null);
   if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  var performChartId = performRead("performChartId", "unknown");
+  var performSongStats = performRead("performSongStats", {}) || {};
+  var performChart = performRead("performChart", null);
+  var performDifficulty = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : performRead("performDifficulty", "normal");
 
   var h = '<div class="perform-page text-center" style="padding-top:20px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
@@ -386,8 +450,8 @@ function performDonePage() {
   h += '</div>';
 
   // Previous best
-  var songKey = runtimeState && runtimeState.performanceChartId ? runtimeState.performanceChartId : (S.performChartId || "unknown");
-  var prevBest = (S.performSongStats && S.performSongStats[songKey]) || null;
+  var songKey = runtimeState && runtimeState.performanceChartId ? runtimeState.performanceChartId : performChartId;
+  var prevBest = performSongStats[songKey] || null;
   if (prevBest && prevBest.runs > 1) {
     h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Previous best: ' + prevBest.bestScore + ' pts / ' + prevBest.bestAccuracy + '% / ' + prevBest.bestStars + ' stars (' + prevBest.runs + ' runs)</div>';
   }
@@ -397,10 +461,10 @@ function performDonePage() {
 
   // Mastery badge
   if (typeof getPerformanceStats === "function") {
-    var arrType = (S.performChart && S.performChart.arrangementType)
+    var arrType = (performChart && performChart.arrangementType)
       || (runtimeState && runtimeState.performanceArrangementType)
       || "chords";
-    var difficultyId = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
+    var difficultyId = performDifficulty;
     var pStats = getPerformanceStats(songKey, arrType, difficultyId);
     if (pStats.mastery !== "none") {
       h += '<div style="margin-bottom:12px"><span style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + ';padding:6px 16px;border-radius:12px;font-size:13px;font-weight:800">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';

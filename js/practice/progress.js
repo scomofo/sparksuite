@@ -1,43 +1,80 @@
 (function(){
 
+  function practiceProgressRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function practiceProgressRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = practiceProgressRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function practiceProgressWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = practiceProgressRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
+  function practiceProgressEnsureArray(path){
+    var arr = practiceProgressRead(path, null);
+    if(!Array.isArray(arr)){
+      arr = [];
+      practiceProgressWrite(path, arr);
+    }
+    return arr;
+  }
+
   function recordPracticeSession(result){
     if(!result) return;
-    if(window.SparkProgressBridge && typeof SparkProgressBridge.applyPracticeSessionRecord === "function"){
+    if(window.sparkCore && typeof window.sparkCore.recordLegacyPracticeSession === "function"){
+      window.sparkCore.recordLegacyPracticeSession(result);
+    }else if(window.SparkProgressBridge && typeof SparkProgressBridge.applyPracticeSessionRecord === "function"){
       SparkProgressBridge.applyPracticeSessionRecord(result);
+      saveState();
     }else{
       result.ts = Date.now();
-      if(!Array.isArray(S.practiceHistory)) S.practiceHistory = [];
-      S.practiceHistory.push(result);
+      practiceProgressEnsureArray("practiceHistory").push(result);
       updatePracticeTime(result.durationMin || 0);
       updatePracticeStreak();
+      saveState();
     }
-    saveState();
   }
 
   function updatePracticeTime(minutes){
     if(!minutes) return;
-    S.totalPracticeMinutes = (S.totalPracticeMinutes || 0) + minutes;
-    S.todayPracticeMinutes = (S.todayPracticeMinutes || 0) + minutes;
+    practiceProgressWrite("totalPracticeMinutes", (practiceProgressRead("totalPracticeMinutes", 0) || 0) + minutes);
+    practiceProgressWrite("todayPracticeMinutes", (practiceProgressRead("todayPracticeMinutes", 0) || 0) + minutes);
   }
 
   function updatePracticeStreak(){
     var today = new Date().toISOString().slice(0,10);
-    if(S.lastPracticeDate === today) return;
+    var lastPracticeDate = practiceProgressRead("lastPracticeDate", null);
+    if(lastPracticeDate === today) return;
     var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-    if(S.lastPracticeDate === yesterday){
-      S.practiceStreak++;
+    if(lastPracticeDate === yesterday){
+      practiceProgressWrite("practiceStreak", (practiceProgressRead("practiceStreak", 0) || 0) + 1);
     }else{
-      S.practiceStreak = 1;
+      practiceProgressWrite("practiceStreak", 1);
     }
-    S.lastPracticeDate = today;
+    practiceProgressWrite("lastPracticeDate", today);
   }
 
   function getPracticeStats(){
     return {
-      streak: S.practiceStreak || 0,
-      totalMinutes: S.totalPracticeMinutes || 0,
-      todayMinutes: S.todayPracticeMinutes || 0,
-      sessions: (S.practiceHistory || []).length
+      streak: practiceProgressRead("practiceStreak", 0) || 0,
+      totalMinutes: practiceProgressRead("totalPracticeMinutes", 0) || 0,
+      todayMinutes: practiceProgressRead("todayPracticeMinutes", 0) || 0,
+      sessions: practiceProgressEnsureArray("practiceHistory").length
     };
   }
 

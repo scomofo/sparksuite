@@ -81,13 +81,93 @@
     SparkLog.info("SYSTEM", "All play-along subsystems initialized");
   };
 
+  function clonePlayAlongParams(core, params) {
+    if (core && typeof core.cloneValue === "function") {
+      return core.cloneValue(params);
+    }
+    return JSON.parse(JSON.stringify(params || {}));
+  }
+
+  function setPlayAlongSessionState(core, patch) {
+    if (core && typeof core.setPlayAlongSession === "function") {
+      return core.setPlayAlongSession(patch);
+    }
+
+    patch = patch || {};
+    if (Object.prototype.hasOwnProperty.call(patch, "params")) {
+      core._activeParams = patch.params;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "chart")) {
+      core._activeChart = patch.chart;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "userId")) {
+      core._activeUserId = patch.userId;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "startedAtMs")) {
+      core._sessionStartWallTime = patch.startedAtMs;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "pausedPlaybackTimeMs")) {
+      core._pausedPlaybackTimeMs = patch.pausedPlaybackTimeMs;
+    }
+
+    return patch;
+  }
+
+  function getPlayAlongSessionState(core) {
+    if (core && typeof core.getPlayAlongSession === "function") {
+      return core.getPlayAlongSession();
+    }
+    return {
+      params: core && core._activeParams ? core._activeParams : null,
+      chart: core && core._activeChart ? core._activeChart : null,
+      userId: core && core._activeUserId ? core._activeUserId : null,
+      startedAtMs: core && typeof core._sessionStartWallTime === "number" ? core._sessionStartWallTime : null,
+      pausedPlaybackTimeMs: core && typeof core._pausedPlaybackTimeMs === "number" ? core._pausedPlaybackTimeMs : null
+    };
+  }
+
+  function getPlayAlongChart(core) {
+    return core && typeof core.getActivePlayAlongChart === "function"
+      ? core.getActivePlayAlongChart()
+      : (core ? core._activeChart || null : null);
+  }
+
+  function getPlayAlongParams(core) {
+    return core && typeof core.getActivePlayAlongParams === "function"
+      ? core.getActivePlayAlongParams()
+      : (core ? core._activeParams || null : null);
+  }
+
+  function getPausedPlayAlongTime(core) {
+    return core && typeof core.getPausedPlayAlongTimeMs === "function"
+      ? core.getPausedPlayAlongTimeMs()
+      : (core && typeof core._pausedPlaybackTimeMs === "number" ? core._pausedPlaybackTimeMs : null);
+  }
+
+  function clearPausedPlayAlongTime(core) {
+    if (core && typeof core.clearPausedPlayAlongTimeMs === "function") {
+      core.clearPausedPlayAlongTimeMs();
+      return;
+    }
+    if (core) core._pausedPlaybackTimeMs = null;
+  }
+
+  function setPausedPlayAlongTime(core, timeMs) {
+    if (core && typeof core.setPausedPlayAlongTimeMs === "function") {
+      core.setPausedPlayAlongTimeMs(timeMs);
+      return;
+    }
+    if (core) core._pausedPlaybackTimeMs = typeof timeMs === "number" ? timeMs : null;
+  }
+
   // ---------------------------------------------------------------
   // getPlaybackTimeMs
   // ---------------------------------------------------------------
 
   SparkCore.prototype.getPlaybackTimeMs = function () {
-    if (typeof this._pausedPlaybackTimeMs === "number") {
-      return this._pausedPlaybackTimeMs;
+    var pausedTimeMs = getPausedPlayAlongTime(this);
+    if (typeof pausedTimeMs === "number") {
+      return pausedTimeMs;
     }
     // Single time source: SparkTimeSource (bound in initPlayAlongSystems)
     if (typeof SparkTimeSource !== "undefined" && SparkTimeSource.isPlaying()) {
@@ -119,8 +199,14 @@
   SparkCore.prototype.startPlayAlongSession = function (params) {
     var self = this;
     params = params || {};
-    this._activeParams = JSON.parse(JSON.stringify(params));
-    this._pausedPlaybackTimeMs = null;
+    setPlayAlongSessionState(this, {
+      params: clonePlayAlongParams(this, params),
+      chart: null,
+      userId: params.userId || null,
+      startedAtMs: null,
+      pausedPlaybackTimeMs: null
+    });
+    clearPausedPlayAlongTime(this);
 
     return new Promise(function (resolve, reject) {
       try {
@@ -177,9 +263,11 @@
           }
 
           // 4. Store active session state
-          self._activeChart = chart;
-          self._sessionStartWallTime = performance.now();
-          self._activeUserId = params.userId;
+          setPlayAlongSessionState(self, {
+            chart: chart,
+            userId: params.userId || null,
+            startedAtMs: performance.now()
+          });
           if (chart && params.title && chart.songChart && chart.songChart.song) chart.songChart.song.title = params.title;
           if (chart && params.artist && chart.songChart && chart.songChart.song) chart.songChart.song.artist = params.artist;
           if (chart && params.trackUri && !chart.trackUri) chart.trackUri = params.trackUri;
@@ -213,7 +301,7 @@
   SparkCore.prototype.processPlayAlongFrame = function () {
     var timeMs = this.getPlaybackTimeMs();
     var inputTimeMs = this.getInputTimeMs();
-    var chart = this._activeChart;
+    var chart = getPlayAlongChart(this);
     var visibleNotes = [];
     var prediction = null;
 
@@ -243,7 +331,7 @@
       SparkDebugState.update({
         time: timeMs,
         expected: visibleNotes.length ? (visibleNotes[0].lane != null ? visibleNotes[0].lane : visibleNotes[0].chord) : null,
-        bpm: (this._activeChart && this._activeChart.getBpm) ? this._activeChart.getBpm() : 0,
+        bpm: (chart && chart.getBpm) ? chart.getBpm() : 0,
         audioMode: this.audioEngine && this.audioEngine.isPlaying() ? "local" : (this.stemMixer && this.stemMixer.isPlaying() ? "stems" : "spotify"),
         latencyMs: this.latencyCalibrator ? this.latencyCalibrator.getOffset() : 0
       });
@@ -263,7 +351,7 @@
   // ---------------------------------------------------------------
 
   SparkCore.prototype.processPlayAlongInput = function (inputEvent) {
-    var chart = this._activeChart;
+    var chart = getPlayAlongChart(this);
     var result = null;
     var chordResult = null;
     var delta = null;
@@ -327,7 +415,8 @@
   // ---------------------------------------------------------------
 
   SparkCore.prototype.completePlayAlongSession = function () {
-    var userId = this._activeUserId || null;
+    var session = getPlayAlongSessionState(this);
+    var userId = session && session.userId ? session.userId : null;
     var model = null;
 
     // 1. Stop all audio
@@ -382,7 +471,7 @@
     var feedback = this.feedbackEngine.generate(performanceSummary, style);
 
     // 8. Drills for weak areas
-    var drills = this.drillGenerator.generate(clusters, this._activeChart);
+    var drills = this.drillGenerator.generate(clusters, getPlayAlongChart(this));
 
     // 9. Voice coach final message
     if (this.voiceCoach && typeof this.voiceCoach.sessionComplete === "function") {
@@ -492,8 +581,9 @@
           if (self.stemMixer) self.stemMixer.seek(0);
           break;
         case "loop":
-          if (self._activeChart && self._activeChart.sections && self._activeChart.sections.length > 0) {
-            var first = self._activeChart.sections[0];
+          var activeChart = self.getActivePlayAlongChart();
+          if (activeChart && activeChart.sections && activeChart.sections.length > 0) {
+            var first = activeChart.sections[0];
             if (self.audioEngine && typeof self.audioEngine.setLoop === "function") {
               self.audioEngine.setLoop(first.start, first.end);
             }
@@ -503,6 +593,132 @@
           break;
       }
     });
+  };
+
+  // ---------------------------------------------------------------
+  // Play-along transport helpers
+  // ---------------------------------------------------------------
+
+  SparkCore.prototype.setPlayAlongPlaybackRate = function (speed) {
+    if (typeof speed !== "number" || !isFinite(speed) || speed <= 0) return false;
+    if (this.audioEngine && typeof this.audioEngine.setPlaybackRate === "function") {
+      this.audioEngine.setPlaybackRate(speed);
+    }
+    if (this.stemMixer && typeof this.stemMixer.setPlaybackRate === "function") {
+      this.stemMixer.setPlaybackRate(speed);
+    }
+    return true;
+  };
+
+  SparkCore.prototype.pausePlayAlongTransport = function () {
+    var pausedMs = this.getPlaybackTimeMs();
+    setPausedPlayAlongTime(this, pausedMs);
+
+    if (this.audioEngine && typeof this.audioEngine.pause === "function") this.audioEngine.pause();
+    else if (this.audioEngine && typeof this.audioEngine.stop === "function") this.audioEngine.stop();
+
+    if (this.stemMixer && typeof this.stemMixer.pause === "function") this.stemMixer.pause();
+    else if (this.stemMixer && typeof this.stemMixer.stop === "function") this.stemMixer.stop();
+
+    if (this.playbackEngine && typeof this.playbackEngine.pause === "function") this.playbackEngine.pause();
+    else if (this.playbackEngine && typeof this.playbackEngine.stop === "function") this.playbackEngine.stop();
+
+    return pausedMs;
+  };
+
+  SparkCore.prototype.resumePlayAlongTransport = function () {
+    var offsetMs = getPausedPlayAlongTime(this) || 0;
+    var params = getPlayAlongParams(this) || {};
+
+    if (this.audioEngine && this.audioEngine.buffer && typeof this.audioEngine.play === "function") {
+      this.audioEngine.play(offsetMs / 1000);
+    } else if (this.stemMixer && typeof this.stemMixer.seek === "function") {
+      this.stemMixer.seek(offsetMs / 1000);
+      if (!this.stemMixer.isPlaying || !this.stemMixer.isPlaying()) {
+        this.stemMixer.play(offsetMs / 1000);
+      }
+    } else if (params.trackUri && this.playbackEngine && typeof this.playbackEngine.resume === "function") {
+      this.playbackEngine.resume(offsetMs, {
+        audioOffsetMs: params.audioOffsetMs || 0,
+        deviceId: params.deviceId
+      }).catch(function () {});
+    } else if (params.trackUri && this.playbackEngine && typeof this.playbackEngine.start === "function") {
+      var playbackEngine = this.playbackEngine;
+      playbackEngine.start(params.trackUri, {
+        audioOffsetMs: params.audioOffsetMs || 0,
+        deviceId: params.deviceId
+      }).then(function () {
+        if (typeof playbackEngine.seekTo === "function") {
+          return playbackEngine.seekTo(offsetMs);
+        }
+      }).catch(function () {});
+    }
+
+    clearPausedPlayAlongTime(this);
+    return offsetMs;
+  };
+
+  SparkCore.prototype.seekPlayAlongToMs = function (targetMs) {
+    setPausedPlayAlongTime(this, targetMs);
+
+    if (this.audioEngine && this.audioEngine.buffer && typeof this.audioEngine.play === "function") {
+      this.audioEngine.play(targetMs / 1000);
+      clearPausedPlayAlongTime(this);
+      return true;
+    }
+
+    if (this.stemMixer && typeof this.stemMixer.seek === "function") {
+      this.stemMixer.seek(targetMs / 1000);
+      clearPausedPlayAlongTime(this);
+      return true;
+    }
+
+    if (this.playbackEngine && typeof this.playbackEngine.seekTo === "function") {
+      var self = this;
+      this.playbackEngine.seekTo(targetMs).then(function () {
+        clearPausedPlayAlongTime(self);
+      }).catch(function () {});
+      return true;
+    }
+
+    return false;
+  };
+
+  SparkCore.prototype.startPlayAlongRenderLoop = function (options) {
+    var self = this;
+    options = options || {};
+
+    this.stopPlayAlongRenderLoop();
+
+    function loop() {
+      var result;
+      if (typeof options.beforeFrame === "function") {
+        options.beforeFrame();
+      }
+      if (typeof options.enforceLoopWindow === "function" && options.enforceLoopWindow()) {
+        self._playAlongLoopFrameId = null;
+        return;
+      }
+
+      result = self.processPlayAlongFrame();
+      if (result && typeof options.onFrame === "function") {
+        options.onFrame(result);
+      }
+
+      self._playAlongLoopFrameId = requestAnimationFrame(loop);
+    }
+
+    this._playAlongLoopFrameId = requestAnimationFrame(loop);
+    return this._playAlongLoopFrameId;
+  };
+
+  SparkCore.prototype.stopPlayAlongRenderLoop = function () {
+    if (this._playAlongLoopFrameId) {
+      cancelAnimationFrame(this._playAlongLoopFrameId);
+      this._playAlongLoopFrameId = null;
+      return true;
+    }
+    return false;
   };
 
   // ---------------------------------------------------------------
@@ -524,7 +740,7 @@
 
   SparkCore.prototype._startAudioForSession = function (params, chart) {
     console.log("[PlayAlong] _startAudioForSession:", params.audioFile ? "local" : (params.stems ? "stems" : (params.trackUri ? "spotify:" + params.trackUri : "none")));
-    this._pausedPlaybackTimeMs = null;
+    clearPausedPlayAlongTime(this);
     if (params.audioFile) {
       SparkTimeSource.bind(this.audioEngine);
       this.audioEngine.play();
@@ -534,11 +750,15 @@
       SparkTimeSource.bind(this.stemMixer);
       this.stemMixer.play();
     } else if (params.trackUri && this.playbackEngine && typeof this.playbackEngine.start === "function") {
+      var playbackResult;
       console.log("[PlayAlong] Starting Spotify playback:", params.trackUri);
-      this.playbackEngine.start(params.trackUri, {
+      playbackResult = this.playbackEngine.start(params.trackUri, {
         audioOffsetMs: params.audioOffsetMs || 0,
         deviceId: params.deviceId
-      }).catch(function(e) { console.warn("[PlayAlong] Spotify playback failed (open Spotify app):", e.message); });
+      });
+      if (playbackResult && typeof playbackResult.catch === "function") {
+        playbackResult.catch(function(e) { console.warn("[PlayAlong] Spotify playback failed (open Spotify app):", e.message); });
+      }
     }
   };
 

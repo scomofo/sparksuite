@@ -1068,9 +1068,9 @@ Add after `evaluateAll` (before the closing return statement), around line 128:
       event.xpAwarded = jackpot ? 50 : 10;
 
       // Check streak
-      if (typeof S !== "undefined") {
+      if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function" && SparkState.getRoot()) {
         var today = new Date().toISOString().slice(0, 10);
-        if (S.lastSessionDate !== today) {
+        if (SparkState.read(["lastSessionDate"], null) !== today) {
           event.streakUpdated = true;
         }
       }

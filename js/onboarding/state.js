@@ -1,37 +1,46 @@
 (function(){
-
-  function isOnboardingComplete(){
-    return !!(S.onboarding && S.onboarding.completed);
+  function getOnboardingStateFacade(){
+    return typeof SparkState !== "undefined" ? SparkState : null;
   }
 
-  function getCurrentOnboardingStep(){
-    return (S.onboarding && S.onboarding.currentStep) || "welcome";
+  function getOnboardingStateRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") return SparkState.getRoot();
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
   }
 
-  function setCurrentOnboardingStep(stepId){
-    if(!S.onboarding) return;
-    S.onboarding.currentStep = stepId;
-    saveState();
-  }
-
-  function markOnboardingStarted(){
-    if(!S.onboarding) return;
-    if(!S.onboarding.startedAt){
-      S.onboarding.startedAt = Date.now();
+  function readOnboardingState(path, fallback){
+    var facade = getOnboardingStateFacade();
+    var root = getOnboardingStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(facade && typeof facade.read === "function") return facade.read(path, fallback);
+    if(!cursor) return fallback;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
     }
-    saveState();
+    return cursor == null ? fallback : cursor;
   }
 
-  function markOnboardingComplete(){
-    if(!S.onboarding) return;
-    S.onboarding.completed = true;
-    S.onboarding.completedAt = Date.now();
-    S.firstRun = false;
-    saveState();
+  function writeOnboardingState(path, value){
+    var facade = getOnboardingStateFacade();
+    var root = getOnboardingStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(facade && typeof facade.write === "function") return facade.write(path, value);
+    if(!cursor || !parts.length) return value;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
   }
 
-  function resetOnboarding(){
-    S.onboarding = {
+  function createDefaultOnboardingState(){
+    return {
       completed: false,
       startedAt: null,
       completedAt: null,
@@ -43,7 +52,50 @@
       calibrationDone: false,
       starterContentUnlocked: false
     };
-    S.firstRun = true;
+  }
+
+  function ensureOnboardingState(){
+    var onboarding = readOnboardingState("onboarding", null);
+    if(!onboarding || typeof onboarding !== "object" || Array.isArray(onboarding)){
+      onboarding = createDefaultOnboardingState();
+      writeOnboardingState("onboarding", onboarding);
+    }
+    return onboarding;
+  }
+
+  function isOnboardingComplete(){
+    return !!readOnboardingState(["onboarding", "completed"], false);
+  }
+
+  function getCurrentOnboardingStep(){
+    return readOnboardingState(["onboarding", "currentStep"], "welcome");
+  }
+
+  function setCurrentOnboardingStep(stepId){
+    ensureOnboardingState();
+    writeOnboardingState(["onboarding", "currentStep"], stepId);
+    saveState();
+  }
+
+  function markOnboardingStarted(){
+    var onboarding = ensureOnboardingState();
+    if(!onboarding.startedAt){
+      writeOnboardingState(["onboarding", "startedAt"], Date.now());
+    }
+    saveState();
+  }
+
+  function markOnboardingComplete(){
+    ensureOnboardingState();
+    writeOnboardingState(["onboarding", "completed"], true);
+    writeOnboardingState(["onboarding", "completedAt"], Date.now());
+    writeOnboardingState("firstRun", false);
+    saveState();
+  }
+
+  function resetOnboarding(){
+    writeOnboardingState("onboarding", createDefaultOnboardingState());
+    writeOnboardingState("firstRun", true);
     saveState();
   }
 

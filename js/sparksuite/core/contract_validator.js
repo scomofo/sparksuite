@@ -77,10 +77,7 @@
     "syncSettingsState",
     "syncSongRuntimeState",
     "syncTunerRuntimeState",
-    "updateRuntimeState",
-    "window.sparkCore ",
-    "window.sparkCore&",
-    "window.sparkCore)",
+    "updateRuntimeState"
   ];
 
   function validateSparkCoreContract() {

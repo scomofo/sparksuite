@@ -1,6 +1,13 @@
 /* ───────── PianoSpark – pages/perform_results.js ───────── */
 /* Performance results page with phrase breakdown and retry options */
 
+function pianoPerformResultsRead(path, fallback){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+    return SparkState.read(path, fallback);
+  }
+  return fallback;
+}
+
 function pianoPerformanceResultsPage(){
   try{ return _pianoPerformResultsInner(); }catch(e){
     console.error("Piano results render error:",e);
@@ -8,7 +15,7 @@ function pianoPerformanceResultsPage(){
   }
 }
 function _pianoPerformResultsInner(){
-  var r = S.performResults || S.performanceResult;
+  var r = pianoPerformResultsRead(["performResults"], null) || pianoPerformResultsRead(["performanceResult"], null);
   if(!r) return '<div class="card">No result</div>';
 
   var best = getPerformanceBest(r.songId, r.arrangementType || "block_chords", r.difficultyId || "normal");

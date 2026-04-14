@@ -1,5 +1,32 @@
 (function(){
 
+function exerciseGeneratorRoot(){
+  if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+    var sparkRoot = SparkState.getRoot();
+    if(sparkRoot) return sparkRoot;
+  }
+  if(typeof globalThis !== "undefined"){
+    return globalThis.__sparkState || globalThis.S || null;
+  }
+  return null;
+}
+
+function exerciseGeneratorRead(path, fallback){
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  var root = exerciseGeneratorRoot();
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(!cursor) return fallback;
+  for(i=0;i<parts.length;i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
 function generateExercise(type, options){
   options = options || {};
 
@@ -28,7 +55,7 @@ function getChordsForLevel(level){
 // ── Chord ──
 
 function generateChordExercise(options){
-  var level = options.level || S.level || 1;
+  var level = options.level || exerciseGeneratorRead("level", 1) || 1;
   var chords = getChordsForLevel(level);
   if(!chords.length) return null;
 
@@ -51,7 +78,7 @@ function generateChordExercise(options){
 // ── Transition ──
 
 function generateTransitionExercise(options){
-  var ts = S.transitionStats || {};
+  var ts = exerciseGeneratorRead("transitionStats", {}) || {};
   var weakest = null;
   var worstScore = 999;
 
@@ -114,7 +141,7 @@ function generateScaleExercise(options){
 // ── Arpeggio ──
 
 function generateArpeggioExercise(options){
-  var level = S.level || 1;
+  var level = exerciseGeneratorRead("level", 1) || 1;
   var chords = getChordsForLevel(level);
   if(!chords.length) return null;
 

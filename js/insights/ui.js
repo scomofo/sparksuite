@@ -1,12 +1,35 @@
+function insightsUiRoot(){
+  if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+    return SparkState.getRoot();
+  }
+  return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+}
+
+function insightsUiRead(path, fallback){
+  var root = insightsUiRoot();
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  if(!cursor) return fallback;
+  for(i = 0; i < parts.length; i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
 function insightsDashboardPage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var pi = runtimeState && runtimeState.dashboardInsights ? runtimeState.dashboardInsights : S.personalInsights;
-  if(!pi || !S.lastInsightRun){
+  var pi = runtimeState && runtimeState.dashboardInsights ? runtimeState.dashboardInsights : insightsUiRead("personalInsights", null);
+  if(!pi || !insightsUiRead("lastInsightRun", null)){
     generatePersonalInsights();
-    pi = S.personalInsights || {};
+    pi = insightsUiRead("personalInsights", {}) || {};
   }
   var h = '';
   h += '<div class="card mb16">';
@@ -72,7 +95,7 @@ function renderSmartCoachCard(pi){
   var smartCoach = pi && pi.recommendationQuality ? pi.recommendationQuality.smartCoach : null;
   var coach = pi && pi.coach ? pi.coach : null;
   var trace = window.sparkCore && window.sparkCore.runtimeState ? window.sparkCore.runtimeState.lastExecutionTrace : (window.__sparkExecutionTrace || null);
-  var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent : [];
+  var recent = insightsUiRead("playAlongRecent", []);
   var latest = recent.length ? recent[0] : null;
   if (!smartCoach && !(coach && coach.message)) return '';
   var h = '<div class="card mb16">';

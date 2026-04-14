@@ -1,5 +1,49 @@
 (function(){
 
+  function midiImportRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function midiImportRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = midiImportRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function midiImportWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = midiImportRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor || !parts.length) return value;
+    for(i=0;i<parts.length-1;i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length-1]] = value;
+    return value;
+  }
+
   function midiImportPage(){
     var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
       ? window.sparkCore.getRuntimeState()
@@ -12,16 +56,17 @@
       : null;
     var assignments = runtimeState && runtimeState.midiImportAssignments
       ? runtimeState.midiImportAssignments
-      : S.importedMidiAssignments;
+      : midiImportRead("importedMidiAssignments", {});
     var h = '<div class="card">';
     h += '<div><b>MIDI Import</b></div>';
     h += '<input type="file" accept=".mid,.midi" onchange="act(\'importMidiFile\', this.files[0])" />';
     h += '</div>';
 
-    if((runtimeTracks && runtimeTracks.length) || S.importedMidi){
+    if((runtimeTracks && runtimeTracks.length) || midiImportRead("importedMidi", null)){
       h += '<div class="card">';
       h += '<div><b>Imported Tracks</b></div>';
-      var tracks = runtimeTracks || (S.importedMidi.tracks || []);
+      var importedMidi = midiImportRead("importedMidi", null) || {};
+      var tracks = runtimeTracks || (importedMidi.tracks || []);
       for(var i=0;i<tracks.length;i++){
         var assignment = (assignments && assignments[tracks[i].id]) || "unassigned";
         h += '<div style="margin-bottom:8px">';
@@ -60,14 +105,15 @@
     if(!file) return;
     var raw = await parseMidiFile(file);
     var normalized = normalizeParsedMidi(raw, file.name);
-    S.importedMidi = normalized;
-    S.importedMidiTracks = normalized.tracks || [];
+    midiImportWrite("importedMidi", normalized);
+    midiImportWrite("importedMidiTracks", normalized.tracks || []);
     var appType = "guitar"; // ChordSpark default
-    S.importedMidiAssignments = autoAssignMidiTracks(normalized, appType);
+    var assignments = autoAssignMidiTracks(normalized, appType);
+    midiImportWrite("importedMidiAssignments", assignments);
     if(typeof syncMidiImportStateRequest === "function"){
       syncMidiImportStateRequest({
         normalizedMidi: normalized,
-        assignments: S.importedMidiAssignments,
+        assignments: assignments,
         seedMode: null,
         seedChart: null
       });

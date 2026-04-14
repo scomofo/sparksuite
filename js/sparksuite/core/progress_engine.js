@@ -1,5 +1,33 @@
 (function() {
-  function ProgressEngine() {}
+  function ProgressEngine(options) {
+    options = options || {};
+    this.masteryStore = options.masteryStore || null;
+    this.persist = typeof options.persist === "function" ? options.persist : null;
+  }
+
+  ProgressEngine.prototype.setMasteryStore = function(masteryStore) {
+    this.masteryStore = masteryStore || null;
+    return this;
+  };
+
+  ProgressEngine.prototype.setPersistHandler = function(persist) {
+    this.persist = typeof persist === "function" ? persist : null;
+    return this;
+  };
+
+  ProgressEngine.prototype._readSkillGraph = function() {
+    if (this.masteryStore && typeof this.masteryStore.getSkillGraph === "function") {
+      return this.masteryStore.getSkillGraph() || {};
+    }
+    return {};
+  };
+
+  ProgressEngine.prototype._writeSkillGraph = function(graph) {
+    if (this.masteryStore && typeof this.masteryStore.setSkillGraph === "function") {
+      this.masteryStore.setSkillGraph(graph || {});
+    }
+    if (this.persist) this.persist();
+  };
 
   ProgressEngine.prototype.completeSession = function(plan, payload) {
     payload = payload || {};
@@ -49,8 +77,8 @@
       progress.xpAwarded = xpAwarded;
       progress.sessionStatePatch = sessionStatePatch;
       progress.completionSummary = completionSummary;
-    } else if (typeof saveState === "function") {
-      saveState();
+    } else if (this.persist) {
+      this.persist();
     }
 
     return progress;
@@ -100,7 +128,7 @@
 
     SparkProgressBridge.applySessionStatePatch(sessionStatePatch);
     progress.sessionStatePatch = sessionStatePatch;
-    if (typeof saveState === "function") saveState();
+    if (this.persist) this.persist();
     return progress;
   }
 
@@ -137,7 +165,7 @@
       progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded);
     }
 
-    if (typeof saveState === "function") saveState();
+    if (this.persist) this.persist();
     return progress;
   }
 
@@ -345,7 +373,7 @@
 
   /**
    * Update mastery for a specific skill based on session performance.
-   * Stores per-skill record in S.skillGraph (or creates it).
+   * Stores per-skill record in the configured mastery store.
    * Uses exponential moving average with decay and confidence tracking.
    *
    * @param {string} skillId - e.g. "chord_switching", "timing", "rhythm"
@@ -354,7 +382,7 @@
    */
   ProgressEngine.prototype.updateMastery = function(skillId, performance) {
     performance = performance || {};
-    var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
+    var graph = this._readSkillGraph();
 
     var prev = normalizeSkillRecord(graph[skillId]);
     prev = applyDecay(prev);
@@ -382,12 +410,8 @@
       attempts: (prev.attempts || 0) + 1
     };
 
-    // Persist
-    if (typeof S !== "undefined") {
-      if (!S.skillGraph) S.skillGraph = {};
-      S.skillGraph[skillId] = record;
-      if (typeof saveState === "function") saveState();
-    }
+    graph[skillId] = record;
+    this._writeSkillGraph(graph);
 
     return {
       skillId: skillId,
@@ -430,7 +454,7 @@
    * @returns {Object} skill record
    */
   ProgressEngine.prototype.getSkill = function(skillId) {
-    var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
+    var graph = this._readSkillGraph();
     var raw = graph[skillId];
     var skill = normalizeSkillRecord(raw);
     skill = applyDecay(skill);
@@ -467,7 +491,7 @@
    */
   ProgressEngine.prototype.getDecayedSkills = function(threshold) {
     if (threshold === undefined) threshold = 0.05;
-    var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
+    var graph = this._readSkillGraph();
     var results = [];
     for (var skillId in graph) {
       if (!graph.hasOwnProperty(skillId)) continue;
@@ -486,7 +510,7 @@
    * @returns {Object} { skillId: record }
    */
   ProgressEngine.prototype.getSkillGraph = function() {
-    var graph = (typeof S !== "undefined" && S.skillGraph) ? S.skillGraph : {};
+    var graph = this._readSkillGraph();
     var result = {};
     for (var skillId in graph) {
       if (!graph.hasOwnProperty(skillId)) continue;

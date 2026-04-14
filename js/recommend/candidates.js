@@ -1,5 +1,40 @@
 (function(){
 
+  function recommendationCandidateRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function recommendationCandidateRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = recommendationCandidateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function getPlayAlongView() {
+    var core = window.sparkCore || null;
+    if (core && typeof core.getPlayAlongDashboardView === "function") {
+      return core.getPlayAlongDashboardView();
+    }
+    return null;
+  }
+
   function collectRecommendationCandidates(appType){
     var out = [];
     out = out.concat(getCurriculumCandidates(appType));
@@ -94,18 +129,35 @@
 
   function getPlayAlongCandidates(){
     var out = [];
-    var outcome = window.sparkCore && window.sparkCore.lastSessionOutcome ? window.sparkCore.lastSessionOutcome : null;
-    var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent : [];
+    var playAlongView = getPlayAlongView();
+    var outcome = playAlongView && Object.prototype.hasOwnProperty.call(playAlongView, "outcome")
+      ? playAlongView.outcome
+      : (window.sparkCore && typeof window.sparkCore.getLastSessionOutcome === "function"
+        ? window.sparkCore.getLastSessionOutcome()
+        : (window.sparkCore ? window.sparkCore.lastSessionOutcome : null));
+    var recent = playAlongView && Array.isArray(playAlongView.recent)
+      ? playAlongView.recent
+      : (Array.isArray(recommendationCandidateRead("playAlongRecent", [])) ? recommendationCandidateRead("playAlongRecent", []) : []);
     var latest = recent.length ? recent[0] : null;
-    var bookmarks = Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks : [];
-    var weakAreas = outcome && outcome.performance && Array.isArray(outcome.performance.weakAreas)
-      ? outcome.performance.weakAreas.slice(0, 2)
-      : [];
-    if (latest && outcome && outcome.sectionSummary) {
+    var bookmarks = playAlongView && Array.isArray(playAlongView.bookmarks)
+      ? playAlongView.bookmarks
+      : (Array.isArray(recommendationCandidateRead("playAlongBookmarks", [])) ? recommendationCandidateRead("playAlongBookmarks", []) : []);
+    var weakAreas = playAlongView && Array.isArray(playAlongView.weakAreas)
+      ? playAlongView.weakAreas.slice(0, 2)
+      : (outcome && outcome.performance && Array.isArray(outcome.performance.weakAreas)
+        ? outcome.performance.weakAreas.slice(0, 2)
+        : []);
+    var weakSection = playAlongView && playAlongView.weakSection
+      ? playAlongView.weakSection
+      : (outcome && outcome.sectionSummary ? outcome.sectionSummary : null);
+    var transportMode = playAlongView && playAlongView.transportMode != null
+      ? playAlongView.transportMode
+      : (latest ? latest.transportMode || null : null);
+    if (latest && weakSection) {
       out.push({
-        id: "playalong_weak_section_" + (latest.trackId || "recent") + "_" + Number(outcome.sectionSummary.sectionIndex || 0),
+        id: "playalong_weak_section_" + (latest.trackId || "recent") + "_" + Number(weakSection.sectionIndex || 0),
         type: "play_along_section",
-        title: "Play Along: Fix " + (outcome.sectionSummary.sectionLabel || "weak section"),
+        title: "Play Along: Fix " + (weakSection.sectionLabel || "weak section"),
         source: "play_along",
         targetSkill: "play_along_section",
         level: 1,
@@ -115,10 +167,10 @@
           action: "weak_section",
           trackId: latest.trackId || null,
           trackTitle: latest.title || latest.trackId || "Recent Song",
-          sectionIndex: Number(outcome.sectionSummary.sectionIndex || 0),
-          sectionLabel: outcome.sectionSummary.sectionLabel || "Weak section",
+          sectionIndex: Number(weakSection.sectionIndex || 0),
+          sectionLabel: weakSection.sectionLabel || "Weak section",
           weakAreas: weakAreas,
-          transportMode: latest.transportMode || null
+          transportMode: transportMode
         }
       });
     }
@@ -148,7 +200,7 @@
 
   function getReviewCandidates(){
     var out = [];
-    var hist = S.practiceHistory || [];
+    var hist = recommendationCandidateRead("practiceHistory", []) || [];
     var recent = hist.slice(-10);
     for(var i=0;i<recent.length;i++){
       if((recent[i].accuracy || 0) < 0.75){
@@ -170,7 +222,7 @@
 
   function getChallengeCandidates(){
     var out = [];
-    var daily = S.dailyChallenges || [];
+    var daily = recommendationCandidateRead("dailyChallenges", []) || [];
     for(var i=0;i<daily.length;i++){
       if(!daily[i].completed){
         out.push({
@@ -209,7 +261,10 @@
   }
 
   function getCompletedLessons(){
-    return S.completedLessons || [];
+    if (window.sparkCore && typeof window.sparkCore.getCompletedLessonIds === "function") {
+      return window.sparkCore.getCompletedLessonIds();
+    }
+    return recommendationCandidateRead("completedLessons", []) || [];
   }
 
   window.collectRecommendationCandidates = collectRecommendationCandidates;

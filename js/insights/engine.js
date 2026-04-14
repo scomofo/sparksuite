@@ -1,8 +1,55 @@
 (function(){
+  function insightsStateRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function insightsStateRead(path, fallback){
+    var root = insightsStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    if(!cursor) return fallback;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function insightsStateWrite(path, value){
+    var root = insightsStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    if(!cursor || !parts.length) return value;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function getPlayAlongView() {
+    var core = window.sparkCore || null;
+    if (core && typeof core.getPlayAlongDashboardView === "function") {
+      return core.getPlayAlongDashboardView();
+    }
+    return null;
+  }
 
   function generatePersonalInsights(){
-    var existing = S.personalInsights || {};
-    S.personalInsights = {
+    var existing = insightsStateRead("personalInsights", {});
+    var nextInsights = {
       weakestSkills: typeof getWeakestMasterySkills === "function" ? getWeakestMasterySkills(5) : [],
       strongestSkills: typeof getStrongestMasterySkills === "function" ? getStrongestMasterySkills(5) : [],
       masteryTrend: typeof buildMasteryTrend === "function" ? buildMasteryTrend() : {},
@@ -13,8 +60,9 @@
       coach: existing.coach || null,
       playAlongSummary: buildPlayAlongInsightSummary(existing.playAlongSummary)
     };
-    S.lastInsightRun = Date.now();
-    return S.personalInsights;
+    insightsStateWrite("personalInsights", nextInsights);
+    insightsStateWrite("lastInsightRun", Date.now());
+    return nextInsights;
   }
 
   function buildPackInsights(){
@@ -34,20 +82,35 @@
   }
 
   function buildPlayAlongInsightSummary(existing) {
-    var outcome = window.sparkCore && window.sparkCore.lastSessionOutcome ? window.sparkCore.lastSessionOutcome : null;
-    var recent = Array.isArray(S.playAlongRecent) ? S.playAlongRecent : [];
+    var playAlongView = getPlayAlongView();
+    var outcome = playAlongView && Object.prototype.hasOwnProperty.call(playAlongView, "outcome")
+      ? playAlongView.outcome
+      : (window.sparkCore && typeof window.sparkCore.getLastSessionOutcome === "function"
+        ? window.sparkCore.getLastSessionOutcome()
+        : (window.sparkCore ? window.sparkCore.lastSessionOutcome : null));
+    var recent = playAlongView && Array.isArray(playAlongView.recent)
+      ? playAlongView.recent
+      : insightsStateRead("playAlongRecent", []);
     var latest = recent.length ? recent[0] : null;
-    var weakAreas = outcome && outcome.performance && Array.isArray(outcome.performance.weakAreas)
-      ? outcome.performance.weakAreas.slice(0, 3)
-      : [];
+    var weakAreas = playAlongView && Array.isArray(playAlongView.weakAreas)
+      ? playAlongView.weakAreas.slice(0, 3)
+      : (outcome && outcome.performance && Array.isArray(outcome.performance.weakAreas)
+        ? outcome.performance.weakAreas.slice(0, 3)
+        : []);
     return mergeObjects({
       recentTitle: latest ? (latest.title || latest.trackId || null) : null,
-      transportMode: latest ? (latest.transportMode || null) : null,
+      transportMode: playAlongView && playAlongView.transportMode != null
+        ? playAlongView.transportMode
+        : (latest ? (latest.transportMode || null) : null),
       accuracy: outcome && typeof outcome.accuracy === "number" ? (outcome.accuracy <= 1 ? Math.round(outcome.accuracy * 100) : Math.round(outcome.accuracy)) : null,
       weakAreas: weakAreas,
-      hasDrill: !!(outcome && Array.isArray(outcome.drills) && outcome.drills.length),
-      weakSection: outcome && outcome.sectionSummary ? outcome.sectionSummary.sectionLabel : null,
-      bookmarks: Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks.slice(0, 2) : []
+      hasDrill: playAlongView ? !!playAlongView.hasDrill : !!(outcome && Array.isArray(outcome.drills) && outcome.drills.length),
+      weakSection: playAlongView && playAlongView.weakSection
+        ? playAlongView.weakSection.sectionLabel || null
+        : (outcome && outcome.sectionSummary ? outcome.sectionSummary.sectionLabel : null),
+      bookmarks: playAlongView && Array.isArray(playAlongView.bookmarks)
+        ? playAlongView.bookmarks.slice(0, 2)
+        : insightsStateRead("playAlongBookmarks", []).slice(0, 2)
     }, existing || {});
   }
 

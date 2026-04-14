@@ -101,8 +101,10 @@
     }
 
     // Store events for next session's LearningBrain
-    if (typeof S !== "undefined") {
-      S.lastSessionEvents = _sessionEvents.slice();
+    if (typeof SparkState !== "undefined" && typeof SparkState.setLastSessionEvents === "function") {
+      SparkState.setLastSessionEvents(_sessionEvents);
+    } else if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      SparkState.write(["lastSessionEvents"], _sessionEvents.slice());
     }
 
     // Auto-advance to next segment

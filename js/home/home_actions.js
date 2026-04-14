@@ -1,3 +1,3 @@
-// Home dashboard actions - handled in app.js act() dispatcher
-// case "openHome": S.screen = SCR.HOME_DASH; render(); return;
-// case "refreshHome": generateRecommendations(); generatePersonalInsights(); render(); return;
+// Home dashboard actions are handled in app.js act() dispatcher.
+// Example route: open the home dashboard and render.
+// Example refresh: regenerate recommendations and personal insights before rendering.

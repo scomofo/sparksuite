@@ -1,14 +1,60 @@
 (function(){
 
+  function cloudSyncRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function cloudSyncRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = cloudSyncRoot();
+    if(!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function cloudSyncWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = cloudSyncRoot();
+    if(!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if(parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   function _ensureCloudSync(){
-    if(!S.cloudSync) S.cloudSync = { lastSyncStatus: null, lastSyncAt: 0, dirtyKeys: [] };
+    var cloudSync = cloudSyncRead("cloudSync", null);
+    if(!cloudSync || typeof cloudSync !== "object" || Array.isArray(cloudSync)){
+      cloudSync = { lastSyncStatus: null, lastSyncAt: 0, dirtyKeys: [] };
+    }
+    if(!Array.isArray(cloudSync.dirtyKeys)) cloudSync.dirtyKeys = [];
+    cloudSyncWrite("cloudSync", cloudSync);
+    return cloudSync;
   }
 
   async function syncSparkNow(){
     if(!isLoggedInSpark()) return false;
     _ensureCloudSync();
     try{
-      S.cloudSync.lastSyncStatus = "syncing";
+      cloudSyncWrite(["cloudSync", "lastSyncStatus"], "syncing");
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing" });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       if(typeof render === "function") render();
@@ -19,19 +65,19 @@
       if(result && result.snapshot){
         applyCloudSnapshot(result.snapshot);
       }
-      S.cloudSync.lastSyncAt = Date.now();
-      S.cloudSync.lastSyncStatus = "ok";
-      S.cloudSync.dirtyKeys = [];
+      cloudSyncWrite(["cloudSync", "lastSyncAt"], Date.now());
+      cloudSyncWrite(["cloudSync", "lastSyncStatus"], "ok");
+      cloudSyncWrite(["cloudSync", "dirtyKeys"], []);
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_done", {
         lastSyncStatus: "ok",
-        lastSyncAt: S.cloudSync.lastSyncAt
+        lastSyncAt: cloudSyncRead(["cloudSync", "lastSyncAt"], 0)
       });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
       return true;
     }catch(e){
       console.error("Spark sync failed", e);
-      S.cloudSync.lastSyncStatus = "error";
+      cloudSyncWrite(["cloudSync", "lastSyncStatus"], "error");
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_error", { lastSyncStatus: "error" });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
@@ -43,25 +89,25 @@
     if(!isLoggedInSpark()) return false;
     _ensureCloudSync();
     try{
-      S.cloudSync.lastSyncStatus = "syncing";
+      cloudSyncWrite(["cloudSync", "lastSyncStatus"], "syncing");
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing" });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       var result = await sparkApiRequest("/api/sync/pull", "GET");
       if(result && result.snapshot){
         applyCloudSnapshot(result.snapshot);
       }
-      S.cloudSync.lastSyncAt = Date.now();
-      S.cloudSync.lastSyncStatus = "ok";
+      cloudSyncWrite(["cloudSync", "lastSyncAt"], Date.now());
+      cloudSyncWrite(["cloudSync", "lastSyncStatus"], "ok");
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_done", {
         lastSyncStatus: "ok",
-        lastSyncAt: S.cloudSync.lastSyncAt
+        lastSyncAt: cloudSyncRead(["cloudSync", "lastSyncAt"], 0)
       });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
       return true;
     }catch(e){
       console.error("Spark pull failed", e);
-      S.cloudSync.lastSyncStatus = "error";
+      cloudSyncWrite(["cloudSync", "lastSyncStatus"], "error");
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_error", { lastSyncStatus: "error" });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();

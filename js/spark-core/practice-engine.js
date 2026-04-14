@@ -3,6 +3,16 @@
 // Delegates to instrument modules via SparkInstrumentAdapter.
 (function() {
 
+  function getPracticeEngineLevelFallback() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getLevel === "function") {
+      return SparkState.getLevel();
+    }
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(["level"], 1);
+    }
+    return 1;
+  }
+
   var SparkPracticeEngine = {
 
     /**
@@ -12,7 +22,7 @@
     generateDrill: function(opts) {
       opts = opts || {};
       var skill = opts.skill || null;
-      var level = opts.level || (typeof S !== "undefined" ? S.level : 1);
+      var level = opts.level || getPracticeEngineLevelFallback();
       var count = opts.count || 2;
 
       // Use InstrumentAdapter if available

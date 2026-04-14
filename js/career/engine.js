@@ -1,5 +1,28 @@
 (function(){
 
+  function careerEngineRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function careerEngineRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = careerEngineRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   function recordCareerPerformance(result){
     if(!result || !result.songId) return;
     var stars = updateSongCareerRating(result);
@@ -8,7 +31,7 @@
     if(stageId){
       checkStageCompletion(stageId);
     }
-    evaluateCareerUnlocks(S.activeCareerId);
+    evaluateCareerUnlocks(careerEngineRead("activeCareerId", null));
     saveState();
   }
 
@@ -23,14 +46,16 @@
   }
 
   function getRecommendedCareerSong(){
-    var career = getCareerItem("careers", S.activeCareerId);
+    var activeCareerId = careerEngineRead("activeCareerId", null);
+    var careerProgress = careerEngineRead("careerProgress", {}) || {};
+    var career = getCareerItem("careers", activeCareerId);
     if(!career) return null;
     for(var t=0;t<career.tiers.length;t++){
       var tier = getCareerItem("tiers", career.tiers[t]);
-      if(!tier || !S.careerProgress.unlockedTiers[tier.id]) continue;
+      if(!tier || !(careerProgress.unlockedTiers || {})[tier.id]) continue;
       for(var s=0;s<tier.stages.length;s++){
         var stage = getCareerItem("stages", tier.stages[s]);
-        if(!stage || !S.careerProgress.unlockedStages[stage.id]) continue;
+        if(!stage || !(careerProgress.unlockedStages || {})[stage.id]) continue;
         for(var i=0;i<(stage.songs || []).length;i++){
           if(hasSongClearedCareer(stage.songs[i]) === false){
             return stage.songs[i];

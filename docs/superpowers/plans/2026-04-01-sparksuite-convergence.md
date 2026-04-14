@@ -416,9 +416,9 @@ This is the largest task. All guitar-specific actions move from shared `app.js` 
         if (S.fingerExTimer <= 0) {
           clearInterval(T.fingerEx); S.fingerExActive = false;
           snd("complete"); S.xp += 10;
-          if (typeof S.fingerStats !== "object" || S.fingerStats === null) S.fingerStats = {};
-          S.fingerStats[v] = (S.fingerStats[v] || 0) + 1;
-          S.xpToast = { amount: 10, time: Date.now() };
+          if (typeof SparkState.read(["fingerStats"], null) !== "object" || SparkState.read(["fingerStats"], null) === null) SparkState.write(["fingerStats"], {});
+          SparkState.write(["fingerStats", v], (SparkState.read(["fingerStats", v], 0) || 0) + 1);
+          SparkState.write(["xpToast"], { amount: 10, time: Date.now() });
           saveState();
         }
         render();

@@ -1,7 +1,14 @@
 (function() {
 
+  function getSkillGraph() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(["skillGraph"], null);
+    }
+    return null;
+  }
+
   function skillDashboardPage() {
-    var sg = S.skillGraph;
+    var sg = getSkillGraph();
     if (!sg) return '<div class="text-center"><p>No skill data yet. Play some sessions first!</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
     var h = '<div style="max-width:480px;margin:0 auto;padding:16px">';
@@ -89,7 +96,7 @@
 
   // Draw trend line on canvas after render
   function drawSkillCharts() {
-    var sg = S.skillGraph;
+    var sg = getSkillGraph();
     if (!sg || !sg.history || sg.history.length < 2) return;
 
     var skills = [

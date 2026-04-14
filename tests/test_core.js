@@ -47,6 +47,7 @@ global.S = {
   soundOn: false, darkMode: false, chordProgress: {}, earnedBadges: [],
   sessionMicros: [], detectedNotes: [], chordMatch: -1
 };
+global.__sparkState = global.S;
 global.T = {};
 
 // Stub audio functions that ui.js references

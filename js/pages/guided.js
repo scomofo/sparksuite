@@ -2,6 +2,29 @@
 // Mirrors PianoSpark's 5-phase session flow: Spark → Review → NewMove → SongSlice → VictoryLap
 // NewMove uses Watch→Shadow→Try→Refine (stickiness technique #3)
 
+function guidedStateRoot() {
+  if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+    return SparkState.getRoot();
+  }
+  return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+}
+
+function guidedStateRead(path, fallback) {
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  var root = guidedStateRoot();
+  if (!root) return fallback;
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
 function guidedStepIndicator(step) {
   var steps = [
     {id:"spark",label:"Spark",icon:"&#10024;"},
@@ -191,7 +214,7 @@ function _guidedSongSlice(plan) {
     h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:12px">&#127926; ' + escHTML(plan.songSlice.song) + '</div>';
   }
   h += '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">';
-  h += '<button class="btn" onclick="act(\'toggleMetro\')" style="padding:8px 16px;font-size:13px;background:' + (S.metronomeOn ? '#FFE66D' : '#4ECDC4') + ';color:' + (S.metronomeOn ? '#333' : '#fff') + '">' + (S.metronomeOn ? '&#9632; Metro' : '&#9654; Metro') + '</button>';
+  h += '<button class="btn" onclick="act(\'toggleMetro\')" style="padding:8px 16px;font-size:13px;background:' + (guidedStateRead("metronomeOn", false) ? '#FFE66D' : '#4ECDC4') + ';color:' + (guidedStateRead("metronomeOn", false) ? '#333' : '#fff') + '">' + (guidedStateRead("metronomeOn", false) ? '&#9632; Metro' : '&#9654; Metro') + '</button>';
   h += '</div>';
   h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">Done &#8594;</button>';
   h += '</div>';
@@ -235,8 +258,8 @@ function guidedDonePage() {
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(title) + '</p>';
   h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + S.streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + (S.completedGuidedSessions ? S.completedGuidedSessions.length : 0) + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + (guidedStateRead("streak", 0) || 0) + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + ((guidedStateRead("completedGuidedSessions", []) || []).length) + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
   h += '</div></div>';
   h += '<div class="flex-col"><button class="btn" onclick="act(\'guidedStart\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';
@@ -256,12 +279,12 @@ function getGuidedSessionView() {
     : null;
 
   return {
-    plan: plan || S.guidedPlan || null,
+    plan: plan || guidedStateRead("guidedPlan", null),
     guidedStep: coreView && coreView.runtimeState && coreView.runtimeState.guidedStep
       ? coreView.runtimeState.guidedStep
-      : (S.guidedStep || "spark"),
+      : (guidedStateRead("guidedStep", "spark") || "spark"),
     newMovePhase: coreView && coreView.runtimeState && coreView.runtimeState.guidedNewMovePhase
       ? coreView.runtimeState.guidedNewMovePhase
-      : (S.newMovePhase || null)
+      : guidedStateRead("newMovePhase", null)
   };
 }

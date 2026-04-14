@@ -1,12 +1,42 @@
+function recommendationUiRoot(){
+  if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+    return SparkState.getRoot();
+  }
+  return typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
+}
+
+function recommendationUiRead(path, fallback){
+  var root = recommendationUiRoot();
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  if(!cursor) return fallback;
+  for(i = 0; i < parts.length; i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function getRecommendationUiList(runtimeState){
+  if(runtimeState && Array.isArray(runtimeState.dashboardRecommendations) && runtimeState.dashboardRecommendations.length){
+    return runtimeState.dashboardRecommendations;
+  }
+  return recommendationUiRead("recommendations", []);
+}
+
 function recommendationsPage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var arr = runtimeState && runtimeState.dashboardRecommendations ? runtimeState.dashboardRecommendations : S.recommendations;
+  var arr = getRecommendationUiList(runtimeState);
   if(!arr || !arr.length){
     generateRecommendations();
-    arr = S.recommendations || [];
+    arr = getRecommendationUiList(null);
   }
   var h = '<div class="card">';
   h += '<div><b>Recommended Next</b></div>';
@@ -50,7 +80,7 @@ function renderRecommendationPlayAlongDetail(recommendation){
 }
 
 function launchRecommendationById(id){
-  var arr = S.recommendations || [];
+  var arr = recommendationUiRead("recommendations", []);
   if (window.sparkCore && typeof window.sparkCore.launchDashboardRecommendation === "function") {
     var coreRequest = window.sparkCore.launchDashboardRecommendation(id);
     if (coreRequest && coreRequest.recommendation) {

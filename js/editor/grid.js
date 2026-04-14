@@ -3,8 +3,16 @@
 
 (function(){
 
+  function editorGridRead(path, fallback){
+    if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    return fallback;
+  }
+
   function getEditorBpm(){
-    return S.editorObject && S.editorObject.bpm ? S.editorObject.bpm : 80;
+    var editorObject = editorGridRead(["editorObject"], null);
+    return editorObject && editorObject.bpm ? editorObject.bpm : 80;
   }
 
   function getGridStepSec(div, bpm){
@@ -20,7 +28,7 @@
 
   function buildTimelineGridLines(startSec, endSec, bpm, div){
     bpm = bpm || getEditorBpm();
-    div = div || S.editorGridDivision || "1/4";
+    div = div || editorGridRead(["editorGridDivision"], "1/4");
     var step = getGridStepSec(div, bpm);
     var lines = [];
     var t = Math.max(0, Math.floor(startSec / step) * step);

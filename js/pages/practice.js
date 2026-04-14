@@ -1,5 +1,124 @@
 // ===== ChordSpark: Home page and practice-related tabs =====
 
+function practiceStateRead(path, fallback) {
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  if (!cursor) return fallback;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function practiceStateWrite(path, value) {
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+    return SparkState.write(path, value);
+  }
+  if (!cursor || !parts.length) return value;
+  for (i = 0; i < parts.length - 1; i++) {
+    if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+    cursor = cursor[parts[i]];
+  }
+  cursor[parts[parts.length - 1]] = value;
+  return value;
+}
+
+function getPracticeRuntimeState() {
+  var view = getSparkCoreLegacySnapshotBundle();
+  return view && view.runtimeState ? view.runtimeState : null;
+}
+
+function getPracticeHomeSnapshot() {
+  return {
+    tab: practiceStateRead("tab", "practice"),
+    lastBrainAnalysis: practiceStateRead("lastBrainAnalysis", null),
+    personalInsights: practiceStateRead("personalInsights", null),
+    recommendedFocus: practiceStateRead("recommendedFocus", null),
+    guidedSession: practiceStateRead("guidedSession", 1),
+    completedGuidedSessions: Array.isArray(practiceStateRead("completedGuidedSessions", [])) ? practiceStateRead("completedGuidedSessions", []) : [],
+    lastChordName: practiceStateRead("lastChordName", ""),
+    selectedLevel: practiceStateRead("selectedLevel", 1),
+    sessions: practiceStateRead("sessions", 0),
+    earnedBadges: Array.isArray(practiceStateRead("earnedBadges", [])) ? practiceStateRead("earnedBadges", []) : [],
+    importMsg: practiceStateRead("importMsg", null),
+    drillCount: practiceStateRead("drillCount", 0),
+    practicePlan: practiceStateRead("practicePlan", null)
+  };
+}
+
+function getPracticeGoalSnapshot() {
+  return {
+    todayPracticeSeconds: practiceStateRead("todayPracticeSeconds", 0),
+    dailyGoalMinutes: practiceStateRead("dailyGoalMinutes", 15),
+    goalReachedToday: !!practiceStateRead("goalReachedToday", false),
+    goalStreak: practiceStateRead("goalStreak", 0)
+  };
+}
+
+function getPracticeCustomSetSnapshot() {
+  return {
+    editingSet: !!practiceStateRead("editingSet", false),
+    editingSetIdx: practiceStateRead("editingSetIdx", -1),
+    customSetName: practiceStateRead("customSetName", "") || "",
+    customSetChords: Array.isArray(practiceStateRead("customSetChords", [])) ? practiceStateRead("customSetChords", []) : [],
+    customSets: Array.isArray(practiceStateRead("customSets", [])) ? practiceStateRead("customSets", []) : []
+  };
+}
+
+function getPracticeSkillSnapshot() {
+  return {
+    transitionStats: practiceStateRead("transitionStats", {}) || {},
+    dailyChallenge: practiceStateRead("dailyChallenge", null)
+  };
+}
+
+function practiceOpenProgressDashboard() {
+  practiceStateWrite("screen", SCR.PROGRESS);
+  render();
+}
+
+function getSparkCoreLegacySnapshotBundle() {
+  if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
+  return window.sparkCore.getActiveSessionView() || null;
+}
+
+function getPracticePlayerSnapshot() {
+  var view = getSparkCoreLegacySnapshotBundle();
+  return view && view.player ? view.player : {
+    xp: practiceStateRead("xp", 0),
+    level: practiceStateRead("playerLevel", practiceStateRead("level", 1)),
+    streak: practiceStateRead("streak", 0),
+    sessions: practiceStateRead("sessions", 0)
+  };
+}
+
+function getPracticeProgressSnapshot() {
+  var view = getSparkCoreLegacySnapshotBundle();
+  return view && view.progress ? view.progress : {
+    chordProgress: practiceStateRead("chordProgress", {})
+  };
+}
+
 function sv2HomeDashboard() {
   var inst = SparkInstruments.getActive();
   if (!inst) return "";
@@ -10,18 +129,23 @@ function sv2HomeDashboard() {
 
   var allInstruments = typeof SparkInstruments !== "undefined" ? SparkInstruments.getAll() : [];
   var levelNames = D.LN || {};
-  var levelName = levelNames[S.level] || ("Level " + S.level);
+  var player = getPracticePlayerSnapshot();
+  var progress = getPracticeProgressSnapshot();
+  var goal = getPracticeGoalSnapshot();
+  var playerLevel = player.level || 1;
+  var chordProgress = progress.chordProgress || {};
+  var levelName = levelNames[playerLevel] || ("Level " + playerLevel);
   var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
   var masteredCount = 0;
   if (D.ALL_CHORDS) {
     for (var i = 0; i < D.ALL_CHORDS.length; i++) {
-      if ((S.chordProgress[D.ALL_CHORDS[i].name] || 0) >= 100) masteredCount++;
+      if ((chordProgress[D.ALL_CHORDS[i].name] || 0) >= 100) masteredCount++;
     }
   }
 
   // Daily goal
-  var goalPct = Math.min(100, Math.round((S.todayPracticeSeconds / (S.dailyGoalMinutes * 60)) * 100));
-  var goalMins = Math.floor(S.todayPracticeSeconds / 60);
+  var goalPct = Math.min(100, Math.round((goal.todayPracticeSeconds / (goal.dailyGoalMinutes * 60)) * 100));
+  var goalMins = Math.floor(goal.todayPracticeSeconds / 60);
 
   var h = '';
 
@@ -31,10 +155,10 @@ function sv2HomeDashboard() {
   h += '<div class="sv2-icon sv2-icon--lg sv2-anim-glow">' + (inst.icon || "\uD83C\uDFB8") + '</div>';
   h += '<div class="sv2-home-hero__info">';
   h += '<h2 class="sv2-home-hero__name">' + escHTML(inst.name) + '</h2>';
-  h += '<div class="sv2-home-hero__level">' + escHTML(levelName) + ' &mdash; Level ' + S.level + '</div>';
+  h += '<div class="sv2-home-hero__level">' + escHTML(levelName) + ' &mdash; Level ' + playerLevel + '</div>';
   h += '<div class="sv2-home-hero__badges">';
-  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + S.xp + ' XP</span>';
-  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + S.streak + '</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + player.xp + ' XP</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + player.streak + '</span>';
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + masteredCount + '/' + chordCount + ' chords</span>';
   h += '</div></div></div>';
 
@@ -84,8 +208,8 @@ function sv2HomeDashboard() {
   h += '<div class="sv2-ring__label" style="font-size:10px">' + goalPct + '%</div>';
   h += '</div>';
   h += '<div style="flex:1">';
-  h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (S.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + S.dailyGoalMinutes + " min") + '</div>';
-  h += '<div style="font-size:var(--text-micro);color:var(--text-muted)">' + goalMins + ' / ' + S.dailyGoalMinutes + ' min today' + (S.goalStreak > 0 ? " &middot; \uD83D\uDD25 " + S.goalStreak + " day streak" : "") + '</div>';
+  h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (goal.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + goal.dailyGoalMinutes + " min") + '</div>';
+  h += '<div style="font-size:var(--text-micro);color:var(--text-muted)">' + goalMins + ' / ' + goal.dailyGoalMinutes + ' min today' + (goal.goalStreak > 0 ? " &middot; \uD83D\uDD25 " + goal.goalStreak + " day streak" : "") + '</div>';
   h += '</div></div>';
 
   return h;
@@ -94,6 +218,7 @@ function sv2HomeDashboard() {
 function homePage(){
   // V2 Dashboard
   var v2Home = typeof sv2HomeDashboard === "function" && document.body.classList.contains("sv2") ? sv2HomeDashboard() : "";
+  var homeState = getPracticeHomeSnapshot();
 
   // Build tab bar from active instrument's tabs array
   var inst = SparkInstruments.getActive();
@@ -104,7 +229,7 @@ function homePage(){
     var tid = typeof t === "string" ? t : t.id;
     var ticon = typeof t === "object" && t.icon ? t.icon : "";
     var tlabel = typeof t === "object" && t.label ? t.label : tid.charAt(0).toUpperCase()+tid.slice(1);
-    h+='<button class="tab'+(S.tab===tid?" active":"")+'" onclick="act(\'tab\',\''+tid+'\')" role="tab" aria-selected="'+(S.tab===tid)+'" aria-label="'+tlabel+' tab"><span class="tab-icon">'+ticon+'</span><span class="tab-label">'+tlabel+'</span></button>';
+    h+='<button class="tab'+(homeState.tab===tid?" active":"")+'" onclick="act(\'tab\',\''+tid+'\')" role="tab" aria-selected="'+(homeState.tab===tid)+'" aria-label="'+tlabel+' tab"><span class="tab-icon">'+ticon+'</span><span class="tab-label">'+tlabel+'</span></button>';
   }
   h+='</div>';
 
@@ -128,7 +253,7 @@ function homePage(){
     games: typeof gamesTab === "function" ? gamesTab : null,
     tools: typeof toolsTab === "function" ? toolsTab : null
   };
-  var _renderer = _tabRenderers[S.tab] || _sharedTabRenderers[S.tab] || null;
+  var _renderer = _tabRenderers[homeState.tab] || _sharedTabRenderers[homeState.tab] || null;
   if (_renderer) h += _renderer();
   return v2Home + h;
 }
@@ -140,13 +265,20 @@ function toolsTab(){ return '<div class="card"><div><b>Tools</b></div><div class
 function practiceTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var player = getPracticePlayerSnapshot();
+  var progress = getPracticeProgressSnapshot();
+  var goal = getPracticeGoalSnapshot();
+  var homeState = getPracticeHomeSnapshot();
+  var skillState = getPracticeSkillSnapshot();
+  var chordProgress = progress.chordProgress || {};
+  var playerLevel = player.level || 1;
   // Daily goal progress at top
-  var goalPct=Math.min(100,Math.round((S.todayPracticeSeconds/(S.dailyGoalMinutes*60))*100));
-  var goalMins=Math.floor(S.todayPracticeSeconds/60);
-  var h='<div class="card mb12"><div style="display:flex;align-items:center;gap:12px"><div class="flex-center">'+ringHTML(goalPct,56,5,S.goalReachedToday?"#4ECDC4":"#FF6B6B",'<div style="font-size:12px;font-weight:900;color:var(--text-primary)">'+goalMins+'m</div>',"Daily goal progress")+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">'+(S.goalReachedToday?"&#9989; Goal reached!":"Daily Goal: "+S.dailyGoalMinutes+" min")+'</div><div style="font-size:11px;color:var(--text-muted)">'+goalMins+'/'+S.dailyGoalMinutes+' min today'+(S.goalStreak>0?" | &#128293; "+S.goalStreak+" day streak":"")+'</div></div><div style="display:flex;gap:4px">';
+  var goalPct=Math.min(100,Math.round((goal.todayPracticeSeconds/(goal.dailyGoalMinutes*60))*100));
+  var goalMins=Math.floor(goal.todayPracticeSeconds/60);
+  var h='<div class="card mb12"><div style="display:flex;align-items:center;gap:12px"><div class="flex-center">'+ringHTML(goalPct,56,5,goal.goalReachedToday?"#4ECDC4":"#FF6B6B",'<div style="font-size:12px;font-weight:900;color:var(--text-primary)">'+goalMins+'m</div>',"Daily goal progress")+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">'+(goal.goalReachedToday?"&#9989; Goal reached!":"Daily Goal: "+goal.dailyGoalMinutes+" min")+'</div><div style="font-size:11px;color:var(--text-muted)">'+goalMins+'/'+goal.dailyGoalMinutes+' min today'+(goal.goalStreak>0?" | &#128293; "+goal.goalStreak+" day streak":"")+'</div></div><div style="display:flex;gap:4px">';
   var goals=[5,10,15,20,30];
   for(var i=0;i<goals.length;i++){
-    h+='<button onclick="act(\'setGoal\',\''+goals[i]+'\')" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(S.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(S.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
+    h+='<button onclick="act(\'setGoal\',\''+goals[i]+'\')" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(goal.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(goal.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
   }
   h+='</div></div></div>';
 
@@ -170,29 +302,29 @@ function practiceTab(){
   h+='<div style="font-size:24px;margin-bottom:4px">&#128200;</div>';
   h+='<div style="font-size:15px;font-weight:900;color:#fff">Your Progress</div>';
   h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">Skills, mastery, and practice goals</div>';
-  h+='<button onclick="S.screen=SCR.PROGRESS;render()" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">View Progress &#9654;</button>';
+  h+='<button onclick="practiceOpenProgressDashboard()" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">View Progress &#9654;</button>';
   h+='</div>';
 
-  if (S.lastBrainAnalysis || (S.personalInsights && S.personalInsights.coach)) {
-    var coachMsg = S.personalInsights && S.personalInsights.coach ? S.personalInsights.coach.message : "";
-    var focusSkill = S.recommendedFocus || (S.lastBrainAnalysis && S.lastBrainAnalysis.focusSkill) || null;
+  if (homeState.lastBrainAnalysis || (homeState.personalInsights && homeState.personalInsights.coach)) {
+    var coachMsg = homeState.personalInsights && homeState.personalInsights.coach ? homeState.personalInsights.coach.message : "";
+    var focusSkill = homeState.recommendedFocus || (homeState.lastBrainAnalysis && homeState.lastBrainAnalysis.focusSkill) || null;
     var focusLabel = focusSkill ? String(focusSkill).replace(/_/g, " ") : "consistency";
     h += '<div class="card mb12" style="border:2px solid #45B7D1">';
     h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:6px">&#129504; Smart Coach</div>';
     if (coachMsg) h += '<div style="font-size:12px;color:#8fd5c4;margin-bottom:8px">' + escHTML(coachMsg) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim)">Recommended focus: <strong style="color:var(--text-primary)">' + escHTML(focusLabel) + '</strong></div>';
-    if (S.lastBrainAnalysis && S.lastBrainAnalysis.recommendedDifficultyId) {
-      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">Suggested difficulty: <strong style="color:var(--text-primary)">' + escHTML(S.lastBrainAnalysis.recommendedDifficultyId) + '</strong></div>';
+    if (homeState.lastBrainAnalysis && homeState.lastBrainAnalysis.recommendedDifficultyId) {
+      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">Suggested difficulty: <strong style="color:var(--text-primary)">' + escHTML(homeState.lastBrainAnalysis.recommendedDifficultyId) + '</strong></div>';
     }
-    if (S.lastBrainAnalysis && S.lastBrainAnalysis.weakLane != null) {
-      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">Weak lane: <strong style="color:var(--text-primary)">' + (S.lastBrainAnalysis.weakLane + 1) + '</strong></div>';
+    if (homeState.lastBrainAnalysis && homeState.lastBrainAnalysis.weakLane != null) {
+      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">Weak lane: <strong style="color:var(--text-primary)">' + (homeState.lastBrainAnalysis.weakLane + 1) + '</strong></div>';
     }
     h += '</div>';
   }
   // Guided Session CTA
-  var gs=D.SESSIONS[S.guidedSession-1];
+  var gs=D.SESSIONS[homeState.guidedSession-1];
   if(gs){
-    var gsDone=S.completedGuidedSessions?S.completedGuidedSessions.length:0;
+    var gsDone=homeState.completedGuidedSessions.length;
     h+='<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
     h+='<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
     h+='<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
@@ -229,9 +361,9 @@ function practiceTab(){
   // Quick Start / Resume
   h+='<div class="card mb12" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);border:none;text-align:center;padding:20px">';
   h+='<div style="font-size:28px;margin-bottom:4px">&#9889;</div>';
-  if(S.lastChordName){
+  if(homeState.lastChordName){
     h+='<div style="font-size:16px;font-weight:900;color:#fff">Pick Up Where You Left Off</div>';
-    h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 12px">Continue practicing: <strong>'+escHTML(S.lastChordName)+'</strong></div>';
+    h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 12px">Continue practicing: <strong>'+escHTML(homeState.lastChordName)+'</strong></div>';
     h+='<div style="display:flex;gap:8px;justify-content:center">';
     h+='<button onclick="act(\'resumeSession\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Continue</button>';
     h+='<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Random</button>';
@@ -245,28 +377,28 @@ function practiceTab(){
 
   h+='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Pick a Chord &#9889;</h2></div><div class="lvl-tabs">';
   for(var l=1;l<=8;l++){
-    var sel=S.selectedLevel===l,lk=l>S.level;
+    var sel=homeState.selectedLevel===l,lk=l>playerLevel;
     h+='<button class="lvl-tab" onclick="act(\'selLevel\',\''+l+'\')" style="background:'+(sel?D.LC[l]:"var(--tab-bg)")+';color:'+(sel?"#fff":"var(--tab-inactive)")+';opacity:'+(lk?0.4:1)+'" aria-label="Level '+l+' '+D.LN[l]+'">'+(lk?"&#128274; ":"")+l+'</button>';
   }
   h+='</div>';
-  h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+D.LC[S.selectedLevel]+'">'+D.LN[S.selectedLevel]+'</span>';
-  if(D.CURRICULUM&&D.CURRICULUM[S.selectedLevel-1])h+='<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+D.CURRICULUM[S.selectedLevel-1].sub+'</span>';
+  h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+D.LC[homeState.selectedLevel]+'">'+D.LN[homeState.selectedLevel]+'</span>';
+  if(D.CURRICULUM&&D.CURRICULUM[homeState.selectedLevel-1])h+='<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+D.CURRICULUM[homeState.selectedLevel-1].sub+'</span>';
   h+='</div>';
   h+='<div class="flex-col">';
-  var cs=D.CHORDS[S.selectedLevel]||[];
+  var cs=D.CHORDS[homeState.selectedLevel]||[];
   for(var i=0;i<cs.length;i++){
-    var c=cs[i],p=S.chordProgress[c.name]||0,lk=S.selectedLevel>S.level;
+    var c=cs[i],p=chordProgress[c.name]||0,lk=homeState.selectedLevel>playerLevel;
     var tier=getChordTier(c.name);
     var tierStyle=tier.tier!=="none"?";border-left:4px solid "+tier.color:"";
-    h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+UI.chord(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+D.LC[S.selectedLevel]+','+D.LC[S.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
-    if(!lk)h+='<button onclick="event.stopPropagation();act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:18px;padding:6px" aria-label="Preview '+c.name+' sound">&#128264;</button><div style="font-size:22px;color:'+D.LC[S.selectedLevel]+'">&#9654;</div>';
+    h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+UI.chord(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+D.LC[homeState.selectedLevel]+','+D.LC[homeState.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
+    if(!lk)h+='<button onclick="event.stopPropagation();act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:18px;padding:6px" aria-label="Preview '+c.name+' sound">&#128264;</button><div style="font-size:22px;color:'+D.LC[homeState.selectedLevel]+'">&#9654;</div>';
     h+='</div>';
   }
   h+='</div>';
 
   // Progress summary
-  var mas=0;for(var k in S.chordProgress)if(S.chordProgress[k]>=100)mas++;
-  h+='<div class="card mt16"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+S.sessions+'</div><div style="font-size:10px;color:var(--text-muted)">Sessions</div></div><div><div style="font-size:24px;font-weight:900;color:#4ECDC4">'+mas+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div><div><div style="font-size:24px;font-weight:900;color:#45B7D1">Lvl '+S.level+'</div><div style="font-size:10px;color:var(--text-muted)">Current</div></div></div></div>';
+  var mas=0;for(var k in chordProgress)if(chordProgress[k]>=100)mas++;
+  h+='<div class="card mt16"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+player.sessions+'</div><div style="font-size:10px;color:var(--text-muted)">Sessions</div></div><div><div style="font-size:24px;font-weight:900;color:#4ECDC4">'+mas+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div><div><div style="font-size:24px;font-weight:900;color:#45B7D1">Lvl '+playerLevel+'</div><div style="font-size:10px;color:var(--text-muted)">Current</div></div></div></div>';
 
   // Strum track recommendation (S1-S7 progression from addendum)
   h+=strumTrackCard();
@@ -280,7 +412,7 @@ function practiceTab(){
   // Badges
   h+='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127942; Badges</h3><div style="display:flex;flex-wrap:wrap;gap:8px">';
   for(var i=0;i<BADGES.length;i++){
-    var b=BADGES[i],e=S.earnedBadges.indexOf(b.id)!==-1;
+    var b=BADGES[i],e=homeState.earnedBadges.indexOf(b.id)!==-1;
     h+='<div style="width:56px;text-align:center;opacity:'+(e?1:0.3)+'" aria-label="Badge: '+b.label+(e?" (earned)":" (locked)")+'"><div style="font-size:24px;filter:'+(e?"none":"grayscale(1)")+'">'+b.icon+'</div><div style="font-size:8px;color:var(--text-label);font-weight:600">'+b.label+'</div></div>';
   }
   h+='</div></div>';
@@ -291,34 +423,36 @@ function practiceTab(){
   h+='<button class="reset-btn" onclick="act(\'importProgress\')" style="border-color:#45B7D1;color:#45B7D1">&#128194; Import</button>';
   h+='<button class="reset-btn" onclick="resetProgress()">Reset Progress</button>';
   h+='</div>';
-  if(S.importMsg)h+='<div style="text-align:center;margin-top:8px;font-size:12px;color:'+(S.importMsg.ok?"#4ECDC4":"#FF6B6B")+'">'+S.importMsg.text+'</div>';
+  if(homeState.importMsg)h+='<div style="text-align:center;margin-top:8px;font-size:12px;color:'+(homeState.importMsg.ok?"#4ECDC4":"#FF6B6B")+'">'+homeState.importMsg.text+'</div>';
   return h;
 }
 
 // ===== CUSTOM PRACTICE SETS =====
 function customSetsSection(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var customState = getPracticeCustomSetSnapshot();
+  var player = getPracticePlayerSnapshot();
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
-  if(S.editingSet){
-    h+='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(S.customSetName)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
+  if(customState.editingSet){
+    h+='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(customState.customSetName)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Select chords (min 2):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
-    for(var l=1;l<=S.level;l++){
+    for(var l=1;l<=player.level;l++){
       var cs=D.CHORDS[l]||[];
       for(var i=0;i<cs.length;i++){
-        var c=cs[i],sel=S.customSetChords.indexOf(c.name)!==-1;
+        var c=cs[i],sel=customState.customSetChords.indexOf(c.name)!==-1;
         h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'toggleSetChord\',\'"+c.name+"\')")+'>'+c.short+'</span>';
       }
     }
     h+='</div>';
-    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(S.customSetChords.length<2||!S.customSetName.trim()?';opacity:0.5':'')+'">'+(S.editingSetIdx>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
+    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(customState.customSetChords.length<2||!customState.customSetName.trim()?';opacity:0.5':'')+'">'+(customState.editingSetIdx>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
   } else {
-    if(S.customSets.length===0){
+    if(customState.customSets.length===0){
       h+='<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Create custom chord groups to practice together.</p>';
     } else {
-      for(var i=0;i<S.customSets.length;i++){
-        var cs=S.customSets[i];
+      for(var i=0;i<customState.customSets.length;i++){
+        var cs=customState.customSets[i];
         h+='<div class="set-card mb12"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.name)+'</h4><div style="display:flex;gap:6px">';
         h+='<button onclick="act(\'drillCustomSet\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Start drill with '+escHTML(cs.name)+'">&#9889; Drill</button>';
         h+='<button onclick="act(\'editSet\',\''+i+'\')" style="background:var(--input-bg);color:var(--text-muted);padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Edit set">&#9998;</button>';
@@ -341,7 +475,8 @@ function customSetsSection(){
 
 // ===== DRILL TAB =====
 function drillTab(){
-  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+S.drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
+  var homeState = getPracticeHomeSnapshot();
+  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+homeState.drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
   // Suggested drill from transition stats
   var hardest=getHardestTransition();
   if(hardest){
@@ -352,7 +487,7 @@ function drillTab(){
 }
 
 function getHardestTransition(){
-  var ts=S.transitionStats;
+  var ts=getPracticeSkillSnapshot().transitionStats;
   var worst=null,worstAvg=0;
   for(var k in ts){
     if(ts[k].attempts>=2){
@@ -369,36 +504,30 @@ function getHardestTransition(){
 
 // ===== DAILY TAB =====
 function dailyTab(){
-  if(!S.dailyChallenge)return '';
-  var dc=S.dailyChallenge;
+  var dc=getPracticeSkillSnapshot().dailyChallenge;
+  if(!dc)return '';
   return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Daily Challenge &#127941;</h2><div class="card"><div style="font-size:48px;margin-bottom:8px">'+dc.icon+'</div><h3 style="margin:0 0 6px;font-size:18px;font-weight:800;color:var(--text-primary)">'+dc.title+'</h3><p style="color:var(--text-label);font-size:14px;margin-bottom:8px">'+dc.desc+'</p><div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:16px">+'+dc.xp+' XP</div><br><button class="btn" onclick="act(\'startDaily\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">Accept Challenge</button></div></div>';
 }
 
 // ===== QUIZ TAB =====
 function quizTab(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
-  var quizScore = typeof S.quizCorrect === "number"
-    ? S.quizCorrect
+  var runtime = getPracticeRuntimeState();
+  var quizScore = typeof practiceStateRead("quizCorrect", null) === "number"
+    ? practiceStateRead("quizCorrect", null)
     : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
   return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#129504;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Correct: <strong>'+quizScore+'</strong></p><button class="btn" onclick="act(\'startQuiz\')" style="background:linear-gradient(135deg,#45B7D1,#4ECDC4);color:#fff">Start Quiz</button></div></div>';
 }
 
 // ===== EAR TRAINING TAB =====
 function getLegacyEarTrainingRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  var runtime = getPracticeRuntimeState();
   return {
-    question: typeof S.earTrainQ === "string" ? S.earTrainQ : (runtime ? runtime.legacyEarTrainQuestion : null),
-    options: Array.isArray(S.earTrainOpts) && S.earTrainOpts.length ? S.earTrainOpts : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
-    answer: typeof S.earTrainAns === "string" ? S.earTrainAns : (runtime ? runtime.legacyEarTrainAnswer : null),
-    score: typeof S.earTrainScore === "number" ? S.earTrainScore : (runtime && typeof runtime.legacyEarTrainScore === "number" ? runtime.legacyEarTrainScore : 0),
-    total: typeof S.earTrainTotal === "number" ? S.earTrainTotal : (runtime && typeof runtime.legacyEarTrainTotal === "number" ? runtime.legacyEarTrainTotal : 0),
-    streak: typeof S.earTrainStreak === "number" ? S.earTrainStreak : (runtime && typeof runtime.legacyEarTrainStreak === "number" ? runtime.legacyEarTrainStreak : 0)
+    question: typeof practiceStateRead("earTrainQ", null) === "string" ? practiceStateRead("earTrainQ", null) : (runtime ? runtime.legacyEarTrainQuestion : null),
+    options: Array.isArray(practiceStateRead("earTrainOpts", [])) && practiceStateRead("earTrainOpts", []).length ? practiceStateRead("earTrainOpts", []) : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
+    answer: typeof practiceStateRead("earTrainAns", null) === "string" ? practiceStateRead("earTrainAns", null) : (runtime ? runtime.legacyEarTrainAnswer : null),
+    score: typeof practiceStateRead("earTrainScore", null) === "number" ? practiceStateRead("earTrainScore", null) : (runtime && typeof runtime.legacyEarTrainScore === "number" ? runtime.legacyEarTrainScore : 0),
+    total: typeof practiceStateRead("earTrainTotal", null) === "number" ? practiceStateRead("earTrainTotal", null) : (runtime && typeof runtime.legacyEarTrainTotal === "number" ? runtime.legacyEarTrainTotal : 0),
+    streak: typeof practiceStateRead("earTrainStreak", null) === "number" ? practiceStateRead("earTrainStreak", null) : (runtime && typeof runtime.legacyEarTrainStreak === "number" ? runtime.legacyEarTrainStreak : 0)
   };
 }
 
@@ -438,12 +567,13 @@ function practicePage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
-  if(!S.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice")) generateDailyPracticePlan();
+  var homeState = getPracticeHomeSnapshot();
+  if(!homeState.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice")) generateDailyPracticePlan();
 
   var stats = getPracticeStats();
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
     ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
-    : S.practicePlan;
+    : homeState.practicePlan;
 
   var h = '<div class="card mb16">';
   h += '<div><b>Practice Stats</b></div>';
@@ -474,7 +604,7 @@ function startPracticeItem(id){
       plan = SparkPracticeBridge.toLegacyPlan(view.plan);
     }
   }
-  if(!plan) plan = S.practicePlan;
+  if(!plan) plan = practiceStateRead("practicePlan", null);
   if(!plan) return;
   for(var i=0;i<plan.items.length;i++){
     if(plan.items[i].id === id){

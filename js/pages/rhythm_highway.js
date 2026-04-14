@@ -14,6 +14,17 @@
     { id: "spark_challenge", label: "Challenge", hint: "Tighter timing and stricter fret checks" }
   ];
 
+  function rhythmHighwayState() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
   function startRhythmHighwaySegment(segmentId, presetName, loopSpec) {
     var launchData = resolveRhythmHighwayLaunchData(segmentId);
     if (!launchData || !launchData.payload) return false;
@@ -29,13 +40,15 @@
   }
 
   function startRhythmHighwayPayload(payload, presetName, launchContext) {
+    var state = rhythmHighwayState();
     if (!payload || !payload.songChart) return false;
+    if (!state) return false;
     launchContext = launchContext || {};
 
     stopSparkRhythmHighway();
 
-    var resolvedPresetName = resolveRhythmHighwayPresetName(presetName || S.rhythmHighwayPreset || payload.enginePreset);
-    var resolvedLoopSpec = launchContext.loopSpec || S.rhythmHighwayLoop || null;
+    var resolvedPresetName = resolveRhythmHighwayPresetName(presetName || state.rhythmHighwayPreset || payload.enginePreset);
+    var resolvedLoopSpec = launchContext.loopSpec || state.rhythmHighwayLoop || null;
     var activePayload = resolvedLoopSpec ? buildRhythmHighwayLoopPayload(payload, resolvedLoopSpec) : payload;
     if (!activePayload || !activePayload.songChart) activePayload = payload;
 
@@ -49,21 +62,21 @@
       preset: SparkEnginePresetRegistry.get(resolvedPresetName)
     });
 
-    S.activeCoreSegmentId = launchContext.segmentId || null;
-    S.rhythmHighwayPreset = resolvedPresetName;
-    S.rhythmHighwayLoop = resolvedLoopSpec && activePayload !== payload ? resolvedLoopSpec : null;
-    S.rhythmHighwayLaunchContext = {
+    state.activeCoreSegmentId = launchContext.segmentId || null;
+    state.rhythmHighwayPreset = resolvedPresetName;
+    state.rhythmHighwayLoop = resolvedLoopSpec && activePayload !== payload ? resolvedLoopSpec : null;
+    state.rhythmHighwayLaunchContext = {
       source: launchContext.source || "ad_hoc",
       label: launchContext.label || payload.chartId || (payload.songChart.song && payload.songChart.song.title) || null,
       instrument: launchContext.instrument || payload.adapterType || null,
       exerciseId: launchContext.exerciseId || null,
       exerciseFocus: launchContext.exerciseFocus || null
     };
-    S.rhythmHighwayHeldMask = 0;
-    S.rhythmHighwaySnapshot = runtime.engine.getSnapshot(0);
-    S.rhythmHighwayResult = null;
-    S.rhythmHighwayFeedback = "";
-    S.screen = SCR.RHYTHM_HIGHWAY;
+    state.rhythmHighwayHeldMask = 0;
+    state.rhythmHighwaySnapshot = runtime.engine.getSnapshot(0);
+    state.rhythmHighwayResult = null;
+    state.rhythmHighwayFeedback = "";
+    state.screen = SCR.RHYTHM_HIGHWAY;
 
     tickRhythmHighway();
     render();
@@ -79,10 +92,12 @@
   }
 
   function tickRhythmHighway() {
+    var state = rhythmHighwayState();
     if (!runtime.engine || !runtime.clock) return;
+    if (!state) return;
     var songTimeSec = runtime.clock.getSongTime();
-    S.rhythmHighwaySnapshot = runtime.engine.update(songTimeSec);
-    if (S.rhythmHighwaySnapshot.finished && !S.rhythmHighwayResult) {
+    state.rhythmHighwaySnapshot = runtime.engine.update(songTimeSec);
+    if (state.rhythmHighwaySnapshot.finished && !state.rhythmHighwayResult) {
       finalizeRhythmHighway();
       return;
     }
@@ -91,10 +106,12 @@
   }
 
   function finalizeRhythmHighway() {
+    var state = rhythmHighwayState();
     if (!runtime.engine) return;
+    if (!state) return;
     var result = runtime.engine.finalize();
-    S.rhythmHighwayResult = result;
-    S.rhythmHighwayFeedback = buildFeedback(result);
+    state.rhythmHighwayResult = result;
+    state.rhythmHighwayFeedback = buildFeedback(result);
     if (runtime.segmentId && window.sparkCore && typeof window.sparkCore.completeSession === "function") {
       window.sparkCore.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
@@ -109,20 +126,24 @@
   }
 
   function sparkRhythmHighwayStrum() {
+    var state = rhythmHighwayState();
     if (!runtime.engine || !runtime.clock) return;
+    if (!state) return;
     var outcome = runtime.engine.handleInput({
       kind: "strum",
-      laneMask: S.rhythmHighwayHeldMask || 0,
+      laneMask: state.rhythmHighwayHeldMask || 0,
       atSec: runtime.clock.getSongTime()
     });
     if (outcome && outcome.resolution) {
-      S.rhythmHighwayFeedback = feedbackForResolution(outcome.resolution);
+      state.rhythmHighwayFeedback = feedbackForResolution(outcome.resolution);
     }
   }
 
   function rhythmHighwayPage() {
-    if (S.rhythmHighwayResult) return rhythmHighwayResultsPage();
-    var snapshot = S.rhythmHighwaySnapshot;
+    var state = rhythmHighwayState();
+    if (!state) return '<div class="text-center"><p>No rhythm session active.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+    if (state.rhythmHighwayResult) return rhythmHighwayResultsPage();
+    var snapshot = state.rhythmHighwaySnapshot;
     if (!snapshot) return '<div class="text-center"><p>No rhythm session active.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
     var labels = getRhythmHighwayLaneLabels();
@@ -146,8 +167,8 @@
     h += '<div><div style="font-size:24px;font-weight:900;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div style="font-size:10px;color:var(--text-muted)">Max Combo</div></div>';
     h += '<div><div style="font-size:24px;font-weight:900;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:10px;color:var(--text-muted)">Accuracy</div></div>';
     h += '</div>';
-    if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.label) {
-      h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(S.rhythmHighwayLaunchContext.label) + '</div>';
+    if (state.rhythmHighwayLaunchContext && state.rhythmHighwayLaunchContext.label) {
+      h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(state.rhythmHighwayLaunchContext.label) + '</div>';
     }
 
     h += '<div style="display:grid;grid-template-columns:repeat(' + laneCount + ',56px);gap:8px;justify-content:center;align-items:end;height:320px;margin:0 auto 16px;position:relative">';
@@ -167,27 +188,29 @@
 
     h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
     for (var fi = 0; fi < laneCount; fi++) {
-      var active = maskHasLane(S.rhythmHighwayHeldMask, fi);
+      var active = maskHasLane(state.rhythmHighwayHeldMask, fi);
       h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + labels[fi] + '</button>';
     }
     h += '</div>';
     h += '<div style="display:flex;justify-content:center;gap:10px">';
     h += '<button class="btn" onclick="act(\'rhythmHighwayStrum\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:18px;padding:14px 28px">Strum</button>';
-    h += '<button class="btn" onclick="act(\'' + (S.rhythmHighwayLoop ? "rhythmHighwayClearLoop" : "rhythmHighwayLoopWindow") + '\')" style="background:' + (S.rhythmHighwayLoop ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (S.rhythmHighwayLoop ? "#fff" : "var(--text-secondary)") + '">' + (S.rhythmHighwayLoop ? "Clear Loop" : "Loop Window") + '</button>';
+    h += '<button class="btn" onclick="act(\'' + (state.rhythmHighwayLoop ? "rhythmHighwayClearLoop" : "rhythmHighwayLoopWindow") + '\')" style="background:' + (state.rhythmHighwayLoop ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (state.rhythmHighwayLoop ? "#fff" : "var(--text-secondary)") + '">' + (state.rhythmHighwayLoop ? "Clear Loop" : "Loop Window") + '</button>';
     h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">Exit</button>';
     h += '</div>';
-    if (S.rhythmHighwayLoop) {
-      h += '<div style="margin-top:10px;font-size:11px;color:#4ECDC4;font-weight:800">Looping ' + escHTML(S.rhythmHighwayLoop.label || "current window") + '</div>';
+    if (state.rhythmHighwayLoop) {
+      h += '<div style="margin-top:10px;font-size:11px;color:#4ECDC4;font-weight:800">Looping ' + escHTML(state.rhythmHighwayLoop.label || "current window") + '</div>';
     }
-    if (S.rhythmHighwayFeedback) {
-      h += '<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">' + escHTML(S.rhythmHighwayFeedback) + '</div>';
+    if (state.rhythmHighwayFeedback) {
+      h += '<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">' + escHTML(state.rhythmHighwayFeedback) + '</div>';
     }
     h += '</div>';
     return h;
   }
 
   function rhythmHighwayResultsPage() {
-    var result = S.rhythmHighwayResult;
+    var state = rhythmHighwayState();
+    if (!state) return '<div class="text-center"><p>No rhythm results available.</p></div>';
+    var result = state.rhythmHighwayResult;
     var gameplay = result.gameplay || {};
     var learning = result.learning || {};
     var activePreset = getCurrentAssistPreset();
@@ -197,8 +220,8 @@
     if (activePreset) {
       h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Assist Mode: <span style="color:var(--text-primary);font-weight:800">' + escHTML(activePreset.label) + "</span></div>";
     }
-    if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.exerciseFocus) {
-      h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Focus: ' + escHTML(String(S.rhythmHighwayLaunchContext.exerciseFocus).replace(/_/g, " ")) + '</div>';
+    if (state.rhythmHighwayLaunchContext && state.rhythmHighwayLaunchContext.exerciseFocus) {
+      h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Focus: ' + escHTML(String(state.rhythmHighwayLaunchContext.exerciseFocus).replace(/_/g, " ")) + '</div>';
     }
     if (moduleGuidance) {
       h += '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(20,184,166,.12),rgba(20,184,166,.04));border:1px solid rgba(20,184,166,.28)">';
@@ -219,7 +242,7 @@
     h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML((learning.weakAreas || []).join(", ") || "None") + '</div></div>';
     h += '<div style="display:flex;gap:10px;justify-content:center">';
     h += '<button class="btn" onclick="act(\'restartRhythmHighway\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
-    if (S.rhythmHighwayLoop) {
+    if (state.rhythmHighwayLoop) {
       h += '<button class="btn" onclick="act(\'rhythmHighwayClearLoop\')" style="background:var(--input-bg);color:var(--text-secondary)">Play Full Run</button>';
     } else {
       h += '<button class="btn" onclick="act(\'rhythmHighwayLoopWindow\')" style="background:var(--input-bg);color:var(--text-secondary)">Loop Window</button>';
@@ -259,7 +282,8 @@
   }
 
   function getRhythmHighwayModuleGuidance(result) {
-    var launchContext = S.rhythmHighwayLaunchContext || null;
+    var state = rhythmHighwayState();
+    var launchContext = state ? state.rhythmHighwayLaunchContext || null : null;
     if (!launchContext || !launchContext.instrument || !launchContext.exerciseFocus) return null;
     var moduleMap = {
       bass: window.SparkBassModule,
@@ -269,12 +293,13 @@
     };
     var instrumentModule = moduleMap[launchContext.instrument] || null;
     if (!instrumentModule || typeof instrumentModule.getRhythmGuidance !== "function") return null;
-    return instrumentModule.getRhythmGuidance(launchContext.exerciseFocus, result || S.rhythmHighwayResult || null);
+    return instrumentModule.getRhythmGuidance(launchContext.exerciseFocus, result || (state ? state.rhythmHighwayResult : null) || null);
   }
 
   function cloneRhythmHighwayLaunchContext() {
-    if (!S.rhythmHighwayLaunchContext) return null;
-    return JSON.parse(JSON.stringify(S.rhythmHighwayLaunchContext));
+    var state = rhythmHighwayState();
+    if (!state || !state.rhythmHighwayLaunchContext) return null;
+    return JSON.parse(JSON.stringify(state.rhythmHighwayLaunchContext));
   }
 
   function resolveRhythmHighwayLaunchData(segmentId) {
@@ -321,7 +346,8 @@
   }
 
   function getCurrentAssistPreset() {
-    var presetName = resolveRhythmHighwayPresetName(S.rhythmHighwayPreset);
+    var state = rhythmHighwayState();
+    var presetName = resolveRhythmHighwayPresetName(state ? state.rhythmHighwayPreset : null);
     for (var i = 0; i < ASSIST_PRESETS.length; i++) {
       if (ASSIST_PRESETS[i].id === presetName) return ASSIST_PRESETS[i];
     }

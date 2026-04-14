@@ -1,7 +1,14 @@
 (function(){
+  function editorShortcutRead(path, fallback){
+    if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    return fallback;
+  }
+
   function handleEditorKeydown(e){
-    if(!S.editorShortcutEnabled) return false;
-    if(S.screen !== SCR.EDITOR) return false;
+    if(!editorShortcutRead(["editorShortcutEnabled"], false)) return false;
+    if(editorShortcutRead(["screen"], "") !== SCR.EDITOR) return false;
     var tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
     var typing = tag==="input" || tag==="textarea" || document.activeElement && document.activeElement.isContentEditable;
     if(typing) return false;

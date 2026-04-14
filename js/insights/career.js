@@ -1,7 +1,14 @@
 (function(){
 
+  function getCareerProgressValue(key, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(["careerProgress", key], fallback);
+    }
+    return fallback;
+  }
+
   function buildCareerInsights(){
-    var ratings = (S.careerProgress && S.careerProgress.songRatings) || {};
+    var ratings = getCareerProgressValue("songRatings", {});
     var totalSongs = 0;
     var clearedSongs = 0;
     var totalStars = 0;
@@ -21,7 +28,7 @@
   }
 
   function countCompletedStages(){
-    var row = (S.careerProgress && S.careerProgress.stageCompletion) || {};
+    var row = getCareerProgressValue("stageCompletion", {});
     var n = 0;
     for(var k in row){
       if(row[k]) n++;

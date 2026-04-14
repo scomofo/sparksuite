@@ -3,42 +3,70 @@
 
 (function(){
 
+  function editorIoRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function editorIoRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorIoRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function editorIoWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = editorIoRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
   function saveEditorObjectToLibrary(){
-    if(!S.editorObject) return false;
-    if(!Array.isArray(S.editorLibrary)) S.editorLibrary = [];
-    var obj = JSON.parse(JSON.stringify(S.editorObject));
+    var editorObject = editorIoRead("editorObject", null);
+    var editorLibrary = Array.isArray(editorIoRead("editorLibrary", [])) ? editorIoRead("editorLibrary", []) : [];
+    if(!editorObject) return false;
+    var obj = JSON.parse(JSON.stringify(editorObject));
     var idx = -1;
-    for(var i=0;i<S.editorLibrary.length;i++){
-      if(S.editorLibrary[i].id===obj.id){
+    for(var i=0;i<editorLibrary.length;i++){
+      if(editorLibrary[i].id===obj.id){
         idx = i;
         break;
       }
     }
-    if(idx >= 0) S.editorLibrary[idx] = obj;
-    else S.editorLibrary.push(obj);
-    S.editorDirty = false;
+    if(idx >= 0) editorLibrary[idx] = obj;
+    else editorLibrary.push(obj);
+    editorIoWrite("editorLibrary", editorLibrary);
+    editorIoWrite("editorDirty", false);
     saveState();
     return true;
   }
 
   function loadEditorObjectFromLibrary(id){
-    if(!Array.isArray(S.editorLibrary)) return null;
-    for(var i=0;i<S.editorLibrary.length;i++){
-      if(String(S.editorLibrary[i].id)===String(id)){
-        return JSON.parse(JSON.stringify(S.editorLibrary[i]));
+    var editorLibrary = Array.isArray(editorIoRead("editorLibrary", [])) ? editorIoRead("editorLibrary", []) : [];
+    for(var i=0;i<editorLibrary.length;i++){
+      if(String(editorLibrary[i].id)===String(id)){
+        return JSON.parse(JSON.stringify(editorLibrary[i]));
       }
     }
     return null;
   }
 
   function exportEditorObject(){
-    if(!S.editorObject) return false;
-    var raw = JSON.stringify(S.editorObject, null, 2);
+    var editorObject = editorIoRead("editorObject", null);
+    if(!editorObject) return false;
+    var raw = JSON.stringify(editorObject, null, 2);
     var blob = new Blob([raw], { type:"application/json" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
-    a.download = (S.editorObject.id || "spark_object") + ".json";
+    a.download = (editorObject.id || "spark_object") + ".json";
     a.click();
     URL.revokeObjectURL(url);
     return true;
@@ -47,8 +75,8 @@
   function importEditorObjectFromJson(raw){
     try{
       var obj = JSON.parse(raw);
-      S.editorObject = obj;
-      S.editorDirty = true;
+      editorIoWrite("editorObject", obj);
+      editorIoWrite("editorDirty", true);
       return true;
     }catch(e){
       console.error("Spark editor: import failed", e);

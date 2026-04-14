@@ -1,10 +1,17 @@
+function skillTreeStateRead(path, fallback){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+    return SparkState.read(path, fallback);
+  }
+  return fallback;
+}
+
 function skillTreePage(){
   var tree = buildSkillTree();
   var h = '';
   var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
     ? window.sparkCore.getRuntimeState()
     : null;
-  var focus = runtimeState && runtimeState.skillTreeFocus ? runtimeState.skillTreeFocus : (S.skillTreeFocus || "overview");
+  var focus = runtimeState && runtimeState.skillTreeFocus ? runtimeState.skillTreeFocus : skillTreeStateRead(["skillTreeFocus"], "overview");
 
   h += '<div class="card mb16">';
   h += '<h2>Skill Tree</h2>';

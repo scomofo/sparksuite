@@ -1,10 +1,63 @@
 ﻿(function() {
+  function ukuleleRegisterRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function ukuleleRegisterRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = ukuleleRegisterRoot();
+    if (!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function ukuleleRegisterWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = ukuleleRegisterRoot();
+    if (root) root[path] = value;
+    return value;
+  }
+
+  function ukuleleRegisterEnsureArray(path) {
+    var current = ukuleleRegisterRead(path, null);
+    if (Array.isArray(current)) return current;
+    current = [];
+    ukuleleRegisterWrite(path, current);
+    return current;
+  }
+
+  function ukuleleRegisterEnsureObject(path) {
+    var current = ukuleleRegisterRead(path, null);
+    if (current && typeof current === "object" && !Array.isArray(current)) return current;
+    current = {};
+    ukuleleRegisterWrite(path, current);
+    return current;
+  }
+
   function getUkuleleLevelColors() {
     return {
       1: "#22c55e",
       2: "#3b82f6",
       3: "#f97316",
-      4: "#8b5cf6"
+      4: "#8b5cf6",
+      5: "#ec4899",
+      6: "#14b8a6",
+      7: "#f59e0b",
+      8: "#ef4444",
+      9: "#6366f1",
+      10: "#0ea5e9",
+      11: "#84cc16",
+      12: "#f97316"
     };
   }
 
@@ -13,7 +66,42 @@
       1: "First Strum",
       2: "Starter Chords",
       3: "Smooth Changes",
-      4: "Pattern Flow"
+      4: "Pattern Flow",
+      5: "Play a Song",
+      6: "Fingerpicked Motion",
+      7: "Melody Notes",
+      8: "Campfire Performance",
+      9: "Barre Basics",
+      10: "Syncopated Strum",
+      11: "Fingerpick Patterns",
+      12: "Performance Ready"
+    };
+  }
+
+  function getUkuleleProgressView() {
+    if (window.sparkCore && typeof window.sparkCore.getInstrumentProgressView === "function") {
+      return window.sparkCore.getInstrumentProgressView("ukulele") || {};
+    }
+    var completed = Array.isArray(ukuleleRegisterRead("completedLessons", [])) ? ukuleleRegisterRead("completedLessons", []) : [];
+    var masteryLessons = [];
+    var mastery = ukuleleRegisterRead("mastery", {}) || {};
+    var masteryRhythm = mastery.rhythm || {};
+    if (mastery.lessons) {
+      for (var lessonId in mastery.lessons) {
+        if (mastery.lessons[lessonId]) masteryLessons.push(lessonId);
+      }
+    }
+    for (var i = 0; i < masteryLessons.length; i++) {
+      if (completed.indexOf(masteryLessons[i]) === -1) completed.push(masteryLessons[i]);
+    }
+    return {
+      instrument: "ukulele",
+      completedLessonIds: completed,
+      masteryLessonIds: masteryLessons,
+      rhythmMastery: masteryRhythm || {},
+      rhythmSkillIds: Object.keys(masteryRhythm || {}),
+      namedSkillProgress: ukuleleRegisterRead("ukuleleSkillProgress", {}) || {},
+      namedSkillIds: Object.keys(ukuleleRegisterRead("ukuleleSkillProgress", {}) || {})
     };
   }
 
@@ -28,12 +116,8 @@
   function getUkuleleNextLesson() {
     var lessons = window.SparkUkuleleLessons || [];
     if (!lessons.length) return null;
-    var completed = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-    if (S.mastery && S.mastery.lessons) {
-      for (var lessonId in S.mastery.lessons) {
-        if (S.mastery.lessons[lessonId]) completed.push(lessonId);
-      }
-    }
+    var progressView = getUkuleleProgressView();
+    var completed = Array.isArray(progressView.completedLessonIds) ? progressView.completedLessonIds.slice() : [];
     if (typeof getNextLessonFromCurriculum === "function") {
       var nextLessonId = getNextLessonFromCurriculum(lessons[0].id, completed);
       if (nextLessonId) return nextLessonId;
@@ -132,12 +216,14 @@
   }
 
   function renderUkuleleStatsTab() {
-    var lessonCount = Array.isArray(S.completedLessons) ? S.completedLessons.filter(function(id) {
+    var progressView = getUkuleleProgressView();
+    var completedLessonIds = Array.isArray(progressView.completedLessonIds) ? progressView.completedLessonIds : [];
+    var lessonCount = completedLessonIds.filter(function(id) {
       return String(id || "").indexOf("uke_") === 0;
-    }).length : 0;
+    }).length;
     var h = '<div class="card mb12"><div style="font-size:18px;font-weight:900;color:var(--text-primary)">Ukulele Progress</div>';
     h += '<div style="font-size:13px;color:var(--text-muted);margin-top:8px">Lessons completed: ' + lessonCount + '</div>';
-    h += '<div style="font-size:13px;color:var(--text-muted)">Rhythm skills tracked: ' + Object.keys((S.mastery && S.mastery.rhythm) || {}).length + '</div>';
+    h += '<div style="font-size:13px;color:var(--text-muted)">Rhythm skills tracked: ' + (progressView.rhythmSkillIds || []).length + '</div>';
     h += '</div>';
     return h;
   }
@@ -235,12 +321,10 @@
         SparkProfile.ensureApp(profile, "ukespark", "ukulele");
         SparkStorage.save(profile);
       }
-      if (typeof S !== "undefined") {
-        if (S.completedLessons === undefined) S.completedLessons = [];
-        if (!S.mastery) S.mastery = {};
-        if (!S.mastery.lessons) S.mastery.lessons = {};
-        if (!S.mastery.rhythm) S.mastery.rhythm = {};
-      }
+      ukuleleRegisterEnsureArray("completedLessons");
+      var mastery = ukuleleRegisterEnsureObject("mastery");
+      if (!mastery.lessons || typeof mastery.lessons !== "object") mastery.lessons = {};
+      if (!mastery.rhythm || typeof mastery.rhythm !== "object") mastery.rhythm = {};
     },
 
     getSkillTree: function() {

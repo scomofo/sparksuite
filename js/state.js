@@ -298,6 +298,17 @@ var T={session:null,drill:null,daily:null,song:null,strum:null,metro:null,undo:n
 // Undo backup
 var _undoBackup=null;
 
+function stateRoot(){
+  if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+    var sparkRoot=SparkState.getRoot();
+    if(sparkRoot) return sparkRoot;
+  }
+  if(typeof globalThis!=="undefined"){
+    return globalThis.__sparkState || globalThis.S || null;
+  }
+  return null;
+}
+
 // ===== PERSISTENCE =====
 var SAVE_KEY="chordspark_state";
 var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","dailyDone","quizCorrect","songsPlayed",
@@ -361,42 +372,44 @@ function _doSave(){
 
 function loadState(){
   try{
+    var state=stateRoot();
     var raw=localStorage.getItem(SAVE_KEY);
     if(!raw)return;
     var data=safeJsonParse(raw,null);
     if(!data)return;
-    applyPersistedStateSnapshot(S,data,PERSIST_FIELDS);
+    applyPersistedStateSnapshot(state,data,PERSIST_FIELDS);
     // Ensure arrays
-    if(!Array.isArray(S.history))S.history=[];
-    if(!Array.isArray(S.customSets))S.customSets=[];
-    if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
-    if(!Array.isArray(S.importedSongs))S.importedSongs=[];
+    if(!Array.isArray(state.history))state.history=[];
+    if(!Array.isArray(state.customSets))state.customSets=[];
+    if(typeof state.transitionStats!=="object"||state.transitionStats===null)state.transitionStats={};
+    if(!Array.isArray(state.importedSongs))state.importedSongs=[];
     // Ensure transient UI state has sane defaults
-    if(!S.screen)S.screen=SCR.HOME;
-    if(!S.tab)S.tab=TAB.PRACTICE;
+    if(!state.screen)state.screen=SCR.HOME;
+    if(!state.tab)state.tab=TAB.PRACTICE;
   }catch(e){console.error("ChordSpark: loadState failed — data may be corrupted",e);}
 }
 
 function resetProgress(){
+  var state=stateRoot();
   // Save backup for undo — keep old data in localStorage until undo expires
-  _undoBackup=JSON.parse(JSON.stringify(buildPersistedStateSnapshot(S,PERSIST_FIELDS)));
+  _undoBackup=JSON.parse(JSON.stringify(buildPersistedStateSnapshot(state,PERSIST_FIELDS)));
   _undoBackup._backupTime=Date.now();
   try{localStorage.setItem(SAVE_KEY+"_backup",JSON.stringify(_undoBackup));}catch(e){console.error("ChordSpark: undo backup save failed",e);}
   // Clear state in memory (localStorage cleared only when undo timer expires)
-  S.xp=0;S.streak=0;S.sessions=0;S.drillCount=0;S.dailyDone=0;S.quizCorrect=0;S.songsPlayed=0;
-  S.level=1;S.chordProgress={};S.earnedBadges=[];S.selectedLevel=1;S.lastSessionDate=null;
-  S.history=[];S.customSets=[];S.earTrainScore=0;S.transitionStats={};
-  S.dailyGoalMinutes=15;S.todayPracticeSeconds=0;S.lastPracticeDate=null;S.goalReachedToday=false;S.goalStreak=0;
-  S.importedSongs=[];S.lastChordName="";
+  state.xp=0;state.streak=0;state.sessions=0;state.drillCount=0;state.dailyDone=0;state.quizCorrect=0;state.songsPlayed=0;
+  state.level=1;state.chordProgress={};state.earnedBadges=[];state.selectedLevel=1;state.lastSessionDate=null;
+  state.history=[];state.customSets=[];state.earTrainScore=0;state.transitionStats={};
+  state.dailyGoalMinutes=15;state.todayPracticeSeconds=0;state.lastPracticeDate=null;state.goalReachedToday=false;state.goalStreak=0;
+  state.importedSongs=[];state.lastChordName="";
   // Show undo toast
-  S.showUndoToast=true;S.undoTimer=5;
+  state.showUndoToast=true;state.undoTimer=5;
   render();
   clearInterval(T.undo);
   T.undo=setInterval(function(){
-    S.undoTimer--;
-    if(S.undoTimer<=0){
+    state.undoTimer--;
+    if(state.undoTimer<=0){
       clearInterval(T.undo);T.undo=null;
-      S.showUndoToast=false;_undoBackup=null;
+      state.showUndoToast=false;_undoBackup=null;
       removePersistedBackup(SAVE_KEY+"_backup");
       saveState();
     }
@@ -405,13 +418,14 @@ function resetProgress(){
 }
 
 function undoReset(){
+  var state=stateRoot();
   if(!_undoBackup)return;
   clearInterval(T.undo);T.undo=null;
   for(var k in _undoBackup){
-    S[k]=_undoBackup[k];
+    state[k]=_undoBackup[k];
   }
   _undoBackup=null;
-  S.showUndoToast=false;
+  state.showUndoToast=false;
   removePersistedBackup(SAVE_KEY+"_backup");
   saveState(true);render();
 }
@@ -419,6 +433,7 @@ function undoReset(){
 // Recover from crash during reset undo window
 function recoverFromCrash(){
   try{
+    var state=stateRoot();
     var raw=localStorage.getItem(SAVE_KEY+"_backup");
     if(raw){
       var data=safeJsonParse(raw,null);
@@ -428,7 +443,7 @@ function recoverFromCrash(){
         removePersistedBackup(SAVE_KEY+"_backup");
         return;
       }
-      applyPersistedStateSnapshot(S,data,PERSIST_FIELDS);
+      applyPersistedStateSnapshot(state,data,PERSIST_FIELDS);
       removePersistedBackup(SAVE_KEY+"_backup");
       saveState(true);
     }
@@ -436,45 +451,49 @@ function recoverFromCrash(){
 }
 
 function checkStreak(){
+  var state=stateRoot();
   var today=new Date().toISOString().split("T")[0];
-  if(S.lastSessionDate){
+  if(state.lastSessionDate){
     // Normalise: legacy data may be stored as toDateString() format
-    var last=new Date(S.lastSessionDate);
+    var last=new Date(state.lastSessionDate);
     var lastISO=last.toISOString().split("T")[0];
     var diff=Math.floor((new Date(today)-new Date(lastISO))/86400000);
-    if(diff>1){S.streak=0;saveState(true);}
+    if(diff>1){state.streak=0;saveState(true);}
   }
 }
 
 function checkPracticeDate(){
+  var state=stateRoot();
   var today=new Date().toISOString().split("T")[0];
-  if(S.lastPracticeDate!==today){
+  if(state.lastPracticeDate!==today){
     // Check if previous day goal was met before resetting
-    if(S.lastPracticeDate&&S.goalReachedToday){
-      S.goalStreak++;
-    } else if(S.lastPracticeDate&&!S.goalReachedToday){
-      S.goalStreak=0;
+    if(state.lastPracticeDate&&state.goalReachedToday){
+      state.goalStreak++;
+    } else if(state.lastPracticeDate&&!state.goalReachedToday){
+      state.goalStreak=0;
     }
-    S.todayPracticeSeconds=0;
-    S.goalReachedToday=false;
-    S.lastPracticeDate=today;
+    state.todayPracticeSeconds=0;
+    state.goalReachedToday=false;
+    state.lastPracticeDate=today;
     saveState();
   }
 }
 
 function addPracticeSecond(){
+  var state=stateRoot();
   checkPracticeDate();
-  S.todayPracticeSeconds++;
-  if(!S.goalReachedToday&&S.todayPracticeSeconds>=S.dailyGoalMinutes*60){
-    S.goalReachedToday=true;
+  state.todayPracticeSeconds++;
+  if(!state.goalReachedToday&&state.todayPracticeSeconds>=state.dailyGoalMinutes*60){
+    state.goalReachedToday=true;
     snd("levelup");
     saveState();
   }
 }
 
 function logHistory(type,detail,xp){
+  var state=stateRoot();
   var now=new Date();
-  S.history.push({
+  state.history.push({
     type:type,
     date:now.toISOString().split("T")[0],
     timestamp:now.getTime(),
@@ -488,4 +507,9 @@ loadState();
 recoverFromCrash();
 checkStreak();
 checkPracticeDate();
-S.sessionStartTime=Date.now();
+stateRoot().sessionStartTime=Date.now();
+if(typeof SparkState!=="undefined"&&typeof SparkState.setRoot==="function"){
+  SparkState.setRoot(S);
+}else if(typeof globalThis!=="undefined"){
+  globalThis.__sparkState=S;
+}

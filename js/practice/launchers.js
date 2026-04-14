@@ -162,9 +162,17 @@
 /* ChordSpark extension: guided session launcher */
 (function(){
 
+  function getGuidedSessionNumber(item){
+    if(item && item.meta && item.meta.guidedSession) return item.meta.guidedSession;
+    if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+      return SparkState.read(["guidedSession"], 1);
+    }
+    return 1;
+  }
+
   function launchGuidedSessionItem(item){
     if(typeof act!=="function") return false;
-    var sessionNum = item && item.meta && item.meta.guidedSession || S.guidedSession || 1;
+    var sessionNum = getGuidedSessionNumber(item);
     if(typeof SparkInstrumentAdapter!=="undefined" && SparkInstrumentAdapter.getInstrumentType && SparkInstrumentAdapter.getInstrumentType()==="piano"){
       act("tab", TAB.PRACTICE);
       act("start_guided_session", sessionNum);

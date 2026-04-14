@@ -203,6 +203,74 @@ if (typeof SparkCurriculumService !== "undefined") {
     var targets = SparkCurriculumService.getReviewTargets({});
     assert.ok(Array.isArray(targets), "getReviewTargets() did not return array");
   });
+
+  test("SparkCurriculumService.buildLearningQueue can use sparkCore completed lessons", function() {
+    var prevSparkCore = global.sparkCore;
+    var prevCompleted = S.completedLessons;
+    var prevMasteryLessons = S.mastery.lessons;
+
+    S.completedLessons = [];
+    S.mastery.lessons = {};
+    global.sparkCore = {
+      getCompletedLessonIds: function() {
+        return ["uke_01"];
+      }
+    };
+    global.SparkInstruments.getActive = function() {
+      return {
+        getCurriculumMap: function() {
+          return [
+            { id: "uke_01", title: "First Strum" },
+            { id: "uke_02", title: "Starter Chords" }
+          ];
+        }
+      };
+    };
+
+    var queue = SparkCurriculumService.buildLearningQueue({});
+    var lessonEntry = null;
+    for (var i = 0; i < queue.length; i++) {
+      if (queue[i].type === "lesson") {
+        lessonEntry = queue[i];
+        break;
+      }
+    }
+
+    assert.ok(lessonEntry, "No lesson entry returned");
+    assert.strictEqual(lessonEntry.id, "uke_02");
+
+    global.sparkCore = prevSparkCore;
+    S.completedLessons = prevCompleted;
+    S.mastery.lessons = prevMasteryLessons;
+  });
+
+  test("SparkCurriculumService.getReviewTargets can use sparkCore progress snapshot", function() {
+    var prevSparkCore = global.sparkCore;
+    var prevChordProgress = S.chordProgress;
+
+    S.chordProgress = {};
+    global.sparkCore = {
+      getLegacyProgressSnapshot: function() {
+        return {
+          completedLessonIds: [],
+          mastery: { lessons: {}, chords: {}, rhythm: {} },
+          chordProgress: { "C Major": 24, "G Major": 81 },
+          ukuleleSkillProgress: {},
+          bassSkillProgress: {}
+        };
+      }
+    };
+
+    var targets = SparkCurriculumService.getReviewTargets({});
+
+    assert.ok(Array.isArray(targets), "getReviewTargets() did not return array");
+    assert.strictEqual(targets.length, 1);
+    assert.strictEqual(targets[0].id, "C Major");
+    assert.strictEqual(targets[0].priority, "high");
+
+    global.sparkCore = prevSparkCore;
+    S.chordProgress = prevChordProgress;
+  });
 }
 
 // Summary

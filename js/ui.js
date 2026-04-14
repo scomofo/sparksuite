@@ -1,6 +1,56 @@
 // ===== UTILITY =====
 function escHTML(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 
+function uiStateRoot(){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.getRoot==="function"){
+    return SparkState.getRoot();
+  }
+  if(typeof globalThis!=="undefined"&&globalThis.__sparkState) return globalThis.__sparkState;
+  return null;
+}
+
+function uiStateRead(path,fallback){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+    return SparkState.read(path,fallback);
+  }
+  var root=uiStateRoot();
+  if(!root) return fallback;
+  var parts=Array.isArray(path)?path.slice():[path];
+  var cursor=root;
+  var i;
+  for(i=0;i<parts.length;i++){
+    if(cursor==null||!Object.prototype.hasOwnProperty.call(cursor,parts[i])) return fallback;
+    cursor=cursor[parts[i]];
+  }
+  return cursor==null?fallback:cursor;
+}
+
+function uiStateWrite(path,value){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.write==="function"){
+    return SparkState.write(path,value);
+  }
+  var root=uiStateRoot();
+  if(!root) return value;
+  var parts=Array.isArray(path)?path.slice():[path];
+  var cursor=root;
+  var i;
+  for(i=0;i<parts.length-1;i++){
+    if(!cursor[parts[i]]||typeof cursor[parts[i]]!=="object") cursor[parts[i]]={};
+    cursor=cursor[parts[i]];
+  }
+  if(parts.length) cursor[parts[parts.length-1]]=value;
+  return value;
+}
+
+function uiStateEnsureArray(path){
+  var arr=uiStateRead(path,null);
+  if(!Array.isArray(arr)){
+    arr=[];
+    uiStateWrite(path,arr);
+  }
+  return arr;
+}
+
 // ===== UI HELPERS =====
 
 function chordSVG(ch,sz,label,animate){
@@ -105,21 +155,22 @@ function strumHTML(pat,beat){
 
 function checkBadges(){
   var nb=[];
+  var earnedBadges=uiStateEnsureArray("earnedBadges");
   for(var i=0;i<BADGES.length;i++){
     var b=BADGES[i];
-    if(b.check&&b.check()&&S.earnedBadges.indexOf(b.id)===-1)nb.push(b);
+    if(b.check&&b.check()&&earnedBadges.indexOf(b.id)===-1)nb.push(b);
   }
   if(nb.length){
-    for(var i=0;i<nb.length;i++)S.earnedBadges.push(nb[i].id);
-    S.newBadge=nb[0];
+    for(var i=0;i<nb.length;i++)earnedBadges.push(nb[i].id);
+    uiStateWrite("newBadge",nb[0]);
     snd("badge");saveState();
-    setTimeout(function(){S.newBadge=null;render();},3000);
+    setTimeout(function(){uiStateWrite("newBadge",null);render();},3000);
   }
 }
 
 function trigC(){
-  S.showConfetti=true;render();
-  setTimeout(function(){S.showConfetti=false;render();},2500);
+  uiStateWrite("showConfetti",true);render();
+  setTimeout(function(){uiStateWrite("showConfetti",false);render();},2500);
 }
 
 // Fisher-Yates shuffle
@@ -140,7 +191,7 @@ function clickableDiv(onclick,extra){
 
 // ===== CHORD MASTERY TIERS =====
 function getChordTier(chordName){
-  var p=S.chordProgress[chordName]||0;
+  var p=uiStateRead(["chordProgress",chordName],0)||0;
   if(p>=75)return{tier:"gold",label:"Gold",icon:"&#129351;",color:"#FFD700"};
   if(p>=50)return{tier:"silver",label:"Silver",icon:"&#129352;",color:"#C0C0C0"};
   if(p>=25)return{tier:"bronze",label:"Bronze",icon:"&#129353;",color:"#CD7F32"};
@@ -156,9 +207,10 @@ function tierBadgeHTML(chordName,size){
 
 // ===== MICRO-ACHIEVEMENT TOAST =====
 function fireMicro(id,msg,icon){
-  if(S.sessionMicros.indexOf(id)!==-1)return;
-  S.sessionMicros.push(id);
-  S.microToast={msg:msg,icon:icon,time:Date.now()};
+  var sessionMicros=uiStateEnsureArray("sessionMicros");
+  if(sessionMicros.indexOf(id)!==-1)return;
+  sessionMicros.push(id);
+  uiStateWrite("microToast",{msg:msg,icon:icon,time:Date.now()});
   snd("badge");
   render();
 }

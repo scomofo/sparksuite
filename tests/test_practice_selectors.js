@@ -34,6 +34,7 @@ function resetState() {
     guidedSession: 1,
     ukuleleSkillProgress: {}
   };
+  global.sparkCore = null;
   global.getNextLessonFromCurriculum = function(rootLessonId, completedLessonIds) {
     completedLessonIds = completedLessonIds || [];
     var order = ["uke_01", "uke_02", "uke_03", "uke_04", "uke_05", "uke_06", "uke_07", "uke_08"];
@@ -265,6 +266,44 @@ test("selectInstrumentModuleCandidate carries ukulele progress summary into reco
   assert.strictEqual(candidate.meta.skill, "fingerpicking");
   assert.ok(candidate.meta.progressSummary);
   assert.strictEqual(candidate.meta.progressSummary.skill, "fingerpicking");
+  assert.strictEqual(candidate.meta.progressSummary.weakestMetric, "timing");
+  assert.ok(candidate.reason.indexOf("timing is at 52%") >= 0);
+});
+
+test("selectInstrumentModuleCandidate can read ukulele progress from sparkCore view", function() {
+  S.completedLessons = [];
+  S.ukuleleSkillProgress = {};
+  global.sparkCore = {
+    getCompletedLessonIds: function() {
+      return ["uke_01", "uke_02", "uke_03", "uke_04", "uke_05"];
+    },
+    getInstrumentProgressView: function(instrumentId) {
+      assert.strictEqual(instrumentId, "ukulele");
+      return {
+        instrument: "ukulele",
+        completedLessonIds: ["uke_01", "uke_02", "uke_03", "uke_04", "uke_05"],
+        masteryLessonIds: [],
+        rhythmMastery: {},
+        rhythmSkillIds: [],
+        namedSkillProgress: {
+          fingerpicking: {
+            accuracy: 0.7,
+            timing: 0.52,
+            speed: 0.63,
+            consistency: 0.66
+          }
+        },
+        namedSkillIds: ["fingerpicking"]
+      };
+    }
+  };
+
+  var candidate = selectInstrumentModuleCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.lessonId, "uke_06");
+  assert.strictEqual(candidate.meta.skill, "fingerpicking");
+  assert.ok(candidate.meta.progressSummary);
   assert.strictEqual(candidate.meta.progressSummary.weakestMetric, "timing");
   assert.ok(candidate.reason.indexOf("timing is at 52%") >= 0);
 });

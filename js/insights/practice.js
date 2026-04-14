@@ -1,17 +1,40 @@
 (function(){
 
+  function practiceInsightRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function practiceInsightRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = practiceInsightRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   function buildPracticeInsights(){
     return {
       avgMinutes: typeof getAveragePracticeMinutes === "function" ? getAveragePracticeMinutes() : 0,
-      currentStreak: S.practiceStreak || 0,
-      totalMinutes: S.totalPracticeMinutes || 0,
-      sessionCount: (S.practiceHistory || []).length,
+      currentStreak: practiceInsightRead("practiceStreak", 0) || 0,
+      totalMinutes: practiceInsightRead("totalPracticeMinutes", 0) || 0,
+      sessionCount: (practiceInsightRead("practiceHistory", []) || []).length,
       recentAccuracyTrend: typeof getRecentAccuracyTrend === "function" ? getRecentAccuracyTrend() : 0
     };
   }
 
   function buildPracticeTrendSeries(){
-    var snaps = S.insightSnapshots || [];
+    var snaps = practiceInsightRead("insightSnapshots", []) || [];
     return {
       minutes: extractPracticeSeries(snaps, "totalMinutes"),
       streak: extractPracticeSeries(snaps, "streak"),

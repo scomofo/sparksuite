@@ -3,6 +3,13 @@
 
 (function(){
 
+  function editorSeedRead(path, fallback){
+    if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    return fallback;
+  }
+
   function seedChartFromSong(song, arrangementType){
     if(!song || typeof buildPerformanceChartFromSong!=="function") return null;
     return JSON.parse(JSON.stringify(
@@ -45,7 +52,7 @@
       type:"transition",
       title:(from || "Chord") + " \u2192 " + (to || "Chord") + " Drill",
       description:"Seeded transition drill",
-      bpm:S.drillAdaptiveBpm || 60,
+      bpm:editorSeedRead(["drillAdaptiveBpm"], 60),
       durationSec:60,
       steps:[
         { id:1, chord:from || "G", dur:2 },
@@ -68,7 +75,7 @@ function getSongByEditorParam(param){
 }
 
 function getSeedArrangementForEditor(){
-  return S.performArrangementType || "chords";
+  return editorSeedRead(["performArrangementType"], "chords");
 }
 
 function getExerciseSeedByParam(param){

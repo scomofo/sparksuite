@@ -1,12 +1,64 @@
 (function(){
 
+  function practiceEngineRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function practiceEngineRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = practiceEngineRoot();
+    if (!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function practiceEngineWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = practiceEngineRoot();
+    if (root) root[path] = value;
+    return value;
+  }
+
+  function getPracticePlanState() {
+    return {
+      practicePlan: practiceEngineRead("practicePlan", null),
+      practicePlanDate: practiceEngineRead("practicePlanDate", null),
+      practicePlanComplete: !!practiceEngineRead("practicePlanComplete", false),
+      practicePlanHistory: Array.isArray(practiceEngineRead("practicePlanHistory", [])) ? practiceEngineRead("practicePlanHistory", []) : [],
+      xp: practiceEngineRead("xp", 0)
+    };
+  }
+
+  function getPracticeAnalyticsSnapshot() {
+    if (window.sparkCore && typeof window.sparkCore.getLegacyPracticeAnalyticsSnapshot === "function") {
+      return window.sparkCore.getLegacyPracticeAnalyticsSnapshot() || {};
+    }
+    return {
+      transitionStats: practiceEngineRead("transitionStats", {}) || {},
+      chordProgress: practiceEngineRead("chordProgress", {}) || {},
+      performanceStats: practiceEngineRead("performanceStats", {}) || {}
+    };
+  }
+
   function getWeakTransitions() {
     var weak = [];
-    if (!S.transitionStats) return weak;
-    for (var key in S.transitionStats) {
-      var st = S.transitionStats[key];
+    var analytics = getPracticeAnalyticsSnapshot();
+    var transitionStats = analytics.transitionStats || {};
+    for (var key in transitionStats) {
+      var st = transitionStats[key];
       if (typeof st === "object" && st.attempts > 0 && st.success / st.attempts < 0.7) {
-        var parts = key.split("→");
+        var parts = key.split("->");
+        if (parts.length !== 2) parts = key.split("→");
         if (parts.length === 2) weak.push({ from: parts[0].trim(), to: parts[1].trim(), rate: st.success / st.attempts });
       }
     }
@@ -16,8 +68,10 @@
 
   function getWeakChords() {
     var weak = [];
-    for (var chord in (S.chordProgress || {})) {
-      var pct = S.chordProgress[chord] || 0;
+    var analytics = getPracticeAnalyticsSnapshot();
+    var chordProgress = analytics.chordProgress || {};
+    for (var chord in chordProgress) {
+      var pct = chordProgress[chord] || 0;
       if (pct < 70) weak.push({ chord: chord, mastery: pct });
     }
     weak.sort(function(a, b) { return a.mastery - b.mastery; });
@@ -26,8 +80,10 @@
 
   function getWeakPerformanceSongs() {
     var weak = [];
-    for (var key in (S.performanceStats || {})) {
-      var st = S.performanceStats[key];
+    var analytics = getPracticeAnalyticsSnapshot();
+    var performanceStats = analytics.performanceStats || {};
+    for (var key in performanceStats) {
+      var st = performanceStats[key];
       if (st && st.runs > 0 && st.bestAccuracy < 80) {
         weak.push({ key: key, songId: st.songId, accuracy: st.bestAccuracy, arrangement: st.arrangement, difficulty: st.difficulty });
       }
@@ -48,12 +104,12 @@
     }
 
     var today = new Date().toISOString().split("T")[0];
-    if (S.practicePlanDate === today && S.practicePlan) return S.practicePlan;
+    var practiceState = getPracticePlanState();
+    if (practiceState.practicePlanDate === today && practiceState.practicePlan) return practiceState.practicePlan;
 
     var items = [];
     var itemId = 1;
 
-    // 1. Warmup - finger exercise
     items.push({
       id: "warmup_" + itemId++,
       type: "warmup",
@@ -63,13 +119,12 @@
       completed: false
     });
 
-    // 2. Weak chord transitions
     var weakTrans = getWeakTransitions();
     for (var t = 0; t < weakTrans.length; t++) {
       items.push({
         id: "transition_" + itemId++,
         type: "transition",
-        label: weakTrans[t].from + " → " + weakTrans[t].to,
+        label: weakTrans[t].from + " -> " + weakTrans[t].to,
         desc: "Practice this transition (" + Math.round(weakTrans[t].rate * 100) + "% success)",
         from: weakTrans[t].from,
         to: weakTrans[t].to,
@@ -78,28 +133,26 @@
       });
     }
 
-    // 3. Weak chords
     var weakChords = getWeakChords();
     for (var c = 0; c < weakChords.length; c++) {
       items.push({
         id: "chord_" + itemId++,
         type: "chord_practice",
         label: "Practice " + weakChords[c].chord,
-        desc: weakChords[c].mastery + "% mastery — needs work",
+        desc: weakChords[c].mastery + "% mastery - needs work",
         chord: weakChords[c].chord,
         durationSec: 120,
         completed: false
       });
     }
 
-    // 4. Performance song practice
     var weakSongs = getWeakPerformanceSongs();
     for (var s = 0; s < Math.min(2, weakSongs.length); s++) {
       items.push({
         id: "song_" + itemId++,
         type: "performance_song",
         label: "Perform: " + weakSongs[s].songId,
-        desc: weakSongs[s].accuracy + "% accuracy — aim for 80%+",
+        desc: weakSongs[s].accuracy + "% accuracy - aim for 80%+",
         songId: weakSongs[s].songId,
         arrangementType: weakSongs[s].arrangement || "chords",
         difficultyId: weakSongs[s].difficulty || "normal",
@@ -107,7 +160,6 @@
       });
     }
 
-    // 5. If no weak items, suggest exploration
     if (items.length <= 1) {
       items.push({
         id: "explore_" + itemId++,
@@ -118,7 +170,6 @@
       });
     }
 
-    // Determine focus
     var focus = "General Practice";
     if (weakTrans.length > 0) focus = "Smooth Chord Transitions";
     else if (weakChords.length > 0) focus = "Chord Mastery";
@@ -132,9 +183,9 @@
       completedItems: 0
     };
 
-    S.practicePlan = plan;
-    S.practicePlanDate = today;
-    S.practicePlanComplete = false;
+    practiceEngineWrite("practicePlan", plan);
+    practiceEngineWrite("practicePlanDate", today);
+    practiceEngineWrite("practicePlanComplete", false);
     return plan;
   }
 
@@ -146,25 +197,28 @@
       });
     }
 
-    if (!S.practicePlan || !S.practicePlan.items) return;
-    for (var i = 0; i < S.practicePlan.items.length; i++) {
-      if (S.practicePlan.items[i].id === itemId) {
-        S.practicePlan.items[i].completed = true;
+    var practiceState = getPracticePlanState();
+    var practicePlan = practiceState.practicePlan;
+    var practicePlanHistory = practiceState.practicePlanHistory;
+    if (!practicePlan || !practicePlan.items) return;
+    for (var i = 0; i < practicePlan.items.length; i++) {
+      if (practicePlan.items[i].id === itemId) {
+        practicePlan.items[i].completed = true;
         break;
       }
     }
-    // Count completed
     var done = 0;
-    for (var j = 0; j < S.practicePlan.items.length; j++) {
-      if (S.practicePlan.items[j].completed) done++;
+    for (var j = 0; j < practicePlan.items.length; j++) {
+      if (practicePlan.items[j].completed) done++;
     }
-    S.practicePlan.completedItems = done;
-    if (done >= S.practicePlan.totalItems) {
-      S.practicePlanComplete = true;
-      if (!Array.isArray(S.practicePlanHistory)) S.practicePlanHistory = [];
-      S.practicePlanHistory.push({ date: S.practicePlanDate, focus: S.practicePlan.focus, items: S.practicePlan.totalItems });
-      S.xp += 20;
-      S.xpToast = { amount: 20, time: Date.now() };
+    practicePlan.completedItems = done;
+    practiceEngineWrite("practicePlan", practicePlan);
+    if (done >= practicePlan.totalItems) {
+      practiceEngineWrite("practicePlanComplete", true);
+      practicePlanHistory.push({ date: practiceState.practicePlanDate, focus: practicePlan.focus, items: practicePlan.totalItems });
+      practiceEngineWrite("practicePlanHistory", practicePlanHistory);
+      practiceEngineWrite("xp", practiceState.xp + 20);
+      practiceEngineWrite("xpToast", { amount: 20, time: Date.now() });
     }
     saveState();
   }

@@ -34,6 +34,17 @@ var TAB={
   BUILD:"build",TUNER:"tuner",DUAL:"dual",STATS:"stats",GUIDE:"guide"
 };
 
+function dataRoot(){
+  if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+    var sparkRoot = SparkState.getRoot();
+    if(sparkRoot) return sparkRoot;
+  }
+  if(typeof globalThis !== "undefined"){
+    return globalThis.__sparkState || globalThis.S || null;
+  }
+  return null;
+}
+
 // ===== DUAL-INSTRUMENT DATA (Pianospark + Chordspark integration) =====
 // Piano chord voicings: notes (octave-qualified) + RH finger IDs (1=thumb..5=pinky)
 var PIANO_CHORDS={
@@ -188,6 +199,22 @@ function getSongLevel(song){
   return mx||1;
 }
 
+function dataStateRead(path,fallback){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+    return SparkState.read(path,fallback);
+  }
+  var root=dataRoot();
+  if(!root) return fallback;
+  var parts=Array.isArray(path)?path.slice():[path];
+  var cursor=root;
+  var i;
+  for(i=0;i<parts.length;i++){
+    if(cursor==null||!Object.prototype.hasOwnProperty.call(cursor,parts[i])) return fallback;
+    cursor=cursor[parts[i]];
+  }
+  return cursor==null?fallback:cursor;
+}
+
 // ===== CURRICULUM (8-level learning journey) =====
 var CURRICULUM=[
   {num:1,title:"First Spark",sub:"Two-Finger",sessions:"1-3",chords:["E Minor","Em7"],icon:"&#127928;",
@@ -236,16 +263,16 @@ var CURRICULUM=[
 // Each badge has a check() function so checkBadges() in ui.js is data-driven.
 // To add a badge: add it here only — no other file needs updating.
 var BADGES=[
-  {id:"first_chord",label:"First Chord!",icon:"&#11088;",desc:"Complete your first practice",check:function(){return S.sessions>=1;}},
-  {id:"streak_3",label:"On Fire!",icon:"&#128293;",desc:"3-day streak",check:function(){return S.streak>=3;}},
-  {id:"streak_7",label:"Unstoppable!",icon:"&#128142;",desc:"7-day streak",check:function(){return S.streak>=7;}},
-  {id:"level_4",label:"Open Road!",icon:"&#128640;",desc:"Reach Level 4",check:function(){return S.level>=4;}},
-  {id:"level_8",label:"Chord Master",icon:"&#128081;",desc:"Complete all 8 levels",check:function(){return S.level>=8;}},
-  {id:"ten_sessions",label:"Dedicated!",icon:"&#127919;",desc:"Complete 10 sessions",check:function(){return S.sessions>=10;}},
-  {id:"drill_5",label:"Quick Fingers!",icon:"&#9889;",desc:"Complete 5 drills",check:function(){return S.drillCount>=5;}},
-  {id:"daily_3",label:"Challenger!",icon:"&#127941;",desc:"Complete 3 daily challenges",check:function(){return S.dailyDone>=3;}},
-  {id:"quiz_10",label:"Brain Power!",icon:"&#129504;",desc:"10 quiz questions right",check:function(){return S.quizCorrect>=10;}},
-  {id:"songs_3",label:"Songwriter!",icon:"&#127925;",desc:"Practice 3 songs",check:function(){return S.songsPlayed>=3;}},
+  {id:"first_chord",label:"First Chord!",icon:"&#11088;",desc:"Complete your first practice",check:function(){return (dataStateRead("sessions",0)||0)>=1;}},
+  {id:"streak_3",label:"On Fire!",icon:"&#128293;",desc:"3-day streak",check:function(){return (dataStateRead("streak",0)||0)>=3;}},
+  {id:"streak_7",label:"Unstoppable!",icon:"&#128142;",desc:"7-day streak",check:function(){return (dataStateRead("streak",0)||0)>=7;}},
+  {id:"level_4",label:"Open Road!",icon:"&#128640;",desc:"Reach Level 4",check:function(){return (dataStateRead("level",0)||0)>=4;}},
+  {id:"level_8",label:"Chord Master",icon:"&#128081;",desc:"Complete all 8 levels",check:function(){return (dataStateRead("level",0)||0)>=8;}},
+  {id:"ten_sessions",label:"Dedicated!",icon:"&#127919;",desc:"Complete 10 sessions",check:function(){return (dataStateRead("sessions",0)||0)>=10;}},
+  {id:"drill_5",label:"Quick Fingers!",icon:"&#9889;",desc:"Complete 5 drills",check:function(){return (dataStateRead("drillCount",0)||0)>=5;}},
+  {id:"daily_3",label:"Challenger!",icon:"&#127941;",desc:"Complete 3 daily challenges",check:function(){return (dataStateRead("dailyDone",0)||0)>=3;}},
+  {id:"quiz_10",label:"Brain Power!",icon:"&#129504;",desc:"10 quiz questions right",check:function(){return (dataStateRead("quizCorrect",0)||0)>=10;}},
+  {id:"songs_3",label:"Songwriter!",icon:"&#127925;",desc:"Practice 3 songs",check:function(){return (dataStateRead("songsPlayed",0)||0)>=3;}},
   {id:"perf_first",label:"First Performance",desc:"Complete your first performance run",icon:"\u{1F3B8}"},
   {id:"perf_3star",label:"Rising Star",desc:"Earn 3 stars on any performance",icon:"\u{2B50}"},
   {id:"perf_5star",label:"Guitar Hero",desc:"Earn 5 stars on any performance",icon:"\u{1F31F}"},

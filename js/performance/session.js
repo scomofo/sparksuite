@@ -3,6 +3,57 @@
 var _performRAF = null;
 var _performStopping = false;
 
+function performanceSessionRead(path, fallback) {
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  if (!cursor) return fallback;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function performanceSessionWrite(path, value) {
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+    return SparkState.write(path, value);
+  }
+  if (!cursor || !parts.length) return value;
+  for (i = 0; i < parts.length - 1; i++) {
+    if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+    cursor = cursor[parts[i]];
+  }
+  cursor[parts[parts.length - 1]] = value;
+  return value;
+}
+
+function performanceSessionPatch(patch) {
+  var key;
+  patch = patch || {};
+  for (key in patch) {
+    if (Object.prototype.hasOwnProperty.call(patch, key)) performanceSessionWrite(key, patch[key]);
+  }
+}
+
 function buildPerformanceLaneDebugSnapshot(chart, nowSec) {
   if (!chart || !Array.isArray(chart.events)) {
     return { events: [], collapsed: false, distinctKeys: 0, distinctLanes: 0 };
@@ -64,8 +115,10 @@ function startPerformanceCountIn(chart, speed, onDone) {
   var bpm = chart.bpm || 90;
   var beatSec = (60 / bpm) / (speed || 1);
   var beats = (typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.countInBeats : 4;
-  S.performCountdownActive = true;
-  S.performCountdownBeats = beats;
+  performanceSessionPatch({
+    performCountdownActive: true,
+    performCountdownBeats: beats
+  });
   render();
 
   // Use Web Audio API scheduler for sample-accurate beat timing
@@ -91,7 +144,7 @@ function startPerformanceCountIn(chart, speed, onDone) {
   var startWallTime = performance.now() + 50;
 
   for (var i = 0; i < beats; i++) {
-    if (ctx && S.soundOn) {
+    if (ctx && performanceSessionRead("soundOn", true)) {
       scheduleClick(startAudioTime + i * beatSec, i === 0);
     }
   }
@@ -104,8 +157,8 @@ function startPerformanceCountIn(chart, speed, onDone) {
     var currentBeat = Math.floor(elapsed / beatSec);
     var remaining = beats - currentBeat;
 
-    if (remaining !== S.performCountdownBeats && remaining >= 0) {
-      S.performCountdownBeats = remaining;
+    if (remaining !== performanceSessionRead("performCountdownBeats", 0) && remaining >= 0) {
+      performanceSessionWrite("performCountdownBeats", remaining);
       var countEl = document.querySelector("[data-count-in]");
       if (countEl) {
         if (remaining > 0) {
@@ -120,8 +173,10 @@ function startPerformanceCountIn(chart, speed, onDone) {
 
     if (elapsed >= beats * beatSec) {
       countInActive = false;
-      S.performCountdownActive = false;
-      S.performCountdownBeats = 0;
+      performanceSessionPatch({
+        performCountdownActive: false,
+        performCountdownBeats: 0
+      });
       if (ctx) { try { ctx.close(); } catch(e) {} }
       onDone();
       return;
@@ -147,76 +202,89 @@ function startPerformance(chartIdOrChart, opts) {
   }
 
   chartPromise.then(function(chart) {
+    var performMode = opts.mode || performanceSessionRead("performMode", null);
+    var performDifficulty = opts.difficulty || performanceSessionRead("performDifficulty", null);
+    var performSpeed = opts.speed || performanceSessionRead("performSpeed", 1);
+    var performPreset = opts.preset || performanceSessionRead("performPracticePreset", null);
+    var performArrangementType = chart.arrangementType || performanceSessionRead("performArrangementType", null);
+    var performCountIn = !!performanceSessionRead("performCountIn", false);
+    var performTargetTechnique = Object.prototype.hasOwnProperty.call(opts, "targetTechnique")
+      ? opts.targetTechnique
+      : (performanceSessionRead("performTargetTechnique", null) || null);
     if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
       SparkPerformanceBridge.syncPerformanceRuntimeState("start", {
         chart: chart,
         chartId: typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated"),
         phraseStats: createEmptyPhraseStats(chart),
-        mode: opts.mode || S.performMode,
-        difficulty: opts.difficulty || S.performDifficulty,
-        speed: opts.speed || S.performSpeed,
-        preset: opts.preset || S.performPracticePreset,
+        mode: performMode,
+        difficulty: performDifficulty,
+        speed: performSpeed,
+        preset: performPreset,
         screen: SCR.PERFORM
       });
     } else {
-      S.performChart = chart;
-      S.performChartId = typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated");
-      S.performPlaying = true;
-      S.performPaused = false;
-      S.performCurrentSec = 0;
-      S.performStartSec = 0;
-      S.performScore = 0;
-      S.performCombo = 0;
-      S.performMaxCombo = 0;
-      S.performAccuracy = 0;
-      S.performPhraseIdx = 0;
-      S.performResults = null;
-      S.performStarRating = 0;
-      S.performLoop = null;
-      S.performLastHitLabel = "";
-      S.performLastHitTime = 0;
-      S.performPhraseStats = createEmptyPhraseStats(chart);
-      S.performLaneDebugSnapshot = buildPerformanceLaneDebugSnapshot(chart, 0);
-      if (opts.mode) S.performMode = opts.mode;
-      if (opts.difficulty) S.performDifficulty = opts.difficulty;
-      if (opts.speed) S.performSpeed = opts.speed;
-      if (opts.preset) S.performPracticePreset = opts.preset;
-      S.performInputSource = S.performMode;
+      performanceSessionPatch({
+        performChart: chart,
+        performChartId: typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated"),
+        performPlaying: true,
+        performPaused: false,
+        performCurrentSec: 0,
+        performStartSec: 0,
+        performScore: 0,
+        performCombo: 0,
+        performMaxCombo: 0,
+        performAccuracy: 0,
+        performPhraseIdx: 0,
+        performResults: null,
+        performStarRating: 0,
+        performLoop: null,
+        performLastHitLabel: "",
+        performLastHitTime: 0,
+        performPhraseStats: createEmptyPhraseStats(chart),
+        performLaneDebugSnapshot: buildPerformanceLaneDebugSnapshot(chart, 0),
+        performInputSource: performMode
+      });
+      if (opts.mode) performanceSessionWrite("performMode", opts.mode);
+      if (opts.difficulty) performanceSessionWrite("performDifficulty", opts.difficulty);
+      if (opts.speed) performanceSessionWrite("performSpeed", opts.speed);
+      if (opts.preset) performanceSessionWrite("performPracticePreset", opts.preset);
     }
     if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
       window.sparkCore.syncPerformanceRuntimeState("start", {
         chartId: typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated"),
-        difficulty: opts.difficulty || S.performDifficulty,
-        arrangementType: chart.arrangementType || S.performArrangementType,
-        speed: opts.speed || S.performSpeed,
-        mode: opts.mode || S.performMode,
-        preset: opts.preset || S.performPracticePreset,
-        countIn: !!S.performCountIn,
-        targetTechnique: Object.prototype.hasOwnProperty.call(opts, "targetTechnique")
-          ? opts.targetTechnique
-          : (S.performTargetTechnique || null)
+        difficulty: performDifficulty,
+        arrangementType: performArrangementType,
+        speed: performSpeed,
+        mode: performMode,
+        preset: performPreset,
+        countIn: performCountIn,
+        targetTechnique: performTargetTechnique
       });
     }
 
     // Apply difficulty profile to state windows
-    applyPerformanceDifficultyToState(S.performDifficulty);
+    applyPerformanceDifficultyToState(performanceSessionRead("performDifficulty", performDifficulty));
     // Apply config-driven runtime values
     if (typeof PERFORMANCE_CONFIG !== "undefined") {
-      S.performScrollSpeed = PERFORMANCE_CONFIG.highway.scrollSpeed;
-      S.performHighwayLookaheadSec = PERFORMANCE_CONFIG.highway.lookaheadSec;
+      performanceSessionPatch({
+        performScrollSpeed: PERFORMANCE_CONFIG.highway.scrollSpeed,
+        performHighwayLookaheadSec: PERFORMANCE_CONFIG.highway.lookaheadSec
+      });
     }
 
-    PerformanceInput.start(S.performMode);
-    applyPerformanceStemPreset(S.performPracticePreset);
+    PerformanceInput.start(performanceSessionRead("performMode", performMode));
+    applyPerformanceStemPreset(performanceSessionRead("performPracticePreset", performPreset));
 
     // Load stems if song has imported audio
-    var songId = (S.performSongData && S.performSongData.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-    var audioData = S.songAudioData[songId];
+    var performSongData = performanceSessionRead("performSongData", null);
+    var songAudioData = performanceSessionRead("songAudioData", {});
+    var songId = (performSongData && performSongData.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    var audioData = songAudioData ? songAudioData[songId] : null;
     var hasStemAudio = audioData && audioData.stemUrls && Object.keys(audioData.stemUrls).length > 0;
 
     if (hasStemAudio) {
       loadStemUrls(audioData.stemUrls);
-      applyPerformanceStemPreset(S.performPracticePreset);
+      applyPerformanceStemPreset(performanceSessionRead("performPracticePreset", performPreset));
       if (audioData.detectedBpm && chart.bpm) {
         chart._effectiveBpm = audioData.detectedBpm;
       }
@@ -228,26 +296,26 @@ function startPerformance(chartIdOrChart, opts) {
       ? (typeof loadMidiBacking === "function" ? loadMidiBacking(chart.audio.src) : Promise.resolve())
       : Promise.resolve();
     midiReady.then(function(){
-    if (S.performCountIn) {
-      startPerformanceCountIn(chart, S.performSpeed, function() {
-        PerformanceTransport.start(0, S.performSpeed);
+    if (performCountIn) {
+      startPerformanceCountIn(chart, performanceSessionRead("performSpeed", performSpeed), function() {
+        PerformanceTransport.start(0, performanceSessionRead("performSpeed", performSpeed));
         if (hasStemAudio) {
           playStems();
           var firstStem = typeof getFirstStemAudio === "function" ? getFirstStemAudio() : null;
           if (firstStem) PerformanceTransport.setAudioSource(firstStem);
         }
-        if (hasMidiBacking && typeof playMidiBacking === "function") playMidiBacking(0, S.performSpeed);
+        if (hasMidiBacking && typeof playMidiBacking === "function") playMidiBacking(0, performanceSessionRead("performSpeed", performSpeed));
         render();
         _performRAF = requestAnimationFrame(updatePerformanceFrame);
       });
     } else {
-      PerformanceTransport.start(0, S.performSpeed);
+      PerformanceTransport.start(0, performanceSessionRead("performSpeed", performSpeed));
       if (hasStemAudio) {
         playStems();
         var firstStem = typeof getFirstStemAudio === "function" ? getFirstStemAudio() : null;
         if (firstStem) PerformanceTransport.setAudioSource(firstStem);
       }
-      if (hasMidiBacking && typeof playMidiBacking === "function") playMidiBacking(0, S.performSpeed);
+      if (hasMidiBacking && typeof playMidiBacking === "function") playMidiBacking(0, performanceSessionRead("performSpeed", performSpeed));
       render();
       _performRAF = requestAnimationFrame(updatePerformanceFrame);
     }
@@ -260,8 +328,10 @@ function startPerformance(chartIdOrChart, opts) {
         tab: TAB.SONGS
       });
     } else {
-      S.screen = SCR.HOME;
-      S.tab = TAB.SONGS;
+      performanceSessionPatch({
+        screen: SCR.HOME,
+        tab: TAB.SONGS
+      });
     }
     if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
       window.sparkCore.syncPerformanceRuntimeState("start_failed", {
@@ -284,8 +354,10 @@ function stopPerformance() {
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("stop");
   } else {
-    S.performPlaying = false;
-    S.performPaused = false;
+    performanceSessionPatch({
+      performPlaying: false,
+      performPaused: false
+    });
   }
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState("stop", {
@@ -315,8 +387,10 @@ function pausePerformance() {
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("pause");
   } else {
-    S.performPaused = true;
-    S.performPlaying = false;
+    performanceSessionPatch({
+      performPaused: true,
+      performPlaying: false
+    });
   }
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState("pause");
@@ -330,15 +404,17 @@ function resumePerformance() {
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("resume");
   } else {
-    S.performPaused = false;
-    S.performPlaying = true;
+    performanceSessionPatch({
+      performPaused: false,
+      performPlaying: true
+    });
   }
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState("resume");
   }
   if (typeof playStems === "function") playStems();
-  if (typeof playMidiBacking === "function" && S.performChart && S.performChart.audio && S.performChart.audio.type === "midi") {
-    playMidiBacking(S.performCurrentSec, S.performSpeed);
+  if (typeof playMidiBacking === "function" && performanceSessionRead("performChart", null) && performanceSessionRead(["performChart", "audio"], null) && performanceSessionRead(["performChart", "audio", "type"], null) === "midi") {
+    playMidiBacking(performanceSessionRead("performCurrentSec", 0), performanceSessionRead("performSpeed", 1));
   }
   _performRAF = requestAnimationFrame(updatePerformanceFrame);
   render();
@@ -349,13 +425,13 @@ function seekPerformance(sec) {
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("seek", { sec: sec });
   } else {
-    S.performCurrentSec = sec;
+    performanceSessionWrite("performCurrentSec", sec);
   }
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState("seek", { sec: sec });
   }
   if (typeof seekStems === "function") seekStems(sec);
-  if (typeof seekMidiBacking === "function") seekMidiBacking(sec, S.performSpeed);
+  if (typeof seekMidiBacking === "function") seekMidiBacking(sec, performanceSessionRead("performSpeed", 1));
   render();
 }
 
@@ -363,7 +439,7 @@ function setPerformanceLoop(loopObj) {
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("set_loop", { loop: loopObj });
   } else {
-    S.performLoop = loopObj;
+    performanceSessionWrite("performLoop", loopObj);
   }
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState("set_loop", { loop: loopObj });
@@ -375,7 +451,7 @@ function clearPerformanceLoop() {
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("clear_loop");
   } else {
-    S.performLoop = null;
+    performanceSessionWrite("performLoop", null);
   }
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState("clear_loop");
@@ -384,29 +460,31 @@ function clearPerformanceLoop() {
 }
 
 function updatePerformanceFrame() {
-  if (_performStopping || !S.performPlaying || S.performPaused) return;
+  if (_performStopping || !performanceSessionRead("performPlaying", false) || performanceSessionRead("performPaused", false)) return;
 
   var nowSec = PerformanceTransport.now();
-  S.performCurrentSec = nowSec;
+  performanceSessionWrite("performCurrentSec", nowSec);
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState("tick", { sec: nowSec, status: "running" });
   }
-  S.performPhraseIdx = getPerformancePhraseIndexForTime(S.performChart, nowSec);
+  performanceSessionWrite("performPhraseIdx", getPerformancePhraseIndexForTime(performanceSessionRead("performChart", null), nowSec));
 
   maybeScorePendingEvents(nowSec);
 
   // Loop enforcement
-  if (S.performLoop && nowSec >= S.performLoop.endSec) {
-    PerformanceTransport.seek(S.performLoop.startSec);
-    resetPerformanceEvents(S.performChart, S.performLoop.startSec, S.performLoop.endSec);
+  var performLoop = performanceSessionRead("performLoop", null);
+  var performChart = performanceSessionRead("performChart", null);
+  if (performLoop && nowSec >= performLoop.endSec) {
+    PerformanceTransport.seek(performLoop.startSec);
+    resetPerformanceEvents(performChart, performLoop.startSec, performLoop.endSec);
     _updatePerformDisplay();
     _performRAF = requestAnimationFrame(updatePerformanceFrame);
     return;
   }
 
   // Check if past end of chart
-  if (!S.performChart || !S.performChart.phrases || !S.performChart.phrases.length) { finishPerformance(); return; }
-  var lastPhrase = S.performChart.phrases[S.performChart.phrases.length - 1];
+  if (!performChart || !performChart.phrases || !performChart.phrases.length) { finishPerformance(); return; }
+  var lastPhrase = performChart.phrases[performChart.phrases.length - 1];
   if (lastPhrase && nowSec > lastPhrase.endSec + 1) {
     finishPerformance();
     return;
@@ -417,51 +495,64 @@ function updatePerformanceFrame() {
 }
 
 function _updatePerformDisplay() {
-  S.performLaneDebugSnapshot = buildPerformanceLaneDebugSnapshot(S.performChart, S.performCurrentSec || 0);
+  var performChart = performanceSessionRead("performChart", null);
+  var performCurrentSec = performanceSessionRead("performCurrentSec", 0) || 0;
+  var performCombo = performanceSessionRead("performCombo", 0);
+  performanceSessionWrite("performLaneDebugSnapshot", buildPerformanceLaneDebugSnapshot(performChart, performCurrentSec));
 
   // Initialize canvas highway on first frame
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas && !_sparkHighway) ensureSparkHighway(canvas);
   if (canvas) {
-    if (S.performChart) { feedChartToHighway(S.performChart); }
-    feedChartToHighway(S.performChart);
-    updateSparkHighway(S.performCurrentSec, S.performCombo);
+    if (performChart) { feedChartToHighway(performChart); }
+    feedChartToHighway(performChart);
+    updateSparkHighway(performCurrentSec, performCombo);
   }
 
   // Update score strip (targeted, no full rebuild)
   var scoreEls = document.querySelectorAll(".perform-stat-val");
   if (scoreEls.length >= 3) {
-    scoreEls[0].textContent = S.performScore;
-    scoreEls[1].textContent = S.performAccuracy + "%";
-    scoreEls[2].textContent = S.performCombo + "x";
+    scoreEls[0].textContent = performanceSessionRead("performScore", 0);
+    scoreEls[1].textContent = performanceSessionRead("performAccuracy", 0) + "%";
+    scoreEls[2].textContent = performanceSessionRead("performCombo", 0) + "x";
   }
 
   // Update phrase name
   var phraseEl = document.querySelector(".perform-phrase-name");
   if (phraseEl) {
-    var phrase = getPerformancePhraseForTime(S.performChart, S.performCurrentSec);
+    var phrase = getPerformancePhraseForTime(performChart, performCurrentSec);
     phraseEl.textContent = phrase ? phrase.name : "";
   }
 
   var importedOverlayEl = document.getElementById("perform-imported-overlay");
   if (importedOverlayEl && typeof renderImportedTechniqueOverlay === "function") {
-    importedOverlayEl.innerHTML = renderImportedTechniqueOverlay(S.performChart, S.performCurrentSec, 3);
+    importedOverlayEl.innerHTML = renderImportedTechniqueOverlay(performChart, performCurrentSec, 3);
   }
 
   var laneDebugEl = document.getElementById("perform-lane-debug");
   if (laneDebugEl && typeof renderPerformanceLaneDebug === "function") {
-    laneDebugEl.innerHTML = renderPerformanceLaneDebug(S.performLaneDebugSnapshot);
+    laneDebugEl.innerHTML = renderPerformanceLaneDebug(performanceSessionRead("performLaneDebugSnapshot", null));
   }
 }
 
 function maybeScorePendingEvents(nowSec) {
-  var chart = S.performChart;
+  var chart = performanceSessionRead("performChart", null);
   if (!chart) return;
   var snapshot = PerformanceInput.getSnapshot(nowSec);
-  S.performInputSource = PerformanceInput.activeMode;
-  S.performInputNotes = snapshot.pitchClasses.slice();
-  var offsetMs = S.performMode === "midi" ? (S.performMidiOffsetMs || 0) : (S.performAudioOffsetMs || 0);
-  var targetTechnique = S.performTargetTechnique || null;
+  var performMode = performanceSessionRead("performMode", "midi");
+  var performDifficulty = performanceSessionRead("performDifficulty", "normal");
+  var performWindowMissMs = performanceSessionRead("performWindowMissMs", 220);
+  var phraseStats = performanceSessionRead("performPhraseStats", null);
+  var performCombo = performanceSessionRead("performCombo", 0);
+  var performMaxCombo = performanceSessionRead("performMaxCombo", 0);
+  var performScore = performanceSessionRead("performScore", 0);
+  var offsetMs = performMode === "midi"
+    ? (performanceSessionRead("performMidiOffsetMs", 0) || 0)
+    : (performanceSessionRead("performAudioOffsetMs", 0) || 0);
+  var targetTechnique = performanceSessionRead("performTargetTechnique", null) || null;
+
+  performanceSessionWrite("performInputSource", PerformanceInput.activeMode);
+  performanceSessionWrite("performInputNotes", snapshot.pitchClasses.slice());
 
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
@@ -469,27 +560,30 @@ function maybeScorePendingEvents(nowSec) {
 
     var deltaMs = (nowSec - evt.t) * 1000 - offsetMs;
 
-    if (deltaMs < -S.performWindowMissMs) continue;
+    if (deltaMs < -performWindowMissMs) continue;
 
     // Past miss window — mark as miss
-    if (deltaMs > S.performWindowMissMs && !evt._hit) {
+    if (deltaMs > performWindowMissMs && !evt._hit) {
       evt._scored = true;
       evt._miss = true;
       evt._result = { score: 0, grade: "miss", noteScore: 0, timingScore: 0 };
       evt._score = 0;
-      updatePhraseStats(S.performPhraseStats, evt, evt._result);
-      S.performCombo = 0;
+      updatePhraseStats(phraseStats, evt, evt._result);
+      performCombo = 0;
+      performanceSessionWrite("performCombo", performCombo);
       if (evt.sourceFlags && targetTechnique && evt.sourceFlags[targetTechnique] && typeof buildPerformanceFeedbackLabel === "function") {
-        S.performLastHitLabel = buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique);
-        S.performLastHitTime = Date.now();
+        performanceSessionPatch({
+          performLastHitLabel: buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique),
+          performLastHitTime: Date.now()
+        });
       }
       _updatePerformanceAccuracy(chart);
       continue;
     }
 
     // In scoring window — check snapshot
-    if (performanceSnapshotHasActivity(snapshot, evt, S.performMode)) {
-      var result = scorePerformanceEvent(evt, snapshot, deltaMs, S.performDifficulty, S.performMode);
+    if (performanceSnapshotHasActivity(snapshot, evt, performMode)) {
+      var result = scorePerformanceEvent(evt, snapshot, deltaMs, performDifficulty, performMode);
 
       if (result.grade !== "miss") {
         evt._scored = true;
@@ -497,18 +591,23 @@ function maybeScorePendingEvents(nowSec) {
         evt._result = result;
         evt._score = result.score;
         if (typeof notifyHighwayHit === "function") notifyHighwayHit(evt);
-        updatePhraseStats(S.performPhraseStats, evt, result);
+        updatePhraseStats(phraseStats, evt, result);
 
-        S.performCombo++;
-        if (S.performCombo > S.performMaxCombo) S.performMaxCombo = S.performCombo;
+        performCombo++;
+        if (performCombo > performMaxCombo) performMaxCombo = performCombo;
 
-        var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
-        S.performScore += Math.round(100 * result.score * comboMult);
+        var comboMult = Math.min(1 + performCombo * 0.1, 4);
+        performScore += Math.round(100 * result.score * comboMult);
 
-        S.performLastHitLabel = typeof buildPerformanceFeedbackLabel === "function"
-          ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
-          : (result.grade.toUpperCase() + "!");
-        S.performLastHitTime = Date.now();
+        performanceSessionPatch({
+          performCombo: performCombo,
+          performMaxCombo: performMaxCombo,
+          performScore: performScore,
+          performLastHitLabel: typeof buildPerformanceFeedbackLabel === "function"
+            ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
+            : (result.grade.toUpperCase() + "!"),
+          performLastHitTime: Date.now()
+        });
 
         _updatePerformanceAccuracy(chart);
       }
@@ -524,11 +623,11 @@ function _updatePerformanceAccuracy(chart) {
       if (chart.events[i]._hit) hits++;
     }
   }
-  S.performAccuracy = scored > 0 ? Math.round((hits / scored) * 100) : 0;
+  performanceSessionWrite("performAccuracy", scored > 0 ? Math.round((hits / scored) * 100) : 0);
 }
 
 function applyPerformanceStemPreset(preset) {
-  S.performPracticePreset = preset;
+  performanceSessionWrite("performPracticePreset", preset);
   if (typeof setStemMuted !== "function") return;
   if (typeof setStemVolume === "function") setStemVolume(0.8);
   switch (preset) {
@@ -570,8 +669,16 @@ function applyPerformanceStemPreset(preset) {
 
 function finishPerformance() {
   stopPerformance();
-  var results = finalizePerformanceResults(S.performChart, S.performPhraseStats, {
-    focusedTechnique: S.performTargetTechnique || null
+  var performChart = performanceSessionRead("performChart", null);
+  var performPhraseStats = performanceSessionRead("performPhraseStats", null);
+  var performTargetTechnique = performanceSessionRead("performTargetTechnique", null) || null;
+  var performChartId = performanceSessionRead("performChartId", null);
+  var performArrangementType = performanceSessionRead("performArrangementType", null);
+  var performDifficulty = performanceSessionRead("performDifficulty", "normal");
+  var performanceStats = performanceSessionRead("performanceStats", {});
+  var performSongStats = performanceSessionRead("performSongStats", {});
+  var results = finalizePerformanceResults(performChart, performPhraseStats, {
+    focusedTechnique: performTargetTechnique
   });
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("finish", {
@@ -579,8 +686,10 @@ function finishPerformance() {
       screen: SCR.PERFORM_DONE
     });
   } else {
-    S.performResults = results;
-    S.performStarRating = results.stars;
+    performanceSessionPatch({
+      performResults: results,
+      performStarRating: results.stars
+    });
   }
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState("finish", {
@@ -588,21 +697,21 @@ function finishPerformance() {
     });
   }
 
-  var xpAward = Math.max(5, Math.round(S.performResults.accuracy / 10));
+  var xpAward = Math.max(5, Math.round(results.accuracy / 10));
   var corePerformanceResult = null;
   if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
     var completionRequest = typeof window.sparkCore.buildPerformanceCompletionRequest === "function"
       ? window.sparkCore.buildPerformanceCompletionRequest({
-          performanceResults: S.performResults,
+          performanceResults: results,
           xpAwarded: xpAward,
-          chartId: S.performChartId || "unknown",
-          arrangementType: (S.performChart && S.performChart.arrangementType) || S.performArrangementType,
-          difficultyId: S.performDifficulty
+          chartId: performChartId || "unknown",
+          arrangementType: (performChart && performChart.arrangementType) || performArrangementType,
+          difficultyId: performDifficulty
         })
       : {
           flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
           markPlanComplete: true,
-          performanceResults: S.performResults,
+          performanceResults: results,
           xpAwarded: xpAward
         };
     corePerformanceResult = window.sparkCore.completeSession(completionRequest);
@@ -612,7 +721,8 @@ function finishPerformance() {
   } else if (window.SparkProgressBridge) {
     SparkProgressBridge.applyLegacyReward({ xpDelta: xpAward, toastAmount: xpAward });
   } else {
-    S.xp += xpAward; S.xpToast = { amount: xpAward, time: Date.now() };
+    performanceSessionWrite("xp", performanceSessionRead("xp", 0) + xpAward);
+    performanceSessionWrite("xpToast", { amount: xpAward, time: Date.now() });
   }
   // Route through contract-based progress path (Phase 6 migration)
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
@@ -620,9 +730,9 @@ function finishPerformance() {
       mode: "song",
       instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
       instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
-      accuracy: S.performResults ? S.performResults.accuracy / 100 : 0,
-      duration: S.performResults ? (S.performResults.duration || 0) : 0,
-      songId: S.performChartId || null,
+      accuracy: results ? results.accuracy / 100 : 0,
+      duration: results ? (results.duration || 0) : 0,
+      songId: performChartId || null,
       completed: true
     });
     var perfProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(perfSessionResult);
@@ -630,33 +740,33 @@ function finishPerformance() {
       console.debug("[Performance] ProgressOutcome:", perfProgressOutcome);
     }
   }
-  logHistory("perform", S.performResults.title + " - " + S.performResults.accuracy + "% accuracy", xpAward);
+  logHistory("perform", results.title + " - " + results.accuracy + "% accuracy", xpAward);
 
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.applyPerformanceRunOutcome === "function") {
     SparkPerformanceBridge.applyPerformanceRunOutcome({
-      chartId: S.performChartId || "unknown",
-      chart: S.performChart,
-      results: S.performResults,
-      difficulty: S.performDifficulty
+      chartId: performChartId || "unknown",
+      chart: performChart,
+      results: results,
+      difficulty: performDifficulty
     });
   }
 
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.applyPerformanceRunFollowOns === "function") {
     SparkPerformanceBridge.applyPerformanceRunFollowOns({
-      chartId: S.performChartId || "unknown",
-      chart: S.performChart,
-      results: S.performResults,
-      difficulty: S.performDifficulty,
-      progressionStats: S.performanceStats && S.performanceStats[(S.performChartId || "unknown") + "_" + ((S.performChart && S.performChart.arrangementType) || "chords") + "_" + (S.performDifficulty || "normal")] || null,
-      songStats: S.performSongStats && S.performSongStats[S.performChartId || "unknown"] || null
+      chartId: performChartId || "unknown",
+      chart: performChart,
+      results: results,
+      difficulty: performDifficulty,
+      progressionStats: performanceStats && performanceStats[(performChartId || "unknown") + "_" + ((performChart && performChart.arrangementType) || "chords") + "_" + (performDifficulty || "normal")] || null,
+      songStats: performSongStats && performSongStats[performChartId || "unknown"] || null
     });
   }
 
   if (typeof PerfEvents !== "undefined") PerfEvents.emit("performance_completed", {
-    chartId: S.performChartId, accuracy: S.performResults.accuracy, stars: S.performResults.stars, score: S.performResults.score
+    chartId: performChartId, accuracy: results.accuracy, stars: results.stars, score: results.score
   });
 
   saveState();
-  S.screen = SCR.PERFORM_DONE;
+  performanceSessionWrite("screen", SCR.PERFORM_DONE);
   render();
 }

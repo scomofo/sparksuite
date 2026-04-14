@@ -1,5 +1,30 @@
 (function(){
 
+  function practiceEngineRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function practiceEngineRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = practiceEngineRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function practiceEngineWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = practiceEngineRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
   function ensurePracticePlan(opts){
     opts = opts || {};
     if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
@@ -11,7 +36,8 @@
     }
 
     var today = new Date().toISOString().slice(0,10);
-    if(S.practicePlan && S.practicePlanDate===today) return S.practicePlan;
+    var plan = practiceEngineRead("practicePlan", null);
+    if(plan && practiceEngineRead("practicePlanDate", null)===today) return plan;
     return buildPracticePlan();
   }
 
@@ -60,10 +86,10 @@
       items: items
     };
 
-    S.practicePlan = plan;
-    S.practicePlanDate = today;
-    S.practicePlanComplete = false;
-    S.practicePlanFocus = focus;
+    practiceEngineWrite("practicePlan", plan);
+    practiceEngineWrite("practicePlanDate", today);
+    practiceEngineWrite("practicePlanComplete", false);
+    practiceEngineWrite("practicePlanFocus", focus);
     saveState();
 
     return plan;
@@ -97,15 +123,17 @@
       return;
     }
 
-    S.practicePlanComplete = true;
-    if(!Array.isArray(S.practicePlanHistory)) S.practicePlanHistory = [];
-    S.practicePlanHistory.push({
-      date: S.practicePlanDate,
-      focus: S.practicePlanFocus,
-      itemCount: S.practicePlan && S.practicePlan.items ? S.practicePlan.items.length : 0,
+    var practicePlanHistory = Array.isArray(practiceEngineRead("practicePlanHistory", [])) ? practiceEngineRead("practicePlanHistory", []) : [];
+    var practicePlan = practiceEngineRead("practicePlan", null);
+    practiceEngineWrite("practicePlanComplete", true);
+    practicePlanHistory.push({
+      date: practiceEngineRead("practicePlanDate", null),
+      focus: practiceEngineRead("practicePlanFocus", null),
+      itemCount: practicePlan && practicePlan.items ? practicePlan.items.length : 0,
       completedAt: Date.now()
     });
-    if(S.practicePlanHistory.length > 30) S.practicePlanHistory.shift();
+    if(practicePlanHistory.length > 30) practicePlanHistory.shift();
+    practiceEngineWrite("practicePlanHistory", practicePlanHistory);
     saveState();
   }
 

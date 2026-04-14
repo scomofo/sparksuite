@@ -1,37 +1,67 @@
 (function(){
 
+  function performanceCalibrationRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function performanceCalibrationRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = performanceCalibrationRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function performanceCalibrationWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = performanceCalibrationRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
   function getActivePerformanceOffsetMs(mode){
-    var globalOffset = S.performTimingOffsetMs || 0;
-    if(mode==="midi") return globalOffset + (S.performMidiOffsetMs || 0);
-    if(mode==="mic") return globalOffset + (S.performMicOffsetMs || 0);
+    var globalOffset = performanceCalibrationRead("performTimingOffsetMs", 0) || 0;
+    if(mode==="midi") return globalOffset + (performanceCalibrationRead("performMidiOffsetMs", 0) || 0);
+    if(mode==="mic") return globalOffset + (performanceCalibrationRead("performMicOffsetMs", 0) || 0);
     return globalOffset;
   }
 
   function beginPerformanceCalibration(source){
-    S.performCalibrationMode = true;
-    S.performCalibrationSource = source || "midi";
-    S.performCalibrationHits = [];
+    performanceCalibrationWrite("performCalibrationMode", true);
+    performanceCalibrationWrite("performCalibrationSource", source || "midi");
+    performanceCalibrationWrite("performCalibrationHits", []);
   }
 
   function stopPerformanceCalibration(){
-    S.performCalibrationMode = false;
+    performanceCalibrationWrite("performCalibrationMode", false);
     stopPerformanceCalibrationRun();
   }
 
   function recordCalibrationHit(targetMs, actualMs){
-    if(!Array.isArray(S.performCalibrationHits)) S.performCalibrationHits = [];
-    S.performCalibrationHits.push({
+    var hits = Array.isArray(performanceCalibrationRead("performCalibrationHits", [])) ? performanceCalibrationRead("performCalibrationHits", []) : [];
+    hits.push({
       targetMs: targetMs,
       actualMs: actualMs,
       deltaMs: actualMs - targetMs
     });
-    if(S.performCalibrationHits.length > 32){
-      S.performCalibrationHits.shift();
+    if(hits.length > 32){
+      hits.shift();
     }
+    performanceCalibrationWrite("performCalibrationHits", hits);
   }
 
   function computeCalibrationOffsetMs(){
-    var hits = S.performCalibrationHits || [];
+    var hits = performanceCalibrationRead("performCalibrationHits", []) || [];
     if(!hits.length) return 0;
 
     var deltas = hits.map(function(h){ return h.deltaMs; }).sort(function(a,b){ return a-b; });
@@ -41,10 +71,10 @@
 
   function applyCalibrationOffset(){
     var offset = computeCalibrationOffsetMs();
-    if(S.performCalibrationSource==="midi"){
-      S.performMidiOffsetMs = offset;
-    }else if(S.performCalibrationSource==="mic"){
-      S.performMicOffsetMs = offset;
+    if(performanceCalibrationRead("performCalibrationSource", "midi")==="midi"){
+      performanceCalibrationWrite("performMidiOffsetMs", offset);
+    }else if(performanceCalibrationRead("performCalibrationSource", "midi")==="mic"){
+      performanceCalibrationWrite("performMicOffsetMs", offset);
     }
     saveState();
     return offset;
@@ -58,7 +88,7 @@
 
   function startPerformanceCalibrationRun(){
     stopPerformanceCalibrationRun();
-    beginPerformanceCalibration(S.performCalibrationSource);
+    beginPerformanceCalibration(performanceCalibrationRead("performCalibrationSource", "midi"));
     _perfCalStartMs = performance.now();
     _perfCalBeatIndex = 0;
 

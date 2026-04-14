@@ -54,6 +54,7 @@ function resetState() {
       params: { trackId: "demo_song_1" }
     }]
   };
+  global.__sparkState = global.S;
   global.sparkCore = {
     _activeChart: {
       trackId: "track_1",
@@ -63,9 +64,13 @@ function resetState() {
       ],
       getBpm: function() { return 128; }
     },
+    getActivePlayAlongChart: function() { return this._activeChart; },
+    lastSessionOutcome: null,
+    getLastSessionOutcome: function() { return this.lastSessionOutcome; },
     runtimeState: {
       playAlongTransportMode: "spotify"
     },
+    getRuntimeState: function() { return this.runtimeState; },
     performanceTracker: {
       getAccuracy: function() { return 0.83; }
     }
@@ -74,6 +79,7 @@ function resetState() {
 
 function bootstrap() {
   resetState();
+  loadJS("js/sparksuite/core/play_along_state_service.js");
   loadJS("js/pages/play_along.js");
 }
 

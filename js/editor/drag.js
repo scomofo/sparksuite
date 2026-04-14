@@ -3,24 +3,69 @@
 
 (function(){
 
+  function editorDragRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorDragRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorDragRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function editorDragWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = editorDragRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor || !parts.length) return value;
+    for(i=0;i<parts.length-1;i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length-1]] = value;
+    return value;
+  }
+
   function beginEditorDrag(kind, id, startX, startY){
     var item = getSelectedEditorItem && getSelectedEditorItem();
     if(!item || String(item.id)!==String(id)) selectEditorItem(id);
     item = getSelectedEditorItem && getSelectedEditorItem();
     if(!item) return false;
-    S.editorDragState = {
+    editorDragWrite("editorDragState", {
       kind:kind,
       id:id,
       startX:startX,
       startY:startY,
       original:JSON.parse(JSON.stringify(item))
-    };
+    });
     return true;
   }
 
   function updateEditorDrag(x, y){
-    var ds = S.editorDragState;
-    if(!ds || !S.editorObject) return false;
+    var ds = editorDragRead("editorDragState", null);
+    var editorObject = editorDragRead("editorObject", null);
+    if(!ds || !editorObject) return false;
     var item = getSelectedEditorItem && getSelectedEditorItem();
     if(!item) return false;
     var dx = x - ds.startX;
@@ -31,7 +76,7 @@
     if(ds.kind==="event"){
       targetTime = (ds.original.t || 0) + deltaSec;
       item.t = snapTimeSec(Math.max(0, targetTime));
-      applyLaneDragToEvent(item, y, S.editorObject);
+      applyLaneDragToEvent(item, y, editorObject);
     }
     if(ds.kind==="phrase"){
       targetTime = (ds.original.startSec || 0) + deltaSec;
@@ -40,12 +85,12 @@
       item.endSec = snapTimeSec(item.startSec + Math.max(0, dur));
       snapPhraseBounds(item);
     }
-    S.editorDirty = true;
+    editorDragWrite("editorDirty", true);
     return true;
   }
 
   function endEditorDrag(){
-    S.editorDragState = null;
+    editorDragWrite("editorDragState", null);
     return true;
   }
 

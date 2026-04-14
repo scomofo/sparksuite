@@ -2,6 +2,34 @@
 // Inline highlights broken skills/lessons in the UI.
 // Activated by: ?dev=1 or localStorage spark_dev_overlay=true
 (function() {
+  function devHighlighterRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function devHighlighterWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = devHighlighterRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (!cursor || !parts.length) return value;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   var enabled = false;
   if (typeof window !== "undefined") {
     if (window.location && window.location.search.indexOf("dev=1") >= 0) enabled = true;
@@ -167,14 +195,14 @@
   };
 
   function navTo(screen, extra) {
-    if (typeof S === "undefined" || typeof render !== "function") return;
+    if (typeof render !== "function") return;
     if (screen === "skillTree") {
-      S.screen = "skillTree";
-      if (extra && extra.focus) S.skillTreeFocus = extra.focus;
+      devHighlighterWrite("screen", "skillTree");
+      if (extra && extra.focus) devHighlighterWrite("skillTreeFocus", extra.focus);
     } else if (screen === "practice") {
-      S.screen = "home";
-      S.tab = "practice";
-      if (extra && extra.level) S.selectedLevel = extra.level;
+      devHighlighterWrite("screen", "home");
+      devHighlighterWrite("tab", "practice");
+      if (extra && extra.level) devHighlighterWrite("selectedLevel", extra.level);
     }
     render();
   }

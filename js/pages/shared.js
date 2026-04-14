@@ -1,22 +1,94 @@
 // ===== ChordSpark: Shared rendering helpers =====
 
-function getLegacyChordDetectRuntime(){
-  var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
+function sharedStateRead(path, fallback){
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if(!root && typeof globalThis !== "undefined"){
+    root = globalThis.__sparkState || globalThis.S || null;
   }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  if(!cursor) return fallback;
+  for(i = 0; i < parts.length; i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function getSharedCoreView(){
+  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+    return window.sparkCore.getActiveSessionView() || null;
+  }
+  return null;
+}
+
+function getSharedRuntimeState(){
+  var view = getSharedCoreView();
+  return view && view.runtimeState ? view.runtimeState : null;
+}
+
+function getSharedTunerSnapshot(){
+  var runtime = getSharedRuntimeState();
   return {
-    active: typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : !!(runtime && runtime.chordDetectActive),
-    notes: Array.isArray(S.detectedNotes) ? S.detectedNotes : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
-    match: typeof S.chordMatch === "number" ? S.chordMatch : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
-    error: S.chordDetectErr || (runtime && runtime.chordDetectError) || ""
+    note: sharedStateRead("tunerNote", null),
+    freq: typeof sharedStateRead("tunerFreq", null) === "number" ? sharedStateRead("tunerFreq", null) : 0,
+    cents: typeof sharedStateRead("tunerCents", null) === "number" ? sharedStateRead("tunerCents", null) : (runtime && typeof runtime.tunerCents === "number" ? runtime.tunerCents : 0)
+  };
+}
+
+function getSharedDrillSnapshot(){
+  return {
+    timer: sharedStateRead("drillTimer", 0),
+    switches: sharedStateRead("drillSwitches", 0),
+    adaptiveBpm: sharedStateRead("drillAdaptiveBpm", 0)
+  };
+}
+
+function getSharedDailySnapshot(){
+  return {
+    challenge: sharedStateRead("dailyChallenge", null),
+    timer: sharedStateRead("dailyTimer", 0)
+  };
+}
+
+function getSharedFingerExerciseSnapshot(){
+  var runtime = getSharedRuntimeState();
+  return {
+    active: typeof sharedStateRead("fingerExActive", null) === "boolean" ? sharedStateRead("fingerExActive", null) : !!(runtime && runtime.legacyFingerExerciseActive),
+    id: typeof sharedStateRead("fingerExId", null) === "string" ? sharedStateRead("fingerExId", null) : (runtime ? runtime.legacyFingerExerciseId : null),
+    timer: typeof sharedStateRead("fingerExTimer", null) === "number" ? sharedStateRead("fingerExTimer", null) : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : 0),
+    count: typeof sharedStateRead("fingerExCount", null) === "number" ? sharedStateRead("fingerExCount", null) : (runtime && typeof runtime.legacyFingerExerciseCount === "number" ? runtime.legacyFingerExerciseCount : 0),
+    stats: sharedStateRead("fingerStats", {}) || {}
+  };
+}
+
+function getSharedProgressSnapshot(){
+  var view = getSharedCoreView();
+  return view && view.player ? view.player : {
+    sessions: sharedStateRead("sessions", 0)
+  };
+}
+
+function getLegacyChordDetectRuntime(){
+  var runtime = getSharedRuntimeState();
+  return {
+    active: typeof sharedStateRead("chordDetectOn", null) === "boolean" ? sharedStateRead("chordDetectOn", null) : !!(runtime && runtime.chordDetectActive),
+    notes: Array.isArray(sharedStateRead("detectedNotes", [])) ? sharedStateRead("detectedNotes", []) : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
+    match: typeof sharedStateRead("chordMatch", null) === "number" ? sharedStateRead("chordMatch", null) : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
+    error: sharedStateRead("chordDetectErr", "") || (runtime && runtime.chordDetectError) || ""
   };
 }
 
 // Build chord check inner HTML (shared by sessionPage and updateChordCheckUI)
 function _buildChordCheckInner(exp){
   var runtime=getLegacyChordDetectRuntime();
+  var currentChord = sharedStateRead("currentChord", null);
   // Note pills row — fixed height so layout doesn't jump
   var h='<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-bottom:10px;min-height:32px">';
   for(var i=0;i<exp.length;i++){
@@ -34,7 +106,7 @@ function _buildChordCheckInner(exp){
   h+='</div>';
   // AI Coach feedback — fixed min height
   h+='<div style="min-height:20px">';
-  var tips=getCoachFeedback(S.currentChord?S.currentChord.name:"",runtime.notes,exp);
+  var tips=getCoachFeedback(currentChord?currentChord.name:"",runtime.notes,exp);
   if(tips.length>0&&runtime.match>=0&&runtime.match<100){
     h+='<div style="margin-top:10px;background:var(--input-bg);border-radius:12px;padding:10px">';
     h+='<div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:6px">&#129302; Coach Tips:</div>';
@@ -52,13 +124,15 @@ function updateChordCheckUI(){
   var el=document.getElementById("chord-check-results");
   var runtime=getLegacyChordDetectRuntime();
   if(!el||!runtime.active)return;
-  var exp=getExpectedNotes(S.currentChord?S.currentChord.name:"");
+  var currentChord = sharedStateRead("currentChord", null);
+  var exp=getExpectedNotes(currentChord?currentChord.name:"");
   el.innerHTML=_buildChordCheckInner(exp);
 }
 
 // Targeted tuner UI update (avoids full DOM rebuild at ~30fps)
 function updateTunerUI(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var tuner = getSharedTunerSnapshot();
   var noteEl=document.getElementById("tuner-note-display");
   var freqEl=document.getElementById("tuner-freq-display");
   var needleEl=document.getElementById("tuner-needle");
@@ -66,23 +140,23 @@ function updateTunerUI(){
   var stringsEl=document.getElementById("tuner-strings");
   if(!noteEl)return; // not on tuner tab
 
-  var inT=Math.abs(S.tunerCents)<5;
-  var tC=inT?"#4ECDC4":Math.abs(S.tunerCents)<15?"#FFE66D":"#FF6B6B";
+  var inT=Math.abs(tuner.cents)<5;
+  var tC=inT?"#4ECDC4":Math.abs(tuner.cents)<15?"#FFE66D":"#FF6B6B";
 
-  noteEl.textContent=S.tunerNote||"\u2014";
+  noteEl.textContent=tuner.note||"\u2014";
   noteEl.style.color=tC;
-  freqEl.textContent=S.tunerFreq>0?S.tunerFreq+" Hz":"Play a note...";
+  freqEl.textContent=tuner.freq>0?tuner.freq+" Hz":"Play a note...";
 
   if(needleEl){
-    needleEl.style.left=(50+S.tunerCents/2)+"%";
+    needleEl.style.left=(50+tuner.cents/2)+"%";
     needleEl.style.background=tC;
   }
 
   if(statusEl){
-    if(!S.tunerFreq)statusEl.innerHTML="&#128266; Listening...";
+    if(!tuner.freq)statusEl.innerHTML="&#128266; Listening...";
     else if(inT)statusEl.innerHTML="&#9989; In Tune!";
-    else if(S.tunerCents>0)statusEl.innerHTML="&#11015; Too sharp (+"+S.tunerCents+"&#162;) &#8595;";
-    else statusEl.innerHTML="&#11014; Too flat ("+S.tunerCents+"&#162;) &#8593;";
+    else if(tuner.cents>0)statusEl.innerHTML="&#11015; Too sharp (+"+tuner.cents+"&#162;) &#8595;";
+    else statusEl.innerHTML="&#11014; Too flat ("+tuner.cents+"&#162;) &#8593;";
     statusEl.style.color=tC;
   }
 
@@ -91,9 +165,9 @@ function updateTunerUI(){
     var btns=stringsEl.children;
     for(var i=0;i<btns.length&&i<D.STRINGS.length;i++){
       var gs=D.STRINGS[i];
-      var mt=S.tunerNote===gs.note;
-      var sInT=mt&&Math.abs(S.tunerCents)<5;
-      var sC=sInT?"#4ECDC4":mt&&Math.abs(S.tunerCents)<15?"#FFE66D":"#FF6B6B";
+      var mt=tuner.note===gs.note;
+      var sInT=mt&&Math.abs(tuner.cents)<5;
+      var sC=sInT?"#4ECDC4":mt&&Math.abs(tuner.cents)<15?"#FFE66D":"#FF6B6B";
       btns[i].style.background=mt?sC+"22":"var(--chip-bg)";
       btns[i].style.borderColor=mt?sC:"var(--border)";
       btns[i].firstChild.style.color=mt?sC:"var(--text-muted)";
@@ -103,54 +177,47 @@ function updateTunerUI(){
 
 // ===== PARTIAL DOM UPDATES (avoid full rebuild for timer-tick screens) =====
 function updateDrillTimerUI(){
+  var drill = getSharedDrillSnapshot();
   var timerEl=document.getElementById("drill-timer-ring");
   var switchEl=document.getElementById("drill-switch-count");
   var bpmEl=document.getElementById("drill-adaptive-bpm");
   if(!timerEl)return false;
-  if(timerEl)timerEl.innerHTML=ringHTML((1-S.drillTimer/60)*100,70,6,"#FF6B6B",'<div style="font-size:18px;font-weight:900;color:var(--text-primary)">'+S.drillTimer+'s</div>',"Drill timer");
-  if(switchEl)switchEl.textContent=S.drillSwitches;
-  if(bpmEl)bpmEl.textContent=S.drillAdaptiveBpm;
+  if(timerEl)timerEl.innerHTML=ringHTML((1-drill.timer/60)*100,70,6,"#FF6B6B",'<div style="font-size:18px;font-weight:900;color:var(--text-primary)">'+drill.timer+'s</div>',"Drill timer");
+  if(switchEl)switchEl.textContent=drill.switches;
+  if(bpmEl)bpmEl.textContent=drill.adaptiveBpm;
   return true;
 }
 
 function updateDailyTimerUI(){
+  var daily = getSharedDailySnapshot();
   var el=document.getElementById("daily-timer-ring");
   if(!el)return false;
-  var dc=S.dailyChallenge;if(!dc)return false;
+  var dc=daily.challenge;if(!dc)return false;
   var mx=dc.id==="hold"?30:dc.id==="marathon"?180:60;
-  el.innerHTML=ringHTML((1-S.dailyTimer/mx)*100,100,7,"#FF6B6B",'<div style="font-size:28px;font-weight:900;color:var(--text-primary)">'+S.dailyTimer+'s</div>',"Daily challenge timer");
+  el.innerHTML=ringHTML((1-daily.timer/mx)*100,100,7,"#FF6B6B",'<div style="font-size:28px;font-weight:900;color:var(--text-primary)">'+daily.timer+'s</div>',"Daily challenge timer");
   return true;
 }
 
 // ===== FINGER EXERCISES CARD =====
 function fingerExerciseCard(){
-  var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
-  }
-  var fingerExActive = typeof S.fingerExActive === "boolean" ? S.fingerExActive : !!(runtime && runtime.legacyFingerExerciseActive);
-  var fingerExId = typeof S.fingerExId === "string" ? S.fingerExId : (runtime ? runtime.legacyFingerExerciseId : null);
-  var fingerExTimer = typeof S.fingerExTimer === "number" ? S.fingerExTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : 0);
-  var fingerExCount = typeof S.fingerExCount === "number"
-    ? S.fingerExCount
-    : (runtime && typeof runtime.legacyFingerExerciseCount === "number" ? runtime.legacyFingerExerciseCount : 0);
+  var runtime = getSharedRuntimeState();
+  var fingerEx = getSharedFingerExerciseSnapshot();
   var h='<div class="card" style="margin-top:12px">';
   h+='<h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#9995; Finger Exercises</h3>';
 
   // Active exercise
-  if(fingerExActive&&fingerExId){
+  if(fingerEx.active&&fingerEx.id){
     var ex=null;
-    for(var i=0;i<FINGER_EXERCISES.length;i++)if(FINGER_EXERCISES[i].id===fingerExId){ex=FINGER_EXERCISES[i];break;}
+    for(var i=0;i<FINGER_EXERCISES.length;i++)if(FINGER_EXERCISES[i].id===fingerEx.id){ex=FINGER_EXERCISES[i];break;}
     if(ex){
-      var m=Math.floor(fingerExTimer/60),s=fingerExTimer%60;
+      var m=Math.floor(fingerEx.timer/60),s=fingerEx.timer%60;
       h+='<div style="background:var(--input-bg);border-radius:14px;padding:14px;margin-bottom:10px;border-left:4px solid #FF6B6B">';
       h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
       h+='<div style="font-size:14px;font-weight:800;color:var(--text-primary)">'+escHTML(ex.name)+'</div>';
       h+='<div style="font-size:20px;font-weight:900;color:#FF6B6B">'+m+':'+(s<10?'0':'')+s+'</div>';
       h+='</div>';
       h+='<p style="margin:0 0 8px;font-size:12px;color:var(--text-secondary);line-height:1.5">'+escHTML(ex.desc)+'</p>';
-      if(fingerExCount>0)h+='<div style="font-size:11px;color:#4ECDC4;font-weight:700;margin-bottom:6px">&#9989; Completed '+fingerExCount+'x</div>';
+      if(fingerEx.count>0)h+='<div style="font-size:11px;color:#4ECDC4;font-weight:700;margin-bottom:6px">&#9989; Completed '+fingerEx.count+'x</div>';
       if(ex.goal)h+='<div style="font-size:11px;color:#4ECDC4;font-weight:700">&#127919; '+escHTML(ex.goal)+'</div>';
       h+='<button onclick="act(\'stopFingerEx\')" style="margin-top:8px;background:#FF6B6B;color:#fff;padding:6px 16px;border-radius:10px;font-size:12px;font-weight:700">&#9632; Stop</button>';
       h+='</div>';
@@ -172,7 +239,7 @@ function fingerExerciseCard(){
     h+='<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:8px 0 4px">'+t.icon+' Tier '+t.num+': '+t.label+'</div>';
     for(var ei=0;ei<exs.length;ei++){
       var ex=exs[ei];
-      var done=(S.fingerStats&&S.fingerStats[ex.id])||0;
+      var done=(fingerEx.stats&&fingerEx.stats[ex.id])||0;
       if(!done&&runtime&&runtime.legacyFingerExerciseId===ex.id&&typeof runtime.legacyFingerExerciseCount==="number"){
         done=runtime.legacyFingerExerciseCount;
       }
@@ -197,7 +264,7 @@ function fingerExerciseCard(){
 // Maps session count to the recommended strum pattern index in STRUM_PATTERNS
 // (S1-S7 progression from the curriculum addendum)
 function _getRecommendedStrumIdx(){
-  var n=S.sessions;
+  var n=getSharedProgressSnapshot().sessions;
   if(n<8)  return 0; // S1: Basic Down (all downstrokes)
   if(n<13) return 1; // S2: Down-Up (first upstroke)
   if(n<19) return 2; // S3: Folk Strum (campfire pattern)
@@ -207,10 +274,11 @@ function _getRecommendedStrumIdx(){
 }
 
 function strumTrackCard(){
+  var sessions=getSharedProgressSnapshot().sessions;
   var idx=_getRecommendedStrumIdx();
   var sp=STRUM_PATTERNS[idx];
   if(!sp)return '';
-  var isNext=idx>0&&S.sessions>0;
+  var isNext=idx>0&&sessions>0;
   var nextIdx=Math.min(idx+1,STRUM_PATTERNS.length-1);
   var nextSp=STRUM_PATTERNS[nextIdx];
   var h='<div class="card" style="margin-top:12px">';
@@ -234,7 +302,7 @@ function strumTrackCard(){
   if(isNext&&nextSp&&nextSp.name!==sp.name){
     var sessionsNeeded={1:8,2:13,3:19,4:25,5:33};
     var need=sessionsNeeded[idx]||999;
-    var remaining=Math.max(0,need-S.sessions);
+    var remaining=Math.max(0,need-sessions);
     if(remaining>0)h+='<div style="font-size:11px;color:var(--text-muted);margin-top:8px">Next: <strong>'+nextSp.name+'</strong> in '+remaining+' session'+(remaining===1?"":"s")+'</div>';
   }
   h+='</div>';

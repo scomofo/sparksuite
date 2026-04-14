@@ -1,5 +1,28 @@
 /* ===== ChordSpark: Performance Song Detail Page ===== */
 
+function performSongStateRoot() {
+  if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+    return SparkState.getRoot();
+  }
+  return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+}
+
+function performSongStateRead(path, fallback) {
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  var root = performSongStateRoot();
+  if (!root) return fallback;
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
@@ -101,7 +124,8 @@ function performSongPage() {
 
   // Audio import
   var songId = (song.title || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  var audioData = S.songAudioData[songId];
+  var songAudioData = performSongStateRead("songAudioData", {}) || {};
+  var audioData = songAudioData[songId];
 
   h += '<div class="card mb20">';
   h += '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Song Audio</div>';
@@ -119,10 +143,10 @@ function performSongPage() {
     }
     h += '</div>';
     h += '<button class="btn btn-sm" onclick="act(\'removeSongAudio\',\'' + songId + '\')" style="background:var(--input-bg);color:var(--text-secondary)">Remove Audio</button>';
-  } else if (S.songAudioImporting) {
+  } else if (performSongStateRead("songAudioImporting", false)) {
     h += '<div style="margin-bottom:8px">';
-    h += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">Separating stems... ' + (S.songAudioProgress || 0) + '%</div>';
-    h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + (S.songAudioProgress || 0) + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
+    h += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">Separating stems... ' + (performSongStateRead("songAudioProgress", 0) || 0) + '%</div>';
+    h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + (performSongStateRead("songAudioProgress", 0) || 0) + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
     h += '</div>';
   } else {
     h += '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Import an MP3 to play along with the actual song during performance.</p>';
@@ -156,14 +180,14 @@ function getPerformanceSongView() {
   return {
     song: performanceSong && performanceSong.songData
       ? performanceSong.songData
-      : (runtimeState && runtimeState.performanceSongData ? runtimeState.performanceSongData : S.performSongData),
-    songId: performanceSong && performanceSong.songId ? performanceSong.songId : S.performSongId,
-    arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : S.performArrangementType,
-    difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty,
-    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed,
+      : (runtimeState && runtimeState.performanceSongData ? runtimeState.performanceSongData : performSongStateRead("performSongData", null)),
+    songId: performanceSong && performanceSong.songId ? performanceSong.songId : performSongStateRead("performSongId", null),
+    arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : performSongStateRead("performArrangementType", null),
+    difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : performSongStateRead("performDifficulty", null),
+    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : performSongStateRead("performSpeed", null),
     targetTechnique: runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
       ? runtimeState.performanceTargetTechnique
-      : S.performTargetTechnique
+      : performSongStateRead("performTargetTechnique", null)
   };
 }
 

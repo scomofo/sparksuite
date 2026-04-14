@@ -1,5 +1,30 @@
 (function(){
 
+  function practicePlanRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function practicePlanRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = practicePlanRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function practicePlanWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = practicePlanRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
   function generateDailyPracticePlan(){
     if(typeof ensurePracticePlan === "function" && ensurePracticePlan !== generateDailyPracticePlan){
       return ensurePracticePlan();
@@ -64,20 +89,21 @@
       items[j] = applyAdaptiveToExercise(items[j]);
     }
 
-    S.practicePlan = {
+    var plan = {
       date: new Date().toISOString().slice(0,10),
       items: items
     };
-
-    return S.practicePlan;
+    practicePlanWrite("practicePlan", plan);
+    return plan;
   }
 
   function getNextPracticeItem(){
-    if(!S.practicePlan) generateDailyPracticePlan();
-    if(!S.practicePlan || !S.practicePlan.items) return null;
-    for(var i=0;i<S.practicePlan.items.length;i++){
-      if(!S.practicePlan.items[i].completed){
-        return S.practicePlan.items[i];
+    var plan = practicePlanRead("practicePlan", null);
+    if(!plan) plan = generateDailyPracticePlan();
+    if(!plan || !plan.items) return null;
+    for(var i=0;i<plan.items.length;i++){
+      if(!plan.items[i].completed){
+        return plan.items[i];
       }
     }
 
@@ -96,19 +122,23 @@
       });
     }
 
-    if(!S.practicePlan || !S.practicePlan.items) return;
+    var plan = practicePlanRead("practicePlan", null);
+    if(!plan || !plan.items) return;
 
-    for(var i=0;i<S.practicePlan.items.length;i++){
-      if(S.practicePlan.items[i].id===id){
-        S.practicePlan.items[i].completed = true;
+    for(var i=0;i<plan.items.length;i++){
+      if(plan.items[i].id===id){
+        plan.items[i].completed = true;
         break;
       }
     }
+    practicePlanWrite("practicePlan", plan);
 
     if(result){
       updateWeakSpotsFromPerformance(result);
       updateAdaptiveFromResult(result);
-      S.practiceHistory.push(result);
+      var practiceHistory = Array.isArray(practicePlanRead("practiceHistory", [])) ? practicePlanRead("practiceHistory", []) : [];
+      practiceHistory.push(result);
+      practicePlanWrite("practiceHistory", practiceHistory);
     }
 
     saveState();
@@ -121,21 +151,23 @@
       for(var d=0; d<7; d++){
         sharedDays.push(buildPracticePlan());
       }
-      S.weeklyPracticePlan = {
+      var sharedWeeklyPlan = {
         weekStart: new Date().toISOString().slice(0,10),
         days: sharedDays
       };
-      return S.weeklyPracticePlan;
+      practicePlanWrite("weeklyPracticePlan", sharedWeeklyPlan);
+      return sharedWeeklyPlan;
     }
     var days = [];
     for(var i=0;i<7;i++){
       days.push(generateDailyPracticePlan());
     }
-    S.weeklyPracticePlan = {
+    var weeklyPlan = {
       weekStart: new Date().toISOString().slice(0,10),
       days: days
     };
-    return S.weeklyPracticePlan;
+    practicePlanWrite("weeklyPracticePlan", weeklyPlan);
+    return weeklyPlan;
   }
 
   window.generateDailyPracticePlan = generateDailyPracticePlan;

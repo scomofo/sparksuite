@@ -1,11 +1,19 @@
 (function(){
 
+  function getCloudAuthToken() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(["cloudAuth", "token"], "");
+    }
+    return "";
+  }
+
   async function sparkApiRequest(path, method, body){
     var headers = {
       "Content-Type": "application/json"
     };
-    if(S.cloudAuth && S.cloudAuth.token){
-      headers["Authorization"] = "Bearer " + S.cloudAuth.token;
+    var token = getCloudAuthToken();
+    if(token){
+      headers["Authorization"] = "Bearer " + token;
     }
     var res = await fetch(path, {
       method: method || "GET",

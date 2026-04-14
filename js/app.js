@@ -1,41 +1,93 @@
 // ===== TIMERS =====
+function getAppStateFacade(){
+  return typeof SparkState !== "undefined" ? SparkState : null;
+}
+
+function getAppStateRoot(){
+  var facade=getAppStateFacade();
+  if(facade&&typeof facade.getRoot==="function")return facade.getRoot();
+  if(typeof globalThis!=="undefined"&&globalThis.__sparkState)return globalThis.__sparkState;
+  return null;
+}
+
+function appRead(path, fallback){
+  var facade=getAppStateFacade();
+  if(facade&&typeof facade.read==="function")return facade.read(path, fallback);
+  var root=getAppStateRoot();
+  if(!root)return fallback;
+  var parts=Array.isArray(path)?path:[path],cursor=root;
+  for(var i=0;i<parts.length;i++){
+    if(cursor==null||!Object.prototype.hasOwnProperty.call(cursor, parts[i]))return fallback;
+    cursor=cursor[parts[i]];
+  }
+  return cursor==null?fallback:cursor;
+}
+
+function appWrite(path, value){
+  var facade=getAppStateFacade();
+  if(facade&&typeof facade.write==="function")return facade.write(path, value);
+  var root=getAppStateRoot();
+  if(!root)return value;
+  var parts=Array.isArray(path)?path:[path],cursor=root;
+  for(var i=0;i<parts.length-1;i++){
+    if(!cursor[parts[i]]||typeof cursor[parts[i]]!=="object")cursor[parts[i]]={};
+    cursor=cursor[parts[i]];
+  }
+  cursor[parts[parts.length-1]]=value;
+  return value;
+}
+
+function appIncrement(path, delta){
+  var facade=getAppStateFacade();
+  if(facade&&typeof facade.increment==="function")return facade.increment(path, delta);
+  var current=appRead(path, 0);
+  if(typeof current!=="number")current=0;
+  if(typeof delta!=="number")delta=0;
+  return appWrite(path, current+delta);
+}
+
 function tickS(){
-  if(S.timerActive&&S.timer>0){
-    S.timer--;
+  var timerActive=appRead("timerActive", false);
+  var timer=appRead("timer", 0);
+  var lastChordName=appRead("lastChordName", "");
+  var currentChord=appRead("currentChord", null);
+  var sessions=appRead("sessions", 0);
+  if(timerActive&&timer>0){
+    timer=appWrite("timer", timer-1);
     syncLegacyPracticeRuntimeRequest("tick", {
-      remainingSec: S.timer,
-      timerActive: S.timerActive,
-      mode: S.lastChordName ? "chord" : "quickStart",
-      chordName: S.currentChord ? S.currentChord.name : null,
+      remainingSec: timer,
+      timerActive: timerActive,
+      mode: lastChordName ? "chord" : "quickStart",
+      chordName: currentChord ? currentChord.name : null,
       durationSec: 120
     });
-    if(S.timer%30===0&&S.timer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
-    else if(S.timer%30===0&&S.timer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}} // silent XP accrual when toast skipped
-    if(S.timer===60)fireMicro("halfway","Halfway there!","&#128170;");
+    if(timer%30===0&&timer>0&&SparkPsychology.shouldReward(sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{appIncrement("xp",5);appWrite("xpToast",{amount:5,time:Date.now()});}saveState();}
+    else if(timer%30===0&&timer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{appIncrement("xp",5);}} // silent XP accrual when toast skipped
+    if(timer===60)fireMicro("halfway","Halfway there!","&#128170;");
     addPracticeSecond();
     render();T.session=setTimeout(tickS,1000);
-  } else if(S.timerActive&&S.timer<=0){
-    S.timerActive=false;clearTimeout(T.session);
-    if(S.metronomeOn)stopMetronome();
-    if(S.chordDetectOn)stopChordDetect();
+  } else if(timerActive&&timer<=0){
+    appWrite("timerActive",false);clearTimeout(T.session);
+    if(appRead("metronomeOn", false))stopMetronome();
+    if(appRead("chordDetectOn", false))stopChordDetect();
     if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeSession === "function"){
       window.sparkCore.completeLegacyPracticeSession({
-        mode: S.lastChordName ? "chord" : "quickStart",
-        chordName: S.currentChord ? S.currentChord.name : null,
+        mode: lastChordName ? "chord" : "quickStart",
+        chordName: currentChord ? currentChord.name : null,
         durationSec: 120
       });
     }
     // Delegate all completion logic to SparkSession
     var outcome=SparkSession.processResults({
       type:"session",
-      chordName:S.currentChord?S.currentChord.name:null,
+      chordName:currentChord?currentChord.name:null,
       duration:120
     });
     // Route through contract-based progress path (Phase 3 migration)
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
       var sessionResult = SparkContracts.createSessionResult({
-        mode: S.lastChordName ? "chord" : "quickStart",
-        chordName: S.currentChord ? S.currentChord.name : null,
+        mode: lastChordName ? "chord" : "quickStart",
+        chordName: currentChord ? currentChord.name : null,
         duration: 120,
         accuracy: 0.75,
         completed: true
@@ -46,35 +98,39 @@ function tickS(){
       }
     }
     if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
-    else S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
+    else appWrite("xpToast",{amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot});
     if(outcome.jackpot){snd("levelup");}else{snd("complete");}
     if(outcome.leveledUp)snd("levelup");
-    trigC();S.screen=SCR.COMPLETE;render();
+    trigC();appWrite("screen",SCR.COMPLETE);render();
   }
 }
 
 function tickD(){
-  if(S.screen===SCR.DRILL&&S.drillTimer>0){
-    S.drillTimer--;
+  var screen=appRead("screen", null);
+  var drillTimer=appRead("drillTimer", 0);
+  var drillChords=appRead("drillChords", []);
+  var sessions=appRead("sessions", 0);
+  if(screen===SCR.DRILL&&drillTimer>0){
+    drillTimer=appWrite("drillTimer", drillTimer-1);
     syncLegacyPracticeRuntimeRequest("tick", {
-      remainingSec: S.drillTimer,
+      remainingSec: drillTimer,
       timerActive: true,
       mode: "drill",
-      chordNames: S.drillChords.map(function(c){ return c.name; }),
+      chordNames: drillChords.map(function(c){ return c.name; }),
       durationSec: 60
     });
-    if(S.drillTimer%30===0&&S.drillTimer>0&&SparkPsychology.shouldReward(S.sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{S.xp+=5;S.xpToast={amount:5,time:Date.now()};}saveState();}
-    else if(S.drillTimer%30===0&&S.drillTimer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{S.xp+=5;}}
+    if(drillTimer%30===0&&drillTimer>0&&SparkPsychology.shouldReward(sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{appIncrement("xp",5);appWrite("xpToast",{amount:5,time:Date.now()});}saveState();}
+    else if(drillTimer%30===0&&drillTimer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{appIncrement("xp",5);}}
     addPracticeSecond();
     if(!updateDrillTimerUI())render(); // partial update if elements exist
     T.drill=setTimeout(tickD,1000);
-  } else if(S.screen===SCR.DRILL&&S.drillTimer<=0){
+  } else if(screen===SCR.DRILL&&drillTimer<=0){
     clearTimeout(T.drill);snd("complete");
-    var detail=S.drillChords.map(function(c){return c.name;}).join(" / ");
+    var detail=drillChords.map(function(c){return c.name;}).join(" / ");
     if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function"){
       window.sparkCore.completeLegacyPracticeDrill({
         durationSec: 60,
-        chordNames: S.drillChords.map(function(c){return c.name;})
+        chordNames: drillChords.map(function(c){return c.name;})
       });
     }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
@@ -87,7 +143,7 @@ function tickD(){
         checkBadges:true
       });
     }else{
-      S.drillCount++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{S.xp+=20;S.xpToast={amount:20,time:Date.now()};}
+      appIncrement("drillCount",1);if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{appIncrement("xp",20);appWrite("xpToast",{amount:20,time:Date.now()});}
       logHistory("drill",detail,20);
       _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
       checkBadges();saveState();
@@ -96,7 +152,7 @@ function tickD(){
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
       var drillSessionResult = SparkContracts.createSessionResult({
         mode: "drill",
-        chordName: S.drillChords && S.drillChords[0] ? S.drillChords[0].name : null,
+        chordName: drillChords && drillChords[0] ? drillChords[0].name : null,
         duration: 60,
         accuracy: 0.75,
         completed: true
@@ -106,27 +162,31 @@ function tickD(){
         console.debug("[App] Drill ProgressOutcome:", drillProgressOutcome);
       }
     }
-    trigC();S.screen=SCR.DRILL_DONE;render();
+    trigC();appWrite("screen",SCR.DRILL_DONE);render();
   }
 }
 
 function tickDy(){
-  if(S.screen===SCR.DAILY&&S.dailyTimer>0&&!S.dailyComplete){
-    S.dailyTimer--;addPracticeSecond();
+  var screen=appRead("screen", null);
+  var dailyTimer=appRead("dailyTimer", 0);
+  var dailyComplete=appRead("dailyComplete", false);
+  var dailyChallenge=appRead("dailyChallenge", null);
+  if(screen===SCR.DAILY&&dailyTimer>0&&!dailyComplete){
+    dailyTimer=appWrite("dailyTimer", dailyTimer-1);addPracticeSecond();
     syncLegacyDailyRuntimeRequest("tick", {
-      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
-      remainingSec: S.dailyTimer,
+      challengeId: dailyChallenge ? dailyChallenge.id : null,
+      remainingSec: dailyTimer,
       timerActive: true,
-      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+      durationSec: dailyChallenge && dailyChallenge.id === "hold" ? 30 : dailyChallenge && dailyChallenge.id === "marathon" ? 180 : 60
     });
     if(!updateDailyTimerUI())render(); // partial update if elements exist
     T.daily=setTimeout(tickDy,1000);
-  } else if(S.screen===SCR.DAILY&&S.dailyTimer<=0&&!S.dailyComplete){
+  } else if(screen===SCR.DAILY&&dailyTimer<=0&&!dailyComplete){
     clearTimeout(T.daily);snd("complete");
-    var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
+    var xp=(dailyChallenge&&dailyChallenge.xp)||40;
     completeLegacyDailyChallengeRequest({
-      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
-      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+      challengeId: dailyChallenge ? dailyChallenge.id : null,
+      durationSec: dailyChallenge && dailyChallenge.id === "hold" ? 30 : dailyChallenge && dailyChallenge.id === "marathon" ? 180 : 60
     });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
@@ -134,20 +194,20 @@ function tickDy(){
         toastAmount:xp,
         setFlags:{dailyComplete:true},
         incrementFields:{dailyDone:1},
-        history:{type:"daily",detail:S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp:xp},
+        history:{type:"daily",detail:dailyChallenge?dailyChallenge.title:"Challenge",xp:xp},
         checkBadges:true
       });
     }else{
-      S.dailyComplete=true;S.dailyDone++;
-      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp,toastAmount:xp});else{S.xp+=xp;S.xpToast={amount:xp,time:Date.now()};}
-      logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
+      appWrite("dailyComplete",true);appIncrement("dailyDone",1);
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp,toastAmount:xp});else{appIncrement("xp",xp);appWrite("xpToast",{amount:xp,time:Date.now()});}
+      logHistory("daily",dailyChallenge?dailyChallenge.title:"Challenge",xp);
       checkBadges();saveState();
     }
     // Route through contract-based progress path
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
       var dailyResult = SparkContracts.createSessionResult({
         mode: "daily",
-        duration: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60,
+        duration: dailyChallenge && dailyChallenge.id === "hold" ? 30 : dailyChallenge && dailyChallenge.id === "marathon" ? 180 : 60,
         accuracy: 1.0,
         completed: true
       });
@@ -158,7 +218,8 @@ function tickDy(){
 }
 
 function genQ(){
-  var av=[];for(var _l=1;_l<=S.level;_l++)av=av.concat(CHORDS[_l]||[]);
+  var level=appRead("level", 1);
+  var av=[];for(var _l=1;_l<=level;_l++)av=av.concat(CHORDS[_l]||[]);
   if(!av.length)av=CHORDS[1];
   var q=av[Math.floor(Math.random()*av.length)];
   var opts=[q];
@@ -170,7 +231,7 @@ function genQ(){
     attempts++;
   }
   opts=shuffle(opts);
-  S.quizQ=q;S.quizOpts=opts;S.quizAns=null;
+  appWrite("quizQ",q);appWrite("quizOpts",opts);appWrite("quizAns",null);
   if(window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function"){
     window.sparkCore.syncLegacyQuizRuntimeState({
       question: q,
@@ -184,43 +245,51 @@ function genQ(){
 // ===== RHYTHM GAME =====
 var _rhythmAnim=null;
 function rhythmTick(){
-  if(!S.rhythmActive)return;
-  var elapsed=performance.now()-S.rhythmStartTime;
-  var lastBeatTime=S.rhythmBeats[S.rhythmBeats.length-1].time;
+  var rhythmActive=appRead("rhythmActive", false);
+  var rhythmStartTime=appRead("rhythmStartTime", 0);
+  var rhythmBeats=appRead("rhythmBeats", []);
+  if(!rhythmActive)return;
+  var elapsed=performance.now()-rhythmStartTime;
+  var lastBeatTime=rhythmBeats[rhythmBeats.length-1].time;
   if(elapsed>lastBeatTime+2000){
     finishRhythm();
     return;
   }
-  for(var i=0;i<S.rhythmBeats.length;i++){
-    var b=S.rhythmBeats[i];
+  for(var i=0;i<rhythmBeats.length;i++){
+    var b=rhythmBeats[i];
     if(!b.hit&&elapsed-b.time>200){
       b.hit=true;b.result="miss";
-      S.rhythmCombo=0;
+      appWrite("rhythmCombo",0);
     }
   }
   syncLegacyRhythmRuntimeRequest({
-    active: S.rhythmActive,
-    beats: S.rhythmBeats,
-    score: S.rhythmScore,
-    combo: S.rhythmCombo,
-    maxCombo: S.rhythmMaxCombo,
-    startTimeMs: S.rhythmStartTime
+    active: rhythmActive,
+    beats: rhythmBeats,
+    score: appRead("rhythmScore", 0),
+    combo: appRead("rhythmCombo", 0),
+    maxCombo: appRead("rhythmMaxCombo", 0),
+    startTimeMs: rhythmStartTime
   });
   render();
   _rhythmAnim=requestAnimationFrame(rhythmTick);
 }
 
 function finishRhythm(){
-  var total=S.rhythmBeats.length,hits=0;
-  for(var i=0;i<total;i++)if(S.rhythmBeats[i].result==="perfect"||S.rhythmBeats[i].result==="good")hits++;
+  var rhythmBeats=appRead("rhythmBeats", []);
+  var rhythmScore=appRead("rhythmScore", 0);
+  var rhythmCombo=appRead("rhythmCombo", 0);
+  var rhythmMaxCombo=appRead("rhythmMaxCombo", 0);
+  var rhythmStartTime=appRead("rhythmStartTime", 0);
+  var total=rhythmBeats.length,hits=0;
+  for(var i=0;i<total;i++)if(rhythmBeats[i].result==="perfect"||rhythmBeats[i].result==="good")hits++;
   var acc=total>0?Math.round((hits/total)*100):0;
-  var rhythmResult={score:S.rhythmScore,accuracy:acc,maxCombo:S.rhythmMaxCombo,total:total,hits:hits};
+  var rhythmResult={score:rhythmScore,accuracy:acc,maxCombo:rhythmMaxCombo,total:total,hits:hits};
   completeLegacyRhythmGameRequest({
-    beats: S.rhythmBeats,
-    score: S.rhythmScore,
-    combo: S.rhythmCombo,
-    maxCombo: S.rhythmMaxCombo,
-    startTimeMs: S.rhythmStartTime,
+    beats: rhythmBeats,
+    score: rhythmScore,
+    combo: rhythmCombo,
+    maxCombo: rhythmMaxCombo,
+    startTimeMs: rhythmStartTime,
     results: rhythmResult
   });
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
@@ -229,20 +298,20 @@ function finishRhythm(){
       cancelAnimationFrames:_rhythmAnim?[_rhythmAnim]:[]
     });
   }else{
-    S.rhythmActive=false;
+    appWrite("rhythmActive",false);
     if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);
-    S.rhythmResults=rhythmResult;
+    appWrite("rhythmResults",rhythmResult);
   }
   _rhythmAnim=null;
-  var xp=Math.round(S.rhythmScore/10);
+  var xp=Math.round(rhythmScore/10);
   if(xp>0){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:xp,
-        history:{type:"rhythm",detail:"Score: "+S.rhythmScore,xp:xp}
+        history:{type:"rhythm",detail:"Score: "+rhythmScore,xp:xp}
       });
     }else{
-      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("rhythm","Score: "+S.rhythmScore,xp);saveState();
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else appIncrement("xp",xp);logHistory("rhythm","Score: "+rhythmScore,xp);saveState();
     }
   }
   // Route through contract-based progress path
@@ -262,60 +331,74 @@ var _runnerAnim=null;
 var _runnerObstId=0;
 
 function spawnRunnerObstacle(){
-  var av=CHORDS[S.level]||CHORDS[1];
+  var level=appRead("level", 1);
+  var runnerTarget=appRead("runnerTarget", null);
+  var runnerObstacles=appRead("runnerObstacles", []);
+  var av=CHORDS[level]||CHORDS[1];
   var isTarget=Math.random()<0.35;
   var chord;
   if(isTarget){
-    chord=S.runnerTarget;
+    chord=runnerTarget;
   }else{
     chord=av[Math.floor(Math.random()*av.length)];
     var tries=0;
-    while(chord.name===S.runnerTarget.name&&av.length>1&&tries<15){
+    while(runnerTarget&&chord.name===runnerTarget.name&&av.length>1&&tries<15){
       chord=av[Math.floor(Math.random()*av.length)];tries++;
     }
   }
-  S.runnerObstacles.push({
+  runnerObstacles.push({
     id:++_runnerObstId,name:chord.name,short:chord.short,
-    x:460,isTarget:chord.name===S.runnerTarget.name,
+    x:460,isTarget:runnerTarget?chord.name===runnerTarget.name:false,
     hit:false,result:null
   });
 }
 
 function changeRunnerTarget(){
-  var av=CHORDS[S.level]||CHORDS[1];
-  var prev=S.runnerTarget;var tries=0;
-  S.runnerTarget=av[Math.floor(Math.random()*av.length)];
-  while(S.runnerTarget.name===prev.name&&av.length>1&&tries<15){
-    S.runnerTarget=av[Math.floor(Math.random()*av.length)];tries++;
+  var level=appRead("level", 1);
+  var runnerObstacles=appRead("runnerObstacles", []);
+  var av=CHORDS[level]||CHORDS[1];
+  var prev=appRead("runnerTarget", null);var tries=0;
+  var nextTarget=av[Math.floor(Math.random()*av.length)];
+  while(prev&&nextTarget.name===prev.name&&av.length>1&&tries<15){
+    nextTarget=av[Math.floor(Math.random()*av.length)];tries++;
   }
+  appWrite("runnerTarget", nextTarget);
   // Mark existing unmatched obstacles as non-target (new target now)
-  for(var i=0;i<S.runnerObstacles.length;i++){
-    if(!S.runnerObstacles[i].hit){
-      S.runnerObstacles[i].isTarget=S.runnerObstacles[i].name===S.runnerTarget.name;
+  for(var i=0;i<runnerObstacles.length;i++){
+    if(!runnerObstacles[i].hit){
+      runnerObstacles[i].isTarget=runnerObstacles[i].name===nextTarget.name;
     }
   }
   syncLegacyRunnerRuntimeRequest({
-    active: S.runnerActive,
-    targetName: S.runnerTarget ? S.runnerTarget.name : null,
-    score: S.runnerScore,
-    combo: S.runnerCombo,
-    maxCombo: S.runnerMaxCombo,
-    lives: S.runnerLives,
-    distance: Math.floor(S.runnerDistance/100),
-    obstacles: S.runnerObstacles
+    active: appRead("runnerActive", false),
+    targetName: nextTarget ? nextTarget.name : null,
+    score: appRead("runnerScore", 0),
+    combo: appRead("runnerCombo", 0),
+    maxCombo: appRead("runnerMaxCombo", 0),
+    lives: appRead("runnerLives", 0),
+    distance: Math.floor(appRead("runnerDistance", 0)/100),
+    obstacles: runnerObstacles
   });
 }
 
 function finishRunner(){
-  var runnerResult={score:S.runnerScore,maxCombo:S.runnerMaxCombo,distance:Math.floor(S.runnerDistance/100)};
+  var runnerTarget=appRead("runnerTarget", null);
+  var runnerScore=appRead("runnerScore", 0);
+  var runnerCombo=appRead("runnerCombo", 0);
+  var runnerMaxCombo=appRead("runnerMaxCombo", 0);
+  var runnerLives=appRead("runnerLives", 0);
+  var runnerDistance=appRead("runnerDistance", 0);
+  var runnerObstacles=appRead("runnerObstacles", []);
+  var runnerHighScore=appRead("runnerHighScore", 0);
+  var runnerResult={score:runnerScore,maxCombo:runnerMaxCombo,distance:Math.floor(runnerDistance/100)};
   completeLegacyRunnerGameRequest({
-    targetName: S.runnerTarget ? S.runnerTarget.name : null,
-    score: S.runnerScore,
-    combo: S.runnerCombo,
-    maxCombo: S.runnerMaxCombo,
-    lives: S.runnerLives,
+    targetName: runnerTarget ? runnerTarget.name : null,
+    score: runnerScore,
+    combo: runnerCombo,
+    maxCombo: runnerMaxCombo,
+    lives: runnerLives,
     distance: runnerResult.distance,
-    obstacles: S.runnerObstacles,
+    obstacles: runnerObstacles,
     results: runnerResult
   });
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
@@ -324,29 +407,29 @@ function finishRunner(){
       cancelAnimationFrames:_runnerAnim?[_runnerAnim]:[]
     });
   }else{
-    S.runnerActive=false;
+    appWrite("runnerActive",false);
     if(_runnerAnim)cancelAnimationFrame(_runnerAnim);
-    S.runnerResults=runnerResult;
+    appWrite("runnerResults",runnerResult);
   }
   _runnerAnim=null;
-  var xp=Math.round(S.runnerScore/20);
+  var xp=Math.round(runnerScore/20);
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
     SparkProgressBridge.applyLegacyActivityCompletion({
       xpDelta:xp>0?xp:0,
-      maxFields:{runnerHighScore:S.runnerScore},
+      maxFields:{runnerHighScore:runnerScore},
       resultFields:{runnerResults:runnerResult},
-      history:xp>0?{type:"runner",detail:"Score: "+S.runnerScore,xp:xp}:null
+      history:xp>0?{type:"runner",detail:"Score: "+runnerScore,xp:xp}:null
     });
   }else{
-    if(S.runnerScore>S.runnerHighScore)S.runnerHighScore=S.runnerScore;
-    S.runnerResults=runnerResult;
-    if(xp>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("runner","Score: "+S.runnerScore,xp);saveState();}
+    if(runnerScore>runnerHighScore)appWrite("runnerHighScore",runnerScore);
+    appWrite("runnerResults",runnerResult);
+    if(xp>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else appIncrement("xp",xp);logHistory("runner","Score: "+runnerScore,xp);saveState();}
   }
   // Route through contract-based progress path
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
     var runnerSessionResult = SparkContracts.createSessionResult({
       mode: "runner",
-      accuracy: S.runnerScore > 0 ? Math.min(1, S.runnerScore / 100) : 0,
+      accuracy: runnerScore > 0 ? Math.min(1, runnerScore / 100) : 0,
       completed: true
     });
     SparkProgressOrchestrator.applySessionOutcome(runnerSessionResult);
@@ -356,49 +439,55 @@ function finishRunner(){
 }
 
 function runnerTick(){
-  if(!S.runnerActive)return;
+  var runnerActive=appRead("runnerActive", false);
+  var runnerStartTime=appRead("runnerStartTime", 0);
+  var runnerObstacles=appRead("runnerObstacles", []);
+  var runnerLives=appRead("runnerLives", 0);
+  var runnerDistance=appRead("runnerDistance", 0);
+  var runnerLastSpawn=appRead("runnerLastSpawn", 0);
+  if(!runnerActive)return;
   var now=Date.now();
-  var elapsed=(now-S.runnerStartTime)/1000;
+  var elapsed=(now-runnerStartTime)/1000;
 
   // Speed ramps from 2 to 6 over ~60s
-  S.runnerSpeed=Math.min(6,2+elapsed/15);
+  var runnerSpeed=appWrite("runnerSpeed",Math.min(6,2+elapsed/15));
 
   // Move obstacles
-  for(var i=S.runnerObstacles.length-1;i>=0;i--){
-    var o=S.runnerObstacles[i];
-    o.x-=S.runnerSpeed;
+  for(var i=runnerObstacles.length-1;i>=0;i--){
+    var o=runnerObstacles[i];
+    o.x-=runnerSpeed;
     // Passed the hit zone without being handled
     if(o.x<20&&!o.hit){
       o.hit=true;
       if(o.isTarget){
-        S.runnerLives--;S.runnerCombo=0;o.result="missed";
+        runnerLives=appIncrement("runnerLives",-1);appWrite("runnerCombo",0);o.result="missed";
         snd("wrong");
-        if(S.runnerLives<=0){finishRunner();return;}
+        if(runnerLives<=0){finishRunner();return;}
       }
     }
     // Remove off-screen
-    if(o.x<-100)S.runnerObstacles.splice(i,1);
+    if(o.x<-100)runnerObstacles.splice(i,1);
   }
 
   // Track distance for ground animation
-  S.runnerDistance+=S.runnerSpeed;
+  runnerDistance=appIncrement("runnerDistance",runnerSpeed);
 
   // Spawn obstacles
   var spawnInterval=Math.max(900,1800-elapsed*12);
-  if(now-S.runnerLastSpawn>spawnInterval){
+  if(now-runnerLastSpawn>spawnInterval){
     spawnRunnerObstacle();
-    S.runnerLastSpawn=now;
+    appWrite("runnerLastSpawn",now);
   }
 
   syncLegacyRunnerRuntimeRequest({
-    active: S.runnerActive,
-    targetName: S.runnerTarget ? S.runnerTarget.name : null,
-    score: S.runnerScore,
-    combo: S.runnerCombo,
-    maxCombo: S.runnerMaxCombo,
-    lives: S.runnerLives,
-    distance: Math.floor(S.runnerDistance/100),
-    obstacles: S.runnerObstacles
+    active: runnerActive,
+    targetName: appRead(["runnerTarget","name"], null),
+    score: appRead("runnerScore", 0),
+    combo: appRead("runnerCombo", 0),
+    maxCombo: appRead("runnerMaxCombo", 0),
+    lives: runnerLives,
+    distance: Math.floor(runnerDistance/100),
+    obstacles: runnerObstacles
   });
 
   render();
@@ -411,14 +500,14 @@ if(!COMMUNITY_URL.startsWith("https")&&COMMUNITY_URL.indexOf("localhost")===-1&&
   console.warn("ChordSpark: Community URL should use HTTPS for non-local servers");
 
 function fetchCommunity(){
-  S.communityLoading=true;S.communityError=null;render();
+  appWrite("communityLoading",true);appWrite("communityError",null);render();
   var url=COMMUNITY_URL+"/api/songs";
-  if(S.communitySearch)url+="?q="+encodeURIComponent(S.communitySearch)+"&sort="+S.communitySort;
-  else url+="?sort="+S.communitySort;
+  if(appRead("communitySearch",""))url+="?q="+encodeURIComponent(appRead("communitySearch",""))+"&sort="+appRead("communitySort","recent");
+  else url+="?sort="+appRead("communitySort","recent");
   fetch(url).then(function(r){return r.json();}).then(function(data){
-    S.communitySongs=data;S.communityLoading=false;render();
+    appWrite("communitySongs",data);appWrite("communityLoading",false);render();
   }).catch(function(){
-    S.communityError="Could not connect to community server";S.communityLoading=false;render();
+    appWrite("communityError","Could not connect to community server");appWrite("communityLoading",false);render();
   });
 }
 
@@ -480,9 +569,9 @@ function _loadStemFileUrls(paths){
           loadStemUrls(urlMap);
           for(var j=0;j<STEM_NAMES.length;j++){
             var sn=STEM_NAMES[j];
-            if(urlMap[sn])setStemMuted(sn,!S.stemToggles[sn]);
+            if(urlMap[sn])setStemMuted(sn,!appRead(["stemToggles", sn], true));
           }
-          setStemVolume(S.stemVolume);
+          setStemVolume(appRead("stemVolume", 1));
         }
       });
     })(names[i]);
@@ -496,8 +585,8 @@ var _prevChordKey="";
 function stopAllTimers(){
   clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.fingerEx);
   clearInterval(T.strum);clearInterval(T.song);clearInterval(T.metro);clearInterval(T.prog);
-  if(S.metronomeOn){stopMetronome();S.metronomeOn=false;}
-  if(S.chordDetectOn)stopChordDetect();
+  if(appRead("metronomeOn", false)){stopMetronome();appWrite("metronomeOn",false);}
+  if(appRead("chordDetectOn", false))stopChordDetect();
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({
       setFields:{
@@ -512,15 +601,15 @@ function stopAllTimers(){
       cancelAnimationFrames:[_rhythmAnim,_runnerAnim]
     });
   }else{
-    if(S.rhythmActive){S.rhythmActive=false;if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);}
-    if(S.runnerActive){S.runnerActive=false;if(_runnerAnim)cancelAnimationFrame(_runnerAnim);}
-    if(S.progPlaying){S.progPlaying=false;}
-    S.timerActive=false;S.strumActive=false;S.songPlaying=false;
-    S.stemPlaying=false;
+    if(appRead("rhythmActive", false)){appWrite("rhythmActive",false);if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);}
+    if(appRead("runnerActive", false)){appWrite("runnerActive",false);if(_runnerAnim)cancelAnimationFrame(_runnerAnim);}
+    if(appRead("progPlaying", false)){appWrite("progPlaying",false);}
+    appWrite("timerActive",false);appWrite("strumActive",false);appWrite("songPlaying",false);
+    appWrite("stemPlaying",false);
   }
   _rhythmAnim=null;_runnerAnim=null;
   cleanupStems();
-  if(!_performStopping&&(S.performPlaying||S.performPaused)){stopPerformance();}
+  if(!_performStopping&&(appRead("performPlaying", false)||appRead("performPaused", false))){stopPerformance();}
   if(typeof stopSparkRhythmHighway==="function")stopSparkRhythmHighway();
 }
 
@@ -544,18 +633,18 @@ function syncPerformanceEditorDocumentState(chart, options) {
   var selectedPhrase = options.selectedPhrase || null;
   var selectedEventId = Object.prototype.hasOwnProperty.call(options, "selectedEventId")
     ? options.selectedEventId
-    : (selectedEvent ? selectedEvent.id : (S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null));
+    : (selectedEvent ? selectedEvent.id : (appRead("performEditorSelectedEventId", null) != null ? appRead("performEditorSelectedEventId", null) : null));
   var selectedPhraseId = Object.prototype.hasOwnProperty.call(options, "selectedPhraseId")
     ? options.selectedPhraseId
     : (selectedPhrase ? selectedPhrase.id : null);
 
   window.sparkCore.syncPerformanceRuntimeState(options.action || "configure_editor", {
-    mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : S.performEditorMode,
-    snap: Object.prototype.hasOwnProperty.call(options, "snap") ? options.snap : S.performEditorSnap,
+    mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : appRead("performEditorMode", null),
+    snap: Object.prototype.hasOwnProperty.call(options, "snap") ? options.snap : appRead("performEditorSnap", null),
     chartId: chart && chart.id ? chart.id : null,
     chartTitle: chart && chart.title ? chart.title : null,
     source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (chart ? "existing" : "blank"),
-    dirty: Object.prototype.hasOwnProperty.call(options, "dirty") ? !!options.dirty : !!S.performEditorDirty,
+    dirty: Object.prototype.hasOwnProperty.call(options, "dirty") ? !!options.dirty : !!appRead("performEditorDirty", false),
     selectedEventId: selectedEventId,
     selectedEventLabel: Object.prototype.hasOwnProperty.call(options, "selectedEventLabel")
       ? options.selectedEventLabel
@@ -595,7 +684,7 @@ function applyPerformanceEditorCoreMutation(action, payload) {
 
 function syncPerformanceEditorLibraryState(library) {
   var nextLibrary = Array.isArray(library) ? library : [];
-  S.performEditorLibrary = nextLibrary;
+  appWrite("performEditorLibrary", nextLibrary);
   return nextLibrary;
 }
 
@@ -603,11 +692,12 @@ function getPerformanceEditorExportData() {
   if (window.sparkCore && typeof window.sparkCore.getPerformanceEditorExportData === "function") {
     return window.sparkCore.getPerformanceEditorExportData();
   }
-  if (!S.performEditorChart) return { chart: null, json: "", fileName: "chart.json" };
+  var chart = appRead("performEditorChart", null);
+  if (!chart) return { chart: null, json: "", fileName: "chart.json" };
   return {
-    chart: S.performEditorChart,
-    json: JSON.stringify(S.performEditorChart, null, 2),
-    fileName: (S.performEditorChart.title || "chart").replace(/\s+/g, "_") + ".json"
+    chart: chart,
+    json: JSON.stringify(chart, null, 2),
+    fileName: (chart.title || "chart").replace(/\s+/g, "_") + ".json"
   };
 }
 
@@ -615,7 +705,7 @@ function getPerformanceEditorPreviewChart() {
   if (window.sparkCore && typeof window.sparkCore.getPerformanceEditorPreviewChart === "function") {
     return window.sparkCore.getPerformanceEditorPreviewChart();
   }
-  return S.performEditorChart || null;
+  return appRead("performEditorChart", null) || null;
 }
 
 function getPerformanceEditorPreviewRequest() {
@@ -627,11 +717,11 @@ function getPerformanceEditorPreviewRequest() {
   return {
     chart: chart,
     chartId: chart.id || "generated",
-    arrangementType: chart.arrangementType || S.performArrangementType || "chords",
-    difficulty: S.performDifficulty || "normal",
-    speed: S.performSpeed || 1,
-    mode: S.performMode || "midi",
-    preset: S.performPracticePreset || null
+    arrangementType: chart.arrangementType || appRead("performArrangementType", "chords") || "chords",
+    difficulty: appRead("performDifficulty", "normal") || "normal",
+    speed: appRead("performSpeed", 1) || 1,
+    mode: appRead("performMode", "midi") || "midi",
+    preset: appRead("performPracticePreset", null)
   };
 }
 
@@ -642,13 +732,13 @@ function getPerformanceRetryRequest(options) {
   options = options || {};
   return {
     chart: Object.prototype.hasOwnProperty.call(options, "chart") ? options.chart : null,
-    chartId: Object.prototype.hasOwnProperty.call(options, "chartId") ? options.chartId : (S.performChartId || "generated"),
-    arrangementType: Object.prototype.hasOwnProperty.call(options, "arrangementType") ? options.arrangementType : S.performArrangementType,
-    difficulty: Object.prototype.hasOwnProperty.call(options, "difficulty") ? options.difficulty : S.performDifficulty,
-    speed: Object.prototype.hasOwnProperty.call(options, "speed") ? options.speed : S.performSpeed,
-    mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : S.performMode,
-    preset: Object.prototype.hasOwnProperty.call(options, "preset") ? options.preset : S.performPracticePreset,
-    countIn: Object.prototype.hasOwnProperty.call(options, "countIn") ? !!options.countIn : !!S.performCountIn,
+    chartId: Object.prototype.hasOwnProperty.call(options, "chartId") ? options.chartId : (appRead("performChartId", "generated") || "generated"),
+    arrangementType: Object.prototype.hasOwnProperty.call(options, "arrangementType") ? options.arrangementType : appRead("performArrangementType", null),
+    difficulty: Object.prototype.hasOwnProperty.call(options, "difficulty") ? options.difficulty : appRead("performDifficulty", "normal"),
+    speed: Object.prototype.hasOwnProperty.call(options, "speed") ? options.speed : appRead("performSpeed", 1),
+    mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : appRead("performMode", "midi"),
+    preset: Object.prototype.hasOwnProperty.call(options, "preset") ? options.preset : appRead("performPracticePreset", null),
+    countIn: Object.prototype.hasOwnProperty.call(options, "countIn") ? !!options.countIn : !!appRead("performCountIn", false),
     targetPhraseIndex: Object.prototype.hasOwnProperty.call(options, "targetPhraseIndex") ? options.targetPhraseIndex : null
   };
 }
@@ -660,11 +750,11 @@ function applyPerformanceCalibrationRequest(action, options) {
   options = options || {};
   if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
     window.sparkCore.syncPerformanceRuntimeState(action, {
-      source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (S.performCalibrationSource || "midi"),
+      source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (appRead("performCalibrationSource","midi") || "midi"),
       appliedOffsetMs: Object.prototype.hasOwnProperty.call(options, "appliedOffsetMs") ? options.appliedOffsetMs : null,
-      globalOffsetMs: Object.prototype.hasOwnProperty.call(options, "globalOffsetMs") ? options.globalOffsetMs : (S.performTimingOffsetMs || 0),
-      midiOffsetMs: Object.prototype.hasOwnProperty.call(options, "midiOffsetMs") ? options.midiOffsetMs : (S.performMidiOffsetMs || 0),
-      micOffsetMs: Object.prototype.hasOwnProperty.call(options, "micOffsetMs") ? options.micOffsetMs : (S.performMicOffsetMs || 0)
+      globalOffsetMs: Object.prototype.hasOwnProperty.call(options, "globalOffsetMs") ? options.globalOffsetMs : (appRead("performTimingOffsetMs",0) || 0),
+      midiOffsetMs: Object.prototype.hasOwnProperty.call(options, "midiOffsetMs") ? options.midiOffsetMs : (appRead("performMidiOffsetMs",0) || 0),
+      micOffsetMs: Object.prototype.hasOwnProperty.call(options, "micOffsetMs") ? options.micOffsetMs : (appRead("performMicOffsetMs",0) || 0)
     });
   }
   return options;
@@ -1060,13 +1150,13 @@ function applySongBrowserRequest(action, options) {
     options = options || {};
     return window.sparkCore.updateRuntimeState({
       activeTab: "songs",
-      songsSubTab: Object.prototype.hasOwnProperty.call(options, "songsSubTab") ? options.songsSubTab : S.songsSubTab,
-      songFilter: Object.prototype.hasOwnProperty.call(options, "songFilter") ? options.songFilter : S.songFilter,
-      songSort: Object.prototype.hasOwnProperty.call(options, "songSort") ? options.songSort : S.songSort,
-      songSortAsc: Object.prototype.hasOwnProperty.call(options, "songSortAsc") ? !!options.songSortAsc : !!S.songSortAsc,
-      communityTab: Object.prototype.hasOwnProperty.call(options, "communityTab") ? options.communityTab : S.communityTab,
-      communitySearch: Object.prototype.hasOwnProperty.call(options, "communitySearch") ? options.communitySearch : S.communitySearch,
-      communitySort: Object.prototype.hasOwnProperty.call(options, "communitySort") ? options.communitySort : S.communitySort
+      songsSubTab: Object.prototype.hasOwnProperty.call(options, "songsSubTab") ? options.songsSubTab : appRead("songsSubTab", null),
+      songFilter: Object.prototype.hasOwnProperty.call(options, "songFilter") ? options.songFilter : appRead("songFilter", null),
+      songSort: Object.prototype.hasOwnProperty.call(options, "songSort") ? options.songSort : appRead("songSort", null),
+      songSortAsc: Object.prototype.hasOwnProperty.call(options, "songSortAsc") ? !!options.songSortAsc : !!appRead("songSortAsc", false),
+      communityTab: Object.prototype.hasOwnProperty.call(options, "communityTab") ? options.communityTab : appRead("communityTab", null),
+      communitySearch: Object.prototype.hasOwnProperty.call(options, "communitySearch") ? options.communitySearch : appRead("communitySearch", ""),
+      communitySort: Object.prototype.hasOwnProperty.call(options, "communitySort") ? options.communitySort : appRead("communitySort", "")
     });
   }
   console.warn("[No Handler] applySongBrowserRequest");
@@ -1080,9 +1170,9 @@ function applyDashboardRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
     options = options || {};
     return window.sparkCore.updateRuntimeState({
-      dashboardRecommendations: Object.prototype.hasOwnProperty.call(options, "recommendations") ? options.recommendations : (S.recommendations || []),
-      dashboardInsights: Object.prototype.hasOwnProperty.call(options, "insights") ? options.insights : (S.personalInsights || null),
-      dashboardChallenges: Object.prototype.hasOwnProperty.call(options, "challenges") ? options.challenges : (S.activeChallenges || []),
+      dashboardRecommendations: Object.prototype.hasOwnProperty.call(options, "recommendations") ? options.recommendations : (appRead("recommendations", []) || []),
+      dashboardInsights: Object.prototype.hasOwnProperty.call(options, "insights") ? options.insights : (appRead("personalInsights", null) || null),
+      dashboardChallenges: Object.prototype.hasOwnProperty.call(options, "challenges") ? options.challenges : (appRead("activeChallenges", []) || []),
       lastDashboardRefreshAt: Object.prototype.hasOwnProperty.call(options, "refreshedAt") ? options.refreshedAt : Date.now()
     });
   }
@@ -1143,7 +1233,7 @@ function returnFromHomeFamilyRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
     return window.sparkCore.updateRuntimeState({
       activeScreen: "home",
-      activeTab: S.tab || null,
+      activeTab: appRead("tab", null),
       transport: { status: "idle", positionMs: 0 }
     });
   }
@@ -1158,7 +1248,7 @@ function openUtilityScreenRequest(target) {
   if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
     return window.sparkCore.updateRuntimeState({
       activeScreen: target || "home",
-      activeTab: S.tab || null
+      activeTab: appRead("tab", null)
     });
   }
   if (typeof console !== "undefined") console.warn("[No Handler] openUtilityScreenRequest");
@@ -1176,12 +1266,13 @@ function syncSettingsStateRequest(options) {
 function buildMidiSettingsRuntimePayload() {
   var activeDevice = typeof getActiveMidiDevice === "function" ? getActiveMidiDevice() : null;
   var activeProfile = typeof getActiveMidiProfile === "function" ? getActiveMidiProfile() : null;
-  var profileIds = S.midiProfiles ? Object.keys(S.midiProfiles) : [];
+  var midiProfiles = appRead("midiProfiles", {}) || {};
+  var profileIds = midiProfiles ? Object.keys(midiProfiles) : [];
   var profileOptions = [];
   var i;
   for (i = 0; i < profileIds.length; i++) {
     var id = profileIds[i];
-    var profile = S.midiProfiles[id];
+    var profile = midiProfiles[id];
     if (!profile) continue;
     profileOptions.push({
       id: id,
@@ -1190,12 +1281,12 @@ function buildMidiSettingsRuntimePayload() {
     });
   }
   return {
-    midiEnabled: !!S.midiEnabled,
-    activeDeviceId: S.activeMidiDeviceId || null,
+    midiEnabled: !!appRead("midiEnabled", false),
+    activeDeviceId: appRead("activeMidiDeviceId", null),
     activeDeviceName: activeDevice ? (activeDevice.name || null) : null,
-    activeProfileId: S.activeMidiProfileId || null,
+    activeProfileId: appRead("activeMidiProfileId", null),
     activeProfileName: activeProfile ? (activeProfile.name || null) : null,
-    deviceOptions: Array.isArray(S.midiDevices) ? S.midiDevices.map(function(device) {
+    deviceOptions: Array.isArray(appRead("midiDevices", [])) ? appRead("midiDevices", []).map(function(device) {
       return {
         id: device.id,
         name: device.name || "MIDI Input"
@@ -1220,11 +1311,13 @@ function syncMidiSettingsStateRequest(options) {
 }
 
 function buildCloudSettingsRuntimePayload() {
+  var cloudAuth = appRead("cloudAuth", null);
+  var cloudSync = appRead("cloudSync", null);
   return {
-    loggedIn: !!(S.cloudAuth && S.cloudAuth.loggedIn && S.cloudAuth.token),
-    email: S.cloudAuth ? (S.cloudAuth.email || null) : null,
-    lastSyncStatus: S.cloudSync ? (S.cloudSync.lastSyncStatus || "idle") : "idle",
-    lastSyncAt: S.cloudSync ? (S.cloudSync.lastSyncAt || null) : null
+    loggedIn: !!(cloudAuth && cloudAuth.loggedIn && cloudAuth.token),
+    email: cloudAuth ? (cloudAuth.email || null) : null,
+    lastSyncStatus: cloudSync ? (cloudSync.lastSyncStatus || "idle") : "idle",
+    lastSyncAt: cloudSync ? (cloudSync.lastSyncAt || null) : null
   };
 }
 
@@ -1301,13 +1394,13 @@ function syncCurriculumStateRequest(options) {
 function buildMidiImportRuntimePayload(options) {
   var normalizedMidi = (options && Object.prototype.hasOwnProperty.call(options, "normalizedMidi"))
     ? options.normalizedMidi
-    : S.importedMidi;
+    : appRead("importedMidi", null);
   var assignments = (options && Object.prototype.hasOwnProperty.call(options, "assignments"))
     ? options.assignments
-    : S.importedMidiAssignments;
+    : appRead("importedMidiAssignments", null);
   var seedChart = (options && Object.prototype.hasOwnProperty.call(options, "seedChart"))
     ? options.seedChart
-    : S.importedMidiSeedPreview;
+    : appRead("importedMidiSeedPreview", null);
   var tracks = normalizedMidi && Array.isArray(normalizedMidi.tracks) ? normalizedMidi.tracks : [];
   return {
     summary: normalizedMidi ? {
@@ -1343,7 +1436,7 @@ function openSkillTreeRequest() {
   if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
     return window.sparkCore.updateRuntimeState({
       activeScreen: "skill_tree",
-      activeTab: S.tab || null
+      activeTab: appRead("tab", null)
     });
   }
   if (typeof console !== "undefined") console.warn("[No Handler] openSkillTreeRequest");
@@ -1357,7 +1450,7 @@ function setSkillTreeFocusRequest(focus) {
   if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
     return window.sparkCore.updateRuntimeState({
       activeScreen: "skill_tree",
-      activeTab: S.tab || null,
+      activeTab: appRead("tab", null),
       skillTreeFocus: focus || "overview"
     });
   }
@@ -1403,7 +1496,7 @@ function returnFromUtilityFamilyRequest(options) {
   if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
     return window.sparkCore.updateRuntimeState({
       activeScreen: "home",
-      activeTab: S.tab || null,
+      activeTab: appRead("tab", null),
       transport: { status: "idle", positionMs: 0 }
     });
   }
@@ -1500,9 +1593,9 @@ window.act=function(a,v){
   // Switch instrument from v2 dashboard
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
-    S.activeInstrument = v;
-    S.screen = SCR.HOME;
-    S.tab = TAB.PRACTICE;
+    appWrite("activeInstrument", v);
+    appWrite("screen", SCR.HOME);
+    appWrite("tab", TAB.PRACTICE);
     saveState();
     render();
     return;
@@ -1513,8 +1606,8 @@ window.act=function(a,v){
         setFields:{tab:v,screen:SCR.HOME,earTrainQ:null,earTrainAns:null,selectedVoicing:0}
       });
     }else{
-      S.tab=v;S.screen=SCR.HOME;
-      S.earTrainQ=null;S.earTrainAns=null;S.selectedVoicing=0;
+      appWrite("tab",v);appWrite("screen",SCR.HOME);
+      appWrite("earTrainQ",null);appWrite("earTrainAns",null);appWrite("selectedVoicing",0);
     }
     if(window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function"){
       window.sparkCore.updateRuntimeState({
@@ -1524,20 +1617,21 @@ window.act=function(a,v){
       });
     }
     stopAllTimers();
-    if(v===TAB.SONGS&&S.songsSubTab==="community")fetchCommunity();
+    if(v===TAB.SONGS&&appRead("songsSubTab", null)==="community")fetchCommunity();
     render();return;
   }
-  if(a==="selLevel"&&parseInt(v)<=S.level){S.selectedLevel=parseInt(v);render();return;}
+  if(a==="selLevel"&&parseInt(v)<=appRead("level", 1)){appWrite("selectedLevel",parseInt(v));render();return;}
   if(a==="toggleTimer"){
-    S.timerActive=!S.timerActive;
-    syncLegacyPracticeRuntimeRequest(S.timerActive ? "resume" : "pause", {
-      remainingSec: S.timer,
-      timerActive: S.timerActive,
-      mode: S.lastChordName ? "chord" : "quickStart",
-      chordName: S.currentChord ? S.currentChord.name : null,
+    var nextTimerActive=!appRead("timerActive", false);
+    appWrite("timerActive",nextTimerActive);
+    syncLegacyPracticeRuntimeRequest(nextTimerActive ? "resume" : "pause", {
+      remainingSec: appRead("timer", 0),
+      timerActive: nextTimerActive,
+      mode: appRead("lastChordName", "") ? "chord" : "quickStart",
+      chordName: appRead("currentChord", null) ? appRead("currentChord", null).name : null,
       durationSec: 120
     });
-    if(S.timerActive)T.session=setTimeout(tickS,1000);else clearTimeout(T.session);
+    if(nextTimerActive)T.session=setTimeout(tickS,1000);else clearTimeout(T.session);
     render();return;
   }
   if(a==="completeSessionHome"){
@@ -1555,57 +1649,59 @@ window.act=function(a,v){
     return;
   }
   if(a==="doneSession"){
-    clearTimeout(T.session);if(S.metronomeOn)stopMetronome();if(S.chordDetectOn)stopChordDetect();
+    clearTimeout(T.session);if(appRead("metronomeOn", false))stopMetronome();if(appRead("chordDetectOn", false))stopChordDetect();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
         setFields:{timerActive:true,timer:0}
       });
     }else{
-      S.timerActive=true;S.timer=0;
+      appWrite("timerActive",true);appWrite("timer",0);
     }
     syncLegacyPracticeRuntimeRequest("set_remaining", {
       remainingSec: 0,
       timerActive: true,
-      mode: S.lastChordName ? "chord" : "quickStart",
-      chordName: S.currentChord ? S.currentChord.name : null,
+      mode: appRead("lastChordName", "") ? "chord" : "quickStart",
+      chordName: appRead("currentChord", null) ? appRead("currentChord", null).name : null,
       durationSec: 120
     });
     tickS();return;
   }
-  if(a==="startDaily"&&S.dailyChallenge){
-    var t=S.dailyChallenge.id==="hold"?30:S.dailyChallenge.id==="marathon"?180:60;
+  if(a==="startDaily"&&appRead("dailyChallenge", null)){
+    var dailyChallenge=appRead("dailyChallenge", null);
+    var t=dailyChallenge.id==="hold"?30:dailyChallenge.id==="marathon"?180:60;
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
         setFields:{dailyTimer:t,dailyComplete:false,screen:SCR.DAILY}
       });
     }else{
-      S.dailyTimer=t;S.dailyComplete=false;S.screen=SCR.DAILY;
+      appWrite("dailyTimer",t);appWrite("dailyComplete",false);appWrite("screen",SCR.DAILY);
     }
     openLegacyDailyChallengeRequest({
-      challengeId: S.dailyChallenge.id,
+      challengeId: dailyChallenge.id,
       durationSec: t
     });
     snd("start");render();T.daily=setTimeout(tickDy,1000);return;
   }
   if(a==="completeDaily"){
     clearTimeout(T.daily);snd("complete");
-    var xp=(S.dailyChallenge&&S.dailyChallenge.xp)||40;
+    var completeDailyChallenge=appRead("dailyChallenge", null);
+    var xp=(completeDailyChallenge&&completeDailyChallenge.xp)||40;
     completeLegacyDailyChallengeRequest({
-      challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
-      durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
+      challengeId: completeDailyChallenge ? completeDailyChallenge.id : null,
+      durationSec: completeDailyChallenge && completeDailyChallenge.id === "hold" ? 30 : completeDailyChallenge && completeDailyChallenge.id === "marathon" ? 180 : 60
     });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:xp,
         setFlags:{dailyComplete:true},
         incrementFields:{dailyDone:1},
-        history:{type:"daily",detail:S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp:xp},
+        history:{type:"daily",detail:completeDailyChallenge?completeDailyChallenge.title:"Challenge",xp:xp},
         checkBadges:true
       });
     }else{
-      S.dailyComplete=true;S.dailyDone++;
-      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;
-      logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
+      appWrite("dailyComplete",true);appIncrement("dailyDone",1);
+      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else appIncrement("xp",xp);
+      logHistory("daily",completeDailyChallenge?completeDailyChallenge.title:"Challenge",xp);
       checkBadges();saveState();
     }
     trigC();render();return;
@@ -1615,16 +1711,17 @@ window.act=function(a,v){
     act("tab","daily");
     return;
   }
-  if(a==="replayEarTrain"&&S.earTrainQ){strumChord(S.earTrainQ);return;}
-  if(a==="answerEarTrain"&&S.earTrainAns===null){
-    var earTrainOk=v===S.earTrainQ;
-    var nextEarTrainTotal=(S.earTrainTotal||0)+1;
-    var nextEarTrainScore=(S.earTrainScore||0)+(earTrainOk?1:0);
-    var nextEarTrainStreak=earTrainOk?((S.earTrainStreak||0)+1):0;
+  if(a==="replayEarTrain"&&appRead("earTrainQ", null)){strumChord(appRead("earTrainQ", null));return;}
+  if(a==="answerEarTrain"&&appRead("earTrainAns", null)===null){
+    var currentEarTrainQ=appRead("earTrainQ", null);
+    var earTrainOk=v===currentEarTrainQ;
+    var nextEarTrainTotal=(appRead("earTrainTotal",0)||0)+1;
+    var nextEarTrainScore=(appRead("earTrainScore",0)||0)+(earTrainOk?1:0);
+    var nextEarTrainStreak=earTrainOk?((appRead("earTrainStreak",0)||0)+1):0;
     if(window.sparkCore&&typeof window.sparkCore.syncLegacyEarTrainingRuntimeState==="function"){
       window.sparkCore.syncLegacyEarTrainingRuntimeState({
-        question: S.earTrainQ,
-        options: S.earTrainOpts,
+        question: currentEarTrainQ,
+        options: appRead("earTrainOpts", []),
         answer: v,
         score: nextEarTrainScore,
         total: nextEarTrainTotal,
@@ -1637,8 +1734,8 @@ window.act=function(a,v){
         incrementFields:{earTrainTotal:1}
       });
     }else{
-      S.earTrainAns=v;
-      S.earTrainTotal++;
+      appWrite("earTrainAns",v);
+      appIncrement("earTrainTotal",1);
     }
     var ok=earTrainOk;
     if(ok){
@@ -1647,12 +1744,12 @@ window.act=function(a,v){
         SparkProgressBridge.applyLegacyActivityCompletion({
           xpDelta:15,
           incrementFields:{earTrainScore:1,earTrainStreak:1},
-          history:{type:"ear",detail:S.earTrainQ,xp:15},
+          history:{type:"ear",detail:currentEarTrainQ,xp:15},
           checkBadges:true
         });
       }else{
-        S.earTrainScore++;S.earTrainStreak++;
-        if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:15});else S.xp+=15;logHistory("ear",S.earTrainQ,15);checkBadges();saveState();
+        appIncrement("earTrainScore",1);appIncrement("earTrainStreak",1);
+        if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:15});else appIncrement("xp",15);logHistory("ear",currentEarTrainQ,15);checkBadges();saveState();
       }
     }
     else{
@@ -1662,7 +1759,7 @@ window.act=function(a,v){
           setFields:{earTrainStreak:0}
         });
       }else{
-        S.earTrainStreak=0;
+        appWrite("earTrainStreak",0);
       }
     }
     render();
@@ -1672,11 +1769,11 @@ window.act=function(a,v){
   // === Sound Preview ===
   if(a==="previewChord"){strumChord(v);return;}
   // === Voicings ===
-  if(a==="selectVoicing"){_prevChordKey=S.currentChord?S.currentChord.name+"_v"+S.selectedVoicing:"";S.selectedVoicing=parseInt(v);render();return;}
+  if(a==="selectVoicing"){var currentChordForVoicing=appRead("currentChord", null);_prevChordKey=currentChordForVoicing?currentChordForVoicing.name+"_v"+appRead("selectedVoicing",0):"";appWrite("selectedVoicing",parseInt(v));render();return;}
   // === Strum ===
   if(a==="openStrum"){
     var sp;for(var i=0;i<STRUM_PATTERNS.length;i++)if(STRUM_PATTERNS[i].name===v)sp=STRUM_PATTERNS[i];
-    if(sp&&sp.level<=S.level){
+    if(sp&&sp.level<=appRead("level", 1)){
       if(window.sparkCore && typeof window.sparkCore.openLegacyStrumPattern === "function"){
         window.sparkCore.openLegacyStrumPattern({ pattern: sp });
       }
@@ -1686,17 +1783,18 @@ window.act=function(a,v){
           clearIntervals:["strum"]
         });
       }else{
-        S.selectedStrum=sp;S.strumActive=false;S._strumBeat=-1;clearInterval(T.strum);S.screen=SCR.STRUM;
+        appWrite("selectedStrum",sp);appWrite("strumActive",false);appWrite("_strumBeat",-1);clearInterval(T.strum);appWrite("screen",SCR.STRUM);
       }
       render();
     }return;
   }
   if(a==="toggleStrum"){
     snd("click");
-    var nextStrumActive=!S.strumActive;
+    var selectedStrum=appRead("selectedStrum", null);
+    var nextStrumActive=!appRead("strumActive", false);
     if(window.sparkCore && typeof window.sparkCore.syncLegacyStrumRuntimeState === "function"){
       window.sparkCore.syncLegacyStrumRuntimeState({
-        pattern: S.selectedStrum,
+        pattern: selectedStrum,
         active: nextStrumActive,
         beat: nextStrumActive ? 0 : -1
       });
@@ -1707,41 +1805,44 @@ window.act=function(a,v){
         clearIntervals:nextStrumActive?[]:["strum"]
       });
     }else{
-      S.strumActive=nextStrumActive;
-      if(!S.strumActive){clearInterval(T.strum);S._strumBeat=-1;}
+      appWrite("strumActive",nextStrumActive);
+      if(!nextStrumActive){clearInterval(T.strum);appWrite("_strumBeat",-1);}
     }
-    if(S.strumActive){
-      var p=S.selectedStrum.pattern,ms=60000/S.selectedStrum.bpm/(p.length>4?2:1);
-      var _strumChordName=S.currentChord?S.currentChord.name:"E Major";
+    if(nextStrumActive&&selectedStrum){
+      var p=selectedStrum.pattern,ms=60000/selectedStrum.bpm/(p.length>4?2:1);
+      var currentStrumChord=appRead("currentChord", null);
+      var _strumChordName=currentStrumChord?currentStrumChord.name:"E Major";
       if(p[0]!=="x")strumChord(_strumChordName);render();
       T.strum=setInterval(function(){
-        S._strumBeat=(S._strumBeat+1)%p.length;
+        var nextStrumBeat=(appRead("_strumBeat",-1)+1)%p.length;
+        appWrite("_strumBeat",nextStrumBeat);
         if(window.sparkCore && typeof window.sparkCore.syncLegacyStrumRuntimeState === "function"){
           window.sparkCore.syncLegacyStrumRuntimeState({
-            pattern: S.selectedStrum,
+            pattern: appRead("selectedStrum", null),
             active: true,
-            beat: S._strumBeat
+            beat: nextStrumBeat
           });
         }
-        if(p[S._strumBeat]!=="x")strumChord(_strumChordName);
+        if(p[nextStrumBeat]!=="x")strumChord(_strumChordName);
         render();
       },ms);
-    }else{clearInterval(T.strum);S._strumBeat=-1;render();}return;
+    }else{clearInterval(T.strum);appWrite("_strumBeat",-1);render();}return;
   }
   // === Songs ===
   if(a==="songsSubTab"){
-    S.songsSubTab=v;
-    applySongBrowserRequest("songs_subtab", { songsSubTab: S.songsSubTab });
+    appWrite("songsSubTab",v);
+    applySongBrowserRequest("songs_subtab", { songsSubTab: appRead("songsSubTab", null) });
     if(v==="community")fetchCommunity();
     render();return;
   }
   if(a==="toggleSong"){
     snd("click");
-    var nextSongPlaying=!S.songPlaying;
+    var selectedSongData=appRead("selectedSong", null);
+    var nextSongPlaying=!appRead("songPlaying", false);
     syncSongRuntimeRequest(nextSongPlaying ? "play" : "pause", {
-      songData: S.selectedSong,
+      songData: selectedSongData,
       source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
-      songBeat: nextSongPlaying ? 0 : S.songBeat
+      songBeat: nextSongPlaying ? 0 : appRead("songBeat", 0)
     });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
@@ -1749,59 +1850,61 @@ window.act=function(a,v){
         clearIntervals:nextSongPlaying?[]:["song"]
       });
     }else{
-      S.songPlaying=nextSongPlaying;
-      if(S.songPlaying)S.songBeat=0;
+      appWrite("songPlaying",nextSongPlaying);
+      if(nextSongPlaying)appWrite("songBeat",0);
       else clearInterval(T.song);
     }
-    if(S.songPlaying){
-      var ms=60000/S.selectedSong.bpm;
-      var cn=S.selectedSong.progression[0];strumChord(CHORD_NAME_MAP[cn]||cn);
+    if(nextSongPlaying&&selectedSongData){
+      var ms=60000/selectedSongData.bpm;
+      var cn=selectedSongData.progression[0];strumChord(CHORD_NAME_MAP[cn]||cn);
       render();
       T.song=setInterval(function(){
-        S.songBeat=(S.songBeat+1)%S.selectedSong.progression.length;
-        syncSongRuntimeRequest("tick", { songBeat: S.songBeat });
-        var cn=S.selectedSong.progression[S.songBeat];strumChord(CHORD_NAME_MAP[cn]||cn);render();
+        var nextSongBeat=(appRead("songBeat",0)+1)%selectedSongData.progression.length;
+        appWrite("songBeat",nextSongBeat);
+        syncSongRuntimeRequest("tick", { songBeat: nextSongBeat });
+        var cn=selectedSongData.progression[nextSongBeat];strumChord(CHORD_NAME_MAP[cn]||cn);render();
       },ms);
     }else{render();}return;
   }
   if(a==="completeSong"){
+    var completeSongData=appRead("selectedSong", null);
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
         setFields:{songPlaying:false},
         clearIntervals:["song"]
       });
     }else{
-      S.songPlaying=false;clearInterval(T.song);
+      appWrite("songPlaying",false);clearInterval(T.song);
     }
     snd("complete");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:40,
         incrementFields:{songsPlayed:1},
-        history:{type:"song",detail:S.selectedSong?S.selectedSong.title:"Song",xp:40},
-        emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 }},
+        history:{type:"song",detail:completeSongData?completeSongData.title:"Song",xp:40},
+        emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 }},
         checkBadges:true
       });
     }else{
-      S.songsPlayed++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:40});else S.xp+=40;
-      logHistory("song",S.selectedSong?S.selectedSong.title:"Song",40);
-      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
+      appIncrement("songsPlayed",1);if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:40});else appIncrement("xp",40);
+      logHistory("song",completeSongData?completeSongData.title:"Song",40);
+      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 });
       checkBadges();saveState();
     }
     completeSongSessionRequest({
-      songData: S.selectedSong,
+      songData: completeSongData,
       source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
-      songBeat: S.songBeat
+      songBeat: appRead("songBeat", 0)
     });
     fireMicro("full_song","Rockstar!","&#127908;");
-    trigC();S.screen=SCR.SONG_DONE;render();return;
+    trigC();appWrite("screen",SCR.SONG_DONE);render();return;
   }
   if(a==="songBack"){
     applySongNavigationRequest("songs_home");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
-      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+      appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
     }
     render();return;
   }
@@ -1810,7 +1913,7 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
-      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+      appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
     }
     render();return;
   }
@@ -1821,7 +1924,7 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Audio not supported"}});
       }else{
-        S.tunerErr="Audio not supported";
+        appWrite("tunerErr","Audio not supported");
       }
       render();return;
     }
@@ -1833,7 +1936,7 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerActive:true,tunerErr:null}});
       }else{
-        S.tunerActive=true;S.tunerErr=null;
+        appWrite("tunerActive",true);appWrite("tunerErr",null);
       }
       _tunerHistory=[];_tunerStableCount=0;_tunerLastStableNote="";
       render();
@@ -1846,12 +1949,12 @@ window.act=function(a,v){
           an.getFloatTimeDomainData(buf);var f=autoCorrelate(buf,ctx.sampleRate);
           var result=smoothTunerResult(f);
           if(result.note){
-            S.tunerNote=result.note;
-            S.tunerFreq=result.freq;
-            S.tunerCents=result.cents;
+            appWrite("tunerNote",result.note);
+            appWrite("tunerFreq",result.freq);
+            appWrite("tunerCents",result.cents);
             syncTunerRuntimeRequest({ active:true, note: result.note, freq: result.freq, cents: result.cents, error:null });
           }else if(f<0){
-            S.tunerNote=null;S.tunerFreq=0;S.tunerCents=0;
+            appWrite("tunerNote",null);appWrite("tunerFreq",0);appWrite("tunerCents",0);
             syncTunerRuntimeRequest({ active:true, note:null, freq:0, cents:0, error:null });
           }
           // Targeted UI update instead of full render
@@ -1864,7 +1967,7 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Microphone access denied"}});
       }else{
-        S.tunerErr="Microphone access denied";
+        appWrite("tunerErr","Microphone access denied");
       }
       render();
     });return;
@@ -1879,23 +1982,23 @@ window.act=function(a,v){
         setFields:{tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0}
       });
     }else{
-      S.tunerActive=false;
-      S.tunerNote=null;S.tunerFreq=0;S.tunerCents=0;
+      appWrite("tunerActive",false);
+      appWrite("tunerNote",null);appWrite("tunerFreq",0);appWrite("tunerCents",0);
     }
     render();return;
   }
-  if(a==="toggleMetro"){if(S.metronomeOn)stopMetronome();else startMetronome();return;}
+  if(a==="toggleMetro"){if(appRead("metronomeOn", false))stopMetronome();else startMetronome();return;}
   if(a==="metroBpm"){
     var b=parseInt(v);
     if(b>=40&&b<=200){
-      S.metronomeBpm=b;
+      appWrite("metronomeBpm",b);
       syncMetronomeRuntimeRequest({
-        active: !!S.metronomeOn,
-        bpm: S.metronomeBpm,
-        beat: S._metroBeat,
-        beatsPerBar: S._metroBeats
+        active: !!appRead("metronomeOn", false),
+        bpm: appRead("metronomeBpm", 0),
+        beat: appRead("_metroBeat", 0),
+        beatsPerBar: appRead("_metroBeats", 4)
       });
-      if(S.metronomeOn){
+      if(appRead("metronomeOn", false)){
         clearTimeout(T.metro);
         T.metro=null;
         if(typeof _metroNextTime==="number"&&audioCtx)_metroNextTime=audioCtx.currentTime;
@@ -1904,23 +2007,23 @@ window.act=function(a,v){
       render();
     }return;
   }
-  if(a==="toggleChordDetect"){if(S.chordDetectOn)stopChordDetect();else startChordDetect();return;}
+  if(a==="toggleChordDetect"){if(appRead("chordDetectOn", false))stopChordDetect();else startChordDetect();return;}
   // Dark mode toggle
   if(a==="toggleDark"){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{darkMode:!S.darkMode},save:false});
+      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{darkMode:!appRead("darkMode", false)},save:false});
     }else{
-      S.darkMode=!S.darkMode;
+      appWrite("darkMode",!appRead("darkMode", false));
     }
     saveState();applyTheme();render();return;
   }
   // Onboarding
-  if(a==="setIntention"){S.practiceIntention=v||"";return;}
+  if(a==="setIntention"){appWrite("practiceIntention",v||"");return;}
   if(a==="completeOnboarding"){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{onboardingDone:true},save:false});
     }else{
-      S.onboardingDone=true;
+      appWrite("onboardingDone",true);
     }
     saveState();render();return;
   }
@@ -1928,13 +2031,13 @@ window.act=function(a,v){
   if(a==="openRecommendations"){
     openDashboardSectionRequest("recommendations");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.RECOMMENDATIONS}});
-    else S.screen=SCR.RECOMMENDATIONS;
+    else appWrite("screen",SCR.RECOMMENDATIONS);
     render();return;
   }
   if(a==="openCareer"){
     openDashboardSectionRequest("career");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CAREER}});
-    else S.screen=SCR.CAREER;
+    else appWrite("screen",SCR.CAREER);
     render();return;
   }
   if(a==="openCareerSong"){
@@ -1945,45 +2048,45 @@ window.act=function(a,v){
         songId: v,
         songData: nextSong,
         songTitle: nextSong.title || null,
-        arrangementType: S.performArrangementType || "chords",
-        difficultyId: S.performDifficulty || "normal"
+        arrangementType: appRead("performArrangementType", "chords") || "chords",
+        difficultyId: appRead("performDifficulty", "normal") || "normal"
       });
-      S.performSongData = nextSong;
-      S.performSongId = v;
+      appWrite("performSongData",nextSong);
+      appWrite("performSongId",v);
     }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{currentSong:nextSong,performSongData:nextSong,performSongId:v,screen:SCR.PERFORM_SONG}});
     }else{
-      S.currentSong=nextSong;
-      S.performSongData=nextSong;
-      S.performSongId=v;
-      S.screen=SCR.PERFORM_SONG;
+      appWrite("currentSong",nextSong);
+      appWrite("performSongData",nextSong);
+      appWrite("performSongId",v);
+      appWrite("screen",SCR.PERFORM_SONG);
     }
     render();return;
   }
   if(a==="openInsights"){
     openDashboardSectionRequest("insights");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.INSIGHTS}});
-    else S.screen=SCR.INSIGHTS;
+    else appWrite("screen",SCR.INSIGHTS);
     render();return;
   }
   if(a==="openChallengeHub"){
     openDashboardSectionRequest("challenges");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CHALLENGES}});
-    else S.screen=SCR.CHALLENGES;
+    else appWrite("screen",SCR.CHALLENGES);
     render();return;
   }
   if(a==="openHomeDash"){
     openDashboardSectionRequest("home_dash");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME_DASH}});
-    else S.screen=SCR.HOME_DASH;
+    else appWrite("screen",SCR.HOME_DASH);
     render();return;
   }
   if(a==="openSettings"){
     openUtilityScreenRequest("settings");
-    syncSettingsStateRequest({ theme: S.settings ? S.settings.theme : null });
+    syncSettingsStateRequest({ theme: appRead(["settings","theme"], null) });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SETTINGS}});
-    else S.screen=SCR.SETTINGS;
+    else appWrite("screen",SCR.SETTINGS);
     render();return;
   }
   if(a==="openOnboarding"){if(typeof startOnboarding==="function")startOnboarding();return;}
@@ -1992,9 +2095,9 @@ window.act=function(a,v){
     if(typeof generateRecommendations==="function")generateRecommendations();
     if(typeof generatePersonalInsights==="function")generatePersonalInsights();
     refreshDashboardSnapshotRequest({
-      recommendations: S.recommendations || [],
-      insights: S.personalInsights || null,
-      challenges: S.activeChallenges || [],
+      recommendations: appRead("recommendations", []) || [],
+      insights: appRead("personalInsights", null) || null,
+      challenges: appRead("activeChallenges", []) || [],
       refreshedAt: Date.now()
     });
     render();return;
@@ -2008,9 +2111,9 @@ window.act=function(a,v){
   if(a==="initChallenges"){
     if(typeof initializeChallengesForCurrentCycle==="function")initializeChallengesForCurrentCycle();
     initializeDashboardChallengesRequest({
-      recommendations: S.recommendations || [],
-      insights: S.personalInsights || null,
-      challenges: S.activeChallenges || [],
+      recommendations: appRead("recommendations", []) || [],
+      insights: appRead("personalInsights", null) || null,
+      challenges: appRead("activeChallenges", []) || [],
       refreshedAt: Date.now()
     });
     render();return;
@@ -2018,41 +2121,48 @@ window.act=function(a,v){
   if(a==="openPracticePlan"){
     openPracticePlanScreenRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PLAN}});
-    else S.screen=SCR.PLAN;
+    else appWrite("screen",SCR.PLAN);
     render();return;
   }
-  if(a==="setTheme"){if(S.settings)S.settings.theme=v;if(typeof applyThemeSetting==="function")applyThemeSetting();saveState();render();return;}
+  if(a==="setTheme"){if(appRead("settings", null))appWrite(["settings","theme"],v);if(typeof applyThemeSetting==="function")applyThemeSetting();saveState();render();return;}
   // Song sorting
   if(a==="songSort"){
-    if(S.songSort===v){S.songSortAsc=!S.songSortAsc;}
-    else{S.songSort=v;S.songSortAsc=true;}
+    if(appRead("songSort", null)===v){appWrite("songSortAsc",!appRead("songSortAsc", false));}
+    else{appWrite("songSort",v);appWrite("songSortAsc",true);}
     applySongBrowserRequest("song_sort", {
-      songSort: S.songSort,
-      songSortAsc: S.songSortAsc
+      songSort: appRead("songSort", null),
+      songSortAsc: appRead("songSortAsc", false)
     });
     render();return;
   }
-  if(a==="songFilter"){S.songFilter=v||"";applySongBrowserRequest("song_filter", { songFilter: S.songFilter });render();return;}
+  if(a==="songFilter"){appWrite("songFilter",v||"");applySongBrowserRequest("song_filter", { songFilter: appRead("songFilter", "") });render();return;}
   // Stem solo
   if(a==="stemSolo"){
-    for(var sk in S.stemToggles)S.stemToggles[sk]=(sk===v);
-    for(var sk in S.stemToggles)setStemMuted(sk,!S.stemToggles[sk]);
+    var stemSoloToggles=appRead("stemToggles", {});
+    for(var sk in stemSoloToggles){
+      var isSoloStem=(sk===v);
+      appWrite(["stemToggles", sk],isSoloStem);
+      setStemMuted(sk,!isSoloStem);
+    }
     render();return;
   }
   if(a==="stemAll"){
-    for(var sk in S.stemToggles){S.stemToggles[sk]=true;setStemMuted(sk,false);}
+    var stemAllToggles=appRead("stemToggles", {});
+    for(var sk in stemAllToggles){appWrite(["stemToggles", sk],true);setStemMuted(sk,false);}
     render();return;
   }
   if(a==="guidedNext"){
     var steps=["spark","review","newMove","songSlice","victoryLap"];
-    var idx=steps.indexOf(S.guidedStep);
+    var guidedStep=appRead("guidedStep", null);
+    var idx=steps.indexOf(guidedStep);
     if(idx<steps.length-1){
-      S.guidedStep=steps[idx+1];
-      if(S.guidedStep==="newMove")S.newMovePhase="watch";
+      guidedStep=steps[idx+1];
+      appWrite("guidedStep",guidedStep);
+      if(guidedStep==="newMove")appWrite("newMovePhase","watch");
       if(window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function"){
         window.sparkCore.syncGuidedRuntimeState({
-          guidedStep: S.guidedStep,
-          guidedNewMovePhase: S.newMovePhase || null
+          guidedStep: guidedStep,
+          guidedNewMovePhase: appRead("newMovePhase", null) || null
         });
       }
     }
@@ -2060,13 +2170,15 @@ window.act=function(a,v){
   }
   if(a==="guidedAdvancePhase"){
     var phases=["watch","shadow","try","refine"];
-    var pi=phases.indexOf(S.newMovePhase);
+    var newMovePhase=appRead("newMovePhase", null);
+    var pi=phases.indexOf(newMovePhase);
     if(pi<phases.length-1){
-      S.newMovePhase=phases[pi+1];
+      newMovePhase=phases[pi+1];
+      appWrite("newMovePhase",newMovePhase);
       if(window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function"){
         window.sparkCore.syncGuidedRuntimeState({
-          guidedStep: S.guidedStep,
-          guidedNewMovePhase: S.newMovePhase
+          guidedStep: appRead("guidedStep", null),
+          guidedNewMovePhase: newMovePhase
         });
       }
     }
@@ -2075,13 +2187,13 @@ window.act=function(a,v){
   }
   if(a==="guidedStop"){
     clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.metro);clearInterval(T.strum);
-    if(S.metronomeOn)stopMetronome();
+    if(appRead("metronomeOn", false))stopMetronome();
     applyGuidedNavigationRequest("guided_home");
-    S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();return;
+    appWrite("screen",SCR.HOME);appWrite("tab",TAB.PRACTICE);render();return;
   }
   // Dual instrument
-  if(a==="dualChord"){S.dualChord=v;render();return;}
-  if(a==="toggleAnchor"){S.dualAnchorOn=!S.dualAnchorOn;render();return;}
+  if(a==="dualChord"){appWrite("dualChord",v);render();return;}
+  if(a==="toggleAnchor"){appWrite("dualAnchorOn",!appRead("dualAnchorOn", false));render();return;}
   if(a==="dualPreview"){
     // Play chord on both instruments
     strumChord(v);
@@ -2090,51 +2202,60 @@ window.act=function(a,v){
   // Practice Goal
   if(a==="setGoal"){
     var g=parseInt(v);
-    if(g>=1&&g<=60){S.dailyGoalMinutes=g;saveState();render();}
+    if(g>=1&&g<=60){appWrite("dailyGoalMinutes",g);saveState();render();}
     return;
   }
   // === Custom Practice Sets ===
-  if(a==="newSet"){S.editingSet=true;S.editingSetIdx=-1;S.customSetName="";S.customSetChords=[];render();return;}
-  if(a==="setName"){S.customSetName=v;return;}
+  if(a==="newSet"){appWrite("editingSet",true);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);render();return;}
+  if(a==="setName"){appWrite("customSetName",v);return;}
   if(a==="toggleSetChord"){
-    var idx=S.customSetChords.indexOf(v);
-    if(idx===-1)S.customSetChords.push(v);else S.customSetChords.splice(idx,1);
+    var customSetChords=appRead("customSetChords", []);
+    var idx=customSetChords.indexOf(v);
+    if(idx===-1)customSetChords.push(v);else customSetChords.splice(idx,1);
+    appWrite("customSetChords",customSetChords);
     render();return;
   }
   if(a==="saveSet"){
-    if(S.customSetChords.length<2||!S.customSetName.trim())return;
-    var setObj={name:S.customSetName.trim(),chords:S.customSetChords.slice()};
-    if(S.editingSetIdx>=0&&S.editingSetIdx<S.customSets.length){
-      S.customSets[S.editingSetIdx]=setObj;
+    var saveSetChords=appRead("customSetChords", []);
+    var saveSetName=appRead("customSetName", "");
+    var customSets=appRead("customSets", []);
+    var editingSetIdx=appRead("editingSetIdx", -1);
+    if(saveSetChords.length<2||!saveSetName.trim())return;
+    var setObj={name:saveSetName.trim(),chords:saveSetChords.slice()};
+    if(editingSetIdx>=0&&editingSetIdx<customSets.length){
+      customSets[editingSetIdx]=setObj;
     }else{
-      S.customSets.push(setObj);
+      customSets.push(setObj);
     }
-    S.editingSet=false;S.editingSetIdx=-1;S.customSetName="";S.customSetChords=[];
+    appWrite("customSets",customSets);
+    appWrite("editingSet",false);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);
     saveState();render();return;
   }
-  if(a==="cancelSet"){S.editingSet=false;S.editingSetIdx=-1;S.customSetName="";S.customSetChords=[];render();return;}
+  if(a==="cancelSet"){appWrite("editingSet",false);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);render();return;}
   if(a==="editSet"){
-    var idx=parseInt(v);
-    if(idx>=0&&idx<S.customSets.length){
-      var cs=S.customSets[idx];
-      S.editingSet=true;S.editingSetIdx=idx;S.customSetName=cs.name;S.customSetChords=cs.chords.slice();
+    var editSetIdx=parseInt(v);
+    var editCustomSets=appRead("customSets", []);
+    if(editSetIdx>=0&&editSetIdx<editCustomSets.length){
+      var cs=editCustomSets[editSetIdx];
+      appWrite("editingSet",true);appWrite("editingSetIdx",editSetIdx);appWrite("customSetName",cs.name);appWrite("customSetChords",cs.chords.slice());
       render();
     }return;
   }
   if(a==="deleteSet"){
-    var idx=parseInt(v);
-    if(idx>=0&&idx<S.customSets.length){
-      S.customSets.splice(idx,1);saveState();render();
+    var deleteSetIdx=parseInt(v);
+    var deleteCustomSets=appRead("customSets", []);
+    if(deleteSetIdx>=0&&deleteSetIdx<deleteCustomSets.length){
+      deleteCustomSets.splice(deleteSetIdx,1);appWrite("customSets",deleteCustomSets);saveState();render();
     }return;
   }
   // === Rhythm Game ===
   if(a==="rhythmBpm"){
     var b=parseInt(v);
-    if(b>=60&&b<=200){S.rhythmBpm=b;render();}
+    if(b>=60&&b<=200){appWrite("rhythmBpm",b);render();}
     return;
   }
   if(a==="startRhythm"){
-    var ms=60000/S.rhythmBpm;
+    var ms=60000/appRead("rhythmBpm", 90);
     var beats=[];
     var patterns=[["D","U","D","U"],["D","D","U","D"],["D","U","D","U","D","U","D","U"]];
     var pat=patterns[Math.floor(Math.random()*patterns.length)];
@@ -2156,83 +2277,97 @@ window.act=function(a,v){
         }
       });
     }else{
-      S.rhythmBeats=beats;S.rhythmScore=0;S.rhythmCombo=0;S.rhythmMaxCombo=0;
-      S.rhythmActive=true;S.rhythmResults=null;S.rhythmStartTime=performance.now();
+      appWrite("rhythmBeats",beats);appWrite("rhythmScore",0);appWrite("rhythmCombo",0);appWrite("rhythmMaxCombo",0);
+      appWrite("rhythmActive",true);appWrite("rhythmResults",null);appWrite("rhythmStartTime",performance.now());
     }
     openLegacyRhythmGameRequest({
       beats: beats,
       score: 0,
       combo: 0,
       maxCombo: 0,
-      startTimeMs: S.rhythmStartTime
+      startTimeMs: appRead("rhythmStartTime", 0)
     });
     render();_rhythmAnim=requestAnimationFrame(rhythmTick);
     return;
   }
-  if(a==="rhythmTap"&&S.rhythmActive){
-    var now=performance.now()-S.rhythmStartTime;
+  if(a==="rhythmTap"&&appRead("rhythmActive", false)){
+    var rhythmBeats=appRead("rhythmBeats", []);
+    var rhythmScore=appRead("rhythmScore", 0);
+    var rhythmCombo=appRead("rhythmCombo", 0);
+    var rhythmMaxCombo=appRead("rhythmMaxCombo", 0);
+    var rhythmStartTime=appRead("rhythmStartTime", 0);
+    var now=performance.now()-rhythmStartTime;
     var closest=null,closestDiff=999999;
-    for(var i=0;i<S.rhythmBeats.length;i++){
-      var b=S.rhythmBeats[i];
+    for(var i=0;i<rhythmBeats.length;i++){
+      var b=rhythmBeats[i];
       if(b.hit)continue;
       var diff=Math.abs(now-b.time);
       if(diff<closestDiff){closestDiff=diff;closest=i;}
     }
     if(closest!==null&&closestDiff<300){
-      var b=S.rhythmBeats[closest];
+      var b=rhythmBeats[closest];
       b.hit=true;
-      if(closestDiff<50){b.result="perfect";S.rhythmScore+=100*(1+Math.floor(S.rhythmCombo/5));S.rhythmCombo++;snd("correct");}
-      else if(closestDiff<100){b.result="good";S.rhythmScore+=50*(1+Math.floor(S.rhythmCombo/5));S.rhythmCombo++;snd("click");}
-      else{b.result="ok";S.rhythmScore+=25;S.rhythmCombo=0;}
-      if(S.rhythmCombo>S.rhythmMaxCombo)S.rhythmMaxCombo=S.rhythmCombo;
+      if(closestDiff<50){b.result="perfect";rhythmScore+=100*(1+Math.floor(rhythmCombo/5));rhythmCombo++;snd("correct");}
+      else if(closestDiff<100){b.result="good";rhythmScore+=50*(1+Math.floor(rhythmCombo/5));rhythmCombo++;snd("click");}
+      else{b.result="ok";rhythmScore+=25;rhythmCombo=0;}
+      if(rhythmCombo>rhythmMaxCombo)rhythmMaxCombo=rhythmCombo;
     }else{
-      S.rhythmCombo=0;snd("wrong");
+      rhythmCombo=0;snd("wrong");
     }
+    appWrite("rhythmBeats",rhythmBeats);
+    appWrite("rhythmScore",rhythmScore);
+    appWrite("rhythmCombo",rhythmCombo);
+    appWrite("rhythmMaxCombo",rhythmMaxCombo);
     syncLegacyRhythmRuntimeRequest({
-      active: S.rhythmActive,
-      beats: S.rhythmBeats,
-      score: S.rhythmScore,
-      combo: S.rhythmCombo,
-      maxCombo: S.rhythmMaxCombo,
-      startTimeMs: S.rhythmStartTime
+      active: appRead("rhythmActive", false),
+      beats: rhythmBeats,
+      score: rhythmScore,
+      combo: rhythmCombo,
+      maxCombo: rhythmMaxCombo,
+      startTimeMs: rhythmStartTime
     });
     render();return;
   }
   // === Progression Builder ===
-  if(a==="progPickerToggle"){S.progPickerOpen=!S.progPickerOpen;render();return;}
-  if(a==="progAdd"){S.progChords.push(v);S.progPickerOpen=false;render();return;}
+  if(a==="progPickerToggle"){appWrite("progPickerOpen",!appRead("progPickerOpen", false));render();return;}
+  if(a==="progAdd"){var progAddChords=appRead("progChords", []);progAddChords.push(v);appWrite("progChords",progAddChords);appWrite("progPickerOpen",false);render();return;}
   if(a==="progRemove"){
-    var idx=parseInt(v);
-    if(idx>=0&&idx<S.progChords.length){S.progChords.splice(idx,1);render();}
+    var progRemoveIdx=parseInt(v);
+    var progRemoveChords=appRead("progChords", []);
+    if(progRemoveIdx>=0&&progRemoveIdx<progRemoveChords.length){progRemoveChords.splice(progRemoveIdx,1);appWrite("progChords",progRemoveChords);render();}
     return;
   }
   if(a==="progMove"){
     var parts=v.split(":");
-    var idx=parseInt(parts[0]),dir=parts[1];
-    if(dir==="left"&&idx>0){
-      var t=S.progChords[idx];S.progChords[idx]=S.progChords[idx-1];S.progChords[idx-1]=t;
-    }else if(dir==="right"&&idx<S.progChords.length-1){
-      var t=S.progChords[idx];S.progChords[idx]=S.progChords[idx+1];S.progChords[idx+1]=t;
+    var moveIdx=parseInt(parts[0]),dir=parts[1];
+    var moveChords=appRead("progChords", []);
+    if(dir==="left"&&moveIdx>0){
+      var t=moveChords[moveIdx];moveChords[moveIdx]=moveChords[moveIdx-1];moveChords[moveIdx-1]=t;
+    }else if(dir==="right"&&moveIdx<moveChords.length-1){
+      var t2=moveChords[moveIdx];moveChords[moveIdx]=moveChords[moveIdx+1];moveChords[moveIdx+1]=t2;
     }
+    appWrite("progChords",moveChords);
     render();return;
   }
   if(a==="progTemplate"){
-    var idx=parseInt(v);
-    if(idx>=0&&idx<COMMON_PROGRESSIONS.length){
-      S.progChords=COMMON_PROGRESSIONS[idx].chords.slice();
+    var templateIdx=parseInt(v);
+    if(templateIdx>=0&&templateIdx<COMMON_PROGRESSIONS.length){
+      appWrite("progChords",COMMON_PROGRESSIONS[templateIdx].chords.slice());
       render();
     }return;
   }
   if(a==="progBpm"){
     var b=parseInt(v);
     if(b>=40&&b<=200){
-      S.progBpm=b;
-      if(S.progPlaying){
+      appWrite("progBpm",b);
+      if(appRead("progPlaying", false)){
         clearInterval(T.prog);
         var ms=60000/b;
         T.prog=setInterval(function(){
-          S.progBeat=(S.progBeat+1)%S.progChords.length;
-          strumChord(S.progChords[S.progBeat]);
+          var progChordsTick=appRead("progChords", []);
+          var nextProgBeat=(appRead("progBeat",0)+1)%progChordsTick.length;
+          appWrite("progBeat",nextProgBeat);
+          strumChord(progChordsTick[nextProgBeat]);
           render();
         },ms);
       }
@@ -2240,30 +2375,33 @@ window.act=function(a,v){
     }return;
   }
   if(a==="progPlay"){
-    if(S.progChords.length<2)return;
-    if(S.progPlaying){
-      S.progPlaying=false;clearInterval(T.prog);render();
+    var progPlayChords=appRead("progChords", []);
+    if(progPlayChords.length<2)return;
+    if(appRead("progPlaying", false)){
+      appWrite("progPlaying",false);clearInterval(T.prog);render();
     }else{
-      S.progPlaying=true;S.progBeat=0;
-      strumChord(S.progChords[0]);
-      var ms=60000/S.progBpm;
+      appWrite("progPlaying",true);appWrite("progBeat",0);
+      strumChord(progPlayChords[0]);
+      var ms=60000/appRead("progBpm", 90);
       T.prog=setInterval(function(){
-        S.progBeat=(S.progBeat+1)%S.progChords.length;
-        strumChord(S.progChords[S.progBeat]);
+        var progIntervalChords=appRead("progChords", []);
+        var nextProgBeat=(appRead("progBeat",0)+1)%progIntervalChords.length;
+        appWrite("progBeat",nextProgBeat);
+        strumChord(progIntervalChords[nextProgBeat]);
         render();
       },ms);
       render();
     }return;
   }
   if(a==="progClear"){
-    if(S.progPlaying){S.progPlaying=false;clearInterval(T.prog);}
-    S.progChords=[];render();return;
+    if(appRead("progPlaying", false)){appWrite("progPlaying",false);clearInterval(T.prog);}
+    appWrite("progChords",[]);render();return;
   }
   // === Export/Import Progress ===
   if(a==="exportProgress"){
     var data={version:"3.1",exportDate:new Date().toISOString(),data:{}};
     for(var i=0;i<PERSIST_FIELDS.length;i++){
-      data.data[PERSIST_FIELDS[i]]=S[PERSIST_FIELDS[i]];
+      data.data[PERSIST_FIELDS[i]]=appRead(PERSIST_FIELDS[i], null);
     }
     var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
     var url=URL.createObjectURL(blob);
@@ -2271,8 +2409,8 @@ window.act=function(a,v){
     a2.href=url;a2.download="chordspark-backup.json";
     document.body.appendChild(a2);a2.click();document.body.removeChild(a2);
     URL.revokeObjectURL(url);
-    S.importMsg={ok:true,text:"Progress exported!"};render();
-    setTimeout(function(){S.importMsg=null;render();},3000);
+    appWrite("importMsg",{ok:true,text:"Progress exported!"});render();
+    setTimeout(function(){appWrite("importMsg",null);render();},3000);
     return;
   }
   if(a==="importProgress"){
@@ -2303,20 +2441,20 @@ window.act=function(a,v){
             if(typeChecks[k]&&typeof val!==typeChecks[k])continue; // skip wrong type
             if(arrayFields.indexOf(k)!==-1&&!Array.isArray(val))continue;
             if(objectFields.indexOf(k)!==-1&&(typeof val!=="object"||val===null||Array.isArray(val)))continue;
-            S[k]=val;
+            appWrite(k,val);
           }
-          if(!Array.isArray(S.history))S.history=[];
-          if(!Array.isArray(S.customSets))S.customSets=[];
-          if(!Array.isArray(S.importedSongs))S.importedSongs=[];
-          if(!Array.isArray(S.spotifySavedTracks))S.spotifySavedTracks=[];
-          if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
+          if(!Array.isArray(appRead("history", null)))appWrite("history",[]);
+          if(!Array.isArray(appRead("customSets", null)))appWrite("customSets",[]);
+          if(!Array.isArray(appRead("importedSongs", null)))appWrite("importedSongs",[]);
+          if(!Array.isArray(appRead("spotifySavedTracks", null)))appWrite("spotifySavedTracks",[]);
+          if(typeof appRead("transitionStats", null)!=="object"||appRead("transitionStats", null)===null)appWrite("transitionStats",{});
           saveState();
-          S.importMsg={ok:true,text:"Progress imported successfully!"};
+          appWrite("importMsg",{ok:true,text:"Progress imported successfully!"});
         }catch(err){
-          S.importMsg={ok:false,text:"Invalid backup file: "+(err.message||"unknown error")};
+          appWrite("importMsg",{ok:false,text:"Invalid backup file: "+(err.message||"unknown error")});
         }
         render();
-        setTimeout(function(){S.importMsg=null;render();},3000);
+        setTimeout(function(){appWrite("importMsg",null);render();},3000);
       };
       reader.readAsText(file);
     };
@@ -2324,58 +2462,64 @@ window.act=function(a,v){
     return;
   }
   // === Chord Sheet Import ===
-  if(a==="importText"){S.importText=v;return;}
+  if(a==="importText"){appWrite("importText",v);return;}
   if(a==="parseImport"){
-    var result=parseChordSheet(S.importText);
+    var result=parseChordSheet(appRead("importText",""));
     if(result.error){
-      S.importedSong=null;S.importError=result.error;
+      appWrite("importedSong",null);appWrite("importError",result.error);
     }else{
-      S.importedSong={title:"Imported Song",artist:"Unknown",chords:result.chords,progression:result.progression,bpm:100,level:1,pattern:["D","D","U","U","D","U"]};
-      S.importError=null;
+      appWrite("importedSong",{title:"Imported Song",artist:"Unknown",chords:result.chords,progression:result.progression,bpm:100,level:1,pattern:["D","D","U","U","D","U"]});
+      appWrite("importError",null);
     }
     render();return;
   }
-  if(a==="importTitle"){if(S.importedSong)S.importedSong.title=v;return;}
-  if(a==="importArtist"){if(S.importedSong)S.importedSong.artist=v;return;}
-  if(a==="importBpm"){if(S.importedSong)S.importedSong.bpm=parseInt(v)||100;return;}
+  if(a==="importTitle"){var importedSongTitle=appRead("importedSong", null);if(importedSongTitle){importedSongTitle.title=v;appWrite("importedSong",importedSongTitle);}return;}
+  if(a==="importArtist"){var importedSongArtist=appRead("importedSong", null);if(importedSongArtist){importedSongArtist.artist=v;appWrite("importedSong",importedSongArtist);}return;}
+  if(a==="importBpm"){var importedSongBpm=appRead("importedSong", null);if(importedSongBpm){importedSongBpm.bpm=parseInt(v)||100;appWrite("importedSong",importedSongBpm);}return;}
   if(a==="saveImport"){
-    if(!S.importedSong)return;
-    S.importedSongs.push(JSON.parse(JSON.stringify(S.importedSong)));
-    S.importedSong=null;S.importText="";S.importError=null;
+    var importedSongToSave=appRead("importedSong", null);
+    if(!importedSongToSave)return;
+    var importedSongs=appRead("importedSongs", []);
+    importedSongs.push(JSON.parse(JSON.stringify(importedSongToSave)));
+    appWrite("importedSongs",importedSongs);
+    appWrite("importedSong",null);appWrite("importText","");appWrite("importError",null);
     saveState();render();return;
   }
   if(a==="deleteImport"){
     var idx=parseInt(v);
-    if(idx>=0&&idx<S.importedSongs.length){S.importedSongs.splice(idx,1);saveState();render();}
+    var importedSongsList=appRead("importedSongs", []);
+    if(idx>=0&&idx<importedSongsList.length){importedSongsList.splice(idx,1);appWrite("importedSongs",importedSongsList);saveState();render();}
     return;
   }
   if(a==="playImport"){
     var idx=parseInt(v);
-    if(idx>=0&&idx<S.importedSongs.length){
-      openSongSessionRequest({ songData: S.importedSongs[idx], source: "imported" });
+    var importedSongsPlay=appRead("importedSongs", []);
+    if(idx>=0&&idx<importedSongsPlay.length){
+      openSongSessionRequest({ songData: importedSongsPlay[idx], source: "imported" });
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields:{selectedSong:S.importedSongs[idx],songPlaying:false,songBeat:0,screen:SCR.SONG},
+          setFields:{selectedSong:importedSongsPlay[idx],songPlaying:false,songBeat:0,screen:SCR.SONG},
           clearIntervals:["song"]
         });
       }else{
-        S.selectedSong=S.importedSongs[idx];S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
-        S.screen=SCR.SONG;
+        appWrite("selectedSong",importedSongsPlay[idx]);appWrite("songPlaying",false);appWrite("songBeat",0);clearInterval(T.song);
+        appWrite("screen",SCR.SONG);
       }
       render();
     }return;
   }
   // === Community ===
-  if(a==="communityTab"){S.communityTab=v;applySongBrowserRequest("community_tab", { communityTab: S.communityTab });render();return;}
-  if(a==="communitySearch"){S.communitySearch=v;applySongBrowserRequest("community_search", { communitySearch: S.communitySearch });fetchCommunity();return;}
-  if(a==="communitySort"){S.communitySort=v;applySongBrowserRequest("community_sort", { communitySort: S.communitySort });fetchCommunity();return;}
+  if(a==="communityTab"){appWrite("communityTab",v);applySongBrowserRequest("community_tab", { communityTab: appRead("communityTab", null) });render();return;}
+  if(a==="communitySearch"){appWrite("communitySearch",v);applySongBrowserRequest("community_search", { communitySearch: appRead("communitySearch", "") });fetchCommunity();return;}
+  if(a==="communitySort"){appWrite("communitySort",v);applySongBrowserRequest("community_sort", { communitySort: appRead("communitySort", "") });fetchCommunity();return;}
   if(a==="voteSong"){
     fetch(COMMUNITY_URL+"/api/songs/"+v+"/vote",{method:"POST"}).then(function(){fetchCommunity();}).catch(function(){});
     return;
   }
   if(a==="playCommunity"){
     var song=null;
-    for(var i=0;i<S.communitySongs.length;i++)if(S.communitySongs[i].id==v)song=S.communitySongs[i];
+    var communitySongs=appRead("communitySongs", []) || [];
+    for(var i=0;i<communitySongs.length;i++)if(communitySongs[i].id==v)song=communitySongs[i];
     if(!song)return;
     try{
       var parsed={
@@ -2392,32 +2536,37 @@ window.act=function(a,v){
           clearIntervals:["song"]
         });
       }else{
-        S.selectedSong=parsed;S.songPlaying=false;S.songBeat=0;clearInterval(T.song);
-        S.screen=SCR.SONG;
+        appWrite("selectedSong",parsed);appWrite("songPlaying",false);appWrite("songBeat",0);clearInterval(T.song);
+        appWrite("screen",SCR.SONG);
       }
       render();
     }catch(e){
       console.warn("ChordSpark: Failed to parse community song:",e.message);
-      S.communityError="Could not load song: invalid data";render();
+      appWrite("communityError","Could not load song: invalid data");render();
     }
     return;
   }
   if(a==="submitField"){
     var sep=v.indexOf(":");
     var field=v.substring(0,sep),val=v.substring(sep+1);
-    if(field==="bpm")S.submitSong.bpm=parseInt(val)||100;
-    else S.submitSong[field]=val;
+    var submitSong=appRead("submitSong", null);
+    if(!submitSong)return;
+    if(field==="bpm")submitSong.bpm=parseInt(val)||100;
+    else submitSong[field]=val;
     return;
   }
   if(a==="submitToggleChord"){
-    var idx=S.submitSong.chords.indexOf(v);
-    if(idx===-1){S.submitSong.chords.push(v);S.submitSong.progression.push(v);}
-    else{S.submitSong.chords.splice(idx,1);}
+    var submitSong=appRead("submitSong", null);
+    if(!submitSong)return;
+    var idx=submitSong.chords.indexOf(v);
+    if(idx===-1){submitSong.chords.push(v);submitSong.progression.push(v);}
+    else{submitSong.chords.splice(idx,1);}
     render();return;
   }
-  if(a==="submitClearProg"){S.submitSong.progression=[];render();return;}
+  if(a==="submitClearProg"){var submitSong=appRead("submitSong", null);if(submitSong)submitSong.progression=[];render();return;}
   if(a==="submitSong"){
-    var ss=S.submitSong;
+    var ss=appRead("submitSong", null);
+    if(!ss)return;
     if(!ss.title.trim()||!ss.artist.trim()||ss.chords.length<2||ss.progression.length<2)return;
     var _title=ss.title.trim().slice(0,100);
     var _artist=ss.artist.trim().slice(0,100);
@@ -2436,17 +2585,17 @@ window.act=function(a,v){
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(body)
     }).then(function(r){return r.json();}).then(function(){
-      S.submitSong={title:"",artist:"",chords:[],progression:[],bpm:100,pattern:[],submittedBy:""};
-      S.communityTab="browse";
+      appWrite("submitSong",{title:"",artist:"",chords:[],progression:[],bpm:100,pattern:[],submittedBy:""});
+      appWrite("communityTab","browse");
       fetchCommunity();
     }).catch(function(){
-      S.communityError="Failed to submit song";render();
+      appWrite("communityError","Failed to submit song");render();
     });
     return;
   }
   // === Chord Runner ===
   if(a==="startRunner"){
-    var av=CHORDS[S.level]||CHORDS[1];
+    var av=CHORDS[appRead("level", 1)]||CHORDS[1];
     var runnerTarget=av[Math.floor(Math.random()*av.length)];
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({
@@ -2466,10 +2615,10 @@ window.act=function(a,v){
         }
       });
     }else{
-      S.runnerTarget=runnerTarget;
-      S.runnerActive=true;S.runnerScore=0;S.runnerCombo=0;S.runnerMaxCombo=0;
-      S.runnerLives=3;S.runnerObstacles=[];S.runnerSpeed=2;S.runnerDistance=0;
-      S.runnerResults=null;S.runnerStartTime=Date.now();S.runnerLastSpawn=0;
+      appWrite("runnerTarget",runnerTarget);
+      appWrite("runnerActive",true);appWrite("runnerScore",0);appWrite("runnerCombo",0);appWrite("runnerMaxCombo",0);
+      appWrite("runnerLives",3);appWrite("runnerObstacles",[]);appWrite("runnerSpeed",2);appWrite("runnerDistance",0);
+      appWrite("runnerResults",null);appWrite("runnerStartTime",Date.now());appWrite("runnerLastSpawn",0);
     }
     openLegacyRunnerGameRequest({
       targetName: runnerTarget ? runnerTarget.name : null,
@@ -2484,10 +2633,16 @@ window.act=function(a,v){
     snd("start");render();_runnerAnim=requestAnimationFrame(runnerTick);
     return;
   }
-  if(a==="runnerStrum"&&S.runnerActive){
+  if(a==="runnerStrum"&&appRead("runnerActive", false)){
+    var runnerObstacles=appRead("runnerObstacles", []);
+    var runnerCombo=appRead("runnerCombo", 0);
+    var runnerMaxCombo=appRead("runnerMaxCombo", 0);
+    var runnerScore=appRead("runnerScore", 0);
+    var runnerLives=appRead("runnerLives", 0);
+    var runnerTarget=appRead("runnerTarget", null);
     var closest=null,closestDist=999;
-    for(var i=0;i<S.runnerObstacles.length;i++){
-      var o=S.runnerObstacles[i];
+    for(var i=0;i<runnerObstacles.length;i++){
+      var o=runnerObstacles[i];
       if(o.hit)continue;
       var dist=Math.abs(o.x-60);
       if(dist<closestDist&&o.x>0&&o.x<140){
@@ -2495,33 +2650,41 @@ window.act=function(a,v){
       }
     }
     if(closest!==null){
-      var o=S.runnerObstacles[closest];
+      var o=runnerObstacles[closest];
       o.hit=true;
       if(o.isTarget){
-        S.runnerCombo++;
-        if(S.runnerCombo>S.runnerMaxCombo)S.runnerMaxCombo=S.runnerCombo;
-        var pts=100*(1+Math.floor(S.runnerCombo/5));
-        S.runnerScore+=pts;o.result="correct";
+        runnerCombo++;
+        if(runnerCombo>runnerMaxCombo)runnerMaxCombo=runnerCombo;
+        var pts=100*(1+Math.floor(runnerCombo/5));
+        runnerScore+=pts;o.result="correct";
         snd("correct");
         // Change target every 5 correct hits
-        if(S.runnerCombo%5===0&&S.runnerCombo>0)changeRunnerTarget();
+        if(runnerCombo%5===0&&runnerCombo>0)changeRunnerTarget();
       }else{
-        S.runnerLives--;S.runnerCombo=0;o.result="wrong";
+        runnerLives--;runnerCombo=0;o.result="wrong";
         snd("wrong");
-        if(S.runnerLives<=0){finishRunner();return;}
+        if(runnerLives<=0){
+          appWrite("runnerObstacles",runnerObstacles);appWrite("runnerLives",runnerLives);appWrite("runnerCombo",runnerCombo);appWrite("runnerScore",runnerScore);appWrite("runnerMaxCombo",runnerMaxCombo);
+          finishRunner();return;
+        }
       }
     }else{
-      S.runnerCombo=0;
+      runnerCombo=0;
     }
+    appWrite("runnerObstacles",runnerObstacles);
+    appWrite("runnerCombo",runnerCombo);
+    appWrite("runnerMaxCombo",runnerMaxCombo);
+    appWrite("runnerScore",runnerScore);
+    appWrite("runnerLives",runnerLives);
     syncLegacyRunnerRuntimeRequest({
-      active: S.runnerActive,
-      targetName: S.runnerTarget ? S.runnerTarget.name : null,
-      score: S.runnerScore,
-      combo: S.runnerCombo,
-      maxCombo: S.runnerMaxCombo,
-      lives: S.runnerLives,
-      distance: Math.floor(S.runnerDistance/100),
-      obstacles: S.runnerObstacles
+      active: appRead("runnerActive", false),
+      targetName: runnerTarget ? runnerTarget.name : null,
+      score: runnerScore,
+      combo: runnerCombo,
+      maxCombo: runnerMaxCombo,
+      lives: runnerLives,
+      distance: Math.floor(appRead("runnerDistance",0)/100),
+      obstacles: runnerObstacles
     });
     render();return;
   }
@@ -2531,7 +2694,7 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemError:null}});
     }else{
-      S.stemError=null;
+      appWrite("stemError",null);
     }
     render();
     window.electron.stems.openFile().then(function(result){
@@ -2539,7 +2702,7 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemFile:result,stemError:null,stemStatus:"idle"}});
       }else{
-        S.stemFile=result;S.stemError=null;S.stemStatus="idle";
+        appWrite("stemFile",result);appWrite("stemError",null);appWrite("stemStatus","idle");
       }
       render();
       // Check cache first
@@ -2548,7 +2711,7 @@ window.act=function(a,v){
           if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
             SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPaths:cached,stemStatus:"ready"}});
           }else{
-            S.stemPaths=cached;S.stemStatus="ready";
+            appWrite("stemPaths",cached);appWrite("stemStatus","ready");
           }
           render();
           // Pre-load audio URLs
@@ -2561,11 +2724,12 @@ window.act=function(a,v){
     return;
   }
   if(a==="stemSeparate"){
-    if(!window.electron||!S.stemFile)return;
+    var stemFile=appRead("stemFile", null);
+    if(!window.electron||!stemFile)return;
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"separating",stemProgress:0,stemError:null}});
     }else{
-      S.stemStatus="separating";S.stemProgress=0;S.stemError=null;
+      appWrite("stemStatus","separating");appWrite("stemProgress",0);appWrite("stemError",null);
     }
     render();
     // Listen for progress
@@ -2574,19 +2738,19 @@ window.act=function(a,v){
       if(data.line){
         // demucs.cpp outputs segment info; rough estimate
         if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemProgress:Math.min(95,S.stemProgress+2)},save:false});
+          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemProgress:Math.min(95,appRead("stemProgress",0)+2)},save:false});
         }else{
-          S.stemProgress=Math.min(95,S.stemProgress+2);
+          appWrite("stemProgress",Math.min(95,appRead("stemProgress",0)+2));
         }
         render();
       }
     });
-    window.electron.stems.separate(S.stemFile.filePath).then(function(result){
+    window.electron.stems.separate(stemFile.filePath).then(function(result){
       removeProgress();
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPaths:result.stemPaths,stemStatus:"ready",stemProgress:100}});
       }else{
-        S.stemPaths=result.stemPaths;S.stemStatus="ready";S.stemProgress=100;
+        appWrite("stemPaths",result.stemPaths);appWrite("stemStatus","ready");appWrite("stemProgress",100);
       }
       render();
       _loadStemFileUrls(result.stemPaths);
@@ -2595,7 +2759,7 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"error",stemError:err.message||"Separation failed"}});
       }else{
-        S.stemStatus="error";S.stemError=err.message||"Separation failed";
+        appWrite("stemStatus","error");appWrite("stemError",err.message||"Separation failed");
       }
       render();
     });
@@ -2606,30 +2770,31 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"idle",stemProgress:0}});
     }else{
-      S.stemStatus="idle";S.stemProgress=0;
+      appWrite("stemStatus","idle");appWrite("stemProgress",0);
     }
     render();return;
   }
   if(a==="stemOpen"){
     openStemPlayerRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.STEMS}});
-    else S.screen=SCR.STEMS;
+    else appWrite("screen",SCR.STEMS);
     render();return;
   }
   if(a==="stemBack"){
     cleanupStems();
     closeStemPlayerRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS,songsSubTab:"stems"}});
-    else {S.screen=SCR.HOME;S.tab=TAB.SONGS;S.songsSubTab="stems";}
+    else {appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);appWrite("songsSubTab","stems");}
     render();return;
   }
   if(a==="stemToggle"){
-    S.stemToggles[v]=!S.stemToggles[v];
-    setStemMuted(v,!S.stemToggles[v]);
+    var nextStemToggle=!appRead(["stemToggles",v], true);
+    appWrite(["stemToggles",v],nextStemToggle);
+    setStemMuted(v,!nextStemToggle);
     render();return;
   }
   if(a==="stemPlay"){
-    if(S.stemPlaying){pauseStems();}
+    if(appRead("stemPlaying", false)){pauseStems();}
     else{playStems();}
     return;
   }
@@ -2637,27 +2802,28 @@ window.act=function(a,v){
     seekStems(parseFloat(v));render();return;
   }
   if(a==="stemVolume"){
-    S.stemVolume=parseFloat(v);
-    setStemVolume(S.stemVolume);
+    var stemVolumeValue=parseFloat(v);
+    appWrite("stemVolume",stemVolumeValue);
+    setStemVolume(stemVolumeValue);
     render();return;
   }
   // === Tone Picker ===
   if(a==="setTone"){
-    if(STRUM_TONES[v]||v==="guitar"){S.strumTone=v;saveState();render();}
+    if(STRUM_TONES[v]||v==="guitar"){appWrite("strumTone",v);saveState();render();}
     return;
   }
   // === Scale Explorer ===
-  if(a==="selectScale"){S.selectedScale=v;render();return;}
+  if(a==="selectScale"){appWrite("selectedScale",v);render();return;}
   // === Audio Input ===
   if(a==="refreshAudioInputs"){refreshAudioInputs();return;}
   if(a==="testAudioInput"){testAudioInput(v);return;}
   if(a==="stopAudioTest"){stopAudioTest();render();return;}
   if(a==="selectAudioInput"){
     stopAudioTest();
-    S.audioInputId=v;
+    appWrite("audioInputId",v);
     syncAudioInputRuntimeRequest({
-      devices: S.audioInputDevices || [],
-      inputId: S.audioInputId || null,
+      devices: appRead("audioInputDevices", []) || [],
+      inputId: appRead("audioInputId", null),
       testingId: "",
       testLevel: 0
     });
@@ -2665,17 +2831,18 @@ window.act=function(a,v){
   }
   // === MIDI ===
   if(a==="toggleMidi"){
-    S.midiEnabled=!S.midiEnabled;
-    if(S.midiEnabled){initMIDI();}
-    else{S.midiOutput=null;S.midiDevices=[];}
+    var midiEnabled=!appRead("midiEnabled", false);
+    appWrite("midiEnabled",midiEnabled);
+    if(midiEnabled){initMIDI();}
+    else{appWrite("midiOutput",null);appWrite("midiDevices",[]);}
     syncMidiSettingsStateRequest();
     saveState();render();return;
   }
   if(a==="selectMidiDevice"){selectMIDIDevice(v);saveState();render();return;}
   // === Shortcuts ===
-  if(a==="toggleFocus"){S.focusMode=!S.focusMode;if(S.focusMode&&[TAB.PRACTICE,TAB.DRILL,TAB.DAILY,TAB.STATS,TAB.GUIDE].indexOf(S.tab)===-1){S.tab=TAB.PRACTICE;}saveState();render();return;}
-  if(a==="dismissBreak"){S.breakDismissed=true;S.sessionStartTime=Date.now();render();return;}
-  if(a==="toggleShortcuts"){S.showShortcuts=!S.showShortcuts;render();return;}
+  if(a==="toggleFocus"){var nextFocusMode=!appRead("focusMode", false);appWrite("focusMode",nextFocusMode);if(nextFocusMode&&[TAB.PRACTICE,TAB.DRILL,TAB.DAILY,TAB.STATS,TAB.GUIDE].indexOf(appRead("tab", null))===-1){appWrite("tab",TAB.PRACTICE);}saveState();render();return;}
+  if(a==="dismissBreak"){appWrite("breakDismissed",true);appWrite("sessionStartTime",Date.now());render();return;}
+  if(a==="toggleShortcuts"){appWrite("showShortcuts",!appRead("showShortcuts", false));render();return;}
   // === Undo ===
   if(a==="undoReset"){undoReset();return;}
   // === Performance Mode ===
@@ -2700,7 +2867,7 @@ window.act=function(a,v){
         if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
           SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performArrangementType:"rhythm_chords"}});
         }else{
-          S.performArrangementType="rhythm_chords";
+          appWrite("performArrangementType","rhythm_chords");
         }
         startPerformance(chart);return;
       }
@@ -2714,31 +2881,30 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
       }else{
-        S.performTargetTechnique=null;
+        appWrite("performTargetTechnique",null);
       }
+      var preferredArrangement = typeof getPreferredPerformanceArrangement === "function"
+        ? getPreferredPerformanceArrangement(SONGS[sgIdx], appRead("performArrangementType", "chords") || "chords")
+        : (appRead("performArrangementType", "chords") || "chords");
       if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
         openPerformanceSongSelectionRequest({
           songIndex: sgIdx,
           songId: selectedSongId,
           songTitle: SONGS[sgIdx].title || null,
           targetTechnique: null,
-          arrangementType: (typeof getPreferredPerformanceArrangement === "function"
-            ? getPreferredPerformanceArrangement(SONGS[sgIdx], S.performArrangementType || "chords")
-            : (S.performArrangementType || "chords")),
-          difficultyId: S.performDifficulty || "normal"
+          arrangementType: preferredArrangement,
+          difficultyId: appRead("performDifficulty", "normal") || "normal"
         });
       } else {
-        S.performSongData=SONGS[sgIdx];
-        S.performSongId=selectedSongId;
-        S.performArrangementType = typeof getPreferredPerformanceArrangement === "function"
-          ? getPreferredPerformanceArrangement(SONGS[sgIdx], S.performArrangementType || "chords")
-          : (S.performArrangementType || "chords");
-        S.performTargetTechnique=null;
+        appWrite("performSongData",SONGS[sgIdx]);
+        appWrite("performSongId",selectedSongId);
+        appWrite("performArrangementType",preferredArrangement);
+        appWrite("performTargetTechnique",null);
       }
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
       }else{
-        S.screen=SCR.PERFORM_SONG;
+        appWrite("screen",SCR.PERFORM_SONG);
       }
       render();
     }
@@ -2752,7 +2918,7 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
     }else{
-      S.performTargetTechnique=null;
+      appWrite("performTargetTechnique",null);
     }
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
       openPerformanceSongSelectionRequest({
@@ -2764,21 +2930,21 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
       }else{
-        S.screen=SCR.PERFORM_SONG;
+        appWrite("screen",SCR.PERFORM_SONG);
       }
       render();return;
     }
     for(var psi=0;psi<SONGS.length;psi++){
       var planSongId=(SONGS[psi].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
       if(planSongId===songId){
-        S.performSongData=SONGS[psi];
-        S.performSongId=songId;
-        S.performArrangementType=arrangementType;
-        S.performDifficulty=difficultyId;
+        appWrite("performSongData",SONGS[psi]);
+        appWrite("performSongId",songId);
+        appWrite("performArrangementType",arrangementType);
+        appWrite("performDifficulty",difficultyId);
         if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
           SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
         }else{
-          S.screen=SCR.PERFORM_SONG;
+          appWrite("screen",SCR.PERFORM_SONG);
         }
         render();return;
       }
@@ -2794,7 +2960,7 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetPhrase:phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null}});
     }else{
-      S.performTargetPhrase=phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null;
+      appWrite("performTargetPhrase",phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null);
     }
     act("planStartPerformanceSong", phraseSongId + "|" + phraseArrangementType + "|" + phraseDifficultyId);
     return;
@@ -2808,7 +2974,7 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:techniqueKey}});
     }else{
-      S.performTargetTechnique=techniqueKey;
+      appWrite("performTargetTechnique",techniqueKey);
     }
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
       openPerformanceSongSelectionRequest({
@@ -2820,7 +2986,7 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
       }else{
-        S.screen=SCR.PERFORM_SONG;
+        appWrite("screen",SCR.PERFORM_SONG);
       }
       render();return;
     }
@@ -2830,21 +2996,21 @@ window.act=function(a,v){
   if(a==="openPerfStats"){
     openPerformanceStatsRequest({ focus: "overview" });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERF_STATS}});
-    else S.screen=SCR.PERF_STATS;
+    else appWrite("screen",SCR.PERF_STATS);
     render();return;
   }
   if(a==="openEditor"){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performEditorChart:null,performEditorDirty:false,screen:SCR.PERF_EDITOR}});
     }else{
-      S.performEditorChart=null;S.performEditorDirty=false;S.screen=SCR.PERF_EDITOR;
+      appWrite("performEditorChart",null);appWrite("performEditorDirty",false);appWrite("screen",SCR.PERF_EDITOR);
     }
     openPerformanceEditorRequest(null, {
       action: "open_editor",
       source: "blank",
       dirty: false,
-      mode: S.performEditorMode || "chords",
-      snap: S.performEditorSnap || "1/8",
+      mode: appRead("performEditorMode", "chords") || "chords",
+      snap: appRead("performEditorSnap", "1/8") || "1/8",
       selectedEventId: null,
       selectedPhraseId: null
     });
@@ -2853,14 +3019,14 @@ window.act=function(a,v){
   if(a==="openSkillTree"){
     openSkillTreeRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SKILL_TREE}});
-    else S.screen=SCR.SKILL_TREE;
+    else appWrite("screen",SCR.SKILL_TREE);
     render();return;
   }
   if(a==="planStartModuleExercise"){
     var moduleExercise = resolveModuleExerciseLaunchOptions(v);
     var modulePayload = buildModuleExerciseRhythmPayload(moduleExercise);
     if(modulePayload && typeof startRhythmHighwayPayload==="function"){
-      startRhythmHighwayPayload(modulePayload, S.rhythmHighwayPreset, {
+      startRhythmHighwayPayload(modulePayload, appRead("rhythmHighwayPreset", "spark_learning"), {
         source: "module_exercise",
         label: moduleExercise && (moduleExercise.exerciseName || moduleExercise.lessonId || moduleExercise.skill) || "Module exercise",
         instrument: moduleExercise && moduleExercise.instrument || null,
@@ -2873,58 +3039,58 @@ window.act=function(a,v){
     return;
   }
   if(a==="planStartRhythmHighway"){
-    if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v,S.rhythmHighwayPreset))return;
+    if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v,appRead("rhythmHighwayPreset", "spark_learning")))return;
     render();return;
   }
   if(a==="planStartWarmup"){
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
       window.sparkCore.startSession({flow:"daily_practice",forceRebuild:true});
     }
-    S.screen=SCR.SESSION;render();return;
+    appWrite("screen",SCR.SESSION);render();return;
   }
   if(a==="planStartTransition"){
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
       window.sparkCore.startSession({flow:"daily_practice",forceRebuild:true});
     }
-    S.screen=SCR.SESSION;render();return;
+    appWrite("screen",SCR.SESSION);render();return;
   }
   if(a==="planStartRhythm"){
-    S.rhythmBpm=parseInt(v)||90;
-    S.tab=TAB.RHYTHM;S.screen=SCR.HOME;render();return;
+    appWrite("rhythmBpm",parseInt(v)||90);
+    appWrite("tab",TAB.RHYTHM);appWrite("screen",SCR.HOME);render();return;
   }
   if(a==="rhythmHighwayPreset"){
-    S.rhythmHighwayPreset=v||"spark_learning";
-    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function"){
-      startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset);
+    appWrite("rhythmHighwayPreset",v||"spark_learning");
+    if(appRead("activeCoreSegmentId", null)&&typeof startRhythmHighwaySegment==="function"){
+      startRhythmHighwaySegment(appRead("activeCoreSegmentId", null),appRead("rhythmHighwayPreset", "spark_learning"));
       return;
     }
     render();return;
   }
   if(a==="skillTreeFocus"){
-    S.skillTreeFocus=v||"overview";
-    setSkillTreeFocusRequest(S.skillTreeFocus);
+    appWrite("skillTreeFocus",v||"overview");
+    setSkillTreeFocusRequest(appRead("skillTreeFocus", "overview"));
     render();return;
   }
   if(a==="openPlan"){
     if(window.sparkCore){
       openPracticePlanScreenRequest();
     }
-    S.screen=SCR.PLAN;render();return;
+    appWrite("screen",SCR.PLAN);render();return;
   }
   if(a==="openPerformCalibration"){
     openPerformanceCalibrationRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_CALIBRATE}});
-    else S.screen=SCR.PERFORM_CALIBRATE;
+    else appWrite("screen",SCR.PERFORM_CALIBRATE);
     render();return;
   }
   if(a==="performCalibrateSource"){
     applyPerformanceCalibrationRequest("calibration_source", { source: v||"midi" });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performCalibrationSource:v||"midi"}});
-    else S.performCalibrationSource=v||"midi";
+    else appWrite("performCalibrationSource",v||"midi");
     render();return;
   }
   if(a==="performCalibrationStart"){
-    var calStartSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(S.performCalibrationSource||"midi");
+    var calStartSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(appRead("performCalibrationSource","midi")||"midi");
     applyPerformanceCalibrationRequest("calibration_start", { source: calStartSource });
     startPerformanceCalibrationRun();render();return;
   }
@@ -2935,31 +3101,31 @@ window.act=function(a,v){
   if(a==="performCalibrationApply"){
     var appliedOffset=applyCalibrationOffset();
     applyPerformanceCalibrationRequest("calibration_apply", {
-      source: S.performCalibrationSource || "midi",
+      source: appRead("performCalibrationSource","midi") || "midi",
       appliedOffsetMs: appliedOffset,
-      globalOffsetMs: S.performTimingOffsetMs || 0,
-      midiOffsetMs: S.performMidiOffsetMs || 0,
-      micOffsetMs: S.performMicOffsetMs || 0
+      globalOffsetMs: appRead("performTimingOffsetMs",0) || 0,
+      midiOffsetMs: appRead("performMidiOffsetMs",0) || 0,
+      micOffsetMs: appRead("performMicOffsetMs",0) || 0
     });
     render();return;
   }
   if(a==="performCalibrationReset"){
-    var resetSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(S.performCalibrationSource||"midi");
+    var resetSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(appRead("performCalibrationSource","midi")||"midi");
     var resetPatch={performCalibrationHits:[]};
     if(resetSource==="midi")resetPatch.performMidiOffsetMs=0;
     if(resetSource==="mic")resetPatch.performMicOffsetMs=0;
     applyPerformanceCalibrationRequest("calibration_reset", {
       source: resetSource,
-      globalOffsetMs: S.performTimingOffsetMs || 0,
-      midiOffsetMs: resetSource==="midi" ? 0 : (S.performMidiOffsetMs || 0),
-      micOffsetMs: resetSource==="mic" ? 0 : (S.performMicOffsetMs || 0)
+      globalOffsetMs: appRead("performTimingOffsetMs",0) || 0,
+      midiOffsetMs: resetSource==="midi" ? 0 : (appRead("performMidiOffsetMs",0) || 0),
+      micOffsetMs: resetSource==="mic" ? 0 : (appRead("performMicOffsetMs",0) || 0)
     });
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:resetPatch,save:false});
     }else{
-      if(resetPatch.performMidiOffsetMs===0)S.performMidiOffsetMs=0;
-      if(resetPatch.performMicOffsetMs===0)S.performMicOffsetMs=0;
-      S.performCalibrationHits=[];
+      if(resetPatch.performMidiOffsetMs===0)appWrite("performMidiOffsetMs",0);
+      if(resetPatch.performMicOffsetMs===0)appWrite("performMicOffsetMs",0);
+      appWrite("performCalibrationHits",[]);
     }
     saveState();render();return;
   }
@@ -2968,7 +3134,7 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
-      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+      appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
     }
     render();return;
   }
@@ -2986,7 +3152,7 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
-      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+      appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
     }
     render();return;
   }
@@ -3019,168 +3185,196 @@ window.act=function(a,v){
       window.sparkCore.syncPerformanceRuntimeState("close_editor", { screen: "home" });
     }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
-    else {S.screen=SCR.HOME;S.tab=TAB.SONGS;}
+    else {appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);}
     render();return;
   }
   if(a==="editorMode"){
-    syncPerformanceEditorDocumentState(S.performEditorChart, { mode: v });
-    S.performEditorMode=v;render();return;
+    var editorModeChart=appRead("performEditorChart", null);
+    syncPerformanceEditorDocumentState(editorModeChart, { mode: v });
+    appWrite("performEditorMode",v);render();return;
   }
   if(a==="editorSnap"){
-    syncPerformanceEditorDocumentState(S.performEditorChart, { snap: v });
-    S.performEditorSnap=v;render();return;
+    var editorSnapChart=appRead("performEditorChart", null);
+    syncPerformanceEditorDocumentState(editorSnapChart, { snap: v });
+    appWrite("performEditorSnap",v);render();return;
   }
   if(a==="editorNew"){
-    var newEditorChartResult=applyPerformanceEditorCoreMutation("new_blank", { mode: S.performEditorMode });
-    S.performEditorChart=newEditorChartResult&&newEditorChartResult.chart
+    var editorMode=appRead("performEditorMode", "chords");
+    var newEditorChartResult=applyPerformanceEditorCoreMutation("new_blank", { mode: editorMode });
+    var nextEditorChart=newEditorChartResult&&newEditorChartResult.chart
       ? newEditorChartResult.chart
-      : {id:"custom_"+Date.now(),title:"New Chart",artist:"Custom",bpm:90,beatsPerBar:4,arrangementType:S.performEditorMode,events:[],phrases:[{id:0,name:"Phrase 1",startSec:0,endSec:8}]};
-    syncPerformanceEditorDocumentState(S.performEditorChart, {
+      : {id:"custom_"+Date.now(),title:"New Chart",artist:"Custom",bpm:90,beatsPerBar:4,arrangementType:editorMode,events:[],phrases:[{id:0,name:"Phrase 1",startSec:0,endSec:8}]};
+    appWrite("performEditorChart",nextEditorChart);
+    syncPerformanceEditorDocumentState(nextEditorChart, {
       source: "blank",
       dirty: true,
       selectedEventId: null,
       selectedPhraseId: null
     });
-    S.performEditorDirty=true;render();return;
+    appWrite("performEditorDirty",true);render();return;
   }
   if(a==="editorFromSong"){
-    if(S.performSongData){
-      var chart=buildPerformanceChartFromSong(S.performSongData,"builtin",S.performEditorMode);
+    var editorSongData=appRead("performSongData", null);
+    if(editorSongData){
+      var chart=buildPerformanceChartFromSong(editorSongData,"builtin",appRead("performEditorMode", "chords"));
       if(chart){
-        S.performEditorChart=chart;
+        appWrite("performEditorChart",chart);
         syncPerformanceEditorDocumentState(chart, {
           source: "song",
           dirty: true,
           selectedEventId: null,
           selectedPhraseId: null
         });
-        S.performEditorDirty=true;render();
+        appWrite("performEditorDirty",true);render();
       }
     }
     return;
   }
   if(a==="editorTitle"){
-    if(S.performEditorChart){
+    var editorTitleChart=appRead("performEditorChart", null);
+    if(editorTitleChart){
       var titleMutation=applyPerformanceEditorCoreMutation("set_title", { title: v });
-      S.performEditorChart=titleMutation&&titleMutation.chart ? titleMutation.chart : S.performEditorChart;
-      S.performEditorChart.title=v;
-      syncPerformanceEditorDocumentState(S.performEditorChart, { source: "existing", dirty: true });
-      S.performEditorDirty=true;render();
+      editorTitleChart=titleMutation&&titleMutation.chart ? titleMutation.chart : editorTitleChart;
+      editorTitleChart.title=v;
+      appWrite("performEditorChart",editorTitleChart);
+      syncPerformanceEditorDocumentState(editorTitleChart, { source: "existing", dirty: true });
+      appWrite("performEditorDirty",true);render();
     }
     return;
   }
   if(a==="editorBpm"){
-    if(S.performEditorChart){
+    var editorBpmChart=appRead("performEditorChart", null);
+    if(editorBpmChart){
       var bpmValue=parseInt(v)||90;
       var bpmMutation=applyPerformanceEditorCoreMutation("set_bpm", { bpm: bpmValue });
-      S.performEditorChart=bpmMutation&&bpmMutation.chart ? bpmMutation.chart : S.performEditorChart;
-      S.performEditorChart.bpm=bpmValue;
-      syncPerformanceEditorDocumentState(S.performEditorChart, { source: "existing", dirty: true });
-      S.performEditorDirty=true;render();
+      editorBpmChart=bpmMutation&&bpmMutation.chart ? bpmMutation.chart : editorBpmChart;
+      editorBpmChart.bpm=bpmValue;
+      appWrite("performEditorChart",editorBpmChart);
+      syncPerformanceEditorDocumentState(editorBpmChart, { source: "existing", dirty: true });
+      appWrite("performEditorDirty",true);render();
     }
     return;
   }
   if(a==="editorSelectEvent"){
-    S.performEditorSelectedEventId=parseInt(v);
-    var selectedEventMutation=applyPerformanceEditorCoreMutation("select_event", { id: S.performEditorSelectedEventId });
-    if(selectedEventMutation&&selectedEventMutation.chart)S.performEditorChart=selectedEventMutation.chart;
+    var nextSelectedEventId=parseInt(v);
+    appWrite("performEditorSelectedEventId",nextSelectedEventId);
+    var selectedEventMutation=applyPerformanceEditorCoreMutation("select_event", { id: nextSelectedEventId });
+    var selectedEventChart=appRead("performEditorChart", null);
+    if(selectedEventMutation&&selectedEventMutation.chart){
+      selectedEventChart=selectedEventMutation.chart;
+      appWrite("performEditorChart",selectedEventChart);
+    }
     var selectedEditorEvent=null;
-    if(S.performEditorChart&&S.performEditorChart.events){
-      for(var selectedIdx=0;selectedIdx<S.performEditorChart.events.length;selectedIdx++){
-        if(S.performEditorChart.events[selectedIdx].id===S.performEditorSelectedEventId){selectedEditorEvent=S.performEditorChart.events[selectedIdx];break;}
+    if(selectedEventChart&&selectedEventChart.events){
+      for(var selectedIdx=0;selectedIdx<selectedEventChart.events.length;selectedIdx++){
+        if(selectedEventChart.events[selectedIdx].id===nextSelectedEventId){selectedEditorEvent=selectedEventChart.events[selectedIdx];break;}
       }
     }
-    syncPerformanceEditorDocumentState(S.performEditorChart, {
-      source: S.performEditorChart ? "existing" : "blank",
-      dirty: !!S.performEditorDirty,
-      selectedEventId: S.performEditorSelectedEventId,
+    syncPerformanceEditorDocumentState(selectedEventChart, {
+      source: selectedEventChart ? "existing" : "blank",
+      dirty: !!appRead("performEditorDirty", false),
+      selectedEventId: nextSelectedEventId,
       selectedEvent: selectedEditorEvent
     });
     render();return;
   }
   if(a==="editorAddEvent"){
-    if(S.performEditorChart){
-      var addEventMutation=applyPerformanceEditorCoreMutation("add_event", { mode: S.performEditorMode });
-      if(addEventMutation&&addEventMutation.chart)S.performEditorChart=addEventMutation.chart;
-      syncPerformanceEditorDocumentState(S.performEditorChart, {
+    var addEventChart=appRead("performEditorChart", null);
+    if(addEventChart){
+      var addEventMutation=applyPerformanceEditorCoreMutation("add_event", { mode: appRead("performEditorMode", "chords") });
+      if(addEventMutation&&addEventMutation.chart){
+        addEventChart=addEventMutation.chart;
+        appWrite("performEditorChart",addEventChart);
+      }
+      syncPerformanceEditorDocumentState(addEventChart, {
         source: "existing",
         dirty: true,
-        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+        selectedEventId: appRead("performEditorSelectedEventId", null) != null ? appRead("performEditorSelectedEventId", null) : null,
         selectedEvent: null
       });
-      S.performEditorDirty=true;render();
+      appWrite("performEditorDirty",true);render();
     }
     return;
   }
   if(a==="editorDeleteEvent"){
-    if(S.performEditorChart){
+    var deleteEventChart=appRead("performEditorChart", null);
+    if(deleteEventChart){
       var deleteEventId=parseInt(v);
       var deleteEventMutation=applyPerformanceEditorCoreMutation("delete_event", { id: deleteEventId });
-      if(deleteEventMutation&&deleteEventMutation.chart)S.performEditorChart=deleteEventMutation.chart;
-      else S.performEditorChart.events=S.performEditorChart.events.filter(function(e){return e.id!==deleteEventId;});
-      if(S.performEditorSelectedEventId===parseInt(v))S.performEditorSelectedEventId=null;
-      syncPerformanceEditorDocumentState(S.performEditorChart, {
+      if(deleteEventMutation&&deleteEventMutation.chart)deleteEventChart=deleteEventMutation.chart;
+      else deleteEventChart.events=deleteEventChart.events.filter(function(e){return e.id!==deleteEventId;});
+      appWrite("performEditorChart",deleteEventChart);
+      if(appRead("performEditorSelectedEventId", null)===parseInt(v))appWrite("performEditorSelectedEventId",null);
+      syncPerformanceEditorDocumentState(deleteEventChart, {
         source: "existing",
         dirty: true,
-        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+        selectedEventId: appRead("performEditorSelectedEventId", null) != null ? appRead("performEditorSelectedEventId", null) : null,
         selectedEvent: null
       });
-      S.performEditorDirty=true;render();
+      appWrite("performEditorDirty",true);render();
     }
     return;
   }
   if(a==="editorEvt"){
     try{
       var p=JSON.parse(v);
-      if(S.performEditorChart){
+      var editorEventChart=appRead("performEditorChart", null);
+      if(editorEventChart){
         var editorMutation=applyPerformanceEditorCoreMutation("update_event", p);
-        if(editorMutation&&editorMutation.chart)S.performEditorChart=editorMutation.chart;
-        for(var ee=0;ee<S.performEditorChart.events.length;ee++){
-          if(S.performEditorChart.events[ee].id===p.id){
-            var editedEvent=S.performEditorChart.events[ee];
+        if(editorMutation&&editorMutation.chart)editorEventChart=editorMutation.chart;
+        appWrite("performEditorChart",editorEventChart);
+        for(var ee=0;ee<editorEventChart.events.length;ee++){
+          if(editorEventChart.events[ee].id===p.id){
+            var editedEvent=editorEventChart.events[ee];
             break;
           }
         }
-        syncPerformanceEditorDocumentState(S.performEditorChart, {
+        syncPerformanceEditorDocumentState(editorEventChart, {
           source: "existing",
           dirty: true,
-          selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+          selectedEventId: appRead("performEditorSelectedEventId", null) != null ? appRead("performEditorSelectedEventId", null) : null,
           selectedEvent: editedEvent || null
         });
-        S.performEditorDirty=true;render();
+        appWrite("performEditorDirty",true);render();
       }
     }catch(e){}
     return;
   }
   if(a==="editorAddPhrase"){
-    if(S.performEditorChart){
+    var addPhraseChart=appRead("performEditorChart", null);
+    if(addPhraseChart){
       var addPhraseMutation=applyPerformanceEditorCoreMutation("add_phrase");
-      if(addPhraseMutation&&addPhraseMutation.chart)S.performEditorChart=addPhraseMutation.chart;
-      var ph=S.performEditorChart.phrases;
+      if(addPhraseMutation&&addPhraseMutation.chart)addPhraseChart=addPhraseMutation.chart;
+      appWrite("performEditorChart",addPhraseChart);
+      var ph=addPhraseChart.phrases;
       var addedPhrase=ph[ph.length-1];
-      syncPerformanceEditorDocumentState(S.performEditorChart, {
+      syncPerformanceEditorDocumentState(addPhraseChart, {
         source: "existing",
         dirty: true,
         selectedPhraseId: addedPhrase.id,
         selectedPhrase: addedPhrase
       });
-      S.performEditorDirty=true;render();
+      appWrite("performEditorDirty",true);render();
     }
     return;
   }
   if(a==="editorSelectPhrase"){
     var selectedPhraseId=parseInt(v,10);
     var selectedPhraseMutation=applyPerformanceEditorCoreMutation("select_phrase", { id: selectedPhraseId });
-    if(selectedPhraseMutation&&selectedPhraseMutation.chart)S.performEditorChart=selectedPhraseMutation.chart;
+    var selectedPhraseChart=appRead("performEditorChart", null);
+    if(selectedPhraseMutation&&selectedPhraseMutation.chart){
+      selectedPhraseChart=selectedPhraseMutation.chart;
+      appWrite("performEditorChart",selectedPhraseChart);
+    }
     var selectedPhrase=null;
-    if(S.performEditorChart&&S.performEditorChart.phrases){
-      for(var phraseIndex=0;phraseIndex<S.performEditorChart.phrases.length;phraseIndex++){
-        if(S.performEditorChart.phrases[phraseIndex].id===selectedPhraseId){selectedPhrase=S.performEditorChart.phrases[phraseIndex];break;}
+    if(selectedPhraseChart&&selectedPhraseChart.phrases){
+      for(var phraseIndex=0;phraseIndex<selectedPhraseChart.phrases.length;phraseIndex++){
+        if(selectedPhraseChart.phrases[phraseIndex].id===selectedPhraseId){selectedPhrase=selectedPhraseChart.phrases[phraseIndex];break;}
       }
     }
-    syncPerformanceEditorDocumentState(S.performEditorChart, {
-      source: S.performEditorChart ? "existing" : "blank",
-      dirty: !!S.performEditorDirty,
+    syncPerformanceEditorDocumentState(selectedPhraseChart, {
+      source: selectedPhraseChart ? "existing" : "blank",
+      dirty: !!appRead("performEditorDirty", false),
       selectedPhraseId: selectedPhrase ? selectedPhrase.id : null,
       selectedPhrase: selectedPhrase
     });
@@ -3190,61 +3384,68 @@ window.act=function(a,v){
     try{
       var phrasePatch=JSON.parse(v);
       var updatedPhrase=null;
-      if(S.performEditorChart&&S.performEditorChart.phrases){
+      var editorPhraseChart=appRead("performEditorChart", null);
+      if(editorPhraseChart&&editorPhraseChart.phrases){
         var phraseMutation=applyPerformanceEditorCoreMutation("update_phrase", phrasePatch);
-        if(phraseMutation&&phraseMutation.chart)S.performEditorChart=phraseMutation.chart;
-        for(var phraseEditIndex=0;phraseEditIndex<S.performEditorChart.phrases.length;phraseEditIndex++){
-          if(S.performEditorChart.phrases[phraseEditIndex].id===phrasePatch.id){
-            updatedPhrase=S.performEditorChart.phrases[phraseEditIndex];
+        if(phraseMutation&&phraseMutation.chart)editorPhraseChart=phraseMutation.chart;
+        appWrite("performEditorChart",editorPhraseChart);
+        for(var phraseEditIndex=0;phraseEditIndex<editorPhraseChart.phrases.length;phraseEditIndex++){
+          if(editorPhraseChart.phrases[phraseEditIndex].id===phrasePatch.id){
+            updatedPhrase=editorPhraseChart.phrases[phraseEditIndex];
             break;
           }
         }
-        syncPerformanceEditorDocumentState(S.performEditorChart, {
+        syncPerformanceEditorDocumentState(editorPhraseChart, {
           source: "existing",
           dirty: true,
           selectedPhraseId: updatedPhrase ? updatedPhrase.id : null,
           selectedPhrase: updatedPhrase
         });
-        S.performEditorDirty=true;render();
+        appWrite("performEditorDirty",true);render();
       }
     }catch(e){}
     return;
   }
   if(a==="editorDeletePhrase"){
     var deletePhraseId=parseInt(v,10);
-    if(S.performEditorChart&&S.performEditorChart.phrases){
+    var deletePhraseChart=appRead("performEditorChart", null);
+    if(deletePhraseChart&&deletePhraseChart.phrases){
       var deletePhraseMutation=applyPerformanceEditorCoreMutation("delete_phrase", { id: deletePhraseId });
-      if(deletePhraseMutation&&deletePhraseMutation.chart)S.performEditorChart=deletePhraseMutation.chart;
-      syncPerformanceEditorDocumentState(S.performEditorChart, {
+      if(deletePhraseMutation&&deletePhraseMutation.chart)deletePhraseChart=deletePhraseMutation.chart;
+      appWrite("performEditorChart",deletePhraseChart);
+      syncPerformanceEditorDocumentState(deletePhraseChart, {
         source: "existing",
         dirty: true,
         selectedPhraseId: null,
         selectedPhrase: null
       });
-      S.performEditorDirty=true;render();
+      appWrite("performEditorDirty",true);render();
     }
     return;
   }
   if(a==="editorSave"){
-    if(S.performEditorChart){
-      var copy=JSON.parse(JSON.stringify(S.performEditorChart));
+    var saveEditorChart=appRead("performEditorChart", null);
+    if(saveEditorChart){
+      var copy=JSON.parse(JSON.stringify(saveEditorChart));
       var saveMutation=applyPerformanceEditorCoreMutation("save_to_library");
       if(saveMutation&&Array.isArray(saveMutation.library))syncPerformanceEditorLibraryState(saveMutation.library);
       else{
-        if(!Array.isArray(S.performEditorLibrary))S.performEditorLibrary=[];
+        var editorLibrary=appRead("performEditorLibrary", []);
+        if(!Array.isArray(editorLibrary))editorLibrary=[];
         var exists=-1;
-        for(var si=0;si<S.performEditorLibrary.length;si++){
-          if(S.performEditorLibrary[si].id===S.performEditorChart.id){exists=si;break;}
+        for(var si=0;si<editorLibrary.length;si++){
+          if(editorLibrary[si].id===saveEditorChart.id){exists=si;break;}
         }
-        if(exists>=0)S.performEditorLibrary[exists]=copy;
-        else S.performEditorLibrary.push(copy);
+        if(exists>=0)editorLibrary[exists]=copy;
+        else editorLibrary.push(copy);
+        syncPerformanceEditorLibraryState(editorLibrary);
       }
       syncPerformanceEditorDocumentState(copy, {
         source: "library",
         dirty: false,
-        selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null
+        selectedEventId: appRead("performEditorSelectedEventId", null) != null ? appRead("performEditorSelectedEventId", null) : null
       });
-      S.performEditorDirty=false;saveState();render();
+      appWrite("performEditorDirty",false);saveState();render();
     }
     return;
   }
@@ -3252,15 +3453,17 @@ window.act=function(a,v){
     var idx=parseInt(v);
     var loadMutation=applyPerformanceEditorCoreMutation("load_from_library", { index: idx });
     if(loadMutation&&Array.isArray(loadMutation.library))syncPerformanceEditorLibraryState(loadMutation.library);
-    if((loadMutation&&loadMutation.chart) || (S.performEditorLibrary&&S.performEditorLibrary[idx])){
-      S.performEditorChart=loadMutation&&loadMutation.chart ? loadMutation.chart : JSON.parse(JSON.stringify(S.performEditorLibrary[idx]));
-      syncPerformanceEditorDocumentState(S.performEditorChart, {
+    var performanceEditorLibrary=appRead("performEditorLibrary", []);
+    if((loadMutation&&loadMutation.chart) || (performanceEditorLibrary&&performanceEditorLibrary[idx])){
+      var loadedEditorChart=loadMutation&&loadMutation.chart ? loadMutation.chart : JSON.parse(JSON.stringify(performanceEditorLibrary[idx]));
+      appWrite("performEditorChart",loadedEditorChart);
+      syncPerformanceEditorDocumentState(loadedEditorChart, {
         source: "library",
         dirty: false,
         selectedEventId: null,
         selectedPhraseId: null
       });
-      S.performEditorDirty=false;S.performEditorSelectedEventId=null;render();
+      appWrite("performEditorDirty",false);appWrite("performEditorSelectedEventId",null);render();
     }
     return;
   }
@@ -3272,8 +3475,11 @@ window.act=function(a,v){
       saveState();render();
       return;
     }
-    if(S.performEditorLibrary&&S.performEditorLibrary[di]){
-      S.performEditorLibrary.splice(di,1);saveState();render();
+    var deleteEditorLibrary=appRead("performEditorLibrary", []);
+    if(deleteEditorLibrary&&deleteEditorLibrary[di]){
+      deleteEditorLibrary.splice(di,1);
+      syncPerformanceEditorLibraryState(deleteEditorLibrary);
+      saveState();render();
     }
     return;
   }
@@ -3316,26 +3522,26 @@ window.act=function(a,v){
             songIndex: di,
             targetTechnique: ch.techniqueKey||null
           });
-          S.performSongData=SONGS[di];S.performSongId=ch.songId;
-          S.performArrangementType=ch.arrangementType||"chords";
-          S.performDifficulty=ch.difficultyId||"normal";
+          appWrite("performSongData",SONGS[di]);appWrite("performSongId",ch.songId);
+          appWrite("performArrangementType",ch.arrangementType||"chords");
+          appWrite("performDifficulty",ch.difficultyId||"normal");
           if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
-          else S.screen=SCR.PERFORM_SONG;
+          else appWrite("screen",SCR.PERFORM_SONG);
           render();return;
         }
       }
     }
     openPerformanceDailyChallengeRequest({});
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tab:TAB.SONGS,screen:SCR.HOME}});
-    else {S.tab=TAB.SONGS;S.screen=SCR.HOME;}
+    else {appWrite("tab",TAB.SONGS);appWrite("screen",SCR.HOME);}
     render();return;
   }
   if(a==="performArrangement"){
-    S.performArrangementType=v||"chords";
+    appWrite("performArrangementType",v||"chords");
     if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
       var arrangementState = window.sparkCore.getRuntimeState();
       window.sparkCore.syncPerformanceRuntimeState("configure", {
-        arrangementType: S.performArrangementType,
+        arrangementType: appRead("performArrangementType", "chords"),
         songIndex: arrangementState.performanceSongIndex,
         songTitle: arrangementState.performanceSongTitle
       });
@@ -3350,9 +3556,9 @@ window.act=function(a,v){
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:true,songAudioProgress:0,songAudioImportingSongId:importSongId}});
       }else{
-        S.songAudioImporting=true;
-        S.songAudioProgress=0;
-        S.songAudioImportingSongId=importSongId;
+        appWrite("songAudioImporting",true);
+        appWrite("songAudioProgress",0);
+        appWrite("songAudioImportingSongId",importSongId);
       }
       render();
 
@@ -3361,7 +3567,7 @@ window.act=function(a,v){
           if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
             SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioProgress:Math.round(data.progress)},save:false});
           }else{
-            S.songAudioProgress=Math.round(data.progress);
+            appWrite("songAudioProgress",Math.round(data.progress));
           }
           render();
         }
@@ -3378,7 +3584,7 @@ window.act=function(a,v){
           if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
             SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false}});
           }else{
-            S.songAudioImporting=false;
+            appWrite("songAudioImporting",false);
           }
           render();return;
         }
@@ -3388,7 +3594,12 @@ window.act=function(a,v){
 
         function loadNextUrl(idx){
           if(idx>=stemNames.length){
-            S.songAudioData[importSongId]={
+            var songAudioData=appRead("songAudioData", null);
+            if(!songAudioData||typeof songAudioData!=="object"){
+              songAudioData={};
+              appWrite("songAudioData",songAudioData);
+            }
+            songAudioData[importSongId]={
               mp3Path:result.filePath,
               detectedBpm:null,
               stemPaths:stemPaths,
@@ -3398,8 +3609,8 @@ window.act=function(a,v){
             if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
               SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0},save:false});
             }else{
-              S.songAudioImporting=false;
-              S.songAudioProgress=0;
+              appWrite("songAudioImporting",false);
+              appWrite("songAudioProgress",0);
             }
             saveState();
             render();
@@ -3417,8 +3628,8 @@ window.act=function(a,v){
         if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
           SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0}});
         }else{
-          S.songAudioImporting=false;
-          S.songAudioProgress=0;
+          appWrite("songAudioImporting",false);
+          appWrite("songAudioProgress",0);
         }
         alert("Stem separation failed: "+(err.message||err));
         render();
@@ -3427,7 +3638,8 @@ window.act=function(a,v){
     return;
   }
   if(a==="removeSongAudio"){
-    delete S.songAudioData[v];
+    var songAudioData=appRead("songAudioData", null);
+    if(songAudioData&&Object.prototype.hasOwnProperty.call(songAudioData, v))delete songAudioData[v];
     saveState();render();return;
   }
   if(a==="performStartFromSong"){
@@ -3440,23 +3652,23 @@ window.act=function(a,v){
       && coreView.plan.context
       ? coreView.plan.context.performanceSong || null
       : null;
-    var selectedSong = performanceSong && performanceSong.songData ? performanceSong.songData : S.performSongData;
+    var selectedSong = performanceSong && performanceSong.songData ? performanceSong.songData : appRead("performSongData", null);
     var selectedSongIndex = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceSongIndex")
       ? coreView.runtimeState.performanceSongIndex
       : null;
     var selectedSongTitle = coreView && coreView.runtimeState && coreView.runtimeState.performanceSongTitle
       ? coreView.runtimeState.performanceSongTitle
       : (selectedSong && selectedSong.title ? selectedSong.title : null);
-    var arrangementType = performanceSong && performanceSong.arrangementType ? performanceSong.arrangementType : S.performArrangementType;
+    var arrangementType = performanceSong && performanceSong.arrangementType ? performanceSong.arrangementType : appRead("performArrangementType", "chords");
     var difficultyId = coreView && coreView.runtimeState && coreView.runtimeState.performanceDifficultyId
       ? coreView.runtimeState.performanceDifficultyId
-      : S.performDifficulty;
+      : appRead("performDifficulty", "normal");
     var speed = coreView && coreView.runtimeState && coreView.runtimeState.performanceSpeed
       ? coreView.runtimeState.performanceSpeed
-      : S.performSpeed;
+      : appRead("performSpeed", 1);
     var targetTechnique = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceTargetTechnique")
       ? coreView.runtimeState.performanceTargetTechnique
-      : S.performTargetTechnique;
+      : appRead("performTargetTechnique", null);
     if(selectedSong){
       var chart=buildPerformanceChartFromSong(selectedSong,"builtin",arrangementType);
       if(chart){
@@ -3469,9 +3681,9 @@ window.act=function(a,v){
           arrangementType: arrangementType,
           speed: speed,
           targetTechnique: targetTechnique,
-          preset: S.performPracticePreset,
-          mode: S.performMode,
-          countIn: !!S.performCountIn
+          preset: appRead("performPracticePreset", null),
+          mode: appRead("performMode", "midi"),
+          countIn: !!appRead("performCountIn", false)
         });
         startPerformance(chart,{difficulty:startRequest.difficulty,speed:startRequest.speed,preset:startRequest.preset,mode:startRequest.mode});
       }
@@ -3482,13 +3694,13 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
     }else{
-      S.performTargetTechnique=null;
+      appWrite("performTargetTechnique",null);
     }
     applyPerformanceNavigationRequest("songs_home");
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
-      S.screen=SCR.HOME;S.tab=TAB.SONGS;
+      appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
     }
     render();return;
   }
@@ -3501,12 +3713,12 @@ window.act=function(a,v){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:shouldReturnToSong?{screen:SCR.PERFORM_SONG}:{screen:SCR.HOME,tab:TAB.SONGS}});
     }else{
-      if(shouldReturnToSong){S.screen=SCR.PERFORM_SONG;}else{S.screen=SCR.HOME;S.tab=TAB.SONGS;}
+      if(shouldReturnToSong){appWrite("screen",SCR.PERFORM_SONG);}else{appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);}
     }
     render();return;
   }
   if(a==="performMode"){
-    S.performMode=v;S.performInputSource=v;PerformanceInput.start(v);
+    appWrite("performMode",v);appWrite("performInputSource",v);PerformanceInput.start(v);
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
       window.sparkCore.syncPerformanceRuntimeState("configure", { mode: v });
     }
@@ -3516,7 +3728,7 @@ window.act=function(a,v){
     applyPerformanceDifficultyToState(v||"normal");
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
       window.sparkCore.syncPerformanceRuntimeState("configure", {
-        difficulty: S.performDifficulty,
+        difficulty: appRead("performDifficulty", "normal"),
         songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
         songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
       });
@@ -3524,10 +3736,10 @@ window.act=function(a,v){
     saveState();render();return;
   }
   if(a==="performSpeed"){
-    S.performSpeed=parseFloat(v);PerformanceTransport.setSpeed(S.performSpeed);
+    appWrite("performSpeed",parseFloat(v));PerformanceTransport.setSpeed(appRead("performSpeed", 1));
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
       window.sparkCore.syncPerformanceRuntimeState("configure", {
-        speed: S.performSpeed,
+        speed: appRead("performSpeed", 1),
         songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
         songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
       });
@@ -3535,7 +3747,7 @@ window.act=function(a,v){
     saveState();render();return;
   }
   if(a==="performLoopPhrase"){
-    var ph=getPerformancePhraseForTime(S.performChart,S.performCurrentSec);
+    var ph=getPerformancePhraseForTime(appRead("performChart", null),appRead("performCurrentSec", 0));
     if(ph)setPerformanceLoop({startSec:ph.startSec,endSec:ph.endSec,phraseId:ph.id});
     return;
   }
@@ -3543,7 +3755,7 @@ window.act=function(a,v){
   if(a==="performPracticePreset"){
     applyPerformanceStemPreset(v);
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
-      window.sparkCore.syncPerformanceRuntimeState("configure", { preset: S.performPracticePreset });
+      window.sparkCore.syncPerformanceRuntimeState("configure", { preset: appRead("performPracticePreset", null) });
     }
     render();return;
   }
@@ -3551,7 +3763,7 @@ window.act=function(a,v){
   if(a==="performCalibrateTap"){recordCalibrationTap();return;}
   if(a==="performRetry"){
     var retryRequest=getPerformanceRetryRequest({
-      chartId: S.performChartId
+      chartId: appRead("performChartId", "generated")
     });
     startPerformance(retryRequest.chartId,{
       difficulty:retryRequest.difficulty,
@@ -3561,9 +3773,11 @@ window.act=function(a,v){
       targetTechnique: retryRequest.targetTechnique
     });return;
   }
-  if(a==="performDebug"){S.performDebug=!S.performDebug;render();return;}
+  if(a==="performDebug"){appWrite("performDebug",!appRead("performDebug", false));render();return;}
   if(a==="performRetryPhrase"){
-    if(S.performChart&&S.performResults&&S.performResults.phraseStats){
+    var performChart=appRead("performChart", null);
+    var performResults=appRead("performResults", null);
+    if(performChart&&performResults&&performResults.phraseStats){
       var targetTechnique = null;
       if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
         var coreView = window.sparkCore.getActiveSessionView();
@@ -3571,25 +3785,25 @@ window.act=function(a,v){
           targetTechnique = coreView.runtimeState.performanceTargetTechnique;
         }
       }
-      if(!targetTechnique) targetTechnique = S.performTargetTechnique || null;
+      if(!targetTechnique) targetTechnique = appRead("performTargetTechnique", null) || null;
       var candidateIndices = null;
       if(targetTechnique && typeof getPerformancePhraseIndicesForTechnique === "function"){
-        candidateIndices = getPerformancePhraseIndicesForTechnique(S.performChart, targetTechnique);
+        candidateIndices = getPerformancePhraseIndicesForTechnique(performChart, targetTechnique);
         if(!candidateIndices || !candidateIndices.length) candidateIndices = null;
       }
       var weakIdx=candidateIndices && candidateIndices.length ? candidateIndices[0] : 0,weakAvg=Infinity;
-      for(var wi=0;wi<S.performResults.phraseStats.length;wi++){
+      for(var wi=0;wi<performResults.phraseStats.length;wi++){
         if(candidateIndices && candidateIndices.indexOf(wi) === -1) continue;
-        var wp=S.performResults.phraseStats[wi];
+        var wp=performResults.phraseStats[wi];
         var wa=wp.total>0?wp.scoreSum/wp.total:0;
         if(wa<weakAvg){weakAvg=wa;weakIdx=wi;}
       }
-      var weakPhrase=S.performChart.phrases[weakIdx];
+      var weakPhrase=performChart.phrases[weakIdx];
       if(weakPhrase){
-        S.performTargetPhrase=weakIdx;
+        appWrite("performTargetPhrase",weakIdx);
         var retryPhraseRequest=getPerformanceRetryRequest({
-          chart: S.performChart,
-          chartId: S.performChartId || (S.performChart && S.performChart.id) || "generated",
+          chart: performChart,
+          chartId: appRead("performChartId", null) || (performChart && performChart.id) || "generated",
           targetPhraseIndex: weakIdx
         });
         startPerformance(retryPhraseRequest.chartId||retryPhraseRequest.chart,{
@@ -3600,8 +3814,9 @@ window.act=function(a,v){
         });
         // Set loop after start (chart needs to load first) - use setTimeout to let it resolve
         setTimeout(function(){
-          if(S.performChart&&S.performChart.phrases[weakIdx]){
-            var ph=S.performChart.phrases[weakIdx];
+          var loadedChart=appRead("performChart", null);
+          if(loadedChart&&loadedChart.phrases[weakIdx]){
+            var ph=loadedChart.phrases[weakIdx];
             setPerformanceLoop({startSec:ph.startSec,endSec:ph.endSec,phraseId:ph.id});
             render();
           }
@@ -3630,7 +3845,8 @@ window.act=function(a,v){
   }
   if(a==="rhythmHighwayLane"){
     var laneMask=(1<<parseInt(v,10));
-    S.rhythmHighwayHeldMask=(S.rhythmHighwayHeldMask&laneMask)?(S.rhythmHighwayHeldMask&~laneMask):(S.rhythmHighwayHeldMask|laneMask);
+    var heldMask=appRead("rhythmHighwayHeldMask", 0);
+    appWrite("rhythmHighwayHeldMask",(heldMask&laneMask)?(heldMask&~laneMask):(heldMask|laneMask));
     render();return;
   }
   if(a==="rhythmHighwayStrum"){
@@ -3638,44 +3854,46 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="rhythmHighwayLoopWindow"){
-    if(typeof _createRhythmHighwayLoopSpec==="function" && S.activeCoreSegmentId){
-      var payload = typeof _resolveRhythmHighwayPayload==="function" ? _resolveRhythmHighwayPayload(S.activeCoreSegmentId) : null;
-      var loopSpec = _createRhythmHighwayLoopSpec(payload, S.rhythmHighwaySnapshot);
+    var activeCoreSegmentId=appRead("activeCoreSegmentId", null);
+    if(typeof _createRhythmHighwayLoopSpec==="function" && activeCoreSegmentId){
+      var payload = typeof _resolveRhythmHighwayPayload==="function" ? _resolveRhythmHighwayPayload(activeCoreSegmentId) : null;
+      var loopSpec = _createRhythmHighwayLoopSpec(payload, appRead("rhythmHighwaySnapshot", null));
       if(loopSpec && typeof startRhythmHighwaySegment==="function"){
-        S.rhythmHighwayLoop=loopSpec;
-        startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,loopSpec);
+        appWrite("rhythmHighwayLoop",loopSpec);
+        startRhythmHighwaySegment(activeCoreSegmentId,appRead("rhythmHighwayPreset", "spark_learning"),loopSpec);
         return;
       }
     }
     render();return;
   }
   if(a==="rhythmHighwayClearLoop"){
-    S.rhythmHighwayLoop=null;
-    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function"){
-      startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,null);
+    appWrite("rhythmHighwayLoop",null);
+    var clearLoopSegmentId=appRead("activeCoreSegmentId", null);
+    if(clearLoopSegmentId&&typeof startRhythmHighwaySegment==="function"){
+      startRhythmHighwaySegment(clearLoopSegmentId,appRead("rhythmHighwayPreset", "spark_learning"),null);
       return;
     }
     render();return;
   }
   if(a==="restartRhythmHighway"){
-    if(S.activeCoreSegmentId&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(S.activeCoreSegmentId,S.rhythmHighwayPreset,S.rhythmHighwayLoop);
+    if(appRead("activeCoreSegmentId", null)&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(appRead("activeCoreSegmentId", null),appRead("rhythmHighwayPreset", "spark_learning"),appRead("rhythmHighwayLoop", null));
     return;
   }
   // === MIDI Device/Profile Actions ===
-  if(a==="setMidiDevice"){S.activeMidiDeviceId=v;syncMidiSettingsStateRequest();saveState();render();return;}
+  if(a==="setMidiDevice"){appWrite("activeMidiDeviceId",v);syncMidiSettingsStateRequest();saveState();render();return;}
   if(a==="setMidiProfile"){if(typeof setActiveMidiProfile==="function")setActiveMidiProfile(v);syncMidiSettingsStateRequest();render();return;}
   if(a==="createDefaultPianoProfile"){if(typeof createDefaultPianoProfile==="function")createDefaultPianoProfile();syncMidiSettingsStateRequest();render();return;}
   if(a==="createDefaultGuitarProfile"){if(typeof createDefaultGuitarProfile==="function")createDefaultGuitarProfile();syncMidiSettingsStateRequest();render();return;}
   if(a==="openMidiSettings"){
     openUtilityScreenRequest("midi_settings");
     syncMidiSettingsStateRequest();
-    S.screen=SCR.MIDI_SETTINGS;render();return;
+    appWrite("screen",SCR.MIDI_SETTINGS);render();return;
   }
   // === MIDI Import Actions ===
   if(a==="openMidiImport"){
     openUtilityScreenRequest("midi_import");
     syncMidiImportStateRequest();
-    S.screen=SCR.MIDI_IMPORT;render();return;
+    appWrite("screen",SCR.MIDI_IMPORT);render();return;
   }
   if(a==="importMidiFile"){if(typeof handleMidiImport==="function")handleMidiImport(v);return;}
   if(a==="assignMidiTrack"){
@@ -3686,8 +3904,8 @@ window.act=function(a,v){
   }
   if(a==="buildMidiSeedChart"){
     if(typeof buildSeedChartFromImportedMidi==="function"){
-      var chart=buildSeedChartFromImportedMidi(S.importedMidi,S.importedMidiAssignments,v);
-      S.importedMidiSeedPreview=chart;
+      var chart=buildSeedChartFromImportedMidi(appRead("importedMidi", null),appRead("importedMidiAssignments", null),v);
+      appWrite("importedMidiSeedPreview",chart);
       syncMidiImportStateRequest({ seedMode: v, seedChart: chart });
       if(chart&&typeof openEditor==="function"){openEditor("chart",chart);}
       else{render();}
@@ -3704,7 +3922,7 @@ window.act=function(a,v){
       loginSpark(email,password).then(function(){applyCloudWorkflowRequest("login");render();});
     }return;
   }
-  if(a==="openCloudSettings"){openUtilityScreenRequest("cloud_settings");applyCloudWorkflowRequest("open");S.screen=SCR.CLOUD_SETTINGS;render();return;}
+  if(a==="openCloudSettings"){openUtilityScreenRequest("cloud_settings");applyCloudWorkflowRequest("open");appWrite("screen",SCR.CLOUD_SETTINGS);render();return;}
   // === Desktop Actions ===
   if(a==="checkUpdates"){if(typeof checkForDesktopUpdates==="function")checkForDesktopUpdates();return;}
   if(a==="exportBackup"){if(typeof exportFullBackupDesktopAware==="function")exportFullBackupDesktopAware();return;}
@@ -3714,15 +3932,17 @@ window.act=function(a,v){
     openUtilityScreenRequest("curriculum");
     syncCurriculumStateRequest();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CURRICULUM}});
-    else S.screen=SCR.CURRICULUM;
+    else appWrite("screen",SCR.CURRICULUM);
     render();return;
   }
   // === Back ===
   if(a==="back"){
-      var _dashboardBack = S.screen===SCR.RECOMMENDATIONS||S.screen===SCR.INSIGHTS||S.screen===SCR.CHALLENGES||S.screen===SCR.CAREER||S.screen===SCR.HOME_DASH;
-      var _utilityBack = S.screen===SCR.SETTINGS||S.screen===SCR.CLOUD_SETTINGS||S.screen===SCR.CURRICULUM||S.screen===SCR.MIDI_SETTINGS||S.screen===SCR.MIDI_IMPORT;
-      var _dailyBack = S.screen===SCR.DAILY;
-      if(S.screen===SCR.SONG||S.screen===SCR.SONG_DONE){
+      var currentScreen=appRead("screen", null);
+      var currentTab=appRead("tab", null);
+      var _dashboardBack = currentScreen===SCR.RECOMMENDATIONS||currentScreen===SCR.INSIGHTS||currentScreen===SCR.CHALLENGES||currentScreen===SCR.CAREER||currentScreen===SCR.HOME_DASH;
+      var _utilityBack = currentScreen===SCR.SETTINGS||currentScreen===SCR.CLOUD_SETTINGS||currentScreen===SCR.CURRICULUM||currentScreen===SCR.MIDI_SETTINGS||currentScreen===SCR.MIDI_IMPORT;
+      var _dailyBack = currentScreen===SCR.DAILY;
+      if(currentScreen===SCR.SONG||currentScreen===SCR.SONG_DONE){
         applySongNavigationRequest("songs_home");
       }
       if(_dailyBack){
@@ -3730,10 +3950,10 @@ window.act=function(a,v){
       }
       if(_utilityBack){
         returnFromUtilityFamilyRequest({
-          currentScreen: S.screen===SCR.SETTINGS ? "settings"
-            : S.screen===SCR.CLOUD_SETTINGS ? "cloud_settings"
-            : S.screen===SCR.CURRICULUM ? "curriculum"
-            : S.screen===SCR.MIDI_SETTINGS ? "midi_settings"
+          currentScreen: currentScreen===SCR.SETTINGS ? "settings"
+            : currentScreen===SCR.CLOUD_SETTINGS ? "cloud_settings"
+            : currentScreen===SCR.CURRICULUM ? "curriculum"
+            : currentScreen===SCR.MIDI_SETTINGS ? "midi_settings"
             : "midi_import"
         });
       }else if(!_dailyBack){
@@ -3741,10 +3961,10 @@ window.act=function(a,v){
       }
       stopAllTimers();
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:_dashboardBack?SCR.HOME_DASH:SCR.HOME,tab:_dailyBack?TAB.DAILY:S.tab}});
+        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:_dashboardBack?SCR.HOME_DASH:SCR.HOME,tab:_dailyBack?TAB.DAILY:currentTab}});
       }else{
-        S.selectedVoicing=0;S.screen=_dashboardBack?SCR.HOME_DASH:SCR.HOME;
-        if(_dailyBack)S.tab=TAB.DAILY;
+        appWrite("selectedVoicing",0);appWrite("screen",_dashboardBack?SCR.HOME_DASH:SCR.HOME);
+        if(_dailyBack)appWrite("tab",TAB.DAILY);
       }
       render();
     }
@@ -3753,7 +3973,7 @@ window.act=function(a,v){
 // ===== RENDER =====
 function applyTheme(){
   // Dark is default; light mode is the override
-  if(S.darkMode){document.body.classList.remove("light");}
+  if(appRead("darkMode", false)){document.body.classList.remove("light");}
   else{document.body.classList.add("light");}
 }
 
@@ -3766,9 +3986,13 @@ function render(){
 }
 function _renderInner(){
   var app=document.getElementById("app");
+  var coreSessionView=window.sparkCore&&typeof window.sparkCore.getActiveSessionView==="function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var playerSnapshot=coreSessionView&&coreSessionView.player?coreSessionView.player:null;
 
   // Launcher gate — if no instrument active, show clean launcher
-  if (!S.activeInstrument) {
+  if (!appRead("activeInstrument", null)) {
     document.getElementById("header").style.display = "none";
     app.innerHTML = SparkInstruments.renderLauncher();
     return;
@@ -3787,19 +4011,19 @@ function _renderInner(){
     SparkTheme.apply(_inst.instrument || "guitar");
   }
 
-  document.getElementById("hdr-xp").textContent=S.xp;
-  document.getElementById("hdr-str").textContent=S.streak;
-  document.getElementById("snd-btn").textContent=S.soundOn?"\uD83D\uDD0A":"\uD83D\uDD07";
-  document.getElementById("snd-btn").style.opacity=S.soundOn?1:0.4;
-  document.getElementById("dark-btn").textContent=S.darkMode?"\uD83C\uDF19":"\u2600\uFE0F";
+  document.getElementById("hdr-xp").textContent=playerSnapshot&&typeof playerSnapshot.xp==="number"?playerSnapshot.xp:appRead("xp",0);
+  document.getElementById("hdr-str").textContent=playerSnapshot&&typeof playerSnapshot.streak==="number"?playerSnapshot.streak:appRead("streak",0);
+  document.getElementById("snd-btn").textContent=appRead("soundOn", true)?"\uD83D\uDD0A":"\uD83D\uDD07";
+  document.getElementById("snd-btn").style.opacity=appRead("soundOn", true)?1:0.4;
+  document.getElementById("dark-btn").textContent=appRead("darkMode", false)?"\uD83C\uDF19":"\u2600\uFE0F";
   var h="";
-  if(S.showConfetti){
+  if(appRead("showConfetti", false)){
     // Use SparkConfetti if available (v2), else fall back to inline confetti
     if (typeof SparkConfetti !== "undefined") {
-      if (!S._confettiFired) {
-        S._confettiFired = true;
+      if (!appRead("_confettiFired", false)) {
+        appWrite("_confettiFired", true);
         SparkConfetti.burst();
-        setTimeout(function() { S._confettiFired = false; }, 2600);
+        setTimeout(function() { appWrite("_confettiFired", false); }, 2600);
       }
     } else {
       var cols=["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
@@ -3809,29 +4033,33 @@ function _renderInner(){
       h+='</div>';
     }
   }
-  if(S.newBadge)
-    h+='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:16px 32px;box-shadow:0 8px 30px rgba(255,138,92,.4);animation:sD .5s ease;text-align:center"><div style="font-size:32px">'+S.newBadge.icon+'</div><div style="font-weight:800;font-size:16px;color:#333">'+S.newBadge.label+'</div><div style="font-size:12px;color:#555">'+S.newBadge.desc+'</div></div>';
-  if(S.showUndoToast)
-    h+='<div class="undo-toast"><span>Progress reset.</span><button onclick="act(\'undoReset\')">Undo</button><span class="countdown">'+S.undoTimer+'</span></div>';
+  var renderNewBadge=appRead("newBadge", null);
+  if(renderNewBadge)
+    h+='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:16px 32px;box-shadow:0 8px 30px rgba(255,138,92,.4);animation:sD .5s ease;text-align:center"><div style="font-size:32px">'+renderNewBadge.icon+'</div><div style="font-weight:800;font-size:16px;color:#333">'+renderNewBadge.label+'</div><div style="font-size:12px;color:#555">'+renderNewBadge.desc+'</div></div>';
+  if(appRead("showUndoToast", false))
+    h+='<div class="undo-toast"><span>Progress reset.</span><button onclick="act(\'undoReset\')">Undo</button><span class="countdown">'+appRead("undoTimer",0)+'</span></div>';
   // XP toast (jackpot gets special fire styling)
-  if(S.xpToast&&Date.now()-S.xpToast.time<1500){
-    if(S.xpToast.jackpot)
-      h+='<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:12px 28px;box-shadow:0 6px 24px rgba(255,138,92,.6);animation:sD .3s ease;font-weight:900;color:#fff;font-size:20px;text-align:center">&#127873; JACKPOT! +'+S.xpToast.amount+' XP!</div>';
+  var renderXpToast=appRead("xpToast", null);
+  if(renderXpToast&&Date.now()-renderXpToast.time<1500){
+    if(renderXpToast.jackpot)
+      h+='<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:12px 28px;box-shadow:0 6px 24px rgba(255,138,92,.6);animation:sD .3s ease;font-weight:900;color:#fff;font-size:20px;text-align:center">&#127873; JACKPOT! +'+renderXpToast.amount+' XP!</div>';
     else
-      h+='<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#4ECDC4,#45B7D1);border-radius:16px;padding:8px 20px;box-shadow:0 4px 15px rgba(78,205,196,.4);animation:sD .3s ease;font-weight:800;color:#fff;font-size:16px">+'+S.xpToast.amount+' XP!</div>';
+      h+='<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#4ECDC4,#45B7D1);border-radius:16px;padding:8px 20px;box-shadow:0 4px 15px rgba(78,205,196,.4);animation:sD .3s ease;font-weight:800;color:#fff;font-size:16px">+'+renderXpToast.amount+' XP!</div>';
   }
   // Micro-achievement toast
-  if(S.microToast&&Date.now()-S.microToast.time<2000)
-    h+='<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:16px;padding:10px 24px;box-shadow:0 4px 15px rgba(255,138,92,.4);animation:sD .3s ease;text-align:center"><span style="font-size:20px;margin-right:6px">'+S.microToast.icon+'</span><span style="font-weight:800;color:#333;font-size:15px">'+S.microToast.msg+'</span></div>';
+  var renderMicroToast=appRead("microToast", null);
+  if(renderMicroToast&&Date.now()-renderMicroToast.time<2000)
+    h+='<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:16px;padding:10px 24px;box-shadow:0 4px 15px rgba(255,138,92,.4);animation:sD .3s ease;text-align:center"><span style="font-size:20px;margin-right:6px">'+renderMicroToast.icon+'</span><span style="font-weight:800;color:#333;font-size:15px">'+renderMicroToast.msg+'</span></div>';
   // Break reminder
-  var _contMin=(Date.now()-S.sessionStartTime)/60000;
-  if(S.sessionStartTime>0&&_contMin>=20&&!S.breakDismissed)
+  var sessionStartTime=appRead("sessionStartTime", 0);
+  var _contMin=(Date.now()-sessionStartTime)/60000;
+  if(sessionStartTime>0&&_contMin>=20&&!appRead("breakDismissed", false))
     h+='<div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#45B7D1,#4ECDC4);border-radius:16px;padding:12px 24px;box-shadow:0 4px 20px rgba(69,183,209,.4);animation:sD .5s ease;text-align:center;max-width:320px"><div style="font-size:20px;margin-bottom:4px">&#9749;</div><div style="font-weight:800;color:#fff;font-size:14px">Nice focus! Take a quick break?</div><div style="font-size:11px;color:rgba(255,255,255,.8);margin:4px 0">You\'ve been practicing for '+Math.floor(_contMin)+' min straight</div><button onclick="act(\'dismissBreak\')" style="margin-top:6px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:6px 16px;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Got it!</button></div>';
   // Shortcut overlay
-  if(S.showShortcuts)h+=shortcutOverlay();
+  if(appRead("showShortcuts", false))h+=shortcutOverlay();
 
   // Onboarding overlay — shown once on first launch
-  if(!S.onboardingDone && !S.activeInstrument){
+  if(!appRead("onboardingDone", false) && !appRead("activeInstrument", null)){
     h+='<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
     h+='<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
     h+='<h1 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Welcome to SparkSuite!</h1>';
@@ -3839,7 +4067,7 @@ function _renderInner(){
     h+='<div class="card" style="width:100%;max-width:340px;text-align:left;margin-bottom:20px">';
     h+='<p style="font-size:13px;font-weight:700;color:var(--text-primary);margin:0 0 8px">Complete this sentence:</p>';
     h+='<p style="font-size:14px;color:var(--text-muted);margin:0 0 8px">&#8220;Every day, when I&nbsp;&hellip;</p>';
-    h+='<input type="text" id="intention-input" class="set-input" placeholder="finish dinner, make coffee..." value="'+escHTML(S.practiceIntention)+'" oninput="act(\'setIntention\',this.value)" style="margin-bottom:8px" aria-label="Practice trigger"/>';
+    h+='<input type="text" id="intention-input" class="set-input" placeholder="finish dinner, make coffee..." value="'+escHTML(appRead("practiceIntention",""))+'" oninput="act(\'setIntention\',this.value)" style="margin-bottom:8px" aria-label="Practice trigger"/>';
     h+='<p style="font-size:14px;color:var(--text-muted);margin:0">&#8230;&nbsp;I will open SparkSuite.&#8221;</p>';
     h+='</div>';
     h+='<button class="btn" onclick="act(\'completeOnboarding\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:14px 40px;font-size:17px;font-weight:800">Let\'s Go!</button>';
@@ -3847,7 +4075,9 @@ function _renderInner(){
     h+='</div>';
   }
 
-  var screenKey=S.screen+S.tab;
+  var renderScreen=appRead("screen", null);
+  var renderTab=appRead("tab", null);
+  var screenKey=String(renderScreen)+String(renderTab);
   var content="";
 
   // Shared page registry — instrument pages can override any of these
@@ -3891,8 +4121,8 @@ function _renderInner(){
   _sharedPages[SCR.PLAY_ALONG_RESULTS] = typeof playAlongResultsPage === "function" ? playAlongResultsPage : null;
 
   // Instrument override: if active instrument provides a page for this screen, use it
-  var _instrumentPage = SparkInstruments.getPage(S.screen);
-  var _renderer = _instrumentPage || _sharedPages[S.screen] || null;
+  var _instrumentPage = SparkInstruments.getPage(renderScreen);
+  var _renderer = _instrumentPage || _sharedPages[renderScreen] || null;
   if (_renderer) {
     content = _renderer();
   }
@@ -3905,7 +4135,7 @@ function _renderInner(){
   }
   app.innerHTML=h;
   // Focus management for modal overlays
-  if(S.showShortcuts){var cb=document.getElementById("shortcut-close-btn");if(cb)cb.focus();}
+  if(appRead("showShortcuts", false)){var cb=document.getElementById("shortcut-close-btn");if(cb)cb.focus();}
 }
 
 // ===== KEYBOARD SHORTCUTS =====
@@ -3921,29 +4151,32 @@ document.addEventListener("keydown",function(e){
 
   // Escape - close overlay or go back
   if(key==="Escape"){
-    if(S.showShortcuts){S.showShortcuts=false;render();return;}
-    if(S.screen!==SCR.HOME){act("back");}
+    if(appRead("showShortcuts", false)){appWrite("showShortcuts",false);render();return;}
+    if(appRead("screen", null)!==SCR.HOME){act("back");}
     return;
   }
 
   // Space - pause/resume
   if(key===" "){
     e.preventDefault();
-    if(S.screen===SCR.RHYTHM_HIGHWAY){act("rhythmHighwayStrum");return;}
-    if(S.screen===SCR.SESSION){act("toggleTimer");return;}
-    if(S.screen===SCR.STRUM){act("toggleStrum");return;}
-    if(S.screen===SCR.SONG){act("toggleSong");return;}
-    if(S.screen===SCR.PERFORM){
-      if(S.performPaused){act("resumePerform");return;}
+    var keyScreen=appRead("screen", null);
+    var keyTab=appRead("tab", null);
+    if(keyScreen===SCR.RHYTHM_HIGHWAY){act("rhythmHighwayStrum");return;}
+    if(keyScreen===SCR.SESSION){act("toggleTimer");return;}
+    if(keyScreen===SCR.STRUM){act("toggleStrum");return;}
+    if(keyScreen===SCR.SONG){act("toggleSong");return;}
+    if(keyScreen===SCR.PERFORM){
+      if(appRead("performPaused", false)){act("resumePerform");return;}
       // Spacebar = simulate strum hit (injects the exact target notes the scorer expects)
-      if(S.performPlaying && S.performChart){
+      var performChart=appRead("performChart", null);
+      if(appRead("performPlaying", false) && performChart){
         var nowSec=PerformanceTransport.now();
-        var chart=S.performChart;
+        var chart=performChart;
         for(var si=0;si<chart.events.length;si++){
           var evt=chart.events[si];
           if(evt._scored)continue;
           var delta=Math.abs(nowSec-evt.t)*1000;
-          if(delta<(S.performWindowMissMs||220)){
+          if(delta<(appRead("performWindowMissMs",220)||220)){
             // Use the exact same notes the scorer checks: event.notes
             var tn=evt.notes;
             if(!tn||!tn.length){
@@ -3962,20 +4195,21 @@ document.addEventListener("keydown",function(e){
       }
       return;
     }
-    if(S.screen===SCR.HOME&&S.tab===TAB.RHYTHM&&S.rhythmActive){act("rhythmTap");return;}
-    if(S.screen===SCR.HOME&&S.tab===TAB.RUNNER&&S.runnerActive){act("runnerStrum");return;}
-    if(S.screen===SCR.HOME&&S.tab===TAB.BUILD&&S.progChords.length>=2){act("progPlay");return;}
+    if(keyScreen===SCR.HOME&&keyTab===TAB.RHYTHM&&appRead("rhythmActive", false)){act("rhythmTap");return;}
+    if(keyScreen===SCR.HOME&&keyTab===TAB.RUNNER&&appRead("runnerActive", false)){act("runnerStrum");return;}
+    if(keyScreen===SCR.HOME&&keyTab===TAB.BUILD&&(appRead("progChords", []).length>=2)){act("progPlay");return;}
     return;
   }
 
   // Enter - context-sensitive confirm
   if(key==="Enter"){
-    if(S.screen===SCR.RHYTHM_HIGHWAY){act("rhythmHighwayStrum");return;}
-    if(S.screen===SCR.DRILL){act("drillSwitch");return;}
+    var enterScreen=appRead("screen", null);
+    if(enterScreen===SCR.RHYTHM_HIGHWAY){act("rhythmHighwayStrum");return;}
+    if(enterScreen===SCR.DRILL){act("drillSwitch");return;}
     return;
   }
 
-  if(S.screen===SCR.RHYTHM_HIGHWAY&&key>="1"&&key<="5"){
+  if(appRead("screen", null)===SCR.RHYTHM_HIGHWAY&&key>="1"&&key<="5"){
     act("rhythmHighwayLane", String(parseInt(key,10)-1));
     return;
   }
@@ -3983,24 +4217,27 @@ document.addEventListener("keydown",function(e){
   // Arrow keys - BPM adjustment
   if(key==="ArrowLeft"||key==="ArrowRight"){
     var delta=key==="ArrowRight"?5:-5;
-    if(S.screen===SCR.SESSION&&S.metronomeOn){act("metroBpm",""+(S.metronomeBpm+delta));return;}
-    if(S.screen===SCR.HOME&&S.tab===TAB.RHYTHM&&!S.rhythmActive){act("rhythmBpm",""+(S.rhythmBpm+(delta>0?10:-10)));return;}
-    if(S.screen===SCR.HOME&&S.tab===TAB.BUILD){act("progBpm",""+(S.progBpm+delta));return;}
+    var arrowScreen=appRead("screen", null);
+    var arrowTab=appRead("tab", null);
+    if(arrowScreen===SCR.SESSION&&appRead("metronomeOn", false)){act("metroBpm",""+(appRead("metronomeBpm", 0)+delta));return;}
+    if(arrowScreen===SCR.HOME&&arrowTab===TAB.RHYTHM&&!appRead("rhythmActive", false)){act("rhythmBpm",""+(appRead("rhythmBpm", 0)+(delta>0?10:-10)));return;}
+    if(arrowScreen===SCR.HOME&&arrowTab===TAB.BUILD){act("progBpm",""+(appRead("progBpm", 0)+delta));return;}
     return;
   }
 
   // Up/Down - level navigation
   if(key==="ArrowUp"||key==="ArrowDown"){
-    if(S.screen===SCR.HOME&&S.tab===TAB.PRACTICE){
-      var nl=S.selectedLevel+(key==="ArrowUp"?-1:1);
-      if(nl>=1&&nl<=S.level){act("selLevel",""+nl);}
+    if(appRead("screen", null)===SCR.HOME&&appRead("tab", null)===TAB.PRACTICE){
+      var nl=appRead("selectedLevel", 1)+(key==="ArrowUp"?-1:1);
+      if(nl>=1&&nl<=appRead("level", 1)){act("selLevel",""+nl);}
       return;
     }
     return;
   }
 
   // Perform mode shortcuts
-  if(S.screen===SCR.PERFORM||S.screen===SCR.PERFORM_DONE){
+  var performShortcutScreen=appRead("screen", null);
+  if(performShortcutScreen===SCR.PERFORM||performShortcutScreen===SCR.PERFORM_DONE){
     if(key==="l"||key==="L"){act("performLoopPhrase");return;}
     if(key==="c"||key==="C"){act("performClearLoop");return;}
     if(key==="r"||key==="R"){act("performRetry");return;}
@@ -4017,13 +4254,13 @@ document.addEventListener("keydown",function(e){
 
   // M - toggle metronome
   if(key==="m"||key==="M"){
-    if(S.screen===SCR.SESSION){act("toggleMetro");return;}
+    if(appRead("screen", null)===SCR.SESSION){act("toggleMetro");return;}
     return;
   }
 
   // S - toggle sound (shift+S to avoid conflict)
   if(key==="S"){
-    S.soundOn=!S.soundOn;saveState();render();return;
+    appWrite("soundOn",!appRead("soundOn", true));saveState();render();return;
   }
 
   // D - toggle dark mode
@@ -4032,28 +4269,28 @@ document.addEventListener("keydown",function(e){
   }
 
   // Number keys 1-9 for quick tab switching
-  if(key>="1"&&key<="9"&&S.screen===SCR.HOME){
+  if(key>="1"&&key<="9"&&appRead("screen", null)===SCR.HOME){
     var tabList=[TAB.PRACTICE,TAB.DRILL,TAB.DAILY,TAB.QUIZ,TAB.EAR,TAB.STRUM,TAB.SONGS,TAB.RHYTHM,TAB.BUILD];
     var idx=parseInt(key)-1;
     if(idx<tabList.length){act("tab",tabList[idx]);}
     return;
   }
   // 0 for stats, - for tuner, = for guide
-  if(key==="0"&&S.screen===SCR.HOME){act("tab",TAB.STATS);return;}
+  if(key==="0"&&appRead("screen", null)===SCR.HOME){act("tab",TAB.STATS);return;}
 });
 
 // ===== INITIALIZATION =====
-S.dailyChallenge=DAILY_CHALLENGES[Math.floor(Date.now()/86400000)%DAILY_CHALLENGES.length];
+appWrite("dailyChallenge",DAILY_CHALLENGES[Math.floor(Date.now()/86400000)%DAILY_CHALLENGES.length]);
 try{if(typeof generatePracticePlan==="function")generatePracticePlan();}catch(e){}
 applyTheme();
 // Init MIDI if previously enabled
-if(S.midiEnabled){try{initMIDI();}catch(e){console.error("ChordSpark: MIDI init failed",e);}}
+if(appRead("midiEnabled", false)){try{initMIDI();}catch(e){console.error("ChordSpark: MIDI init failed",e);}}
 // Preload guitar WAV samples
 try{preloadGuitarAudio();}catch(e){console.error("ChordSpark: guitar audio preload failed",e);}
 document.getElementById("no-js").style.display="none";
-document.getElementById("header").style.display=S.activeInstrument?"flex":"none";
+document.getElementById("header").style.display=appRead("activeInstrument", null)?"flex":"none";
 document.getElementById("app").style.display="block";
 // Activate remembered instrument
-if(S.activeInstrument){try{SparkInstruments.activate(S.activeInstrument);}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
+if(appRead("activeInstrument", null)){try{SparkInstruments.activate(appRead("activeInstrument", null));}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
 try{if(typeof choosePerformanceDailyChallenge==="function")choosePerformanceDailyChallenge();}catch(e){}
 // render() moved to index.html after all instrument pages register

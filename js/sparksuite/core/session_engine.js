@@ -13,43 +13,103 @@
     };
   }
 
-  function SessionEngine(practiceEngine, curriculumEngine) {
+  function createEmptyAnalysisContext() {
+    return {
+      skillGraph: {},
+      lastSessionEvents: [],
+      performAccuracy: 0,
+      performCombo: 0,
+      playerProfile: null,
+      weakSpots: null
+    };
+  }
+
+  function getAnalysisRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function createDefaultAnalysisContext() {
+    var root = getAnalysisRoot();
+    if (!root) return createEmptyAnalysisContext();
+    return {
+      skillGraph: root.skillGraph || {},
+      lastSessionEvents: Array.isArray(root.lastSessionEvents) ? root.lastSessionEvents.slice() : [],
+      performAccuracy: typeof root.performAccuracy === "number" ? root.performAccuracy : 0,
+      performCombo: typeof root.performCombo === "number" ? root.performCombo : 0,
+      playerProfile: root.playerProfile || null,
+      weakSpots: root.weakSpots || null
+    };
+  }
+
+  function SessionEngine(practiceEngine, curriculumEngine, options) {
+    options = options || {};
     this.practiceEngine = practiceEngine;
     this.curriculumEngine = curriculumEngine;
+    this.analysisContextProvider = options.analysisContextProvider || createDefaultAnalysisContext;
   }
+
+  SessionEngine.prototype.setAnalysisContextProvider = function(provider) {
+    this.analysisContextProvider = typeof provider === "function"
+      ? provider
+      : function() { return createEmptyAnalysisContext(); };
+  };
+
+  SessionEngine.prototype.getAnalysisContext = function() {
+    var snapshot = typeof this.analysisContextProvider === "function"
+      ? this.analysisContextProvider()
+      : null;
+    snapshot = snapshot || {};
+    return {
+      skillGraph: snapshot.skillGraph || {},
+      lastSessionEvents: Array.isArray(snapshot.lastSessionEvents) ? snapshot.lastSessionEvents : [],
+      performAccuracy: typeof snapshot.performAccuracy === "number" ? snapshot.performAccuracy : 0,
+      performCombo: typeof snapshot.performCombo === "number" ? snapshot.performCombo : 0,
+      playerProfile: snapshot.playerProfile || null,
+      weakSpots: snapshot.weakSpots || null
+    };
+  };
 
   SessionEngine.prototype.buildSession = function(flow, context) {
     context = context || {};
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.buildGuidedSession(context);
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.buildPerformanceSongSession(context);
-    if (flow === SparkSessionTypes.FLOW_SPOTIFY_PLAY_ALONG) return this.buildSpotifyPlayAlongSession(context);
+    if (flow === SparkSessionTypes.FLOW_SPOTIFY_PLAY_ALONG) return this.buildEmptySession(flow, context);
     if (flow !== SparkSessionTypes.FLOW_DAILY_PRACTICE) return this.buildEmptySession(flow, context);
 
     // 1. Analyze user via LearningBrain + FlowEngine
     var brainAnalysis = null;
+    var analysisContext = this.getAnalysisContext();
+    var skillGraph = analysisContext.skillGraph;
     // DEPRECATED: direct LearningBrain usage — new code must use psychologyEngine.analyzeUser()
-    if (typeof SparkLearningBrain !== "undefined" && typeof S !== "undefined" && S.skillGraph) {
+    if (typeof SparkLearningBrain !== "undefined" && skillGraph) {
       var flowState = null;
       if (typeof SparkFlowEngine !== "undefined") {
-        var recentEvents = (S.lastSessionEvents && S.lastSessionEvents.length) ? S.lastSessionEvents : [];
+        var recentEvents = analysisContext.lastSessionEvents;
         var missCount = 0;
         for (var ei = 0; ei < recentEvents.length; ei++) { if (recentEvents[ei] && recentEvents[ei].type === "miss") missCount++; }
         flowState = SparkFlowEngine.buildFlowState({
-          accuracy: S.performAccuracy || 0,
-          combo: S.performCombo || 0,
+          accuracy: analysisContext.performAccuracy || 0,
+          combo: analysisContext.performCombo || 0,
           missStreak: missCount,
-          timingConsistency: (S.playerProfile && S.playerProfile.consistency) || 0
+          timingConsistency: (analysisContext.playerProfile && analysisContext.playerProfile.consistency) || 0
         });
       }
-      brainAnalysis = SparkLearningBrain.analyzeUser(S.skillGraph, flowState, S.weakSpots || null); // DEPRECATED: route through PsychologyEngine
+      brainAnalysis = SparkLearningBrain.analyzeUser(skillGraph, flowState, analysisContext.weakSpots || null); // DEPRECATED: route through PsychologyEngine
     }
 
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
     var difficulty = brainAnalysis && brainAnalysis.recommendedDifficultyId
       ? brainAnalysis.recommendedDifficultyId
       : "easy";
-    if ((!brainAnalysis || !brainAnalysis.recommendedDifficultyId) && typeof S !== "undefined" && S.skillGraph) {
-      var sk = S.skillGraph;
+    if ((!brainAnalysis || !brainAnalysis.recommendedDifficultyId) && skillGraph) {
+      var sk = skillGraph;
       var avg = ((sk.timing || 0) + (sk.rhythm || 0) + (sk.chordAccuracy || 0)) / 3;
       difficulty = avg > 0.8 ? "hard" : avg > 0.6 ? "normal" : "easy";
     }
@@ -59,7 +119,7 @@
 
     // 2. Inject practice if brain recommends it
     if (brainAnalysis && (brainAnalysis.recommendation === "targeted_practice" || brainAnalysis.recommendation === "easy_practice" || brainAnalysis.recommendation === "practice")) {
-      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis, S.skillGraph) : null; // DEPRECATED: route through PsychologyEngine
+      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis, skillGraph) : null; // DEPRECATED: route through PsychologyEngine
       if (brainDrill) {
         var pn = normalizeSegment({
           id: "brain_" + Date.now(),

@@ -1,25 +1,62 @@
 (function(){
 
+  function analyticsStateRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function analyticsStateRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = analyticsStateRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function analyticsStateWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = analyticsStateRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
+  function analyticsEnsureArray(path){
+    var current = analyticsStateRead(path, null);
+    if(Array.isArray(current)) return current;
+    current = [];
+    analyticsStateWrite(path, current);
+    return current;
+  }
+
   function _ensureAnalytics(){
-    if(!S.analytics) S.analytics = {};
-    if(!S.analytics.performanceHistory) S.analytics.performanceHistory = [];
-    if(!S.analytics.accuracyHistory) S.analytics.accuracyHistory = [];
-    if(!S.analytics.practiceHistory) S.analytics.practiceHistory = [];
-    if(!S.analytics.xpHistory) S.analytics.xpHistory = [];
-    if(!S.analytics.streakHistory) S.analytics.streakHistory = [];
+    var analytics = analyticsStateRead("analytics", null);
+    if(!analytics || typeof analytics !== "object"){
+      analytics = {};
+      analyticsStateWrite("analytics", analytics);
+    }
+    analyticsEnsureArray(["analytics","performanceHistory"]);
+    analyticsEnsureArray(["analytics","accuracyHistory"]);
+    analyticsEnsureArray(["analytics","practiceHistory"]);
+    analyticsEnsureArray(["analytics","xpHistory"]);
+    analyticsEnsureArray(["analytics","streakHistory"]);
   }
 
   function recordPerformanceStats(result){
     if(!result) return;
     _ensureAnalytics();
-    S.analytics.performanceHistory.push({
+    analyticsEnsureArray(["analytics","performanceHistory"]).push({
       ts: Date.now(),
       accuracy: result.accuracy || 0,
       score: result.score || 0,
       songId: result.songId,
       arrangementType: result.arrangementType
     });
-    S.analytics.accuracyHistory.push({
+    analyticsEnsureArray(["analytics","accuracyHistory"]).push({
       ts: Date.now(),
       accuracy: result.accuracy || 0
     });
@@ -28,7 +65,7 @@
 
   function recordPracticeStats(minutes){
     _ensureAnalytics();
-    S.analytics.practiceHistory.push({
+    analyticsEnsureArray(["analytics","practiceHistory"]).push({
       ts: Date.now(),
       minutes: minutes
     });
@@ -37,7 +74,7 @@
 
   function recordXPStats(xp){
     _ensureAnalytics();
-    S.analytics.xpHistory.push({
+    analyticsEnsureArray(["analytics","xpHistory"]).push({
       ts: Date.now(),
       xp: xp
     });
@@ -45,7 +82,7 @@
 
   function recordStreakStats(streak){
     _ensureAnalytics();
-    S.analytics.streakHistory.push({
+    analyticsEnsureArray(["analytics","streakHistory"]).push({
       ts: Date.now(),
       streak: streak
     });

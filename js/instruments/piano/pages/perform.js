@@ -1,3 +1,17 @@
+function pianoPerformRead(path, fallback){
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  if (!root) return fallback;
+  return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+}
+
 function pianoPerformPage(){
   try { return _pianoPerformPageInner(); } catch (e) {
     console.error("Piano perform render error:", e);
@@ -6,15 +20,21 @@ function pianoPerformPage(){
 }
 
 function _pianoPerformPageInner(){
-  var chart = S.performChart;
-  var phrase = chart ? getPerformancePhraseForTime(chart, S.performCurrentSec) : null;
+  var chart = pianoPerformRead("performChart", null);
+  var currentSec = pianoPerformRead("performCurrentSec", 0) || 0;
+  var performScore = pianoPerformRead("performScore", 0) || 0;
+  var performCombo = pianoPerformRead("performCombo", 0) || 0;
+  var performAccuracy = pianoPerformRead("performAccuracy", 0) || 0;
+  var performInputMidi = pianoPerformRead("performInputMidi", []) || [];
+  var performLaneDebugSnapshot = pianoPerformRead("performLaneDebugSnapshot", null);
+  var phrase = chart ? getPerformancePhraseForTime(chart, currentSec) : null;
   var h = '<div class="card mb16">';
   h += '<h2>' + escHTML(chart ? chart.title : "Performance") + '</h2>';
   h += '<div class="muted">' + escHTML(chart ? chart.artist : "") + '</div>';
   h += '<div style="margin-top:8px" id="perf-phrase">Phrase: ' + escHTML(phrase ? phrase.name : "-") + '</div>';
-  h += '<div id="perf-stats">Score: ' + S.performScore + ' · Combo: ' + S.performCombo + ' · Accuracy: ' + S.performAccuracy + '%</div>';
-  h += '<div id="perf-midi" style="font-size:12px;color:var(--text-muted)">Held MIDI: ' + (S.performInputMidi || []).join(", ") + '</div>';
-  h += '<div id="perform-lane-debug">' + (typeof renderPerformanceLaneDebug === "function" ? renderPerformanceLaneDebug(S.performLaneDebugSnapshot) : "") + '</div>';
+  h += '<div id="perf-stats">Score: ' + performScore + ' · Combo: ' + performCombo + ' · Accuracy: ' + performAccuracy + '%</div>';
+  h += '<div id="perf-midi" style="font-size:12px;color:var(--text-muted)">Held MIDI: ' + performInputMidi.join(", ") + '</div>';
+  h += '<div id="perform-lane-debug">' + (typeof renderPerformanceLaneDebug === "function" ? renderPerformanceLaneDebug(performLaneDebugSnapshot) : "") + '</div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
@@ -23,42 +43,47 @@ function _pianoPerformPageInner(){
   h += '<button class="btn" onclick="act(\'stopPerform\')">Exit</button>';
   h += '</div>';
 
-  h += '<div id="perf-highway-wrap">' + renderPerformanceHighway(chart, S.performCurrentSec) + '</div>';
+  h += '<div id="perf-highway-wrap">' + renderPerformanceHighway(chart, currentSec) + '</div>';
   return h;
 }
 
-// Targeted per-frame update; avoids full DOM rebuild at 60fps.
 function updatePerformanceDOM(){
-  var chart = S.performChart;
+  var chart = pianoPerformRead("performChart", null);
+  var currentSec = pianoPerformRead("performCurrentSec", 0) || 0;
+  var performCombo = pianoPerformRead("performCombo", 0) || 0;
+  var performScore = pianoPerformRead("performScore", 0) || 0;
+  var performAccuracy = pianoPerformRead("performAccuracy", 0) || 0;
+  var performInputMidi = pianoPerformRead("performInputMidi", []) || [];
+  var performLaneDebugSnapshot = pianoPerformRead("performLaneDebugSnapshot", null);
 
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas) {
     var hw = _ensurePianoHighway(canvas);
     hw.setChart(chart ? chart.events : [], chart ? chart.phrases : []);
-    hw.update(S.performCurrentSec, S.performCombo || 0);
+    hw.update(currentSec, performCombo || 0);
   }
 
   var st = document.getElementById("perf-stats");
-  if (st) st.textContent = "Score: " + S.performScore + " · Combo: " + S.performCombo + " · Accuracy: " + S.performAccuracy + "%";
+  if (st) st.textContent = "Score: " + performScore + " · Combo: " + performCombo + " · Accuracy: " + performAccuracy + "%";
 
   var ph = document.getElementById("perf-phrase");
   if (ph) {
-    var phrase = getPerformancePhraseForTime(chart, S.performCurrentSec);
+    var phrase = getPerformancePhraseForTime(chart, currentSec);
     ph.textContent = "Phrase: " + (phrase ? phrase.name : "-");
   }
 
   var mi = document.getElementById("perf-midi");
-  if (mi) mi.textContent = "Held MIDI: " + (S.performInputMidi || []).join(", ");
+  if (mi) mi.textContent = "Held MIDI: " + performInputMidi.join(", ");
 
   var ld = document.getElementById("perform-lane-debug");
   if (ld && typeof renderPerformanceLaneDebug === "function") {
-    ld.innerHTML = renderPerformanceLaneDebug(S.performLaneDebugSnapshot);
+    ld.innerHTML = renderPerformanceLaneDebug(performLaneDebugSnapshot);
   }
 }
 
 function pianoPerformDonePage(){
   if (typeof pianoPerformanceResultsPage === "function") return pianoPerformanceResultsPage();
-  var r = S.performResults || {};
+  var r = pianoPerformRead("performResults", {}) || {};
   var best = getPerformanceBest(r.songId, r.arrangementType || "block_chords", r.difficultyId || "normal");
   var mastery = getPerformanceMasteryLabel(best);
 

@@ -1,7 +1,28 @@
-/* pages/editor.js — Editor shell page (handoffs 6-9) */
+/* pages/editor.js â€” Editor shell page (handoffs 6-9) */
+
+function pianoEditorPageRead(path, fallback){
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if(!root && typeof globalThis !== "undefined"){
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(!cursor) return fallback;
+  for(i=0;i<parts.length;i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
 
 function pianoEditorPage(){
-  var obj = S.editorObject;
+  var obj = pianoEditorPageRead("editorObject", null);
   var h = '';
   h += '<div class="card mb16">';
   h += '<h2>Editor</h2>';
@@ -19,9 +40,9 @@ function pianoEditorPage(){
   var errors = validateEditorObject ? validateEditorObject(obj) : [];
 
   h += '<div class="card mb16">';
-  h += '<div><b>Mode:</b> '+escHTML(S.editorMode || "chart")+'</div>';
+  h += '<div><b>Mode:</b> '+escHTML(pianoEditorPageRead("editorMode", "chart") || "chart")+'</div>';
   h += '<div><b>ID:</b> '+escHTML(obj.id || "")+'</div>';
-  h += '<div><b>Dirty:</b> '+(S.editorDirty ? 'Yes' : 'No')+'</div>';
+  h += '<div><b>Dirty:</b> '+(pianoEditorPageRead("editorDirty", false) ? 'Yes' : 'No')+'</div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
@@ -78,11 +99,11 @@ function renderEditorObjectSummary(obj){
 function renderEditorTimelineToolbar(obj){
   var h = '<div class="card mb16">';
   h += '<div class="mb8"><b>Timeline</b></div>';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(S.editorGridDivision||"1/4")+'</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+((pianoEditorPageRead("editorPlayheadSec", 0) || 0).toFixed(2))+'s \u00b7 Grid: '+escHTML(pianoEditorPageRead("editorGridDivision", "1/4") || "1/4")+'</div>';
   h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
   h += '<button class="btn" onclick="act(\'editorPlayheadLeft\')">\u25C0</button>';
   h += '<button class="btn" onclick="act(\'editorPlayheadRight\')">\u25B6</button>';
-  h += '<button class="btn" onclick="act(\'editorToggleSnap\')">'+(S.editorSnapEnabled ? 'Snap On' : 'Snap Off')+'</button>';
+  h += '<button class="btn" onclick="act(\'editorToggleSnap\')">'+(pianoEditorPageRead("editorSnapEnabled", false) ? 'Snap On' : 'Snap Off')+'</button>';
   h += '<button class="btn" onclick="act(\'editorGrid\',\'1/4\')">1/4</button>';
   h += '<button class="btn" onclick="act(\'editorGrid\',\'1/8\')">1/8</button>';
   h += '<button class="btn" onclick="act(\'editorGrid\',\'1/16\')">1/16</button>';
@@ -113,7 +134,7 @@ function renderEditorItemsList(obj){
     for(var e=0;e<entries.length;e++){
       var entry = entries[e];
       var item = entry.item;
-      var selected = String(S.editorSelectedId)===String(item.id);
+      var selected = String(pianoEditorPageRead("editorSelectedId", null))===String(item.id);
       h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'" onclick="act(\'editorSelect\',\''+item.id+'\')">';
       h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(String(item.id))+'</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(getEditorItemSummary(entry.kind, item))+'</div>';

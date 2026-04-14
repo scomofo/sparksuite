@@ -3,10 +3,37 @@
 
 (function(){
 
+  function editorRenderRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorRenderRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorRenderRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   function renderVisualTimeline(obj){
     var lanes = getEditorLanes(obj);
     var range = getEditorTimelineRange();
-    var grid = buildTimelineGridLines(range.startSec, range.endSec, getEditorBpm(), S.editorGridDivision || "1/4");
+    var grid = buildTimelineGridLines(range.startSec, range.endSec, getEditorBpm(), editorRenderRead("editorGridDivision", "1/4") || "1/4");
     var m = getTimelinePixelMetrics();
     var totalHeight = lanes.length * m.laneHeight;
     var h = '';
@@ -16,7 +43,7 @@
     h += ' onmouseup="act(\'editorPointerUp\', event)"';
     h += ' onmouseleave="act(\'editorPointerUp\', event)">';
 
-    if(S.editorShowGrid){
+    if(editorRenderRead("editorShowGrid", false)){
       for(var g=0; g<grid.length; g++){
         var gx = timeToEditorX(grid[g].t);
         h += '<div style="position:absolute;left:'+gx+'px;top:0;bottom:0;width:1px;background:rgba(255,255,255,.08)"></div>';
@@ -29,7 +56,7 @@
       h += '<div style="position:absolute;left:8px;top:'+(y+6)+'px;font-size:11px;color:var(--text-muted)">'+escHTML(lanes[l].label)+'</div>';
     }
 
-    if(S.editorShowPhrases && Array.isArray(obj.phrases)){
+    if(editorRenderRead("editorShowPhrases", false) && Array.isArray(obj.phrases)){
       for(var p=0;p<obj.phrases.length;p++){
         var pb = getEditorItemBounds("phrase", obj.phrases[p], obj);
         if(!pb) continue;
@@ -42,7 +69,7 @@
         var evt = obj.events[i];
         var b = getEditorItemBounds("event", evt, obj);
         if(!b) continue;
-        var selected = String(S.editorSelectedId)===String(evt.id);
+        var selected = String(editorRenderRead("editorSelectedId", null))===String(evt.id);
         h += '<div style="position:absolute;left:'+b.x+'px;top:'+b.y+'px;width:'+b.w+'px;height:'+b.h+'px;border-radius:10px;';
         h += 'background:'+(selected?'rgba(34,197,94,.18)':'rgba(255,255,255,.08)')+';';
         h += 'border:2px solid '+(selected?'#22c55e':'rgba(255,255,255,.12)')+';';
@@ -53,7 +80,7 @@
       }
     }
 
-    var playheadX = timeToEditorX(S.editorPlayheadSec || 0);
+    var playheadX = timeToEditorX(editorRenderRead("editorPlayheadSec", 0) || 0);
     h += '<div style="position:absolute;left:'+playheadX+'px;top:0;bottom:0;width:2px;background:#22c55e"></div>';
     h += '</div>';
     return h;

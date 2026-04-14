@@ -1,5 +1,28 @@
 (function(){
 
+  function cloudUiRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function cloudUiRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = cloudUiRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   function cloudSettingsPage(){
     var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
       ? window.sparkCore.getRuntimeState()
@@ -9,13 +32,13 @@
       : isLoggedInSpark();
     var email = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "cloudEmail")
       ? runtimeState.cloudEmail
-      : (S.cloudAuth ? (S.cloudAuth.email || null) : null);
+      : ((cloudUiRead("cloudAuth", {}) || {}).email || null);
     var syncStatus = runtimeState && runtimeState.cloudLastSyncStatus
       ? runtimeState.cloudLastSyncStatus
-      : ((S.cloudSync && S.cloudSync.lastSyncStatus) || "idle");
+      : (((cloudUiRead("cloudSync", {}) || {}).lastSyncStatus) || "idle");
     var syncAt = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "cloudLastSyncAt")
       ? runtimeState.cloudLastSyncAt
-      : (S.cloudSync ? (S.cloudSync.lastSyncAt || null) : null);
+      : (((cloudUiRead("cloudSync", {}) || {}).lastSyncAt) || null);
     var h = '<div class="card">';
     h += '<div><b>Cloud Sync</b></div>';
     if(loggedIn){

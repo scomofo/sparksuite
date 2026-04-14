@@ -1,3 +1,10 @@
+function challengeUiRead(path, fallback){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+    return SparkState.read(path, fallback);
+  }
+  return fallback;
+}
+
 function challengeHubPage(){
   var h = '<div class="card mb16">';
   h += '<div><b>Challenge Hub</b></div>';
@@ -16,7 +23,7 @@ function renderActiveChallengesCard(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var arr = runtimeState && runtimeState.dashboardChallenges ? runtimeState.dashboardChallenges : (S.activeChallenges || []);
+  var arr = runtimeState && runtimeState.dashboardChallenges ? runtimeState.dashboardChallenges : challengeUiRead(["activeChallenges"], []);
   if(!arr.length){
     h += '<div>No active challenges.</div>';
   }
@@ -55,7 +62,7 @@ function renderSeasonalEventCard(){
 }
 
 function renderPackProgressCard(){
-  var packs = (S.packCompletion && S.packCompletion.packs) || {};
+  var packs = challengeUiRead(["packCompletion", "packs"], {});
   var h = '<div class="card mb16">';
   h += '<div><b>Pack Progress</b></div>';
   var any = false;

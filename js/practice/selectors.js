@@ -1,15 +1,66 @@
 (function(){
 
+  function practiceSelectorRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
+  }
+
+  function practiceSelectorRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = practiceSelectorRoot();
+    if(!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function getPracticeSelectorState(){
+    return {
+      completedLessons: Array.isArray(practiceSelectorRead("completedLessons", [])) ? practiceSelectorRead("completedLessons", []) : [],
+      mastery: practiceSelectorRead("mastery", {}) || {},
+      performanceStats: practiceSelectorRead("performanceStats", {}) || {},
+      transitionStats: practiceSelectorRead("transitionStats", {}) || {},
+      rhythmResults: practiceSelectorRead("rhythmResults", null),
+      rhythmBpm: practiceSelectorRead("rhythmBpm", 90),
+      fingerStats: practiceSelectorRead("fingerStats", {}) || {},
+      guidedSession: practiceSelectorRead("guidedSession", 1),
+      ukuleleSkillProgress: practiceSelectorRead("ukuleleSkillProgress", {}) || {},
+      bassSkillProgress: practiceSelectorRead("bassSkillProgress", {}) || {}
+    };
+  }
+
   function getActiveInstrumentModule(){
     if(typeof SparkInstruments==="undefined" || !SparkInstruments.getActive) return null;
     return SparkInstruments.getActive();
   }
 
+  function getActiveInstrumentProgressView(module){
+    module = module || getActiveInstrumentModule();
+    var instrumentId = module && module.instrument ? module.instrument : null;
+    if(window.sparkCore && typeof window.sparkCore.getInstrumentProgressView==="function" && instrumentId){
+      return window.sparkCore.getInstrumentProgressView(instrumentId) || {};
+    }
+    return {};
+  }
+
   function getCompletedLessonIds(){
-    var completed = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-    var mastery = S.mastery && S.mastery.lessons ? S.mastery.lessons : {};
+    if(window.sparkCore && typeof window.sparkCore.getCompletedLessonIds==="function"){
+      return window.sparkCore.getCompletedLessonIds();
+    }
+    var state = getPracticeSelectorState();
+    var completed = Array.isArray(state.completedLessons) ? state.completedLessons.slice() : [];
+    var mastery = state.mastery && state.mastery.lessons ? state.mastery.lessons : {};
     for(var lessonId in mastery){
-      if(mastery[lessonId]) completed.push(lessonId);
+      if(mastery[lessonId] && completed.indexOf(lessonId) < 0) completed.push(lessonId);
     }
     return completed;
   }
@@ -42,12 +93,25 @@
     if(!exercises.length) return null;
     var instrumentName = module.name || module.instrument || "Instrument";
     var completedLessonIds = getCompletedLessonIds();
+    var progressView = getActiveInstrumentProgressView(module);
+    var namedSkillProgress = progressView && progressView.namedSkillProgress ? progressView.namedSkillProgress : {};
+    var state = getPracticeSelectorState();
+    var rhythmMastery = progressView && progressView.rhythmMastery ? progressView.rhythmMastery : ((state.mastery && state.mastery.rhythm) || {});
+    var ukuleleSkillProgress = module.instrument === "ukulele" && Object.keys(namedSkillProgress).length
+      ? namedSkillProgress
+      : (state.ukuleleSkillProgress || {});
+    var bassSkillProgress = module.instrument === "bass" && Object.keys(namedSkillProgress).length
+      ? namedSkillProgress
+      : (state.bassSkillProgress || {});
     var moduleState = {
       completedLessonIds: completedLessonIds,
-      mastery: S.mastery || {},
-      performanceStats: S.performanceStats || {},
-      ukuleleSkillProgress: S.ukuleleSkillProgress || {},
-      bassSkillProgress: S.bassSkillProgress || {}
+      mastery: {
+        lessons: (state.mastery && state.mastery.lessons) || {},
+        rhythm: rhythmMastery
+      },
+      performanceStats: state.performanceStats || {},
+      ukuleleSkillProgress: ukuleleSkillProgress,
+      bassSkillProgress: bassSkillProgress
     };
     var exercise = typeof module.pickPracticeExercise==="function"
       ? (module.pickPracticeExercise(lesson, exercises.slice(), moduleState) || exercises[0])
@@ -95,7 +159,7 @@
   }
 
   function selectWeakTransitionCandidate(){
-    var ts = S.transitionStats || {};
+    var ts = getPracticeSelectorState().transitionStats || {};
     var best = null;
     for(var key in ts){
       var row = ts[key];
@@ -122,7 +186,7 @@
   }
 
   function selectWeakPerformanceCandidate(){
-    var perf = S.performanceStats || {};
+    var perf = getPracticeSelectorState().performanceStats || {};
     var weakest = null;
     var buckets = normalizePerformanceBuckets(perf);
     for(var i=0;i<buckets.length;i++){
@@ -179,7 +243,7 @@
   }
 
   function selectImportedTechniqueCandidate(){
-    var perf = S.performanceStats || {};
+    var perf = getPracticeSelectorState().performanceStats || {};
     var buckets = normalizePerformanceBuckets(perf);
     var strongestNeed = null;
     for(var i=0;i<buckets.length;i++){
@@ -212,23 +276,24 @@
   }
 
   function selectRhythmCandidate(){
-    if(!S.rhythmResults || typeof S.rhythmResults.accuracy!=="number") return null;
-    if(S.rhythmResults.accuracy >= 75) return null;
+    var state = getPracticeSelectorState();
+    if(!state.rhythmResults || typeof state.rhythmResults.accuracy!=="number") return null;
+    if(state.rhythmResults.accuracy >= 75) return null;
     return {
       id:"rhythm_fix",
       type:"rhythm",
-      priority:80 - S.rhythmResults.accuracy,
+      priority:80 - state.rhythmResults.accuracy,
       label:"Rhythm timing practice",
       reason:"Recent rhythm accuracy is low",
       meta:{
-        accuracy:S.rhythmResults.accuracy,
-        bpm:S.rhythmBpm || 90
+        accuracy:state.rhythmResults.accuracy,
+        bpm:state.rhythmBpm || 90
       }
     };
   }
 
   function selectFingerCandidate(){
-    var stats = S.fingerStats || {};
+    var stats = getPracticeSelectorState().fingerStats || {};
     var weakest = null;
     for(var key in stats){
       var row = stats[key];
@@ -434,15 +499,34 @@
 /* ChordSpark extension: guided session candidate */
 (function(){
 
+  function readGuidedSessionState(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"
+      ? SparkState.getRoot()
+      : (typeof globalThis!=="undefined" ? (globalThis.__sparkState || globalThis.S || null) : null);
+    if(!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   function selectGuidedSessionCandidate(){
+    var guidedSession = readGuidedSessionState("guidedSession", 1);
     return {
-      id:"guided_session_" + (S.guidedSession || 1),
+      id:"guided_session_" + (guidedSession || 1),
       type:"guided_session",
       priority:45,
       label:"Continue guided session",
       reason:"Stay aligned with current progression",
       meta:{
-        guidedSession:S.guidedSession || 1
+        guidedSession:guidedSession || 1
       }
     };
   }

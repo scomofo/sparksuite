@@ -56,6 +56,7 @@ function resetState() {
     performSongData: null,
     performSongId: ""
   };
+  global.__sparkState = global.S;
   global.PIANO_DATA = {
     CURRICULUM: [{ num: 1, title: "First Steps", sessions: "1-3", lhPattern: "R1" }],
     LH_PATTERNS: [{ id: "R1" }],

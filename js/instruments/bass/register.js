@@ -1,5 +1,50 @@
 // js/instruments/bass/register.js
 (function() {
+  function bassRegisterRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function bassRegisterRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = bassRegisterRoot();
+    if (!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function bassRegisterWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = bassRegisterRoot();
+    if (root) root[path] = value;
+    return value;
+  }
+
+  function bassRegisterEnsureArray(path) {
+    var current = bassRegisterRead(path, null);
+    if (Array.isArray(current)) return current;
+    current = [];
+    bassRegisterWrite(path, current);
+    return current;
+  }
+
+  function bassRegisterEnsureObject(path) {
+    var current = bassRegisterRead(path, null);
+    if (current && typeof current === "object" && !Array.isArray(current)) return current;
+    current = {};
+    bassRegisterWrite(path, current);
+    return current;
+  }
+
   function renderBassSongsTab() {
     var songs = (window.SparkBassModule && window.SparkBassModule.getSongs()) || (typeof BASS_SONGS !== "undefined" ? BASS_SONGS : []);
     var charts = typeof getPerformanceChartLibrary === "function"
@@ -124,20 +169,18 @@
         SparkProfile.ensureApp(profile, "bassspark", "bass");
         SparkStorage.save(profile);
       }
-      if (typeof S !== "undefined") {
-        if (S.completedGuidedSessions === undefined) S.completedGuidedSessions = [];
-        if (S.chordProgress === undefined) S.chordProgress = {};
-        if (S.transitionStats === undefined) S.transitionStats = {};
-        if (S.drillAdaptiveBpm === undefined) S.drillAdaptiveBpm = 60;
-        if (S.drillConsecutiveFast === undefined) S.drillConsecutiveFast = 0;
-        if (S.drillConsecutiveSlow === undefined) S.drillConsecutiveSlow = 0;
-        if (S.drillLastSwitchTime === undefined) S.drillLastSwitchTime = 0;
-        if (S.guidedSession === undefined) S.guidedSession = 1;
-        if (S.guidedPlan === undefined) S.guidedPlan = null;
-        if (S.guidedStep === undefined) S.guidedStep = null;
-        if (S.newMovePhase === undefined) S.newMovePhase = null;
-        if (S.guidedPaused === undefined) S.guidedPaused = false;
-      }
+      bassRegisterEnsureArray("completedGuidedSessions");
+      bassRegisterEnsureObject("chordProgress");
+      bassRegisterEnsureObject("transitionStats");
+      if (bassRegisterRead("drillAdaptiveBpm", null) === null) bassRegisterWrite("drillAdaptiveBpm", 60);
+      if (bassRegisterRead("drillConsecutiveFast", null) === null) bassRegisterWrite("drillConsecutiveFast", 0);
+      if (bassRegisterRead("drillConsecutiveSlow", null) === null) bassRegisterWrite("drillConsecutiveSlow", 0);
+      if (bassRegisterRead("drillLastSwitchTime", null) === null) bassRegisterWrite("drillLastSwitchTime", 0);
+      if (bassRegisterRead("guidedSession", null) === null) bassRegisterWrite("guidedSession", 1);
+      if (bassRegisterRead("guidedPlan", undefined) === undefined) bassRegisterWrite("guidedPlan", null);
+      if (bassRegisterRead("guidedStep", undefined) === undefined) bassRegisterWrite("guidedStep", null);
+      if (bassRegisterRead("newMovePhase", undefined) === undefined) bassRegisterWrite("newMovePhase", null);
+      if (bassRegisterRead("guidedPaused", undefined) === undefined) bassRegisterWrite("guidedPaused", false);
     },
 
     // ── InstrumentModule interface ──
@@ -148,12 +191,13 @@
       var branches = [];
       for (var i = 0; i < curriculum.length; i++) {
         var lvl = curriculum[i];
+        var level = bassRegisterRead("level", 1) || 1;
         branches.push({
           id: "level_" + lvl.num,
           label: lvl.title,
           level: lvl.num,
-          status: (S.level || 1) >= lvl.num ? "available" : "locked",
-          progress: (S.level || 1) > lvl.num ? 100 : ((S.level || 1) === lvl.num ? 50 : 0)
+          status: level >= lvl.num ? "available" : "locked",
+          progress: level > lvl.num ? 100 : (level === lvl.num ? 50 : 0)
         });
       }
       return { branches: branches };

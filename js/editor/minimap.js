@@ -1,9 +1,39 @@
 (function(){
+  function editorMinimapRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorMinimapRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorMinimapRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function editorMinimapWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = editorMinimapRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
   function getEditorObjectDurationSec(){
-    if(!S.editorObject) return 0;
+    var editorObject = editorMinimapRead("editorObject", null);
+    if(!editorObject) return 0;
     var maxSec = 0;
-    var events = S.editorObject.events || [];
-    var phrases = S.editorObject.phrases || [];
+    var events = editorObject.events || [];
+    var phrases = editorObject.phrases || [];
     for(var i=0;i<events.length;i++){
       maxSec = Math.max(maxSec, (events[i].t || 0) + (events[i].dur || 0));
     }
@@ -14,15 +44,17 @@
   }
 
   function renderMiniMap(){
-    if(!S.editorMiniMapEnabled || !S.editorObject) return '';
+    var editorMiniMapEnabled = editorMinimapRead("editorMiniMapEnabled", false);
+    var editorObject = editorMinimapRead("editorObject", null);
+    if(!editorMiniMapEnabled || !editorObject) return '';
     var total = Math.max(1, getEditorObjectDurationSec());
-    var viewStart = S.editorViewportStartSec || 0;
-    var viewDur = S.editorTimelineWindowSec || 16;
+    var viewStart = editorMinimapRead("editorViewportStartSec", 0) || 0;
+    var viewDur = editorMinimapRead("editorTimelineWindowSec", 16) || 16;
     var viewEnd = Math.min(total, viewStart + viewDur);
     var h = '<div id="editorMiniMap" style="position:relative;height:70px;border-radius:12px;background:var(--input-bg);overflow:hidden"';
     h += ' onclick="act(\'editorMiniMapClick\', event)">';
 
-    var events = S.editorObject.events || [];
+    var events = editorObject.events || [];
     for(var i=0;i<events.length;i++){
       var left = ((events[i].t || 0) / total) * 100;
       var width = Math.max(0.5, (((events[i].dur || 0.2) / total) * 100));
@@ -41,9 +73,9 @@
     var rect = el.getBoundingClientRect();
     var ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     var total = Math.max(1, getEditorObjectDurationSec());
-    var windowSec = S.editorTimelineWindowSec || 16;
+    var windowSec = editorMinimapRead("editorTimelineWindowSec", 16) || 16;
     var centerSec = ratio * total;
-    S.editorViewportStartSec = Math.max(0, centerSec - (windowSec / 2));
+    editorMinimapWrite("editorViewportStartSec", Math.max(0, centerSec - (windowSec / 2)));
     return true;
   }
 

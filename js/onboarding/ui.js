@@ -1,3 +1,26 @@
+function onboardingUiRoot(){
+  if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+    return SparkState.getRoot();
+  }
+  return typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
+}
+
+function onboardingUiRead(path, fallback){
+  var root = onboardingUiRoot();
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  if(!cursor) return fallback;
+  for(i = 0; i < parts.length; i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
 function onboardingPage(){
   var step = getCurrentOnboardingStep();
   var h = '<div class="card mb16">';
@@ -32,7 +55,7 @@ function renderOnboardingInstrument(){
   h += '<button onclick="setOnboardingInstrument(\'guitar\')">Guitar</button> ';
   h += '<button onclick="setOnboardingInstrument(\'piano\')">Piano</button> ';
   h += '<button onclick="setOnboardingInstrument(\'ukulele\')">Ukulele</button>';
-  h += '<div style="margin-top:8px">Selected: '+escHTML(S.onboarding.instrument || "none")+'</div>';
+  h += '<div style="margin-top:8px">Selected: '+escHTML(onboardingUiRead(["onboarding", "instrument"], "none"))+'</div>';
   h += '</div>';
   return h;
 }
@@ -43,13 +66,13 @@ function renderOnboardingSkillLevel(){
   h += '<button onclick="setOnboardingSkillLevel(\'beginner\')">Beginner</button> ';
   h += '<button onclick="setOnboardingSkillLevel(\'early_intermediate\')">Early Intermediate</button> ';
   h += '<button onclick="setOnboardingSkillLevel(\'intermediate\')">Intermediate+</button>';
-  h += '<div style="margin-top:8px">Selected: '+escHTML(S.onboarding.skillLevel || "none")+'</div>';
+  h += '<div style="margin-top:8px">Selected: '+escHTML(onboardingUiRead(["onboarding", "skillLevel"], "none"))+'</div>';
   h += '</div>';
   return h;
 }
 
 function renderOnboardingGoals(){
-  var goals = S.onboarding.goals || [];
+  var goals = onboardingUiRead(["onboarding", "goals"], []);
   var opts = ["chords","rhythm","lead","left_hand","melody","songs","technique"];
   var h = '<div class="card mb16">';
   h += '<div><b>What do you want to focus on?</b></div>';

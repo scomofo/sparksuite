@@ -101,11 +101,12 @@ test("progress bridge stores smart coach insights after session completion", fun
     }
   });
 
-  assert.ok(S.personalInsights);
-  assert.strictEqual(S.recommendedFocus, "timing");
-  assert.strictEqual(S.personalInsights.recommendationQuality.smartCoach.focusSkill, "timing");
-  assert.strictEqual(S.personalInsights.recommendationQuality.smartCoach.weakArea, "wrong_fret");
-  assert.ok(typeof S.personalInsights.coach.message === "string");
+  var stateRoot = global.__sparkState || global.S;
+  assert.ok(stateRoot.personalInsights);
+  assert.strictEqual(stateRoot.recommendedFocus, "timing");
+  assert.strictEqual(stateRoot.personalInsights.recommendationQuality.smartCoach.focusSkill, "timing");
+  assert.strictEqual(stateRoot.personalInsights.recommendationQuality.smartCoach.weakArea, "wrong_fret");
+  assert.ok(typeof stateRoot.personalInsights.coach.message === "string");
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");

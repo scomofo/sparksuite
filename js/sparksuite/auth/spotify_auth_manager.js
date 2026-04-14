@@ -117,6 +117,9 @@
   SpotifyAuthManager.prototype.exchangeCode = function(code) {
     var self = this;
     var codeVerifier = localStorage.getItem(VERIFIER_STORAGE_KEY);
+    if (!codeVerifier) {
+      return Promise.reject(new Error("SpotifyAuthManager: missing PKCE verifier; restart Spotify sign-in."));
+    }
 
     return fetch("https://accounts.spotify.com/api/token", {
       method: "POST",

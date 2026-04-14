@@ -3,33 +3,66 @@
 
 (function(){
 
+  function editorTimelineRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorTimelineRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorTimelineRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function editorTimelineWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = editorTimelineRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
   function getEditorTimelineRange(){
-    var start = Math.max(0, S.editorPlayheadSec - (S.editorTimelineWindowSec / 4));
-    var end = start + (S.editorTimelineWindowSec || 16);
+    var playheadSec = editorTimelineRead("editorPlayheadSec", 0) || 0;
+    var windowSec = editorTimelineRead("editorTimelineWindowSec", 16) || 16;
+    var start = Math.max(0, playheadSec - (windowSec / 4));
+    var end = start + windowSec;
     return { startSec:start, endSec:end };
   }
 
   function setEditorPlayhead(sec){
-    S.editorPlayheadSec = Math.max(0, sec || 0);
+    editorTimelineWrite("editorPlayheadSec", Math.max(0, sec || 0));
   }
 
   function moveEditorPlayhead(direction){
-    var step = getGridStepSec(S.editorGridDivision || "1/4", getEditorBpm());
-    if(direction==="left") S.editorPlayheadSec = Math.max(0, (S.editorPlayheadSec || 0) - step);
-    if(direction==="right") S.editorPlayheadSec = (S.editorPlayheadSec || 0) + step;
+    var gridDivision = editorTimelineRead("editorGridDivision", "1/4") || "1/4";
+    var playheadSec = editorTimelineRead("editorPlayheadSec", 0) || 0;
+    var step = getGridStepSec(gridDivision, getEditorBpm());
+    if(direction==="left") editorTimelineWrite("editorPlayheadSec", Math.max(0, playheadSec - step));
+    if(direction==="right") editorTimelineWrite("editorPlayheadSec", playheadSec + step);
   }
 
   function addEventAtPlayhead(base){
     var evt = JSON.parse(JSON.stringify(base || {}));
     evt.id = evt.id || ("evt_" + Date.now());
-    evt.t = snapTimeSec(S.editorPlayheadSec || 0);
-    evt.dur = evt.dur != null ? evt.dur : getGridStepSec(S.editorGridDivision || "1/4", getEditorBpm());
+    evt.t = snapTimeSec(editorTimelineRead("editorPlayheadSec", 0) || 0);
+    evt.dur = evt.dur != null ? evt.dur : getGridStepSec(editorTimelineRead("editorGridDivision", "1/4") || "1/4", getEditorBpm());
     addEditorItem("event", evt);
-    S.editorSelectedId = evt.id;
+    editorTimelineWrite("editorSelectedId", evt.id);
   }
 
   function addPhraseAtPlayhead(){
-    var start = snapTimeSec(S.editorPlayheadSec || 0);
+    var start = snapTimeSec(editorTimelineRead("editorPlayheadSec", 0) || 0);
     var len = getGridStepSec("1/1", getEditorBpm());
     var phrase = {
       id:"phrase_" + Date.now(),
@@ -38,7 +71,7 @@
       endSec:start + len
     };
     addEditorItem("phrase", phrase);
-    S.editorSelectedId = phrase.id;
+    editorTimelineWrite("editorSelectedId", phrase.id);
   }
 
   function nudgeSelectedEditorItem(direction){
@@ -56,7 +89,7 @@
     if(kind==="step" && item.t != null){
       item.t = nudgeTimeSec(item.t || 0, direction);
     }
-    S.editorDirty = true;
+    editorTimelineWrite("editorDirty", true);
     return true;
   }
 

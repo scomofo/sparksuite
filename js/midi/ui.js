@@ -1,5 +1,28 @@
 (function(){
 
+  function midiUiRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function midiUiRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = midiUiRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
   function midiSettingsPage(){
     var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
       ? window.sparkCore.getRuntimeState()
@@ -12,13 +35,13 @@
       : ((getActiveMidiProfile() && getActiveMidiProfile().name) || "None");
     var devs = runtimeState && Array.isArray(runtimeState.midiDeviceOptions) && runtimeState.midiDeviceOptions.length
       ? runtimeState.midiDeviceOptions
-      : (S.midiDevices || []);
+      : (midiUiRead("midiDevices", []) || []);
     var profiles = runtimeState && Array.isArray(runtimeState.midiProfileOptions) && runtimeState.midiProfileOptions.length
       ? runtimeState.midiProfileOptions
-      : (S.midiProfiles || {});
+      : (midiUiRead("midiProfiles", {}) || {});
     var activeProfileId = runtimeState && runtimeState.midiActiveProfileId
       ? runtimeState.midiActiveProfileId
-      : S.activeMidiProfileId;
+      : midiUiRead("activeMidiProfileId", null);
     var usingProfileArray = Array.isArray(profiles);
     var h = '<div class="card">';
     h += '<div><b>MIDI Settings</b></div>';

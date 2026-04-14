@@ -1,5 +1,26 @@
 /* ===== ChordSpark Performance: Scoring Engine ===== */
 
+function performanceScoringRead(path, fallback) {
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if (!cursor) return fallback;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
 function _getClosestCluster(eventTimeSec, clusters) {
   if (!clusters || clusters.length === 0) return null;
   var best = null;
@@ -60,9 +81,9 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
   var noteScore = overlap / targetNotes.length;
 
   var diff = typeof getPerformanceDifficulty === "function" ? getPerformanceDifficulty(difficulty) : null;
-  var perfectMs = diff ? diff.perfectMs : S.performWindowPerfectMs;
-  var goodMs = diff ? diff.goodMs : S.performWindowGoodMs;
-  var missMs = diff ? diff.missMs : S.performWindowMissMs;
+  var perfectMs = diff ? diff.perfectMs : performanceScoringRead("performWindowPerfectMs", 60);
+  var goodMs = diff ? diff.goodMs : performanceScoringRead("performWindowGoodMs", 120);
+  var missMs = diff ? diff.missMs : performanceScoringRead("performWindowMissMs", 180);
   var nw = diff ? diff.noteWeight : 0.75;
   var tw = diff ? diff.timingWeight : 0.25;
 
@@ -103,9 +124,9 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
 
 function scoreOpenPerformanceEvent(event, cluster, hitDeltaMs, difficulty) {
   var diff = typeof getPerformanceDifficulty === "function" ? getPerformanceDifficulty(difficulty) : null;
-  var perfectMs = diff ? diff.perfectMs : S.performWindowPerfectMs;
-  var goodMs = diff ? diff.goodMs : S.performWindowGoodMs;
-  var missMs = diff ? diff.missMs : S.performWindowMissMs;
+  var perfectMs = diff ? diff.perfectMs : performanceScoringRead("performWindowPerfectMs", 60);
+  var goodMs = diff ? diff.goodMs : performanceScoringRead("performWindowGoodMs", 120);
+  var missMs = diff ? diff.missMs : performanceScoringRead("performWindowMissMs", 180);
   var nw = diff ? diff.noteWeight : 0.75;
   var tw = diff ? diff.timingWeight : 0.25;
   var absDelta = Math.abs(hitDeltaMs);

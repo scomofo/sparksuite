@@ -1,45 +1,99 @@
 (function(){
+  function getOnboardingActionStateFacade(){
+    return typeof SparkState !== "undefined" ? SparkState : null;
+  }
+
+  function getOnboardingActionStateRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") return SparkState.getRoot();
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
+  }
+
+  function readOnboardingActionState(path, fallback){
+    var facade = getOnboardingActionStateFacade();
+    var root = getOnboardingActionStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(facade && typeof facade.read === "function") return facade.read(path, fallback);
+    if(!cursor) return fallback;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function writeOnboardingActionState(path, value){
+    var facade = getOnboardingActionStateFacade();
+    var root = getOnboardingActionStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(facade && typeof facade.write === "function") return facade.write(path, value);
+    if(!cursor || !parts.length) return value;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function getOnboardingStateSnapshot(){
+    var onboarding = readOnboardingActionState("onboarding", null);
+    if(!onboarding || typeof onboarding !== "object" || Array.isArray(onboarding)){
+      if(typeof resetOnboarding === "function") resetOnboarding();
+      onboarding = readOnboardingActionState("onboarding", null);
+    }
+    if(!onboarding || typeof onboarding !== "object" || Array.isArray(onboarding)) onboarding = {};
+    return onboarding;
+  }
 
   function setOnboardingInstrument(value){
-    S.onboarding.instrument = value;
+    getOnboardingStateSnapshot();
+    writeOnboardingActionState(["onboarding", "instrument"], value);
     saveState();
   }
 
   function setOnboardingSkillLevel(value){
-    S.onboarding.skillLevel = value;
+    getOnboardingStateSnapshot();
+    writeOnboardingActionState(["onboarding", "skillLevel"], value);
     saveState();
   }
 
   function toggleOnboardingGoal(goal){
-    var arr = S.onboarding.goals || [];
+    var arr = readOnboardingActionState(["onboarding", "goals"], []);
     var idx = arr.indexOf(goal);
     if(idx >= 0){
       arr.splice(idx, 1);
     }else{
       arr.push(goal);
     }
-    S.onboarding.goals = arr;
+    writeOnboardingActionState(["onboarding", "goals"], arr);
     saveState();
   }
 
   function markOnboardingMidiSetupDone(){
-    S.onboarding.midiSetupDone = true;
+    getOnboardingStateSnapshot();
+    writeOnboardingActionState(["onboarding", "midiSetupDone"], true);
     saveState();
   }
 
   function markOnboardingCalibrationDone(){
-    S.onboarding.calibrationDone = true;
+    getOnboardingStateSnapshot();
+    writeOnboardingActionState(["onboarding", "calibrationDone"], true);
     saveState();
   }
 
   function markOnboardingStarterUnlocksDone(){
-    S.onboarding.starterContentUnlocked = true;
+    getOnboardingStateSnapshot();
+    writeOnboardingActionState(["onboarding", "starterContentUnlocked"], true);
     saveState();
   }
 
   function applyStarterUnlocksFromOnboarding(){
-    var instrument = S.onboarding.instrument;
-    var level = S.onboarding.skillLevel;
+    var instrument = readOnboardingActionState(["onboarding", "instrument"], null);
+    var level = readOnboardingActionState(["onboarding", "skillLevel"], null);
     if(instrument === "guitar"){
       if(level === "beginner"){
         unlockStarterIds([
@@ -119,8 +173,8 @@
 
   function generateInitialRecommendationsFromOnboarding(){
     if(typeof generateRecommendations !== "function") return [];
-    if(S.onboarding.instrument === "piano") return generateRecommendations("piano");
-    if(S.onboarding.instrument === "ukulele") return generateRecommendations("guitar");
+    if(readOnboardingActionState(["onboarding", "instrument"], null) === "piano") return generateRecommendations("piano");
+    if(readOnboardingActionState(["onboarding", "instrument"], null) === "ukulele") return generateRecommendations("guitar");
     return generateRecommendations("guitar");
   }
 

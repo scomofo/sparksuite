@@ -1,9 +1,31 @@
 /* PianoSpark - Shared page components */
 
-// ── Performance helpers ──
+function pianoSharedRead(path, fallback) {
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(path, fallback);
+  }
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if (!root && typeof globalThis !== "undefined") {
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  if (!root) return fallback;
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  for (i = 0; i < parts.length; i++) {
+    if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+// Performance helpers
 function getPerformanceBest(songId, arrangementType, difficulty) {
   var key = (songId || "") + "_" + (arrangementType || "chords") + "_" + (difficulty || "normal");
-  var stats = S.performanceStats && S.performanceStats[key];
+  var performanceStats = pianoSharedRead("performanceStats", {}) || {};
+  var stats = performanceStats[key];
   if (!stats) return { bestScore: 0, bestAccuracy: 0, bestStars: 0, runs: 0 };
   return stats;
 }
@@ -16,41 +38,41 @@ function getPerformanceMasteryLabel(best) {
   return "Beginner";
 }
 
-// ── Header ──
+// Header
 function pianoHeaderHTML() {
   var html = '<header class="app-header" role="banner">';
   html += '<h1 class="logo">PianoSpark</h1>';
   html += '<div class="header-actions">';
-  html += '<span class="xp-badge" aria-label="XP" aria-live="polite">' + S.xp + ' XP</span>';
-  if (S.onboardingComplete) {
-    html += '<span class="session-badge">S' + S.currentSession + '/50</span>';
+  html += '<span class="xp-badge" aria-label="XP" aria-live="polite">' + (pianoSharedRead("xp", 0) || 0) + ' XP</span>';
+  if (pianoSharedRead("onboardingComplete", false)) {
+    html += '<span class="session-badge">S' + (pianoSharedRead("currentSession", 0) || 0) + '/50</span>';
   }
-  html += '<span class="streak-badge" aria-label="Streak" aria-live="polite">' + (S.streak > 0 ? "\u{1F525}" + S.streak : "") + '</span>';
-  html += '<button class="icon-btn" onclick="act(\'toggle_dark\')" title="Toggle dark mode" aria-label="Toggle dark mode">' + (S.darkMode ? "\u{2600}" : "\u{1F319}") + '</button>';
+  html += '<span class="streak-badge" aria-label="Streak" aria-live="polite">' + ((pianoSharedRead("streak", 0) || 0) > 0 ? "\u{1F525}" + (pianoSharedRead("streak", 0) || 0) : "") + '</span>';
+  html += '<button class="icon-btn" onclick="act(\'toggle_dark\')" title="Toggle dark mode" aria-label="Toggle dark mode">' + (pianoSharedRead("darkMode", false) ? "\u2600" : "\u{1F319}") + '</button>';
   html += '</div></header>';
   return html;
 }
 
-// ── Tab navigation (4 tabs) ──
+// Tab navigation (4 tabs)
 function pianoTabNavHTML() {
-  // Use string literals — global TAB lacks GAMES/TOOLS keys (guitar-centric)
   var tabs = [
     { id: "practice", label: "Practice", icon: "\u{1F3B9}" },
-    { id: "games",    label: "Games",    icon: "\u{26A1}" },
-    { id: "songs",    label: "Songs",    icon: "\u{1F3B6}" },
-    { id: "tools",    label: "Tools",    icon: "\u{1F527}" }
+    { id: "games", label: "Games", icon: "\u26A1" },
+    { id: "songs", label: "Songs", icon: "\u{1F3B6}" },
+    { id: "tools", label: "Tools", icon: "\u{1F527}" }
   ];
 
+  var activeTab = pianoSharedRead("tab", null);
   var html = '<nav class="tab-nav" role="tablist">';
   tabs.forEach(function(t) {
-    var active = S.tab === t.id ? "active" : "";
-    html += '<button class="tab-btn ' + active + '" role="tab" aria-selected="' + (S.tab === t.id ? 'true' : 'false') + '" onclick="act(\'tab\',\'' + t.id + '\')">' + t.icon + ' ' + t.label + '</button>';
+    var active = activeTab === t.id ? "active" : "";
+    html += '<button class="tab-btn ' + active + '" role="tab" aria-selected="' + (activeTab === t.id ? "true" : "false") + '" onclick="act(\'tab\',\'' + t.id + '\')">' + t.icon + ' ' + t.label + '</button>';
   });
   html += '</nav>';
   return html;
 }
 
-// ── Toast ──
+// Toast
 var toastTimeout = null;
 function showToast(msg) {
   var el = document.getElementById("toast");
@@ -68,18 +90,18 @@ function showToast(msg) {
   toastTimeout = setTimeout(function() { el.classList.remove("show"); }, 3000);
 }
 
-// ── Back button ──
+// Back button
 function backBtnHTML(action) {
   return '<button class="btn btn-secondary btn-sm" onclick="act(\'' + action + '\')">\u2190 Back</button>';
 }
 
-// ── Level color helper ──
+// Level color helper
 function levelColor(lvl) {
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
   return (D.LC && D.LC[lvl]) ? D.LC[lvl] : "#7c3aed";
 }
 
-// ── Chord type color tag ──
+// Chord type color tag
 function chordTypeTag(chord) {
   if (!chord) return "";
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
@@ -87,6 +109,5 @@ function chordTypeTag(chord) {
   return '<span class="song-chord-tag" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + escHTML(chord.short) + '</span>';
 }
 
-// ── Direct global exports for ui bag ──
 window.pianoHeaderHTML = pianoHeaderHTML;
 window.pianoTabNavHTML = pianoTabNavHTML;

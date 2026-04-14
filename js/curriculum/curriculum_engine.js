@@ -1,5 +1,54 @@
 (function(){
 
+  function curriculumStateRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function curriculumStateRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = curriculumStateRoot();
+    if (!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function getProgressSnapshot() {
+    if (window.sparkCore && typeof window.sparkCore.getLegacyProgressSnapshot === "function") {
+      return window.sparkCore.getLegacyProgressSnapshot() || {};
+    }
+    var mastery = curriculumStateRead("mastery", {}) || {};
+    return {
+      completedLessonIds: getCompletedLessonIds(),
+      mastery: {
+        lessons: mastery.lessons || {},
+        chords: mastery.chords || {},
+        rhythm: mastery.rhythm || {}
+      },
+      chordProgress: curriculumStateRead("chordProgress", {}) || {},
+      ukuleleSkillProgress: curriculumStateRead("ukuleleSkillProgress", {}) || {},
+      bassSkillProgress: curriculumStateRead("bassSkillProgress", {}) || {}
+    };
+  }
+
+  function getCompletedLessonIds() {
+    if (window.sparkCore && typeof window.sparkCore.getCompletedLessonIds === "function") {
+      return window.sparkCore.getCompletedLessonIds();
+    }
+    var completedLessons = Array.isArray(curriculumStateRead("completedLessons", [])) ? curriculumStateRead("completedLessons", []).slice() : [];
+    var mastery = curriculumStateRead("mastery", {}) || {};
+    var lessonMastery = mastery.lessons || {};
+    for (var lessonId in lessonMastery) {
+      if (lessonMastery[lessonId] && completedLessons.indexOf(lessonId) === -1) {
+        completedLessons.push(lessonId);
+      }
+    }
+    return completedLessons;
+  }
+
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
     var curriculum = getCurriculumItem("curriculums", curriculumId);
     if(!curriculum) return null;
@@ -26,18 +75,19 @@
     var rules = lesson.unlockRules;
 
     if(rules.lessonsCompleted && Array.isArray(rules.lessonsCompleted)){
-      var completedLessons = (S.mastery && S.mastery.lessons) || {};
+      var completedLessons = getCompletedLessonIds();
       for(var i=0;i<rules.lessonsCompleted.length;i++){
-        if(!completedLessons[rules.lessonsCompleted[i]]) return false;
+        if(completedLessons.indexOf(rules.lessonsCompleted[i]) < 0) return false;
       }
     }
 
-    if(rules.playerLevel && (S.playerLevel || 1) < rules.playerLevel){
+    if(rules.playerLevel && curriculumStateRead("playerLevel", 1) < rules.playerLevel){
       return false;
     }
 
     if(rules.mastery && rules.mastery.chords){
-      var chordMastery = (S.mastery && S.mastery.chords) || {};
+      var progressSnapshot = getProgressSnapshot();
+      var chordMastery = progressSnapshot.mastery && progressSnapshot.mastery.chords ? progressSnapshot.mastery.chords : {};
       for(var j=0;j<rules.mastery.chords.length;j++){
         if(!chordMastery[rules.mastery.chords[j]]) return false;
       }
@@ -71,17 +121,16 @@
       var targets = [];
       var chordMastery = {};
       var lessonMastery = {};
+      var progressSnapshot = getProgressSnapshot();
 
       // Read mastery data from global state or userContext
-      if (typeof S !== "undefined" && S.mastery) {
-        chordMastery = S.mastery.chords || {};
-        lessonMastery = S.mastery.lessons || {};
-      }
+      chordMastery = progressSnapshot.mastery && progressSnapshot.mastery.chords ? progressSnapshot.mastery.chords : {};
+      lessonMastery = progressSnapshot.mastery && progressSnapshot.mastery.lessons ? progressSnapshot.mastery.lessons : {};
       if (userContext.chordMastery) chordMastery = userContext.chordMastery;
       if (userContext.lessonMastery) lessonMastery = userContext.lessonMastery;
 
       // Find chords below mastery threshold (below 75 = needs review)
-      var chordProgress = (typeof S !== "undefined" && S.chordProgress) ? S.chordProgress : {};
+      var chordProgress = progressSnapshot.chordProgress || {};
       for (var chordName in chordProgress) {
         if (!Object.prototype.hasOwnProperty.call(chordProgress, chordName)) continue;
         var progress = chordProgress[chordName];
@@ -119,17 +168,7 @@
       }
 
       // 2. Get next lesson from curriculum
-      var completedLessons = [];
-      if (typeof S !== "undefined") {
-        completedLessons = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-        if (S.mastery && S.mastery.lessons) {
-          for (var lessonId in S.mastery.lessons) {
-            if (S.mastery.lessons[lessonId] && completedLessons.indexOf(lessonId) === -1) {
-              completedLessons.push(lessonId);
-            }
-          }
-        }
-      }
+      var completedLessons = getCompletedLessonIds();
 
       // Try to find next lesson from active instrument's curriculum map
       // currMap is an array of lesson/level objects (not a curriculum root ID),

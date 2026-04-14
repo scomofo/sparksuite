@@ -1,6 +1,37 @@
 (function(){
 
+  function insightSnapshotRoot(){
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis!=="undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function insightSnapshotRead(path, fallback){
+    if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = insightSnapshotRoot();
+    if(!root) return fallback;
+    return Object.prototype.hasOwnProperty.call(root, path) ? root[path] : fallback;
+  }
+
+  function insightSnapshotWrite(path, value){
+    if(typeof SparkState!=="undefined" && typeof SparkState.write==="function"){
+      return SparkState.write(path, value);
+    }
+    var root = insightSnapshotRoot();
+    if(root) root[path] = value;
+    return value;
+  }
+
+  function getCareerProgressSnapshot(){
+    return insightSnapshotRead("careerProgress", {}) || {};
+  }
+
   function buildInsightSnapshot(){
+    var practiceHistory = Array.isArray(insightSnapshotRead("practiceHistory", [])) ? insightSnapshotRead("practiceHistory", []) : [];
+    var metaProgress = insightSnapshotRead("metaProgress", {}) || {};
     return {
       ts: Date.now(),
       mastery: {
@@ -11,16 +42,16 @@
         songs: safeAvgMastery("songs")
       },
       practice: {
-        streak: S.practiceStreak || 0,
-        totalMinutes: S.totalPracticeMinutes || 0,
-        sessions: (S.practiceHistory || []).length,
+        streak: insightSnapshotRead("practiceStreak", 0) || 0,
+        totalMinutes: insightSnapshotRead("totalPracticeMinutes", 0) || 0,
+        sessions: practiceHistory.length,
         avgAccuracy: typeof getAverageAccuracy === "function" ? getAverageAccuracy() : 0
       },
       meta: {
-        xp: S.playerXP || 0,
-        level: S.playerLevel || 1,
-        challengesCompleted: (S.metaProgress && S.metaProgress.challengesCompleted) || 0,
-        goalsCompleted: (S.metaProgress && S.metaProgress.goalsCompleted) || 0
+        xp: insightSnapshotRead("playerXP", 0) || 0,
+        level: insightSnapshotRead("playerLevel", 1) || 1,
+        challengesCompleted: metaProgress.challengesCompleted || 0,
+        goalsCompleted: metaProgress.goalsCompleted || 0
       },
       career: {
         clearedSongs: getCareerClearedSongCount(),
@@ -32,10 +63,12 @@
 
   function recordInsightSnapshot(){
     var snap = buildInsightSnapshot();
-    S.insightSnapshots.push(snap);
-    if(S.insightSnapshots.length > 200){
-      S.insightSnapshots = S.insightSnapshots.slice(S.insightSnapshots.length - 200);
+    var snapshots = Array.isArray(insightSnapshotRead("insightSnapshots", [])) ? insightSnapshotRead("insightSnapshots", []) : [];
+    snapshots.push(snap);
+    if(snapshots.length > 200){
+      snapshots = snapshots.slice(snapshots.length - 200);
     }
+    insightSnapshotWrite("insightSnapshots", snapshots);
     saveState();
     return snap;
   }
@@ -45,7 +78,7 @@
   }
 
   function getCareerClearedSongCount(){
-    var ratings = (S.careerProgress && S.careerProgress.songRatings) || {};
+    var ratings = getCareerProgressSnapshot().songRatings || {};
     var count = 0;
     for(var k in ratings){
       if((ratings[k].bestStars || 0) >= 2) count++;
@@ -54,7 +87,7 @@
   }
 
   function getAverageCareerStars(){
-    var ratings = (S.careerProgress && S.careerProgress.songRatings) || {};
+    var ratings = getCareerProgressSnapshot().songRatings || {};
     var total = 0, count = 0;
     for(var k in ratings){
       total += ratings[k].bestStars || 0;
@@ -64,7 +97,7 @@
   }
 
   function getCompletedCareerStageCount(){
-    var stages = (S.careerProgress && S.careerProgress.stageCompletion) || {};
+    var stages = getCareerProgressSnapshot().stageCompletion || {};
     var count = 0;
     for(var k in stages){
       if(stages[k]) count++;

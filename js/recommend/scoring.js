@@ -1,4 +1,26 @@
 (function(){
+  function recommendationScoringRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
+  }
+
+  function recommendationScoringRead(path, fallback){
+    var root = recommendationScoringRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    if(!cursor) return fallback;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
 
   function scoreRecommendationCandidate(candidate){
     var score = 0;
@@ -40,8 +62,9 @@
   }
 
   function scoreVarietyWeight(candidate){
-    if(!S.recommendationHistory || !S.recommendationHistory.length) return 10;
-    var recentIds = S.recommendationHistory.slice(-10).map(function(x){ return x.id; });
+    var history = recommendationScoringRead("recommendationHistory", []);
+    if(!history || !history.length) return 10;
+    var recentIds = history.slice(-10).map(function(x){ return x.id; });
     if(recentIds.indexOf(candidate.id) >= 0) return -20;
     return 10;
   }

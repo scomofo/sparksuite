@@ -1,3 +1,10 @@
+function analyticsDashboardRead(path, fallback){
+  if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+    return SparkState.read(path, fallback);
+  }
+  return fallback;
+}
+
 function analyticsDashboardPage(){
   var report = generatePracticeReport();
   var h = '<div class="card">';
@@ -9,7 +16,7 @@ function analyticsDashboardPage(){
   h += '<div>Level: '+report.level+'</div>';
   h += '</div>';
 
-  var analytics = S.analytics || {};
+  var analytics = analyticsDashboardRead(["analytics"], {});
   h += '<div class="card">';
   h += '<div><b>Accuracy Trend</b></div>';
   h += renderLineChart(analytics.accuracyHistory || [], "accuracy", 300, 120);

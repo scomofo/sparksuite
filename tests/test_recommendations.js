@@ -58,16 +58,33 @@ function resetState() {
   };
   global.saveState = function() {};
   global.window.sparkCore = {
-    lastSessionOutcome: {
-      performance: {
-        weakAreas: ["lane_2", "late"]
-      },
-      sectionSummary: {
-        sectionIndex: 1,
-        sectionLabel: "Chorus"
-      }
+    getCompletedLessonIds: function() {
+      return ["bass_level_1", "bass_level_2", "bass_level_3"];
+    },
+    getPlayAlongDashboardView: function() {
+      return {
+        recent: S.playAlongRecent.slice(),
+        bookmarks: S.playAlongBookmarks.slice(),
+        outcome: {
+          performance: {
+            weakAreas: ["lane_2", "late"]
+          },
+          sectionSummary: {
+            sectionIndex: 1,
+            sectionLabel: "Chorus"
+          }
+        },
+        transportMode: "generated",
+        weakAreas: ["lane_2", "late"],
+        hasDrill: false,
+        weakSection: {
+          sectionIndex: 1,
+          sectionLabel: "Chorus"
+        }
+      };
     }
   };
+  global.__sparkState = global.S;
   global.getAverageMastery = function() { return 1; };
   global.getTopWeakSpots = function() { return null; };
   global.getCurriculumItem = function() { return null; };
@@ -171,6 +188,33 @@ test("collectRecommendationCandidates includes play-along weak-section and bookm
   assert.deepStrictEqual(weakSection.meta.weakAreas, ["lane_2", "late"]);
   assert.ok(bookmark);
   assert.strictEqual(bookmark.meta.sectionLabel, "Chorus");
+});
+
+test("curriculum recommendation can read completed lessons from sparkCore", function() {
+  S.completedLessons = [];
+  global.getCurriculumItem = function(kind, lessonId) {
+    if (kind === "lessons" && lessonId === "bass_level_4") {
+      return { id: "bass_level_4", title: "Walking Lines", level: 4 };
+    }
+    return null;
+  };
+  global.getNextLessonFromCurriculum = function(rootLessonId, completedLessonIds) {
+    completedLessonIds = completedLessonIds || [];
+    if (rootLessonId !== "curriculum_chordspark_main") return null;
+    return completedLessonIds.indexOf("bass_level_4") === -1 ? "bass_level_4" : null;
+  };
+
+  var candidates = collectRecommendationCandidates("guitar");
+  var curriculum = null;
+  for (var i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "curriculum") {
+      curriculum = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(curriculum);
+  assert.strictEqual(curriculum.id, "bass_level_4");
 });
 
 test("generateRecommendations prioritizes play-along recovery and module-progress ahead of generic challenges", function() {

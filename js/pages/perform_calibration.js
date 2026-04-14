@@ -1,3 +1,24 @@
+function performCalibrationRead(path, fallback){
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if(!root && typeof globalThis !== "undefined"){
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(!cursor) return fallback;
+  for(i=0;i<parts.length;i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
 function performCalibrationPage(){
   var calibrationView = getPerformanceCalibrationView();
   var source = calibrationView.source;
@@ -37,7 +58,7 @@ function performCalibrationPage(){
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<div><b>Captured Hits:</b> '+((S.performCalibrationHits||[]).length)+'</div>';
+  h += '<div><b>Captured Hits:</b> '+((performCalibrationRead("performCalibrationHits", [])||[]).length)+'</div>';
   h += '<div>Suggested Offset: '+(typeof computeCalibrationOffsetMs==="function" ? computeCalibrationOffsetMs() : 0)+' ms</div>';
   h += '</div>';
 
@@ -53,18 +74,18 @@ function getPerformanceCalibrationView(){
   return {
     source: runtimeState && runtimeState.performanceCalibrationSource
       ? runtimeState.performanceCalibrationSource
-      : (S.performCalibrationSource || "midi"),
+      : (performCalibrationRead("performCalibrationSource", "midi") || "midi"),
     mode: runtimeState && typeof runtimeState.performanceCalibrationMode === "boolean"
       ? runtimeState.performanceCalibrationMode
-      : !!S.performCalibrationMode,
+      : !!performCalibrationRead("performCalibrationMode", false),
     globalOffsetMs: runtimeState && typeof runtimeState.performanceTimingOffsetMs === "number"
       ? runtimeState.performanceTimingOffsetMs
-      : (S.performTimingOffsetMs || 0),
+      : (performCalibrationRead("performTimingOffsetMs", 0) || 0),
     midiOffsetMs: runtimeState && typeof runtimeState.performanceMidiOffsetMs === "number"
       ? runtimeState.performanceMidiOffsetMs
-      : (S.performMidiOffsetMs || 0),
+      : (performCalibrationRead("performMidiOffsetMs", 0) || 0),
     micOffsetMs: runtimeState && typeof runtimeState.performanceMicOffsetMs === "number"
       ? runtimeState.performanceMicOffsetMs
-      : (S.performMicOffsetMs || 0)
+      : (performCalibrationRead("performMicOffsetMs", 0) || 0)
   };
 }

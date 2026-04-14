@@ -3,10 +3,17 @@
 
 (function(){
 
+  function editorHitTestRead(path, fallback){
+    if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+      return SparkState.read(path, fallback);
+    }
+    return fallback;
+  }
+
   function getTimelinePixelMetrics(){
     return {
-      pxPerSec: S.editorViewportPxPerSec || 80,
-      laneHeight: S.editorLaneHeightPx || 56,
+      pxPerSec: editorHitTestRead(["editorViewportPxPerSec"], 80),
+      laneHeight: editorHitTestRead(["editorLaneHeightPx"], 56),
       range: getEditorTimelineRange()
     };
   }

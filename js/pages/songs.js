@@ -1,9 +1,114 @@
 // ===== ChordSpark: Song-related pages and sections =====
 
+function songsStateRead(path, fallback){
+  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
+    ? SparkState.getRoot()
+    : null;
+  if(!root && typeof globalThis !== "undefined"){
+    root = globalThis.__sparkState || globalThis.S || null;
+  }
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+    return SparkState.read(path, fallback);
+  }
+  if(!cursor) return fallback;
+  for(i = 0; i < parts.length; i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
+}
+
+function getSongsCoreView(){
+  if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
+  return window.sparkCore.getActiveSessionView() || null;
+}
+
+function getSongsRuntimeState(){
+  var view = getSongsCoreView();
+  return view && view.runtimeState ? view.runtimeState : null;
+}
+
+function getSongsPlayerSnapshot(){
+  var view = getSongsCoreView();
+  return view && view.player ? view.player : {
+    level: songsStateRead("level", 1)
+  };
+}
+
+function getSongsBrowserSnapshot(){
+  var runtime = getSongsRuntimeState();
+  return {
+    songsSubTab: runtime && runtime.songsSubTab ? runtime.songsSubTab : songsStateRead("songsSubTab", "builtin"),
+    songFilter: runtime && typeof runtime.songFilter === "string" ? runtime.songFilter : songsStateRead("songFilter", ""),
+    songSort: runtime && runtime.songSort ? runtime.songSort : songsStateRead("songSort", "level"),
+    songSortAsc: runtime && typeof runtime.songSortAsc === "boolean" ? runtime.songSortAsc : !!songsStateRead("songSortAsc", false),
+    communityTab: runtime && runtime.communityTab ? runtime.communityTab : songsStateRead("communityTab", "browse"),
+    communitySearch: runtime && typeof runtime.communitySearch === "string" ? runtime.communitySearch : songsStateRead("communitySearch", ""),
+    communitySort: runtime && runtime.communitySort ? runtime.communitySort : songsStateRead("communitySort", "recent"),
+    performanceDailyChallenge: runtime && runtime.performanceDailyChallenge ? runtime.performanceDailyChallenge : songsStateRead("performanceDailyChallenge", null),
+    performanceDailyComplete: runtime && typeof runtime.performanceDailyComplete === "boolean" ? runtime.performanceDailyComplete : !!songsStateRead("performanceDailyComplete", false)
+  };
+}
+
+function getSongsCommunitySnapshot(){
+  return {
+    loading: !!songsStateRead("communityLoading", false),
+    error: songsStateRead("communityError", "") || "",
+    songs: Array.isArray(songsStateRead("communitySongs", [])) ? songsStateRead("communitySongs", []) : []
+  };
+}
+
+function getSongsImportSnapshot(){
+  return {
+    importText: songsStateRead("importText", "") || "",
+    importError: songsStateRead("importError", "") || "",
+    importedSong: songsStateRead("importedSong", null) || null,
+    importedSongs: Array.isArray(songsStateRead("importedSongs", [])) ? songsStateRead("importedSongs", []) : []
+  };
+}
+
+function getSongsStemSnapshot(){
+  var runtime = getSongsRuntimeState();
+  return {
+    status: songsStateRead("stemStatus", "idle") || "idle",
+    error: songsStateRead("stemError", "") || "",
+    file: songsStateRead("stemFile", null) || null,
+    progress: typeof songsStateRead("stemProgress", null) === "number" ? songsStateRead("stemProgress", null) : 0,
+    paths: songsStateRead("stemPaths", null) || null,
+    toggles: songsStateRead("stemToggles", {}) || {},
+    volume: typeof songsStateRead("stemVolume", null) === "number" ? songsStateRead("stemVolume", null) : 1,
+    playing: typeof songsStateRead("stemPlaying", null) === "boolean" ? songsStateRead("stemPlaying", null) : !!(runtime && runtime.stemPlaying),
+    currentTime: typeof songsStateRead("stemCurrentTime", null) === "number" ? songsStateRead("stemCurrentTime", null) : (runtime && typeof runtime.stemCurrentTime === "number" ? runtime.stemCurrentTime : 0),
+    duration: typeof songsStateRead("stemDuration", null) === "number" ? songsStateRead("stemDuration", null) : (runtime && typeof runtime.stemDuration === "number" ? runtime.stemDuration : 0)
+  };
+}
+
+function getSongsSubmitSnapshot(){
+  return songsStateRead("submitSong", {
+    title: "",
+    artist: "",
+    submittedBy: "",
+    bpm: 120,
+    chords: [],
+    progression: []
+  }) || {
+    title: "",
+    artist: "",
+    submittedBy: "",
+    bpm: 120,
+    chords: [],
+    progression: []
+  };
+}
+
 // Helper: check if only one stem is on (solo mode)
 function _isStemSolo(name){
+  var stemState = getSongsStemSnapshot();
   var onCount=0,soloName="";
-  for(var k in S.stemToggles){if(S.stemToggles[k]){onCount++;soloName=k;}}
+  for(var k in stemState.toggles){if(stemState.toggles[k]){onCount++;soloName=k;}}
   return onCount===1&&soloName===name;
 }
 
@@ -20,9 +125,10 @@ function _formatPerformanceTechniqueLabel(key){
 // ===== STRUM TAB =====
 function strumTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var player = getSongsPlayerSnapshot();
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Strum Patterns &#127932;</h2></div><div class="flex-col">';
   for(var i=0;i<STRUM_PATTERNS.length;i++){
-    var sp=STRUM_PATTERNS[i],lk=sp.level>S.level;
+    var sp=STRUM_PATTERNS[i],lk=sp.level>player.level;
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openStrum\',\'"+sp.name+"\')"))+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+sp.name+'</h3><p style="margin:4px 0 0;font-size:12px;color:var(--text-dim)">'+sp.desc+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[sp.level] || '#999')+'">Lvl '+sp.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+sp.bpm+' BPM</div></div></div>';
     h+='<div style="display:flex;gap:4px;margin-top:10px">';
@@ -39,20 +145,14 @@ function strumTab(){
 // ===== SONGS TAB =====
 function songsTab(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  var songBrowserState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var songsSubTab = songBrowserState && songBrowserState.songsSubTab ? songBrowserState.songsSubTab : S.songsSubTab;
-  var songFilter = songBrowserState && typeof songBrowserState.songFilter === "string" ? songBrowserState.songFilter : S.songFilter;
-  var songSort = songBrowserState && songBrowserState.songSort ? songBrowserState.songSort : S.songSort;
-  var songSortAsc = songBrowserState && typeof songBrowserState.songSortAsc === "boolean" ? songBrowserState.songSortAsc : S.songSortAsc;
-  var performanceDailyChallenge = songBrowserState && songBrowserState.performanceDailyChallenge
-    ? songBrowserState.performanceDailyChallenge
-    : S.performanceDailyChallenge;
-  var performanceDailyComplete = songBrowserState && typeof songBrowserState.performanceDailyComplete === "boolean"
-    ? songBrowserState.performanceDailyComplete
-    : S.performanceDailyComplete;
+  var browserState = getSongsBrowserSnapshot();
+  var player = getSongsPlayerSnapshot();
+  var songsSubTab = browserState.songsSubTab;
+  var songFilter = browserState.songFilter;
+  var songSort = browserState.songSort;
+  var songSortAsc = browserState.songSortAsc;
+  var performanceDailyChallenge = browserState.performanceDailyChallenge;
+  var performanceDailyComplete = browserState.performanceDailyComplete;
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Song Library &#127925;</h2></div>';
   // Sub-tabs: Built-in | Community
   h+='<div class="community-tabs">';
@@ -136,11 +236,11 @@ function songsTab(){
 
   h+='<div class="flex-col">';
   for(var i=0;i<filtered.length;i++){
-    var s=filtered[i],lk=s.level>S.level;
-    h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
+    var s=filtered[i],lk=s.level>player.level;
+    h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+D.SONGS.indexOf(s)+")"))+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(s.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(s.artist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+s.bpm+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
-      var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",S.performDifficulty);
+      var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",songsStateRead("performDifficulty", "normal"));
       if(_ps.mastery!=="none"){
         h+='<div style="font-size:11px;font-weight:700;color:'+getMasteryColor(_ps.mastery)+'">'+getMasteryIcon(_ps.mastery)+' '+_ps.mastery+'</div>';
       }
@@ -162,13 +262,11 @@ function songsTab(){
 
 // ===== COMMUNITY SECTION =====
 function communitySection(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  var songBrowserState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var communityTab = songBrowserState && songBrowserState.communityTab ? songBrowserState.communityTab : S.communityTab;
-  var communitySearch = songBrowserState && typeof songBrowserState.communitySearch === "string" ? songBrowserState.communitySearch : S.communitySearch;
-  var communitySort = songBrowserState && songBrowserState.communitySort ? songBrowserState.communitySort : S.communitySort;
+  var browserState = getSongsBrowserSnapshot();
+  var communityState = getSongsCommunitySnapshot();
+  var communityTab = browserState.communityTab;
+  var communitySearch = browserState.communitySearch;
+  var communitySort = browserState.communitySort;
   var h='<div class="community-tabs" style="margin-bottom:12px">';
   h+='<button class="community-tab'+(communityTab==="browse"?" active":"")+'" onclick="act(\'communityTab\',\'browse\')">Browse</button>';
   h+='<button class="community-tab'+(communityTab==="submit"?" active":"")+'" onclick="act(\'communityTab\',\'submit\')">Submit</button>';
@@ -180,16 +278,16 @@ function communitySection(){
   h+='<div style="display:flex;gap:8px;margin-bottom:12px"><input class="set-input" style="flex:1" type="text" placeholder="Search songs..." value="'+escHTML(communitySearch)+'" oninput="act(\'communitySearch\',this.value)" aria-label="Search community songs"/>';
   h+='<button onclick="act(\'communitySort\',\''+(communitySort==="votes"?"newest":"votes")+'\')" style="padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;background:var(--input-bg);color:var(--text-muted)">'+(communitySort==="votes"?"&#11088; Top":"&#128337; New")+'</button></div>';
 
-  if(S.communityLoading){
+  if(communityState.loading){
     h+='<div class="text-center" style="padding:30px;color:var(--text-muted)">Loading...</div>';
-  } else if(S.communityError){
-    h+='<div class="card text-center"><p style="color:#FF6B6B;font-size:13px">'+escHTML(S.communityError)+'</p><p style="color:var(--text-muted);font-size:12px;margin-top:8px">Make sure the community server is running:<br><code>cd server && npm start</code></p></div>';
-  } else if(S.communitySongs.length===0){
+  } else if(communityState.error){
+    h+='<div class="card text-center"><p style="color:#FF6B6B;font-size:13px">'+escHTML(communityState.error)+'</p><p style="color:var(--text-muted);font-size:12px;margin-top:8px">Make sure the community server is running:<br><code>cd server && npm start</code></p></div>';
+  } else if(communityState.songs.length===0){
     h+='<div class="card text-center"><p style="color:var(--text-muted);font-size:13px">No community songs yet. Be the first to submit!</p></div>';
   } else {
     h+='<div class="flex-col">';
-    for(var i=0;i<S.communitySongs.length;i++){
-      var cs=S.communitySongs[i];
+    for(var i=0;i<communityState.songs.length;i++){
+      var cs=communityState.songs[i];
       h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(cs.artist)+' | '+escHTML(String(cs.bpm))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
       var chords=[];try{chords=JSON.parse(cs.chords);}catch(e){console.error("ChordSpark: failed to parse community song chords",e);}
       if(chords.length){
@@ -207,7 +305,7 @@ function communitySection(){
 
 function communitySubmitForm(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var ss=S.submitSong;
+  var ss=getSongsSubmitSnapshot();
   var h='<div class="card"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">Submit a Song</h3>';
   h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(ss.title)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
   h+='<input class="set-input mb12" type="text" placeholder="Artist" value="'+escHTML(ss.artist)+'" oninput="act(\'submitField\',\'artist:\'+this.value)" aria-label="Artist name"/>';
@@ -237,49 +335,51 @@ function communitySubmitForm(){
 // ===== IMPORT CHORD SHEET SECTION =====
 function importSection(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var importState = getSongsImportSnapshot();
   var h='<div class="card mb16">';
   h+='<h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128196; Import Chord Sheet</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Paste a chord sheet using [Am] [G] bracket notation or chord names on their own lines.</p>';
-  h+='<textarea class="import-textarea" id="import-textarea" rows="8" placeholder="[Am]   [G]   [C]   [F]\nVerse lyrics here...\n[Am]   [G]   [C]   [F]\nMore lyrics..." oninput="act(\'importText\',this.value)">'+escHTML(S.importText)+'</textarea>';
+  h+='<textarea class="import-textarea" id="import-textarea" rows="8" placeholder="[Am]   [G]   [C]   [F]\nVerse lyrics here...\n[Am]   [G]   [C]   [F]\nMore lyrics..." oninput="act(\'importText\',this.value)">'+escHTML(importState.importText)+'</textarea>';
   h+='<button class="btn" onclick="act(\'parseImport\')" style="width:100%;padding:10px;font-size:14px;margin-top:10px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">&#128270; Parse Chords</button>';
   h+='</div>';
 
   // Parse result
-  if(S.importError){
-    h+='<div class="card mb16"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(S.importError)+'</p></div>';
+  if(importState.importError){
+    h+='<div class="card mb16"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(importState.importError)+'</p></div>';
   }
-  if(S.importedSong){
+  if(importState.importedSong){
+    var importedSong = importState.importedSong;
     h+='<div class="card mb16">';
     h+='<h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#9989; Parsed Successfully</h4>';
-    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(S.importedSong.title)+'" oninput="act(\'importTitle\',this.value)"/></div>';
-    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(S.importedSong.artist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
-    h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+S.importedSong.bpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
-    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Chords found ('+S.importedSong.chords.length+'):</div>';
+    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(importedSong.title)+'" oninput="act(\'importTitle\',this.value)"/></div>';
+    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(importedSong.artist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
+    h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+importedSong.bpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
+    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Chords found ('+importedSong.chords.length+'):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">';
-    for(var i=0;i<S.importedSong.chords.length;i++){
-      var cn=S.importedSong.chords[i];
+    for(var i=0;i<importedSong.chords.length;i++){
+      var cn=importedSong.chords[i];
       var known=false;
       for(var j=0;j<D.ALL_CHORDS.length;j++)if(D.ALL_CHORDS[j].name===cn||D.ALL_CHORDS[j].short===cn){known=true;break;}
       h+='<span style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;background:'+(known?"#4ECDC422":"#FF6B6B22")+';color:'+(known?"#4ECDC4":"#FF6B6B")+';border:1px solid '+(known?"#4ECDC4":"#FF6B6B")+'">'+escHTML(cn)+'</span>';
     }
     h+='</div>';
-    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Progression ('+S.importedSong.progression.length+' chords):</div>';
+    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Progression ('+importedSong.progression.length+' chords):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;background:var(--input-bg);border-radius:10px;padding:8px">';
-    for(var i=0;i<Math.min(S.importedSong.progression.length,32);i++){
-      h+='<span style="background:var(--card-bg);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--text-primary)">'+escHTML(S.importedSong.progression[i])+'</span>';
+    for(var i=0;i<Math.min(importedSong.progression.length,32);i++){
+      h+='<span style="background:var(--card-bg);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--text-primary)">'+escHTML(importedSong.progression[i])+'</span>';
     }
-    if(S.importedSong.progression.length>32)h+='<span style="font-size:11px;color:var(--text-muted)">...+'+(S.importedSong.progression.length-32)+' more</span>';
+    if(importedSong.progression.length>32)h+='<span style="font-size:11px;color:var(--text-muted)">...+'+(importedSong.progression.length-32)+' more</span>';
     h+='</div>';
     h+='<button class="btn" onclick="act(\'saveImport\')" style="width:100%;padding:10px;font-size:14px;background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128190; Save as Song</button>';
     h+='</div>';
   }
 
   // Saved imported songs
-  if(S.importedSongs.length>0){
+  if(importState.importedSongs.length>0){
     h+='<div class="card"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#127925; My Imported Songs</h4>';
     h+='<div class="flex-col">';
-    for(var i=0;i<S.importedSongs.length;i++){
-      var sg=S.importedSongs[i];
+    for(var i=0;i<importState.importedSongs.length;i++){
+      var sg=importState.importedSongs[i];
       h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--input-bg);border-radius:12px">';
       h+='<div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+escHTML(sg.title)+'</div>';
       h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(sg.artist)+' | '+sg.chords.length+' chords | '+sg.bpm+' BPM</div></div>';
@@ -295,6 +395,7 @@ function importSection(){
 
 // ===== STEM SEPARATION SECTION =====
 function stemsSection(){
+  var stemState = getSongsStemSnapshot();
   var h='<div class="card mb16" style="text-align:center">';
   h+='<div style="font-size:32px;margin-bottom:8px">&#127911;</div>';
   h+='<h3 style="margin:0 0 6px;font-size:18px;font-weight:900;color:var(--text-primary)">Stem Separator</h3>';
@@ -307,26 +408,26 @@ function stemsSection(){
   }
 
   // Import button
-  if(S.stemStatus==="idle"||S.stemStatus==="error"||S.stemStatus==="ready"){
+  if(stemState.status==="idle"||stemState.status==="error"||stemState.status==="ready"){
     h+='<button onclick="act(\'stemOpenFile\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;padding:12px 28px;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;border:none">&#128193; Import Audio File</button>';
   }
   h+='</div>';
 
   // Error
-  if(S.stemError){
-    h+='<div class="card mb16" style="border:1px solid #FF6B6B"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(S.stemError)+'</p></div>';
+  if(stemState.error){
+    h+='<div class="card mb16" style="border:1px solid #FF6B6B"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(stemState.error)+'</p></div>';
   }
 
   // Separating progress
-  if(S.stemStatus==="separating"){
+  if(stemState.status==="separating"){
     h+='<div class="card mb16">';
     h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
     h+='<div style="width:24px;height:24px;border:3px solid var(--border);border-top-color:#4ECDC4;border-radius:50%;animation:spin 1s linear infinite"></div>';
     h+='<div><div style="font-size:14px;font-weight:800;color:var(--text-primary)">Separating stems...</div>';
-    h+='<div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div></div>';
+    h+='<div style="font-size:11px;color:var(--text-muted)">'+(stemState.file?escHTML(stemState.file.fileName):"")+'</div></div></div>';
     // Progress bar
     h+='<div style="background:var(--input-bg);border-radius:8px;height:8px;overflow:hidden;margin-bottom:8px">';
-    h+='<div style="background:linear-gradient(90deg,#4ECDC4,#45B7D1);height:100%;border-radius:8px;width:'+S.stemProgress+'%;transition:width .3s ease"></div></div>';
+    h+='<div style="background:linear-gradient(90deg,#4ECDC4,#45B7D1);height:100%;border-radius:8px;width:'+stemState.progress+'%;transition:width .3s ease"></div></div>';
     h+='<div style="display:flex;justify-content:space-between;align-items:center">';
     h+='<span style="font-size:12px;color:var(--text-muted)">This may take 5-10 minutes</span>';
     h+='<button onclick="act(\'stemCancel\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid var(--border);cursor:pointer">Cancel</button>';
@@ -334,12 +435,12 @@ function stemsSection(){
   }
 
   // Ready — show open player button
-  if(S.stemStatus==="ready"&&S.stemPaths){
+  if(stemState.status==="ready"&&stemState.paths){
     h+='<div class="card mb16" style="background:linear-gradient(135deg,#4ECDC422,#45B7D122);border:1px solid #4ECDC4">';
     h+='<div style="display:flex;align-items:center;gap:12px">';
     h+='<div style="font-size:28px">&#9989;</div>';
     h+='<div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--text-primary)">Stems Ready!</div>';
-    h+='<div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div>';
+    h+='<div style="font-size:11px;color:var(--text-muted)">'+(stemState.file?escHTML(stemState.file.fileName):"")+'</div></div>';
     h+='<button onclick="act(\'stemOpen\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;border:none">&#127911; Open Player</button>';
     h+='</div></div>';
   }
@@ -359,20 +460,16 @@ function stemsSection(){
 
 // ===== STEM PLAYER PAGE =====
 function stemsPage(){
-  var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
-  }
-  var stemPlaying = typeof S.stemPlaying === "boolean" ? S.stemPlaying : !!(runtime && runtime.stemPlaying);
-  var stemCurrentTime = typeof S.stemCurrentTime === "number" ? S.stemCurrentTime : (runtime && typeof runtime.stemCurrentTime === "number" ? runtime.stemCurrentTime : 0);
-  var stemDuration = typeof S.stemDuration === "number" ? S.stemDuration : (runtime && typeof runtime.stemDuration === "number" ? runtime.stemDuration : 0);
+  var stemState = getSongsStemSnapshot();
+  var stemPlaying = stemState.playing;
+  var stemCurrentTime = stemState.currentTime;
+  var stemDuration = stemState.duration;
   var h='<div style="padding:8px 0">';
   // Header
   h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
   h+='<button onclick="act(\'stemBack\')" style="background:var(--input-bg);border:none;width:36px;height:36px;border-radius:12px;font-size:18px;cursor:pointer;color:var(--text-primary)">&#8592;</button>';
   h+='<div style="flex:1"><div style="font-size:16px;font-weight:900;color:var(--text-primary)">&#127911; Stem Player</div>';
-  h+='<div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div></div>';
+  h+='<div style="font-size:11px;color:var(--text-muted)">'+(stemState.file?escHTML(stemState.file.fileName):"")+'</div></div></div>';
 
   // Stem toggles
   h+='<div class="card mb12">';
@@ -381,8 +478,8 @@ function stemsPage(){
   h+='</div>';
   for(var i=0;i<STEM_NAMES.length;i++){
     var name=STEM_NAMES[i];
-    if(!S.stemPaths||!S.stemPaths[name])continue;
-    var on=S.stemToggles[name];
+    if(!stemState.paths||!stemState.paths[name])continue;
+    var on=stemState.toggles[name];
     var color=STEM_COLORS[name];
     var icon=STEM_ICONS[name];
     h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;'+(i>0?"border-top:1px solid var(--border);":"")+'">';
@@ -410,8 +507,8 @@ function stemsPage(){
   h+='<div class="card">';
   h+='<div style="display:flex;align-items:center;gap:12px">';
   h+='<span style="font-size:16px">&#128266;</span>';
-  h+='<input type="range" min="0" max="1" step="0.05" value="'+S.stemVolume+'" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:#4ECDC4"/>';
-  h+='<span style="font-size:12px;color:var(--text-muted);font-weight:700;min-width:36px">'+Math.round(S.stemVolume*100)+'%</span>';
+  h+='<input type="range" min="0" max="1" step="0.05" value="'+stemState.volume+'" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:#4ECDC4"/>';
+  h+='<span style="font-size:12px;color:var(--text-muted);font-weight:700;min-width:36px">'+Math.round(stemState.volume*100)+'%</span>';
   h+='</div></div>';
 
   h+='</div>';
@@ -419,6 +516,7 @@ function stemsPage(){
 }
 
 function performSubTab(){
+  var midiEnabled = !!songsStateRead("midiEnabled", false);
   var h='<div class="card mb20" style="text-align:center;padding:24px">';
   var charts = typeof getPerformanceChartLibrary === "function" ? getPerformanceChartLibrary() : [];
   h+='<div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
@@ -439,7 +537,7 @@ function performSubTab(){
     h+='<div style="font-size:24px">'+icon+'</div></div></div>';
   }
   h+='<p style="font-size:11px;color:var(--text-muted)">More charts coming soon! MIDI input: '+
-    (S.midiEnabled?'<span style="color:#4ECDC4;font-weight:700">Connected</span>':'<span style="color:#FF6B6B">Off &mdash; enable in Tools</span>')+'</p>';
+    (midiEnabled?'<span style="color:#4ECDC4;font-weight:700">Connected</span>':'<span style="color:#FF6B6B">Off &mdash; enable in Tools</span>')+'</p>';
   h+='</div>';
   h+='<div style="text-align:center;margin-top:12px"><button class="btn btn-sm" onclick="act(\'openPerfStats\')" style="background:var(--input-bg);color:var(--text-secondary)">&#128202; View Stats</button></div>';
   return h;

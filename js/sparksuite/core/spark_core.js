@@ -1,14 +1,66 @@
 (function() {
+  function readLegacyAppState() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      return SparkState.getRoot();
+    }
+    if (typeof globalThis !== "undefined" && globalThis.__sparkState) {
+      return globalThis.__sparkState;
+    }
+    return null;
+  }
+
+  function createLegacyStateBridge() {
+    return {
+      masteryStore: {
+        getSkillGraph: function() {
+          var state = readLegacyAppState();
+          return state && state.skillGraph ? state.skillGraph : {};
+        },
+        setSkillGraph: function(graph) {
+          var state = readLegacyAppState();
+          if (!state) return;
+          state.skillGraph = graph || {};
+        }
+      },
+      getPlayAlongRecent: function() {
+        var state = readLegacyAppState();
+        return state && Array.isArray(state.playAlongRecent) ? state.playAlongRecent : [];
+      },
+      getPlayAlongBookmarks: function() {
+        var state = readLegacyAppState();
+        return state && Array.isArray(state.playAlongBookmarks) ? state.playAlongBookmarks : [];
+      },
+      analysisContextProvider: function() {
+        var state = readLegacyAppState();
+        return {
+          skillGraph: state && state.skillGraph ? state.skillGraph : {},
+          lastSessionEvents: state && Array.isArray(state.lastSessionEvents) ? state.lastSessionEvents : [],
+          performAccuracy: state && typeof state.performAccuracy === "number" ? state.performAccuracy : 0,
+          performCombo: state && typeof state.performCombo === "number" ? state.performCombo : 0,
+          playerProfile: state && state.playerProfile ? state.playerProfile : null,
+          weakSpots: state && state.weakSpots ? state.weakSpots : null
+        };
+      }
+    };
+  }
+
   function SparkCore(options) {
     options = options || {};
+    var legacyStateBridge = options.legacyStateBridge || createLegacyStateBridge();
+    this.legacyStateBridge = legacyStateBridge;
     this.storage = options.storage || new SparkSuiteStorage();
     this.aiEngine = options.aiEngine || new SparkAIEngine();
     this.instrumentManager = options.instrumentManager || new SparkInstrumentManager();
     this.psychologyEngine = options.psychologyEngine || new SparkSuitePsychologyEngine();
     this.curriculumEngine = options.curriculumEngine || new SparkSuiteCurriculumEngine();
     this.practiceEngine = options.practiceEngine || new SparkSuitePracticeEngine(this.psychologyEngine);
-    this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine();
-    this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine);
+    this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine({
+      masteryStore: legacyStateBridge.masteryStore,
+      persist: typeof saveState === "function" ? saveState : null
+    });
+    this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine, {
+      analysisContextProvider: legacyStateBridge.analysisContextProvider
+    });
     this.currentPlan = null;
     this.lastSessionOutcome = null;
     this.performanceEditorDocument = null;
@@ -19,6 +71,7 @@
     this.playbackEngine = null;
     this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
+    this.playAlongSession = this.createInitialPlayAlongSession();
   }
 
   SparkCore.prototype.cloneValue = function(value) {
@@ -193,8 +246,75 @@
     };
   };
 
+  SparkCore.prototype.createInitialPlayAlongSession = function() {
+    return {
+      params: null,
+      chart: null,
+      userId: null,
+      startedAtMs: null,
+      pausedPlaybackTimeMs: null
+    };
+  };
+
   SparkCore.prototype.getRuntimeState = function() {
     return this.runtimeState;
+  };
+
+  SparkCore.prototype.getPlayAlongSession = function() {
+    return this.playAlongSession || null;
+  };
+
+  SparkCore.prototype.setPlayAlongSession = function(patch) {
+    var next = this.createInitialPlayAlongSession();
+    var key;
+    var current = this.playAlongSession || {};
+    patch = patch || {};
+
+    for (key in next) {
+      if (!Object.prototype.hasOwnProperty.call(next, key)) continue;
+      if (Object.prototype.hasOwnProperty.call(current, key)) {
+        next[key] = current[key];
+      }
+      if (Object.prototype.hasOwnProperty.call(patch, key)) {
+        next[key] = patch[key];
+      }
+    }
+
+    this.playAlongSession = next;
+    return this.playAlongSession;
+  };
+
+  SparkCore.prototype.clearPlayAlongSession = function() {
+    this.playAlongSession = this.createInitialPlayAlongSession();
+    return this.playAlongSession;
+  };
+
+  SparkCore.prototype.getPausedPlayAlongTimeMs = function() {
+    var session = this.getPlayAlongSession();
+    if (!session || typeof session.pausedPlaybackTimeMs !== "number") return null;
+    return session.pausedPlaybackTimeMs;
+  };
+
+  SparkCore.prototype.setPausedPlayAlongTimeMs = function(timeMs) {
+    this.setPlayAlongSession({
+      pausedPlaybackTimeMs: typeof timeMs === "number" ? timeMs : null
+    });
+    return this.getPausedPlayAlongTimeMs();
+  };
+
+  SparkCore.prototype.clearPausedPlayAlongTimeMs = function() {
+    this.setPlayAlongSession({ pausedPlaybackTimeMs: null });
+    return null;
+  };
+
+  SparkCore.prototype.getActivePlayAlongParams = function() {
+    var session = this.getPlayAlongSession();
+    return session ? session.params || null : null;
+  };
+
+  SparkCore.prototype.getActivePlayAlongChart = function() {
+    var session = this.getPlayAlongSession();
+    return session ? session.chart || null : null;
   };
 
   SparkCore.prototype.updateRuntimeState = function(patch) {
@@ -1698,11 +1818,246 @@
     return this.lastSessionOutcome;
   };
 
+  SparkCore.prototype.getPlayAlongRecent = function(limit) {
+    var items = this.legacyStateBridge && typeof this.legacyStateBridge.getPlayAlongRecent === "function"
+      ? this.legacyStateBridge.getPlayAlongRecent()
+      : [];
+    items = Array.isArray(items) ? items : [];
+    items = this.cloneValue(items) || [];
+    if (typeof limit === "number" && limit >= 0) return items.slice(0, limit);
+    return items;
+  };
+
+  SparkCore.prototype.getPlayAlongBookmarks = function(limit) {
+    var items = this.legacyStateBridge && typeof this.legacyStateBridge.getPlayAlongBookmarks === "function"
+      ? this.legacyStateBridge.getPlayAlongBookmarks()
+      : [];
+    items = Array.isArray(items) ? items : [];
+    items = this.cloneValue(items) || [];
+    if (typeof limit === "number" && limit >= 0) return items.slice(0, limit);
+    return items;
+  };
+
+  SparkCore.prototype.getPlayAlongDashboardView = function() {
+    var runtimeState = this.getRuntimeState ? this.getRuntimeState() : this.runtimeState || null;
+    var outcome = this.getLastSessionOutcome();
+    return {
+      recent: this.getPlayAlongRecent(),
+      bookmarks: this.getPlayAlongBookmarks(),
+      outcome: outcome,
+      transportMode: runtimeState && runtimeState.playAlongTransportMode ? runtimeState.playAlongTransportMode : null,
+      weakAreas: outcome && outcome.performance && Array.isArray(outcome.performance.weakAreas)
+        ? outcome.performance.weakAreas.slice(0, 3)
+        : [],
+      hasDrill: !!(outcome && Array.isArray(outcome.drills) && outcome.drills.length),
+      weakSection: outcome && outcome.sectionSummary ? this.cloneValue(outcome.sectionSummary) : null
+    };
+  };
+
+  SparkCore.prototype.getInstrumentProgressView = function(instrumentId) {
+    var state = readLegacyAppState();
+    var completedLessons = [];
+    var masteryLessons = [];
+    var masteryRhythm = {};
+    var namedSkillProgress = {};
+    var lessonSeen = {};
+    var masterySeen = {};
+    var i;
+    var lessonId;
+
+    instrumentId = instrumentId || null;
+
+    if (state && Array.isArray(state.completedLessons)) {
+      completedLessons = this.cloneValue(state.completedLessons) || [];
+    }
+    if (state && state.mastery && state.mastery.lessons) {
+      for (lessonId in state.mastery.lessons) {
+        if (!state.mastery.lessons[lessonId]) continue;
+        masteryLessons.push(lessonId);
+      }
+    }
+    if (state && state.mastery && state.mastery.rhythm) {
+      masteryRhythm = this.cloneValue(state.mastery.rhythm) || {};
+    }
+
+    if (instrumentId === "ukulele" && state && state.ukuleleSkillProgress) {
+      namedSkillProgress = this.cloneValue(state.ukuleleSkillProgress) || {};
+    } else if (instrumentId === "bass" && state && state.bassSkillProgress) {
+      namedSkillProgress = this.cloneValue(state.bassSkillProgress) || {};
+    }
+
+    completedLessons = Array.isArray(completedLessons) ? completedLessons : [];
+    masteryLessons = Array.isArray(masteryLessons) ? masteryLessons : [];
+
+    for (i = 0; i < completedLessons.length; i++) {
+      lessonSeen[completedLessons[i]] = true;
+    }
+    for (i = 0; i < masteryLessons.length; i++) {
+      masterySeen[masteryLessons[i]] = true;
+      if (!lessonSeen[masteryLessons[i]]) completedLessons.push(masteryLessons[i]);
+    }
+
+    return {
+      instrument: instrumentId,
+      completedLessonIds: completedLessons,
+      masteryLessonIds: masteryLessons,
+      rhythmMastery: masteryRhythm,
+      rhythmSkillIds: Object.keys(masteryRhythm || {}),
+      namedSkillProgress: namedSkillProgress,
+      namedSkillIds: Object.keys(namedSkillProgress || {})
+    };
+  };
+
+  SparkCore.prototype.getCompletedLessonIds = function() {
+    return this.getInstrumentProgressView(null).completedLessonIds.slice();
+  };
+
+  SparkCore.prototype.recordLegacyPracticeSession = function(result) {
+    var state;
+    var record;
+    var durationMin;
+    var today;
+    var yesterday;
+    if (!result) return null;
+    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyPracticeSessionRecord === "function") {
+      record = SparkProgressBridge.applyPracticeSessionRecord(result);
+      if (typeof saveState === "function") saveState();
+      return record;
+    }
+
+    state = readLegacyAppState();
+    record = this.cloneValue(result) || {};
+    if (!state) return record;
+
+    record.ts = record.ts || Date.now();
+    if (!Array.isArray(state.practiceHistory)) state.practiceHistory = [];
+    state.practiceHistory.push(record);
+
+    durationMin = record.durationMin || 0;
+    if (durationMin) {
+      state.totalPracticeMinutes = (state.totalPracticeMinutes || 0) + durationMin;
+      state.todayPracticeMinutes = (state.todayPracticeMinutes || 0) + durationMin;
+    }
+
+    today = new Date().toISOString().slice(0, 10);
+    if (state.lastPracticeDate !== today) {
+      yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      state.practiceStreak = state.lastPracticeDate === yesterday ? ((state.practiceStreak || 0) + 1) : 1;
+      state.lastPracticeDate = today;
+    }
+
+    if (typeof saveState === "function") saveState();
+    return record;
+  };
+
+  SparkCore.prototype.buildLegacyItemResultSummary = function(result) {
+    if (!result) return null;
+    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.buildLegacyItemResultSummary === "function") {
+      return SparkProgressBridge.buildLegacyItemResultSummary(result);
+    }
+    return {
+      practiceResult: this.cloneValue(result),
+      weakSpotUpdate: buildSparkCoreWeakSpotUpdate(result, this.cloneValue.bind(this)),
+      adaptiveUpdate: result.exerciseId ? {
+        exerciseId: result.exerciseId,
+        accuracy: result.accuracy,
+        ts: Date.now()
+      } : null
+    };
+  };
+
+  SparkCore.prototype.updateLegacyWeakSpotsFromPerformance = function(result) {
+    var summary;
+    var state;
+    var weakSpots;
+    if (!result) return null;
+    summary = this.buildLegacyItemResultSummary(result);
+    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyWeakSpotUpdate === "function") {
+      SparkProgressBridge.applyWeakSpotUpdate(summary ? summary.weakSpotUpdate : null);
+      if (typeof saveState === "function") saveState();
+      return summary ? summary.weakSpotUpdate : null;
+    }
+
+    state = readLegacyAppState();
+    if (!state) return summary ? summary.weakSpotUpdate : null;
+    weakSpots = ensureSparkCoreWeakSpots(state);
+    applySparkCoreWeakSpotUpdate(weakSpots, summary ? summary.weakSpotUpdate : null);
+    if (typeof saveState === "function") saveState();
+    return summary ? summary.weakSpotUpdate : null;
+  };
+
+  SparkCore.prototype.updateLegacyAdaptiveFromResult = function(result) {
+    var summary;
+    var state;
+    if (!result || !result.exerciseId) return null;
+    summary = this.buildLegacyItemResultSummary(result);
+    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyAdaptiveUpdate === "function") {
+      SparkProgressBridge.applyAdaptiveUpdate(summary ? summary.adaptiveUpdate : null);
+      if (typeof saveState === "function") saveState();
+      return summary ? summary.adaptiveUpdate : null;
+    }
+
+    state = readLegacyAppState();
+    if (!state) return summary ? summary.adaptiveUpdate : null;
+    if (!state.adaptiveState || typeof state.adaptiveState !== "object" || Array.isArray(state.adaptiveState)) {
+      state.adaptiveState = {};
+    }
+    state.adaptiveState[result.exerciseId] = {
+      accuracy: result.accuracy,
+      ts: Date.now()
+    };
+    if (typeof saveState === "function") saveState();
+    return state.adaptiveState[result.exerciseId];
+  };
+
+  SparkCore.prototype.getLegacyProgressSnapshot = function() {
+    var state = readLegacyAppState();
+    var lessonView = this.getInstrumentProgressView(null);
+    return {
+      completedLessonIds: lessonView.completedLessonIds.slice(),
+      mastery: {
+        lessons: this.cloneValue((state && state.mastery && state.mastery.lessons) ? state.mastery.lessons : {}) || {},
+        chords: this.cloneValue((state && state.mastery && state.mastery.chords) ? state.mastery.chords : {}) || {},
+        rhythm: this.cloneValue(lessonView.rhythmMastery || {}) || {}
+      },
+      chordProgress: this.cloneValue((state && state.chordProgress) ? state.chordProgress : {}) || {},
+      ukuleleSkillProgress: this.cloneValue((state && state.ukuleleSkillProgress) ? state.ukuleleSkillProgress : {}) || {},
+      bassSkillProgress: this.cloneValue((state && state.bassSkillProgress) ? state.bassSkillProgress : {}) || {}
+    };
+  };
+
+  SparkCore.prototype.getLegacyPlayerSnapshot = function() {
+    var state = readLegacyAppState();
+    return {
+      xp: (state && typeof state.xp === "number") ? state.xp : 0,
+      level: state ? (state.playerLevel || state.level || 1) : 1,
+      streak: (state && typeof state.streak === "number") ? state.streak : 0,
+      lastSessionDate: (state && state.lastSessionDate) ? state.lastSessionDate : null,
+      achievements: this.cloneValue((state && state.playerAchievements) ? state.playerAchievements : {}) || {},
+      unlocks: this.cloneValue((state && state.unlocks) ? state.unlocks : {}) || {}
+    };
+  };
+
+  SparkCore.prototype.getLegacyPracticeAnalyticsSnapshot = function() {
+    var state = readLegacyAppState();
+    return {
+      transitionStats: this.cloneValue((state && state.transitionStats) ? state.transitionStats : {}) || {},
+      chordProgress: this.cloneValue((state && state.chordProgress) ? state.chordProgress : {}) || {},
+      performanceStats: this.cloneValue((state && state.performanceStats) ? state.performanceStats : {}) || {}
+    };
+  };
+
   SparkCore.prototype.getActiveSessionView = function() {
     return {
       plan: this.currentPlan,
       runtimeState: this.getRuntimeState(),
-      lastSessionOutcome: this.getLastSessionOutcome()
+      lastSessionOutcome: this.getLastSessionOutcome(),
+      playAlong: this.getPlayAlongDashboardView(),
+      ukulele: this.getInstrumentProgressView("ukulele"),
+      bass: this.getInstrumentProgressView("bass"),
+      progress: this.getLegacyProgressSnapshot(),
+      player: this.getLegacyPlayerSnapshot(),
+      practiceAnalytics: this.getLegacyPracticeAnalyticsSnapshot()
     };
   };
 
@@ -2629,6 +2984,66 @@
     }
     return false;
   };
+
+  function buildSparkCoreWeakSpotUpdate(result, cloneValue) {
+    var update = {};
+    if (result.transitions) update.transitions = cloneValue(result.transitions);
+    if (result.chords) update.chords = cloneValue(result.chords);
+    if (result.rhythm) update.rhythm = cloneValue(result.rhythm);
+    if (Array.isArray(result.phrases)) update.phrases = cloneValue(result.phrases);
+    return sparkCoreHasOwnKeys(update) ? update : null;
+  }
+
+  function ensureSparkCoreWeakSpots(state) {
+    if (!state.weakSpots || typeof state.weakSpots !== "object" || Array.isArray(state.weakSpots)) {
+      state.weakSpots = {};
+    }
+    if (!state.weakSpots.transitions) state.weakSpots.transitions = {};
+    if (!state.weakSpots.chords) state.weakSpots.chords = {};
+    if (!state.weakSpots.rhythm) state.weakSpots.rhythm = {};
+    if (!state.weakSpots.phrases) state.weakSpots.phrases = {};
+    return state.weakSpots;
+  }
+
+  function applySparkCoreWeakSpotUpdate(weakSpots, update) {
+    var i;
+    if (!weakSpots || !update) return;
+    if (update.transitions) {
+      for (var transitionKey in update.transitions) {
+        updateSparkCoreWeakMetric(weakSpots.transitions, transitionKey, update.transitions[transitionKey]);
+      }
+    }
+    if (update.chords) {
+      for (var chordKey in update.chords) {
+        updateSparkCoreWeakMetric(weakSpots.chords, chordKey, update.chords[chordKey]);
+      }
+    }
+    if (update.rhythm) {
+      for (var rhythmKey in update.rhythm) {
+        updateSparkCoreWeakMetric(weakSpots.rhythm, rhythmKey, update.rhythm[rhythmKey]);
+      }
+    }
+    if (Array.isArray(update.phrases)) {
+      for (i = 0; i < update.phrases.length; i++) {
+        updateSparkCoreWeakMetric(weakSpots.phrases, update.phrases[i].id, update.phrases[i].accuracy);
+      }
+    }
+  }
+
+  function updateSparkCoreWeakMetric(bucket, key, accuracy) {
+    if (!bucket[key]) {
+      bucket[key] = { accuracy: accuracy, attempts: 1 };
+    } else {
+      var prev = bucket[key];
+      prev.accuracy = (prev.accuracy * prev.attempts + accuracy) / (prev.attempts + 1);
+      prev.attempts++;
+    }
+  }
+
+  function sparkCoreHasOwnKeys(value) {
+    for (var key in value) return true;
+    return false;
+  }
 
   function createDefaultSparkCore() {
     var instrumentManager = new SparkInstrumentManager();

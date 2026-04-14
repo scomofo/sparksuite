@@ -1,5 +1,32 @@
 (function(){
 
+  function getInsightStateRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function getInsightSnapshots() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(["insightSnapshots"], []);
+    }
+    var root = getInsightStateRoot();
+    return root && Array.isArray(root.insightSnapshots) ? root.insightSnapshots : [];
+  }
+
+  function getMasterySnapshot() {
+    if (window.sparkCore && typeof window.sparkCore.getLegacyProgressSnapshot === "function") {
+      var progress = window.sparkCore.getLegacyProgressSnapshot();
+      if (progress && progress.mastery) return progress.mastery;
+    }
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(["mastery"], {});
+    }
+    var root = getInsightStateRoot();
+    return root && root.mastery ? root.mastery : {};
+  }
+
   function getWeakestMasterySkills(limit){
     var rows = flattenMasteryBuckets();
     rows.sort(function(a,b){ return a.value - b.value; });
@@ -14,7 +41,7 @@
 
   function flattenMasteryBuckets(){
     var out = [];
-    var mastery = S.mastery || {};
+    var mastery = getMasterySnapshot();
     for(var bucket in mastery){
       var items = mastery[bucket] || {};
       for(var id in items){
@@ -29,7 +56,7 @@
   }
 
   function buildMasteryTrend(){
-    var snaps = S.insightSnapshots || [];
+    var snaps = getInsightSnapshots();
     return {
       chords: extractSeries(snaps, "mastery", "chords"),
       transitions: extractSeries(snaps, "mastery", "transitions"),

@@ -1,30 +1,77 @@
 (function(){
+  function editorBoxSelectRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function editorBoxSelectRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = editorBoxSelectRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function editorBoxSelectWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = editorBoxSelectRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor || !parts.length) return value;
+    for(i=0;i<parts.length-1;i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length-1]] = value;
+    return value;
+  }
+
   function beginBoxSelection(startX, startY){
-    S.editorBoxSelectState = {
+    editorBoxSelectWrite("editorBoxSelectState", {
       startX:startX,
       startY:startY,
       endX:startX,
       endY:startY
-    };
+    });
     return true;
   }
 
   function updateBoxSelection(x, y){
-    if(!S.editorBoxSelectState) return false;
-    S.editorBoxSelectState.endX = x;
-    S.editorBoxSelectState.endY = y;
+    var state = editorBoxSelectRead("editorBoxSelectState", null);
+    if(!state) return false;
+    state.endX = x;
+    state.endY = y;
+    editorBoxSelectWrite("editorBoxSelectState", state);
     return true;
   }
 
   function endBoxSelection(obj, additive){
-    if(!S.editorBoxSelectState || !obj) return false;
-    var rect = normalizeSelectionRect(S.editorBoxSelectState);
+    var state = editorBoxSelectRead("editorBoxSelectState", null);
+    if(!state || !obj) return false;
+    var rect = normalizeSelectionRect(state);
     var hits = getItemsIntersectingBox(rect, obj);
     if(!additive) clearEditorSelection();
     for(var i=0;i<hits.length;i++){
       addEditorSelection(hits[i].id);
     }
-    S.editorBoxSelectState = null;
+    editorBoxSelectWrite("editorBoxSelectState", null);
     return true;
   }
 

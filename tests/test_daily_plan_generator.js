@@ -7,6 +7,7 @@ function test(name, fn) {
 
 global.window = {};
 global.S = {};
+global.__sparkState = global.S;
 
 require("../js/sparksuite/core/skill_tracker.js");
 require("../js/sparksuite/core/lesson_generator.js");

@@ -1,5 +1,45 @@
 (function(){
 
+  function midiDeviceRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      return SparkState.getRoot();
+    }
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+  }
+
+  function midiDeviceRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = midiDeviceRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function midiDeviceWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = midiDeviceRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor || !parts.length) return value;
+    for(i=0;i<parts.length-1;i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length-1]] = value;
+    return value;
+  }
+
   function refreshMidiDevices(){
     if(!navigator.requestMIDIAccess) return;
     navigator.requestMIDIAccess().then(function(access){
@@ -12,9 +52,9 @@
           state: input.state || "connected"
         });
       });
-      S.midiDevices = out;
-      if(!S.activeMidiDeviceId && out.length){
-        S.activeMidiDeviceId = out[0].id;
+      midiDeviceWrite("midiDevices", out);
+      if(!midiDeviceRead("activeMidiDeviceId", null) && out.length){
+        midiDeviceWrite("activeMidiDeviceId", out[0].id);
       }
       if(typeof syncMidiSettingsStateRequest === "function"){
         syncMidiSettingsStateRequest();
@@ -24,9 +64,9 @@
   }
 
   function getActiveMidiDevice(){
-    var arr = S.midiDevices || [];
+    var arr = midiDeviceRead("midiDevices", []) || [];
     for(var i=0;i<arr.length;i++){
-      if(arr[i].id === S.activeMidiDeviceId) return arr[i];
+      if(arr[i].id === midiDeviceRead("activeMidiDeviceId", null)) return arr[i];
     }
     return null;
   }

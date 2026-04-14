@@ -55,6 +55,7 @@ function resetState() {
     performArrangementType: "chords",
     performDifficulty: "normal"
   };
+  global.__sparkState = global.S;
   global.saveStateCalls = 0;
   global.saveState = function() { saveStateCalls++; };
   var guidedSessions = [
@@ -170,6 +171,7 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/index.js"));
+eval(loadJS("js/sparksuite/core/state_facade.js"));
 eval(loadJS("js/sparksuite/core/storage.js"));
 eval(loadJS("js/sparksuite/core/ai_engine.js"));
 eval(loadJS("js/sparksuite/core/instrument_manager.js"));
@@ -216,6 +218,152 @@ test("SparkCore exposes engine-owned runtime state for active session context", 
   assert.strictEqual(view.plan, plan);
   assert.strictEqual(view.runtimeState, runtimeState);
   assert.strictEqual(view.lastSessionOutcome, null);
+});
+
+test("SparkCore exposes completed lesson ids through a normalized accessor", function() {
+  var core = createDefaultSparkCore();
+  S.completedLessons = ["uke_01"];
+  S.mastery.lessons.uke_02 = true;
+
+  var completed = core.getCompletedLessonIds();
+
+  assert.deepStrictEqual(completed, ["uke_01", "uke_02"]);
+});
+
+test("SparkCore exposes a normalized legacy progress snapshot", function() {
+  var core = createDefaultSparkCore();
+  S.completedLessons = ["uke_01"];
+  S.mastery.lessons.uke_02 = true;
+  S.mastery.chords = {};
+  S.mastery.chords.C = true;
+  S.mastery.rhythm.uke_island = 14;
+  S.chordProgress.G = 42;
+  S.ukuleleSkillProgress = {};
+  S.ukuleleSkillProgress.fingerpicking = { timing: 0.52 };
+
+  var progress = core.getLegacyProgressSnapshot();
+
+  assert.deepStrictEqual(progress.completedLessonIds, ["uke_01", "uke_02"]);
+  assert.strictEqual(progress.mastery.lessons.uke_02, true);
+  assert.strictEqual(progress.mastery.chords.C, true);
+  assert.strictEqual(progress.mastery.rhythm.uke_island, 14);
+  assert.strictEqual(progress.chordProgress.G, 42);
+  assert.strictEqual(progress.ukuleleSkillProgress.fingerpicking.timing, 0.52);
+});
+
+test("SparkCore exposes a normalized legacy player snapshot", function() {
+  var core = createDefaultSparkCore();
+  S.xp = 88;
+  S.playerLevel = 4;
+  S.streak = 7;
+  S.lastSessionDate = "2026-04-12";
+  S.playerAchievements = { level_5: true };
+  S.unlocks = { songs: { fire_road: true } };
+
+  var player = core.getLegacyPlayerSnapshot();
+
+  assert.strictEqual(player.xp, 88);
+  assert.strictEqual(player.level, 4);
+  assert.strictEqual(player.streak, 7);
+  assert.strictEqual(player.lastSessionDate, "2026-04-12");
+  assert.strictEqual(player.achievements.level_5, true);
+  assert.strictEqual(player.unlocks.songs.fire_road, true);
+});
+
+test("SparkCore exposes a normalized legacy practice analytics snapshot", function() {
+  var core = createDefaultSparkCore();
+  S.transitionStats = { "G->C": { attempts: 5, success: 2 } };
+  S.chordProgress = { G: 42 };
+  S.performanceStats = {
+    song_hard: { songId: "song", runs: 2, bestAccuracy: 76 }
+  };
+
+  var analytics = core.getLegacyPracticeAnalyticsSnapshot();
+
+  assert.strictEqual(analytics.transitionStats["G->C"].attempts, 5);
+  assert.strictEqual(analytics.chordProgress.G, 42);
+  assert.strictEqual(analytics.performanceStats.song_hard.bestAccuracy, 76);
+});
+
+test("SparkCore legacy practice helpers centralize practice, weak-spot, and adaptive updates", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+
+  core.recordLegacyPracticeSession({ id: "practice_1", durationMin: 6 });
+  core.updateLegacyWeakSpotsFromPerformance({
+    transitions: { "G->C": 0.61 },
+    phrases: [{ id: "phrase_2", accuracy: 0.55 }]
+  });
+  core.updateLegacyAdaptiveFromResult({ exerciseId: "rhythm_1", accuracy: 0.82 });
+
+  assert.strictEqual(S.practiceHistory.length, 1);
+  assert.strictEqual(S.practiceHistory[0].id, "practice_1");
+  assert.ok(S.practiceHistory[0].ts);
+  assert.strictEqual(S.totalPracticeMinutes, 6);
+  assert.strictEqual(S.todayPracticeMinutes, 6);
+  assert.strictEqual(S.practiceStreak, 1);
+  assert.strictEqual(S.weakSpots.transitions["G->C"].attempts, 1);
+  assert.strictEqual(S.weakSpots.phrases["phrase_2"].attempts, 1);
+  assert.strictEqual(S.adaptiveState.rhythm_1.accuracy, 0.82);
+  assert.ok(S.adaptiveState.rhythm_1.ts);
+});
+
+test("SparkProgressOrchestrator can evaluate from sparkCore-backed snapshots", function() {
+  var core = createDefaultSparkCore();
+  window.sparkCore = core;
+  S.playerLevel = 4;
+  S.streak = 7;
+  S.lastSessionDate = "2026-04-10";
+  S.mastery.chords = {};
+  S.unlocks = { songs: {} };
+  S.playerAchievements = {};
+
+  var levelChecks = 0;
+  var streakAwards = [];
+  var comebackRequests = [];
+  global.checkLevelUp = function() {
+    levelChecks++;
+    S.playerLevel = 5;
+  };
+  global.updateMastery = function(skillType, skillId, value) {
+    if (!S.mastery[skillType]) S.mastery[skillType] = {};
+    S.mastery[skillType][skillId] = value;
+  };
+  global.evaluateUnlocks = function() {
+    S.unlocks.songs.fire_road = true;
+  };
+  global.evaluateAchievements = function() {
+    S.playerAchievements.level_5 = true;
+  };
+  global.awardStreakXP = function(streak) {
+    streakAwards.push(streak);
+  };
+  global.awardXP = function() {};
+  global.SparkPsychology = {
+    getComebackBonus: function(lastSessionDate) {
+      comebackRequests.push(lastSessionDate);
+      return 0;
+    }
+  };
+
+  eval(loadJS("js/spark-core/progress-orchestrator.js"));
+
+  var result = SparkProgressOrchestrator.evaluateAll({
+    type: "session",
+    chordName: "C",
+    accuracy: 0.82,
+    streakUpdated: true
+  });
+
+  assert.strictEqual(levelChecks, 1);
+  assert.strictEqual(result.leveledUp, true);
+  assert.strictEqual(result.newLevel, 5);
+  assert.strictEqual(result.masteryUpdates.C, 82);
+  assert.deepStrictEqual(result.newUnlocks, ["content_unlocked"]);
+  assert.deepStrictEqual(result.newAchievements, ["achievement_earned"]);
+  assert.deepStrictEqual(streakAwards, [7]);
+  assert.deepStrictEqual(comebackRequests, ["2026-04-10"]);
+  assert.strictEqual(result.xpTotal, 35);
 });
 
 test("SparkCore runtime state tracks manual patches and completion summaries", function() {
@@ -1275,6 +1423,93 @@ test("session page metronome card can fall back to SparkCore metronome runtime s
   assert.ok(sessionHtml.indexOf(">96<") >= 0);
   assert.ok(sessionHtml.indexOf("Stop") >= 0);
   assert.ok(sessionHtml.indexOf("metro-dot active") >= 0);
+});
+
+test("complete page can fall back to SparkCore player and progress snapshots", function() {
+  window.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        player: { streak: 9 },
+        progress: { chordProgress: { C: 88 } }
+      };
+    }
+  };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            ALL_CHORDS: [{ name: "C", short: "C" }]
+          };
+        }
+      };
+    }
+  };
+  S.currentChord = { name: "C", short: "C" };
+  S.streak = undefined;
+  S.chordProgress = {};
+  S.xpToast = { amount: 15, time: 1 };
+
+  eval(loadJS("js/pages/session.js"));
+
+  var completeHtml = completePage();
+  assert.ok(completeHtml.indexOf("+15") >= 0);
+  assert.ok(completeHtml.indexOf("&#128293;9") >= 0);
+  assert.ok(completeHtml.indexOf(">88%<") >= 0);
+});
+
+test("sv2 home dashboard can fall back to SparkCore player and progress snapshots", function() {
+  window.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        player: { xp: 88, level: 4, streak: 7 },
+        progress: { chordProgress: { C: 100, G: 40 } }
+      };
+    }
+  };
+  global.document = { body: { classList: { contains: function() { return true; } } } };
+  global.SparkTheme = {
+    get: function() { return {}; },
+    getColor: function() { return "#4ECDC4"; }
+  };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        id: "chordspark",
+        instrument: "guitar",
+        icon: "G",
+        name: "Chord",
+        tabs: ["practice", "songs", "drill"],
+        getData: function() {
+          return {
+            LN: { 4: "Stage 4" },
+            ALL_CHORDS: [{ name: "C" }, { name: "G" }],
+            LC: { 1: "#111", 4: "#45B7D1" },
+            CHORDS: {
+              1: [{ name: "C", short: "C" }, { name: "G", short: "G" }]
+            }
+          };
+        }
+      };
+    },
+    getAll: function() {
+      return [{ id: "chordspark", instrument: "guitar", available: true }];
+    }
+  };
+  global.escHTML = function(value) { return String(value); };
+  S.level = 1;
+  S.selectedLevel = 1;
+  S.todayPracticeSeconds = 0;
+  S.dailyGoalMinutes = 10;
+  S.goalReachedToday = false;
+  S.goalStreak = 0;
+
+  eval(loadJS("js/pages/practice.js"));
+
+  var homeHtml = sv2HomeDashboard();
+  assert.ok(homeHtml.indexOf("88 XP") >= 0);
+  assert.ok(homeHtml.indexOf("Stage 4") >= 0);
+  assert.ok(homeHtml.indexOf("1/2 chords") >= 0);
 });
 
 test("finger exercise card can fall back to SparkCore finger exercise runtime state", function() {

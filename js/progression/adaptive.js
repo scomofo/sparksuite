@@ -1,5 +1,49 @@
 (function(){
 
+  function adaptiveRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function adaptiveRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = adaptiveRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor) return fallback;
+    for(i=0;i<parts.length;i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function adaptiveWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = adaptiveRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(!cursor || !parts.length) return value;
+    for(i=0;i<parts.length-1;i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length-1]] = value;
+    return value;
+  }
+
   function buildAdaptiveDecision(context){
     context = context || {};
     var type = context.targetType || "generic";
@@ -103,8 +147,9 @@
   }
 
   function recordAdaptiveDecision(decision){
-    if(!Array.isArray(S.adaptiveDecisions)) S.adaptiveDecisions = [];
-    S.adaptiveDecisions.push({
+    var adaptiveDecisions = adaptiveRead("adaptiveDecisions", []);
+    if(!Array.isArray(adaptiveDecisions)) adaptiveDecisions = [];
+    adaptiveDecisions.push({
       targetType: decision.targetType,
       difficultyAction: decision.difficultyAction,
       currentValue: decision.currentValue,
@@ -112,8 +157,9 @@
       reason: decision.reason,
       ts: Date.now()
     });
-    if(S.adaptiveDecisions.length > 100) S.adaptiveDecisions.shift();
-    S.adaptiveLastDecision = decision;
+    if(adaptiveDecisions.length > 100) adaptiveDecisions.shift();
+    adaptiveWrite("adaptiveDecisions", adaptiveDecisions);
+    adaptiveWrite("adaptiveLastDecision", decision);
     saveState();
   }
 

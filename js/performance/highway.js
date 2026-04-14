@@ -18,7 +18,6 @@ function destroySparkHighway() {
 
 function feedChartToHighway(chart) {
   if (!_sparkHighway || !chart) return;
-  ensurePerformanceHighwayLaneData(chart);
   _sparkHighway.setChart(chart.events || [], chart.phrases || []);
 }
 

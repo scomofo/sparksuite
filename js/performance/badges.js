@@ -1,5 +1,58 @@
 (function(){
 
+  function performanceBadgeRoot(){
+    if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
+    }
+    if(typeof globalThis !== "undefined"){
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function performanceBadgeRead(path, fallback){
+    if(typeof SparkState !== "undefined" && typeof SparkState.read === "function"){
+      return SparkState.read(path, fallback);
+    }
+    var root = performanceBadgeRoot();
+    if(!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length; i++){
+      if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function performanceBadgeWrite(path, value){
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    var root = performanceBadgeRoot();
+    if(!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if(parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function performanceBadgeEnsureArray(path){
+    var arr = performanceBadgeRead(path, null);
+    if(!Array.isArray(arr)){
+      arr = [];
+      performanceBadgeWrite(path, arr);
+    }
+    return arr;
+  }
+
   var PERFORMANCE_BADGES = [
     {
       id:"perf_first_clear",
@@ -60,20 +113,19 @@
   ];
 
   function hasPerformanceBadge(id){
-    return Array.isArray(S.performanceBadges) && S.performanceBadges.indexOf(id)!==-1;
+    return performanceBadgeEnsureArray("performanceBadges").indexOf(id)!==-1;
   }
 
   function awardPerformanceBadge(badge){
     if(!badge || hasPerformanceBadge(badge.id)) return false;
-    if(!Array.isArray(S.performanceBadges)) S.performanceBadges = [];
-    S.performanceBadges.push(badge.id);
-    S.performanceMilestoneToast = {
+    performanceBadgeEnsureArray("performanceBadges").push(badge.id);
+    performanceBadgeWrite("performanceMilestoneToast", {
       type:"badge",
       icon:badge.icon,
       label:badge.label,
       desc:badge.desc,
       time:Date.now()
-    };
+    });
     return true;
   }
 
@@ -93,16 +145,20 @@
 
   // Unlock helpers
   function ensurePerformanceUnlockRecord(songId, arrangementType, difficultyId){
-    if(!S.performanceUnlocks) S.performanceUnlocks = {};
     var key = songId + ":" + arrangementType + ":" + difficultyId;
-    if(!S.performanceUnlocks[key]){
-      S.performanceUnlocks[key] = {
+    var performanceUnlocks = performanceBadgeRead("performanceUnlocks", null);
+    if(!performanceUnlocks || typeof performanceUnlocks !== "object" || Array.isArray(performanceUnlocks)){
+      performanceUnlocks = {};
+    }
+    if(!performanceUnlocks[key]){
+      performanceUnlocks[key] = {
         firstClear:false,
         firstMastery:false,
         firstFiveStar:false
       };
     }
-    return S.performanceUnlocks[key];
+    performanceBadgeWrite("performanceUnlocks", performanceUnlocks);
+    return performanceUnlocks[key];
   }
 
   function applyPerformanceUnlocks(summary, stats){

@@ -32,6 +32,7 @@ global.SparkStorage = { load: function() { return SparkProfile.createEmpty(); } 
 global.SparkHighway = { GUITAR_SKIN: { laneCount: 6 }, PIANO_SKIN: { laneCount: 24 } };
 global.escHTML = function(s) { return String(s); };
 global.S = { completedLessons: [], mastery: { rhythm: {} } };
+global.__sparkState = global.S;
 
 function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
@@ -133,6 +134,51 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.ok(ukulele);
   assert.strictEqual(ukulele.instrument, 'ukulele');
   assert.strictEqual(typeof ukulele.tabRenderers.practice, 'function');
+});
+
+test('ukulele register prefers sparkCore progress view for practice and stats rendering', function() {
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_chords.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_scales.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_tuning.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_exercises.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_progression.js'));
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_module.js'));
+  eval(loadJS('js/instruments/ukulele/register.js'));
+
+  global.ukuleleSVG = function(chordObj) {
+    return '<div>' + (chordObj && chordObj.name ? chordObj.name : '') + '</div>';
+  };
+  global.S.completedLessons = [];
+  global.S.mastery = { rhythm: {} };
+  global.sparkCore = {
+    getInstrumentProgressView: function(instrumentId) {
+      assert.strictEqual(instrumentId, 'ukulele');
+      return {
+        instrument: 'ukulele',
+        completedLessonIds: ['uke_01', 'uke_02'],
+        masteryLessonIds: [],
+        rhythmMastery: { island_strum: 35, fingerpicking: 22 },
+        rhythmSkillIds: ['island_strum', 'fingerpicking'],
+        namedSkillProgress: {},
+        namedSkillIds: []
+      };
+    }
+  };
+
+  var all = SparkInstruments.getAll();
+  var ukulele = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === 'ukespark') ukulele = all[i];
+  }
+
+  assert.ok(ukulele);
+  var practiceHtml = ukulele.tabRenderers.practice();
+  var statsHtml = ukulele.tabRenderers.stats();
+  assert.ok(practiceHtml.indexOf('Ukulele Practice') >= 0);
+  assert.ok(statsHtml.indexOf('Lessons completed: 2') >= 0);
+  assert.ok(statsHtml.indexOf('Rhythm skills tracked: 2') >= 0);
 });
 
 test('bass register exposes a dedicated songs tab renderer', function() {

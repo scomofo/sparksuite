@@ -1,5 +1,8 @@
 // ===== SparkSuite: Play Along Pages =====
 (function() {
+  var playAlongState = new SparkPlayAlongStateService({
+    persist: typeof saveState === "function" ? saveState : null
+  });
 
   var PLAY_ALONG_DEMOS = [
     {
@@ -24,24 +27,126 @@
     return PLAY_ALONG_DEMOS.slice();
   };
 
+  function getPlayAlongCore() {
+    return window.sparkCore || null;
+  }
+
+  function getPlayAlongRuntimeState() {
+    var core = getPlayAlongCore();
+    return core && typeof core.getRuntimeState === "function"
+      ? core.getRuntimeState()
+      : (core ? core.runtimeState || null : null);
+  }
+
+  function getPlayAlongActiveChart() {
+    var core = getPlayAlongCore();
+    return core && typeof core.getActivePlayAlongChart === "function"
+      ? core.getActivePlayAlongChart()
+      : (core ? core._activeChart || null : null);
+  }
+
+  function getPlayAlongOutcome() {
+    var core = getPlayAlongCore();
+    return core && typeof core.getLastSessionOutcome === "function"
+      ? core.getLastSessionOutcome()
+      : (core ? core.lastSessionOutcome || null : null);
+  }
+
+  function getPlayAlongErrorState() {
+    return playAlongState.getError();
+  }
+
+  function playAlongPageRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    return fallback;
+  }
+
+  function sparkPlayAlongBackToHome() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      SparkState.write(["screen"], "home");
+      SparkState.write(["tab"], "practice");
+    }
+    if (typeof render === "function") render();
+  }
+
+  function buildPlayAlongHomeViewModel() {
+    var runtimeState = getPlayAlongRuntimeState();
+    var errorState = getPlayAlongErrorState();
+    return {
+      spotifyConnected: !!(runtimeState && runtimeState.spotifyConnected),
+      difficulty: playAlongPageRead(["spotifyDifficulty"], "easy"),
+      error: errorState,
+      demos: typeof window.getSparkPlayAlongDemos === "function" ? window.getSparkPlayAlongDemos() : [],
+      recent: getPlayAlongRecentEntries(),
+      bookmarks: getPlayAlongBookmarks(),
+      savedTracks: getPlayAlongSavedTracks()
+    };
+  }
+
+  function buildPlayAlongSessionViewModel() {
+    var core = getPlayAlongCore();
+    var chart = getPlayAlongActiveChart();
+    var perf = core && core.performanceTracker;
+    var drill = playAlongState.getStateValue("playAlongSelectedDrill", null);
+    var errorState = getPlayAlongErrorState();
+    return {
+      chart: chart,
+      error: errorState,
+      trackTitle: getPlayAlongTrackTitle(chart),
+      bpm: getPlayAlongBpm(chart),
+      accuracy: perf && typeof perf.getAccuracy === "function" ? Math.round(perf.getAccuracy() * 100) : 0,
+      paused: !!playAlongState.getStateValue("playAlongPaused", false),
+      drill: drill,
+      loopRange: playAlongState.getStateValue("playAlongLoopRange", null),
+      loopTarget: playAlongState.getStateValue("playAlongLoopTarget", null) || (drill ? "drill" : "section"),
+      coachHint: playAlongState.getStateValue("playAlongCoachHint", "") || "",
+      transportMode: getPlayAlongTransportMode(),
+      currentSection: playAlongState.getStateValue("playAlongCurrentSection", "Section: Intro") || "Section: Intro",
+      currentTime: formatPlayAlongMs(playAlongState.getStateValue("playAlongNowMs", 0)),
+      speedLabel: playAlongState.getStateValue("playAlongSpeed", "1.0") || "1.0",
+      loopEnabled: !!playAlongState.getStateValue("playAlongLoop", false),
+      sectionNav: getPlayAlongSectionNavigation(chart)
+    };
+  }
+
+  function buildPlayAlongResultsViewModel() {
+    var outcome = getPlayAlongOutcome();
+    return {
+      outcome: outcome,
+      accuracy: asPercent(outcome && outcome.accuracy),
+      timing: asPercent(outcome && outcome.timing),
+      consistency: asPercent(outcome && outcome.consistency),
+      feedback: outcome && Array.isArray(outcome.feedback) ? outcome.feedback : [],
+      drills: outcome && Array.isArray(outcome.drills) ? outcome.drills : (outcome && outcome.drills ? [outcome.drills] : []),
+      suggestedDifficulty: outcome && outcome.suggestedDifficulty ? outcome.suggestedDifficulty : "",
+      suggestedMode: outcome && outcome.suggestedMode ? outcome.suggestedMode : "",
+      drillSummary: outcome && outcome.drillSummary ? outcome.drillSummary : null,
+      nextAction: getPlayAlongNextAction(outcome),
+      weakAreas: getPlayAlongWeakAreas(outcome),
+      sectionSummary: outcome && outcome.sectionSummary ? outcome.sectionSummary : null
+    };
+  }
+
   window.playAlongPage = function() {
     var h = "";
-    var spotifyConnected = window.sparkCore && window.sparkCore.runtimeState && window.sparkCore.runtimeState.spotifyConnected;
-    var diff = S.spotifyDifficulty || "easy";
-    var demos = typeof window.getSparkPlayAlongDemos === "function" ? window.getSparkPlayAlongDemos() : [];
-    var recent = getPlayAlongRecentEntries();
-    var bookmarks = getPlayAlongBookmarks();
-    var savedTracks = getPlayAlongSavedTracks();
+    var viewModel = buildPlayAlongHomeViewModel();
 
     h += "<div>";
-    h += "<button class='btn' onclick=\"S.screen='home';S.tab='practice';render()\">&#8592; Back</button>";
+    h += "<button class='btn' onclick='sparkPlayAlongBackToHome()'>&#8592; Back</button>";
     h += "<h2 style='font-size:22px;font-weight:900;color:var(--text-primary);margin:12px 0'>Play Along</h2>";
+    if (viewModel.error && viewModel.error.message) {
+      h += "<div class='card' style='margin-bottom:12px;border-color:#ef4444;background:rgba(239,68,68,0.08)'>";
+      h += "<div style='font-size:12px;color:#ef4444;font-weight:700'>" + escPlayAlong(viewModel.error.message) + "</div>";
+      h += "</div>";
+    }
 
     // Spotify connection
     h += "<div class='card' style='margin-bottom:12px'>";
     h += "<div style='display:flex;align-items:center;justify-content:space-between'>";
     h += "<span style='font-size:14px;font-weight:700;color:var(--text-primary)'>Spotify</span>";
-    if (spotifyConnected) {
+    if (viewModel.spotifyConnected) {
       h += "<span style='background:#22c55e;color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700'>Connected</span>";
     } else {
       h += "<button class='btn btn-sm' onclick=\"act('spotifyConnect')\" style='font-size:12px'>Connect</button>";
@@ -52,11 +157,11 @@
     h += "<input id='play-along-search' type='text' placeholder='Search any song...' class='input' oninput='sparkPlayAlongSearch(this.value)' style='width:100%;margin-bottom:8px'>";
     h += "<div id='play-along-results'></div>";
 
-    if (savedTracks.length > 0) {
+    if (viewModel.savedTracks.length > 0) {
       h += "<div class='card' style='margin:12px 0'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Saved Spotify Songs</div>";
-      for (var si = 0; si < savedTracks.length; si++) {
-        var saved = savedTracks[si];
+      for (var si = 0; si < viewModel.savedTracks.length; si++) {
+        var saved = viewModel.savedTracks[si];
         h += "<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:" + (si === 0 ? "none" : "1px solid var(--border)") + "'>";
         h += "<div>";
         h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary)'>" + escPlayAlong(saved.title || saved.trackId || "Saved Track") + "</div>";
@@ -73,11 +178,11 @@
     }
 
     // Recent tracks
-    if (recent.length > 0) {
+    if (viewModel.recent.length > 0) {
       h += "<div class='card' style='margin:12px 0'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Recent Songs</div>";
-      for (var ri = 0; ri < recent.length; ri++) {
-        var item = recent[ri];
+      for (var ri = 0; ri < viewModel.recent.length; ri++) {
+        var item = viewModel.recent[ri];
         h += "<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:" + (ri === 0 ? "none" : "1px solid var(--border)") + "'>";
         h += "<div>";
         h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary)'>" + escPlayAlong(item.title || item.trackId || "Recent Song") + "</div>";
@@ -93,11 +198,11 @@
       h += "</div>";
     }
 
-    if (bookmarks.length > 0) {
+    if (viewModel.bookmarks.length > 0) {
       h += "<div class='card' style='margin:12px 0'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Saved Sections</div>";
-      for (var bi = 0; bi < bookmarks.length; bi++) {
-        var mark = bookmarks[bi];
+      for (var bi = 0; bi < viewModel.bookmarks.length; bi++) {
+        var mark = viewModel.bookmarks[bi];
         h += "<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:" + (bi === 0 ? "none" : "1px solid var(--border)") + "'>";
         h += "<div>";
         h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary)'>" + escPlayAlong(mark.title || mark.trackId || "Saved Section") + "</div>";
@@ -113,11 +218,11 @@
       h += "</div>";
     }
 
-    if (demos.length > 0) {
+    if (viewModel.demos.length > 0) {
       h += "<div class='card' style='margin:12px 0'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Featured Songs</div>";
-      for (var di = 0; di < demos.length; di++) {
-        var demo = demos[di];
+      for (var di = 0; di < viewModel.demos.length; di++) {
+        var demo = viewModel.demos[di];
         h += "<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:" + (di === 0 ? "none" : "1px solid var(--border)") + "'>";
         h += "<div>";
         h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary)'>" + escPlayAlong(demo.title || demo.trackId || "Demo Song") + "</div>";
@@ -133,9 +238,9 @@
     h += "<div class='card' style='margin:12px 0'>";
     h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Difficulty</div>";
     h += "<div style='display:flex;gap:8px'>";
-    h += "<button class='btn btn-sm" + (diff === "easy" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('easy')\">Easy</button>";
-    h += "<button class='btn btn-sm" + (diff === "normal" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('normal')\">Normal</button>";
-    h += "<button class='btn btn-sm" + (diff === "hard" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('hard')\">Hard</button>";
+    h += "<button class='btn btn-sm" + (viewModel.difficulty === "easy" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('easy')\">Easy</button>";
+    h += "<button class='btn btn-sm" + (viewModel.difficulty === "normal" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('normal')\">Normal</button>";
+    h += "<button class='btn btn-sm" + (viewModel.difficulty === "hard" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('hard')\">Hard</button>";
     h += "</div></div>";
 
     // Local file upload
@@ -150,28 +255,20 @@
 
   window.playAlongSessionPage = function() {
     var h = "";
-    var chart = window.sparkCore && window.sparkCore._activeChart;
-    var perf = window.sparkCore && window.sparkCore.performanceTracker;
-    var trackTitle = getPlayAlongTrackTitle(chart);
-    var bpm = getPlayAlongBpm(chart);
-    var accuracy = perf && typeof perf.getAccuracy === "function" ? Math.round(perf.getAccuracy() * 100) : 0;
-    var paused = !!S.playAlongPaused;
-    var drill = S.playAlongSelectedDrill || null;
-    var loopRange = S.playAlongLoopRange || null;
-    var loopTarget = S.playAlongLoopTarget || (drill ? "drill" : "section");
-    var coachHint = S.playAlongCoachHint || "";
-    var transportMode = getPlayAlongTransportMode();
-    var currentSection = S.playAlongCurrentSection || "Section: Intro";
-    var currentTime = formatPlayAlongMs(S.playAlongNowMs || 0);
-    var sectionNav = getPlayAlongSectionNavigation(chart);
+    var viewModel = buildPlayAlongSessionViewModel();
 
     h += "<div>";
     h += "<button class='btn' onclick='sparkPlayAlongStop()'>&#9632; Stop</button>";
+    if (viewModel.error && viewModel.error.message) {
+      h += "<div class='card' style='margin-top:10px;border-color:#ef4444;background:rgba(239,68,68,0.08)'>";
+      h += "<div style='font-size:12px;color:#ef4444;font-weight:700'>" + escPlayAlong(viewModel.error.message) + "</div>";
+      h += "</div>";
+    }
 
     // Song info
     h += "<div style='text-align:center;margin:8px 0'>";
-    h += "<div style='font-size:18px;font-weight:900;color:var(--text-primary)'>" + trackTitle + "</div>";
-    h += "<div style='font-size:12px;color:var(--text-dim)'>" + bpm + " BPM</div>";
+    h += "<div style='font-size:18px;font-weight:900;color:var(--text-primary)'>" + viewModel.trackTitle + "</div>";
+    h += "<div style='font-size:12px;color:var(--text-dim)'>" + viewModel.bpm + " BPM</div>";
     h += "</div>";
 
     // Gameplay canvas
@@ -182,63 +279,63 @@
 
     // Controls row
     h += "<div style='display:flex;align-items:center;justify-content:space-between;margin-top:8px'>";
-    h += "<button class='btn btn-sm' onclick='sparkPlayAlongTogglePause()'>" + (paused ? "Resume" : "Pause") + "</button>";
-    h += "<span style='font-size:12px;color:var(--text-dim)'>Speed: " + (S.playAlongSpeed || "1.0") + "x</span>";
-    h += "<button class='btn btn-sm' onclick='sparkPlayAlongToggleLoop()'>Loop: " + (S.playAlongLoop ? "ON" : "OFF") + "</button>";
+    h += "<button class='btn btn-sm' onclick='sparkPlayAlongTogglePause()'>" + (viewModel.paused ? "Resume" : "Pause") + "</button>";
+    h += "<span style='font-size:12px;color:var(--text-dim)'>Speed: " + viewModel.speedLabel + "x</span>";
+    h += "<button class='btn btn-sm' onclick='sparkPlayAlongToggleLoop()'>Loop: " + (viewModel.loopEnabled ? "ON" : "OFF") + "</button>";
     h += "</div>";
     h += "<div style='display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px'>";
-    h += "<span style='font-size:11px;color:var(--text-muted);background:var(--chip-bg);padding:4px 10px;border-radius:999px'>Transport: " + escPlayAlong(transportMode) + "</span>";
-    h += "<span style='font-size:11px;color:var(--text-muted);background:var(--chip-bg);padding:4px 10px;border-radius:999px'>Loop Target: " + escPlayAlong(loopTarget) + "</span>";
+    h += "<span style='font-size:11px;color:var(--text-muted);background:var(--chip-bg);padding:4px 10px;border-radius:999px'>Transport: " + escPlayAlong(viewModel.transportMode) + "</span>";
+    h += "<span style='font-size:11px;color:var(--text-muted);background:var(--chip-bg);padding:4px 10px;border-radius:999px'>Loop Target: " + escPlayAlong(viewModel.loopTarget) + "</span>";
     h += "</div>";
     h += "<div class='card' style='margin-top:10px;padding:10px 12px;text-align:left'>";
-    h += "<div id='play-along-session-section' style='font-size:12px;font-weight:800;color:var(--text-primary)'>" + escPlayAlong(currentSection) + "</div>";
-    h += "<div style='font-size:11px;color:var(--text-muted);margin-top:4px'>Position: <span id='play-along-session-time'>" + escPlayAlong(currentTime) + "</span></div>";
+    h += "<div id='play-along-session-section' style='font-size:12px;font-weight:800;color:var(--text-primary)'>" + escPlayAlong(viewModel.currentSection) + "</div>";
+    h += "<div style='font-size:11px;color:var(--text-muted);margin-top:4px'>Position: <span id='play-along-session-time'>" + escPlayAlong(viewModel.currentTime) + "</span></div>";
     h += "<div style='margin-top:8px'><button class='btn btn-sm' onclick='sparkPlayAlongBookmarkCurrentSection()'>Save This Section</button></div>";
-    if (sectionNav.total > 1) {
+    if (viewModel.sectionNav.total > 1) {
       h += "<div style='display:flex;gap:8px;justify-content:space-between;margin-top:8px'>";
-      h += "<button class='btn btn-sm' onclick='sparkPlayAlongPrevSection()'" + (sectionNav.hasPrev ? "" : " style='opacity:0.5'") + ">Prev Section</button>";
-      h += "<span style='font-size:11px;color:var(--text-muted);align-self:center'>" + escPlayAlong(sectionNav.label) + "</span>";
-      h += "<button class='btn btn-sm' onclick='sparkPlayAlongNextSection()'" + (sectionNav.hasNext ? "" : " style='opacity:0.5'") + ">Next Section</button>";
+      h += "<button class='btn btn-sm' onclick='sparkPlayAlongPrevSection()'" + (viewModel.sectionNav.hasPrev ? "" : " style='opacity:0.5'") + ">Prev Section</button>";
+      h += "<span style='font-size:11px;color:var(--text-muted);align-self:center'>" + escPlayAlong(viewModel.sectionNav.label) + "</span>";
+      h += "<button class='btn btn-sm' onclick='sparkPlayAlongNextSection()'" + (viewModel.sectionNav.hasNext ? "" : " style='opacity:0.5'") + ">Next Section</button>";
       h += "</div>";
     }
     h += "</div>";
 
-    if (drill || chartHasPlayableSections(chart)) {
+    if (viewModel.drill || chartHasPlayableSections(viewModel.chart)) {
       h += "<div style='display:flex;gap:8px;justify-content:center;margin-top:8px'>";
-      if (drill) {
-        h += "<button class='btn btn-sm' onclick=\"sparkPlayAlongSetLoopTarget('drill')\" style='background:" + (loopTarget === "drill" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (loopTarget === "drill" ? "#fff" : "var(--text-secondary)") + "'>Target: Drill</button>";
+      if (viewModel.drill) {
+        h += "<button class='btn btn-sm' onclick=\"sparkPlayAlongSetLoopTarget('drill')\" style='background:" + (viewModel.loopTarget === "drill" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (viewModel.loopTarget === "drill" ? "#fff" : "var(--text-secondary)") + "'>Target: Drill</button>";
       }
-      if (chartHasPlayableSections(chart)) {
-        h += "<button class='btn btn-sm' onclick=\"sparkPlayAlongSetLoopTarget('section')\" style='background:" + (loopTarget === "section" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (loopTarget === "section" ? "#fff" : "var(--text-secondary)") + "'>Target: Section</button>";
+      if (chartHasPlayableSections(viewModel.chart)) {
+        h += "<button class='btn btn-sm' onclick=\"sparkPlayAlongSetLoopTarget('section')\" style='background:" + (viewModel.loopTarget === "section" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (viewModel.loopTarget === "section" ? "#fff" : "var(--text-secondary)") + "'>Target: Section</button>";
       }
     h += "</div>";
     }
 
-    if (drill || loopRange) {
+    if (viewModel.drill || viewModel.loopRange) {
       h += "<div class='card' style='margin-top:10px;padding:10px 12px;text-align:left'>";
-      if (drill) {
-        h += "<div style='font-size:12px;font-weight:800;color:var(--text-primary);margin-bottom:4px'>Active Drill: " + escPlayAlong(drill.label || drill.focus || drill.type || "Focused Practice") + "</div>";
+      if (viewModel.drill) {
+        h += "<div style='font-size:12px;font-weight:800;color:var(--text-primary);margin-bottom:4px'>Active Drill: " + escPlayAlong(viewModel.drill.label || viewModel.drill.focus || viewModel.drill.type || "Focused Practice") + "</div>";
       }
-      if (loopRange && loopRange.startMs != null && loopRange.endMs != null) {
-        h += "<div style='font-size:12px;color:var(--text-dim)'>Loop Window: " + formatPlayAlongMs(loopRange.startMs) + " - " + formatPlayAlongMs(loopRange.endMs) + "</div>";
+      if (viewModel.loopRange && viewModel.loopRange.startMs != null && viewModel.loopRange.endMs != null) {
+        h += "<div style='font-size:12px;color:var(--text-dim)'>Loop Window: " + formatPlayAlongMs(viewModel.loopRange.startMs) + " - " + formatPlayAlongMs(viewModel.loopRange.endMs) + "</div>";
       }
-      if (drill && drill.repetitions != null) {
-        h += "<div id='play-along-loop-reps' style='font-size:11px;color:var(--text-muted);margin-top:4px'>" + getPlayAlongRepStatus(drill) + "</div>";
-      } else if (drill || loopRange) {
-        h += "<div id='play-along-loop-reps' style='font-size:11px;color:var(--text-muted);margin-top:4px'>" + getPlayAlongRepStatus(drill) + "</div>";
+      if (viewModel.drill && viewModel.drill.repetitions != null) {
+        h += "<div id='play-along-loop-reps' style='font-size:11px;color:var(--text-muted);margin-top:4px'>" + getPlayAlongRepStatus(viewModel.drill) + "</div>";
+      } else if (viewModel.drill || viewModel.loopRange) {
+        h += "<div id='play-along-loop-reps' style='font-size:11px;color:var(--text-muted);margin-top:4px'>" + getPlayAlongRepStatus(viewModel.drill) + "</div>";
       }
-      if (loopRange && loopRange.startMs != null && loopRange.endMs != null) {
+      if (viewModel.loopRange && viewModel.loopRange.startMs != null && viewModel.loopRange.endMs != null) {
         h += "<div id='play-along-loop-progress' style='font-size:11px;color:var(--text-muted);margin-top:4px'>Loop Progress: " + getPlayAlongLoopProgress() + "%</div>";
       }
-      if (coachHint) {
-        h += "<div id='play-along-coach-hint' style='font-size:11px;color:var(--accent);margin-top:6px'>" + escPlayAlong(coachHint) + "</div>";
+      if (viewModel.coachHint) {
+        h += "<div id='play-along-coach-hint' style='font-size:11px;color:var(--accent);margin-top:6px'>" + escPlayAlong(viewModel.coachHint) + "</div>";
       }
       h += "</div>";
     }
 
     // Score
     h += "<div style='text-align:center;margin-top:12px'>";
-    h += "<div style='font-size:32px;font-weight:900;color:var(--accent)'>" + accuracy + "%</div>";
+    h += "<div style='font-size:32px;font-weight:900;color:var(--accent)'>" + viewModel.accuracy + "%</div>";
     h += "<div style='font-size:11px;color:var(--text-muted)'>Accuracy</div>";
     h += "</div>";
 
@@ -253,18 +350,7 @@
 
   window.playAlongResultsPage = function() {
     var h = "";
-    var outcome = window.sparkCore && window.sparkCore.lastSessionOutcome;
-    var acc = asPercent(outcome && outcome.accuracy);
-    var timing = asPercent(outcome && outcome.timing);
-    var consistency = asPercent(outcome && outcome.consistency);
-    var feedback = outcome && Array.isArray(outcome.feedback) ? outcome.feedback : [];
-    var drills = outcome && Array.isArray(outcome.drills) ? outcome.drills : (outcome && outcome.drills ? [outcome.drills] : []);
-    var suggestedDiff = outcome && outcome.suggestedDifficulty ? outcome.suggestedDifficulty : "";
-    var suggestedMode = outcome && outcome.suggestedMode ? outcome.suggestedMode : "";
-    var drillSummary = outcome && outcome.drillSummary ? outcome.drillSummary : null;
-    var nextAction = getPlayAlongNextAction(outcome);
-    var weakAreas = getPlayAlongWeakAreas(outcome);
-    var sectionSummary = outcome && outcome.sectionSummary ? outcome.sectionSummary : null;
+    var viewModel = buildPlayAlongResultsViewModel();
 
     h += "<div class='text-center'>";
     h += "<h2 style='font-size:22px;font-weight:900;color:var(--text-primary);margin-bottom:12px'>Session Complete</h2>";
@@ -272,42 +358,42 @@
     // Stats card
     h += "<div class='card' style='margin-bottom:12px'>";
     h += "<div style='display:flex;justify-content:center;gap:24px'>";
-    h += "<div><div style='font-size:28px;font-weight:900;color:var(--accent)'>" + acc + "%</div><div style='font-size:11px;color:var(--text-muted)'>Accuracy</div></div>";
-    h += "<div><div style='font-size:28px;font-weight:900;color:var(--text-primary)'>" + timing + "%</div><div style='font-size:11px;color:var(--text-muted)'>Timing</div></div>";
-    h += "<div><div style='font-size:28px;font-weight:900;color:var(--text-primary)'>" + consistency + "%</div><div style='font-size:11px;color:var(--text-muted)'>Consistency</div></div>";
+    h += "<div><div style='font-size:28px;font-weight:900;color:var(--accent)'>" + viewModel.accuracy + "%</div><div style='font-size:11px;color:var(--text-muted)'>Accuracy</div></div>";
+    h += "<div><div style='font-size:28px;font-weight:900;color:var(--text-primary)'>" + viewModel.timing + "%</div><div style='font-size:11px;color:var(--text-muted)'>Timing</div></div>";
+    h += "<div><div style='font-size:28px;font-weight:900;color:var(--text-primary)'>" + viewModel.consistency + "%</div><div style='font-size:11px;color:var(--text-muted)'>Consistency</div></div>";
     h += "</div></div>";
 
     // Feedback messages
-    if (feedback.length > 0) {
+    if (viewModel.feedback.length > 0) {
       h += "<div class='card' style='margin-bottom:12px;text-align:left'>";
-      for (var i = 0; i < feedback.length; i++) {
-        h += "<div style='font-size:13px;color:var(--text-dim);padding:4px 0'>" + feedback[i] + "</div>";
+      for (var i = 0; i < viewModel.feedback.length; i++) {
+        h += "<div style='font-size:13px;color:var(--text-dim);padding:4px 0'>" + viewModel.feedback[i] + "</div>";
       }
       h += "</div>";
     }
 
-    if (drillSummary) {
+    if (viewModel.drillSummary) {
       h += "<div class='card' style='margin-bottom:12px;text-align:left'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:6px'>Drill Summary</div>";
-      if (drillSummary.label) {
-        h += "<div style='font-size:12px;color:var(--text-dim)'>" + escPlayAlong(drillSummary.label) + "</div>";
+      if (viewModel.drillSummary.label) {
+        h += "<div style='font-size:12px;color:var(--text-dim)'>" + escPlayAlong(viewModel.drillSummary.label) + "</div>";
       }
-      h += "<div style='font-size:12px;color:var(--text-dim)'>Completed " + escPlayAlong(String(drillSummary.completedReps || 0)) + " of " + escPlayAlong(String(drillSummary.targetReps || 0)) + " reps</div>";
-      if (drillSummary.loopWindowLabel) {
-        h += "<div style='font-size:12px;color:var(--text-dim)'>Loop Window: " + escPlayAlong(drillSummary.loopWindowLabel) + "</div>";
+      h += "<div style='font-size:12px;color:var(--text-dim)'>Completed " + escPlayAlong(String(viewModel.drillSummary.completedReps || 0)) + " of " + escPlayAlong(String(viewModel.drillSummary.targetReps || 0)) + " reps</div>";
+      if (viewModel.drillSummary.loopWindowLabel) {
+        h += "<div style='font-size:12px;color:var(--text-dim)'>Loop Window: " + escPlayAlong(viewModel.drillSummary.loopWindowLabel) + "</div>";
       }
-      h += "<div style='font-size:12px;color:" + (drillSummary.metTarget ? "var(--accent)" : "var(--text-muted)") + ";margin-top:4px'>" + escPlayAlong(drillSummary.metTarget ? "Target reached" : "Stopped before target") + "</div>";
+      h += "<div style='font-size:12px;color:" + (viewModel.drillSummary.metTarget ? "var(--accent)" : "var(--text-muted)") + ";margin-top:4px'>" + escPlayAlong(viewModel.drillSummary.metTarget ? "Target reached" : "Stopped before target") + "</div>";
       h += "</div>";
     }
 
-    if (nextAction) {
+    if (viewModel.nextAction) {
       h += "<div class='card' style='margin-bottom:12px;text-align:left;border:1px solid var(--accent)'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:6px'>Next Best Move</div>";
-      h += "<div style='font-size:12px;color:var(--text-dim);margin-bottom:8px'>" + escPlayAlong(nextAction.message) + "</div>";
+      h += "<div style='font-size:12px;color:var(--text-dim);margin-bottom:8px'>" + escPlayAlong(viewModel.nextAction.message) + "</div>";
       h += "<div style='display:flex;gap:8px;flex-wrap:wrap'>";
-      if (nextAction.primaryAction === "drill") {
+      if (viewModel.nextAction.primaryAction === "drill") {
         h += "<button class='btn btn-sm' onclick='sparkPlayAlongReplayDrill()' style='background:var(--accent);color:#fff'>Run Drill Again</button>";
-      } else if (nextAction.primaryAction === "full_song") {
+      } else if (viewModel.nextAction.primaryAction === "full_song") {
         h += "<button class='btn btn-sm' onclick='sparkPlayAlongReplayFullSong()' style='background:var(--accent);color:#fff'>Back to Full Song</button>";
       }
       h += "<button class='btn btn-sm' onclick='sparkPlayAlongReplay()'>Replay Session</button>";
@@ -315,15 +401,15 @@
       h += "</div>";
     }
 
-    if (weakAreas.length > 0) {
+    if (viewModel.weakAreas.length > 0) {
       h += "<div class='card' style='margin-bottom:12px;text-align:left'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:6px'>Where It Broke Down</div>";
-      h += "<div style='font-size:12px;color:var(--text-dim)'>" + escPlayAlong(weakAreas.join(" | ")) + "</div>";
-      if (sectionSummary && sectionSummary.sectionLabel) {
-        h += "<div style='font-size:12px;color:var(--text-dim);margin-top:6px'>Weak section: " + escPlayAlong(sectionSummary.sectionLabel) + "</div>";
+      h += "<div style='font-size:12px;color:var(--text-dim)'>" + escPlayAlong(viewModel.weakAreas.join(" | ")) + "</div>";
+      if (viewModel.sectionSummary && viewModel.sectionSummary.sectionLabel) {
+        h += "<div style='font-size:12px;color:var(--text-dim);margin-top:6px'>Weak section: " + escPlayAlong(viewModel.sectionSummary.sectionLabel) + "</div>";
       }
       h += "<div style='display:flex;gap:8px;flex-wrap:wrap;margin-top:8px'>";
-      if (sectionSummary) {
+      if (viewModel.sectionSummary) {
         h += "<button class='btn btn-sm' onclick='sparkPlayAlongJumpToWeakSection()'>Jump To Weak Section</button>";
         h += "<button class='btn btn-sm' onclick='sparkPlayAlongBookmarkCurrentSection()'>Save Weak Section</button>";
       }
@@ -335,23 +421,23 @@
     h += "<canvas id='play-along-heatmap' width='800' height='60' style='width:100%;border-radius:8px;background:#111'></canvas>";
 
     // Drills section
-    if (drills.length > 0) {
+    if (viewModel.drills.length > 0) {
       h += "<div class='card' style='margin:12px 0;text-align:left'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Suggested Drills</div>";
-      for (var j = 0; j < drills.length; j++) {
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongStartDrill(" + j + ")' style='margin:2px 4px 2px 0'>Fix This: " + (drills[j].label || drills[j]) + "</button>";
+      for (var j = 0; j < viewModel.drills.length; j++) {
+        h += "<button class='btn btn-sm' onclick='sparkPlayAlongStartDrill(" + j + ")' style='margin:2px 4px 2px 0'>Fix This: " + (viewModel.drills[j].label || viewModel.drills[j]) + "</button>";
       }
       h += "</div>";
     }
 
     // RL suggestion
-    if (suggestedDiff || suggestedMode) {
+    if (viewModel.suggestedDifficulty || viewModel.suggestedMode) {
       h += "<div style='font-size:12px;color:var(--text-dim);margin:8px 0'>";
-      if (suggestedDiff) {
-        h += "Suggested difficulty: <strong style='color:var(--text-primary)'>" + suggestedDiff + "</strong> ";
+      if (viewModel.suggestedDifficulty) {
+        h += "Suggested difficulty: <strong style='color:var(--text-primary)'>" + viewModel.suggestedDifficulty + "</strong> ";
       }
-      if (suggestedMode) {
-        h += "Mode: <strong style='color:var(--text-primary)'>" + suggestedMode + "</strong>";
+      if (viewModel.suggestedMode) {
+        h += "Mode: <strong style='color:var(--text-primary)'>" + viewModel.suggestedMode + "</strong>";
       }
       h += "</div>";
     }
@@ -409,25 +495,23 @@
   }
 
   function getPlayAlongRepStatus(drill) {
-    var current = Math.max(1, Number(S.playAlongLoopIteration || (drill ? 1 : 0) || 1));
-    var target = drill && drill.repetitions != null ? drill.repetitions : null;
-    return target != null ? ("Rep " + current + " / " + target) : ("Rep " + current);
+    return playAlongState.getRepStatus(drill);
   }
 
   function getPlayAlongLoopProgress() {
-    return Math.max(0, Math.min(100, Number(S.playAlongLoopProgress || 0)));
+    return playAlongState.getLoopProgress();
   }
 
   function getPlayAlongRecentEntries() {
-    return Array.isArray(S.playAlongRecent) ? S.playAlongRecent : [];
+    return playAlongState.getRecent();
   }
 
   function getPlayAlongBookmarks() {
-    return Array.isArray(S.playAlongBookmarks) ? S.playAlongBookmarks : [];
+    return playAlongState.getBookmarks();
   }
 
   function getPlayAlongSavedTracks() {
-    return Array.isArray(S.spotifySavedTracks) ? S.spotifySavedTracks : [];
+    return playAlongState.getSavedTracks();
   }
 
   function buildPlayAlongRecentMeta(item) {
@@ -439,8 +523,7 @@
   }
 
   function getPlayAlongTransportMode() {
-    var runtimeState = window.sparkCore && window.sparkCore.runtimeState ? window.sparkCore.runtimeState : null;
-    return runtimeState && runtimeState.playAlongTransportMode ? runtimeState.playAlongTransportMode : "generated";
+    return playAlongState.getTransportMode();
   }
 
   function getPlayAlongNextAction(outcome) {
@@ -487,20 +570,9 @@
   }
 
   function getPlayAlongSectionNavigation(chart) {
-    var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
-    var index = Number(S.playAlongSectionIndex || 0);
-    if (!sections.length) {
-      return { total: 0, label: "", hasPrev: false, hasNext: false };
-    }
-    if (!isFinite(index) || index < 0) index = 0;
-    if (index >= sections.length) index = sections.length - 1;
-    var current = sections[index] || {};
-    return {
-      total: sections.length,
-      label: "Section " + (index + 1) + " of " + sections.length + ": " + (current.name || ("Part " + (index + 1))),
-      hasPrev: index > 0,
-      hasNext: index < sections.length - 1
-    };
+    return playAlongState.getSectionNavigation(chart);
   }
+
+  window.sparkPlayAlongBackToHome = sparkPlayAlongBackToHome;
 
 })();

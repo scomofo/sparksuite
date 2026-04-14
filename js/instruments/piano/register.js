@@ -1,5 +1,55 @@
 // js/instruments/piano/register.js
 (function() {
+  function pianoRegisterRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function pianoRegisterRead(path, fallback) {
+    var root = pianoRegisterRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    if (!cursor) return fallback;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function pianoRegisterWrite(path, value) {
+    var root = pianoRegisterRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    if (!cursor || !parts.length) return value;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function ensurePianoStateDefaults(defaults) {
+    for (var key in defaults) {
+      if (pianoRegisterRead(key, undefined) === undefined) pianoRegisterWrite(key, defaults[key]);
+    }
+  }
+
   SparkInstruments.register({
     id: "pianospark",
     instrument: "piano",
@@ -92,61 +142,56 @@
         SparkProfile.ensureApp(profile, "pianospark", "piano");
         SparkStorage.save(profile);
       }
-      // Ensure piano-specific state fields exist on shared S
-      if (typeof S !== "undefined") {
-        if (S.currentSession === undefined) S.currentSession = 1;
-        if (S.onboardingComplete === undefined) S.onboardingComplete = false;
-        if (S.practiceLen === undefined) S.practiceLen = 60;
-        if (S.sessionPlan === undefined) S.sessionPlan = null;
-        if (S.lhLevel === undefined) S.lhLevel = 1;
-        if (S.keyboardSize === undefined) S.keyboardSize = 61;
-        if (S.stylePrefs === undefined) S.stylePrefs = [];
-        if (S.focusMode === undefined) S.focusMode = false;
-        if (S.dailyGoal === undefined) S.dailyGoal = 15;
-        if (S.dailyPracticed === undefined) S.dailyPracticed = 0;
-        if (S.a4Tuning === undefined) S.a4Tuning = 440;
-        if (S.chord === undefined) S.chord = null;
-        if (S.active === undefined) S.active = false;
-        if (S.paused === undefined) S.paused = false;
-        if (S.lastPractice === undefined) S.lastPractice = null;
-        if (S.personalBests === undefined) S.personalBests = { streak: 0 };
-        if (S.earned === undefined) S.earned = [];
-        if (S.transitionStats === undefined) S.transitionStats = {};
-        if (S.drillChord === undefined) S.drillChord = null;
-        if (S.drillTimer === undefined) S.drillTimer = 0;
-        if (S.drillCount === undefined) S.drillCount = 0;
-        if (S._inPlacement === undefined) S._inPlacement = false;
-        if (S.onboardingStep === undefined) S.onboardingStep = 0;
-        if (S.chordProg === undefined) S.chordProg = {};
-        if (S.fingerBadges === undefined) S.fingerBadges = [];
-        if (S.fingerStats === undefined) S.fingerStats = {};
-        if (S.songIdx === undefined) S.songIdx = null;
-        if (S.styleIdx === undefined) S.styleIdx = 0;
-        if (S.bpm === undefined) S.bpm = 72;
-        if (S.volume === undefined) S.volume = 80;
-        if (S.reverbAmount === undefined) S.reverbAmount = 0.3;
-        if (S.tone === undefined) S.tone = "grand";
-        if (S.metronomeSound === undefined) S.metronomeSound = "click";
-        // Session tracking
-        if (S.completedSessions === undefined) S.completedSessions = [];
-        if (S.lastReviewChords === undefined) S.lastReviewChords = [];
-        if (S.sessions === undefined) S.sessions = 0;
-        if (S.adaptiveBpm === undefined) S.adaptiveBpm = 72;
-        if (S.songsDone === undefined) S.songsDone = [];
-        // Reward engine
-        if (S.totalActions === undefined) S.totalActions = 0;
-        if (S.actionsSinceReward === undefined) S.actionsSinceReward = 0;
-        if (S.nextRewardAt === undefined) S.nextRewardAt = 2;
-        if (S.jackpotsHit === undefined) S.jackpotsHit = 0;
-        // Activity counters
-        if (S.drillsDone === undefined) S.drillsDone = 0;
-        if (S.dailiesDone === undefined) S.dailiesDone = 0;
-        if (S.fingerExercisesDone === undefined) S.fingerExercisesDone = 0;
-        if (S.fingerDaysLogged === undefined) S.fingerDaysLogged = 0;
-        // Build mode
-        if (S.buildChords === undefined) S.buildChords = [];
-        if (S.buildPlaying === undefined) S.buildPlaying = false;
-      }
+      ensurePianoStateDefaults({
+        currentSession: 1,
+        onboardingComplete: false,
+        practiceLen: 60,
+        sessionPlan: null,
+        lhLevel: 1,
+        keyboardSize: 61,
+        stylePrefs: [],
+        focusMode: false,
+        dailyGoal: 15,
+        dailyPracticed: 0,
+        a4Tuning: 440,
+        chord: null,
+        active: false,
+        paused: false,
+        lastPractice: null,
+        personalBests: { streak: 0 },
+        earned: [],
+        transitionStats: {},
+        drillChord: null,
+        drillTimer: 0,
+        drillCount: 0,
+        _inPlacement: false,
+        onboardingStep: 0,
+        chordProg: {},
+        fingerBadges: [],
+        fingerStats: {},
+        songIdx: null,
+        styleIdx: 0,
+        bpm: 72,
+        volume: 80,
+        reverbAmount: 0.3,
+        tone: "grand",
+        metronomeSound: "click",
+        completedSessions: [],
+        lastReviewChords: [],
+        sessions: 0,
+        adaptiveBpm: 72,
+        songsDone: [],
+        totalActions: 0,
+        actionsSinceReward: 0,
+        nextRewardAt: 2,
+        jackpotsHit: 0,
+        drillsDone: 0,
+        dailiesDone: 0,
+        fingerExercisesDone: 0,
+        fingerDaysLogged: 0,
+        buildChords: [],
+        buildPlaying: false
+      });
     },
 
     // ── InstrumentModule interface ──
@@ -161,8 +206,8 @@
           id: "level_" + lvl.num,
           label: lvl.title,
           level: lvl.num,
-          status: (S.level || 1) >= lvl.num ? "available" : "locked",
-          progress: (S.level || 1) > lvl.num ? 100 : ((S.level || 1) === lvl.num ? 50 : 0)
+          status: (pianoRegisterRead("level", 1) || 1) >= lvl.num ? "available" : "locked",
+          progress: (pianoRegisterRead("level", 1) || 1) > lvl.num ? 100 : (((pianoRegisterRead("level", 1) || 1) === lvl.num) ? 50 : 0)
         });
       }
       return { branches: branches };

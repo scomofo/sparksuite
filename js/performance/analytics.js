@@ -1,10 +1,22 @@
 (function(){
 
+  function getPerformanceStatsSnapshot(){
+    if(window.sparkCore&&typeof window.sparkCore.getLegacyPracticeAnalyticsSnapshot==="function"){
+      var analytics=window.sparkCore.getLegacyPracticeAnalyticsSnapshot();
+      if(analytics&&analytics.performanceStats)return analytics.performanceStats;
+    }
+    if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
+      return SparkState.read(["performanceStats"], {});
+    }
+    return {};
+  }
+
   function getPerformanceTotals(){
     var out={runs:0,masteredSongs:0,songsPlayed:0,avgAccuracy:0,totalStars:0};
     var accSum=0,accCount=0,songSet={};
-    for(var key in(S.performanceStats||{})){
-      var st=S.performanceStats[key];
+    var performanceStats=getPerformanceStatsSnapshot();
+    for(var key in performanceStats){
+      var st=performanceStats[key];
       if(!st||!st.runs)continue;
       out.runs+=st.runs;
       out.totalStars+=st.bestStars||0;
@@ -19,8 +31,9 @@
 
   function getPerformanceRecentRuns(){
     var runs=[];
-    for(var key in(S.performanceStats||{})){
-      var st=S.performanceStats[key];
+    var performanceStats=getPerformanceStatsSnapshot();
+    for(var key in performanceStats){
+      var st=performanceStats[key];
       if(!st||!st.lastPlayed)continue;
       runs.push({key:key,songId:st.songId||key,arrangement:st.arrangement,difficulty:st.difficulty,bestScore:st.bestScore,bestAccuracy:st.bestAccuracy,bestStars:st.bestStars,mastery:st.mastery,lastPlayed:st.lastPlayed,runs:st.runs});
     }
@@ -30,8 +43,9 @@
 
   function getPerformanceTopSongs(){
     var songs=[];
-    for(var key in(S.performanceStats||{})){
-      var st=S.performanceStats[key];
+    var performanceStats=getPerformanceStatsSnapshot();
+    for(var key in performanceStats){
+      var st=performanceStats[key];
       if(!st||!st.runs)continue;
       songs.push({key:key,songId:st.songId||key,arrangement:st.arrangement,difficulty:st.difficulty,bestScore:st.bestScore,bestAccuracy:st.bestAccuracy,bestStars:st.bestStars,mastery:st.mastery,runs:st.runs});
     }
@@ -41,8 +55,9 @@
 
   function getPerformanceWeakSongs(){
     var songs=[];
-    for(var key in(S.performanceStats||{})){
-      var st=S.performanceStats[key];
+    var performanceStats=getPerformanceStatsSnapshot();
+    for(var key in performanceStats){
+      var st=performanceStats[key];
       if(!st||!st.runs)continue;
       songs.push({key:key,songId:st.songId||key,arrangement:st.arrangement,difficulty:st.difficulty,bestAccuracy:st.bestAccuracy,bestStars:st.bestStars,mastery:st.mastery,runs:st.runs});
     }
