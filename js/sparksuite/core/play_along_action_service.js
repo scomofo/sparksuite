@@ -488,42 +488,41 @@
 
   SparkPlayAlongActionService.prototype.connectSpotify = function(onConnected) {
     var authManager = this.createSpotifyAuthManager();
-    var self = this;
     if (!authManager) {
       alert("Spotify integration not loaded.");
       return Promise.resolve(false);
     }
 
     return this.resumeSpotifyConnection(authManager, function(token) {
-      if (token && self.stateService.initSpotify(token)) {
+      if (token && this.stateService.initSpotify(token)) {
         if (typeof onConnected === "function") onConnected();
       }
-    }).then(function(reused) {
+    }.bind(this)).then(function(reused) {
       var clientId;
       if (reused) return true;
 
-      clientId = self.getSpotifyClientId();
+      clientId = this.getSpotifyClientId();
       if (!clientId) {
-        self.showSpotifyClientIdPrompt(self.getSpotifyPromptContainer());
+        this.showSpotifyClientIdPrompt(this.getSpotifyPromptContainer());
         return false;
       }
 
-      if (!self.configureSpotifyAuth(clientId)) return false;
+      if (!this.configureSpotifyAuth(clientId)) return false;
 
-      self.requestSpotifyAuthUrl(authManager).then(function(url) {
-        self.openSpotifyAuthUrl(url);
-      }).catch(function(err) {
+      this.requestSpotifyAuthUrl(authManager).then(function(url) {
+        this.openSpotifyAuthUrl(url);
+      }.bind(this)).catch(function(err) {
         console.error("Spotify auth URL generation failed:", err);
       });
 
-      self.bindSpotifyCallback(authManager, function(tokenData) {
-        if (tokenData && tokenData.access_token && self.stateService.initSpotify(tokenData.access_token)) {
+      this.bindSpotifyCallback(authManager, function(tokenData) {
+        if (tokenData && tokenData.access_token && this.stateService.initSpotify(tokenData.access_token)) {
           if (typeof onConnected === "function") onConnected();
         }
-      });
+      }.bind(this));
 
       return true;
-    });
+    }.bind(this));
   };
 
   SparkPlayAlongActionService.prototype.createSavedTrack = function(track) {
