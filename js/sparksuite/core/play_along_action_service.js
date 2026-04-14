@@ -241,6 +241,16 @@
     return this.showSearchUploadPrompt(container, index, onSelectWithFile, onSkipLaunch);
   };
 
+  SparkPlayAlongActionService.prototype.handleSearchSelection = function(index, onLaunchPrepared, onSelectWithFile) {
+    if (this.shouldUseCachedSearchChart(index)) {
+      if (typeof onLaunchPrepared === "function") {
+        onLaunchPrepared(this.prepareSearchLaunch(index));
+      }
+      return true;
+    }
+    return this.showSearchUploadPromptForIndex(index, onSelectWithFile, onLaunchPrepared);
+  };
+
   SparkPlayAlongActionService.prototype.saveSearchResultAndRender = function(index, onRender) {
     return this.saveSearchResult(index).then(function(saved) {
       if (saved && typeof onRender === "function") onRender();

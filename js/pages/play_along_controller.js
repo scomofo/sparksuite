@@ -57,14 +57,9 @@
   // ---- Select Track ----
 
   window.sparkPlayAlongSelect = function(index) {
-    if (playAlongActions.shouldUseCachedSearchChart(index)) {
-      launchSearchSelection(index);
-      return;
-    }
-
-    return playAlongActions.showSearchUploadPromptForIndex(index, sparkPlayAlongSelectWithFile, function(params) {
+    return playAlongActions.handleSearchSelection(index, function(params) {
       launchPreparedParams(params);
-    });
+    }, sparkPlayAlongSelectWithFile);
   };
 
   window.sparkPlayAlongSelectWithFile = function(index, file) {
