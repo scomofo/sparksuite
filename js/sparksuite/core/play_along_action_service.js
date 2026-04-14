@@ -165,10 +165,6 @@
     return bindings;
   };
 
-  SparkPlayAlongActionService.prototype.cloneValue = function(value) {
-    return this.stateService.cloneValue(value);
-  };
-
   SparkPlayAlongActionService.prototype.getDifficulty = function() {
     return this.stateService.getDifficulty();
   };
