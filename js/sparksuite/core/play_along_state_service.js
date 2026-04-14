@@ -178,6 +178,20 @@
     return this.startSession(params);
   };
 
+  SparkPlayAlongStateService.prototype.launchSession = function(params, instrumentId, onRender, onStartLoop) {
+    if (!params) return Promise.resolve(false);
+    if (!params.instrument) params.instrument = instrumentId || "guitar";
+    return this.beginSessionLaunch(params).then(function(started) {
+      if (!started) return false;
+      return this.activateStartedSession(onRender, onStartLoop);
+    }.bind(this)).catch(function(err) {
+      console.error("[PlayAlong] Failed:", err);
+      this.setError(err);
+      this.showHome(onRender);
+      return false;
+    }.bind(this));
+  };
+
   SparkPlayAlongStateService.prototype.activateStartedSession = function(onRender, onStartLoop) {
     this.showSessionScreen();
     this.applySelectedDrillState();

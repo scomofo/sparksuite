@@ -11,7 +11,7 @@
 
   function launchPreparedParams(params) {
     if (!params) return false;
-    launchPlayAlongSession(params);
+    playAlongState.launchSession(params, playAlongActions.getInstrumentId(), requestRender, sparkPlayAlongStartLoop);
     return true;
   }
 
@@ -206,20 +206,6 @@
   window.openPlayAlong = function() {
     return playAlongState.showHome(requestRender);
   };
-
-  function launchPlayAlongSession(params) {
-    if (!params) return Promise.resolve(false);
-    if (!params.instrument) params.instrument = playAlongActions.getInstrumentId();
-    return playAlongState.beginSessionLaunch(params).then(function(started) {
-      if (!started) return false;
-      return playAlongState.activateStartedSession(requestRender, sparkPlayAlongStartLoop);
-    }).catch(function(err) {
-      console.error("[PlayAlong] Failed:", err);
-      playAlongState.setError(err);
-      playAlongState.showHome(requestRender);
-      return false;
-    });
-  }
 
   function enforceLoopWindow() {
     return playAlongState.enforceLoopWindow(sparkPlayAlongStop);
