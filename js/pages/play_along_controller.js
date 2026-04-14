@@ -10,7 +10,6 @@
   }
 
   var rendererBindings = playAlongRenderer.createControllerBindings(requestRender);
-  var controllerBindings = playAlongActions.createControllerBindings(requestRender, rendererBindings.startLoop);
-  Object.assign(window, playAlongActions.createGlobalBindings(controllerBindings, rendererBindings));
+  playAlongActions.bindGlobals(window, requestRender, rendererBindings);
 
 })();
