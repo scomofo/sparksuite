@@ -50,7 +50,9 @@
     var stateService = new SparkPlayAlongStateService();
     var actionService = new SparkPlayAlongActionService(stateService);
     var renderer = new SparkPlayAlongRenderer(stateService);
-    var onRender = actionService.getRenderCallback();
+    var onRender = function() {
+      if (typeof render === "function") render();
+    };
     var stop = renderer.finishSessionResults.bind(renderer, onRender);
     var startLoop = renderer.startSessionLoop.bind(renderer, stop);
     var controllerBindings = actionService.createControllerBindings(onRender, startLoop);
@@ -108,16 +110,11 @@
     return true;
   };
 
-  SparkPlayAlongActionService.prototype.getRenderCallback = function(onRender) {
-    if (typeof onRender === "function") return onRender;
-    return function() {
-      if (typeof render === "function") render();
-    };
-  };
-
   SparkPlayAlongActionService.prototype.createControllerBindings = function(onRender, onStartLoop) {
     var self = this;
-    onRender = this.getRenderCallback(onRender);
+    onRender = typeof onRender === "function" ? onRender : function() {
+      if (typeof render === "function") render();
+    };
     var launchPreparedParams = function(params) {
       return self.launchPreparedParams(params, onRender, onStartLoop);
     };
