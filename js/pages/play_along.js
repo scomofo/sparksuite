@@ -25,18 +25,9 @@
     return PLAY_ALONG_DEMOS.slice();
   };
 
-  function playAlongPageRead(path, fallback) {
-    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
-      return SparkState.read(path, fallback);
-    }
-    return fallback;
-  }
-
   function sparkPlayAlongBackToHome() {
-    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
-      SparkState.write(["screen"], "home");
-      SparkState.write(["tab"], "practice");
-    }
+    playAlongState.writeValue(["screen"], "home");
+    playAlongState.writeValue(["tab"], "practice");
     if (typeof render === "function") render();
   }
 
@@ -44,7 +35,7 @@
     var errorState = playAlongState.getError();
     return {
       spotifyConnected: playAlongState.isSpotifyConnected(),
-      difficulty: playAlongPageRead(["spotifyDifficulty"], "easy"),
+      difficulty: playAlongState.readValue(["spotifyDifficulty"], "easy"),
       error: errorState,
       demos: typeof window.getSparkPlayAlongDemos === "function" ? window.getSparkPlayAlongDemos() : [],
       recent: getPlayAlongRecentEntries(),

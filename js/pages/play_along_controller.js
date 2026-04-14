@@ -1,59 +1,16 @@
 // ===== SparkSuite: Play Along Controller =====
 // Glue layer connecting play-along page UI to SparkCore play-along pipeline.
 (function() {
-
-  function playAlongControllerRead(path, fallback) {
-    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
-      return SparkState.read(path, fallback);
-    }
-    var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
-      ? SparkState.getRoot()
-      : (typeof globalThis !== "undefined" ? globalThis.__sparkState || null : null);
-    if (!root) return fallback;
-    var parts = Array.isArray(path) ? path.slice() : [path];
-    var cursor = root;
-    var i;
-    for (i = 0; i < parts.length; i++) {
-      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
-      cursor = cursor[parts[i]];
-    }
-    return cursor == null ? fallback : cursor;
-  }
-
-  function playAlongControllerWrite(path, value) {
-    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
-      return SparkState.write(path, value);
-    }
-    var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
-      ? SparkState.getRoot()
-      : (typeof globalThis !== "undefined" ? globalThis.__sparkState || null : null);
-    if (!root) return value;
-    var parts = Array.isArray(path) ? path.slice() : [path];
-    var cursor = root;
-    var i;
-    for (i = 0; i < parts.length - 1; i++) {
-      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
-      cursor = cursor[parts[i]];
-    }
-    if (parts.length) cursor[parts[parts.length - 1]] = value;
-    return value;
-  }
-
   var playAlongState = new SparkPlayAlongStateService();
   var playAlongActions = new SparkPlayAlongActionService(playAlongState);
   var playAlongRenderer = new SparkPlayAlongRenderer(playAlongState);
 
   function clearPlayAlongError() {
-    playAlongControllerWrite("playAlongError", null);
+    playAlongState.clearError();
   }
 
   function setPlayAlongError(err) {
-    var message = err && err.message ? err.message : err;
-    playAlongControllerWrite("playAlongError", {
-      message: message ? String(message) : "Unable to start play-along session.",
-      source: "play_along_session",
-      retryable: true
-    });
+    playAlongState.setError(err);
   }
 
   // ---- Search ----
@@ -89,7 +46,6 @@
   window.sparkPlayAlongSelect = function(index) {
     var track = playAlongActions.getSearchResult(index);
     if (!track) return;
-    if (!window.sparkCore) return;
 
     clearSelectedDrillState();
 
@@ -124,7 +80,6 @@
   window.sparkPlayAlongSelectWithFile = function(index, file) {
     var track = playAlongActions.getSearchResult(index);
     if (!track || !file) return;
-    if (!window.sparkCore) return;
 
     clearSelectedDrillState();
     launchPlayAlongSession(playAlongActions.buildLaunchParams(track, {
@@ -195,7 +150,7 @@
     if (!item || !item.params) return false;
     clearPlayAlongError();
     playAlongState.prepareBookmarkLaunch(item);
-    launchPlayAlongSession(clonePlainObject(item.params));
+    launchPlayAlongSession(playAlongState.cloneValue(item.params));
     return true;
   };
 
@@ -239,12 +194,11 @@
 
   window.sparkPlayAlongLoadFile = function(file) {
     if (!file) return;
-    if (!window.sparkCore) return;
 
     clearSelectedDrillState();
     launchPlayAlongSession({
       audioFile: file,
-      difficulty: playAlongControllerRead("spotifyDifficulty", "easy") || "easy",
+      difficulty: playAlongState.readValue("spotifyDifficulty", "easy") || "easy",
       instrument: playAlongActions.getInstrumentId()
     });
   };
@@ -252,8 +206,7 @@
   // ---- Game Loop ----
 
   window.sparkPlayAlongStartLoop = function() {
-    if (!window.sparkCore || typeof window.sparkCore.startPlayAlongRenderLoop !== "function") return;
-    window.sparkCore.startPlayAlongRenderLoop({
+    playAlongState.startRenderLoop({
       enforceLoopWindow: enforceLoopWindow,
       onFrame: function(result) {
         playAlongRenderer.renderFrame(result, playAlongState.getActiveChart());
@@ -265,25 +218,19 @@
 
   window.sparkPlayAlongStop = function() {
     var outcome = null;
-    if (window.sparkCore && typeof window.sparkCore.stopPlayAlongRenderLoop === "function") {
-      window.sparkCore.stopPlayAlongRenderLoop();
+    playAlongState.stopRenderLoop();
+    outcome = playAlongState.completeSession();
+    if (outcome) {
+      outcome = playAlongState.enrichOutcomeWithLoopSummary(outcome, playAlongState.buildCurrentSectionBookmark());
+      playAlongState.setLastOutcome(outcome);
     }
-    if (window.sparkCore) {
-      outcome = window.sparkCore.completePlayAlongSession();
-      outcome = playAlongState.enrichOutcomeWithLoopSummary(outcome, buildCurrentSectionBookmark());
-      if (typeof window.sparkCore.setLastSessionOutcome === "function") {
-        window.sparkCore.setLastSessionOutcome(outcome);
-      }
-    }
-    playAlongControllerWrite("screen", SCR.PLAY_ALONG_RESULTS);
+    playAlongState.writeValue("screen", SCR.PLAY_ALONG_RESULTS);
     render();
 
     // Draw heatmap after render
     setTimeout(function() {
       var heatmapCanvas = document.getElementById("play-along-heatmap");
-      if (heatmapCanvas && window.sparkCore && window.sparkCore.drawHeatmap) {
-        window.sparkCore.drawHeatmap(heatmapCanvas);
-      }
+      playAlongState.drawHeatmap(heatmapCanvas);
     }, 0);
   };
 
@@ -307,7 +254,7 @@
     if (params) {
       launchPlayAlongSession(params);
     } else {
-      playAlongControllerWrite("screen", SCR.PLAY_ALONG);
+      playAlongState.writeValue("screen", SCR.PLAY_ALONG);
       render();
     }
   };
@@ -329,12 +276,10 @@
     var params = playAlongState.getActiveParams();
     if (!playAlongState.prepareFullSongReplay() || !params) return false;
     clearPlayAlongError();
-    return launchPlayAlongSession(clonePlainObject(params));
+    return launchPlayAlongSession(playAlongState.cloneValue(params));
   };
 
   window.sparkPlayAlongTogglePause = function() {
-    if (!window.sparkCore) return false;
-
     if (playAlongState.getStateValue("playAlongPaused", false)) {
       resumePlayAlongTransport();
       playAlongState.togglePaused();
@@ -360,17 +305,17 @@
   };
 
   window.sparkPlayAlongPrevSection = function() {
-    return stepPlayAlongSection(-1);
+    return playAlongState.stepSection(-1, seekPlayAlongToMs, render);
   };
 
   window.sparkPlayAlongNextSection = function() {
-    return stepPlayAlongSection(1);
+    return playAlongState.stepSection(1, seekPlayAlongToMs, render);
   };
 
   window.sparkPlayAlongBookmarkCurrentSection = function() {
-    var bookmark = buildCurrentSectionBookmark();
+    var bookmark = playAlongState.buildCurrentSectionBookmark();
     if (!bookmark) return false;
-    rememberPlayAlongBookmark(bookmark);
+    playAlongState.rememberBookmark(bookmark);
     render();
     return true;
   };
@@ -382,20 +327,20 @@
     if (!sectionSummary || !params) return false;
     clearSelectedDrillState();
     playAlongState.activateSectionLoop(sectionSummary.sectionIndex || 0);
-    return launchPlayAlongSession(clonePlainObject(params));
+    return launchPlayAlongSession(playAlongState.cloneValue(params));
   };
 
   window.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {
     var params = null;
     var activeParams = playAlongState.getActiveParams();
     if (activeParams && activeParams.trackId === trackId) {
-      params = clonePlainObject(activeParams);
+      params = playAlongState.cloneValue(activeParams);
     }
     if (!params) {
       var recent = playAlongState.getRecent();
       for (var i = 0; i < recent.length; i++) {
         if (recent[i] && recent[i].trackId === trackId && recent[i].params) {
-          params = clonePlainObject(recent[i].params);
+          params = playAlongState.cloneValue(recent[i].params);
           break;
         }
       }
@@ -408,7 +353,7 @@
 
   window.sparkPlayAlongPickNew = function() {
     clearSelectedDrillState();
-    playAlongControllerWrite("screen", SCR.PLAY_ALONG);
+    playAlongState.writeValue("screen", SCR.PLAY_ALONG);
     render();
   };
 
@@ -424,7 +369,7 @@
       launchPlayAlongSession(params);
       return true;
     }
-    playAlongControllerWrite("screen", SCR.PLAY_ALONG);
+    playAlongState.writeValue("screen", SCR.PLAY_ALONG);
     render();
     return true;
   };
@@ -432,7 +377,7 @@
   // ---- Navigation Helper ----
 
   window.openPlayAlong = function() {
-    playAlongControllerWrite("screen", SCR.PLAY_ALONG);
+    playAlongState.writeValue("screen", SCR.PLAY_ALONG);
     render();
   };
 
@@ -448,19 +393,11 @@
   }
 
   function pausePlayAlongTransport() {
-    var core = window.sparkCore;
-    if (!core || typeof core.pausePlayAlongTransport !== "function") return;
-    core.pausePlayAlongTransport();
+    playAlongState.pauseTransport();
   }
 
   function resumePlayAlongTransport() {
-    var core = window.sparkCore;
-    if (!core || typeof core.resumePlayAlongTransport !== "function") return;
-    core.resumePlayAlongTransport();
-  }
-
-  function resolveLoopRange() {
-    return playAlongState.resolveLoopRange();
+    playAlongState.resumeTransport();
   }
 
   function clearSelectedDrillState() {
@@ -469,13 +406,14 @@
   }
 
   function launchPlayAlongSession(params) {
-    if (!window.sparkCore || !params) return Promise.resolve(false);
+    if (!params) return Promise.resolve(false);
     if (!params.instrument) params.instrument = playAlongActions.getInstrumentId();
     clearPlayAlongError();
-    rememberPlayAlongLaunch(params);
-    return window.sparkCore.startPlayAlongSession(params).then(function() {
-      playAlongControllerWrite("screen", SCR.PLAY_ALONG_SESSION);
-      playAlongControllerWrite("playAlongPaused", false);
+    playAlongState.rememberLaunch(params);
+    return playAlongState.startSession(params).then(function(started) {
+      if (!started) return false;
+      playAlongState.writeValue("screen", SCR.PLAY_ALONG_SESSION);
+      playAlongState.writeValue("playAlongPaused", false);
       applySelectedDrillState();
       render();
       sparkPlayAlongStartLoop();
@@ -483,7 +421,7 @@
     }).catch(function(err) {
       console.error("[PlayAlong] Failed:", err);
       setPlayAlongError(err);
-      playAlongControllerWrite("screen", SCR.PLAY_ALONG);
+      playAlongState.writeValue("screen", SCR.PLAY_ALONG);
       render();
       return false;
     });
@@ -494,16 +432,13 @@
   }
 
   function setPlayAlongPlaybackRate(speed) {
-    var core = window.sparkCore;
-    if (!core || typeof core.setPlayAlongPlaybackRate !== "function") return;
-    core.setPlayAlongPlaybackRate(speed);
+    playAlongState.setPlaybackRate(speed);
   }
 
   function enforceLoopWindow() {
-    if (!window.sparkCore) return false;
     return playAlongState.enforceLoopWindow(
       function() {
-        return typeof window.sparkCore.getPlaybackTimeMs === "function" ? window.sparkCore.getPlaybackTimeMs() : 0;
+        return playAlongState.getPlaybackTimeMs();
       },
       seekPlayAlongToMs,
       sparkPlayAlongStop
@@ -511,36 +446,8 @@
   }
 
   function seekPlayAlongToMs(targetMs) {
-    var core = window.sparkCore;
-    if (!core || typeof core.seekPlayAlongToMs !== "function") return false;
-    return core.seekPlayAlongToMs(targetMs);
+    return playAlongState.seekToMs(targetMs);
   }
-
-  function rememberPlayAlongLaunch(params) {
-    playAlongState.rememberLaunch(params);
-  }
-
-  function clonePlainObject(value) {
-    return playAlongState.cloneValue(value);
-  }
-
-  function buildCurrentSectionBookmark() {
-    return playAlongState.buildCurrentSectionBookmark();
-  }
-
-  function rememberPlayAlongBookmark(bookmark) {
-    playAlongState.rememberBookmark(bookmark);
-  }
-
-  function stepPlayAlongSection(delta) {
-    return playAlongState.stepSection(delta, seekPlayAlongToMs, render);
-  }
-
-  function syncPlayAlongSectionIndex() {
-    var chart = playAlongState.getActiveChart();
-    playAlongState.syncSectionIndex(chart);
-  }
-
 
   // ---- Spotify Connect ----
 
@@ -556,8 +463,7 @@
     // Check if already connected
     if (authManager.isConnected()) {
       authManager.getValidToken().then(function(token) {
-        if (token && window.sparkCore && typeof window.sparkCore.initSpotify === "function") {
-          window.sparkCore.initSpotify(token);
+        if (token && playAlongState.initSpotify(token)) {
           if (typeof render === "function") render();
         }
       });
@@ -605,8 +511,7 @@
     if (window.electron && window.electron.spotify && window.electron.spotify.onCallback) {
       window.electron.spotify.onCallback(function(code) {
         authManager.exchangeCode(code).then(function(tokenData) {
-          if (tokenData && tokenData.access_token && window.sparkCore) {
-            window.sparkCore.initSpotify(tokenData.access_token);
+          if (tokenData && tokenData.access_token && playAlongState.initSpotify(tokenData.access_token)) {
             if (typeof render === "function") render();
           }
         });

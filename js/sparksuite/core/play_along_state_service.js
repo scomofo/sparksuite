@@ -9,6 +9,39 @@
     return null;
   }
 
+  function readPlayAlongPath(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = getPlayAlongState();
+    if (!root) return fallback;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function writePlayAlongPath(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = getPlayAlongState();
+    if (!root) return value;
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    if (parts.length) cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   function getPlayAlongCore() {
     return typeof window !== "undefined" ? window.sparkCore || null : null;
   }
@@ -43,6 +76,14 @@
     return clonePlainObject(value);
   };
 
+  SparkPlayAlongStateService.prototype.readValue = function(path, fallback) {
+    return readPlayAlongPath(path, fallback);
+  };
+
+  SparkPlayAlongStateService.prototype.writeValue = function(path, value) {
+    return writePlayAlongPath(path, value);
+  };
+
   SparkPlayAlongStateService.prototype.persistState = function() {
     if (typeof saveState === "function") saveState();
   };
@@ -64,6 +105,79 @@
 
   SparkPlayAlongStateService.prototype.getCore = function() {
     return getPlayAlongCore();
+  };
+
+  SparkPlayAlongStateService.prototype.startSession = function(params) {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.startPlayAlongSession !== "function") return Promise.resolve(false);
+    return core.startPlayAlongSession(params);
+  };
+
+  SparkPlayAlongStateService.prototype.startRenderLoop = function(options) {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.startPlayAlongRenderLoop !== "function") return false;
+    return core.startPlayAlongRenderLoop(options || {});
+  };
+
+  SparkPlayAlongStateService.prototype.stopRenderLoop = function() {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.stopPlayAlongRenderLoop !== "function") return false;
+    core.stopPlayAlongRenderLoop();
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.completeSession = function() {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.completePlayAlongSession !== "function") return null;
+    return core.completePlayAlongSession();
+  };
+
+  SparkPlayAlongStateService.prototype.drawHeatmap = function(canvas) {
+    var core = getPlayAlongCore();
+    if (!core || !canvas || typeof core.drawHeatmap !== "function") return false;
+    core.drawHeatmap(canvas);
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.pauseTransport = function() {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.pausePlayAlongTransport !== "function") return false;
+    core.pausePlayAlongTransport();
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.resumeTransport = function() {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.resumePlayAlongTransport !== "function") return false;
+    core.resumePlayAlongTransport();
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.seekToMs = function(targetMs) {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.seekPlayAlongToMs !== "function") return false;
+    return core.seekPlayAlongToMs(targetMs);
+  };
+
+  SparkPlayAlongStateService.prototype.setPlaybackRate = function(speed) {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.setPlayAlongPlaybackRate !== "function") return false;
+    core.setPlayAlongPlaybackRate(speed);
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.setLastOutcome = function(outcome) {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.setLastSessionOutcome !== "function") return false;
+    core.setLastSessionOutcome(outcome);
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.initSpotify = function(token) {
+    var core = getPlayAlongCore();
+    if (!core || typeof core.initSpotify !== "function") return false;
+    core.initSpotify(token);
+    return true;
   };
 
   SparkPlayAlongStateService.prototype.getRuntimeState = function() {
@@ -128,6 +242,20 @@
       source: errorState.source || "play_along_session",
       retryable: errorState.retryable !== false
     };
+  };
+
+  SparkPlayAlongStateService.prototype.clearError = function() {
+    this.writeValue("playAlongError", null);
+    return null;
+  };
+
+  SparkPlayAlongStateService.prototype.setError = function(err) {
+    var message = err && err.message ? err.message : err;
+    return this.writeValue("playAlongError", {
+      message: message ? String(message) : "Unable to start play-along session.",
+      source: "play_along_session",
+      retryable: true
+    });
   };
 
   SparkPlayAlongStateService.prototype.rememberLaunch = function(params) {
