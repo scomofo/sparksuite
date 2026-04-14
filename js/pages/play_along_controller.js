@@ -113,9 +113,7 @@
     return playAlongState.replayOrShowHome(launchPreparedParams, requestRender);
   };
 
-  window.sparkPlayAlongReplay = function() {
-    return window.sparkPlayAlongAgain();
-  };
+  window.sparkPlayAlongReplay = window.sparkPlayAlongAgain;
 
   window.sparkPlayAlongReplayDrill = function() {
     return playAlongState.replayDrill(launchPreparedParams);
@@ -167,19 +165,13 @@
 
   // ---- Navigation Helper ----
 
-  window.openPlayAlong = function() {
-    return playAlongState.showHome(requestRender);
-  };
+  window.openPlayAlong = playAlongState.showHome.bind(playAlongState, requestRender);
 
   // ---- Spotify Connect ----
 
-  window.sparkPlayAlongConnectSpotify = function() {
-    return playAlongActions.connectSpotifyAndRender(requestRender);
-  };
+  window.sparkPlayAlongConnectSpotify = playAlongActions.connectSpotifyAndRender.bind(playAlongActions, requestRender);
 
-  window.sparkPlayAlongSaveClientId = function() {
-    return playAlongActions.saveSpotifyClientIdAndConnectAndRender(requestRender);
-  };
+  window.sparkPlayAlongSaveClientId = playAlongActions.saveSpotifyClientIdAndConnectAndRender.bind(playAlongActions, requestRender);
 
   // Handle spotifyConnect action from act() dispatcher
   window.handleSpotifyConnectAction = window.sparkPlayAlongConnectSpotify;
