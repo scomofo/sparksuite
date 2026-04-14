@@ -21,6 +21,12 @@
     return true;
   }
 
+  function showHomeAndRender() {
+    playAlongState.showHomeScreen();
+    requestRender();
+    return true;
+  }
+
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
@@ -163,8 +169,7 @@
   window.sparkPlayAlongAgain = function() {
     var params = playAlongState.getReplayParams();
     if (launchPreparedParams(params)) return;
-    playAlongState.showHomeScreen();
-    requestRender();
+    showHomeAndRender();
   };
 
   window.sparkPlayAlongReplay = function() {
@@ -225,8 +230,7 @@
 
   window.sparkPlayAlongPickNew = function() {
     playAlongState.resetSelectedDrillState();
-    playAlongState.showHomeScreen();
-    requestRender();
+    showHomeAndRender();
   };
 
   window.sparkPlayAlongStartDrill = function(index) {
@@ -244,8 +248,7 @@
   // ---- Navigation Helper ----
 
   window.openPlayAlong = function() {
-    playAlongState.showHomeScreen();
-    requestRender();
+    showHomeAndRender();
   };
 
   function launchPlayAlongSession(params) {
@@ -261,8 +264,7 @@
     }).catch(function(err) {
       console.error("[PlayAlong] Failed:", err);
       playAlongState.setError(err);
-      playAlongState.showHomeScreen();
-      requestRender();
+      showHomeAndRender();
       return false;
     });
   }
