@@ -3,7 +3,7 @@
     return typeof window !== "undefined" ? window.sparkCore || null : null;
   }
 
-  function defaultGetState() {
+  function getPlayAlongState() {
     if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
       return SparkState.getRoot();
     }
@@ -13,10 +13,21 @@
     return null;
   }
 
-  function defaultGetDemos() {
+  function getPlayAlongDemos() {
     return typeof window !== "undefined" && typeof window.getSparkPlayAlongDemos === "function"
       ? window.getSparkPlayAlongDemos()
       : [];
+  }
+
+  function getPlayAlongInstrumentId() {
+    var core = getPlayAlongCore();
+    var runtime = core && typeof core.getRuntimeState === "function"
+      ? core.getRuntimeState()
+      : null;
+    if (runtime && runtime.activeInstrumentId) return runtime.activeInstrumentId;
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+    if (active && active.appId) return active.appId;
+    return "guitar";
   }
 
   function escapeHtml(value) {
@@ -28,14 +39,14 @@
       .replace(/>/g, "&gt;");
   }
 
-  function SparkPlayAlongActionService(options) {
-    options = options || {};
-    this.stateService = options.stateService || null;
-    this.getState = options.getState || defaultGetState;
-    this.getDemos = options.getDemos || defaultGetDemos;
-    this.getInstrumentId = typeof options.getInstrumentId === "function" ? options.getInstrumentId : function() { return "guitar"; };
+  function SparkPlayAlongActionService(stateService) {
+    this.stateService = stateService || null;
     this.searchResults = [];
   }
+
+  SparkPlayAlongActionService.prototype.getInstrumentId = function() {
+    return getPlayAlongInstrumentId();
+  };
 
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
     if (this.stateService && typeof this.stateService.cloneValue === "function") {
@@ -45,12 +56,12 @@
   };
 
   SparkPlayAlongActionService.prototype.getDifficulty = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     return state && state.spotifyDifficulty ? state.spotifyDifficulty : "easy";
   };
 
   SparkPlayAlongActionService.prototype.setDifficulty = function(level) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var core = getPlayAlongCore();
     if (state) state.spotifyDifficulty = level;
     if (core && typeof core.updateRuntimeState === "function") {
@@ -158,7 +169,7 @@
   };
 
   SparkPlayAlongActionService.prototype.getDemo = function(index) {
-    var demos = this.getDemos();
+    var demos = getPlayAlongDemos();
     return demos[index] || null;
   };
 

@@ -1,5 +1,5 @@
 (function() {
-  function defaultGetState() {
+  function getPlayAlongState() {
     if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
       return SparkState.getRoot();
     }
@@ -37,10 +37,7 @@
     return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
   }
 
-  function SparkPlayAlongStateService(options) {
-    options = options || {};
-    this.getState = options.getState || defaultGetState;
-  }
+  function SparkPlayAlongStateService() {}
 
   SparkPlayAlongStateService.prototype.cloneValue = function(value) {
     return clonePlainObject(value);
@@ -51,22 +48,67 @@
   };
 
   SparkPlayAlongStateService.prototype.getRecent = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     return state && Array.isArray(state.playAlongRecent) ? state.playAlongRecent : [];
   };
 
   SparkPlayAlongStateService.prototype.getBookmarks = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     return state && Array.isArray(state.playAlongBookmarks) ? state.playAlongBookmarks : [];
   };
 
   SparkPlayAlongStateService.prototype.getSavedTracks = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     return state && Array.isArray(state.spotifySavedTracks) ? state.spotifySavedTracks : [];
   };
 
+  SparkPlayAlongStateService.prototype.getCore = function() {
+    return getPlayAlongCore();
+  };
+
+  SparkPlayAlongStateService.prototype.getRuntimeState = function() {
+    var core = getPlayAlongCore();
+    return core && typeof core.getRuntimeState === "function"
+      ? core.getRuntimeState()
+      : (core ? core.runtimeState || null : null);
+  };
+
+  SparkPlayAlongStateService.prototype.getPlaybackTimeMs = function() {
+    var core = getPlayAlongCore();
+    return core && typeof core.getPlaybackTimeMs === "function"
+      ? core.getPlaybackTimeMs()
+      : 0;
+  };
+
+  SparkPlayAlongStateService.prototype.isSpotifyConnected = function() {
+    var runtimeState = this.getRuntimeState();
+    return !!(runtimeState && runtimeState.spotifyConnected);
+  };
+
+  SparkPlayAlongStateService.prototype.getActiveChart = function() {
+    return getActiveChart(getPlayAlongCore());
+  };
+
+  SparkPlayAlongStateService.prototype.getActiveParams = function() {
+    return getActiveParams(getPlayAlongCore());
+  };
+
+  SparkPlayAlongStateService.prototype.getLastOutcome = function() {
+    var core = getPlayAlongCore();
+    return core && typeof core.getLastSessionOutcome === "function"
+      ? core.getLastSessionOutcome()
+      : null;
+  };
+
+  SparkPlayAlongStateService.prototype.getAccuracy = function() {
+    var core = getPlayAlongCore();
+    return core && core.performanceTracker && typeof core.performanceTracker.getAccuracy === "function"
+      ? core.performanceTracker.getAccuracy()
+      : null;
+  };
+
   SparkPlayAlongStateService.prototype.getStateValue = function(key, fallback) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state || !Object.prototype.hasOwnProperty.call(state, key)) return fallback;
     return state[key];
   };
@@ -89,7 +131,7 @@
   };
 
   SparkPlayAlongStateService.prototype.rememberLaunch = function(params) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state || !params || params.audioFile) return;
     var recent = this.getRecent().slice();
     var normalizedParams = clonePlainObject(params);
@@ -111,7 +153,7 @@
   };
 
   SparkPlayAlongStateService.prototype.removeRecent = function(index) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var recent = this.getRecent().slice();
     if (!state || index < 0 || index >= recent.length) return false;
     recent.splice(index, 1);
@@ -121,7 +163,7 @@
   };
 
   SparkPlayAlongStateService.prototype.clearRecent = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state) return false;
     state.playAlongRecent = [];
     this.persistState();
@@ -129,7 +171,7 @@
   };
 
   SparkPlayAlongStateService.prototype.rememberBookmark = function(bookmark) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state || !bookmark) return;
     var bookmarks = this.getBookmarks().slice();
     bookmarks = bookmarks.filter(function(item) {
@@ -141,7 +183,7 @@
   };
 
   SparkPlayAlongStateService.prototype.removeBookmark = function(index) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var bookmarks = this.getBookmarks().slice();
     if (!state || index < 0 || index >= bookmarks.length) return false;
     bookmarks.splice(index, 1);
@@ -151,7 +193,7 @@
   };
 
   SparkPlayAlongStateService.prototype.clearBookmarks = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state) return false;
     state.playAlongBookmarks = [];
     this.persistState();
@@ -159,7 +201,7 @@
   };
 
   SparkPlayAlongStateService.prototype.saveTrack = function(saved) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var tracks;
     var replaced = false;
     var i;
@@ -179,7 +221,7 @@
   };
 
   SparkPlayAlongStateService.prototype.removeSavedTrack = function(index) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var tracks = this.getSavedTracks().slice();
     if (!state || index < 0 || index >= tracks.length) return false;
     tracks.splice(index, 1);
@@ -189,7 +231,7 @@
   };
 
   SparkPlayAlongStateService.prototype.clearSavedTracks = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state) return false;
     state.spotifySavedTracks = [];
     this.persistState();
@@ -197,7 +239,7 @@
   };
 
   SparkPlayAlongStateService.prototype.syncSectionIndex = function(chart) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
     if (!state) return 0;
     if (!sections.length) {
@@ -212,7 +254,7 @@
   };
 
   SparkPlayAlongStateService.prototype.resolveLoopRange = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var core = getPlayAlongCore();
     var selected = state && state.playAlongSelectedDrill ? state.playAlongSelectedDrill : null;
     var target = state ? (state.playAlongLoopTarget || (selected ? "drill" : "section")) : "section";
@@ -235,7 +277,7 @@
   };
 
   SparkPlayAlongStateService.prototype.clearSelectedDrillState = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state) return false;
     state.playAlongSelectedDrill = null;
     state.playAlongLoop = false;
@@ -252,7 +294,7 @@
   };
 
   SparkPlayAlongStateService.prototype.activateSectionLoop = function(sectionIndex) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state) return false;
     state.playAlongSelectedDrill = null;
     state.playAlongLoop = true;
@@ -267,7 +309,7 @@
   };
 
   SparkPlayAlongStateService.prototype.prepareBookmarkLaunch = function(bookmark) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state || !bookmark) return false;
     this.clearSelectedDrillState();
     state.playAlongLoop = true;
@@ -278,7 +320,7 @@
   };
 
   SparkPlayAlongStateService.prototype.prepareFullSongReplay = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state) return false;
     state.playAlongSelectedDrill = null;
     state.playAlongLoop = false;
@@ -292,7 +334,7 @@
   };
 
   SparkPlayAlongStateService.prototype.selectDrill = function(drill) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state || !drill) return false;
     state.playAlongSelectedDrill = drill;
     state.playAlongLoop = true;
@@ -303,14 +345,14 @@
   };
 
   SparkPlayAlongStateService.prototype.togglePaused = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state) return false;
     state.playAlongPaused = !state.playAlongPaused;
     return state.playAlongPaused;
   };
 
   SparkPlayAlongStateService.prototype.toggleLoop = function() {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state) return false;
     state.playAlongLoop = !state.playAlongLoop;
     state.playAlongLoopRange = state.playAlongLoop ? this.resolveLoopRange() : null;
@@ -318,7 +360,7 @@
   };
 
   SparkPlayAlongStateService.prototype.setLoopTarget = function(target) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     if (!state || (target !== "drill" && target !== "section")) return false;
     state.playAlongLoopTarget = target;
     state.playAlongLoopRange = this.resolveLoopRange();
@@ -337,10 +379,7 @@
   };
 
   SparkPlayAlongStateService.prototype.getTransportMode = function() {
-    var core = getPlayAlongCore();
-    var runtimeState = core && typeof core.getRuntimeState === "function"
-      ? core.getRuntimeState()
-      : (core ? core.runtimeState || null : null);
+    var runtimeState = this.getRuntimeState();
     return runtimeState && runtimeState.playAlongTransportMode ? runtimeState.playAlongTransportMode : "generated";
   };
 
@@ -363,7 +402,7 @@
   };
 
   SparkPlayAlongStateService.prototype.resolveCurrentSectionLabel = function(chart, timeMs) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
     var label;
     var i;
@@ -396,7 +435,7 @@
   };
 
   SparkPlayAlongStateService.prototype.updateCoachHint = function(accuracy) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var hint = "";
     var currentRep;
     if (!state) return "";
@@ -412,7 +451,7 @@
   };
 
   SparkPlayAlongStateService.prototype.updateSessionTelemetry = function(chart, timeMs, accuracy) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var range;
     var clamped;
     var pct = 0;
@@ -448,7 +487,7 @@
   };
 
   SparkPlayAlongStateService.prototype.enrichOutcomeWithLoopSummary = function(outcome, currentBookmark) {
-    var state = this.getState();
+    var state = getPlayAlongState();
     var selected;
     var range;
     var completedReps;
@@ -480,10 +519,9 @@
     return outcome;
   };
 
-  SparkPlayAlongStateService.prototype.applySelectedDrillState = function(options) {
-    var state = this.getState();
+  SparkPlayAlongStateService.prototype.applySelectedDrillState = function(seekToMs, setPlaybackRate) {
+    var state = getPlayAlongState();
     var selected;
-    options = options || {};
     if (!state) return null;
     selected = state.playAlongSelectedDrill || null;
     if (!selected) {
@@ -500,33 +538,32 @@
     state.playAlongLoopProgress = 0;
     if (selected.speed != null) {
       state.playAlongSpeed = String(selected.speed);
-      if (typeof options.setPlaybackRate === "function") {
-        options.setPlaybackRate(selected.speed);
+      if (typeof setPlaybackRate === "function") {
+        setPlaybackRate(selected.speed);
       }
     } else {
       state.playAlongSpeed = "1.0";
     }
 
-    if (state.playAlongLoopRange && state.playAlongLoopRange.startMs != null && typeof options.seekToMs === "function") {
-      options.seekToMs(state.playAlongLoopRange.startMs);
+    if (state.playAlongLoopRange && state.playAlongLoopRange.startMs != null && typeof seekToMs === "function") {
+      seekToMs(state.playAlongLoopRange.startMs);
     }
     return state.playAlongLoopRange;
   };
 
-  SparkPlayAlongStateService.prototype.enforceLoopWindow = function(options) {
-    var state = this.getState();
+  SparkPlayAlongStateService.prototype.enforceLoopWindow = function(getPlaybackTimeMs, seekToMs, stopLoop) {
+    var state = getPlayAlongState();
     var range;
     var selected;
     var targetReps;
     var currentRep;
     var nowMs;
-    options = options || {};
     if (!state || !state.playAlongLoop || state.playAlongPaused) return false;
     range = state.playAlongLoopRange || this.resolveLoopRange();
     if (!range || range.startMs == null || range.endMs == null || range.endMs <= range.startMs) return false;
     state.playAlongLoopRange = range;
 
-    nowMs = typeof options.getPlaybackTimeMs === "function" ? options.getPlaybackTimeMs() : 0;
+    nowMs = typeof getPlaybackTimeMs === "function" ? getPlaybackTimeMs() : 0;
     if (nowMs < range.endMs) return false;
 
     selected = state.playAlongSelectedDrill || null;
@@ -535,19 +572,19 @@
     if (targetReps != null && targetReps > 0 && currentRep >= targetReps) {
       state.playAlongLoop = false;
       state.playAlongLoopProgress = 100;
-      if (typeof options.stopLoop === "function") options.stopLoop();
+      if (typeof stopLoop === "function") stopLoop();
       return true;
     }
 
     state.playAlongLoopIteration = currentRep + 1;
     state.playAlongLoopProgress = 0;
-    if (typeof options.seekToMs === "function") options.seekToMs(range.startMs);
+    if (typeof seekToMs === "function") seekToMs(range.startMs);
     return false;
   };
 
   SparkPlayAlongStateService.prototype.buildCurrentSectionBookmark = function() {
     var core = getPlayAlongCore();
-    var state = this.getState();
+    var state = getPlayAlongState();
     var chart = getActiveChart(core);
     var params = getActiveParams(core);
     var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
@@ -567,15 +604,14 @@
     };
   };
 
-  SparkPlayAlongStateService.prototype.stepSection = function(delta, options) {
-    var state = this.getState();
+  SparkPlayAlongStateService.prototype.stepSection = function(delta, seekToMs, onAfterStep) {
+    var state = getPlayAlongState();
     var core = getPlayAlongCore();
     var chart = getActiveChart(core);
     var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
     var index;
     var section;
     var startMs;
-    options = options || {};
     if (!state || !sections.length) return false;
     index = Number(state.playAlongSectionIndex || 0);
     if (!isFinite(index)) index = 0;
@@ -588,11 +624,11 @@
     section = sections[index] || {};
     startMs = section.startMs != null ? section.startMs : section.start;
     if (startMs != null) {
-      if (typeof options.seekToMs === "function") options.seekToMs(startMs);
+      if (typeof seekToMs === "function") seekToMs(startMs);
       state.playAlongNowMs = startMs;
       state.playAlongCurrentSection = "Section: " + (section.name || ("Part " + (index + 1)));
     }
-    if (typeof options.onAfterStep === "function") options.onAfterStep();
+    if (typeof onAfterStep === "function") onAfterStep();
     return true;
   };
 

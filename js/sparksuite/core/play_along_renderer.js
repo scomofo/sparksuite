@@ -7,20 +7,14 @@
   var LANE_HEIGHT = 60;
   var LANE_OFFSET_Y = 10;
 
-  function getPlayAlongCore() {
-    return typeof window !== "undefined" ? window.sparkCore || null : null;
+  function SparkPlayAlongRenderer(stateService) {
+    this.stateService = stateService || null;
   }
 
-  function SparkPlayAlongRenderer(options) {
-    options = options || {};
-    this.stateService = options.stateService || null;
-  }
-
-  SparkPlayAlongRenderer.prototype.renderFrame = function(result, options) {
-    options = options || {};
+  SparkPlayAlongRenderer.prototype.renderFrame = function(result, chart) {
     this.renderHighway(result);
     this.renderFretboard(result);
-    this.renderSessionTelemetry(result, options.chart || null);
+    this.renderSessionTelemetry(result, chart || null);
     this.updateDebugState(result);
   };
 
@@ -83,10 +77,13 @@
   };
 
   SparkPlayAlongRenderer.prototype.renderSessionTelemetry = function(result, chart) {
-    var core = getPlayAlongCore();
-    var timeMs = result && result.timeMs != null ? result.timeMs : (core && typeof core.getPlaybackTimeMs === "function" ? core.getPlaybackTimeMs() : 0);
-    var accuracy = core && core.performanceTracker && typeof core.performanceTracker.getAccuracy === "function"
-      ? core.performanceTracker.getAccuracy()
+    var timeMs = result && result.timeMs != null ? result.timeMs : (
+      this.stateService && typeof this.stateService.getPlaybackTimeMs === "function"
+        ? this.stateService.getPlaybackTimeMs()
+        : 0
+    );
+    var accuracy = this.stateService && typeof this.stateService.getAccuracy === "function"
+      ? this.stateService.getAccuracy()
       : null;
     var telemetry = this.stateService && typeof this.stateService.updateSessionTelemetry === "function"
       ? this.stateService.updateSessionTelemetry(chart, timeMs, accuracy)

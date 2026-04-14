@@ -25,35 +25,6 @@
     return PLAY_ALONG_DEMOS.slice();
   };
 
-  function getPlayAlongCore() {
-    return window.sparkCore || null;
-  }
-
-  function getPlayAlongRuntimeState() {
-    var core = getPlayAlongCore();
-    return core && typeof core.getRuntimeState === "function"
-      ? core.getRuntimeState()
-      : (core ? core.runtimeState || null : null);
-  }
-
-  function getPlayAlongActiveChart() {
-    var core = getPlayAlongCore();
-    return core && typeof core.getActivePlayAlongChart === "function"
-      ? core.getActivePlayAlongChart()
-      : (core ? core._activeChart || null : null);
-  }
-
-  function getPlayAlongOutcome() {
-    var core = getPlayAlongCore();
-    return core && typeof core.getLastSessionOutcome === "function"
-      ? core.getLastSessionOutcome()
-      : (core ? core.lastSessionOutcome || null : null);
-  }
-
-  function getPlayAlongErrorState() {
-    return playAlongState.getError();
-  }
-
   function playAlongPageRead(path, fallback) {
     if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
       return SparkState.read(path, fallback);
@@ -70,10 +41,9 @@
   }
 
   function buildPlayAlongHomeViewModel() {
-    var runtimeState = getPlayAlongRuntimeState();
-    var errorState = getPlayAlongErrorState();
+    var errorState = playAlongState.getError();
     return {
-      spotifyConnected: !!(runtimeState && runtimeState.spotifyConnected),
+      spotifyConnected: playAlongState.isSpotifyConnected(),
       difficulty: playAlongPageRead(["spotifyDifficulty"], "easy"),
       error: errorState,
       demos: typeof window.getSparkPlayAlongDemos === "function" ? window.getSparkPlayAlongDemos() : [],
@@ -84,33 +54,31 @@
   }
 
   function buildPlayAlongSessionViewModel() {
-    var core = getPlayAlongCore();
-    var chart = getPlayAlongActiveChart();
-    var perf = core && core.performanceTracker;
+    var chart = playAlongState.getActiveChart();
     var drill = playAlongState.getStateValue("playAlongSelectedDrill", null);
-    var errorState = getPlayAlongErrorState();
+    var errorState = playAlongState.getError();
     return {
       chart: chart,
       error: errorState,
       trackTitle: getPlayAlongTrackTitle(chart),
       bpm: getPlayAlongBpm(chart),
-      accuracy: perf && typeof perf.getAccuracy === "function" ? Math.round(perf.getAccuracy() * 100) : 0,
+      accuracy: Math.round((playAlongState.getAccuracy() || 0) * 100),
       paused: !!playAlongState.getStateValue("playAlongPaused", false),
       drill: drill,
       loopRange: playAlongState.getStateValue("playAlongLoopRange", null),
       loopTarget: playAlongState.getStateValue("playAlongLoopTarget", null) || (drill ? "drill" : "section"),
       coachHint: playAlongState.getStateValue("playAlongCoachHint", "") || "",
-      transportMode: getPlayAlongTransportMode(),
+      transportMode: playAlongState.getTransportMode(),
       currentSection: playAlongState.getStateValue("playAlongCurrentSection", "Section: Intro") || "Section: Intro",
       currentTime: formatPlayAlongMs(playAlongState.getStateValue("playAlongNowMs", 0)),
       speedLabel: playAlongState.getStateValue("playAlongSpeed", "1.0") || "1.0",
       loopEnabled: !!playAlongState.getStateValue("playAlongLoop", false),
-      sectionNav: getPlayAlongSectionNavigation(chart)
+      sectionNav: playAlongState.getSectionNavigation(chart)
     };
   }
 
   function buildPlayAlongResultsViewModel() {
-    var outcome = getPlayAlongOutcome();
+    var outcome = playAlongState.getLastOutcome();
     return {
       outcome: outcome,
       accuracy: asPercent(outcome && outcome.accuracy),
@@ -318,12 +286,12 @@
         h += "<div style='font-size:12px;color:var(--text-dim)'>Loop Window: " + formatPlayAlongMs(viewModel.loopRange.startMs) + " - " + formatPlayAlongMs(viewModel.loopRange.endMs) + "</div>";
       }
       if (viewModel.drill && viewModel.drill.repetitions != null) {
-        h += "<div id='play-along-loop-reps' style='font-size:11px;color:var(--text-muted);margin-top:4px'>" + getPlayAlongRepStatus(viewModel.drill) + "</div>";
+        h += "<div id='play-along-loop-reps' style='font-size:11px;color:var(--text-muted);margin-top:4px'>" + playAlongState.getRepStatus(viewModel.drill) + "</div>";
       } else if (viewModel.drill || viewModel.loopRange) {
-        h += "<div id='play-along-loop-reps' style='font-size:11px;color:var(--text-muted);margin-top:4px'>" + getPlayAlongRepStatus(viewModel.drill) + "</div>";
+        h += "<div id='play-along-loop-reps' style='font-size:11px;color:var(--text-muted);margin-top:4px'>" + playAlongState.getRepStatus(viewModel.drill) + "</div>";
       }
       if (viewModel.loopRange && viewModel.loopRange.startMs != null && viewModel.loopRange.endMs != null) {
-        h += "<div id='play-along-loop-progress' style='font-size:11px;color:var(--text-muted);margin-top:4px'>Loop Progress: " + getPlayAlongLoopProgress() + "%</div>";
+        h += "<div id='play-along-loop-progress' style='font-size:11px;color:var(--text-muted);margin-top:4px'>Loop Progress: " + playAlongState.getLoopProgress() + "%</div>";
       }
       if (viewModel.coachHint) {
         h += "<div id='play-along-coach-hint' style='font-size:11px;color:var(--accent);margin-top:6px'>" + escPlayAlong(viewModel.coachHint) + "</div>";
@@ -492,14 +460,6 @@
       .replace(/'/g, "&#39;");
   }
 
-  function getPlayAlongRepStatus(drill) {
-    return playAlongState.getRepStatus(drill);
-  }
-
-  function getPlayAlongLoopProgress() {
-    return playAlongState.getLoopProgress();
-  }
-
   function getPlayAlongRecentEntries() {
     return playAlongState.getRecent();
   }
@@ -518,10 +478,6 @@
     if (item.transportMode) bits.push(item.transportMode);
     if (item.difficulty) bits.push(item.difficulty);
     return bits.join(" | ");
-  }
-
-  function getPlayAlongTransportMode() {
-    return playAlongState.getTransportMode();
   }
 
   function getPlayAlongNextAction(outcome) {
@@ -565,10 +521,6 @@
       }
     }
     return labels;
-  }
-
-  function getPlayAlongSectionNavigation(chart) {
-    return playAlongState.getSectionNavigation(chart);
   }
 
   window.sparkPlayAlongBackToHome = sparkPlayAlongBackToHome;

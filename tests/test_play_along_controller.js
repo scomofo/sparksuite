@@ -42,6 +42,10 @@ function resetState() {
   global.sparkCore = {
     lastSessionOutcome: null,
     getLastSessionOutcome: function() { return this.lastSessionOutcome; },
+    setLastSessionOutcome: function(outcome) {
+      this.lastSessionOutcome = outcome || null;
+      return this.lastSessionOutcome;
+    },
     getPlaybackTimeMs: function() { return 1234; },
     completePlayAlongSession: function() {
       return {

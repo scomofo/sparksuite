@@ -40,43 +40,8 @@
   }
 
   var playAlongState = new SparkPlayAlongStateService();
-  var playAlongActions = new SparkPlayAlongActionService({
-    stateService: playAlongState,
-    getInstrumentId: getPlayAlongInstrumentId
-  });
-  var playAlongRenderer = new SparkPlayAlongRenderer({
-    stateService: playAlongState
-  });
-
-  function getPlayAlongInstrumentId() {
-    var runtime = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-      ? window.sparkCore.getRuntimeState()
-      : null;
-    if (runtime && runtime.activeInstrumentId) return runtime.activeInstrumentId;
-    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
-    if (active && active.appId) return active.appId;
-    return "guitar";
-  }
-
-  function getActivePlayAlongParams() {
-    if (!window.sparkCore) return null;
-    return typeof window.sparkCore.getActivePlayAlongParams === "function"
-      ? window.sparkCore.getActivePlayAlongParams()
-      : (window.sparkCore._activeParams || null);
-  }
-
-  function getActivePlayAlongChart() {
-    if (!window.sparkCore) return null;
-    return typeof window.sparkCore.getActivePlayAlongChart === "function"
-      ? window.sparkCore.getActivePlayAlongChart()
-      : (window.sparkCore._activeChart || null);
-  }
-
-  function getLastPlayAlongOutcome() {
-    return window.sparkCore && typeof window.sparkCore.getLastSessionOutcome === "function"
-      ? window.sparkCore.getLastSessionOutcome()
-      : (window.sparkCore ? window.sparkCore.lastSessionOutcome : null);
-  }
+  var playAlongActions = new SparkPlayAlongActionService(playAlongState);
+  var playAlongRenderer = new SparkPlayAlongRenderer(playAlongState);
 
   function clearPlayAlongError() {
     playAlongControllerWrite("playAlongError", null);
@@ -280,7 +245,7 @@
     launchPlayAlongSession({
       audioFile: file,
       difficulty: playAlongControllerRead("spotifyDifficulty", "easy") || "easy",
-      instrument: getPlayAlongInstrumentId()
+      instrument: playAlongActions.getInstrumentId()
     });
   };
 
@@ -291,9 +256,7 @@
     window.sparkCore.startPlayAlongRenderLoop({
       enforceLoopWindow: enforceLoopWindow,
       onFrame: function(result) {
-        playAlongRenderer.renderFrame(result, {
-          chart: getActivePlayAlongChart()
-        });
+        playAlongRenderer.renderFrame(result, playAlongState.getActiveChart());
       }
     });
   };
@@ -308,7 +271,9 @@
     if (window.sparkCore) {
       outcome = window.sparkCore.completePlayAlongSession();
       outcome = playAlongState.enrichOutcomeWithLoopSummary(outcome, buildCurrentSectionBookmark());
-      window.sparkCore.lastSessionOutcome = outcome;
+      if (typeof window.sparkCore.setLastSessionOutcome === "function") {
+        window.sparkCore.setLastSessionOutcome(outcome);
+      }
     }
     playAlongControllerWrite("screen", SCR.PLAY_ALONG_RESULTS);
     render();
@@ -338,7 +303,7 @@
   // ---- Play Again ----
 
   window.sparkPlayAlongAgain = function() {
-    var params = getActivePlayAlongParams();
+    var params = playAlongState.getActiveParams();
     if (params) {
       launchPlayAlongSession(params);
     } else {
@@ -352,7 +317,7 @@
   };
 
   window.sparkPlayAlongReplayDrill = function() {
-    var outcome = getLastPlayAlongOutcome();
+    var outcome = playAlongState.getLastOutcome();
     var drills = outcome && Array.isArray(outcome.drills) ? outcome.drills : [];
     if (drills.length > 0) {
       return window.sparkPlayAlongStartDrill(0);
@@ -361,7 +326,7 @@
   };
 
   window.sparkPlayAlongReplayFullSong = function() {
-    var params = getActivePlayAlongParams();
+    var params = playAlongState.getActiveParams();
     if (!playAlongState.prepareFullSongReplay() || !params) return false;
     clearPlayAlongError();
     return launchPlayAlongSession(clonePlainObject(params));
@@ -411,9 +376,9 @@
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {
-    var outcome = getLastPlayAlongOutcome();
+    var outcome = playAlongState.getLastOutcome();
     var sectionSummary = outcome && outcome.sectionSummary ? outcome.sectionSummary : null;
-    var params = getActivePlayAlongParams();
+    var params = playAlongState.getActiveParams();
     if (!sectionSummary || !params) return false;
     clearSelectedDrillState();
     playAlongState.activateSectionLoop(sectionSummary.sectionIndex || 0);
@@ -422,7 +387,7 @@
 
   window.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {
     var params = null;
-    var activeParams = getActivePlayAlongParams();
+    var activeParams = playAlongState.getActiveParams();
     if (activeParams && activeParams.trackId === trackId) {
       params = clonePlainObject(activeParams);
     }
@@ -448,13 +413,13 @@
   };
 
   window.sparkPlayAlongStartDrill = function(index) {
-    var outcome = getLastPlayAlongOutcome();
+    var outcome = playAlongState.getLastOutcome();
     var drills = outcome && Array.isArray(outcome.drills) ? outcome.drills : [];
     var drill = drills[index] || null;
     if (!drill) return false;
     playAlongState.selectDrill(drill);
     clearPlayAlongError();
-    var params = getActivePlayAlongParams();
+    var params = playAlongState.getActiveParams();
     if (params) {
       launchPlayAlongSession(params);
       return true;
@@ -505,7 +470,7 @@
 
   function launchPlayAlongSession(params) {
     if (!window.sparkCore || !params) return Promise.resolve(false);
-    if (!params.instrument) params.instrument = getPlayAlongInstrumentId();
+    if (!params.instrument) params.instrument = playAlongActions.getInstrumentId();
     clearPlayAlongError();
     rememberPlayAlongLaunch(params);
     return window.sparkCore.startPlayAlongSession(params).then(function() {
@@ -525,10 +490,7 @@
   }
 
   function applySelectedDrillState() {
-    playAlongState.applySelectedDrillState({
-      seekToMs: seekPlayAlongToMs,
-      setPlaybackRate: setPlayAlongPlaybackRate
-    });
+    playAlongState.applySelectedDrillState(seekPlayAlongToMs, setPlayAlongPlaybackRate);
   }
 
   function setPlayAlongPlaybackRate(speed) {
@@ -539,13 +501,13 @@
 
   function enforceLoopWindow() {
     if (!window.sparkCore) return false;
-    return playAlongState.enforceLoopWindow({
-      getPlaybackTimeMs: function() {
+    return playAlongState.enforceLoopWindow(
+      function() {
         return typeof window.sparkCore.getPlaybackTimeMs === "function" ? window.sparkCore.getPlaybackTimeMs() : 0;
       },
-      seekToMs: seekPlayAlongToMs,
-      stopLoop: sparkPlayAlongStop
-    });
+      seekPlayAlongToMs,
+      sparkPlayAlongStop
+    );
   }
 
   function seekPlayAlongToMs(targetMs) {
@@ -571,14 +533,11 @@
   }
 
   function stepPlayAlongSection(delta) {
-    return playAlongState.stepSection(delta, {
-      seekToMs: seekPlayAlongToMs,
-      onAfterStep: render
-    });
+    return playAlongState.stepSection(delta, seekPlayAlongToMs, render);
   }
 
   function syncPlayAlongSectionIndex() {
-    var chart = getActivePlayAlongChart();
+    var chart = playAlongState.getActiveChart();
     playAlongState.syncSectionIndex(chart);
   }
 

@@ -2149,7 +2149,7 @@
     }
 
     var result = this.progressEngine.completeSession(this.currentPlan, payload);
-    this.lastSessionOutcome = result;
+    this.setLastSessionOutcome(result);
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
       activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
@@ -2218,6 +2218,11 @@
   };
 
   SparkCore.prototype.getLastSessionOutcome = function() {
+    return this.lastSessionOutcome;
+  };
+
+  SparkCore.prototype.setLastSessionOutcome = function(outcome) {
+    this.lastSessionOutcome = outcome || null;
     return this.lastSessionOutcome;
   };
 
