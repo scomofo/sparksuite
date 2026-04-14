@@ -45,10 +45,12 @@
   }
 
   SparkPlayAlongActionService.bootstrapController = function(target) {
+    target = target || (typeof window !== "undefined" ? window : null);
+    if (!target) return null;
     var stateService = new SparkPlayAlongStateService();
     var actionService = new SparkPlayAlongActionService(stateService);
     var renderer = new SparkPlayAlongRenderer(stateService);
-    return actionService.bootstrapGlobals(target || window, renderer);
+    return actionService.bootstrapGlobals(target, renderer);
   };
 
   SparkPlayAlongActionService.prototype.getInstrumentId = function() {
