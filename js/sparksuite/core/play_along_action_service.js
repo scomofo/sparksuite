@@ -259,6 +259,18 @@
     return true;
   };
 
+  SparkPlayAlongActionService.prototype.handleLocalFileLaunch = function(file, onLaunchPrepared) {
+    var params;
+    if (!file) return false;
+    params = this.stateService && typeof this.stateService.prepareLocalFileLaunch === "function"
+      ? this.stateService.prepareLocalFileLaunch(file, this.getInstrumentId())
+      : null;
+    if (typeof onLaunchPrepared === "function") {
+      onLaunchPrepared(params);
+    }
+    return !!params;
+  };
+
   SparkPlayAlongActionService.prototype.saveSearchResultAndRender = function(index, onRender) {
     return this.saveSearchResult(index).then(function(saved) {
       if (saved && typeof onRender === "function") onRender();

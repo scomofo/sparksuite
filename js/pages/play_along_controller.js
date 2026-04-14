@@ -131,9 +131,8 @@
   // ---- Load Local File ----
 
   window.sparkPlayAlongLoadFile = function(file) {
-    if (!file) return;
-    return launchFrom(function() {
-      return playAlongState.prepareLocalFileLaunch(file, playAlongActions.getInstrumentId());
+    return playAlongActions.handleLocalFileLaunch(file, function(params) {
+      launchPreparedParams(params);
     });
   };
 
