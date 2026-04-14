@@ -18,7 +18,7 @@
 
   // ---- Search ----
 
-  window.sparkPlayAlongSearch = playAlongActions.searchAndRenderTracks.bind(playAlongActions);
+  window.sparkPlayAlongSearch = controllerBindings.search;
 
   // ---- Select Track ----
 
@@ -56,15 +56,15 @@
 
   // ---- Toggle Debug ----
 
-  window.sparkPlayAlongToggleDebug = playAlongActions.toggleDebugDashboard.bind(playAlongActions);
+  window.sparkPlayAlongToggleDebug = controllerBindings.toggleDebug;
 
   // ---- Play Again ----
 
-  window.sparkPlayAlongAgain = playAlongState.replayOrShowHome.bind(playAlongState, controllerBindings.launchPreparedParams, requestRender);
+  window.sparkPlayAlongAgain = controllerBindings.again;
 
-  window.sparkPlayAlongReplayDrill = playAlongState.replayDrill.bind(playAlongState, controllerBindings.launchPreparedParams);
+  window.sparkPlayAlongReplayDrill = controllerBindings.replayDrill;
 
-  window.sparkPlayAlongReplayFullSong = playAlongState.replayFullSong.bind(playAlongState, controllerBindings.launchPreparedParams);
+  window.sparkPlayAlongReplayFullSong = controllerBindings.replayFullSong;
 
   window.sparkPlayAlongTogglePause = controllerBindings.withRenderOnly(playAlongState.togglePause, playAlongState);
 
@@ -78,9 +78,9 @@
 
   window.sparkPlayAlongBookmarkCurrentSection = controllerBindings.withRenderOnly(playAlongState.saveCurrentSectionBookmarkWithRender, playAlongState);
 
-  window.sparkPlayAlongJumpToWeakSection = playAlongState.launchWeakSection.bind(playAlongState, controllerBindings.launchPreparedParams);
+  window.sparkPlayAlongJumpToWeakSection = controllerBindings.jumpToWeakSection;
 
-  window.sparkPlayAlongJumpToSectionRecommendation = controllerBindings.withLaunchPair(playAlongState.launchSectionRecommendation, playAlongState);
+  window.sparkPlayAlongJumpToSectionRecommendation = controllerBindings.jumpToSectionRecommendation;
 
   window.sparkPlayAlongPickNew = controllerBindings.withRenderOnly(playAlongState.resetToHome, playAlongState);
 
@@ -88,13 +88,13 @@
 
   // ---- Navigation Helper ----
 
-  window.openPlayAlong = controllerBindings.withRenderOnly(playAlongState.showHome, playAlongState);
+  window.openPlayAlong = controllerBindings.openHome;
 
   // ---- Spotify Connect ----
 
-  window.sparkPlayAlongConnectSpotify = controllerBindings.withRenderOnly(playAlongActions.connectSpotifyAndRender, playAlongActions);
+  window.sparkPlayAlongConnectSpotify = controllerBindings.connectSpotify;
 
-  window.sparkPlayAlongSaveClientId = controllerBindings.withRenderOnly(playAlongActions.saveSpotifyClientIdAndConnectAndRender, playAlongActions);
+  window.sparkPlayAlongSaveClientId = controllerBindings.saveSpotifyClientId;
   window.sparkPlayAlongReplay = window.sparkPlayAlongAgain;
   window.handleSpotifyConnectAction = window.sparkPlayAlongConnectSpotify;
 

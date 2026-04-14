@@ -106,8 +106,31 @@
     var self = this;
     var launchPreparedParams = this.createLaunchHandler(onRender, onStartLoop);
     var selectWithFile = this.createSearchSelectionWithFileHandler(launchPreparedParams);
+    var replayOrShowHome = this.stateService && typeof this.stateService.replayOrShowHome === "function"
+      ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedParams, onRender)
+      : function() { return false; };
+    var replayDrill = this.stateService && typeof this.stateService.replayDrill === "function"
+      ? this.stateService.replayDrill.bind(this.stateService, launchPreparedParams)
+      : function() { return false; };
+    var replayFullSong = this.stateService && typeof this.stateService.replayFullSong === "function"
+      ? this.stateService.replayFullSong.bind(this.stateService, launchPreparedParams)
+      : function() { return false; };
+    var launchWeakSection = this.stateService && typeof this.stateService.launchWeakSection === "function"
+      ? this.stateService.launchWeakSection.bind(this.stateService, launchPreparedParams)
+      : function() { return false; };
+    var launchSectionRecommendation = this.stateService && typeof this.stateService.launchSectionRecommendation === "function"
+      ? this.createLaunchPairCallback(this.stateService.launchSectionRecommendation, this.stateService, launchPreparedParams)
+      : function() { return false; };
+    var showHome = this.stateService && typeof this.stateService.showHome === "function"
+      ? this.stateService.showHome
+      : function() { return false; };
     return {
+      search: this.searchAndRenderTracks.bind(this),
+      toggleDebug: this.toggleDebugDashboard.bind(this),
       launchPreparedParams: launchPreparedParams,
+      again: replayOrShowHome,
+      replayDrill: replayDrill,
+      replayFullSong: replayFullSong,
       withRender: function(fn, context) {
         return self.createRenderHandler(fn, context, onRender);
       },
@@ -123,6 +146,11 @@
       withLaunchPair: function(fn, context) {
         return self.createLaunchPairCallback(fn, context, launchPreparedParams);
       },
+      openHome: self.createRenderOnlyHandler(showHome, self.stateService, onRender),
+      connectSpotify: self.createRenderOnlyHandler(self.connectSpotifyAndRender, self, onRender),
+      saveSpotifyClientId: self.createRenderOnlyHandler(self.saveSpotifyClientIdAndConnectAndRender, self, onRender),
+      jumpToWeakSection: launchWeakSection,
+      jumpToSectionRecommendation: launchSectionRecommendation,
       searchSelectWithFile: selectWithFile,
       searchSelect: this.createSearchSelectionHandler(launchPreparedParams, selectWithFile)
     };
