@@ -14,6 +14,7 @@
 
   var launchPreparedParams = playAlongActions.createLaunchHandler(requestRender, sparkPlayAlongStartLoop);
   var withRender = playAlongActions.createRenderHandler.bind(playAlongActions);
+  var withRenderOnly = playAlongActions.createRenderOnlyHandler.bind(playAlongActions);
   var withLaunch = playAlongActions.createLaunchCallback.bind(playAlongActions);
   var withLaunchAndRender = playAlongActions.createLaunchAndRenderCallback.bind(playAlongActions);
   var withLaunchPair = playAlongActions.createLaunchPairCallback.bind(playAlongActions);
@@ -36,7 +37,7 @@
 
   window.sparkPlayAlongRemoveSaved = withRender(playAlongState.removeSavedTrackWithRender, playAlongState);
 
-  window.sparkPlayAlongClearSaved = playAlongState.clearSavedTracksWithRender.bind(playAlongState, requestRender);
+  window.sparkPlayAlongClearSaved = withRenderOnly(playAlongState.clearSavedTracksWithRender, playAlongState, requestRender);
 
   window.sparkPlayAlongLaunchBookmark = withLaunch(playAlongState.launchBookmark, playAlongState);
 
@@ -44,11 +45,11 @@
 
   window.sparkPlayAlongRemoveRecent = withRender(playAlongState.removeRecentWithRender, playAlongState);
 
-  window.sparkPlayAlongClearRecent = playAlongState.clearRecentWithRender.bind(playAlongState, requestRender);
+  window.sparkPlayAlongClearRecent = withRenderOnly(playAlongState.clearRecentWithRender, playAlongState, requestRender);
 
   window.sparkPlayAlongRemoveBookmark = withRender(playAlongState.removeBookmarkWithRender, playAlongState);
 
-  window.sparkPlayAlongClearBookmarks = playAlongState.clearBookmarksWithRender.bind(playAlongState, requestRender);
+  window.sparkPlayAlongClearBookmarks = withRenderOnly(playAlongState.clearBookmarksWithRender, playAlongState, requestRender);
 
   // ---- Set Difficulty ----
 
@@ -70,35 +71,35 @@
 
   window.sparkPlayAlongReplayFullSong = playAlongState.replayFullSong.bind(playAlongState, launchPreparedParams);
 
-  window.sparkPlayAlongTogglePause = playAlongState.togglePause.bind(playAlongState, requestRender);
+  window.sparkPlayAlongTogglePause = withRenderOnly(playAlongState.togglePause, playAlongState, requestRender);
 
-  window.sparkPlayAlongToggleLoop = playAlongState.toggleLoopWithRender.bind(playAlongState, requestRender);
+  window.sparkPlayAlongToggleLoop = withRenderOnly(playAlongState.toggleLoopWithRender, playAlongState, requestRender);
 
   window.sparkPlayAlongSetLoopTarget = withRender(playAlongState.setLoopTargetWithRender, playAlongState);
 
-  window.sparkPlayAlongPrevSection = playAlongState.prevSection.bind(playAlongState, requestRender);
+  window.sparkPlayAlongPrevSection = withRenderOnly(playAlongState.prevSection, playAlongState, requestRender);
 
-  window.sparkPlayAlongNextSection = playAlongState.nextSection.bind(playAlongState, requestRender);
+  window.sparkPlayAlongNextSection = withRenderOnly(playAlongState.nextSection, playAlongState, requestRender);
 
-  window.sparkPlayAlongBookmarkCurrentSection = playAlongState.saveCurrentSectionBookmarkWithRender.bind(playAlongState, requestRender);
+  window.sparkPlayAlongBookmarkCurrentSection = withRenderOnly(playAlongState.saveCurrentSectionBookmarkWithRender, playAlongState, requestRender);
 
   window.sparkPlayAlongJumpToWeakSection = playAlongState.launchWeakSection.bind(playAlongState, launchPreparedParams);
 
   window.sparkPlayAlongJumpToSectionRecommendation = withLaunchPair(playAlongState.launchSectionRecommendation, playAlongState);
 
-  window.sparkPlayAlongPickNew = playAlongState.resetToHome.bind(playAlongState, requestRender);
+  window.sparkPlayAlongPickNew = withRenderOnly(playAlongState.resetToHome, playAlongState, requestRender);
 
   window.sparkPlayAlongStartDrill = withLaunchAndRender(playAlongState.startDrill, playAlongState);
 
   // ---- Navigation Helper ----
 
-  window.openPlayAlong = playAlongState.showHome.bind(playAlongState, requestRender);
+  window.openPlayAlong = withRenderOnly(playAlongState.showHome, playAlongState, requestRender);
 
   // ---- Spotify Connect ----
 
-  window.sparkPlayAlongConnectSpotify = playAlongActions.connectSpotifyAndRender.bind(playAlongActions, requestRender);
+  window.sparkPlayAlongConnectSpotify = withRenderOnly(playAlongActions.connectSpotifyAndRender, playAlongActions, requestRender);
 
-  window.sparkPlayAlongSaveClientId = playAlongActions.saveSpotifyClientIdAndConnectAndRender.bind(playAlongActions, requestRender);
+  window.sparkPlayAlongSaveClientId = withRenderOnly(playAlongActions.saveSpotifyClientIdAndConnectAndRender, playAlongActions, requestRender);
   window.sparkPlayAlongReplay = window.sparkPlayAlongAgain;
   window.handleSpotifyConnectAction = window.sparkPlayAlongConnectSpotify;
 

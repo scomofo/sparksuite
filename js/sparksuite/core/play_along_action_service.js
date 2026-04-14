@@ -66,6 +66,12 @@
     };
   };
 
+  SparkPlayAlongActionService.prototype.createRenderOnlyHandler = function(fn, context, onRender) {
+    return function() {
+      return fn.call(context, onRender);
+    };
+  };
+
   SparkPlayAlongActionService.prototype.createLaunchCallback = function(fn, context, onLaunchPrepared) {
     return function(value) {
       return fn.call(context, value, onLaunchPrepared);
