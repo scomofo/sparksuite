@@ -61,8 +61,8 @@
       openPlayAlong: controllerBindings.openHome,
       sparkPlayAlongConnectSpotify: controllerBindings.connectSpotify,
       sparkPlayAlongSaveClientId: controllerBindings.saveSpotifyClientId,
-      sparkPlayAlongReplay: controllerBindings.replay,
-      handleSpotifyConnectAction: controllerBindings.spotifyConnectAction
+      sparkPlayAlongReplay: controllerBindings.again,
+      handleSpotifyConnectAction: controllerBindings.connectSpotify
     });
   };
 
@@ -173,15 +173,11 @@
         : function() { return false; },
       searchSelectWithFile: function(index, file) {
         return self.handleSearchSelectionWithFile(index, file, launchPreparedSession);
-      },
-      searchSelect: function(index) {
-        return self.handleSearchSelection(index, launchPreparedSession, function(fileIndex, file) {
-          return self.handleSearchSelectionWithFile(fileIndex, file, launchPreparedSession);
-        });
       }
     };
-    bindings.replay = bindings.again;
-    bindings.spotifyConnectAction = bindings.connectSpotify;
+    bindings.searchSelect = function(index) {
+      return self.handleSearchSelection(index, launchPreparedSession, bindings.searchSelectWithFile);
+    };
     return bindings;
   };
 
