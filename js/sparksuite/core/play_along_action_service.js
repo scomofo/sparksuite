@@ -51,11 +51,12 @@
     var actionService = new SparkPlayAlongActionService(stateService);
     var renderer = new SparkPlayAlongRenderer(stateService);
     var onRender = actionService.getRenderCallback();
-    var rendererBindings = renderer.createControllerBindings(onRender);
-    var controllerBindings = actionService.createControllerBindings(onRender, rendererBindings.startLoop);
+    var stop = renderer.finishSessionResults.bind(renderer, onRender);
+    var startLoop = renderer.startSessionLoop.bind(renderer, stop);
+    var controllerBindings = actionService.createControllerBindings(onRender, startLoop);
     var globals = {
-      sparkPlayAlongStop: rendererBindings.stop,
-      sparkPlayAlongStartLoop: rendererBindings.startLoop,
+      sparkPlayAlongStop: stop,
+      sparkPlayAlongStartLoop: startLoop,
       sparkPlayAlongSelectWithFile: controllerBindings.searchSelectWithFile,
       sparkPlayAlongSelect: controllerBindings.searchSelect,
       sparkPlayAlongSearch: controllerBindings.search,
