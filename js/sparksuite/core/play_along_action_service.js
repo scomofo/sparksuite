@@ -151,10 +151,15 @@
       },
       openHome: stateService.showHome.bind(stateService, onRender),
       connectSpotify: function() {
-        return self.connectSpotifyAndRender(onRender);
+        return self.connectSpotify(function() {
+          if (typeof onRender === "function") onRender();
+        });
       },
       saveSpotifyClientId: function() {
-        return self.saveSpotifyClientIdAndConnectAndRender(onRender);
+        if (!self.saveSpotifyClientIdFromPrompt()) return false;
+        return self.connectSpotify(function() {
+          if (typeof onRender === "function") onRender();
+        });
       },
       jumpToWeakSection: stateService.launchWeakSection.bind(stateService, launchPreparedSession),
       jumpToSectionRecommendation: function(first, second) {
@@ -533,21 +538,9 @@
     });
   };
 
-  SparkPlayAlongActionService.prototype.connectSpotifyAndRender = function(onRender) {
-    return this.connectSpotify(function() {
-      if (typeof onRender === "function") onRender();
-    });
-  };
-
   SparkPlayAlongActionService.prototype.saveSpotifyClientIdAndConnect = function(onConnected) {
     if (!this.saveSpotifyClientIdFromPrompt()) return false;
     this.connectSpotify(onConnected);
-    return true;
-  };
-
-  SparkPlayAlongActionService.prototype.saveSpotifyClientIdAndConnectAndRender = function(onRender) {
-    if (!this.saveSpotifyClientIdFromPrompt()) return false;
-    this.connectSpotifyAndRender(onRender);
     return true;
   };
 
