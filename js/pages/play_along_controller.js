@@ -161,9 +161,7 @@
   // ---- Play Again ----
 
   window.sparkPlayAlongAgain = function() {
-    var params = playAlongState.getReplayParams();
-    if (launchFrom(params)) return;
-    playAlongState.showHome(requestRender);
+    return playAlongState.replayOrShowHome(launchPreparedParams, requestRender);
   };
 
   window.sparkPlayAlongReplay = function() {

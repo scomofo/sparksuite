@@ -312,6 +312,15 @@
     return this.getReplayParams();
   };
 
+  SparkPlayAlongStateService.prototype.replayOrShowHome = function(onLaunchPrepared, onRender) {
+    var params = this.getReplayParams();
+    if (params) {
+      if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+      return true;
+    }
+    return this.showHome(onRender);
+  };
+
   SparkPlayAlongStateService.prototype.getSectionSummary = function() {
     var outcome = this.getLastOutcome();
     return outcome && outcome.sectionSummary ? outcome.sectionSummary : null;
