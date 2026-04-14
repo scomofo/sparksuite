@@ -94,32 +94,19 @@
       self.stateService.launchSession(params, getPlayAlongInstrumentId(), onRender, onStartLoop);
       return true;
     };
-    var selectWithFile = function(index, file) {
-      return self.handleSearchSelectionWithFile(index, file, launchPreparedParams);
-    };
     var replayOrShowHome = this.stateService && typeof this.stateService.replayOrShowHome === "function"
       ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedParams, onRender)
-      : function() { return false; };
-    var replayDrill = this.stateService && typeof this.stateService.replayDrill === "function"
-      ? this.stateService.replayDrill.bind(this.stateService, launchPreparedParams)
-      : function() { return false; };
-    var replayFullSong = this.stateService && typeof this.stateService.replayFullSong === "function"
-      ? this.stateService.replayFullSong.bind(this.stateService, launchPreparedParams)
-      : function() { return false; };
-    var launchWeakSection = this.stateService && typeof this.stateService.launchWeakSection === "function"
-      ? this.stateService.launchWeakSection.bind(this.stateService, launchPreparedParams)
-      : function() { return false; };
-    var launchSectionRecommendation = this.stateService && typeof this.stateService.launchSectionRecommendation === "function"
-      ? function(first, second) {
-        return self.stateService.launchSectionRecommendation(first, second, launchPreparedParams);
-      }
       : function() { return false; };
     return {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
       again: replayOrShowHome,
-      replayDrill: replayDrill,
-      replayFullSong: replayFullSong,
+      replayDrill: this.stateService && typeof this.stateService.replayDrill === "function"
+        ? this.stateService.replayDrill.bind(this.stateService, launchPreparedParams)
+        : function() { return false; },
+      replayFullSong: this.stateService && typeof this.stateService.replayFullSong === "function"
+        ? this.stateService.replayFullSong.bind(this.stateService, launchPreparedParams)
+        : function() { return false; },
       launchDemo: function(value) {
         return self.handleDemoLaunch(value, launchPreparedParams);
       },
@@ -201,11 +188,21 @@
       spotifyConnectAction: function() {
         return self.connectSpotifyAndRender(onRender);
       },
-      jumpToWeakSection: launchWeakSection,
-      jumpToSectionRecommendation: launchSectionRecommendation,
-      searchSelectWithFile: selectWithFile,
+      jumpToWeakSection: this.stateService && typeof this.stateService.launchWeakSection === "function"
+        ? this.stateService.launchWeakSection.bind(this.stateService, launchPreparedParams)
+        : function() { return false; },
+      jumpToSectionRecommendation: this.stateService && typeof this.stateService.launchSectionRecommendation === "function"
+        ? function(first, second) {
+          return self.stateService.launchSectionRecommendation(first, second, launchPreparedParams);
+        }
+        : function() { return false; },
+      searchSelectWithFile: function(index, file) {
+        return self.handleSearchSelectionWithFile(index, file, launchPreparedParams);
+      },
       searchSelect: function(index) {
-        return self.handleSearchSelection(index, launchPreparedParams, selectWithFile);
+        return self.handleSearchSelection(index, launchPreparedParams, function(fileIndex, file) {
+          return self.handleSearchSelectionWithFile(fileIndex, file, launchPreparedParams);
+        });
       }
     };
   };
