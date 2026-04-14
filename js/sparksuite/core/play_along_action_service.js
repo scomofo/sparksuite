@@ -3,17 +3,6 @@
     return typeof window !== "undefined" ? window.sparkCore || null : null;
   }
 
-  function getPlayAlongInstrumentId() {
-    var core = getPlayAlongCore();
-    var runtime = core && typeof core.getRuntimeState === "function"
-      ? core.getRuntimeState()
-      : null;
-    if (runtime && runtime.activeInstrumentId) return runtime.activeInstrumentId;
-    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
-    if (active && active.appId) return active.appId;
-    return "guitar";
-  }
-
   function escapeHtml(value) {
     if (!value) return "";
     return String(value)
@@ -382,7 +371,7 @@
       artist: overrides.artist != null ? overrides.artist : (track.artist || null),
       audioOffsetMs: overrides.audioOffsetMs != null ? overrides.audioOffsetMs : (track.audioOffsetMs || 0),
       difficulty: overrides.difficulty || track.difficulty || this.getDifficulty(),
-      instrument: overrides.instrument || track.instrument || getPlayAlongInstrumentId()
+      instrument: overrides.instrument || track.instrument || this.getInstrumentId()
     };
     if (Object.prototype.hasOwnProperty.call(overrides, "audioFile")) {
       params.audioFile = overrides.audioFile;
@@ -443,7 +432,7 @@
     var params;
     if (!file) return false;
     params = this.stateService && typeof this.stateService.prepareLocalFileLaunch === "function"
-      ? this.stateService.prepareLocalFileLaunch(file, getPlayAlongInstrumentId())
+      ? this.stateService.prepareLocalFileLaunch(file, this.getInstrumentId())
       : null;
     if (typeof onLaunchPrepared === "function") {
       onLaunchPrepared(params);
@@ -716,6 +705,12 @@
       ? window.getSparkPlayAlongDemos()
       : [];
     return demos[index] || null;
+  };
+
+  SparkPlayAlongActionService.prototype.getInstrumentId = function() {
+    return this.stateService && typeof this.stateService.getInstrumentId === "function"
+      ? this.stateService.getInstrumentId()
+      : "guitar";
   };
 
   SparkPlayAlongActionService.prototype.getDemoLaunchParams = function(index) {

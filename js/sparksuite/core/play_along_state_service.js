@@ -176,6 +176,10 @@
     return getPlayAlongCore();
   };
 
+  SparkPlayAlongStateService.prototype.getInstrumentId = function() {
+    return getPlayAlongInstrumentId();
+  };
+
   SparkPlayAlongStateService.prototype.startSession = function(params) {
     var core = getPlayAlongCore();
     if (!core || typeof core.startPlayAlongSession !== "function") return Promise.resolve(false);
