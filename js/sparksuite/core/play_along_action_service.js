@@ -189,40 +189,15 @@
   };
 
   SparkPlayAlongActionService.prototype.getDifficulty = function() {
-    var state;
-    if (this.stateService && typeof this.stateService.getDifficulty === "function") {
-      return this.stateService.getDifficulty();
-    }
-    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
-      state = SparkState.getRoot();
-    } else if (typeof globalThis !== "undefined" && globalThis.__sparkState) {
-      state = globalThis.__sparkState;
-    } else {
-      state = null;
-    }
-    return state && state.spotifyDifficulty ? state.spotifyDifficulty : "easy";
+    return this.stateService && typeof this.stateService.getDifficulty === "function"
+      ? this.stateService.getDifficulty()
+      : "easy";
   };
 
   SparkPlayAlongActionService.prototype.setDifficulty = function(level) {
-    var state;
-    if (this.stateService && typeof this.stateService.setDifficulty === "function") {
-      return this.stateService.setDifficulty(level);
-    }
-    var core = this.stateService && typeof this.stateService.getCore === "function"
-      ? this.stateService.getCore()
-      : null;
-    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
-      state = SparkState.getRoot();
-    } else if (typeof globalThis !== "undefined" && globalThis.__sparkState) {
-      state = globalThis.__sparkState;
-    } else {
-      state = null;
-    }
-    if (state) state.spotifyDifficulty = level;
-    if (core && typeof core.updateRuntimeState === "function") {
-      core.updateRuntimeState({ spotifyDifficulty: level });
-    }
-    return level;
+    return this.stateService && typeof this.stateService.setDifficulty === "function"
+      ? this.stateService.setDifficulty(level)
+      : level;
   };
 
   SparkPlayAlongActionService.prototype.setDifficultyAndRender = function(level, onRender) {
