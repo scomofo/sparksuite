@@ -87,10 +87,7 @@
   };
 
   window.sparkPlayAlongSaveTrack = function(index) {
-    return playAlongActions.saveSearchResult(index).then(function(saved) {
-      if (saved) requestRender();
-      return saved;
-    });
+    return playAlongActions.saveSearchResultAndRender(index, requestRender);
   };
 
   window.sparkPlayAlongLaunchSaved = function(index) {

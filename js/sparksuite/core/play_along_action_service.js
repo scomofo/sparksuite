@@ -241,6 +241,13 @@
     return this.showSearchUploadPrompt(container, index, onSelectWithFile, onSkipLaunch);
   };
 
+  SparkPlayAlongActionService.prototype.saveSearchResultAndRender = function(index, onRender) {
+    return this.saveSearchResult(index).then(function(saved) {
+      if (saved && typeof onRender === "function") onRender();
+      return saved;
+    });
+  };
+
   SparkPlayAlongActionService.prototype.bindUploadPromptHandlers = function(index, onSelectWithFile, onSkip) {
     var track = this.getSearchResult(index);
     var fileInput = document.getElementById("play-along-audio-input");
