@@ -298,46 +298,6 @@
   // ---- Spotify Connect ----
 
   window.sparkPlayAlongConnectSpotify = function() {
-    var authManager = playAlongActions.createSpotifyAuthManager();
-    if (!authManager) {
-      alert("Spotify integration not loaded.");
-      return;
-    }
-
-    // Check if already connected
-    playAlongActions.resumeSpotifyConnection(authManager, function(token) {
-      if (token && playAlongState.initSpotify(token)) {
-        if (typeof render === "function") render();
-      }
-    }).then(function(reused) {
-      var clientId;
-      if (reused) return;
-
-    // Need to configure first — check if client ID is set
-      clientId = playAlongActions.getSpotifyClientId();
-      if (!clientId) {
-        playAlongActions.showSpotifyClientIdPrompt(playAlongActions.getSpotifyPromptContainer());
-        return;
-      }
-
-      if (!playAlongActions.configureSpotifyAuth(clientId)) return;
-
-      playAlongActions.requestSpotifyAuthUrl(authManager).then(function(url) {
-        playAlongActions.openSpotifyAuthUrl(url);
-      }).catch(function(err) {
-        console.error("Spotify auth URL generation failed:", err);
-      });
-
-      playAlongActions.bindSpotifyCallback(authManager, function(tokenData) {
-        if (tokenData && tokenData.access_token && playAlongState.initSpotify(tokenData.access_token)) {
-          if (typeof render === "function") render();
-        }
-      });
-    });
-  };
-
-
-  window.sparkPlayAlongConnectSpotify = function() {
     return playAlongActions.connectSpotify(function() {
       if (typeof render === "function") render();
     });
