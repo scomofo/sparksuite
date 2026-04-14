@@ -154,12 +154,7 @@
     playAlongState.stopRenderLoop();
     playAlongState.completeSessionForResults();
     render();
-
-    // Draw heatmap after render
-    setTimeout(function() {
-      var heatmapCanvas = document.getElementById("play-along-heatmap");
-      playAlongState.drawHeatmap(heatmapCanvas);
-    }, 0);
+    playAlongRenderer.scheduleResultsHeatmap();
   };
 
   // ---- Toggle Debug ----
@@ -345,8 +340,7 @@
 
 
   window.sparkPlayAlongSaveClientId = function() {
-    var input = document.getElementById("spotify-client-id-input");
-    if (!input || !playAlongActions.saveSpotifyClientId(input.value)) return;
+    if (!playAlongActions.saveSpotifyClientIdFromPrompt()) return;
     sparkPlayAlongConnectSpotify();
   };
 

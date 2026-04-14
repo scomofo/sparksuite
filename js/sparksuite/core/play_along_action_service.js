@@ -252,6 +252,11 @@
     return true;
   };
 
+  SparkPlayAlongActionService.prototype.saveSpotifyClientIdFromPrompt = function() {
+    var input = document.getElementById("spotify-client-id-input");
+    return !!(input && this.saveSpotifyClientId(input.value));
+  };
+
   SparkPlayAlongActionService.prototype.createSpotifyAuthManager = function() {
     if (typeof SparkSpotifyAuthManager === "undefined") return null;
     return new SparkSpotifyAuthManager();

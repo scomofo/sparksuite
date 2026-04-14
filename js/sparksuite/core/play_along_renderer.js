@@ -11,6 +11,26 @@
     this.stateService = stateService || null;
   }
 
+  SparkPlayAlongRenderer.prototype.getHeatmapCanvas = function() {
+    return document.getElementById("play-along-heatmap");
+  };
+
+  SparkPlayAlongRenderer.prototype.drawResultsHeatmap = function() {
+    var canvas = this.getHeatmapCanvas();
+    if (!canvas || !this.stateService || typeof this.stateService.drawHeatmap !== "function") {
+      return false;
+    }
+    return this.stateService.drawHeatmap(canvas);
+  };
+
+  SparkPlayAlongRenderer.prototype.scheduleResultsHeatmap = function() {
+    var self = this;
+    setTimeout(function() {
+      self.drawResultsHeatmap();
+    }, 0);
+    return true;
+  };
+
   SparkPlayAlongRenderer.prototype.renderFrame = function(result, chart) {
     this.renderHighway(result);
     this.renderFretboard(result);
