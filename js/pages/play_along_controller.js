@@ -19,29 +19,22 @@
   // ---- Select Track ----
 
   window.sparkPlayAlongSelect = function(index) {
-    var track = playAlongActions.getSearchResult(index);
-    if (!track) return;
-
-    playAlongState.resetSelectedDrillState();
-
-    if (playAlongActions.hasCachedChart(track.id)) {
-      launchPlayAlongSession(playAlongActions.getSearchLaunchParams(index));
+    if (playAlongActions.shouldUseCachedSearchChart(index)) {
+      launchPlayAlongSession(playAlongActions.prepareSearchLaunch(index));
       return;
     }
 
     var resultsEl = document.getElementById("play-along-results");
     if (!resultsEl) return;
-    playAlongActions.showUploadPrompt(resultsEl, index, sparkPlayAlongSelectWithFile, function(selectedIndex) {
-      launchPlayAlongSession(playAlongActions.getSearchLaunchParams(selectedIndex));
+    playAlongActions.showSearchUploadPrompt(resultsEl, index, sparkPlayAlongSelectWithFile, function(params) {
+      launchPlayAlongSession(params);
     });
   };
 
   window.sparkPlayAlongSelectWithFile = function(index, file) {
     var params;
     if (!file) return;
-
-    playAlongState.resetSelectedDrillState();
-    params = playAlongActions.getSearchLaunchParams(index, {
+    params = playAlongActions.prepareSearchLaunch(index, {
       audioFile: file,
     });
     if (!params) return;

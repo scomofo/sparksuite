@@ -96,6 +96,20 @@
     return this.buildLaunchParams(track, overrides);
   };
 
+  SparkPlayAlongActionService.prototype.prepareSearchLaunch = function(index, overrides) {
+    var params = this.getSearchLaunchParams(index, overrides);
+    if (!params) return null;
+    if (this.stateService && typeof this.stateService.prepareFreshLaunch === "function") {
+      return this.stateService.prepareFreshLaunch(params);
+    }
+    return this.cloneValue(params);
+  };
+
+  SparkPlayAlongActionService.prototype.shouldUseCachedSearchChart = function(index) {
+    var track = this.getSearchResult(index);
+    return !!(track && this.hasCachedChart(track.id));
+  };
+
   SparkPlayAlongActionService.prototype.searchTracks = function(query, onResults) {
     var core = getPlayAlongCore();
     var self = this;
@@ -192,6 +206,14 @@
     container.innerHTML = this.buildUploadPromptMarkup(track);
     this.bindUploadPromptHandlers(index, onSelectWithFile, onSkip);
     return true;
+  };
+
+  SparkPlayAlongActionService.prototype.showSearchUploadPrompt = function(container, index, onSelectWithFile, onSkipLaunch) {
+    return this.showUploadPrompt(container, index, onSelectWithFile, function(selectedIndex) {
+      if (typeof onSkipLaunch === "function") {
+        onSkipLaunch(this.prepareSearchLaunch(selectedIndex));
+      }
+    }.bind(this));
   };
 
   SparkPlayAlongActionService.prototype.bindUploadPromptHandlers = function(index, onSelectWithFile, onSkip) {
