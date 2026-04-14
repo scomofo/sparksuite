@@ -99,7 +99,11 @@
       replayDrill: stateService.replayDrill.bind(stateService, launchPreparedSession),
       replayFullSong: stateService.replayFullSong.bind(stateService, launchPreparedSession),
       launchDemo: function(value) {
-        return self.handleDemoLaunch(value, launchPreparedSession);
+        var params = stateService.prepareFreshLaunch(self.getDemoLaunchParams(value));
+        if (typeof launchPreparedSession === "function") {
+          launchPreparedSession(params);
+        }
+        return !!params;
       },
       launchRecent: function(value) {
         return stateService.launchRecent(value, launchPreparedSession);
@@ -143,7 +147,13 @@
         return result;
       },
       loadFile: function(value) {
-        return self.handleLocalFileLaunch(value, launchPreparedSession);
+        var params;
+        if (!value) return false;
+        params = stateService.prepareLocalFileLaunch(value, stateService.getInstrumentId());
+        if (typeof launchPreparedSession === "function") {
+          launchPreparedSession(params);
+        }
+        return !!params;
       },
       togglePause: function() {
         return stateService.togglePause(onRender);
@@ -370,24 +380,6 @@
       onLaunchPrepared(this.prepareSearchLaunch(index, { audioFile: file }));
     }
     return true;
-  };
-
-  SparkPlayAlongActionService.prototype.handleLocalFileLaunch = function(file, onLaunchPrepared) {
-    var params;
-    if (!file) return false;
-    params = this.stateService.prepareLocalFileLaunch(file, this.stateService.getInstrumentId());
-    if (typeof onLaunchPrepared === "function") {
-      onLaunchPrepared(params);
-    }
-    return !!params;
-  };
-
-  SparkPlayAlongActionService.prototype.handleDemoLaunch = function(index, onLaunchPrepared) {
-    var params = this.stateService.prepareFreshLaunch(this.getDemoLaunchParams(index));
-    if (typeof onLaunchPrepared === "function") {
-      onLaunchPrepared(params);
-    }
-    return !!params;
   };
 
   SparkPlayAlongActionService.prototype.bindUploadPromptHandlers = function(index, onSelectWithFile, onSkip) {
