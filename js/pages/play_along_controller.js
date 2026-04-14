@@ -183,11 +183,11 @@
   // ---- Spotify Connect ----
 
   window.sparkPlayAlongConnectSpotify = function() {
-    return playAlongActions.connectSpotify(requestRender);
+    return playAlongActions.connectSpotifyAndRender(requestRender);
   };
 
   window.sparkPlayAlongSaveClientId = function() {
-    return playAlongActions.saveSpotifyClientIdAndConnect(requestRender);
+    return playAlongActions.saveSpotifyClientIdAndConnectAndRender(requestRender);
   };
 
   // Handle spotifyConnect action from act() dispatcher

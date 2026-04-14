@@ -462,9 +462,21 @@
     });
   };
 
+  SparkPlayAlongActionService.prototype.connectSpotifyAndRender = function(onRender) {
+    return this.connectSpotify(function() {
+      if (typeof onRender === "function") onRender();
+    });
+  };
+
   SparkPlayAlongActionService.prototype.saveSpotifyClientIdAndConnect = function(onConnected) {
     if (!this.saveSpotifyClientIdFromPrompt()) return false;
     this.connectSpotify(onConnected);
+    return true;
+  };
+
+  SparkPlayAlongActionService.prototype.saveSpotifyClientIdAndConnectAndRender = function(onRender) {
+    if (!this.saveSpotifyClientIdFromPrompt()) return false;
+    this.connectSpotifyAndRender(onRender);
     return true;
   };
 
