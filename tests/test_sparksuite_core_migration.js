@@ -1610,6 +1610,7 @@ test("shared app dispatcher keeps ear training and drill actions wired for share
   assert.ok(appSource.indexOf('if(a==="start_ear")') >= 0);
   assert.ok(appSource.indexOf('if(a==="startEarTrain")') >= 0);
   assert.ok(appSource.indexOf('if(a==="startDrill")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="practiceSkillNow")') >= 0);
   assert.ok(appSource.indexOf('if(a==="drillSwitch")') >= 0);
   assert.ok(appSource.indexOf('if(a==="repeatLegacyPracticeDrill")') >= 0);
   assert.ok(appSource.indexOf('if(a==="repeatLegacyPracticeSession")') >= 0);

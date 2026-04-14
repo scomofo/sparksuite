@@ -1744,6 +1744,16 @@ window.act=function(a,v){
     render();
     return;
   }
+  if(a==="practiceSkillNow"){
+    var reviewSkill = v || null;
+    appWrite("reviewSkill", reviewSkill);
+    if(reviewSkill && /(switch|transition)/i.test(String(reviewSkill))){
+      act("startDrill");
+      return;
+    }
+    act("quickStart");
+    return;
+  }
   if(a==="resetProgress"){
     if (typeof window.resetProgress === "function") {
       window.resetProgress();
