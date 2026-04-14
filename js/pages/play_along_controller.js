@@ -38,12 +38,6 @@
     return true;
   }
 
-  function launchSearchSelection(index, overrides) {
-    return launchFrom(function() {
-      return playAlongActions.prepareSearchLaunch(index, overrides);
-    });
-  }
-
   function stepSection(delta) {
     return playAlongState.stepSection(delta, requestRender);
   }
@@ -63,9 +57,8 @@
   };
 
   window.sparkPlayAlongSelectWithFile = function(index, file) {
-    if (!file) return;
-    return launchSearchSelection(index, {
-      audioFile: file,
+    return playAlongActions.handleSearchSelectionWithFile(index, file, function(params) {
+      launchPreparedParams(params);
     });
   };
 

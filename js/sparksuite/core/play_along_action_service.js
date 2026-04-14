@@ -251,6 +251,14 @@
     return this.showSearchUploadPromptForIndex(index, onSelectWithFile, onLaunchPrepared);
   };
 
+  SparkPlayAlongActionService.prototype.handleSearchSelectionWithFile = function(index, file, onLaunchPrepared) {
+    if (!file) return false;
+    if (typeof onLaunchPrepared === "function") {
+      onLaunchPrepared(this.prepareSearchLaunch(index, { audioFile: file }));
+    }
+    return true;
+  };
+
   SparkPlayAlongActionService.prototype.saveSearchResultAndRender = function(index, onRender) {
     return this.saveSearchResult(index).then(function(saved) {
       if (saved && typeof onRender === "function") onRender();
