@@ -35,7 +35,7 @@
     var errorState = playAlongState.getError();
     return {
       spotifyConnected: playAlongState.isSpotifyConnected(),
-      difficulty: playAlongState.readValue(["spotifyDifficulty"], "easy"),
+      difficulty: playAlongState.getDifficulty(),
       error: errorState,
       demos: typeof window.getSparkPlayAlongDemos === "function" ? window.getSparkPlayAlongDemos() : [],
       recent: playAlongState.getRecent(),
@@ -46,25 +46,26 @@
 
   function buildPlayAlongSessionViewModel() {
     var chart = playAlongState.getActiveChart();
-    var drill = playAlongState.getStateValue("playAlongSelectedDrill", null);
+    var drill = playAlongState.getSelectedDrill();
     var errorState = playAlongState.getError();
     return {
       chart: chart,
       error: errorState,
-      trackTitle: getPlayAlongTrackTitle(chart),
-      bpm: getPlayAlongBpm(chart),
+      trackTitle: playAlongState.getTrackTitle(chart),
+      bpm: playAlongState.getBpm(chart),
       accuracy: Math.round((playAlongState.getAccuracy() || 0) * 100),
-      paused: !!playAlongState.getStateValue("playAlongPaused", false),
+      paused: playAlongState.isPaused(),
       drill: drill,
-      loopRange: playAlongState.getStateValue("playAlongLoopRange", null),
-      loopTarget: playAlongState.getStateValue("playAlongLoopTarget", null) || (drill ? "drill" : "section"),
-      coachHint: playAlongState.getStateValue("playAlongCoachHint", "") || "",
+      loopRange: playAlongState.getLoopRange(),
+      loopTarget: playAlongState.getLoopTarget(),
+      coachHint: playAlongState.getCoachHint(),
       transportMode: playAlongState.getTransportMode(),
-      currentSection: playAlongState.getStateValue("playAlongCurrentSection", "Section: Intro") || "Section: Intro",
-      currentTime: formatPlayAlongMs(playAlongState.getStateValue("playAlongNowMs", 0)),
-      speedLabel: playAlongState.getStateValue("playAlongSpeed", "1.0") || "1.0",
-      loopEnabled: !!playAlongState.getStateValue("playAlongLoop", false),
-      sectionNav: playAlongState.getSectionNavigation(chart)
+      currentSection: playAlongState.getCurrentSectionLabel(),
+      currentTime: playAlongState.getCurrentTimeLabel(),
+      speedLabel: playAlongState.getSpeedLabel(),
+      loopEnabled: playAlongState.isLoopEnabled(),
+      sectionNav: playAlongState.getSectionNavigation(chart),
+      hasPlayableSections: playAlongState.hasPlayableSections(chart)
     };
   }
 
@@ -75,14 +76,14 @@
       accuracy: asPercent(outcome && outcome.accuracy),
       timing: asPercent(outcome && outcome.timing),
       consistency: asPercent(outcome && outcome.consistency),
-      feedback: outcome && Array.isArray(outcome.feedback) ? outcome.feedback : [],
-      drills: outcome && Array.isArray(outcome.drills) ? outcome.drills : (outcome && outcome.drills ? [outcome.drills] : []),
-      suggestedDifficulty: outcome && outcome.suggestedDifficulty ? outcome.suggestedDifficulty : "",
-      suggestedMode: outcome && outcome.suggestedMode ? outcome.suggestedMode : "",
+      feedback: playAlongState.getOutcomeFeedback(),
+      drills: playAlongState.getOutcomeDrills(),
+      suggestedDifficulty: playAlongState.getSuggestedDifficulty(),
+      suggestedMode: playAlongState.getSuggestedMode(),
       drillSummary: outcome && outcome.drillSummary ? outcome.drillSummary : null,
       nextAction: getPlayAlongNextAction(outcome),
       weakAreas: getPlayAlongWeakAreas(outcome),
-      sectionSummary: outcome && outcome.sectionSummary ? outcome.sectionSummary : null
+      sectionSummary: playAlongState.getSectionSummary()
     };
   }
 
@@ -257,12 +258,12 @@
     }
     h += "</div>";
 
-    if (viewModel.drill || chartHasPlayableSections(viewModel.chart)) {
+    if (viewModel.drill || viewModel.hasPlayableSections) {
       h += "<div style='display:flex;gap:8px;justify-content:center;margin-top:8px'>";
       if (viewModel.drill) {
         h += "<button class='btn btn-sm' onclick=\"sparkPlayAlongSetLoopTarget('drill')\" style='background:" + (viewModel.loopTarget === "drill" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (viewModel.loopTarget === "drill" ? "#fff" : "var(--text-secondary)") + "'>Target: Drill</button>";
       }
-      if (chartHasPlayableSections(viewModel.chart)) {
+      if (viewModel.hasPlayableSections) {
         h += "<button class='btn btn-sm' onclick=\"sparkPlayAlongSetLoopTarget('section')\" style='background:" + (viewModel.loopTarget === "section" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (viewModel.loopTarget === "section" ? "#fff" : "var(--text-secondary)") + "'>Target: Section</button>";
       }
     h += "</div>";
@@ -412,25 +413,6 @@
   function asPercent(value) {
     if (typeof value !== "number") return 0;
     return value <= 1 ? Math.round(value * 100) : Math.round(value);
-  }
-
-  function getPlayAlongTrackTitle(chart) {
-    if (!chart) return "Unknown Track";
-    if (chart.songChart && chart.songChart.song && chart.songChart.song.title) return chart.songChart.song.title;
-    if (chart.title) return chart.title;
-    if (chart.trackId) return chart.trackId;
-    return "Unknown Track";
-  }
-
-  function getPlayAlongBpm(chart) {
-    if (!chart) return "--";
-    if (typeof chart.getBpm === "function") return Math.round(chart.getBpm());
-    if (chart.bpm) return chart.bpm;
-    return "--";
-  }
-
-  function chartHasPlayableSections(chart) {
-    return !!(chart && Array.isArray(chart.sections) && chart.sections.length);
   }
 
   function formatPlayAlongMs(ms) {

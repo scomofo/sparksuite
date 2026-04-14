@@ -56,11 +56,17 @@
   };
 
   SparkPlayAlongActionService.prototype.getDifficulty = function() {
+    if (this.stateService && typeof this.stateService.getDifficulty === "function") {
+      return this.stateService.getDifficulty();
+    }
     var state = getPlayAlongState();
     return state && state.spotifyDifficulty ? state.spotifyDifficulty : "easy";
   };
 
   SparkPlayAlongActionService.prototype.setDifficulty = function(level) {
+    if (this.stateService && typeof this.stateService.setDifficulty === "function") {
+      return this.stateService.setDifficulty(level);
+    }
     var state = getPlayAlongState();
     var core = getPlayAlongCore();
     if (state) state.spotifyDifficulty = level;

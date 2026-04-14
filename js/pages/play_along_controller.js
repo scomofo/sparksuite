@@ -5,14 +5,6 @@
   var playAlongActions = new SparkPlayAlongActionService(playAlongState);
   var playAlongRenderer = new SparkPlayAlongRenderer(playAlongState);
 
-  function clearPlayAlongError() {
-    playAlongState.clearError();
-  }
-
-  function setPlayAlongError(err) {
-    playAlongState.setError(err);
-  }
-
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
@@ -47,7 +39,7 @@
     var track = playAlongActions.getSearchResult(index);
     if (!track) return;
 
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
 
     if (playAlongActions.hasCachedChart(track.id)) {
       launchPlayAlongSession(playAlongActions.buildLaunchParams(track));
@@ -81,7 +73,7 @@
     var track = playAlongActions.getSearchResult(index);
     if (!track || !file) return;
 
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(playAlongActions.buildLaunchParams(track, {
       audioFile: file,
     }));
@@ -90,7 +82,7 @@
   window.sparkPlayAlongLaunchDemo = function(index) {
     var demo = playAlongActions.getDemo(index);
     if (!demo) return false;
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(playAlongActions.buildLaunchParams(demo, {
       trackId: demo.trackId,
       trackUri: demo.trackUri || null,
@@ -105,7 +97,7 @@
   window.sparkPlayAlongLaunchRecent = function(index) {
     var params = playAlongActions.getRecentLaunchParams(index);
     if (!params) return false;
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(params);
     return true;
   };
@@ -128,7 +120,7 @@
   window.sparkPlayAlongLaunchSaved = function(index) {
     var params = playAlongActions.getSavedLaunchParams(index);
     if (!params) return false;
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(params);
     return true;
   };
@@ -148,7 +140,7 @@
   window.sparkPlayAlongLaunchBookmark = function(index) {
     var item = playAlongActions.getBookmark(index);
     if (!item || !item.params) return false;
-    clearPlayAlongError();
+    playAlongState.clearError();
     playAlongState.prepareBookmarkLaunch(item);
     launchPlayAlongSession(playAlongState.cloneValue(item.params));
     return true;
@@ -195,10 +187,10 @@
   window.sparkPlayAlongLoadFile = function(file) {
     if (!file) return;
 
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
     launchPlayAlongSession({
       audioFile: file,
-      difficulty: playAlongState.readValue("spotifyDifficulty", "easy") || "easy",
+      difficulty: playAlongState.getDifficulty(),
       instrument: playAlongActions.getInstrumentId()
     });
   };
@@ -264,8 +256,7 @@
   };
 
   window.sparkPlayAlongReplayDrill = function() {
-    var outcome = playAlongState.getLastOutcome();
-    var drills = outcome && Array.isArray(outcome.drills) ? outcome.drills : [];
+    var drills = playAlongState.getOutcomeDrills();
     if (drills.length > 0) {
       return window.sparkPlayAlongStartDrill(0);
     }
@@ -273,29 +264,23 @@
   };
 
   window.sparkPlayAlongReplayFullSong = function() {
-    var params = playAlongState.getActiveParams();
+    var params = playAlongState.getReplayParams();
     if (!playAlongState.prepareFullSongReplay() || !params) return false;
-    clearPlayAlongError();
-    return launchPlayAlongSession(playAlongState.cloneValue(params));
+    playAlongState.clearError();
+    return launchPlayAlongSession(params);
   };
 
   window.sparkPlayAlongTogglePause = function() {
-    if (playAlongState.getStateValue("playAlongPaused", false)) {
-      playAlongState.resumeTransport();
-      playAlongState.togglePaused();
-    } else {
-      playAlongState.pauseTransport();
-      playAlongState.togglePaused();
-    }
+    var paused = playAlongState.togglePauseTransport();
     render();
-    return playAlongState.getStateValue("playAlongPaused", false);
+    return paused;
   };
 
   window.sparkPlayAlongToggleLoop = function() {
-    clearPlayAlongError();
+    playAlongState.clearError();
     playAlongState.toggleLoop();
     render();
-    return !!playAlongState.getStateValue("playAlongLoop", false);
+    return playAlongState.isLoopEnabled();
   };
 
   window.sparkPlayAlongSetLoopTarget = function(target) {
@@ -305,11 +290,11 @@
   };
 
   window.sparkPlayAlongPrevSection = function() {
-    return playAlongState.stepSection(-1, seekPlayAlongToMs, render);
+    return playAlongState.stepSection(-1, render);
   };
 
   window.sparkPlayAlongNextSection = function() {
-    return playAlongState.stepSection(1, seekPlayAlongToMs, render);
+    return playAlongState.stepSection(1, render);
   };
 
   window.sparkPlayAlongBookmarkCurrentSection = function() {
@@ -321,49 +306,34 @@
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {
-    var outcome = playAlongState.getLastOutcome();
-    var sectionSummary = outcome && outcome.sectionSummary ? outcome.sectionSummary : null;
-    var params = playAlongState.getActiveParams();
+    var sectionSummary = playAlongState.getSectionSummary();
+    var params = playAlongState.getReplayParams();
     if (!sectionSummary || !params) return false;
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
     playAlongState.activateSectionLoop(sectionSummary.sectionIndex || 0);
-    return launchPlayAlongSession(playAlongState.cloneValue(params));
+    return launchPlayAlongSession(params);
   };
 
   window.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {
-    var params = null;
-    var activeParams = playAlongState.getActiveParams();
-    if (activeParams && activeParams.trackId === trackId) {
-      params = playAlongState.cloneValue(activeParams);
-    }
-    if (!params) {
-      var recent = playAlongState.getRecent();
-      for (var i = 0; i < recent.length; i++) {
-        if (recent[i] && recent[i].trackId === trackId && recent[i].params) {
-          params = playAlongState.cloneValue(recent[i].params);
-          break;
-        }
-      }
-    }
+    var params = playAlongState.getSectionRecommendationLaunchParams(trackId);
     if (!params) return false;
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
     playAlongState.activateSectionLoop(sectionIndex || 0);
     return launchPlayAlongSession(params);
   };
 
   window.sparkPlayAlongPickNew = function() {
-    clearSelectedDrillState();
+    playAlongState.resetSelectedDrillState();
     playAlongState.writeValue("screen", SCR.PLAY_ALONG);
     render();
   };
 
   window.sparkPlayAlongStartDrill = function(index) {
-    var outcome = playAlongState.getLastOutcome();
-    var drills = outcome && Array.isArray(outcome.drills) ? outcome.drills : [];
+    var drills = playAlongState.getOutcomeDrills();
     var drill = drills[index] || null;
     if (!drill) return false;
     playAlongState.selectDrill(drill);
-    clearPlayAlongError();
+    playAlongState.clearError();
     var params = playAlongState.getActiveParams();
     if (params) {
       launchPlayAlongSession(params);
@@ -392,53 +362,30 @@
       .replace(/>/g, "&gt;");
   }
 
-  function clearSelectedDrillState() {
-    clearPlayAlongError();
-    playAlongState.clearSelectedDrillState();
-  }
-
   function launchPlayAlongSession(params) {
     if (!params) return Promise.resolve(false);
     if (!params.instrument) params.instrument = playAlongActions.getInstrumentId();
-    clearPlayAlongError();
+    playAlongState.clearError();
     playAlongState.rememberLaunch(params);
     return playAlongState.startSession(params).then(function(started) {
       if (!started) return false;
       playAlongState.writeValue("screen", SCR.PLAY_ALONG_SESSION);
       playAlongState.writeValue("playAlongPaused", false);
-      applySelectedDrillState();
+      playAlongState.applySelectedDrillState();
       render();
       sparkPlayAlongStartLoop();
       return true;
     }).catch(function(err) {
       console.error("[PlayAlong] Failed:", err);
-      setPlayAlongError(err);
+      playAlongState.setError(err);
       playAlongState.writeValue("screen", SCR.PLAY_ALONG);
       render();
       return false;
     });
   }
 
-  function applySelectedDrillState() {
-    playAlongState.applySelectedDrillState(seekPlayAlongToMs, setPlayAlongPlaybackRate);
-  }
-
-  function setPlayAlongPlaybackRate(speed) {
-    playAlongState.setPlaybackRate(speed);
-  }
-
   function enforceLoopWindow() {
-    return playAlongState.enforceLoopWindow(
-      function() {
-        return playAlongState.getPlaybackTimeMs();
-      },
-      seekPlayAlongToMs,
-      sparkPlayAlongStop
-    );
-  }
-
-  function seekPlayAlongToMs(targetMs) {
-    return playAlongState.seekToMs(targetMs);
+    return playAlongState.enforceLoopWindow(sparkPlayAlongStop);
   }
 
   // ---- Spotify Connect ----

@@ -103,6 +103,19 @@
     return state && Array.isArray(state.spotifySavedTracks) ? state.spotifySavedTracks : [];
   };
 
+  SparkPlayAlongStateService.prototype.getDifficulty = function() {
+    return this.readValue("spotifyDifficulty", "easy") || "easy";
+  };
+
+  SparkPlayAlongStateService.prototype.setDifficulty = function(level) {
+    var core = getPlayAlongCore();
+    this.writeValue("spotifyDifficulty", level);
+    if (core && typeof core.updateRuntimeState === "function") {
+      core.updateRuntimeState({ spotifyDifficulty: level });
+    }
+    return level;
+  };
+
   SparkPlayAlongStateService.prototype.getCore = function() {
     return getPlayAlongCore();
   };
@@ -214,11 +227,56 @@
       : null;
   };
 
+  SparkPlayAlongStateService.prototype.getOutcomeDrills = function() {
+    var outcome = this.getLastOutcome();
+    return outcome && Array.isArray(outcome.drills) ? outcome.drills : [];
+  };
+
+  SparkPlayAlongStateService.prototype.getSectionSummary = function() {
+    var outcome = this.getLastOutcome();
+    return outcome && outcome.sectionSummary ? outcome.sectionSummary : null;
+  };
+
+  SparkPlayAlongStateService.prototype.getReplayParams = function() {
+    var params = this.getActiveParams();
+    return params ? this.cloneValue(params) : null;
+  };
+
+  SparkPlayAlongStateService.prototype.getSectionRecommendationLaunchParams = function(trackId) {
+    var activeParams = this.getActiveParams();
+    if (activeParams && activeParams.trackId === trackId) {
+      return this.cloneValue(activeParams);
+    }
+    return this.getRecentLaunchParamsByTrackId(trackId);
+  };
+
   SparkPlayAlongStateService.prototype.getAccuracy = function() {
     var core = getPlayAlongCore();
     return core && core.performanceTracker && typeof core.performanceTracker.getAccuracy === "function"
       ? core.performanceTracker.getAccuracy()
       : null;
+  };
+
+  SparkPlayAlongStateService.prototype.getTrackTitle = function(chart) {
+    chart = chart || this.getActiveChart();
+    if (!chart) return "Unknown Track";
+    if (chart.songChart && chart.songChart.song && chart.songChart.song.title) return chart.songChart.song.title;
+    if (chart.title) return chart.title;
+    if (chart.trackId) return chart.trackId;
+    return "Unknown Track";
+  };
+
+  SparkPlayAlongStateService.prototype.getBpm = function(chart) {
+    chart = chart || this.getActiveChart();
+    if (!chart) return "--";
+    if (typeof chart.getBpm === "function") return Math.round(chart.getBpm());
+    if (chart.bpm) return chart.bpm;
+    return "--";
+  };
+
+  SparkPlayAlongStateService.prototype.hasPlayableSections = function(chart) {
+    chart = chart || this.getActiveChart();
+    return !!(chart && Array.isArray(chart.sections) && chart.sections.length);
   };
 
   SparkPlayAlongStateService.prototype.getStateValue = function(key, fallback) {
@@ -242,6 +300,69 @@
       source: errorState.source || "play_along_session",
       retryable: errorState.retryable !== false
     };
+  };
+
+  SparkPlayAlongStateService.prototype.getSelectedDrill = function() {
+    return this.getStateValue("playAlongSelectedDrill", null);
+  };
+
+  SparkPlayAlongStateService.prototype.isPaused = function() {
+    return !!this.getStateValue("playAlongPaused", false);
+  };
+
+  SparkPlayAlongStateService.prototype.isLoopEnabled = function() {
+    return !!this.getStateValue("playAlongLoop", false);
+  };
+
+  SparkPlayAlongStateService.prototype.getLoopRange = function() {
+    return this.getStateValue("playAlongLoopRange", null);
+  };
+
+  SparkPlayAlongStateService.prototype.getLoopTarget = function() {
+    var drill = this.getSelectedDrill();
+    return this.getStateValue("playAlongLoopTarget", null) || (drill ? "drill" : "section");
+  };
+
+  SparkPlayAlongStateService.prototype.getCoachHint = function() {
+    return this.getStateValue("playAlongCoachHint", "") || "";
+  };
+
+  SparkPlayAlongStateService.prototype.getCurrentSectionLabel = function() {
+    return this.getStateValue("playAlongCurrentSection", "Section: Intro") || "Section: Intro";
+  };
+
+  SparkPlayAlongStateService.prototype.getCurrentTimeLabel = function() {
+    return formatMs(this.getStateValue("playAlongNowMs", 0));
+  };
+
+  SparkPlayAlongStateService.prototype.getSpeedLabel = function() {
+    return this.getStateValue("playAlongSpeed", "1.0") || "1.0";
+  };
+
+  SparkPlayAlongStateService.prototype.togglePauseTransport = function() {
+    if (this.isPaused()) {
+      this.resumeTransport();
+      this.togglePaused();
+    } else {
+      this.pauseTransport();
+      this.togglePaused();
+    }
+    return this.isPaused();
+  };
+
+  SparkPlayAlongStateService.prototype.getOutcomeFeedback = function() {
+    var outcome = this.getLastOutcome();
+    return outcome && Array.isArray(outcome.feedback) ? outcome.feedback : [];
+  };
+
+  SparkPlayAlongStateService.prototype.getSuggestedDifficulty = function() {
+    var outcome = this.getLastOutcome();
+    return outcome && outcome.suggestedDifficulty ? outcome.suggestedDifficulty : "";
+  };
+
+  SparkPlayAlongStateService.prototype.getSuggestedMode = function() {
+    var outcome = this.getLastOutcome();
+    return outcome && outcome.suggestedMode ? outcome.suggestedMode : "";
   };
 
   SparkPlayAlongStateService.prototype.clearError = function() {
@@ -288,6 +409,17 @@
     state.playAlongRecent = recent;
     this.persistState();
     return true;
+  };
+
+  SparkPlayAlongStateService.prototype.getRecentLaunchParamsByTrackId = function(trackId) {
+    var recent = this.getRecent();
+    var i;
+    for (i = 0; i < recent.length; i++) {
+      if (recent[i] && recent[i].trackId === trackId && recent[i].params) {
+        return this.cloneValue(recent[i].params);
+      }
+    }
+    return null;
   };
 
   SparkPlayAlongStateService.prototype.clearRecent = function() {
@@ -419,6 +551,11 @@
     state.playAlongNowMs = 0;
     state.playAlongSectionIndex = 0;
     return true;
+  };
+
+  SparkPlayAlongStateService.prototype.resetSelectedDrillState = function() {
+    this.clearError();
+    return this.clearSelectedDrillState();
   };
 
   SparkPlayAlongStateService.prototype.activateSectionLoop = function(sectionIndex) {
@@ -647,7 +784,7 @@
     return outcome;
   };
 
-  SparkPlayAlongStateService.prototype.applySelectedDrillState = function(seekToMs, setPlaybackRate) {
+  SparkPlayAlongStateService.prototype.applySelectedDrillState = function() {
     var state = getPlayAlongState();
     var selected;
     if (!state) return null;
@@ -666,20 +803,18 @@
     state.playAlongLoopProgress = 0;
     if (selected.speed != null) {
       state.playAlongSpeed = String(selected.speed);
-      if (typeof setPlaybackRate === "function") {
-        setPlaybackRate(selected.speed);
-      }
+      this.setPlaybackRate(selected.speed);
     } else {
       state.playAlongSpeed = "1.0";
     }
 
-    if (state.playAlongLoopRange && state.playAlongLoopRange.startMs != null && typeof seekToMs === "function") {
-      seekToMs(state.playAlongLoopRange.startMs);
+    if (state.playAlongLoopRange && state.playAlongLoopRange.startMs != null) {
+      this.seekToMs(state.playAlongLoopRange.startMs);
     }
     return state.playAlongLoopRange;
   };
 
-  SparkPlayAlongStateService.prototype.enforceLoopWindow = function(getPlaybackTimeMs, seekToMs, stopLoop) {
+  SparkPlayAlongStateService.prototype.enforceLoopWindow = function(stopLoop) {
     var state = getPlayAlongState();
     var range;
     var selected;
@@ -691,7 +826,7 @@
     if (!range || range.startMs == null || range.endMs == null || range.endMs <= range.startMs) return false;
     state.playAlongLoopRange = range;
 
-    nowMs = typeof getPlaybackTimeMs === "function" ? getPlaybackTimeMs() : 0;
+    nowMs = this.getPlaybackTimeMs();
     if (nowMs < range.endMs) return false;
 
     selected = state.playAlongSelectedDrill || null;
@@ -706,7 +841,7 @@
 
     state.playAlongLoopIteration = currentRep + 1;
     state.playAlongLoopProgress = 0;
-    if (typeof seekToMs === "function") seekToMs(range.startMs);
+    this.seekToMs(range.startMs);
     return false;
   };
 
@@ -732,7 +867,7 @@
     };
   };
 
-  SparkPlayAlongStateService.prototype.stepSection = function(delta, seekToMs, onAfterStep) {
+  SparkPlayAlongStateService.prototype.stepSection = function(delta, onAfterStep) {
     var state = getPlayAlongState();
     var core = getPlayAlongCore();
     var chart = getActiveChart(core);
@@ -752,7 +887,7 @@
     section = sections[index] || {};
     startMs = section.startMs != null ? section.startMs : section.start;
     if (startMs != null) {
-      if (typeof seekToMs === "function") seekToMs(startMs);
+      this.seekToMs(startMs);
       state.playAlongNowMs = startMs;
       state.playAlongCurrentSection = "Section: " + (section.name || ("Part " + (index + 1)));
     }
