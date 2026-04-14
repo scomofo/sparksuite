@@ -160,6 +160,13 @@
     return core.startPlayAlongSession(params);
   };
 
+  SparkPlayAlongStateService.prototype.beginSessionLaunch = function(params) {
+    if (!params) return Promise.resolve(false);
+    this.clearError();
+    this.rememberLaunch(params);
+    return this.startSession(params);
+  };
+
   SparkPlayAlongStateService.prototype.startRenderLoop = function(options) {
     var core = getPlayAlongCore();
     if (!core || typeof core.startPlayAlongRenderLoop !== "function") return false;
@@ -177,6 +184,15 @@
     var core = getPlayAlongCore();
     if (!core || typeof core.completePlayAlongSession !== "function") return null;
     return core.completePlayAlongSession();
+  };
+
+  SparkPlayAlongStateService.prototype.completeSessionForResults = function() {
+    var outcome = this.completeSession();
+    if (!outcome) return null;
+    outcome = this.enrichOutcomeWithLoopSummary(outcome, this.buildCurrentSectionBookmark());
+    this.setLastOutcome(outcome);
+    this.showResultsScreen();
+    return outcome;
   };
 
   SparkPlayAlongStateService.prototype.drawHeatmap = function(canvas) {

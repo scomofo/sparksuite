@@ -159,14 +159,8 @@
   // ---- Stop ----
 
   window.sparkPlayAlongStop = function() {
-    var outcome = null;
     playAlongState.stopRenderLoop();
-    outcome = playAlongState.completeSession();
-    if (outcome) {
-      outcome = playAlongState.enrichOutcomeWithLoopSummary(outcome, playAlongState.buildCurrentSectionBookmark());
-      playAlongState.setLastOutcome(outcome);
-    }
-    playAlongState.showResultsScreen();
+    playAlongState.completeSessionForResults();
     render();
 
     // Draw heatmap after render
@@ -294,9 +288,7 @@
   function launchPlayAlongSession(params) {
     if (!params) return Promise.resolve(false);
     if (!params.instrument) params.instrument = playAlongActions.getInstrumentId();
-    playAlongState.clearError();
-    playAlongState.rememberLaunch(params);
-    return playAlongState.startSession(params).then(function(started) {
+    return playAlongState.beginSessionLaunch(params).then(function(started) {
       if (!started) return false;
       playAlongState.showSessionScreen();
       playAlongState.applySelectedDrillState();
