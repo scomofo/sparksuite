@@ -585,6 +585,13 @@
     return params;
   };
 
+  SparkPlayAlongStateService.prototype.launchRecent = function(index, onLaunchPrepared) {
+    var params = this.prepareRecentLaunch(index);
+    if (!params) return false;
+    if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.clearRecent = function() {
     var state = getPlayAlongState();
     if (!state) return false;
@@ -693,6 +700,13 @@
     return params;
   };
 
+  SparkPlayAlongStateService.prototype.launchSaved = function(index, onLaunchPrepared) {
+    var params = this.prepareSavedLaunch(index);
+    if (!params) return false;
+    if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.syncSectionIndex = function(chart) {
     var state = getPlayAlongState();
     var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
@@ -787,6 +801,13 @@
     return this.cloneValue(item.params);
   };
 
+  SparkPlayAlongStateService.prototype.launchBookmark = function(index, onLaunchPrepared) {
+    var params = this.prepareBookmarkLaunchByIndex(index);
+    if (!params) return false;
+    if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.prepareBookmarkLaunchByKey = function(trackId, sectionIndex) {
     var index = this.findBookmarkIndex(trackId, sectionIndex);
     return index >= 0 ? this.prepareBookmarkLaunchByIndex(index) : null;
@@ -813,6 +834,13 @@
     return params;
   };
 
+  SparkPlayAlongStateService.prototype.replayFullSong = function(onLaunchPrepared) {
+    var params = this.prepareFullSongReplayLaunch();
+    if (!params) return false;
+    if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.prepareWeakSectionLaunch = function() {
     var sectionSummary = this.getSectionSummary();
     var params = this.getReplayParams();
@@ -822,12 +850,26 @@
     return params;
   };
 
+  SparkPlayAlongStateService.prototype.launchWeakSection = function(onLaunchPrepared) {
+    var params = this.prepareWeakSectionLaunch();
+    if (!params) return false;
+    if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.prepareSectionRecommendationLaunch = function(trackId, sectionIndex) {
     var params = this.getSectionRecommendationLaunchParams(trackId);
     if (!params) return null;
     this.resetSelectedDrillState();
     this.activateSectionLoop(sectionIndex || 0);
     return params;
+  };
+
+  SparkPlayAlongStateService.prototype.launchSectionRecommendation = function(trackId, sectionIndex, onLaunchPrepared) {
+    var params = this.prepareSectionRecommendationLaunch(trackId, sectionIndex);
+    if (!params) return false;
+    if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+    return true;
   };
 
   SparkPlayAlongStateService.prototype.selectDrill = function(drill) {

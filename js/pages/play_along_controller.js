@@ -59,9 +59,7 @@
   };
 
   window.sparkPlayAlongLaunchRecent = function(index) {
-    return launchFrom(function() {
-      return playAlongState.prepareRecentLaunch(index);
-    });
+    return playAlongState.launchRecent(index, launchPreparedParams);
   };
 
   window.sparkPlayAlongSaveTrack = function(index) {
@@ -69,9 +67,7 @@
   };
 
   window.sparkPlayAlongLaunchSaved = function(index) {
-    return launchFrom(function() {
-      return playAlongState.prepareSavedLaunch(index);
-    });
+    return playAlongState.launchSaved(index, launchPreparedParams);
   };
 
   window.sparkPlayAlongRemoveSaved = function(index) {
@@ -83,9 +79,7 @@
   };
 
   window.sparkPlayAlongLaunchBookmark = function(index) {
-    return launchFrom(function() {
-      return playAlongState.prepareBookmarkLaunchByIndex(index);
-    });
+    return playAlongState.launchBookmark(index, launchPreparedParams);
   };
 
   window.sparkPlayAlongLaunchBookmarkByKey = function(trackId, sectionIndex) {
@@ -175,9 +169,7 @@
   };
 
   window.sparkPlayAlongReplayFullSong = function() {
-    return launchFrom(function() {
-      return playAlongState.prepareFullSongReplayLaunch();
-    });
+    return playAlongState.replayFullSong(launchPreparedParams);
   };
 
   window.sparkPlayAlongTogglePause = function() {
@@ -211,15 +203,11 @@
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {
-    return launchFrom(function() {
-      return playAlongState.prepareWeakSectionLaunch();
-    });
+    return playAlongState.launchWeakSection(launchPreparedParams);
   };
 
   window.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {
-    return launchFrom(function() {
-      return playAlongState.prepareSectionRecommendationLaunch(trackId, sectionIndex);
-    });
+    return playAlongState.launchSectionRecommendation(trackId, sectionIndex, launchPreparedParams);
   };
 
   window.sparkPlayAlongPickNew = function() {
