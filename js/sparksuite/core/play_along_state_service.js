@@ -46,6 +46,17 @@
     return typeof window !== "undefined" ? window.sparkCore || null : null;
   }
 
+  function getPlayAlongInstrumentId() {
+    var core = getPlayAlongCore();
+    var runtime = core && typeof core.getRuntimeState === "function"
+      ? core.getRuntimeState()
+      : null;
+    if (runtime && runtime.activeInstrumentId) return runtime.activeInstrumentId;
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+    if (active && active.appId) return active.appId;
+    return "guitar";
+  }
+
   function getActiveChart(core) {
     return core && typeof core.getActivePlayAlongChart === "function"
       ? core.getActivePlayAlongChart()
@@ -180,7 +191,7 @@
 
   SparkPlayAlongStateService.prototype.launchSession = function(params, instrumentId, onRender, onStartLoop) {
     if (!params) return Promise.resolve(false);
-    if (!params.instrument) params.instrument = instrumentId || "guitar";
+    if (!params.instrument) params.instrument = instrumentId || getPlayAlongInstrumentId();
     return this.beginSessionLaunch(params).then(function(started) {
       if (!started) return false;
       return this.activateStartedSession(onRender, onStartLoop);
@@ -190,6 +201,10 @@
       this.showHome(onRender);
       return false;
     }.bind(this));
+  };
+
+  SparkPlayAlongStateService.prototype.launchPreparedSession = function(params, onRender, onStartLoop) {
+    return this.launchSession(params, null, onRender, onStartLoop);
   };
 
   SparkPlayAlongStateService.prototype.activateStartedSession = function(onRender, onStartLoop) {

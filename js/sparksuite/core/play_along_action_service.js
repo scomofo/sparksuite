@@ -89,34 +89,34 @@
     onRender = typeof onRender === "function" ? onRender : function() {
       if (typeof render === "function") render();
     };
-    var launchPreparedParams = function(params) {
-      if (!params || !self.stateService || typeof self.stateService.launchSession !== "function") return false;
-      self.stateService.launchSession(params, getPlayAlongInstrumentId(), onRender, onStartLoop);
-      return true;
-    };
+    var launchPreparedSession = this.stateService && typeof this.stateService.launchPreparedSession === "function"
+      ? function(params) {
+        return self.stateService.launchPreparedSession(params, onRender, onStartLoop);
+      }
+      : function() { return false; };
     return {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
       again: this.stateService && typeof this.stateService.replayOrShowHome === "function"
-        ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedParams, onRender)
+        ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedSession, onRender)
         : function() { return false; },
       replayDrill: this.stateService && typeof this.stateService.replayDrill === "function"
-        ? this.stateService.replayDrill.bind(this.stateService, launchPreparedParams)
+        ? this.stateService.replayDrill.bind(this.stateService, launchPreparedSession)
         : function() { return false; },
       replayFullSong: this.stateService && typeof this.stateService.replayFullSong === "function"
-        ? this.stateService.replayFullSong.bind(this.stateService, launchPreparedParams)
+        ? this.stateService.replayFullSong.bind(this.stateService, launchPreparedSession)
         : function() { return false; },
       launchDemo: function(value) {
-        return self.handleDemoLaunch(value, launchPreparedParams);
+        return self.handleDemoLaunch(value, launchPreparedSession);
       },
       launchRecent: function(value) {
-        return self.stateService.launchRecent(value, launchPreparedParams);
+        return self.stateService.launchRecent(value, launchPreparedSession);
       },
       saveTrack: function(value) {
         return self.saveSearchResultAndRender(value, onRender);
       },
       launchSaved: function(value) {
-        return self.stateService.launchSaved(value, launchPreparedParams);
+        return self.stateService.launchSaved(value, launchPreparedSession);
       },
       removeSaved: function(value) {
         return self.stateService.removeSavedTrackWithRender(value, onRender);
@@ -125,10 +125,10 @@
         return self.stateService.clearSavedTracksWithRender(onRender);
       },
       launchBookmark: function(value) {
-        return self.stateService.launchBookmark(value, launchPreparedParams);
+        return self.stateService.launchBookmark(value, launchPreparedSession);
       },
       launchBookmarkByKey: function(first, second) {
-        return self.stateService.launchBookmarkByKey(first, second, launchPreparedParams);
+        return self.stateService.launchBookmarkByKey(first, second, launchPreparedSession);
       },
       removeRecent: function(value) {
         return self.stateService.removeRecentWithRender(value, onRender);
@@ -146,7 +146,7 @@
         return self.setDifficultyAndRender(value, onRender);
       },
       loadFile: function(value) {
-        return self.handleLocalFileLaunch(value, launchPreparedParams);
+        return self.handleLocalFileLaunch(value, launchPreparedSession);
       },
       togglePause: function() {
         return self.stateService.togglePause(onRender);
@@ -170,7 +170,7 @@
         return self.stateService.resetToHome(onRender);
       },
       startDrill: function(value) {
-        return self.stateService.startDrill(value, launchPreparedParams, onRender);
+        return self.stateService.startDrill(value, launchPreparedSession, onRender);
       },
       openHome: function() {
         return self.stateService && typeof self.stateService.showHome === "function"
@@ -184,25 +184,25 @@
         return self.saveSpotifyClientIdAndConnectAndRender(onRender);
       },
       replay: this.stateService && typeof this.stateService.replayOrShowHome === "function"
-        ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedParams, onRender)
+        ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedSession, onRender)
         : function() { return false; },
       spotifyConnectAction: function() {
         return self.connectSpotifyAndRender(onRender);
       },
       jumpToWeakSection: this.stateService && typeof this.stateService.launchWeakSection === "function"
-        ? this.stateService.launchWeakSection.bind(this.stateService, launchPreparedParams)
+        ? this.stateService.launchWeakSection.bind(this.stateService, launchPreparedSession)
         : function() { return false; },
       jumpToSectionRecommendation: this.stateService && typeof this.stateService.launchSectionRecommendation === "function"
         ? function(first, second) {
-          return self.stateService.launchSectionRecommendation(first, second, launchPreparedParams);
+          return self.stateService.launchSectionRecommendation(first, second, launchPreparedSession);
         }
         : function() { return false; },
       searchSelectWithFile: function(index, file) {
-        return self.handleSearchSelectionWithFile(index, file, launchPreparedParams);
+        return self.handleSearchSelectionWithFile(index, file, launchPreparedSession);
       },
       searchSelect: function(index) {
-        return self.handleSearchSelection(index, launchPreparedParams, function(fileIndex, file) {
-          return self.handleSearchSelectionWithFile(fileIndex, file, launchPreparedParams);
+        return self.handleSearchSelection(index, launchPreparedSession, function(fileIndex, file) {
+          return self.handleSearchSelectionWithFile(fileIndex, file, launchPreparedSession);
         });
       }
     };
