@@ -206,7 +206,10 @@ var chordNoteNames = window.chordNoteNames || function() { return []; };
 var getAvailableExercises = window.getAvailableExercises || function() { return []; };
 var getSessionExercise = window.getSessionExercise || function() { return null; };
 var getWarmUpExercise = window.getWarmUpExercise || function() { return null; };
-var render = window.render;
+function render() {
+  if (typeof window.render === "function") return window.render();
+  return legacyPianoRender();
+}
 
 // ── Utility ──
 function shuffleArray(arr) {
@@ -2109,7 +2112,7 @@ function act(action, param) {
 }
 
 // ── Render (piano-specific, NOT used by SparkSuite — kept for reference) ──
-function render() {
+function legacyPianoRender() {
   var root = document.getElementById("app");
   if (!root) return;
   var state = pianoAppState();

@@ -426,6 +426,20 @@ test("start_guided_session delegates to sparkCore and syncs piano session aliase
   assert.strictEqual(S.adaptiveBpm, 84);
 });
 
+test("start_guided_session can render when global render is defined after piano app load", function() {
+  resetState();
+  delete global.render;
+  eval(loadJS("js/instruments/piano/app.js"));
+  global.renderCalls = 0;
+  global.render = function() { renderCalls++; };
+
+  pianoAct("start_guided_session");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(renderCalls, 1);
+  assert.strictEqual(S.screen, "session");
+});
+
 test("complete_victory_lap delegates to sparkCore and syncs piano completion aliases", function() {
   S.sessionPlan = {
     num: 2,

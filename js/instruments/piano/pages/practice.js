@@ -191,7 +191,7 @@ function practicePlanSection(){
         h += '<div class="row"' + done + '>';
         h += '<span>' + escHTML(item.type) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
         if(!item.completed){
-          h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
+          h += '<button class="btn btn-sm" onclick="startPracticeItem(\''+item.id+'\')">Start</button>';
         }else{
           h += '<span class="text-muted">Done</span>';
         }

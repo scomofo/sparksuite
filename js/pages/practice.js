@@ -588,7 +588,7 @@ function practicePage(){
     var item = plan.items[i];
     h += '<div class="row">';
     h += '<span>'+escHTML(item.type)+'</span>';
-    h += '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
+    h += '<button onclick="startPracticeItem(\''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
     h += '</div>';
   }
   h += '</div>';
@@ -613,3 +613,5 @@ function startPracticeItem(id){
     }
   }
 }
+
+window.startPracticeItem = startPracticeItem;

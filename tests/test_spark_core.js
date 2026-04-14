@@ -250,6 +250,7 @@ test('evaluateAchievements awards dual_instrument when both apps have lessons', 
 
 eval(loadJS('js/spark-core/content-schema.js'));
 eval(loadJS('js/spark-core/content-normalizer.js'));
+eval(loadJS('js/sparksuite/domain/session.js'));
 
 console.log('\n--- SparkCore: Content ---');
 
@@ -289,6 +290,36 @@ test('getLessonById finds lesson', function() {
 test('getLessonById returns null for missing', function() {
   var content = { units: [{ id: 'u1', lessons: [] }] };
   assert.strictEqual(SparkContentNormalizer.getLessonById(content, 'nope'), null);
+});
+
+console.log('\n--- SparkSuite Domain ---');
+
+test('SessionPlan.toLegacyPracticePlan builds guided-session legacy items', function() {
+  var plan = new SessionPlan({
+    flow: 'guided_session',
+    focus: 'guided',
+    segments: [{
+      id: 'seg_guided_1',
+      type: 'practice',
+      exerciseIds: ['guided_session_1']
+    }],
+    exercises: [{
+      id: 'guided_session_1',
+      type: 'practice',
+      data: {
+        core: {
+          sessionNum: 2,
+          durationSec: 300
+        }
+      }
+    }]
+  });
+  var legacy = plan.toLegacyPracticePlan();
+  assert.strictEqual(legacy.items.length, 1);
+  assert.strictEqual(legacy.items[0].type, 'guided_session');
+  assert.strictEqual(legacy.items[0].label, 'Guided Session 2');
+  assert.strictEqual(legacy.items[0].meta.guidedSession, 2);
+  assert.strictEqual(legacy.items[0].durationSec, 300);
 });
 
 // ===== Summary =====

@@ -1512,6 +1512,30 @@ test("sv2 home dashboard can fall back to SparkCore player and progress snapshot
   assert.ok(homeHtml.indexOf("1/2 chords") >= 0);
 });
 
+test("startPracticeItem launches the matching daily practice item", function() {
+  window.sparkCore = null;
+  global.escHTML = function(value) { return String(value); };
+  S.practicePlan = {
+    items: [
+      { id: "guided_session_1", type: "guided_session", completed: false }
+    ]
+  };
+
+  eval(loadJS("js/pages/practice.js"));
+
+  var launchedItem = null;
+  global.launchPracticeItem = function(item) {
+    launchedItem = item;
+  };
+
+  startPracticeItem("guided_session_1");
+
+  assert.ok(launchedItem);
+  assert.strictEqual(launchedItem.id, "guided_session_1");
+  assert.strictEqual(launchedItem.type, "guided_session");
+  assert.strictEqual(window.startPracticeItem, startPracticeItem);
+});
+
 test("finger exercise card can fall back to SparkCore finger exercise runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
