@@ -30,7 +30,7 @@
 
   window.sparkPlayAlongSelect = function(index) {
     if (playAlongActions.shouldUseCachedSearchChart(index)) {
-      launchPlayAlongSession(playAlongActions.prepareSearchLaunch(index));
+      launchPreparedParams(playAlongActions.prepareSearchLaunch(index));
       return;
     }
 
@@ -47,8 +47,7 @@
     params = playAlongActions.prepareSearchLaunch(index, {
       audioFile: file,
     });
-    if (!params) return;
-    launchPlayAlongSession(params);
+    launchPreparedParams(params);
   };
 
   window.sparkPlayAlongLaunchDemo = function(index) {
@@ -169,12 +168,9 @@
 
   window.sparkPlayAlongAgain = function() {
     var params = playAlongState.getReplayParams();
-    if (params) {
-      launchPlayAlongSession(params);
-    } else {
-      playAlongState.showHomeScreen();
-      requestRender();
-    }
+    if (launchPreparedParams(params)) return;
+    playAlongState.showHomeScreen();
+    requestRender();
   };
 
   window.sparkPlayAlongReplay = function() {
@@ -213,11 +209,11 @@
   };
 
   window.sparkPlayAlongPrevSection = function() {
-    return playAlongState.stepSection(-1, render);
+    return playAlongState.stepSection(-1, requestRender);
   };
 
   window.sparkPlayAlongNextSection = function() {
-    return playAlongState.stepSection(1, render);
+    return playAlongState.stepSection(1, requestRender);
   };
 
   window.sparkPlayAlongBookmarkCurrentSection = function() {
