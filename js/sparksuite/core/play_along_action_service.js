@@ -271,6 +271,16 @@
     return !!params;
   };
 
+  SparkPlayAlongActionService.prototype.handleDemoLaunch = function(index, onLaunchPrepared) {
+    var params = this.stateService && typeof this.stateService.prepareFreshLaunch === "function"
+      ? this.stateService.prepareFreshLaunch(this.getDemoLaunchParams(index))
+      : null;
+    if (typeof onLaunchPrepared === "function") {
+      onLaunchPrepared(params);
+    }
+    return !!params;
+  };
+
   SparkPlayAlongActionService.prototype.saveSearchResultAndRender = function(index, onRender) {
     return this.saveSearchResult(index).then(function(saved) {
       if (saved && typeof onRender === "function") onRender();

@@ -63,8 +63,8 @@
   };
 
   window.sparkPlayAlongLaunchDemo = function(index) {
-    return launchFrom(function() {
-      return playAlongState.prepareFreshLaunch(playAlongActions.getDemoLaunchParams(index));
+    return playAlongActions.handleDemoLaunch(index, function(params) {
+      launchPreparedParams(params);
     });
   };
 
