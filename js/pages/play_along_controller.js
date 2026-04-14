@@ -58,9 +58,8 @@
   };
 
   window.sparkPlayAlongLaunchRecent = function(index) {
-    var params = playAlongState.getRecentLaunchParams(index);
+    var params = playAlongState.prepareRecentLaunch(index);
     if (!params) return false;
-    playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(params);
     return true;
   };
@@ -73,9 +72,8 @@
   };
 
   window.sparkPlayAlongLaunchSaved = function(index) {
-    var params = playAlongState.getSavedLaunchParams(index);
+    var params = playAlongState.prepareSavedLaunch(index);
     if (!params) return false;
-    playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(params);
     return true;
   };
@@ -93,11 +91,9 @@
   };
 
   window.sparkPlayAlongLaunchBookmark = function(index) {
-    var item = playAlongState.getBookmark(index);
-    if (!item || !item.params) return false;
-    playAlongState.clearError();
-    playAlongState.prepareBookmarkLaunch(item);
-    launchPlayAlongSession(playAlongState.cloneValue(item.params));
+    var params = playAlongState.prepareBookmarkLaunchByIndex(index);
+    if (!params) return false;
+    launchPlayAlongSession(params);
     return true;
   };
 
@@ -261,19 +257,14 @@
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {
-    var sectionSummary = playAlongState.getSectionSummary();
-    var params = playAlongState.getReplayParams();
-    if (!sectionSummary || !params) return false;
-    playAlongState.resetSelectedDrillState();
-    playAlongState.activateSectionLoop(sectionSummary.sectionIndex || 0);
+    var params = playAlongState.prepareWeakSectionLaunch();
+    if (!params) return false;
     return launchPlayAlongSession(params);
   };
 
   window.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {
-    var params = playAlongState.getSectionRecommendationLaunchParams(trackId);
+    var params = playAlongState.prepareSectionRecommendationLaunch(trackId, sectionIndex);
     if (!params) return false;
-    playAlongState.resetSelectedDrillState();
-    playAlongState.activateSectionLoop(sectionIndex || 0);
     return launchPlayAlongSession(params);
   };
 
