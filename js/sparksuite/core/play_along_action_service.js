@@ -560,14 +560,13 @@
   };
 
   SparkPlayAlongActionService.prototype.saveSearchResult = function(index) {
-    var self = this;
     var track = this.getSearchResult(index);
     if (!track) {
       return Promise.resolve(false);
     }
     return this.enrichSavedTrack(track).then(function(saved) {
-      return !!self.stateService.saveTrack(saved);
-    });
+      return !!this.stateService.saveTrack(saved);
+    }.bind(this));
   };
 
   SparkPlayAlongActionService.prototype.getDemo = function(index) {
