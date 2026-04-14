@@ -157,6 +157,15 @@ function bootstrap() {
   loadJS("js/pages/play_along_controller.js");
 }
 
+function bootstrapWithoutRender() {
+  resetState();
+  delete global.render;
+  loadJS("js/sparksuite/core/play_along_state_service.js");
+  loadJS("js/sparksuite/core/play_along_action_service.js");
+  loadJS("js/sparksuite/core/play_along_renderer.js");
+  loadJS("js/pages/play_along_controller.js");
+}
+
 console.log("=== Play Along Controller Tests ===");
 
 test("sparkPlayAlongStop stores outcome for results screen", function() {
@@ -498,6 +507,19 @@ test("jump to section recommendation resolves params from recent history", async
   assert.strictEqual(S.playAlongSectionIndex, 1);
   assert.strictEqual(S.playAlongLoopTarget, "section");
   assert.strictEqual(sparkCore.startedWith.trackId, "demo_song_1");
+});
+
+test("bootstrapped handlers use render defined after controller load", function() {
+  var renderCalls = 0;
+  bootstrapWithoutRender();
+  global.render = function() {
+    renderCalls++;
+  };
+
+  sparkPlayAlongSetDifficulty("hard");
+
+  assert.strictEqual(S.spotifyDifficulty, "hard");
+  assert.strictEqual(renderCalls, 1);
 });
 
 Promise.resolve().then(async function() {
