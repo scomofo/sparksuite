@@ -521,6 +521,25 @@ test("save_custom persists a valid inline custom set and clears editor state", f
   assert.strictEqual(S.customSetDraftChords, "");
 });
 
+test("drill_custom opens the games tab for saved custom sets", function() {
+  S.tab = "practice";
+  S.customSets = [{ name: "Warmup", chords: ["C", "Am", "F", "G"] }];
+  var originalSetInterval = global.setInterval;
+  var originalClearInterval = global.clearInterval;
+  global.setInterval = function() { return 123; };
+  global.clearInterval = function() {};
+  try {
+    pianoAct("drill_custom", "0");
+
+    assert.strictEqual(S.tab, "games");
+    assert.strictEqual(S.drillActive, true);
+    assert.deepStrictEqual(S.drillChords, ["C", "Am", "F", "G"]);
+  } finally {
+    global.setInterval = originalSetInterval;
+    global.clearInterval = originalClearInterval;
+  }
+});
+
 test("piano subtab actions update local subtab state through the shared dispatcher", function() {
   renderCalls = 0;
 

@@ -1223,6 +1223,7 @@ function act(action, param) {
     case "drill_custom": {
       var set = state.customSets[parseInt(param)];
       if (set) {
+        state.tab = "games";
         state.drillChords = set.chords.slice();
         state.drillIdx = 0;
         state.drillTimer = 30;
