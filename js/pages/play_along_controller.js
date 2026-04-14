@@ -9,9 +9,15 @@
     if (typeof render === "function") render();
   }
 
-  function launchPreparedParams(params) {
-    return playAlongActions.launchPreparedParams(params, requestRender, sparkPlayAlongStartLoop);
-  }
+  window.sparkPlayAlongStop = function() {
+    return playAlongRenderer.finishSessionResults(requestRender);
+  };
+
+  window.sparkPlayAlongStartLoop = function() {
+    return playAlongRenderer.startSessionLoop(sparkPlayAlongStop);
+  };
+
+  var launchPreparedParams = playAlongActions.createLaunchHandler(requestRender, sparkPlayAlongStartLoop);
 
   // ---- Search ----
 
@@ -87,18 +93,6 @@
 
   window.sparkPlayAlongLoadFile = function(file) {
     return playAlongActions.handleLocalFileLaunch(file, launchPreparedParams);
-  };
-
-  // ---- Game Loop ----
-
-  window.sparkPlayAlongStartLoop = function() {
-    return playAlongRenderer.startSessionLoop(sparkPlayAlongStop);
-  };
-
-  // ---- Stop ----
-
-  window.sparkPlayAlongStop = function() {
-    return playAlongRenderer.finishSessionResults(requestRender);
   };
 
   // ---- Toggle Debug ----

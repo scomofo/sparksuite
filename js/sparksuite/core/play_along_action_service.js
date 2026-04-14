@@ -54,6 +54,12 @@
     return true;
   };
 
+  SparkPlayAlongActionService.prototype.createLaunchHandler = function(onRender, onStartLoop) {
+    return function(params) {
+      return this.launchPreparedParams(params, onRender, onStartLoop);
+    }.bind(this);
+  };
+
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
     if (this.stateService && typeof this.stateService.cloneValue === "function") {
       return this.stateService.cloneValue(value);
