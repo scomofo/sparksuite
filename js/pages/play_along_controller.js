@@ -55,9 +55,7 @@
     return playAlongState.removeSavedTrackWithRender(index, requestRender);
   };
 
-  window.sparkPlayAlongClearSaved = function() {
-    return playAlongState.clearSavedTracksWithRender(requestRender);
-  };
+  window.sparkPlayAlongClearSaved = playAlongState.clearSavedTracksWithRender.bind(playAlongState, requestRender);
 
   window.sparkPlayAlongLaunchBookmark = function(index) {
     return playAlongState.launchBookmark(index, launchPreparedParams);
@@ -71,17 +69,13 @@
     return playAlongState.removeRecentWithRender(index, requestRender);
   };
 
-  window.sparkPlayAlongClearRecent = function() {
-    return playAlongState.clearRecentWithRender(requestRender);
-  };
+  window.sparkPlayAlongClearRecent = playAlongState.clearRecentWithRender.bind(playAlongState, requestRender);
 
   window.sparkPlayAlongRemoveBookmark = function(index) {
     return playAlongState.removeBookmarkWithRender(index, requestRender);
   };
 
-  window.sparkPlayAlongClearBookmarks = function() {
-    return playAlongState.clearBookmarksWithRender(requestRender);
-  };
+  window.sparkPlayAlongClearBookmarks = playAlongState.clearBookmarksWithRender.bind(playAlongState, requestRender);
 
   // ---- Set Difficulty ----
 
@@ -97,9 +91,7 @@
 
   // ---- Toggle Debug ----
 
-  window.sparkPlayAlongToggleDebug = function() {
-    return playAlongActions.toggleDebugDashboard();
-  };
+  window.sparkPlayAlongToggleDebug = playAlongActions.toggleDebugDashboard.bind(playAlongActions);
 
   // ---- Play Again ----
 
@@ -117,29 +109,19 @@
     return playAlongState.replayFullSong(launchPreparedParams);
   };
 
-  window.sparkPlayAlongTogglePause = function() {
-    return playAlongState.togglePause(requestRender);
-  };
+  window.sparkPlayAlongTogglePause = playAlongState.togglePause.bind(playAlongState, requestRender);
 
-  window.sparkPlayAlongToggleLoop = function() {
-    return playAlongState.toggleLoopWithRender(requestRender);
-  };
+  window.sparkPlayAlongToggleLoop = playAlongState.toggleLoopWithRender.bind(playAlongState, requestRender);
 
   window.sparkPlayAlongSetLoopTarget = function(target) {
     return playAlongState.setLoopTargetWithRender(target, requestRender);
   };
 
-  window.sparkPlayAlongPrevSection = function() {
-    return playAlongState.prevSection(requestRender);
-  };
+  window.sparkPlayAlongPrevSection = playAlongState.prevSection.bind(playAlongState, requestRender);
 
-  window.sparkPlayAlongNextSection = function() {
-    return playAlongState.nextSection(requestRender);
-  };
+  window.sparkPlayAlongNextSection = playAlongState.nextSection.bind(playAlongState, requestRender);
 
-  window.sparkPlayAlongBookmarkCurrentSection = function() {
-    return playAlongState.saveCurrentSectionBookmarkWithRender(requestRender);
-  };
+  window.sparkPlayAlongBookmarkCurrentSection = playAlongState.saveCurrentSectionBookmarkWithRender.bind(playAlongState, requestRender);
 
   window.sparkPlayAlongJumpToWeakSection = function() {
     return playAlongState.launchWeakSection(launchPreparedParams);
@@ -149,9 +131,7 @@
     return playAlongState.launchSectionRecommendation(trackId, sectionIndex, launchPreparedParams);
   };
 
-  window.sparkPlayAlongPickNew = function() {
-    return playAlongState.resetToHome(requestRender);
-  };
+  window.sparkPlayAlongPickNew = playAlongState.resetToHome.bind(playAlongState, requestRender);
 
   window.sparkPlayAlongStartDrill = function(index) {
     return playAlongState.startDrill(index, launchPreparedParams, requestRender);
