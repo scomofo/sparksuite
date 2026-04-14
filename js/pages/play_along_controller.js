@@ -140,9 +140,9 @@
   // ---- Stop ----
 
   window.sparkPlayAlongStop = function() {
-    playAlongState.stopSessionForResults();
-    renderAfter(true);
-    playAlongRenderer.scheduleResultsHeatmap();
+    return playAlongRenderer.finishSessionResults(function() {
+      playAlongState.stopSessionForResults();
+    }, requestRender);
   };
 
   // ---- Toggle Debug ----

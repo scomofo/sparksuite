@@ -31,6 +31,13 @@
     return true;
   };
 
+  SparkPlayAlongRenderer.prototype.finishSessionResults = function(onStop, onRender) {
+    if (typeof onStop === "function") onStop();
+    if (typeof onRender === "function") onRender();
+    this.scheduleResultsHeatmap();
+    return true;
+  };
+
   SparkPlayAlongRenderer.prototype.renderFrame = function(result, chart) {
     this.renderHighway(result);
     this.renderFretboard(result);
