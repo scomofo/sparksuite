@@ -39,9 +39,7 @@
     return value;
   }
 
-  var playAlongState = new SparkPlayAlongStateService({
-    persist: typeof saveState === "function" ? saveState : null
-  });
+  var playAlongState = new SparkPlayAlongStateService();
   var playAlongActions = new SparkPlayAlongActionService({
     stateService: playAlongState,
     getInstrumentId: getPlayAlongInstrumentId

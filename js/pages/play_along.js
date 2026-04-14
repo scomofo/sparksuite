@@ -1,8 +1,6 @@
 // ===== SparkSuite: Play Along Pages =====
 (function() {
-  var playAlongState = new SparkPlayAlongStateService({
-    persist: typeof saveState === "function" ? saveState : null
-  });
+  var playAlongState = new SparkPlayAlongStateService();
 
   var PLAY_ALONG_DEMOS = [
     {

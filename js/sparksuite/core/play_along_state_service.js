@@ -41,7 +41,6 @@
     options = options || {};
     this.getState = options.getState || defaultGetState;
     this.getCore = options.getCore || defaultGetCore;
-    this.persist = typeof options.persist === "function" ? options.persist : null;
   }
 
   SparkPlayAlongStateService.prototype.cloneValue = function(value) {
@@ -49,7 +48,7 @@
   };
 
   SparkPlayAlongStateService.prototype.persistState = function() {
-    if (typeof this.persist === "function") this.persist();
+    if (typeof saveState === "function") saveState();
   };
 
   SparkPlayAlongStateService.prototype.getRecent = function() {

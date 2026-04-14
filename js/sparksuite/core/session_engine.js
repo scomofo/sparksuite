@@ -48,8 +48,7 @@
     };
   }
 
-  function SessionEngine(practiceEngine, curriculumEngine, options) {
-    options = options || {};
+  function SessionEngine(practiceEngine, curriculumEngine) {
     this.practiceEngine = practiceEngine;
     this.curriculumEngine = curriculumEngine;
     this.coreRuntime = null;

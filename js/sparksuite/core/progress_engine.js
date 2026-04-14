@@ -1,6 +1,5 @@
 (function() {
-  function ProgressEngine(options) {
-    options = options || {};
+  function ProgressEngine() {
     this.coreRuntime = null;
   };
 
