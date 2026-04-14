@@ -79,7 +79,7 @@ function pianoPerformSongPage(){
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<button class="btn btn-primary" onclick="act(\'performStart\')">Start Performance</button> ';
+  h += '<button class="btn btn-primary" onclick="act(\'performStartFromSong\')">Start Performance</button> ';
   h += '<button class="btn" onclick="act(\'back\')">Back</button>';
   h += '</div>';
 

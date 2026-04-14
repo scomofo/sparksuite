@@ -3707,27 +3707,43 @@ window.act=function(a,v){
     var speed = coreView && coreView.runtimeState && coreView.runtimeState.performanceSpeed
       ? coreView.runtimeState.performanceSpeed
       : appRead("performSpeed", 1);
+    var selectedSongId = performanceSong && performanceSong.songId
+      ? performanceSong.songId
+      : appRead("performSongId", null);
     var targetTechnique = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceTargetTechnique")
       ? coreView.runtimeState.performanceTargetTechnique
       : appRead("performTargetTechnique", null);
+    function startSelectedChart(chart, chartId) {
+      if (!chart) return;
+      var startRequest = startSelectedPerformanceSongRequest({
+        chart: chart,
+        chartId: chartId || chart.id || null,
+        songIndex: selectedSongIndex,
+        songTitle: selectedSongTitle,
+        difficulty: difficultyId,
+        arrangementType: arrangementType,
+        speed: speed,
+        targetTechnique: targetTechnique,
+        preset: appRead("performPracticePreset", null),
+        mode: appRead("performMode", "midi"),
+        countIn: !!appRead("performCountIn", false)
+      });
+      startPerformance(chart,{difficulty:startRequest.difficulty,speed:startRequest.speed,preset:startRequest.preset,mode:startRequest.mode});
+    }
     if(selectedSong){
       var chart=buildPerformanceChartFromSong(selectedSong,"builtin",arrangementType);
       if(chart){
-        var startRequest = startSelectedPerformanceSongRequest({
-          chart: chart,
-          chartId: chart.id || null,
-          songIndex: selectedSongIndex,
-          songTitle: selectedSongTitle,
-          difficulty: difficultyId,
-          arrangementType: arrangementType,
-          speed: speed,
-          targetTechnique: targetTechnique,
-          preset: appRead("performPracticePreset", null),
-          mode: appRead("performMode", "midi"),
-          countIn: !!appRead("performCountIn", false)
-        });
-        startPerformance(chart,{difficulty:startRequest.difficulty,speed:startRequest.speed,preset:startRequest.preset,mode:startRequest.mode});
+        startSelectedChart(chart, chart.id || null);
+        return;
       }
+    }
+    if(selectedSongId && typeof loadPerformanceChart === "function"){
+      loadPerformanceChart(selectedSongId).then(function(loadedChart){
+        startSelectedChart(loadedChart, selectedSongId);
+      }).catch(function(err){
+        if (typeof console !== "undefined") console.warn("Failed to load performance chart", err);
+        if (typeof showToast === "function") showToast("Couldn't load this performance chart.");
+      });
     }
     return;
   }

@@ -540,6 +540,10 @@ test("drill_custom opens the games tab for saved custom sets", function() {
   }
 });
 
+test("piano perform song page routes Start Performance through the shared performance action", function() {
+  assert.ok(loadJS("js/instruments/piano/pages/perform_song.js").indexOf("act(\\'performStartFromSong\\')") >= 0);
+});
+
 test("piano subtab actions update local subtab state through the shared dispatcher", function() {
   renderCalls = 0;
 
