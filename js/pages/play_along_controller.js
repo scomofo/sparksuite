@@ -9,13 +9,8 @@
     if (typeof render === "function") render();
   }
 
-  window.sparkPlayAlongStop = function() {
-    return playAlongRenderer.finishSessionResults(requestRender);
-  };
-
-  window.sparkPlayAlongStartLoop = function() {
-    return playAlongRenderer.startSessionLoop(sparkPlayAlongStop);
-  };
+  window.sparkPlayAlongStop = playAlongRenderer.finishSessionResults.bind(playAlongRenderer, requestRender);
+  window.sparkPlayAlongStartLoop = playAlongRenderer.startSessionLoop.bind(playAlongRenderer, window.sparkPlayAlongStop);
 
   var launchPreparedParams = playAlongActions.createLaunchHandler(requestRender, sparkPlayAlongStartLoop);
 
