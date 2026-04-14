@@ -167,6 +167,14 @@
     return this.startSession(params);
   };
 
+  SparkPlayAlongStateService.prototype.activateStartedSession = function(onRender, onStartLoop) {
+    this.showSessionScreen();
+    this.applySelectedDrillState();
+    if (typeof onRender === "function") onRender();
+    if (typeof onStartLoop === "function") onStartLoop();
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.startRenderLoop = function(options) {
     var core = getPlayAlongCore();
     if (!core || typeof core.startPlayAlongRenderLoop !== "function") return false;
@@ -193,6 +201,11 @@
     this.setLastOutcome(outcome);
     this.showResultsScreen();
     return outcome;
+  };
+
+  SparkPlayAlongStateService.prototype.stopSessionForResults = function() {
+    this.stopRenderLoop();
+    return this.completeSessionForResults();
   };
 
   SparkPlayAlongStateService.prototype.drawHeatmap = function(canvas) {
