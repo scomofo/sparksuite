@@ -166,22 +166,15 @@
   };
 
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
-    if (this.stateService && typeof this.stateService.cloneValue === "function") {
-      return this.stateService.cloneValue(value);
-    }
-    return JSON.parse(JSON.stringify(value || {}));
+    return this.stateService.cloneValue(value);
   };
 
   SparkPlayAlongActionService.prototype.getDifficulty = function() {
-    return this.stateService && typeof this.stateService.getDifficulty === "function"
-      ? this.stateService.getDifficulty()
-      : "easy";
+    return this.stateService.getDifficulty();
   };
 
   SparkPlayAlongActionService.prototype.setDifficulty = function(level) {
-    return this.stateService && typeof this.stateService.setDifficulty === "function"
-      ? this.stateService.setDifficulty(level)
-      : level;
+    return this.stateService.setDifficulty(level);
   };
 
   SparkPlayAlongActionService.prototype.setDifficultyAndRender = function(level, onRender) {
@@ -222,9 +215,7 @@
   };
 
   SparkPlayAlongActionService.prototype.searchTracks = function(query, onResults) {
-    var core = this.stateService && typeof this.stateService.getCore === "function"
-      ? this.stateService.getCore()
-      : null;
+    var core = this.stateService.getCore();
     var self = this;
     if (!query || query.length < 2) {
       if (typeof onResults === "function") onResults(this.clearSearchResults());
@@ -298,9 +289,7 @@
   };
 
   SparkPlayAlongActionService.prototype.hasCachedChart = function(trackId) {
-    var core = this.stateService && typeof this.stateService.getCore === "function"
-      ? this.stateService.getCore()
-      : null;
+    var core = this.stateService.getCore();
     return !!(core && core.chartService &&
       typeof core.chartService.hasCachedChart === "function" &&
       core.chartService.hasCachedChart(trackId));
@@ -615,9 +604,7 @@
   };
 
   SparkPlayAlongActionService.prototype.enrichSavedTrack = function(track) {
-    var core = this.stateService && typeof this.stateService.getCore === "function"
-      ? this.stateService.getCore()
-      : null;
+    var core = this.stateService.getCore();
     var saved = this.createSavedTrack(track);
     if (!saved) return Promise.resolve(null);
     if (!core || !core.spotifyClient || typeof core.spotifyClient.getAudioFeatures !== "function") {
