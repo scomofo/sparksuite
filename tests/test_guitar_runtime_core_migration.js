@@ -270,6 +270,46 @@ test("startDrill delegates drill launch through sparkCore helpers", function() {
   assert.strictEqual(S.screen, "drill");
 });
 
+test("startDrill hydrates chord names into guitar chord objects", function() {
+  window.sparkCore.startLegacyPracticeSession = function(options) {
+    sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+    return {
+      context: {
+        legacyPractice: {
+          mode: "drill",
+          chordNames: ["E", "A"],
+          durationSec: 60
+        }
+      }
+    };
+  };
+
+  guitarAct("startDrill");
+
+  assert.deepStrictEqual(S.drillChords, [{ name: "E" }, { name: "A" }]);
+  assert.strictEqual(S.screen, "drill");
+});
+
+test("startDrill falls back to instrument chord pool when sparkCore drill plan is sparse", function() {
+  window.sparkCore.startLegacyPracticeSession = function(options) {
+    sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+    return {
+      context: {
+        legacyPractice: {
+          mode: "drill",
+          chordNames: [],
+          durationSec: 60
+        }
+      }
+    };
+  };
+
+  guitarAct("startDrill");
+
+  assert.deepStrictEqual(S.drillChords, [{ name: "E" }, { name: "A" }]);
+  assert.strictEqual(S.screen, "drill");
+});
+
 test("guidedStart delegates to shared guided session helper", function() {
   guitarAct("guidedStart", "2");
 

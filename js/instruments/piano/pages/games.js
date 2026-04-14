@@ -74,7 +74,7 @@ function pianoGamesTab() {
   html += '</div>';
 
   switch (activeGameTab) {
-    case "drill":   html += drillTab(); break;
+    case "drill":   html += pianoDrillTab(); break;
     case "fingers": html += fingersTab(); break;
     case "daily":   html += pianoDailyTab(); break;
     case "quiz":    html += pianoQuizTab(); break;
@@ -86,7 +86,7 @@ function pianoGamesTab() {
 }
 
 // ── Drill ──
-function drillTab() {
+function pianoDrillTab() {
   var html = '<div class="card">';
   var drillActive = !!pianoGameRead("drillActive", false);
   var drillChords = Array.isArray(pianoGameRead("drillChords", [])) ? pianoGameRead("drillChords", []) : [];

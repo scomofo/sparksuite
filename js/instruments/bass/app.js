@@ -92,6 +92,47 @@
     return plan && plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : plan;
   }
 
+  function resolveLegacyDrillChords(D, session) {
+    if (!session) return [];
+    if (Array.isArray(session.chords) && session.chords.length && session.chords[0] && typeof session.chords[0] === "object") {
+      return session.chords;
+    }
+    var chordNames = Array.isArray(session.chordNames)
+      ? session.chordNames
+      : (Array.isArray(session.chords) ? session.chords : []);
+    var resolved = [];
+    var allChords = D && Array.isArray(D.ALL_CHORDS)
+      ? D.ALL_CHORDS
+      : ((typeof CHORDS !== "undefined" && Array.isArray(CHORDS)) ? CHORDS : []);
+    for (var i = 0; i < chordNames.length; i++) {
+      var chordName = chordNames[i];
+      var matchedChord = null;
+      for (var j = 0; j < allChords.length; j++) {
+        if (allChords[j] && allChords[j].name === chordName) {
+          matchedChord = allChords[j];
+          break;
+        }
+      }
+      resolved.push(matchedChord || { name: chordName });
+    }
+    return resolved;
+  }
+
+  function buildFallbackLegacyDrillChords(D, level) {
+    var fallbackPool = [];
+    if (typeof CHORDS !== "undefined" && CHORDS && Array.isArray(CHORDS[level])) {
+      fallbackPool = CHORDS[level];
+    } else if (typeof CHORDS !== "undefined" && CHORDS && Array.isArray(CHORDS[1])) {
+      fallbackPool = CHORDS[1];
+    } else if (D && Array.isArray(D.ALL_CHORDS)) {
+      fallbackPool = D.ALL_CHORDS;
+    }
+    if (!fallbackPool.length) return [];
+    var selection = fallbackPool.slice(0, Math.min(2, fallbackPool.length));
+    if (selection.length === 1) selection.push(selection[0]);
+    return selection;
+  }
+
   function openLegacyPracticeSessionRuntime(options) {
     if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeSession === "function") {
       return window.sparkCore.openLegacyPracticeSession(options || {});
@@ -252,14 +293,18 @@
     }
 
     if (a === "startDrill") {
-      var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "drill", level: bassStateRead("level", 1) }));
+      var drillLevel = bassStateRead("level", 1);
+      var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "drill", level: drillLevel }));
       if (!session) return true;
+      var drillChords = resolveLegacyDrillChords(D, session);
+      if (!drillChords.length) drillChords = buildFallbackLegacyDrillChords(D, drillLevel);
+      if (!drillChords.length) return true;
       openLegacyPracticeDrillRuntime({
         durationSec: session.durationSec != null ? session.durationSec : session.duration,
-        chordNames: session.chordNames || (session.chords ? session.chords.map(function(ch) { return ch.name; }) : [])
+        chordNames: drillChords.map(function(ch) { return ch.name; })
       });
       bassPatchState({
-        drillChords: session.chords,
+        drillChords: drillChords,
         drillIdx: 0,
         drillTimer: session.durationSec != null ? session.durationSec : session.duration,
         drillSwitches: 0,

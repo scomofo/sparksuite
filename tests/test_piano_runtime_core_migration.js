@@ -550,6 +550,8 @@ test("piano tab renderers are namespaced so they do not clobber shared page glob
   var pianoToolsSource = loadJS("js/instruments/piano/pages/tools.js");
   assert.ok(pianoGamesSource.indexOf("function pianoEarTrainTab()") >= 0);
   assert.ok(pianoGamesSource.indexOf("function earTrainTab()") === -1);
+  assert.ok(pianoGamesSource.indexOf("function pianoDrillTab()") >= 0);
+  assert.ok(pianoGamesSource.indexOf("function drillTab()") === -1);
   assert.ok(pianoGamesSource.indexOf("function pianoDailyTab()") >= 0);
   assert.ok(pianoGamesSource.indexOf("function pianoQuizTab()") >= 0);
   assert.ok(pianoGamesSource.indexOf("function pianoRhythmTab()") >= 0);

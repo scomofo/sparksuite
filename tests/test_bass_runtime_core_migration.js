@@ -60,6 +60,10 @@ function resetState() {
       return {
         getData: function() {
           return {
+            ALL_CHORDS: [
+              { name: "E" },
+              { name: "A" }
+            ],
             SESSIONS: [
               { num: 1, title: "Bass Session 1", bpm: 70, spark: { text: "start" }, newMove: { chord: "E" } },
               { num: 2, title: "Bass Session 2", bpm: 80, spark: { text: "next" }, newMove: { chord: "A" } }
@@ -292,6 +296,46 @@ test("quickStart and drill entry delegate to shared legacy practice helpers", fu
   assert.strictEqual(S.lastChordName, "E");
   assert.strictEqual(S.timer, 120);
   assert.strictEqual(S.drillTimer, 60);
+  assert.strictEqual(S.screen, "drill");
+});
+
+test("startDrill hydrates chord names into bass chord objects", function() {
+  window.sparkCore.startLegacyPracticeSession = function(options) {
+    sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+    return {
+      context: {
+        legacyPractice: {
+          mode: "drill",
+          chordNames: ["E", "A"],
+          durationSec: 60
+        }
+      }
+    };
+  };
+
+  bassAct("startDrill");
+
+  assert.deepStrictEqual(S.drillChords, [{ name: "E" }, { name: "A" }]);
+  assert.strictEqual(S.screen, "drill");
+});
+
+test("startDrill falls back to the instrument chord pool when sparkCore drill plan is sparse", function() {
+  window.sparkCore.startLegacyPracticeSession = function(options) {
+    sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+    return {
+      context: {
+        legacyPractice: {
+          mode: "drill",
+          chordNames: [],
+          durationSec: 60
+        }
+      }
+    };
+  };
+
+  bassAct("startDrill");
+
+  assert.deepStrictEqual(S.drillChords, [{ name: "E" }, { name: "A" }]);
   assert.strictEqual(S.screen, "drill");
 });
 

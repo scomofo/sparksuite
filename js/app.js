@@ -1778,6 +1778,72 @@ window.act=function(a,v){
     act("tab","drill");
     return;
   }
+  if(a==="repeatLegacyPracticeSession"){
+    var repeatChord = appRead("currentChord", null);
+    var repeatChordName = repeatChord && repeatChord.name ? repeatChord.name : (appRead("lastChordName", null) || null);
+    var repeatDurationSec = typeof appRead("timer", null) === "number" ? appRead("timer", null) : 120;
+    repeatLegacyPracticeSessionRequest({
+      mode: repeatChordName ? "chord" : "quickStart",
+      chordName: repeatChordName,
+      durationSec: repeatDurationSec
+    });
+    if(repeatChordName){
+      act("startSession", repeatChordName);
+      return;
+    }
+    act("quickStart");
+    return;
+  }
+  if(a==="repeatLegacyPracticeDrill"){
+    var repeatDrillChords = appRead("drillChords", null);
+    repeatLegacyPracticeDrillRequest({
+      durationSec: typeof appRead("drillTimer", null) === "number" ? appRead("drillTimer", null) : 60,
+      chordNames: Array.isArray(repeatDrillChords) ? repeatDrillChords.map(function(ch){ return ch && ch.name ? ch.name : ch; }).filter(Boolean) : []
+    });
+    act("startDrill");
+    return;
+  }
+  if(a==="startDrill"){
+    var drillLevel = appRead("level", 1);
+    var drillPool = CHORDS[drillLevel] || CHORDS[1] || [];
+    if(!drillPool.length) return;
+    var drillSelection = drillPool.slice(0, Math.min(2, drillPool.length));
+    if(drillSelection.length === 1) drillSelection.push(drillSelection[0]);
+    var drillDurationSec = 60;
+    openLegacyPracticeDrillRequest({
+      durationSec: drillDurationSec,
+      chordNames: drillSelection.map(function(ch){ return ch.name; })
+    });
+    appApplyLegacyActivityRuntime({
+      setFields:{
+        drillChords: drillSelection,
+        drillIdx: 0,
+        drillTimer: drillDurationSec,
+        drillSwitches: 0,
+        drillLastSwitchTime: Date.now(),
+        drillAdaptiveBpm: 60,
+        drillConsecutiveFast: 0,
+        drillConsecutiveSlow: 0,
+        screen: SCR.DRILL,
+        tab: TAB.DRILL
+      }
+    }, function(){
+      appWrite("drillChords", drillSelection);
+      appWrite("drillIdx", 0);
+      appWrite("drillTimer", drillDurationSec);
+      appWrite("drillSwitches", 0);
+      appWrite("drillLastSwitchTime", Date.now());
+      appWrite("drillAdaptiveBpm", 60);
+      appWrite("drillConsecutiveFast", 0);
+      appWrite("drillConsecutiveSlow", 0);
+      appWrite("screen", SCR.DRILL);
+      appWrite("tab", TAB.DRILL);
+    });
+    _prevChordKey = drillSelection[0] && drillSelection[0].name ? drillSelection[0].name : "";
+    snd("start");
+    render();
+    return;
+  }
   if(a==="drillSwitch"){
     var sharedDrillChords = appRead("drillChords", []);
     if(!Array.isArray(sharedDrillChords) || sharedDrillChords.length < 2) return;

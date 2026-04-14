@@ -1609,7 +1609,10 @@ test("shared app dispatcher keeps ear training and drill actions wired for share
   var appSource = loadJS("js/app.js");
   assert.ok(appSource.indexOf('if(a==="start_ear")') >= 0);
   assert.ok(appSource.indexOf('if(a==="startEarTrain")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="startDrill")') >= 0);
   assert.ok(appSource.indexOf('if(a==="drillSwitch")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="repeatLegacyPracticeDrill")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="repeatLegacyPracticeSession")') >= 0);
 });
 
 test("shared app performance launch paths mirror hydrated selection payloads into legacy song state", function() {
