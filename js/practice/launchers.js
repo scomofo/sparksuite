@@ -1,5 +1,36 @@
 (function(){
 
+  function getCurrentPracticePlan(){
+    if(typeof window.sparkCore !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
+      var view = window.sparkCore.getActiveSessionView();
+      if(view && view.plan && view.plan.flow === "daily_practice" && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
+        return SparkPracticeBridge.toLegacyPlan(view.plan);
+      }
+    }
+    if(typeof SparkState !== "undefined" && SparkState && typeof SparkState.read === "function"){
+      var statePlan = SparkState.read(["practicePlan"], null);
+      if(statePlan && Array.isArray(statePlan.items)) return statePlan;
+    }
+    if(typeof ensurePracticePlan === "function"){
+      var ensuredPlan = ensurePracticePlan();
+      if(ensuredPlan && Array.isArray(ensuredPlan.items)) return ensuredPlan;
+    }
+    return null;
+  }
+
+  function resolvePracticePlanItem(itemOrId){
+    var plan;
+    var i;
+    if(itemOrId && typeof itemOrId === "object") return itemOrId;
+    if(!itemOrId) return null;
+    plan = getCurrentPracticePlan();
+    if(!plan || !Array.isArray(plan.items)) return null;
+    for(i = 0; i < plan.items.length; i++){
+      if(plan.items[i] && plan.items[i].id === itemOrId) return plan.items[i];
+    }
+    return null;
+  }
+
   function launchPracticeItem(item){
     if(!item) return false;
     if(item.type==="play_along_section") return launchPlayAlongSectionItem(item);
@@ -21,6 +52,10 @@
     }
     console.warn("Spark: no launcher for item type", item.type);
     return false;
+  }
+
+  function launchPracticePlanItem(itemOrId){
+    return launchPracticeItem(resolvePracticePlanItem(itemOrId));
   }
 
   function launchWarmupItem(item){
@@ -155,7 +190,7 @@
   window.launchModuleExerciseItem = launchModuleExerciseItem;
   window.launchPlayAlongSectionItem = launchPlayAlongSectionItem;
   window.launchPlayAlongBookmarkItem = launchPlayAlongBookmarkItem;
-  window.launchPracticePlanItem = launchPracticeItem;
+  window.launchPracticePlanItem = launchPracticePlanItem;
 
 })();
 

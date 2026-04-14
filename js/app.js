@@ -1655,6 +1655,21 @@ window.act=function(a,v){
     act("tab","drill");
     return;
   }
+  if(a==="guidedStart"){
+    var guidedSessionNum = parseInt(v, 10);
+    if(isNaN(guidedSessionNum)) guidedSessionNum = appRead("guidedSession", 1) || 1;
+    var guidedPlan = openGuidedSessionRequest({ sessionNum: guidedSessionNum });
+    if(guidedPlan){
+      appApplyLegacyActivityRuntime({
+        setFields:{screen:SCR.GUIDED}
+      },function(){
+        appWrite("screen",SCR.GUIDED);
+      });
+      snd("start");
+      render();
+    }
+    return;
+  }
   if(a==="doneSession"){
     clearTimeout(T.session);if(appRead("metronomeOn", false))stopMetronome();if(appRead("chordDetectOn", false))stopChordDetect();
     appApplyLegacyActivityRuntime({

@@ -34,6 +34,12 @@ function resetState() {
   global.SparkInstrumentAdapter = {
     getInstrumentType: function() { return "guitar"; }
   };
+  global.SparkState = {
+    read: function(path, fallback) {
+      var key = Array.isArray(path) ? path[0] : path;
+      return Object.prototype.hasOwnProperty.call(global.S, key) ? global.S[key] : fallback;
+    }
+  };
 }
 
 resetState();
@@ -86,6 +92,27 @@ test("launchPracticeItem routes authored bass module exercises through explicit 
     exerciseFocus: "walking_bass",
     exerciseType: "bassline"
   });
+});
+
+test("launchPracticePlanItem resolves plan item ids before launching", function() {
+  global.S.practicePlan = {
+    items: [{
+      id: "performance_song_the_beat_goes_on",
+      type: "performance_song",
+      meta: {
+        songId: "the_beat_goes_on",
+        arrangementType: "chords",
+        difficultyId: "normal"
+      }
+    }]
+  };
+
+  var launched = launchPracticePlanItem("performance_song_the_beat_goes_on");
+
+  assert.strictEqual(launched, true);
+  assert.strictEqual(global._acts.length, 1);
+  assert.strictEqual(global._acts[0].name, "planStartPerformanceSong");
+  assert.strictEqual(global._acts[0].value, "the_beat_goes_on|chords|normal");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);
