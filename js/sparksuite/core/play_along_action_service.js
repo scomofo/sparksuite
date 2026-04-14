@@ -50,7 +50,12 @@
     var stateService = new SparkPlayAlongStateService();
     var actionService = new SparkPlayAlongActionService(stateService);
     var renderer = new SparkPlayAlongRenderer(stateService);
-    return actionService.bootstrapGlobals(target, renderer);
+    var onRender = actionService.getRenderCallback();
+    var rendererBindings = renderer.createControllerBindings(onRender);
+    var controllerBindings = actionService.createControllerBindings(onRender, rendererBindings.startLoop);
+    var globals = actionService.createGlobalBindings(controllerBindings, rendererBindings);
+    Object.assign(target, globals);
+    return globals;
   };
 
   SparkPlayAlongActionService.prototype.getInstrumentId = function() {
@@ -243,17 +248,6 @@
       sparkPlayAlongReplay: controllerBindings.replay,
       handleSpotifyConnectAction: controllerBindings.spotifyConnectAction
     };
-  };
-
-  SparkPlayAlongActionService.prototype.bootstrapGlobals = function(target, renderer, onRender) {
-    if (!renderer || typeof renderer.createControllerBindings !== "function") return null;
-    onRender = this.getRenderCallback(onRender);
-    if (!target) return null;
-    var rendererBindings = renderer.createControllerBindings(onRender);
-    var controllerBindings = this.createControllerBindings(onRender, rendererBindings.startLoop);
-    var globals = this.createGlobalBindings(controllerBindings, rendererBindings);
-    Object.assign(target, globals);
-    return globals;
   };
 
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
