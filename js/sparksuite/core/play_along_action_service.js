@@ -108,7 +108,7 @@
       },
       saveTrack: function(value) {
         return actionService.saveSearchResult(value).then(function(saved) {
-          if (saved && typeof onRender === "function") onRender();
+          if (saved) onRender();
           return saved;
         });
       },
@@ -141,7 +141,7 @@
       },
       setDifficulty: function(value) {
         var result = actionService.setDifficulty(value);
-        if (typeof onRender === "function") onRender();
+        onRender();
         return result;
       },
       loadFile: function(value) {
@@ -178,13 +178,13 @@
       openHome: stateService.showHome.bind(stateService, onRender),
       connectSpotify: function() {
         return actionService.connectSpotify(function() {
-          if (typeof onRender === "function") onRender();
+          onRender();
         });
       },
       saveSpotifyClientId: function() {
         if (!actionService.saveSpotifyClientIdFromPrompt()) return false;
         return actionService.connectSpotify(function() {
-          if (typeof onRender === "function") onRender();
+          onRender();
         });
       },
       jumpToWeakSection: stateService.launchWeakSection.bind(stateService, launchPreparedSession),
