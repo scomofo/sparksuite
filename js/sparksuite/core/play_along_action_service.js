@@ -179,38 +179,5 @@
     return demos[index] || null;
   };
 
-  SparkPlayAlongActionService.prototype.getRecentLaunchParams = function(index) {
-    var item = this.stateService && typeof this.stateService.getRecent === "function"
-      ? this.stateService.getRecent()[index] || null
-      : null;
-    return item && item.params ? this.cloneValue(item.params) : null;
-  };
-
-  SparkPlayAlongActionService.prototype.getSavedLaunchParams = function(index) {
-    var item = this.stateService && typeof this.stateService.getSavedTracks === "function"
-      ? this.stateService.getSavedTracks()[index] || null
-      : null;
-    return item && item.params ? this.cloneValue(item.params) : null;
-  };
-
-  SparkPlayAlongActionService.prototype.getBookmark = function(index) {
-    return this.stateService && typeof this.stateService.getBookmarks === "function"
-      ? this.stateService.getBookmarks()[index] || null
-      : null;
-  };
-
-  SparkPlayAlongActionService.prototype.findBookmarkIndex = function(trackId, sectionIndex) {
-    var bookmarks = this.stateService && typeof this.stateService.getBookmarks === "function"
-      ? this.stateService.getBookmarks()
-      : [];
-    var i;
-    for (i = 0; i < bookmarks.length; i++) {
-      if (bookmarks[i] && bookmarks[i].trackId === trackId && Number(bookmarks[i].sectionIndex) === Number(sectionIndex)) {
-        return i;
-      }
-    }
-    return -1;
-  };
-
   window.SparkPlayAlongActionService = SparkPlayAlongActionService;
 })();

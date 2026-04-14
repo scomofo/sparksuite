@@ -95,7 +95,7 @@
   };
 
   window.sparkPlayAlongLaunchRecent = function(index) {
-    var params = playAlongActions.getRecentLaunchParams(index);
+    var params = playAlongState.getRecentLaunchParams(index);
     if (!params) return false;
     playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(params);
@@ -118,7 +118,7 @@
   };
 
   window.sparkPlayAlongLaunchSaved = function(index) {
-    var params = playAlongActions.getSavedLaunchParams(index);
+    var params = playAlongState.getSavedLaunchParams(index);
     if (!params) return false;
     playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(params);
@@ -138,7 +138,7 @@
   };
 
   window.sparkPlayAlongLaunchBookmark = function(index) {
-    var item = playAlongActions.getBookmark(index);
+    var item = playAlongState.getBookmark(index);
     if (!item || !item.params) return false;
     playAlongState.clearError();
     playAlongState.prepareBookmarkLaunch(item);
@@ -147,7 +147,7 @@
   };
 
   window.sparkPlayAlongLaunchBookmarkByKey = function(trackId, sectionIndex) {
-    var index = playAlongActions.findBookmarkIndex(trackId, sectionIndex);
+    var index = playAlongState.findBookmarkIndex(trackId, sectionIndex);
     return index >= 0 ? window.sparkPlayAlongLaunchBookmark(index) : false;
   };
 

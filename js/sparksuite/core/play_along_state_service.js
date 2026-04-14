@@ -422,6 +422,11 @@
     return null;
   };
 
+  SparkPlayAlongStateService.prototype.getRecentLaunchParams = function(index) {
+    var item = this.getRecent()[index] || null;
+    return item && item.params ? this.cloneValue(item.params) : null;
+  };
+
   SparkPlayAlongStateService.prototype.clearRecent = function() {
     var state = getPlayAlongState();
     if (!state) return false;
@@ -460,6 +465,21 @@
     return true;
   };
 
+  SparkPlayAlongStateService.prototype.getBookmark = function(index) {
+    return this.getBookmarks()[index] || null;
+  };
+
+  SparkPlayAlongStateService.prototype.findBookmarkIndex = function(trackId, sectionIndex) {
+    var bookmarks = this.getBookmarks();
+    var i;
+    for (i = 0; i < bookmarks.length; i++) {
+      if (bookmarks[i] && bookmarks[i].trackId === trackId && Number(bookmarks[i].sectionIndex) === Number(sectionIndex)) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
   SparkPlayAlongStateService.prototype.saveTrack = function(saved) {
     var state = getPlayAlongState();
     var tracks;
@@ -496,6 +516,11 @@
     state.spotifySavedTracks = [];
     this.persistState();
     return true;
+  };
+
+  SparkPlayAlongStateService.prototype.getSavedLaunchParams = function(index) {
+    var item = this.getSavedTracks()[index] || null;
+    return item && item.params ? this.cloneValue(item.params) : null;
   };
 
   SparkPlayAlongStateService.prototype.syncSectionIndex = function(chart) {
