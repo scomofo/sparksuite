@@ -74,7 +74,7 @@
         return stateService.launchPreparedSession(params, onRender, onStartLoop);
       }
       : function() { return false; };
-    return {
+    var bindings = {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
       again: stateService && typeof stateService.replayOrShowHome === "function"
@@ -163,12 +163,6 @@
       saveSpotifyClientId: function() {
         return self.saveSpotifyClientIdAndConnectAndRender(onRender);
       },
-      replay: stateService && typeof stateService.replayOrShowHome === "function"
-        ? stateService.replayOrShowHome.bind(stateService, launchPreparedSession, onRender)
-        : function() { return false; },
-      spotifyConnectAction: function() {
-        return self.connectSpotifyAndRender(onRender);
-      },
       jumpToWeakSection: stateService && typeof stateService.launchWeakSection === "function"
         ? stateService.launchWeakSection.bind(stateService, launchPreparedSession)
         : function() { return false; },
@@ -186,6 +180,9 @@
         });
       }
     };
+    bindings.replay = bindings.again;
+    bindings.spotifyConnectAction = bindings.connectSpotify;
+    return bindings;
   };
 
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
