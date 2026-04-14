@@ -90,6 +90,12 @@
     return this.searchResults[index] || null;
   };
 
+  SparkPlayAlongActionService.prototype.getSearchLaunchParams = function(index, overrides) {
+    var track = this.getSearchResult(index);
+    if (!track) return null;
+    return this.buildLaunchParams(track, overrides);
+  };
+
   SparkPlayAlongActionService.prototype.searchTracks = function(query, onResults) {
     var core = getPlayAlongCore();
     var self = this;
@@ -185,7 +191,7 @@
 
     if (skipBtn) {
       skipBtn.addEventListener("click", function() {
-        if (typeof onSkip === "function") onSkip(track);
+        if (typeof onSkip === "function") onSkip(index, track);
       });
     }
 
