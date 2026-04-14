@@ -139,6 +139,18 @@
     return html;
   };
 
+  SparkPlayAlongActionService.prototype.renderSearchResults = function(container, tracks) {
+    if (!container) return false;
+    container.innerHTML = this.buildSearchResultsMarkup(tracks);
+    return true;
+  };
+
+  SparkPlayAlongActionService.prototype.clearSearchResultsMarkup = function(container) {
+    if (!container) return false;
+    container.innerHTML = "";
+    return true;
+  };
+
   SparkPlayAlongActionService.prototype.hasCachedChart = function(trackId) {
     var core = getPlayAlongCore();
     return !!(core && core.chartService &&
@@ -172,6 +184,14 @@
       + "<input type=\"file\" id=\"play-along-audio-input\" accept=\"audio/*\" />"
       + "<button class=\"btn btn-sm\" id=\"play-along-skip-btn\">Skip (use default)</button>"
       + "</div>";
+  };
+
+  SparkPlayAlongActionService.prototype.showUploadPrompt = function(container, index, onSelectWithFile, onSkip) {
+    var track = this.getSearchResult(index);
+    if (!container || !track) return false;
+    container.innerHTML = this.buildUploadPromptMarkup(track);
+    this.bindUploadPromptHandlers(index, onSelectWithFile, onSkip);
+    return true;
   };
 
   SparkPlayAlongActionService.prototype.bindUploadPromptHandlers = function(index, onSelectWithFile, onSkip) {

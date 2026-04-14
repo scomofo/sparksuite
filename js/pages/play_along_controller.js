@@ -10,9 +10,9 @@
   window.sparkPlayAlongSearch = function(query) {
     var resultsEl = document.getElementById("play-along-results");
     if (!playAlongActions.searchTracks(query, function(tracks) {
-      if (resultsEl) resultsEl.innerHTML = playAlongActions.buildSearchResultsMarkup(tracks);
+      playAlongActions.renderSearchResults(resultsEl, tracks);
     })) {
-      if (resultsEl) resultsEl.innerHTML = "";
+      playAlongActions.clearSearchResultsMarkup(resultsEl);
     }
   };
 
@@ -31,8 +31,7 @@
 
     var resultsEl = document.getElementById("play-along-results");
     if (!resultsEl) return;
-    resultsEl.innerHTML = playAlongActions.buildUploadPromptMarkup(track);
-    playAlongActions.bindUploadPromptHandlers(index, sparkPlayAlongSelectWithFile, function(selectedIndex) {
+    playAlongActions.showUploadPrompt(resultsEl, index, sparkPlayAlongSelectWithFile, function(selectedIndex) {
       launchPlayAlongSession(playAlongActions.getSearchLaunchParams(selectedIndex));
     });
   };
