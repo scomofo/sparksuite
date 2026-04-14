@@ -589,6 +589,13 @@
     return true;
   };
 
+  SparkPlayAlongStateService.prototype.removeRecentWithRender = function(index, onRender) {
+    var changed = this.removeRecent(index);
+    if (!changed) return false;
+    if (typeof onRender === "function") onRender();
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.getRecentLaunchParamsByTrackId = function(trackId) {
     var recent = this.getRecent();
     var i;
@@ -627,6 +634,13 @@
     return true;
   };
 
+  SparkPlayAlongStateService.prototype.clearRecentWithRender = function(onRender) {
+    var changed = this.clearRecent();
+    if (!changed) return false;
+    if (typeof onRender === "function") onRender();
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.rememberBookmark = function(bookmark) {
     var state = getPlayAlongState();
     if (!state || !bookmark) return;
@@ -649,11 +663,25 @@
     return true;
   };
 
+  SparkPlayAlongStateService.prototype.removeBookmarkWithRender = function(index, onRender) {
+    var changed = this.removeBookmark(index);
+    if (!changed) return false;
+    if (typeof onRender === "function") onRender();
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.clearBookmarks = function() {
     var state = getPlayAlongState();
     if (!state) return false;
     state.playAlongBookmarks = [];
     this.persistState();
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.clearBookmarksWithRender = function(onRender) {
+    var changed = this.clearBookmarks();
+    if (!changed) return false;
+    if (typeof onRender === "function") onRender();
     return true;
   };
 
@@ -707,11 +735,25 @@
     return true;
   };
 
+  SparkPlayAlongStateService.prototype.removeSavedTrackWithRender = function(index, onRender) {
+    var changed = this.removeSavedTrack(index);
+    if (!changed) return false;
+    if (typeof onRender === "function") onRender();
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.clearSavedTracks = function() {
     var state = getPlayAlongState();
     if (!state) return false;
     state.spotifySavedTracks = [];
     this.persistState();
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.clearSavedTracksWithRender = function(onRender) {
+    var changed = this.clearSavedTracks();
+    if (!changed) return false;
+    if (typeof onRender === "function") onRender();
     return true;
   };
 

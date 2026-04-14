@@ -15,12 +15,6 @@
     return true;
   }
 
-  function renderOnSuccess(changed) {
-    if (!changed) return false;
-    requestRender();
-    return true;
-  }
-
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
@@ -54,11 +48,11 @@
   };
 
   window.sparkPlayAlongRemoveSaved = function(index) {
-    return renderOnSuccess(playAlongState.removeSavedTrack(index));
+    return playAlongState.removeSavedTrackWithRender(index, requestRender);
   };
 
   window.sparkPlayAlongClearSaved = function() {
-    return renderOnSuccess(playAlongState.clearSavedTracks());
+    return playAlongState.clearSavedTracksWithRender(requestRender);
   };
 
   window.sparkPlayAlongLaunchBookmark = function(index) {
@@ -70,19 +64,19 @@
   };
 
   window.sparkPlayAlongRemoveRecent = function(index) {
-    return renderOnSuccess(playAlongState.removeRecent(index));
+    return playAlongState.removeRecentWithRender(index, requestRender);
   };
 
   window.sparkPlayAlongClearRecent = function() {
-    return renderOnSuccess(playAlongState.clearRecent());
+    return playAlongState.clearRecentWithRender(requestRender);
   };
 
   window.sparkPlayAlongRemoveBookmark = function(index) {
-    return renderOnSuccess(playAlongState.removeBookmark(index));
+    return playAlongState.removeBookmarkWithRender(index, requestRender);
   };
 
   window.sparkPlayAlongClearBookmarks = function() {
-    return renderOnSuccess(playAlongState.clearBookmarks());
+    return playAlongState.clearBookmarksWithRender(requestRender);
   };
 
   // ---- Set Difficulty ----
