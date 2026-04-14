@@ -1605,6 +1605,13 @@ test("shared app dispatcher keeps start_guided_session wired for non-piano guide
   assert.ok(loadJS("js/app.js").indexOf('if(a==="start_guided_session")') >= 0);
 });
 
+test("shared app dispatcher keeps ear training and drill actions wired for shared pages", function() {
+  var appSource = loadJS("js/app.js");
+  assert.ok(appSource.indexOf('if(a==="start_ear")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="startEarTrain")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="drillSwitch")') >= 0);
+});
+
 test("shared app performance launch paths mirror hydrated selection payloads into legacy song state", function() {
   var appSource = loadJS("js/app.js");
   assert.ok(appSource.indexOf('var sharedSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);

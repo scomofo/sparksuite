@@ -544,6 +544,21 @@ test("piano perform song page routes Start Performance through the shared perfor
   assert.ok(loadJS("js/instruments/piano/pages/perform_song.js").indexOf("act(\\'performStartFromSong\\')") >= 0);
 });
 
+test("piano tab renderers are namespaced so they do not clobber shared page globals", function() {
+  var pianoGamesSource = loadJS("js/instruments/piano/pages/games.js");
+  var pianoSongsSource = loadJS("js/instruments/piano/pages/songs.js");
+  var pianoToolsSource = loadJS("js/instruments/piano/pages/tools.js");
+  assert.ok(pianoGamesSource.indexOf("function pianoEarTrainTab()") >= 0);
+  assert.ok(pianoGamesSource.indexOf("function earTrainTab()") === -1);
+  assert.ok(pianoGamesSource.indexOf("function pianoDailyTab()") >= 0);
+  assert.ok(pianoGamesSource.indexOf("function pianoQuizTab()") >= 0);
+  assert.ok(pianoGamesSource.indexOf("function pianoRhythmTab()") >= 0);
+  assert.ok(pianoGamesSource.indexOf("function pianoRunnerTab()") >= 0);
+  assert.ok(pianoSongsSource.indexOf("function pianoSongLibrary()") >= 0);
+  assert.ok(pianoSongsSource.indexOf("function pianoBuildTab()") >= 0);
+  assert.ok(pianoToolsSource.indexOf("function pianoGuideTab()") >= 0);
+});
+
 test("piano subtab actions update local subtab state through the shared dispatcher", function() {
   renderCalls = 0;
 

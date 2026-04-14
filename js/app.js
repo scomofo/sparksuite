@@ -1778,6 +1778,133 @@ window.act=function(a,v){
     act("tab","drill");
     return;
   }
+  if(a==="drillSwitch"){
+    var sharedDrillChords = appRead("drillChords", []);
+    if(!Array.isArray(sharedDrillChords) || sharedDrillChords.length < 2) return;
+    snd("click");
+    var sharedDrillIdx = appRead("drillIdx", 0) || 0;
+    var sharedDrillSwitches = appRead("drillSwitches", 0) || 0;
+    var sharedDrillLastSwitchTime = appRead("drillLastSwitchTime", Date.now()) || Date.now();
+    var sharedDrillAdaptiveBpm = appRead("drillAdaptiveBpm", 60) || 60;
+    var sharedDrillConsecutiveFast = appRead("drillConsecutiveFast", 0) || 0;
+    var sharedDrillConsecutiveSlow = appRead("drillConsecutiveSlow", 0) || 0;
+    var sharedDrillNow = Date.now();
+    var sharedFromChord = sharedDrillChords[sharedDrillIdx] && sharedDrillChords[sharedDrillIdx].name;
+    var sharedNextDrillIdx = (sharedDrillIdx + 1) % sharedDrillChords.length;
+    var sharedToChord = sharedDrillChords[sharedNextDrillIdx] && sharedDrillChords[sharedNextDrillIdx].name;
+    var sharedElapsed = (sharedDrillNow - sharedDrillLastSwitchTime) / 1000;
+    var sharedTransitionStats = appRead("transitionStats", {});
+    if(typeof sharedTransitionStats !== "object" || sharedTransitionStats === null) sharedTransitionStats = {};
+    if(sharedFromChord && sharedToChord && sharedElapsed < 15){
+      var sharedTransitionKey = sharedFromChord + "->" + sharedToChord;
+      if(!sharedTransitionStats[sharedTransitionKey]) sharedTransitionStats[sharedTransitionKey] = { attempts: 0, avgTime: 0, best: 999 };
+      var sharedTransition = sharedTransitionStats[sharedTransitionKey];
+      sharedTransition.avgTime = (sharedTransition.avgTime * sharedTransition.attempts + sharedElapsed) / (sharedTransition.attempts + 1);
+      sharedTransition.attempts++;
+      if(sharedElapsed < sharedTransition.best) sharedTransition.best = sharedElapsed;
+      var sharedTargetSecs = 60 / sharedDrillAdaptiveBpm;
+      if(sharedElapsed < sharedTargetSecs * 0.8){
+        sharedDrillConsecutiveFast++;
+        sharedDrillConsecutiveSlow = 0;
+        if(sharedDrillConsecutiveFast >= 3){
+          sharedDrillAdaptiveBpm = Math.min(sharedDrillAdaptiveBpm + 3, 160);
+          sharedDrillConsecutiveFast = 0;
+          fireMicro("speed_up", "Speeding up!", "&#9654;&#65039;");
+        }
+      }else if(sharedElapsed > sharedTargetSecs * 1.5){
+        sharedDrillConsecutiveSlow++;
+        sharedDrillConsecutiveFast = 0;
+        if(sharedDrillConsecutiveSlow >= 2){
+          sharedDrillAdaptiveBpm = Math.max(sharedDrillAdaptiveBpm - 5, 40);
+          sharedDrillConsecutiveSlow = 0;
+        }
+      }else{
+        sharedDrillConsecutiveFast = 0;
+        sharedDrillConsecutiveSlow = 0;
+      }
+    }
+    _prevChordKey = sharedFromChord || "";
+    sharedDrillSwitches += 1;
+    appApplyLegacyActivityRuntime({
+      setFields:{
+        transitionStats: sharedTransitionStats,
+        drillLastSwitchTime: sharedDrillNow,
+        drillAdaptiveBpm: sharedDrillAdaptiveBpm,
+        drillConsecutiveFast: sharedDrillConsecutiveFast,
+        drillConsecutiveSlow: sharedDrillConsecutiveSlow,
+        drillIdx: sharedNextDrillIdx,
+        drillSwitches: sharedDrillSwitches
+      }
+    }, function(){
+      appWrite("transitionStats", sharedTransitionStats);
+      appWrite("drillLastSwitchTime", sharedDrillNow);
+      appWrite("drillAdaptiveBpm", sharedDrillAdaptiveBpm);
+      appWrite("drillConsecutiveFast", sharedDrillConsecutiveFast);
+      appWrite("drillConsecutiveSlow", sharedDrillConsecutiveSlow);
+      appWrite("drillIdx", sharedNextDrillIdx);
+      appWrite("drillSwitches", sharedDrillSwitches);
+    });
+    if(sharedDrillSwitches === 1) fireMicro("clean_switch", "Smooth switch!", "&#9889;");
+    if(sharedDrillSwitches === 3) fireMicro("three_switches", "On fire!", "&#128293;");
+    render();
+    return;
+  }
+  if(a==="start_ear"){
+    act("startEarTrain");
+    return;
+  }
+  if(a==="startEarTrain"){
+    var sharedEarLevel = appRead("level", 1);
+    var sharedEarChords = [];
+    for(var sharedLevelIdx = 1; sharedLevelIdx <= sharedEarLevel; sharedLevelIdx++) sharedEarChords = sharedEarChords.concat(CHORDS[sharedLevelIdx] || []);
+    if(!sharedEarChords.length) sharedEarChords = CHORDS[1] || [];
+    if(!sharedEarChords.length) return;
+    var sharedEarQuestion = sharedEarChords[Math.floor(Math.random() * sharedEarChords.length)];
+    var sharedEarOptions = [sharedEarQuestion.name];
+    var sharedEarAttempts = 0;
+    while(sharedEarOptions.length < 4 && sharedEarAttempts < 100){
+      var sharedEarRandom = ALL_CHORDS[Math.floor(Math.random() * ALL_CHORDS.length)];
+      if(sharedEarOptions.indexOf(sharedEarRandom.name) === -1) sharedEarOptions.push(sharedEarRandom.name);
+      sharedEarAttempts++;
+    }
+    sharedEarOptions = shuffle(sharedEarOptions);
+    var sharedEarScore = appRead("earTrainScore", 0) || 0;
+    var sharedEarTotal = appRead("earTrainTotal", 0) || 0;
+    var sharedEarStreak = appRead("earTrainStreak", 0) || 0;
+    if(window.sparkCore && typeof window.sparkCore.openLegacyEarTraining === "function"){
+      window.sparkCore.openLegacyEarTraining({
+        question: sharedEarQuestion.name,
+        options: sharedEarOptions,
+        answer: null,
+        score: sharedEarScore,
+        total: sharedEarTotal,
+        streak: sharedEarStreak
+      });
+    }
+    appApplyLegacyActivityRuntime({
+      setFields:{
+        tab:TAB.EAR,
+        screen:SCR.HOME,
+        earTrainQ: sharedEarQuestion.name,
+        earTrainOpts: sharedEarOptions,
+        earTrainAns: null,
+        earTrainScore: sharedEarScore,
+        earTrainTotal: sharedEarTotal,
+        earTrainStreak: sharedEarStreak
+      }
+    }, function(){
+      appWrite("tab", TAB.EAR);
+      appWrite("screen", SCR.HOME);
+      appWrite("earTrainQ", sharedEarQuestion.name);
+      appWrite("earTrainOpts", sharedEarOptions);
+      appWrite("earTrainAns", null);
+      appWrite("earTrainScore", sharedEarScore);
+      appWrite("earTrainTotal", sharedEarTotal);
+      appWrite("earTrainStreak", sharedEarStreak);
+    });
+    render();
+    return;
+  }
   if(a==="guidedStart"){
     var guidedSessionNum = parseInt(v, 10);
     if(isNaN(guidedSessionNum)) guidedSessionNum = appRead("guidedSession", 1) || 1;

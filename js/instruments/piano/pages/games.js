@@ -76,11 +76,11 @@ function pianoGamesTab() {
   switch (activeGameTab) {
     case "drill":   html += drillTab(); break;
     case "fingers": html += fingersTab(); break;
-    case "daily":   html += dailyTab(); break;
-    case "quiz":    html += quizTab(); break;
-    case "ear":     html += earTrainTab(); break;
-    case "rhythm":  html += rhythmTab(); break;
-    case "runner":  html += runnerTab(); break;
+    case "daily":   html += pianoDailyTab(); break;
+    case "quiz":    html += pianoQuizTab(); break;
+    case "ear":     html += pianoEarTrainTab(); break;
+    case "rhythm":  html += pianoRhythmTab(); break;
+    case "runner":  html += pianoRunnerTab(); break;
   }
   return html;
 }
@@ -129,7 +129,7 @@ function drillTab() {
 }
 
 // ── Daily ──
-function dailyTab() {
+function pianoDailyTab() {
   var html = '<div class="card">';
   var dailyActive = !!pianoGameRead("dailyActive", false);
   var dailyType = pianoGameRead("dailyType", null);
@@ -161,7 +161,7 @@ function dailyTab() {
 }
 
 // ── Quiz (with delayed feedback - stickiness #5) ──
-function quizTab() {
+function pianoQuizTab() {
   var html = '<div class="card"><h2>Chord Quiz</h2>';
   var quizQ = pianoGameRead("quizQ", null);
   var quizAns = pianoGameRead("quizAns", null);
@@ -196,7 +196,7 @@ function quizTab() {
 }
 
 // ── Ear Training ──
-function earTrainTab() {
+function pianoEarTrainTab() {
   var html = '<div class="card"><h2>Ear Training</h2>';
   var earChord = pianoGameRead("earChord", null);
   var earRevealed = !!pianoGameRead("earRevealed", false);
@@ -226,7 +226,7 @@ function earTrainTab() {
 }
 
 // ── Rhythm Game ──
-function rhythmTab() {
+function pianoRhythmTab() {
   var html = '<div class="card"><h2>Rhythm Game</h2>';
   var rhythmActive = !!pianoGameRead("rhythmActive", false);
   var rhythmScore = pianoGameRead("rhythmScore", 0);
@@ -255,7 +255,7 @@ function rhythmTab() {
 }
 
 // ── Runner Game ──
-function runnerTab() {
+function pianoRunnerTab() {
   var html = '<div class="card"><h2>Chord Runner</h2>';
   var runnerActive = !!pianoGameRead("runnerActive", false);
   var runnerScore = pianoGameRead("runnerScore", 0);

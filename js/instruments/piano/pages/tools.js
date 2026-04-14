@@ -77,7 +77,7 @@ function pianoToolsTab() {
     case "stats": html += statsTab(); break;
     case "settings": html += settingsTab(); break;
     case "clips": html += clipsTab(); break;
-    case "guide": html += guideTab(); break;
+    case "guide": html += pianoGuideTab(); break;
   }
   return html;
 }
@@ -304,7 +304,7 @@ function clipsTab() {
   return html;
 }
 
-function guideTab() {
+function pianoGuideTab() {
   var html = '<div class="card"><h2>Learning Guide</h2>';
 
   var lessons = [

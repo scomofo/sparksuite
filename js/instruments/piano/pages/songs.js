@@ -79,15 +79,15 @@ function pianoSongsTab() {
   html += '</div>';
 
   switch (activeSongTab) {
-    case "library": html += songLibrary(); break;
+    case "library": html += pianoSongLibrary(); break;
     case "styles":  html += stylesTab(); break;
-    case "build":   html += buildTab(); break;
+    case "build":   html += pianoBuildTab(); break;
     case "stems":   html += stemsSection(); break;
   }
   return html;
 }
 
-function songLibrary() {
+function pianoSongLibrary() {
   var SONGS = _pianoSongs, CURRICULUM = _pianoCurriculum;
   var html = '<div class="card"><h2>Song Library</h2>';
   var songIdx = pianoSongRead("songIdx", null);
@@ -249,7 +249,7 @@ function stylesTab() {
 }
 
 // ── Progression Builder ──
-function buildTab() {
+function pianoBuildTab() {
   var html = '<div class="card"><h2>Progression Builder</h2>';
   html += '<p>Create your own chord progressions.</p>';
   var buildChords = Array.isArray(pianoSongRead("buildChords", [])) ? pianoSongRead("buildChords", []) : [];
