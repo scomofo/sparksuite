@@ -236,6 +236,11 @@
     return globals;
   };
 
+  SparkPlayAlongActionService.prototype.bootstrapGlobals = function(target, renderer, onRender) {
+    if (!renderer || typeof renderer.createControllerBindings !== "function") return null;
+    return this.bindGlobals(target, onRender, renderer.createControllerBindings(onRender));
+  };
+
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
     if (this.stateService && typeof this.stateService.cloneValue === "function") {
       return this.stateService.cloneValue(value);

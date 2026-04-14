@@ -9,7 +9,6 @@
     if (typeof render === "function") render();
   }
 
-  var rendererBindings = playAlongRenderer.createControllerBindings(requestRender);
-  playAlongActions.bindGlobals(window, requestRender, rendererBindings);
+  playAlongActions.bootstrapGlobals(window, playAlongRenderer, requestRender);
 
 })();
