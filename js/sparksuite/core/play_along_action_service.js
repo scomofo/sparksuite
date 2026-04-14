@@ -100,9 +100,7 @@
       replayFullSong: stateService.replayFullSong.bind(stateService, launchPreparedSession),
       launchDemo: function(value) {
         var params = stateService.prepareFreshLaunch(actionService.getDemoLaunchParams(value));
-        if (typeof launchPreparedSession === "function") {
-          launchPreparedSession(params);
-        }
+        launchPreparedSession(params);
         return !!params;
       },
       launchRecent: function(value) {
@@ -150,9 +148,7 @@
         var params;
         if (!value) return false;
         params = stateService.prepareLocalFileLaunch(value, stateService.getInstrumentId());
-        if (typeof launchPreparedSession === "function") {
-          launchPreparedSession(params);
-        }
+        launchPreparedSession(params);
         return !!params;
       },
       togglePause: function() {
