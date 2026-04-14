@@ -244,10 +244,7 @@
   };
 
   window.sparkPlayAlongBookmarkCurrentSection = function() {
-    var bookmark = playAlongState.buildCurrentSectionBookmark();
-    if (!bookmark) return false;
-    playAlongState.rememberBookmark(bookmark);
-    return renderOnSuccess(true);
+    return renderOnSuccess(playAlongState.saveCurrentSectionBookmark());
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {

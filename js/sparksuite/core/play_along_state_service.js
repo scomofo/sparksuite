@@ -1085,6 +1085,13 @@
     };
   };
 
+  SparkPlayAlongStateService.prototype.saveCurrentSectionBookmark = function() {
+    var bookmark = this.buildCurrentSectionBookmark();
+    if (!bookmark) return false;
+    this.rememberBookmark(bookmark);
+    return true;
+  };
+
   SparkPlayAlongStateService.prototype.stepSection = function(delta, onAfterStep) {
     var state = getPlayAlongState();
     var core = getPlayAlongCore();
