@@ -334,30 +334,18 @@
     if (!clientId) {
       // Show inline input instead of prompt (blocked in Electron)
       var container = document.getElementById("play-along-results") || document.getElementById("app");
-      if (container) {
-        container.innerHTML = playAlongActions.buildSpotifyClientIdPromptMarkup();
-      }
+      playAlongActions.showSpotifyClientIdPrompt(container);
       return;
-    }
-
-    // Determine redirect URI based on environment
-    var redirectUri = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "") + "index.html";
-    if (redirectUri.indexOf("file://") === 0) {
-      redirectUri = "http://127.0.0.1:3456/callback";
     }
 
     SparkSpotifyAuthManager.configure({
       clientId: clientId.trim(),
-      redirectUri: redirectUri
+      redirectUri: playAlongActions.getSpotifyRedirectUri()
     });
 
     // Start OAuth flow (PKCE - getAuthUrl is async)
     authManager.getAuthUrl().then(function(url) {
-      if (typeof window.electron !== "undefined" && window.electron.shell) {
-        window.electron.shell.openExternal(url);
-      } else {
-        window.location.href = url;
-      }
+      playAlongActions.openSpotifyAuthUrl(url);
     }).catch(function(err) {
       console.error("Spotify auth URL generation failed:", err);
     });

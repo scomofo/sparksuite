@@ -219,6 +219,30 @@
       + "</div>";
   };
 
+  SparkPlayAlongActionService.prototype.showSpotifyClientIdPrompt = function(container) {
+    if (!container) return false;
+    container.innerHTML = this.buildSpotifyClientIdPromptMarkup();
+    return true;
+  };
+
+  SparkPlayAlongActionService.prototype.getSpotifyRedirectUri = function() {
+    var redirectUri = window.location.origin + window.location.pathname.replace(/[^\/]*$/, "") + "index.html";
+    if (redirectUri.indexOf("file://") === 0) {
+      redirectUri = "http://127.0.0.1:3456/callback";
+    }
+    return redirectUri;
+  };
+
+  SparkPlayAlongActionService.prototype.openSpotifyAuthUrl = function(url) {
+    if (!url) return false;
+    if (typeof window.electron !== "undefined" && window.electron.shell) {
+      window.electron.shell.openExternal(url);
+    } else {
+      window.location.href = url;
+    }
+    return true;
+  };
+
   SparkPlayAlongActionService.prototype.createSavedTrack = function(track) {
     if (!track) return null;
     return {
