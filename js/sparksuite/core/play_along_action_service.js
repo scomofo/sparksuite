@@ -100,13 +100,9 @@
     return globals;
   };
 
-  SparkPlayAlongActionService.prototype.getInstrumentId = function() {
-    return getPlayAlongInstrumentId();
-  };
-
   SparkPlayAlongActionService.prototype.launchPreparedParams = function(params, onRender, onStartLoop) {
     if (!params || !this.stateService || typeof this.stateService.launchSession !== "function") return false;
-    this.stateService.launchSession(params, this.getInstrumentId(), onRender, onStartLoop);
+    this.stateService.launchSession(params, getPlayAlongInstrumentId(), onRender, onStartLoop);
     return true;
   };
 
@@ -394,7 +390,7 @@
       artist: overrides.artist != null ? overrides.artist : (track.artist || null),
       audioOffsetMs: overrides.audioOffsetMs != null ? overrides.audioOffsetMs : (track.audioOffsetMs || 0),
       difficulty: overrides.difficulty || track.difficulty || this.getDifficulty(),
-      instrument: overrides.instrument || track.instrument || this.getInstrumentId()
+      instrument: overrides.instrument || track.instrument || getPlayAlongInstrumentId()
     };
     if (Object.prototype.hasOwnProperty.call(overrides, "audioFile")) {
       params.audioFile = overrides.audioFile;
@@ -455,7 +451,7 @@
     var params;
     if (!file) return false;
     params = this.stateService && typeof this.stateService.prepareLocalFileLaunch === "function"
-      ? this.stateService.prepareLocalFileLaunch(file, this.getInstrumentId())
+      ? this.stateService.prepareLocalFileLaunch(file, getPlayAlongInstrumentId())
       : null;
     if (typeof onLaunchPrepared === "function") {
       onLaunchPrepared(params);
