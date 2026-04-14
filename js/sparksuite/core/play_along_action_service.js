@@ -107,36 +107,6 @@
     return true;
   };
 
-  SparkPlayAlongActionService.prototype.createRenderHandler = function(fn, context, onRender) {
-    return function(value) {
-      return fn.call(context, value, onRender);
-    };
-  };
-
-  SparkPlayAlongActionService.prototype.createRenderOnlyHandler = function(fn, context, onRender) {
-    return function() {
-      return fn.call(context, onRender);
-    };
-  };
-
-  SparkPlayAlongActionService.prototype.createLaunchCallback = function(fn, context, onLaunchPrepared) {
-    return function(value) {
-      return fn.call(context, value, onLaunchPrepared);
-    };
-  };
-
-  SparkPlayAlongActionService.prototype.createLaunchAndRenderCallback = function(fn, context, onLaunchPrepared, onRender) {
-    return function(value) {
-      return fn.call(context, value, onLaunchPrepared, onRender);
-    };
-  };
-
-  SparkPlayAlongActionService.prototype.createLaunchPairCallback = function(fn, context, onLaunchPrepared) {
-    return function(first, second) {
-      return fn.call(context, first, second, onLaunchPrepared);
-    };
-  };
-
   SparkPlayAlongActionService.prototype.getRenderCallback = function(onRender) {
     if (typeof onRender === "function") return onRender;
     return function() {
@@ -166,25 +136,37 @@
       ? this.stateService.launchWeakSection.bind(this.stateService, launchPreparedParams)
       : function() { return false; };
     var launchSectionRecommendation = this.stateService && typeof this.stateService.launchSectionRecommendation === "function"
-      ? this.createLaunchPairCallback(this.stateService.launchSectionRecommendation, this.stateService, launchPreparedParams)
+      ? function(first, second) {
+        return self.stateService.launchSectionRecommendation(first, second, launchPreparedParams);
+      }
       : function() { return false; };
     var showHome = this.stateService && typeof this.stateService.showHome === "function"
       ? this.stateService.showHome
       : function() { return false; };
     var withRender = function(fn, context) {
-      return self.createRenderHandler(fn, context, onRender);
+      return function(value) {
+        return fn.call(context, value, onRender);
+      };
     };
     var withRenderOnly = function(fn, context) {
-      return self.createRenderOnlyHandler(fn, context, onRender);
+      return function() {
+        return fn.call(context, onRender);
+      };
     };
     var withLaunch = function(fn, context) {
-      return self.createLaunchCallback(fn, context, launchPreparedParams);
+      return function(value) {
+        return fn.call(context, value, launchPreparedParams);
+      };
     };
     var withLaunchAndRender = function(fn, context) {
-      return self.createLaunchAndRenderCallback(fn, context, launchPreparedParams, onRender);
+      return function(value) {
+        return fn.call(context, value, launchPreparedParams, onRender);
+      };
     };
     var withLaunchPair = function(fn, context) {
-      return self.createLaunchPairCallback(fn, context, launchPreparedParams);
+      return function(first, second) {
+        return fn.call(context, first, second, launchPreparedParams);
+      };
     };
     return {
       search: this.searchAndRenderTracks.bind(this),
