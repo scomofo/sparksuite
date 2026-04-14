@@ -1536,6 +1536,13 @@ test("startPracticeItem launches the matching daily practice item", function() {
   assert.strictEqual(window.startPracticeItem, startPracticeItem);
 });
 
+test("practice and plan buttons route practice item launches through shared actions", function() {
+  assert.ok(loadJS("js/pages/practice.js").indexOf("onclick=\"act(\\'startPracticeItem\\'") >= 0);
+  assert.ok(loadJS("js/pages/plan.js").indexOf("onclick=\"act(\\'startPracticeItem\\'") >= 0);
+  assert.ok(loadJS("js/instruments/piano/pages/practice.js").indexOf("onclick=\"act(\\'startPracticeItem\\'") >= 0);
+  assert.ok(loadJS("js/instruments/piano/pages/plan.js").indexOf("onclick=\"act(\\'startPracticeItem\\'") >= 0);
+});
+
 test("finger exercise card can fall back to SparkCore finger exercise runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;

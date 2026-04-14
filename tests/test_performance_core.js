@@ -152,6 +152,12 @@ test('performance calibration buttons route through shared actions', function() 
   assert.ok(performPageSource.indexOf("onclick=\"act(\\'performCalibrateCancel\\')\"") >= 0);
 });
 
+test('audio calibration page buttons route through shared actions', function() {
+  var calibrationPageSource = loadJS('js/audio/calibration.js');
+  assert.ok(calibrationPageSource.indexOf("onclick=\"act(\\'startAudioCalibration\\')\"") >= 0);
+  assert.ok(calibrationPageSource.indexOf("onclick=\"act(\\'stopAudioCalibration\\')\"") >= 0);
+});
+
 console.log('\n--- PerformanceCore: Imported Chart Bridge ---');
 
 test('convertSparkSongChartToPerformanceChart adapts imported spark charts for performance mode', function() {

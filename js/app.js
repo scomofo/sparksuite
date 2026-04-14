@@ -1680,6 +1680,24 @@ window.act=function(a,v){
     render();
     return;
   }
+  if(a==="startPracticeItem"){
+    if (typeof window.startPracticeItem === "function") {
+      window.startPracticeItem(v);
+    }
+    return;
+  }
+  if(a==="startAudioCalibration"){
+    if (typeof window.startAudioCalibration === "function") {
+      window.startAudioCalibration();
+    }
+    return;
+  }
+  if(a==="stopAudioCalibration"){
+    if (typeof window.stopAudioCalibration === "function") {
+      window.stopAudioCalibration();
+    }
+    return;
+  }
   if(a==="openProgressDashboard"){
     appWrite("screen", SCR.PROGRESS);
     render();

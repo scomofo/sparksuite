@@ -39,7 +39,7 @@ function pianoPlanPage(){
     h += '<div style="font-weight:700;font-size:14px">'+escHTML(item.label)+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(item.type)+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
-    h += '<button class="btn btn-sm" onclick="startPracticeItem(\'' + escHTML(item.id) + '\')" style="background:var(--accent);color:#fff">Go</button>';
+    h += '<button class="btn btn-sm" onclick="act(\'startPracticeItem\',\'' + escHTML(item.id) + '\')" style="background:var(--accent);color:#fff">Go</button>';
     h += '</div>';
     h += '</div>';
   }
