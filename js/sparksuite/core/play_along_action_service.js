@@ -13,12 +13,6 @@
     return null;
   }
 
-  function getPlayAlongDemos() {
-    return typeof window !== "undefined" && typeof window.getSparkPlayAlongDemos === "function"
-      ? window.getSparkPlayAlongDemos()
-      : [];
-  }
-
   function getPlayAlongInstrumentId() {
     var core = getPlayAlongCore();
     var runtime = core && typeof core.getRuntimeState === "function"
@@ -716,7 +710,9 @@
   };
 
   SparkPlayAlongActionService.prototype.getDemo = function(index) {
-    var demos = getPlayAlongDemos();
+    var demos = typeof window !== "undefined" && typeof window.getSparkPlayAlongDemos === "function"
+      ? window.getSparkPlayAlongDemos()
+      : [];
     return demos[index] || null;
   };
 
