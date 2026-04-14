@@ -229,12 +229,7 @@
   };
 
   window.sparkPlayAlongStartDrill = function(index) {
-    var params = playAlongState.prepareDrillLaunch(index);
-    if (params) return launchFrom(params);
-    if (params === null) return false;
-    playAlongState.writeValue("screen", SCR.PLAY_ALONG);
-    requestRender();
-    return true;
+    return playAlongState.startDrill(index, launchPreparedParams, requestRender);
   };
 
   // ---- Navigation Helper ----

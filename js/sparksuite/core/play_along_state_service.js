@@ -844,6 +844,16 @@
     return params;
   };
 
+  SparkPlayAlongStateService.prototype.startDrill = function(index, onLaunchPrepared, onRender) {
+    var params = this.prepareDrillLaunch(index);
+    if (params) {
+      if (typeof onLaunchPrepared === "function") onLaunchPrepared(params);
+      return true;
+    }
+    if (params === null) return false;
+    return this.showHome(onRender);
+  };
+
   SparkPlayAlongStateService.prototype.togglePaused = function() {
     var state = getPlayAlongState();
     if (!state) return false;
