@@ -44,6 +44,13 @@
     this.searchResults = [];
   }
 
+  SparkPlayAlongActionService.bootstrapController = function(target) {
+    var stateService = new SparkPlayAlongStateService();
+    var actionService = new SparkPlayAlongActionService(stateService);
+    var renderer = new SparkPlayAlongRenderer(stateService);
+    return actionService.bootstrapGlobals(target || window, renderer);
+  };
+
   SparkPlayAlongActionService.prototype.getInstrumentId = function() {
     return getPlayAlongInstrumentId();
   };
