@@ -67,18 +67,18 @@
   };
 
   SparkPlayAlongActionService.prototype.createControllerBindings = function(onRender, onStartLoop) {
-    var self = this;
+    var actionService = this;
     var stateService = this.stateService;
     var launchPreparedSession = function(params) {
       return stateService.launchPreparedSession(params, onRender, onStartLoop);
     };
     var bindings = {
       search: function(query) {
-        var resultsEl = self.getSearchResultsContainer();
-        if (!self.searchTracks(query, function(tracks) {
-          self.renderSearchResults(resultsEl, tracks);
+        var resultsEl = actionService.getSearchResultsContainer();
+        if (!actionService.searchTracks(query, function(tracks) {
+          actionService.renderSearchResults(resultsEl, tracks);
         })) {
-          self.clearSearchResultsMarkup(resultsEl);
+          actionService.clearSearchResultsMarkup(resultsEl);
           return false;
         }
         return true;
@@ -99,7 +99,7 @@
       replayDrill: stateService.replayDrill.bind(stateService, launchPreparedSession),
       replayFullSong: stateService.replayFullSong.bind(stateService, launchPreparedSession),
       launchDemo: function(value) {
-        var params = stateService.prepareFreshLaunch(self.getDemoLaunchParams(value));
+        var params = stateService.prepareFreshLaunch(actionService.getDemoLaunchParams(value));
         if (typeof launchPreparedSession === "function") {
           launchPreparedSession(params);
         }
@@ -109,7 +109,7 @@
         return stateService.launchRecent(value, launchPreparedSession);
       },
       saveTrack: function(value) {
-        return self.saveSearchResult(value).then(function(saved) {
+        return actionService.saveSearchResult(value).then(function(saved) {
           if (saved && typeof onRender === "function") onRender();
           return saved;
         });
@@ -142,7 +142,7 @@
         return stateService.clearBookmarksWithRender(onRender);
       },
       setDifficulty: function(value) {
-        var result = self.setDifficulty(value);
+        var result = actionService.setDifficulty(value);
         if (typeof onRender === "function") onRender();
         return result;
       },
@@ -181,13 +181,13 @@
       },
       openHome: stateService.showHome.bind(stateService, onRender),
       connectSpotify: function() {
-        return self.connectSpotify(function() {
+        return actionService.connectSpotify(function() {
           if (typeof onRender === "function") onRender();
         });
       },
       saveSpotifyClientId: function() {
-        if (!self.saveSpotifyClientIdFromPrompt()) return false;
-        return self.connectSpotify(function() {
+        if (!actionService.saveSpotifyClientIdFromPrompt()) return false;
+        return actionService.connectSpotify(function() {
           if (typeof onRender === "function") onRender();
         });
       },
@@ -197,16 +197,16 @@
       },
       searchSelectWithFile: function(index, file) {
         if (!file) return false;
-        launchPreparedSession(self.prepareSearchLaunch(index, { audioFile: file }));
+        launchPreparedSession(actionService.prepareSearchLaunch(index, { audioFile: file }));
         return true;
       }
     };
     bindings.searchSelect = function(index) {
-      if (self.shouldUseCachedSearchChart(index)) {
-        launchPreparedSession(self.prepareSearchLaunch(index));
+      if (actionService.shouldUseCachedSearchChart(index)) {
+        launchPreparedSession(actionService.prepareSearchLaunch(index));
         return true;
       }
-      return self.showSearchUploadPromptForIndex(index, bindings.searchSelectWithFile, launchPreparedSession);
+      return actionService.showSearchUploadPromptForIndex(index, bindings.searchSelectWithFile, launchPreparedSession);
     };
     return bindings;
   };
