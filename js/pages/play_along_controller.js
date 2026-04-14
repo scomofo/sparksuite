@@ -32,12 +32,6 @@
     return result;
   }
 
-  function showHomeAndRender() {
-    playAlongState.showHomeScreen();
-    requestRender();
-    return true;
-  }
-
   function stepSection(delta) {
     return playAlongState.stepSection(delta, requestRender);
   }
@@ -173,7 +167,7 @@
   window.sparkPlayAlongAgain = function() {
     var params = playAlongState.getReplayParams();
     if (launchFrom(params)) return;
-    showHomeAndRender();
+    playAlongState.showHome(requestRender);
   };
 
   window.sparkPlayAlongReplay = function() {
@@ -181,11 +175,9 @@
   };
 
   window.sparkPlayAlongReplayDrill = function() {
-    var drills = playAlongState.getOutcomeDrills();
-    if (drills.length > 0) {
-      return window.sparkPlayAlongStartDrill(0);
-    }
-    return window.sparkPlayAlongReplay();
+    return launchFrom(function() {
+      return playAlongState.prepareReplayDrillLaunch();
+    });
   };
 
   window.sparkPlayAlongReplayFullSong = function() {
@@ -237,8 +229,7 @@
   };
 
   window.sparkPlayAlongPickNew = function() {
-    playAlongState.resetSelectedDrillState();
-    showHomeAndRender();
+    return playAlongState.resetToHome(requestRender);
   };
 
   window.sparkPlayAlongStartDrill = function(index) {
@@ -253,7 +244,7 @@
   // ---- Navigation Helper ----
 
   window.openPlayAlong = function() {
-    showHomeAndRender();
+    return playAlongState.showHome(requestRender);
   };
 
   function launchPlayAlongSession(params) {
@@ -265,7 +256,7 @@
     }).catch(function(err) {
       console.error("[PlayAlong] Failed:", err);
       playAlongState.setError(err);
-      showHomeAndRender();
+      playAlongState.showHome(requestRender);
       return false;
     });
   }

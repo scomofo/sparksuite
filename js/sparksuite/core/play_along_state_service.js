@@ -93,6 +93,17 @@
     return this.writeValue("screen", SCR.PLAY_ALONG);
   };
 
+  SparkPlayAlongStateService.prototype.showHome = function(onRender) {
+    this.showHomeScreen();
+    if (typeof onRender === "function") onRender();
+    return true;
+  };
+
+  SparkPlayAlongStateService.prototype.resetToHome = function(onRender) {
+    this.resetSelectedDrillState();
+    return this.showHome(onRender);
+  };
+
   SparkPlayAlongStateService.prototype.showSessionScreen = function() {
     this.writeValue("screen", SCR.PLAY_ALONG_SESSION);
     return this.writeValue("playAlongPaused", false);
@@ -293,6 +304,12 @@
   SparkPlayAlongStateService.prototype.getOutcomeDrills = function() {
     var outcome = this.getLastOutcome();
     return outcome && Array.isArray(outcome.drills) ? outcome.drills : [];
+  };
+
+  SparkPlayAlongStateService.prototype.prepareReplayDrillLaunch = function() {
+    var drills = this.getOutcomeDrills();
+    if (drills.length > 0) return this.prepareDrillLaunch(0);
+    return this.getReplayParams();
   };
 
   SparkPlayAlongStateService.prototype.getSectionSummary = function() {
