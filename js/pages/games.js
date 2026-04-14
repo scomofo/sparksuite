@@ -112,8 +112,8 @@ function rhythmResultsPage(){
   h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+r.accuracy+'%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
   h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+r.maxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
   h+='</div></div>';
-  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="gameStateWrite(\'rhythmResults\',null);act(\'startRhythm\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
-  h+='<button class="btn" onclick="gameStateWrite(\'rhythmResults\',null);render()" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
+  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'rhythmReplay\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
+  h+='<button class="btn" onclick="act(\'rhythmResultsBack\')" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
   h+='</div>';
   return h;
 }
@@ -228,8 +228,8 @@ function runnerResultsPage(){
   h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+r.maxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
   h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+r.distance+'m</div><div style="font-size:11px;color:var(--text-muted)">Distance</div></div>';
   h+='</div></div>';
-  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="gameStateWrite(\'runnerResults\',null);act(\'startRunner\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
-  h+='<button class="btn" onclick="gameStateWrite(\'runnerResults\',null);render()" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
+  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'runnerReplay\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
+  h+='<button class="btn" onclick="act(\'runnerResultsBack\')" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
   h+='</div>';
   return h;
 }

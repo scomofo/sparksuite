@@ -86,6 +86,18 @@ test('handles XSS attempt', function() {
   assert.ok(result.indexOf('<') === -1, 'should not contain raw <');
 });
 
+test('clickableDiv escapes keydown handler quotes safely', function() {
+  var html = clickableDiv("act('openSong',3)");
+  assert.ok(html.indexOf("event.key==='Enter'||event.key===' '") >= 0);
+  assert.ok(html.indexOf('event.key==="Enter"') === -1);
+});
+
+test('piano clickable div also uses safe single-quoted key checks', function() {
+  var pianoUi = loadJS('js/instruments/piano/ui.js');
+  assert.ok(pianoUi.indexOf("event.key==='Enter'||event.key===' '") >= 0);
+  assert.ok(pianoUi.indexOf('event.key==="Enter"') === -1);
+});
+
 // ===== Tests: shuffle =====
 console.log('\n--- shuffle ---');
 

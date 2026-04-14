@@ -197,12 +197,12 @@ function renderHomePlayAlongCard(data){
       h += '<div style="font-size:12px;color:var(--text-muted)">Weak section: '+escHTML(data.weakSection.sectionLabel)+'</div>';
     }
     h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">';
-    h += '<button onclick="sparkPlayAlongLaunchRecent(0)">Resume Song</button>';
+    h += '<button onclick="act(\'playAlongResumeRecent\',0)">Resume Song</button>';
     if(data.weakSection){
-      h += '<button onclick="sparkPlayAlongJumpToWeakSection()">Jump To Weak Section</button>';
+      h += '<button onclick="act(\'playAlongJumpToWeakSection\')">Jump To Weak Section</button>';
     }
     if(data.hasDrill){
-      h += '<button onclick="sparkPlayAlongStartDrill(0)">Run Last Drill</button>';
+      h += '<button onclick="act(\'playAlongStartDrill\',0)">Run Last Drill</button>';
     }
     h += '</div>';
     if(bookmarks.length){
@@ -213,7 +213,7 @@ function renderHomePlayAlongCard(data){
     }
   }else{
     h += '<div>No recent play-along songs yet.</div>';
-    h += '<button onclick="openPlayAlong()">Start Play Along</button>';
+    h += '<button onclick="act(\'openPlayAlongHome\')">Start Play Along</button>';
   }
   h += '</div>';
   return h;

@@ -47,7 +47,7 @@
     h += '<div><b>MIDI Settings</b></div>';
     h += '<div>Active Device: ' + escHTML(activeDeviceName) + '</div>';
     h += '<div>Active Profile: ' + escHTML(activeProfileName) + '</div>';
-    h += '<button onclick="refreshMidiDevices()">Refresh Devices</button> ';
+    h += '<button onclick="act(\'refreshMidiDevices\')">Refresh Devices</button> ';
     h += '<button onclick="act(\'createDefaultPianoProfile\')">New Piano Profile</button> ';
     h += '<button onclick="act(\'createDefaultGuitarProfile\')">New Guitar Profile</button>';
     h += '</div>';

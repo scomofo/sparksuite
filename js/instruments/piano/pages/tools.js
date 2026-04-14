@@ -61,7 +61,7 @@ function pianoToolsTab() {
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = activeToolTab === t.id ? " active" : "";
-    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="setPianoToolTab(\'' + t.id + '\')">' + t.label + '</div>';
+    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="act(\'pianoToolTab\',\'' + t.id + '\')">' + t.label + '</div>';
   });
   html += '</div>';
 

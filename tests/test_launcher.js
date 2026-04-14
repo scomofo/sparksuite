@@ -31,8 +31,28 @@ global.SparkProfile = {
 global.SparkStorage = { load: function() { return SparkProfile.createEmpty(); } };
 global.SparkHighway = { GUITAR_SKIN: { laneCount: 6 }, PIANO_SKIN: { laneCount: 24 } };
 global.escHTML = function(s) { return String(s); };
-global.S = { completedLessons: [], mastery: { rhythm: {} } };
+global.SCR = { HOME: 'home' };
+global.TAB = { PRACTICE: 'practice' };
+global.S = { completedLessons: [], mastery: { rhythm: {} }, activeInstrument: null, screen: null, tab: null };
 global.__sparkState = global.S;
+global.SparkState = {
+  getRoot: function() { return global.S; },
+  write: function(path, value) {
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = global.S;
+    var i;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== 'object') cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+};
+global.saveStateCalls = 0;
+global.saveState = function() { saveStateCalls++; };
+global.renderCalls = 0;
+global.render = function() { renderCalls++; };
 
 function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
@@ -88,6 +108,41 @@ test('activate sets active instrument', function() {
 test('deactivate clears active instrument', function() {
   SparkInstruments.deactivate();
   assert.strictEqual(SparkInstruments.getActive(), null);
+});
+
+test('openInstrumentFromLauncher updates shared launcher state', function() {
+  renderCalls = 0;
+  saveStateCalls = 0;
+  openInstrumentFromLauncher('test_guitar');
+  assert.strictEqual(S.activeInstrument, 'test_guitar');
+  assert.strictEqual(S.screen, 'home');
+  assert.strictEqual(S.tab, 'practice');
+  assert.strictEqual(renderCalls, 1);
+  assert.strictEqual(saveStateCalls, 1);
+});
+
+test('returnToLauncherFromHeader clears active instrument and rerenders', function() {
+  renderCalls = 0;
+  saveStateCalls = 0;
+  SparkInstruments.activate('test_guitar');
+  S.activeInstrument = 'test_guitar';
+  returnToLauncherFromHeader();
+  assert.strictEqual(SparkInstruments.getActive(), null);
+  assert.strictEqual(S.activeInstrument, null);
+  assert.strictEqual(S.screen, 'home');
+  assert.strictEqual(S.tab, 'practice');
+  assert.strictEqual(renderCalls, 1);
+  assert.strictEqual(saveStateCalls, 1);
+});
+
+test('header logo routes through the shared goHome action', function() {
+  var indexHtml = loadJS('index.html');
+  assert.ok(/onclick="act\('goHome'\)"/.test(indexHtml));
+});
+
+test('launcher back routes through the shared returnToLauncher action', function() {
+  var indexHtml = loadJS('index.html');
+  assert.ok(/onclick="event\.stopPropagation\(\);act\('returnToLauncher'\)"/.test(indexHtml));
 });
 
 test('getPage returns page from active instrument', function() {

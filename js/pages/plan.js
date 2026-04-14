@@ -33,7 +33,7 @@ function planPage(){
     h += '<div style="font-weight:700;font-size:14px">'+escHTML(item.label)+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
-    h += '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(item.id)+'\')" style="background:var(--accent);color:#fff">Go</button>';
+    h += '<button class="btn btn-sm" onclick="startPracticeItem(\''+escHTML(item.id)+'\')" style="background:var(--accent);color:#fff">Go</button>';
     h += '</div>';
     h += '</div>';
   }
@@ -79,21 +79,3 @@ function prettyPlanToken(value){
   return String(value || "").replace(/_/g, " ");
 }
 
-function launchPracticePlanItem(itemId){
-  var plan = null;
-  if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
-    var view = window.sparkCore.getActiveSessionView();
-    if(view && view.plan && view.plan.flow === "daily_practice"){
-      plan = SparkPracticeBridge.toLegacyPlan(view.plan);
-    }
-  }
-  if(!plan) plan = planStateRead(["practicePlan"], null) || ensurePracticePlan();
-  if(!plan || !Array.isArray(plan.items)) return;
-
-  for(var i=0;i<plan.items.length;i++){
-    if(plan.items[i].id === itemId){
-      launchPracticeItem(plan.items[i]);
-      return;
-    }
-  }
-}

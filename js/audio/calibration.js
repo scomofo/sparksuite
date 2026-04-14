@@ -42,19 +42,19 @@ function calibrationPage(){
   var h = '<div class="card">';
   h += '<div><b>Latency Calibration</b></div>';
   h += '<div>Play a key exactly on each click.</div>';
-  h += '<button onclick="startCalibration()">Start Calibration</button>';
-  h += ' <button onclick="stopCalibration()">Stop</button>';
+  h += '<button onclick="startAudioCalibration()">Start Calibration</button>';
+  h += ' <button onclick="stopAudioCalibration()">Stop</button>';
   h += '<div style="margin-top:8px">Detected Latency: '+Math.round(audioCalibrationRead("inputLatencyMs", 0))+' ms</div>';
   h += '<div>Samples: '+((audioCalibrationRead("calibrationOffsets", [])||[]).length)+'</div>';
   h += '</div>';
   return h;
 }
 
-function startCalibration(){
+function startAudioCalibration(){
   audioCalibrationWrite("calibrationOffsets", []);
   startCalibrationMetronome(80);
 }
 
-function stopCalibration(){
+function stopAudioCalibration(){
   stopCalibrationMetronome();
 }

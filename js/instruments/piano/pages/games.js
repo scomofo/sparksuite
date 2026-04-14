@@ -69,7 +69,7 @@ function pianoGamesTab() {
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = activeGameTab === t.id ? " active" : "";
-    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="setPianoGameTab(\'' + t.id + '\')">' + t.icon + ' ' + t.label + '</div>';
+    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="act(\'pianoGameTab\',\'' + t.id + '\')">' + t.icon + ' ' + t.label + '</div>';
   });
   html += '</div>';
 

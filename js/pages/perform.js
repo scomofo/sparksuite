@@ -413,8 +413,8 @@ function performPage() {
     h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Calibrating...</div>';
     h += '<div style="font-size:48px;font-weight:900;color:#FFE66D;animation:bn .3s ease">' + calibCurrentBeat + '/' + calibTotalBeats + '</div>';
     h += '<p style="font-size:12px;color:var(--text-muted)">Tap spacebar or click when you hear the beat</p>';
-    h += '<button class="btn" onclick="recordCalibrationTap()" style="background:#4ECDC4;color:#fff;padding:16px 32px;font-size:16px">TAP</button>';
-    h += ' <button class="btn btn-sm" onclick="cancelCalibration()" style="margin-left:8px">Cancel</button>';
+    h += '<button class="btn" onclick="act(\'performCalibrateTap\')" style="background:#4ECDC4;color:#fff;padding:16px 32px;font-size:16px">TAP</button>';
+    h += ' <button class="btn btn-sm" onclick="act(\'performCalibrateCancel\')" style="margin-left:8px">Cancel</button>';
     h += '</div>';
   }
 

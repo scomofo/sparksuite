@@ -350,7 +350,7 @@ function escHTML(s) {
 
 function pianoClickableDiv(onclick, content, cls) {
   if (!cls) cls = "";
-  var k='if(event.key==="Enter"||event.key===" "){event.preventDefault();'+onclick+'}';
+  var k="if(event.key==='Enter'||event.key===' '){event.preventDefault();" + onclick + "}";
   return '<div class="' + cls + '" role="button" tabindex="0" onclick="' + onclick + '" onkeydown="' + k + '">' + content + '</div>';
 }
 

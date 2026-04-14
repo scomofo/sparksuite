@@ -185,7 +185,7 @@ function shuffle(arr){
 
 // Helper for accessible clickable divs
 function clickableDiv(onclick,extra){
-  var k='if(event.key==="Enter"||event.key===" "){event.preventDefault();'+onclick+'}';
+  var k="if(event.key==='Enter'||event.key===' '){event.preventDefault();" + onclick + "}";
   return ' tabindex="0" role="button" onclick="'+onclick+'" onkeydown="'+k+'"'+(extra?' '+extra:'');
 }
 

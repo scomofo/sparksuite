@@ -92,11 +92,6 @@ function getPracticeSkillSnapshot() {
   };
 }
 
-function practiceOpenProgressDashboard() {
-  practiceStateWrite("screen", SCR.PROGRESS);
-  render();
-}
-
 function getSparkCoreLegacySnapshotBundle() {
   if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
   return window.sparkCore.getActiveSessionView() || null;
@@ -293,7 +288,7 @@ function practiceTab(){
   h+='<div style="font-size:24px;margin-bottom:4px">&#127911;</div>';
   h+='<div style="font-size:15px;font-weight:900;color:#fff">Play Along</div>';
   h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">Search any song, play along in real time</div>';
-  h+='<button onclick="openPlayAlong()" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Find a Song &#9654;</button>';
+  h+='<button onclick="act(\'openPlayAlongHome\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Find a Song &#9654;</button>';
   h+='</div>';
   h+='</div>';
 
@@ -302,7 +297,7 @@ function practiceTab(){
   h+='<div style="font-size:24px;margin-bottom:4px">&#128200;</div>';
   h+='<div style="font-size:15px;font-weight:900;color:#fff">Your Progress</div>';
   h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">Skills, mastery, and practice goals</div>';
-  h+='<button onclick="practiceOpenProgressDashboard()" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">View Progress &#9654;</button>';
+  h+='<button onclick="act(\'openProgressDashboard\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">View Progress &#9654;</button>';
   h+='</div>';
 
   if (homeState.lastBrainAnalysis || (homeState.personalInsights && homeState.personalInsights.coach)) {
@@ -421,7 +416,7 @@ function practiceTab(){
   h+='<div style="text-align:center;margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
   h+='<button class="reset-btn" onclick="act(\'exportProgress\')" style="border-color:#4ECDC4;color:#4ECDC4">&#128190; Export</button>';
   h+='<button class="reset-btn" onclick="act(\'importProgress\')" style="border-color:#45B7D1;color:#45B7D1">&#128194; Import</button>';
-  h+='<button class="reset-btn" onclick="resetProgress()">Reset Progress</button>';
+  h+='<button class="reset-btn" onclick="act(\'resetProgress\')">Reset Progress</button>';
   h+='</div>';
   if(homeState.importMsg)h+='<div style="text-align:center;margin-top:8px;font-size:12px;color:'+(homeState.importMsg.ok?"#4ECDC4":"#FF6B6B")+'">'+homeState.importMsg.text+'</div>';
   return h;

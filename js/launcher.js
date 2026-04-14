@@ -22,6 +22,17 @@
     if (typeof render === "function") render();
   }
 
+  function returnToLauncherFromHeader() {
+    if (window.SparkInstruments && typeof SparkInstruments.deactivate === "function") {
+      SparkInstruments.deactivate();
+    }
+    launcherStateWrite(["activeInstrument"], null);
+    launcherStateWrite(["screen"], SCR.HOME);
+    launcherStateWrite(["tab"], TAB.PRACTICE);
+    if (typeof saveState === "function") saveState();
+    if (typeof render === "function") render();
+  }
+
   function renderInstrumentIcon(inst) {
     if (inst && inst.iconImage) {
       return '<img class="instrument-icon-image" src="' + escHTML(inst.iconImage) + '" alt="' + escHTML(inst.name || "Instrument") + ' icon">';
@@ -140,4 +151,5 @@
 
   window.SparkInstruments = SparkInstruments;
   window.openInstrumentFromLauncher = openInstrumentFromLauncher;
+  window.returnToLauncherFromHeader = returnToLauncherFromHeader;
 })();

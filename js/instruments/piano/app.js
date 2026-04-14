@@ -958,6 +958,18 @@ function act(action, param) {
       }
       break;
 
+    case "pianoGameTab":
+      state._gameTab = param || "drill";
+      break;
+
+    case "pianoSongTab":
+      state._songTab = param || "library";
+      break;
+
+    case "pianoToolTab":
+      state._toolTab = param || "stats";
+      break;
+
     case "toggle_dark":
       state.darkMode = !state.darkMode;
       document.body.classList.toggle("dark", state.darkMode);

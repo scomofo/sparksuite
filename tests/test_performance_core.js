@@ -69,6 +69,9 @@ eval(loadJS('js/performance/badges.js'));
 eval(loadJS('js/performance/recommendations.js'));
 eval(loadJS('js/sparksuite/ui/note_mapper.js'));
 eval(loadJS('js/data.js'));
+eval(loadJS('js/pages/perform.js'));
+var performStartCalibration = startCalibration;
+eval(loadJS('js/audio/calibration.js'));
 
 console.log('\n--- PerformanceCore: Chart Contract ---');
 
@@ -134,6 +137,19 @@ test('emitPerformanceEvent calls SparkEvents.emit', function() {
   SparkEvents.emit = orig;
   assert.strictEqual(captured.length, 1);
   assert.strictEqual(captured[0].type, 'performance_started');
+});
+
+test('audio calibration globals do not clobber performance calibration handlers', function() {
+  assert.strictEqual(startCalibration, performStartCalibration);
+  assert.strictEqual(typeof startAudioCalibration, 'function');
+  assert.strictEqual(typeof stopAudioCalibration, 'function');
+  assert.notStrictEqual(startAudioCalibration, startCalibration);
+});
+
+test('performance calibration buttons route through shared actions', function() {
+  var performPageSource = loadJS('js/pages/perform.js');
+  assert.ok(performPageSource.indexOf("onclick=\"act(\\'performCalibrateTap\\')\"") >= 0);
+  assert.ok(performPageSource.indexOf("onclick=\"act(\\'performCalibrateCancel\\')\"") >= 0);
 });
 
 console.log('\n--- PerformanceCore: Imported Chart Bridge ---');

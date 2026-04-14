@@ -20,10 +20,10 @@
 <p><b>Android:</b> Open with <b>Chrome</b> from your file manager.</p>
 </div>
 <header class="header" id="header" style="display:none" role="banner">
-<div class="logo" onclick="S.screen='home';S.tab='practice';render()" tabindex="0" role="button" aria-label="SparkSuite home"><button id="launcher-back" onclick="SparkInstruments.deactivate();S.activeInstrument=null;saveState();render()" style="background:none;font-size:18px;padding:4px 8px;display:none" aria-label="Back to launcher">&#9664;</button><span>&#127925;</span><span class="logo-text">SparkSuite</span></div>
+<div class="logo" onclick="act('goHome')" tabindex="0" role="button" aria-label="SparkSuite home"><button id="launcher-back" onclick="event.stopPropagation();act('returnToLauncher')" style="background:none;font-size:18px;padding:4px 8px;display:none" aria-label="Back to launcher">&#9664;</button><span>&#127925;</span><span class="logo-text">SparkSuite</span></div>
 <div class="hdr-stats">
 <button onclick="act('toggleDark')" style="background:none;font-size:16px" id="dark-btn" aria-label="Toggle dark mode">&#127769;</button>
-<button onclick="S.soundOn=!S.soundOn;saveState();render()" style="background:none;font-size:16px" id="snd-btn" aria-label="Toggle sound">&#128266;</button>
+<button onclick="act('toggleSound')" style="background:none;font-size:16px" id="snd-btn" aria-label="Toggle sound">&#128266;</button>
 <div class="stat stat-xp" aria-label="Experience points">&#9889;<span id="hdr-xp">0</span></div>
 <div class="stat stat-str" aria-label="Day streak">&#128293;<span id="hdr-str">0</span></div>
 </div>

@@ -1599,6 +1599,26 @@ window.act=function(a,v){
   if (_inst && _inst.act && _inst.act(a, v)) return;
   // Spotify connect
   if(a==="spotifyConnect"){ if(typeof sparkPlayAlongConnectSpotify==="function") sparkPlayAlongConnectSpotify(); return; }
+  if(a==="playAlongResumeRecent"){ if(typeof sparkPlayAlongLaunchRecent==="function") sparkPlayAlongLaunchRecent(v); return; }
+  if(a==="playAlongJumpToWeakSection"){ if(typeof sparkPlayAlongJumpToWeakSection==="function") sparkPlayAlongJumpToWeakSection(); return; }
+  if(a==="playAlongStartDrill"){ if(typeof sparkPlayAlongStartDrill==="function") sparkPlayAlongStartDrill(v); return; }
+  if(a==="openPlayAlongHome"){ if(typeof openPlayAlong==="function") openPlayAlong(); return; }
+  if(a==="rhythmReplay"){ appWrite("rhythmResults", null); act("startRhythm"); return; }
+  if(a==="rhythmResultsBack"){ appWrite("rhythmResults", null); render(); return; }
+  if(a==="runnerReplay"){ appWrite("runnerResults", null); act("startRunner"); return; }
+  if(a==="runnerResultsBack"){ appWrite("runnerResults", null); render(); return; }
+  if(a==="onboardingSetInstrument"){ if(typeof setOnboardingInstrument==="function") setOnboardingInstrument(v); render(); return; }
+  if(a==="onboardingSetSkillLevel"){ if(typeof setOnboardingSkillLevel==="function") setOnboardingSkillLevel(v); render(); return; }
+  if(a==="onboardingToggleGoal"){ if(typeof toggleOnboardingGoal==="function") toggleOnboardingGoal(v); render(); return; }
+  if(a==="onboardingMarkMidiDone"){ if(typeof markOnboardingMidiSetupDone==="function") markOnboardingMidiSetupDone(); render(); return; }
+  if(a==="onboardingMarkCalibrationDone"){ if(typeof markOnboardingCalibrationDone==="function") markOnboardingCalibrationDone(); render(); return; }
+  if(a==="onboardingUnlockStarterContent"){ if(typeof applyStarterUnlocksFromOnboarding==="function") applyStarterUnlocksFromOnboarding(); render(); return; }
+  if(a==="onboardingGeneratePlan"){ if(typeof generateInitialPracticePlanFromOnboarding==="function") generateInitialPracticePlanFromOnboarding(); render(); return; }
+  if(a==="onboardingGenerateRecommendations"){ if(typeof generateInitialRecommendationsFromOnboarding==="function") generateInitialRecommendationsFromOnboarding(); render(); return; }
+  if(a==="onboardingFinish"){ if(typeof finishOnboardingFlow==="function") finishOnboardingFlow(); return; }
+  if(a==="onboardingPrevStep"){ if(typeof goToPreviousOnboardingStep==="function") goToPreviousOnboardingStep(); return; }
+  if(a==="onboardingNextStep"){ if(typeof goToNextOnboardingStep==="function") goToNextOnboardingStep(); return; }
+  if(a==="refreshMidiDevices"){ if(typeof refreshMidiDevices==="function") refreshMidiDevices(); return; }
   // Switch instrument from v2 dashboard
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
@@ -1606,6 +1626,33 @@ window.act=function(a,v){
     appWrite("screen", SCR.HOME);
     appWrite("tab", TAB.PRACTICE);
     saveState();
+    render();
+    return;
+  }
+  if(a==="returnToLauncher"){
+    if (typeof window.returnToLauncherFromHeader === "function") {
+      window.returnToLauncherFromHeader();
+    }
+    return;
+  }
+  if(a==="goHome"){
+    appApplyLegacyActivityRuntime({
+      setFields:{tab:TAB.PRACTICE,screen:SCR.HOME,earTrainQ:null,earTrainAns:null,selectedVoicing:0}
+    },function(){
+      appWrite("tab", TAB.PRACTICE);
+      appWrite("screen", SCR.HOME);
+      appWrite("earTrainQ", null);
+      appWrite("earTrainAns", null);
+      appWrite("selectedVoicing", 0);
+    });
+    if(window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function"){
+      window.sparkCore.updateRuntimeState({
+        activeScreen: "home",
+        activeTab: TAB.PRACTICE,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    stopAllTimers();
     render();
     return;
   }
@@ -1626,6 +1673,23 @@ window.act=function(a,v){
     stopAllTimers();
     if(v===TAB.SONGS&&appRead("songsSubTab", null)==="community")fetchCommunity();
     render();return;
+  }
+  if(a==="toggleSound"){
+    appWrite("soundOn", !appRead("soundOn", true));
+    saveState();
+    render();
+    return;
+  }
+  if(a==="openProgressDashboard"){
+    appWrite("screen", SCR.PROGRESS);
+    render();
+    return;
+  }
+  if(a==="resetProgress"){
+    if (typeof window.resetProgress === "function") {
+      window.resetProgress();
+    }
+    return;
   }
   if(a==="selLevel"&&parseInt(v)<=appRead("level", 1)){appWrite("selectedLevel",parseInt(v));render();return;}
   if(a==="toggleTimer"){
@@ -3661,6 +3725,7 @@ window.act=function(a,v){
   }
   if(a==="performCalibrate"){startCalibration();return;}
   if(a==="performCalibrateTap"){recordCalibrationTap();return;}
+  if(a==="performCalibrateCancel"){cancelCalibration();return;}
   if(a==="performRetry"){
     var retryRequest=getPerformanceRetryRequest({
       chartId: appRead("performChartId", "generated")

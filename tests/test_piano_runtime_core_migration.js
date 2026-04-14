@@ -485,6 +485,21 @@ test("openPlan delegates piano dashboard practice entry to the shared helper", f
   assert.strictEqual(S.screen, "practicePlan");
 });
 
+test("piano subtab actions update local subtab state through the shared dispatcher", function() {
+  renderCalls = 0;
+
+  pianoAct("pianoGameTab", "runner");
+  assert.strictEqual(S._gameTab, "runner");
+
+  pianoAct("pianoSongTab", "stems");
+  assert.strictEqual(S._songTab, "stems");
+
+  pianoAct("pianoToolTab", "settings");
+  assert.strictEqual(S._toolTab, "settings");
+
+  assert.strictEqual(renderCalls, 3);
+});
+
 test("openCareerSong delegates to shared performance selection helper and syncs piano aliases", function() {
   global.getCareerItem = function(type, id) {
     if (type !== "songs" || id !== "career_river") return null;
