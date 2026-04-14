@@ -37,20 +37,14 @@
   window.sparkPlayAlongStartLoop = playAlongRenderer.startSessionLoop.bind(playAlongRenderer, window.sparkPlayAlongStop);
 
   var launchPreparedParams = playAlongActions.createLaunchHandler(requestRender, sparkPlayAlongStartLoop);
+  window.sparkPlayAlongSelectWithFile = playAlongActions.createSearchSelectionWithFileHandler(launchPreparedParams);
+  window.sparkPlayAlongSelect = playAlongActions.createSearchSelectionHandler(launchPreparedParams, window.sparkPlayAlongSelectWithFile);
 
   // ---- Search ----
 
   window.sparkPlayAlongSearch = playAlongActions.searchAndRenderTracks.bind(playAlongActions);
 
   // ---- Select Track ----
-
-  window.sparkPlayAlongSelect = function(index) {
-    return playAlongActions.handleSearchSelection(index, launchPreparedParams, sparkPlayAlongSelectWithFile);
-  };
-
-  window.sparkPlayAlongSelectWithFile = function(index, file) {
-    return playAlongActions.handleSearchSelectionWithFile(index, file, launchPreparedParams);
-  };
 
   window.sparkPlayAlongLaunchDemo = withLaunch(playAlongActions.handleDemoLaunch, playAlongActions);
 

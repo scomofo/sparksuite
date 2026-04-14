@@ -60,6 +60,18 @@
     }.bind(this);
   };
 
+  SparkPlayAlongActionService.prototype.createSearchSelectionHandler = function(onLaunchPrepared, onSelectWithFile) {
+    return function(index) {
+      return this.handleSearchSelection(index, onLaunchPrepared, onSelectWithFile);
+    }.bind(this);
+  };
+
+  SparkPlayAlongActionService.prototype.createSearchSelectionWithFileHandler = function(onLaunchPrepared) {
+    return function(index, file) {
+      return this.handleSearchSelectionWithFile(index, file, onLaunchPrepared);
+    }.bind(this);
+  };
+
   SparkPlayAlongActionService.prototype.cloneValue = function(value) {
     if (this.stateService && typeof this.stateService.cloneValue === "function") {
       return this.stateService.cloneValue(value);
