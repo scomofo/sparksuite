@@ -703,6 +703,11 @@
     return this.cloneValue(item.params);
   };
 
+  SparkPlayAlongStateService.prototype.prepareBookmarkLaunchByKey = function(trackId, sectionIndex) {
+    var index = this.findBookmarkIndex(trackId, sectionIndex);
+    return index >= 0 ? this.prepareBookmarkLaunchByIndex(index) : null;
+  };
+
   SparkPlayAlongStateService.prototype.prepareFullSongReplay = function() {
     var state = getPlayAlongState();
     if (!state) return false;
@@ -715,6 +720,13 @@
     state.playAlongCoachHint = "";
     state.playAlongPaused = false;
     return true;
+  };
+
+  SparkPlayAlongStateService.prototype.prepareFullSongReplayLaunch = function() {
+    var params = this.getReplayParams();
+    if (!this.prepareFullSongReplay() || !params) return null;
+    this.clearError();
+    return params;
   };
 
   SparkPlayAlongStateService.prototype.prepareWeakSectionLaunch = function() {
@@ -743,6 +755,18 @@
     state.playAlongLoopRange = this.resolveLoopRange();
     state.playAlongPaused = false;
     return true;
+  };
+
+  SparkPlayAlongStateService.prototype.prepareDrillLaunch = function(index) {
+    var drills = this.getOutcomeDrills();
+    var drill = drills[index] || null;
+    var params;
+    if (!drill) return null;
+    this.selectDrill(drill);
+    this.clearError();
+    params = this.getActiveParams();
+    if (!params) return false;
+    return params;
   };
 
   SparkPlayAlongStateService.prototype.togglePaused = function() {

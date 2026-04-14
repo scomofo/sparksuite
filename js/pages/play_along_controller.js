@@ -98,8 +98,10 @@
   };
 
   window.sparkPlayAlongLaunchBookmarkByKey = function(trackId, sectionIndex) {
-    var index = playAlongState.findBookmarkIndex(trackId, sectionIndex);
-    return index >= 0 ? window.sparkPlayAlongLaunchBookmark(index) : false;
+    var params = playAlongState.prepareBookmarkLaunchByKey(trackId, sectionIndex);
+    if (!params) return false;
+    launchPlayAlongSession(params);
+    return true;
   };
 
   window.sparkPlayAlongRemoveRecent = function(index) {
@@ -215,9 +217,8 @@
   };
 
   window.sparkPlayAlongReplayFullSong = function() {
-    var params = playAlongState.getReplayParams();
-    if (!playAlongState.prepareFullSongReplay() || !params) return false;
-    playAlongState.clearError();
+    var params = playAlongState.prepareFullSongReplayLaunch();
+    if (!params) return false;
     return launchPlayAlongSession(params);
   };
 
@@ -275,16 +276,12 @@
   };
 
   window.sparkPlayAlongStartDrill = function(index) {
-    var drills = playAlongState.getOutcomeDrills();
-    var drill = drills[index] || null;
-    if (!drill) return false;
-    playAlongState.selectDrill(drill);
-    playAlongState.clearError();
-    var params = playAlongState.getActiveParams();
+    var params = playAlongState.prepareDrillLaunch(index);
     if (params) {
       launchPlayAlongSession(params);
       return true;
     }
+    if (params === null) return false;
     playAlongState.writeValue("screen", SCR.PLAY_ALONG);
     render();
     return true;
