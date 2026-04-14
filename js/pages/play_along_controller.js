@@ -9,34 +9,14 @@
     if (typeof render === "function") render();
   }
 
-  function withRender(fn, context) {
-    return function(value) {
-      return fn.call(context, value, requestRender);
-    };
-  }
-
-  function withLaunch(fn, context) {
-    return function(value) {
-      return fn.call(context, value, launchPreparedParams);
-    };
-  }
-
-  function withLaunchAndRender(fn, context) {
-    return function(value) {
-      return fn.call(context, value, launchPreparedParams, requestRender);
-    };
-  }
-
-  function withLaunchPair(fn, context) {
-    return function(first, second) {
-      return fn.call(context, first, second, launchPreparedParams);
-    };
-  }
-
   window.sparkPlayAlongStop = playAlongRenderer.finishSessionResults.bind(playAlongRenderer, requestRender);
   window.sparkPlayAlongStartLoop = playAlongRenderer.startSessionLoop.bind(playAlongRenderer, window.sparkPlayAlongStop);
 
   var launchPreparedParams = playAlongActions.createLaunchHandler(requestRender, sparkPlayAlongStartLoop);
+  var withRender = playAlongActions.createRenderHandler.bind(playAlongActions);
+  var withLaunch = playAlongActions.createLaunchCallback.bind(playAlongActions);
+  var withLaunchAndRender = playAlongActions.createLaunchAndRenderCallback.bind(playAlongActions);
+  var withLaunchPair = playAlongActions.createLaunchPairCallback.bind(playAlongActions);
   window.sparkPlayAlongSelectWithFile = playAlongActions.createSearchSelectionWithFileHandler(launchPreparedParams);
   window.sparkPlayAlongSelect = playAlongActions.createSearchSelectionHandler(launchPreparedParams, window.sparkPlayAlongSelectWithFile);
 
@@ -86,8 +66,6 @@
 
   window.sparkPlayAlongAgain = playAlongState.replayOrShowHome.bind(playAlongState, launchPreparedParams, requestRender);
 
-  window.sparkPlayAlongReplay = window.sparkPlayAlongAgain;
-
   window.sparkPlayAlongReplayDrill = playAlongState.replayDrill.bind(playAlongState, launchPreparedParams);
 
   window.sparkPlayAlongReplayFullSong = playAlongState.replayFullSong.bind(playAlongState, launchPreparedParams);
@@ -121,7 +99,7 @@
   window.sparkPlayAlongConnectSpotify = playAlongActions.connectSpotifyAndRender.bind(playAlongActions, requestRender);
 
   window.sparkPlayAlongSaveClientId = playAlongActions.saveSpotifyClientIdAndConnectAndRender.bind(playAlongActions, requestRender);
-
+  window.sparkPlayAlongReplay = window.sparkPlayAlongAgain;
   window.handleSpotifyConnectAction = window.sparkPlayAlongConnectSpotify;
 
 })();

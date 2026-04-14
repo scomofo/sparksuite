@@ -60,6 +60,30 @@
     }.bind(this);
   };
 
+  SparkPlayAlongActionService.prototype.createRenderHandler = function(fn, context, onRender) {
+    return function(value) {
+      return fn.call(context, value, onRender);
+    };
+  };
+
+  SparkPlayAlongActionService.prototype.createLaunchCallback = function(fn, context, onLaunchPrepared) {
+    return function(value) {
+      return fn.call(context, value, onLaunchPrepared);
+    };
+  };
+
+  SparkPlayAlongActionService.prototype.createLaunchAndRenderCallback = function(fn, context, onLaunchPrepared, onRender) {
+    return function(value) {
+      return fn.call(context, value, onLaunchPrepared, onRender);
+    };
+  };
+
+  SparkPlayAlongActionService.prototype.createLaunchPairCallback = function(fn, context, onLaunchPrepared) {
+    return function(first, second) {
+      return fn.call(context, first, second, onLaunchPrepared);
+    };
+  };
+
   SparkPlayAlongActionService.prototype.createSearchSelectionHandler = function(onLaunchPrepared, onSelectWithFile) {
     return function(index) {
       return this.handleSearchSelection(index, onLaunchPrepared, onSelectWithFile);
