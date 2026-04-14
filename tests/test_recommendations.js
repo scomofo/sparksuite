@@ -326,5 +326,70 @@ test("launchRecommendationById routes play-along recommendation through section 
   assert.deepStrictEqual(called, { trackId: "demo_song_1", sectionIndex: 1 });
 });
 
+test("launchRecommendationById falls back to a drill launch for generic drill recommendations", function() {
+  var actions = [];
+  global.act = function(action, value) {
+    actions.push({ action: action, value: value });
+  };
+  global.launchPracticeItem = function() {
+    return false;
+  };
+  S.recommendations = [{
+    id: "unlock_transitions_push",
+    type: "drill",
+    source: "unlock",
+    meta: {}
+  }];
+
+  launchRecommendationById("unlock_transitions_push");
+
+  assert.deepStrictEqual(actions, [{ action: "startDrill", value: undefined }]);
+});
+
+test("launchRecommendationById routes generic drill recommendations into piano drill flow", function() {
+  var actions = [];
+  global.act = function(action, value) {
+    actions.push({ action: action, value: value });
+  };
+  global.launchPracticeItem = function() {
+    return false;
+  };
+  S.activeInstrument = "pianospark";
+  S.recommendations = [{
+    id: "unlock_transitions_push",
+    type: "drill",
+    source: "unlock",
+    meta: {}
+  }];
+
+  launchRecommendationById("unlock_transitions_push");
+
+  assert.deepStrictEqual(actions, [
+    { action: "goHome", value: undefined },
+    { action: "tab", value: "games" },
+    { action: "start_drill", value: "level" }
+  ]);
+});
+
+test("launchRecommendationById can open the challenge hub for challenge recommendations", function() {
+  var actions = [];
+  global.act = function(action, value) {
+    actions.push({ action: action, value: value });
+  };
+  global.launchPracticeItem = function() {
+    return false;
+  };
+  S.recommendations = [{
+    id: "challenge_daily_walk",
+    type: "challenge",
+    source: "challenge",
+    meta: { challengeId: "daily_walk" }
+  }];
+
+  launchRecommendationById("challenge_daily_walk");
+
+  assert.deepStrictEqual(actions, [{ action: "openChallengeHub", value: undefined }]);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);

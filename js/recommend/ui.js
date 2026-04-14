@@ -79,20 +79,53 @@ function renderRecommendationPlayAlongDetail(recommendation){
   return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
 }
 
+function launchGenericRecommendationItem(item){
+  if(!item || typeof act !== "function") return false;
+  if(item.type === "drill"){
+    if(recommendationUiRead("activeInstrument", null) === "pianospark"){
+      act("goHome");
+      act("tab", "games");
+      act("start_drill", "level");
+      return true;
+    }
+    act("startDrill");
+    return true;
+  }
+  if(item.type === "review"){
+    act("quickStart");
+    return true;
+  }
+  if(item.type === "challenge"){
+    act("openChallengeHub");
+    return true;
+  }
+  if(item.type === "lesson"){
+    act("guidedStart");
+    return true;
+  }
+  return false;
+}
+
+function launchRecommendationItem(item){
+  if(!item) return false;
+  if(typeof launchPracticeItem === "function" && launchPracticeItem(item)) return true;
+  return launchGenericRecommendationItem(item);
+}
+
 function launchRecommendationById(id){
   var arr = recommendationUiRead("recommendations", []);
   if (window.sparkCore && typeof window.sparkCore.launchDashboardRecommendation === "function") {
     var coreRequest = window.sparkCore.launchDashboardRecommendation(id);
     if (coreRequest && coreRequest.recommendation) {
       recordRecommendationUse(coreRequest.recommendation);
-      if(typeof launchPracticeItem === "function") launchPracticeItem(coreRequest.recommendation);
+      if(launchRecommendationItem(coreRequest.recommendation)) return;
       return;
     }
   } else if (window.sparkCore && typeof window.sparkCore.getDashboardRecommendationById === "function") {
     var coreRecommendation = window.sparkCore.getDashboardRecommendationById(id);
     if (coreRecommendation) {
       recordRecommendationUse(coreRecommendation);
-      if(typeof launchPracticeItem === "function") launchPracticeItem(coreRecommendation);
+      if(launchRecommendationItem(coreRecommendation)) return;
       return;
     }
   }
@@ -107,7 +140,7 @@ function launchRecommendationById(id){
         sparkPlayAlongLaunchBookmarkByKey(arr[i].meta && arr[i].meta.trackId, arr[i].meta && arr[i].meta.sectionIndex);
         return;
       }
-      if(typeof launchPracticeItem === "function") launchPracticeItem(arr[i]);
+      launchRecommendationItem(arr[i]);
       return;
     }
   }
