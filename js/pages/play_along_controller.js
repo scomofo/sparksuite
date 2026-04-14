@@ -21,6 +21,12 @@
     return true;
   }
 
+  function renderAfter(action) {
+    var result = typeof action === "function" ? action() : action;
+    requestRender();
+    return result;
+  }
+
   function showHomeAndRender() {
     playAlongState.showHomeScreen();
     requestRender();
@@ -118,8 +124,9 @@
   // ---- Set Difficulty ----
 
   window.sparkPlayAlongSetDifficulty = function(level) {
-    playAlongActions.setDifficulty(level);
-    requestRender();
+    return renderAfter(function() {
+      return playAlongActions.setDifficulty(level);
+    });
   };
 
   // ---- Load Local File ----
@@ -147,7 +154,7 @@
   window.sparkPlayAlongStop = function() {
     playAlongState.stopRenderLoop();
     playAlongState.completeSessionForResults();
-    requestRender();
+    renderAfter(true);
     playAlongRenderer.scheduleResultsHeatmap();
   };
 
@@ -189,16 +196,17 @@
   };
 
   window.sparkPlayAlongTogglePause = function() {
-    var paused = playAlongState.togglePauseTransport();
-    requestRender();
-    return paused;
+    return renderAfter(function() {
+      return playAlongState.togglePauseTransport();
+    });
   };
 
   window.sparkPlayAlongToggleLoop = function() {
     playAlongState.clearError();
-    playAlongState.toggleLoop();
-    requestRender();
-    return playAlongState.isLoopEnabled();
+    return renderAfter(function() {
+      playAlongState.toggleLoop();
+      return playAlongState.isLoopEnabled();
+    });
   };
 
   window.sparkPlayAlongSetLoopTarget = function(target) {
