@@ -92,7 +92,7 @@
     var viewModel = buildPlayAlongHomeViewModel();
 
     h += "<div>";
-    h += "<button class='btn' onclick='sparkPlayAlongBackToHome()'>&#8592; Back</button>";
+    h += "<button class='btn' onclick=\"act('playAlongBackHome')\">&#8592; Back</button>";
     h += "<h2 style='font-size:22px;font-weight:900;color:var(--text-primary);margin:12px 0'>Play Along</h2>";
     if (viewModel.error && viewModel.error.message) {
       h += "<div class='card' style='margin-bottom:12px;border-color:#ef4444;background:rgba(239,68,68,0.08)'>";
@@ -126,12 +126,12 @@
         h += "<div style='font-size:11px;color:var(--text-muted)'>" + escPlayAlong((saved.artist || "Unknown Artist") + (saved.bpm ? " | " + saved.bpm + " BPM" : "")) + "</div>";
         h += "</div>";
         h += "<div style='display:flex;gap:6px'>";
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongLaunchSaved(" + si + ")'>Play</button>";
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongRemoveSaved(" + si + ")'>Remove</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongLaunchSaved'," + si + ")\">Play</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongRemoveSaved'," + si + ")\">Remove</button>";
         h += "</div>";
         h += "</div>";
       }
-      h += "<div style='text-align:right;margin-top:8px'><button class='btn btn-sm' onclick='sparkPlayAlongClearSaved()'>Clear Saved</button></div>";
+      h += "<div style='text-align:right;margin-top:8px'><button class='btn btn-sm' onclick=\"act('playAlongClearSaved')\">Clear Saved</button></div>";
       h += "</div>";
     }
 
@@ -147,12 +147,12 @@
         h += "<div style='font-size:11px;color:var(--text-muted)'>" + escPlayAlong(playAlongState.getRecentMeta(item)) + "</div>";
         h += "</div>";
         h += "<div style='display:flex;gap:6px'>";
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongLaunchRecent(" + ri + ")'>Replay</button>";
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongRemoveRecent(" + ri + ")'>Remove</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongResumeRecent'," + ri + ")\">Replay</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongRemoveRecent'," + ri + ")\">Remove</button>";
         h += "</div>";
         h += "</div>";
       }
-      h += "<div style='text-align:right;margin-top:8px'><button class='btn btn-sm' onclick='sparkPlayAlongClearRecent()'>Clear History</button></div>";
+      h += "<div style='text-align:right;margin-top:8px'><button class='btn btn-sm' onclick=\"act('playAlongClearRecent')\">Clear History</button></div>";
       h += "</div>";
     }
 
@@ -167,12 +167,12 @@
         h += "<div style='font-size:11px;color:var(--text-muted)'>" + escPlayAlong((mark.sectionLabel || "Section") + " | " + formatPlayAlongMs(mark.startMs || 0)) + "</div>";
         h += "</div>";
         h += "<div style='display:flex;gap:6px'>";
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongLaunchBookmark(" + bi + ")'>Jump In</button>";
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongRemoveBookmark(" + bi + ")'>Remove</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongLaunchBookmark'," + bi + ")\">Jump In</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongRemoveBookmark'," + bi + ")\">Remove</button>";
         h += "</div>";
         h += "</div>";
       }
-      h += "<div style='text-align:right;margin-top:8px'><button class='btn btn-sm' onclick='sparkPlayAlongClearBookmarks()'>Clear Bookmarks</button></div>";
+      h += "<div style='text-align:right;margin-top:8px'><button class='btn btn-sm' onclick=\"act('playAlongClearBookmarks')\">Clear Bookmarks</button></div>";
       h += "</div>";
     }
 
@@ -186,7 +186,7 @@
         h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary)'>" + escPlayAlong(demo.title || demo.trackId || "Demo Song") + "</div>";
         h += "<div style='font-size:11px;color:var(--text-muted)'>" + escPlayAlong((demo.artist || "Unknown Artist") + " | offset " + (demo.audioOffsetMs || 0) + "ms") + "</div>";
         h += "</div>";
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongLaunchDemo(" + di + ")'>Play</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongLaunchDemo'," + di + ")\">Play</button>";
         h += "</div>";
       }
       h += "</div>";
@@ -196,9 +196,9 @@
     h += "<div class='card' style='margin:12px 0'>";
     h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Difficulty</div>";
     h += "<div style='display:flex;gap:8px'>";
-    h += "<button class='btn btn-sm" + (viewModel.difficulty === "easy" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('easy')\">Easy</button>";
-    h += "<button class='btn btn-sm" + (viewModel.difficulty === "normal" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('normal')\">Normal</button>";
-    h += "<button class='btn btn-sm" + (viewModel.difficulty === "hard" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"sparkPlayAlongSetDifficulty('hard')\">Hard</button>";
+    h += "<button class='btn btn-sm" + (viewModel.difficulty === "easy" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"act('playAlongSetDifficulty','easy')\">Easy</button>";
+    h += "<button class='btn btn-sm" + (viewModel.difficulty === "normal" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"act('playAlongSetDifficulty','normal')\">Normal</button>";
+    h += "<button class='btn btn-sm" + (viewModel.difficulty === "hard" ? "' style='background:var(--accent);color:#fff'" : "'") + " onclick=\"act('playAlongSetDifficulty','hard')\">Hard</button>";
     h += "</div></div>";
 
     // Local file upload
@@ -216,7 +216,7 @@
     var viewModel = buildPlayAlongSessionViewModel();
 
     h += "<div>";
-    h += "<button class='btn' onclick='sparkPlayAlongStop()'>&#9632; Stop</button>";
+    h += "<button class='btn' onclick=\"act('playAlongStop')\">&#9632; Stop</button>";
     if (viewModel.error && viewModel.error.message) {
       h += "<div class='card' style='margin-top:10px;border-color:#ef4444;background:rgba(239,68,68,0.08)'>";
       h += "<div style='font-size:12px;color:#ef4444;font-weight:700'>" + escPlayAlong(viewModel.error.message) + "</div>";
@@ -237,9 +237,9 @@
 
     // Controls row
     h += "<div style='display:flex;align-items:center;justify-content:space-between;margin-top:8px'>";
-    h += "<button class='btn btn-sm' onclick='sparkPlayAlongTogglePause()'>" + (viewModel.paused ? "Resume" : "Pause") + "</button>";
+    h += "<button class='btn btn-sm' onclick=\"act('playAlongTogglePause')\">" + (viewModel.paused ? "Resume" : "Pause") + "</button>";
     h += "<span style='font-size:12px;color:var(--text-dim)'>Speed: " + viewModel.speedLabel + "x</span>";
-    h += "<button class='btn btn-sm' onclick='sparkPlayAlongToggleLoop()'>Loop: " + (viewModel.loopEnabled ? "ON" : "OFF") + "</button>";
+    h += "<button class='btn btn-sm' onclick=\"act('playAlongToggleLoop')\">Loop: " + (viewModel.loopEnabled ? "ON" : "OFF") + "</button>";
     h += "</div>";
     h += "<div style='display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px'>";
     h += "<span style='font-size:11px;color:var(--text-muted);background:var(--chip-bg);padding:4px 10px;border-radius:999px'>Transport: " + escPlayAlong(viewModel.transportMode) + "</span>";
@@ -248,12 +248,12 @@
     h += "<div class='card' style='margin-top:10px;padding:10px 12px;text-align:left'>";
     h += "<div id='play-along-session-section' style='font-size:12px;font-weight:800;color:var(--text-primary)'>" + escPlayAlong(viewModel.currentSection) + "</div>";
     h += "<div style='font-size:11px;color:var(--text-muted);margin-top:4px'>Position: <span id='play-along-session-time'>" + escPlayAlong(viewModel.currentTime) + "</span></div>";
-    h += "<div style='margin-top:8px'><button class='btn btn-sm' onclick='sparkPlayAlongBookmarkCurrentSection()'>Save This Section</button></div>";
+    h += "<div style='margin-top:8px'><button class='btn btn-sm' onclick=\"act('playAlongBookmarkCurrentSection')\">Save This Section</button></div>";
     if (viewModel.sectionNav.total > 1) {
       h += "<div style='display:flex;gap:8px;justify-content:space-between;margin-top:8px'>";
-      h += "<button class='btn btn-sm' onclick='sparkPlayAlongPrevSection()'" + (viewModel.sectionNav.hasPrev ? "" : " style='opacity:0.5'") + ">Prev Section</button>";
+      h += "<button class='btn btn-sm' onclick=\"act('playAlongPrevSection')\"" + (viewModel.sectionNav.hasPrev ? "" : " style='opacity:0.5'") + ">Prev Section</button>";
       h += "<span style='font-size:11px;color:var(--text-muted);align-self:center'>" + escPlayAlong(viewModel.sectionNav.label) + "</span>";
-      h += "<button class='btn btn-sm' onclick='sparkPlayAlongNextSection()'" + (viewModel.sectionNav.hasNext ? "" : " style='opacity:0.5'") + ">Next Section</button>";
+      h += "<button class='btn btn-sm' onclick=\"act('playAlongNextSection')\"" + (viewModel.sectionNav.hasNext ? "" : " style='opacity:0.5'") + ">Next Section</button>";
       h += "</div>";
     }
     h += "</div>";
@@ -261,10 +261,10 @@
     if (viewModel.drill || viewModel.hasPlayableSections) {
       h += "<div style='display:flex;gap:8px;justify-content:center;margin-top:8px'>";
       if (viewModel.drill) {
-        h += "<button class='btn btn-sm' onclick=\"sparkPlayAlongSetLoopTarget('drill')\" style='background:" + (viewModel.loopTarget === "drill" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (viewModel.loopTarget === "drill" ? "#fff" : "var(--text-secondary)") + "'>Target: Drill</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongSetLoopTarget','drill')\" style='background:" + (viewModel.loopTarget === "drill" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (viewModel.loopTarget === "drill" ? "#fff" : "var(--text-secondary)") + "'>Target: Drill</button>";
       }
       if (viewModel.hasPlayableSections) {
-        h += "<button class='btn btn-sm' onclick=\"sparkPlayAlongSetLoopTarget('section')\" style='background:" + (viewModel.loopTarget === "section" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (viewModel.loopTarget === "section" ? "#fff" : "var(--text-secondary)") + "'>Target: Section</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongSetLoopTarget','section')\" style='background:" + (viewModel.loopTarget === "section" ? "var(--accent)" : "var(--input-bg)") + ";color:" + (viewModel.loopTarget === "section" ? "#fff" : "var(--text-secondary)") + "'>Target: Section</button>";
       }
     h += "</div>";
     }
@@ -299,7 +299,7 @@
 
     // Debug toggle
     h += "<div style='text-align:right;margin-top:8px'>";
-    h += "<button class='btn btn-sm' onclick='sparkPlayAlongToggleDebug()' style='opacity:0.5;font-size:11px'>Debug</button>";
+    h += "<button class='btn btn-sm' onclick=\"act('playAlongToggleDebug')\" style='opacity:0.5;font-size:11px'>Debug</button>";
     h += "</div>";
 
     h += "</div>";
@@ -350,11 +350,11 @@
       h += "<div style='font-size:12px;color:var(--text-dim);margin-bottom:8px'>" + escPlayAlong(viewModel.nextAction.message) + "</div>";
       h += "<div style='display:flex;gap:8px;flex-wrap:wrap'>";
       if (viewModel.nextAction.primaryAction === "drill") {
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongReplayDrill()' style='background:var(--accent);color:#fff'>Run Drill Again</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongReplayDrill')\" style='background:var(--accent);color:#fff'>Run Drill Again</button>";
       } else if (viewModel.nextAction.primaryAction === "full_song") {
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongReplayFullSong()' style='background:var(--accent);color:#fff'>Back to Full Song</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongReplayFullSong')\" style='background:var(--accent);color:#fff'>Back to Full Song</button>";
       }
-      h += "<button class='btn btn-sm' onclick='sparkPlayAlongReplay()'>Replay Session</button>";
+      h += "<button class='btn btn-sm' onclick=\"act('playAlongReplay')\">Replay Session</button>";
       h += "</div>";
       h += "</div>";
     }
@@ -368,8 +368,8 @@
       }
       h += "<div style='display:flex;gap:8px;flex-wrap:wrap;margin-top:8px'>";
       if (viewModel.sectionSummary) {
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongJumpToWeakSection()'>Jump To Weak Section</button>";
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongBookmarkCurrentSection()'>Save Weak Section</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongJumpToWeakSection')\">Jump To Weak Section</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongBookmarkCurrentSection')\">Save Weak Section</button>";
       }
       h += "</div>";
       h += "</div>";
@@ -383,7 +383,7 @@
       h += "<div class='card' style='margin:12px 0;text-align:left'>";
       h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px'>Suggested Drills</div>";
       for (var j = 0; j < viewModel.drills.length; j++) {
-        h += "<button class='btn btn-sm' onclick='sparkPlayAlongStartDrill(" + j + ")' style='margin:2px 4px 2px 0'>Fix This: " + (viewModel.drills[j].label || viewModel.drills[j]) + "</button>";
+        h += "<button class='btn btn-sm' onclick=\"act('playAlongStartDrill'," + j + ")\" style='margin:2px 4px 2px 0'>Fix This: " + (viewModel.drills[j].label || viewModel.drills[j]) + "</button>";
       }
       h += "</div>";
     }
@@ -402,8 +402,8 @@
 
     // Action buttons
     h += "<div style='display:flex;gap:8px;justify-content:center;margin-top:16px'>";
-    h += "<button class='btn' onclick='sparkPlayAlongReplay()' style='background:var(--accent);color:#fff'>Play Again</button>";
-    h += "<button class='btn' onclick='sparkPlayAlongPickNew()'>Pick New Song</button>";
+    h += "<button class='btn' onclick=\"act('playAlongReplay')\" style='background:var(--accent);color:#fff'>Play Again</button>";
+    h += "<button class='btn' onclick=\"act('playAlongPickNew')\">Pick New Song</button>";
     h += "</div>";
 
     h += "</div>";

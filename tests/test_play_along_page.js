@@ -181,6 +181,34 @@ test("playAlongPage shows recent songs", function() {
   assert.ok(html.indexOf("Clear Bookmarks") >= 0);
 });
 
+test("playAlong pages route buttons through shared actions", function() {
+  var homeHtml = playAlongPage();
+  var sessionHtml = playAlongSessionPage();
+  sparkCore.lastSessionOutcome = {
+    accuracy: 0.82,
+    timing: 0.76,
+    consistency: 0.71,
+    feedback: [],
+    drills: [{ label: "Fix timing" }],
+    performance: { weakAreas: ["lane_2"] }
+  };
+  var resultsHtml = playAlongResultsPage();
+
+  assert.ok(homeHtml.indexOf("act('playAlongBackHome')") >= 0);
+  assert.ok(homeHtml.indexOf("act('playAlongLaunchSaved',0)") >= 0);
+  assert.ok(homeHtml.indexOf("act('playAlongResumeRecent',0)") >= 0);
+  assert.ok(homeHtml.indexOf("act('playAlongLaunchBookmark',0)") >= 0);
+  assert.ok(homeHtml.indexOf("act('playAlongLaunchDemo',0)") >= 0);
+  assert.ok(homeHtml.indexOf("sparkPlayAlongLaunchSaved(") === -1);
+  assert.ok(sessionHtml.indexOf("act('playAlongStop')") >= 0);
+  assert.ok(sessionHtml.indexOf("act('playAlongTogglePause')") >= 0);
+  assert.ok(sessionHtml.indexOf("act('playAlongSetLoopTarget','drill')") >= 0);
+  assert.ok(sessionHtml.indexOf("sparkPlayAlongTogglePause()") === -1);
+  assert.ok(resultsHtml.indexOf("act('playAlongReplay')") >= 0);
+  assert.ok(resultsHtml.indexOf("act('playAlongStartDrill',0)") >= 0);
+  assert.ok(resultsHtml.indexOf("sparkPlayAlongReplay()") === -1);
+});
+
 Promise.resolve().then(async function() {
   for (var i = 0; i < tests.length; i++) {
     try {
