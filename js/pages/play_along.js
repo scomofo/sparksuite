@@ -38,9 +38,9 @@
       difficulty: playAlongState.readValue(["spotifyDifficulty"], "easy"),
       error: errorState,
       demos: typeof window.getSparkPlayAlongDemos === "function" ? window.getSparkPlayAlongDemos() : [],
-      recent: getPlayAlongRecentEntries(),
-      bookmarks: getPlayAlongBookmarks(),
-      savedTracks: getPlayAlongSavedTracks()
+      recent: playAlongState.getRecent(),
+      bookmarks: playAlongState.getBookmarks(),
+      savedTracks: playAlongState.getSavedTracks()
     };
   }
 
@@ -449,18 +449,6 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
-  }
-
-  function getPlayAlongRecentEntries() {
-    return playAlongState.getRecent();
-  }
-
-  function getPlayAlongBookmarks() {
-    return playAlongState.getBookmarks();
-  }
-
-  function getPlayAlongSavedTracks() {
-    return playAlongState.getSavedTracks();
   }
 
   function buildPlayAlongRecentMeta(item) {

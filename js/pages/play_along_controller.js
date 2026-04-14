@@ -281,10 +281,10 @@
 
   window.sparkPlayAlongTogglePause = function() {
     if (playAlongState.getStateValue("playAlongPaused", false)) {
-      resumePlayAlongTransport();
+      playAlongState.resumeTransport();
       playAlongState.togglePaused();
     } else {
-      pausePlayAlongTransport();
+      playAlongState.pauseTransport();
       playAlongState.togglePaused();
     }
     render();
@@ -390,14 +390,6 @@
       .replace(/"/g, "&quot;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
-  }
-
-  function pausePlayAlongTransport() {
-    playAlongState.pauseTransport();
-  }
-
-  function resumePlayAlongTransport() {
-    playAlongState.resumeTransport();
   }
 
   function clearSelectedDrillState() {
