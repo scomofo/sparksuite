@@ -147,7 +147,6 @@
     return {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
-      launchPreparedParams: launchPreparedParams,
       again: replayOrShowHome,
       replayDrill: replayDrill,
       replayFullSong: replayFullSong,
