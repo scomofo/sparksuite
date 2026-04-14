@@ -1605,6 +1605,13 @@ test("shared app dispatcher keeps start_guided_session wired for non-piano guide
   assert.ok(loadJS("js/app.js").indexOf('if(a==="start_guided_session")') >= 0);
 });
 
+test("shared app performance launch paths mirror hydrated selection payloads into legacy song state", function() {
+  var appSource = loadJS("js/app.js");
+  assert.ok(appSource.indexOf('var sharedSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);
+  assert.ok(appSource.indexOf('var planSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);
+  assert.ok(appSource.indexOf('appWrite("performSongData", planSelectionRequest.songData || null);') >= 0);
+});
+
 test("finger exercise card can fall back to SparkCore finger exercise runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;
@@ -2765,6 +2772,37 @@ test("SparkCore can open performance song selection from direct song data", func
   assert.strictEqual(core.getRuntimeState().performanceChartId, "career_anthem");
   assert.strictEqual(core.getRuntimeState().performanceSongData.title, "Career Anthem");
   assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Career Anthem");
+});
+
+test("SparkCore can hydrate performance song selection from chart library metadata", function() {
+  var core = createDefaultSparkCore();
+  var originalGetPerformanceChartLibrary = global.getPerformanceChartLibrary;
+  global.getPerformanceChartLibrary = function() {
+    return [
+      {
+        id: "ukulele_island_package",
+        title: "Island Loop",
+        artist: "SparkSuite Ukulele",
+        bpm: 78,
+        instrument: "ukulele",
+        sourceType: "imported_package"
+      }
+    ];
+  };
+  try {
+    var selectionRequest = core.openPerformanceSongSelection({
+      songId: "ukulele_island_package",
+      arrangementType: "ukulele_strum",
+      difficultyId: "normal"
+    });
+
+    assert.strictEqual(selectionRequest.songId, "ukulele_island_package");
+    assert.strictEqual(selectionRequest.songData.title, "Island Loop");
+    assert.strictEqual(core.getRuntimeState().performanceSongData.title, "Island Loop");
+    assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Island Loop");
+  } finally {
+    global.getPerformanceChartLibrary = originalGetPerformanceChartLibrary;
+  }
 });
 
 test("SparkCore can open career song selection through an explicit helper", function() {

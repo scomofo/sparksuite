@@ -2849,6 +2849,36 @@
         ? options.difficultyId
         : (this.runtimeState.performanceDifficultyId || "normal")
     };
+    if (!request.songData && typeof getPerformanceChartLibrary === "function") {
+      var chartLibrary = getPerformanceChartLibrary();
+      var chartEntry = null;
+      var chartIndex;
+      if (Array.isArray(chartLibrary)) {
+        for (chartIndex = 0; chartIndex < chartLibrary.length; chartIndex++) {
+          if (!chartLibrary[chartIndex]) continue;
+          if (request.songId && chartLibrary[chartIndex].id === request.songId) {
+            chartEntry = chartLibrary[chartIndex];
+            break;
+          }
+          if (request.songIndex != null && chartIndex === request.songIndex) {
+            chartEntry = chartLibrary[chartIndex];
+            break;
+          }
+        }
+      }
+      if (chartEntry) {
+        request.songData = {
+          title: chartEntry.title || request.songTitle || request.songId || "Performance Song",
+          artist: chartEntry.artist || "",
+          bpm: chartEntry.bpm || null,
+          chords: Array.isArray(chartEntry.chords) ? chartEntry.chords.slice() : [],
+          progression: Array.isArray(chartEntry.progression) ? chartEntry.progression.slice() : [],
+          description: chartEntry.description || "",
+          instrument: chartEntry.instrument || null,
+          sourceType: chartEntry.sourceType || null
+        };
+      }
+    }
     if (!request.songId && request.songData && request.songData.title) {
       request.songId = String(request.songData.title || "")
         .toLowerCase()

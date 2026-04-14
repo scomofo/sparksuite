@@ -2955,7 +2955,7 @@ window.act=function(a,v){
         ? getPreferredPerformanceArrangement(SONGS[sgIdx], appRead("performArrangementType", "chords") || "chords")
         : (appRead("performArrangementType", "chords") || "chords");
       if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-        openPerformanceSongSelectionRequest({
+        var sharedSelectionRequest = openPerformanceSongSelectionRequest({
           songIndex: sgIdx,
           songId: selectedSongId,
           songTitle: SONGS[sgIdx].title || null,
@@ -2963,6 +2963,12 @@ window.act=function(a,v){
           arrangementType: preferredArrangement,
           difficultyId: appRead("performDifficulty", "normal") || "normal"
         });
+        if (sharedSelectionRequest) {
+          appWrite("performSongData", sharedSelectionRequest.songData || SONGS[sgIdx]);
+          appWrite("performSongId", sharedSelectionRequest.songId || selectedSongId);
+          appWrite("performArrangementType", sharedSelectionRequest.arrangementType || preferredArrangement);
+          appWrite("performDifficulty", sharedSelectionRequest.difficultyId || (appRead("performDifficulty", "normal") || "normal"));
+        }
       } else {
         appWrite("performSongData",SONGS[sgIdx]);
         appWrite("performSongId",selectedSongId);
@@ -2985,12 +2991,18 @@ window.act=function(a,v){
       appWrite("performTargetTechnique",null);
     });
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-      openPerformanceSongSelectionRequest({
+      var planSelectionRequest = openPerformanceSongSelectionRequest({
         songId: songId,
         targetTechnique: null,
         arrangementType: arrangementType,
         difficultyId: difficultyId
       });
+      if (planSelectionRequest) {
+        appWrite("performSongData", planSelectionRequest.songData || null);
+        appWrite("performSongId", planSelectionRequest.songId || songId);
+        appWrite("performArrangementType", planSelectionRequest.arrangementType || arrangementType);
+        appWrite("performDifficulty", planSelectionRequest.difficultyId || difficultyId);
+      }
       appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){
         appWrite("screen",SCR.PERFORM_SONG);
       });
