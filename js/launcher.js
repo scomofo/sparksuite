@@ -120,7 +120,7 @@
 
         if (inst.available !== false) {
           h += '<div class="launcher-card" ';
-          h += 'onclick="openInstrumentFromLauncher(\'' + inst.id + '\')">';
+          h += 'onclick="act(\'openInstrument\',\'' + inst.id + '\')">';
           h += '<span class="instrument-icon">' + renderInstrumentIcon(inst) + '</span>';
           h += '<div class="instrument-name">' + escHTML(inst.name) + '</div>';
           if (inst.tagline) {

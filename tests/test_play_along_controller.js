@@ -522,6 +522,25 @@ test("bootstrapped handlers use render defined after controller load", function(
   assert.strictEqual(renderCalls, 1);
 });
 
+test("search results markup routes buttons through shared actions", function() {
+  var actionService = new SparkPlayAlongActionService(new SparkPlayAlongStateService());
+  var markup = actionService.buildSearchResultsMarkup([{
+    id: "track_1",
+    name: "Track One",
+    artist: "Artist"
+  }]);
+
+  assert.ok(markup.indexOf("onclick=\"act('playAlongSelect',0)\"") >= 0);
+  assert.ok(markup.indexOf("event.stopPropagation();act('playAlongSaveTrack',0)") >= 0);
+});
+
+test("spotify prompt markup routes save through shared action", function() {
+  var actionService = new SparkPlayAlongActionService(new SparkPlayAlongStateService());
+  var markup = actionService.buildSpotifyClientIdPromptMarkup();
+
+  assert.ok(markup.indexOf("onclick=\"act('playAlongSaveClientId')\"") >= 0);
+});
+
 Promise.resolve().then(async function() {
   for (var i = 0; i < tests.length; i++) {
     try {

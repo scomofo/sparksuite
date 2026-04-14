@@ -1599,6 +1599,9 @@ window.act=function(a,v){
   if (_inst && _inst.act && _inst.act(a, v)) return;
   // Spotify connect
   if(a==="spotifyConnect"){ if(typeof sparkPlayAlongConnectSpotify==="function") sparkPlayAlongConnectSpotify(); return; }
+  if(a==="playAlongSelect"){ if(typeof sparkPlayAlongSelect==="function") sparkPlayAlongSelect(v); return; }
+  if(a==="playAlongSaveTrack"){ if(typeof sparkPlayAlongSaveTrack==="function") sparkPlayAlongSaveTrack(v); return; }
+  if(a==="playAlongSaveClientId"){ if(typeof sparkPlayAlongSaveClientId==="function") sparkPlayAlongSaveClientId(); return; }
   if(a==="playAlongResumeRecent"){ if(typeof sparkPlayAlongLaunchRecent==="function") sparkPlayAlongLaunchRecent(v); return; }
   if(a==="playAlongJumpToWeakSection"){ if(typeof sparkPlayAlongJumpToWeakSection==="function") sparkPlayAlongJumpToWeakSection(); return; }
   if(a==="playAlongStartDrill"){ if(typeof sparkPlayAlongStartDrill==="function") sparkPlayAlongStartDrill(v); return; }
@@ -1632,6 +1635,12 @@ window.act=function(a,v){
   if(a==="returnToLauncher"){
     if (typeof window.returnToLauncherFromHeader === "function") {
       window.returnToLauncherFromHeader();
+    }
+    return;
+  }
+  if(a==="openInstrument" && v){
+    if (typeof window.openInstrumentFromLauncher === "function") {
+      window.openInstrumentFromLauncher(v);
     }
     return;
   }

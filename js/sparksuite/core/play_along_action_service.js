@@ -276,13 +276,13 @@
       imgTag = track.image
         ? "<img src=\"" + escapeHtml(track.image) + "\" width=\"40\" height=\"40\" class=\"song-item-art\"/>"
         : "";
-      html += "<div class=\"song-item\" onclick=\"sparkPlayAlongSelect(" + i + ")\">"
+      html += "<div class=\"song-item\" onclick=\"act('playAlongSelect'," + i + ")\">"
         + imgTag
         + "<div class=\"song-item-info\">"
         + "<strong class=\"song-item-name\">" + name + "</strong>"
         + "<span class=\"song-item-artist\">" + artist + "</span>"
         + "</div>"
-        + "<button class=\"btn btn-sm\" onclick=\"event.stopPropagation();sparkPlayAlongSaveTrack(" + i + ")\">Save</button>"
+        + "<button class=\"btn btn-sm\" onclick=\"event.stopPropagation();act('playAlongSaveTrack'," + i + ")\">Save</button>"
         + "</div>";
     }
     return html;
@@ -416,7 +416,7 @@
       + "<div style=font-size:14px;font-weight:700;margin-bottom:8px>Spotify Client ID</div>"
       + "<div style=font-size:12px;color:var(--text-dim);margin-bottom:12px>Get yours at developer.spotify.com/dashboard</div>"
       + "<input id=spotify-client-id-input class=input type=text placeholder=Paste client ID here style=width:100%;margin-bottom:8px>"
-      + "<button class=btn onclick=sparkPlayAlongSaveClientId() style=background:var(--accent);color:#fff>Save and Connect</button>"
+      + "<button class=btn onclick=\"act('playAlongSaveClientId')\" style=background:var(--accent);color:#fff>Save and Connect</button>"
       + "</div>";
   };
 

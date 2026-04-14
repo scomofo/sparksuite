@@ -145,6 +145,11 @@ test('launcher back routes through the shared returnToLauncher action', function
   assert.ok(/onclick="event\.stopPropagation\(\);act\('returnToLauncher'\)"/.test(indexHtml));
 });
 
+test('launcher cards route through the shared openInstrument action', function() {
+  var launcherJs = loadJS('js/launcher.js');
+  assert.ok(launcherJs.indexOf('onclick="act(\\\'openInstrument\\\',\\\'') >= 0);
+});
+
 test('getPage returns page from active instrument', function() {
   SparkInstruments.activate('test_guitar');
   var page = SparkInstruments.getPage('home');
