@@ -1,5 +1,5 @@
 (function() {
-  function defaultGetCore() {
+  function getPlayAlongCore() {
     return typeof window !== "undefined" ? window.sparkCore || null : null;
   }
 
@@ -31,7 +31,6 @@
   function SparkPlayAlongActionService(options) {
     options = options || {};
     this.stateService = options.stateService || null;
-    this.getCore = options.getCore || defaultGetCore;
     this.getState = options.getState || defaultGetState;
     this.getDemos = options.getDemos || defaultGetDemos;
     this.getInstrumentId = typeof options.getInstrumentId === "function" ? options.getInstrumentId : function() { return "guitar"; };
@@ -52,7 +51,7 @@
 
   SparkPlayAlongActionService.prototype.setDifficulty = function(level) {
     var state = this.getState();
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     if (state) state.spotifyDifficulty = level;
     if (core && typeof core.updateRuntimeState === "function") {
       core.updateRuntimeState({ spotifyDifficulty: level });
@@ -75,7 +74,7 @@
   };
 
   SparkPlayAlongActionService.prototype.searchTracks = function(query, onResults) {
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     var self = this;
     if (!query || query.length < 2) {
       if (typeof onResults === "function") onResults(this.clearSearchResults());
@@ -91,7 +90,7 @@
   };
 
   SparkPlayAlongActionService.prototype.hasCachedChart = function(trackId) {
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     return !!(core && core.chartService &&
       typeof core.chartService.hasCachedChart === "function" &&
       core.chartService.hasCachedChart(trackId));
@@ -142,7 +141,7 @@
   };
 
   SparkPlayAlongActionService.prototype.enrichSavedTrack = function(track) {
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     var saved = this.createSavedTrack(track);
     if (!saved) return Promise.resolve(null);
     if (!core || !core.spotifyClient || typeof core.spotifyClient.getAudioFeatures !== "function") {

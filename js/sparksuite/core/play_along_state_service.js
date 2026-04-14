@@ -9,7 +9,7 @@
     return null;
   }
 
-  function defaultGetCore() {
+  function getPlayAlongCore() {
     return typeof window !== "undefined" ? window.sparkCore || null : null;
   }
 
@@ -40,7 +40,6 @@
   function SparkPlayAlongStateService(options) {
     options = options || {};
     this.getState = options.getState || defaultGetState;
-    this.getCore = options.getCore || defaultGetCore;
   }
 
   SparkPlayAlongStateService.prototype.cloneValue = function(value) {
@@ -214,7 +213,7 @@
 
   SparkPlayAlongStateService.prototype.resolveLoopRange = function() {
     var state = this.getState();
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     var selected = state && state.playAlongSelectedDrill ? state.playAlongSelectedDrill : null;
     var target = state ? (state.playAlongLoopTarget || (selected ? "drill" : "section")) : "section";
     if (target === "drill" && selected && selected.startMs != null && selected.endMs != null) {
@@ -338,7 +337,7 @@
   };
 
   SparkPlayAlongStateService.prototype.getTransportMode = function() {
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     var runtimeState = core && typeof core.getRuntimeState === "function"
       ? core.getRuntimeState()
       : (core ? core.runtimeState || null : null);
@@ -489,7 +488,7 @@
     selected = state.playAlongSelectedDrill || null;
     if (!selected) {
       if (!state.playAlongLoopTarget) state.playAlongLoopTarget = "section";
-      this.syncSectionIndex(getActiveChart(this.getCore()));
+      this.syncSectionIndex(getActiveChart(getPlayAlongCore()));
       state.playAlongLoopRange = state.playAlongLoop ? this.resolveLoopRange() : null;
       return state.playAlongLoopRange;
     }
@@ -547,7 +546,7 @@
   };
 
   SparkPlayAlongStateService.prototype.buildCurrentSectionBookmark = function() {
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     var state = this.getState();
     var chart = getActiveChart(core);
     var params = getActiveParams(core);
@@ -570,7 +569,7 @@
 
   SparkPlayAlongStateService.prototype.stepSection = function(delta, options) {
     var state = this.getState();
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     var chart = getActiveChart(core);
     var sections = chart && Array.isArray(chart.sections) ? chart.sections : [];
     var index;

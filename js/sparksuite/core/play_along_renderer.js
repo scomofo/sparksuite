@@ -7,14 +7,13 @@
   var LANE_HEIGHT = 60;
   var LANE_OFFSET_Y = 10;
 
-  function defaultGetCore() {
+  function getPlayAlongCore() {
     return typeof window !== "undefined" ? window.sparkCore || null : null;
   }
 
   function SparkPlayAlongRenderer(options) {
     options = options || {};
     this.stateService = options.stateService || null;
-    this.getCore = options.getCore || defaultGetCore;
   }
 
   SparkPlayAlongRenderer.prototype.renderFrame = function(result, options) {
@@ -84,7 +83,7 @@
   };
 
   SparkPlayAlongRenderer.prototype.renderSessionTelemetry = function(result, chart) {
-    var core = this.getCore();
+    var core = getPlayAlongCore();
     var timeMs = result && result.timeMs != null ? result.timeMs : (core && typeof core.getPlaybackTimeMs === "function" ? core.getPlaybackTimeMs() : 0);
     var accuracy = core && core.performanceTracker && typeof core.performanceTracker.getAccuracy === "function"
       ? core.performanceTracker.getAccuracy()
