@@ -15,11 +15,6 @@
     return true;
   }
 
-  function launchFrom(factory) {
-    var params = typeof factory === "function" ? factory() : factory;
-    return launchPreparedParams(params);
-  }
-
   function renderOnSuccess(changed) {
     if (!changed) return false;
     requestRender();
@@ -41,21 +36,15 @@
   // ---- Select Track ----
 
   window.sparkPlayAlongSelect = function(index) {
-    return playAlongActions.handleSearchSelection(index, function(params) {
-      launchPreparedParams(params);
-    }, sparkPlayAlongSelectWithFile);
+    return playAlongActions.handleSearchSelection(index, launchPreparedParams, sparkPlayAlongSelectWithFile);
   };
 
   window.sparkPlayAlongSelectWithFile = function(index, file) {
-    return playAlongActions.handleSearchSelectionWithFile(index, file, function(params) {
-      launchPreparedParams(params);
-    });
+    return playAlongActions.handleSearchSelectionWithFile(index, file, launchPreparedParams);
   };
 
   window.sparkPlayAlongLaunchDemo = function(index) {
-    return playAlongActions.handleDemoLaunch(index, function(params) {
-      launchPreparedParams(params);
-    });
+    return playAlongActions.handleDemoLaunch(index, launchPreparedParams);
   };
 
   window.sparkPlayAlongLaunchRecent = function(index) {
@@ -113,9 +102,7 @@
   // ---- Load Local File ----
 
   window.sparkPlayAlongLoadFile = function(file) {
-    return playAlongActions.handleLocalFileLaunch(file, function(params) {
-      launchPreparedParams(params);
-    });
+    return playAlongActions.handleLocalFileLaunch(file, launchPreparedParams);
   };
 
   // ---- Game Loop ----
