@@ -15,6 +15,12 @@
     return true;
   }
 
+  function renderOnSuccess(changed) {
+    if (!changed) return false;
+    requestRender();
+    return true;
+  }
+
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
@@ -72,15 +78,11 @@
   };
 
   window.sparkPlayAlongRemoveSaved = function(index) {
-    if (!playAlongState.removeSavedTrack(index)) return false;
-    requestRender();
-    return true;
+    return renderOnSuccess(playAlongState.removeSavedTrack(index));
   };
 
   window.sparkPlayAlongClearSaved = function() {
-    if (!playAlongState.clearSavedTracks()) return false;
-    requestRender();
-    return true;
+    return renderOnSuccess(playAlongState.clearSavedTracks());
   };
 
   window.sparkPlayAlongLaunchBookmark = function(index) {
@@ -92,27 +94,19 @@
   };
 
   window.sparkPlayAlongRemoveRecent = function(index) {
-    if (!playAlongState.removeRecent(index)) return false;
-    requestRender();
-    return true;
+    return renderOnSuccess(playAlongState.removeRecent(index));
   };
 
   window.sparkPlayAlongClearRecent = function() {
-    if (!playAlongState.clearRecent()) return false;
-    requestRender();
-    return true;
+    return renderOnSuccess(playAlongState.clearRecent());
   };
 
   window.sparkPlayAlongRemoveBookmark = function(index) {
-    if (!playAlongState.removeBookmark(index)) return false;
-    requestRender();
-    return true;
+    return renderOnSuccess(playAlongState.removeBookmark(index));
   };
 
   window.sparkPlayAlongClearBookmarks = function() {
-    if (!playAlongState.clearBookmarks()) return false;
-    requestRender();
-    return true;
+    return renderOnSuccess(playAlongState.clearBookmarks());
   };
 
   // ---- Set Difficulty ----
@@ -203,9 +197,7 @@
   };
 
   window.sparkPlayAlongSetLoopTarget = function(target) {
-    if (!playAlongState.setLoopTarget(target)) return false;
-    requestRender();
-    return true;
+    return renderOnSuccess(playAlongState.setLoopTarget(target));
   };
 
   window.sparkPlayAlongPrevSection = function() {
@@ -220,8 +212,7 @@
     var bookmark = playAlongState.buildCurrentSectionBookmark();
     if (!bookmark) return false;
     playAlongState.rememberBookmark(bookmark);
-    requestRender();
-    return true;
+    return renderOnSuccess(true);
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {
