@@ -13,8 +13,8 @@
     this.searchResults = [];
   }
 
-  SparkPlayAlongActionService.bootstrapController = function(target) {
-    target = target || (typeof window !== "undefined" ? window : null);
+  SparkPlayAlongActionService.bootstrapController = function() {
+    var target = typeof window !== "undefined" ? window : null;
     if (!target) return null;
     var stateService = new SparkPlayAlongStateService();
     var actionService = new SparkPlayAlongActionService(stateService);
