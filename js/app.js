@@ -46,6 +46,30 @@ function appIncrement(path, delta){
   return appWrite(path, current+delta);
 }
 
+function appApplyLegacyReward(reward, fallback){
+  if(window.sparkCore&&typeof window.sparkCore.applyLegacyReward==="function"){
+    return window.sparkCore.applyLegacyReward(reward||{});
+  }
+  if(typeof fallback==="function")return fallback();
+  return reward||{};
+}
+
+function appApplyLegacyActivityCompletion(update, fallback){
+  if(window.sparkCore&&typeof window.sparkCore.applyLegacyActivityCompletion==="function"){
+    return window.sparkCore.applyLegacyActivityCompletion(update||{});
+  }
+  if(typeof fallback==="function")return fallback();
+  return update||{};
+}
+
+function appApplyLegacyActivityRuntime(update, fallback){
+  if(window.sparkCore&&typeof window.sparkCore.applyLegacyActivityRuntime==="function"){
+    return window.sparkCore.applyLegacyActivityRuntime(update||{});
+  }
+  if(typeof fallback==="function")return fallback();
+  return update||{};
+}
+
 function tickS(){
   var timerActive=appRead("timerActive", false);
   var timer=appRead("timer", 0);
@@ -61,8 +85,8 @@ function tickS(){
       chordName: currentChord ? currentChord.name : null,
       durationSec: 120
     });
-    if(timer%30===0&&timer>0&&SparkPsychology.shouldReward(sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{appIncrement("xp",5);appWrite("xpToast",{amount:5,time:Date.now()});}saveState();}
-    else if(timer%30===0&&timer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{appIncrement("xp",5);}} // silent XP accrual when toast skipped
+    if(timer%30===0&&timer>0&&SparkPsychology.shouldReward(sessions)){snd("tick");appApplyLegacyReward({xpDelta:5,toastAmount:5},function(){appIncrement("xp",5);appWrite("xpToast",{amount:5,time:Date.now()});});saveState();}
+    else if(timer%30===0&&timer>0){appApplyLegacyReward({xpDelta:5},function(){appIncrement("xp",5);});} // silent XP accrual when toast skipped
     if(timer===60)fireMicro("halfway","Halfway there!","&#128170;");
     addPracticeSecond();
     render();T.session=setTimeout(tickS,1000);
@@ -97,8 +121,7 @@ function tickS(){
         console.debug("[App] ProgressOutcome:", progressOutcome);
       }
     }
-    if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
-    else appWrite("xpToast",{amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot});
+    appApplyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot},function(){appWrite("xpToast",{amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot});});
     if(outcome.jackpot){snd("levelup");}else{snd("complete");}
     if(outcome.leveledUp)snd("levelup");
     trigC();appWrite("screen",SCR.COMPLETE);render();
@@ -119,8 +142,8 @@ function tickD(){
       chordNames: drillChords.map(function(c){ return c.name; }),
       durationSec: 60
     });
-    if(drillTimer%30===0&&drillTimer>0&&SparkPsychology.shouldReward(sessions)){snd("tick");if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5,toastAmount:5});else{appIncrement("xp",5);appWrite("xpToast",{amount:5,time:Date.now()});}saveState();}
-    else if(drillTimer%30===0&&drillTimer>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:5});else{appIncrement("xp",5);}}
+    if(drillTimer%30===0&&drillTimer>0&&SparkPsychology.shouldReward(sessions)){snd("tick");appApplyLegacyReward({xpDelta:5,toastAmount:5},function(){appIncrement("xp",5);appWrite("xpToast",{amount:5,time:Date.now()});});saveState();}
+    else if(drillTimer%30===0&&drillTimer>0){appApplyLegacyReward({xpDelta:5},function(){appIncrement("xp",5);});}
     addPracticeSecond();
     if(!updateDrillTimerUI())render(); // partial update if elements exist
     T.drill=setTimeout(tickD,1000);
@@ -133,21 +156,19 @@ function tickD(){
         chordNames: drillChords.map(function(c){return c.name;})
       });
     }
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-      SparkProgressBridge.applyLegacyActivityCompletion({
-        xpDelta:20,
-        toastAmount:20,
-        incrementFields:{drillCount:1},
-        history:{type:"drill",detail:detail,xp:20},
-        emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
-        checkBadges:true
-      });
-    }else{
-      appIncrement("drillCount",1);if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{appIncrement("xp",20);appWrite("xpToast",{amount:20,time:Date.now()});}
+    appApplyLegacyActivityCompletion({
+      xpDelta:20,
+      toastAmount:20,
+      incrementFields:{drillCount:1},
+      history:{type:"drill",detail:detail,xp:20},
+      emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
+      checkBadges:true
+    },function(){
+      appIncrement("drillCount",1);appApplyLegacyReward({xpDelta:20,toastAmount:20},function(){appIncrement("xp",20);appWrite("xpToast",{amount:20,time:Date.now()});});
       logHistory("drill",detail,20);
       _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
       checkBadges();saveState();
-    }
+    });
     // Route through contract-based progress path (Phase 6 migration)
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
       var drillSessionResult = SparkContracts.createSessionResult({
@@ -188,21 +209,19 @@ function tickDy(){
       challengeId: dailyChallenge ? dailyChallenge.id : null,
       durationSec: dailyChallenge && dailyChallenge.id === "hold" ? 30 : dailyChallenge && dailyChallenge.id === "marathon" ? 180 : 60
     });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-      SparkProgressBridge.applyLegacyActivityCompletion({
-        xpDelta:xp,
-        toastAmount:xp,
-        setFlags:{dailyComplete:true},
-        incrementFields:{dailyDone:1},
-        history:{type:"daily",detail:dailyChallenge?dailyChallenge.title:"Challenge",xp:xp},
-        checkBadges:true
-      });
-    }else{
+    appApplyLegacyActivityCompletion({
+      xpDelta:xp,
+      toastAmount:xp,
+      setFlags:{dailyComplete:true},
+      incrementFields:{dailyDone:1},
+      history:{type:"daily",detail:dailyChallenge?dailyChallenge.title:"Challenge",xp:xp},
+      checkBadges:true
+    },function(){
       appWrite("dailyComplete",true);appIncrement("dailyDone",1);
-      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp,toastAmount:xp});else{appIncrement("xp",xp);appWrite("xpToast",{amount:xp,time:Date.now()});}
+      appApplyLegacyReward({xpDelta:xp,toastAmount:xp},function(){appIncrement("xp",xp);appWrite("xpToast",{amount:xp,time:Date.now()});});
       logHistory("daily",dailyChallenge?dailyChallenge.title:"Challenge",xp);
       checkBadges();saveState();
-    }
+    });
     // Route through contract-based progress path
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
       var dailyResult = SparkContracts.createSessionResult({
@@ -292,27 +311,23 @@ function finishRhythm(){
     startTimeMs: rhythmStartTime,
     results: rhythmResult
   });
-  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-    SparkProgressBridge.applyLegacyActivityRuntime({
-      setFields:{rhythmActive:false,rhythmResults:rhythmResult},
-      cancelAnimationFrames:_rhythmAnim?[_rhythmAnim]:[]
-    });
-  }else{
+  appApplyLegacyActivityRuntime({
+    setFields:{rhythmActive:false,rhythmResults:rhythmResult},
+    cancelAnimationFrames:_rhythmAnim?[_rhythmAnim]:[]
+  },function(){
     appWrite("rhythmActive",false);
     if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);
     appWrite("rhythmResults",rhythmResult);
-  }
+  });
   _rhythmAnim=null;
   var xp=Math.round(rhythmScore/10);
   if(xp>0){
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-      SparkProgressBridge.applyLegacyActivityCompletion({
-        xpDelta:xp,
-        history:{type:"rhythm",detail:"Score: "+rhythmScore,xp:xp}
-      });
-    }else{
-      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else appIncrement("xp",xp);logHistory("rhythm","Score: "+rhythmScore,xp);saveState();
-    }
+    appApplyLegacyActivityCompletion({
+      xpDelta:xp,
+      history:{type:"rhythm",detail:"Score: "+rhythmScore,xp:xp}
+    },function(){
+      appApplyLegacyReward({xpDelta:xp},function(){appIncrement("xp",xp);});logHistory("rhythm","Score: "+rhythmScore,xp);saveState();
+    });
   }
   // Route through contract-based progress path
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
@@ -401,30 +416,26 @@ function finishRunner(){
     obstacles: runnerObstacles,
     results: runnerResult
   });
-  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-    SparkProgressBridge.applyLegacyActivityRuntime({
-      setFields:{runnerActive:false,runnerResults:runnerResult},
-      cancelAnimationFrames:_runnerAnim?[_runnerAnim]:[]
-    });
-  }else{
+  appApplyLegacyActivityRuntime({
+    setFields:{runnerActive:false,runnerResults:runnerResult},
+    cancelAnimationFrames:_runnerAnim?[_runnerAnim]:[]
+  },function(){
     appWrite("runnerActive",false);
     if(_runnerAnim)cancelAnimationFrame(_runnerAnim);
     appWrite("runnerResults",runnerResult);
-  }
+  });
   _runnerAnim=null;
   var xp=Math.round(runnerScore/20);
-  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-    SparkProgressBridge.applyLegacyActivityCompletion({
-      xpDelta:xp>0?xp:0,
-      maxFields:{runnerHighScore:runnerScore},
-      resultFields:{runnerResults:runnerResult},
-      history:xp>0?{type:"runner",detail:"Score: "+runnerScore,xp:xp}:null
-    });
-  }else{
+  appApplyLegacyActivityCompletion({
+    xpDelta:xp>0?xp:0,
+    maxFields:{runnerHighScore:runnerScore},
+    resultFields:{runnerResults:runnerResult},
+    history:xp>0?{type:"runner",detail:"Score: "+runnerScore,xp:xp}:null
+  },function(){
     if(runnerScore>runnerHighScore)appWrite("runnerHighScore",runnerScore);
     appWrite("runnerResults",runnerResult);
-    if(xp>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else appIncrement("xp",xp);logHistory("runner","Score: "+runnerScore,xp);saveState();}
-  }
+    if(xp>0){appApplyLegacyReward({xpDelta:xp},function(){appIncrement("xp",xp);});logHistory("runner","Score: "+runnerScore,xp);saveState();}
+  });
   // Route through contract-based progress path
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
     var runnerSessionResult = SparkContracts.createSessionResult({
@@ -587,26 +598,24 @@ function stopAllTimers(){
   clearInterval(T.strum);clearInterval(T.song);clearInterval(T.metro);clearInterval(T.prog);
   if(appRead("metronomeOn", false)){stopMetronome();appWrite("metronomeOn",false);}
   if(appRead("chordDetectOn", false))stopChordDetect();
-  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-    SparkProgressBridge.applyLegacyActivityRuntime({
-      setFields:{
-        rhythmActive:false,
-        runnerActive:false,
-        progPlaying:false,
-        stemPlaying:false,
-        timerActive:false,
-        strumActive:false,
-        songPlaying:false
-      },
-      cancelAnimationFrames:[_rhythmAnim,_runnerAnim]
-    });
-  }else{
+  appApplyLegacyActivityRuntime({
+    setFields:{
+      rhythmActive:false,
+      runnerActive:false,
+      progPlaying:false,
+      stemPlaying:false,
+      timerActive:false,
+      strumActive:false,
+      songPlaying:false
+    },
+    cancelAnimationFrames:[_rhythmAnim,_runnerAnim]
+  },function(){
     if(appRead("rhythmActive", false)){appWrite("rhythmActive",false);if(_rhythmAnim)cancelAnimationFrame(_rhythmAnim);}
     if(appRead("runnerActive", false)){appWrite("runnerActive",false);if(_runnerAnim)cancelAnimationFrame(_runnerAnim);}
     if(appRead("progPlaying", false)){appWrite("progPlaying",false);}
     appWrite("timerActive",false);appWrite("strumActive",false);appWrite("songPlaying",false);
     appWrite("stemPlaying",false);
-  }
+  });
   _rhythmAnim=null;_runnerAnim=null;
   cleanupStems();
   if(!_performStopping&&(appRead("performPlaying", false)||appRead("performPaused", false))){stopPerformance();}
@@ -1601,14 +1610,12 @@ window.act=function(a,v){
     return;
   }
   if(a==="tab"){
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{tab:v,screen:SCR.HOME,earTrainQ:null,earTrainAns:null,selectedVoicing:0}
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:{tab:v,screen:SCR.HOME,earTrainQ:null,earTrainAns:null,selectedVoicing:0}
+    },function(){
       appWrite("tab",v);appWrite("screen",SCR.HOME);
       appWrite("earTrainQ",null);appWrite("earTrainAns",null);appWrite("selectedVoicing",0);
-    }
+    });
     if(window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function"){
       window.sparkCore.updateRuntimeState({
         activeScreen: "home",
@@ -1650,13 +1657,11 @@ window.act=function(a,v){
   }
   if(a==="doneSession"){
     clearTimeout(T.session);if(appRead("metronomeOn", false))stopMetronome();if(appRead("chordDetectOn", false))stopChordDetect();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{timerActive:true,timer:0}
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:{timerActive:true,timer:0}
+    },function(){
       appWrite("timerActive",true);appWrite("timer",0);
-    }
+    });
     syncLegacyPracticeRuntimeRequest("set_remaining", {
       remainingSec: 0,
       timerActive: true,
@@ -1669,13 +1674,11 @@ window.act=function(a,v){
   if(a==="startDaily"&&appRead("dailyChallenge", null)){
     var dailyChallenge=appRead("dailyChallenge", null);
     var t=dailyChallenge.id==="hold"?30:dailyChallenge.id==="marathon"?180:60;
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{dailyTimer:t,dailyComplete:false,screen:SCR.DAILY}
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:{dailyTimer:t,dailyComplete:false,screen:SCR.DAILY}
+    },function(){
       appWrite("dailyTimer",t);appWrite("dailyComplete",false);appWrite("screen",SCR.DAILY);
-    }
+    });
     openLegacyDailyChallengeRequest({
       challengeId: dailyChallenge.id,
       durationSec: t
@@ -1690,20 +1693,18 @@ window.act=function(a,v){
       challengeId: completeDailyChallenge ? completeDailyChallenge.id : null,
       durationSec: completeDailyChallenge && completeDailyChallenge.id === "hold" ? 30 : completeDailyChallenge && completeDailyChallenge.id === "marathon" ? 180 : 60
     });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-      SparkProgressBridge.applyLegacyActivityCompletion({
-        xpDelta:xp,
-        setFlags:{dailyComplete:true},
-        incrementFields:{dailyDone:1},
-        history:{type:"daily",detail:completeDailyChallenge?completeDailyChallenge.title:"Challenge",xp:xp},
-        checkBadges:true
-      });
-    }else{
+    appApplyLegacyActivityCompletion({
+      xpDelta:xp,
+      setFlags:{dailyComplete:true},
+      incrementFields:{dailyDone:1},
+      history:{type:"daily",detail:completeDailyChallenge?completeDailyChallenge.title:"Challenge",xp:xp},
+      checkBadges:true
+    },function(){
       appWrite("dailyComplete",true);appIncrement("dailyDone",1);
-      if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else appIncrement("xp",xp);
+      appApplyLegacyReward({xpDelta:xp},function(){appIncrement("xp",xp);});
       logHistory("daily",completeDailyChallenge?completeDailyChallenge.title:"Challenge",xp);
       checkBadges();saveState();
-    }
+    });
     trigC();render();return;
   }
   if(a==="dailyDoneHome"){
@@ -1728,39 +1729,33 @@ window.act=function(a,v){
         streak: nextEarTrainStreak
       });
     }
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{earTrainAns:v},
-        incrementFields:{earTrainTotal:1}
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:{earTrainAns:v},
+      incrementFields:{earTrainTotal:1}
+    },function(){
       appWrite("earTrainAns",v);
       appIncrement("earTrainTotal",1);
-    }
+    });
     var ok=earTrainOk;
     if(ok){
       snd("correct");
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-        SparkProgressBridge.applyLegacyActivityCompletion({
-          xpDelta:15,
-          incrementFields:{earTrainScore:1,earTrainStreak:1},
-          history:{type:"ear",detail:currentEarTrainQ,xp:15},
-          checkBadges:true
-        });
-      }else{
+      appApplyLegacyActivityCompletion({
+        xpDelta:15,
+        incrementFields:{earTrainScore:1,earTrainStreak:1},
+        history:{type:"ear",detail:currentEarTrainQ,xp:15},
+        checkBadges:true
+      },function(){
         appIncrement("earTrainScore",1);appIncrement("earTrainStreak",1);
-        if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:15});else appIncrement("xp",15);logHistory("ear",currentEarTrainQ,15);checkBadges();saveState();
-      }
+        appApplyLegacyReward({xpDelta:15},function(){appIncrement("xp",15);});logHistory("ear",currentEarTrainQ,15);checkBadges();saveState();
+      });
     }
     else{
       snd("wrong");
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields:{earTrainStreak:0}
-        });
-      }else{
+      appApplyLegacyActivityRuntime({
+        setFields:{earTrainStreak:0}
+      },function(){
         appWrite("earTrainStreak",0);
-      }
+      });
     }
     render();
     setTimeout(function(){act("startEarTrain");},1500);
@@ -1777,14 +1772,12 @@ window.act=function(a,v){
       if(window.sparkCore && typeof window.sparkCore.openLegacyStrumPattern === "function"){
         window.sparkCore.openLegacyStrumPattern({ pattern: sp });
       }
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields:{selectedStrum:sp,strumActive:false,_strumBeat:-1,screen:SCR.STRUM},
-          clearIntervals:["strum"]
-        });
-      }else{
+      appApplyLegacyActivityRuntime({
+        setFields:{selectedStrum:sp,strumActive:false,_strumBeat:-1,screen:SCR.STRUM},
+        clearIntervals:["strum"]
+      },function(){
         appWrite("selectedStrum",sp);appWrite("strumActive",false);appWrite("_strumBeat",-1);clearInterval(T.strum);appWrite("screen",SCR.STRUM);
-      }
+      });
       render();
     }return;
   }
@@ -1799,15 +1792,13 @@ window.act=function(a,v){
         beat: nextStrumActive ? 0 : -1
       });
     }
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:nextStrumActive?{strumActive:true,_strumBeat:0}:{strumActive:false,_strumBeat:-1},
-        clearIntervals:nextStrumActive?[]:["strum"]
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:nextStrumActive?{strumActive:true,_strumBeat:0}:{strumActive:false,_strumBeat:-1},
+      clearIntervals:nextStrumActive?[]:["strum"]
+    },function(){
       appWrite("strumActive",nextStrumActive);
       if(!nextStrumActive){clearInterval(T.strum);appWrite("_strumBeat",-1);}
-    }
+    });
     if(nextStrumActive&&selectedStrum){
       var p=selectedStrum.pattern,ms=60000/selectedStrum.bpm/(p.length>4?2:1);
       var currentStrumChord=appRead("currentChord", null);
@@ -1844,16 +1835,14 @@ window.act=function(a,v){
       source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
       songBeat: nextSongPlaying ? 0 : appRead("songBeat", 0)
     });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:nextSongPlaying?{songPlaying:true,songBeat:0}:{songPlaying:false},
-        clearIntervals:nextSongPlaying?[]:["song"]
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:nextSongPlaying?{songPlaying:true,songBeat:0}:{songPlaying:false},
+      clearIntervals:nextSongPlaying?[]:["song"]
+    },function(){
       appWrite("songPlaying",nextSongPlaying);
       if(nextSongPlaying)appWrite("songBeat",0);
       else clearInterval(T.song);
-    }
+    });
     if(nextSongPlaying&&selectedSongData){
       var ms=60000/selectedSongData.bpm;
       var cn=selectedSongData.progression[0];strumChord(CHORD_NAME_MAP[cn]||cn);
@@ -1868,29 +1857,25 @@ window.act=function(a,v){
   }
   if(a==="completeSong"){
     var completeSongData=appRead("selectedSong", null);
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{songPlaying:false},
-        clearIntervals:["song"]
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:{songPlaying:false},
+      clearIntervals:["song"]
+    },function(){
       appWrite("songPlaying",false);clearInterval(T.song);
-    }
+    });
     snd("complete");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
-      SparkProgressBridge.applyLegacyActivityCompletion({
-        xpDelta:40,
-        incrementFields:{songsPlayed:1},
-        history:{type:"song",detail:completeSongData?completeSongData.title:"Song",xp:40},
-        emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 }},
-        checkBadges:true
-      });
-    }else{
-      appIncrement("songsPlayed",1);if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:40});else appIncrement("xp",40);
+    appApplyLegacyActivityCompletion({
+      xpDelta:40,
+      incrementFields:{songsPlayed:1},
+      history:{type:"song",detail:completeSongData?completeSongData.title:"Song",xp:40},
+      emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 }},
+      checkBadges:true
+    },function(){
+      appIncrement("songsPlayed",1);appApplyLegacyReward({xpDelta:40},function(){appIncrement("xp",40);});
       logHistory("song",completeSongData?completeSongData.title:"Song",40);
       _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 });
       checkBadges();saveState();
-    }
+    });
     completeSongSessionRequest({
       songData: completeSongData,
       source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
@@ -1901,31 +1886,25 @@ window.act=function(a,v){
   }
   if(a==="songBack"){
     applySongNavigationRequest("songs_home");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}},function(){
       appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
-    }
+    });
     render();return;
   }
   if(a==="songDoneHome"){
     applySongNavigationRequest("songs_home");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}},function(){
       appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
-    }
+    });
     render();return;
   }
   // === Tuner ===
   if(a==="startTuner"){
     if(!AC){
       syncTunerRuntimeRequest({ active:false, error:"Audio not supported" });
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Audio not supported"}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{tunerErr:"Audio not supported"}},function(){
         appWrite("tunerErr","Audio not supported");
-      }
+      });
       render();return;
     }
     navigator.mediaDevices.getUserMedia(getAudioConstraint()).then(function(st){
@@ -1933,11 +1912,9 @@ window.act=function(a,v){
       an.fftSize=8192;src.connect(an); // Larger buffer for better low-freq accuracy
       tunerR.ctx=ctx;tunerR.analyser=an;
       syncTunerRuntimeRequest({ active:true, error:null, note:null, freq:0, cents:0 });
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerActive:true,tunerErr:null}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{tunerActive:true,tunerErr:null}},function(){
         appWrite("tunerActive",true);appWrite("tunerErr",null);
-      }
+      });
       _tunerHistory=[];_tunerStableCount=0;_tunerLastStableNote="";
       render();
       var buf=new Float32Array(an.fftSize);
@@ -1964,11 +1941,9 @@ window.act=function(a,v){
       }det();
     }).catch(function(){
       syncTunerRuntimeRequest({ active:false, error:"Microphone access denied" });
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tunerErr:"Microphone access denied"}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{tunerErr:"Microphone access denied"}},function(){
         appWrite("tunerErr","Microphone access denied");
-      }
+      });
       render();
     });return;
   }
@@ -1977,14 +1952,12 @@ window.act=function(a,v){
     if(tunerR.stream)tunerR.stream.getTracks().forEach(function(t){t.stop();});
     if(tunerR.ctx)tunerR.ctx.close();
     syncTunerRuntimeRequest({ active:false, note:null, freq:0, cents:0, error:null });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0}
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:{tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0}
+    },function(){
       appWrite("tunerActive",false);
       appWrite("tunerNote",null);appWrite("tunerFreq",0);appWrite("tunerCents",0);
-    }
+    });
     render();return;
   }
   if(a==="toggleMetro"){if(appRead("metronomeOn", false))stopMetronome();else startMetronome();return;}
@@ -2010,34 +1983,28 @@ window.act=function(a,v){
   if(a==="toggleChordDetect"){if(appRead("chordDetectOn", false))stopChordDetect();else startChordDetect();return;}
   // Dark mode toggle
   if(a==="toggleDark"){
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{darkMode:!appRead("darkMode", false)},save:false});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{darkMode:!appRead("darkMode", false)},save:false},function(){
       appWrite("darkMode",!appRead("darkMode", false));
-    }
+    });
     saveState();applyTheme();render();return;
   }
   // Onboarding
   if(a==="setIntention"){appWrite("practiceIntention",v||"");return;}
   if(a==="completeOnboarding"){
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{onboardingDone:true},save:false});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{onboardingDone:true},save:false},function(){
       appWrite("onboardingDone",true);
-    }
+    });
     saveState();render();return;
   }
   // New system screens
   if(a==="openRecommendations"){
     openDashboardSectionRequest("recommendations");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.RECOMMENDATIONS}});
-    else appWrite("screen",SCR.RECOMMENDATIONS);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.RECOMMENDATIONS}},function(){appWrite("screen",SCR.RECOMMENDATIONS);});
     render();return;
   }
   if(a==="openCareer"){
     openDashboardSectionRequest("career");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CAREER}});
-    else appWrite("screen",SCR.CAREER);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.CAREER}},function(){appWrite("screen",SCR.CAREER);});
     render();return;
   }
   if(a==="openCareerSong"){
@@ -2054,39 +2021,33 @@ window.act=function(a,v){
       appWrite("performSongData",nextSong);
       appWrite("performSongId",v);
     }
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{currentSong:nextSong,performSongData:nextSong,performSongId:v,screen:SCR.PERFORM_SONG}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{currentSong:nextSong,performSongData:nextSong,performSongId:v,screen:SCR.PERFORM_SONG}},function(){
       appWrite("currentSong",nextSong);
       appWrite("performSongData",nextSong);
       appWrite("performSongId",v);
       appWrite("screen",SCR.PERFORM_SONG);
-    }
+    });
     render();return;
   }
   if(a==="openInsights"){
     openDashboardSectionRequest("insights");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.INSIGHTS}});
-    else appWrite("screen",SCR.INSIGHTS);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.INSIGHTS}},function(){appWrite("screen",SCR.INSIGHTS);});
     render();return;
   }
   if(a==="openChallengeHub"){
     openDashboardSectionRequest("challenges");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CHALLENGES}});
-    else appWrite("screen",SCR.CHALLENGES);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.CHALLENGES}},function(){appWrite("screen",SCR.CHALLENGES);});
     render();return;
   }
   if(a==="openHomeDash"){
     openDashboardSectionRequest("home_dash");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME_DASH}});
-    else appWrite("screen",SCR.HOME_DASH);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME_DASH}},function(){appWrite("screen",SCR.HOME_DASH);});
     render();return;
   }
   if(a==="openSettings"){
     openUtilityScreenRequest("settings");
     syncSettingsStateRequest({ theme: appRead(["settings","theme"], null) });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SETTINGS}});
-    else appWrite("screen",SCR.SETTINGS);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.SETTINGS}},function(){appWrite("screen",SCR.SETTINGS);});
     render();return;
   }
   if(a==="openOnboarding"){if(typeof startOnboarding==="function")startOnboarding();return;}
@@ -2120,8 +2081,7 @@ window.act=function(a,v){
   }
   if(a==="openPracticePlan"){
     openPracticePlanScreenRequest();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PLAN}});
-    else appWrite("screen",SCR.PLAN);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.PLAN}},function(){appWrite("screen",SCR.PLAN);});
     render();return;
   }
   if(a==="setTheme"){if(appRead("settings", null))appWrite(["settings","theme"],v);if(typeof applyThemeSetting==="function")applyThemeSetting();saveState();render();return;}
@@ -2264,22 +2224,20 @@ window.act=function(a,v){
         beats.push({time:(r*pat.length+i)*ms/2,type:pat[i],hit:false,result:null});
       }
     }
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{
-          rhythmBeats:beats,
-          rhythmScore:0,
-          rhythmCombo:0,
-          rhythmMaxCombo:0,
-          rhythmActive:true,
-          rhythmResults:null,
-          rhythmStartTime:performance.now()
-        }
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:{
+        rhythmBeats:beats,
+        rhythmScore:0,
+        rhythmCombo:0,
+        rhythmMaxCombo:0,
+        rhythmActive:true,
+        rhythmResults:null,
+        rhythmStartTime:performance.now()
+      }
+    },function(){
       appWrite("rhythmBeats",beats);appWrite("rhythmScore",0);appWrite("rhythmCombo",0);appWrite("rhythmMaxCombo",0);
       appWrite("rhythmActive",true);appWrite("rhythmResults",null);appWrite("rhythmStartTime",performance.now());
-    }
+    });
     openLegacyRhythmGameRequest({
       beats: beats,
       score: 0,
@@ -2496,15 +2454,13 @@ window.act=function(a,v){
     var importedSongsPlay=appRead("importedSongs", []);
     if(idx>=0&&idx<importedSongsPlay.length){
       openSongSessionRequest({ songData: importedSongsPlay[idx], source: "imported" });
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields:{selectedSong:importedSongsPlay[idx],songPlaying:false,songBeat:0,screen:SCR.SONG},
-          clearIntervals:["song"]
-        });
-      }else{
+      appApplyLegacyActivityRuntime({
+        setFields:{selectedSong:importedSongsPlay[idx],songPlaying:false,songBeat:0,screen:SCR.SONG},
+        clearIntervals:["song"]
+      },function(){
         appWrite("selectedSong",importedSongsPlay[idx]);appWrite("songPlaying",false);appWrite("songBeat",0);clearInterval(T.song);
         appWrite("screen",SCR.SONG);
-      }
+      });
       render();
     }return;
   }
@@ -2530,15 +2486,13 @@ window.act=function(a,v){
       };
       if(!Array.isArray(parsed.chords)||!Array.isArray(parsed.progression)){throw new Error("Invalid song data");}
       openSongSessionRequest({ songData: parsed, source: "community" });
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields:{selectedSong:parsed,songPlaying:false,songBeat:0,screen:SCR.SONG},
-          clearIntervals:["song"]
-        });
-      }else{
+      appApplyLegacyActivityRuntime({
+        setFields:{selectedSong:parsed,songPlaying:false,songBeat:0,screen:SCR.SONG},
+        clearIntervals:["song"]
+      },function(){
         appWrite("selectedSong",parsed);appWrite("songPlaying",false);appWrite("songBeat",0);clearInterval(T.song);
         appWrite("screen",SCR.SONG);
-      }
+      });
       render();
     }catch(e){
       console.warn("ChordSpark: Failed to parse community song:",e.message);
@@ -2597,29 +2551,27 @@ window.act=function(a,v){
   if(a==="startRunner"){
     var av=CHORDS[appRead("level", 1)]||CHORDS[1];
     var runnerTarget=av[Math.floor(Math.random()*av.length)];
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{
-          runnerTarget:runnerTarget,
-          runnerActive:true,
-          runnerScore:0,
-          runnerCombo:0,
-          runnerMaxCombo:0,
-          runnerLives:3,
-          runnerObstacles:[],
-          runnerSpeed:2,
-          runnerDistance:0,
-          runnerResults:null,
-          runnerStartTime:Date.now(),
-          runnerLastSpawn:0
-        }
-      });
-    }else{
+    appApplyLegacyActivityRuntime({
+      setFields:{
+        runnerTarget:runnerTarget,
+        runnerActive:true,
+        runnerScore:0,
+        runnerCombo:0,
+        runnerMaxCombo:0,
+        runnerLives:3,
+        runnerObstacles:[],
+        runnerSpeed:2,
+        runnerDistance:0,
+        runnerResults:null,
+        runnerStartTime:Date.now(),
+        runnerLastSpawn:0
+      }
+    },function(){
       appWrite("runnerTarget",runnerTarget);
       appWrite("runnerActive",true);appWrite("runnerScore",0);appWrite("runnerCombo",0);appWrite("runnerMaxCombo",0);
       appWrite("runnerLives",3);appWrite("runnerObstacles",[]);appWrite("runnerSpeed",2);appWrite("runnerDistance",0);
       appWrite("runnerResults",null);appWrite("runnerStartTime",Date.now());appWrite("runnerLastSpawn",0);
-    }
+    });
     openLegacyRunnerGameRequest({
       targetName: runnerTarget ? runnerTarget.name : null,
       score: 0,
@@ -2691,28 +2643,22 @@ window.act=function(a,v){
   // === Stem Separation ===
   if(a==="stemOpenFile"){
     if(!window.electron)return;
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemError:null}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{stemError:null}},function(){
       appWrite("stemError",null);
-    }
+    });
     render();
     window.electron.stems.openFile().then(function(result){
       if(!result)return;
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemFile:result,stemError:null,stemStatus:"idle"}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{stemFile:result,stemError:null,stemStatus:"idle"}},function(){
         appWrite("stemFile",result);appWrite("stemError",null);appWrite("stemStatus","idle");
-      }
+      });
       render();
       // Check cache first
       window.electron.stems.checkCache(result.filePath).then(function(cached){
         if(cached){
-          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPaths:cached,stemStatus:"ready"}});
-          }else{
+          appApplyLegacyActivityRuntime({setFields:{stemPaths:cached,stemStatus:"ready"}},function(){
             appWrite("stemPaths",cached);appWrite("stemStatus","ready");
-          }
+          });
           render();
           // Pre-load audio URLs
           _loadStemFileUrls(cached);
@@ -2726,65 +2672,53 @@ window.act=function(a,v){
   if(a==="stemSeparate"){
     var stemFile=appRead("stemFile", null);
     if(!window.electron||!stemFile)return;
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"separating",stemProgress:0,stemError:null}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{stemStatus:"separating",stemProgress:0,stemError:null}},function(){
       appWrite("stemStatus","separating");appWrite("stemProgress",0);appWrite("stemError",null);
-    }
+    });
     render();
     // Listen for progress
     var removeProgress=window.electron.stems.onProgress(function(data){
       // Estimate progress from stderr output
       if(data.line){
         // demucs.cpp outputs segment info; rough estimate
-        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemProgress:Math.min(95,appRead("stemProgress",0)+2)},save:false});
-        }else{
+        appApplyLegacyActivityRuntime({setFields:{stemProgress:Math.min(95,appRead("stemProgress",0)+2)},save:false},function(){
           appWrite("stemProgress",Math.min(95,appRead("stemProgress",0)+2));
-        }
+        });
         render();
       }
     });
     window.electron.stems.separate(stemFile.filePath).then(function(result){
       removeProgress();
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPaths:result.stemPaths,stemStatus:"ready",stemProgress:100}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{stemPaths:result.stemPaths,stemStatus:"ready",stemProgress:100}},function(){
         appWrite("stemPaths",result.stemPaths);appWrite("stemStatus","ready");appWrite("stemProgress",100);
-      }
+      });
       render();
       _loadStemFileUrls(result.stemPaths);
     }).catch(function(err){
       removeProgress();
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"error",stemError:err.message||"Separation failed"}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{stemStatus:"error",stemError:err.message||"Separation failed"}},function(){
         appWrite("stemStatus","error");appWrite("stemError",err.message||"Separation failed");
-      }
+      });
       render();
     });
     return;
   }
   if(a==="stemCancel"){
     if(window.electron)window.electron.stems.cancel();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemStatus:"idle",stemProgress:0}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{stemStatus:"idle",stemProgress:0}},function(){
       appWrite("stemStatus","idle");appWrite("stemProgress",0);
-    }
+    });
     render();return;
   }
   if(a==="stemOpen"){
     openStemPlayerRequest();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.STEMS}});
-    else appWrite("screen",SCR.STEMS);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.STEMS}},function(){appWrite("screen",SCR.STEMS);});
     render();return;
   }
   if(a==="stemBack"){
     cleanupStems();
     closeStemPlayerRequest();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS,songsSubTab:"stems"}});
-    else {appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);appWrite("songsSubTab","stems");}
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS,songsSubTab:"stems"}},function(){appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);appWrite("songsSubTab","stems");});
     render();return;
   }
   if(a==="stemToggle"){
@@ -2864,11 +2798,9 @@ window.act=function(a,v){
     if(!isNaN(songIdx)&&SONGS[songIdx]){
       var chart=buildPerformanceChartFromSong(SONGS[songIdx],"builtin","rhythm_chords");
       if(chart){
-        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performArrangementType:"rhythm_chords"}});
-        }else{
+        appApplyLegacyActivityRuntime({setFields:{performArrangementType:"rhythm_chords"}},function(){
           appWrite("performArrangementType","rhythm_chords");
-        }
+        });
         startPerformance(chart);return;
       }
     }
@@ -2878,11 +2810,9 @@ window.act=function(a,v){
     var sgIdx=parseInt(v);
     if(!isNaN(sgIdx)&&SONGS[sgIdx]){
       var selectedSongId=(SONGS[sgIdx].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{performTargetTechnique:null}},function(){
         appWrite("performTargetTechnique",null);
-      }
+      });
       var preferredArrangement = typeof getPreferredPerformanceArrangement === "function"
         ? getPreferredPerformanceArrangement(SONGS[sgIdx], appRead("performArrangementType", "chords") || "chords")
         : (appRead("performArrangementType", "chords") || "chords");
@@ -2901,11 +2831,9 @@ window.act=function(a,v){
         appWrite("performArrangementType",preferredArrangement);
         appWrite("performTargetTechnique",null);
       }
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){
         appWrite("screen",SCR.PERFORM_SONG);
-      }
+      });
       render();
     }
     return;
@@ -2915,11 +2843,9 @@ window.act=function(a,v){
     var songId=parts[0]||"";
     var arrangementType=parts[1]||"chords";
     var difficultyId=parts[2]||"normal";
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{performTargetTechnique:null}},function(){
       appWrite("performTargetTechnique",null);
-    }
+    });
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
       openPerformanceSongSelectionRequest({
         songId: songId,
@@ -2927,11 +2853,9 @@ window.act=function(a,v){
         arrangementType: arrangementType,
         difficultyId: difficultyId
       });
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){
         appWrite("screen",SCR.PERFORM_SONG);
-      }
+      });
       render();return;
     }
     for(var psi=0;psi<SONGS.length;psi++){
@@ -2941,11 +2865,9 @@ window.act=function(a,v){
         appWrite("performSongId",songId);
         appWrite("performArrangementType",arrangementType);
         appWrite("performDifficulty",difficultyId);
-        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
-        }else{
+        appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){
           appWrite("screen",SCR.PERFORM_SONG);
-        }
+        });
         render();return;
       }
     }
@@ -2957,11 +2879,9 @@ window.act=function(a,v){
     var phraseArrangementType=phraseParts[1]||"chords";
     var phraseDifficultyId=phraseParts[2]||"normal";
     var phraseId=phraseParts[3];
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetPhrase:phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{performTargetPhrase:phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null}},function(){
       appWrite("performTargetPhrase",phraseId!=null&&phraseId!==""?parseInt(phraseId,10):null);
-    }
+    });
     act("planStartPerformanceSong", phraseSongId + "|" + phraseArrangementType + "|" + phraseDifficultyId);
     return;
   }
@@ -2971,11 +2891,9 @@ window.act=function(a,v){
     var techniqueArrangementType=techniqueParts[1]||"imported_chart";
     var techniqueDifficultyId=techniqueParts[2]||"normal";
     var techniqueKey=techniqueParts[3]||null;
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:techniqueKey}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{performTargetTechnique:techniqueKey}},function(){
       appWrite("performTargetTechnique",techniqueKey);
-    }
+    });
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
       openPerformanceSongSelectionRequest({
         songId: techniqueSongId,
@@ -2983,11 +2901,9 @@ window.act=function(a,v){
         difficultyId: techniqueDifficultyId,
         targetTechnique: techniqueKey
       });
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){
         appWrite("screen",SCR.PERFORM_SONG);
-      }
+      });
       render();return;
     }
     act("planStartPerformanceSong", techniqueSongId + "|" + techniqueArrangementType + "|" + techniqueDifficultyId);
@@ -2995,16 +2911,13 @@ window.act=function(a,v){
   }
   if(a==="openPerfStats"){
     openPerformanceStatsRequest({ focus: "overview" });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERF_STATS}});
-    else appWrite("screen",SCR.PERF_STATS);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERF_STATS}},function(){appWrite("screen",SCR.PERF_STATS);});
     render();return;
   }
   if(a==="openEditor"){
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performEditorChart:null,performEditorDirty:false,screen:SCR.PERF_EDITOR}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{performEditorChart:null,performEditorDirty:false,screen:SCR.PERF_EDITOR}},function(){
       appWrite("performEditorChart",null);appWrite("performEditorDirty",false);appWrite("screen",SCR.PERF_EDITOR);
-    }
+    });
     openPerformanceEditorRequest(null, {
       action: "open_editor",
       source: "blank",
@@ -3018,8 +2931,7 @@ window.act=function(a,v){
   }
   if(a==="openSkillTree"){
     openSkillTreeRequest();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.SKILL_TREE}});
-    else appWrite("screen",SCR.SKILL_TREE);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.SKILL_TREE}},function(){appWrite("screen",SCR.SKILL_TREE);});
     render();return;
   }
   if(a==="planStartModuleExercise"){
@@ -3079,14 +2991,12 @@ window.act=function(a,v){
   }
   if(a==="openPerformCalibration"){
     openPerformanceCalibrationRequest();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_CALIBRATE}});
-    else appWrite("screen",SCR.PERFORM_CALIBRATE);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_CALIBRATE}},function(){appWrite("screen",SCR.PERFORM_CALIBRATE);});
     render();return;
   }
   if(a==="performCalibrateSource"){
     applyPerformanceCalibrationRequest("calibration_source", { source: v||"midi" });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performCalibrationSource:v||"midi"}});
-    else appWrite("performCalibrationSource",v||"midi");
+    appApplyLegacyActivityRuntime({setFields:{performCalibrationSource:v||"midi"}},function(){appWrite("performCalibrationSource",v||"midi");});
     render();return;
   }
   if(a==="performCalibrationStart"){
@@ -3120,22 +3030,18 @@ window.act=function(a,v){
       midiOffsetMs: resetSource==="midi" ? 0 : (appRead("performMidiOffsetMs",0) || 0),
       micOffsetMs: resetSource==="mic" ? 0 : (appRead("performMicOffsetMs",0) || 0)
     });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:resetPatch,save:false});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:resetPatch,save:false},function(){
       if(resetPatch.performMidiOffsetMs===0)appWrite("performMidiOffsetMs",0);
       if(resetPatch.performMicOffsetMs===0)appWrite("performMicOffsetMs",0);
       appWrite("performCalibrationHits",[]);
-    }
+    });
     saveState();render();return;
   }
   if(a==="performStatsBack"){
     applyPerformanceNavigationRequest("songs_home");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}},function(){
       appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
-    }
+    });
     render();return;
   }
   if(a==="performStatsFocus"){
@@ -3149,11 +3055,9 @@ window.act=function(a,v){
   if(a==="performCalibrationBack"){
     if(typeof stopPerformanceCalibration==="function")stopPerformanceCalibration();
     applyPerformanceNavigationRequest("songs_home", { performanceCalibrationMode: false });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}},function(){
       appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
-    }
+    });
     render();return;
   }
   if(a==="performCalibrateTap"){
@@ -3184,8 +3088,7 @@ window.act=function(a,v){
     if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
       window.sparkCore.syncPerformanceRuntimeState("close_editor", { screen: "home" });
     }
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
-    else {appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);}
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}},function(){appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);});
     render();return;
   }
   if(a==="editorMode"){
@@ -3525,15 +3428,13 @@ window.act=function(a,v){
           appWrite("performSongData",SONGS[di]);appWrite("performSongId",ch.songId);
           appWrite("performArrangementType",ch.arrangementType||"chords");
           appWrite("performDifficulty",ch.difficultyId||"normal");
-          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}});
-          else appWrite("screen",SCR.PERFORM_SONG);
+          appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){appWrite("screen",SCR.PERFORM_SONG);});
           render();return;
         }
       }
     }
     openPerformanceDailyChallengeRequest({});
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{tab:TAB.SONGS,screen:SCR.HOME}});
-    else {appWrite("tab",TAB.SONGS);appWrite("screen",SCR.HOME);}
+    appApplyLegacyActivityRuntime({setFields:{tab:TAB.SONGS,screen:SCR.HOME}},function(){appWrite("tab",TAB.SONGS);appWrite("screen",SCR.HOME);});
     render();return;
   }
   if(a==="performArrangement"){
@@ -3553,22 +3454,18 @@ window.act=function(a,v){
     var importSongId=v;
     window.electron.stems.openFile().then(function(result){
       if(!result)return;
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:true,songAudioProgress:0,songAudioImportingSongId:importSongId}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{songAudioImporting:true,songAudioProgress:0,songAudioImportingSongId:importSongId}},function(){
         appWrite("songAudioImporting",true);
         appWrite("songAudioProgress",0);
         appWrite("songAudioImportingSongId",importSongId);
-      }
+      });
       render();
 
       var unsubProgress=window.electron.stems.onProgress(function(data){
         if(data&&data.progress!=null){
-          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioProgress:Math.round(data.progress)},save:false});
-          }else{
+          appApplyLegacyActivityRuntime({setFields:{songAudioProgress:Math.round(data.progress)},save:false},function(){
             appWrite("songAudioProgress",Math.round(data.progress));
-          }
+          });
           render();
         }
       });
@@ -3581,11 +3478,9 @@ window.act=function(a,v){
       }).then(function(stemPaths){
         unsubProgress();
         if(!stemPaths){
-          if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-            SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false}});
-          }else{
+          appApplyLegacyActivityRuntime({setFields:{songAudioImporting:false}},function(){
             appWrite("songAudioImporting",false);
-          }
+          });
           render();return;
         }
 
@@ -3606,12 +3501,10 @@ window.act=function(a,v){
               stemUrls:urlMap,
               importedAt:new Date().toISOString()
             };
-            if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-              SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0},save:false});
-            }else{
+            appApplyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0},save:false},function(){
               appWrite("songAudioImporting",false);
               appWrite("songAudioProgress",0);
-            }
+            });
             saveState();
             render();
             return;
@@ -3625,12 +3518,10 @@ window.act=function(a,v){
         loadNextUrl(0);
       }).catch(function(err){
         unsubProgress();
-        if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-          SparkProgressBridge.applyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0}});
-        }else{
+        appApplyLegacyActivityRuntime({setFields:{songAudioImporting:false,songAudioProgress:0}},function(){
           appWrite("songAudioImporting",false);
           appWrite("songAudioProgress",0);
-        }
+        });
         alert("Stem separation failed: "+(err.message||err));
         render();
       });
@@ -3691,17 +3582,13 @@ window.act=function(a,v){
     return;
   }
   if(a==="performSongBack"){
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{performTargetTechnique:null}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{performTargetTechnique:null}},function(){
       appWrite("performTargetTechnique",null);
-    }
+    });
     applyPerformanceNavigationRequest("songs_home");
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME,tab:TAB.SONGS}},function(){
       appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);
-    }
+    });
     render();return;
   }
   if(a==="pausePerform"){pausePerformance();return;}
@@ -3710,11 +3597,9 @@ window.act=function(a,v){
     stopPerformance();
     var performanceStopState = applyPerformanceNavigationRequest("return_after_stop");
     var shouldReturnToSong = performanceStopState && performanceStopState.activeScreen === "performance_song";
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({setFields:shouldReturnToSong?{screen:SCR.PERFORM_SONG}:{screen:SCR.HOME,tab:TAB.SONGS}});
-    }else{
+    appApplyLegacyActivityRuntime({setFields:shouldReturnToSong?{screen:SCR.PERFORM_SONG}:{screen:SCR.HOME,tab:TAB.SONGS}},function(){
       if(shouldReturnToSong){appWrite("screen",SCR.PERFORM_SONG);}else{appWrite("screen",SCR.HOME);appWrite("tab",TAB.SONGS);}
-    }
+    });
     render();return;
   }
   if(a==="performMode"){
@@ -3931,8 +3816,7 @@ window.act=function(a,v){
   if(a==="openCurriculum"){
     openUtilityScreenRequest("curriculum");
     syncCurriculumStateRequest();
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.CURRICULUM}});
-    else appWrite("screen",SCR.CURRICULUM);
+    appApplyLegacyActivityRuntime({setFields:{screen:SCR.CURRICULUM}},function(){appWrite("screen",SCR.CURRICULUM);});
     render();return;
   }
   // === Back ===
@@ -3960,12 +3844,10 @@ window.act=function(a,v){
         returnFromHomeFamilyRequest({ currentScreen: _dashboardBack ? "home_dash" : "home" });
       }
       stopAllTimers();
-      if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-        SparkProgressBridge.applyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:_dashboardBack?SCR.HOME_DASH:SCR.HOME,tab:_dailyBack?TAB.DAILY:currentTab}});
-      }else{
+      appApplyLegacyActivityRuntime({setFields:{selectedVoicing:0,screen:_dashboardBack?SCR.HOME_DASH:SCR.HOME,tab:_dailyBack?TAB.DAILY:currentTab}},function(){
         appWrite("selectedVoicing",0);appWrite("screen",_dashboardBack?SCR.HOME_DASH:SCR.HOME);
         if(_dailyBack)appWrite("tab",TAB.DAILY);
-      }
+      });
       render();
     }
 };

@@ -79,7 +79,7 @@ test("progress bridge stores smart coach insights after session completion", fun
     exercises: []
   });
 
-  SparkProgressBridge.finalizePlan(plan, {
+  SparkStateBridge.finalizePlan(plan, {
     xpAwarded: 15,
     accuracy: 0.58,
     avgAbsDelta: 72,

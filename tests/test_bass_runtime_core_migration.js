@@ -150,10 +150,46 @@ function resetState() {
     openLegacyPracticeDrill: function(payload) {
       sparkCoreCalls.push({ fn: "openLegacyPracticeDrill", payload: payload });
       return payload;
+    },
+    syncLegacyGuidedSession: function(plan, sessionNum) {
+      sparkCoreCalls.push({ fn: "syncLegacyGuidedSession", payload: { plan: plan, sessionNum: sessionNum } });
+      S.guidedPlan = plan;
+      S.guidedSession = sessionNum;
+      S.guidedStep = "spark";
+      S.newMovePhase = null;
+      S.guidedPaused = false;
+      return plan;
+    },
+    applyLegacySessionStatePatch: function(payload) {
+      sparkCoreCalls.push({ fn: "applyLegacySessionStatePatch", payload: payload });
+      if (payload && payload.guided) {
+        if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
+        (payload.guided.completedSessionNums || []).forEach(function(num) {
+          if (S.completedGuidedSessions.indexOf(num) < 0) S.completedGuidedSessions.push(num);
+        });
+        if (typeof payload.guided.nextGuidedSession === "number") S.guidedSession = payload.guided.nextGuidedSession;
+      }
+      return payload;
+    },
+    applyLegacyActivityCompletion: function(payload) {
+      sparkCoreCalls.push({ fn: "applyLegacyActivityCompletion", payload: payload });
+      if (payload.incrementFields) {
+        Object.keys(payload.incrementFields).forEach(function(key) {
+          S[key] = (S[key] || 0) + payload.incrementFields[key];
+        });
+      }
+      if (payload.resultFields) {
+        Object.keys(payload.resultFields).forEach(function(key) {
+          S[key] = payload.resultFields[key];
+        });
+      }
+      if (payload.toastAmount) S.xpToast = { amount: payload.toastAmount, time: 1, jackpot: !!payload.jackpot };
+      if (payload.save !== false) saveState();
+      return payload;
     }
   };
 
-  global.SparkProgressBridge = {
+  global.SparkStateBridge = {
     applyLegacyActivityCompletion: function(payload) {
       bridgeCompletionCalls.push(payload);
       if (payload.incrementFields) {
@@ -217,6 +253,18 @@ test("guidedStart delegates to shared guided session helper", function() {
   assert.strictEqual(saveStateCalls, 1);
 });
 
+test("guidedStart fallback prefers sparkCore legacy guided sync helper", function() {
+  global.openGuidedSessionRequest = null;
+
+  bassAct("guidedStart", "2");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].fn, "syncLegacyGuidedSession");
+  assert.strictEqual(sparkCoreCalls[0].payload.sessionNum, 2);
+  assert.strictEqual(S.guidedPlan.num, 2);
+  assert.strictEqual(S.screen, "guided");
+});
+
 test("guidedComplete delegates to shared completion and guided navigation helpers", function() {
   S.screen = "guided";
 
@@ -268,22 +316,43 @@ test("legacy practice replay actions delegate to shared retry helpers", function
   ]);
 });
 
-test("guidedComplete fallback uses shared completion bookkeeping helper", function() {
+test("guidedComplete fallback uses local bookkeeping when sparkCore helper is unavailable", function() {
   S.screen = "guided";
   S.guidedPlan = { num: 2, newMove: { chord: "A" } };
   global.completeGuidedSessionRequest = null;
   global.applyGuidedNavigationRequest = null;
   global.window.sparkCore.completeSession = null;
+  global.window.sparkCore.applyLegacySessionStatePatch = null;
+  global.window.sparkCore.applyLegacyActivityCompletion = null;
 
   bassAct("guidedComplete");
 
-  assert.strictEqual(bridgeCompletionCalls.length, 1);
-  assert.strictEqual(bridgeCompletionCalls[0].toastAmount, 30);
+  assert.strictEqual(bridgeCompletionCalls.length, 0);
   assert.deepStrictEqual(S.completedGuidedSessions, [2]);
   assert.strictEqual(S.guidedSession, 2);
   assert.strictEqual(S.xpToast.amount, 30);
   assert.strictEqual(S.screen, "guided_done");
   assert.strictEqual(confettiCalls, 1);
+});
+
+test("guidedComplete fallback prefers sparkCore legacy completion helpers", function() {
+  S.screen = "guided";
+  S.guidedPlan = { num: 2, newMove: { chord: "A" } };
+  global.completeGuidedSessionRequest = null;
+  global.applyGuidedNavigationRequest = null;
+  global.window.sparkCore.completeSession = null;
+  global.SparkStateBridge.applyLegacyActivityCompletion = function(payload) {
+    bridgeCompletionCalls.push(payload);
+    return payload;
+  };
+
+  bassAct("guidedComplete");
+
+  assert.strictEqual(sparkCoreCalls[0].fn, "applyLegacySessionStatePatch");
+  assert.strictEqual(sparkCoreCalls[1].fn, "applyLegacyActivityCompletion");
+  assert.strictEqual(bridgeCompletionCalls.length, 0);
+  assert.strictEqual(S.xpToast.amount, 30);
+  assert.strictEqual(S.screen, "guided_done");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

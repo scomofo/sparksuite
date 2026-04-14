@@ -38,9 +38,6 @@
     if(!result) return;
     if(window.sparkCore && typeof window.sparkCore.recordLegacyPracticeSession === "function"){
       window.sparkCore.recordLegacyPracticeSession(result);
-    }else if(window.SparkProgressBridge && typeof SparkProgressBridge.applyPracticeSessionRecord === "function"){
-      SparkProgressBridge.applyPracticeSessionRecord(result);
-      saveState();
     }else{
       result.ts = Date.now();
       practiceProgressEnsureArray("practiceHistory").push(result);

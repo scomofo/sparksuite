@@ -369,8 +369,8 @@
   }
 
   function applyReward(reward) {
-    if (window.SparkProgressBridge && typeof window.SparkProgressBridge.applyLegacyReward === "function") {
-      return window.SparkProgressBridge.applyLegacyReward(reward);
+    if (window.sparkCore && typeof window.sparkCore.applyLegacyReward === "function") {
+      return window.sparkCore.applyLegacyReward(reward);
     }
     reward = reward || {};
     if (reward.xpDelta) performanceBridgeIncrement("xp", reward.xpDelta);

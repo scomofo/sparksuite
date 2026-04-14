@@ -144,8 +144,8 @@
 
   function applyLegacyCompletionUpdate(update) {
     update = update || {};
-    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
-      return SparkProgressBridge.applyLegacyActivityCompletion(update);
+    if (window.sparkCore && typeof window.sparkCore.applyLegacyActivityCompletion === "function") {
+      return window.sparkCore.applyLegacyActivityCompletion(update);
     }
 
     if (update.setFlags) {
@@ -160,8 +160,8 @@
       for (var resultKey in update.resultFields) bassStateWrite(resultKey, update.resultFields[resultKey]);
     }
     if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") {
-        SparkProgressBridge.applyLegacyReward({
+      if (window.sparkCore && typeof window.sparkCore.applyLegacyReward === "function") {
+        window.sparkCore.applyLegacyReward({
           xpDelta: update.xpDelta || 0,
           toastAmount: update.toastAmount || 0,
           jackpot: !!update.jackpot
@@ -312,13 +312,8 @@
       }
       var plan = D.SESSIONS[(isNaN(sessionNum) ? bassStateRead("guidedSession", 1) || 1 : sessionNum) - 1];
       if (!plan) { bassStateWrite("guidedSession", 1); plan = D.SESSIONS[0]; }
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
-        SparkProgressBridge.syncGuidedSessionToState({
-          context: {
-            guidedPlan: plan,
-            guidedSession: plan && plan.num ? plan.num : (bassStateRead("guidedSession", 1) || 1)
-          }
-        });
+      if (window.sparkCore && typeof window.sparkCore.syncLegacyGuidedSession === "function") {
+        window.sparkCore.syncLegacyGuidedSession(plan, plan && plan.num ? plan.num : (bassStateRead("guidedSession", 1) || 1));
       } else {
         bassPatchState({
           guidedPlan: plan,
@@ -357,8 +352,8 @@
       }
       var plan = bassStateRead("guidedPlan", null);
       if (plan) {
-        if (window.SparkProgressBridge && typeof SparkProgressBridge.applySessionStatePatch === "function") {
-          SparkProgressBridge.applySessionStatePatch({
+        if (window.sparkCore && typeof window.sparkCore.applyLegacySessionStatePatch === "function") {
+          window.sparkCore.applyLegacySessionStatePatch({
             guided: {
               completedSessionNums: [plan.num],
               nextGuidedSession: Math.min(D.SESSIONS.length, plan.num + 1),

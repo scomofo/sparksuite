@@ -166,8 +166,8 @@ function applyGuidedDoneNavigation() {
 
 function applyLegacyCompletionUpdate(update) {
   update = update || {};
-  if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
-    return SparkProgressBridge.applyLegacyActivityCompletion(update);
+  if (window.sparkCore && typeof window.sparkCore.applyLegacyActivityCompletion === "function") {
+    return window.sparkCore.applyLegacyActivityCompletion(update);
   }
 
   if (update.setFlags) {
@@ -182,8 +182,8 @@ function applyLegacyCompletionUpdate(update) {
     for (var resultKey in update.resultFields) guitarStateWrite(resultKey, update.resultFields[resultKey]);
   }
   if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
-    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") {
-      SparkProgressBridge.applyLegacyReward({
+    if (window.sparkCore && typeof window.sparkCore.applyLegacyReward === "function") {
+      window.sparkCore.applyLegacyReward({
         xpDelta: update.xpDelta || 0,
         toastAmount: update.toastAmount || 0,
         jackpot: !!update.jackpot
@@ -547,13 +547,8 @@ function guitarAct(a, v) {
     }
     var plan = D.SESSIONS[(isNaN(sessionNum) ? guitarStateRead("guidedSession", 1) || 1 : sessionNum) - 1];
     if (!plan) { guitarStateWrite("guidedSession", 1); plan = D.SESSIONS[0]; }
-    if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
-      SparkProgressBridge.syncGuidedSessionToState({
-        context: {
-          guidedPlan: plan,
-          guidedSession: plan && plan.num ? plan.num : (guitarStateRead("guidedSession", 1) || 1)
-        }
-      });
+    if (window.sparkCore && typeof window.sparkCore.syncLegacyGuidedSession === "function") {
+      window.sparkCore.syncLegacyGuidedSession(plan, plan && plan.num ? plan.num : (guitarStateRead("guidedSession", 1) || 1));
     } else {
       guitarPatchState({
         guidedPlan: plan,
@@ -586,7 +581,7 @@ function guitarAct(a, v) {
     }
     var plan = guitarStateRead("guidedPlan", null);
     if (plan) {
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applySessionStatePatch === "function") {
+      if (window.sparkCore && typeof window.sparkCore.applyLegacySessionStatePatch === "function") {
         var guidedPatch = {
           guided: {
             completedSessionNums: [plan.num],
@@ -595,7 +590,7 @@ function guitarAct(a, v) {
           }
         };
         if (plan.newMove && plan.newMove.chord) guidedPatch.guided.chordProgress[plan.newMove.chord] = 25;
-        SparkProgressBridge.applySessionStatePatch(guidedPatch);
+        window.sparkCore.applyLegacySessionStatePatch(guidedPatch);
       } else {
         var completedGuidedSessions = guitarStateEnsureArray("completedGuidedSessions");
         if (completedGuidedSessions.indexOf(plan.num) < 0) completedGuidedSessions.push(plan.num);

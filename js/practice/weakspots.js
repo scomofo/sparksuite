@@ -59,12 +59,6 @@
       window.sparkCore.updateLegacyWeakSpotsFromPerformance(result);
       return;
     }
-    if(window.SparkProgressBridge && typeof SparkProgressBridge.buildLegacyItemResultSummary === "function" && typeof SparkProgressBridge.applyWeakSpotUpdate === "function"){
-      var summary = SparkProgressBridge.buildLegacyItemResultSummary(result);
-      SparkProgressBridge.applyWeakSpotUpdate(summary ? summary.weakSpotUpdate : null);
-      saveState();
-      return;
-    }
 
     var weakSpots = ensureWeakSpots();
 

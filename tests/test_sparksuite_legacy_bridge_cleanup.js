@@ -264,7 +264,7 @@ test("performance practice generator defers to shared ensurePracticePlan when av
 });
 
 test("progress bridge legacy reward helper centralizes xp and toast updates", function() {
-  var reward = SparkProgressBridge.applyLegacyReward({ xpDelta: 12, toastAmount: 12, jackpot: true });
+  var reward = SparkStateBridge.applyLegacyReward({ xpDelta: 12, toastAmount: 12, jackpot: true });
 
   assert.strictEqual(reward.xpDelta, 12);
   assert.strictEqual(S.xp, 12);
@@ -377,7 +377,7 @@ test("practice adaptive updater prefers sparkCore helper when available", functi
 });
 
 test("legacy activity completion helper centralizes drill and daily bookkeeping", function() {
-  SparkProgressBridge.applyLegacyActivityCompletion({
+  SparkStateBridge.applyLegacyActivityCompletion({
     xpDelta: 20,
     toastAmount: 20,
     incrementFields: { drillCount: 1 },
@@ -386,7 +386,7 @@ test("legacy activity completion helper centralizes drill and daily bookkeeping"
     checkBadges: true
   });
 
-  SparkProgressBridge.applyLegacyActivityCompletion({
+  SparkStateBridge.applyLegacyActivityCompletion({
     xpDelta: 40,
     toastAmount: 40,
     setFlags: { dailyComplete: true },
@@ -404,7 +404,7 @@ test("legacy activity completion helper centralizes drill and daily bookkeeping"
 });
 
 test("legacy activity completion helper centralizes runner bookkeeping", function() {
-  SparkProgressBridge.applyLegacyActivityCompletion({
+  SparkStateBridge.applyLegacyActivityCompletion({
     xpDelta: 15,
     maxFields: { runnerHighScore: 120 },
     resultFields: { runnerResults: { score: 120, maxCombo: 8, distance: 42 } },
@@ -417,14 +417,14 @@ test("legacy activity completion helper centralizes runner bookkeeping", functio
 });
 
 test("legacy activity completion helper centralizes ear training and song bookkeeping", function() {
-  SparkProgressBridge.applyLegacyActivityCompletion({
+  SparkStateBridge.applyLegacyActivityCompletion({
     xpDelta: 15,
     incrementFields: { earTrainScore: 1, earTrainStreak: 1 },
     history: { type: "ear", detail: "C Major", xp: 15 },
     checkBadges: true
   });
 
-  SparkProgressBridge.applyLegacyActivityCompletion({
+  SparkStateBridge.applyLegacyActivityCompletion({
     xpDelta: 40,
     incrementFields: { songsPlayed: 1 },
     history: { type: "song", detail: "Fire Road", xp: 40 },
@@ -445,7 +445,7 @@ test("legacy activity runtime helper centralizes mini-activity state and timer c
   T.song = 321;
   T.ear = 654;
 
-  SparkProgressBridge.applyLegacyActivityRuntime({
+  SparkStateBridge.applyLegacyActivityRuntime({
     setFields: { songPlaying: true, songBeat: 0, earTrainAns: "C Major" },
     incrementFields: { earTrainTotal: 1 },
     clearIntervals: ["song"],
@@ -463,7 +463,7 @@ test("legacy activity runtime helper centralizes mini-activity state and timer c
 });
 
 test("legacy activity runtime helper can cancel animation frames for live mini-games", function() {
-  SparkProgressBridge.applyLegacyActivityRuntime({
+  SparkStateBridge.applyLegacyActivityRuntime({
     setFields: { rhythmActive: false, runnerActive: false },
     cancelAnimationFrames: [111, 222]
   });

@@ -578,7 +578,7 @@
     return JSON.parse(JSON.stringify(value));
   }
 
-  window.SparkProgressBridge = {
+  var stateBridgeApi = {
     syncPlanToState: syncPlanToState,
     syncDailyPracticePlanToState: syncDailyPracticePlanToState,
     syncGuidedSessionToState: syncGuidedSessionToState,
@@ -597,4 +597,6 @@
     completePlanItem: completePlanItem,
     finalizePlan: finalizePlan
   };
+
+  window.SparkStateBridge = stateBridgeApi;
 })();

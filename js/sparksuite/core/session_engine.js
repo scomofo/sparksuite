@@ -52,19 +52,13 @@
     options = options || {};
     this.practiceEngine = practiceEngine;
     this.curriculumEngine = curriculumEngine;
-    this.analysisContextProvider = options.analysisContextProvider || createDefaultAnalysisContext;
-  }
-
-  SessionEngine.prototype.setAnalysisContextProvider = function(provider) {
-    this.analysisContextProvider = typeof provider === "function"
-      ? provider
-      : function() { return createEmptyAnalysisContext(); };
+    this.coreRuntime = null;
   };
 
   SessionEngine.prototype.getAnalysisContext = function() {
-    var snapshot = typeof this.analysisContextProvider === "function"
-      ? this.analysisContextProvider()
-      : null;
+    var snapshot = this.coreRuntime && typeof this.coreRuntime.getAnalysisContextSnapshot === "function"
+      ? this.coreRuntime.getAnalysisContextSnapshot()
+      : createDefaultAnalysisContext();
     snapshot = snapshot || {};
     return {
       skillGraph: snapshot.skillGraph || {},

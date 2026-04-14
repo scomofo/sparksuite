@@ -718,8 +718,8 @@ function finishPerformance() {
     if (corePerformanceResult && typeof corePerformanceResult.xpAwarded === "number") {
       xpAward = corePerformanceResult.xpAwarded;
     }
-  } else if (window.SparkProgressBridge) {
-    SparkProgressBridge.applyLegacyReward({ xpDelta: xpAward, toastAmount: xpAward });
+  } else if (window.sparkCore && typeof window.sparkCore.applyLegacyReward === "function") {
+    window.sparkCore.applyLegacyReward({ xpDelta: xpAward, toastAmount: xpAward });
   } else {
     performanceSessionWrite("xp", performanceSessionRead("xp", 0) + xpAward);
     performanceSessionWrite("xpToast", { amount: xpAward, time: Date.now() });

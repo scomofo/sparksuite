@@ -1,41 +1,32 @@
 (function() {
   function ProgressEngine(options) {
     options = options || {};
-    this.masteryStore = options.masteryStore || null;
-    this.persist = typeof options.persist === "function" ? options.persist : null;
-  }
-
-  ProgressEngine.prototype.setMasteryStore = function(masteryStore) {
-    this.masteryStore = masteryStore || null;
-    return this;
-  };
-
-  ProgressEngine.prototype.setPersistHandler = function(persist) {
-    this.persist = typeof persist === "function" ? persist : null;
-    return this;
+    this.coreRuntime = null;
   };
 
   ProgressEngine.prototype._readSkillGraph = function() {
-    if (this.masteryStore && typeof this.masteryStore.getSkillGraph === "function") {
-      return this.masteryStore.getSkillGraph() || {};
-    }
-    return {};
+    var coreRuntime = requireCoreRuntime(this);
+    return typeof coreRuntime.getSkillGraph === "function"
+      ? (coreRuntime.getSkillGraph() || {})
+      : {};
   };
 
   ProgressEngine.prototype._writeSkillGraph = function(graph) {
-    if (this.masteryStore && typeof this.masteryStore.setSkillGraph === "function") {
-      this.masteryStore.setSkillGraph(graph || {});
+    var coreRuntime = requireCoreRuntime(this);
+    if (typeof coreRuntime.setSkillGraph === "function") {
+      coreRuntime.setSkillGraph(graph || {});
     }
-    if (this.persist) this.persist();
+    if (typeof saveState === "function") saveState();
   };
 
   ProgressEngine.prototype.completeSession = function(plan, payload) {
+    var coreRuntime = requireCoreRuntime(this);
     payload = payload || {};
     if (!plan) return { completedItems: 0, totalItems: 0, planCompleted: false, xpAwarded: 0 };
-    if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return completeGuidedSession(plan, payload);
-    if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return completePerformanceSong(plan, payload);
+    if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return completeGuidedSession.call(this, plan, payload);
+    if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return completePerformanceSong.call(this, plan, payload);
 
-    var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
+    var progress = payload.itemId ? coreRuntime.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
       totalItems: plan.segments.length,
       planCompleted: true
@@ -46,7 +37,7 @@
       progress.completedItems = plan.segments.length;
       progress.totalItems = plan.segments.length;
       progress.planCompleted = true;
-      SparkProgressBridge.syncPlanToState(plan);
+      coreRuntime.syncPlanToState(plan);
     }
 
     if (progress.planCompleted) {
@@ -69,7 +60,7 @@
           streakUpdated: false
         });
       }
-      SparkProgressBridge.finalizePlan(plan, {
+      coreRuntime.finalizePlan(plan, {
         xpAwarded: xpAwarded,
         sessionStatePatch: sessionStatePatch,
         completionSummary: completionSummary
@@ -77,15 +68,16 @@
       progress.xpAwarded = xpAwarded;
       progress.sessionStatePatch = sessionStatePatch;
       progress.completionSummary = completionSummary;
-    } else if (this.persist) {
-      this.persist();
+    } else if (typeof saveState === "function") {
+      saveState();
     }
 
     return progress;
   };
 
   function completeGuidedSession(plan, payload) {
-    var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
+    var coreRuntime = requireCoreRuntime(this);
+    var progress = payload.itemId ? coreRuntime.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
       totalItems: plan.segments.length,
       planCompleted: true
@@ -126,14 +118,15 @@
       progress.audioCue = "complete";
     }
 
-    SparkProgressBridge.applySessionStatePatch(sessionStatePatch);
+    coreRuntime.applySessionStatePatch(sessionStatePatch);
     progress.sessionStatePatch = sessionStatePatch;
-    if (this.persist) this.persist();
+    if (typeof saveState === "function") saveState();
     return progress;
   }
 
   function completePerformanceSong(plan, payload) {
-    var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
+    var coreRuntime = requireCoreRuntime(this);
+    var progress = payload.itemId ? coreRuntime.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
       totalItems: plan.segments.length,
       planCompleted: true
@@ -151,7 +144,7 @@
       var xpAwarded = typeof payload.xpAwarded === "number"
         ? payload.xpAwarded
         : Math.max(5, Math.round((performanceResults.accuracy || 0) / 10));
-      SparkProgressBridge.applyLegacyReward({
+      coreRuntime.applyLegacyReward({
         xpDelta: xpAwarded,
         toastAmount: xpAwarded
       });
@@ -165,8 +158,23 @@
       progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded);
     }
 
-    if (this.persist) this.persist();
+    if (typeof saveState === "function") saveState();
     return progress;
+  }
+
+  function requireCoreRuntime(engine) {
+    var coreRuntime = engine && engine.coreRuntime;
+    if (
+      coreRuntime &&
+      typeof coreRuntime.completePlanItem === "function" &&
+      typeof coreRuntime.syncPlanToState === "function" &&
+      typeof coreRuntime.finalizePlan === "function" &&
+      typeof coreRuntime.applySessionStatePatch === "function" &&
+      typeof coreRuntime.applyLegacyReward === "function"
+    ) {
+      return coreRuntime;
+    }
+    throw new Error("SparkSuiteProgressEngine requires a coreRuntime");
   }
 
   function buildGameplayLearningPatch(learning, gameplayContext, gameplay) {

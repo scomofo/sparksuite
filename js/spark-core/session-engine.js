@@ -37,6 +37,54 @@
     return value;
   }
 
+  function applyLegacySessionOutcomeUpdate(update) {
+    var stateFacade = getStateFacade();
+    var chordName;
+    var chordProgressState;
+    update = update || {};
+
+    if (update.streak) {
+      if (stateFacade) {
+        stateFacade.increment(["streak"], update.streak.increment);
+        stateFacade.write(["lastSessionDate"], update.streak.lastSessionDate);
+      } else {
+        writeSessionState("streak", (readSessionState("streak", 0) || 0) + update.streak.increment);
+        writeSessionState("lastSessionDate", update.streak.lastSessionDate);
+      }
+    }
+
+    if (update.sessionsDelta) {
+      if (stateFacade) stateFacade.increment(["sessions"], update.sessionsDelta);
+      else writeSessionState("sessions", (readSessionState("sessions", 0) || 0) + update.sessionsDelta);
+    }
+
+    if (update.xpDelta) {
+      if (stateFacade) stateFacade.increment(["xp"], update.xpDelta);
+      else writeSessionState("xp", (readSessionState("xp", 0) || 0) + update.xpDelta);
+    }
+
+    if (update.chordProgress) {
+      for (chordName in update.chordProgress) {
+        if (stateFacade && typeof stateFacade.incrementChordProgress === "function") {
+          stateFacade.incrementChordProgress(chordName, update.chordProgress[chordName], 100);
+        } else {
+          chordProgressState = readSessionState("chordProgress", {});
+          if (typeof chordProgressState !== "object" || chordProgressState === null) chordProgressState = {};
+          chordProgressState[chordName] = Math.min((chordProgressState[chordName] || 0) + update.chordProgress[chordName], 100);
+          writeSessionState("chordProgress", chordProgressState);
+        }
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(update, "level")) {
+      if (stateFacade && typeof stateFacade.setLevel === "function") {
+        stateFacade.setLevel(update.level);
+      } else {
+        writeSessionState("level", update.level);
+      }
+    }
+  }
+
   var SparkSession = {
 
     // buildSession(opts) — returns a session plan object for the given mode.
@@ -227,36 +275,7 @@
         sessionUpdate.chordProgress[chordName] = 34;
       }
 
-      if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
-        SparkProgressBridge.applyLegacySessionOutcome(sessionUpdate);
-      } else {
-        if (sessionUpdate.streak) {
-          if (stateFacade) {
-            stateFacade.increment(["streak"], sessionUpdate.streak.increment);
-            stateFacade.write(["lastSessionDate"], sessionUpdate.streak.lastSessionDate);
-          } else {
-            writeSessionState("streak", (readSessionState("streak", 0) || 0) + sessionUpdate.streak.increment);
-            writeSessionState("lastSessionDate", sessionUpdate.streak.lastSessionDate);
-          }
-        }
-        if (stateFacade) {
-          stateFacade.increment(["sessions"], sessionUpdate.sessionsDelta);
-          stateFacade.increment(["xp"], sessionUpdate.xpDelta);
-        } else {
-          writeSessionState("sessions", (readSessionState("sessions", 0) || 0) + sessionUpdate.sessionsDelta);
-          writeSessionState("xp", (readSessionState("xp", 0) || 0) + sessionUpdate.xpDelta);
-        }
-        if (chordName) {
-          if (stateFacade && typeof stateFacade.incrementChordProgress === "function") {
-            stateFacade.incrementChordProgress(chordName, sessionUpdate.chordProgress[chordName], 100);
-          } else {
-            var chordProgressState = readSessionState("chordProgress", {});
-            if (typeof chordProgressState !== "object" || chordProgressState === null) chordProgressState = {};
-            chordProgressState[chordName] = Math.min((chordProgressState[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
-            writeSessionState("chordProgress", chordProgressState);
-          }
-        }
-      }
+      applyLegacySessionOutcomeUpdate(sessionUpdate);
 
       // --- Level-up: all chords at current level mastered ---
       var D = results.instrumentData || {};
@@ -276,15 +295,7 @@
           if ((chordProgress[levelChords[i].name] || 0) < 100) { allMastered = false; break; }
         }
         if (allMastered) {
-          if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
-            SparkProgressBridge.applyLegacySessionOutcome({ level: activeLevel + 1 });
-          } else {
-            if (stateFacade && typeof stateFacade.setLevel === "function") {
-              stateFacade.setLevel(activeLevel + 1);
-            } else {
-              writeSessionState("level", activeLevel + 1);
-            }
-          }
+          applyLegacySessionOutcomeUpdate({ level: activeLevel + 1 });
           leveledUp = true;
           newLevel  = stateFacade && typeof stateFacade.getLevel === "function" ? stateFacade.getLevel() : readSessionState("level", 1);
         }

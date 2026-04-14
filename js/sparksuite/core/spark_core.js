@@ -9,58 +9,16 @@
     return null;
   }
 
-  function createLegacyStateBridge() {
-    return {
-      masteryStore: {
-        getSkillGraph: function() {
-          var state = readLegacyAppState();
-          return state && state.skillGraph ? state.skillGraph : {};
-        },
-        setSkillGraph: function(graph) {
-          var state = readLegacyAppState();
-          if (!state) return;
-          state.skillGraph = graph || {};
-        }
-      },
-      getPlayAlongRecent: function() {
-        var state = readLegacyAppState();
-        return state && Array.isArray(state.playAlongRecent) ? state.playAlongRecent : [];
-      },
-      getPlayAlongBookmarks: function() {
-        var state = readLegacyAppState();
-        return state && Array.isArray(state.playAlongBookmarks) ? state.playAlongBookmarks : [];
-      },
-      analysisContextProvider: function() {
-        var state = readLegacyAppState();
-        return {
-          skillGraph: state && state.skillGraph ? state.skillGraph : {},
-          lastSessionEvents: state && Array.isArray(state.lastSessionEvents) ? state.lastSessionEvents : [],
-          performAccuracy: state && typeof state.performAccuracy === "number" ? state.performAccuracy : 0,
-          performCombo: state && typeof state.performCombo === "number" ? state.performCombo : 0,
-          playerProfile: state && state.playerProfile ? state.playerProfile : null,
-          weakSpots: state && state.weakSpots ? state.weakSpots : null
-        };
-      }
-    };
-  }
-
   function SparkCore(options) {
     options = options || {};
-    var legacyStateBridge = options.legacyStateBridge || createLegacyStateBridge();
-    this.legacyStateBridge = legacyStateBridge;
     this.storage = options.storage || new SparkSuiteStorage();
     this.aiEngine = options.aiEngine || new SparkAIEngine();
     this.instrumentManager = options.instrumentManager || new SparkInstrumentManager();
     this.psychologyEngine = options.psychologyEngine || new SparkSuitePsychologyEngine();
     this.curriculumEngine = options.curriculumEngine || new SparkSuiteCurriculumEngine();
     this.practiceEngine = options.practiceEngine || new SparkSuitePracticeEngine(this.psychologyEngine);
-    this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine({
-      masteryStore: legacyStateBridge.masteryStore,
-      persist: typeof saveState === "function" ? saveState : null
-    });
-    this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine, {
-      analysisContextProvider: legacyStateBridge.analysisContextProvider
-    });
+    this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine();
+    this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine);
     this.currentPlan = null;
     this.lastSessionOutcome = null;
     this.performanceEditorDocument = null;
@@ -72,11 +30,37 @@
     this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
     this.playAlongSession = this.createInitialPlayAlongSession();
+    if (this.progressEngine) this.progressEngine.coreRuntime = this;
+    if (this.sessionEngine) this.sessionEngine.coreRuntime = this;
   }
 
   SparkCore.prototype.cloneValue = function(value) {
     if (value == null) return value;
     return JSON.parse(JSON.stringify(value));
+  };
+
+  SparkCore.prototype.getSkillGraph = function() {
+    var state = readLegacyAppState();
+    return state && state.skillGraph ? state.skillGraph : {};
+  };
+
+  SparkCore.prototype.setSkillGraph = function(graph) {
+    var state = readLegacyAppState();
+    if (!state) return graph || {};
+    state.skillGraph = graph || {};
+    return state.skillGraph;
+  };
+
+  SparkCore.prototype.getAnalysisContextSnapshot = function() {
+    var state = readLegacyAppState();
+    return {
+      skillGraph: state && state.skillGraph ? state.skillGraph : {},
+      lastSessionEvents: state && Array.isArray(state.lastSessionEvents) ? state.lastSessionEvents : [],
+      performAccuracy: state && typeof state.performAccuracy === "number" ? state.performAccuracy : 0,
+      performCombo: state && typeof state.performCombo === "number" ? state.performCombo : 0,
+      playerProfile: state && state.playerProfile ? state.playerProfile : null,
+      weakSpots: state && state.weakSpots ? state.weakSpots : null
+    };
   };
 
   SparkCore.prototype.createInitialRuntimeState = function() {
@@ -422,7 +406,7 @@
       performanceResults: this.runtimeState.performanceResults,
       transport: { status: "ready", positionMs: 0 }
     });
-      SparkProgressBridge.syncPlanToState(this.currentPlan);
+      this.syncPlanToState(this.currentPlan);
       return this.currentPlan;
     }
 
@@ -514,7 +498,7 @@
       performanceResults: null,
       transport: { status: "ready", positionMs: 0 }
     });
-    SparkProgressBridge.syncPlanToState(plan);
+    this.syncPlanToState(plan);
     return plan;
   };
 
@@ -1739,6 +1723,425 @@
     return result;
   };
 
+  SparkCore.prototype.syncLegacyGuidedSession = function(plan, guidedSessionNum) {
+    var state;
+    var nextSessionNum = guidedSessionNum;
+    if (!plan) return null;
+    state = readLegacyAppState();
+    if (!state) return null;
+    state.guidedPlan = this.cloneValue(plan);
+    state.guidedSession = nextSessionNum != null ? nextSessionNum : (plan && plan.num ? plan.num : (state.guidedSession || 1));
+    state.guidedStep = "spark";
+    state.newMovePhase = null;
+    state.guidedPaused = false;
+    return state.guidedPlan;
+  };
+
+  SparkCore.prototype.applyLegacySessionStatePatch = function(patch) {
+    var state;
+    patch = patch || {};
+    state = readLegacyAppState();
+    if (!state) return patch;
+
+    if (patch.guided) {
+      if (!Array.isArray(state.completedGuidedSessions)) state.completedGuidedSessions = [];
+      var completedSessionNums = Array.isArray(patch.guided.completedSessionNums) ? patch.guided.completedSessionNums : [];
+      for (var i = 0; i < completedSessionNums.length; i++) {
+        if (state.completedGuidedSessions.indexOf(completedSessionNums[i]) < 0) {
+          state.completedGuidedSessions.push(completedSessionNums[i]);
+        }
+      }
+
+      if (!state.chordProgress || typeof state.chordProgress !== "object" || Array.isArray(state.chordProgress)) {
+        state.chordProgress = {};
+      }
+      var chordProgress = patch.guided.chordProgress || {};
+      for (var chordName in chordProgress) {
+        state.chordProgress[chordName] = Math.min((state.chordProgress[chordName] || 0) + chordProgress[chordName], 100);
+      }
+
+      if (patch.guided.nextGuidedSession != null) state.guidedSession = patch.guided.nextGuidedSession;
+    }
+
+    if (patch.mastery && patch.mastery.rhythm) {
+      if (!state.mastery || typeof state.mastery !== "object" || Array.isArray(state.mastery)) state.mastery = {};
+      if (!state.mastery.rhythm || typeof state.mastery.rhythm !== "object" || Array.isArray(state.mastery.rhythm)) {
+        state.mastery.rhythm = {};
+      }
+      for (var skillId in patch.mastery.rhythm) {
+        var prev = state.mastery.rhythm[skillId] || 0;
+        state.mastery.rhythm[skillId] = Math.max(0, Math.min(100, prev + patch.mastery.rhythm[skillId]));
+      }
+    }
+
+    if (patch.weakSpots) {
+      if (!state.weakSpots || typeof state.weakSpots !== "object" || Array.isArray(state.weakSpots)) state.weakSpots = {};
+      for (var weakSpotKey in patch.weakSpots) {
+        state.weakSpots[weakSpotKey] = Array.isArray(patch.weakSpots[weakSpotKey])
+          ? this.cloneValue(patch.weakSpots[weakSpotKey])
+          : patch.weakSpots[weakSpotKey];
+      }
+    }
+
+    if (patch.bassSkillProgress) {
+      if (!state.bassSkillProgress || typeof state.bassSkillProgress !== "object" || Array.isArray(state.bassSkillProgress)) {
+        state.bassSkillProgress = {};
+      }
+      sparkCoreMergeInstrumentSkillProgress(state.bassSkillProgress, patch.bassSkillProgress);
+    }
+
+    if (patch.ukuleleSkillProgress) {
+      if (!state.ukuleleSkillProgress || typeof state.ukuleleSkillProgress !== "object" || Array.isArray(state.ukuleleSkillProgress)) {
+        state.ukuleleSkillProgress = {};
+      }
+      sparkCoreMergeInstrumentSkillProgress(state.ukuleleSkillProgress, patch.ukuleleSkillProgress);
+    }
+
+    if (patch.xpToast) state.xpToast = this.cloneValue(patch.xpToast);
+    return patch;
+  };
+
+  SparkCore.prototype.applySessionStatePatch = function(patch) {
+    return this.applyLegacySessionStatePatch(patch);
+  };
+
+  SparkCore.prototype.syncDailyPracticePlanToState = function(plan) {
+    var state = readLegacyAppState();
+    var legacyPlan = plan && typeof plan.toLegacyPracticePlan === "function" ? plan.toLegacyPracticePlan() : null;
+    if (!state) return legacyPlan;
+    state.practicePlan = legacyPlan;
+    state.practicePlanDate = legacyPlan ? legacyPlan.generatedDate : null;
+    state.practicePlanFocus = legacyPlan ? legacyPlan.focus : "";
+    state.practicePlanComplete = !!(legacyPlan && legacyPlan.completedItems >= legacyPlan.totalItems);
+    return legacyPlan;
+  };
+
+  SparkCore.prototype.syncPerformanceSongToState = function(plan) {
+    var state = readLegacyAppState();
+    var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
+    if (!performanceSong || !state) return performanceSong || null;
+    state.performSongData = performanceSong.songData || null;
+    state.performSongId = performanceSong.songId || "";
+    state.performArrangementType = performanceSong.arrangementType || "chords";
+    if (performanceSong.difficultyId) state.performDifficulty = performanceSong.difficultyId;
+    return performanceSong;
+  };
+
+  SparkCore.prototype.syncPlanToState = function(plan) {
+    if (!plan) return null;
+    if (this.storage && typeof this.storage.setCurrentPlanId === "function") {
+      this.storage.setCurrentPlanId(plan.id);
+    }
+    if (plan.flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return this.syncDailyPracticePlanToState(plan);
+    if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.syncLegacyGuidedSession(
+      plan && plan.context ? plan.context.guidedPlan : null,
+      plan && plan.context ? plan.context.guidedSession : null
+    );
+    if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.syncPerformanceSongToState(plan);
+    return null;
+  };
+
+  SparkCore.prototype.applyLegacyItemResultSummary = function(summary) {
+    var state = readLegacyAppState();
+    if (!summary) return null;
+    if (summary.weakSpotUpdate) {
+      this.updateLegacyWeakSpotsFromPerformance(summary.practiceResult || summary.weakSpotUpdate);
+    }
+    if (summary.adaptiveUpdate) {
+      this.updateLegacyAdaptiveFromResult({
+        exerciseId: summary.adaptiveUpdate.exerciseId,
+        accuracy: summary.adaptiveUpdate.accuracy
+      });
+    }
+    if (summary.practiceResult && state) {
+      if (!Array.isArray(state.practiceHistory)) state.practiceHistory = [];
+      state.practiceHistory.push(this.cloneValue(summary.practiceResult));
+    }
+    return summary;
+  };
+
+  SparkCore.prototype.completePlanItem = function(plan, itemId, result) {
+    var completedItems = 0;
+    var summary = null;
+    var i;
+    if (!plan || !Array.isArray(plan.segments)) {
+      return { completedItems: 0, totalItems: 0, planCompleted: false };
+    }
+    for (i = 0; i < plan.segments.length; i++) {
+      if (plan.segments[i].id === itemId) plan.segments[i].completed = true;
+      if (plan.segments[i].completed) completedItems++;
+    }
+    summary = result ? this.buildLegacyItemResultSummary(result) : null;
+    this.applyLegacyItemResultSummary(summary);
+    this.syncPlanToState(plan);
+    return {
+      completedItems: completedItems,
+      totalItems: plan.segments.length,
+      planCompleted: completedItems >= plan.segments.length,
+      itemResultSummary: summary
+    };
+  };
+
+  SparkCore.prototype.buildLegacyCompletionSummary = function(plan, xpAwarded, durationSec) {
+    var state = readLegacyAppState();
+    var legacyPlan = state && state.practicePlan ? state.practicePlan : null;
+    return {
+      sessionId: plan ? plan.id : null,
+      flow: plan ? plan.flow : null,
+      date: plan ? plan.generatedDate : (state ? state.practicePlanDate : null),
+      focus: plan ? plan.focus : (state ? (state.practicePlanFocus || "") : ""),
+      itemCount: plan && Array.isArray(plan.segments)
+        ? plan.segments.length
+        : (legacyPlan && Array.isArray(legacyPlan.items) ? legacyPlan.items.length : 0),
+      durationSec: durationSec || 0,
+      xpAwarded: xpAwarded || 0,
+      completedAt: Date.now()
+    };
+  };
+
+  SparkCore.prototype.finalizePlan = function(plan, summary) {
+    var state;
+    var completionSummary;
+    var practicePlanHistory;
+    var brainAnalysis;
+    summary = summary || {};
+    this.applyLegacySessionStatePatch(summary.sessionStatePatch);
+    state = readLegacyAppState();
+    if (!state) return null;
+    state.practicePlanComplete = true;
+    completionSummary = summary.completionSummary || this.buildLegacyCompletionSummary(plan, summary.xpAwarded, 0);
+    if (!Array.isArray(state.practicePlanHistory)) state.practicePlanHistory = [];
+    practicePlanHistory = state.practicePlanHistory;
+    practicePlanHistory.push({
+      date: completionSummary.date,
+      focus: completionSummary.focus,
+      itemCount: completionSummary.itemCount,
+      completedAt: completionSummary.completedAt,
+      sessionId: completionSummary.sessionId,
+      flow: completionSummary.flow,
+      durationSec: completionSummary.durationSec || 0
+    });
+    if (practicePlanHistory.length > 30) practicePlanHistory.shift();
+    if (summary.xpAwarded) state.xp = (state.xp || 0) + summary.xpAwarded;
+    if (typeof SparkLearningBrain !== "undefined" && typeof SparkLearningBrain.analyzeUser === "function" && state.skillGraph) {
+      brainAnalysis = SparkLearningBrain.analyzeUser(state.skillGraph, null, state.weakSpots || null);
+      state.lastBrainAnalysis = brainAnalysis;
+      state.recommendedFocus = brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : (completionSummary.focus || null);
+      state.personalInsights = {
+        weakestSkills: brainAnalysis && brainAnalysis.focusSkill ? [{ id: brainAnalysis.focusSkill, value: brainAnalysis.confidence || 0 }] : [],
+        strongestSkills: brainAnalysis && brainAnalysis.strongestSkill ? [{ id: brainAnalysis.strongestSkill, value: brainAnalysis.strongestValue || 0 }] : [],
+        masteryTrend: {},
+        practiceTrend: {},
+        recommendationQuality: {
+          smartCoach: {
+            focusSkill: brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : (completionSummary.focus || null),
+            weakArea: brainAnalysis ? brainAnalysis.primaryWeakArea || null : null,
+            weakLane: brainAnalysis ? brainAnalysis.weakLane : null,
+            recommendedDifficultyId: brainAnalysis ? brainAnalysis.recommendedDifficultyId || null : null
+          }
+        },
+        careerTrend: {},
+        packProgress: {},
+        coach: {
+          message: brainAnalysis && brainAnalysis.coachMessage ? brainAnalysis.coachMessage : ""
+        }
+      };
+    }
+    if (typeof saveState === "function") saveState();
+    return completionSummary;
+  };
+
+  SparkCore.prototype.applyLegacyReward = function(reward) {
+    var state;
+    var xpDelta;
+    var nextToast;
+    reward = reward || {};
+    state = readLegacyAppState();
+    if (!state) return { xpDelta: reward.xpDelta || 0, toastAmount: reward.toastAmount || 0, jackpot: !!reward.jackpot };
+
+    xpDelta = reward.xpDelta || 0;
+    if (xpDelta) state.xp = (state.xp || 0) + xpDelta;
+    if (reward.toastAmount) {
+      nextToast = {
+        amount: reward.toastAmount,
+        time: reward.time || Date.now()
+      };
+      if (reward.jackpot) nextToast.jackpot = true;
+      state.xpToast = nextToast;
+    }
+    return {
+      xpDelta: xpDelta,
+      toastAmount: reward.toastAmount || 0,
+      jackpot: !!reward.jackpot
+    };
+  };
+
+  SparkCore.prototype.applyLegacySessionOutcome = function(update) {
+    var state;
+    update = update || {};
+    state = readLegacyAppState();
+    if (!state) {
+      return {
+        streak: update.streak || null,
+        sessionsDelta: update.sessionsDelta || 0,
+        xpDelta: update.xpDelta || 0,
+        chordProgress: update.chordProgress || null,
+        level: typeof update.level === "number" ? update.level : null
+      };
+    }
+
+    if (update.streak) {
+      if (update.streak.increment) state.streak = (state.streak || 0) + update.streak.increment;
+      if (update.streak.lastSessionDate) state.lastSessionDate = update.streak.lastSessionDate;
+    }
+
+    if (update.sessionsDelta) state.sessions = (state.sessions || 0) + update.sessionsDelta;
+
+    if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
+      this.applyLegacyReward({
+        xpDelta: update.xpDelta || 0,
+        toastAmount: update.toastAmount || 0,
+        jackpot: !!update.jackpot
+      });
+    }
+
+    if (update.chordProgress) {
+      if (!state.chordProgress || typeof state.chordProgress !== "object" || Array.isArray(state.chordProgress)) {
+        state.chordProgress = {};
+      }
+      for (var chordName in update.chordProgress) {
+        state.chordProgress[chordName] = Math.min((state.chordProgress[chordName] || 0) + update.chordProgress[chordName], 100);
+      }
+    }
+
+    if (typeof update.level === "number") {
+      state.level = update.level;
+      if (Object.prototype.hasOwnProperty.call(state, "playerLevel")) state.playerLevel = update.level;
+    }
+
+    return {
+      streak: update.streak || null,
+      sessionsDelta: update.sessionsDelta || 0,
+      xpDelta: update.xpDelta || 0,
+      chordProgress: update.chordProgress || null,
+      level: typeof update.level === "number" ? update.level : null
+    };
+  };
+
+  SparkCore.prototype.applyLegacyActivityCompletion = function(update) {
+    var state;
+    update = update || {};
+    state = readLegacyAppState();
+    if (!state) return update;
+
+    if (update.setFlags) {
+      for (var flagKey in update.setFlags) {
+        state[flagKey] = update.setFlags[flagKey];
+      }
+    }
+
+    if (update.incrementFields) {
+      for (var incrementKey in update.incrementFields) {
+        state[incrementKey] = (state[incrementKey] || 0) + update.incrementFields[incrementKey];
+      }
+    }
+
+    if (update.maxFields) {
+      for (var maxKey in update.maxFields) {
+        state[maxKey] = Math.max(state[maxKey] || 0, update.maxFields[maxKey]);
+      }
+    }
+
+    if (update.resultFields) {
+      for (var resultKey in update.resultFields) {
+        state[resultKey] = this.cloneValue(update.resultFields[resultKey]);
+      }
+    }
+
+    if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
+      this.applyLegacyReward({
+        xpDelta: update.xpDelta || 0,
+        toastAmount: update.toastAmount || 0,
+        jackpot: !!update.jackpot
+      });
+    }
+
+    if (update.history && typeof logHistory === "function") {
+      logHistory(update.history.type, update.history.detail, update.history.xp || 0);
+    }
+    if (update.emit && typeof _sparkEmit === "function") {
+      _sparkEmit(update.emit.type, this.cloneValue(update.emit.payload || {}));
+    }
+    if (update.checkBadges && typeof checkBadges === "function") {
+      checkBadges();
+    }
+    if (update.save !== false && typeof saveState === "function") {
+      saveState();
+    }
+    return update;
+  };
+
+  SparkCore.prototype.applyLegacyActivityRuntime = function(update) {
+    var state;
+    update = update || {};
+    state = readLegacyAppState();
+    if (!state) {
+      return {
+        setFields: update.setFields || null,
+        incrementFields: update.incrementFields || null,
+        clearIntervals: update.clearIntervals || null,
+        clearTimeouts: update.clearTimeouts || null,
+        cancelAnimationFrames: update.cancelAnimationFrames || null
+      };
+    }
+
+    if (update.setFields) {
+      for (var fieldKey in update.setFields) {
+        state[fieldKey] = update.setFields[fieldKey];
+      }
+    }
+
+    if (update.incrementFields) {
+      for (var incrementKey in update.incrementFields) {
+        state[incrementKey] = (state[incrementKey] || 0) + update.incrementFields[incrementKey];
+      }
+    }
+
+    if (Array.isArray(update.clearIntervals) && typeof T === "object" && T) {
+      for (var i = 0; i < update.clearIntervals.length; i++) {
+        var intervalKey = update.clearIntervals[i];
+        if (T[intervalKey]) {
+          clearInterval(T[intervalKey]);
+          T[intervalKey] = null;
+        }
+      }
+    }
+
+    if (Array.isArray(update.clearTimeouts) && typeof T === "object" && T) {
+      for (var j = 0; j < update.clearTimeouts.length; j++) {
+        var timeoutKey = update.clearTimeouts[j];
+        if (T[timeoutKey]) {
+          clearTimeout(T[timeoutKey]);
+          T[timeoutKey] = null;
+        }
+      }
+    }
+
+    if (Array.isArray(update.cancelAnimationFrames) && typeof cancelAnimationFrame === "function") {
+      for (var k = 0; k < update.cancelAnimationFrames.length; k++) {
+        if (update.cancelAnimationFrames[k]) cancelAnimationFrame(update.cancelAnimationFrames[k]);
+      }
+    }
+
+    return {
+      setFields: update.setFields || null,
+      incrementFields: update.incrementFields || null,
+      clearIntervals: update.clearIntervals || null,
+      clearTimeouts: update.clearTimeouts || null,
+      cancelAnimationFrames: update.cancelAnimationFrames || null
+    };
+  };
+
   SparkCore.prototype.completeSession = function(payload) {
     payload = payload || {};
     if (!this.currentPlan || (payload.sessionId && this.currentPlan.id !== payload.sessionId)) {
@@ -1819,9 +2222,8 @@
   };
 
   SparkCore.prototype.getPlayAlongRecent = function(limit) {
-    var items = this.legacyStateBridge && typeof this.legacyStateBridge.getPlayAlongRecent === "function"
-      ? this.legacyStateBridge.getPlayAlongRecent()
-      : [];
+    var state = readLegacyAppState();
+    var items = state && Array.isArray(state.playAlongRecent) ? state.playAlongRecent : [];
     items = Array.isArray(items) ? items : [];
     items = this.cloneValue(items) || [];
     if (typeof limit === "number" && limit >= 0) return items.slice(0, limit);
@@ -1829,9 +2231,8 @@
   };
 
   SparkCore.prototype.getPlayAlongBookmarks = function(limit) {
-    var items = this.legacyStateBridge && typeof this.legacyStateBridge.getPlayAlongBookmarks === "function"
-      ? this.legacyStateBridge.getPlayAlongBookmarks()
-      : [];
+    var state = readLegacyAppState();
+    var items = state && Array.isArray(state.playAlongBookmarks) ? state.playAlongBookmarks : [];
     items = Array.isArray(items) ? items : [];
     items = this.cloneValue(items) || [];
     if (typeof limit === "number" && limit >= 0) return items.slice(0, limit);
@@ -1919,11 +2320,6 @@
     var today;
     var yesterday;
     if (!result) return null;
-    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyPracticeSessionRecord === "function") {
-      record = SparkProgressBridge.applyPracticeSessionRecord(result);
-      if (typeof saveState === "function") saveState();
-      return record;
-    }
 
     state = readLegacyAppState();
     record = this.cloneValue(result) || {};
@@ -1952,9 +2348,6 @@
 
   SparkCore.prototype.buildLegacyItemResultSummary = function(result) {
     if (!result) return null;
-    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.buildLegacyItemResultSummary === "function") {
-      return SparkProgressBridge.buildLegacyItemResultSummary(result);
-    }
     return {
       practiceResult: this.cloneValue(result),
       weakSpotUpdate: buildSparkCoreWeakSpotUpdate(result, this.cloneValue.bind(this)),
@@ -1966,17 +2359,23 @@
     };
   };
 
+  SparkCore.prototype.applyWeakSpotUpdate = function(update) {
+    var state = readLegacyAppState();
+    var weakSpots;
+    if (!update) return null;
+    if (!state) return update;
+    weakSpots = ensureSparkCoreWeakSpots(state);
+    applySparkCoreWeakSpotUpdate(weakSpots, update);
+    if (typeof saveState === "function") saveState();
+    return update;
+  };
+
   SparkCore.prototype.updateLegacyWeakSpotsFromPerformance = function(result) {
     var summary;
     var state;
     var weakSpots;
     if (!result) return null;
     summary = this.buildLegacyItemResultSummary(result);
-    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyWeakSpotUpdate === "function") {
-      SparkProgressBridge.applyWeakSpotUpdate(summary ? summary.weakSpotUpdate : null);
-      if (typeof saveState === "function") saveState();
-      return summary ? summary.weakSpotUpdate : null;
-    }
 
     state = readLegacyAppState();
     if (!state) return summary ? summary.weakSpotUpdate : null;
@@ -1986,28 +2385,30 @@
     return summary ? summary.weakSpotUpdate : null;
   };
 
+  SparkCore.prototype.applyAdaptiveUpdate = function(update) {
+    var state = readLegacyAppState();
+    if (!update || !update.exerciseId) return null;
+    if (!state) return update;
+    if (!state.adaptiveState || typeof state.adaptiveState !== "object" || Array.isArray(state.adaptiveState)) {
+      state.adaptiveState = {};
+    }
+    state.adaptiveState[update.exerciseId] = {
+      accuracy: update.accuracy,
+      ts: update.ts || Date.now()
+    };
+    if (typeof saveState === "function") saveState();
+    return state.adaptiveState[update.exerciseId];
+  };
+
   SparkCore.prototype.updateLegacyAdaptiveFromResult = function(result) {
     var summary;
     var state;
     if (!result || !result.exerciseId) return null;
     summary = this.buildLegacyItemResultSummary(result);
-    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyAdaptiveUpdate === "function") {
-      SparkProgressBridge.applyAdaptiveUpdate(summary ? summary.adaptiveUpdate : null);
-      if (typeof saveState === "function") saveState();
-      return summary ? summary.adaptiveUpdate : null;
-    }
 
     state = readLegacyAppState();
     if (!state) return summary ? summary.adaptiveUpdate : null;
-    if (!state.adaptiveState || typeof state.adaptiveState !== "object" || Array.isArray(state.adaptiveState)) {
-      state.adaptiveState = {};
-    }
-    state.adaptiveState[result.exerciseId] = {
-      accuracy: result.accuracy,
-      ts: Date.now()
-    };
-    if (typeof saveState === "function") saveState();
-    return state.adaptiveState[result.exerciseId];
+    return this.applyAdaptiveUpdate(summary ? summary.adaptiveUpdate : null);
   };
 
   SparkCore.prototype.getLegacyProgressSnapshot = function() {
@@ -3043,6 +3444,29 @@
   function sparkCoreHasOwnKeys(value) {
     for (var key in value) return true;
     return false;
+  }
+
+  function sparkCoreMergeInstrumentSkillProgress(target, incoming) {
+    for (var skillId in incoming) {
+      var next = incoming[skillId] || {};
+      var prev = target[skillId] || null;
+      if (!prev) {
+        target[skillId] = JSON.parse(JSON.stringify(next));
+        continue;
+      }
+      target[skillId] = {
+        groove: sparkCoreAverageUnit(prev.groove, next.groove),
+        timing: sparkCoreAverageUnit(prev.timing, next.timing),
+        accuracy: sparkCoreAverageUnit(prev.accuracy, next.accuracy),
+        movement: sparkCoreAverageUnit(prev.movement, next.movement)
+      };
+    }
+  }
+
+  function sparkCoreAverageUnit(prev, next) {
+    if (typeof prev !== "number") return typeof next === "number" ? next : 0;
+    if (typeof next !== "number") return prev;
+    return Math.round((((prev + next) / 2) * 100)) / 100;
   }
 
   function createDefaultSparkCore() {

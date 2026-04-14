@@ -50,12 +50,6 @@
       window.sparkCore.updateLegacyAdaptiveFromResult(result);
       return;
     }
-    if(window.SparkProgressBridge && typeof SparkProgressBridge.buildLegacyItemResultSummary === "function" && typeof SparkProgressBridge.applyAdaptiveUpdate === "function"){
-      var summary = SparkProgressBridge.buildLegacyItemResultSummary(result);
-      SparkProgressBridge.applyAdaptiveUpdate(summary ? summary.adaptiveUpdate : null);
-      saveState();
-      return;
-    }
 
     getAdaptiveStateStore()[result.exerciseId] = {
       accuracy: result.accuracy,
