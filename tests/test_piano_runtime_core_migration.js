@@ -33,6 +33,7 @@ function resetState() {
     addEventListener: function() {},
     getElementById: function() { return null; }
   };
+  global.navigator = {};
   global.prompt = function() { return ""; };
   global.SparkSessionTypes = {
     FLOW_GUIDED_SESSION: "guided_session",
@@ -83,6 +84,12 @@ function resetState() {
   global.PIANO_DATA.PLAY_STYLES = [];
   global.PIANO_DATA.REWARD_PHASES = [];
   global.PIANO_DATA.CHORD_COLORS = {};
+  global.KEYBOARD_SIZES = [
+    { keys: 88, label: "Full Piano (88 keys)" },
+    { keys: 76, label: "76-key keyboard" },
+    { keys: 61, label: "61-key keyboard" },
+    { keys: 49, label: "49-key keyboard" }
+  ];
 
   global.saveStateCalls = 0;
   global.renderCalls = 0;
@@ -411,6 +418,7 @@ function resetState() {
 
 resetState();
 eval(loadJS("js/instruments/piano/app.js"));
+eval(loadJS("js/instruments/piano/pages/tools.js"));
 
 console.log("\n--- Piano Runtime Core Migration ---");
 
@@ -498,6 +506,16 @@ test("piano subtab actions update local subtab state through the shared dispatch
   assert.strictEqual(S._toolTab, "settings");
 
   assert.strictEqual(renderCalls, 3);
+});
+
+test("piano settings tab normalizes legacy volume percentages", function() {
+  S._toolTab = "settings";
+  S.volume = 80;
+
+  var html = settingsTab();
+
+  assert.ok(html.indexOf("Volume: 80%") >= 0, "expected normalized volume label");
+  assert.ok(html.indexOf("value=\"80\"") >= 0, "expected normalized slider value");
 });
 
 test("openCareerSong delegates to shared performance selection helper and syncs piano aliases", function() {

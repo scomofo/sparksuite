@@ -56,6 +56,14 @@ function pianoAudioStateEnsureArray(path) {
   return current;
 }
 
+function normalizePianoVolumeValue(value, fallback) {
+  var resolvedFallback = typeof fallback === "number" ? fallback : 0.8;
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return resolvedFallback;
+  if (numeric > 1 && numeric <= 100) return numeric / 100;
+  return Math.max(0, Math.min(1, numeric));
+}
+
 var audioCtx = null;
 var masterGain = null;
 var reverbNode = null;   // ConvolverNode
@@ -81,7 +89,7 @@ function ensureAudio() {
 
     // masterGain feeds both paths
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = pianoAudioStateRead("volume", 0.8);
+    masterGain.gain.value = normalizePianoVolumeValue(pianoAudioStateRead("volume", 0.8), 0.8);
     masterGain.connect(dryGain);
     masterGain.connect(reverbNode);
   }
@@ -113,8 +121,9 @@ function setReverb(amount) {
 }
 
 function setVolume(v) {
-  pianoAudioStateWrite("volume", v);
-  if (masterGain) masterGain.gain.value = v;
+  var nextVolume = normalizePianoVolumeValue(v, 0.8);
+  pianoAudioStateWrite("volume", nextVolume);
+  if (masterGain) masterGain.gain.value = nextVolume;
 }
 
 // ── WAV sample cache & preloading ──
@@ -1014,7 +1023,7 @@ function isRecording() {
 
 function playClip(url) {
   var audio = new Audio(url);
-  audio.volume = pianoAudioStateRead("volume", 0.8);
+  audio.volume = normalizePianoVolumeValue(pianoAudioStateRead("volume", 0.8), 0.8);
   audio.play().catch(function() { showToast("Could not play clip."); });
 }
 

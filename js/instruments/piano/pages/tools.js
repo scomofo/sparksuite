@@ -48,6 +48,14 @@ function setPianoToolTab(tabId) {
   render();
 }
 
+function normalizePianoToolVolume(value, fallback) {
+  var resolvedFallback = typeof fallback === "number" ? fallback : 0.8;
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return resolvedFallback;
+  if (numeric > 1 && numeric <= 100) return numeric / 100;
+  return Math.max(0, Math.min(1, numeric));
+}
+
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -163,7 +171,7 @@ function statsTab() {
 function settingsTab() {
   var html = '<div class="card"><h2>Settings</h2>';
   var dailyGoal = pianoToolRead("dailyGoal", 15);
-  var volume = pianoToolRead("volume", 0.8);
+  var volume = normalizePianoToolVolume(pianoToolRead("volume", 0.8), 0.8);
   var tone = pianoToolRead("tone", "grand");
   var keyboardSize = pianoToolRead("keyboardSize", 61);
   var focusMode = !!pianoToolRead("focusMode", false);
