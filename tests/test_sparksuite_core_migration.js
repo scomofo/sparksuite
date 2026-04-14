@@ -1512,6 +1512,64 @@ test("sv2 home dashboard can fall back to SparkCore player and progress snapshot
   assert.ok(homeHtml.indexOf("1/2 chords") >= 0);
 });
 
+test("sv2 home dashboard merges missing player session counts from fallback state", function() {
+  window.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        player: { xp: 12, level: 1, streak: 0 },
+        progress: { chordProgress: {} }
+      };
+    }
+  };
+  global.document = { body: { classList: { contains: function() { return true; } } } };
+  global.SparkTheme = {
+    get: function() { return {}; },
+    getColor: function() { return "#4ECDC4"; }
+  };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        id: "chordspark",
+        instrument: "guitar",
+        icon: "G",
+        name: "Chord",
+        tabs: ["practice"],
+        getData: function() {
+          return {
+            LN: { 1: "Stage 1" },
+            ALL_CHORDS: [],
+            LC: { 1: "#111" },
+            CHORDS: { 1: [] }
+          };
+        }
+      };
+    },
+    getAll: function() {
+      return [{ id: "chordspark", instrument: "guitar", available: true }];
+    }
+  };
+  global.escHTML = function(value) { return String(value); };
+  S.level = 1;
+  S.playerLevel = 1;
+  S.selectedLevel = 1;
+  S.sessions = 7;
+  S.todayPracticeSeconds = 0;
+  S.dailyGoalMinutes = 10;
+  S.goalReachedToday = false;
+  S.goalStreak = 0;
+
+  eval(loadJS("js/pages/practice.js"));
+
+  var homeHtml = sv2HomeDashboard();
+  assert.ok(homeHtml.indexOf("undefined") === -1);
+});
+
+test("practice home level labels fall back to generic names when LN entries are missing", function() {
+  eval(loadJS("js/pages/practice.js"));
+  assert.strictEqual(getPracticeLevelName({ 1: "First Groove" }, 7), "Level 7");
+  assert.strictEqual(getPracticeLevelName({ 1: "First Groove" }, 1), "First Groove");
+});
+
 test("startPracticeItem launches the matching daily practice item", function() {
   window.sparkCore = null;
   global.escHTML = function(value) { return String(value); };

@@ -99,11 +99,18 @@ function getSparkCoreLegacySnapshotBundle() {
 
 function getPracticePlayerSnapshot() {
   var view = getSparkCoreLegacySnapshotBundle();
-  return view && view.player ? view.player : {
+  var fallback = {
     xp: practiceStateRead("xp", 0),
     level: practiceStateRead("playerLevel", practiceStateRead("level", 1)),
     streak: practiceStateRead("streak", 0),
     sessions: practiceStateRead("sessions", 0)
+  };
+  if (!view || !view.player) return fallback;
+  return {
+    xp: typeof view.player.xp === "number" ? view.player.xp : fallback.xp,
+    level: typeof view.player.level === "number" ? view.player.level : fallback.level,
+    streak: typeof view.player.streak === "number" ? view.player.streak : fallback.streak,
+    sessions: typeof view.player.sessions === "number" ? view.player.sessions : fallback.sessions
   };
 }
 
@@ -112,6 +119,10 @@ function getPracticeProgressSnapshot() {
   return view && view.progress ? view.progress : {
     chordProgress: practiceStateRead("chordProgress", {})
   };
+}
+
+function getPracticeLevelName(levelNames, level) {
+  return levelNames && levelNames[level] ? levelNames[level] : ("Level " + level);
 }
 
 function sv2HomeDashboard() {
@@ -372,11 +383,11 @@ function practiceTab(){
 
   h+='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Pick a Chord &#9889;</h2></div><div class="lvl-tabs">';
   for(var l=1;l<=8;l++){
-    var sel=homeState.selectedLevel===l,lk=l>playerLevel;
-    h+='<button class="lvl-tab" onclick="act(\'selLevel\',\''+l+'\')" style="background:'+(sel?D.LC[l]:"var(--tab-bg)")+';color:'+(sel?"#fff":"var(--tab-inactive)")+';opacity:'+(lk?0.4:1)+'" aria-label="Level '+l+' '+D.LN[l]+'">'+(lk?"&#128274; ":"")+l+'</button>';
+    var sel=homeState.selectedLevel===l,lk=l>playerLevel,levelLabel=getPracticeLevelName(D.LN, l);
+    h+='<button class="lvl-tab" onclick="act(\'selLevel\',\''+l+'\')" style="background:'+(sel?D.LC[l]:"var(--tab-bg)")+';color:'+(sel?"#fff":"var(--tab-inactive)")+';opacity:'+(lk?0.4:1)+'" aria-label="Level '+l+' '+levelLabel+'">'+(lk?"&#128274; ":"")+l+'</button>';
   }
   h+='</div>';
-  h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+D.LC[homeState.selectedLevel]+'">'+D.LN[homeState.selectedLevel]+'</span>';
+  h+='<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+D.LC[homeState.selectedLevel]+'">'+getPracticeLevelName(D.LN, homeState.selectedLevel)+'</span>';
   if(D.CURRICULUM&&D.CURRICULUM[homeState.selectedLevel-1])h+='<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+D.CURRICULUM[homeState.selectedLevel-1].sub+'</span>';
   h+='</div>';
   h+='<div class="flex-col">';
