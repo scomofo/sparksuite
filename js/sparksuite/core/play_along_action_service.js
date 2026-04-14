@@ -14,8 +14,7 @@
   }
 
   SparkPlayAlongActionService.bootstrapController = function() {
-    var target = typeof window !== "undefined" ? window : null;
-    if (!target) return null;
+    if (typeof window === "undefined") return null;
     var stateService = new SparkPlayAlongStateService();
     var actionService = new SparkPlayAlongActionService(stateService);
     var renderer = new SparkPlayAlongRenderer(stateService);
@@ -65,7 +64,7 @@
       sparkPlayAlongReplay: controllerBindings.replay,
       handleSpotifyConnectAction: controllerBindings.spotifyConnectAction
     };
-    Object.assign(target, globals);
+    Object.assign(window, globals);
     return globals;
   };
 
