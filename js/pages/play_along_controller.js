@@ -33,6 +33,14 @@
     return true;
   }
 
+  function launchSearchSelection(index, overrides) {
+    return launchPreparedParams(playAlongActions.prepareSearchLaunch(index, overrides));
+  }
+
+  function stepSection(delta) {
+    return playAlongState.stepSection(delta, requestRender);
+  }
+
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
@@ -48,7 +56,7 @@
 
   window.sparkPlayAlongSelect = function(index) {
     if (playAlongActions.shouldUseCachedSearchChart(index)) {
-      launchPreparedParams(playAlongActions.prepareSearchLaunch(index));
+      launchSearchSelection(index);
       return;
     }
 
@@ -60,12 +68,10 @@
   };
 
   window.sparkPlayAlongSelectWithFile = function(index, file) {
-    var params;
     if (!file) return;
-    params = playAlongActions.prepareSearchLaunch(index, {
+    return launchSearchSelection(index, {
       audioFile: file,
     });
-    launchPreparedParams(params);
   };
 
   window.sparkPlayAlongLaunchDemo = function(index) {
@@ -214,11 +220,11 @@
   };
 
   window.sparkPlayAlongPrevSection = function() {
-    return playAlongState.stepSection(-1, requestRender);
+    return stepSection(-1);
   };
 
   window.sparkPlayAlongNextSection = function() {
-    return playAlongState.stepSection(1, requestRender);
+    return stepSection(1);
   };
 
   window.sparkPlayAlongBookmarkCurrentSection = function() {
