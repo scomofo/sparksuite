@@ -89,6 +89,19 @@
     return writePlayAlongPath(path, value);
   };
 
+  SparkPlayAlongStateService.prototype.showHomeScreen = function() {
+    return this.writeValue("screen", SCR.PLAY_ALONG);
+  };
+
+  SparkPlayAlongStateService.prototype.showSessionScreen = function() {
+    this.writeValue("screen", SCR.PLAY_ALONG_SESSION);
+    return this.writeValue("playAlongPaused", false);
+  };
+
+  SparkPlayAlongStateService.prototype.showResultsScreen = function() {
+    return this.writeValue("screen", SCR.PLAY_ALONG_RESULTS);
+  };
+
   SparkPlayAlongStateService.prototype.persistState = function() {
     if (typeof saveState === "function") saveState();
   };
@@ -119,6 +132,22 @@
       core.updateRuntimeState({ spotifyDifficulty: level });
     }
     return level;
+  };
+
+  SparkPlayAlongStateService.prototype.prepareFreshLaunch = function(params) {
+    if (!params) return null;
+    this.resetSelectedDrillState();
+    return this.cloneValue(params);
+  };
+
+  SparkPlayAlongStateService.prototype.prepareLocalFileLaunch = function(file, instrumentId) {
+    if (!file) return null;
+    this.resetSelectedDrillState();
+    return {
+      audioFile: file,
+      difficulty: this.getDifficulty(),
+      instrument: instrumentId || "guitar"
+    };
   };
 
   SparkPlayAlongStateService.prototype.getCore = function() {

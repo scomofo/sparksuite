@@ -50,9 +50,8 @@
   };
 
   window.sparkPlayAlongLaunchDemo = function(index) {
-    var params = playAlongActions.getDemoLaunchParams(index);
+    var params = playAlongState.prepareFreshLaunch(playAlongActions.getDemoLaunchParams(index));
     if (!params) return false;
-    playAlongState.resetSelectedDrillState();
     launchPlayAlongSession(params);
     return true;
   };
@@ -138,14 +137,12 @@
   // ---- Load Local File ----
 
   window.sparkPlayAlongLoadFile = function(file) {
+    var params;
     if (!file) return;
-
-    playAlongState.resetSelectedDrillState();
-    launchPlayAlongSession({
-      audioFile: file,
-      difficulty: playAlongState.getDifficulty(),
-      instrument: playAlongActions.getInstrumentId()
-    });
+    params = playAlongState.prepareLocalFileLaunch(file, playAlongActions.getInstrumentId());
+    if (!params) return false;
+    launchPlayAlongSession(params);
+    return true;
   };
 
   // ---- Game Loop ----
@@ -169,7 +166,7 @@
       outcome = playAlongState.enrichOutcomeWithLoopSummary(outcome, playAlongState.buildCurrentSectionBookmark());
       playAlongState.setLastOutcome(outcome);
     }
-    playAlongState.writeValue("screen", SCR.PLAY_ALONG_RESULTS);
+    playAlongState.showResultsScreen();
     render();
 
     // Draw heatmap after render
@@ -199,7 +196,7 @@
     if (params) {
       launchPlayAlongSession(params);
     } else {
-      playAlongState.writeValue("screen", SCR.PLAY_ALONG);
+      playAlongState.showHomeScreen();
       render();
     }
   };
@@ -271,7 +268,7 @@
 
   window.sparkPlayAlongPickNew = function() {
     playAlongState.resetSelectedDrillState();
-    playAlongState.writeValue("screen", SCR.PLAY_ALONG);
+    playAlongState.showHomeScreen();
     render();
   };
 
@@ -290,7 +287,7 @@
   // ---- Navigation Helper ----
 
   window.openPlayAlong = function() {
-    playAlongState.writeValue("screen", SCR.PLAY_ALONG);
+    playAlongState.showHomeScreen();
     render();
   };
 
@@ -301,8 +298,7 @@
     playAlongState.rememberLaunch(params);
     return playAlongState.startSession(params).then(function(started) {
       if (!started) return false;
-      playAlongState.writeValue("screen", SCR.PLAY_ALONG_SESSION);
-      playAlongState.writeValue("playAlongPaused", false);
+      playAlongState.showSessionScreen();
       playAlongState.applySelectedDrillState();
       render();
       sparkPlayAlongStartLoop();
@@ -310,7 +306,7 @@
     }).catch(function(err) {
       console.error("[PlayAlong] Failed:", err);
       playAlongState.setError(err);
-      playAlongState.writeValue("screen", SCR.PLAY_ALONG);
+      playAlongState.showHomeScreen();
       render();
       return false;
     });
