@@ -510,12 +510,7 @@
     }
 
     return this.resumeSpotifyConnection(authManager, function(token) {
-      if (
-        token &&
-        self.stateService &&
-        typeof self.stateService.initSpotify === "function" &&
-        self.stateService.initSpotify(token)
-      ) {
+      if (token && self.stateService.initSpotify(token)) {
         if (typeof onConnected === "function") onConnected();
       }
     }).then(function(reused) {
@@ -537,13 +532,7 @@
       });
 
       self.bindSpotifyCallback(authManager, function(tokenData) {
-        if (
-          tokenData &&
-          tokenData.access_token &&
-          self.stateService &&
-          typeof self.stateService.initSpotify === "function" &&
-          self.stateService.initSpotify(tokenData.access_token)
-        ) {
+        if (tokenData && tokenData.access_token && self.stateService.initSpotify(tokenData.access_token)) {
           if (typeof onConnected === "function") onConnected();
         }
       });
