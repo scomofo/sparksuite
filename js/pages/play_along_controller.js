@@ -337,6 +337,12 @@
   };
 
 
+  window.sparkPlayAlongConnectSpotify = function() {
+    return playAlongActions.connectSpotify(function() {
+      if (typeof render === "function") render();
+    });
+  };
+
   window.sparkPlayAlongSaveClientId = function() {
     if (!playAlongActions.saveSpotifyClientIdFromPrompt()) return;
     sparkPlayAlongConnectSpotify();

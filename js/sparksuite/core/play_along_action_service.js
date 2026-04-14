@@ -341,6 +341,57 @@
     return authManager.getAuthUrl();
   };
 
+  SparkPlayAlongActionService.prototype.connectSpotify = function(onConnected) {
+    var authManager = this.createSpotifyAuthManager();
+    var self = this;
+    if (!authManager) {
+      alert("Spotify integration not loaded.");
+      return Promise.resolve(false);
+    }
+
+    return this.resumeSpotifyConnection(authManager, function(token) {
+      if (
+        token &&
+        self.stateService &&
+        typeof self.stateService.initSpotify === "function" &&
+        self.stateService.initSpotify(token)
+      ) {
+        if (typeof onConnected === "function") onConnected();
+      }
+    }).then(function(reused) {
+      var clientId;
+      if (reused) return true;
+
+      clientId = self.getSpotifyClientId();
+      if (!clientId) {
+        self.showSpotifyClientIdPrompt(self.getSpotifyPromptContainer());
+        return false;
+      }
+
+      if (!self.configureSpotifyAuth(clientId)) return false;
+
+      self.requestSpotifyAuthUrl(authManager).then(function(url) {
+        self.openSpotifyAuthUrl(url);
+      }).catch(function(err) {
+        console.error("Spotify auth URL generation failed:", err);
+      });
+
+      self.bindSpotifyCallback(authManager, function(tokenData) {
+        if (
+          tokenData &&
+          tokenData.access_token &&
+          self.stateService &&
+          typeof self.stateService.initSpotify === "function" &&
+          self.stateService.initSpotify(tokenData.access_token)
+        ) {
+          if (typeof onConnected === "function") onConnected();
+        }
+      });
+
+      return true;
+    });
+  };
+
   SparkPlayAlongActionService.prototype.createSavedTrack = function(track) {
     if (!track) return null;
     return {
