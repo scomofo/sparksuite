@@ -8,7 +8,7 @@
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
-    var resultsEl = document.getElementById("play-along-results");
+    var resultsEl = playAlongActions.getSearchResultsContainer();
     if (!playAlongActions.searchTracks(query, function(tracks) {
       playAlongActions.renderSearchResults(resultsEl, tracks);
     })) {
@@ -24,7 +24,7 @@
       return;
     }
 
-    var resultsEl = document.getElementById("play-along-results");
+    var resultsEl = playAlongActions.getSearchResultsContainer();
     if (!resultsEl) return;
     playAlongActions.showSearchUploadPrompt(resultsEl, index, sparkPlayAlongSelectWithFile, function(params) {
       launchPlayAlongSession(params);
@@ -311,14 +311,12 @@
       }
     }).then(function(reused) {
       var clientId;
-      var container;
       if (reused) return;
 
     // Need to configure first — check if client ID is set
       clientId = playAlongActions.getSpotifyClientId();
       if (!clientId) {
-        container = document.getElementById("play-along-results") || document.getElementById("app");
-        playAlongActions.showSpotifyClientIdPrompt(container);
+        playAlongActions.showSpotifyClientIdPrompt(playAlongActions.getSpotifyPromptContainer());
         return;
       }
 

@@ -153,6 +153,14 @@
     return html;
   };
 
+  SparkPlayAlongActionService.prototype.getSearchResultsContainer = function() {
+    return document.getElementById("play-along-results");
+  };
+
+  SparkPlayAlongActionService.prototype.getSpotifyPromptContainer = function() {
+    return this.getSearchResultsContainer() || document.getElementById("app");
+  };
+
   SparkPlayAlongActionService.prototype.renderSearchResults = function(container, tracks) {
     if (!container) return false;
     container.innerHTML = this.buildSearchResultsMarkup(tracks);
