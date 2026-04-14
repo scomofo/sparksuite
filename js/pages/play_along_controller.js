@@ -9,6 +9,12 @@
     if (typeof render === "function") render();
   }
 
+  function launchPreparedParams(params) {
+    if (!params) return false;
+    launchPlayAlongSession(params);
+    return true;
+  }
+
   // ---- Search ----
 
   window.sparkPlayAlongSearch = function(query) {
@@ -46,17 +52,13 @@
   };
 
   window.sparkPlayAlongLaunchDemo = function(index) {
-    var params = playAlongState.prepareFreshLaunch(playAlongActions.getDemoLaunchParams(index));
-    if (!params) return false;
-    launchPlayAlongSession(params);
-    return true;
+    return launchPreparedParams(
+      playAlongState.prepareFreshLaunch(playAlongActions.getDemoLaunchParams(index))
+    );
   };
 
   window.sparkPlayAlongLaunchRecent = function(index) {
-    var params = playAlongState.prepareRecentLaunch(index);
-    if (!params) return false;
-    launchPlayAlongSession(params);
-    return true;
+    return launchPreparedParams(playAlongState.prepareRecentLaunch(index));
   };
 
   window.sparkPlayAlongSaveTrack = function(index) {
@@ -67,10 +69,7 @@
   };
 
   window.sparkPlayAlongLaunchSaved = function(index) {
-    var params = playAlongState.prepareSavedLaunch(index);
-    if (!params) return false;
-    launchPlayAlongSession(params);
-    return true;
+    return launchPreparedParams(playAlongState.prepareSavedLaunch(index));
   };
 
   window.sparkPlayAlongRemoveSaved = function(index) {
@@ -86,17 +85,11 @@
   };
 
   window.sparkPlayAlongLaunchBookmark = function(index) {
-    var params = playAlongState.prepareBookmarkLaunchByIndex(index);
-    if (!params) return false;
-    launchPlayAlongSession(params);
-    return true;
+    return launchPreparedParams(playAlongState.prepareBookmarkLaunchByIndex(index));
   };
 
   window.sparkPlayAlongLaunchBookmarkByKey = function(trackId, sectionIndex) {
-    var params = playAlongState.prepareBookmarkLaunchByKey(trackId, sectionIndex);
-    if (!params) return false;
-    launchPlayAlongSession(params);
-    return true;
+    return launchPreparedParams(playAlongState.prepareBookmarkLaunchByKey(trackId, sectionIndex));
   };
 
   window.sparkPlayAlongRemoveRecent = function(index) {
@@ -136,9 +129,7 @@
     var params;
     if (!file) return;
     params = playAlongState.prepareLocalFileLaunch(file, playAlongActions.getInstrumentId());
-    if (!params) return false;
-    launchPlayAlongSession(params);
-    return true;
+    return launchPreparedParams(params);
   };
 
   // ---- Game Loop ----
@@ -199,9 +190,7 @@
   };
 
   window.sparkPlayAlongReplayFullSong = function() {
-    var params = playAlongState.prepareFullSongReplayLaunch();
-    if (!params) return false;
-    return launchPlayAlongSession(params);
+    return launchPreparedParams(playAlongState.prepareFullSongReplayLaunch());
   };
 
   window.sparkPlayAlongTogglePause = function() {
@@ -240,15 +229,11 @@
   };
 
   window.sparkPlayAlongJumpToWeakSection = function() {
-    var params = playAlongState.prepareWeakSectionLaunch();
-    if (!params) return false;
-    return launchPlayAlongSession(params);
+    return launchPreparedParams(playAlongState.prepareWeakSectionLaunch());
   };
 
   window.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {
-    var params = playAlongState.prepareSectionRecommendationLaunch(trackId, sectionIndex);
-    if (!params) return false;
-    return launchPlayAlongSession(params);
+    return launchPreparedParams(playAlongState.prepareSectionRecommendationLaunch(trackId, sectionIndex));
   };
 
   window.sparkPlayAlongPickNew = function() {
