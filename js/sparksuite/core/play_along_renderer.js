@@ -31,19 +31,11 @@
     return true;
   };
 
-  SparkPlayAlongRenderer.prototype.createStopHandler = function(onRender) {
-    return this.finishSessionResults.bind(this, onRender);
-  };
-
-  SparkPlayAlongRenderer.prototype.createStartLoopHandler = function(onStopLoop) {
-    return this.startSessionLoop.bind(this, onStopLoop);
-  };
-
   SparkPlayAlongRenderer.prototype.createControllerBindings = function(onRender) {
-    var stop = this.createStopHandler(onRender);
+    var stop = this.finishSessionResults.bind(this, onRender);
     return {
       stop: stop,
-      startLoop: this.createStartLoopHandler(stop)
+      startLoop: this.startSessionLoop.bind(this, stop)
     };
   };
 
