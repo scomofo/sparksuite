@@ -25,6 +25,58 @@ function guidedStateRead(path, fallback) {
   return cursor == null ? fallback : cursor;
 }
 
+function titleizeGuidedToken(value) {
+  return String(value || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+}
+
+function ensureGuidedPlanView(plan) {
+  var nextPlan = plan ? JSON.parse(JSON.stringify(plan)) : null;
+  var moveLabel;
+  if (!nextPlan) return null;
+
+  nextPlan.level = nextPlan.level != null ? nextPlan.level : (nextPlan.num || 1);
+  nextPlan.bpm = nextPlan.bpm != null ? nextPlan.bpm : 70;
+
+  if (!nextPlan.spark || !nextPlan.spark.text) {
+    nextPlan.spark = {
+      text: nextPlan.desc || nextPlan.description || "Let's take this lesson one clear step at a time."
+    };
+  }
+
+  if (!nextPlan.review || !nextPlan.review.text) {
+    nextPlan.review = {
+      chords: nextPlan.review && Array.isArray(nextPlan.review.chords) ? nextPlan.review.chords.slice() : null,
+      text: "Take a quick breath, reconnect with the groove, and get ready for the next layer."
+    };
+  }
+
+  moveLabel = titleizeGuidedToken(nextPlan.moveLabel || nextPlan.skillLabel || nextPlan.skill || nextPlan.title || "this move");
+  if (!nextPlan.newMove || !nextPlan.newMove.text) {
+    nextPlan.newMove = {
+      chord: nextPlan.newMove && nextPlan.newMove.chord ? nextPlan.newMove.chord : (nextPlan.chord || null),
+      strum: nextPlan.newMove && nextPlan.newMove.strum ? nextPlan.newMove.strum : null,
+      text: "Focus on " + moveLabel + " and aim for one clean, confident rep."
+    };
+  }
+
+  if (!nextPlan.songSlice || !nextPlan.songSlice.text) {
+    nextPlan.songSlice = {
+      song: nextPlan.songSlice && nextPlan.songSlice.song ? nextPlan.songSlice.song : null,
+      text: "Try the idea in time and keep the motion relaxed and steady."
+    };
+  }
+
+  if (!nextPlan.victoryLap || !nextPlan.victoryLap.text) {
+    nextPlan.victoryLap = {
+      text: "Run it one more time with confidence to lock the feeling in."
+    };
+  }
+
+  return nextPlan;
+}
+
 function guidedStepIndicator(step) {
   var steps = [
     {id:"spark",label:"Spark",icon:"&#10024;"},
@@ -279,7 +331,7 @@ function getGuidedSessionView() {
     : null;
 
   return {
-    plan: plan || guidedStateRead("guidedPlan", null),
+    plan: ensureGuidedPlanView(plan || guidedStateRead("guidedPlan", null)),
     guidedStep: coreView && coreView.runtimeState && coreView.runtimeState.guidedStep
       ? coreView.runtimeState.guidedStep
       : (guidedStateRead("guidedStep", "spark") || "spark"),

@@ -57,6 +57,7 @@ global.render = function() {};
 
 // Load ui.js (escHTML, checkBadges, shuffle, etc.)
 eval(loadJS('js/ui.js'));
+eval(loadJS('js/pages/guided.js'));
 
 // ===== Tests: escHTML =====
 console.log('\n--- escHTML ---');
@@ -96,6 +97,22 @@ test('piano clickable div also uses safe single-quoted key checks', function() {
   var pianoUi = loadJS('js/instruments/piano/ui.js');
   assert.ok(pianoUi.indexOf("event.key==='Enter'||event.key===' '") >= 0);
   assert.ok(pianoUi.indexOf('event.key==="Enter"') === -1);
+});
+
+test('guided plan view fills missing presentation fields for raw lessons', function() {
+  var plan = ensureGuidedPlanView({
+    num: 1,
+    title: 'First Strum',
+    skill: 'down_strum',
+    desc: 'Lock in steady down-strums on open strings.'
+  });
+  assert.strictEqual(plan.level, 1);
+  assert.strictEqual(plan.bpm, 70);
+  assert.ok(plan.spark && plan.spark.text);
+  assert.ok(plan.review && plan.review.text);
+  assert.ok(plan.newMove && plan.newMove.text);
+  assert.ok(plan.songSlice && plan.songSlice.text);
+  assert.ok(plan.victoryLap && plan.victoryLap.text);
 });
 
 // ===== Tests: shuffle =====
