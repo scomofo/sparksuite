@@ -338,10 +338,7 @@
       return;
     }
 
-    SparkSpotifyAuthManager.configure({
-      clientId: clientId.trim(),
-      redirectUri: playAlongActions.getSpotifyRedirectUri()
-    });
+    if (!playAlongActions.configureSpotifyAuth(clientId)) return;
 
     // Start OAuth flow (PKCE - getAuthUrl is async)
     authManager.getAuthUrl().then(function(url) {
@@ -350,15 +347,11 @@
       console.error("Spotify auth URL generation failed:", err);
     });
 
-    if (window.electron && window.electron.spotify && window.electron.spotify.onCallback) {
-      window.electron.spotify.onCallback(function(code) {
-        authManager.exchangeCode(code).then(function(tokenData) {
-          if (tokenData && tokenData.access_token && playAlongState.initSpotify(tokenData.access_token)) {
-            if (typeof render === "function") render();
-          }
-        });
-      });
-    }
+    playAlongActions.bindSpotifyCallback(authManager, function(tokenData) {
+      if (tokenData && tokenData.access_token && playAlongState.initSpotify(tokenData.access_token)) {
+        if (typeof render === "function") render();
+      }
+    });
   };
 
 

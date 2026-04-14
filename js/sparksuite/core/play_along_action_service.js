@@ -233,6 +233,15 @@
     return redirectUri;
   };
 
+  SparkPlayAlongActionService.prototype.configureSpotifyAuth = function(clientId) {
+    if (typeof SparkSpotifyAuthManager === "undefined" || !clientId) return false;
+    SparkSpotifyAuthManager.configure({
+      clientId: String(clientId).trim(),
+      redirectUri: this.getSpotifyRedirectUri()
+    });
+    return true;
+  };
+
   SparkPlayAlongActionService.prototype.openSpotifyAuthUrl = function(url) {
     if (!url) return false;
     if (typeof window.electron !== "undefined" && window.electron.shell) {
@@ -240,6 +249,18 @@
     } else {
       window.location.href = url;
     }
+    return true;
+  };
+
+  SparkPlayAlongActionService.prototype.bindSpotifyCallback = function(authManager, onTokenData) {
+    if (!authManager || !window.electron || !window.electron.spotify || !window.electron.spotify.onCallback) {
+      return false;
+    }
+    window.electron.spotify.onCallback(function(code) {
+      authManager.exchangeCode(code).then(function(tokenData) {
+        if (typeof onTokenData === "function") onTokenData(tokenData);
+      });
+    });
     return true;
   };
 
