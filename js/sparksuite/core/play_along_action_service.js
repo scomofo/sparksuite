@@ -141,9 +141,6 @@
         return self.stateService.launchSectionRecommendation(first, second, launchPreparedParams);
       }
       : function() { return false; };
-    var showHome = this.stateService && typeof this.stateService.showHome === "function"
-      ? this.stateService.showHome
-      : function() { return false; };
     return {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
@@ -217,7 +214,9 @@
         return self.stateService.startDrill(value, launchPreparedParams, onRender);
       },
       openHome: function() {
-        return showHome.call(self.stateService, onRender);
+        return self.stateService && typeof self.stateService.showHome === "function"
+          ? self.stateService.showHome(onRender)
+          : false;
       },
       connectSpotify: function() {
         return self.connectSpotifyAndRender(onRender);
