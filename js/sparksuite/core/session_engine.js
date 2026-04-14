@@ -48,6 +48,57 @@
     };
   }
 
+  function titleizeSessionToken(value) {
+    return String(value || "")
+      .replace(/[_-]+/g, " ")
+      .replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+  }
+
+  function ensureGuidedPlanPresentation(guidedPlan) {
+    var nextPlan = guidedPlan ? JSON.parse(JSON.stringify(guidedPlan)) : null;
+    var moveLabel;
+    if (!nextPlan) return null;
+
+    nextPlan.level = nextPlan.level != null ? nextPlan.level : (nextPlan.num || 1);
+    nextPlan.bpm = nextPlan.bpm != null ? nextPlan.bpm : 70;
+
+    if (!nextPlan.spark || !nextPlan.spark.text) {
+      nextPlan.spark = {
+        text: nextPlan.desc || nextPlan.description || "Let's take this lesson one clear step at a time."
+      };
+    }
+
+    if (!nextPlan.review) {
+      nextPlan.review = {
+        text: "Take a quick breath, reconnect with the groove, and get ready for the next layer."
+      };
+    }
+
+    moveLabel = titleizeSessionToken(nextPlan.moveLabel || nextPlan.skillLabel || nextPlan.skill || nextPlan.title || "this move");
+    if (!nextPlan.newMove) {
+      nextPlan.newMove = {
+        chord: nextPlan.chord || null,
+        text: "Focus on " + moveLabel + " and aim for one clean, confident rep."
+      };
+    } else if (!nextPlan.newMove.text) {
+      nextPlan.newMove.text = "Focus on " + moveLabel + " and aim for one clean, confident rep.";
+    }
+
+    if (!nextPlan.songSlice) {
+      nextPlan.songSlice = {
+        text: "Try the idea in time and keep the motion relaxed and steady."
+      };
+    }
+
+    if (!nextPlan.victoryLap) {
+      nextPlan.victoryLap = {
+        text: "Run it one more time with confidence to lock the feeling in."
+      };
+    }
+
+    return nextPlan;
+  }
+
   function SessionEngine(practiceEngine, curriculumEngine) {
     this.practiceEngine = practiceEngine;
     this.curriculumEngine = curriculumEngine;
@@ -246,7 +297,7 @@
     if (isNaN(sessionNum) || sessionNum < 1) sessionNum = 1;
 
     var sessionIndex = Math.max(0, Math.min(sessions.length - 1, sessionNum - 1));
-    var guidedPlan = sessions.length ? clone(sessions[sessionIndex]) : null;
+    var guidedPlan = sessions.length ? ensureGuidedPlanPresentation(sessions[sessionIndex]) : null;
     if (guidedPlan && guidedPlan.num != null) sessionNum = guidedPlan.num;
 
     return new SessionPlan({

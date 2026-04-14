@@ -3210,6 +3210,28 @@ test("createDefaultSparkCore registers ukulele and builds a ukulele-ready practi
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "uke_01");
 });
 
+test("ukulele guided sessions get a renderable guided plan shape", function() {
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "ukespark"; },
+    getInstrumentType: function() { return "ukulele"; },
+    getCurriculumMap: function() { return SparkUkuleleLessons; },
+    getCurriculum: function() { return { SESSIONS: SparkUkuleleLessons }; },
+    getSongs: function() { return SparkUkuleleModule.getSongs(); }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+  var guidedPlan = plan.context && plan.context.guidedPlan;
+
+  assert.strictEqual(plan.flow, "guided_session");
+  assert.ok(guidedPlan);
+  assert.strictEqual(guidedPlan.title, "First Strum");
+  assert.ok(guidedPlan.spark && guidedPlan.spark.text);
+  assert.ok(guidedPlan.newMove && guidedPlan.newMove.text);
+  assert.ok(guidedPlan.songSlice && guidedPlan.songSlice.text);
+  assert.ok(guidedPlan.victoryLap && guidedPlan.victoryLap.text);
+});
+
 test("ukulele rhythm adapter selects richer chart variants as lessons progress", function() {
   var adapter = new SparkUkuleleRhythmAdapter();
   var switchingPayload = adapter.createPayload({
