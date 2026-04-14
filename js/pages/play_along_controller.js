@@ -49,7 +49,7 @@
     var resultsEl = playAlongActions.getSearchResultsContainer();
     if (!resultsEl) return;
     playAlongActions.showSearchUploadPrompt(resultsEl, index, sparkPlayAlongSelectWithFile, function(params) {
-      launchPlayAlongSession(params);
+      launchPreparedParams(params);
     });
   };
 
@@ -235,10 +235,7 @@
 
   window.sparkPlayAlongStartDrill = function(index) {
     var params = playAlongState.prepareDrillLaunch(index);
-    if (params) {
-      launchPlayAlongSession(params);
-      return true;
-    }
+    if (params) return launchPreparedParams(params);
     if (params === null) return false;
     playAlongState.writeValue("screen", SCR.PLAY_ALONG);
     requestRender();
