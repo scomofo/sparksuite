@@ -493,6 +493,34 @@ test("openPlan delegates piano dashboard practice entry to the shared helper", f
   assert.strictEqual(S.screen, "practicePlan");
 });
 
+test("new_custom opens the inline custom set editor", function() {
+  pianoAct("new_custom");
+
+  assert.strictEqual(S.customSetEditorOpen, true);
+  assert.strictEqual(S.customSetDraftName, "");
+  assert.strictEqual(S.customSetDraftChords, "");
+});
+
+test("save_custom persists a valid inline custom set and clears editor state", function() {
+  global.window.findChord = function(name) {
+    return /^(C|Am|F|G)$/.test(name) ? { short: name } : null;
+  };
+  eval(loadJS("js/instruments/piano/app.js"));
+  S.customSets = [];
+  S.customSetEditorOpen = true;
+  S.customSetDraftName = "Warmup";
+  S.customSetDraftChords = "C, Am, F, G";
+
+  pianoAct("save_custom");
+
+  assert.strictEqual(S.customSets.length, 1);
+  assert.strictEqual(S.customSets[0].name, "Warmup");
+  assert.deepStrictEqual(S.customSets[0].chords, ["C", "Am", "F", "G"]);
+  assert.strictEqual(S.customSetEditorOpen, false);
+  assert.strictEqual(S.customSetDraftName, "");
+  assert.strictEqual(S.customSetDraftChords, "");
+});
+
 test("piano subtab actions update local subtab state through the shared dispatcher", function() {
   renderCalls = 0;
 

@@ -1781,23 +1781,49 @@ function act(action, param) {
       break;
 
     // ── Custom sets ──
-    case "new_custom": {
-      var name = prompt("Set name:");
-      if (!name || !name.trim()) break;
-      var chordStr = prompt("Chords (comma-separated, e.g. C,Am,F,G):");
-      if (!chordStr) break;
+    case "new_custom":
+      state.customSetEditorOpen = true;
+      state.customSetDraftName = state.customSetDraftName || "";
+      state.customSetDraftChords = state.customSetDraftChords || "";
+      break;
+
+    case "set_custom_name":
+      state.customSetDraftName = String(param || "").slice(0, 50);
+      break;
+
+    case "set_custom_chords":
+      state.customSetDraftChords = String(param || "");
+      break;
+
+    case "save_custom": {
+      var name = String(state.customSetDraftName || "").trim();
+      var chordStr = String(state.customSetDraftChords || "");
       var parsed = chordStr.split(",").map(function(s) { return s.trim(); }).filter(Boolean);
       var valid = parsed.filter(function(c) { return findChord(c); });
       var invalid = parsed.filter(function(c) { return !findChord(c); });
+      if (!name) {
+        showToast("Add a set name first.");
+        break;
+      }
       if (valid.length < 2) {
         showToast("Need at least 2 valid chords." + (invalid.length ? " Unknown: " + invalid.join(", ") : ""));
         break;
       }
       if (invalid.length) showToast("Skipped unknown: " + invalid.join(", "));
-      state.customSets.push({ name: name.trim().slice(0, 50), chords: valid });
+      state.customSets.push({ name: name, chords: valid });
+      state.customSetEditorOpen = false;
+      state.customSetDraftName = "";
+      state.customSetDraftChords = "";
       saveState();
       break;
     }
+
+    case "cancel_custom":
+      state.customSetEditorOpen = false;
+      state.customSetDraftName = "";
+      state.customSetDraftChords = "";
+      saveState();
+      break;
 
     case "del_custom":
       state.customSets.splice(parseInt(param), 1);

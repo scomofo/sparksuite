@@ -41,6 +41,9 @@ function pianoPracticeTab() {
   var viewedLevel = pianoPracticeRead("_viewLevel", currentLevel) || currentLevel;
   var chordProg = pianoPracticeRead("chordProg", {});
   var customSets = Array.isArray(pianoPracticeRead("customSets", [])) ? pianoPracticeRead("customSets", []) : [];
+  var customSetEditorOpen = !!pianoPracticeRead("customSetEditorOpen", false);
+  var customSetDraftName = pianoPracticeRead("customSetDraftName", "");
+  var customSetDraftChords = pianoPracticeRead("customSetDraftChords", "");
   var earnedBadges = Array.isArray(pianoPracticeRead("earned", [])) ? pianoPracticeRead("earned", []) : [];
 
   // If-then intention reminder (stickiness #2)
@@ -136,7 +139,19 @@ function pianoPracticeTab() {
       html += '</div>';
     });
   }
-  html += '<button class="btn btn-sm" onclick="act(\'new_custom\')">+ New Set</button></div>';
+  if (customSetEditorOpen) {
+    html += '<div class="card" style="margin-top:8px;padding:12px">';
+    html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Build a set with at least 2 valid chords, like C, Am, F, G.</div>';
+    html += '<input class="input" type="text" placeholder="Set name" value="' + escHTML(customSetDraftName) + '" oninput="act(\'set_custom_name\',this.value)" style="width:100%;margin-bottom:8px">';
+    html += '<input class="input" type="text" placeholder="Chords (comma-separated)" value="' + escHTML(customSetDraftChords) + '" oninput="act(\'set_custom_chords\',this.value)" style="width:100%;margin-bottom:8px">';
+    html += '<div style="display:flex;gap:8px">';
+    html += '<button class="btn btn-sm" onclick="act(\'save_custom\')" style="background:var(--accent);color:#fff">Save Set</button>';
+    html += '<button class="btn btn-sm btn-secondary" onclick="act(\'cancel_custom\')">Cancel</button>';
+    html += '</div></div>';
+  } else {
+    html += '<button class="btn btn-sm" onclick="act(\'new_custom\')">+ New Set</button>';
+  }
+  html += '</div>';
 
   // Focus mode toggle
   html += '<div class="setting-row" style="margin-top:12px">';
