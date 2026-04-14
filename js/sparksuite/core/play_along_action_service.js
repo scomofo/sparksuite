@@ -168,6 +168,51 @@
       + "</div>";
   };
 
+  SparkPlayAlongActionService.prototype.bindUploadPromptHandlers = function(index, onSelectWithFile, onSkip) {
+    var track = this.getSearchResult(index);
+    var fileInput = document.getElementById("play-along-audio-input");
+    var skipBtn = document.getElementById("play-along-skip-btn");
+    if (!track) return false;
+
+    if (fileInput) {
+      fileInput.addEventListener("change", function() {
+        var file = fileInput.files && fileInput.files[0];
+        if (file && typeof onSelectWithFile === "function") {
+          onSelectWithFile(index, file);
+        }
+      });
+    }
+
+    if (skipBtn) {
+      skipBtn.addEventListener("click", function() {
+        if (typeof onSkip === "function") onSkip(track);
+      });
+    }
+
+    return !!(fileInput || skipBtn);
+  };
+
+  SparkPlayAlongActionService.prototype.getSpotifyClientId = function() {
+    if (typeof localStorage === "undefined" || !localStorage) return "";
+    return localStorage.getItem("sparksuite_spotify_client_id") || "";
+  };
+
+  SparkPlayAlongActionService.prototype.saveSpotifyClientId = function(value) {
+    var clientId = value && String(value).trim();
+    if (!clientId || typeof localStorage === "undefined" || !localStorage) return false;
+    localStorage.setItem("sparksuite_spotify_client_id", clientId);
+    return true;
+  };
+
+  SparkPlayAlongActionService.prototype.buildSpotifyClientIdPromptMarkup = function() {
+    return "<div class=card style=padding:20px;text-align:center>"
+      + "<div style=font-size:14px;font-weight:700;margin-bottom:8px>Spotify Client ID</div>"
+      + "<div style=font-size:12px;color:var(--text-dim);margin-bottom:12px>Get yours at developer.spotify.com/dashboard</div>"
+      + "<input id=spotify-client-id-input class=input type=text placeholder=Paste client ID here style=width:100%;margin-bottom:8px>"
+      + "<button class=btn onclick=sparkPlayAlongSaveClientId() style=background:var(--accent);color:#fff>Save and Connect</button>"
+      + "</div>";
+  };
+
   SparkPlayAlongActionService.prototype.createSavedTrack = function(track) {
     if (!track) return null;
     return {

@@ -32,24 +32,9 @@
     var resultsEl = document.getElementById("play-along-results");
     if (!resultsEl) return;
     resultsEl.innerHTML = playAlongActions.buildUploadPromptMarkup(track);
-
-    var fileInput = document.getElementById("play-along-audio-input");
-    var skipBtn = document.getElementById("play-along-skip-btn");
-
-    if (fileInput) {
-      fileInput.addEventListener("change", function() {
-        var file = fileInput.files && fileInput.files[0];
-        if (file) {
-          sparkPlayAlongSelectWithFile(index, file);
-        }
-      });
-    }
-
-    if (skipBtn) {
-      skipBtn.addEventListener("click", function() {
-        launchPlayAlongSession(playAlongActions.buildLaunchParams(track));
-      });
-    }
+    playAlongActions.bindUploadPromptHandlers(index, sparkPlayAlongSelectWithFile, function(selectedTrack) {
+      launchPlayAlongSession(playAlongActions.buildLaunchParams(selectedTrack));
+    });
   };
 
   window.sparkPlayAlongSelectWithFile = function(index, file) {
@@ -367,17 +352,12 @@
     }
 
     // Need to configure first — check if client ID is set
-    var clientId = localStorage.getItem("sparksuite_spotify_client_id");
+    var clientId = playAlongActions.getSpotifyClientId();
     if (!clientId) {
       // Show inline input instead of prompt (blocked in Electron)
       var container = document.getElementById("play-along-results") || document.getElementById("app");
       if (container) {
-        container.innerHTML = "<div class=card style=padding:20px;text-align:center>" +
-          "<div style=font-size:14px;font-weight:700;margin-bottom:8px>Spotify Client ID</div>" +
-          "<div style=font-size:12px;color:var(--text-dim);margin-bottom:12px>Get yours at developer.spotify.com/dashboard</div>" +
-          "<input id=spotify-client-id-input class=input type=text placeholder=Paste client ID here style=width:100%;margin-bottom:8px>" +
-          "<button class=btn onclick=sparkPlayAlongSaveClientId() style=background:var(--accent);color:#fff>Save and Connect</button>" +
-          "</div>";
+        container.innerHTML = playAlongActions.buildSpotifyClientIdPromptMarkup();
       }
       return;
     }
@@ -418,8 +398,7 @@
 
   window.sparkPlayAlongSaveClientId = function() {
     var input = document.getElementById("spotify-client-id-input");
-    if (!input || !input.value.trim()) return;
-    localStorage.setItem("sparksuite_spotify_client_id", input.value.trim());
+    if (!input || !playAlongActions.saveSpotifyClientId(input.value)) return;
     sparkPlayAlongConnectSpotify();
   };
 
