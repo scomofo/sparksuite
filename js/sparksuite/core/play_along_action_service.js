@@ -24,7 +24,7 @@
     var stop = renderer.finishSessionResults.bind(renderer, onRender);
     var startLoop = renderer.startSessionLoop.bind(renderer, stop);
     var controllerBindings = actionService.createControllerBindings(onRender, startLoop);
-    var globals = {
+    Object.assign(window, {
       sparkPlayAlongStop: stop,
       sparkPlayAlongStartLoop: startLoop,
       sparkPlayAlongSelectWithFile: controllerBindings.searchSelectWithFile,
@@ -63,9 +63,8 @@
       sparkPlayAlongSaveClientId: controllerBindings.saveSpotifyClientId,
       sparkPlayAlongReplay: controllerBindings.replay,
       handleSpotifyConnectAction: controllerBindings.spotifyConnectAction
-    };
-    Object.assign(window, globals);
-    return globals;
+    });
+    return controllerBindings;
   };
 
   SparkPlayAlongActionService.prototype.createControllerBindings = function(onRender, onStartLoop) {
