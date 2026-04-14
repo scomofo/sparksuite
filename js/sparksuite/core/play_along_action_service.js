@@ -252,7 +252,6 @@
 
   SparkPlayAlongActionService.prototype.searchTracks = function(query, onResults) {
     var core = this.stateService.getCore();
-    var self = this;
     if (!query || query.length < 2) {
       if (typeof onResults === "function") onResults(this.clearSearchResults());
       return false;
@@ -260,9 +259,9 @@
     if (!core || !core.spotifySearch || typeof core.spotifySearch.searchDebounced !== "function") return false;
 
     core.spotifySearch.searchDebounced(query, function(tracks) {
-      var results = self.setSearchResults(tracks || []);
+      var results = this.setSearchResults(tracks || []);
       if (typeof onResults === "function") onResults(results);
-    });
+    }.bind(this));
     return true;
   };
 
