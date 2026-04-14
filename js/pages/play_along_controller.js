@@ -5,10 +5,6 @@
   var playAlongActions = new SparkPlayAlongActionService(playAlongState);
   var playAlongRenderer = new SparkPlayAlongRenderer(playAlongState);
 
-  function requestRender() {
-    if (typeof render === "function") render();
-  }
-
-  playAlongActions.bootstrapGlobals(window, playAlongRenderer, requestRender);
+  playAlongActions.bootstrapGlobals(window, playAlongRenderer);
 
 })();

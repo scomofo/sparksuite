@@ -102,8 +102,16 @@
     }.bind(this);
   };
 
+  SparkPlayAlongActionService.prototype.getRenderCallback = function(onRender) {
+    if (typeof onRender === "function") return onRender;
+    return function() {
+      if (typeof render === "function") render();
+    };
+  };
+
   SparkPlayAlongActionService.prototype.createControllerBindings = function(onRender, onStartLoop) {
     var self = this;
+    onRender = this.getRenderCallback(onRender);
     var launchPreparedParams = this.createLaunchHandler(onRender, onStartLoop);
     var selectWithFile = this.createSearchSelectionWithFileHandler(launchPreparedParams);
     var replayOrShowHome = this.stateService && typeof this.stateService.replayOrShowHome === "function"
@@ -230,6 +238,7 @@
 
   SparkPlayAlongActionService.prototype.bindGlobals = function(target, onRender, rendererBindings) {
     if (!target || !rendererBindings) return null;
+    onRender = this.getRenderCallback(onRender);
     var controllerBindings = this.createControllerBindings(onRender, rendererBindings.startLoop);
     var globals = this.createGlobalBindings(controllerBindings, rendererBindings);
     Object.assign(target, globals);
@@ -238,6 +247,7 @@
 
   SparkPlayAlongActionService.prototype.bootstrapGlobals = function(target, renderer, onRender) {
     if (!renderer || typeof renderer.createControllerBindings !== "function") return null;
+    onRender = this.getRenderCallback(onRender);
     return this.bindGlobals(target, onRender, renderer.createControllerBindings(onRender));
   };
 
