@@ -106,14 +106,10 @@
     var track = playAlongActions.getSearchResult(index);
     if (!track) return Promise.resolve(false);
 
-    function persistSavedTrack(saved) {
+    return playAlongActions.enrichSavedTrack(track).then(function(saved) {
       if (!playAlongState.saveTrack(saved)) return false;
       render();
       return true;
-    }
-
-    return playAlongActions.enrichSavedTrack(track).then(function(saved) {
-      return persistSavedTrack(saved);
     });
   };
 
@@ -242,7 +238,7 @@
   // ---- Play Again ----
 
   window.sparkPlayAlongAgain = function() {
-    var params = playAlongState.getActiveParams();
+    var params = playAlongState.getReplayParams();
     if (params) {
       launchPlayAlongSession(params);
     } else {
