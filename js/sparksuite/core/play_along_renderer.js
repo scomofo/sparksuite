@@ -31,6 +31,14 @@
     return true;
   };
 
+  SparkPlayAlongRenderer.prototype.createStopHandler = function(onRender) {
+    return this.finishSessionResults.bind(this, onRender);
+  };
+
+  SparkPlayAlongRenderer.prototype.createStartLoopHandler = function(onStopLoop) {
+    return this.startSessionLoop.bind(this, onStopLoop);
+  };
+
   SparkPlayAlongRenderer.prototype.finishSessionResults = function(onRender) {
     if (this.stateService && typeof this.stateService.stopSessionForResults === "function") {
       this.stateService.stopSessionForResults();

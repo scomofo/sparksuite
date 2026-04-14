@@ -9,15 +9,25 @@
     if (typeof render === "function") render();
   }
 
-  window.sparkPlayAlongStop = playAlongRenderer.finishSessionResults.bind(playAlongRenderer, requestRender);
-  window.sparkPlayAlongStartLoop = playAlongRenderer.startSessionLoop.bind(playAlongRenderer, window.sparkPlayAlongStop);
+  window.sparkPlayAlongStop = playAlongRenderer.createStopHandler(requestRender);
+  window.sparkPlayAlongStartLoop = playAlongRenderer.createStartLoopHandler(window.sparkPlayAlongStop);
 
   var launchPreparedParams = playAlongActions.createLaunchHandler(requestRender, sparkPlayAlongStartLoop);
-  var withRender = playAlongActions.createRenderHandler.bind(playAlongActions);
-  var withRenderOnly = playAlongActions.createRenderOnlyHandler.bind(playAlongActions);
-  var withLaunch = playAlongActions.createLaunchCallback.bind(playAlongActions);
-  var withLaunchAndRender = playAlongActions.createLaunchAndRenderCallback.bind(playAlongActions);
-  var withLaunchPair = playAlongActions.createLaunchPairCallback.bind(playAlongActions);
+  function withRender(fn, context) {
+    return playAlongActions.createRenderHandler(fn, context, requestRender);
+  }
+  function withRenderOnly(fn, context) {
+    return playAlongActions.createRenderOnlyHandler(fn, context, requestRender);
+  }
+  function withLaunch(fn, context) {
+    return playAlongActions.createLaunchCallback(fn, context, launchPreparedParams);
+  }
+  function withLaunchAndRender(fn, context) {
+    return playAlongActions.createLaunchAndRenderCallback(fn, context, launchPreparedParams, requestRender);
+  }
+  function withLaunchPair(fn, context) {
+    return playAlongActions.createLaunchPairCallback(fn, context, launchPreparedParams);
+  }
   window.sparkPlayAlongSelectWithFile = playAlongActions.createSearchSelectionWithFileHandler(launchPreparedParams);
   window.sparkPlayAlongSelect = playAlongActions.createSearchSelectionHandler(launchPreparedParams, window.sparkPlayAlongSelectWithFile);
 
@@ -37,7 +47,7 @@
 
   window.sparkPlayAlongRemoveSaved = withRender(playAlongState.removeSavedTrackWithRender, playAlongState);
 
-  window.sparkPlayAlongClearSaved = withRenderOnly(playAlongState.clearSavedTracksWithRender, playAlongState, requestRender);
+  window.sparkPlayAlongClearSaved = withRenderOnly(playAlongState.clearSavedTracksWithRender, playAlongState);
 
   window.sparkPlayAlongLaunchBookmark = withLaunch(playAlongState.launchBookmark, playAlongState);
 
@@ -45,11 +55,11 @@
 
   window.sparkPlayAlongRemoveRecent = withRender(playAlongState.removeRecentWithRender, playAlongState);
 
-  window.sparkPlayAlongClearRecent = withRenderOnly(playAlongState.clearRecentWithRender, playAlongState, requestRender);
+  window.sparkPlayAlongClearRecent = withRenderOnly(playAlongState.clearRecentWithRender, playAlongState);
 
   window.sparkPlayAlongRemoveBookmark = withRender(playAlongState.removeBookmarkWithRender, playAlongState);
 
-  window.sparkPlayAlongClearBookmarks = withRenderOnly(playAlongState.clearBookmarksWithRender, playAlongState, requestRender);
+  window.sparkPlayAlongClearBookmarks = withRenderOnly(playAlongState.clearBookmarksWithRender, playAlongState);
 
   // ---- Set Difficulty ----
 
@@ -71,35 +81,35 @@
 
   window.sparkPlayAlongReplayFullSong = playAlongState.replayFullSong.bind(playAlongState, launchPreparedParams);
 
-  window.sparkPlayAlongTogglePause = withRenderOnly(playAlongState.togglePause, playAlongState, requestRender);
+  window.sparkPlayAlongTogglePause = withRenderOnly(playAlongState.togglePause, playAlongState);
 
-  window.sparkPlayAlongToggleLoop = withRenderOnly(playAlongState.toggleLoopWithRender, playAlongState, requestRender);
+  window.sparkPlayAlongToggleLoop = withRenderOnly(playAlongState.toggleLoopWithRender, playAlongState);
 
   window.sparkPlayAlongSetLoopTarget = withRender(playAlongState.setLoopTargetWithRender, playAlongState);
 
-  window.sparkPlayAlongPrevSection = withRenderOnly(playAlongState.prevSection, playAlongState, requestRender);
+  window.sparkPlayAlongPrevSection = withRenderOnly(playAlongState.prevSection, playAlongState);
 
-  window.sparkPlayAlongNextSection = withRenderOnly(playAlongState.nextSection, playAlongState, requestRender);
+  window.sparkPlayAlongNextSection = withRenderOnly(playAlongState.nextSection, playAlongState);
 
-  window.sparkPlayAlongBookmarkCurrentSection = withRenderOnly(playAlongState.saveCurrentSectionBookmarkWithRender, playAlongState, requestRender);
+  window.sparkPlayAlongBookmarkCurrentSection = withRenderOnly(playAlongState.saveCurrentSectionBookmarkWithRender, playAlongState);
 
   window.sparkPlayAlongJumpToWeakSection = playAlongState.launchWeakSection.bind(playAlongState, launchPreparedParams);
 
   window.sparkPlayAlongJumpToSectionRecommendation = withLaunchPair(playAlongState.launchSectionRecommendation, playAlongState);
 
-  window.sparkPlayAlongPickNew = withRenderOnly(playAlongState.resetToHome, playAlongState, requestRender);
+  window.sparkPlayAlongPickNew = withRenderOnly(playAlongState.resetToHome, playAlongState);
 
   window.sparkPlayAlongStartDrill = withLaunchAndRender(playAlongState.startDrill, playAlongState);
 
   // ---- Navigation Helper ----
 
-  window.openPlayAlong = withRenderOnly(playAlongState.showHome, playAlongState, requestRender);
+  window.openPlayAlong = withRenderOnly(playAlongState.showHome, playAlongState);
 
   // ---- Spotify Connect ----
 
-  window.sparkPlayAlongConnectSpotify = withRenderOnly(playAlongActions.connectSpotifyAndRender, playAlongActions, requestRender);
+  window.sparkPlayAlongConnectSpotify = withRenderOnly(playAlongActions.connectSpotifyAndRender, playAlongActions);
 
-  window.sparkPlayAlongSaveClientId = withRenderOnly(playAlongActions.saveSpotifyClientIdAndConnectAndRender, playAlongActions, requestRender);
+  window.sparkPlayAlongSaveClientId = withRenderOnly(playAlongActions.saveSpotifyClientIdAndConnectAndRender, playAlongActions);
   window.sparkPlayAlongReplay = window.sparkPlayAlongAgain;
   window.handleSpotifyConnectAction = window.sparkPlayAlongConnectSpotify;
 
