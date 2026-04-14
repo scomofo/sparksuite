@@ -213,10 +213,7 @@
   SparkPlayAlongActionService.prototype.prepareSearchLaunch = function(index, overrides) {
     var params = this.getSearchLaunchParams(index, overrides);
     if (!params) return null;
-    if (this.stateService && typeof this.stateService.prepareFreshLaunch === "function") {
-      return this.stateService.prepareFreshLaunch(params);
-    }
-    return this.cloneValue(params);
+    return this.stateService.prepareFreshLaunch(params);
   };
 
   SparkPlayAlongActionService.prototype.shouldUseCachedSearchChart = function(index) {
@@ -320,11 +317,7 @@
       artist: overrides.artist != null ? overrides.artist : (track.artist || null),
       audioOffsetMs: overrides.audioOffsetMs != null ? overrides.audioOffsetMs : (track.audioOffsetMs || 0),
       difficulty: overrides.difficulty || track.difficulty || this.getDifficulty(),
-      instrument: overrides.instrument || track.instrument || (
-        this.stateService && typeof this.stateService.getInstrumentId === "function"
-          ? this.stateService.getInstrumentId()
-          : "guitar"
-      )
+      instrument: overrides.instrument || track.instrument || this.stateService.getInstrumentId()
     };
     if (Object.prototype.hasOwnProperty.call(overrides, "audioFile")) {
       params.audioFile = overrides.audioFile;
@@ -384,14 +377,7 @@
   SparkPlayAlongActionService.prototype.handleLocalFileLaunch = function(file, onLaunchPrepared) {
     var params;
     if (!file) return false;
-    params = this.stateService && typeof this.stateService.prepareLocalFileLaunch === "function"
-      ? this.stateService.prepareLocalFileLaunch(
-        file,
-        this.stateService && typeof this.stateService.getInstrumentId === "function"
-          ? this.stateService.getInstrumentId()
-          : "guitar"
-      )
-      : null;
+    params = this.stateService.prepareLocalFileLaunch(file, this.stateService.getInstrumentId());
     if (typeof onLaunchPrepared === "function") {
       onLaunchPrepared(params);
     }
@@ -399,9 +385,7 @@
   };
 
   SparkPlayAlongActionService.prototype.handleDemoLaunch = function(index, onLaunchPrepared) {
-    var params = this.stateService && typeof this.stateService.prepareFreshLaunch === "function"
-      ? this.stateService.prepareFreshLaunch(this.getDemoLaunchParams(index))
-      : null;
+    var params = this.stateService.prepareFreshLaunch(this.getDemoLaunchParams(index));
     if (typeof onLaunchPrepared === "function") {
       onLaunchPrepared(params);
     }
@@ -652,7 +636,7 @@
   SparkPlayAlongActionService.prototype.saveSearchResult = function(index) {
     var self = this;
     var track = this.getSearchResult(index);
-    if (!track || !this.stateService || typeof this.stateService.saveTrack !== "function") {
+    if (!track) {
       return Promise.resolve(false);
     }
     return this.enrichSavedTrack(track).then(function(saved) {
