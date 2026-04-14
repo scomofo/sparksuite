@@ -53,7 +53,46 @@
     var onRender = actionService.getRenderCallback();
     var rendererBindings = renderer.createControllerBindings(onRender);
     var controllerBindings = actionService.createControllerBindings(onRender, rendererBindings.startLoop);
-    var globals = actionService.createGlobalBindings(controllerBindings, rendererBindings);
+    var globals = {
+      sparkPlayAlongStop: rendererBindings.stop,
+      sparkPlayAlongStartLoop: rendererBindings.startLoop,
+      sparkPlayAlongSelectWithFile: controllerBindings.searchSelectWithFile,
+      sparkPlayAlongSelect: controllerBindings.searchSelect,
+      sparkPlayAlongSearch: controllerBindings.search,
+      sparkPlayAlongLaunchDemo: controllerBindings.launchDemo,
+      sparkPlayAlongLaunchRecent: controllerBindings.launchRecent,
+      sparkPlayAlongSaveTrack: controllerBindings.saveTrack,
+      sparkPlayAlongLaunchSaved: controllerBindings.launchSaved,
+      sparkPlayAlongRemoveSaved: controllerBindings.removeSaved,
+      sparkPlayAlongClearSaved: controllerBindings.clearSaved,
+      sparkPlayAlongLaunchBookmark: controllerBindings.launchBookmark,
+      sparkPlayAlongLaunchBookmarkByKey: controllerBindings.launchBookmarkByKey,
+      sparkPlayAlongRemoveRecent: controllerBindings.removeRecent,
+      sparkPlayAlongClearRecent: controllerBindings.clearRecent,
+      sparkPlayAlongRemoveBookmark: controllerBindings.removeBookmark,
+      sparkPlayAlongClearBookmarks: controllerBindings.clearBookmarks,
+      sparkPlayAlongSetDifficulty: controllerBindings.setDifficulty,
+      sparkPlayAlongLoadFile: controllerBindings.loadFile,
+      sparkPlayAlongToggleDebug: controllerBindings.toggleDebug,
+      sparkPlayAlongAgain: controllerBindings.again,
+      sparkPlayAlongReplayDrill: controllerBindings.replayDrill,
+      sparkPlayAlongReplayFullSong: controllerBindings.replayFullSong,
+      sparkPlayAlongTogglePause: controllerBindings.togglePause,
+      sparkPlayAlongToggleLoop: controllerBindings.toggleLoop,
+      sparkPlayAlongSetLoopTarget: controllerBindings.setLoopTarget,
+      sparkPlayAlongPrevSection: controllerBindings.prevSection,
+      sparkPlayAlongNextSection: controllerBindings.nextSection,
+      sparkPlayAlongBookmarkCurrentSection: controllerBindings.bookmarkCurrentSection,
+      sparkPlayAlongJumpToWeakSection: controllerBindings.jumpToWeakSection,
+      sparkPlayAlongJumpToSectionRecommendation: controllerBindings.jumpToSectionRecommendation,
+      sparkPlayAlongPickNew: controllerBindings.pickNew,
+      sparkPlayAlongStartDrill: controllerBindings.startDrill,
+      openPlayAlong: controllerBindings.openHome,
+      sparkPlayAlongConnectSpotify: controllerBindings.connectSpotify,
+      sparkPlayAlongSaveClientId: controllerBindings.saveSpotifyClientId,
+      sparkPlayAlongReplay: controllerBindings.replay,
+      handleSpotifyConnectAction: controllerBindings.spotifyConnectAction
+    };
     Object.assign(target, globals);
     return globals;
   };
@@ -204,49 +243,6 @@
       jumpToSectionRecommendation: launchSectionRecommendation,
       searchSelectWithFile: selectWithFile,
       searchSelect: this.createSearchSelectionHandler(launchPreparedParams, selectWithFile)
-    };
-  };
-
-  SparkPlayAlongActionService.prototype.createGlobalBindings = function(controllerBindings, rendererBindings) {
-    return {
-      sparkPlayAlongStop: rendererBindings.stop,
-      sparkPlayAlongStartLoop: rendererBindings.startLoop,
-      sparkPlayAlongSelectWithFile: controllerBindings.searchSelectWithFile,
-      sparkPlayAlongSelect: controllerBindings.searchSelect,
-      sparkPlayAlongSearch: controllerBindings.search,
-      sparkPlayAlongLaunchDemo: controllerBindings.launchDemo,
-      sparkPlayAlongLaunchRecent: controllerBindings.launchRecent,
-      sparkPlayAlongSaveTrack: controllerBindings.saveTrack,
-      sparkPlayAlongLaunchSaved: controllerBindings.launchSaved,
-      sparkPlayAlongRemoveSaved: controllerBindings.removeSaved,
-      sparkPlayAlongClearSaved: controllerBindings.clearSaved,
-      sparkPlayAlongLaunchBookmark: controllerBindings.launchBookmark,
-      sparkPlayAlongLaunchBookmarkByKey: controllerBindings.launchBookmarkByKey,
-      sparkPlayAlongRemoveRecent: controllerBindings.removeRecent,
-      sparkPlayAlongClearRecent: controllerBindings.clearRecent,
-      sparkPlayAlongRemoveBookmark: controllerBindings.removeBookmark,
-      sparkPlayAlongClearBookmarks: controllerBindings.clearBookmarks,
-      sparkPlayAlongSetDifficulty: controllerBindings.setDifficulty,
-      sparkPlayAlongLoadFile: controllerBindings.loadFile,
-      sparkPlayAlongToggleDebug: controllerBindings.toggleDebug,
-      sparkPlayAlongAgain: controllerBindings.again,
-      sparkPlayAlongReplayDrill: controllerBindings.replayDrill,
-      sparkPlayAlongReplayFullSong: controllerBindings.replayFullSong,
-      sparkPlayAlongTogglePause: controllerBindings.togglePause,
-      sparkPlayAlongToggleLoop: controllerBindings.toggleLoop,
-      sparkPlayAlongSetLoopTarget: controllerBindings.setLoopTarget,
-      sparkPlayAlongPrevSection: controllerBindings.prevSection,
-      sparkPlayAlongNextSection: controllerBindings.nextSection,
-      sparkPlayAlongBookmarkCurrentSection: controllerBindings.bookmarkCurrentSection,
-      sparkPlayAlongJumpToWeakSection: controllerBindings.jumpToWeakSection,
-      sparkPlayAlongJumpToSectionRecommendation: controllerBindings.jumpToSectionRecommendation,
-      sparkPlayAlongPickNew: controllerBindings.pickNew,
-      sparkPlayAlongStartDrill: controllerBindings.startDrill,
-      openPlayAlong: controllerBindings.openHome,
-      sparkPlayAlongConnectSpotify: controllerBindings.connectSpotify,
-      sparkPlayAlongSaveClientId: controllerBindings.saveSpotifyClientId,
-      sparkPlayAlongReplay: controllerBindings.replay,
-      handleSpotifyConnectAction: controllerBindings.spotifyConnectAction
     };
   };
 
