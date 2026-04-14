@@ -1601,6 +1601,10 @@ test("practice and plan buttons route practice item launches through shared acti
   assert.ok(loadJS("js/instruments/piano/pages/plan.js").indexOf("onclick=\"act(\\'startPracticeItem\\'") >= 0);
 });
 
+test("shared app dispatcher keeps start_guided_session wired for non-piano guided launches", function() {
+  assert.ok(loadJS("js/app.js").indexOf('if(a==="start_guided_session")') >= 0);
+});
+
 test("finger exercise card can fall back to SparkCore finger exercise runtime state", function() {
   var core = createDefaultSparkCore();
   window.sparkCore = core;

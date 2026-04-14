@@ -1723,6 +1723,10 @@ window.act=function(a,v){
     }
     return;
   }
+  if(a==="start_guided_session"){
+    act("guidedStart", v);
+    return;
+  }
   if(a==="startAudioCalibration"){
     if (typeof window.startAudioCalibration === "function") {
       window.startAudioCalibration();
