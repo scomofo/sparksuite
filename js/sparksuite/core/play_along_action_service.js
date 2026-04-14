@@ -100,19 +100,15 @@
     return globals;
   };
 
-  SparkPlayAlongActionService.prototype.launchPreparedParams = function(params, onRender, onStartLoop) {
-    if (!params || !this.stateService || typeof this.stateService.launchSession !== "function") return false;
-    this.stateService.launchSession(params, getPlayAlongInstrumentId(), onRender, onStartLoop);
-    return true;
-  };
-
   SparkPlayAlongActionService.prototype.createControllerBindings = function(onRender, onStartLoop) {
     var self = this;
     onRender = typeof onRender === "function" ? onRender : function() {
       if (typeof render === "function") render();
     };
     var launchPreparedParams = function(params) {
-      return self.launchPreparedParams(params, onRender, onStartLoop);
+      if (!params || !self.stateService || typeof self.stateService.launchSession !== "function") return false;
+      self.stateService.launchSession(params, getPlayAlongInstrumentId(), onRender, onStartLoop);
+      return true;
     };
     var selectWithFile = function(index, file) {
       return self.handleSearchSelectionWithFile(index, file, launchPreparedParams);
