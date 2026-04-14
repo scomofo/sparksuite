@@ -94,13 +94,12 @@
       self.stateService.launchSession(params, getPlayAlongInstrumentId(), onRender, onStartLoop);
       return true;
     };
-    var replayOrShowHome = this.stateService && typeof this.stateService.replayOrShowHome === "function"
-      ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedParams, onRender)
-      : function() { return false; };
     return {
       search: this.searchAndRenderTracks.bind(this),
       toggleDebug: this.toggleDebugDashboard.bind(this),
-      again: replayOrShowHome,
+      again: this.stateService && typeof this.stateService.replayOrShowHome === "function"
+        ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedParams, onRender)
+        : function() { return false; },
       replayDrill: this.stateService && typeof this.stateService.replayDrill === "function"
         ? this.stateService.replayDrill.bind(this.stateService, launchPreparedParams)
         : function() { return false; },
@@ -184,7 +183,9 @@
       saveSpotifyClientId: function() {
         return self.saveSpotifyClientIdAndConnectAndRender(onRender);
       },
-      replay: replayOrShowHome,
+      replay: this.stateService && typeof this.stateService.replayOrShowHome === "function"
+        ? this.stateService.replayOrShowHome.bind(this.stateService, launchPreparedParams, onRender)
+        : function() { return false; },
       spotifyConnectAction: function() {
         return self.connectSpotifyAndRender(onRender);
       },
