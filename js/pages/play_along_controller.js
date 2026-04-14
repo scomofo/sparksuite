@@ -84,9 +84,7 @@
 
   // ---- Play Again ----
 
-  window.sparkPlayAlongAgain = function() {
-    return playAlongState.replayOrShowHome(launchPreparedParams, requestRender);
-  };
+  window.sparkPlayAlongAgain = playAlongState.replayOrShowHome.bind(playAlongState, launchPreparedParams, requestRender);
 
   window.sparkPlayAlongReplay = window.sparkPlayAlongAgain;
 
@@ -124,7 +122,6 @@
 
   window.sparkPlayAlongSaveClientId = playAlongActions.saveSpotifyClientIdAndConnectAndRender.bind(playAlongActions, requestRender);
 
-  // Handle spotifyConnect action from act() dispatcher
   window.handleSpotifyConnectAction = window.sparkPlayAlongConnectSpotify;
 
 })();
