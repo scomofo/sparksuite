@@ -278,6 +278,11 @@ function practiceTab(){
   var skillState = getPracticeSkillSnapshot();
   var chordProgress = progress.chordProgress || {};
   var playerLevel = player.level || 1;
+  var guidedSessions = Array.isArray(D.SESSIONS) ? D.SESSIONS : [];
+  var hasPracticeBundle = !!(D && D.LC && D.CHORDS && Array.isArray(D.ALL_CHORDS) && UI && typeof UI.chord === "function");
+  if(!hasPracticeBundle){
+    return '<div class="card"><div><b>Loading practice dashboard...</b></div><div class="muted">Preparing your instrument content.</div></div>';
+  }
   // Daily goal progress at top
   var goalPct=Math.min(100,Math.round((goal.todayPracticeSeconds/(goal.dailyGoalMinutes*60))*100));
   var goalMins=Math.floor(goal.todayPracticeSeconds/60);
@@ -328,13 +333,13 @@ function practiceTab(){
     h += '</div>';
   }
   // Guided Session CTA
-  var gs=D.SESSIONS[homeState.guidedSession-1];
+  var gs=guidedSessions[homeState.guidedSession-1];
   if(gs){
     var gsDone=homeState.completedGuidedSessions.length;
     h+='<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
     h+='<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
     h+='<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
-    h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+D.SESSIONS.length+' done</div>';
+    h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+guidedSessions.length+' done</div>';
     h+='<button onclick="act(\'guidedStart\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Start Session &#9654;</button>';
     h+='</div>';
   }

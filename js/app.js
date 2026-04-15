@@ -46,6 +46,18 @@ function appIncrement(path, delta){
   return appWrite(path, current+delta);
 }
 
+function normalizeActiveInstrumentId(instrumentId){
+  if(!instrumentId) return instrumentId;
+  var map = {
+    guitar: "chordspark",
+    piano: "pianospark",
+    ukulele: "ukulelespark",
+    bass: "bassspark",
+    drums: "drumsspark"
+  };
+  return map[instrumentId] || instrumentId;
+}
+
 function appApplyLegacyReward(reward, fallback){
   if(window.sparkCore&&typeof window.sparkCore.applyLegacyReward==="function"){
     return window.sparkCore.applyLegacyReward(reward||{});
@@ -3342,6 +3354,9 @@ window.act=function(a,v){
     }
     appWrite("screen",SCR.PLAN);render();return;
   }
+  if(a==="openCalibration"){
+    a = "openPerformCalibration";
+  }
   if(a==="openPerformCalibration"){
     openPerformanceCalibrationRequest();
     appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_CALIBRATE}},function(){appWrite("screen",SCR.PERFORM_CALIBRATE);});
@@ -4540,9 +4555,11 @@ if(appRead("midiEnabled", false)){try{initMIDI();}catch(e){console.error("ChordS
 // Preload guitar WAV samples
 try{preloadGuitarAudio();}catch(e){console.error("ChordSpark: guitar audio preload failed",e);}
 document.getElementById("no-js").style.display="none";
-document.getElementById("header").style.display=appRead("activeInstrument", null)?"flex":"none";
+var persistedActiveInstrument=normalizeActiveInstrumentId(appRead("activeInstrument", null));
+if(persistedActiveInstrument!==appRead("activeInstrument", null))appWrite("activeInstrument", persistedActiveInstrument);
+document.getElementById("header").style.display=persistedActiveInstrument?"flex":"none";
 document.getElementById("app").style.display="block";
 // Activate remembered instrument
-if(appRead("activeInstrument", null)){try{SparkInstruments.activate(appRead("activeInstrument", null));}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
+if(persistedActiveInstrument){try{SparkInstruments.activate(persistedActiveInstrument);}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
 try{if(typeof choosePerformanceDailyChallenge==="function")choosePerformanceDailyChallenge();}catch(e){}
 // render() moved to index.html after all instrument pages register

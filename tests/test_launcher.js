@@ -150,6 +150,12 @@ test('launcher cards route through the shared openInstrument action', function()
   assert.ok(launcherJs.indexOf('onclick="act(\\\'openInstrument\\\',\\\'') >= 0);
 });
 
+test('app startup normalizes legacy active instrument aliases before activation', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('guitar: "chordspark"') >= 0);
+  assert.ok(appSource.indexOf('var persistedActiveInstrument=normalizeActiveInstrumentId(appRead("activeInstrument", null));') >= 0);
+});
+
 test('getPage returns page from active instrument', function() {
   SparkInstruments.activate('test_guitar');
   var page = SparkInstruments.getPage('home');

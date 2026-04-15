@@ -152,6 +152,12 @@ test('performance calibration buttons route through shared actions', function() 
   assert.ok(performPageSource.indexOf("onclick=\"act(\\'performCalibrateCancel\\')\"") >= 0);
 });
 
+test('shared onboarding calibration action routes through the calibration screen handler', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('if(a==="openCalibration"){') >= 0);
+  assert.ok(appSource.indexOf('a = "openPerformCalibration";') >= 0);
+});
+
 test('audio calibration page buttons route through shared actions', function() {
   var calibrationPageSource = loadJS('js/audio/calibration.js');
   assert.ok(calibrationPageSource.indexOf("onclick=\"act(\\'startAudioCalibration\\')\"") >= 0);

@@ -1570,6 +1570,25 @@ test("practice home level labels fall back to generic names when LN entries are 
   assert.strictEqual(getPracticeLevelName({ 1: "First Groove" }, 1), "First Groove");
 });
 
+test("practice tab renders a loading card when instrument curriculum data is unavailable", function() {
+  window.sparkCore = null;
+  global.escHTML = function(value) { return String(value); };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() { return {}; },
+        ui: {}
+      };
+    },
+    getAll: function() { return []; }
+  };
+
+  eval(loadJS("js/pages/practice.js"));
+
+  var html = practiceTab();
+  assert.ok(html.indexOf("Loading practice dashboard") >= 0);
+});
+
 test("startPracticeItem launches the matching daily practice item", function() {
   window.sparkCore = null;
   global.escHTML = function(value) { return String(value); };
