@@ -37,6 +37,9 @@ function bootstrap() {
   loadJS("js/sparksuite/input/multi_frequency_chord_detector.js");
   loadJS("js/sparksuite/analysis/performance_analyzer.js");
   loadJS("js/sparksuite/analysis/chord_confidence.js");
+  loadJS("js/sparksuite/core/ai_engine.js");
+  loadJS("js/ai/ai_coach.js");
+  loadJS("js/ai/ai_session_analysis.js");
   loadJS("js/sparksuite/core/play_along_expected_event.js");
   loadJS("js/sparksuite/core/system_wiring.js");
 }
@@ -345,6 +348,95 @@ test("processPlayAlongInput uses expected event timing helper for bar beat chart
   assert.strictEqual(out.expectedEvent.chord, "C");
   assert.strictEqual(SparkDebugState.last.expected, "C");
   assert.strictEqual(SparkDebugState.last.timing, "perfect");
+  assert.strictEqual(SparkDebugState.last.feedback, null);
+});
+
+test("processPlayAlongInput adds realtime AI feedback for mismatched or late chords", function() {
+  var core = new SparkCoreRuntime();
+  core.aiEngine = new SparkAIEngine();
+  core._activeChart = {
+    timeline: [
+      { time: 1000, chord: "Am" }
+    ]
+  };
+  core.performanceAnalyzer = new SparkPerformanceAnalyzer();
+  core.performanceTracker = {
+    record: function() {},
+    getAccuracy: function() { return 0.5; }
+  };
+
+  var wrong = core.processPlayAlongInput({
+    time: 1000,
+    note: "C",
+    chord: "C",
+    confidence: 0.7,
+    detectedNotes: ["C", "E", "G"]
+  });
+  assert.strictEqual(wrong.feedback, "Wrong chord");
+  assert.strictEqual(SparkDebugState.last.feedback, "Wrong chord");
+
+  var late = core.processPlayAlongInput({
+    time: 1130,
+    note: "Am",
+    chord: "Am",
+    confidence: 0.7,
+    detectedNotes: ["A", "C", "E"]
+  });
+  assert.strictEqual(late.feedback, "Too slow");
+  assert.strictEqual(SparkDebugState.last.feedback, "Too slow");
+});
+
+test("completePlayAlongSession returns aiInsights and updates debug insight fields", function() {
+  var saved = null;
+  var core = new SparkCoreRuntime();
+  core.aiEngine = new SparkAIEngine();
+  core._activeUserId = "user_ai";
+  core.audioEngine = { stop: function() {} };
+  core.stemMixer = { stop: function() {} };
+  core.playbackEngine = { stop: function() {} };
+  core.performanceTracker = {
+    getSummary: function() {
+      return [
+        { time: 10, lane: 1, hit: false, error: 140, judgement: "miss", expectedChord: "Am", detectedChord: "C" },
+        { time: 20, lane: 2, hit: true, error: 130, judgement: "late", expectedChord: "C", detectedChord: "C" },
+        { time: 30, lane: 3, hit: true, error: -140, judgement: "early", expectedChord: "G", detectedChord: "G" }
+      ];
+    },
+    getEvents: function() {
+      return [
+        { time: 10, lane: 1, hit: false, error: 140, judgement: "miss", expectedChord: "Am", detectedChord: "C" },
+        { time: 20, lane: 2, hit: true, error: 130, judgement: "late", expectedChord: "C", detectedChord: "C" },
+        { time: 30, lane: 3, hit: true, error: -140, judgement: "early", expectedChord: "G", detectedChord: "G" }
+      ];
+    },
+    getAccuracy: function() { return 2 / 3; }
+  };
+  core.heatmapGenerator = {
+    generate: function(events) { return { total: events.length }; },
+    findClusters: function() { return []; }
+  };
+  core.styleAnalyzer = { analyze: function() { return { feel: "steady" }; } };
+  core.rewardModel = { compute: function() { return { xp: 10 }; } };
+  core.policyEngine = { update: function(model) { return model; } };
+  core.learnerModel = {
+    load: function() { return { userId: "user_ai" }; },
+    save: function(userId, model) { saved = { userId: userId, model: model }; },
+    toJSON: function() { return { exported: true }; }
+  };
+  core.feedbackEngine = { generate: function() { return []; } };
+  core.drillGenerator = { generate: function() { return []; } };
+  core.voiceCoach = { sessionComplete: function() {} };
+
+  var out = core.completePlayAlongSession();
+
+  assert.strictEqual(saved.userId, "user_ai");
+  assert.strictEqual(out.aiInsights.chordErrors.Am, 1);
+  assert.strictEqual(out.aiInsights.lateHits, 2);
+  assert.strictEqual(out.aiInsights.earlyHits, 1);
+  assert.strictEqual(out.coaching.lateHits, 2);
+  assert.strictEqual(SparkDebugState.last.aiChordErrors, "Am:1");
+  assert.strictEqual(SparkDebugState.last.aiLateHits, 2);
+  assert.strictEqual(SparkDebugState.last.aiEarlyHits, 1);
 });
 
 test("startMicDetection uses mic start and multi-note detector output", function() {

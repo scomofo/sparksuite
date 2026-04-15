@@ -334,6 +334,19 @@
       : null;
   };
 
+  SparkPlayAlongStateService.prototype.getRealtimeAIFeedback = function() {
+    if (typeof SparkDebugState !== "undefined" && typeof SparkDebugState.toObject === "function") {
+      var snapshot = SparkDebugState.toObject();
+      return snapshot && snapshot.feedback ? snapshot.feedback : null;
+    }
+    return null;
+  };
+
+  SparkPlayAlongStateService.prototype.getOutcomeAIInsights = function() {
+    var outcome = this.getLastOutcome();
+    return outcome && outcome.aiInsights ? outcome.aiInsights : null;
+  };
+
   SparkPlayAlongStateService.prototype.getOutcomeDrills = function() {
     var outcome = this.getLastOutcome();
     return outcome && Array.isArray(outcome.drills) ? outcome.drills : [];

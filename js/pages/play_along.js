@@ -62,6 +62,7 @@
       transportMode: playAlongState.getTransportMode(),
       currentSection: playAlongState.getCurrentSectionLabel(),
       currentTime: playAlongState.getCurrentTimeLabel(),
+      aiFeedback: playAlongState.getRealtimeAIFeedback(),
       speedLabel: playAlongState.getSpeedLabel(),
       loopEnabled: playAlongState.isLoopEnabled(),
       sectionNav: playAlongState.getSectionNavigation(chart),
@@ -71,6 +72,7 @@
 
   function buildPlayAlongResultsViewModel() {
     var outcome = playAlongState.getLastOutcome();
+    var aiInsights = playAlongState.getOutcomeAIInsights();
     return {
       outcome: outcome,
       accuracy: playAlongState.getOutcomePercent("accuracy"),
@@ -81,6 +83,7 @@
       suggestedDifficulty: playAlongState.getSuggestedDifficulty(),
       suggestedMode: playAlongState.getSuggestedMode(),
       drillSummary: outcome && outcome.drillSummary ? outcome.drillSummary : null,
+      aiInsights: aiInsights,
       nextAction: playAlongState.getNextAction(),
       weakAreas: playAlongState.getWeakAreas(),
       sectionSummary: playAlongState.getSectionSummary()
@@ -288,6 +291,9 @@
       if (viewModel.coachHint) {
         h += "<div id='play-along-coach-hint' style='font-size:11px;color:var(--accent);margin-top:6px'>" + escPlayAlong(viewModel.coachHint) + "</div>";
       }
+      if (viewModel.aiFeedback) {
+        h += "<div id='play-along-ai-feedback' style='font-size:12px;color:#66ccff;font-weight:700;margin-top:6px'>" + escPlayAlong(viewModel.aiFeedback) + "</div>";
+      }
       h += "</div>";
     }
 
@@ -372,6 +378,16 @@
         h += "<button class='btn btn-sm' onclick=\"act('playAlongBookmarkCurrentSection')\">Save Weak Section</button>";
       }
       h += "</div>";
+      h += "</div>";
+    }
+
+    if (viewModel.aiInsights) {
+      var aiChordKeys = Object.keys(viewModel.aiInsights.chordErrors || {});
+      h += "<div class='card' style='margin-bottom:12px;text-align:left;border:1px solid rgba(102,204,255,.26)'>";
+      h += "<div style='font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:6px'>AI Coach Summary</div>";
+      h += "<div style='font-size:12px;color:var(--text-dim)'>Most missed chord: " + escPlayAlong(aiChordKeys.length ? aiChordKeys[0] : "None") + "</div>";
+      h += "<div style='font-size:12px;color:var(--text-dim)'>Late hits: " + escPlayAlong(String(viewModel.aiInsights.lateHits || 0)) + "</div>";
+      h += "<div style='font-size:12px;color:var(--text-dim)'>Early hits: " + escPlayAlong(String(viewModel.aiInsights.earlyHits || 0)) + "</div>";
       h += "</div>";
     }
 

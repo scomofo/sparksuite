@@ -208,6 +208,36 @@
     }
   }
 
+  function summarizeAICoachChordErrors(chordErrors) {
+    var labels = [];
+    var chordName;
+    chordErrors = chordErrors && typeof chordErrors === "object" ? chordErrors : {};
+    for (chordName in chordErrors) {
+      if (!Object.prototype.hasOwnProperty.call(chordErrors, chordName)) continue;
+      labels.push(chordName + ":" + chordErrors[chordName]);
+    }
+    return labels.length ? labels.join(", ") : null;
+  }
+
+  function normalizePlayAlongAIEvents(events) {
+    var normalized = [];
+    var source = Array.isArray(events) ? events : [];
+    var i;
+    var event;
+    for (i = 0; i < source.length; i++) {
+      event = source[i] || {};
+      normalized.push({
+        correct: !!event.hit,
+        expectedChord: event.expectedChord || event.expected || event.chord || null,
+        detectedChord: event.detectedChord || event.detected || null,
+        offsetMs: typeof event.offsetMs === "number"
+          ? event.offsetMs
+          : (typeof event.error === "number" ? event.error : 0)
+      });
+    }
+    return normalized;
+  }
+
   // ---------------------------------------------------------------
   // getPlaybackTimeMs
   // ---------------------------------------------------------------
@@ -408,21 +438,24 @@
     var expectedLabel = null;
     var timingLabel = null;
     var score = 0;
+    var detectedLabel = inputEvent.note || inputEvent.chord || null;
+    var realtimeFeedback = null;
 
     if (!chart || !chart.timeline) {
       updatePlayAlongDebug({
-        detected: inputEvent.note || inputEvent.chord || null,
+        detected: detectedLabel,
         chord: inputEvent.chord || null,
         detectedChord: inputEvent.chord || null,
         detectedNotes: inputEvent.detectedNotes || (inputEvent.note ? [inputEvent.note] : []),
         confidence: inputEvent.confidence || 0,
+        feedback: null,
         delta: 0,
         accuracy: this.performanceTracker ? this.performanceTracker.getAccuracy() : 0,
         timing: null,
         score: 0
       });
 
-      return { result: null, chordResult: null, delta: null, expectedEvent: null };
+      return { result: null, chordResult: null, delta: null, expectedEvent: null, feedback: null };
     }
 
     expectedEvent = getExpectedPlayAlongEvent(chart, inputEvent.time);
@@ -431,9 +464,17 @@
     // Score via performance analyzer
     if (expectedEvent && this.performanceAnalyzer) {
       delta = calculateTimingOffsetMs(expectedEvent.time, inputEvent.time);
-      result = this.performanceAnalyzer.analyze(expectedLabel, inputEvent.note || inputEvent.chord || null, delta);
+      result = this.performanceAnalyzer.analyze(expectedLabel, detectedLabel, delta);
       timingLabel = result ? result.rating : null;
       score = result && typeof result.score === "number" ? result.score : 0;
+    }
+
+    if (this.aiEngine && typeof this.aiEngine.generateRealtimeFeedback === "function") {
+      realtimeFeedback = this.aiEngine.generateRealtimeFeedback({
+        expected: expectedLabel,
+        detected: detectedLabel,
+        offsetMs: delta
+      });
     }
 
     // Chord confidence if applicable
@@ -460,11 +501,12 @@
 
     updatePlayAlongDebug({
       expected: expectedLabel,
-      detected: inputEvent.note || inputEvent.chord || null,
+      detected: detectedLabel,
       chord: inputEvent.chord || expectedLabel || null,
       detectedChord: inputEvent.chord || null,
       detectedNotes: inputEvent.detectedNotes || (inputEvent.note ? [inputEvent.note] : []),
       confidence: inputEvent.confidence || 0,
+      feedback: realtimeFeedback,
       delta: delta || 0,
       timing: chordResult && chordResult.timing ? chordResult.timing : timingLabel,
       score: chordResult && typeof chordResult.confidence === "number" ? chordResult.confidence : score,
@@ -475,7 +517,8 @@
       result: result,
       chordResult: chordResult,
       delta: delta,
-      expectedEvent: expectedEvent
+      expectedEvent: expectedEvent,
+      feedback: realtimeFeedback
     };
   };
 
@@ -511,6 +554,9 @@
         ? this.performanceTracker.getAccuracy()
         : null
     );
+    var aiInsights = this.aiEngine && typeof this.aiEngine.analyzeSession === "function"
+      ? this.aiEngine.analyzeSession(normalizePlayAlongAIEvents(events))
+      : { chordErrors: {}, lateHits: 0, earlyHits: 0 };
 
     // 3. Heatmap and clusters
     var heatmap = this.heatmapGenerator.generate(events);
@@ -554,6 +600,12 @@
       ? this.learnerModel.toJSON()
       : updatedModel;
 
+    updatePlayAlongDebug({
+      aiChordErrors: summarizeAICoachChordErrors(aiInsights.chordErrors),
+      aiLateHits: aiInsights.lateHits,
+      aiEarlyHits: aiInsights.earlyHits
+    });
+
     return {
       accuracy: performanceSummary.accuracy,
       timing: performanceSummary.timing,
@@ -564,6 +616,8 @@
       clusters: clusters,
       style: style,
       feedback: feedback,
+      aiInsights: aiInsights,
+      coaching: aiInsights,
       drills: drills,
       model: model,
       events: events
