@@ -56,8 +56,10 @@ function resetState() {
     performDifficulty: "normal"
   };
   global.__sparkState = global.S;
+  global.toasts = [];
   global.saveStateCalls = 0;
   global.saveState = function() { saveStateCalls++; };
+  global.showToast = function(msg) { toasts.push(msg); };
   var guidedSessions = [
     {
       num: 1,
@@ -1611,6 +1613,28 @@ test("startPracticeItem launches the matching daily practice item", function() {
   assert.strictEqual(launchedItem.id, "guided_session_1");
   assert.strictEqual(launchedItem.type, "guided_session");
   assert.strictEqual(window.startPracticeItem, startPracticeItem);
+});
+
+test("startPracticeItem surfaces feedback when the plan or launcher is unavailable", function() {
+  window.sparkCore = null;
+  global.escHTML = function(value) { return String(value); };
+  eval(loadJS("js/pages/practice.js"));
+
+  startPracticeItem("guided_session_1");
+  assert.deepStrictEqual(toasts, ["That practice item couldn't be started right now."]);
+
+  toasts.length = 0;
+  S.practicePlan = {
+    items: [
+      { id: "guided_session_1", type: "guided_session", completed: false }
+    ]
+  };
+  global.launchPracticeItem = function() {
+    return false;
+  };
+
+  startPracticeItem("guided_session_1");
+  assert.deepStrictEqual(toasts, ["That practice item couldn't be started right now."]);
 });
 
 test("practice and plan buttons route practice item launches through shared actions", function() {

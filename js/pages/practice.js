@@ -627,13 +627,19 @@ function startPracticeItem(id){
     }
   }
   if(!plan) plan = practiceStateRead("practicePlan", null);
-  if(!plan) return;
+  if(!plan){
+    if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
+    return;
+  }
   for(var i=0;i<plan.items.length;i++){
     if(plan.items[i].id === id){
-      launchPracticeItem(plan.items[i]);
+      if(!launchPracticeItem(plan.items[i]) && typeof showToast === "function"){
+        showToast("That practice item couldn't be started right now.");
+      }
       return;
     }
   }
+  if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
 }
 
 window.startPracticeItem = startPracticeItem;
