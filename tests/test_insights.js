@@ -32,6 +32,23 @@ function resetState() {
     playAlongRecent: []
   };
   global.__sparkState = global.S;
+  global.SparkState = {
+    getRoot: function() {
+      return global.S;
+    },
+    read: function(path, fallback) {
+      var parts = Array.isArray(path) ? path.slice() : [path];
+      var cursor = global.S;
+      var i;
+      for (i = 0; i < parts.length; i++) {
+        if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) {
+          return fallback;
+        }
+        cursor = cursor[parts[i]];
+      }
+      return cursor == null ? fallback : cursor;
+    }
+  };
   global.escHTML = function(value) { return String(value); };
   global.getWeakestMasterySkills = function() { return []; };
   global.getStrongestMasterySkills = function() { return []; };
@@ -46,6 +63,7 @@ eval(loadJS("js/insights/engine.js"));
 eval(loadJS("js/insights/ui.js"));
 eval(loadJS("js/home/home_engine.js"));
 eval(loadJS("js/home/home_cards.js"));
+eval(loadJS("js/meta/challenge_ui.js"));
 
 console.log("\n--- Insights ---");
 
@@ -230,6 +248,57 @@ test("renderSmartCoachCard includes execution trace and recent play-along contex
 
   assert.ok(html.indexOf("Latest execution: play_along_resume") >= 0);
   assert.ok(html.indexOf("Recent play along: Sunrise Drive") >= 0);
+});
+
+test("buildHomeDashboardData falls back when sparkCore dashboard challenges are empty", function() {
+  global.getIncompleteChallenges = function(limit) {
+    return [{ id: "fallback_daily" }, { id: "fallback_weekly" }].slice(0, limit);
+  };
+  global.window.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardChallenges: []
+        }
+      };
+    }
+  };
+
+  var summary = buildHomeDashboardData().challenges;
+
+  assert.strictEqual(summary.length, 2);
+  assert.strictEqual(summary[0].id, "fallback_daily");
+});
+
+test("challenge hub falls back to active challenges when sparkCore dashboard list is empty", function() {
+  global.SparkState.read = function(path, fallback) {
+    var key = Array.isArray(path) ? path[0] : path;
+    return Object.prototype.hasOwnProperty.call(global.S, key) ? global.S[key] : fallback;
+  };
+  global.window.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardChallenges: []
+        }
+      };
+    }
+  };
+  S.activeChallenges = [{
+    id: "claim_me",
+    title: "Claim Me",
+    description: "Test challenge",
+    progress: 1,
+    target: 1,
+    completed: true,
+    claimed: false
+  }];
+  global.getActiveSeasonalEvent = function() { return null; };
+
+  var html = renderActiveChallengesCard();
+
+  assert.ok(html.indexOf("Claim Me") >= 0);
+  assert.ok(html.indexOf("Claim Reward") >= 0);
 });
 
 test("buildHomeDashboardData carries play-along summary", function() {

@@ -23,7 +23,9 @@ function renderActiveChallengesCard(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var arr = runtimeState && runtimeState.dashboardChallenges ? runtimeState.dashboardChallenges : challengeUiRead(["activeChallenges"], []);
+  var arr = runtimeState && Array.isArray(runtimeState.dashboardChallenges) && runtimeState.dashboardChallenges.length
+    ? runtimeState.dashboardChallenges
+    : challengeUiRead(["activeChallenges"], []);
   if(!arr.length){
     h += '<div>No active challenges.</div>';
   }

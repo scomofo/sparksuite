@@ -78,7 +78,7 @@
   function buildHomeChallengeSummary(){
     var coreView = getCoreView();
     var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-    if (runtimeState && runtimeState.dashboardChallenges) {
+    if (runtimeState && Array.isArray(runtimeState.dashboardChallenges) && runtimeState.dashboardChallenges.length) {
       return (runtimeState.dashboardChallenges || []).slice(0, 3);
     }
     return typeof getIncompleteChallenges === "function" ? getIncompleteChallenges(3) : [];
