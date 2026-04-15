@@ -224,6 +224,12 @@ test('feedback export falls back to browser download and surfaces status', funct
   assert.ok(feedbackSource.indexOf('feedbackExportMsg') >= 0);
 });
 
+test('full backup export also falls back to browser download outside desktop builds', function() {
+  var bridgeSource = loadJS('js/desktop/bridge.js');
+  assert.ok(bridgeSource.indexOf('a.download = "sparksuite-backup.json";') >= 0);
+  assert.ok(bridgeSource.indexOf('desktopBridgeWrite(["desktopInfo", "lastBackupAt"], Date.now());') >= 0);
+});
+
 test('midi import falls back to the internal parser and surfaces import errors', function() {
   var chartIoSource = loadJS('js/sparksuite/core/chart_io.js');
   var midiParseSource = loadJS('js/import/midi_parse.js');

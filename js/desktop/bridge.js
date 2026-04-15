@@ -103,7 +103,22 @@
       }
       return false;
     }
-    return false;
+    try{
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "sparksuite-backup.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      desktopBridgeWrite(["desktopInfo", "lastBackupAt"], Date.now());
+      saveState();
+      return true;
+    }catch(e){
+      return false;
+    }
   }
 
   window.isDesktopBuild = isDesktopBuild;
