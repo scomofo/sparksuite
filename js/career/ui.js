@@ -26,8 +26,9 @@ function careerPage(){
         var songId = stage.songs[i];
         var unlocked = isCareerSongUnlocked(songId);
         var song = getCareerItem("songs", songId);
+        var songLabel = song && song.title ? song.title : songId;
         h += '<div style="margin-left:12px;opacity:'+(unlocked?1:0.4)+'">';
-        h += escHTML(songId) + ' ';
+        h += escHTML(songLabel) + ' ';
         if(unlocked && song){
           h += '<button onclick="act(\'openCareerSong\', \''+songId+'\')">Play</button>';
         }else if(unlocked){

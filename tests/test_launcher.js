@@ -37,6 +37,16 @@ global.S = { completedLessons: [], mastery: { rhythm: {} }, activeInstrument: nu
 global.__sparkState = global.S;
 global.SparkState = {
   getRoot: function() { return global.S; },
+  read: function(path, fallback) {
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = global.S;
+    var i;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  },
   write: function(path, value) {
     var parts = Array.isArray(path) ? path.slice() : [path];
     var cursor = global.S;
@@ -302,6 +312,41 @@ test('career page hides play CTA when unlocked song data is missing', function()
   var html = careerPage();
   assert.ok(html.indexOf('Play') === -1);
   assert.ok(html.indexOf('Unavailable') >= 0);
+});
+
+test('career content bootstraps from the active instrument song library', function() {
+  global.S.activeCareerId = 'career_main';
+  global.S.careerProgress = { unlockedTiers: {}, unlockedStages: {}, unlockedSongs: {}, songRatings: {}, stageCompletion: {}, tierCompletion: {} };
+  SparkInstruments.register({
+    id: 'career_test',
+    instrument: 'guitar',
+    name: 'Career Test Guitar',
+    icon: 'C',
+    skin: SparkHighway.GUITAR_SKIN,
+    available: true,
+    getData: function() {
+      return {
+        SONGS: [
+          { title: 'Alpha Song', level: 1, artist: 'A' },
+          { title: 'Beta Song', level: 2, artist: 'B' }
+        ]
+      };
+    },
+    pages: {},
+    tabs: [],
+    stemMutePreset: {},
+    init: function() {}
+  });
+  SparkInstruments.activate('career_test');
+  eval(loadJS('js/career/registry.js'));
+  eval(loadJS('js/career/unlocks.js'));
+  eval(loadJS('js/career/ui.js'));
+
+  var html = careerPage();
+  assert.ok(html.indexOf('No career loaded.') === -1);
+  assert.ok(html.indexOf('Alpha Song') >= 0);
+  assert.ok(html.indexOf('Play') >= 0);
+  assert.strictEqual(global.S.activeCareerId, 'career_career_test');
 });
 
 test('inline onclick handlers stay on shared act routing', function() {
