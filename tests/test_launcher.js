@@ -156,6 +156,18 @@ test('app startup normalizes legacy active instrument aliases before activation'
   assert.ok(appSource.indexOf('var persistedActiveInstrument=normalizeActiveInstrumentId(appRead("activeInstrument", null));') >= 0);
 });
 
+test('shared app routes chart and exercise editor actions through the editor engine', function() {
+  var appSource = loadJS('js/app.js');
+  var dataSource = loadJS('js/data.js');
+  assert.ok(dataSource.indexOf('EDITOR:"editor"') >= 0);
+  assert.ok(appSource.indexOf('if(a==="openChartEditor"){') >= 0);
+  assert.ok(appSource.indexOf('openEditor("chart")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="openExerciseEditor"){') >= 0);
+  assert.ok(appSource.indexOf('openEditor("exercise")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="editorClose"){') >= 0);
+  assert.ok(appSource.indexOf('_sharedPages[SCR.EDITOR] = typeof editorPage === "function" ? editorPage : null;') >= 0);
+});
+
 test('getPage returns page from active instrument', function() {
   SparkInstruments.activate('test_guitar');
   var page = SparkInstruments.getPage('home');

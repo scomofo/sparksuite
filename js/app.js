@@ -2403,6 +2403,29 @@ window.act=function(a,v){
     appApplyLegacyActivityRuntime({setFields:{screen:SCR.SETTINGS}},function(){appWrite("screen",SCR.SETTINGS);});
     render();return;
   }
+  if(a==="openChartEditor"){
+    if(typeof openEditor==="function"){
+      openEditor("chart");
+      render();
+    }
+    return;
+  }
+  if(a==="openExerciseEditor"){
+    if(typeof openEditor==="function"){
+      openEditor("exercise");
+      render();
+    }
+    return;
+  }
+  if(a==="editorClose"){
+    appWrite("editorObject", null);
+    appWrite("editorDirty", false);
+    appWrite("editorSelectedId", null);
+    appWrite("screen", SCR.HOME);
+    appWrite("tab", TAB.PRACTICE);
+    render();
+    return;
+  }
   if(a==="openOnboarding"){if(typeof startOnboarding==="function")startOnboarding();return;}
   if(a==="resumeOnboarding"){if(typeof continueOnboarding==="function")continueOnboarding();return;}
   if(a==="refreshHome"){
@@ -4371,6 +4394,7 @@ function _renderInner(){
   _sharedPages[SCR.SKILL_TREE] = typeof skillTreePage === "function" ? skillTreePage : null;
   _sharedPages[SCR.PERFORM_CALIBRATE] = typeof performCalibrationPage === "function" ? performCalibrationPage : null;
   _sharedPages[SCR.PLAN] = typeof planPage === "function" ? planPage : null;
+  _sharedPages[SCR.EDITOR] = typeof editorPage === "function" ? editorPage : null;
   _sharedPages[SCR.RECOMMENDATIONS] = typeof recommendationsPage === "function" ? recommendationsPage : null;
   _sharedPages[SCR.CAREER] = typeof careerPage === "function" ? careerPage : null;
   _sharedPages[SCR.INSIGHTS] = typeof insightsDashboardPage === "function" ? insightsDashboardPage : null;

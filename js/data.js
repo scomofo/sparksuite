@@ -8,6 +8,7 @@ var SCR={
   PERFORM_SONG:"performSong",
   PERF_STATS:"perfStats",
   PERF_EDITOR:"perfEditor",
+  EDITOR:"editor",
   SKILL_TREE:"skillTree",
   PLAN:"practicePlan",
   PERFORM_CALIBRATE:"perfCalibrate",
