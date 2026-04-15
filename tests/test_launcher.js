@@ -236,6 +236,11 @@ test('feedback export falls back to browser download and surfaces status', funct
   assert.ok(feedbackSource.indexOf('feedbackExportMsg') >= 0);
 });
 
+test('check updates surfaces a browser fallback message', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('showToast("App updates are only available in the desktop build.")') >= 0);
+});
+
 test('full backup export also falls back to browser download outside desktop builds', function() {
   var bridgeSource = loadJS('js/desktop/bridge.js');
   assert.ok(bridgeSource.indexOf('a.download = "sparksuite-backup.json";') >= 0);

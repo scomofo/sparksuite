@@ -4505,7 +4505,11 @@ window.act=function(a,v){
     appWrite("feedbackDraft", feedbackDraft);
     return;
   }
-  if(a==="checkUpdates"){if(typeof checkForDesktopUpdates==="function")checkForDesktopUpdates();return;}
+  if(a==="checkUpdates"){
+    if(typeof checkForDesktopUpdates==="function"){checkForDesktopUpdates();return;}
+    if (typeof showToast === "function") showToast("App updates are only available in the desktop build.");
+    return;
+  }
   if(a==="exportBackup"){if(typeof exportFullBackupDesktopAware==="function")exportFullBackupDesktopAware();return;}
   if(a==="exportFeedback"){if(typeof exportFeedbackDesktopAware==="function")exportFeedbackDesktopAware();return;}
   // === Curriculum ===
