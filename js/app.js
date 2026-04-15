@@ -4025,6 +4025,8 @@ window.act=function(a,v){
       var url=URL.createObjectURL(blob);
       var a2=document.createElement("a");a2.href=url;a2.download=exportData.fileName;
       document.body.appendChild(a2);a2.click();document.body.removeChild(a2);URL.revokeObjectURL(url);
+    } else if (typeof showToast === "function") {
+      showToast("Add some chart events before exporting.");
     }
     return;
   }
@@ -4037,6 +4039,8 @@ window.act=function(a,v){
         preset:previewRequest.preset,
         mode:previewRequest.mode
       });
+    } else if (typeof showToast === "function") {
+      showToast("Add at least one chart event before previewing.");
     }
     return;
   }

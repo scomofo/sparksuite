@@ -202,6 +202,8 @@ test('shared app routes editor toolbar actions through the shared editor engine'
   assert.ok(appSource.indexOf('if(a==="editorAddAtPlayhead"){') >= 0);
   assert.ok(appSource.indexOf('if(a==="editorDeleteSelected"){') >= 0);
   assert.ok(appSource.indexOf('if(a==="editorPreview"){') >= 0);
+  assert.ok(appSource.indexOf('showToast("Add at least one chart event before previewing.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Add some chart events before exporting.")') >= 0);
   assert.ok(appSource.indexOf('saveEditorObjectToLibrary') >= 0);
   assert.ok(appSource.indexOf('exportEditorObjectDesktopAware') >= 0);
 });
