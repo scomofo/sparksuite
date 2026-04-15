@@ -1642,6 +1642,15 @@ function dispatchPlayAlongAction(name, arg1, arg2) {
   return false;
 }
 
+function dispatchWindowAction(name, fallbackMessage, arg1, arg2) {
+  if (typeof window[name] === "function") {
+    window[name](arg1, arg2);
+    return true;
+  }
+  if (typeof showToast === "function") showToast(fallbackMessage);
+  return false;
+}
+
 window.act=function(a,v){
   // Delegate to active instrument's handler first
   var _inst = SparkInstruments.getActive();
@@ -4391,10 +4400,10 @@ window.act=function(a,v){
     });
     render();return;
   }
-  if(a==="pausePerform"){pausePerformance();return;}
-  if(a==="resumePerform"){resumePerformance();return;}
+  if(a==="pausePerform"){dispatchWindowAction("pausePerformance", "Performance controls aren't available right now.");return;}
+  if(a==="resumePerform"){dispatchWindowAction("resumePerformance", "Performance controls aren't available right now.");return;}
   if(a==="stopPerform"){
-    stopPerformance();
+    if(!dispatchWindowAction("stopPerformance", "Performance controls aren't available right now.")) return;
     var performanceStopState = applyPerformanceNavigationRequest("return_after_stop");
     var shouldReturnToSong = performanceStopState && performanceStopState.activeScreen === "performance_song";
     appApplyLegacyActivityRuntime({setFields:shouldReturnToSong?{screen:SCR.PERFORM_SONG}:{screen:SCR.HOME,tab:TAB.SONGS}},function(){
@@ -4433,10 +4442,10 @@ window.act=function(a,v){
   }
   if(a==="performLoopPhrase"){
     var ph=getPerformancePhraseForTime(appRead("performChart", null),appRead("performCurrentSec", 0));
-    if(ph)setPerformanceLoop({startSec:ph.startSec,endSec:ph.endSec,phraseId:ph.id});
+    if(ph)dispatchWindowAction("setPerformanceLoop", "Performance controls aren't available right now.", {startSec:ph.startSec,endSec:ph.endSec,phraseId:ph.id});
     return;
   }
-  if(a==="performClearLoop"){clearPerformanceLoop();return;}
+  if(a==="performClearLoop"){dispatchWindowAction("clearPerformanceLoop", "Performance controls aren't available right now.");return;}
   if(a==="performPracticePreset"){
     applyPerformanceStemPreset(v);
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
@@ -4444,9 +4453,9 @@ window.act=function(a,v){
     }
     render();return;
   }
-  if(a==="performCalibrate"){startCalibration();return;}
-  if(a==="performCalibrateTap"){recordCalibrationTap();return;}
-  if(a==="performCalibrateCancel"){cancelCalibration();return;}
+  if(a==="performCalibrate"){dispatchWindowAction("startCalibration", "Performance calibration isn't available right now.");return;}
+  if(a==="performCalibrateTap"){dispatchWindowAction("recordCalibrationTap", "Performance calibration isn't available right now.");return;}
+  if(a==="performCalibrateCancel"){dispatchWindowAction("cancelCalibration", "Performance calibration isn't available right now.");return;}
   if(a==="performRetry"){
     var retryRequest=getPerformanceRetryRequest({
       chartId: appRead("performChartId", "generated")
