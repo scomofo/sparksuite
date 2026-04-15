@@ -390,7 +390,14 @@
 
     // Chord confidence if applicable
     if (inputEvent.chord && this.chordConfidence) {
-      chordResult = this.chordConfidence.evaluate(inputEvent.chord, inputEvent.confidence);
+      chordResult = this.chordConfidence.score(
+        inputEvent.chord,
+        inputEvent.detectedNotes || (inputEvent.note ? [inputEvent.note] : []),
+        {
+          timingErrorMs: delta,
+          stability: inputEvent.confidence
+        }
+      );
     }
 
     // Record to tracker

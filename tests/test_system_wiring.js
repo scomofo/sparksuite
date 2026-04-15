@@ -218,6 +218,45 @@ test("processPlayAlongInput passes timing into voice coach evaluation", function
   assert.strictEqual(evaluatedAt, 980);
 });
 
+test("processPlayAlongInput scores chord confidence from detected notes and timing", function() {
+  var scoredWith = null;
+  var core = new SparkCoreRuntime();
+  core._activeChart = { timeline: [{ time: 1000, lane: 1, chord: "C" }] };
+  core.performanceAnalyzer = { analyze: function() { return { accuracy: 0.9 }; } };
+  core.performanceTracker = {
+    record: function() {},
+    getAccuracy: function() { return 0.9; }
+  };
+  core.chordConfidence = {
+    score: function(chord, detectedNotes, options) {
+      scoredWith = {
+        chord: chord,
+        detectedNotes: detectedNotes,
+        options: options
+      };
+      return { chord: chord, confidence: 0.77 };
+    }
+  };
+
+  var out = core.processPlayAlongInput({
+    time: 980,
+    chord: "C",
+    note: "E",
+    detectedNotes: ["C", "E", "G"],
+    confidence: 0.65
+  });
+
+  assert.deepStrictEqual(scoredWith, {
+    chord: "C",
+    detectedNotes: ["C", "E", "G"],
+    options: {
+      timingErrorMs: -20,
+      stability: 0.65
+    }
+  });
+  assert.deepStrictEqual(out.chordResult, { chord: "C", confidence: 0.77 });
+});
+
 test("_startAudioForSession uses playbackEngine.start for trackUri sessions", function() {
   var called = null;
   var core = new SparkCoreRuntime();
