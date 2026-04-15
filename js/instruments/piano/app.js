@@ -306,6 +306,70 @@ function openPianoUtilityScreen(state, target, screen, syncRequest) {
   state.screen = screen;
 }
 
+function resetPianoSessionFlowState(state, screen) {
+  state.screen = screen;
+  state.sessionStep = null;
+  state.sessionPlan = null;
+  state.newMovePhase = null;
+}
+
+function openPianoHomeDashboard(state) {
+  openPianoDashboardScreen(state, "home_dash", SCR.HOME_DASH);
+}
+
+function openPianoPracticePlan(state) {
+  if (typeof openPracticePlanScreenRequest === "function") {
+    openPracticePlanScreenRequest();
+  } else if (typeof openDashboardPracticePlanRequest === "function") {
+    openDashboardPracticePlanRequest();
+  }
+  state.screen = SCR.PLAN;
+}
+
+function openPianoCalibration(state) {
+  if (typeof openPerformanceCalibrationRequest === "function") {
+    openPerformanceCalibrationRequest();
+  }
+  state.screen = SCR.CALIBRATION;
+}
+
+function openPianoStemPlayer(state) {
+  if (typeof openStemPlayerRequest === "function") {
+    openStemPlayerRequest();
+  }
+  state.screen = SCR.STEM_PLAYER;
+  render();
+}
+
+function closePianoStemPlayer(state) {
+  if (typeof closeStemPlayerRequest === "function") {
+    closeStemPlayerRequest();
+  }
+  cleanupStems();
+  state.screen = SCR.HOME;
+  state.tab = TAB.SONGS;
+  state._songTab = "stems";
+  render();
+}
+
+function syncPianoMidiSettingsState(payload) {
+  if (typeof syncMidiSettingsStateRequest === "function") {
+    syncMidiSettingsStateRequest(payload);
+  }
+}
+
+function syncPianoMidiImportState(payload) {
+  if (typeof syncMidiImportStateRequest === "function") {
+    syncMidiImportStateRequest(payload);
+  }
+}
+
+function applyPianoCloudWorkflow(action, payload) {
+  if (typeof applyCloudWorkflowRequest === "function") {
+    applyCloudWorkflowRequest(action, payload || {});
+  }
+}
+
 // ── Utility ──
 function shuffleArray(arr) {
   for (var i = arr.length - 1; i > 0; i--) {
@@ -776,10 +840,7 @@ function completeGuidedSession() {
       showToast("Session " + (plan ? plan.num : "") + " complete!");
     }
     playSound(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
-    state.screen = SCR.HOME;
-    state.sessionStep = null;
-    state.sessionPlan = null;
-    state.newMovePhase = null;
+    resetPianoSessionFlowState(state, SCR.HOME);
     saveState();
     render();
     return;
@@ -810,10 +871,7 @@ function completeGuidedSession() {
       showToast("Session " + (plan ? plan.num : "") + " complete!");
     }
     playSound(guidedResult && guidedResult.audioCue === "levelup" ? "levelup" : "complete");
-    state.screen = SCR.HOME;
-    state.sessionStep = null;
-    state.sessionPlan = null;
-    state.newMovePhase = null;
+    resetPianoSessionFlowState(state, SCR.HOME);
     saveState();
     render();
     return;
@@ -860,10 +918,7 @@ function completeGuidedSession() {
     playSound("complete");
   }
 
-  state.screen = SCR.HOME;
-  state.sessionStep = null;
-  state.sessionPlan = null;
-  state.newMovePhase = null;
+  resetPianoSessionFlowState(state, SCR.HOME);
   saveState();
   render();
 }
@@ -1186,15 +1241,10 @@ function act(action, param) {
           currentScreen: pianoHomeFamilyRequestScreen(state.screen)
         });
       }
-      state.screen = isPianoDashboardScreen(state.screen) ? SCR.HOME_DASH : SCR.HOME;
-      state.sessionStep = null;
-      state.sessionPlan = null;
+      resetPianoSessionFlowState(state, isPianoDashboardScreen(state.screen) ? SCR.HOME_DASH : SCR.HOME);
       break;
     case "openCalibration":
-      if (typeof openPerformanceCalibrationRequest === "function") {
-        openPerformanceCalibrationRequest();
-      }
-      state.screen = SCR.CALIBRATION;
+      openPianoCalibration(state);
       break;
 
     // ── Legacy practice ──
@@ -1228,9 +1278,7 @@ function act(action, param) {
         stopMetronome(); stopLHPattern(); stopWatchDemo();
         if (state.detecting) stopDetection();
         state.active = false;
-        state.screen = SCR.HOME;
-        state.sessionStep = null;
-        state.sessionPlan = null;
+        resetPianoSessionFlowState(state, SCR.HOME);
       } else {
         if (T.session) { clearInterval(T.session); T.session = null; }
         state.active = false;
@@ -1568,15 +1616,10 @@ function act(action, param) {
       state.stemStatus = "idle"; state.stemProgress = 0; render();
       break;
     case "stemOpen":
-      if (typeof openStemPlayerRequest === "function") {
-        openStemPlayerRequest();
-      }
-      state.screen = SCR.STEM_PLAYER; render(); break;
+      openPianoStemPlayer(state);
+      break;
     case "stemBack":
-      if (typeof closeStemPlayerRequest === "function") {
-        closeStemPlayerRequest();
-      }
-      cleanupStems(); state.screen = SCR.HOME; state.tab = TAB.SONGS; state._songTab = "stems"; render();
+      closePianoStemPlayer(state);
       break;
     case "stemToggle":
       state.stemToggles[param] = !state.stemToggles[param];
@@ -1599,12 +1642,8 @@ function act(action, param) {
 
     // ── Practice Plan ──
     case "openPlan":
-      if (typeof openPracticePlanScreenRequest === "function") {
-        openPracticePlanScreenRequest();
-      } else if (typeof openDashboardPracticePlanRequest === "function") {
-        openDashboardPracticePlanRequest();
-      }
-      state.screen = SCR.PLAN; break;
+      openPianoPracticePlan(state);
+      break;
     case "completePlan":
       completePracticePlan(); break;
     case "regeneratePlan":
@@ -2039,34 +2078,34 @@ function act(action, param) {
     // ── MIDI Device/Profile actions ──
     case "setMidiDevice":
       state.activeMidiDeviceId = param;
-      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
+      syncPianoMidiSettingsState();
       saveState();
       break;
 
     case "setMidiProfile":
       if(typeof setActiveMidiProfile === "function") setActiveMidiProfile(param);
       else showToast("MIDI profiles aren't available right now.");
-      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
+      syncPianoMidiSettingsState();
       break;
 
     case "createDefaultPianoProfile":
       if(typeof createDefaultPianoProfile === "function") createDefaultPianoProfile();
       else showToast("Piano MIDI profiles aren't available right now.");
-      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
+      syncPianoMidiSettingsState();
       break;
 
     case "createDefaultGuitarProfile":
       if(typeof createDefaultGuitarProfile === "function") createDefaultGuitarProfile();
       else showToast("Guitar MIDI profiles aren't available right now.");
-      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
+      syncPianoMidiSettingsState();
       break;
 
     case "openMidiSettings":
-      openPianoUtilityScreen(state, "midi_settings", SCR.MIDI_SETTINGS, syncMidiSettingsStateRequest);
+      openPianoUtilityScreen(state, "midi_settings", SCR.MIDI_SETTINGS, syncPianoMidiSettingsState);
       break;
 
     case "openMidiImport":
-      openPianoUtilityScreen(state, "midi_import", SCR.MIDI_IMPORT, syncMidiImportStateRequest);
+      openPianoUtilityScreen(state, "midi_import", SCR.MIDI_IMPORT, syncPianoMidiImportState);
       break;
 
     // ── MIDI Import actions ──
@@ -2079,7 +2118,7 @@ function act(action, param) {
       var atParts = String(param).split("|");
       if(typeof setMidiTrackAssignment === "function") setMidiTrackAssignment(atParts[0], atParts[1]);
       else showToast("MIDI track assignment isn't available right now.");
-      if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest();
+      syncPianoMidiImportState();
       break;
     }
 
@@ -2090,7 +2129,7 @@ function act(action, param) {
       }
       var seedChart = buildSeedChartFromImportedMidi(state.importedMidi, state.importedMidiAssignments, param);
       state.importedMidiSeedPreview = seedChart;
-      if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest({ seedMode: param, seedChart: seedChart });
+      syncPianoMidiImportState({ seedMode: param, seedChart: seedChart });
       if(seedChart && typeof openEditor === "function"){
         openEditor("chart", seedChart);
         render();
@@ -2105,28 +2144,28 @@ function act(action, param) {
     case "cloudSync":
       var syncUnavailableError;
       state.cloudLastError = null;
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing", lastError: null });
+      applyPianoCloudWorkflow("sync_start", { lastSyncStatus: "syncing", lastError: null });
       if(typeof syncSparkNow === "function") {
         syncSparkNow();
         return;
       }
       syncUnavailableError = "Cloud sync is unavailable right now.";
       state.cloudLastError = syncUnavailableError;
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_error", { lastSyncStatus: "error", lastError: syncUnavailableError });
+      applyPianoCloudWorkflow("sync_error", { lastSyncStatus: "error", lastError: syncUnavailableError });
       render();
       return;
 
     case "cloudPull":
       var pullUnavailableError;
       state.cloudLastError = null;
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing", lastError: null });
+      applyPianoCloudWorkflow("pull_start", { lastSyncStatus: "syncing", lastError: null });
       if(typeof pullSparkCloud === "function") {
         pullSparkCloud();
         return;
       }
       pullUnavailableError = "Cloud pull is unavailable right now.";
       state.cloudLastError = pullUnavailableError;
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_error", { lastSyncStatus: "error", lastError: pullUnavailableError });
+      applyPianoCloudWorkflow("pull_error", { lastSyncStatus: "error", lastError: pullUnavailableError });
       render();
       return;
 
@@ -2134,7 +2173,7 @@ function act(action, param) {
       state.cloudLastError = null;
       if(typeof logoutSpark === "function") logoutSpark();
       else showToast("Cloud logout is unavailable right now.");
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("logout", { lastError: null });
+      applyPianoCloudWorkflow("logout", { lastError: null });
       render();
       return;
 
@@ -2162,7 +2201,7 @@ function act(action, param) {
       if(typeof loginSpark !== "function"){
         clError = "Cloud login is unavailable right now.";
         state.cloudLastError = clError;
-        if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login_error", { lastSyncStatus: "error", lastError: clError });
+        applyPianoCloudWorkflow("login_error", { lastSyncStatus: "error", lastError: clError });
         render();
         return;
       }
@@ -2170,12 +2209,12 @@ function act(action, param) {
         state.cloudEmailDraft = clEmail;
         state.cloudPasswordDraft = "";
         state.cloudLastError = null;
-        if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login", { lastError: null });
+        applyPianoCloudWorkflow("login", { lastError: null });
         render();
       }).catch(function(err){
         clError = String((err && err.message) || err || "Cloud login failed.");
         state.cloudLastError = clError;
-        if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login_error", { lastSyncStatus: "error", lastError: clError });
+        applyPianoCloudWorkflow("login_error", { lastSyncStatus: "error", lastError: clError });
         render();
       });
       return;
@@ -2183,9 +2222,7 @@ function act(action, param) {
 
     case "openCloudSettings":
       openPianoUtilityScreen(state, "cloud_settings", SCR.CLOUD_SETTINGS, function() {
-        if (typeof applyCloudWorkflowRequest === "function") {
-          applyCloudWorkflowRequest("open");
-        }
+        applyPianoCloudWorkflow("open");
       });
       break;
 
@@ -2275,10 +2312,7 @@ function act(action, param) {
     // ── Home dashboard ──
     case "openHome":
     case "openHomeDash":
-      if (typeof openDashboardSectionRequest === "function") {
-        openDashboardSectionRequest("home_dash");
-      }
-      state.screen = SCR.HOME_DASH;
+      openPianoHomeDashboard(state);
       break;
     case "refreshHome":
       if(typeof generateRecommendations === "function") generateRecommendations();
