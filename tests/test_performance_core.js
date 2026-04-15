@@ -364,6 +364,36 @@ test('renderPerformanceHighway honors theme manifest overrides', function() {
   global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = originalManifest;
 });
 
+test('renderPerformanceHighway supports named theme manifests and chart theme selection', function() {
+  var originalManifest = global.PERFORMANCE_HIGHWAY_THEME_MANIFEST;
+  var originalSelection = global.PERFORMANCE_HIGHWAY_THEME_SELECTION;
+  global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = {
+    defaultTheme: 'classic',
+    themes: {
+      classic: {
+        guitar: { background: 'classic/guitar_bg.png', surface: 'classic/guitar_surface.png' },
+        piano: { background: 'classic/piano_bg.png', surface: 'classic/piano_surface.png' }
+      },
+      neon: {
+        guitar: { background: 'neon/guitar_bg.png', surface: 'neon/guitar_surface.png' },
+        piano: { background: 'neon/piano_bg.png', surface: 'neon/piano_surface.png' }
+      }
+    }
+  };
+  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = { piano: 'neon' };
+
+  var selectedHtml = renderPerformanceHighway({ instrument: 'piano', events: [] }, 0);
+  var chartHtml = renderPerformanceHighway({ instrument: 'guitar', highwayTheme: 'neon', events: [] }, 0);
+
+  assert.ok(selectedHtml.indexOf('neon/piano_bg.png') >= 0);
+  assert.ok(selectedHtml.indexOf('neon/piano_surface.png') >= 0);
+  assert.ok(chartHtml.indexOf('neon/guitar_bg.png') >= 0);
+  assert.ok(chartHtml.indexOf('neon/guitar_surface.png') >= 0);
+
+  global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = originalManifest;
+  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
+});
+
 test('getPreferredPerformanceArrangement honors song-authored arrangement preference', function() {
   assert.strictEqual(getPreferredPerformanceArrangement({ preferredPerformanceArrangement: 'lead' }, 'chords'), 'lead');
   assert.strictEqual(getPreferredPerformanceArrangement({}, 'chords'), 'chords');

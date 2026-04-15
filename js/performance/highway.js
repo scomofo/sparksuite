@@ -19,6 +19,24 @@ function getPerformanceHighwayThemeManifest() {
   return PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS;
 }
 
+function getPerformanceHighwayThemeId(chart, instrument) {
+  if (chart) {
+    if (typeof chart.highwayTheme === "string" && chart.highwayTheme) return chart.highwayTheme;
+    if (chart.metadata && typeof chart.metadata.highwayTheme === "string" && chart.metadata.highwayTheme) return chart.metadata.highwayTheme;
+  }
+  if (typeof window !== "undefined" && window.PERFORMANCE_HIGHWAY_THEME_SELECTION) {
+    if (typeof window.PERFORMANCE_HIGHWAY_THEME_SELECTION === "string" && window.PERFORMANCE_HIGHWAY_THEME_SELECTION) {
+      return window.PERFORMANCE_HIGHWAY_THEME_SELECTION;
+    }
+    if (window.PERFORMANCE_HIGHWAY_THEME_SELECTION[instrument]) {
+      return window.PERFORMANCE_HIGHWAY_THEME_SELECTION[instrument];
+    }
+  }
+  var manifest = getPerformanceHighwayThemeManifest();
+  if (manifest && typeof manifest.defaultTheme === "string" && manifest.defaultTheme) return manifest.defaultTheme;
+  return "classic";
+}
+
 installSparkHighwayLanePatch();
 
 function getPerformanceHighwayInstrument(chart) {
@@ -44,6 +62,12 @@ function getPerformanceHighwaySkin(instrument) {
 function getPerformanceHighwayAssets(chart) {
   var manifest = getPerformanceHighwayThemeManifest();
   var instrument = getPerformanceHighwayInstrument(chart);
+  var themeId = getPerformanceHighwayThemeId(chart, instrument);
+  if (manifest && manifest.themes) {
+    var themed = manifest.themes[themeId] || manifest.themes[manifest.defaultTheme] || null;
+    if (themed && themed[instrument]) return themed[instrument];
+    if (themed && themed.guitar) return themed.guitar;
+  }
   if (instrument === "piano" && manifest.piano) return manifest.piano;
   return manifest.guitar || PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS.guitar;
 }
