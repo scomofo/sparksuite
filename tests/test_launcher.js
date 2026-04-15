@@ -234,10 +234,35 @@ test('midi import falls back to the internal parser and surfaces import errors',
   var chartIoSource = loadJS('js/sparksuite/core/chart_io.js');
   var midiParseSource = loadJS('js/import/midi_parse.js');
   var midiUiSource = loadJS('js/import/midi_ui.js');
+  var appSource = loadJS('js/app.js');
+  var pianoSource = loadJS('js/instruments/piano/app.js');
   assert.ok(chartIoSource.indexOf('window.SparkChartIO.parseMidiBuffer = parseMidiBuffer;') >= 0);
   assert.ok(midiParseSource.indexOf('typeof SparkChartIO !== "undefined" && typeof SparkChartIO.parseMidiBuffer === "function"') >= 0);
   assert.ok(midiUiSource.indexOf('midiImportWrite("midiImportError"') >= 0);
   assert.ok(midiUiSource.indexOf('<b>Import error:</b>') >= 0);
+  assert.ok(appSource.indexOf('openEditor("chart",chart);render();') >= 0);
+  assert.ok(pianoSource.indexOf('openEditor("chart", seedChart);') >= 0);
+});
+
+test('midi seed builder falls back to single imported tracks instead of opening empty charts', function() {
+  global.createSparkChart = function() { return { events: [], phrases: [] }; };
+  global.generateId = function(prefix) { return prefix + '_test'; };
+  eval(loadJS('js/import/midi_seed.js'));
+
+  var chart = buildSeedChartFromImportedMidi({
+    sourceName: 'stand_by_me.mid',
+    tempoMap: [{ bpm: 120 }],
+    tracks: [{
+      id: 'track_1',
+      notes: [
+        { startSec: 0, durSec: 0.5, note: 'E4', pitch: 64, velocity: 0.8 },
+        { startSec: 1, durSec: 0.5, note: 'G4', pitch: 67, velocity: 0.8 }
+      ]
+    }]
+  }, { track_1: 'chord_seed' }, 'guitar_single_note');
+
+  assert.ok(chart);
+  assert.strictEqual(chart.events.length, 2);
 });
 
 test('cloud actions surface login and sync errors instead of failing silently', function() {

@@ -1968,6 +1968,7 @@ function act(action, param) {
       if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest({ seedMode: param, seedChart: seedChart });
       if(seedChart && typeof openEditor === "function"){
         openEditor("chart", seedChart);
+        render();
       }
       break;
     }

@@ -110,13 +110,38 @@
   function collectAssignedNotes(normalizedMidi, assignments, role){
     var out = [];
     var tracks = normalizedMidi.tracks || [];
+    var fallbackRoles = getMidiAssignmentFallbackRoles(role);
+    var i;
     for(var i=0;i<tracks.length;i++){
       if(assignments[tracks[i].id] === role){
         out = out.concat(tracks[i].notes || []);
       }
     }
+    if(!out.length){
+      for(i=0;i<tracks.length;i++){
+        if(fallbackRoles.indexOf(assignments[tracks[i].id]) >= 0){
+          out = out.concat(tracks[i].notes || []);
+        }
+      }
+    }
+    if(!out.length && tracks.length===1){
+      out = out.concat(tracks[0].notes || []);
+    }
+    if(!out.length){
+      for(i=0;i<tracks.length;i++){
+        out = out.concat(tracks[i].notes || []);
+      }
+    }
     out.sort(function(a,b){ return a.startSec - b.startSec; });
     return out;
+  }
+
+  function getMidiAssignmentFallbackRoles(role){
+    if(role === "single_note") return ["chord_seed", "melody", "block_chords"];
+    if(role === "melody") return ["single_note", "block_chords", "chord_seed"];
+    if(role === "left_hand") return ["block_chords", "chord_seed"];
+    if(role === "block_chords") return ["chord_seed", "single_note", "melody"];
+    return [];
   }
 
   function getPrimaryMidiBpm(normalizedMidi){

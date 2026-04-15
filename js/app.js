@@ -4370,7 +4370,7 @@ window.act=function(a,v){
       var chart=buildSeedChartFromImportedMidi(appRead("importedMidi", null),appRead("importedMidiAssignments", null),v);
       appWrite("importedMidiSeedPreview",chart);
       syncMidiImportStateRequest({ seedMode: v, seedChart: chart });
-      if(chart&&typeof openEditor==="function"){openEditor("chart",chart);}
+      if(chart&&typeof openEditor==="function"){openEditor("chart",chart);render();}
       else{render();}
     }return;
   }
