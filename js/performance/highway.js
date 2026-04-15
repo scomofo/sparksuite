@@ -12,6 +12,13 @@ var PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS = {
   }
 };
 
+function getPerformanceHighwayThemeManifest() {
+  if (typeof window !== "undefined" && window.PERFORMANCE_HIGHWAY_THEME_MANIFEST) {
+    return window.PERFORMANCE_HIGHWAY_THEME_MANIFEST;
+  }
+  return PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS;
+}
+
 installSparkHighwayLanePatch();
 
 function getPerformanceHighwayInstrument(chart) {
@@ -35,9 +42,10 @@ function getPerformanceHighwaySkin(instrument) {
 }
 
 function getPerformanceHighwayAssets(chart) {
+  var manifest = getPerformanceHighwayThemeManifest();
   var instrument = getPerformanceHighwayInstrument(chart);
-  if (instrument === "piano") return PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS.piano;
-  return PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS.guitar;
+  if (instrument === "piano" && manifest.piano) return manifest.piano;
+  return manifest.guitar || PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS.guitar;
 }
 
 function ensureSparkHighway(canvasEl, chart) {

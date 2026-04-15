@@ -343,6 +343,27 @@ test('renderPerformanceHighway uses archive-backed backgrounds for guitar and pi
   assert.ok(pianoHtml.indexOf('sparkgame/assets/highway/piano_highway_v3.png') >= 0);
 });
 
+test('renderPerformanceHighway honors theme manifest overrides', function() {
+  var originalManifest = global.PERFORMANCE_HIGHWAY_THEME_MANIFEST;
+  global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = {
+    guitar: {
+      background: 'custom/guitar_bg.png',
+      surface: 'custom/guitar_surface.png'
+    },
+    piano: {
+      background: 'custom/piano_bg.png',
+      surface: 'custom/piano_surface.png'
+    }
+  };
+
+  var html = renderPerformanceHighway({ instrument: 'piano', events: [] }, 0);
+
+  assert.ok(html.indexOf('custom/piano_bg.png') >= 0);
+  assert.ok(html.indexOf('custom/piano_surface.png') >= 0);
+
+  global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = originalManifest;
+});
+
 test('getPreferredPerformanceArrangement honors song-authored arrangement preference', function() {
   assert.strictEqual(getPreferredPerformanceArrangement({ preferredPerformanceArrangement: 'lead' }, 'chords'), 'lead');
   assert.strictEqual(getPreferredPerformanceArrangement({}, 'chords'), 'chords');
