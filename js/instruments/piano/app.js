@@ -2179,9 +2179,11 @@ function act(action, param) {
     // ── Onboarding flow ──
     case "openOnboarding":
       if(typeof startOnboarding === "function") startOnboarding();
+      else showToast("Onboarding isn't available right now.");
       return;
     case "resumeOnboarding":
       if(typeof continueOnboarding === "function") continueOnboarding();
+      else showToast("Onboarding isn't available right now.");
       return;
 
     // ── Settings ──

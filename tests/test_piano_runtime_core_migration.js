@@ -793,6 +793,19 @@ test("utility screen entry actions mirror piano navigation into shared utility h
   assert.strictEqual(S.screen, "midi_import");
 });
 
+test("piano onboarding actions surface fallback feedback when onboarding helpers are unavailable", function() {
+  delete global.startOnboarding;
+  delete global.continueOnboarding;
+
+  pianoAct("openOnboarding");
+  pianoAct("resumeOnboarding");
+
+  assert.deepStrictEqual(toasts, [
+    "Onboarding isn't available right now.",
+    "Onboarding isn't available right now."
+  ]);
+});
+
 test("piano cloud sync and pull surface unavailable helper errors through shared workflow state", function() {
   pianoAct("cloudSync");
   pianoAct("cloudPull");
