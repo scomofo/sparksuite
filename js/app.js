@@ -2645,7 +2645,11 @@ window.act=function(a,v){
     });
     render();return;
   }
-  if(a==="launchRecommendation"){if(typeof launchRecommendationById==="function")launchRecommendationById(v);return;}
+  if(a==="launchRecommendation"){
+    if(typeof launchRecommendationById==="function"){launchRecommendationById(v);return;}
+    if (typeof showToast === "function") showToast("Recommendations aren't available right now.");
+    return;
+  }
   if(a==="launchAnalyticsRecommendation"){
     var analyticsSummary = typeof buildAnalyticsSummary==="function" ? buildAnalyticsSummary() : null;
     var analyticsIndex = parseInt(v, 10);
@@ -4497,6 +4501,7 @@ window.act=function(a,v){
   if(a==="assignMidiTrack"){
     var parts=String(v).split("|");
     if(typeof setMidiTrackAssignment==="function")setMidiTrackAssignment(parts[0],parts[1]);
+    else if(typeof showToast === "function") showToast("MIDI track assignment isn't available right now.");
     syncMidiImportStateRequest();
     render();return;
   }
@@ -4506,8 +4511,14 @@ window.act=function(a,v){
       appWrite("importedMidiSeedPreview",chart);
       syncMidiImportStateRequest({ seedMode: v, seedChart: chart });
       if(chart&&typeof openEditor==="function"){openEditor("chart",chart);render();}
-      else{render();}
-    }return;
+      else{
+        if(typeof showToast === "function") showToast("No usable seed chart could be built from that MIDI import.");
+        render();
+      }
+      return;
+    }
+    if(typeof showToast === "function") showToast("MIDI seed chart building isn't available right now.");
+    return;
   }
   // === Cloud Sync Actions ===
   if(a==="cloudSync"){

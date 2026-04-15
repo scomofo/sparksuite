@@ -217,6 +217,7 @@ test('analytics recommendation buttons route through shared and piano dispatcher
   var appSource = loadJS('js/app.js');
   var pianoSource = loadJS('js/instruments/piano/app.js');
   assert.ok(appSource.indexOf('if(a==="launchAnalyticsRecommendation"){') >= 0);
+  assert.ok(appSource.indexOf('showToast("Recommendations aren\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('launchPracticeItem(analyticsItems[analyticsIndex])') >= 0);
   assert.ok(pianoSource.indexOf('case "launchAnalyticsRecommendation":') >= 0);
   assert.ok(pianoSource.indexOf('launchPracticeItem(pianoAnalyticsItems[pianoAnalyticsIndex])') >= 0);
@@ -258,6 +259,9 @@ test('midi import falls back to the internal parser and surfaces import errors',
   assert.ok(midiUiSource.indexOf('midiImportWrite("midiImportError"') >= 0);
   assert.ok(midiUiSource.indexOf('<b>Import error:</b>') >= 0);
   assert.ok(appSource.indexOf('showToast("MIDI import isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("MIDI track assignment isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("No usable seed chart could be built from that MIDI import.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("MIDI seed chart building isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('openEditor("chart",chart);render();') >= 0);
   assert.ok(pianoSource.indexOf('openEditor("chart", seedChart);') >= 0);
 });
