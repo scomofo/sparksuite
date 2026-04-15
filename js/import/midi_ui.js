@@ -57,9 +57,13 @@
     var assignments = runtimeState && runtimeState.midiImportAssignments
       ? runtimeState.midiImportAssignments
       : midiImportRead("importedMidiAssignments", {});
+    var importError = midiImportRead("midiImportError", "");
     var h = '<div class="card">';
     h += '<div><b>MIDI Import</b></div>';
     h += '<input type="file" accept=".mid,.midi" onchange="act(\'importMidiFile\', this.files[0])" />';
+    if(importError){
+      h += '<div style="margin-top:8px;color:#FF6B6B"><b>Import error:</b> ' + escHTML(importError) + '</div>';
+    }
     h += '</div>';
 
     if((runtimeTracks && runtimeTracks.length) || midiImportRead("importedMidi", null)){
@@ -103,20 +107,25 @@
 
   async function handleMidiImport(file){
     if(!file) return;
-    var raw = await parseMidiFile(file);
-    var normalized = normalizeParsedMidi(raw, file.name);
-    midiImportWrite("importedMidi", normalized);
-    midiImportWrite("importedMidiTracks", normalized.tracks || []);
-    var appType = "guitar"; // ChordSpark default
-    var assignments = autoAssignMidiTracks(normalized, appType);
-    midiImportWrite("importedMidiAssignments", assignments);
-    if(typeof syncMidiImportStateRequest === "function"){
-      syncMidiImportStateRequest({
-        normalizedMidi: normalized,
-        assignments: assignments,
-        seedMode: null,
-        seedChart: null
-      });
+    try {
+      var raw = await parseMidiFile(file);
+      var normalized = normalizeParsedMidi(raw, file.name);
+      midiImportWrite("midiImportError", "");
+      midiImportWrite("importedMidi", normalized);
+      midiImportWrite("importedMidiTracks", normalized.tracks || []);
+      var appType = "guitar"; // ChordSpark default
+      var assignments = autoAssignMidiTracks(normalized, appType);
+      midiImportWrite("importedMidiAssignments", assignments);
+      if(typeof syncMidiImportStateRequest === "function"){
+        syncMidiImportStateRequest({
+          normalizedMidi: normalized,
+          assignments: assignments,
+          seedMode: null,
+          seedChart: null
+        });
+      }
+    } catch (e) {
+      midiImportWrite("midiImportError", String((e && e.message) || e || "Unable to import MIDI file"));
     }
     render();
   }

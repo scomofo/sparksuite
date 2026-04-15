@@ -217,6 +217,16 @@ test('feedback draft input routes through the shared dispatcher', function() {
   assert.ok(appSource.indexOf('if(a==="feedbackDraftText"){') >= 0);
 });
 
+test('midi import falls back to the internal parser and surfaces import errors', function() {
+  var chartIoSource = loadJS('js/sparksuite/core/chart_io.js');
+  var midiParseSource = loadJS('js/import/midi_parse.js');
+  var midiUiSource = loadJS('js/import/midi_ui.js');
+  assert.ok(chartIoSource.indexOf('window.SparkChartIO.parseMidiBuffer = parseMidiBuffer;') >= 0);
+  assert.ok(midiParseSource.indexOf('typeof SparkChartIO !== "undefined" && typeof SparkChartIO.parseMidiBuffer === "function"') >= 0);
+  assert.ok(midiUiSource.indexOf('midiImportWrite("midiImportError"') >= 0);
+  assert.ok(midiUiSource.indexOf('<b>Import error:</b>') >= 0);
+});
+
 test('career page hides play CTA when unlocked song data is missing', function() {
   global.S.activeCareerId = 'career_1';
   global.SparkState.read = function(path, fallback) {

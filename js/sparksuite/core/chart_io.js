@@ -947,4 +947,5 @@
   }
 
   window.SparkChartIO = ChartIO;
+  window.SparkChartIO.parseMidiBuffer = parseMidiBuffer;
 })();
