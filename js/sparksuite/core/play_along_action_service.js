@@ -485,7 +485,7 @@
   SparkPlayAlongActionService.prototype.connectSpotify = function(onConnected) {
     var authManager = this.createSpotifyAuthManager();
     if (!authManager) {
-      alert("Spotify integration not loaded.");
+      if (typeof window.showToast === "function") window.showToast("Spotify integration isn't available right now.");
       return Promise.resolve(false);
     }
 

@@ -544,6 +544,12 @@ test("piano perform song page routes Start Performance through the shared perfor
   assert.ok(loadJS("js/instruments/piano/pages/perform_song.js").indexOf("act(\\'performStartFromSong\\')") >= 0);
 });
 
+test("piano song audio import surfaces desktop and stem errors through toast feedback", function() {
+  var pianoAppSource = loadJS("js/instruments/piano/app.js");
+  assert.ok(pianoAppSource.indexOf('showToast("Song audio import is only available in the desktop build.")') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("Stem separation failed: " + (err.message || err))') >= 0);
+});
+
 test("piano tab renderers are namespaced so they do not clobber shared page globals", function() {
   var pianoGamesSource = loadJS("js/instruments/piano/pages/games.js");
   var pianoSongsSource = loadJS("js/instruments/piano/pages/songs.js");

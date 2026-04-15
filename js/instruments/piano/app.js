@@ -1569,7 +1569,7 @@ function act(action, param) {
       saveState();
       break;
     case "importSongAudio":
-      if(!window.electron||!window.electron.stems){alert("Requires desktop app.");break;}
+      if(!window.electron||!window.electron.stems){showToast("Song audio import is only available in the desktop build.");break;}
       var importSongId=param;
       window.electron.stems.openFile().then(function(result){
         if(!result)return;
@@ -1611,7 +1611,7 @@ function act(action, param) {
         }).catch(function(err){
           unsubProgress();
           state.songAudioImporting=false;
-          alert("Stem separation failed: "+(err.message||err));
+          showToast("Stem separation failed: " + (err.message || err));
           render();
         });
       });

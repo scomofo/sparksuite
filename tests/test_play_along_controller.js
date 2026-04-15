@@ -134,6 +134,8 @@ function resetState() {
     }
   };
   global.saveState = function() {};
+  global.toasts = [];
+  global.showToast = function(msg) { toasts.push(msg); };
   global.getSparkPlayAlongDemos = function() {
     return [{
       trackId: "demo_song_1",
@@ -374,6 +376,13 @@ test("sparkPlayAlongLaunchSaved replays a saved Spotify song", async function() 
 
   assert.strictEqual(ok, true);
   assert.strictEqual(sparkCore.startedWith.trackId, "spotify_track_1");
+});
+
+test("sparkPlayAlongConnectSpotify surfaces feedback when Spotify integration is unavailable", async function() {
+  var ok = await sparkPlayAlongConnectSpotify();
+
+  assert.strictEqual(ok, false);
+  assert.deepStrictEqual(toasts, ["Spotify integration isn't available right now."]);
 });
 
 test("adaptive coach hint escalates after repeated low-accuracy loop reps", function() {
