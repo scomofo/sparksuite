@@ -29,6 +29,8 @@
         rhythm: mastery.rhythm || {}
       },
       chordProgress: curriculumStateRead("chordProgress", {}) || {},
+      skillMastery: curriculumStateRead("skillMastery", {}) || {},
+      unlockedLessonIds: curriculumStateRead("unlockedLessonIds", []) || [],
       ukuleleSkillProgress: curriculumStateRead("ukuleleSkillProgress", {}) || {},
       bassSkillProgress: curriculumStateRead("bassSkillProgress", {}) || {}
     };
@@ -106,6 +108,45 @@
     return getNextSkillLesson(skillId, instrumentContext) || getLessonForSkill(skillId, instrumentContext);
   }
 
+  function getAdaptiveSkills(userContext, progressSnapshot) {
+    userContext = userContext || {};
+    progressSnapshot = progressSnapshot || getProgressSnapshot();
+    if (userContext.skills && typeof userContext.skills === "object") return userContext.skills;
+    if (progressSnapshot.skillMastery && typeof progressSnapshot.skillMastery === "object") {
+      return progressSnapshot.skillMastery;
+    }
+    return {};
+  }
+
+  function getAdaptiveReviewTarget(userContext) {
+    var progressSnapshot = getProgressSnapshot();
+    var skills = getAdaptiveSkills(userContext, progressSnapshot);
+    var selection = typeof selectAdaptiveNextSkill === "function"
+      ? selectAdaptiveNextSkill(skills, { returnMeta: true })
+      : null;
+    return selection || null;
+  }
+
+  function getAdaptiveNextLesson(userContext, instrumentContext) {
+    var selection = getAdaptiveReviewTarget(userContext);
+    if (selection && selection.skillId) {
+      return getLessonForSkill(selection.skillId, instrumentContext) || getNextSkillLesson(selection.skillId, instrumentContext);
+    }
+    return getLessonForSkill(null, instrumentContext);
+  }
+
+  function buildAdaptiveSessionContext(userContext, instrumentContext) {
+    var review = getAdaptiveReviewTarget(userContext);
+    var nextLessonId = getAdaptiveNextLesson(userContext, instrumentContext);
+    return {
+      reviewSkillId: review ? review.skillId : null,
+      reviewScore: review ? review.score : null,
+      reviewDaysSincePractice: review ? review.daysSincePractice : null,
+      reviewMastery: review ? review.mastery : null,
+      nextLessonId: nextLessonId
+    };
+  }
+
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
     var curriculum = getCurriculumItem("curriculums", curriculumId);
     if(!curriculum) return null;
@@ -174,6 +215,10 @@
       return getNextLessonForSkillProgress(skillId, mastery, instrumentContext, threshold);
     },
 
+    buildAdaptiveSessionContext: function(userContext, instrumentContext) {
+      return buildAdaptiveSessionContext(userContext, instrumentContext);
+    },
+
     isLessonUnlocked: function(lessonId) {
       return checkLessonUnlockRules(lessonId);
     },
@@ -223,17 +268,31 @@
     buildLearningQueue: function(userContext) {
       userContext = userContext || {};
       var queue = [];
+      var adaptiveContext = buildAdaptiveSessionContext(userContext, userContext.instrumentContext || null);
+      var reviewSkillId = adaptiveContext.reviewSkillId;
+      var reviews;
 
-      // 1. Get review targets (chords needing practice)
-      var reviews = this.getReviewTargets(userContext);
-      for (var i = 0; i < reviews.length && i < 2; i++) {
+      if (reviewSkillId) {
         queue.push({
           type: "review",
-          id: reviews[i].id,
-          label: "Review: " + reviews[i].id,
-          priority: reviews[i].priority,
-          mastery: reviews[i].mastery
+          id: reviewSkillId,
+          label: "Review: " + reviewSkillId,
+          priority: "high",
+          mastery: adaptiveContext.reviewMastery,
+          reviewScore: adaptiveContext.reviewScore,
+          daysSincePractice: adaptiveContext.reviewDaysSincePractice
         });
+      } else {
+        reviews = this.getReviewTargets(userContext);
+        for (var i = 0; i < reviews.length && i < 2; i++) {
+          queue.push({
+            type: "review",
+            id: reviews[i].id,
+            label: "Review: " + reviews[i].id,
+            priority: reviews[i].priority,
+            mastery: reviews[i].mastery
+          });
+        }
       }
 
       // 2. Get next lesson from curriculum
@@ -260,14 +319,33 @@
         }
       }
 
+      if (adaptiveContext.nextLessonId && !queue.some(function(item) { return item.id === adaptiveContext.nextLessonId; })) {
+        queue.push({
+          type: "lesson",
+          id: adaptiveContext.nextLessonId,
+          label: adaptiveContext.nextLessonId,
+          priority: "normal"
+        });
+      }
+
       // 3. Add a practice/drill suggestion if queue is short
-      if (queue.length < 3 && reviews.length > 0) {
+      if (queue.length < 3 && reviewSkillId) {
+        queue.push({
+          type: "drill",
+          id: "review_drill",
+          label: "Drill: " + reviewSkillId + " practice",
+          priority: "low"
+        });
+      } else if (queue.length < 3) {
+        reviews = reviews || this.getReviewTargets(userContext);
+        if (reviews.length > 0) {
         queue.push({
           type: "drill",
           id: "review_drill",
           label: "Drill: " + reviews[0].id + " practice",
           priority: "low"
         });
+        }
       }
 
       return queue;

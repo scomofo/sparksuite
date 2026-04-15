@@ -73,6 +73,8 @@ eval(loadJS('js/progression/xp_system.js'));
 eval(loadJS('js/progression/level_system.js'));
 eval(loadJS('js/progression/skill_mastery.js'));
 eval(loadJS('js/progression/unlock_system.js'));
+eval(loadJS('js/adaptive/spaced_repetition.js'));
+eval(loadJS('js/adaptive/skill_selector.js'));
 eval(loadJS('js/performance/session_rewards.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway_themes.js'));

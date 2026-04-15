@@ -178,11 +178,14 @@ eval(loadJS("js/progression/xp_system.js"));
 eval(loadJS("js/progression/level_system.js"));
 eval(loadJS("js/progression/skill_mastery.js"));
 eval(loadJS("js/progression/unlock_system.js"));
+eval(loadJS("js/adaptive/spaced_repetition.js"));
+eval(loadJS("js/adaptive/skill_selector.js"));
 eval(loadJS("js/performance/session_rewards.js"));
 eval(loadJS("js/sparksuite/core/storage.js"));
 eval(loadJS("js/sparksuite/core/ai_engine.js"));
 eval(loadJS("js/sparksuite/core/instrument_manager.js"));
 eval(loadJS("js/sparksuite/core/psychology_engine.js"));
+eval(loadJS("js/curriculum/curriculum_engine.js"));
 eval(loadJS("js/sparksuite/core/curriculum_engine.js"));
 eval(loadJS("js/sparksuite/core/practice_engine.js"));
 eval(loadJS("js/sparksuite/core/progress_engine.js"));
@@ -3614,6 +3617,7 @@ test("completeSession routes performance completion rewards through core", funct
   assert.strictEqual(result.masterySummary.skillId, "tap");
   assert.ok(result.masterySummary.mastery > 0.75);
   assert.strictEqual(result.masterySummary.unlocked, true);
+  assert.ok(typeof result.masterySummary.lastPracticed === "number");
   assert.strictEqual(result.performanceSummary.masterySummary.skillId, "tap");
   assert.ok(S.skillMastery.tap);
   assert.strictEqual(S.xp, 320);
@@ -3659,6 +3663,61 @@ test("completeSession can carry focused bass rhythm drill progress into bass ski
   assert.ok(result.sessionStatePatch.bassSkillProgress.walking_bass);
   assert.ok(result.sessionStatePatch.bassSkillProgress.walking_bass.timing < result.sessionStatePatch.bassSkillProgress.walking_bass.accuracy);
   assert.ok(S.bassSkillProgress.walking_bass);
+});
+
+test("adaptive skill selector prioritizes weaker older skills", function() {
+  var now = Date.now();
+  var selected = selectAdaptiveNextSkill({
+    chord_switching: {
+      mastery: 0.8,
+      lastPracticed: now - (1 * 24 * 60 * 60 * 1000)
+    },
+    strumming_patterns: {
+      mastery: 0.6,
+      lastPracticed: now - (5 * 24 * 60 * 60 * 1000)
+    }
+  });
+
+  assert.strictEqual(selected, "strumming_patterns");
+});
+
+test("curriculum adaptive context surfaces review skill and next lesson", function() {
+  S.skillMastery = {
+    chord_switching: {
+      mastery: 0.62,
+      lastPracticed: Date.now() - (4 * 24 * 60 * 60 * 1000)
+    }
+  };
+
+  var context = SparkCurriculumService.buildAdaptiveSessionContext({
+    skills: S.skillMastery
+  }, {
+    curriculumMap: [
+      { id: "session_1", title: "First Spark" },
+      { id: "session_2", title: "Second Spark" }
+    ]
+  });
+
+  assert.strictEqual(context.reviewSkillId, "chord_switching");
+  assert.strictEqual(context.nextLessonId, "session_1");
+  assert.ok(context.reviewScore < 0.62);
+  assert.ok(context.reviewDaysSincePractice >= 3.9);
+});
+
+test("daily practice sessions carry adaptive review context from skill mastery", function() {
+  var core = createDefaultSparkCore();
+  S.skillMastery = {
+    strumming_patterns: {
+      mastery: 0.58,
+      lastPracticed: Date.now() - (6 * 24 * 60 * 60 * 1000)
+    }
+  };
+
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, forceRebuild: true });
+
+  assert.strictEqual(plan.context.adaptiveSession.reviewSkillId, "strumming_patterns");
+  assert.strictEqual(plan.context.adaptiveSession.nextLessonId, "session_1");
+  assert.ok(plan.context.adaptiveSession.reviewScore < 0.58);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

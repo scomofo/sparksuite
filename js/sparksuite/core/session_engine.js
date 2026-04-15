@@ -148,7 +148,12 @@
       brainAnalysis = SparkLearningBrain.analyzeUser(skillGraph, flowState, analysisContext.weakSpots || null); // DEPRECATED: route through PsychologyEngine
     }
 
-    var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
+    var progressSnapshot = this.coreRuntime && typeof this.coreRuntime.getLegacyProgressSnapshot === "function"
+      ? this.coreRuntime.getLegacyProgressSnapshot()
+      : {};
+    var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {}, {
+      skills: progressSnapshot.skillMastery || {}
+    });
     var difficulty = brainAnalysis && brainAnalysis.recommendedDifficultyId
       ? brainAnalysis.recommendedDifficultyId
       : "easy";
@@ -221,6 +226,13 @@
       rewards: practicePlan.rewards || [{ type: "xp", amount: 40 }],
       context: {
         curriculum: curriculumContext,
+        adaptiveSession: {
+          reviewSkillId: curriculumContext.reviewSkillId || null,
+          reviewScore: curriculumContext.reviewScore,
+          reviewDaysSincePractice: curriculumContext.reviewDaysSincePractice,
+          reviewMastery: curriculumContext.reviewMastery,
+          nextLessonId: curriculumContext.nextLessonId || null
+        },
         brainAnalysis: brainAnalysis,
         smartCoach: brainAnalysis ? {
           message: brainAnalysis.coachMessage,

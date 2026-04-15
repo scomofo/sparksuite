@@ -377,7 +377,8 @@
       nextLessonId: nextLessonId,
       timing: timing,
       accuracy: Math.max(0, Math.min(1, (performanceResults.accuracy || 0) / 100)),
-      combo: performanceResults.maxCombo || 0
+      combo: performanceResults.maxCombo || 0,
+      lastPracticed: Date.now()
     };
 
     progressionWrite(["skillMastery", skillId], summary);
