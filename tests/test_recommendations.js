@@ -25,6 +25,7 @@ function loadJS(file) {
 function resetState() {
   global.window = global;
   global.APP_NAME = "ChordSpark";
+  global.toasts = [];
   global.S = {
     completedLessons: ["bass_level_1", "bass_level_2", "bass_level_3"],
     mastery: { lessons: {} },
@@ -57,6 +58,7 @@ function resetState() {
     }
   };
   global.saveState = function() {};
+  global.showToast = function(msg) { toasts.push(msg); };
   global.window.sparkCore = {
     getCompletedLessonIds: function() {
       return ["bass_level_1", "bass_level_2", "bass_level_3"];
@@ -389,6 +391,22 @@ test("launchRecommendationById can open the challenge hub for challenge recommen
   launchRecommendationById("challenge_daily_walk");
 
   assert.deepStrictEqual(actions, [{ action: "openChallengeHub", value: undefined }]);
+});
+
+test("launchRecommendationById surfaces feedback when a recommendation cannot be launched", function() {
+  global.launchPracticeItem = function() {
+    return false;
+  };
+  S.recommendations = [{
+    id: "mystery_unlaunchable",
+    type: "mystery",
+    source: "unlock",
+    meta: {}
+  }];
+
+  launchRecommendationById("mystery_unlaunchable");
+
+  assert.deepStrictEqual(toasts, ["That recommendation couldn't be opened right now."]);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

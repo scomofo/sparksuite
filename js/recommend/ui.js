@@ -114,11 +114,15 @@ function launchRecommendationItem(item){
 
 function launchRecommendationById(id){
   var arr = recommendationUiRead("recommendations", []);
+  function showRecommendationLaunchError(){
+    if(typeof showToast === "function") showToast("That recommendation couldn't be opened right now.");
+  }
   if (window.sparkCore && typeof window.sparkCore.launchDashboardRecommendation === "function") {
     var coreRequest = window.sparkCore.launchDashboardRecommendation(id);
     if (coreRequest && coreRequest.recommendation) {
       recordRecommendationUse(coreRequest.recommendation);
       if(launchRecommendationItem(coreRequest.recommendation)) return;
+      showRecommendationLaunchError();
       return;
     }
   } else if (window.sparkCore && typeof window.sparkCore.getDashboardRecommendationById === "function") {
@@ -126,6 +130,7 @@ function launchRecommendationById(id){
     if (coreRecommendation) {
       recordRecommendationUse(coreRecommendation);
       if(launchRecommendationItem(coreRecommendation)) return;
+      showRecommendationLaunchError();
       return;
     }
   }
@@ -140,7 +145,8 @@ function launchRecommendationById(id){
         sparkPlayAlongLaunchBookmarkByKey(arr[i].meta && arr[i].meta.trackId, arr[i].meta && arr[i].meta.sectionIndex);
         return;
       }
-      launchRecommendationItem(arr[i]);
+      if(launchRecommendationItem(arr[i])) return;
+      showRecommendationLaunchError();
       return;
     }
   }
