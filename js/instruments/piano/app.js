@@ -1919,16 +1919,19 @@ function act(action, param) {
 
     case "setMidiProfile":
       if(typeof setActiveMidiProfile === "function") setActiveMidiProfile(param);
+      else showToast("MIDI profiles aren't available right now.");
       if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       break;
 
     case "createDefaultPianoProfile":
       if(typeof createDefaultPianoProfile === "function") createDefaultPianoProfile();
+      else showToast("Piano MIDI profiles aren't available right now.");
       if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       break;
 
     case "createDefaultGuitarProfile":
       if(typeof createDefaultGuitarProfile === "function") createDefaultGuitarProfile();
+      else showToast("Guitar MIDI profiles aren't available right now.");
       if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
       break;
 
@@ -1951,23 +1954,30 @@ function act(action, param) {
     // ── MIDI Import actions ──
     case "importMidiFile":
       if(typeof handleMidiImport === "function") handleMidiImport(param);
+      else showToast("MIDI import isn't available right now.");
       return;
 
     case "assignMidiTrack": {
       var atParts = String(param).split("|");
       if(typeof setMidiTrackAssignment === "function") setMidiTrackAssignment(atParts[0], atParts[1]);
+      else showToast("MIDI track assignment isn't available right now.");
       if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest();
       break;
     }
 
     case "buildMidiSeedChart": {
-      var seedChart = typeof buildSeedChartFromImportedMidi === "function"
-        ? buildSeedChartFromImportedMidi(state.importedMidi, state.importedMidiAssignments, param)
-        : null;
+      if (typeof buildSeedChartFromImportedMidi !== "function") {
+        showToast("MIDI seed chart building isn't available right now.");
+        return;
+      }
+      var seedChart = buildSeedChartFromImportedMidi(state.importedMidi, state.importedMidiAssignments, param);
       state.importedMidiSeedPreview = seedChart;
       if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest({ seedMode: param, seedChart: seedChart });
       if(seedChart && typeof openEditor === "function"){
         openEditor("chart", seedChart);
+        render();
+      } else {
+        showToast("No usable seed chart could be built from that MIDI import.");
         render();
       }
       break;
@@ -2113,7 +2123,11 @@ function act(action, param) {
           state.performSongData = cSong;
           state.performSongId = param;
           state.screen = SCR.PERFORM_SONG;
+        } else {
+          showToast("This career song isn't available yet.");
         }
+      } else {
+        showToast("This career song isn't available yet.");
       }
       break;
 

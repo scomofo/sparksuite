@@ -544,11 +544,19 @@ test("piano perform song page routes Start Performance through the shared perfor
   assert.ok(loadJS("js/instruments/piano/pages/perform_song.js").indexOf("act(\\'performStartFromSong\\')") >= 0);
 });
 
-test("piano song audio import surfaces desktop and stem errors through toast feedback", function() {
+test("piano runtime surfaces toast feedback for import and midi helper fallbacks", function() {
   var pianoAppSource = loadJS("js/instruments/piano/app.js");
   assert.ok(pianoAppSource.indexOf('showToast("Recommendations aren\'t available right now.")') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("This career song isn\'t available yet.")') >= 0);
   assert.ok(pianoAppSource.indexOf('showToast("Song audio import is only available in the desktop build.")') >= 0);
   assert.ok(pianoAppSource.indexOf('showToast("Stem separation failed: " + (err.message || err))') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("MIDI profiles aren\'t available right now.")') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("Piano MIDI profiles aren\'t available right now.")') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("Guitar MIDI profiles aren\'t available right now.")') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("MIDI import isn\'t available right now.")') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("MIDI track assignment isn\'t available right now.")') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("MIDI seed chart building isn\'t available right now.")') >= 0);
+  assert.ok(pianoAppSource.indexOf('showToast("No usable seed chart could be built from that MIDI import.")') >= 0);
 });
 
 test("piano launchRecommendation surfaces feedback when recommendation wiring is unavailable", function() {
@@ -636,6 +644,7 @@ test("openCareerSong does not switch piano to perform song when song data is mis
   assert.strictEqual(S.performSongData, null);
   assert.strictEqual(S.performSongId, "");
   assert.strictEqual(S.screen, "career");
+  assert.deepStrictEqual(toasts, ["This career song isn't available yet."]);
 });
 
 test("performStart delegates launch request construction to sparkCore helpers", function() {
@@ -874,6 +883,33 @@ test("piano midi actions mirror into shared midi settings sync helper", function
   assert.strictEqual(midiSettingsSyncCalls.length, 4);
   assert.deepStrictEqual(utilityScreenCalls, ["midi_settings"]);
   assert.strictEqual(S.screen, "midi_settings");
+});
+
+test("piano midi helper gaps surface fallback feedback", function() {
+  delete global.setActiveMidiProfile;
+  delete global.createDefaultPianoProfile;
+  delete global.createDefaultGuitarProfile;
+  delete global.handleMidiImport;
+  delete global.setMidiTrackAssignment;
+  delete global.buildSeedChartFromImportedMidi;
+
+  pianoAct("setMidiProfile", "profile_1");
+  pianoAct("createDefaultPianoProfile");
+  pianoAct("createDefaultGuitarProfile");
+  pianoAct("importMidiFile", { name: "lesson.mid" });
+  pianoAct("assignMidiTrack", "t1|single_note");
+  pianoAct("buildMidiSeedChart", "piano_left_hand");
+
+  assert.deepStrictEqual(toasts, [
+    "MIDI profiles aren't available right now.",
+    "Piano MIDI profiles aren't available right now.",
+    "Guitar MIDI profiles aren't available right now.",
+    "MIDI import isn't available right now.",
+    "MIDI track assignment isn't available right now.",
+    "MIDI seed chart building isn't available right now."
+  ]);
+  assert.strictEqual(midiSettingsSyncCalls.length, 3);
+  assert.strictEqual(midiImportSyncCalls.length, 1);
 });
 
 test("stem player actions mirror piano navigation into shared stem helpers", function() {
