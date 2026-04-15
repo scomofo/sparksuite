@@ -3626,6 +3626,52 @@ test("completeSession routes performance completion rewards through core", funct
   assert.strictEqual(S.playerLevel, 5);
 });
 
+test("completeSession applies psychology comeback multipliers to performance rewards", function() {
+  var core = createDefaultSparkCore();
+  S.psychologyComeback = true;
+  S.streak = 2;
+  S.playerXP = 400;
+  core.startSession({
+    flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+    songId: "night_drive",
+    arrangementType: "rhythm_chords",
+    difficultyId: "hard"
+  });
+
+  var result = core.completeSession({
+    flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
+    markPlanComplete: true,
+    performanceResults: {
+      accuracy: 88,
+      stars: 4,
+      score: 1234,
+      maxCombo: 18,
+      totalEvents: 6
+    },
+    rewardSummary: {
+      xpGained: 100,
+      totalXP: 500,
+      level: 3,
+      previousLevel: 3,
+      leveledUp: false,
+      nextLevelXP: 700,
+      summary: {
+        timingScore: 420,
+        maxCombo: 18,
+        milestones: 2,
+        sessionBonus: 25
+      }
+    }
+  });
+
+  assert.strictEqual(result.xpAwarded, 200);
+  assert.strictEqual(result.rewardSummary.xpGained, 200);
+  assert.strictEqual(result.rewardSummary.totalXP, 600);
+  assert.strictEqual(result.psychologySummary.rewardMultiplier, 2);
+  assert.strictEqual(result.psychologySummary.comeback, true);
+  assert.strictEqual(S.psychologyComeback, false);
+});
+
 test("completeSession can carry focused bass rhythm drill progress into bass skill state", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({
@@ -3718,6 +3764,35 @@ test("daily practice sessions carry adaptive review context from skill mastery",
   assert.strictEqual(plan.context.adaptiveSession.reviewSkillId, "strumming_patterns");
   assert.strictEqual(plan.context.adaptiveSession.nextLessonId, "session_1");
   assert.ok(plan.context.adaptiveSession.reviewScore < 0.58);
+});
+
+test("daily practice sessions carry psychology shaping context and update streak state", function() {
+  var core = createDefaultSparkCore();
+  S.streak = 6;
+  S.lastSessionDate = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, forceRebuild: true });
+
+  assert.ok(plan.context.psychology);
+  assert.strictEqual(plan.context.psychology.streak, 7);
+  assert.strictEqual(plan.context.psychology.rewardMultiplier, 1.5);
+  assert.strictEqual(plan.context.psychology.comeback, false);
+  assert.strictEqual(S.streak, 7);
+  assert.strictEqual(S.practiceStreak, 7);
+});
+
+test("daily practice sessions mark comeback sessions for returning players", function() {
+  var core = createDefaultSparkCore();
+  S.streak = 4;
+  S.lastSessionDate = new Date(Date.now() - (3 * 86400000)).toISOString().slice(0, 10);
+
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, forceRebuild: true });
+
+  assert.strictEqual(plan.context.psychology.comeback, true);
+  assert.strictEqual(plan.context.psychology.rewardMultiplier, 2);
+  assert.strictEqual(plan.context.psychology.sessionType, "comeback");
+  assert.deepStrictEqual(plan.context.psychology.structure, ["easy_win", "review", "reward"]);
+  assert.strictEqual(S.psychologyComeback, true);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

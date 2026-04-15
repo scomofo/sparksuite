@@ -862,6 +862,12 @@ function finishPerformance() {
     if (corePerformanceResult && corePerformanceResult.rewardSummary) {
       results.rewardSummary = corePerformanceResult.rewardSummary;
     }
+    if (corePerformanceResult && corePerformanceResult.masterySummary) {
+      results.masterySummary = corePerformanceResult.masterySummary;
+    }
+    if (corePerformanceResult && corePerformanceResult.psychologySummary) {
+      results.psychologySummary = corePerformanceResult.psychologySummary;
+    }
   } else if (window.sparkCore && typeof window.sparkCore.applyLegacyReward === "function") {
     window.sparkCore.applyLegacyReward({ xpDelta: xpAward, toastAmount: xpAward });
   } else {

@@ -31,6 +31,7 @@
       timingScore: 0,
       maxCombo: results && typeof results.maxCombo === "number" ? results.maxCombo : 0,
       milestones: 0,
+      streak: performanceRewardRead("streak", performanceRewardRead("practiceStreak", 0) || 0),
       sessionBonus: 0
     };
 
@@ -62,10 +63,11 @@
     if (typeof options.sessionBonus === "number") summary.sessionBonus = options.sessionBonus;
 
     var xpGained = typeof calculateSessionXP === "function"
-      ? calculateSessionXP({
+        ? calculateSessionXP({
           timingScore: summary.timingScore,
           combo: summary.maxCombo,
           milestones: summary.milestones,
+          streak: summary.streak,
           sessionBonus: summary.sessionBonus
         })
       : 0;

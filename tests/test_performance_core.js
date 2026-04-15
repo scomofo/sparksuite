@@ -267,6 +267,11 @@ test('performance session reward summary converts timing, combo, and milestones 
   assert.strictEqual(reward.summary.milestones, 1);
 });
 
+test('calculateSessionXP adds an optional streak bonus without changing legacy callers', function() {
+  assert.strictEqual(calculateSessionXP({ timingScore: 210, combo: 12, milestones: 1, sessionBonus: 25 }), 204);
+  assert.strictEqual(calculateSessionXP({ timingScore: 210, combo: 12, milestones: 1, sessionBonus: 25, streak: 3 }), 219);
+});
+
 test('scorePerformanceEvent returns timing grade, lanes, and points for a matching hit', function() {
   var result = scorePerformanceEvent(
     { t: 1.0, chord: 'C', lane: 0, laneLabel: 'C', notes: ['C', 'E', 'G'], type: 'chord' },
@@ -348,6 +353,36 @@ test('performDonePage renders mastery and unlock summary when available', functi
   assert.ok(html.indexOf('Skill: tap') >= 0);
   assert.ok(html.indexOf('Next Lesson: session_2') >= 0);
   assert.ok(html.indexOf('NEW SKILL UNLOCKED') >= 0);
+});
+
+test('performDonePage renders streak and comeback psychology feedback when available', function() {
+  S.performResults = {
+    title: 'Test Song',
+    artist: 'Suite',
+    score: 910,
+    accuracy: 94,
+    maxCombo: 21,
+    stars: 4,
+    totalEvents: 14,
+    phraseStats: [],
+    rewardSummary: {
+      xpGained: 480,
+      totalXP: 1600,
+      level: 6,
+      nextLevelXP: 1900,
+      psychology: {
+        streak: 7,
+        daysAway: 3,
+        comeback: true,
+        rewardMultiplier: 2
+      },
+      summary: { milestones: 2 }
+    }
+  };
+  var html = performDonePage();
+  assert.ok(html.indexOf('7 Day Streak') >= 0);
+  assert.ok(html.indexOf('Reward Multiplier: x2') >= 0);
+  assert.ok(html.indexOf('WELCOME BACK BONUS') >= 0);
 });
 
 test('scorePerformanceEvent uses grace when the correct lane lands just beyond the miss window', function() {

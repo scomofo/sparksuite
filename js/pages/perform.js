@@ -473,6 +473,7 @@ function performDonePage() {
   }, r || {});
   var rewardSummary = r.rewardSummary || null;
   var masterySummary = r.masterySummary || null;
+  var psychologySummary = r.psychologySummary || (rewardSummary && rewardSummary.psychology) || null;
   var performChartId = performRead("performChartId", "unknown");
   var performSongStats = performRead("performSongStats", {}) || {};
   var performChart = performRead("performChart", null);
@@ -532,6 +533,16 @@ function performDonePage() {
     h += '<div style="font-size:18px;font-weight:800;color:#fff;margin-top:4px">Level ' + (rewardSummary.level || 1) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Total XP: ' + (rewardSummary.totalXP || 0) + ' &bull; Next Level: ' + (rewardSummary.nextLevelXP || (rewardSummary.totalXP || 0)) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Max Combo: ' + r.maxCombo + ' &bull; Milestones: ' + ((rewardSummary.summary && rewardSummary.summary.milestones) || 0) + '</div>';
+    h += '</div>';
+  }
+
+  if (psychologySummary) {
+    h += '<div class="card mb20" style="text-align:center;border:1px solid rgba(255,204,0,.24);background:linear-gradient(135deg,#20180bcc,#111827ee)">';
+    h += '<div style="font-size:20px;font-weight:900;color:#ffcc00">&#128293; ' + (psychologySummary.streak || 0) + ' Day Streak</div>';
+    h += '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Reward Multiplier: x' + (psychologySummary.rewardMultiplier || 1) + ' &bull; Days Away: ' + (psychologySummary.daysAway || 0) + '</div>';
+    if (psychologySummary.comeback) {
+      h += '<div style="font-size:18px;font-weight:900;color:#66ffcc;margin-top:8px">WELCOME BACK BONUS</div>';
+    }
     h += '</div>';
   }
 

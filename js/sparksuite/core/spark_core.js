@@ -2477,9 +2477,61 @@
       playerLevel: state ? (state.playerLevel || 1) : 1,
       streak: (state && typeof state.streak === "number") ? state.streak : 0,
       lastSessionDate: (state && state.lastSessionDate) ? state.lastSessionDate : null,
+      practiceStreak: (state && typeof state.practiceStreak === "number") ? state.practiceStreak : 0,
+      lastPracticeDate: (state && state.lastPracticeDate) ? state.lastPracticeDate : null,
+      comeback: !!(state && state.psychologyComeback),
       achievements: this.cloneValue((state && state.playerAchievements) ? state.playerAchievements : {}) || {},
       unlocks: this.cloneValue((state && state.unlocks) ? state.unlocks : {}) || {}
     };
+  };
+
+  SparkCore.prototype.getPsychologyUserSnapshot = function() {
+    var state = readLegacyAppState();
+    var lastSessionDate = state && state.lastSessionDate ? state.lastSessionDate : (state && state.lastPracticeDate ? state.lastPracticeDate : null);
+    var streak = state && typeof state.streak === "number"
+      ? state.streak
+      : ((state && typeof state.practiceStreak === "number") ? state.practiceStreak : 0);
+    return {
+      streak: streak,
+      practiceStreak: (state && typeof state.practiceStreak === "number") ? state.practiceStreak : streak,
+      lastSessionDate: lastSessionDate,
+      lastPracticeDate: state && state.lastPracticeDate ? state.lastPracticeDate : lastSessionDate,
+      lastPlayed: state && state.lastPlayed ? state.lastPlayed : lastSessionDate,
+      comeback: !!(state && state.psychologyComeback),
+      level: state ? (state.playerLevel || state.level || 1) : 1,
+      skillLevel: state && state.skillLevel ? state.skillLevel : null
+    };
+  };
+
+  SparkCore.prototype.applyPsychologyUserSnapshot = function(user, summary) {
+    var state = readLegacyAppState();
+    user = user || {};
+    summary = summary || {};
+    if (!state) return user;
+    if (typeof user.streak === "number") {
+      state.streak = user.streak;
+      state.practiceStreak = user.streak;
+    }
+    if (user.lastSessionDate) {
+      state.lastSessionDate = user.lastSessionDate;
+      state.lastPracticeDate = user.lastSessionDate;
+    }
+    if (user.lastPlayed) state.lastPlayed = user.lastPlayed;
+    state.psychologyComeback = !!(typeof user.comeback === "boolean" ? user.comeback : summary.comeback);
+    state.psychologyDaysAway = typeof user.daysAway === "number" ? user.daysAway : (summary.daysAway || 0);
+    state.psychologyRewardMultiplier = typeof user.rewardMultiplier === "number"
+      ? user.rewardMultiplier
+      : (typeof summary.rewardMultiplier === "number" ? summary.rewardMultiplier : 1);
+    if (summary.sessionType) state.psychologySessionType = summary.sessionType;
+    if (summary.structure) state.psychologySessionStructure = this.cloneValue(summary.structure);
+    return this.getPsychologyUserSnapshot();
+  };
+
+  SparkCore.prototype.clearPsychologyComeback = function() {
+    var state = readLegacyAppState();
+    if (!state) return false;
+    state.psychologyComeback = false;
+    return false;
   };
 
   SparkCore.prototype.getLegacyPracticeAnalyticsSnapshot = function() {

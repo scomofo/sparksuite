@@ -86,15 +86,17 @@
     if (progress.planCompleted) {
       var summary = SparkPerformanceBridge.buildPerformanceSummary(plan);
       var xpAwarded = 20;
+      var psychologySummary = getPsychologySummary(coreRuntime);
       var sessionStatePatch = {
         xpToast: { amount: 20, time: Date.now() }
       };
       if (payload.gameplayResult) {
         xpAwarded += Math.max(0, Math.round(((payload.gameplayResult.gameplay && payload.gameplayResult.gameplay.accuracy) || 0) * 20));
         sessionStatePatch = mergeSessionStatePatch(sessionStatePatch, buildGameplayLearningPatch(payload.gameplayResult.learning, payload.gameplayContext, payload.gameplayResult.gameplay));
-        sessionStatePatch.xpToast.amount = xpAwarded;
       }
-      var completionSummary = buildCompletionSummary(plan, xpAwarded, summary.durationSec);
+      xpAwarded = applyPsychologyMultiplier(xpAwarded, psychologySummary);
+      sessionStatePatch.xpToast.amount = xpAwarded;
+      var completionSummary = buildCompletionSummary(plan, xpAwarded, summary.durationSec, psychologySummary);
       if (typeof SparkProgressOrchestrator !== "undefined") {
         SparkProgressOrchestrator.evaluateAll({
           type: "session",
@@ -111,6 +113,8 @@
       progress.xpAwarded = xpAwarded;
       progress.sessionStatePatch = sessionStatePatch;
       progress.completionSummary = completionSummary;
+      progress.psychologySummary = psychologySummary;
+      consumeComebackReward(coreRuntime, psychologySummary);
     } else if (typeof saveState === "function") {
       saveState();
     }
@@ -120,6 +124,7 @@
 
   function completeGuidedSession(plan, payload) {
     var coreRuntime = requireCoreRuntime(this);
+    var psychologySummary = getPsychologySummary(coreRuntime);
     var progress = payload.itemId ? coreRuntime.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
       totalItems: plan.segments.length,
@@ -160,9 +165,13 @@
       progress.xpAwarded = 30;
       progress.audioCue = "complete";
     }
+    progress.xpAwarded = applyPsychologyMultiplier(progress.xpAwarded, psychologySummary);
+    sessionStatePatch.xpToast.amount = progress.xpAwarded;
 
     coreRuntime.applySessionStatePatch(sessionStatePatch);
     progress.sessionStatePatch = sessionStatePatch;
+    progress.psychologySummary = psychologySummary;
+    consumeComebackReward(coreRuntime, psychologySummary);
     if (typeof saveState === "function") saveState();
     return progress;
   }
@@ -185,10 +194,14 @@
     if (progress.planCompleted) {
       var performanceResults = payload.performanceResults || {};
       var rewardSummary = payload.rewardSummary || null;
+      var psychologySummary = getPsychologySummary(coreRuntime);
       if (!rewardSummary && typeof buildPerformanceSessionRewardSummary === "function") {
         rewardSummary = buildPerformanceSessionRewardSummary(null, performanceResults, {
           currentXP: typeof coreRuntime.getPlayerXP === "function" ? coreRuntime.getPlayerXP() : 0
         });
+      }
+      if (rewardSummary && coreRuntime.psychologyEngine && typeof coreRuntime.psychologyEngine.applyRewardMultiplier === "function") {
+        rewardSummary = coreRuntime.psychologyEngine.applyRewardMultiplier(rewardSummary, psychologySummary);
       }
       if (rewardSummary && typeof coreRuntime.applyProgressionRewardSummary === "function") {
         rewardSummary = coreRuntime.applyProgressionRewardSummary(rewardSummary);
@@ -198,6 +211,7 @@
         : (typeof payload.xpAwarded === "number"
           ? payload.xpAwarded
           : Math.max(5, Math.round((performanceResults.accuracy || 0) / 10)));
+      xpAwarded = applyPsychologyMultiplier(xpAwarded, rewardSummary ? null : psychologySummary);
       coreRuntime.applyLegacyReward({
         xpDelta: xpAwarded,
         toastAmount: xpAwarded
@@ -211,7 +225,9 @@
       };
       progress.rewardSummary = rewardSummary;
       progress.masterySummary = buildPerformanceMasterySummary(plan, payload, rewardSummary);
-      progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary, progress.masterySummary);
+      progress.psychologySummary = psychologySummary;
+      progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary, progress.masterySummary, psychologySummary);
+      consumeComebackReward(coreRuntime, psychologySummary);
     }
 
     if (typeof saveState === "function") saveState();
@@ -231,6 +247,38 @@
       return coreRuntime;
     }
     throw new Error("SparkSuiteProgressEngine requires a coreRuntime");
+  }
+
+  function getPsychologySummary(coreRuntime) {
+    var psychologyEngine = coreRuntime && coreRuntime.psychologyEngine ? coreRuntime.psychologyEngine : null;
+    var user = coreRuntime && typeof coreRuntime.getPsychologyUserSnapshot === "function"
+      ? coreRuntime.getPsychologyUserSnapshot()
+      : null;
+    if (!psychologyEngine || !user) return null;
+    return {
+      streak: typeof user.streak === "number" ? user.streak : 0,
+      daysAway: typeof user.daysAway === "number"
+        ? user.daysAway
+        : (typeof psychologyEngine.getDaysAway === "function" ? psychologyEngine.getDaysAway(user.lastSessionDate || user.lastPlayed) : 0),
+      comeback: !!user.comeback,
+      rewardMultiplier: typeof psychologyEngine.getRewardMultiplier === "function"
+        ? psychologyEngine.getRewardMultiplier(user)
+        : 1,
+      sessionType: progressionRead("psychologySessionType", null)
+    };
+  }
+
+  function applyPsychologyMultiplier(xpAwarded, psychologySummary) {
+    if (!psychologySummary || !psychologySummary.rewardMultiplier || psychologySummary.rewardMultiplier === 1) {
+      return xpAwarded || 0;
+    }
+    return Math.floor((xpAwarded || 0) * psychologySummary.rewardMultiplier);
+  }
+
+  function consumeComebackReward(coreRuntime, psychologySummary) {
+    if (psychologySummary && psychologySummary.comeback && coreRuntime && typeof coreRuntime.clearPsychologyComeback === "function") {
+      coreRuntime.clearPsychologyComeback();
+    }
   }
 
   function buildGameplayLearningPatch(learning, gameplayContext, gameplay) {
@@ -298,7 +346,7 @@
     return Math.max(0, Math.min(1, value || 0));
   }
 
-  function buildCompletionSummary(plan, xpAwarded, durationSec) {
+  function buildCompletionSummary(plan, xpAwarded, durationSec, psychologySummary) {
     var legacyPlan = plan && typeof plan.toLegacyPracticePlan === "function" ? plan.toLegacyPracticePlan() : null;
     return {
       sessionId: plan ? plan.id : null,
@@ -308,11 +356,12 @@
       itemCount: legacyPlan ? legacyPlan.totalItems : (plan && plan.segments ? plan.segments.length : 0),
       durationSec: durationSec || 0,
       xpAwarded: xpAwarded || 0,
+      psychologySummary: psychologySummary || null,
       completedAt: Date.now()
     };
   }
 
-  function buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary, masterySummary) {
+  function buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary, masterySummary, psychologySummary) {
     var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
     return {
       sessionId: plan ? plan.id : null,
@@ -326,6 +375,7 @@
       xpAwarded: xpAwarded || 0,
       rewardSummary: rewardSummary || null,
       masterySummary: masterySummary || null,
+      psychologySummary: psychologySummary || null,
       completedAt: Date.now()
     };
   }

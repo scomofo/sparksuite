@@ -130,9 +130,10 @@
     // 1. Analyze user via LearningBrain + FlowEngine
     var brainAnalysis = null;
     var analysisContext = this.getAnalysisContext();
+    var psychologyEngine = this.coreRuntime && this.coreRuntime.psychologyEngine ? this.coreRuntime.psychologyEngine : null;
     var skillGraph = analysisContext.skillGraph;
     // DEPRECATED: direct LearningBrain usage — new code must use psychologyEngine.analyzeUser()
-    if (typeof SparkLearningBrain !== "undefined" && skillGraph) {
+    if (psychologyEngine && skillGraph) {
       var flowState = null;
       if (typeof SparkFlowEngine !== "undefined") {
         var recentEvents = analysisContext.lastSessionEvents;
@@ -145,12 +146,15 @@
           timingConsistency: (analysisContext.playerProfile && analysisContext.playerProfile.consistency) || 0
         });
       }
-      brainAnalysis = SparkLearningBrain.analyzeUser(skillGraph, flowState, analysisContext.weakSpots || null); // DEPRECATED: route through PsychologyEngine
+      brainAnalysis = psychologyEngine.analyzeUser(skillGraph, flowState, analysisContext.weakSpots || null);
     }
 
     var progressSnapshot = this.coreRuntime && typeof this.coreRuntime.getLegacyProgressSnapshot === "function"
       ? this.coreRuntime.getLegacyProgressSnapshot()
       : {};
+    var playerSnapshot = this.coreRuntime && typeof this.coreRuntime.getPsychologyUserSnapshot === "function"
+      ? this.coreRuntime.getPsychologyUserSnapshot()
+      : null;
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {}, {
       skills: progressSnapshot.skillMastery || {}
     });
@@ -162,13 +166,28 @@
       var avg = ((sk.timing || 0) + (sk.rhythm || 0) + (sk.chordAccuracy || 0)) / 3;
       difficulty = avg > 0.8 ? "hard" : avg > 0.6 ? "normal" : "easy";
     }
+    var psychologySummary = psychologyEngine && typeof psychologyEngine.buildSessionShaping === "function"
+      ? psychologyEngine.buildSessionShaping(playerSnapshot, {
+          performance: {
+            accuracy: analysisContext.performAccuracy || 0,
+            combo: analysisContext.performCombo || 0
+          },
+          recommendedDifficulty: difficulty
+        })
+      : null;
+    if (psychologySummary && psychologySummary.difficulty) difficulty = psychologySummary.difficulty;
+    if (psychologySummary && this.coreRuntime && typeof this.coreRuntime.applyPsychologyUserSnapshot === "function") {
+      this.coreRuntime.applyPsychologyUserSnapshot(psychologySummary.userState, psychologySummary);
+    }
 
     var segments = [];
     var exercises = [];
 
     // 2. Inject practice if brain recommends it
     if (brainAnalysis && (brainAnalysis.recommendation === "targeted_practice" || brainAnalysis.recommendation === "easy_practice" || brainAnalysis.recommendation === "practice")) {
-      var brainDrill = (typeof SparkLearningBrain !== "undefined") ? SparkLearningBrain.generatePracticeFromWeakness(brainAnalysis, skillGraph) : null; // DEPRECATED: route through PsychologyEngine
+      var brainDrill = psychologyEngine && typeof psychologyEngine.generatePracticeFromWeakness === "function"
+        ? psychologyEngine.generatePracticeFromWeakness(brainAnalysis, skillGraph)
+        : null;
       if (brainDrill) {
         var pn = normalizeSegment({
           id: "brain_" + Date.now(),
@@ -233,6 +252,15 @@
           reviewMastery: curriculumContext.reviewMastery,
           nextLessonId: curriculumContext.nextLessonId || null
         },
+        psychology: psychologySummary ? {
+          streak: psychologySummary.streak,
+          daysAway: psychologySummary.daysAway,
+          comeback: psychologySummary.comeback,
+          rewardMultiplier: psychologySummary.rewardMultiplier,
+          sessionType: psychologySummary.sessionType,
+          structure: psychologySummary.structure ? psychologySummary.structure.slice() : [],
+          difficulty: psychologySummary.difficulty
+        } : null,
         brainAnalysis: brainAnalysis,
         smartCoach: brainAnalysis ? {
           message: brainAnalysis.coachMessage,
