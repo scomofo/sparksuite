@@ -39,6 +39,40 @@
     return JSON.parse(JSON.stringify(value));
   };
 
+  SparkCore.prototype.getPlayerXP = function() {
+    var state = readLegacyAppState();
+    if (!state) return 0;
+    if (typeof state.playerXP === "number") return state.playerXP;
+    return typeof state.xp === "number" ? state.xp : 0;
+  };
+
+  SparkCore.prototype.applyProgressionRewardSummary = function(rewardSummary) {
+    var state = readLegacyAppState();
+    rewardSummary = rewardSummary ? this.cloneValue(rewardSummary) : null;
+    if (!rewardSummary) return null;
+    if (!state) return rewardSummary;
+
+    state.playerXP = typeof rewardSummary.totalXP === "number"
+      ? rewardSummary.totalXP
+      : this.getPlayerXP();
+    state.playerLevel = typeof rewardSummary.level === "number"
+      ? rewardSummary.level
+      : (state.playerLevel || 1);
+    state.lastSessionRewardSummary = this.cloneValue(rewardSummary);
+
+    if (rewardSummary.xpGained) {
+      state.xpToast = {
+        amount: rewardSummary.xpGained,
+        time: Date.now(),
+        leveledUp: !!rewardSummary.leveledUp
+      };
+    }
+    if (rewardSummary.leveledUp && typeof showToast === "function") {
+      showToast("Level Up! Level " + rewardSummary.level);
+    }
+    return rewardSummary;
+  };
+
   SparkCore.prototype.getSkillGraph = function() {
     var state = readLegacyAppState();
     return state && state.skillGraph ? state.skillGraph : {};
@@ -2436,7 +2470,9 @@
     var state = readLegacyAppState();
     return {
       xp: (state && typeof state.xp === "number") ? state.xp : 0,
-      level: state ? (state.playerLevel || state.level || 1) : 1,
+      level: state ? (state.level || state.playerLevel || 1) : 1,
+      playerXP: (state && typeof state.playerXP === "number") ? state.playerXP : ((state && typeof state.xp === "number") ? state.xp : 0),
+      playerLevel: state ? (state.playerLevel || 1) : 1,
       streak: (state && typeof state.streak === "number") ? state.streak : 0,
       lastSessionDate: (state && state.lastSessionDate) ? state.lastSessionDate : null,
       achievements: this.cloneValue((state && state.playerAchievements) ? state.playerAchievements : {}) || {},
@@ -3074,6 +3110,9 @@
       xpAwarded: Object.prototype.hasOwnProperty.call(options, "xpAwarded")
         ? options.xpAwarded
         : 0,
+      rewardSummary: Object.prototype.hasOwnProperty.call(options, "rewardSummary")
+        ? this.cloneValue(options.rewardSummary)
+        : null,
       chartId: Object.prototype.hasOwnProperty.call(options, "chartId")
         ? options.chartId
         : (runtimeState.performanceChartId || null),

@@ -813,6 +813,10 @@ function finishPerformance() {
   var results = finalizePerformanceResults(performChart, performPhraseStats, {
     focusedTechnique: performTargetTechnique
   });
+  var rewardSummary = typeof buildPerformanceSessionRewardSummary === "function"
+    ? buildPerformanceSessionRewardSummary(performChart, results)
+    : null;
+  if (rewardSummary) results.rewardSummary = rewardSummary;
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("finish", {
       results: results,
@@ -830,13 +834,16 @@ function finishPerformance() {
     });
   }
 
-  var xpAward = Math.max(5, Math.round(results.accuracy / 10));
+  var xpAward = rewardSummary && typeof rewardSummary.xpGained === "number"
+    ? rewardSummary.xpGained
+    : Math.max(5, Math.round(results.accuracy / 10));
   var corePerformanceResult = null;
   if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
     var completionRequest = typeof window.sparkCore.buildPerformanceCompletionRequest === "function"
       ? window.sparkCore.buildPerformanceCompletionRequest({
           performanceResults: results,
           xpAwarded: xpAward,
+          rewardSummary: rewardSummary,
           chartId: performChartId || "unknown",
           arrangementType: (performChart && performChart.arrangementType) || performArrangementType,
           difficultyId: performDifficulty
@@ -845,11 +852,15 @@ function finishPerformance() {
           flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
           markPlanComplete: true,
           performanceResults: results,
-          xpAwarded: xpAward
+          xpAwarded: xpAward,
+          rewardSummary: rewardSummary
         };
     corePerformanceResult = window.sparkCore.completeSession(completionRequest);
     if (corePerformanceResult && typeof corePerformanceResult.xpAwarded === "number") {
       xpAward = corePerformanceResult.xpAwarded;
+    }
+    if (corePerformanceResult && corePerformanceResult.rewardSummary) {
+      results.rewardSummary = corePerformanceResult.rewardSummary;
     }
   } else if (window.sparkCore && typeof window.sparkCore.applyLegacyReward === "function") {
     window.sparkCore.applyLegacyReward({ xpDelta: xpAward, toastAmount: xpAward });

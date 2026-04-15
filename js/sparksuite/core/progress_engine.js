@@ -140,9 +140,20 @@
 
     if (progress.planCompleted) {
       var performanceResults = payload.performanceResults || {};
-      var xpAwarded = typeof payload.xpAwarded === "number"
-        ? payload.xpAwarded
-        : Math.max(5, Math.round((performanceResults.accuracy || 0) / 10));
+      var rewardSummary = payload.rewardSummary || null;
+      if (!rewardSummary && typeof buildPerformanceSessionRewardSummary === "function") {
+        rewardSummary = buildPerformanceSessionRewardSummary(null, performanceResults, {
+          currentXP: typeof coreRuntime.getPlayerXP === "function" ? coreRuntime.getPlayerXP() : 0
+        });
+      }
+      if (rewardSummary && typeof coreRuntime.applyProgressionRewardSummary === "function") {
+        rewardSummary = coreRuntime.applyProgressionRewardSummary(rewardSummary);
+      }
+      var xpAwarded = rewardSummary && typeof rewardSummary.xpGained === "number"
+        ? rewardSummary.xpGained
+        : (typeof payload.xpAwarded === "number"
+          ? payload.xpAwarded
+          : Math.max(5, Math.round((performanceResults.accuracy || 0) / 10)));
       coreRuntime.applyLegacyReward({
         xpDelta: xpAwarded,
         toastAmount: xpAwarded
@@ -154,7 +165,8 @@
           time: Date.now()
         }
       };
-      progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded);
+      progress.rewardSummary = rewardSummary;
+      progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary);
     }
 
     if (typeof saveState === "function") saveState();
@@ -255,7 +267,7 @@
     };
   }
 
-  function buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded) {
+  function buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary) {
     var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
     return {
       sessionId: plan ? plan.id : null,
@@ -267,6 +279,7 @@
       stars: performanceResults.stars || 0,
       score: performanceResults.score || 0,
       xpAwarded: xpAwarded || 0,
+      rewardSummary: rewardSummary || null,
       completedAt: Date.now()
     };
   }

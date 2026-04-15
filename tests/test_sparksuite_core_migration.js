@@ -174,6 +174,9 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/index.js"));
 eval(loadJS("js/sparksuite/core/state_facade.js"));
+eval(loadJS("js/progression/xp_system.js"));
+eval(loadJS("js/progression/level_system.js"));
+eval(loadJS("js/performance/session_rewards.js"));
 eval(loadJS("js/sparksuite/core/storage.js"));
 eval(loadJS("js/sparksuite/core/ai_engine.js"));
 eval(loadJS("js/sparksuite/core/instrument_manager.js"));
@@ -3577,18 +3580,36 @@ test("completeSession routes performance completion rewards through core", funct
       accuracy: 88,
       stars: 4,
       score: 1234
+    },
+    rewardSummary: {
+      xpGained: 320,
+      totalXP: 1240,
+      level: 5,
+      previousLevel: 4,
+      leveledUp: true,
+      nextLevelXP: 1400,
+      summary: {
+        timingScore: 420,
+        maxCombo: 18,
+        milestones: 2,
+        sessionBonus: 25
+      }
     }
   });
 
   assert.strictEqual(result.planCompleted, true);
-  assert.strictEqual(result.xpAwarded, 9);
+  assert.strictEqual(result.xpAwarded, 320);
+  assert.strictEqual(result.rewardSummary.totalXP, 1240);
   assert.strictEqual(result.performanceSummary.songId, "night_drive");
   assert.strictEqual(result.performanceSummary.arrangementType, "rhythm_chords");
   assert.strictEqual(result.performanceSummary.difficultyId, "hard");
   assert.strictEqual(result.performanceSummary.accuracy, 88);
   assert.strictEqual(result.performanceSummary.stars, 4);
-  assert.strictEqual(S.xp, 9);
-  assert.strictEqual(S.xpToast.amount, 9);
+  assert.strictEqual(result.performanceSummary.rewardSummary.level, 5);
+  assert.strictEqual(S.xp, 320);
+  assert.strictEqual(S.xpToast.amount, 320);
+  assert.strictEqual(S.playerXP, 1240);
+  assert.strictEqual(S.playerLevel, 5);
 });
 
 test("completeSession can carry focused bass rhythm drill progress into bass skill state", function() {

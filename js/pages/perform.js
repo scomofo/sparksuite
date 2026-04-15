@@ -471,6 +471,7 @@ function performDonePage() {
     totalEvents: 0,
     phraseStats: []
   }, r || {});
+  var rewardSummary = r.rewardSummary || null;
   var performChartId = performRead("performChartId", "unknown");
   var performSongStats = performRead("performSongStats", {}) || {};
   var performChart = performRead("performChart", null);
@@ -523,6 +524,15 @@ function performDonePage() {
   h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + r.accuracy + '%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">' + r.maxCombo + 'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
   h += '</div></div>';
+
+  if (rewardSummary) {
+    h += '<div class="card mb20" style="text-align:center;background:linear-gradient(135deg,#0f172acc,#111827dd);border:1px solid rgba(255,230,109,.22)">';
+    h += '<div style="font-size:32px;font-weight:900;color:#FFE66D">+' + (rewardSummary.xpGained || 0) + ' XP</div>';
+    h += '<div style="font-size:18px;font-weight:800;color:#fff;margin-top:4px">Level ' + (rewardSummary.level || 1) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Total XP: ' + (rewardSummary.totalXP || 0) + ' &bull; Next Level: ' + (rewardSummary.nextLevelXP || (rewardSummary.totalXP || 0)) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Max Combo: ' + r.maxCombo + ' &bull; Milestones: ' + ((rewardSummary.summary && rewardSummary.summary.milestones) || 0) + '</div>';
+    h += '</div>';
+  }
 
   // Phrase breakdown
   if (r.phraseStats && r.phraseStats.length > 0) {

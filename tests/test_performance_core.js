@@ -11,6 +11,7 @@ function test(name, fn) {
 
 global.window = global;
 global.performance = { now: function() { return Date.now(); } };
+global.escHTML = function(value) { return String(value == null ? "" : value); };
 global.SparkEvents = { emit: function() {}, clear: function() {}, getPending: function() { return []; }, on: function() {}, off: function() {} };
 global.S = {
   performWindowPerfectMs: 70,
@@ -68,6 +69,9 @@ eval(loadJS('js/performance/lane_mapper.js'));
 eval(loadJS('js/performance/combo_system.js'));
 eval(loadJS('js/performance/combo_decay.js'));
 eval(loadJS('js/performance/combo_milestones.js'));
+eval(loadJS('js/progression/xp_system.js'));
+eval(loadJS('js/progression/level_system.js'));
+eval(loadJS('js/performance/session_rewards.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway_themes.js'));
 eval(loadJS('js/performance/highway.js'));
@@ -238,6 +242,27 @@ test('performance combo milestones trigger once per threshold with burst rewards
   assert.strictEqual(shouldTriggerPerformanceComboMilestone(10, [5, 10]), false);
 });
 
+test('performance session reward summary converts timing, combo, and milestones into xp and level', function() {
+  S.playerXP = 90;
+  var chart = {
+    events: [
+      { _result: { points: 100, milestoneHit: false } },
+      { _result: { points: 70, milestoneHit: true } },
+      { _result: { points: 40, milestoneHit: false } }
+    ]
+  };
+  var results = { maxCombo: 12, totalEvents: 3 };
+  var reward = buildPerformanceSessionRewardSummary(chart, results);
+
+  assert.strictEqual(calculateSessionXP({ timingScore: 210, combo: 12, milestones: 1, sessionBonus: 25 }), 204);
+  assert.strictEqual(reward.xpGained, 204);
+  assert.strictEqual(reward.totalXP, 294);
+  assert.strictEqual(reward.previousLevel, 1);
+  assert.strictEqual(reward.level, 3);
+  assert.strictEqual(reward.nextLevelXP, 450);
+  assert.strictEqual(reward.summary.milestones, 1);
+});
+
 test('scorePerformanceEvent returns timing grade, lanes, and points for a matching hit', function() {
   var result = scorePerformanceEvent(
     { t: 1.0, chord: 'C', lane: 0, laneLabel: 'C', notes: ['C', 'E', 'G'], type: 'chord' },
@@ -268,6 +293,32 @@ test('scorePerformanceEvent treats wrong-lane activity inside the window as a mi
   assert.strictEqual(result.hit, false);
   assert.strictEqual(result.grade, 'miss');
   assert.strictEqual(result.points, 0);
+});
+
+test('performDonePage renders reward summary when session xp is available', function() {
+  S.performResults = {
+    title: 'Test Song',
+    artist: 'Suite',
+    score: 900,
+    accuracy: 92,
+    maxCombo: 18,
+    stars: 4,
+    totalEvents: 12,
+    phraseStats: [],
+    rewardSummary: {
+      xpGained: 320,
+      totalXP: 1240,
+      level: 5,
+      nextLevelXP: 1400,
+      summary: { milestones: 2 }
+    }
+  };
+  var html = performDonePage();
+  assert.ok(html.indexOf('+320 XP') >= 0);
+  assert.ok(html.indexOf('Level 5') >= 0);
+  assert.ok(html.indexOf('Total XP: 1240') >= 0);
+  assert.ok(html.indexOf('Max Combo: 18') >= 0);
+  assert.ok(html.indexOf('Milestones: 2') >= 0);
 });
 
 test('scorePerformanceEvent uses grace when the correct lane lands just beyond the miss window', function() {

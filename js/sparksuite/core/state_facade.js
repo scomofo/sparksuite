@@ -106,7 +106,7 @@
 
   SparkStateFacade.prototype.getLevel = function() {
     var root = this.getRoot();
-    return root ? (root.playerLevel || root.level || 1) : 1;
+    return root ? (root.level || root.playerLevel || 1) : 1;
   };
 
   SparkStateFacade.prototype.setLevel = function(level) {
