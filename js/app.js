@@ -1673,7 +1673,11 @@ window.act=function(a,v){
   if(a==="playAlongReplayFullSong"){ callPlayAlongHandler("sparkPlayAlongReplayFullSong"); return; }
   if(a==="playAlongReplay"){ callPlayAlongHandler("sparkPlayAlongReplay"); return; }
   if(a==="playAlongPickNew"){ callPlayAlongHandler("sparkPlayAlongPickNew"); return; }
-  if(a==="openPlayAlongHome"){ if(typeof openPlayAlong==="function") openPlayAlong(); return; }
+  if(a==="openPlayAlongHome"){
+    if(callPlayAlongHandler("openPlayAlong") !== null) return;
+    if (typeof showToast === "function") showToast("Play Along isn't available right now.");
+    return;
+  }
   if(a==="rhythmReplay"){ appWrite("rhythmResults", null); act("startRhythm"); return; }
   if(a==="rhythmResultsBack"){ appWrite("rhythmResults", null); render(); return; }
   if(a==="runnerReplay"){ appWrite("runnerResults", null); act("startRunner"); return; }
@@ -1686,9 +1690,21 @@ window.act=function(a,v){
   if(a==="onboardingUnlockStarterContent"){ if(typeof applyStarterUnlocksFromOnboarding==="function") applyStarterUnlocksFromOnboarding(); render(); return; }
   if(a==="onboardingGeneratePlan"){ if(typeof generateInitialPracticePlanFromOnboarding==="function") generateInitialPracticePlanFromOnboarding(); render(); return; }
   if(a==="onboardingGenerateRecommendations"){ if(typeof generateInitialRecommendationsFromOnboarding==="function") generateInitialRecommendationsFromOnboarding(); render(); return; }
-  if(a==="onboardingFinish"){ if(typeof finishOnboardingFlow==="function") finishOnboardingFlow(); return; }
-  if(a==="onboardingPrevStep"){ if(typeof goToPreviousOnboardingStep==="function") goToPreviousOnboardingStep(); return; }
-  if(a==="onboardingNextStep"){ if(typeof goToNextOnboardingStep==="function") goToNextOnboardingStep(); return; }
+  if(a==="onboardingFinish"){
+    if(typeof finishOnboardingFlow==="function"){ finishOnboardingFlow(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingPrevStep"){
+    if(typeof goToPreviousOnboardingStep==="function"){ goToPreviousOnboardingStep(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingNextStep"){
+    if(typeof goToNextOnboardingStep==="function"){ goToNextOnboardingStep(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
   if(a==="refreshMidiDevices"){ if(typeof refreshMidiDevices==="function") refreshMidiDevices(); return; }
   // Switch instrument from v2 dashboard
   if(a==="switchInstrument" && v){
@@ -2608,8 +2624,16 @@ window.act=function(a,v){
       return;
     }
   }
-  if(a==="openOnboarding"){if(typeof startOnboarding==="function")startOnboarding();return;}
-  if(a==="resumeOnboarding"){if(typeof continueOnboarding==="function")continueOnboarding();return;}
+  if(a==="openOnboarding"){
+    if(typeof startOnboarding==="function"){startOnboarding();return;}
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="resumeOnboarding"){
+    if(typeof continueOnboarding==="function"){continueOnboarding();return;}
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
   if(a==="refreshHome"){
     if(typeof generateRecommendations==="function")generateRecommendations();
     if(typeof generatePersonalInsights==="function")generatePersonalInsights();

@@ -305,6 +305,14 @@ test('midi profile actions surface feedback when profile helpers are unavailable
   assert.ok(appSource.indexOf('showToast("Guitar MIDI profiles aren\'t available right now.")') >= 0);
 });
 
+test('play-along and onboarding actions surface feedback when helpers are unavailable', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('if(a==="openPlayAlongHome"){') >= 0);
+  assert.ok(appSource.indexOf('callPlayAlongHandler("openPlayAlong")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Play Along isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Onboarding isn\'t available right now.")') >= 0);
+});
+
 test('career page hides play CTA when unlocked song data is missing', function() {
   global.S.activeCareerId = 'career_1';
   global.SparkState.read = function(path, fallback) {
