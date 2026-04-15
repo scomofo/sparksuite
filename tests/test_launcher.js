@@ -329,6 +329,7 @@ test('secondary helper-driven actions surface feedback when handlers are unavail
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('showToast("MIDI device refresh isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("That practice item couldn\'t be started right now.")') >= 0);
+  assert.ok(/if\(a==="planStartRhythmHighway"\)\{\s*if\(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment\(v,appRead\("rhythmHighwayPreset", "spark_learning"\)\)\)return;\s*if\(typeof showToast === "function"\) showToast\("That practice item couldn't be started right now\."\);\s*render\(\);return;\s*\}/.test(appSource));
   assert.ok(appSource.indexOf('showToast("Audio calibration isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Progress reset isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Audio input refresh isn\'t available right now.")') >= 0);

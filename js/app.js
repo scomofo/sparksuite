@@ -3682,6 +3682,7 @@ window.act=function(a,v){
   }
   if(a==="planStartRhythmHighway"){
     if(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment(v,appRead("rhythmHighwayPreset", "spark_learning")))return;
+    if(typeof showToast === "function") showToast("That practice item couldn't be started right now.");
     render();return;
   }
   if(a==="planStartWarmup"){
