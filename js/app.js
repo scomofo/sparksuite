@@ -4439,9 +4439,21 @@ window.act=function(a,v){
   }
   // === MIDI Device/Profile Actions ===
   if(a==="setMidiDevice"){appWrite("activeMidiDeviceId",v);syncMidiSettingsStateRequest();saveState();render();return;}
-  if(a==="setMidiProfile"){if(typeof setActiveMidiProfile==="function")setActiveMidiProfile(v);syncMidiSettingsStateRequest();render();return;}
-  if(a==="createDefaultPianoProfile"){if(typeof createDefaultPianoProfile==="function")createDefaultPianoProfile();syncMidiSettingsStateRequest();render();return;}
-  if(a==="createDefaultGuitarProfile"){if(typeof createDefaultGuitarProfile==="function")createDefaultGuitarProfile();syncMidiSettingsStateRequest();render();return;}
+  if(a==="setMidiProfile"){
+    if(typeof setActiveMidiProfile==="function")setActiveMidiProfile(v);
+    else if(typeof showToast === "function") showToast("MIDI profiles aren't available right now.");
+    syncMidiSettingsStateRequest();render();return;
+  }
+  if(a==="createDefaultPianoProfile"){
+    if(typeof createDefaultPianoProfile==="function")createDefaultPianoProfile();
+    else if(typeof showToast === "function") showToast("Piano MIDI profiles aren't available right now.");
+    syncMidiSettingsStateRequest();render();return;
+  }
+  if(a==="createDefaultGuitarProfile"){
+    if(typeof createDefaultGuitarProfile==="function")createDefaultGuitarProfile();
+    else if(typeof showToast === "function") showToast("Guitar MIDI profiles aren't available right now.");
+    syncMidiSettingsStateRequest();render();return;
+  }
   if(a==="openMidiSettings"){
     openUtilityScreenRequest("midi_settings");
     syncMidiSettingsStateRequest();
@@ -4453,7 +4465,11 @@ window.act=function(a,v){
     syncMidiImportStateRequest();
     appWrite("screen",SCR.MIDI_IMPORT);render();return;
   }
-  if(a==="importMidiFile"){if(typeof handleMidiImport==="function")handleMidiImport(v);return;}
+  if(a==="importMidiFile"){
+    if(typeof handleMidiImport==="function")handleMidiImport(v);
+    else if(typeof showToast === "function") showToast("MIDI import isn't available right now.");
+    return;
+  }
   if(a==="assignMidiTrack"){
     var parts=String(v).split("|");
     if(typeof setMidiTrackAssignment==="function")setMidiTrackAssignment(parts[0],parts[1]);
@@ -4470,8 +4486,24 @@ window.act=function(a,v){
     }return;
   }
   // === Cloud Sync Actions ===
-  if(a==="cloudSync"){appWrite("cloudLastError",null);applyCloudWorkflowRequest("sync_start",{lastSyncStatus:"syncing",lastError:null});if(typeof syncSparkNow==="function")syncSparkNow();return;}
-  if(a==="cloudPull"){appWrite("cloudLastError",null);applyCloudWorkflowRequest("pull_start",{lastSyncStatus:"syncing",lastError:null});if(typeof pullSparkCloud==="function")pullSparkCloud();return;}
+  if(a==="cloudSync"){
+    var syncUnavailableError;
+    appWrite("cloudLastError",null);applyCloudWorkflowRequest("sync_start",{lastSyncStatus:"syncing",lastError:null});
+    if(typeof syncSparkNow==="function"){syncSparkNow();return;}
+    syncUnavailableError="Cloud sync is unavailable right now.";
+    appWrite("cloudLastError",syncUnavailableError);
+    applyCloudWorkflowRequest("sync_error",{lastSyncStatus:"error",lastError:syncUnavailableError});
+    render();return;
+  }
+  if(a==="cloudPull"){
+    var pullUnavailableError;
+    appWrite("cloudLastError",null);applyCloudWorkflowRequest("pull_start",{lastSyncStatus:"syncing",lastError:null});
+    if(typeof pullSparkCloud==="function"){pullSparkCloud();return;}
+    pullUnavailableError="Cloud pull is unavailable right now.";
+    appWrite("cloudLastError",pullUnavailableError);
+    applyCloudWorkflowRequest("pull_error",{lastSyncStatus:"error",lastError:pullUnavailableError});
+    render();return;
+  }
   if(a==="cloudLogout"){appWrite("cloudLastError",null);if(typeof logoutSpark==="function")logoutSpark();applyCloudWorkflowRequest("logout",{lastError:null});render();return;}
   if(a==="cloudLoginPrompt"){
     var email=prompt("Email:");

@@ -257,6 +257,7 @@ test('midi import falls back to the internal parser and surfaces import errors',
   assert.ok(midiParseSource.indexOf('typeof SparkChartIO !== "undefined" && typeof SparkChartIO.parseMidiBuffer === "function"') >= 0);
   assert.ok(midiUiSource.indexOf('midiImportWrite("midiImportError"') >= 0);
   assert.ok(midiUiSource.indexOf('<b>Import error:</b>') >= 0);
+  assert.ok(appSource.indexOf('showToast("MIDI import isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('openEditor("chart",chart);render();') >= 0);
   assert.ok(pianoSource.indexOf('openEditor("chart", seedChart);') >= 0);
 });
@@ -288,11 +289,20 @@ test('cloud actions surface login and sync errors instead of failing silently', 
   var cloudUiSource = loadJS('js/cloud/ui.js');
   var cloudSyncSource = loadJS('js/cloud/sync.js');
   assert.ok(appSource.indexOf('appWrite("cloudLastError",loginError);') >= 0);
+  assert.ok(appSource.indexOf('syncUnavailableError="Cloud sync is unavailable right now.";') >= 0);
+  assert.ok(appSource.indexOf('pullUnavailableError="Cloud pull is unavailable right now.";') >= 0);
   assert.ok(appSource.indexOf('applyCloudWorkflowRequest("login_error",{lastSyncStatus:"error",lastError:loginError});') >= 0);
   assert.ok(pianoSource.indexOf('state.cloudLastError = clError;') >= 0);
   assert.ok(cloudUiSource.indexOf('<b>Error:</b>') >= 0);
   assert.ok(cloudSyncSource.indexOf('cloudSyncWrite("cloudLastError", String((e && e.message) || e || "Cloud sync failed."));') >= 0);
   assert.ok(cloudSyncSource.indexOf('cloudSyncWrite("cloudLastError", String((e && e.message) || e || "Cloud pull failed."));') >= 0);
+});
+
+test('midi profile actions surface feedback when profile helpers are unavailable', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('showToast("MIDI profiles aren\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Piano MIDI profiles aren\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Guitar MIDI profiles aren\'t available right now.")') >= 0);
 });
 
 test('career page hides play CTA when unlocked song data is missing', function() {
