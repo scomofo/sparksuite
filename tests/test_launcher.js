@@ -355,6 +355,13 @@ test('challenge hub open initializes challenges when the cache is empty', functi
   assert.ok(appSource.indexOf('openDashboardSectionRequest("challenges");') >= 0);
 });
 
+test('community submit actions initialize draft state before editing', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('function ensureCommunitySubmitSong(){') >= 0);
+  assert.ok(appSource.indexOf('if(a==="communityTab"){appWrite("communityTab",v);if(v==="submit")ensureCommunitySubmitSong();') >= 0);
+  assert.ok(appSource.indexOf('var submitSong=ensureCommunitySubmitSong();') >= 0);
+});
+
 test('inline onclick handlers stay on shared act routing', function() {
   var allowed = [
     /^act\(/,

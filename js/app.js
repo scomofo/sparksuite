@@ -534,6 +534,25 @@ function fetchCommunity(){
   });
 }
 
+function createEmptyCommunitySubmission(){
+  return {title:"",artist:"",chords:[],progression:[],bpm:120,pattern:[],submittedBy:""};
+}
+
+function ensureCommunitySubmitSong(){
+  var submitSong = appRead("submitSong", null);
+  if(!submitSong || typeof submitSong !== "object" || Array.isArray(submitSong)){
+    submitSong = createEmptyCommunitySubmission();
+    appWrite("submitSong", submitSong);
+  }
+  if(!Array.isArray(submitSong.chords)) submitSong.chords = [];
+  if(!Array.isArray(submitSong.progression)) submitSong.progression = [];
+  if(typeof submitSong.title !== "string") submitSong.title = "";
+  if(typeof submitSong.artist !== "string") submitSong.artist = "";
+  if(typeof submitSong.submittedBy !== "string") submitSong.submittedBy = "";
+  if(typeof submitSong.bpm !== "number") submitSong.bpm = parseInt(submitSong.bpm, 10) || 120;
+  return submitSong;
+}
+
 // ===== CHORD SHEET IMPORT PARSER =====
 function parseChordSheet(text){
   if(!text||!text.trim())return {chords:[],progression:[],error:"Paste a chord sheet to parse"};
@@ -3002,7 +3021,7 @@ window.act=function(a,v){
     }return;
   }
   // === Community ===
-  if(a==="communityTab"){appWrite("communityTab",v);applySongBrowserRequest("community_tab", { communityTab: appRead("communityTab", null) });render();return;}
+  if(a==="communityTab"){appWrite("communityTab",v);if(v==="submit")ensureCommunitySubmitSong();applySongBrowserRequest("community_tab", { communityTab: appRead("communityTab", null) });render();return;}
   if(a==="communitySearch"){appWrite("communitySearch",v);applySongBrowserRequest("community_search", { communitySearch: appRead("communitySearch", "") });fetchCommunity();return;}
   if(a==="communitySort"){appWrite("communitySort",v);applySongBrowserRequest("community_sort", { communitySort: appRead("communitySort", "") });fetchCommunity();return;}
   if(a==="voteSong"){
@@ -3040,24 +3059,21 @@ window.act=function(a,v){
   if(a==="submitField"){
     var sep=v.indexOf(":");
     var field=v.substring(0,sep),val=v.substring(sep+1);
-    var submitSong=appRead("submitSong", null);
-    if(!submitSong)return;
+    var submitSong=ensureCommunitySubmitSong();
     if(field==="bpm")submitSong.bpm=parseInt(val)||100;
     else submitSong[field]=val;
     return;
   }
   if(a==="submitToggleChord"){
-    var submitSong=appRead("submitSong", null);
-    if(!submitSong)return;
+    var submitSong=ensureCommunitySubmitSong();
     var idx=submitSong.chords.indexOf(v);
     if(idx===-1){submitSong.chords.push(v);submitSong.progression.push(v);}
     else{submitSong.chords.splice(idx,1);}
     render();return;
   }
-  if(a==="submitClearProg"){var submitSong=appRead("submitSong", null);if(submitSong)submitSong.progression=[];render();return;}
+  if(a==="submitClearProg"){ensureCommunitySubmitSong().progression=[];render();return;}
   if(a==="submitSong"){
-    var ss=appRead("submitSong", null);
-    if(!ss)return;
+    var ss=ensureCommunitySubmitSong();
     if(!ss.title.trim()||!ss.artist.trim()||ss.chords.length<2||ss.progression.length<2)return;
     var _title=ss.title.trim().slice(0,100);
     var _artist=ss.artist.trim().slice(0,100);
@@ -3076,7 +3092,7 @@ window.act=function(a,v){
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(body)
     }).then(function(r){return r.json();}).then(function(){
-      appWrite("submitSong",{title:"",artist:"",chords:[],progression:[],bpm:100,pattern:[],submittedBy:""});
+      appWrite("submitSong",createEmptyCommunitySubmission());
       appWrite("communityTab","browse");
       fetchCommunity();
     }).catch(function(){
