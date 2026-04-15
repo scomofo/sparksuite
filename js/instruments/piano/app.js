@@ -2079,6 +2079,7 @@ function act(action, param) {
       break;
     case "launchRecommendation":
       if(typeof launchRecommendationById === "function") launchRecommendationById(param);
+      else showToast("Recommendations aren't available right now.");
       return;
     case "launchAnalyticsRecommendation":
       var pianoAnalyticsSummary = typeof buildAnalyticsSummary === "function" ? buildAnalyticsSummary() : null;

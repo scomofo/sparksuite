@@ -546,8 +546,17 @@ test("piano perform song page routes Start Performance through the shared perfor
 
 test("piano song audio import surfaces desktop and stem errors through toast feedback", function() {
   var pianoAppSource = loadJS("js/instruments/piano/app.js");
+  assert.ok(pianoAppSource.indexOf('showToast("Recommendations aren\'t available right now.")') >= 0);
   assert.ok(pianoAppSource.indexOf('showToast("Song audio import is only available in the desktop build.")') >= 0);
   assert.ok(pianoAppSource.indexOf('showToast("Stem separation failed: " + (err.message || err))') >= 0);
+});
+
+test("piano launchRecommendation surfaces feedback when recommendation wiring is unavailable", function() {
+  delete global.launchRecommendationById;
+
+  pianoAct("launchRecommendation", "rec_missing");
+
+  assert.deepStrictEqual(toasts, ["Recommendations aren't available right now."]);
 });
 
 test("piano tab renderers are namespaced so they do not clobber shared page globals", function() {
