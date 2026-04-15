@@ -472,6 +472,7 @@ function performDonePage() {
     phraseStats: []
   }, r || {});
   var rewardSummary = r.rewardSummary || null;
+  var masterySummary = r.masterySummary || null;
   var performChartId = performRead("performChartId", "unknown");
   var performSongStats = performRead("performSongStats", {}) || {};
   var performChart = performRead("performChart", null);
@@ -531,6 +532,19 @@ function performDonePage() {
     h += '<div style="font-size:18px;font-weight:800;color:#fff;margin-top:4px">Level ' + (rewardSummary.level || 1) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Total XP: ' + (rewardSummary.totalXP || 0) + ' &bull; Next Level: ' + (rewardSummary.nextLevelXP || (rewardSummary.totalXP || 0)) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Max Combo: ' + r.maxCombo + ' &bull; Milestones: ' + ((rewardSummary.summary && rewardSummary.summary.milestones) || 0) + '</div>';
+    h += '</div>';
+  }
+
+  if (masterySummary) {
+    h += '<div class="card mb20" style="text-align:center;border:1px solid rgba(78,205,196,.26);background:linear-gradient(135deg,#0b1220cc,#111827ee)">';
+    h += '<div style="font-size:20px;font-weight:900;color:#4ECDC4">Mastery: ' + Math.round((masterySummary.mastery || 0) * 100) + '%</div>';
+    h += '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Skill: ' + escHTML(masterySummary.skillId || 'performance') + '</div>';
+    if (masterySummary.nextLessonId) {
+      h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Next Lesson: ' + escHTML(masterySummary.nextLessonId) + '</div>';
+    }
+    if (masterySummary.unlocked) {
+      h += '<div style="font-size:18px;font-weight:900;color:#ffd700;margin-top:8px">' + (masterySummary.unlockedNow ? 'NEW SKILL UNLOCKED' : 'SKILL READY') + '</div>';
+    }
     h += '</div>';
   }
 

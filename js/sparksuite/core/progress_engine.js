@@ -1,4 +1,48 @@
 (function() {
+  function progressionRoot() {
+    if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
+    }
+    if (typeof globalThis !== "undefined") {
+      return globalThis.__sparkState || globalThis.S || null;
+    }
+    return null;
+  }
+
+  function progressionRead(path, fallback) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+      return SparkState.read(path, fallback);
+    }
+    var root = progressionRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (!root) return fallback;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  }
+
+  function progressionWrite(path, value) {
+    if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+      return SparkState.write(path, value);
+    }
+    var root = progressionRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if (!root || !parts.length) return value;
+    for (i = 0; i < parts.length - 1; i++) {
+      if (!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
   function ProgressEngine() {
     this.coreRuntime = null;
   };
@@ -166,7 +210,8 @@
         }
       };
       progress.rewardSummary = rewardSummary;
-      progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary);
+      progress.masterySummary = buildPerformanceMasterySummary(plan, payload, rewardSummary);
+      progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary, progress.masterySummary);
     }
 
     if (typeof saveState === "function") saveState();
@@ -267,7 +312,7 @@
     };
   }
 
-  function buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary) {
+  function buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded, rewardSummary, masterySummary) {
     var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
     return {
       sessionId: plan ? plan.id : null,
@@ -280,8 +325,75 @@
       score: performanceResults.score || 0,
       xpAwarded: xpAwarded || 0,
       rewardSummary: rewardSummary || null,
+      masterySummary: masterySummary || null,
       completedAt: Date.now()
     };
+  }
+
+  function buildPerformanceMasterySummary(plan, payload, rewardSummary) {
+    var performanceResults = payload.performanceResults || {};
+    var targetTechnique = payload.targetTechnique || performanceResults.focusedTechnique || null;
+    var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
+    var skillId = payload.skillId || targetTechnique || (performanceSong && performanceSong.arrangementType ? ("arrangement_" + performanceSong.arrangementType) : null);
+    var threshold = 0.75;
+    var timingScore = rewardSummary && rewardSummary.summary && typeof rewardSummary.summary.timingScore === "number"
+      ? rewardSummary.summary.timingScore
+      : 0;
+    var totalEvents = performanceResults.totalEvents || 0;
+    var timing = totalEvents > 0 ? Math.max(0, Math.min(1, timingScore / (totalEvents * 100))) : ((performanceResults.accuracy || 0) / 100);
+    var mastery = typeof calculateSkillMastery === "function"
+      ? calculateSkillMastery({
+          accuracy: (performanceResults.accuracy || 0) / 100,
+          timing: timing,
+          combo: performanceResults.maxCombo || 0
+        })
+      : Math.max(0, Math.min(1, (performanceResults.accuracy || 0) / 100));
+    var existingMastery = progressionRead(["skillMastery", skillId], null);
+    var previousMastery = existingMastery && typeof existingMastery.mastery === "number"
+      ? existingMastery.mastery
+      : 0;
+    var blendedMastery = previousMastery > 0
+      ? Math.max(0, Math.min(1, previousMastery * 0.6 + mastery * 0.4))
+      : mastery;
+    var unlocked = typeof isSkillUnlocked === "function"
+      ? isSkillUnlocked(blendedMastery, threshold)
+      : blendedMastery >= threshold;
+    var unlockedNow = !!(unlocked && (!existingMastery || !existingMastery.unlocked));
+    var nextLessonId = typeof SparkCurriculumService !== "undefined" && typeof SparkCurriculumService.getNextLessonForSkillProgress === "function"
+      ? SparkCurriculumService.getNextLessonForSkillProgress(skillId, blendedMastery, null, threshold)
+      : null;
+    var summary;
+    var unlockedLessonIds;
+
+    if (!skillId) return null;
+
+    summary = {
+      skillId: skillId,
+      mastery: blendedMastery,
+      previousMastery: previousMastery,
+      unlocked: unlocked,
+      unlockedNow: unlockedNow,
+      threshold: threshold,
+      nextLessonId: nextLessonId,
+      timing: timing,
+      accuracy: Math.max(0, Math.min(1, (performanceResults.accuracy || 0) / 100)),
+      combo: performanceResults.maxCombo || 0
+    };
+
+    progressionWrite(["skillMastery", skillId], summary);
+    if (unlockedNow && nextLessonId) {
+      unlockedLessonIds = progressionRead("unlockedLessonIds", []);
+      if (!Array.isArray(unlockedLessonIds)) unlockedLessonIds = [];
+      if (unlockedLessonIds.indexOf(nextLessonId) < 0) {
+        unlockedLessonIds.push(nextLessonId);
+        progressionWrite("unlockedLessonIds", unlockedLessonIds);
+      }
+    }
+    if (unlockedNow && typeof showToast === "function") {
+      showToast("New Skill Unlocked");
+    }
+
+    return summary;
   }
 
   function mergeSessionStatePatch(basePatch, nextPatch) {

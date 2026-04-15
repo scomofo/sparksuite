@@ -49,6 +49,63 @@
     return completedLessons;
   }
 
+  function getActiveCurriculumMap(instrumentContext) {
+    instrumentContext = instrumentContext || {};
+    if (Array.isArray(instrumentContext.curriculumMap)) return instrumentContext.curriculumMap.slice();
+    if (typeof SparkInstrumentAdapter !== "undefined" && typeof SparkInstrumentAdapter.getCurriculumMap === "function") {
+      var map = SparkInstrumentAdapter.getCurriculumMap();
+      if (Array.isArray(map)) return map.slice();
+    }
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() && typeof SparkInstruments.getActive().getCurriculumMap === "function") {
+      var activeMap = SparkInstruments.getActive().getCurriculumMap();
+      if (Array.isArray(activeMap)) return activeMap.slice();
+    }
+    return [];
+  }
+
+  function getLessonIdFromMapItem(item) {
+    if (!item) return null;
+    if (item.id) return item.id;
+    if (item.lessonId) return item.lessonId;
+    if (item.num != null) return "session_" + item.num;
+    return null;
+  }
+
+  function getLessonForSkill(skillId, instrumentContext) {
+    var completedLessons = getCompletedLessonIds();
+    var curriculumMap = getActiveCurriculumMap(instrumentContext);
+    var i;
+    for (i = 0; i < curriculumMap.length; i++) {
+      var lessonId = getLessonIdFromMapItem(curriculumMap[i]);
+      if (lessonId && completedLessons.indexOf(lessonId) === -1) return lessonId;
+    }
+    return skillId || null;
+  }
+
+  function getNextSkillLesson(skillId, instrumentContext) {
+    var completedLessons = getCompletedLessonIds();
+    var curriculumMap = getActiveCurriculumMap(instrumentContext);
+    var i;
+    var foundCurrent = false;
+    var currentLessonId = getLessonForSkill(skillId, instrumentContext);
+    if (!currentLessonId) return null;
+
+    for (i = 0; i < curriculumMap.length; i++) {
+      var lessonId = getLessonIdFromMapItem(curriculumMap[i]);
+      if (!lessonId || completedLessons.indexOf(lessonId) >= 0) continue;
+      if (foundCurrent) return lessonId;
+      if (lessonId === currentLessonId) foundCurrent = true;
+    }
+
+    return null;
+  }
+
+  function getNextLessonForSkillProgress(skillId, mastery, instrumentContext, threshold) {
+    threshold = typeof threshold === "number" && isFinite(threshold) ? threshold : 0.75;
+    if (mastery < threshold) return getLessonForSkill(skillId, instrumentContext);
+    return getNextSkillLesson(skillId, instrumentContext) || getLessonForSkill(skillId, instrumentContext);
+  }
+
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
     var curriculum = getCurriculumItem("curriculums", curriculumId);
     if(!curriculum) return null;
@@ -103,6 +160,18 @@
   window.SparkCurriculumService = {
     getNextLesson: function(curriculumId, completedLessons) {
       return getNextLessonFromCurriculum(curriculumId, completedLessons);
+    },
+
+    getLessonForSkill: function(skillId, instrumentContext) {
+      return getLessonForSkill(skillId, instrumentContext);
+    },
+
+    getNextSkillLesson: function(skillId, instrumentContext) {
+      return getNextSkillLesson(skillId, instrumentContext);
+    },
+
+    getNextLessonForSkillProgress: function(skillId, mastery, instrumentContext, threshold) {
+      return getNextLessonForSkillProgress(skillId, mastery, instrumentContext, threshold);
     },
 
     isLessonUnlocked: function(lessonId) {

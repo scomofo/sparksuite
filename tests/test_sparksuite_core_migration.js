@@ -176,6 +176,8 @@ eval(loadJS("js/sparksuite/instruments/guitar/index.js"));
 eval(loadJS("js/sparksuite/core/state_facade.js"));
 eval(loadJS("js/progression/xp_system.js"));
 eval(loadJS("js/progression/level_system.js"));
+eval(loadJS("js/progression/skill_mastery.js"));
+eval(loadJS("js/progression/unlock_system.js"));
 eval(loadJS("js/performance/session_rewards.js"));
 eval(loadJS("js/sparksuite/core/storage.js"));
 eval(loadJS("js/sparksuite/core/ai_engine.js"));
@@ -3579,7 +3581,9 @@ test("completeSession routes performance completion rewards through core", funct
     performanceResults: {
       accuracy: 88,
       stars: 4,
-      score: 1234
+      score: 1234,
+      maxCombo: 18,
+      totalEvents: 6
     },
     rewardSummary: {
       xpGained: 320,
@@ -3594,7 +3598,8 @@ test("completeSession routes performance completion rewards through core", funct
         milestones: 2,
         sessionBonus: 25
       }
-    }
+    },
+    targetTechnique: "tap"
   });
 
   assert.strictEqual(result.planCompleted, true);
@@ -3606,6 +3611,11 @@ test("completeSession routes performance completion rewards through core", funct
   assert.strictEqual(result.performanceSummary.accuracy, 88);
   assert.strictEqual(result.performanceSummary.stars, 4);
   assert.strictEqual(result.performanceSummary.rewardSummary.level, 5);
+  assert.strictEqual(result.masterySummary.skillId, "tap");
+  assert.ok(result.masterySummary.mastery > 0.75);
+  assert.strictEqual(result.masterySummary.unlocked, true);
+  assert.strictEqual(result.performanceSummary.masterySummary.skillId, "tap");
+  assert.ok(S.skillMastery.tap);
   assert.strictEqual(S.xp, 320);
   assert.strictEqual(S.xpToast.amount, 320);
   assert.strictEqual(S.playerXP, 1240);

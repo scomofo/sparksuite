@@ -2461,6 +2461,8 @@
         rhythm: this.cloneValue(lessonView.rhythmMastery || {}) || {}
       },
       chordProgress: this.cloneValue((state && state.chordProgress) ? state.chordProgress : {}) || {},
+      skillMastery: this.cloneValue((state && state.skillMastery) ? state.skillMastery : {}) || {},
+      unlockedLessonIds: this.cloneValue((state && state.unlockedLessonIds) ? state.unlockedLessonIds : []) || [],
       ukuleleSkillProgress: this.cloneValue((state && state.ukuleleSkillProgress) ? state.ukuleleSkillProgress : {}) || {},
       bassSkillProgress: this.cloneValue((state && state.bassSkillProgress) ? state.bassSkillProgress : {}) || {}
     };
@@ -3113,6 +3115,9 @@
       rewardSummary: Object.prototype.hasOwnProperty.call(options, "rewardSummary")
         ? this.cloneValue(options.rewardSummary)
         : null,
+      targetTechnique: Object.prototype.hasOwnProperty.call(options, "targetTechnique")
+        ? options.targetTechnique
+        : runtimeState.performanceTargetTechnique,
       chartId: Object.prototype.hasOwnProperty.call(options, "chartId")
         ? options.chartId
         : (runtimeState.performanceChartId || null),

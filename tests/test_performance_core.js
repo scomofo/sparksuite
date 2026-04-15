@@ -71,6 +71,8 @@ eval(loadJS('js/performance/combo_decay.js'));
 eval(loadJS('js/performance/combo_milestones.js'));
 eval(loadJS('js/progression/xp_system.js'));
 eval(loadJS('js/progression/level_system.js'));
+eval(loadJS('js/progression/skill_mastery.js'));
+eval(loadJS('js/progression/unlock_system.js'));
 eval(loadJS('js/performance/session_rewards.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway_themes.js'));
@@ -319,6 +321,31 @@ test('performDonePage renders reward summary when session xp is available', func
   assert.ok(html.indexOf('Total XP: 1240') >= 0);
   assert.ok(html.indexOf('Max Combo: 18') >= 0);
   assert.ok(html.indexOf('Milestones: 2') >= 0);
+});
+
+test('performDonePage renders mastery and unlock summary when available', function() {
+  S.performResults = {
+    title: 'Test Song',
+    artist: 'Suite',
+    score: 800,
+    accuracy: 88,
+    maxCombo: 12,
+    stars: 3,
+    totalEvents: 10,
+    phraseStats: [],
+    masterySummary: {
+      skillId: 'tap',
+      mastery: 0.78,
+      unlocked: true,
+      unlockedNow: true,
+      nextLessonId: 'session_2'
+    }
+  };
+  var html = performDonePage();
+  assert.ok(html.indexOf('Mastery: 78%') >= 0);
+  assert.ok(html.indexOf('Skill: tap') >= 0);
+  assert.ok(html.indexOf('Next Lesson: session_2') >= 0);
+  assert.ok(html.indexOf('NEW SKILL UNLOCKED') >= 0);
 });
 
 test('scorePerformanceEvent uses grace when the correct lane lands just beyond the miss window', function() {
