@@ -258,6 +258,26 @@ test("startSession and resumeSession delegate chord launches through sparkCore h
   assert.strictEqual(S.screen, "session");
 });
 
+test("quickStart resolves a chord object when legacy context only provides chordName", function() {
+  window.sparkCore.startLegacyPracticeSession = function(options) {
+    sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+    return {
+      context: {
+        legacyPractice: {
+          mode: options.mode || "quickStart",
+          chordName: "E",
+          durationSec: 120
+        }
+      }
+    };
+  };
+
+  guitarAct("quickStart");
+
+  assert.strictEqual(S.currentChord && S.currentChord.name, "E");
+  assert.strictEqual(S.screen, "session");
+});
+
 test("startDrill delegates drill launch through sparkCore helpers", function() {
   guitarAct("startDrill");
 

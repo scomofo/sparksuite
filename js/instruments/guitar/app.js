@@ -104,6 +104,29 @@ function getLegacyPracticeContext(plan) {
   return plan && plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : plan;
 }
 
+function resolveLegacySessionChord(D, session, level) {
+  var chordName = session && session.chordName ? session.chordName : null;
+  var allChords = D && Array.isArray(D.ALL_CHORDS) ? D.ALL_CHORDS : [];
+  var levelPool = [];
+  var i;
+  if (session && session.chord && typeof session.chord === "object") return session.chord;
+  if (!chordName) {
+    if (typeof CHORDS !== "undefined" && CHORDS && Array.isArray(CHORDS[level])) {
+      levelPool = CHORDS[level];
+    } else if (typeof CHORDS !== "undefined" && CHORDS && Array.isArray(CHORDS[1])) {
+      levelPool = CHORDS[1];
+    } else {
+      levelPool = allChords;
+    }
+    return levelPool.length ? levelPool[0] : null;
+  }
+  for (i = 0; i < allChords.length; i++) {
+    if (!allChords[i]) continue;
+    if (allChords[i].name === chordName || allChords[i].short === chordName) return allChords[i];
+  }
+  return { name: chordName };
+}
+
 function resolveLegacyDrillChords(D, session) {
   if (!session) return [];
   if (Array.isArray(session.chords) && session.chords.length && session.chords[0] && typeof session.chords[0] === "object") {
@@ -243,16 +266,18 @@ function guitarAct(a, v) {
 
   if (a === "quickStart") {
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "quickStart", level: guitarStateRead("level", 1) }));
+    var sessionChord = resolveLegacySessionChord(D, session, guitarStateRead("level", 1));
+    var sessionChordName = session && session.chordName ? session.chordName : (sessionChord && sessionChord.name ? sessionChord.name : null);
     if (!session) return true;
     openLegacyPracticeSessionRuntime({
       mode: "quickStart",
-      chordName: session.chordName,
+      chordName: sessionChordName,
       durationSec: session.durationSec != null ? session.durationSec : session.duration
     });
     guitarPatchState({
       sessionMicros: [],
-      lastChordName: session.chordName,
-      currentChord: session.chord,
+      lastChordName: sessionChordName,
+      currentChord: sessionChord,
       timer: session.durationSec != null ? session.durationSec : session.duration,
       timerActive: true,
       selectedVoicing: 0,
@@ -267,22 +292,25 @@ function guitarAct(a, v) {
 
   if (a === "resumeSession") {
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "chord", chordName: guitarStateRead("lastChordName", null) }));
+    var sessionChord = resolveLegacySessionChord(D, session, guitarStateRead("level", 1));
+    var sessionChordName = session && session.chordName ? session.chordName : (sessionChord && sessionChord.name ? sessionChord.name : null);
     if (!session) { act("quickStart"); return true; }
     openLegacyPracticeSessionRuntime({
       mode: "chord",
-      chordName: session.chordName,
+      chordName: sessionChordName,
       durationSec: session.durationSec != null ? session.durationSec : session.duration
     });
     guitarPatchState({
       sessionMicros: [],
-      currentChord: session.chord,
+      lastChordName: sessionChordName,
+      currentChord: sessionChord,
       timer: session.durationSec != null ? session.durationSec : session.duration,
       timerActive: true,
       selectedVoicing: 0,
       screen: SCR.SESSION
     });
     snd("start");
-    if (typeof _prevChordKey !== "undefined") _prevChordKey = session.chordName;
+    if (typeof _prevChordKey !== "undefined") _prevChordKey = sessionChordName;
     render();
     queueSessionTick();
     saveState();
@@ -291,23 +319,25 @@ function guitarAct(a, v) {
 
   if (a === "startSession") {
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "chord", chordName: v }));
+    var sessionChord = resolveLegacySessionChord(D, session, guitarStateRead("level", 1));
+    var sessionChordName = session && session.chordName ? session.chordName : (sessionChord && sessionChord.name ? sessionChord.name : null);
     if (!session) return true;
     openLegacyPracticeSessionRuntime({
       mode: "chord",
-      chordName: session.chordName,
+      chordName: sessionChordName,
       durationSec: session.durationSec != null ? session.durationSec : session.duration
     });
     guitarPatchState({
       sessionMicros: [],
-      lastChordName: session.chordName,
-      currentChord: session.chord,
+      lastChordName: sessionChordName,
+      currentChord: sessionChord,
       timer: session.durationSec != null ? session.durationSec : session.duration,
       timerActive: true,
       selectedVoicing: 0,
       screen: SCR.SESSION
     });
     snd("start");
-    if (typeof _prevChordKey !== "undefined") _prevChordKey = session.chordName;
+    if (typeof _prevChordKey !== "undefined") _prevChordKey = sessionChordName;
     render();
     queueSessionTick();
     saveState();

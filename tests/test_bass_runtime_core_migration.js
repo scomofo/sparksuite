@@ -299,6 +299,26 @@ test("quickStart and drill entry delegate to shared legacy practice helpers", fu
   assert.strictEqual(S.screen, "drill");
 });
 
+test("quickStart resolves a chord object when legacy context only provides chordName", function() {
+  window.sparkCore.startLegacyPracticeSession = function(options) {
+    sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+    return {
+      context: {
+        legacyPractice: {
+          mode: options.mode || "quickStart",
+          chordName: "E",
+          durationSec: 120
+        }
+      }
+    };
+  };
+
+  bassAct("quickStart");
+
+  assert.strictEqual(S.currentChord && S.currentChord.name, "E");
+  assert.strictEqual(S.screen, "session");
+});
+
 test("startDrill hydrates chord names into bass chord objects", function() {
   window.sparkCore.startLegacyPracticeSession = function(options) {
     sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
