@@ -3973,6 +3973,8 @@ window.act=function(a,v){
   if(a==="openPerformanceDaily"){
     var ch=choosePerformanceDailyChallenge();
     if(!ch){render();return;}
+    var defaultArrangement = ch.arrangementType||"chords";
+    var defaultDifficulty = ch.difficultyId||"normal";
     if(ch.songId){
       for(var di=0;di<SONGS.length;di++){
         var dsid=(SONGS[di].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
@@ -3981,21 +3983,33 @@ window.act=function(a,v){
             songId: ch.songId,
             songData: SONGS[di],
             songTitle: SONGS[di].title || null,
-            arrangementType: ch.arrangementType||"chords",
-            difficultyId: ch.difficultyId||"normal",
+            arrangementType: defaultArrangement,
+            difficultyId: defaultDifficulty,
             songIndex: di,
             targetTechnique: ch.techniqueKey||null
           });
           appWrite("performSongData",SONGS[di]);appWrite("performSongId",ch.songId);
-          appWrite("performArrangementType",ch.arrangementType||"chords");
-          appWrite("performDifficulty",ch.difficultyId||"normal");
+          appWrite("performArrangementType",defaultArrangement);
+          appWrite("performDifficulty",defaultDifficulty);
           appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){appWrite("screen",SCR.PERFORM_SONG);});
           render();return;
         }
       }
     }
-    openPerformanceDailyChallengeRequest({});
-    appApplyLegacyActivityRuntime({setFields:{tab:TAB.SONGS,screen:SCR.HOME}},function(){appWrite("tab",TAB.SONGS);appWrite("screen",SCR.HOME);});
+    var fallbackRequest = openPerformanceDailyChallengeRequest({
+      arrangementType: defaultArrangement,
+      difficultyId: defaultDifficulty,
+      targetTechnique: ch.techniqueKey||null
+    });
+    if(fallbackRequest && fallbackRequest.songData){
+      appWrite("performSongData",fallbackRequest.songData);
+      appWrite("performSongId",fallbackRequest.songId||null);
+      appWrite("performArrangementType",fallbackRequest.arrangementType||defaultArrangement);
+      appWrite("performDifficulty",fallbackRequest.difficultyId||defaultDifficulty);
+      appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){appWrite("screen",SCR.PERFORM_SONG);});
+    } else {
+      appApplyLegacyActivityRuntime({setFields:{tab:TAB.SONGS,screen:SCR.HOME}},function(){appWrite("tab",TAB.SONGS);appWrite("screen",SCR.HOME);});
+    }
     render();return;
   }
   if(a==="performArrangement"){

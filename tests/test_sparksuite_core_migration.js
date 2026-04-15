@@ -2885,6 +2885,40 @@ test("SparkCore can open performance daily challenge selection through an explic
   assert.strictEqual(fallback.activeTab, "songs");
 });
 
+test("SparkCore falls back to the first performance chart for empty daily challenges", function() {
+  var core = createDefaultSparkCore();
+  var originalGetPerformanceChartLibrary = global.getPerformanceChartLibrary;
+  var fallbackCharts = [
+    {
+      id: "daily_demo_song",
+      title: "Daily Demo Song",
+      artist: "SparkSuite",
+      instrument: "guitar",
+      sourceType: "built_in"
+    }
+  ];
+  global.getPerformanceChartLibrary = function(options) {
+    if (options && options.instrument === "guitar") {
+      return fallbackCharts;
+    }
+    return fallbackCharts;
+  };
+  core.updateRuntimeState({ activeInstrumentId: "guitar" });
+  try {
+    var fallback = core.openPerformanceDailyChallenge({
+      arrangementType: "chords",
+      difficultyId: "easy"
+    });
+
+    assert.strictEqual(fallback.songId, "daily_demo_song");
+    assert.strictEqual(fallback.songData.title, "Daily Demo Song");
+    assert.strictEqual(core.getRuntimeState().activeScreen, "performance_song");
+    assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Daily Demo Song");
+  } finally {
+    global.getPerformanceChartLibrary = originalGetPerformanceChartLibrary;
+  }
+});
+
 test("SparkCore can start a selected performance song through an explicit helper", function() {
   var core = createDefaultSparkCore();
   core.openPerformanceSongSelection({

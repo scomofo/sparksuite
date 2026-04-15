@@ -2918,6 +2918,32 @@
     if (options.songData || options.songId) {
       return this.openPerformanceSongSelection(options);
     }
+    if (typeof getPerformanceChartLibrary === "function") {
+      var instrumentId = this.runtimeState.activeInstrumentId || this.runtimeState.activeInstrumentType || null;
+      var chartLibrary = getPerformanceChartLibrary(instrumentId ? { instrument: instrumentId } : {}) || [];
+      if (!chartLibrary.length && instrumentId) {
+        chartLibrary = getPerformanceChartLibrary({}) || [];
+      }
+      if (chartLibrary.length) {
+        var fallbackChart = chartLibrary[0] || null;
+        if (fallbackChart) {
+          return this.openPerformanceSongSelection({
+            songId: fallbackChart.id || null,
+            songIndex: 0,
+            songTitle: fallbackChart.title || null,
+            arrangementType: Object.prototype.hasOwnProperty.call(options, "arrangementType")
+              ? options.arrangementType
+              : (this.runtimeState.performanceArrangementType || "chords"),
+            difficultyId: Object.prototype.hasOwnProperty.call(options, "difficultyId")
+              ? options.difficultyId
+              : (this.runtimeState.performanceDifficultyId || "normal"),
+            targetTechnique: Object.prototype.hasOwnProperty.call(options, "targetTechnique")
+              ? options.targetTechnique
+              : null
+          });
+        }
+      }
+    }
     return this.updateRuntimeState({
       activeScreen: "home",
       activeTab: "songs",

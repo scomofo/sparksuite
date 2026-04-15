@@ -543,6 +543,14 @@ test('bass register exposes a dedicated songs tab renderer', function() {
   assert.ok(html.indexOf('Midnight Lock') >= 0);
 });
 
+test('performance daily button keeps a playable fallback path in shared app routing', function() {
+  var appJs = loadJS('js/app.js');
+  assert.ok(appJs.indexOf('var fallbackRequest = openPerformanceDailyChallengeRequest({') >= 0);
+  assert.ok(appJs.indexOf('if(fallbackRequest && fallbackRequest.songData){') >= 0);
+  assert.ok(appJs.indexOf('appWrite(\"performSongData\",fallbackRequest.songData);') >= 0);
+  assert.ok(appJs.indexOf('appWrite(\"screen\",SCR.PERFORM_SONG);') >= 0);
+});
+
 // Summary
 console.log('\n' + '='.repeat(40));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');
