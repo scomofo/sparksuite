@@ -4278,7 +4278,7 @@ window.act=function(a,v){
           appWrite("songAudioImporting",false);
           appWrite("songAudioProgress",0);
         });
-        alert("Stem separation failed: "+(err.message||err));
+        if (typeof showToast === "function") showToast("Stem separation failed: " + (err.message || err));
         render();
       });
     });

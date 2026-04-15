@@ -336,6 +336,7 @@ test('secondary helper-driven actions surface feedback when handlers are unavail
   assert.ok(appSource.indexOf('showToast("Choose an audio file before separating stems.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Song audio import is only available in the desktop build.")') >= 0);
   assert.ok(appSource.indexOf('showToast("No stems were returned for that audio import.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Stem separation failed: " + (err.message || err))') >= 0);
   assert.ok(appSource.indexOf('showToast("This community song isn\'t available right now.")') >= 0);
 });
 
