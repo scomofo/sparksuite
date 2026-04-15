@@ -4538,11 +4538,15 @@ window.act=function(a,v){
     return;
   }
   if(a==="completePlanItem"){
+    var completedPlanItem = false;
     if(window.sparkCore){
       completeDailyPracticePlanRequest({ itemId: v });
+      completedPlanItem = true;
     } else if(typeof markPracticePlanItem==="function"){
       markPracticePlanItem(v);
+      completedPlanItem = true;
     }
+    if(!completedPlanItem && typeof showToast === "function") showToast("That practice item couldn't be completed right now.");
     render();return;
   }
   if(a==="rhythmHighwayLane"){
