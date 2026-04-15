@@ -2833,9 +2833,25 @@ window.act=function(a,v){
     else{act("guidedNext");return;} // refine done → advance to songSlice
     render();return;
   }
+  if(a==="dismissConfirm"){
+    appWrite("confirmDialog", null);
+    render();return;
+  }
+  if(a==="confirmDialogProceed"){
+    var confirmDialog=appRead("confirmDialog", null);
+    appWrite("confirmDialog", null);
+    if(confirmDialog && confirmDialog.action){ act(confirmDialog.action, confirmDialog.value); return; }
+    render();return;
+  }
   if(a==="guidedStopConfirm"){
-    if(typeof confirm==="function" && !confirm("End session early?")){return;}
-    act("guidedStop");return;
+    appWrite("confirmDialog", {
+      title: "End session early?",
+      message: "You'll leave this guided session and lose the rest of the current run.",
+      action: "guidedStop",
+      confirmLabel: "End Session",
+      cancelLabel: "Keep Going"
+    });
+    render();return;
   }
   if(a==="guidedStop"){
     clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.metro);clearInterval(T.strum);
@@ -4927,6 +4943,7 @@ function _renderInner(){
   var renderTab=appRead("tab", null);
   var screenKey=String(renderScreen)+String(renderTab);
   var content="";
+  var confirmDialog = appRead("confirmDialog", null);
 
   // Shared page registry — instrument pages can override any of these
   var _sharedPages = {};
@@ -4982,9 +4999,29 @@ function _renderInner(){
   }else{
     h+=content;
   }
+  if(confirmDialog){
+    h+=appConfirmOverlayHTML(confirmDialog);
+  }
   app.innerHTML=h;
   // Focus management for modal overlays
   if(appRead("showShortcuts", false)){var cb=document.getElementById("shortcut-close-btn");if(cb)cb.focus();}
+  if(confirmDialog){var xb=document.getElementById("confirm-cancel-btn");if(xb)xb.focus();}
+}
+
+function appConfirmOverlayHTML(dialog){
+  var title = escHTML(dialog && dialog.title ? dialog.title : "Are you sure?");
+  var message = dialog && dialog.message ? '<p style="margin:0 0 16px;color:var(--text-muted);font-size:14px;line-height:1.5">' + escHTML(dialog.message) + '</p>' : '';
+  var confirmLabel = escHTML(dialog && dialog.confirmLabel ? dialog.confirmLabel : "Confirm");
+  var cancelLabel = escHTML(dialog && dialog.cancelLabel ? dialog.cancelLabel : "Cancel");
+  var h = '<div class="shortcut-overlay" onclick="act(\'dismissConfirm\')">';
+  h += '<div class="shortcut-modal" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">';
+  h += '<h3 id="confirm-dialog-title" style="margin:0 0 10px;font-size:18px;font-weight:900;color:var(--text-primary)">' + title + '</h3>';
+  h += message;
+  h += '<div style="display:flex;gap:10px;justify-content:flex-end">';
+  h += '<button id="confirm-cancel-btn" class="btn btn-secondary" onclick="act(\'dismissConfirm\')">' + cancelLabel + '</button>';
+  h += '<button class="btn btn-danger" onclick="act(\'confirmDialogProceed\')">' + confirmLabel + '</button>';
+  h += '</div></div></div>';
+  return h;
 }
 
 // ===== KEYBOARD SHORTCUTS =====
@@ -5001,6 +5038,7 @@ document.addEventListener("keydown",function(e){
   // Escape - close overlay or go back
   if(key==="Escape"){
     if(appRead("showShortcuts", false)){appWrite("showShortcuts",false);render();return;}
+    if(appRead("confirmDialog", null)){act("dismissConfirm");return;}
     if(appRead("screen", null)!==SCR.HOME){act("back");}
     return;
   }

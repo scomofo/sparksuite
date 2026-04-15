@@ -577,8 +577,12 @@ test('guided and piano confirm-style exits route through action handlers instead
   assert.ok(pianoToolsSource.indexOf("act(\\'reset_confirm\\')") >= 0);
   assert.ok(pianoToolsSource.indexOf("if(confirm(") === -1);
   assert.ok(appSource.indexOf('if(a==="guidedStopConfirm"){') >= 0);
+  assert.ok(appSource.indexOf('function appConfirmOverlayHTML(dialog){') >= 0);
+  assert.ok(appSource.indexOf('typeof confirm') === -1);
   assert.ok(pianoAppSource.indexOf('case "stop_session_confirm":') >= 0);
   assert.ok(pianoAppSource.indexOf('case "reset_confirm":') >= 0);
+  assert.ok(pianoAppSource.indexOf('function pianoConfirmOverlayHTML(dialog) {') >= 0);
+  assert.ok(pianoAppSource.indexOf('typeof confirm') === -1);
 });
 
 test('getPage returns page from active instrument', function() {

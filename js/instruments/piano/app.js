@@ -210,6 +210,33 @@ function render() {
   if (typeof window.render === "function") return window.render();
   return legacyPianoRender();
 }
+function pianoConfirmOverlayHTML(dialog) {
+  var title = escHTML(dialog && dialog.title ? dialog.title : "Are you sure?");
+  var message = dialog && dialog.message
+    ? '<p style="margin:0 0 16px;color:var(--text-muted);font-size:14px;line-height:1.5">' + escHTML(dialog.message) + '</p>'
+    : '';
+  var confirmLabel = escHTML(dialog && dialog.confirmLabel ? dialog.confirmLabel : "Confirm");
+  var cancelLabel = escHTML(dialog && dialog.cancelLabel ? dialog.cancelLabel : "Cancel");
+  var html = '<div class="shortcut-overlay" onclick="act(\'cancel_confirm\')">';
+  html += '<div class="shortcut-modal" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="piano-confirm-dialog-title">';
+  html += '<h3 id="piano-confirm-dialog-title" style="margin:0 0 10px;font-size:18px;font-weight:900;color:var(--text-primary)">' + title + '</h3>';
+  html += message;
+  html += '<div style="display:flex;gap:10px;justify-content:flex-end">';
+  html += '<button id="piano-confirm-cancel-btn" class="btn btn-secondary" onclick="act(\'cancel_confirm\')">' + cancelLabel + '</button>';
+  html += '<button class="btn btn-danger" onclick="act(\'confirm_action\')">' + confirmLabel + '</button>';
+  html += '</div></div></div>';
+  return html;
+}
+function withPianoConfirmOverlay(html) {
+  return state.confirmDialog ? html + pianoConfirmOverlayHTML(state.confirmDialog) : html;
+}
+function setPianoRootHTML(root, html) {
+  root.innerHTML = withPianoConfirmOverlay(html);
+  if (state.confirmDialog) {
+    var cancelBtn = document.getElementById("piano-confirm-cancel-btn");
+    if (cancelBtn) cancelBtn.focus();
+  }
+}
 
 // ── Utility ──
 function shuffleArray(arr) {
@@ -1121,8 +1148,14 @@ function act(action, param) {
       break;
 
     case "stop_session_confirm":
-      if (typeof confirm === "function" && !confirm("End session early?")) break;
-      act("stop_session");
+      state.confirmDialog = {
+        title: "End session early?",
+        message: "You'll leave the current session and lose the rest of this run.",
+        action: "stop_session",
+        confirmLabel: "End Session",
+        cancelLabel: "Keep Going"
+      };
+      render();
       break;
 
     case "stop_session":
@@ -1871,8 +1904,29 @@ function act(action, param) {
       break;
 
     case "reset_confirm":
-      if (typeof confirm === "function" && !confirm("Reset all progress?")) break;
-      act("reset");
+      state.confirmDialog = {
+        title: "Reset all progress?",
+        message: "This clears your saved Piano progress. You can undo once right after reset.",
+        action: "reset",
+        confirmLabel: "Reset Progress",
+        cancelLabel: "Cancel"
+      };
+      render();
+      break;
+
+    case "cancel_confirm":
+      state.confirmDialog = null;
+      render();
+      break;
+
+    case "confirm_action":
+      var pendingConfirm = state.confirmDialog;
+      state.confirmDialog = null;
+      if (pendingConfirm && pendingConfirm.action) {
+        act(pendingConfirm.action, pendingConfirm.value);
+      } else {
+        render();
+      }
       break;
 
     case "reset":
@@ -2257,120 +2311,120 @@ function legacyPianoRender() {
   // Onboarding check
   if (!state.onboardingComplete) {
     if (state._inPlacement) {
-      root.innerHTML = placementTestPage();
+      setPianoRootHTML(root, placementTestPage());
     } else {
-      root.innerHTML = (typeof pianoOnboardingPage === "function" ? pianoOnboardingPage() : "");
+      setPianoRootHTML(root, (typeof pianoOnboardingPage === "function" ? pianoOnboardingPage() : ""));
     }
     return;
   }
 
   // Session screen
   if (state.screen === SCR.SESSION && state.sessionPlan) {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoSessionPage === "function" ? pianoSessionPage() : "");
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoSessionPage === "function" ? pianoSessionPage() : ""));
     return;
   }
 
   // Stem player screen
   if (state.screen === SCR.STEM_PLAYER) {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoStemsPlayerPage === "function" ? pianoStemsPlayerPage() : "");
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoStemsPlayerPage === "function" ? pianoStemsPlayerPage() : ""));
     return;
   }
 
   // Practice plan screen
   if (state.screen === SCR.PLAN) {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPlanPage === "function" ? pianoPlanPage() : "");
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPlanPage === "function" ? pianoPlanPage() : ""));
     return;
   }
 
   // MIDI settings screen
   if (state.screen === SCR.MIDI_SETTINGS && typeof midiSettingsPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiSettingsPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiSettingsPage());
     return;
   }
 
   // MIDI import screen
   if (state.screen === SCR.MIDI_IMPORT && typeof midiImportPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiImportPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiImportPage());
     return;
   }
 
   // Cloud settings screen
   if (state.screen === SCR.CLOUD_SETTINGS && typeof cloudSettingsPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + cloudSettingsPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + cloudSettingsPage());
     return;
   }
 
   // Curriculum screen
   if (state.screen === SCR.CURRICULUM && typeof curriculumPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + curriculumPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + curriculumPage());
     return;
   }
 
   // Performance mode screens
   if (state.screen === SCR.PERFORM_SONG) {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformSongPage === "function" ? pianoPerformSongPage() : "");
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformSongPage === "function" ? pianoPerformSongPage() : ""));
     return;
   }
   if (state.screen === SCR.PERFORM) {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformPage === "function" ? pianoPerformPage() : "");
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformPage === "function" ? pianoPerformPage() : ""));
     return;
   }
   if (state.screen === SCR.PERFORM_DONE) {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformDonePage === "function" ? pianoPerformDonePage() : "");
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformDonePage === "function" ? pianoPerformDonePage() : ""));
     return;
   }
 
   // Calibration screen
   if (state.screen === SCR.CALIBRATION && typeof calibrationPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<div style="padding:8px"><button class="btn" onclick="act(\'go_home\')">Back</button></div>' + calibrationPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<div style="padding:8px"><button class="btn" onclick="act(\'go_home\')">Back</button></div>' + calibrationPage());
     return;
   }
 
   // Onboarding flow screen (new)
   if (state.screen === SCR.ONBOARDING_FLOW && typeof onboardingFlowPage === "function") {
-    root.innerHTML = onboardingFlowPage();
+    setPianoRootHTML(root, onboardingFlowPage());
     return;
   }
 
   // Home dashboard screen
   if (state.screen === SCR.HOME_DASH && typeof homeDashboardPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + homeDashboardPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + homeDashboardPage());
     return;
   }
 
   // Recommendations screen
   if (state.screen === SCR.RECOMMENDATIONS && typeof recommendationsPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + recommendationsPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + recommendationsPage());
     return;
   }
 
   // Career mode screen
   if (state.screen === SCR.CAREER && typeof careerPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + careerPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + careerPage());
     return;
   }
 
   // Insights dashboard screen
   if (state.screen === SCR.INSIGHTS && typeof insightsDashboardPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + insightsDashboardPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + insightsDashboardPage());
     return;
   }
 
   // Challenge hub screen
   if (state.screen === SCR.CHALLENGES && typeof challengeHubPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + challengeHubPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + challengeHubPage());
     return;
   }
 
   // Settings screen
   if (state.screen === SCR.SETTINGS && typeof settingsPage === "function") {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + settingsPage();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + settingsPage());
     return;
   }
 
   // Legacy active session
   if (state.active && state.chord) {
-    root.innerHTML = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "") + legacySessionHTML();
+    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "") + legacySessionHTML());
     return;
   }
 
@@ -2384,7 +2438,7 @@ function legacyPianoRender() {
     case TAB.TOOLS:    html += typeof pianoToolsTab === "function" ? pianoToolsTab() : ""; break;
   }
   html += '</main>';
-  root.innerHTML = html;
+  setPianoRootHTML(root, html);
 }
 
 // ── Additional exports (non-hoisted helpers) ──
