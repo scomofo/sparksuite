@@ -42,12 +42,21 @@
 
   function feedbackPage(){
     var feedbackDraft = desktopFeedbackRead("feedbackDraft", {}) || {};
+    var feedbackExportMsg = desktopFeedbackRead("feedbackExportMsg", null);
     var h = '<div class="card">';
     h += '<div><b>Send Feedback</b></div>';
     h += '<textarea oninput="act(\'feedbackDraftText\',this.value)" placeholder="What worked? What broke?" style="width:100%;min-height:80px">' + escHTML(feedbackDraft.text || "") + '</textarea>';
     h += '<button onclick="act(\'exportFeedback\')">Export Feedback</button>';
+    if(feedbackExportMsg){
+      h += '<div style="margin-top:8px;color:' + (feedbackExportMsg.ok ? '#4ECDC4' : '#FF6B6B') + '">' + escHTML(feedbackExportMsg.text || '') + '</div>';
+    }
     h += '</div>';
     return h;
+  }
+
+  function setFeedbackExportMsg(ok, text){
+    desktopFeedbackWrite("feedbackExportMsg", { ok: !!ok, text: text || "" });
+    if(typeof render === "function") render();
   }
 
   async function exportFeedbackDesktopAware(){
@@ -57,10 +66,27 @@
       channel: typeof getReleaseChannel === "function" ? getReleaseChannel() : "dev",
       feedback: desktopFeedbackRead("feedbackDraft", {}) || {}
     };
-    if(typeof isDesktopBuild === "function" && isDesktopBuild()){
-      return await window.sparkDesktop.saveJson(payload);
+    try{
+      if(typeof isDesktopBuild === "function" && isDesktopBuild()){
+        await window.sparkDesktop.saveJson(payload);
+        setFeedbackExportMsg(true, "Feedback exported.");
+        return true;
+      }
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "sparksuite-feedback.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setFeedbackExportMsg(true, "Feedback downloaded.");
+      return true;
+    }catch(e){
+      setFeedbackExportMsg(false, String((e && e.message) || e || "Feedback export failed."));
+      return false;
     }
-    return false;
   }
 
   async function loadReleaseNotes(){

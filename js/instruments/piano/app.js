@@ -1974,25 +1974,46 @@ function act(action, param) {
 
     // ── Cloud Sync actions ──
     case "cloudSync":
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing" });
+      state.cloudLastError = null;
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing", lastError: null });
       if(typeof syncSparkNow === "function") syncSparkNow();
       return;
 
     case "cloudPull":
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing" });
+      state.cloudLastError = null;
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing", lastError: null });
       if(typeof pullSparkCloud === "function") pullSparkCloud();
       return;
 
     case "cloudLogout":
+      state.cloudLastError = null;
       if(typeof logoutSpark === "function") logoutSpark();
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("logout", { lastError: null });
       break;
 
     case "cloudLoginPrompt": {
       var clEmail = prompt("Email:");
       var clPassword = prompt("Password:");
-      if(clEmail && clPassword && typeof loginSpark === "function"){
-        loginSpark(clEmail, clPassword).then(function(){ if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login"); render(); });
+      var clError;
+      if(!clEmail || !clPassword) return;
+      state.cloudLastError = null;
+      if(typeof loginSpark !== "function"){
+        clError = "Cloud login is unavailable right now.";
+        state.cloudLastError = clError;
+        if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login_error", { lastSyncStatus: "error", lastError: clError });
+        render();
+        return;
       }
+      loginSpark(clEmail, clPassword).then(function(){
+        state.cloudLastError = null;
+        if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login", { lastError: null });
+        render();
+      }).catch(function(err){
+        clError = String((err && err.message) || err || "Cloud login failed.");
+        state.cloudLastError = clError;
+        if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login_error", { lastSyncStatus: "error", lastError: clError });
+        render();
+      });
       return;
     }
 

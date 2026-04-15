@@ -217,6 +217,13 @@ test('feedback draft input routes through the shared dispatcher', function() {
   assert.ok(appSource.indexOf('if(a==="feedbackDraftText"){') >= 0);
 });
 
+test('feedback export falls back to browser download and surfaces status', function() {
+  var feedbackSource = loadJS('js/desktop/feedback.js');
+  assert.ok(feedbackSource.indexOf('a.download = "sparksuite-feedback.json";') >= 0);
+  assert.ok(feedbackSource.indexOf('setFeedbackExportMsg(true, "Feedback downloaded.");') >= 0);
+  assert.ok(feedbackSource.indexOf('feedbackExportMsg') >= 0);
+});
+
 test('midi import falls back to the internal parser and surfaces import errors', function() {
   var chartIoSource = loadJS('js/sparksuite/core/chart_io.js');
   var midiParseSource = loadJS('js/import/midi_parse.js');
@@ -225,6 +232,19 @@ test('midi import falls back to the internal parser and surfaces import errors',
   assert.ok(midiParseSource.indexOf('typeof SparkChartIO !== "undefined" && typeof SparkChartIO.parseMidiBuffer === "function"') >= 0);
   assert.ok(midiUiSource.indexOf('midiImportWrite("midiImportError"') >= 0);
   assert.ok(midiUiSource.indexOf('<b>Import error:</b>') >= 0);
+});
+
+test('cloud actions surface login and sync errors instead of failing silently', function() {
+  var appSource = loadJS('js/app.js');
+  var pianoSource = loadJS('js/instruments/piano/app.js');
+  var cloudUiSource = loadJS('js/cloud/ui.js');
+  var cloudSyncSource = loadJS('js/cloud/sync.js');
+  assert.ok(appSource.indexOf('appWrite("cloudLastError",loginError);') >= 0);
+  assert.ok(appSource.indexOf('applyCloudWorkflowRequest("login_error",{lastSyncStatus:"error",lastError:loginError});') >= 0);
+  assert.ok(pianoSource.indexOf('state.cloudLastError = clError;') >= 0);
+  assert.ok(cloudUiSource.indexOf('<b>Error:</b>') >= 0);
+  assert.ok(cloudSyncSource.indexOf('cloudSyncWrite("cloudLastError", String((e && e.message) || e || "Cloud sync failed."));') >= 0);
+  assert.ok(cloudSyncSource.indexOf('cloudSyncWrite("cloudLastError", String((e && e.message) || e || "Cloud pull failed."));') >= 0);
 });
 
 test('career page hides play CTA when unlocked song data is missing', function() {

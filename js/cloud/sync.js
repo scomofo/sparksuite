@@ -55,7 +55,8 @@
     _ensureCloudSync();
     try{
       cloudSyncWrite(["cloudSync", "lastSyncStatus"], "syncing");
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing" });
+      cloudSyncWrite("cloudLastError", null);
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing", lastError: null });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       if(typeof render === "function") render();
       var snapshot = buildCloudSnapshot();
@@ -68,9 +69,11 @@
       cloudSyncWrite(["cloudSync", "lastSyncAt"], Date.now());
       cloudSyncWrite(["cloudSync", "lastSyncStatus"], "ok");
       cloudSyncWrite(["cloudSync", "dirtyKeys"], []);
+      cloudSyncWrite("cloudLastError", null);
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_done", {
         lastSyncStatus: "ok",
-        lastSyncAt: cloudSyncRead(["cloudSync", "lastSyncAt"], 0)
+        lastSyncAt: cloudSyncRead(["cloudSync", "lastSyncAt"], 0),
+        lastError: null
       });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
@@ -78,7 +81,11 @@
     }catch(e){
       console.error("Spark sync failed", e);
       cloudSyncWrite(["cloudSync", "lastSyncStatus"], "error");
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_error", { lastSyncStatus: "error" });
+      cloudSyncWrite("cloudLastError", String((e && e.message) || e || "Cloud sync failed."));
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_error", {
+        lastSyncStatus: "error",
+        lastError: cloudSyncRead("cloudLastError", null)
+      });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
       return false;
@@ -90,7 +97,8 @@
     _ensureCloudSync();
     try{
       cloudSyncWrite(["cloudSync", "lastSyncStatus"], "syncing");
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing" });
+      cloudSyncWrite("cloudLastError", null);
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing", lastError: null });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       var result = await sparkApiRequest("/api/sync/pull", "GET");
       if(result && result.snapshot){
@@ -98,9 +106,11 @@
       }
       cloudSyncWrite(["cloudSync", "lastSyncAt"], Date.now());
       cloudSyncWrite(["cloudSync", "lastSyncStatus"], "ok");
+      cloudSyncWrite("cloudLastError", null);
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_done", {
         lastSyncStatus: "ok",
-        lastSyncAt: cloudSyncRead(["cloudSync", "lastSyncAt"], 0)
+        lastSyncAt: cloudSyncRead(["cloudSync", "lastSyncAt"], 0),
+        lastError: null
       });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
@@ -108,7 +118,11 @@
     }catch(e){
       console.error("Spark pull failed", e);
       cloudSyncWrite(["cloudSync", "lastSyncStatus"], "error");
-      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_error", { lastSyncStatus: "error" });
+      cloudSyncWrite("cloudLastError", String((e && e.message) || e || "Cloud pull failed."));
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_error", {
+        lastSyncStatus: "error",
+        lastError: cloudSyncRead("cloudLastError", null)
+      });
       else if(typeof syncCloudSettingsStateRequest === "function") syncCloudSettingsStateRequest();
       saveState();
       return false;

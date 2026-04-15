@@ -39,6 +39,9 @@
     var syncAt = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "cloudLastSyncAt")
       ? runtimeState.cloudLastSyncAt
       : (((cloudUiRead("cloudSync", {}) || {}).lastSyncAt) || null);
+    var lastError = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "cloudLastError")
+      ? runtimeState.cloudLastError
+      : (cloudUiRead("cloudLastError", null) || null);
     var h = '<div class="card">';
     h += '<div><b>Cloud Sync</b></div>';
     if(loggedIn){
@@ -53,6 +56,9 @@
     }else{
       h += '<div>Not signed in</div>';
       h += '<button onclick="act(\'cloudLoginPrompt\')">Login</button>';
+    }
+    if(lastError){
+      h += '<div style="margin-top:8px;color:#FF6B6B"><b>Error:</b> ' + escHTML(lastError) + '</div>';
     }
     h += '</div>';
     return h;

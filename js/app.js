@@ -1338,7 +1338,8 @@ function buildCloudSettingsRuntimePayload() {
     loggedIn: !!(cloudAuth && cloudAuth.loggedIn && cloudAuth.token),
     email: cloudAuth ? (cloudAuth.email || null) : null,
     lastSyncStatus: cloudSync ? (cloudSync.lastSyncStatus || "idle") : "idle",
-    lastSyncAt: cloudSync ? (cloudSync.lastSyncAt || null) : null
+    lastSyncAt: cloudSync ? (cloudSync.lastSyncAt || null) : null,
+    lastError: appRead("cloudLastError", null)
   };
 }
 
@@ -4374,15 +4375,32 @@ window.act=function(a,v){
     }return;
   }
   // === Cloud Sync Actions ===
-  if(a==="cloudSync"){applyCloudWorkflowRequest("sync_start",{lastSyncStatus:"syncing"});if(typeof syncSparkNow==="function")syncSparkNow();return;}
-  if(a==="cloudPull"){applyCloudWorkflowRequest("pull_start",{lastSyncStatus:"syncing"});if(typeof pullSparkCloud==="function")pullSparkCloud();return;}
-  if(a==="cloudLogout"){if(typeof logoutSpark==="function")logoutSpark();applyCloudWorkflowRequest("logout");render();return;}
+  if(a==="cloudSync"){appWrite("cloudLastError",null);applyCloudWorkflowRequest("sync_start",{lastSyncStatus:"syncing",lastError:null});if(typeof syncSparkNow==="function")syncSparkNow();return;}
+  if(a==="cloudPull"){appWrite("cloudLastError",null);applyCloudWorkflowRequest("pull_start",{lastSyncStatus:"syncing",lastError:null});if(typeof pullSparkCloud==="function")pullSparkCloud();return;}
+  if(a==="cloudLogout"){appWrite("cloudLastError",null);if(typeof logoutSpark==="function")logoutSpark();applyCloudWorkflowRequest("logout",{lastError:null});render();return;}
   if(a==="cloudLoginPrompt"){
     var email=prompt("Email:");
     var password=prompt("Password:");
-    if(email&&password&&typeof loginSpark==="function"){
-      loginSpark(email,password).then(function(){applyCloudWorkflowRequest("login");render();});
-    }return;
+    var loginError;
+    if(!email||!password)return;
+    appWrite("cloudLastError",null);
+    if(typeof loginSpark!=="function"){
+      loginError="Cloud login is unavailable right now.";
+      appWrite("cloudLastError",loginError);
+      applyCloudWorkflowRequest("login_error",{lastSyncStatus:"error",lastError:loginError});
+      render();
+      return;
+    }
+    loginSpark(email,password).then(function(){
+      appWrite("cloudLastError",null);
+      applyCloudWorkflowRequest("login",{lastError:null});
+      render();
+    }).catch(function(err){
+      loginError=String((err&&err.message)||err||"Cloud login failed.");
+      appWrite("cloudLastError",loginError);
+      applyCloudWorkflowRequest("login_error",{lastSyncStatus:"error",lastError:loginError});
+      render();
+    });return;
   }
   if(a==="openCloudSettings"){openUtilityScreenRequest("cloud_settings");applyCloudWorkflowRequest("open");appWrite("screen",SCR.CLOUD_SETTINGS);render();return;}
   // === Desktop Actions ===
