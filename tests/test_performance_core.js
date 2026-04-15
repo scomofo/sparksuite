@@ -150,6 +150,7 @@ test('performance calibration buttons route through shared actions', function() 
   var performPageSource = loadJS('js/pages/perform.js');
   assert.ok(performPageSource.indexOf("onclick=\"act(\\'performCalibrateTap\\')\"") >= 0);
   assert.ok(performPageSource.indexOf("onclick=\"act(\\'performCalibrateCancel\\')\"") >= 0);
+  assert.ok(performPageSource.indexOf('maxCombo: 0') >= 0);
 });
 
 test('shared onboarding calibration action routes through the calibration screen handler', function() {

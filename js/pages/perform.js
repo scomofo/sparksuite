@@ -444,6 +444,16 @@ function performDonePage() {
     ? runtimeState.performanceTargetTechnique
     : performRead("performTargetTechnique", null);
   if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  r = Object.assign({
+    title: "",
+    artist: "",
+    score: 0,
+    accuracy: 0,
+    maxCombo: 0,
+    stars: 0,
+    totalEvents: 0,
+    phraseStats: []
+  }, r || {});
   var performChartId = performRead("performChartId", "unknown");
   var performSongStats = performRead("performSongStats", {}) || {};
   var performChart = performRead("performChart", null);
