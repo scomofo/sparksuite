@@ -472,6 +472,7 @@ test('career content bootstraps from the active instrument song library', functi
 test('career registry resolves state through the shared root helper instead of window-only fallbacks', function() {
   var registrySource = loadJS('js/career/registry.js');
   assert.ok(registrySource.indexOf('function getCareerRegistryStateRoot(){') >= 0);
+  assert.ok(registrySource.indexOf('SparkState.getRoot()') >= 0);
   assert.ok(registrySource.indexOf('globalThis.__sparkState') >= 0);
   assert.ok(registrySource.indexOf('var cursor = typeof window!=="undefined" && window.__sparkState ? window.__sparkState : (typeof window!=="undefined" ? window.S : null);') === -1);
   assert.ok(registrySource.indexOf('var root = typeof window!=="undefined" && window.__sparkState ? window.__sparkState : (typeof window!=="undefined" ? window.S : null);') === -1);

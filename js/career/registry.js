@@ -9,6 +9,9 @@
   };
 
   function getCareerRegistryStateRoot(){
+    if(typeof SparkState!=="undefined" && SparkState && typeof SparkState.getRoot==="function"){
+      return SparkState.getRoot();
+    }
     if(typeof globalThis!=="undefined" && globalThis.__sparkState) return globalThis.__sparkState;
     if(typeof globalThis!=="undefined" && globalThis.S) return globalThis.S;
     if(typeof window!=="undefined" && window.__sparkState) return window.__sparkState;

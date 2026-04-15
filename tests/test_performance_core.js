@@ -157,6 +157,7 @@ test('performance calibration buttons route through shared actions', function() 
 test('performance highway theme persistence uses the shared state root instead of legacy window.S-only access', function() {
   var highwaySource = loadJS('js/performance/highway.js');
   assert.ok(highwaySource.indexOf('function getPerformanceHighwayStateRoot()') >= 0);
+  assert.ok(highwaySource.indexOf('SparkState.getRoot()') >= 0);
   assert.ok(highwaySource.indexOf('globalThis.__sparkState') >= 0);
   assert.ok(highwaySource.indexOf('window.S.settings.performanceHighwayThemeSelection') === -1);
 });

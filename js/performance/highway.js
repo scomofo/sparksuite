@@ -20,6 +20,9 @@ function getPerformanceHighwayThemeManifest() {
 }
 
 function getPerformanceHighwayStateRoot() {
+  if (typeof SparkState !== "undefined" && SparkState && typeof SparkState.getRoot === "function") {
+    return SparkState.getRoot();
+  }
   if (typeof globalThis !== "undefined" && globalThis.__sparkState) {
     return globalThis.__sparkState;
   }
