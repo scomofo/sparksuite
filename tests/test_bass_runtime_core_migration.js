@@ -36,6 +36,7 @@ function resetState() {
   global.renderCalls = 0;
   global.saveStateCalls = 0;
   global.playedSounds = [];
+  global.toasts = [];
   global.sparkCoreCalls = [];
   global.guidedNavigationCalls = [];
   global.legacyPracticeCalls = [];
@@ -45,6 +46,7 @@ function resetState() {
   global.render = function() { renderCalls++; };
   global.saveState = function() { saveStateCalls++; };
   global.snd = function(name) { playedSounds.push(name); };
+  global.showToast = function(msg) { toasts.push(msg); };
   global.trigC = function() { confettiCalls++; };
   global.stopMetronome = function() {};
 
@@ -357,6 +359,22 @@ test("startDrill falls back to the instrument chord pool when sparkCore drill pl
 
   assert.deepStrictEqual(S.drillChords, [{ name: "E" }, { name: "A" }]);
   assert.strictEqual(S.screen, "drill");
+});
+
+test("quickStart and drill entry surface feedback when legacy practice builders return no session", function() {
+  window.sparkCore.startLegacyPracticeSession = function(options) {
+    sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+    return null;
+  };
+
+  bassAct("quickStart");
+  bassAct("startDrill");
+
+  assert.deepStrictEqual(toasts, [
+    "That practice item couldn't be started right now.",
+    "That practice item couldn't be started right now."
+  ]);
+  assert.strictEqual(S.screen, "home");
 });
 
 test("legacy practice replay actions delegate to shared retry helpers", function() {

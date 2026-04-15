@@ -268,7 +268,10 @@ function guitarAct(a, v) {
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "quickStart", level: guitarStateRead("level", 1) }));
     var sessionChord = resolveLegacySessionChord(D, session, guitarStateRead("level", 1));
     var sessionChordName = session && session.chordName ? session.chordName : (sessionChord && sessionChord.name ? sessionChord.name : null);
-    if (!session) return true;
+    if (!session) {
+      if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
+      return true;
+    }
     openLegacyPracticeSessionRuntime({
       mode: "quickStart",
       chordName: sessionChordName,
@@ -321,7 +324,10 @@ function guitarAct(a, v) {
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "chord", chordName: v }));
     var sessionChord = resolveLegacySessionChord(D, session, guitarStateRead("level", 1));
     var sessionChordName = session && session.chordName ? session.chordName : (sessionChord && sessionChord.name ? sessionChord.name : null);
-    if (!session) return true;
+    if (!session) {
+      if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
+      return true;
+    }
     openLegacyPracticeSessionRuntime({
       mode: "chord",
       chordName: sessionChordName,
@@ -347,10 +353,16 @@ function guitarAct(a, v) {
   if (a === "startDrill") {
     var drillLevel = guitarStateRead("level", 1);
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "drill", level: drillLevel }));
-    if (!session) return true;
+    if (!session) {
+      if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
+      return true;
+    }
     var drillChords = resolveLegacyDrillChords(D, session);
     if (!drillChords.length) drillChords = buildFallbackLegacyDrillChords(D, drillLevel);
-    if (!drillChords.length) return true;
+    if (!drillChords.length) {
+      if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
+      return true;
+    }
     openLegacyPracticeDrillRuntime({
       durationSec: session.durationSec != null ? session.durationSec : session.duration,
       chordNames: drillChords.map(function(ch) { return ch.name; })

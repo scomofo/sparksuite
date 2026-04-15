@@ -332,6 +332,24 @@ test("startDrill falls back to instrument chord pool when sparkCore drill plan i
   assert.strictEqual(S.screen, "drill");
 });
 
+test("quickStart, startSession, and startDrill surface feedback when legacy practice builders return no session", function() {
+  window.sparkCore.startLegacyPracticeSession = function(options) {
+    sparkCoreCalls.push({ fn: "startLegacyPracticeSession", payload: options });
+    return null;
+  };
+
+  guitarAct("quickStart");
+  guitarAct("startSession", "E");
+  guitarAct("startDrill");
+
+  assert.deepStrictEqual(toasts, [
+    "That practice item couldn't be started right now.",
+    "That practice item couldn't be started right now.",
+    "That practice item couldn't be started right now."
+  ]);
+  assert.strictEqual(S.screen, "home");
+});
+
 test("guidedStart delegates to shared guided session helper", function() {
   guitarAct("guidedStart", "2");
 
