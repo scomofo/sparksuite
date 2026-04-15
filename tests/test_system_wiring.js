@@ -32,6 +32,12 @@ function resetState() {
 
 function bootstrap() {
   resetState();
+  loadJS("js/sparksuite/input/input_note_mapper.js");
+  loadJS("js/sparksuite/input/chord_stabilizer.js");
+  loadJS("js/sparksuite/input/multi_frequency_chord_detector.js");
+  loadJS("js/sparksuite/analysis/performance_analyzer.js");
+  loadJS("js/sparksuite/analysis/chord_confidence.js");
+  loadJS("js/sparksuite/core/play_along_expected_event.js");
   loadJS("js/sparksuite/core/system_wiring.js");
 }
 
@@ -71,7 +77,7 @@ test("processPlayAlongFrame uses visibleNotes debug data without undefined refer
   assert.strictEqual(frame.prediction.windowMs, 3000);
   assert.strictEqual(marked, 1);
   assert.strictEqual(cleared, 0);
-  assert.strictEqual(SparkDebugState.last.expected, 2);
+  assert.strictEqual(SparkDebugState.last.expected, "Am");
   assert.strictEqual(SparkDebugState.last.bpm, 120);
   assert.strictEqual(SparkDebugState.last.audioMode, "local");
   assert.strictEqual(SparkDebugState.last.latencyMs, 25);
@@ -270,6 +276,126 @@ test("processPlayAlongInput scores chord confidence from detected notes and timi
     }
   });
   assert.deepStrictEqual(out.chordResult, { chord: "C", confidence: 0.77 });
+});
+
+test("multi-frequency detector extracts notes and applies confidence gating", function() {
+  var detector = new SparkMultiFrequencyChordDetector({
+    chordDetector: {
+      detect: function(notes) {
+        return notes.indexOf("C") >= 0 ? "C" : null;
+      }
+    },
+    stabilizer: new SparkChordStabilizer(),
+    minConfidence: 0.6
+  });
+
+  var analyser = {
+    frequencyBinCount: 8,
+    fftSize: 16,
+    getByteFrequencyData: function(buffer) {
+      for (var i = 0; i < buffer.length; i++) buffer[i] = 0;
+      buffer[1] = 120;
+      buffer[2] = 110;
+      buffer[3] = 95;
+    }
+  };
+
+  var pitchDetector = {
+    detect: function() { return 261.63; },
+    frequencyToNote: function() { return "C"; }
+  };
+
+  var frame1 = detector.detect(analyser, 2048, pitchDetector, new Float32Array([0.2, 0.1]));
+  var frame2 = detector.detect(analyser, 2048, pitchDetector, new Float32Array([0.2, 0.1]));
+  var frame3 = detector.detect(analyser, 2048, pitchDetector, new Float32Array([0.2, 0.1]));
+
+  assert.ok(frame1.notes.indexOf("C") >= 0);
+  assert.ok(frame1.frequencies.length >= 1);
+  assert.strictEqual(frame1.chord, null);
+  assert.ok(frame3.confidence >= 0.6);
+  assert.strictEqual(frame3.chord, "C");
+});
+
+test("processPlayAlongInput uses expected event timing helper for bar beat charts", function() {
+  var core = new SparkCoreRuntime();
+  core._activeChart = {
+    bpm: 120,
+    timeSignature: 4,
+    timeline: [
+      { bar: 1, beat: 2, chord: "C" }
+    ]
+  };
+  core.performanceAnalyzer = new SparkPerformanceAnalyzer();
+  core.performanceTracker = {
+    record: function() {},
+    getAccuracy: function() { return 1; }
+  };
+  core.chordConfidence = new SparkChordConfidence();
+
+  var out = core.processPlayAlongInput({
+    time: 520,
+    note: "C",
+    chord: "C",
+    confidence: 0.82,
+    detectedNotes: ["C", "E", "G"]
+  });
+
+  assert.strictEqual(out.delta, 20);
+  assert.strictEqual(out.result.rating, "perfect");
+  assert.strictEqual(out.expectedEvent.chord, "C");
+  assert.strictEqual(SparkDebugState.last.expected, "C");
+  assert.strictEqual(SparkDebugState.last.timing, "perfect");
+});
+
+test("startMicDetection uses mic start and multi-note detector output", function() {
+  var scheduled = null;
+  var received = null;
+  global.requestAnimationFrame = function(fn) {
+    scheduled = fn;
+    return 1;
+  };
+
+  var core = new SparkCoreRuntime();
+  core.micInput = {
+    start: function() { return Promise.resolve(); },
+    getAnalyser: function() { return { frequencyBinCount: 4, fftSize: 8, getByteFrequencyData: function() {} }; },
+    getTimeDomainData: function() { return new Float32Array([0.1, 0.2, 0.3]); },
+    getSampleRate: function() { return 48000; }
+  };
+  core.pitchDetector = {
+    detect: function() { return 440; },
+    frequencyToNote: function() { return "A"; }
+  };
+  core.multiChordDetector = {
+    reset: function() {},
+    detect: function() {
+      return {
+        notes: ["C", "E", "G"],
+        chord: "C",
+        confidence: 0.82,
+        rawChord: "C",
+        pitchNote: "C",
+        frequencies: [261.63, 329.63, 392.0]
+      };
+    }
+  };
+  core.processPlayAlongInput = function(inputEvent) {
+    received = inputEvent;
+  };
+  core.getInputTimeMs = function() { return 1234; };
+
+  return core.startMicDetection().then(function() {
+    scheduled();
+    assert.deepStrictEqual(received, {
+      time: 1234,
+      note: "C",
+      chord: "C",
+      confidence: 0.82,
+      detectedNotes: ["C", "E", "G"],
+      rawChord: "C",
+      frequencies: [261.63, 329.63, 392.0]
+    });
+  });
 });
 
 test("_startAudioForSession uses playbackEngine.start for trackUri sessions", function() {

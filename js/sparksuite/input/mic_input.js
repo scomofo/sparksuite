@@ -21,11 +21,19 @@
       this.source.connect(this.analyser);
     }
 
+    init() {
+      return this.start();
+    }
+
     getSamples() {
       if (!this.analyser) return null;
       var buffer = new Float32Array(this.analyser.fftSize);
       this.analyser.getFloatTimeDomainData(buffer);
       return buffer;
+    }
+
+    getTimeDomainData() {
+      return this.getSamples();
     }
 
     getFrequencyData() {

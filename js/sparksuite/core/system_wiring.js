@@ -42,6 +42,14 @@
     this.micInput = new SparkMicInput();
     this.pitchDetector = new SparkPitchDetector();
     this.chordDetector = new SparkChordDetector();
+    this.chordStabilizer = new SparkChordStabilizer();
+    this.multiChordDetector = typeof SparkMultiFrequencyChordDetector === "function"
+      ? new SparkMultiFrequencyChordDetector({
+        chordDetector: this.chordDetector,
+        stabilizer: this.chordStabilizer,
+        minConfidence: 0.6
+      })
+      : null;
 
     // Learning / RL pipeline
     this.learnerModel = new SparkLearnerModel();
@@ -73,7 +81,9 @@
     }
 
     // Chord stabilizer
-    this.chordStabilizer = new SparkChordStabilizer();
+    if (this.multiChordDetector && typeof this.chordStabilizer.setBufferSize === "function") {
+      this.chordStabilizer.setBufferSize(10);
+    }
 
     // Bind single time source (AudioEngine is master clock)
     SparkTimeSource.bind(this.audioEngine);
@@ -158,6 +168,44 @@
       return;
     }
     if (core) core._pausedPlaybackTimeMs = typeof timeMs === "number" ? timeMs : null;
+  }
+
+  function getExpectedPlayAlongEvent(chart, timeMs) {
+    if (window.SparkPlayAlongTiming && typeof window.SparkPlayAlongTiming.getExpectedEvent === "function") {
+      return window.SparkPlayAlongTiming.getExpectedEvent(chart, timeMs);
+    }
+
+    var timeline = chart && chart.timeline ? chart.timeline : [];
+    var closest = { time: null, chord: null, event: null };
+    var bestDistance = Infinity;
+    for (var i = 0; i < timeline.length; i++) {
+      var event = timeline[i];
+      if (typeof event.time !== "number") continue;
+      var distance = Math.abs(event.time - timeMs);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        closest = {
+          time: event.time,
+          chord: event.chord != null ? event.chord : (event.note != null ? event.note : event.lane),
+          event: event
+        };
+      }
+    }
+    return closest;
+  }
+
+  function calculateTimingOffsetMs(expectedTimeMs, actualTimeMs) {
+    if (window.SparkPlayAlongTiming && typeof window.SparkPlayAlongTiming.calculateTimingOffsetMs === "function") {
+      return window.SparkPlayAlongTiming.calculateTimingOffsetMs(expectedTimeMs, actualTimeMs);
+    }
+    if (typeof expectedTimeMs !== "number" || typeof actualTimeMs !== "number") return null;
+    return actualTimeMs - expectedTimeMs;
+  }
+
+  function updatePlayAlongDebug(patch) {
+    if (typeof SparkDebugState !== "undefined") {
+      SparkDebugState.update(patch);
+    }
   }
 
   // ---------------------------------------------------------------
@@ -304,6 +352,7 @@
     var chart = getPlayAlongChart(this);
     var visibleNotes = [];
     var prediction = null;
+    var expectedEvent = null;
 
     if (chart) {
       var timeline = chart.timeline || (typeof chart.getTimeline === "function" ? chart.getTimeline() : []);
@@ -326,23 +375,23 @@
       }
     }
 
-    // Update debug state
-    if (typeof SparkDebugState !== "undefined") {
-      SparkDebugState.update({
-        time: timeMs,
-        expected: visibleNotes.length ? (visibleNotes[0].lane != null ? visibleNotes[0].lane : visibleNotes[0].chord) : null,
-        bpm: (chart && chart.getBpm) ? chart.getBpm() : 0,
-        audioMode: this.audioEngine && this.audioEngine.isPlaying() ? "local" : (this.stemMixer && this.stemMixer.isPlaying() ? "stems" : "spotify"),
-        latencyMs: this.latencyCalibrator ? this.latencyCalibrator.getOffset() : 0
-      });
-    }
+    expectedEvent = chart ? getExpectedPlayAlongEvent(chart, inputTimeMs) : null;
+
+    updatePlayAlongDebug({
+      time: timeMs,
+      expected: expectedEvent ? expectedEvent.chord : null,
+      bpm: (chart && chart.getBpm) ? chart.getBpm() : (chart && chart.bpm ? chart.bpm : 0),
+      audioMode: this.audioEngine && this.audioEngine.isPlaying() ? "local" : (this.stemMixer && this.stemMixer.isPlaying() ? "stems" : "spotify"),
+      latencyMs: this.latencyCalibrator ? this.latencyCalibrator.getOffset() : 0
+    });
 
     return {
       timeMs: timeMs,
       inputTimeMs: inputTimeMs,
       visibleNotes: visibleNotes,
       prediction: prediction,
-      renderTimeMs: timeMs + 100
+      renderTimeMs: timeMs + 100,
+      expectedEvent: expectedEvent
     };
   };
 
@@ -355,43 +404,42 @@
     var result = null;
     var chordResult = null;
     var delta = null;
+    var expectedEvent = null;
+    var expectedLabel = null;
+    var timingLabel = null;
+    var score = 0;
 
     if (!chart || !chart.timeline) {
-      // Update debug state with input
-      if (typeof SparkDebugState !== "undefined") {
-        SparkDebugState.update({
-          detected: inputEvent.note || null,
-          chord: inputEvent.chord || null,
-          confidence: inputEvent.confidence || 0,
-          delta: 0,
-          accuracy: this.performanceTracker ? this.performanceTracker.getAccuracy() : 0
-        });
-      }
+      updatePlayAlongDebug({
+        detected: inputEvent.note || inputEvent.chord || null,
+        chord: inputEvent.chord || null,
+        detectedChord: inputEvent.chord || null,
+        detectedNotes: inputEvent.detectedNotes || (inputEvent.note ? [inputEvent.note] : []),
+        confidence: inputEvent.confidence || 0,
+        delta: 0,
+        accuracy: this.performanceTracker ? this.performanceTracker.getAccuracy() : 0,
+        timing: null,
+        score: 0
+      });
 
-      return { result: null, chordResult: null, delta: null };
+      return { result: null, chordResult: null, delta: null, expectedEvent: null };
     }
 
-    // Find nearest expected note
-    var nearest = null;
-    var nearestDist = Infinity;
-    for (var i = 0; i < chart.timeline.length; i++) {
-      var dist = Math.abs(chart.timeline[i].time - inputEvent.time);
-      if (dist < nearestDist) {
-        nearestDist = dist;
-        nearest = chart.timeline[i];
-      }
-    }
+    expectedEvent = getExpectedPlayAlongEvent(chart, inputEvent.time);
+    expectedLabel = expectedEvent ? expectedEvent.chord : null;
 
     // Score via performance analyzer
-    if (nearest && this.performanceAnalyzer) {
-      delta = inputEvent.time - nearest.time;
-      result = this.performanceAnalyzer.analyze(nearest.note || nearest.chord || null, inputEvent.note || inputEvent.chord || null, delta);
+    if (expectedEvent && this.performanceAnalyzer) {
+      delta = calculateTimingOffsetMs(expectedEvent.time, inputEvent.time);
+      result = this.performanceAnalyzer.analyze(expectedLabel, inputEvent.note || inputEvent.chord || null, delta);
+      timingLabel = result ? result.rating : null;
+      score = result && typeof result.score === "number" ? result.score : 0;
     }
 
     // Chord confidence if applicable
-    if (inputEvent.chord && this.chordConfidence) {
+    if (expectedLabel && this.chordConfidence) {
       chordResult = this.chordConfidence.score(
-        inputEvent.chord,
+        expectedLabel,
         inputEvent.detectedNotes || (inputEvent.note ? [inputEvent.note] : []),
         {
           timingErrorMs: delta,
@@ -410,10 +458,24 @@
       this.voiceCoach.evaluate(result, inputEvent.time || this.getInputTimeMs());
     }
 
+    updatePlayAlongDebug({
+      expected: expectedLabel,
+      detected: inputEvent.note || inputEvent.chord || null,
+      chord: inputEvent.chord || expectedLabel || null,
+      detectedChord: inputEvent.chord || null,
+      detectedNotes: inputEvent.detectedNotes || (inputEvent.note ? [inputEvent.note] : []),
+      confidence: inputEvent.confidence || 0,
+      delta: delta || 0,
+      timing: chordResult && chordResult.timing ? chordResult.timing : timingLabel,
+      score: chordResult && typeof chordResult.confidence === "number" ? chordResult.confidence : score,
+      accuracy: this.performanceTracker ? this.performanceTracker.getAccuracy() : 0
+    });
+
     return {
       result: result,
       chordResult: chordResult,
-      delta: delta
+      delta: delta,
+      expectedEvent: expectedEvent
     };
   };
 
@@ -515,26 +577,44 @@
   SparkCore.prototype.startMicDetection = function () {
     var self = this;
     this._micActive = true;
+    if (this.multiChordDetector && typeof this.multiChordDetector.reset === "function") {
+      this.multiChordDetector.reset();
+    } else if (this.chordStabilizer && typeof this.chordStabilizer.reset === "function") {
+      this.chordStabilizer.reset();
+    }
 
-    this.micInput.init().then(function () {
+    return this.micInput.start().then(function () {
+      var analyser = self.micInput.getAnalyser();
+      if (analyser && typeof SparkHarmonicAnalyzer === "function") {
+        self.harmonicAnalyzer = new SparkHarmonicAnalyzer(analyser);
+      }
+
       function loop() {
         if (!self._micActive) return;
 
-        var samples = self.micInput.getSamples();
-        if (samples && samples.length > 0) {
-          var detection = self.pitchDetector.detect(samples);
-          if (detection && detection.frequency > 0) {
-            var note = self.pitchDetector.frequencyToNote
-              ? self.pitchDetector.frequencyToNote(detection.frequency)
-              : detection.note;
+        var samples = self.micInput.getTimeDomainData ? self.micInput.getTimeDomainData() : self.micInput.getSamples();
+        var sampleRate = self.micInput.getSampleRate ? self.micInput.getSampleRate() : null;
+        var detection = self.multiChordDetector && typeof self.multiChordDetector.detect === "function"
+          ? self.multiChordDetector.detect(analyser, sampleRate, self.pitchDetector, samples)
+          : null;
 
-            self.processPlayAlongInput({
-              time: self.getInputTimeMs(),
-              note: note,
-              confidence: detection.confidence || 0,
-              detectedNotes: detection.notes || [note]
-            });
-          }
+        if (detection && detection.notes && detection.notes.length) {
+          self.processPlayAlongInput({
+            time: self.getInputTimeMs(),
+            note: detection.pitchNote || detection.chord || detection.notes[0] || null,
+            chord: detection.chord,
+            confidence: detection.confidence || 0,
+            detectedNotes: detection.notes,
+            rawChord: detection.rawChord,
+            frequencies: detection.frequencies
+          });
+        } else {
+          updatePlayAlongDebug({
+            detected: null,
+            detectedChord: null,
+            detectedNotes: [],
+            confidence: 0
+          });
         }
 
         requestAnimationFrame(loop);

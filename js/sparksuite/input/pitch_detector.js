@@ -32,6 +32,13 @@
 
       return sampleRate / bestOffset;
     }
+
+    frequencyToNote(freq) {
+      if (!window.SparkInputNoteMapper || typeof window.SparkInputNoteMapper.frequencyToNoteName !== 'function') {
+        return null;
+      }
+      return window.SparkInputNoteMapper.frequencyToNoteName(freq);
+    }
   }
 
   window.SparkPitchDetector = SparkPitchDetector;
