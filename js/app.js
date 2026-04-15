@@ -2728,10 +2728,11 @@ window.act=function(a,v){
     return;
   }
   // === Custom Practice Sets ===
-  if(a==="newSet"){appWrite("editingSet",true);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);render();return;}
-  if(a==="setName"){appWrite("customSetName",v);return;}
+  if(a==="newSet"){appWrite("editingSet",true);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);appWrite("customSetError",null);render();return;}
+  if(a==="setName"){appWrite("customSetName",v);appWrite("customSetError",null);return;}
   if(a==="toggleSetChord"){
     var customSetChords=appRead("customSetChords", []);
+    appWrite("customSetError",null);
     var idx=customSetChords.indexOf(v);
     if(idx===-1)customSetChords.push(v);else customSetChords.splice(idx,1);
     appWrite("customSetChords",customSetChords);
@@ -2742,7 +2743,11 @@ window.act=function(a,v){
     var saveSetName=appRead("customSetName", "");
     var customSets=appRead("customSets", []);
     var editingSetIdx=appRead("editingSetIdx", -1);
-    if(saveSetChords.length<2||!saveSetName.trim())return;
+    if(saveSetChords.length<2||!saveSetName.trim()){
+      appWrite("customSetError","Add a set name and at least 2 chords before saving.");
+      render();
+      return;
+    }
     var setObj={name:saveSetName.trim(),chords:saveSetChords.slice()};
     if(editingSetIdx>=0&&editingSetIdx<customSets.length){
       customSets[editingSetIdx]=setObj;
@@ -2750,16 +2755,16 @@ window.act=function(a,v){
       customSets.push(setObj);
     }
     appWrite("customSets",customSets);
-    appWrite("editingSet",false);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);
+    appWrite("editingSet",false);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);appWrite("customSetError",null);
     saveState();render();return;
   }
-  if(a==="cancelSet"){appWrite("editingSet",false);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);render();return;}
+  if(a==="cancelSet"){appWrite("editingSet",false);appWrite("editingSetIdx",-1);appWrite("customSetName","");appWrite("customSetChords",[]);appWrite("customSetError",null);render();return;}
   if(a==="editSet"){
     var editSetIdx=parseInt(v);
     var editCustomSets=appRead("customSets", []);
     if(editSetIdx>=0&&editSetIdx<editCustomSets.length){
       var cs=editCustomSets[editSetIdx];
-      appWrite("editingSet",true);appWrite("editingSetIdx",editSetIdx);appWrite("customSetName",cs.name);appWrite("customSetChords",cs.chords.slice());
+      appWrite("editingSet",true);appWrite("editingSetIdx",editSetIdx);appWrite("customSetName",cs.name);appWrite("customSetChords",cs.chords.slice());appWrite("customSetError",null);
       render();
     }return;
   }
@@ -2850,11 +2855,11 @@ window.act=function(a,v){
   }
   // === Progression Builder ===
   if(a==="progPickerToggle"){appWrite("progPickerOpen",!appRead("progPickerOpen", false));render();return;}
-  if(a==="progAdd"){var progAddChords=appRead("progChords", []);progAddChords.push(v);appWrite("progChords",progAddChords);appWrite("progPickerOpen",false);render();return;}
+  if(a==="progAdd"){var progAddChords=appRead("progChords", []);progAddChords.push(v);appWrite("progChords",progAddChords);appWrite("progPickerOpen",false);appWrite("progError",null);render();return;}
   if(a==="progRemove"){
     var progRemoveIdx=parseInt(v);
     var progRemoveChords=appRead("progChords", []);
-    if(progRemoveIdx>=0&&progRemoveIdx<progRemoveChords.length){progRemoveChords.splice(progRemoveIdx,1);appWrite("progChords",progRemoveChords);render();}
+    if(progRemoveIdx>=0&&progRemoveIdx<progRemoveChords.length){progRemoveChords.splice(progRemoveIdx,1);appWrite("progChords",progRemoveChords);appWrite("progError",null);render();}
     return;
   }
   if(a==="progMove"){
@@ -2867,12 +2872,14 @@ window.act=function(a,v){
       var t2=moveChords[moveIdx];moveChords[moveIdx]=moveChords[moveIdx+1];moveChords[moveIdx+1]=t2;
     }
     appWrite("progChords",moveChords);
+    appWrite("progError",null);
     render();return;
   }
   if(a==="progTemplate"){
     var templateIdx=parseInt(v);
     if(templateIdx>=0&&templateIdx<COMMON_PROGRESSIONS.length){
       appWrite("progChords",COMMON_PROGRESSIONS[templateIdx].chords.slice());
+      appWrite("progError",null);
       render();
     }return;
   }
@@ -2880,6 +2887,7 @@ window.act=function(a,v){
     var b=parseInt(v);
     if(b>=40&&b<=200){
       appWrite("progBpm",b);
+      appWrite("progError",null);
       if(appRead("progPlaying", false)){
         clearInterval(T.prog);
         var ms=60000/b;
@@ -2896,11 +2904,15 @@ window.act=function(a,v){
   }
   if(a==="progPlay"){
     var progPlayChords=appRead("progChords", []);
-    if(progPlayChords.length<2)return;
+    if(progPlayChords.length<2){
+      appWrite("progError","Add at least 2 chords before pressing Play.");
+      render();
+      return;
+    }
     if(appRead("progPlaying", false)){
-      appWrite("progPlaying",false);clearInterval(T.prog);render();
+      appWrite("progPlaying",false);appWrite("progError",null);clearInterval(T.prog);render();
     }else{
-      appWrite("progPlaying",true);appWrite("progBeat",0);
+      appWrite("progPlaying",true);appWrite("progBeat",0);appWrite("progError",null);
       strumChord(progPlayChords[0]);
       var ms=60000/appRead("progBpm", 90);
       T.prog=setInterval(function(){
@@ -2915,7 +2927,7 @@ window.act=function(a,v){
   }
   if(a==="progClear"){
     if(appRead("progPlaying", false)){appWrite("progPlaying",false);clearInterval(T.prog);}
-    appWrite("progChords",[]);render();return;
+    appWrite("progChords",[]);appWrite("progError",null);render();return;
   }
   // === Export/Import Progress ===
   if(a==="exportProgress"){
@@ -3091,7 +3103,11 @@ window.act=function(a,v){
   if(a==="submitClearProg"){appWrite("communityError",null);ensureCommunitySubmitSong().progression=[];render();return;}
   if(a==="submitSong"){
     var ss=ensureCommunitySubmitSong();
-    if(!ss.title.trim()||!ss.artist.trim()||ss.chords.length<2||ss.progression.length<2)return;
+    if(!ss.title.trim()||!ss.artist.trim()||ss.chords.length<2||ss.progression.length<2){
+      appWrite("communityError","Add a title, artist, and at least two chords in the progression before submitting.");
+      render();
+      return;
+    }
     var _title=ss.title.trim().slice(0,100);
     var _artist=ss.artist.trim().slice(0,100);
     var _submittedBy=(ss.submittedBy.trim()||"Anonymous").slice(0,50);

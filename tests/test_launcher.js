@@ -374,8 +374,27 @@ test('community actions surface API errors instead of swallowing them', function
   assert.ok(appSource.indexOf('if(!r.ok) throw new Error(data && data.error ? data.error : ("Community request failed: " + r.status));') >= 0);
   assert.ok(appSource.indexOf('if(!r.ok) throw new Error(data && data.error ? data.error : ("Vote failed: " + r.status));') >= 0);
   assert.ok(appSource.indexOf('if(!r.ok) throw new Error(data && data.error ? data.error : ("Submit failed: " + r.status));') >= 0);
+  assert.ok(appSource.indexOf('appWrite("communityError","Add a title, artist, and at least two chords in the progression before submitting.");') >= 0);
   assert.ok(appSource.indexOf('appWrite("communityError",String((err&&err.message)||err||"Failed to submit song"));render();') >= 0);
   assert.ok(songsSource.indexOf('if(communityState.error){') >= 0);
+});
+
+test('custom practice set save surfaces validation instead of silently returning', function() {
+  var appSource = loadJS('js/app.js');
+  var practiceSource = loadJS('js/pages/practice.js');
+  assert.ok(appSource.indexOf('appWrite("customSetError","Add a set name and at least 2 chords before saving.");') >= 0);
+  assert.ok(appSource.indexOf('appWrite("customSetError",null);') >= 0);
+  assert.ok(practiceSource.indexOf('customSetError: practiceStateRead("customSetError", "") || ""') >= 0);
+  assert.ok(practiceSource.indexOf('if(customState.customSetError){') >= 0);
+});
+
+test('progression builder play surfaces validation instead of silently returning', function() {
+  var appSource = loadJS('js/app.js');
+  var gamesSource = loadJS('js/pages/games.js');
+  assert.ok(appSource.indexOf('appWrite("progError","Add at least 2 chords before pressing Play.");') >= 0);
+  assert.ok(appSource.indexOf('appWrite("progError",null);') >= 0);
+  assert.ok(gamesSource.indexOf('var progError = gameStateRead("progError", "") || "";') >= 0);
+  assert.ok(gamesSource.indexOf('if(progError){') >= 0);
 });
 
 test('inline onclick handlers stay on shared act routing', function() {

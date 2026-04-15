@@ -81,7 +81,8 @@ function getPracticeCustomSetSnapshot() {
     editingSetIdx: practiceStateRead("editingSetIdx", -1),
     customSetName: practiceStateRead("customSetName", "") || "",
     customSetChords: Array.isArray(practiceStateRead("customSetChords", [])) ? practiceStateRead("customSetChords", []) : [],
-    customSets: Array.isArray(practiceStateRead("customSets", [])) ? practiceStateRead("customSets", []) : []
+    customSets: Array.isArray(practiceStateRead("customSets", [])) ? practiceStateRead("customSets", []) : [],
+    customSetError: practiceStateRead("customSetError", "") || ""
   };
 }
 
@@ -446,6 +447,9 @@ function customSetsSection(){
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
   if(customState.editingSet){
+    if(customState.customSetError){
+      h+='<div style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:#FF6B6B22;color:#FF6B6B;font-size:12px;font-weight:700">'+escHTML(customState.customSetError)+'</div>';
+    }
     h+='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(customState.customSetName)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Select chords (min 2):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';

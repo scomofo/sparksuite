@@ -246,6 +246,7 @@ function buildTab(){
   var activeLevel = gameStateRead("level", 1);
   var selectedScale = gameStateRead("selectedScale", "major");
   var progBpm = gameStateRead("progBpm", 80);
+  var progError = gameStateRead("progError", "") || "";
 
   // Progression display
   h+='<div class="prog-blocks mb12">';
@@ -325,7 +326,11 @@ function buildTab(){
   }
 
   // Controls
-  h+='<div class="card"><div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">';
+  h+='<div class="card">';
+  if(progError){
+    h+='<div style="margin-bottom:12px;padding:10px 12px;border-radius:10px;background:#FF6B6B22;color:#FF6B6B;font-size:12px;font-weight:700">'+escHTML(progError)+'</div>';
+  }
+  h+='<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">';
   h+='<button onclick="act(\'progBpm\',\''+(progBpm-5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">-</button>';
   h+='<div style="text-align:center;min-width:60px"><div style="font-size:20px;font-weight:900;color:var(--text-primary)">'+progBpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
   h+='<button onclick="act(\'progBpm\',\''+(progBpm+5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">+</button></div>';
