@@ -38,6 +38,7 @@ function resetState() {
   global.renderCalls = 0;
   global.saveStateCalls = 0;
   global.playedSounds = [];
+  global.toasts = [];
   global.sparkCoreCalls = [];
   global.guidedNavigationCalls = [];
   global.confettiCalls = 0;
@@ -47,6 +48,7 @@ function resetState() {
   global.render = function() { renderCalls++; };
   global.saveState = function() { saveStateCalls++; };
   global.snd = function(name) { playedSounds.push(name); };
+  global.showToast = function(msg) { toasts.push(msg); };
   global.trigC = function() { confettiCalls++; };
   global.stopMetronome = function() {};
   global.tickS = function() {};
@@ -373,6 +375,15 @@ test("drillTransition reuses shared drill runtime helper", function() {
   ]);
   assert.strictEqual(S.screen, "drill");
   assert.strictEqual(S.drillTimer, 60);
+});
+
+test("drillCustomSet surfaces feedback when a saved set has fewer than two valid chords", function() {
+  S.customSets = [{ name: "Broken Set", chords: ["E", "MissingChord"] }];
+
+  guitarAct("drillCustomSet", "0");
+
+  assert.deepStrictEqual(toasts, ["That practice set needs at least 2 valid chords."]);
+  assert.notStrictEqual(S.screen, "drill");
 });
 
 test("finger exercise completion mirrors runtime through core and bridge helpers", function() {

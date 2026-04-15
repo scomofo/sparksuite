@@ -798,7 +798,10 @@ function guitarAct(a, v) {
           if (D.ALL_CHORDS[j].name === cs.chords[i]) { pool.push(D.ALL_CHORDS[j]); break; }
         }
       }
-      if (pool.length < 2) return true;
+      if (pool.length < 2) {
+        if (typeof showToast === "function") showToast("That practice set needs at least 2 valid chords.");
+        return true;
+      }
       var c1 = pool[Math.floor(Math.random() * pool.length)], c2 = c1, n = 0;
       while (c2.name === c1.name && pool.length > 1 && n < 20) { c2 = pool[Math.floor(Math.random() * pool.length)]; n++; }
       guitarPatchState({
