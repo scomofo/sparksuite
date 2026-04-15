@@ -198,6 +198,7 @@ function startPerformance(chartIdOrChart, opts) {
     chartPromise = Promise.resolve(normalizePerformanceChart(chartIdOrChart));
   } else {
     console.error("ChordSpark: invalid chart argument");
+    if (typeof showToast === "function") showToast("Couldn't start this performance right now.");
     return;
   }
 
@@ -322,6 +323,7 @@ function startPerformance(chartIdOrChart, opts) {
     }).catch(function(e){ console.warn("MIDI backing load failed:", e); });
   }).catch(function(err) {
     console.error("ChordSpark: Failed to start performance:", err);
+    if (typeof showToast === "function") showToast("Couldn't start this performance right now.");
     if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
       SparkPerformanceBridge.syncPerformanceRuntimeState("start_failed", {
         screen: SCR.HOME,

@@ -161,6 +161,8 @@ test('shared onboarding calibration action routes through the calibration screen
 
 test('performance song actions surface visible feedback instead of silently returning', function() {
   var appSource = loadJS('js/app.js');
+  var performanceSessionSource = loadJS('js/performance/session.js');
+  assert.ok(performanceSessionSource.indexOf("showToast(\"Couldn't start this performance right now.\")") >= 0);
   assert.ok(appSource.indexOf('showToast("No playable performance chart is available for this song yet.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Finish a performance run before retrying a weak phrase.")') >= 0);
 });
