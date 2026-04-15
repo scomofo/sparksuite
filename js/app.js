@@ -2402,6 +2402,7 @@ window.act=function(a,v){
     var nextSong=null;
     if(typeof getCareerItem==="function")nextSong=getCareerItem("songs",v);
     if(!nextSong){
+      if (typeof showToast === "function") showToast("This career song isn't available yet.");
       render();return;
     }
     openCareerSongSelectionRequest({
@@ -3467,6 +3468,7 @@ window.act=function(a,v){
         difficultyId: difficultyId
       });
       if(!planSelectionRequest || !planSelectionRequest.songData){
+        if (typeof showToast === "function") showToast("This performance plan song isn't available yet.");
         render();return;
       }
       if (planSelectionRequest) {
@@ -3524,6 +3526,7 @@ window.act=function(a,v){
         targetTechnique: techniqueKey
       });
       if(!techniqueSelectionRequest || !techniqueSelectionRequest.songData){
+        if (typeof showToast === "function") showToast("This technique-targeted performance song isn't available yet.");
         render();return;
       }
       appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){
@@ -4039,7 +4042,10 @@ window.act=function(a,v){
   }
   if(a==="openPerformanceDaily"){
     var ch=choosePerformanceDailyChallenge();
-    if(!ch){render();return;}
+    if(!ch){
+      if (typeof showToast === "function") showToast("No performance daily is available right now.");
+      render();return;
+    }
     var defaultArrangement = ch.arrangementType||"chords";
     var defaultDifficulty = ch.difficultyId||"normal";
     if(ch.songId){
@@ -4236,7 +4242,9 @@ window.act=function(a,v){
         if (typeof console !== "undefined") console.warn("Failed to load performance chart", err);
         if (typeof showToast === "function") showToast("Couldn't load this performance chart.");
       });
+      return;
     }
+    if (typeof showToast === "function") showToast("No playable performance chart is available for this song yet.");
     return;
   }
   if(a==="performSongBack"){
@@ -4365,8 +4373,10 @@ window.act=function(a,v){
             render();
           }
         },100);
+        return;
       }
     }
+    if (typeof showToast === "function") showToast("Finish a performance run before retrying a weak phrase.");
     return;
   }
   if(a==="performDoneSongs"){

@@ -159,6 +159,12 @@ test('shared onboarding calibration action routes through the calibration screen
   assert.ok(appSource.indexOf('a = "openPerformCalibration";') >= 0);
 });
 
+test('performance song actions surface visible feedback instead of silently returning', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('showToast("No playable performance chart is available for this song yet.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Finish a performance run before retrying a weak phrase.")') >= 0);
+});
+
 test('audio calibration page buttons route through shared actions', function() {
   var calibrationPageSource = loadJS('js/audio/calibration.js');
   assert.ok(calibrationPageSource.indexOf("onclick=\"act(\\'startAudioCalibration\\')\"") >= 0);
