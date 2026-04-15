@@ -2738,8 +2738,13 @@ window.act=function(a,v){
     return;
   }
   if(a==="claimChallengeReward"){
-    if(typeof claimChallengeReward==="function")claimChallengeReward(v);
-    applyDashboardChallengeRewardRequest(v);
+    var claimedReward = false;
+    if(typeof claimChallengeReward==="function"){
+      claimChallengeReward(v);
+      claimedReward = true;
+    }
+    if(applyDashboardChallengeRewardRequest(v) !== null) claimedReward = true;
+    if(!claimedReward && typeof showToast === "function") showToast("Challenge rewards aren't available right now.");
     render();return;
   }
   if(a==="initChallenges"){

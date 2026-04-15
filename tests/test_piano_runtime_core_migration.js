@@ -753,6 +753,15 @@ test("claimChallengeReward mirrors piano challenge claims into shared dashboard 
   assert.deepStrictEqual(dashboardChallengeRewardCalls, ["daily_1"]);
 });
 
+test("claimChallengeReward surfaces piano fallback feedback when reward helpers are unavailable", function() {
+  delete global.claimChallengeReward;
+  delete global.applyDashboardChallengeRewardRequest;
+
+  pianoAct("claimChallengeReward", "daily_1");
+
+  assert.deepStrictEqual(toasts, ["Challenge rewards aren't available right now."]);
+});
+
 test("go_home returns piano dashboard-family screens through shared dashboard back helper", function() {
   S.screen = "recommendations";
 

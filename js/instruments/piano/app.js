@@ -2133,10 +2133,15 @@ function act(action, param) {
       state.screen = SCR.CHALLENGES;
       break;
     case "claimChallengeReward":
-      if(typeof claimChallengeReward === "function") claimChallengeReward(param);
-      if (typeof applyDashboardChallengeRewardRequest === "function") {
-        applyDashboardChallengeRewardRequest(param);
+      var pianoClaimedReward = false;
+      if(typeof claimChallengeReward === "function") {
+        claimChallengeReward(param);
+        pianoClaimedReward = true;
       }
+      if (typeof applyDashboardChallengeRewardRequest === "function" && applyDashboardChallengeRewardRequest(param) !== null) {
+        pianoClaimedReward = true;
+      }
+      if(!pianoClaimedReward) showToast("Challenge rewards aren't available right now.");
       break;
 
     // ── Home dashboard ──

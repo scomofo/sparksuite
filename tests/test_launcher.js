@@ -394,6 +394,7 @@ test('career page hides play CTA when unlocked song data is missing', function()
 test('career and performance daily actions surface feedback instead of silently returning', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('showToast("This career song isn\'t available yet.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Challenge rewards aren\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("No performance daily is available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("This performance plan song isn\'t available yet.")') >= 0);
   assert.ok(appSource.indexOf('showToast("This technique-targeted performance song isn\'t available yet.")') >= 0);
