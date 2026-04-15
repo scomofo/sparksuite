@@ -253,7 +253,7 @@ function settingsTab() {
   html += '<button class="btn" onclick="act(\'exportProgress\')" style="background:#F59E0B;color:#fff">Export JSON</button>';
   html += '</div>';
   html += '<div class="setting-row">';
-  html += '<button class="btn btn-danger" onclick="if(confirm(\'Reset all progress?\'))act(\'reset\')">Reset Progress</button>';
+  html += '<button class="btn btn-danger" onclick="act(\'reset_confirm\')">Reset Progress</button>';
   if (undoBackup) {
     html += '<button class="btn" onclick="act(\'undo_reset\')">Undo Reset</button>';
   }

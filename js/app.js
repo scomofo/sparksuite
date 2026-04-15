@@ -2833,6 +2833,10 @@ window.act=function(a,v){
     else{act("guidedNext");return;} // refine done → advance to songSlice
     render();return;
   }
+  if(a==="guidedStopConfirm"){
+    if(typeof confirm==="function" && !confirm("End session early?")){return;}
+    act("guidedStop");return;
+  }
   if(a==="guidedStop"){
     clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.metro);clearInterval(T.strum);
     if(appRead("metronomeOn", false))stopMetronome();

@@ -525,7 +525,6 @@ test('inline onclick handlers stay on shared act routing', function() {
     /^act\(/,
     /^event\.stopPropagation\(\);act\(/,
     /^event\.stopPropagation\(\)$/,
-    /^if\(confirm\(/,
     /^location\.reload\(\)$/
   ];
   var sources = [path.join(__dirname, '..', 'index.html')].concat(listJsFiles(path.join(__dirname, '..', 'js')));
@@ -551,6 +550,23 @@ test('inline onclick handlers stay on shared act routing', function() {
   });
 
   assert.deepStrictEqual(violations, []);
+});
+
+test('guided and piano confirm-style exits route through action handlers instead of inline confirm calls', function() {
+  var guidedSource = loadJS('js/pages/guided.js');
+  var pianoSessionSource = loadJS('js/instruments/piano/pages/session.js');
+  var pianoToolsSource = loadJS('js/instruments/piano/pages/tools.js');
+  var appSource = loadJS('js/app.js');
+  var pianoAppSource = loadJS('js/instruments/piano/app.js');
+  assert.ok(guidedSource.indexOf("act(\\'guidedStopConfirm\\')") >= 0);
+  assert.ok(guidedSource.indexOf("if(confirm(") === -1);
+  assert.ok(pianoSessionSource.indexOf("act(\\'stop_session_confirm\\')") >= 0);
+  assert.ok(pianoSessionSource.indexOf("if(confirm(") === -1);
+  assert.ok(pianoToolsSource.indexOf("act(\\'reset_confirm\\')") >= 0);
+  assert.ok(pianoToolsSource.indexOf("if(confirm(") === -1);
+  assert.ok(appSource.indexOf('if(a==="guidedStopConfirm"){') >= 0);
+  assert.ok(pianoAppSource.indexOf('case "stop_session_confirm":') >= 0);
+  assert.ok(pianoAppSource.indexOf('case "reset_confirm":') >= 0);
 });
 
 test('getPage returns page from active instrument', function() {

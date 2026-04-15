@@ -1120,6 +1120,11 @@ function act(action, param) {
       T.session = setInterval(tickSession, 1000);
       break;
 
+    case "stop_session_confirm":
+      if (typeof confirm === "function" && !confirm("End session early?")) break;
+      act("stop_session");
+      break;
+
     case "stop_session":
       if (state.screen === SCR.SESSION) {
         // Stop guided session — clear both guided and legacy timers
@@ -1863,6 +1868,11 @@ function act(action, param) {
     case "set_goal":
       state.dailyGoal = parseInt(param);
       saveState();
+      break;
+
+    case "reset_confirm":
+      if (typeof confirm === "function" && !confirm("Reset all progress?")) break;
+      act("reset");
       break;
 
     case "reset":
