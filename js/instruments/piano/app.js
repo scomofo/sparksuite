@@ -238,6 +238,74 @@ function setPianoRootHTML(root, html) {
   }
 }
 
+function pianoHeaderMarkup() {
+  return typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "";
+}
+
+function pianoBackButtonMarkup(useBtnClass) {
+  if (useBtnClass) {
+    return '<div style="padding:8px"><button class="btn" onclick="act(\'go_home\')">Back</button></div>';
+  }
+  return '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>';
+}
+
+function renderPianoPageShell(root, bodyHtml, options) {
+  options = options || {};
+  var html = pianoHeaderMarkup();
+  if (options.backButton) {
+    html += pianoBackButtonMarkup(!!options.backButtonClass);
+  }
+  html += bodyHtml || "";
+  setPianoRootHTML(root, html);
+}
+
+var PIANO_DASHBOARD_SCREEN_IDS = {};
+PIANO_DASHBOARD_SCREEN_IDS[SCR.RECOMMENDATIONS] = true;
+PIANO_DASHBOARD_SCREEN_IDS[SCR.INSIGHTS] = true;
+PIANO_DASHBOARD_SCREEN_IDS[SCR.CHALLENGES] = true;
+PIANO_DASHBOARD_SCREEN_IDS[SCR.CAREER] = true;
+PIANO_DASHBOARD_SCREEN_IDS[SCR.HOME_DASH] = true;
+
+var PIANO_UTILITY_SCREEN_KEYS = {};
+PIANO_UTILITY_SCREEN_KEYS[SCR.SETTINGS] = "settings";
+PIANO_UTILITY_SCREEN_KEYS[SCR.CURRICULUM] = "curriculum";
+PIANO_UTILITY_SCREEN_KEYS[SCR.CLOUD_SETTINGS] = "cloud_settings";
+PIANO_UTILITY_SCREEN_KEYS[SCR.MIDI_SETTINGS] = "midi_settings";
+PIANO_UTILITY_SCREEN_KEYS[SCR.MIDI_IMPORT] = "midi_import";
+
+function isPianoDashboardScreen(screen) {
+  return !!PIANO_DASHBOARD_SCREEN_IDS[screen];
+}
+
+function isPianoUtilityScreen(screen) {
+  return !!PIANO_UTILITY_SCREEN_KEYS[screen];
+}
+
+function pianoUtilityRequestScreen(screen) {
+  return PIANO_UTILITY_SCREEN_KEYS[screen] || null;
+}
+
+function pianoHomeFamilyRequestScreen(screen) {
+  return isPianoDashboardScreen(screen) ? "home_dash" : "home";
+}
+
+function openPianoDashboardScreen(state, target, screen) {
+  if (typeof openDashboardSectionRequest === "function") {
+    openDashboardSectionRequest(target);
+  }
+  state.screen = screen;
+}
+
+function openPianoUtilityScreen(state, target, screen, syncRequest) {
+  if (typeof openUtilityScreenRequest === "function") {
+    openUtilityScreenRequest(target);
+  }
+  if (typeof syncRequest === "function") {
+    syncRequest();
+  }
+  state.screen = screen;
+}
+
 // ── Utility ──
 function shuffleArray(arr) {
   for (var i = arr.length - 1; i > 0; i--) {
@@ -1109,22 +1177,16 @@ function act(action, param) {
       return;
 
     case "go_home":
-      var _pianoDashboardScreen = state.screen === SCR.RECOMMENDATIONS || state.screen === SCR.INSIGHTS || state.screen === SCR.CHALLENGES || state.screen === SCR.CAREER || state.screen === SCR.HOME_DASH;
-      var _pianoUtilityScreen = state.screen === SCR.SETTINGS || state.screen === SCR.CURRICULUM || state.screen === SCR.CLOUD_SETTINGS || state.screen === SCR.MIDI_SETTINGS || state.screen === SCR.MIDI_IMPORT;
-      if (_pianoUtilityScreen && typeof returnFromUtilityFamilyRequest === "function") {
+      if (isPianoUtilityScreen(state.screen) && typeof returnFromUtilityFamilyRequest === "function") {
         returnFromUtilityFamilyRequest({
-          currentScreen: state.screen === SCR.SETTINGS ? "settings"
-            : state.screen === SCR.CURRICULUM ? "curriculum"
-            : state.screen === SCR.CLOUD_SETTINGS ? "cloud_settings"
-            : state.screen === SCR.MIDI_SETTINGS ? "midi_settings"
-            : "midi_import"
+          currentScreen: pianoUtilityRequestScreen(state.screen)
         });
       } else if (typeof returnFromHomeFamilyRequest === "function") {
         returnFromHomeFamilyRequest({
-          currentScreen: _pianoDashboardScreen ? "home_dash" : "home"
+          currentScreen: pianoHomeFamilyRequestScreen(state.screen)
         });
       }
-      state.screen = _pianoDashboardScreen ? SCR.HOME_DASH : SCR.HOME;
+      state.screen = isPianoDashboardScreen(state.screen) ? SCR.HOME_DASH : SCR.HOME;
       state.sessionStep = null;
       state.sessionPlan = null;
       break;
@@ -2000,19 +2062,11 @@ function act(action, param) {
       break;
 
     case "openMidiSettings":
-      if (typeof openUtilityScreenRequest === "function") {
-        openUtilityScreenRequest("midi_settings");
-      }
-      if (typeof syncMidiSettingsStateRequest === "function") syncMidiSettingsStateRequest();
-      state.screen = SCR.MIDI_SETTINGS;
+      openPianoUtilityScreen(state, "midi_settings", SCR.MIDI_SETTINGS, syncMidiSettingsStateRequest);
       break;
 
     case "openMidiImport":
-      if (typeof openUtilityScreenRequest === "function") {
-        openUtilityScreenRequest("midi_import");
-      }
-      if (typeof syncMidiImportStateRequest === "function") syncMidiImportStateRequest();
-      state.screen = SCR.MIDI_IMPORT;
+      openPianoUtilityScreen(state, "midi_import", SCR.MIDI_IMPORT, syncMidiImportStateRequest);
       break;
 
     // ── MIDI Import actions ──
@@ -2128,22 +2182,16 @@ function act(action, param) {
     }
 
     case "openCloudSettings":
-      if (typeof openUtilityScreenRequest === "function") {
-        openUtilityScreenRequest("cloud_settings");
-      }
-      if (typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("open");
-      state.screen = SCR.CLOUD_SETTINGS;
+      openPianoUtilityScreen(state, "cloud_settings", SCR.CLOUD_SETTINGS, function() {
+        if (typeof applyCloudWorkflowRequest === "function") {
+          applyCloudWorkflowRequest("open");
+        }
+      });
       break;
 
     case "openCurriculum":
-      if (typeof openUtilityScreenRequest === "function") {
-        openUtilityScreenRequest("curriculum");
-      }
-      if (typeof syncCurriculumStateRequest === "function") {
-        syncCurriculumStateRequest();
-      }
-      state.screen = SCR.CURRICULUM;
-      break;
+        openPianoUtilityScreen(state, "curriculum", SCR.CURRICULUM, syncCurriculumStateRequest);
+        break;
 
     // ── Desktop / Release actions ──
     case "checkUpdates":
@@ -2160,11 +2208,8 @@ function act(action, param) {
 
     // ── Recommendation engine ──
     case "openRecommendations":
-      if (typeof openDashboardSectionRequest === "function") {
-        openDashboardSectionRequest("recommendations");
-      }
-      state.screen = SCR.RECOMMENDATIONS;
-      break;
+        openPianoDashboardScreen(state, "recommendations", SCR.RECOMMENDATIONS);
+        break;
     case "launchRecommendation":
       if(typeof launchRecommendationById === "function") launchRecommendationById(param);
       else showToast("Recommendations aren't available right now.");
@@ -2180,11 +2225,8 @@ function act(action, param) {
 
     // ── Career mode ──
     case "openCareer":
-      if (typeof openDashboardSectionRequest === "function") {
-        openDashboardSectionRequest("career");
-      }
-      state.screen = SCR.CAREER;
-      break;
+        openPianoDashboardScreen(state, "career", SCR.CAREER);
+        break;
     case "openCareerSong":
       if(typeof getCareerItem === "function"){
         var cSong = getCareerItem("songs", param);
@@ -2211,19 +2253,13 @@ function act(action, param) {
 
     // ── Insights ──
     case "openInsights":
-      if (typeof openDashboardSectionRequest === "function") {
-        openDashboardSectionRequest("insights");
-      }
-      state.screen = SCR.INSIGHTS;
-      break;
+        openPianoDashboardScreen(state, "insights", SCR.INSIGHTS);
+        break;
 
     // ── Challenge hub ──
     case "openChallengeHub":
-      if (typeof openDashboardSectionRequest === "function") {
-        openDashboardSectionRequest("challenges");
-      }
-      state.screen = SCR.CHALLENGES;
-      break;
+        openPianoDashboardScreen(state, "challenges", SCR.CHALLENGES);
+        break;
     case "claimChallengeReward":
       var pianoClaimedReward = false;
       if(typeof claimChallengeReward === "function") {
@@ -2285,11 +2321,8 @@ function act(action, param) {
 
     // ── Settings ──
     case "openSettings":
-      if (typeof openUtilityScreenRequest === "function") {
-        openUtilityScreenRequest("settings");
-      }
-      state.screen = SCR.SETTINGS;
-      break;
+        openPianoUtilityScreen(state, "settings", SCR.SETTINGS);
+        break;
 
     default:
       _handled = false;
@@ -2307,6 +2340,9 @@ function legacyPianoRender() {
   if (!root) return;
   var state = pianoAppState();
   if (!state) return;
+  var bodyHtml = null;
+  var shellPageRenderers = {};
+  var backPageRenderers = {};
 
   // Onboarding check
   if (!state.onboardingComplete) {
@@ -2318,65 +2354,25 @@ function legacyPianoRender() {
     return;
   }
 
-  // Session screen
-  if (state.screen === SCR.SESSION && state.sessionPlan) {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoSessionPage === "function" ? pianoSessionPage() : ""));
-    return;
+  // Session/performance screens that keep the standard shell without an extra back button.
+  if (state.screen === SCR.SESSION && !state.sessionPlan) {
+    // fall through to legacy home render if the session payload is missing
+  } else {
+    shellPageRenderers[SCR.SESSION] = typeof pianoSessionPage === "function" ? pianoSessionPage : null;
   }
-
-  // Stem player screen
-  if (state.screen === SCR.STEM_PLAYER) {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoStemsPlayerPage === "function" ? pianoStemsPlayerPage() : ""));
-    return;
-  }
-
-  // Practice plan screen
-  if (state.screen === SCR.PLAN) {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPlanPage === "function" ? pianoPlanPage() : ""));
-    return;
-  }
-
-  // MIDI settings screen
-  if (state.screen === SCR.MIDI_SETTINGS && typeof midiSettingsPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiSettingsPage());
-    return;
-  }
-
-  // MIDI import screen
-  if (state.screen === SCR.MIDI_IMPORT && typeof midiImportPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + midiImportPage());
-    return;
-  }
-
-  // Cloud settings screen
-  if (state.screen === SCR.CLOUD_SETTINGS && typeof cloudSettingsPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + cloudSettingsPage());
-    return;
-  }
-
-  // Curriculum screen
-  if (state.screen === SCR.CURRICULUM && typeof curriculumPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + curriculumPage());
-    return;
-  }
-
-  // Performance mode screens
-  if (state.screen === SCR.PERFORM_SONG) {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformSongPage === "function" ? pianoPerformSongPage() : ""));
-    return;
-  }
-  if (state.screen === SCR.PERFORM) {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformPage === "function" ? pianoPerformPage() : ""));
-    return;
-  }
-  if (state.screen === SCR.PERFORM_DONE) {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoPerformDonePage === "function" ? pianoPerformDonePage() : ""));
+  shellPageRenderers[SCR.STEM_PLAYER] = typeof pianoStemsPlayerPage === "function" ? pianoStemsPlayerPage : null;
+  shellPageRenderers[SCR.PLAN] = typeof pianoPlanPage === "function" ? pianoPlanPage : null;
+  shellPageRenderers[SCR.PERFORM_SONG] = typeof pianoPerformSongPage === "function" ? pianoPerformSongPage : null;
+  shellPageRenderers[SCR.PERFORM] = typeof pianoPerformPage === "function" ? pianoPerformPage : null;
+  shellPageRenderers[SCR.PERFORM_DONE] = typeof pianoPerformDonePage === "function" ? pianoPerformDonePage : null;
+  if (shellPageRenderers[state.screen]) {
+    renderPianoPageShell(root, shellPageRenderers[state.screen]());
     return;
   }
 
   // Calibration screen
   if (state.screen === SCR.CALIBRATION && typeof calibrationPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<div style="padding:8px"><button class="btn" onclick="act(\'go_home\')">Back</button></div>' + calibrationPage());
+    renderPianoPageShell(root, calibrationPage(), { backButton: true, backButtonClass: true });
     return;
   }
 
@@ -2386,50 +2382,35 @@ function legacyPianoRender() {
     return;
   }
 
-  // Home dashboard screen
-  if (state.screen === SCR.HOME_DASH && typeof homeDashboardPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + homeDashboardPage());
+  shellPageRenderers[SCR.HOME_DASH] = typeof homeDashboardPage === "function" ? homeDashboardPage : null;
+  if (shellPageRenderers[state.screen]) {
+    renderPianoPageShell(root, shellPageRenderers[state.screen]());
     return;
   }
 
-  // Recommendations screen
-  if (state.screen === SCR.RECOMMENDATIONS && typeof recommendationsPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + recommendationsPage());
-    return;
-  }
-
-  // Career mode screen
-  if (state.screen === SCR.CAREER && typeof careerPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + careerPage());
-    return;
-  }
-
-  // Insights dashboard screen
-  if (state.screen === SCR.INSIGHTS && typeof insightsDashboardPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + insightsDashboardPage());
-    return;
-  }
-
-  // Challenge hub screen
-  if (state.screen === SCR.CHALLENGES && typeof challengeHubPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + challengeHubPage());
-    return;
-  }
-
-  // Settings screen
-  if (state.screen === SCR.SETTINGS && typeof settingsPage === "function") {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + '<button onclick="act(\'go_home\')" style="margin:8px">Back</button>' + settingsPage());
+  backPageRenderers[SCR.MIDI_SETTINGS] = typeof midiSettingsPage === "function" ? midiSettingsPage : null;
+  backPageRenderers[SCR.MIDI_IMPORT] = typeof midiImportPage === "function" ? midiImportPage : null;
+  backPageRenderers[SCR.CLOUD_SETTINGS] = typeof cloudSettingsPage === "function" ? cloudSettingsPage : null;
+  backPageRenderers[SCR.CURRICULUM] = typeof curriculumPage === "function" ? curriculumPage : null;
+  backPageRenderers[SCR.RECOMMENDATIONS] = typeof recommendationsPage === "function" ? recommendationsPage : null;
+  backPageRenderers[SCR.CAREER] = typeof careerPage === "function" ? careerPage : null;
+  backPageRenderers[SCR.INSIGHTS] = typeof insightsDashboardPage === "function" ? insightsDashboardPage : null;
+  backPageRenderers[SCR.CHALLENGES] = typeof challengeHubPage === "function" ? challengeHubPage : null;
+  backPageRenderers[SCR.SETTINGS] = typeof settingsPage === "function" ? settingsPage : null;
+  if (backPageRenderers[state.screen]) {
+    bodyHtml = backPageRenderers[state.screen]();
+    renderPianoPageShell(root, bodyHtml, { backButton: true });
     return;
   }
 
   // Legacy active session
   if (state.active && state.chord) {
-    setPianoRootHTML(root, (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "") + legacySessionHTML());
+    renderPianoPageShell(root, (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "") + legacySessionHTML());
     return;
   }
 
   // Home screen with tabs
-  var html = (typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : "") + (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "");
+  var html = (typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : "");
   html += '<main class="tab-content">';
   switch (state.tab) {
     case TAB.PRACTICE: html += typeof pianoPracticeTab === "function" ? pianoPracticeTab() : ""; break;
@@ -2438,7 +2419,7 @@ function legacyPianoRender() {
     case TAB.TOOLS:    html += typeof pianoToolsTab === "function" ? pianoToolsTab() : ""; break;
   }
   html += '</main>';
-  setPianoRootHTML(root, html);
+  renderPianoPageShell(root, html);
 }
 
 // ── Additional exports (non-hoisted helpers) ──
@@ -2454,6 +2435,11 @@ document.addEventListener("keydown", function(e) {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
   var state = pianoAppState();
   if (!state) return;
+  if (e.key === "Escape" && state.confirmDialog) {
+    e.preventDefault();
+    act("cancel_confirm");
+    return;
+  }
 
   switch (e.key) {
     case " ":
