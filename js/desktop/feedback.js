@@ -44,7 +44,7 @@
     var feedbackDraft = desktopFeedbackRead("feedbackDraft", {}) || {};
     var h = '<div class="card">';
     h += '<div><b>Send Feedback</b></div>';
-    h += '<textarea oninput="(function(v){var draft=desktopFeedbackRead(\'feedbackDraft\', {})||{}; draft.text=v; desktopFeedbackWrite(\'feedbackDraft\', draft);})(this.value)" placeholder="What worked? What broke?" style="width:100%;min-height:80px">' + escHTML(feedbackDraft.text || "") + '</textarea>';
+    h += '<textarea oninput="act(\'feedbackDraftText\',this.value)" placeholder="What worked? What broke?" style="width:100%;min-height:80px">' + escHTML(feedbackDraft.text || "") + '</textarea>';
     h += '<button onclick="act(\'exportFeedback\')">Export Feedback</button>';
     h += '</div>';
     return h;

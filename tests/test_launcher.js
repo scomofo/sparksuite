@@ -58,6 +58,20 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 }
 
+function listJsFiles(dir) {
+  return fs.readdirSync(dir).reduce(function(files, entry) {
+    var fullPath = path.join(dir, entry);
+    var stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      return files.concat(listJsFiles(fullPath));
+    }
+    if (/\.js$/i.test(entry)) {
+      files.push(fullPath);
+    }
+    return files;
+  }, []);
+}
+
 eval(loadJS('js/launcher.js'));
 
 console.log('\n--- SparkSuite: Launcher ---');
@@ -192,6 +206,46 @@ test('analytics recommendation buttons route through shared and piano dispatcher
   assert.ok(appSource.indexOf('launchPracticeItem(analyticsItems[analyticsIndex])') >= 0);
   assert.ok(pianoSource.indexOf('case "launchAnalyticsRecommendation":') >= 0);
   assert.ok(pianoSource.indexOf('launchPracticeItem(pianoAnalyticsItems[pianoAnalyticsIndex])') >= 0);
+});
+
+test('feedback draft input routes through the shared dispatcher', function() {
+  var appSource = loadJS('js/app.js');
+  var feedbackSource = loadJS('js/desktop/feedback.js');
+  assert.ok(/feedbackDraftText\\',this\.value/.test(feedbackSource));
+  assert.ok(appSource.indexOf('if(a==="feedbackDraftText"){') >= 0);
+});
+
+test('inline onclick handlers stay on shared act routing', function() {
+  var allowed = [
+    /^act\(/,
+    /^event\.stopPropagation\(\);act\(/,
+    /^event\.stopPropagation\(\)$/,
+    /^if\(confirm\(/,
+    /^location\.reload\(\)$/
+  ];
+  var sources = [path.join(__dirname, '..', 'index.html')].concat(listJsFiles(path.join(__dirname, '..', 'js')));
+  var violations = [];
+
+  sources.forEach(function(filePath) {
+    var relativePath = path.relative(path.join(__dirname, '..'), filePath);
+    if (relativePath === path.join('js', 'ui.js') || relativePath === path.join('js', 'instruments', 'piano', 'ui.js')) {
+      return;
+    }
+    var source = fs.readFileSync(filePath, 'utf8');
+    var matches = source.match(/onclick="([^"]+)"/g) || [];
+    matches.forEach(function(match) {
+      var handler = match.replace(/^onclick="/, '').replace(/"$/, '');
+      if (handler.indexOf("' +") >= 0 || handler.indexOf("+ '") >= 0 || handler.indexOf('"+') >= 0 || handler.indexOf('+"') >= 0) {
+        return;
+      }
+      var ok = allowed.some(function(pattern) { return pattern.test(handler); });
+      if (!ok) {
+        violations.push(relativePath + ' -> ' + handler);
+      }
+    });
+  });
+
+  assert.deepStrictEqual(violations, []);
 });
 
 test('getPage returns page from active instrument', function() {

@@ -4365,6 +4365,12 @@ window.act=function(a,v){
   }
   if(a==="openCloudSettings"){openUtilityScreenRequest("cloud_settings");applyCloudWorkflowRequest("open");appWrite("screen",SCR.CLOUD_SETTINGS);render();return;}
   // === Desktop Actions ===
+  if(a==="feedbackDraftText"){
+    var feedbackDraft = appRead("feedbackDraft", {}) || {};
+    feedbackDraft.text = String(v == null ? "" : v);
+    appWrite("feedbackDraft", feedbackDraft);
+    return;
+  }
   if(a==="checkUpdates"){if(typeof checkForDesktopUpdates==="function")checkForDesktopUpdates();return;}
   if(a==="exportBackup"){if(typeof exportFullBackupDesktopAware==="function")exportFullBackupDesktopAware();return;}
   if(a==="exportFeedback"){if(typeof exportFeedbackDesktopAware==="function")exportFeedbackDesktopAware();return;}
