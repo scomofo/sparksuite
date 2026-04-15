@@ -113,6 +113,22 @@ CLI example:
 infsh app run google/gemini-3-pro-image-preview --input "{\"prompt\":\"A transparent highway surface overlay for a piano rhythm game, elegant geometric runway perspective, premium stage aesthetic, restrained lane separation, soft edge glow, dark-to-mid translucent materials, clean center travel path for falling notes, refined and minimal, no literal piano keyboard in the middle, no note gems, no hit markers, no text, no logos, no background scene, transparent PNG style asset, widescreen 16:9\"}"
 ```
 
+### Piano Surface Edit Variant
+
+When editing an existing source such as `piano_highway_v3.png`, use a prompt that explicitly blocks road language. The edit models tend to preserve perspective well, but they also like to invent dashed center lines if the prompt is too generic.
+
+Edit prompt:
+
+```text
+Edit this existing piano rhythm-game runway surface. Keep the centered perspective and the overall runway silhouette. Transform it into a premium dark performance-stage surface for piano. Remove any road-like markings, remove any dashed center line, do not add lane stripes that look like a street or highway. Instead use soft elegant geometric guidance: subtle blue outer edges, very faint warm accent lines, restrained translucent floor panels, and a clean calm center travel path. The result should feel like a luxury concert-stage runway, not a road. No keyboard keys, no text, no logos, no note gems, no hit markers, pure black background outside the runway.
+```
+
+Negative prompt:
+
+```text
+road, street, asphalt, dashed center line, lane divider, traffic markings, highway shoulder, pedestrian crossing, signage, text, logo, keyboard keys, note gems, hit markers
+```
+
 ## Suggested Generation Pass
 
 1. Generate 4 to 6 Guitar background variants.

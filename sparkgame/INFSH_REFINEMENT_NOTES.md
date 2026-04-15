@@ -59,6 +59,28 @@ Archive/staged but not currently live-wired:
 - `sparkgame/assets/highway/piano_highway_surface_next.png`
   - new art direction is good, but the live runway still reads better with the proven `v3` surface
 
+## Piano Surface Edit Findings
+
+The edit-based pass is the right direction for Piano because it preserves runway perspective much better than blind text-to-image generation.
+
+What worked:
+
+- `pruna/p-image-edit` successfully held onto the existing `piano_highway_v3.png` structure
+- local image upload through `infsh` worked reliably
+
+What failed:
+
+- the first edit drifted into literal road semantics with dashed center markings
+- the second edit still felt too road-like even after explicitly asking for a stage runway
+- pure black background plus “runway” language tends to collapse the image into overly dark silhouettes or street graphics
+
+Recommended next pass:
+
+- keep using edit-based workflow against `piano_highway_v3.png`
+- explicitly forbid: `road`, `street`, `asphalt`, `dashed center line`, `traffic markings`
+- ask for `concert-stage floor panels`, `luxury stage runway`, and `subtle geometric guidance`
+- avoid asking for “lane stripes” at all; ask for “soft panel seams” or “faint edge accents” instead
+
 ## Suggested Next infsh Work
 
 ### 1. Piano Surface Rework
