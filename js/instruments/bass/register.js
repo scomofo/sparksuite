@@ -1,5 +1,22 @@
 // js/instruments/bass/register.js
 (function() {
+  function resolveBassRegisterChordShape(chordObj) {
+    var pool;
+    var chordName;
+    var i;
+    if (!chordObj) return null;
+    if (Array.isArray(chordObj.fingers) && chordObj.fingers.length) return chordObj;
+    if (Array.isArray(chordObj.frets) && chordObj.frets.length) return chordObj;
+    chordName = chordObj.name || chordObj.short || null;
+    if (!chordName) return chordObj;
+    pool = typeof BASS_ALL_CHORDS !== "undefined" && Array.isArray(BASS_ALL_CHORDS) ? BASS_ALL_CHORDS : [];
+    for (i = 0; i < pool.length; i++) {
+      if (!pool[i]) continue;
+      if (pool[i].name === chordName || pool[i].short === chordName) return pool[i];
+    }
+    return chordObj;
+  }
+
   function bassRegisterRoot() {
     if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
       var sparkRoot = SparkState.getRoot();
@@ -106,9 +123,10 @@
 
     ui: {
       chord: function(chordObj, size, label, animate) {
-        if (typeof stringedChordSVG === "function" && chordObj) {
+        var renderChord = resolveBassRegisterChordShape(chordObj);
+        if (typeof stringedChordSVG === "function" && renderChord) {
           var chart = {
-            name: chordObj.name || label || "chord",
+            name: renderChord.name || label || "chord",
             instrument: "bass",
             stringCount: 4,
             stringLabels: ["E", "A", "D", "G"],
@@ -116,18 +134,19 @@
             startFret: 0,
             open: [false, false, false, false],
             muted: [],
-            fingers: chordObj.fingers || [],
+            fingers: renderChord.fingers || [],
             barre: null
           };
           // Build open array from frets if available
-          if (chordObj.frets) {
-            for (var i = 0; i < 4 && i < chordObj.frets.length; i++) {
-              chart.open[i] = chordObj.frets[i] === 0;
+          if (renderChord.frets) {
+            for (var i = 0; i < 4 && i < renderChord.frets.length; i++) {
+              chart.open[i] = renderChord.frets[i] === 0;
+              if (renderChord.frets[i] < 0) chart.muted.push(i);
             }
           }
           return stringedChordSVG(chart, { width: size, label: label, animate: animate });
         }
-        return typeof bassSVG === "function" ? bassSVG(chordObj, size, label, animate) : "";
+        return typeof bassSVG === "function" ? bassSVG(renderChord, size, label, animate) : "";
       },
       header: function() {
         return typeof headerHTML === "function" ? headerHTML() : "";

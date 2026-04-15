@@ -219,6 +219,18 @@ test('index loads the shared execution gateway for editor preview flows', functi
   assert.ok(indexHtml.indexOf('js/sparksuite/core/execution_gateway.js') >= 0);
 });
 
+test('bass chord UI hydrates sparse named chords into drawable charts', function() {
+  eval(loadJS('js/ui/stringed_chord_svg.js'));
+  eval(loadJS('js/instruments/bass/ui.js'));
+  eval(loadJS('js/instruments/bass/data.js'));
+  eval(loadJS('js/instruments/bass/register.js'));
+  var bassInstrument = SparkInstruments.getAll().filter(function(inst) {
+    return inst.id === 'bassspark';
+  }).pop();
+  var svg = bassInstrument.ui.chord({ name: 'C' }, 120);
+  assert.ok(/<circle\b/.test(svg), 'expected hydrated bass chart to include a rendered note marker');
+});
+
 test('analytics recommendation buttons route through shared and piano dispatchers', function() {
   var appSource = loadJS('js/app.js');
   var pianoSource = loadJS('js/instruments/piano/app.js');
