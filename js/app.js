@@ -3093,7 +3093,10 @@ window.act=function(a,v){
   if(a==="importBpm"){var importedSongBpm=appRead("importedSong", null);if(importedSongBpm){importedSongBpm.bpm=parseInt(v)||100;appWrite("importedSong",importedSongBpm);}return;}
   if(a==="saveImport"){
     var importedSongToSave=appRead("importedSong", null);
-    if(!importedSongToSave)return;
+    if(!importedSongToSave){
+      if (typeof showToast === "function") showToast("Import a song before saving it.");
+      return;
+    }
     var importedSongs=appRead("importedSongs", []);
     importedSongs.push(JSON.parse(JSON.stringify(importedSongToSave)));
     appWrite("importedSongs",importedSongs);
@@ -3316,7 +3319,10 @@ window.act=function(a,v){
   }
   // === Stem Separation ===
   if(a==="stemOpenFile"){
-    if(!window.electron)return;
+    if(!window.electron){
+      if (typeof showToast === "function") showToast("Stem separation is only available in the desktop build.");
+      return;
+    }
     appApplyLegacyActivityRuntime({setFields:{stemError:null}},function(){
       appWrite("stemError",null);
     });
@@ -3345,7 +3351,14 @@ window.act=function(a,v){
   }
   if(a==="stemSeparate"){
     var stemFile=appRead("stemFile", null);
-    if(!window.electron||!stemFile)return;
+    if(!window.electron){
+      if (typeof showToast === "function") showToast("Stem separation is only available in the desktop build.");
+      return;
+    }
+    if(!stemFile){
+      if (typeof showToast === "function") showToast("Choose an audio file before separating stems.");
+      return;
+    }
     appApplyLegacyActivityRuntime({setFields:{stemStatus:"separating",stemProgress:0,stemError:null}},function(){
       appWrite("stemStatus","separating");appWrite("stemProgress",0);appWrite("stemError",null);
     });
@@ -4595,7 +4608,13 @@ window.act=function(a,v){
     applyCloudWorkflowRequest("pull_error",{lastSyncStatus:"error",lastError:pullUnavailableError});
     render();return;
   }
-  if(a==="cloudLogout"){appWrite("cloudLastError",null);if(typeof logoutSpark==="function")logoutSpark();applyCloudWorkflowRequest("logout",{lastError:null});render();return;}
+  if(a==="cloudLogout"){
+    appWrite("cloudLastError",null);
+    if(typeof logoutSpark==="function")logoutSpark();
+    else if(typeof showToast === "function") showToast("Cloud logout is unavailable right now.");
+    applyCloudWorkflowRequest("logout",{lastError:null});
+    render();return;
+  }
   if(a==="cloudLoginPrompt"){
     var email=prompt("Email:");
     var password=prompt("Password:");
