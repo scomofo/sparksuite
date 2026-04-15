@@ -2068,9 +2068,9 @@ function act(action, param) {
         if(cSong){
           state.performSongData = cSong;
           state.performSongId = param;
+          state.screen = SCR.PERFORM_SONG;
         }
       }
-      state.screen = SCR.PERFORM_SONG;
       break;
 
     // ── Insights ──

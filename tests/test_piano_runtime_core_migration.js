@@ -609,6 +609,20 @@ test("openCareerSong delegates to shared performance selection helper and syncs 
   assert.strictEqual(S.screen, "performSong");
 });
 
+test("openCareerSong does not switch piano to perform song when song data is missing", function() {
+  S.screen = "career";
+  global.getCareerItem = function() {
+    return null;
+  };
+
+  pianoAct("openCareerSong", "missing_song");
+
+  assert.strictEqual(sparkCoreCalls.length, 0);
+  assert.strictEqual(S.performSongData, null);
+  assert.strictEqual(S.performSongId, "");
+  assert.strictEqual(S.screen, "career");
+});
+
 test("performStart delegates launch request construction to sparkCore helpers", function() {
   S.performSongData = { title: "River Walk", artist: "Piano Suite" };
   S.performArrangementType = "block_chords";

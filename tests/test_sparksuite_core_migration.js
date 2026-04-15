@@ -1638,6 +1638,11 @@ test("shared app dispatcher keeps ear training and drill actions wired for share
 test("shared app performance launch paths mirror hydrated selection payloads into legacy song state", function() {
   var appSource = loadJS("js/app.js");
   assert.ok(appSource.indexOf('var sharedSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);
+  assert.ok(appSource.indexOf('var selectedSongData = SONGS[sgIdx];') >= 0);
+  assert.ok(appSource.indexOf('if (sharedSelectionRequest && sharedSelectionRequest.songData) {') >= 0);
+  assert.ok(appSource.indexOf('selectedSongData = sharedSelectionRequest.songData;') >= 0);
+  assert.ok(appSource.indexOf('appWrite("performSongData", selectedSongData);') >= 0);
+  assert.ok(appSource.indexOf('appWrite("performSongId", selectedSongId);') >= 0);
   assert.ok(appSource.indexOf('var planSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);
   assert.ok(appSource.indexOf('if(!planSelectionRequest || !planSelectionRequest.songData){') >= 0);
   assert.ok(appSource.indexOf('var techniqueSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);

@@ -3343,6 +3343,7 @@ window.act=function(a,v){
     var sgIdx=parseInt(v);
     if(!isNaN(sgIdx)&&SONGS[sgIdx]){
       var selectedSongId=(SONGS[sgIdx].title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
+      var selectedSongData = SONGS[sgIdx];
       appApplyLegacyActivityRuntime({setFields:{performTargetTechnique:null}},function(){
         appWrite("performTargetTechnique",null);
       });
@@ -3358,14 +3359,19 @@ window.act=function(a,v){
           arrangementType: preferredArrangement,
           difficultyId: appRead("performDifficulty", "normal") || "normal"
         });
-        if (sharedSelectionRequest) {
-          appWrite("performSongData", sharedSelectionRequest.songData || SONGS[sgIdx]);
+        if (sharedSelectionRequest && sharedSelectionRequest.songData) {
+          selectedSongData = sharedSelectionRequest.songData;
+          appWrite("performSongData", selectedSongData);
           appWrite("performSongId", sharedSelectionRequest.songId || selectedSongId);
           appWrite("performArrangementType", sharedSelectionRequest.arrangementType || preferredArrangement);
           appWrite("performDifficulty", sharedSelectionRequest.difficultyId || (appRead("performDifficulty", "normal") || "normal"));
+        } else {
+          appWrite("performSongData", selectedSongData);
+          appWrite("performSongId", selectedSongId);
+          appWrite("performArrangementType", preferredArrangement);
         }
       } else {
-        appWrite("performSongData",SONGS[sgIdx]);
+        appWrite("performSongData",selectedSongData);
         appWrite("performSongId",selectedSongId);
         appWrite("performArrangementType",preferredArrangement);
         appWrite("performTargetTechnique",null);
