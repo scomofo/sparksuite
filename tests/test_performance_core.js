@@ -65,6 +65,7 @@ eval(loadJS('js/performance/adapters.js'));
 eval(loadJS('js/sparksuite/input/chord_detector.js'));
 eval(loadJS('js/performance/timing_windows.js'));
 eval(loadJS('js/performance/lane_mapper.js'));
+eval(loadJS('js/performance/combo_system.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway_themes.js'));
 eval(loadJS('js/performance/highway.js'));
@@ -203,6 +204,16 @@ test('performance lane mapper prefers explicit event lanes and falls back to cor
   assert.strictEqual(getPerformanceLane('Am', null), 2);
   assert.strictEqual(getPerformanceLane('Unknown', { lane: 4 }), 4);
   assert.strictEqual(getPerformanceLane(null, { laneMask: 8 }), 3);
+});
+
+test('performance combo multiplier uses guitar-hero style thresholds', function() {
+  assert.strictEqual(getPerformanceMultiplier(0), 1);
+  assert.strictEqual(getPerformanceMultiplier(4), 1);
+  assert.strictEqual(getPerformanceMultiplier(5), 2);
+  assert.strictEqual(getPerformanceMultiplier(9), 2);
+  assert.strictEqual(getPerformanceMultiplier(10), 3);
+  assert.strictEqual(getPerformanceMultiplier(19), 3);
+  assert.strictEqual(getPerformanceMultiplier(20), 4);
 });
 
 test('scorePerformanceEvent returns timing grade, lanes, and points for a matching hit', function() {
@@ -508,6 +519,16 @@ test('renderPerformanceHighway renders combo flame only when a manifest provides
   assert.ok(htmlHigh.indexOf('data-highway-combo-flame="custom/combo_flame.png"') >= 0);
 
   global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = originalManifest;
+});
+
+test('renderPerformanceHighway renders combo display only when combo is active and colors by multiplier', function() {
+  var hiddenHtml = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 1, multiplier: 1 });
+  var visibleHtml = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 12, multiplier: 3 });
+
+  assert.ok(hiddenHtml.indexOf('perform-combo-display') === -1);
+  assert.ok(visibleHtml.indexOf('perform-combo-display') >= 0);
+  assert.ok(visibleHtml.indexOf('12 COMBO x3') >= 0);
+  assert.ok(visibleHtml.indexOf('#a970ff') >= 0);
 });
 
 test('setPerformanceHighwayThemeSelection stores per-instrument theme choice', function() {
@@ -1310,6 +1331,7 @@ test('syncPerformanceRuntimeState centralizes performance runtime flags and scre
   assert.strictEqual(S.performChartId, 'chart_a');
   assert.strictEqual(S.performPlaying, true);
   assert.strictEqual(S.performPaused, false);
+  assert.strictEqual(S.performMultiplier, 1);
   assert.strictEqual(S.performMode, 'audio');
   assert.strictEqual(S.performDifficulty, 'pro');
   assert.strictEqual(S.screen, 'perform');

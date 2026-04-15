@@ -234,6 +234,7 @@ function startPerformance(chartIdOrChart, opts) {
         performScore: 0,
         performCombo: 0,
         performMaxCombo: 0,
+        performMultiplier: 1,
         performAccuracy: 0,
         performPhraseIdx: 0,
         performResults: null,
@@ -500,6 +501,7 @@ function _updatePerformDisplay() {
   var performChart = performanceSessionRead("performChart", null);
   var performCurrentSec = performanceSessionRead("performCurrentSec", 0) || 0;
   var performCombo = performanceSessionRead("performCombo", 0);
+  var performMultiplier = performanceSessionRead("performMultiplier", 1);
   performanceSessionWrite("performLaneDebugSnapshot", buildPerformanceLaneDebugSnapshot(performChart, performCurrentSec));
 
   // Initialize canvas highway on first frame
@@ -517,6 +519,7 @@ function _updatePerformDisplay() {
     scoreEls[0].textContent = performanceSessionRead("performScore", 0);
     scoreEls[1].textContent = performanceSessionRead("performAccuracy", 0) + "%";
     scoreEls[2].textContent = performanceSessionRead("performCombo", 0) + "x";
+    if (scoreEls.length >= 4) scoreEls[3].textContent = "x" + performanceSessionRead("performMultiplier", 1);
   }
 
   // Update phrase name
@@ -547,6 +550,7 @@ function maybeScorePendingEvents(nowSec) {
   var phraseStats = performanceSessionRead("performPhraseStats", null);
   var performCombo = performanceSessionRead("performCombo", 0);
   var performMaxCombo = performanceSessionRead("performMaxCombo", 0);
+  var performMultiplier = performanceSessionRead("performMultiplier", 1);
   var performScore = performanceSessionRead("performScore", 0);
   var offsetMs = performMode === "midi"
     ? (performanceSessionRead("performMidiOffsetMs", 0) || 0)
@@ -569,11 +573,15 @@ function maybeScorePendingEvents(nowSec) {
       evt._scored = true;
       evt._miss = true;
       evt._result = { score: 0, grade: "miss", noteScore: 0, timingScore: 0 };
+      evt._result.combo = 0;
+      evt._result.multiplier = 1;
       evt._score = 0;
       updatePhraseStats(phraseStats, evt, evt._result);
       performCombo = 0;
+      performMultiplier = typeof getPerformanceMultiplier === "function" ? getPerformanceMultiplier(performCombo) : 1;
       performanceSessionPatch({
         performCombo: performCombo,
+        performMultiplier: performMultiplier,
         performLastHitGrade: "miss",
         performLastTimingOffsetMs: deltaMs,
         performLastExpectedLane: typeof getPerformanceLane === "function" ? getPerformanceLane(evt.chord || evt.laneLabel || null, evt) : null,
@@ -603,13 +611,14 @@ function maybeScorePendingEvents(nowSec) {
 
         performCombo++;
         if (performCombo > performMaxCombo) performMaxCombo = performCombo;
+        performMultiplier = typeof getPerformanceMultiplier === "function" ? getPerformanceMultiplier(performCombo) : 1;
 
-        var comboMult = Math.min(1 + performCombo * 0.1, 4);
-        performScore += Math.round(result.points * comboMult);
+        performScore += Math.round(result.points * performMultiplier);
 
         performanceSessionPatch({
           performCombo: performCombo,
           performMaxCombo: performMaxCombo,
+          performMultiplier: performMultiplier,
           performScore: performScore,
           performLastHitGrade: result.grade,
           performLastTimingOffsetMs: result.offsetMs,
@@ -620,11 +629,15 @@ function maybeScorePendingEvents(nowSec) {
             : (result.grade.toUpperCase() + "!"),
           performLastHitTime: Date.now()
         });
+        result.combo = performCombo;
+        result.multiplier = performMultiplier;
 
         _updatePerformanceAccuracy(chart);
       } else if (result.grade !== "miss" || result.laneMatch === false) {
         evt._scored = true;
         evt._miss = true;
+        result.combo = 0;
+        result.multiplier = 1;
         evt._result = result;
         evt._score = 0;
         updatePhraseStats(phraseStats, evt, {
@@ -632,8 +645,10 @@ function maybeScorePendingEvents(nowSec) {
           grade: "miss"
         });
         performCombo = 0;
+        performMultiplier = typeof getPerformanceMultiplier === "function" ? getPerformanceMultiplier(performCombo) : 1;
         performanceSessionPatch({
           performCombo: performCombo,
+          performMultiplier: performMultiplier,
           performLastHitGrade: "miss",
           performLastTimingOffsetMs: result.offsetMs,
           performLastExpectedLane: result.expectedLane,

@@ -187,6 +187,7 @@
         performScore: 0,
         performCombo: 0,
         performMaxCombo: 0,
+        performMultiplier: 1,
         performAccuracy: 0,
         performPhraseIdx: 0,
         performResults: null,

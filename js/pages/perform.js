@@ -173,6 +173,7 @@ function performPage() {
   var performScore = performRead("performScore", 0);
   var performAccuracy = performRead("performAccuracy", 0);
   var performCombo = performRead("performCombo", 0);
+  var performMultiplier = performRead("performMultiplier", 1);
   var performLastHitLabel = performRead("performLastHitLabel", "");
   var performLastHitGrade = performRead("performLastHitGrade", "");
   var performLastHitTime = performRead("performLastHitTime", 0);
@@ -231,6 +232,7 @@ function performPage() {
   h += '<div class="perform-stat"><span class="perform-stat-val">' + performScore + '</span><span class="perform-stat-label">Score</span></div>';
   h += '<div class="perform-stat"><span class="perform-stat-val">' + performAccuracy + '%</span><span class="perform-stat-label">Accuracy</span></div>';
   h += '<div class="perform-stat"><span class="perform-stat-val">' + performCombo + 'x</span><span class="perform-stat-label">Combo</span></div>';
+  h += '<div class="perform-stat"><span class="perform-stat-val">x' + performMultiplier + '</span><span class="perform-stat-label">Multiplier</span></div>';
   h += '</div>';
 
   if (highwayThemeOptions.length > 1) {
@@ -256,7 +258,7 @@ function performPage() {
   }
 
   // Highway
-  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo, hitLabel: activeHitLabel, hitGrade: performLastHitGrade });
+  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo, multiplier: performMultiplier, hitLabel: activeHitLabel, hitGrade: performLastHitGrade });
 
   // Chord indicator panel
   var currentChord = null;
@@ -337,7 +339,7 @@ function performPage() {
     h += '<div style="background:rgba(0,0,0,.85);color:#0f0;font-family:monospace;font-size:11px;padding:8px;border-radius:6px;margin:4px 12px">';
     h += 'time: ' + nowSec.toFixed(2) + 's | phrase: ' + (debugPhrase ? debugPhrase.name : '-') + '<br>';
     h += 'speed: ' + performSpeedState + ' | diff: ' + performDifficultyState + '<br>';
-    h += 'combo: ' + performCombo + '/' + performMaxCombo + ' | score: ' + performScore + '<br>';
+    h += 'combo: ' + performCombo + '/' + performMaxCombo + ' | multiplier: x' + performMultiplier + ' | score: ' + performScore + '<br>';
     h += 'notes: [' + (performInputNotes || []).join(',') + ']<br>';
     h += 'lane: ' + (performLastExpectedLane == null ? '-' : performLastExpectedLane) + ' -> ' + (performLastDetectedLane == null ? '-' : performLastDetectedLane) + ' | ';
     h += 'offset: ' + (typeof performLastTimingOffsetMs === 'number' ? Math.round(performLastTimingOffsetMs) : 0) + 'ms | ';
