@@ -73,6 +73,8 @@ function listJsFiles(dir) {
 }
 
 eval(loadJS('js/launcher.js'));
+eval(loadJS('js/instruments/ukulele/chord_normalizer.js'));
+eval(loadJS('js/instruments/ukulele/validator.js'));
 
 console.log('\n--- SparkSuite: Launcher ---');
 
@@ -337,6 +339,32 @@ test('ukulele register prefers sparkCore progress view for practice and stats re
   assert.ok(practiceHtml.indexOf('Ukulele Practice') >= 0);
   assert.ok(statsHtml.indexOf('Lessons completed: 2') >= 0);
   assert.ok(statsHtml.indexOf('Rhythm skills tracked: 2') >= 0);
+});
+
+test('ukulele chord charts keep explicit fingering for barre-heavy shapes', function() {
+  eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_chords.js'));
+
+  function getChord(name) {
+    for (var i = 0; i < SparkUkuleleAllChords.length; i++) {
+      if (SparkUkuleleAllChords[i].name === name) return SparkUkuleleAllChords[i];
+    }
+    return null;
+  }
+
+  var dChord = normalizeUkuleleChord(getChord('D'));
+  var bbChord = normalizeUkuleleChord(getChord('Bb'));
+  var bmChord = normalizeUkuleleChord(getChord('Bm'));
+
+  assert.deepStrictEqual(validateChordChart(dChord), []);
+  assert.deepStrictEqual(validateChordChart(bbChord), []);
+  assert.deepStrictEqual(validateChordChart(bmChord), []);
+
+  assert.deepStrictEqual(dChord.barre, { fret: 2, fromString: 0, toString: 2 });
+  assert.deepStrictEqual(bbChord.barre, { fret: 1, fromString: 0, toString: 1 });
+  assert.deepStrictEqual(bmChord.barre, { fret: 2, fromString: 1, toString: 3 });
+  assert.ok(bmChord.fingers.some(function(finger) {
+    return finger.stringIndex === 0 && finger.fret === 4;
+  }));
 });
 
 test('bass register exposes a dedicated songs tab renderer', function() {
