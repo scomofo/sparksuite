@@ -164,6 +164,8 @@ test('performance song actions surface visible feedback instead of silently retu
   var performanceSessionSource = loadJS('js/performance/session.js');
   assert.ok(performanceSessionSource.indexOf("showToast(\"Couldn't start this performance right now.\")") >= 0);
   assert.ok(appSource.indexOf('showToast("No playable performance chart is available for this song yet.")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="performSong"){') >= 0);
+  assert.ok(appSource.indexOf('if(a==="performSongRhythm"){') >= 0);
   assert.ok(appSource.indexOf('showToast("Finish a performance run before retrying a weak phrase.")') >= 0);
 });
 

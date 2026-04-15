@@ -33,6 +33,8 @@
     var email = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "cloudEmail")
       ? runtimeState.cloudEmail
       : ((cloudUiRead("cloudAuth", {}) || {}).email || null);
+    var emailDraft = cloudUiRead("cloudEmailDraft", email || "") || "";
+    var passwordDraft = cloudUiRead("cloudPasswordDraft", "") || "";
     var syncStatus = runtimeState && runtimeState.cloudLastSyncStatus
       ? runtimeState.cloudLastSyncStatus
       : (((cloudUiRead("cloudSync", {}) || {}).lastSyncStatus) || "idle");
@@ -55,6 +57,10 @@
       h += '<button onclick="act(\'cloudLogout\')">Logout</button>';
     }else{
       h += '<div>Not signed in</div>';
+      h += '<div class="setting-row"><label>Email</label>';
+      h += '<input type="email" value="' + escHTML(emailDraft) + '" autocomplete="username" oninput="act(\'cloudEmailDraft\', this.value)"/></div>';
+      h += '<div class="setting-row"><label>Password</label>';
+      h += '<input type="password" value="' + escHTML(passwordDraft) + '" autocomplete="current-password" oninput="act(\'cloudPasswordDraft\', this.value)"/></div>';
       h += '<button onclick="act(\'cloudLoginPrompt\')">Login</button>';
     }
     if(lastError){

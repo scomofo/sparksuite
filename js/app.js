@@ -284,7 +284,8 @@ function rhythmTick(){
   var lastBeatTime=rhythmBeats[rhythmBeats.length-1].time;
   if(elapsed>lastBeatTime+2000){
     finishRhythm();
-    return;
+    if (typeof showToast === "function") showToast("This performance plan song isn't available yet.");
+    render();return;
   }
   for(var i=0;i<rhythmBeats.length;i++){
     var b=rhythmBeats[i];
@@ -2711,8 +2712,10 @@ window.act=function(a,v){
     return;
   }
   if(a==="refreshHome"){
-    if(typeof generateRecommendations==="function")generateRecommendations();
-    if(typeof generatePersonalInsights==="function")generatePersonalInsights();
+    var refreshedHome = false;
+    if(typeof generateRecommendations==="function"){generateRecommendations();refreshedHome = true;}
+    if(typeof generatePersonalInsights==="function"){generatePersonalInsights();refreshedHome = true;}
+    if(!refreshedHome && typeof showToast === "function") showToast("Dashboard refresh isn't available right now.");
     refreshDashboardSnapshotRequest({
       recommendations: appRead("recommendations", []) || [],
       insights: appRead("personalInsights", null) || null,
@@ -2767,6 +2770,7 @@ window.act=function(a,v){
     var performThemeChart = appRead("performChart", null);
     var performThemeInstrument = typeof getPerformanceHighwayInstrument==="function" ? getPerformanceHighwayInstrument(performThemeChart) : "guitar";
     if(typeof setPerformanceHighwayThemeSelection==="function")setPerformanceHighwayThemeSelection(v, performThemeInstrument);
+    else if(typeof showToast === "function") showToast("Highway theme switching isn't available right now.");
     saveState();render();return;
   }
   // Song sorting
@@ -3146,6 +3150,7 @@ window.act=function(a,v){
     var idx=parseInt(v);
     var importedSongsList=appRead("importedSongs", []);
     if(idx>=0&&idx<importedSongsList.length){importedSongsList.splice(idx,1);appWrite("importedSongs",importedSongsList);saveState();render();}
+    else if(typeof showToast === "function") showToast("This imported song isn't available right now.");
     return;
   }
   if(a==="playImport"){
@@ -3161,7 +3166,8 @@ window.act=function(a,v){
         appWrite("screen",SCR.SONG);
       });
       render();
-    }return;
+    }else if(typeof showToast === "function") showToast("This imported song isn't available right now.");
+    return;
   }
   // === Community ===
   if(a==="communityTab"){appWrite("communityTab",v);if(v==="submit")ensureCommunitySubmitSong();applySongBrowserRequest("community_tab", { communityTab: appRead("communityTab", null) });render();return;}
@@ -3457,17 +3463,30 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="stemPlay"){
-    if(appRead("stemPlaying", false)){pauseStems();}
-    else{playStems();}
+    if(!appRead("stemPaths", null)){
+      if (typeof showToast === "function") showToast("Load and separate a song before playing stems.");
+      return;
+    }
+    if(appRead("stemPlaying", false)){
+      if(typeof pauseStems==="function")pauseStems();
+      else if(typeof showToast === "function") showToast("Stem playback isn't available right now.");
+    }
+    else{
+      if(typeof playStems==="function")playStems();
+      else if(typeof showToast === "function") showToast("Stem playback isn't available right now.");
+    }
     return;
   }
   if(a==="stemSeek"){
-    seekStems(parseFloat(v));render();return;
+    if(typeof seekStems==="function"){seekStems(parseFloat(v));render();return;}
+    if (typeof showToast === "function") showToast("Stem playback isn't available right now.");
+    return;
   }
   if(a==="stemVolume"){
     var stemVolumeValue=parseFloat(v);
     appWrite("stemVolume",stemVolumeValue);
-    setStemVolume(stemVolumeValue);
+    if(typeof setStemVolume==="function")setStemVolume(stemVolumeValue);
+    else if(typeof showToast === "function") showToast("Stem playback isn't available right now.");
     render();return;
   }
   // === Tone Picker ===
@@ -3507,13 +3526,21 @@ window.act=function(a,v){
   // === MIDI ===
   if(a==="toggleMidi"){
     var midiEnabled=!appRead("midiEnabled", false);
+    if(midiEnabled&&typeof initMIDI!=="function"){
+      if (typeof showToast === "function") showToast("MIDI isn't available right now.");
+      return;
+    }
     appWrite("midiEnabled",midiEnabled);
     if(midiEnabled){initMIDI();}
     else{appWrite("midiOutput",null);appWrite("midiDevices",[]);}
     syncMidiSettingsStateRequest();
     saveState();render();return;
   }
-  if(a==="selectMidiDevice"){selectMIDIDevice(v);saveState();render();return;}
+  if(a==="selectMidiDevice"){
+    if(typeof selectMIDIDevice==="function"){selectMIDIDevice(v);saveState();render();return;}
+    if (typeof showToast === "function") showToast("MIDI device selection isn't available right now.");
+    return;
+  }
   // === Shortcuts ===
   if(a==="toggleFocus"){var nextFocusMode=!appRead("focusMode", false);appWrite("focusMode",nextFocusMode);if(nextFocusMode&&[TAB.PRACTICE,TAB.DRILL,TAB.DAILY,TAB.STATS,TAB.GUIDE].indexOf(appRead("tab", null))===-1){appWrite("tab",TAB.PRACTICE);}saveState();render();return;}
   if(a==="dismissBreak"){appWrite("breakDismissed",true);appWrite("sessionStartTime",Date.now());render();return;}
@@ -3521,8 +3548,14 @@ window.act=function(a,v){
   // === Undo ===
   if(a==="undoReset"){undoReset();return;}
   // === Performance Mode ===
-  if(a==="openPerform"){startPerformance(v);return;}
-  if(a==="startPerform"){startPerformance(v);return;}
+  if(a==="openPerform"){
+    dispatchWindowAction("startPerformance", "Performance isn't available right now.", v);
+    return;
+  }
+  if(a==="startPerform"){
+    dispatchWindowAction("startPerformance", "Performance isn't available right now.", v);
+    return;
+  }
   if(a==="performSong"){
     var songIdx=parseInt(v);
     if(!isNaN(songIdx)&&SONGS[songIdx]){
@@ -3532,6 +3565,7 @@ window.act=function(a,v){
       var chart=buildPerformanceChartFromSong(SONGS[songIdx],"builtin",performSongArrangement);
       if(chart){startPerformance(chart);return;}
     }
+    if (typeof showToast === "function") showToast("No playable performance chart is available for this song yet.");
     return;
   }
   if(a==="performSongRhythm"){
@@ -3545,6 +3579,7 @@ window.act=function(a,v){
         startPerformance(chart);return;
       }
     }
+    if (typeof showToast === "function") showToast("No playable performance chart is available for this song yet.");
     return;
   }
   if(a==="openPerformSong"){
@@ -3588,7 +3623,7 @@ window.act=function(a,v){
         appWrite("screen",SCR.PERFORM_SONG);
       });
       render();
-    }
+    } else if(typeof showToast === "function") showToast("This performance song isn't available right now.");
     return;
   }
   if(a==="planStartPerformanceSong"){
@@ -3773,11 +3808,13 @@ window.act=function(a,v){
   if(a==="performCalibrationStart"){
     var calStartSource=typeof getPerformanceCalibrationView==="function"?getPerformanceCalibrationView().source:(appRead("performCalibrationSource","midi")||"midi");
     applyPerformanceCalibrationRequest("calibration_start", { source: calStartSource });
-    startPerformanceCalibrationRun();render();return;
+    if(!dispatchWindowAction("startPerformanceCalibrationRun", "Performance calibration isn't available right now.")){render();return;}
+    render();return;
   }
   if(a==="performCalibrationStop"){
     applyPerformanceCalibrationRequest("calibration_stop");
-    stopPerformanceCalibration();render();return;
+    if(!dispatchWindowAction("stopPerformanceCalibration", "Performance calibration isn't available right now.")){render();return;}
+    render();return;
   }
   if(a==="performCalibrationApply"){
     var appliedOffset=applyCalibrationOffset();
@@ -4360,7 +4397,7 @@ window.act=function(a,v){
       ? coreView.runtimeState.performanceTargetTechnique
       : appRead("performTargetTechnique", null);
     function startSelectedChart(chart, chartId) {
-      if (!chart) return;
+      if (!chart) return false;
       var startRequest = startSelectedPerformanceSongRequest({
         chart: chart,
         chartId: chartId || chart.id || null,
@@ -4374,7 +4411,12 @@ window.act=function(a,v){
         mode: appRead("performMode", "midi"),
         countIn: !!appRead("performCountIn", false)
       });
-      startPerformance(chart,{difficulty:startRequest.difficulty,speed:startRequest.speed,preset:startRequest.preset,mode:startRequest.mode});
+      return dispatchWindowAction(
+        "startPerformance",
+        "Performance isn't available right now.",
+        chart,
+        {difficulty:startRequest.difficulty,speed:startRequest.speed,preset:startRequest.preset,mode:startRequest.mode}
+      );
     }
     if(selectedSong){
       var chart=buildPerformanceChartFromSong(selectedSong,"builtin",arrangementType);
@@ -4557,6 +4599,7 @@ window.act=function(a,v){
   }
   if(a==="rhythmHighwayStrum"){
     if(typeof _sparkRhythmHighwayStrum==="function")_sparkRhythmHighwayStrum();
+    else if(typeof showToast === "function") showToast("Rhythm strumming isn't available right now.");
     render();return;
   }
   if(a==="rhythmHighwayLoopWindow"){
@@ -4669,9 +4712,19 @@ window.act=function(a,v){
     applyCloudWorkflowRequest("logout",{lastError:null});
     render();return;
   }
+  if(a==="cloudEmailDraft"){
+    appWrite("cloudEmailDraft", String(v == null ? "" : v));
+    appWrite("cloudLastError", null);
+    render();return;
+  }
+  if(a==="cloudPasswordDraft"){
+    appWrite("cloudPasswordDraft", String(v == null ? "" : v));
+    appWrite("cloudLastError", null);
+    render();return;
+  }
   if(a==="cloudLoginPrompt"){
-    var email=prompt("Email:");
-    var password=prompt("Password:");
+    var email=String(appRead("cloudEmailDraft", ((appRead("cloudAuth", {}) || {}).email || "")) || "").trim();
+    var password=String(appRead("cloudPasswordDraft", "") || "");
     var loginError;
     if(!email||!password){
       if (typeof showToast === "function") showToast("Enter both email and password to log in.");
@@ -4686,6 +4739,8 @@ window.act=function(a,v){
       return;
     }
     loginSpark(email,password).then(function(){
+      appWrite("cloudEmailDraft", email);
+      appWrite("cloudPasswordDraft", "");
       appWrite("cloudLastError",null);
       applyCloudWorkflowRequest("login",{lastError:null});
       render();

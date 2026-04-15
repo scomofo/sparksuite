@@ -2020,9 +2020,21 @@ function act(action, param) {
       render();
       return;
 
+    case "cloudEmailDraft":
+      state.cloudEmailDraft = String(v == null ? "" : v);
+      state.cloudLastError = null;
+      render();
+      return;
+
+    case "cloudPasswordDraft":
+      state.cloudPasswordDraft = String(v == null ? "" : v);
+      state.cloudLastError = null;
+      render();
+      return;
+
     case "cloudLoginPrompt": {
-      var clEmail = prompt("Email:");
-      var clPassword = prompt("Password:");
+      var clEmail = String(state.cloudEmailDraft || ((state.cloudAuth && state.cloudAuth.email) || "") || "").trim();
+      var clPassword = String(state.cloudPasswordDraft || "");
       var clError;
       if(!clEmail || !clPassword){
         showToast("Enter both email and password to log in.");
@@ -2037,6 +2049,8 @@ function act(action, param) {
         return;
       }
       loginSpark(clEmail, clPassword).then(function(){
+        state.cloudEmailDraft = clEmail;
+        state.cloudPasswordDraft = "";
         state.cloudLastError = null;
         if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("login", { lastError: null });
         render();

@@ -306,9 +306,15 @@ test('cloud actions surface login and sync errors instead of failing silently', 
   assert.ok(appSource.indexOf('syncUnavailableError="Cloud sync is unavailable right now.";') >= 0);
   assert.ok(appSource.indexOf('pullUnavailableError="Cloud pull is unavailable right now.";') >= 0);
   assert.ok(appSource.indexOf('showToast("Enter both email and password to log in.")') >= 0);
+  assert.ok(appSource.indexOf('appWrite("cloudEmailDraft", String(v == null ? "" : v));') >= 0);
+  assert.ok(appSource.indexOf('appWrite("cloudPasswordDraft", String(v == null ? "" : v));') >= 0);
   assert.ok(appSource.indexOf('showToast("Cloud logout is unavailable right now.")') >= 0);
   assert.ok(appSource.indexOf('applyCloudWorkflowRequest("login_error",{lastSyncStatus:"error",lastError:loginError});') >= 0);
+  assert.ok(appSource.indexOf('prompt("Email:")') === -1);
   assert.ok(pianoSource.indexOf('state.cloudLastError = clError;') >= 0);
+  assert.ok(pianoSource.indexOf('prompt("Email:")') === -1);
+  assert.ok(cloudUiSource.indexOf('act(\\\'cloudEmailDraft\\\', this.value)') >= 0);
+  assert.ok(cloudUiSource.indexOf('act(\\\'cloudPasswordDraft\\\', this.value)') >= 0);
   assert.ok(cloudUiSource.indexOf('<b>Error:</b>') >= 0);
   assert.ok(cloudSyncSource.indexOf('cloudSyncWrite("cloudLastError", String((e && e.message) || e || "Cloud sync failed."));') >= 0);
   assert.ok(cloudSyncSource.indexOf('cloudSyncWrite("cloudLastError", String((e && e.message) || e || "Cloud pull failed."));') >= 0);
@@ -331,6 +337,7 @@ test('play-along and onboarding actions surface feedback when helpers are unavai
   assert.ok(appSource.indexOf('dispatchPlayAlongAction("sparkPlayAlongReplay")') >= 0);
   assert.ok(appSource.indexOf('showToast("Play Along isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Onboarding isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Dashboard refresh isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('if(a==="onboardingSetInstrument"){') >= 0);
   assert.ok(appSource.indexOf('if(a==="onboardingGenerateRecommendations"){') >= 0);
 });
@@ -344,16 +351,22 @@ test('secondary helper-driven actions surface feedback when handlers are unavail
   assert.ok(/if\(a==="planStartRhythmHighway"\)\{\s*if\(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment\(v,appRead\("rhythmHighwayPreset", "spark_learning"\)\)\)return;\s*if\(typeof showToast === "function"\) showToast\("That practice item couldn't be started right now\."\);\s*render\(\);return;\s*\}/.test(appSource));
   assert.ok(/if\(a==="completePlanItem"\)\{\s*var completedPlanItem = false;\s*if\(window\.sparkCore\)\{\s*completeDailyPracticePlanRequest\(\{ itemId: v \}\);\s*completedPlanItem = true;\s*\} else if\(typeof markPracticePlanItem==="function"\)\{\s*markPracticePlanItem\(v\);\s*completedPlanItem = true;\s*\}\s*if\(!completedPlanItem && typeof showToast === "function"\) showToast\("That practice item couldn't be completed right now\."\);\s*render\(\);return;\s*\}/.test(appSource));
   assert.ok(/if\(a==="rhythmHighwayLoopWindow"\)\{\s*var activeCoreSegmentId=appRead\("activeCoreSegmentId", null\);\s*if\(typeof _createRhythmHighwayLoopSpec==="function" && activeCoreSegmentId\)\{[\s\S]*?if\(loopSpec && typeof startRhythmHighwaySegment==="function"\)\{[\s\S]*?return;\s*\}\s*\}\s*if\(typeof showToast === "function"\) showToast\("Looping isn't available for this rhythm session right now\."\);\s*render\(\);return;\s*\}/.test(appSource));
+  assert.ok(appSource.indexOf('showToast("Rhythm strumming isn\'t available right now.")') >= 0);
   assert.ok(/if\(a==="rhythmHighwayClearLoop"\)\{\s*appWrite\("rhythmHighwayLoop",null\);\s*var clearLoopSegmentId=appRead\("activeCoreSegmentId", null\);\s*if\(clearLoopSegmentId&&typeof startRhythmHighwaySegment==="function"\)\{[\s\S]*?return;\s*\}\s*if\(typeof showToast === "function"\) showToast\("This rhythm session couldn't be restarted right now\."\);\s*render\(\);return;\s*\}/.test(appSource));
   assert.ok(/if\(a==="restartRhythmHighway"\)\{\s*if\(appRead\("activeCoreSegmentId", null\)&&typeof startRhythmHighwaySegment==="function"&&startRhythmHighwaySegment\(appRead\("activeCoreSegmentId", null\),appRead\("rhythmHighwayPreset", "spark_learning"\),appRead\("rhythmHighwayLoop", null\)\)\)return;\s*if\(typeof showToast === "function"\) showToast\("This rhythm session couldn't be restarted right now\."\);\s*return;\s*\}/.test(appSource));
   assert.ok(appSource.indexOf('dispatchWindowAction("pausePerformance", "Performance controls aren\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('dispatchWindowAction("resumePerformance", "Performance controls aren\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("startPerformance", "Performance isn\'t available right now.", v)') >= 0);
   assert.ok(appSource.indexOf('if(!dispatchWindowAction("stopPerformance", "Performance controls aren\'t available right now.")) return;') >= 0);
   assert.ok(appSource.indexOf('dispatchWindowAction("setPerformanceLoop", "Performance controls aren\'t available right now.", {startSec:ph.startSec,endSec:ph.endSec,phraseId:ph.id})') >= 0);
   assert.ok(appSource.indexOf('dispatchWindowAction("clearPerformanceLoop", "Performance controls aren\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('dispatchWindowAction("startCalibration", "Performance calibration isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('dispatchWindowAction("recordCalibrationTap", "Performance calibration isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('dispatchWindowAction("cancelCalibration", "Performance calibration isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("startPerformanceCalibrationRun", "Performance calibration isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("stopPerformanceCalibration", "Performance calibration isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("MIDI isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("MIDI device selection isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Audio calibration isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Progress reset isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Audio input refresh isn\'t available right now.")') >= 0);
@@ -361,10 +374,13 @@ test('secondary helper-driven actions surface feedback when handlers are unavail
   assert.ok(appSource.indexOf('showToast("Import a song before saving it.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Stem separation is only available in the desktop build.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Choose an audio file before separating stems.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Load and separate a song before playing stems.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Stem playback isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Song audio import is only available in the desktop build.")') >= 0);
   assert.ok(appSource.indexOf('showToast("No stems were returned for that audio import.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Stem separation failed: " + (err.message || err))') >= 0);
   assert.ok(appSource.indexOf('showToast("This community song isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Highway theme switching isn\'t available right now.")') >= 0);
 });
 
 test('career page hides play CTA when unlocked song data is missing', function() {
@@ -398,8 +414,10 @@ test('career and performance daily actions surface feedback instead of silently 
   assert.ok(appSource.indexOf('showToast("This career song isn\'t available yet.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Challenge rewards aren\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("No performance daily is available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("This performance song isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("This performance plan song isn\'t available yet.")') >= 0);
   assert.ok(appSource.indexOf('showToast("This technique-targeted performance song isn\'t available yet.")') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("startPerformance", "Performance isn\'t available right now.",') >= 0);
 });
 
 test('career content bootstraps from the active instrument song library', function() {
