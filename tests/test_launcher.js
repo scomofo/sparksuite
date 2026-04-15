@@ -180,6 +180,11 @@ test('shared app routes editor toolbar actions through the shared editor engine'
   assert.ok(appSource.indexOf('exportEditorObjectDesktopAware') >= 0);
 });
 
+test('index loads the shared execution gateway for editor preview flows', function() {
+  var indexHtml = loadJS('index.html');
+  assert.ok(indexHtml.indexOf('js/sparksuite/core/execution_gateway.js') >= 0);
+});
+
 test('getPage returns page from active instrument', function() {
   SparkInstruments.activate('test_guitar');
   var page = SparkInstruments.getPage('home');
