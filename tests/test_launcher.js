@@ -317,8 +317,12 @@ test('midi profile actions surface feedback when profile helpers are unavailable
 
 test('play-along and onboarding actions surface feedback when helpers are unavailable', function() {
   var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('function dispatchPlayAlongAction(name, arg1, arg2) {') >= 0);
+  assert.ok(appSource.indexOf('if (callPlayAlongHandler(name, arg1, arg2) !== null) return true;') >= 0);
   assert.ok(appSource.indexOf('if(a==="openPlayAlongHome"){') >= 0);
-  assert.ok(appSource.indexOf('callPlayAlongHandler("openPlayAlong")') >= 0);
+  assert.ok(appSource.indexOf('dispatchPlayAlongAction("openPlayAlong")') >= 0);
+  assert.ok(appSource.indexOf('dispatchPlayAlongAction("sparkPlayAlongSelect", v)') >= 0);
+  assert.ok(appSource.indexOf('dispatchPlayAlongAction("sparkPlayAlongReplay")') >= 0);
   assert.ok(appSource.indexOf('showToast("Play Along isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Onboarding isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('if(a==="onboardingSetInstrument"){') >= 0);

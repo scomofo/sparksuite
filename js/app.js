@@ -1636,46 +1636,51 @@ function callPlayAlongHandler(name, arg1, arg2) {
   return null;
 }
 
+function dispatchPlayAlongAction(name, arg1, arg2) {
+  if (callPlayAlongHandler(name, arg1, arg2) !== null) return true;
+  if (typeof showToast === "function") showToast("Play Along isn't available right now.");
+  return false;
+}
+
 window.act=function(a,v){
   // Delegate to active instrument's handler first
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
   // Spotify connect
-  if(a==="spotifyConnect"){ callPlayAlongHandler("sparkPlayAlongConnectSpotify"); return; }
-  if(a==="playAlongSelect"){ callPlayAlongHandler("sparkPlayAlongSelect", v); return; }
-  if(a==="playAlongSearch"){ callPlayAlongHandler("sparkPlayAlongSearch", v); return; }
-  if(a==="playAlongLoadFile"){ callPlayAlongHandler("sparkPlayAlongLoadFile", v); return; }
-  if(a==="playAlongSaveTrack"){ callPlayAlongHandler("sparkPlayAlongSaveTrack", v); return; }
-  if(a==="playAlongSaveClientId"){ callPlayAlongHandler("sparkPlayAlongSaveClientId"); return; }
-  if(a==="playAlongResumeRecent"){ callPlayAlongHandler("sparkPlayAlongLaunchRecent", v); return; }
-  if(a==="playAlongJumpToWeakSection"){ callPlayAlongHandler("sparkPlayAlongJumpToWeakSection"); return; }
-  if(a==="playAlongStartDrill"){ callPlayAlongHandler("sparkPlayAlongStartDrill", v); return; }
-  if(a==="playAlongBackHome"){ callPlayAlongHandler("sparkPlayAlongBackToHome"); return; }
-  if(a==="playAlongLaunchSaved"){ callPlayAlongHandler("sparkPlayAlongLaunchSaved", v); return; }
-  if(a==="playAlongRemoveSaved"){ callPlayAlongHandler("sparkPlayAlongRemoveSaved", v); return; }
-  if(a==="playAlongClearSaved"){ callPlayAlongHandler("sparkPlayAlongClearSaved"); return; }
-  if(a==="playAlongRemoveRecent"){ callPlayAlongHandler("sparkPlayAlongRemoveRecent", v); return; }
-  if(a==="playAlongClearRecent"){ callPlayAlongHandler("sparkPlayAlongClearRecent"); return; }
-  if(a==="playAlongLaunchBookmark"){ callPlayAlongHandler("sparkPlayAlongLaunchBookmark", v); return; }
-  if(a==="playAlongRemoveBookmark"){ callPlayAlongHandler("sparkPlayAlongRemoveBookmark", v); return; }
-  if(a==="playAlongClearBookmarks"){ callPlayAlongHandler("sparkPlayAlongClearBookmarks"); return; }
-  if(a==="playAlongLaunchDemo"){ callPlayAlongHandler("sparkPlayAlongLaunchDemo", v); return; }
-  if(a==="playAlongSetDifficulty"){ callPlayAlongHandler("sparkPlayAlongSetDifficulty", v); return; }
-  if(a==="playAlongStop"){ callPlayAlongHandler("sparkPlayAlongStop"); return; }
-  if(a==="playAlongTogglePause"){ callPlayAlongHandler("sparkPlayAlongTogglePause"); return; }
-  if(a==="playAlongToggleLoop"){ callPlayAlongHandler("sparkPlayAlongToggleLoop"); return; }
-  if(a==="playAlongBookmarkCurrentSection"){ callPlayAlongHandler("sparkPlayAlongBookmarkCurrentSection"); return; }
-  if(a==="playAlongPrevSection"){ callPlayAlongHandler("sparkPlayAlongPrevSection"); return; }
-  if(a==="playAlongNextSection"){ callPlayAlongHandler("sparkPlayAlongNextSection"); return; }
-  if(a==="playAlongSetLoopTarget"){ callPlayAlongHandler("sparkPlayAlongSetLoopTarget", v); return; }
-  if(a==="playAlongToggleDebug"){ callPlayAlongHandler("sparkPlayAlongToggleDebug"); return; }
-  if(a==="playAlongReplayDrill"){ callPlayAlongHandler("sparkPlayAlongReplayDrill"); return; }
-  if(a==="playAlongReplayFullSong"){ callPlayAlongHandler("sparkPlayAlongReplayFullSong"); return; }
-  if(a==="playAlongReplay"){ callPlayAlongHandler("sparkPlayAlongReplay"); return; }
-  if(a==="playAlongPickNew"){ callPlayAlongHandler("sparkPlayAlongPickNew"); return; }
+  if(a==="spotifyConnect"){ dispatchPlayAlongAction("sparkPlayAlongConnectSpotify"); return; }
+  if(a==="playAlongSelect"){ dispatchPlayAlongAction("sparkPlayAlongSelect", v); return; }
+  if(a==="playAlongSearch"){ dispatchPlayAlongAction("sparkPlayAlongSearch", v); return; }
+  if(a==="playAlongLoadFile"){ dispatchPlayAlongAction("sparkPlayAlongLoadFile", v); return; }
+  if(a==="playAlongSaveTrack"){ dispatchPlayAlongAction("sparkPlayAlongSaveTrack", v); return; }
+  if(a==="playAlongSaveClientId"){ dispatchPlayAlongAction("sparkPlayAlongSaveClientId"); return; }
+  if(a==="playAlongResumeRecent"){ dispatchPlayAlongAction("sparkPlayAlongLaunchRecent", v); return; }
+  if(a==="playAlongJumpToWeakSection"){ dispatchPlayAlongAction("sparkPlayAlongJumpToWeakSection"); return; }
+  if(a==="playAlongStartDrill"){ dispatchPlayAlongAction("sparkPlayAlongStartDrill", v); return; }
+  if(a==="playAlongBackHome"){ dispatchPlayAlongAction("sparkPlayAlongBackToHome"); return; }
+  if(a==="playAlongLaunchSaved"){ dispatchPlayAlongAction("sparkPlayAlongLaunchSaved", v); return; }
+  if(a==="playAlongRemoveSaved"){ dispatchPlayAlongAction("sparkPlayAlongRemoveSaved", v); return; }
+  if(a==="playAlongClearSaved"){ dispatchPlayAlongAction("sparkPlayAlongClearSaved"); return; }
+  if(a==="playAlongRemoveRecent"){ dispatchPlayAlongAction("sparkPlayAlongRemoveRecent", v); return; }
+  if(a==="playAlongClearRecent"){ dispatchPlayAlongAction("sparkPlayAlongClearRecent"); return; }
+  if(a==="playAlongLaunchBookmark"){ dispatchPlayAlongAction("sparkPlayAlongLaunchBookmark", v); return; }
+  if(a==="playAlongRemoveBookmark"){ dispatchPlayAlongAction("sparkPlayAlongRemoveBookmark", v); return; }
+  if(a==="playAlongClearBookmarks"){ dispatchPlayAlongAction("sparkPlayAlongClearBookmarks"); return; }
+  if(a==="playAlongLaunchDemo"){ dispatchPlayAlongAction("sparkPlayAlongLaunchDemo", v); return; }
+  if(a==="playAlongSetDifficulty"){ dispatchPlayAlongAction("sparkPlayAlongSetDifficulty", v); return; }
+  if(a==="playAlongStop"){ dispatchPlayAlongAction("sparkPlayAlongStop"); return; }
+  if(a==="playAlongTogglePause"){ dispatchPlayAlongAction("sparkPlayAlongTogglePause"); return; }
+  if(a==="playAlongToggleLoop"){ dispatchPlayAlongAction("sparkPlayAlongToggleLoop"); return; }
+  if(a==="playAlongBookmarkCurrentSection"){ dispatchPlayAlongAction("sparkPlayAlongBookmarkCurrentSection"); return; }
+  if(a==="playAlongPrevSection"){ dispatchPlayAlongAction("sparkPlayAlongPrevSection"); return; }
+  if(a==="playAlongNextSection"){ dispatchPlayAlongAction("sparkPlayAlongNextSection"); return; }
+  if(a==="playAlongSetLoopTarget"){ dispatchPlayAlongAction("sparkPlayAlongSetLoopTarget", v); return; }
+  if(a==="playAlongToggleDebug"){ dispatchPlayAlongAction("sparkPlayAlongToggleDebug"); return; }
+  if(a==="playAlongReplayDrill"){ dispatchPlayAlongAction("sparkPlayAlongReplayDrill"); return; }
+  if(a==="playAlongReplayFullSong"){ dispatchPlayAlongAction("sparkPlayAlongReplayFullSong"); return; }
+  if(a==="playAlongReplay"){ dispatchPlayAlongAction("sparkPlayAlongReplay"); return; }
+  if(a==="playAlongPickNew"){ dispatchPlayAlongAction("sparkPlayAlongPickNew"); return; }
   if(a==="openPlayAlongHome"){
-    if(callPlayAlongHandler("openPlayAlong") !== null) return;
-    if (typeof showToast === "function") showToast("Play Along isn't available right now.");
+    if(dispatchPlayAlongAction("openPlayAlong")) return;
     return;
   }
   if(a==="rhythmReplay"){ appWrite("rhythmResults", null); act("startRhythm"); return; }
