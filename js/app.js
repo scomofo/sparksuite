@@ -1856,7 +1856,12 @@ window.act=function(a,v){
   if(a==="startDrill"){
     var drillLevel = appRead("level", 1);
     var drillPool = CHORDS[drillLevel] || CHORDS[1] || [];
-    if(!drillPool.length) return;
+    if(!drillPool.length){
+      appWrite("drillError","No drill chords are available for this instrument yet.");
+      render();
+      return;
+    }
+    appWrite("drillError",null);
     var drillSelection = drillPool.slice(0, Math.min(2, drillPool.length));
     if(drillSelection.length === 1) drillSelection.push(drillSelection[0]);
     var drillDurationSec = 60;
@@ -1974,7 +1979,12 @@ window.act=function(a,v){
     var sharedEarChords = [];
     for(var sharedLevelIdx = 1; sharedLevelIdx <= sharedEarLevel; sharedLevelIdx++) sharedEarChords = sharedEarChords.concat(CHORDS[sharedLevelIdx] || []);
     if(!sharedEarChords.length) sharedEarChords = CHORDS[1] || [];
-    if(!sharedEarChords.length) return;
+    if(!sharedEarChords.length){
+      appWrite("earTrainError","No ear-training chords are available for this instrument yet.");
+      render();
+      return;
+    }
+    appWrite("earTrainError",null);
     var sharedEarQuestion = sharedEarChords[Math.floor(Math.random() * sharedEarChords.length)];
     var sharedEarOptions = [sharedEarQuestion.name];
     var sharedEarAttempts = 0;

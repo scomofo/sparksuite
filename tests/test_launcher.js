@@ -397,6 +397,15 @@ test('progression builder play surfaces validation instead of silently returning
   assert.ok(gamesSource.indexOf('if(progError){') >= 0);
 });
 
+test('drill and ear training starts surface missing-pool errors instead of silently returning', function() {
+  var appSource = loadJS('js/app.js');
+  var practiceSource = loadJS('js/pages/practice.js');
+  assert.ok(appSource.indexOf('appWrite("drillError","No drill chords are available for this instrument yet.");') >= 0);
+  assert.ok(appSource.indexOf('appWrite("earTrainError","No ear-training chords are available for this instrument yet.");') >= 0);
+  assert.ok(practiceSource.indexOf('var drillError = practiceStateRead("drillError", "") || "";') >= 0);
+  assert.ok(practiceSource.indexOf('error: practiceStateRead("earTrainError", "") || ""') >= 0);
+});
+
 test('inline onclick handlers stay on shared act routing', function() {
   var allowed = [
     /^act\(/,

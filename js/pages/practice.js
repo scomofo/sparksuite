@@ -491,7 +491,10 @@ function customSetsSection(){
 // ===== DRILL TAB =====
 function drillTab(){
   var homeState = getPracticeHomeSnapshot();
-  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+homeState.drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
+  var drillError = practiceStateRead("drillError", "") || "";
+  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+homeState.drillCount+'</strong></p>';
+  if(drillError) h+='<div style="margin-bottom:12px;padding:10px 12px;border-radius:10px;background:#FF6B6B22;color:#FF6B6B;font-size:12px;font-weight:700">'+escHTML(drillError)+'</div>';
+  h+='<button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
   // Suggested drill from transition stats
   var hardest=getHardestTransition();
   if(hardest){
@@ -542,14 +545,18 @@ function getLegacyEarTrainingRuntime(){
     answer: typeof practiceStateRead("earTrainAns", null) === "string" ? practiceStateRead("earTrainAns", null) : (runtime ? runtime.legacyEarTrainAnswer : null),
     score: typeof practiceStateRead("earTrainScore", null) === "number" ? practiceStateRead("earTrainScore", null) : (runtime && typeof runtime.legacyEarTrainScore === "number" ? runtime.legacyEarTrainScore : 0),
     total: typeof practiceStateRead("earTrainTotal", null) === "number" ? practiceStateRead("earTrainTotal", null) : (runtime && typeof runtime.legacyEarTrainTotal === "number" ? runtime.legacyEarTrainTotal : 0),
-    streak: typeof practiceStateRead("earTrainStreak", null) === "number" ? practiceStateRead("earTrainStreak", null) : (runtime && typeof runtime.legacyEarTrainStreak === "number" ? runtime.legacyEarTrainStreak : 0)
+    streak: typeof practiceStateRead("earTrainStreak", null) === "number" ? practiceStateRead("earTrainStreak", null) : (runtime && typeof runtime.legacyEarTrainStreak === "number" ? runtime.legacyEarTrainStreak : 0),
+    error: practiceStateRead("earTrainError", "") || ""
   };
 }
 
 function earTrainTab(){
   var runtime = getLegacyEarTrainingRuntime();
   if(runtime.question)return earTrainPage();
-  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Ear Training &#128066;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Listen to a chord, then identify it!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127911;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Score: <strong>'+runtime.score+'</strong> correct all time</p><button class="btn" onclick="act(\'startEarTrain\')" style="background:linear-gradient(135deg,#FF6B6B,#4ECDC4);color:#fff">&#127911; Start Listening</button></div></div>';
+  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Ear Training &#128066;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Listen to a chord, then identify it!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127911;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Score: <strong>'+runtime.score+'</strong> correct all time</p>';
+  if(runtime.error) h+='<div style="margin-bottom:12px;padding:10px 12px;border-radius:10px;background:#FF6B6B22;color:#FF6B6B;font-size:12px;font-weight:700">'+escHTML(runtime.error)+'</div>';
+  h+='<button class="btn" onclick="act(\'startEarTrain\')" style="background:linear-gradient(135deg,#FF6B6B,#4ECDC4);color:#fff">&#127911; Start Listening</button></div></div>';
+  return h;
 }
 
 function earTrainPage(){
