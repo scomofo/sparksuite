@@ -285,6 +285,11 @@ function getPerformanceHighwayVfxAssets(assets) {
   return assets && assets.vfx && typeof assets.vfx === "object" ? assets.vfx : null;
 }
 
+function getPerformanceHighwayShellOverlayValue(assets, key, fallback) {
+  if (!assets || typeof assets[key] !== "number") return fallback;
+  return Math.max(0, Math.min(1, assets[key]));
+}
+
 function getPerformanceHighwayComboFlameOpacity(combo) {
   combo = typeof combo === "number" ? combo : 0;
   if (combo < 8) return 0;
@@ -295,8 +300,11 @@ function getPerformanceHighwayComboFlameOpacity(combo) {
 function renderPerformanceHighwayVfx(vfxAssets, combo) {
   if (!vfxAssets) return "";
   var h = "";
+  var strikelineOpacity = typeof vfxAssets.strikelineOpacity === "number"
+    ? Math.max(0, Math.min(1, vfxAssets.strikelineOpacity))
+    : 0.8;
   if (vfxAssets.strikeline) {
-    h += '<div class="perform-highway-strikeline" data-highway-strikeline="' + escapePerformanceHtml(vfxAssets.strikeline) + '" style="position:absolute;left:50%;bottom:54px;width:78%;height:54px;transform:translateX(-50%);pointer-events:none;background:url(&quot;' + vfxAssets.strikeline + '&quot;) center/contain no-repeat;opacity:.8;mix-blend-mode:screen;z-index:2"></div>';
+    h += '<div class="perform-highway-strikeline" data-highway-strikeline="' + escapePerformanceHtml(vfxAssets.strikeline) + '" style="position:absolute;left:50%;bottom:54px;width:78%;height:54px;transform:translateX(-50%);pointer-events:none;background:url(&quot;' + vfxAssets.strikeline + '&quot;) center/contain no-repeat;opacity:' + strikelineOpacity.toFixed(2) + ';mix-blend-mode:screen;z-index:2"></div>';
   }
   var comboFlameOpacity = getPerformanceHighwayComboFlameOpacity(combo);
   if (vfxAssets.comboFlame && comboFlameOpacity > 0) {
@@ -312,8 +320,11 @@ function renderPerformanceHighway(chart, nowSec, options) {
   var instrument = getPerformanceHighwayInstrument(chart);
   var combo = typeof options.combo === "number" ? options.combo : 0;
   var height = 400;
-  var shellBackground = 'background:linear-gradient(180deg,rgba(10,16,28,.68),rgba(6,10,18,.9)),url(&quot;' + assets.background + '&quot;) center/cover no-repeat;';
-  var surfaceBackground = 'background:url(&quot;' + assets.surface + '&quot;) center/cover no-repeat;opacity:.3;mix-blend-mode:screen;';
+  var shellOverlayTop = getPerformanceHighwayShellOverlayValue(assets, "shellOverlayTop", 0.68);
+  var shellOverlayBottom = getPerformanceHighwayShellOverlayValue(assets, "shellOverlayBottom", 0.9);
+  var surfaceOpacity = getPerformanceHighwayShellOverlayValue(assets, "surfaceOpacity", 0.3);
+  var shellBackground = 'background:linear-gradient(180deg,rgba(10,16,28,' + shellOverlayTop.toFixed(2) + '),rgba(6,10,18,' + shellOverlayBottom.toFixed(2) + ')),url(&quot;' + assets.background + '&quot;) center/cover no-repeat;';
+  var surfaceBackground = 'background:url(&quot;' + assets.surface + '&quot;) center/cover no-repeat;opacity:' + surfaceOpacity.toFixed(2) + ';mix-blend-mode:screen;';
   var h = '<div class="perform-highway" data-highway-instrument="' + escapePerformanceHtml(instrument) + '" style="height:' + height + 'px;padding:0;border:none;position:relative;overflow:hidden;' + shellBackground + '">';
   h += '<div class="perform-highway-surface" data-highway-surface="' + escapePerformanceHtml(assets.surface) + '" style="position:absolute;inset:0;pointer-events:none;' + surfaceBackground + '"></div>';
   h += renderPerformanceHighwayVfx(vfxAssets, combo);

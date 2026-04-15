@@ -413,30 +413,41 @@ test('renderPerformanceHighway supports named theme manifests and chart theme se
   global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
 });
 
-test('renderPerformanceHighway renders experimental strike-line and combo VFX overlays', function() {
+test('renderPerformanceHighway renders experimental strike-line overlay with curated assets', function() {
   var originalSelection = global.PERFORMANCE_HIGHWAY_THEME_SELECTION;
   global.PERFORMANCE_HIGHWAY_THEME_SELECTION = { guitar: 'experimental' };
 
   var html = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 18 });
 
   assert.ok(html.indexOf('sparkgame/assets/highway/bg_concert_next.png') >= 0);
-  assert.ok(html.indexOf('sparkgame/assets/highway/guitar_highway_surface_refined.png') >= 0);
-  assert.ok(html.indexOf('data-highway-strikeline="sparkgame/assets/vfx/strikeline_refined.png"') >= 0);
-  assert.ok(html.indexOf('data-highway-combo-flame="sparkgame/assets/vfx/combo_flame_refined.png"') >= 0);
-
-  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
-});
-
-test('renderPerformanceHighway hides combo flame until combo threshold is reached', function() {
-  var originalSelection = global.PERFORMANCE_HIGHWAY_THEME_SELECTION;
-  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = { piano: 'experimental' };
-
-  var html = renderPerformanceHighway({ instrument: 'piano', events: [] }, 0, { combo: 3 });
-
+  assert.ok(html.indexOf('sparkgame/assets/highway/guitar_highway_v3.png') >= 0);
   assert.ok(html.indexOf('data-highway-strikeline="sparkgame/assets/vfx/strikeline_refined.png"') >= 0);
   assert.ok(html.indexOf('data-highway-combo-flame=') === -1);
 
   global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
+});
+
+test('renderPerformanceHighway renders combo flame only when a manifest provides it past threshold', function() {
+  var originalManifest = global.PERFORMANCE_HIGHWAY_THEME_MANIFEST;
+  global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = {
+    guitar: {
+      background: 'custom/guitar_bg.png',
+      surface: 'custom/guitar_surface.png',
+      vfx: {
+        strikeline: 'custom/strikeline.png',
+        comboFlame: 'custom/combo_flame.png'
+      }
+    }
+  };
+
+  var htmlLow = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 3 });
+  var htmlHigh = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 18 });
+
+  assert.ok(htmlLow.indexOf('data-highway-strikeline="custom/strikeline.png"') >= 0);
+  assert.ok(htmlLow.indexOf('data-highway-combo-flame=') === -1);
+  assert.ok(htmlHigh.indexOf('data-highway-combo-flame="custom/combo_flame.png"') >= 0);
+
+  global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = originalManifest;
 });
 
 test('setPerformanceHighwayThemeSelection stores per-instrument theme choice', function() {
