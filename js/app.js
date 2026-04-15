@@ -3145,7 +3145,10 @@ window.act=function(a,v){
     var song=null;
     var communitySongs=appRead("communitySongs", []) || [];
     for(var i=0;i<communitySongs.length;i++)if(communitySongs[i].id==v)song=communitySongs[i];
-    if(!song)return;
+    if(!song){
+      if (typeof showToast === "function") showToast("This community song isn't available right now.");
+      return;
+    }
     try{
       var parsed={
         title:song.title,artist:song.artist,bpm:song.bpm||100,level:1,
@@ -4199,7 +4202,10 @@ window.act=function(a,v){
     saveState();render();return;
   }
   if(a==="importSongAudio"){
-    if(!window.electron||!window.electron.stems){alert("Stem separation requires the desktop app.");return;}
+    if(!window.electron||!window.electron.stems){
+      if (typeof showToast === "function") showToast("Song audio import is only available in the desktop build.");
+      return;
+    }
     var importSongId=v;
     window.electron.stems.openFile().then(function(result){
       if(!result)return;
@@ -4230,6 +4236,7 @@ window.act=function(a,v){
           appApplyLegacyActivityRuntime({setFields:{songAudioImporting:false}},function(){
             appWrite("songAudioImporting",false);
           });
+          if (typeof showToast === "function") showToast("No stems were returned for that audio import.");
           render();return;
         }
 
