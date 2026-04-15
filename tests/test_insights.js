@@ -270,6 +270,33 @@ test("buildHomeDashboardData falls back when sparkCore dashboard challenges are 
   assert.strictEqual(summary[0].id, "fallback_daily");
 });
 
+test("buildHomeDashboardData seeds challenges when both dashboard and cache are empty", function() {
+  var initCalls = 0;
+  global.getIncompleteChallenges = function(limit) {
+    if (initCalls > 0) return [{ id: "seeded_daily" }].slice(0, limit);
+    return [];
+  };
+  global.initializeChallengesForCurrentCycle = function() {
+    initCalls++;
+    return [{ id: "seeded_daily" }];
+  };
+  global.window.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardChallenges: []
+        }
+      };
+    }
+  };
+
+  var summary = buildHomeDashboardData().challenges;
+
+  assert.strictEqual(initCalls, 1);
+  assert.strictEqual(summary.length, 1);
+  assert.strictEqual(summary[0].id, "seeded_daily");
+});
+
 test("challenge hub falls back to active challenges when sparkCore dashboard list is empty", function() {
   global.SparkState.read = function(path, fallback) {
     var key = Array.isArray(path) ? path[0] : path;

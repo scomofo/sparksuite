@@ -349,6 +349,12 @@ test('career content bootstraps from the active instrument song library', functi
   assert.strictEqual(global.S.activeCareerId, 'career_career_test');
 });
 
+test('challenge hub open initializes challenges when the cache is empty', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('if((appRead("activeChallenges", []) || []).length===0 && typeof initializeChallengesForCurrentCycle==="function"){') >= 0);
+  assert.ok(appSource.indexOf('openDashboardSectionRequest("challenges");') >= 0);
+});
+
 test('inline onclick handlers stay on shared act routing', function() {
   var allowed = [
     /^act\(/,

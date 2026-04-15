@@ -81,7 +81,13 @@
     if (runtimeState && Array.isArray(runtimeState.dashboardChallenges) && runtimeState.dashboardChallenges.length) {
       return (runtimeState.dashboardChallenges || []).slice(0, 3);
     }
-    return typeof getIncompleteChallenges === "function" ? getIncompleteChallenges(3) : [];
+    var incomplete = typeof getIncompleteChallenges === "function" ? getIncompleteChallenges(3) : [];
+    if (incomplete.length) return incomplete;
+    if (typeof initializeChallengesForCurrentCycle === "function") {
+      initializeChallengesForCurrentCycle();
+      return typeof getIncompleteChallenges === "function" ? getIncompleteChallenges(3) : [];
+    }
+    return [];
   }
 
   function buildHomeCareerSummary(){

@@ -2392,6 +2392,9 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="openChallengeHub"){
+    if((appRead("activeChallenges", []) || []).length===0 && typeof initializeChallengesForCurrentCycle==="function"){
+      initializeChallengesForCurrentCycle();
+    }
     openDashboardSectionRequest("challenges");
     appApplyLegacyActivityRuntime({setFields:{screen:SCR.CHALLENGES}},function(){appWrite("screen",SCR.CHALLENGES);});
     render();return;
