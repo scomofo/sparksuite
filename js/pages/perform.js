@@ -189,6 +189,9 @@ function performPage() {
   var performDifficultyState = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : performRead("performDifficulty", "normal");
   var performSpeedState = runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : performRead("performSpeed", 1);
   var performPracticePresetState = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : performRead("performPracticePreset", null);
+  var highwayInstrument = typeof getPerformanceHighwayInstrument === "function" ? getPerformanceHighwayInstrument(chart) : "guitar";
+  var highwayThemeOptions = typeof getAvailablePerformanceHighwayThemes === "function" ? getAvailablePerformanceHighwayThemes() : ["classic"];
+  var highwayThemeId = typeof getPerformanceHighwayThemeId === "function" ? getPerformanceHighwayThemeId(chart, highwayInstrument) : "classic";
   var calibrating = performRead("_calibrating", false);
   var calibCurrentBeat = performRead("_calibCurrentBeat", 0);
   var calibTotalBeats = performRead("_calibTotalBeats", 8);
@@ -225,6 +228,15 @@ function performPage() {
   h += '<div class="perform-stat"><span class="perform-stat-val">' + performAccuracy + '%</span><span class="perform-stat-label">Accuracy</span></div>';
   h += '<div class="perform-stat"><span class="perform-stat-val">' + performCombo + 'x</span><span class="perform-stat-label">Combo</span></div>';
   h += '</div>';
+
+  if (highwayThemeOptions.length > 1) {
+    h += '<div class="perform-toggle-group" style="justify-content:center;margin:6px 12px 0"><span class="perform-toggle-label">Highway Theme</span>';
+    for (var ht = 0; ht < highwayThemeOptions.length; ht++) {
+      var themeOption = highwayThemeOptions[ht];
+      h += '<button class="btn btn-sm' + (highwayThemeId === themeOption ? ' active' : '') + '" onclick="act(\'performHighwayTheme\',\'' + themeOption + '\')">' + escHTML(themeOption.charAt(0).toUpperCase() + themeOption.slice(1)) + '</button>';
+    }
+    h += '</div>';
+  }
 
   // Hit feedback
   if (performLastHitLabel && Date.now() - performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {

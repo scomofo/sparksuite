@@ -19,22 +19,62 @@ function getPerformanceHighwayThemeManifest() {
   return PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS;
 }
 
+function getStoredPerformanceHighwayThemeSelection() {
+  if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
+    return SparkState.read(["settings", "performanceHighwayThemeSelection"], null);
+  }
+  if (typeof window !== "undefined" && window.S && window.S.settings && window.S.settings.performanceHighwayThemeSelection) {
+    return window.S.settings.performanceHighwayThemeSelection;
+  }
+  if (typeof window !== "undefined" && window.PERFORMANCE_HIGHWAY_THEME_SELECTION) {
+    return window.PERFORMANCE_HIGHWAY_THEME_SELECTION;
+  }
+  return null;
+}
+
+function setStoredPerformanceHighwayThemeSelection(selection) {
+  if (typeof window !== "undefined") window.PERFORMANCE_HIGHWAY_THEME_SELECTION = selection;
+  if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
+    SparkState.write(["settings", "performanceHighwayThemeSelection"], selection);
+  } else if (typeof window !== "undefined" && window.S) {
+    if (!window.S.settings || typeof window.S.settings !== "object") window.S.settings = {};
+    window.S.settings.performanceHighwayThemeSelection = selection;
+  }
+  return selection;
+}
+
+function getAvailablePerformanceHighwayThemes() {
+  var manifest = getPerformanceHighwayThemeManifest();
+  if (manifest && manifest.themes) return Object.keys(manifest.themes);
+  return ["classic"];
+}
+
 function getPerformanceHighwayThemeId(chart, instrument) {
   if (chart) {
     if (typeof chart.highwayTheme === "string" && chart.highwayTheme) return chart.highwayTheme;
     if (chart.metadata && typeof chart.metadata.highwayTheme === "string" && chart.metadata.highwayTheme) return chart.metadata.highwayTheme;
   }
-  if (typeof window !== "undefined" && window.PERFORMANCE_HIGHWAY_THEME_SELECTION) {
-    if (typeof window.PERFORMANCE_HIGHWAY_THEME_SELECTION === "string" && window.PERFORMANCE_HIGHWAY_THEME_SELECTION) {
-      return window.PERFORMANCE_HIGHWAY_THEME_SELECTION;
+  var selection = getStoredPerformanceHighwayThemeSelection();
+  if (selection) {
+    if (typeof selection === "string" && selection) {
+      return selection;
     }
-    if (window.PERFORMANCE_HIGHWAY_THEME_SELECTION[instrument]) {
-      return window.PERFORMANCE_HIGHWAY_THEME_SELECTION[instrument];
+    if (selection[instrument]) {
+      return selection[instrument];
     }
   }
   var manifest = getPerformanceHighwayThemeManifest();
   if (manifest && typeof manifest.defaultTheme === "string" && manifest.defaultTheme) return manifest.defaultTheme;
   return "classic";
+}
+
+function setPerformanceHighwayThemeSelection(themeId, instrument) {
+  themeId = typeof themeId === "string" && themeId ? themeId : "classic";
+  instrument = instrument || getPerformanceHighwayInstrument(null);
+  var selection = getStoredPerformanceHighwayThemeSelection();
+  if (!selection || typeof selection !== "object") selection = {};
+  selection[instrument] = themeId;
+  return setStoredPerformanceHighwayThemeSelection(selection);
 }
 
 installSparkHighwayLanePatch();

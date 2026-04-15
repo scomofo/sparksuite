@@ -2609,6 +2609,12 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="setTheme"){if(appRead("settings", null))appWrite(["settings","theme"],v);if(typeof applyThemeSetting==="function")applyThemeSetting();saveState();render();return;}
+  if(a==="performHighwayTheme"){
+    var performThemeChart = appRead("performChart", null);
+    var performThemeInstrument = typeof getPerformanceHighwayInstrument==="function" ? getPerformanceHighwayInstrument(performThemeChart) : "guitar";
+    if(typeof setPerformanceHighwayThemeSelection==="function")setPerformanceHighwayThemeSelection(v, performThemeInstrument);
+    saveState();render();return;
+  }
   // Song sorting
   if(a==="songSort"){
     if(appRead("songSort", null)===v){appWrite("songSortAsc",!appRead("songSortAsc", false));}

@@ -394,6 +394,41 @@ test('renderPerformanceHighway supports named theme manifests and chart theme se
   global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
 });
 
+test('setPerformanceHighwayThemeSelection stores per-instrument theme choice', function() {
+  var originalSelection = global.PERFORMANCE_HIGHWAY_THEME_SELECTION;
+  S.settings = {};
+
+  setPerformanceHighwayThemeSelection('legacy', 'piano');
+
+  assert.strictEqual(global.PERFORMANCE_HIGHWAY_THEME_SELECTION.piano, 'legacy');
+  assert.strictEqual(S.settings.performanceHighwayThemeSelection.piano, 'legacy');
+
+  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
+});
+
+test('perform page renders highway theme toggles when multiple themes are available', function() {
+  S.performChart = { title: 'Theme Test', artist: 'Spark', instrument: 'piano', events: [], phrases: [] };
+  S.settings = { performanceHighwayThemeSelection: { piano: 'legacy' } };
+  global.escHTML = function(value) { return String(value); };
+  global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = {
+    defaultTheme: 'classic',
+    themes: {
+      classic: {
+        piano: { background: 'classic/piano_bg.png', surface: 'classic/piano_surface.png' }
+      },
+      legacy: {
+        piano: { background: 'legacy/piano_bg.png', surface: 'legacy/piano_surface.png' }
+      }
+    }
+  };
+
+  var html = performPage();
+
+  assert.ok(html.indexOf('Highway Theme') >= 0);
+  assert.ok(html.indexOf("act('performHighwayTheme','classic')") >= 0);
+  assert.ok(html.indexOf("act('performHighwayTheme','legacy')") >= 0);
+});
+
 test('getPreferredPerformanceArrangement honors song-authored arrangement preference', function() {
   assert.strictEqual(getPreferredPerformanceArrangement({ preferredPerformanceArrangement: 'lead' }, 'chords'), 'lead');
   assert.strictEqual(getPreferredPerformanceArrangement({}, 'chords'), 'chords');
