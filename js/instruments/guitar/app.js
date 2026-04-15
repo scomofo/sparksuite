@@ -261,6 +261,66 @@ function applyLegacyCompletionUpdate(update) {
   return update;
 }
 
+function showLegacyPracticeUnavailable() {
+  if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
+  return true;
+}
+
+function launchLegacyPracticeSession(session, sessionChord, sessionChordName, mode, options) {
+  options = options || {};
+  if (!session) {
+    return showLegacyPracticeUnavailable();
+  }
+  openLegacyPracticeSessionRuntime({
+    mode: mode,
+    chordName: sessionChordName,
+    durationSec: session.durationSec != null ? session.durationSec : session.duration
+  });
+  guitarPatchState({
+    sessionMicros: [],
+    lastChordName: sessionChordName,
+    currentChord: sessionChord,
+    timer: session.durationSec != null ? session.durationSec : session.duration,
+    timerActive: true,
+    selectedVoicing: 0,
+    screen: SCR.SESSION
+  });
+  snd("start");
+  if (options.updatePrevChord !== false && typeof _prevChordKey !== "undefined") {
+    _prevChordKey = sessionChordName;
+  }
+  render();
+  queueSessionTick();
+  saveState();
+  return true;
+}
+
+function launchLegacyPracticeDrill(session, drillChords) {
+  if (!session || !drillChords || !drillChords.length) {
+    return showLegacyPracticeUnavailable();
+  }
+  openLegacyPracticeDrillRuntime({
+    durationSec: session.durationSec != null ? session.durationSec : session.duration,
+    chordNames: drillChords.map(function(ch) { return ch.name; })
+  });
+  guitarPatchState({
+    drillChords: drillChords,
+    drillIdx: 0,
+    drillTimer: session.durationSec != null ? session.durationSec : session.duration,
+    drillSwitches: 0,
+    drillLastSwitchTime: Date.now(),
+    drillAdaptiveBpm: 60,
+    drillConsecutiveFast: 0,
+    drillConsecutiveSlow: 0,
+    screen: SCR.DRILL
+  });
+  if (typeof _prevChordKey !== "undefined") _prevChordKey = drillChords[0].name;
+  snd("start");
+  render();
+  queueDrillTick();
+  return true;
+}
+
 function guitarAct(a, v) {
   var D = SparkInstruments.getActive().getData();
 
@@ -268,29 +328,9 @@ function guitarAct(a, v) {
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "quickStart", level: guitarStateRead("level", 1) }));
     var sessionChord = resolveLegacySessionChord(D, session, guitarStateRead("level", 1));
     var sessionChordName = session && session.chordName ? session.chordName : (sessionChord && sessionChord.name ? sessionChord.name : null);
-    if (!session) {
-      if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
-      return true;
-    }
-    openLegacyPracticeSessionRuntime({
-      mode: "quickStart",
-      chordName: sessionChordName,
-      durationSec: session.durationSec != null ? session.durationSec : session.duration
+    return launchLegacyPracticeSession(session, sessionChord, sessionChordName, "quickStart", {
+      updatePrevChord: false
     });
-    guitarPatchState({
-      sessionMicros: [],
-      lastChordName: sessionChordName,
-      currentChord: sessionChord,
-      timer: session.durationSec != null ? session.durationSec : session.duration,
-      timerActive: true,
-      selectedVoicing: 0,
-      screen: SCR.SESSION
-    });
-    snd("start");
-    render();
-    queueSessionTick();
-    saveState();
-    return true;
   }
 
   if (a === "resumeSession") {
@@ -298,91 +338,22 @@ function guitarAct(a, v) {
     var sessionChord = resolveLegacySessionChord(D, session, guitarStateRead("level", 1));
     var sessionChordName = session && session.chordName ? session.chordName : (sessionChord && sessionChord.name ? sessionChord.name : null);
     if (!session) { act("quickStart"); return true; }
-    openLegacyPracticeSessionRuntime({
-      mode: "chord",
-      chordName: sessionChordName,
-      durationSec: session.durationSec != null ? session.durationSec : session.duration
-    });
-    guitarPatchState({
-      sessionMicros: [],
-      lastChordName: sessionChordName,
-      currentChord: sessionChord,
-      timer: session.durationSec != null ? session.durationSec : session.duration,
-      timerActive: true,
-      selectedVoicing: 0,
-      screen: SCR.SESSION
-    });
-    snd("start");
-    if (typeof _prevChordKey !== "undefined") _prevChordKey = sessionChordName;
-    render();
-    queueSessionTick();
-    saveState();
-    return true;
+    return launchLegacyPracticeSession(session, sessionChord, sessionChordName, "chord");
   }
 
   if (a === "startSession") {
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "chord", chordName: v }));
     var sessionChord = resolveLegacySessionChord(D, session, guitarStateRead("level", 1));
     var sessionChordName = session && session.chordName ? session.chordName : (sessionChord && sessionChord.name ? sessionChord.name : null);
-    if (!session) {
-      if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
-      return true;
-    }
-    openLegacyPracticeSessionRuntime({
-      mode: "chord",
-      chordName: sessionChordName,
-      durationSec: session.durationSec != null ? session.durationSec : session.duration
-    });
-    guitarPatchState({
-      sessionMicros: [],
-      lastChordName: sessionChordName,
-      currentChord: sessionChord,
-      timer: session.durationSec != null ? session.durationSec : session.duration,
-      timerActive: true,
-      selectedVoicing: 0,
-      screen: SCR.SESSION
-    });
-    snd("start");
-    if (typeof _prevChordKey !== "undefined") _prevChordKey = sessionChordName;
-    render();
-    queueSessionTick();
-    saveState();
-    return true;
+    return launchLegacyPracticeSession(session, sessionChord, sessionChordName, "chord");
   }
 
   if (a === "startDrill") {
     var drillLevel = guitarStateRead("level", 1);
     var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "drill", level: drillLevel }));
-    if (!session) {
-      if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
-      return true;
-    }
     var drillChords = resolveLegacyDrillChords(D, session);
     if (!drillChords.length) drillChords = buildFallbackLegacyDrillChords(D, drillLevel);
-    if (!drillChords.length) {
-      if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
-      return true;
-    }
-    openLegacyPracticeDrillRuntime({
-      durationSec: session.durationSec != null ? session.durationSec : session.duration,
-      chordNames: drillChords.map(function(ch) { return ch.name; })
-    });
-    guitarPatchState({
-      drillChords: drillChords,
-      drillIdx: 0,
-      drillTimer: session.durationSec != null ? session.durationSec : session.duration,
-      drillSwitches: 0,
-      drillLastSwitchTime: Date.now(),
-      drillAdaptiveBpm: 60,
-      drillConsecutiveFast: 0,
-      drillConsecutiveSlow: 0,
-      screen: SCR.DRILL
-    });
-    if (typeof _prevChordKey !== "undefined") _prevChordKey = drillChords[0].name;
-    snd("start");
-    render();
-    queueDrillTick();
-    return true;
+    return launchLegacyPracticeDrill(session, drillChords);
   }
 
   if (a === "repeatLegacyPracticeSession") {
@@ -473,23 +444,7 @@ function guitarAct(a, v) {
       if (D.ALL_CHORDS[i].name === parts[1]) c2 = D.ALL_CHORDS[i];
     }
     if (c1 && c2) {
-      openLegacyPracticeDrillRuntime({
-        durationSec: 60,
-        chordNames: [c1.name, c2.name]
-      });
-      guitarPatchState({
-        drillChords: [c1, c2],
-        drillIdx: 0,
-        drillTimer: 60,
-        drillSwitches: 0,
-        drillLastSwitchTime: Date.now(),
-        drillAdaptiveBpm: 60,
-        drillConsecutiveFast: 0,
-        drillConsecutiveSlow: 0,
-        screen: SCR.DRILL
-      });
-      _prevChordKey = c1.name;
-      snd("start"); render(); queueDrillTick();
+      launchLegacyPracticeDrill({ durationSec: 60 }, [c1, c2]);
     }
     return true;
   }
@@ -816,21 +771,7 @@ function guitarAct(a, v) {
       }
       var c1 = pool[Math.floor(Math.random() * pool.length)], c2 = c1, n = 0;
       while (c2.name === c1.name && pool.length > 1 && n < 20) { c2 = pool[Math.floor(Math.random() * pool.length)]; n++; }
-      guitarPatchState({
-        drillChords: [c1, c2],
-        drillIdx: 0,
-        drillTimer: 60,
-        drillSwitches: 0,
-        drillLastSwitchTime: Date.now(),
-        drillAdaptiveBpm: 60,
-        drillConsecutiveFast: 0,
-        drillConsecutiveSlow: 0,
-        screen: SCR.DRILL
-      });
-      _prevChordKey = c1.name;
-      snd("start");
-      render();
-      T.drill = setTimeout(tickD, 1000);
+      launchLegacyPracticeDrill({ durationSec: 60 }, [c1, c2]);
     }
     return true;
   }
