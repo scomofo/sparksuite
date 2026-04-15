@@ -39,7 +39,7 @@ window.PERFORMANCE_HIGHWAY_THEME_MANIFEST = {
       },
       piano: {
         background: "sparkgame/assets/highway/bg_recital_next.png",
-        surface: "sparkgame/assets/highway/piano_highway_v3.png",
+        surface: "sparkgame/assets/highway/piano_highway_surface_paintover_v1.png",
         shellOverlayTop: 0.24,
         shellOverlayBottom: 0.54,
         surfaceOpacity: 0.12,

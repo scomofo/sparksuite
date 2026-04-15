@@ -1,6 +1,6 @@
 # infsh Refinement Notes
 
-`infsh` is now installed and authenticated in this workspace, and the first refinement pass has already been run.
+`infsh` is installed and authenticated in this workspace, and the first live asset refinement pass is in use.
 
 ## Current Experimental Theme Assets
 
@@ -9,98 +9,113 @@ Live in the `experimental` highway theme:
 - `sparkgame/assets/highway/bg_concert_next.png`
 - `sparkgame/assets/highway/bg_recital_next.png`
 - `sparkgame/assets/highway/guitar_highway_v3.png`
-- `sparkgame/assets/highway/piano_highway_v3.png`
+- `sparkgame/assets/highway/piano_highway_surface_paintover_v1.png`
 - `sparkgame/assets/vfx/strikeline_screen.png`
 - `sparkgame/assets/vfx/hit_spark_screen_v2.png`
 - `sparkgame/assets/vfx/combo_flame_generate_v2.png`
 
-Archive/staged but not currently live-wired:
+Archive or staged but not currently live-wired:
 
 - `sparkgame/assets/highway/guitar_highway_surface_next.png`
 - `sparkgame/assets/highway/guitar_highway_surface_refined.png`
 - `sparkgame/assets/highway/piano_highway_surface_next.png`
 - `sparkgame/assets/highway/piano_highway_surface_refined.png`
+- `sparkgame/assets/highway/piano_highway_v3.png`
 - `sparkgame/assets/vfx/hit_spark_next.png`
-- `sparkgame/assets/vfx/hit_spark_screen_v2.png`
 - `sparkgame/assets/vfx/strikeline_refined.png`
 - `sparkgame/assets/vfx/strikeline_next.png`
 - `sparkgame/assets/vfx/combo_flame_generate_v1.png`
 - `sparkgame/assets/vfx/combo_flame_refined.png`
 - `sparkgame/assets/vfx/combo_flame_next.png`
 
-## First Refinement Pass Results
-
-### Strong keepers
+## Strong Current Keepers
 
 - `sparkgame/assets/vfx/strikeline_screen.png`
   - black-backed, screen-blend-friendly strike-line
-  - now live in the experimental theme
+  - live in the experimental theme
 - `sparkgame/assets/vfx/combo_flame_generate_v2.png`
   - cleaner black-backed combo accent generated from scratch
-  - now live in the experimental theme
+  - live in the experimental theme
 - `sparkgame/assets/highway/guitar_highway_v3.png`
-  - still the best live runway surface after in-browser comparison
-- `sparkgame/assets/highway/piano_highway_v3.png`
-  - still the best live piano runway surface after in-browser comparison
+  - still the best live Guitar runway surface after in-browser comparison
+- `sparkgame/assets/highway/piano_highway_surface_paintover_v1.png`
+  - first acceptable Piano paintover candidate
+  - live in the experimental theme for in-engine readability testing
 
-### Promising but not yet live
+## Promising but Not Yet Final
 
 - `sparkgame/assets/vfx/hit_spark_screen_v2.png`
-  - much closer to a usable hit effect
-  - now wired for lightweight hit-feedback overlays in the experimental theme
+  - good enough for the lightweight hit-feedback overlay
+  - worth improving later if a cleaner pure-black spark can be produced
+- `sparkgame/assets/highway/piano_highway_v3.png`
+  - still the safe fallback if the new paintover competes too much with dense notes
 
-### Needs another pass
+## Assets That Still Need Work
 
 - `sparkgame/assets/vfx/combo_flame_refined.png`
-  - still not clean enough on a black/screen-ready background
-  - do not wire live yet
+  - still not clean enough on a black, screen-ready background
 - `sparkgame/assets/highway/guitar_highway_surface_refined.png`
   - okay as reference, but the proven `v3` surface still looks better in-engine
 - `sparkgame/assets/highway/piano_highway_surface_next.png`
-  - new art direction is good, but the live runway still reads better with the proven `v3` surface
+  - interesting direction, but weaker than the current paintover candidate
 
-## Piano Surface Edit Findings
+## Piano Surface Generation Findings
 
-The edit-based pass is the right direction for Piano because it preserves runway perspective much better than blind text-to-image generation.
+Edit-based generation is the right seam for Piano because it preserves runway perspective much better than blind text-to-image generation.
 
 What worked:
 
-- `pruna/p-image-edit` successfully held onto the existing `piano_highway_v3.png` structure
-- local image upload through `infsh` worked reliably
+- `pruna/p-image-edit` held onto the existing `piano_highway_v3.png` structure reliably
+- local image upload through `infsh` worked cleanly
+- the generated perspective stayed closer to a usable runway than fresh text-to-image attempts
 
 What failed:
 
-- the first edit drifted into literal road semantics with dashed center markings
-- the second edit still felt too road-like even after explicitly asking for a stage runway
-- pure black background plus “runway” language tends to collapse the image into overly dark silhouettes or street graphics
+- one edit drifted into literal road semantics with dashed center markings
+- another edit stayed too road-like even after explicitly asking for a stage runway
+- pure black background plus strong "runway" language tends to collapse the image into either dark silhouettes or street graphics
+- `google/gemini-2-5-flash-image` showed the same road-marking failure mode
 
-Recommended next pass:
+Recommended next pass if AI is used again:
 
 - keep using edit-based workflow against `piano_highway_v3.png`
 - explicitly forbid: `road`, `street`, `asphalt`, `dashed center line`, `traffic markings`
 - ask for `concert-stage floor panels`, `luxury stage runway`, and `subtle geometric guidance`
-- avoid asking for “lane stripes” at all; ask for “soft panel seams” or “faint edge accents” instead
+- avoid asking for `lane stripes`; ask instead for `soft panel seams` or `faint edge accents`
 
-## Suggested Next infsh Work
+## Piano Paintover Candidate Notes
 
-### 1. Piano Surface Rework
+Candidate:
 
-Current source candidate:
+- `sparkgame/assets/highway/piano_highway_surface_paintover_v1.png`
 
-- `sparkgame/assets/highway/piano_highway_surface_next.png`
+Why it made the cut:
 
-Goal:
+- finally stops reading like a road
+- keeps strong premium material feel
+- preserves good depth and stage atmosphere
+- has the right blue-edge-light direction
+- reads more like stage geometry than traffic lanes
 
-- preserve the clean runway
-- reduce literal lane-striping a little
-- add more premium depth/material contrast
-- avoid the washed-out look from the first refinement
+Watch for during live testing:
 
-Edit prompt:
+- glossy vertical reflections becoming too bright
+- side wood or material contrast pulling the eye away from notes
+- warm inset accents getting too hot near the hit zone
 
-```text
-Refine this piano highway surface overlay for a premium rhythm-game runway. Keep the elegant central perspective and blue-amber palette, but add more material richness and depth while preserving a clean readable center path. Reduce the literal lane-striping slightly without washing out the image. Keep the look luxurious, minimal, and stage-like. No keyboard graphics, no note gems, no hit markers, no text, no logos. Transparent background.
-```
+## Suggested Next Work
+
+### 1. Live Piano Readability Pass
+
+Use the current experimental theme and evaluate:
+
+- dense note readability
+- hit-line clarity
+- whether the reflections compete with notes
+
+If it fails, revert to:
+
+- `sparkgame/assets/highway/piano_highway_v3.png`
 
 ### 2. Future Combo Flame Polish
 
@@ -112,10 +127,6 @@ Open improvement:
 
 - generate a less icon-like, more energetic flame while preserving the pure black background
 
-## Models That Worked Well
+### 3. Prefer Paintover Over Fresh Piano Generation
 
-The first pass was successfully run with:
-
-- `falai/reve@5p7ed7t4`
-
-That model handled local image editing reliably for these asset refinements.
+For Piano runway surfaces, a manual or assisted paintover of the working base is more promising than fresh generation loops.
