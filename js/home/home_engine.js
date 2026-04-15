@@ -91,8 +91,12 @@
   }
 
   function buildHomeCareerSummary(){
+    var nextSong = typeof getRecommendedCareerSong === "function" ? getRecommendedCareerSong() : null;
+    if(nextSong && typeof nextSong === "string" && typeof getCareerItem === "function"){
+      nextSong = getCareerItem("songs", nextSong) || { id: nextSong, title: nextSong };
+    }
     return {
-      nextSong: typeof getRecommendedCareerSong === "function" ? getRecommendedCareerSong() : null
+      nextSong: nextSong
     };
   }
 

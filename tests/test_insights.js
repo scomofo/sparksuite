@@ -297,6 +297,22 @@ test("buildHomeDashboardData seeds challenges when both dashboard and cache are 
   assert.strictEqual(summary[0].id, "seeded_daily");
 });
 
+test("buildHomeDashboardData resolves career recommendation ids into song objects", function() {
+  global.getRecommendedCareerSong = function() {
+    return "career_song_test";
+  };
+  global.getCareerItem = function(type, id) {
+    if (type === "songs" && id === "career_song_test") return { id: id, title: "Career Anthem" };
+    return null;
+  };
+
+  var summary = buildHomeDashboardData().career;
+  var card = renderHomeCareerCard(summary);
+
+  assert.strictEqual(summary.nextSong.title, "Career Anthem");
+  assert.ok(card.indexOf("Career Anthem") >= 0);
+});
+
 test("challenge hub falls back to active challenges when sparkCore dashboard list is empty", function() {
   global.SparkState.read = function(path, fallback) {
     var key = Array.isArray(path) ? path[0] : path;

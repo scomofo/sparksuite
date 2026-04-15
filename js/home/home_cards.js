@@ -85,7 +85,10 @@ function renderHomeCareerCard(data){
   var h = '<div class="card">';
   h += '<div><b>Career</b></div>';
   if(data.nextSong){
-    h += '<div>Next: '+escHTML(data.nextSong)+'</div>';
+    var nextSongLabel = typeof data.nextSong === "string"
+      ? data.nextSong
+      : (data.nextSong.title || data.nextSong.id || "Next song");
+    h += '<div>Next: '+escHTML(nextSongLabel)+'</div>';
     h += '<button onclick="act(\'openCareer\')">Open Career</button>';
   }else{
     h += '<div>No career songs available.</div>';
