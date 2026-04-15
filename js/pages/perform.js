@@ -251,7 +251,7 @@ function performPage() {
   }
 
   // Highway
-  h += renderPerformanceHighway(chart, nowSec);
+  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo });
 
   // Chord indicator panel
   var currentChord = null;

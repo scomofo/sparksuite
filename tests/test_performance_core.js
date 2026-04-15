@@ -63,6 +63,7 @@ eval(loadJS('js/performance/chart.js'));
 eval(loadJS('js/performance/arrangements.js'));
 eval(loadJS('js/performance/adapters.js'));
 eval(loadJS('js/performance/scoring.js'));
+eval(loadJS('js/performance/highway_themes.js'));
 eval(loadJS('js/performance/highway.js'));
 eval(loadJS('js/performance/progression.js'));
 eval(loadJS('js/performance/badges.js'));
@@ -409,6 +410,32 @@ test('renderPerformanceHighway supports named theme manifests and chart theme se
   assert.ok(chartHtml.indexOf('neon/guitar_surface.png') >= 0);
 
   global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = originalManifest;
+  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
+});
+
+test('renderPerformanceHighway renders experimental strike-line and combo VFX overlays', function() {
+  var originalSelection = global.PERFORMANCE_HIGHWAY_THEME_SELECTION;
+  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = { guitar: 'experimental' };
+
+  var html = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 18 });
+
+  assert.ok(html.indexOf('sparkgame/assets/highway/bg_concert_next.png') >= 0);
+  assert.ok(html.indexOf('sparkgame/assets/highway/guitar_highway_surface_refined.png') >= 0);
+  assert.ok(html.indexOf('data-highway-strikeline="sparkgame/assets/vfx/strikeline_refined.png"') >= 0);
+  assert.ok(html.indexOf('data-highway-combo-flame="sparkgame/assets/vfx/combo_flame_refined.png"') >= 0);
+
+  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
+});
+
+test('renderPerformanceHighway hides combo flame until combo threshold is reached', function() {
+  var originalSelection = global.PERFORMANCE_HIGHWAY_THEME_SELECTION;
+  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = { piano: 'experimental' };
+
+  var html = renderPerformanceHighway({ instrument: 'piano', events: [] }, 0, { combo: 3 });
+
+  assert.ok(html.indexOf('data-highway-strikeline="sparkgame/assets/vfx/strikeline_refined.png"') >= 0);
+  assert.ok(html.indexOf('data-highway-combo-flame=') === -1);
+
   global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
 });
 

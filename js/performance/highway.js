@@ -281,14 +281,42 @@ function notifyHighwayHit(evt) {
   _sparkHighway.notifyHit(evt._screenX, evt._screenY, getPerformanceEventHitColor(evt));
 }
 
-function renderPerformanceHighway(chart, nowSec) {
+function getPerformanceHighwayVfxAssets(assets) {
+  return assets && assets.vfx && typeof assets.vfx === "object" ? assets.vfx : null;
+}
+
+function getPerformanceHighwayComboFlameOpacity(combo) {
+  combo = typeof combo === "number" ? combo : 0;
+  if (combo < 8) return 0;
+  if (combo >= 30) return 0.92;
+  return Math.max(0.35, Math.min(0.92, 0.35 + ((combo - 8) / 22) * 0.57));
+}
+
+function renderPerformanceHighwayVfx(vfxAssets, combo) {
+  if (!vfxAssets) return "";
+  var h = "";
+  if (vfxAssets.strikeline) {
+    h += '<div class="perform-highway-strikeline" data-highway-strikeline="' + escapePerformanceHtml(vfxAssets.strikeline) + '" style="position:absolute;left:50%;bottom:54px;width:78%;height:54px;transform:translateX(-50%);pointer-events:none;background:url(&quot;' + vfxAssets.strikeline + '&quot;) center/contain no-repeat;opacity:.8;mix-blend-mode:screen;z-index:2"></div>';
+  }
+  var comboFlameOpacity = getPerformanceHighwayComboFlameOpacity(combo);
+  if (vfxAssets.comboFlame && comboFlameOpacity > 0) {
+    h += '<div class="perform-highway-combo-flame" data-highway-combo-flame="' + escapePerformanceHtml(vfxAssets.comboFlame) + '" style="position:absolute;right:14px;bottom:72px;width:118px;height:118px;pointer-events:none;background:url(&quot;' + vfxAssets.comboFlame + '&quot;) center/contain no-repeat;opacity:' + comboFlameOpacity.toFixed(2) + ';mix-blend-mode:screen;filter:drop-shadow(0 8px 22px rgba(18,122,255,.3));z-index:2"></div>';
+  }
+  return h;
+}
+
+function renderPerformanceHighway(chart, nowSec, options) {
+  options = options || {};
   var assets = getPerformanceHighwayAssets(chart);
+  var vfxAssets = getPerformanceHighwayVfxAssets(assets);
   var instrument = getPerformanceHighwayInstrument(chart);
+  var combo = typeof options.combo === "number" ? options.combo : 0;
   var height = 400;
   var shellBackground = 'background:linear-gradient(180deg,rgba(10,16,28,.68),rgba(6,10,18,.9)),url(&quot;' + assets.background + '&quot;) center/cover no-repeat;';
   var surfaceBackground = 'background:url(&quot;' + assets.surface + '&quot;) center/cover no-repeat;opacity:.3;mix-blend-mode:screen;';
   var h = '<div class="perform-highway" data-highway-instrument="' + escapePerformanceHtml(instrument) + '" style="height:' + height + 'px;padding:0;border:none;position:relative;overflow:hidden;' + shellBackground + '">';
   h += '<div class="perform-highway-surface" data-highway-surface="' + escapePerformanceHtml(assets.surface) + '" style="position:absolute;inset:0;pointer-events:none;' + surfaceBackground + '"></div>';
+  h += renderPerformanceHighwayVfx(vfxAssets, combo);
   h += '<canvas id="spark-highway-canvas" style="width:100%;height:100%;display:block;position:relative;z-index:1"></canvas>';
   h += '<div id="perform-imported-overlay" style="position:absolute;inset:0;pointer-events:none">';
   h += renderImportedTechniqueOverlay(chart, nowSec, 3);
