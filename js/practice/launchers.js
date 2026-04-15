@@ -58,6 +58,21 @@
     return launchPracticeItem(resolvePracticePlanItem(itemOrId));
   }
 
+  function getActivePracticeInstrumentId(){
+    if(typeof SparkState!=="undefined" && SparkState && typeof SparkState.read==="function"){
+      return SparkState.read(["activeInstrument"], null);
+    }
+    if(typeof globalThis!=="undefined"){
+      var root = globalThis.__sparkState || globalThis.S || null;
+      return root && root.activeInstrument ? root.activeInstrument : null;
+    }
+    return null;
+  }
+
+  function isPianoPracticeLauncher(){
+    return getActivePracticeInstrumentId() === "pianospark";
+  }
+
   function launchWarmupItem(item){
     if(item.meta && item.meta.exerciseId && typeof act==="function"){
       act("planStartWarmup", item.meta.exerciseId);
@@ -76,6 +91,12 @@
     var to = item.meta.to || "";
     var key = item.meta.key || (from && to ? (from + "|" + to) : "");
     if(typeof act==="function"){
+      if(isPianoPracticeLauncher()){
+        act("go_home");
+        act("tab", "games");
+        act("start_drill", "level");
+        return true;
+      }
       act("planStartTransition", key);
       return true;
     }
@@ -114,6 +135,12 @@
   function launchRhythmItem(item){
     var bpm = item && item.meta && item.meta.bpm ? item.meta.bpm : 90;
     if(typeof act==="function"){
+      if(isPianoPracticeLauncher()){
+        act("go_home");
+        act("tab", "games");
+        act("start_rhythm");
+        return true;
+      }
       act("planStartRhythm", String(bpm));
       return true;
     }
@@ -122,6 +149,12 @@
 
   function launchFingerItem(item){
     if(typeof act!=="function") return false;
+    if(isPianoPracticeLauncher()){
+      act("go_home");
+      act("tab", "games");
+      act("start_drill", "level");
+      return true;
+    }
     var exerciseId = item && item.meta && item.meta.exerciseId ? item.meta.exerciseId : "";
     act("planStartWarmup", exerciseId);
     return true;

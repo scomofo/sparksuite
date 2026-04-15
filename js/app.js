@@ -2579,6 +2579,15 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="launchRecommendation"){if(typeof launchRecommendationById==="function")launchRecommendationById(v);return;}
+  if(a==="launchAnalyticsRecommendation"){
+    var analyticsSummary = typeof buildAnalyticsSummary==="function" ? buildAnalyticsSummary() : null;
+    var analyticsIndex = parseInt(v, 10);
+    var analyticsItems = analyticsSummary && Array.isArray(analyticsSummary.recommendations) ? analyticsSummary.recommendations : [];
+    if(analyticsIndex>=0 && analyticsIndex<analyticsItems.length && typeof launchPracticeItem==="function"){
+      launchPracticeItem(analyticsItems[analyticsIndex]);
+    }
+    return;
+  }
   if(a==="claimChallengeReward"){
     if(typeof claimChallengeReward==="function")claimChallengeReward(v);
     applyDashboardChallengeRewardRequest(v);

@@ -185,6 +185,15 @@ test('index loads the shared execution gateway for editor preview flows', functi
   assert.ok(indexHtml.indexOf('js/sparksuite/core/execution_gateway.js') >= 0);
 });
 
+test('analytics recommendation buttons route through shared and piano dispatchers', function() {
+  var appSource = loadJS('js/app.js');
+  var pianoSource = loadJS('js/instruments/piano/app.js');
+  assert.ok(appSource.indexOf('if(a==="launchAnalyticsRecommendation"){') >= 0);
+  assert.ok(appSource.indexOf('launchPracticeItem(analyticsItems[analyticsIndex])') >= 0);
+  assert.ok(pianoSource.indexOf('case "launchAnalyticsRecommendation":') >= 0);
+  assert.ok(pianoSource.indexOf('launchPracticeItem(pianoAnalyticsItems[pianoAnalyticsIndex])') >= 0);
+});
+
 test('getPage returns page from active instrument', function() {
   SparkInstruments.activate('test_guitar');
   var page = SparkInstruments.getPage('home');

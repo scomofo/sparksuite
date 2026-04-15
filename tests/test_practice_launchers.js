@@ -115,5 +115,39 @@ test("launchPracticePlanItem resolves plan item ids before launching", function(
   assert.strictEqual(global._acts[0].value, "the_beat_goes_on|chords|normal");
 });
 
+test("piano transition recommendations fall back to the games drill flow", function() {
+  global.S.activeInstrument = "pianospark";
+
+  var launched = launchPracticeItem({
+    id: "transition_c_g",
+    type: "transition",
+    meta: { key: "C->G" }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "go_home", value: undefined },
+    { name: "tab", value: "games" },
+    { name: "start_drill", value: "level" }
+  ]);
+});
+
+test("piano rhythm recommendations fall back to the games rhythm flow", function() {
+  global.S.activeInstrument = "pianospark";
+
+  var launched = launchPracticeItem({
+    id: "rhythm_focus",
+    type: "rhythm",
+    meta: { bpm: 95 }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "go_home", value: undefined },
+    { name: "tab", value: "games" },
+    { name: "start_rhythm", value: undefined }
+  ]);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);
