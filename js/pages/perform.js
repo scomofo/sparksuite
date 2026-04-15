@@ -239,8 +239,9 @@ function performPage() {
   }
 
   // Hit feedback
+  var activeHitLabel = '';
   if (performLastHitLabel && Date.now() - performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
-    h += '<div class="perform-hit-feedback">' + escHTML(performLastHitLabel) + '</div>';
+    activeHitLabel = performLastHitLabel;
   }
 
   // Count-in overlay
@@ -251,7 +252,7 @@ function performPage() {
   }
 
   // Highway
-  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo });
+  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo, hitLabel: activeHitLabel });
 
   // Chord indicator panel
   var currentChord = null;

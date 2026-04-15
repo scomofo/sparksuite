@@ -313,12 +313,24 @@ function renderPerformanceHighwayVfx(vfxAssets, combo) {
   return h;
 }
 
+function renderPerformanceHighwayHitFeedback(label, hitSparkAsset) {
+  if (!label) return "";
+  var h = '<div class="perform-hit-feedback">';
+  if (hitSparkAsset) {
+    h += '<div class="perform-hit-feedback-spark" data-highway-hit-spark="' + escapePerformanceHtml(hitSparkAsset) + '" style="position:absolute;left:50%;top:50%;width:136px;height:136px;transform:translate(-50%,-50%);pointer-events:none;background:url(&quot;' + hitSparkAsset + '&quot;) center/contain no-repeat;opacity:.82;mix-blend-mode:screen;z-index:-1"></div>';
+  }
+  h += escapePerformanceHtml(label);
+  h += '</div>';
+  return h;
+}
+
 function renderPerformanceHighway(chart, nowSec, options) {
   options = options || {};
   var assets = getPerformanceHighwayAssets(chart);
   var vfxAssets = getPerformanceHighwayVfxAssets(assets);
   var instrument = getPerformanceHighwayInstrument(chart);
   var combo = typeof options.combo === "number" ? options.combo : 0;
+  var hitLabel = typeof options.hitLabel === "string" ? options.hitLabel : "";
   var height = 400;
   var shellOverlayTop = getPerformanceHighwayShellOverlayValue(assets, "shellOverlayTop", 0.68);
   var shellOverlayBottom = getPerformanceHighwayShellOverlayValue(assets, "shellOverlayBottom", 0.9);
@@ -332,6 +344,9 @@ function renderPerformanceHighway(chart, nowSec, options) {
   h += '<div id="perform-imported-overlay" style="position:absolute;inset:0;pointer-events:none">';
   h += renderImportedTechniqueOverlay(chart, nowSec, 3);
   h += '</div>';
+  if (hitLabel) {
+    h += renderPerformanceHighwayHitFeedback(hitLabel, vfxAssets && vfxAssets.hitSpark);
+  }
   h += '</div>';
   return h;
 }

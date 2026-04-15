@@ -417,12 +417,13 @@ test('renderPerformanceHighway renders experimental strike-line overlay with cur
   var originalSelection = global.PERFORMANCE_HIGHWAY_THEME_SELECTION;
   global.PERFORMANCE_HIGHWAY_THEME_SELECTION = { guitar: 'experimental' };
 
-  var html = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 18 });
+  var html = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 18, hitLabel: 'Perfect' });
 
   assert.ok(html.indexOf('sparkgame/assets/highway/bg_concert_next.png') >= 0);
   assert.ok(html.indexOf('sparkgame/assets/highway/guitar_highway_v3.png') >= 0);
-  assert.ok(html.indexOf('data-highway-strikeline="sparkgame/assets/vfx/strikeline_refined.png"') >= 0);
-  assert.ok(html.indexOf('data-highway-combo-flame=') === -1);
+  assert.ok(html.indexOf('data-highway-strikeline="sparkgame/assets/vfx/strikeline_screen.png"') >= 0);
+  assert.ok(html.indexOf('data-highway-hit-spark="sparkgame/assets/vfx/hit_spark_screen_v2.png"') >= 0);
+  assert.ok(html.indexOf('data-highway-combo-flame="sparkgame/assets/vfx/combo_flame_generate_v1.png"') >= 0);
 
   global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
 });
