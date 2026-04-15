@@ -308,6 +308,41 @@ test('ensurePerformanceHighwayLaneData repairs missing lane metadata before rend
   assert.strictEqual(chart.events[2].laneMask, 0);
 });
 
+test('ensureSparkHighway uses piano skin for piano charts', function() {
+  var created = [];
+  var originalSparkHighway = global.SparkHighway;
+  global.SparkHighway = function(canvasEl, skin) {
+    this.canvas = canvasEl;
+    this.skin = skin;
+    this.init = function() { return Promise.resolve(); };
+    this.destroy = function() {};
+    created.push({ canvas: canvasEl, skin: skin });
+  };
+  global.SparkHighway.GUITAR_SKIN = { id: 'guitar' };
+  global.SparkHighway.PIANO_SKIN = { id: 'piano' };
+
+  destroySparkHighway();
+  ensureSparkHighway({ id: 'canvas-a' }, { instrument: 'piano' });
+
+  assert.strictEqual(created.length, 1);
+  assert.strictEqual(created[0].skin, global.SparkHighway.PIANO_SKIN);
+
+  destroySparkHighway();
+  global.SparkHighway = originalSparkHighway;
+});
+
+test('renderPerformanceHighway uses archive-backed backgrounds for guitar and piano', function() {
+  var guitarHtml = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0);
+  var pianoHtml = renderPerformanceHighway({ instrument: 'piano', events: [] }, 0);
+
+  assert.ok(guitarHtml.indexOf('data-highway-instrument="guitar"') >= 0);
+  assert.ok(guitarHtml.indexOf('sparkgame/assets/highway/bg_concert.png') >= 0);
+  assert.ok(guitarHtml.indexOf('sparkgame/assets/highway/guitar_highway_v3.png') >= 0);
+  assert.ok(pianoHtml.indexOf('data-highway-instrument="piano"') >= 0);
+  assert.ok(pianoHtml.indexOf('sparkgame/assets/highway/bg_recital.png') >= 0);
+  assert.ok(pianoHtml.indexOf('sparkgame/assets/highway/piano_highway_v3.png') >= 0);
+});
+
 test('getPreferredPerformanceArrangement honors song-authored arrangement preference', function() {
   assert.strictEqual(getPreferredPerformanceArrangement({ preferredPerformanceArrangement: 'lead' }, 'chords'), 'lead');
   assert.strictEqual(getPreferredPerformanceArrangement({}, 'chords'), 'chords');

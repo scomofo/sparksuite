@@ -586,6 +586,12 @@ test("piano settings tab normalizes legacy volume percentages", function() {
   assert.ok(html.indexOf("value=\"80\"") >= 0, "expected normalized slider value");
 });
 
+test("piano performance page uses shared highway initialization", function() {
+  var performPageSource = loadJS("js/instruments/piano/pages/perform.js");
+  assert.ok(performPageSource.indexOf("ensureSparkHighway(canvas, chart)") >= 0);
+  assert.ok(performPageSource.indexOf("_ensurePianoHighway") === -1);
+});
+
 test("openCareerSong delegates to shared performance selection helper and syncs piano aliases", function() {
   global.getCareerItem = function(type, id) {
     if (type !== "songs" || id !== "career_river") return null;

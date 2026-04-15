@@ -502,7 +502,7 @@ function _updatePerformDisplay() {
 
   // Initialize canvas highway on first frame
   var canvas = document.getElementById("spark-highway-canvas");
-  if (canvas && !_sparkHighway) ensureSparkHighway(canvas);
+  if (canvas) ensureSparkHighway(canvas, performChart);
   if (canvas) {
     if (performChart) { feedChartToHighway(performChart); }
     feedChartToHighway(performChart);

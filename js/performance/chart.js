@@ -84,6 +84,7 @@ function importPerformanceChartPackage(chartDefinition) {
     title: chartDefinition.title,
     artist: chartDefinition.artist,
     arrangementType: chartDefinition.arrangementType,
+    instrument: chartDefinition.instrument,
     audio: chartDefinition.audio
   });
 }
@@ -177,6 +178,7 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
     beatsPerBar: normalizedPhrases.length ? 4 : 4,
     offsetSec: songChart.song.offsetSec || 0,
     arrangementType: options.arrangementType || "imported_chart",
+    instrument: options.instrument || songChart.song.instrument || null,
     audio: options.audio || { type: "silent" },
     events: events,
     phrases: normalizedPhrases,

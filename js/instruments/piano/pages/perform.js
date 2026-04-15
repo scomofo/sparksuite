@@ -58,7 +58,7 @@ function updatePerformanceDOM(){
 
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas) {
-    var hw = _ensurePianoHighway(canvas);
+    var hw = ensureSparkHighway(canvas, chart);
     hw.setChart(chart ? chart.events : [], chart ? chart.phrases : []);
     hw.update(currentSec, performCombo || 0);
   }

@@ -1,13 +1,51 @@
 /* ===== ChordSpark Performance: Highway Renderer (Canvas) ===== */
 
 var _sparkHighway = null;
+var PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS = {
+  guitar: {
+    background: "sparkgame/assets/highway/bg_concert.png",
+    surface: "sparkgame/assets/highway/guitar_highway_v3.png"
+  },
+  piano: {
+    background: "sparkgame/assets/highway/bg_recital.png",
+    surface: "sparkgame/assets/highway/piano_highway_v3.png"
+  }
+};
 
 installSparkHighwayLanePatch();
 
-function ensureSparkHighway(canvasEl) {
-  if (_sparkHighway && _sparkHighway.canvas === canvasEl) return _sparkHighway;
+function getPerformanceHighwayInstrument(chart) {
+  if (chart) {
+    if (typeof chart.instrument === "string" && chart.instrument) return chart.instrument;
+    if (chart.metadata && typeof chart.metadata.instrument === "string" && chart.metadata.instrument) return chart.metadata.instrument;
+  }
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
+    var active = SparkInstruments.getActive();
+    if (active && typeof active.instrument === "string" && active.instrument) return active.instrument;
+    if (active && typeof active.id === "string" && active.id) return active.id;
+  }
+  return "guitar";
+}
+
+function getPerformanceHighwaySkin(instrument) {
+  if (instrument === "piano" && typeof SparkHighway !== "undefined" && SparkHighway.PIANO_SKIN) {
+    return SparkHighway.PIANO_SKIN;
+  }
+  return typeof SparkHighway !== "undefined" ? SparkHighway.GUITAR_SKIN : null;
+}
+
+function getPerformanceHighwayAssets(chart) {
+  var instrument = getPerformanceHighwayInstrument(chart);
+  if (instrument === "piano") return PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS.piano;
+  return PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS.guitar;
+}
+
+function ensureSparkHighway(canvasEl, chart) {
+  var instrument = getPerformanceHighwayInstrument(chart);
+  var desiredSkin = getPerformanceHighwaySkin(instrument);
+  if (_sparkHighway && _sparkHighway.canvas === canvasEl && _sparkHighway.skin === desiredSkin) return _sparkHighway;
   if (_sparkHighway) _sparkHighway.destroy();
-  _sparkHighway = new SparkHighway(canvasEl, SparkHighway.GUITAR_SKIN);
+  _sparkHighway = new SparkHighway(canvasEl, desiredSkin);
   _sparkHighway._initPromise = _sparkHighway.init();
   return _sparkHighway;
 }
@@ -152,9 +190,14 @@ function notifyHighwayHit(evt) {
 }
 
 function renderPerformanceHighway(chart, nowSec) {
+  var assets = getPerformanceHighwayAssets(chart);
+  var instrument = getPerformanceHighwayInstrument(chart);
   var height = 400;
-  var h = '<div class="perform-highway" style="height:' + height + 'px;padding:0;border:none;background:transparent;position:relative;overflow:hidden">';
-  h += '<canvas id="spark-highway-canvas" style="width:100%;height:100%;display:block"></canvas>';
+  var shellBackground = 'background:linear-gradient(180deg,rgba(10,16,28,.68),rgba(6,10,18,.9)),url(&quot;' + assets.background + '&quot;) center/cover no-repeat;';
+  var surfaceBackground = 'background:url(&quot;' + assets.surface + '&quot;) center/cover no-repeat;opacity:.3;mix-blend-mode:screen;';
+  var h = '<div class="perform-highway" data-highway-instrument="' + escapePerformanceHtml(instrument) + '" style="height:' + height + 'px;padding:0;border:none;position:relative;overflow:hidden;' + shellBackground + '">';
+  h += '<div class="perform-highway-surface" data-highway-surface="' + escapePerformanceHtml(assets.surface) + '" style="position:absolute;inset:0;pointer-events:none;' + surfaceBackground + '"></div>';
+  h += '<canvas id="spark-highway-canvas" style="width:100%;height:100%;display:block;position:relative;z-index:1"></canvas>';
   h += '<div id="perform-imported-overlay" style="position:absolute;inset:0;pointer-events:none">';
   h += renderImportedTechniqueOverlay(chart, nowSec, 3);
   h += '</div>';
