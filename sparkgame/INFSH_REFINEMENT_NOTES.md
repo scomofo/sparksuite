@@ -12,7 +12,7 @@ Live in the `experimental` highway theme:
 - `sparkgame/assets/highway/piano_highway_v3.png`
 - `sparkgame/assets/vfx/strikeline_screen.png`
 - `sparkgame/assets/vfx/hit_spark_screen_v2.png`
-- `sparkgame/assets/vfx/combo_flame_generate_v1.png`
+- `sparkgame/assets/vfx/combo_flame_generate_v2.png`
 
 Archive/staged but not currently live-wired:
 
@@ -24,6 +24,7 @@ Archive/staged but not currently live-wired:
 - `sparkgame/assets/vfx/hit_spark_screen_v2.png`
 - `sparkgame/assets/vfx/strikeline_refined.png`
 - `sparkgame/assets/vfx/strikeline_next.png`
+- `sparkgame/assets/vfx/combo_flame_generate_v1.png`
 - `sparkgame/assets/vfx/combo_flame_refined.png`
 - `sparkgame/assets/vfx/combo_flame_next.png`
 
@@ -34,8 +35,8 @@ Archive/staged but not currently live-wired:
 - `sparkgame/assets/vfx/strikeline_screen.png`
   - black-backed, screen-blend-friendly strike-line
   - now live in the experimental theme
-- `sparkgame/assets/vfx/combo_flame_generate_v1.png`
-  - clean black-backed combo accent generated from scratch
+- `sparkgame/assets/vfx/combo_flame_generate_v2.png`
+  - cleaner black-backed combo accent generated from scratch
   - now live in the experimental theme
 - `sparkgame/assets/highway/guitar_highway_v3.png`
   - still the best live runway surface after in-browser comparison
@@ -83,7 +84,7 @@ Refine this piano highway surface overlay for a premium rhythm-game runway. Keep
 
 Current live source:
 
-- `sparkgame/assets/vfx/combo_flame_generate_v1.png`
+- `sparkgame/assets/vfx/combo_flame_generate_v2.png`
 
 Open improvement:
 

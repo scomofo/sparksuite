@@ -34,7 +34,7 @@ window.PERFORMANCE_HIGHWAY_THEME_MANIFEST = {
           strikeline: "sparkgame/assets/vfx/strikeline_screen.png",
           strikelineOpacity: 0.58,
           hitSpark: "sparkgame/assets/vfx/hit_spark_screen_v2.png",
-          comboFlame: "sparkgame/assets/vfx/combo_flame_generate_v1.png"
+          comboFlame: "sparkgame/assets/vfx/combo_flame_generate_v2.png"
         }
       },
       piano: {
@@ -47,7 +47,7 @@ window.PERFORMANCE_HIGHWAY_THEME_MANIFEST = {
           strikeline: "sparkgame/assets/vfx/strikeline_screen.png",
           strikelineOpacity: 0.48,
           hitSpark: "sparkgame/assets/vfx/hit_spark_screen_v2.png",
-          comboFlame: "sparkgame/assets/vfx/combo_flame_generate_v1.png"
+          comboFlame: "sparkgame/assets/vfx/combo_flame_generate_v2.png"
         }
       }
     }
