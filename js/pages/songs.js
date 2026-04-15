@@ -305,8 +305,12 @@ function communitySection(){
 
 function communitySubmitForm(){
   var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var communityState=getSongsCommunitySnapshot();
   var ss=getSongsSubmitSnapshot();
   var h='<div class="card"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">Submit a Song</h3>';
+  if(communityState.error){
+    h+='<div style="margin-bottom:12px;padding:10px 12px;border-radius:10px;background:#FF6B6B22;color:#FF6B6B;font-size:12px;font-weight:700">'+escHTML(communityState.error)+'</div>';
+  }
   h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(ss.title)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
   h+='<input class="set-input mb12" type="text" placeholder="Artist" value="'+escHTML(ss.artist)+'" oninput="act(\'submitField\',\'artist:\'+this.value)" aria-label="Artist name"/>';
   h+='<input class="set-input mb12" type="text" placeholder="Your name (optional)" value="'+escHTML(ss.submittedBy)+'" oninput="act(\'submitField\',\'submittedBy:\'+this.value)" aria-label="Your name"/>';

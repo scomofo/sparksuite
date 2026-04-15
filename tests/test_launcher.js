@@ -368,6 +368,16 @@ test('community API defaults to the local HTTP server and allows overrides', fun
   assert.ok(appSource.indexOf('"http://localhost:3456"') >= 0);
 });
 
+test('community actions surface API errors instead of swallowing them', function() {
+  var appSource = loadJS('js/app.js');
+  var songsSource = loadJS('js/pages/songs.js');
+  assert.ok(appSource.indexOf('if(!r.ok) throw new Error(data && data.error ? data.error : ("Community request failed: " + r.status));') >= 0);
+  assert.ok(appSource.indexOf('if(!r.ok) throw new Error(data && data.error ? data.error : ("Vote failed: " + r.status));') >= 0);
+  assert.ok(appSource.indexOf('if(!r.ok) throw new Error(data && data.error ? data.error : ("Submit failed: " + r.status));') >= 0);
+  assert.ok(appSource.indexOf('appWrite("communityError",String((err&&err.message)||err||"Failed to submit song"));render();') >= 0);
+  assert.ok(songsSource.indexOf('if(communityState.error){') >= 0);
+});
+
 test('inline onclick handlers stay on shared act routing', function() {
   var allowed = [
     /^act\(/,

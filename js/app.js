@@ -527,10 +527,16 @@ function fetchCommunity(){
   var url=COMMUNITY_URL+"/api/songs";
   if(appRead("communitySearch",""))url+="?q="+encodeURIComponent(appRead("communitySearch",""))+"&sort="+appRead("communitySort","recent");
   else url+="?sort="+appRead("communitySort","recent");
-  fetch(url).then(function(r){return r.json();}).then(function(data){
+  fetch(url).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(data){
+      if(!r.ok) throw new Error(data && data.error ? data.error : ("Community request failed: " + r.status));
+      return data;
+    });
+  }).then(function(data){
     appWrite("communitySongs",data);appWrite("communityLoading",false);render();
-  }).catch(function(){
-    appWrite("communityError","Could not connect to community server");appWrite("communityLoading",false);render();
+  }).catch(function(err){
+    appWrite("communityError",String((err && err.message) || err || "Could not connect to community server"));
+    appWrite("communityLoading",false);render();
   });
 }
 
@@ -3025,7 +3031,16 @@ window.act=function(a,v){
   if(a==="communitySearch"){appWrite("communitySearch",v);applySongBrowserRequest("community_search", { communitySearch: appRead("communitySearch", "") });fetchCommunity();return;}
   if(a==="communitySort"){appWrite("communitySort",v);applySongBrowserRequest("community_sort", { communitySort: appRead("communitySort", "") });fetchCommunity();return;}
   if(a==="voteSong"){
-    fetch(COMMUNITY_URL+"/api/songs/"+v+"/vote",{method:"POST"}).then(function(){fetchCommunity();}).catch(function(){});
+    appWrite("communityError",null);
+    fetch(COMMUNITY_URL+"/api/songs/"+v+"/vote",{method:"POST"}).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(data){
+        if(!r.ok) throw new Error(data && data.error ? data.error : ("Vote failed: " + r.status));
+        return data;
+      });
+    }).then(function(){fetchCommunity();}).catch(function(err){
+      appWrite("communityError",String((err && err.message) || err || "Failed to vote for song"));
+      render();
+    });
     return;
   }
   if(a==="playCommunity"){
@@ -3060,18 +3075,20 @@ window.act=function(a,v){
     var sep=v.indexOf(":");
     var field=v.substring(0,sep),val=v.substring(sep+1);
     var submitSong=ensureCommunitySubmitSong();
+    appWrite("communityError",null);
     if(field==="bpm")submitSong.bpm=parseInt(val)||100;
     else submitSong[field]=val;
     return;
   }
   if(a==="submitToggleChord"){
     var submitSong=ensureCommunitySubmitSong();
+    appWrite("communityError",null);
     var idx=submitSong.chords.indexOf(v);
     if(idx===-1){submitSong.chords.push(v);submitSong.progression.push(v);}
     else{submitSong.chords.splice(idx,1);}
     render();return;
   }
-  if(a==="submitClearProg"){ensureCommunitySubmitSong().progression=[];render();return;}
+  if(a==="submitClearProg"){appWrite("communityError",null);ensureCommunitySubmitSong().progression=[];render();return;}
   if(a==="submitSong"){
     var ss=ensureCommunitySubmitSong();
     if(!ss.title.trim()||!ss.artist.trim()||ss.chords.length<2||ss.progression.length<2)return;
@@ -3091,12 +3108,17 @@ window.act=function(a,v){
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify(body)
-    }).then(function(r){return r.json();}).then(function(){
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(data){
+        if(!r.ok) throw new Error(data && data.error ? data.error : ("Submit failed: " + r.status));
+        return data;
+      });
+    }).then(function(){
       appWrite("submitSong",createEmptyCommunitySubmission());
       appWrite("communityTab","browse");
       fetchCommunity();
-    }).catch(function(){
-      appWrite("communityError","Failed to submit song");render();
+    }).catch(function(err){
+      appWrite("communityError",String((err&&err.message)||err||"Failed to submit song"));render();
     });
     return;
   }
