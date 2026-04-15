@@ -572,7 +572,13 @@ function maybeScorePendingEvents(nowSec) {
       evt._score = 0;
       updatePhraseStats(phraseStats, evt, evt._result);
       performCombo = 0;
-      performanceSessionWrite("performCombo", performCombo);
+      performanceSessionPatch({
+        performCombo: performCombo,
+        performLastHitGrade: "miss",
+        performLastTimingOffsetMs: deltaMs,
+        performLastExpectedLane: typeof getPerformanceLane === "function" ? getPerformanceLane(evt.chord || evt.laneLabel || null, evt) : null,
+        performLastDetectedLane: null
+      });
       if (evt.sourceFlags && targetTechnique && evt.sourceFlags[targetTechnique] && typeof buildPerformanceFeedbackLabel === "function") {
         performanceSessionPatch({
           performLastHitLabel: buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique),
@@ -587,7 +593,7 @@ function maybeScorePendingEvents(nowSec) {
     if (performanceSnapshotHasActivity(snapshot, evt, performMode)) {
       var result = scorePerformanceEvent(evt, snapshot, deltaMs, performDifficulty, performMode);
 
-      if (result.grade !== "miss") {
+      if (result.hit) {
         evt._scored = true;
         evt._hit = true;
         evt._result = result;
@@ -599,18 +605,42 @@ function maybeScorePendingEvents(nowSec) {
         if (performCombo > performMaxCombo) performMaxCombo = performCombo;
 
         var comboMult = Math.min(1 + performCombo * 0.1, 4);
-        performScore += Math.round(100 * result.score * comboMult);
+        performScore += Math.round(result.points * comboMult);
 
         performanceSessionPatch({
           performCombo: performCombo,
           performMaxCombo: performMaxCombo,
           performScore: performScore,
+          performLastHitGrade: result.grade,
+          performLastTimingOffsetMs: result.offsetMs,
+          performLastExpectedLane: result.expectedLane,
+          performLastDetectedLane: result.detectedLane,
           performLastHitLabel: typeof buildPerformanceFeedbackLabel === "function"
             ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
             : (result.grade.toUpperCase() + "!"),
           performLastHitTime: Date.now()
         });
 
+        _updatePerformanceAccuracy(chart);
+      } else if (result.grade !== "miss" || result.laneMatch === false) {
+        evt._scored = true;
+        evt._miss = true;
+        evt._result = result;
+        evt._score = 0;
+        updatePhraseStats(phraseStats, evt, {
+          score: 0,
+          grade: "miss"
+        });
+        performCombo = 0;
+        performanceSessionPatch({
+          performCombo: performCombo,
+          performLastHitGrade: "miss",
+          performLastTimingOffsetMs: result.offsetMs,
+          performLastExpectedLane: result.expectedLane,
+          performLastDetectedLane: result.detectedLane,
+          performLastHitLabel: "MISS!",
+          performLastHitTime: Date.now()
+        });
         _updatePerformanceAccuracy(chart);
       }
     }

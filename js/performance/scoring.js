@@ -21,6 +21,37 @@ function performanceScoringRead(path, fallback) {
   return cursor == null ? fallback : cursor;
 }
 
+function getTimingWindows(difficulty) {
+  var diff = typeof getPerformanceDifficulty === "function" ? getPerformanceDifficulty(difficulty) : null;
+  return {
+    perfectMs: diff && typeof diff.perfectMs === "number" ? diff.perfectMs : ((window.PERFORMANCE_TIMING_WINDOWS && window.PERFORMANCE_TIMING_WINDOWS.PERFECT) || 50),
+    goodMs: diff && typeof diff.goodMs === "number" ? diff.goodMs : ((window.PERFORMANCE_TIMING_WINDOWS && window.PERFORMANCE_TIMING_WINDOWS.GOOD) || 100),
+    okMs: (window.PERFORMANCE_TIMING_WINDOWS && window.PERFORMANCE_TIMING_WINDOWS.OK) || 160,
+    missMs: diff && typeof diff.missMs === "number" ? diff.missMs : performanceScoringRead("performWindowMissMs", 220)
+  };
+}
+
+function getDetectedPerformanceLane(event, snapshot, mode) {
+  snapshot = snapshot || {};
+  event = event || {};
+  mode = mode || "midi";
+
+  var chordDetector = typeof SparkChordDetector === "function" ? new SparkChordDetector() : null;
+  var notes = snapshot.pitchClasses || [];
+  var detectedChord = chordDetector && notes.length ? chordDetector.detect(notes) : null;
+
+  if (typeof getPerformanceLane === "function") {
+    var mapped = getPerformanceLane(detectedChord, null);
+    if (mapped != null) return mapped;
+  }
+
+  if (event && typeof event.lane === "number" && event.lane >= 0) {
+    if (performanceSnapshotHasActivity(snapshot, event, mode)) return event.lane;
+  }
+
+  return null;
+}
+
 function _getClosestCluster(eventTimeSec, clusters) {
   if (!clusters || clusters.length === 0) return null;
   var best = null;
@@ -81,68 +112,79 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
   var noteScore = overlap / targetNotes.length;
 
   var diff = typeof getPerformanceDifficulty === "function" ? getPerformanceDifficulty(difficulty) : null;
-  var perfectMs = diff ? diff.perfectMs : performanceScoringRead("performWindowPerfectMs", 60);
-  var goodMs = diff ? diff.goodMs : performanceScoringRead("performWindowGoodMs", 120);
-  var missMs = diff ? diff.missMs : performanceScoringRead("performWindowMissMs", 180);
-  var nw = diff ? diff.noteWeight : 0.75;
-  var tw = diff ? diff.timingWeight : 0.25;
-
-  var absDelta = Math.abs(hitDeltaMs);
-  var timingScore = 0;
-  if (absDelta <= perfectMs) timingScore = 1.0;
-  else if (absDelta <= goodMs) timingScore = 0.7;
-  else if (absDelta <= missMs) timingScore = 0.3;
-  else timingScore = 0;
+  var windows = getTimingWindows(difficulty);
+  var missMs = windows.missMs;
+  var expectedLane = typeof getPerformanceLane === "function" ? getPerformanceLane(event.chord || event.laneLabel || null, event) : null;
+  var detectedLane = getDetectedPerformanceLane(event, snapshot, mode);
+  var laneMatch = expectedLane == null || detectedLane == null ? noteScore > 0 : expectedLane === detectedLane;
+  var timingGrade = typeof getPerformanceTimingGrade === "function"
+    ? getPerformanceTimingGrade(hitDeltaMs)
+    : gradePerformanceScore(0);
+  var timingScorePct = typeof getPerformanceTimingScore === "function"
+    ? getPerformanceTimingScore(timingGrade)
+    : 0;
+  var timingScore = timingScorePct / 100;
 
   if (event.type === "tap" && mode === "midi" && !cluster) {
     return {
       score: 0,
+      points: 0,
       grade: "miss",
       noteScore: 0,
-      timingScore: timingScore
+      timingScore: timingScore,
+      timingGrade: "miss",
+      expectedLane: expectedLane,
+      detectedLane: detectedLane,
+      laneMatch: false,
+      hit: false,
+      correct: false,
+      offsetMs: hitDeltaMs
     };
   }
 
-  var total;
-  if (event.type === "strum" && event.rhythm && diff) {
-    var dirScore = scoreStrumDirection(event.rhythm.dir, snapshot.strumDir || null, diff);
-    var dw = diff.directionWeight || 0;
-    // Renormalize weights: note + timing + direction should sum to ~1
-    var sumW = nw + tw + dw;
-    total = (noteScore * nw + timingScore * tw + dirScore * dw) / (sumW || 1);
-  } else {
-    total = noteScore * nw + timingScore * tw;
-  }
+  var hit = laneMatch && noteScore > 0 && timingGrade !== "miss";
+  var normalizedScore = hit ? timingScore : 0;
+  var points = hit ? timingScorePct : 0;
 
   return {
-    score: Math.round(total * 100) / 100,
-    grade: gradePerformanceScore(total),
+    score: Math.round(normalizedScore * 100) / 100,
+    points: points,
+    grade: hit ? timingGrade : "miss",
     noteScore: noteScore,
-    timingScore: timingScore
+    timingScore: timingScore,
+    timingGrade: timingGrade,
+    expectedLane: expectedLane,
+    detectedLane: detectedLane,
+    laneMatch: laneMatch,
+    hit: hit,
+    correct: hit,
+    offsetMs: hitDeltaMs
   };
 }
 
 function scoreOpenPerformanceEvent(event, cluster, hitDeltaMs, difficulty) {
-  var diff = typeof getPerformanceDifficulty === "function" ? getPerformanceDifficulty(difficulty) : null;
-  var perfectMs = diff ? diff.perfectMs : performanceScoringRead("performWindowPerfectMs", 60);
-  var goodMs = diff ? diff.goodMs : performanceScoringRead("performWindowGoodMs", 120);
-  var missMs = diff ? diff.missMs : performanceScoringRead("performWindowMissMs", 180);
-  var nw = diff ? diff.noteWeight : 0.75;
-  var tw = diff ? diff.timingWeight : 0.25;
-  var absDelta = Math.abs(hitDeltaMs);
-  var timingScore = 0;
-  if (absDelta <= perfectMs) timingScore = 1.0;
-  else if (absDelta <= goodMs) timingScore = 0.7;
-  else if (absDelta <= missMs) timingScore = 0.3;
-  else timingScore = 0;
-
+  var timingGrade = typeof getPerformanceTimingGrade === "function"
+    ? getPerformanceTimingGrade(hitDeltaMs)
+    : "miss";
+  var timingScorePct = typeof getPerformanceTimingScore === "function"
+    ? getPerformanceTimingScore(timingGrade)
+    : 0;
+  var timingScore = timingScorePct / 100;
   var noteScore = cluster ? 1 : 0;
-  var total = noteScore * nw + timingScore * tw;
+  var hit = !!cluster && timingGrade !== "miss";
   return {
-    score: Math.round(total * 100) / 100,
-    grade: gradePerformanceScore(total),
+    score: Math.round((hit ? timingScore : 0) * 100) / 100,
+    points: hit ? timingScorePct : 0,
+    grade: hit ? timingGrade : "miss",
     noteScore: noteScore,
-    timingScore: timingScore
+    timingScore: timingScore,
+    timingGrade: timingGrade,
+    expectedLane: typeof getPerformanceLane === "function" ? getPerformanceLane(event.chord || event.laneLabel || null, event) : null,
+    detectedLane: cluster ? (typeof getPerformanceLane === "function" ? getPerformanceLane(event.chord || event.laneLabel || null, event) : null) : null,
+    laneMatch: !!cluster,
+    hit: hit,
+    correct: hit,
+    offsetMs: hitDeltaMs
   };
 }
 

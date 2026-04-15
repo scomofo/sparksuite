@@ -62,6 +62,9 @@ eval(loadJS('js/performance/chart_manifest.js'));
 eval(loadJS('js/performance/chart.js'));
 eval(loadJS('js/performance/arrangements.js'));
 eval(loadJS('js/performance/adapters.js'));
+eval(loadJS('js/sparksuite/input/chord_detector.js'));
+eval(loadJS('js/performance/timing_windows.js'));
+eval(loadJS('js/performance/lane_mapper.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway_themes.js'));
 eval(loadJS('js/performance/highway.js'));
@@ -182,6 +185,56 @@ test('audio calibration page buttons route through shared actions', function() {
   var calibrationPageSource = loadJS('js/audio/calibration.js');
   assert.ok(calibrationPageSource.indexOf("onclick=\"act(\\'startAudioCalibration\\')\"") >= 0);
   assert.ok(calibrationPageSource.indexOf("onclick=\"act(\\'stopAudioCalibration\\')\"") >= 0);
+});
+
+test('performance timing windows grade hits with guitar-hero style buckets', function() {
+  assert.strictEqual(getPerformanceTimingGrade(42), 'perfect');
+  assert.strictEqual(getPerformanceTimingGrade(90), 'good');
+  assert.strictEqual(getPerformanceTimingGrade(150), 'ok');
+  assert.strictEqual(getPerformanceTimingGrade(220), 'miss');
+  assert.strictEqual(getPerformanceTimingScore('perfect'), 100);
+  assert.strictEqual(getPerformanceTimingScore('good'), 70);
+  assert.strictEqual(getPerformanceTimingScore('ok'), 40);
+  assert.strictEqual(getPerformanceTimingScore('miss'), 0);
+});
+
+test('performance lane mapper prefers explicit event lanes and falls back to core chord map', function() {
+  assert.strictEqual(getPerformanceLane('C', null), 0);
+  assert.strictEqual(getPerformanceLane('Am', null), 2);
+  assert.strictEqual(getPerformanceLane('Unknown', { lane: 4 }), 4);
+  assert.strictEqual(getPerformanceLane(null, { laneMask: 8 }), 3);
+});
+
+test('scorePerformanceEvent returns timing grade, lanes, and points for a matching hit', function() {
+  var result = scorePerformanceEvent(
+    { t: 1.0, chord: 'C', lane: 0, laneLabel: 'C', notes: ['C', 'E', 'G'], type: 'chord' },
+    { pitchClasses: ['C', 'E', 'G'], heldMidiNotes: [60, 64, 67], recentAttacks: [{ note: 60, tSec: 1.0 }] },
+    42,
+    'normal',
+    'midi'
+  );
+
+  assert.strictEqual(result.grade, 'perfect');
+  assert.strictEqual(result.points, 100);
+  assert.strictEqual(result.expectedLane, 0);
+  assert.strictEqual(result.detectedLane, 0);
+  assert.strictEqual(result.hit, true);
+});
+
+test('scorePerformanceEvent treats wrong-lane activity inside the window as a miss', function() {
+  var result = scorePerformanceEvent(
+    { t: 1.0, chord: 'C', lane: 0, laneLabel: 'C', notes: ['C', 'E', 'G'], type: 'chord' },
+    { pitchClasses: ['G', 'B', 'D'], heldMidiNotes: [67, 71, 74], recentAttacks: [{ note: 67, tSec: 1.0 }] },
+    40,
+    'normal',
+    'midi'
+  );
+
+  assert.strictEqual(result.expectedLane, 0);
+  assert.strictEqual(result.detectedLane, 1);
+  assert.strictEqual(result.hit, false);
+  assert.strictEqual(result.grade, 'miss');
+  assert.strictEqual(result.points, 0);
 });
 
 console.log('\n--- PerformanceCore: Imported Chart Bridge ---');

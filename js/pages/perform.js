@@ -174,7 +174,11 @@ function performPage() {
   var performAccuracy = performRead("performAccuracy", 0);
   var performCombo = performRead("performCombo", 0);
   var performLastHitLabel = performRead("performLastHitLabel", "");
+  var performLastHitGrade = performRead("performLastHitGrade", "");
   var performLastHitTime = performRead("performLastHitTime", 0);
+  var performLastTimingOffsetMs = performRead("performLastTimingOffsetMs", 0);
+  var performLastExpectedLane = performRead("performLastExpectedLane", null);
+  var performLastDetectedLane = performRead("performLastDetectedLane", null);
   var performCountdownActive = performRead("performCountdownActive", false);
   var performCountdownBeats = performRead("performCountdownBeats", 0);
   var performInputSource = performRead("performInputSource", "midi");
@@ -252,7 +256,7 @@ function performPage() {
   }
 
   // Highway
-  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo, hitLabel: activeHitLabel });
+  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo, hitLabel: activeHitLabel, hitGrade: performLastHitGrade });
 
   // Chord indicator panel
   var currentChord = null;
@@ -335,6 +339,9 @@ function performPage() {
     h += 'speed: ' + performSpeedState + ' | diff: ' + performDifficultyState + '<br>';
     h += 'combo: ' + performCombo + '/' + performMaxCombo + ' | score: ' + performScore + '<br>';
     h += 'notes: [' + (performInputNotes || []).join(',') + ']<br>';
+    h += 'lane: ' + (performLastExpectedLane == null ? '-' : performLastExpectedLane) + ' -> ' + (performLastDetectedLane == null ? '-' : performLastDetectedLane) + ' | ';
+    h += 'offset: ' + (typeof performLastTimingOffsetMs === 'number' ? Math.round(performLastTimingOffsetMs) : 0) + 'ms | ';
+    h += 'grade: ' + (performLastHitGrade || '-') + '<br>';
     h += 'loop: ' + (performLoopState ? performLoopState.startSec.toFixed(1) + '-' + performLoopState.endSec.toFixed(1) : 'off') + '<br>';
     h += 'windows: P' + performRead("performWindowPerfectMs", 0) + '/G' + performRead("performWindowGoodMs", 0) + '/M' + performRead("performWindowMissMs", 0);
     h += '</div>';

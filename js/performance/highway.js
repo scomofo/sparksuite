@@ -316,13 +316,24 @@ function renderPerformanceHighwayVfx(vfxAssets, combo) {
   return h;
 }
 
-function renderPerformanceHighwayHitFeedback(label, hitSparkAsset) {
+function getPerformanceHitFeedbackColor(grade) {
+  switch (grade) {
+    case "perfect": return "#00ffcc";
+    case "good": return "#66ccff";
+    case "ok": return "#ffaa00";
+    case "miss": return "#ff4444";
+    default: return "#FFE66D";
+  }
+}
+
+function renderPerformanceHighwayHitFeedback(label, hitSparkAsset, grade) {
   if (!label) return "";
+  var color = getPerformanceHitFeedbackColor(grade);
   var h = '<div class="perform-hit-feedback">';
   if (hitSparkAsset) {
     h += '<div class="perform-hit-feedback-spark" data-highway-hit-spark="' + escapePerformanceHtml(hitSparkAsset) + '" style="position:absolute;left:50%;top:50%;width:136px;height:136px;transform:translate(-50%,-50%);pointer-events:none;background:url(&quot;' + hitSparkAsset + '&quot;) center/contain no-repeat;opacity:.82;mix-blend-mode:screen;z-index:-1"></div>';
   }
-  h += escapePerformanceHtml(label);
+  h += '<span style="color:' + color + '">' + escapePerformanceHtml(label) + '</span>';
   h += '</div>';
   return h;
 }
@@ -348,7 +359,7 @@ function renderPerformanceHighway(chart, nowSec, options) {
   h += renderImportedTechniqueOverlay(chart, nowSec, 3);
   h += '</div>';
   if (hitLabel) {
-    h += renderPerformanceHighwayHitFeedback(hitLabel, vfxAssets && vfxAssets.hitSpark);
+    h += renderPerformanceHighwayHitFeedback(hitLabel, vfxAssets && vfxAssets.hitSpark, options.hitGrade || "");
   }
   h += '</div>';
   return h;
