@@ -1652,6 +1652,12 @@ function dispatchWindowAction(name, fallbackMessage, arg1, arg2) {
   return false;
 }
 
+function dispatchWindowActionAndRender(name, fallbackMessage, arg1, arg2) {
+  if (!dispatchWindowAction(name, fallbackMessage, arg1, arg2)) return false;
+  render();
+  return true;
+}
+
 window.act=function(a,v){
   // Delegate to active instrument's handler first
   var _inst = SparkInstruments.getActive();
@@ -1703,58 +1709,47 @@ window.act=function(a,v){
     return;
   }
   if(a==="onboardingSetSkillLevel"){
-    if(typeof setOnboardingSkillLevel==="function"){ setOnboardingSkillLevel(v); render(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    if(dispatchWindowActionAndRender("setOnboardingSkillLevel", "Onboarding isn't available right now.", v)) return;
     return;
   }
   if(a==="onboardingToggleGoal"){
-    if(typeof toggleOnboardingGoal==="function"){ toggleOnboardingGoal(v); render(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    if(dispatchWindowActionAndRender("toggleOnboardingGoal", "Onboarding isn't available right now.", v)) return;
     return;
   }
   if(a==="onboardingMarkMidiDone"){
-    if(typeof markOnboardingMidiSetupDone==="function"){ markOnboardingMidiSetupDone(); render(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    if(dispatchWindowActionAndRender("markOnboardingMidiSetupDone", "Onboarding isn't available right now.")) return;
     return;
   }
   if(a==="onboardingMarkCalibrationDone"){
-    if(typeof markOnboardingCalibrationDone==="function"){ markOnboardingCalibrationDone(); render(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    if(dispatchWindowActionAndRender("markOnboardingCalibrationDone", "Onboarding isn't available right now.")) return;
     return;
   }
   if(a==="onboardingUnlockStarterContent"){
-    if(typeof applyStarterUnlocksFromOnboarding==="function"){ applyStarterUnlocksFromOnboarding(); render(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    if(dispatchWindowActionAndRender("applyStarterUnlocksFromOnboarding", "Onboarding isn't available right now.")) return;
     return;
   }
   if(a==="onboardingGeneratePlan"){
-    if(typeof generateInitialPracticePlanFromOnboarding==="function"){ generateInitialPracticePlanFromOnboarding(); render(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    if(dispatchWindowActionAndRender("generateInitialPracticePlanFromOnboarding", "Onboarding isn't available right now.")) return;
     return;
   }
   if(a==="onboardingGenerateRecommendations"){
-    if(typeof generateInitialRecommendationsFromOnboarding==="function"){ generateInitialRecommendationsFromOnboarding(); render(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    if(dispatchWindowActionAndRender("generateInitialRecommendationsFromOnboarding", "Onboarding isn't available right now.")) return;
     return;
   }
   if(a==="onboardingFinish"){
-    if(typeof finishOnboardingFlow==="function"){ finishOnboardingFlow(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    dispatchWindowAction("finishOnboardingFlow", "Onboarding isn't available right now.");
     return;
   }
   if(a==="onboardingPrevStep"){
-    if(typeof goToPreviousOnboardingStep==="function"){ goToPreviousOnboardingStep(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    dispatchWindowAction("goToPreviousOnboardingStep", "Onboarding isn't available right now.");
     return;
   }
   if(a==="onboardingNextStep"){
-    if(typeof goToNextOnboardingStep==="function"){ goToNextOnboardingStep(); return; }
-    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    dispatchWindowAction("goToNextOnboardingStep", "Onboarding isn't available right now.");
     return;
   }
   if(a==="refreshMidiDevices"){
-    if(typeof refreshMidiDevices==="function"){ refreshMidiDevices(); return; }
-    if (typeof showToast === "function") showToast("MIDI device refresh isn't available right now.");
+    dispatchWindowAction("refreshMidiDevices", "MIDI device refresh isn't available right now.");
     return;
   }
   // Switch instrument from v2 dashboard
@@ -1843,11 +1838,7 @@ window.act=function(a,v){
     return;
   }
   if(a==="startPracticeItem"){
-    if (typeof window.startPracticeItem === "function") {
-      window.startPracticeItem(v);
-    } else if (typeof showToast === "function") {
-      showToast("That practice item couldn't be started right now.");
-    }
+    dispatchWindowAction("startPracticeItem", "That practice item couldn't be started right now.", v);
     return;
   }
   if(a==="start_guided_session"){
@@ -1855,19 +1846,11 @@ window.act=function(a,v){
     return;
   }
   if(a==="startAudioCalibration"){
-    if (typeof window.startAudioCalibration === "function") {
-      window.startAudioCalibration();
-    } else if (typeof showToast === "function") {
-      showToast("Audio calibration isn't available right now.");
-    }
+    dispatchWindowAction("startAudioCalibration", "Audio calibration isn't available right now.");
     return;
   }
   if(a==="stopAudioCalibration"){
-    if (typeof window.stopAudioCalibration === "function") {
-      window.stopAudioCalibration();
-    } else if (typeof showToast === "function") {
-      showToast("Audio calibration isn't available right now.");
-    }
+    dispatchWindowAction("stopAudioCalibration", "Audio calibration isn't available right now.");
     return;
   }
   if(a==="openProgressDashboard"){
@@ -1886,11 +1869,7 @@ window.act=function(a,v){
     return;
   }
   if(a==="resetProgress"){
-    if (typeof window.resetProgress === "function") {
-      window.resetProgress();
-    } else if (typeof showToast === "function") {
-      showToast("Progress reset isn't available right now.");
-    }
+    dispatchWindowAction("resetProgress", "Progress reset isn't available right now.");
     return;
   }
   if(a==="selLevel"&&parseInt(v)<=appRead("level", 1)){appWrite("selectedLevel",parseInt(v));render();return;}

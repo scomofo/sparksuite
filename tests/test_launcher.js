@@ -356,8 +356,9 @@ test('play-along and onboarding actions surface feedback when helpers are unavai
 
 test('secondary helper-driven actions surface feedback when handlers are unavailable', function() {
   var appSource = loadJS('js/app.js');
-  assert.ok(appSource.indexOf('showToast("MIDI device refresh isn\'t available right now.")') >= 0);
-  assert.ok(appSource.indexOf('showToast("That practice item couldn\'t be started right now.")') >= 0);
+  assert.ok(appSource.indexOf('function dispatchWindowActionAndRender(name, fallbackMessage, arg1, arg2) {') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("refreshMidiDevices", "MIDI device refresh isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("startPracticeItem", "That practice item couldn\'t be started right now.", v)') >= 0);
   assert.ok(appSource.indexOf('showToast("That practice item couldn\'t be completed right now.")') >= 0);
   assert.ok(appSource.indexOf('function dispatchWindowAction(name, fallbackMessage, arg1, arg2) {') >= 0);
   assert.ok(/if\(a==="planStartRhythmHighway"\)\{\s*if\(typeof startRhythmHighwaySegment==="function" && startRhythmHighwaySegment\(v,appRead\("rhythmHighwayPreset", "spark_learning"\)\)\)return;\s*if\(typeof showToast === "function"\) showToast\("That practice item couldn't be started right now\."\);\s*render\(\);return;\s*\}/.test(appSource));
@@ -379,8 +380,9 @@ test('secondary helper-driven actions surface feedback when handlers are unavail
   assert.ok(appSource.indexOf('dispatchWindowAction("stopPerformanceCalibration", "Performance calibration isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("MIDI isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("MIDI device selection isn\'t available right now.")') >= 0);
-  assert.ok(appSource.indexOf('showToast("Audio calibration isn\'t available right now.")') >= 0);
-  assert.ok(appSource.indexOf('showToast("Progress reset isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("startAudioCalibration", "Audio calibration isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("stopAudioCalibration", "Audio calibration isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('dispatchWindowAction("resetProgress", "Progress reset isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Audio input refresh isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Audio input testing isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Import a song before saving it.")') >= 0);
