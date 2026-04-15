@@ -384,8 +384,8 @@
 
     // Score via performance analyzer
     if (nearest && this.performanceAnalyzer) {
-      result = this.performanceAnalyzer.analyze(inputEvent, nearest);
       delta = inputEvent.time - nearest.time;
+      result = this.performanceAnalyzer.analyze(nearest.note || nearest.chord || null, inputEvent.note || inputEvent.chord || null, delta);
     }
 
     // Chord confidence if applicable

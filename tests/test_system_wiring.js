@@ -202,8 +202,18 @@ test("startPlayAlongSession carries title, artist, track uri, and offset into th
 test("processPlayAlongInput passes timing into voice coach evaluation", function() {
   var core = new SparkCoreRuntime();
   var evaluatedAt = null;
+  var analyzeArgs = null;
   core._activeChart = { timeline: [{ time: 1000, lane: 1 }] };
-  core.performanceAnalyzer = { analyze: function() { return { accuracy: 0.8 }; } };
+  core.performanceAnalyzer = {
+    analyze: function(expected, detected, timingErrorMs) {
+      analyzeArgs = {
+        expected: expected,
+        detected: detected,
+        timingErrorMs: timingErrorMs
+      };
+      return { accuracy: 0.8 };
+    }
+  };
   core.performanceTracker = {
     record: function() {},
     getAccuracy: function() { return 0.75; }
@@ -215,6 +225,11 @@ test("processPlayAlongInput passes timing into voice coach evaluation", function
   var out = core.processPlayAlongInput({ time: 980, note: "A" });
 
   assert.ok(out.result);
+  assert.deepStrictEqual(analyzeArgs, {
+    expected: null,
+    detected: "A",
+    timingErrorMs: -20
+  });
   assert.strictEqual(evaluatedAt, 980);
 });
 
