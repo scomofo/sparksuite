@@ -367,6 +367,17 @@ test('ukulele chord charts keep explicit fingering for barre-heavy shapes', func
   }));
 });
 
+test('meta skill tree helpers do not clobber the shared skill tree builder', function() {
+  eval(loadJS('js/progression/skill_tree.js'));
+  eval(loadJS('js/meta/skill_tree_meta.js'));
+  eval(loadJS('js/pages/skill_tree.js'));
+
+  var tree = buildSkillTree();
+  assert.ok(tree);
+  assert.ok(Array.isArray(tree.branches));
+  assert.ok(typeof initializeMetaSkillTree === 'function');
+});
+
 test('guitar register exposes capo curriculum and lesson-specific exercises for advanced players', function() {
   eval(loadJS('js/data.js'));
   eval(loadJS('js/instruments/guitar/capo.js'));

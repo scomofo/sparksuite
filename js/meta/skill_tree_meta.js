@@ -44,7 +44,7 @@
     return value;
   }
 
-  function buildSkillTree(){
+  function initializeMetaSkillTree(){
     skillTreeMetaWrite("skillTree", {
       rhythm_1:{ unlocked:true, cost:0 },
       rhythm_2:{ unlocked:false, cost:2 },
@@ -75,7 +75,7 @@
     saveState();
   }
 
-  window.buildSkillTree = buildSkillTree;
+  window.initializeMetaSkillTree = initializeMetaSkillTree;
   window.unlockMetaSkill = unlockSkill;
   window.awardSkillPoint = awardSkillPoint;
 

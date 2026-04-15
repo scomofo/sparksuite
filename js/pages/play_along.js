@@ -112,7 +112,7 @@
     h += "</div></div>";
 
     // Search
-    h += "<input id='play-along-search' type='text' placeholder='Search any song...' class='input' oninput='sparkPlayAlongSearch(this.value)' style='width:100%;margin-bottom:8px'>";
+    h += "<input id='play-along-search' type='text' placeholder='Search any song...' class='input' oninput=\"act('playAlongSearch',this.value)\" style='width:100%;margin-bottom:8px'>";
     h += "<div id='play-along-results'></div>";
 
     if (viewModel.savedTracks.length > 0) {
@@ -203,7 +203,7 @@
 
     // Local file upload
     h += "<div class='card'>";
-    h += "<input type='file' id='play-along-file' accept='audio/*' onchange='sparkPlayAlongLoadFile(this.files[0])'>";
+    h += "<input type='file' id='play-along-file' accept='audio/*' onchange=\"act('playAlongLoadFile',this.files[0])\">";
     h += "<div style='color:var(--text-dim);font-size:12px;margin-top:4px'>Or drop an audio file for beat-detected charts</div>";
     h += "</div>";
 

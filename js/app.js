@@ -1617,6 +1617,8 @@ window.act=function(a,v){
   // Spotify connect
   if(a==="spotifyConnect"){ callPlayAlongHandler("sparkPlayAlongConnectSpotify"); return; }
   if(a==="playAlongSelect"){ callPlayAlongHandler("sparkPlayAlongSelect", v); return; }
+  if(a==="playAlongSearch"){ callPlayAlongHandler("sparkPlayAlongSearch", v); return; }
+  if(a==="playAlongLoadFile"){ callPlayAlongHandler("sparkPlayAlongLoadFile", v); return; }
   if(a==="playAlongSaveTrack"){ callPlayAlongHandler("sparkPlayAlongSaveTrack", v); return; }
   if(a==="playAlongSaveClientId"){ callPlayAlongHandler("sparkPlayAlongSaveClientId"); return; }
   if(a==="playAlongResumeRecent"){ callPlayAlongHandler("sparkPlayAlongLaunchRecent", v); return; }

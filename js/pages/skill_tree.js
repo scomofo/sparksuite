@@ -6,7 +6,7 @@ function skillTreeStateRead(path, fallback){
 }
 
 function skillTreePage(){
-  var tree = buildSkillTree();
+  var tree = resolveSkillTree();
   var h = '';
   var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
     ? window.sparkCore.getRuntimeState()
@@ -39,6 +39,26 @@ function skillTreePage(){
   h += '</div>';
 
   return h;
+}
+
+function resolveSkillTree(){
+  var instrumentTree = null;
+  if(typeof SparkInstruments!=="undefined" && SparkInstruments && typeof SparkInstruments.getActive==="function"){
+    var activeInstrument = SparkInstruments.getActive();
+    if(activeInstrument && typeof activeInstrument.getSkillTree==="function"){
+      instrumentTree = activeInstrument.getSkillTree();
+    }
+  }
+  if(isRenderableSkillTree(instrumentTree)) return instrumentTree;
+  if(typeof buildSkillTree==="function"){
+    var sharedTree = buildSkillTree();
+    if(isRenderableSkillTree(sharedTree)) return sharedTree;
+  }
+  return { branches: [] };
+}
+
+function isRenderableSkillTree(tree){
+  return !!(tree && Array.isArray(tree.branches));
 }
 
 function buildSkillTreeBranchTabs(focus){

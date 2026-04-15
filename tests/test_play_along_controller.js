@@ -534,6 +534,14 @@ test("search results markup routes buttons through shared actions", function() {
   assert.ok(markup.indexOf("event.stopPropagation();act('playAlongSaveTrack',0)") >= 0);
 });
 
+test("play along page routes search and file inputs through shared actions", function() {
+  loadJS("js/pages/play_along.js");
+  var markup = playAlongPage();
+
+  assert.ok(markup.indexOf("oninput=\"act('playAlongSearch',this.value)\"") >= 0);
+  assert.ok(markup.indexOf("onchange=\"act('playAlongLoadFile',this.files[0])\"") >= 0);
+});
+
 test("spotify prompt markup routes save through shared action", function() {
   var actionService = new SparkPlayAlongActionService(new SparkPlayAlongStateService());
   var markup = actionService.buildSpotifyClientIdPromptMarkup();
