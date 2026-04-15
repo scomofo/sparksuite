@@ -367,6 +367,59 @@ test('ukulele chord charts keep explicit fingering for barre-heavy shapes', func
   }));
 });
 
+test('guitar register exposes capo curriculum and lesson-specific exercises for advanced players', function() {
+  eval(loadJS('js/data.js'));
+  eval(loadJS('js/instruments/guitar/capo.js'));
+  eval(loadJS('js/instruments/guitar/register.js'));
+
+  var all = SparkInstruments.getAll();
+  var guitar = null;
+  var i;
+  for (i = 0; i < all.length; i++) {
+    if (all[i].id === 'chordspark') guitar = all[i];
+  }
+
+  assert.ok(guitar);
+  S.level = 4;
+  var curriculum = guitar.getCurriculumMap();
+  assert.ok(curriculum.length >= 8);
+  assert.strictEqual(curriculum[0].id, 'capo_L1');
+  assert.strictEqual(curriculum[0].skill, 'capo_basics');
+
+  var capoBasics = guitar.getExercises('capo_basics');
+  assert.ok(capoBasics.some(function(exercise) { return exercise.lessonId === 'capo_L1'; }));
+  assert.ok(capoBasics.some(function(exercise) { return exercise.lessonId === 'capo_L2'; }));
+
+  var picked = guitar.pickPracticeExercise(curriculum[1], capoBasics);
+  assert.ok(picked);
+  assert.strictEqual(picked.lessonId, 'capo_L2');
+
+  var lessonExercises = guitar.getExercisesForLesson('capo_L6');
+  assert.strictEqual(lessonExercises.length, 1);
+  assert.strictEqual(lessonExercises[0].focus, 'capo_transposition');
+  assert.strictEqual(lessonExercises[0].type, 'lesson');
+});
+
+test('guitar capo curriculum routes skills to capo-specific rhythm charts', function() {
+  eval(loadJS('js/sparksuite/instruments/guitar/guitar_chart_library.js'));
+  eval(loadJS('js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js'));
+
+  assert.strictEqual(
+    SparkGuitarRhythmCurriculum.selectChartId({ segment: { meta: { skill: 'capo_basics' } } }),
+    'capo_shapes_01'
+  );
+  assert.strictEqual(
+    SparkGuitarRhythmCurriculum.selectChartId({ segment: { meta: { skill: 'capo_song_playing' } } }),
+    'capo_progressions_01'
+  );
+  assert.strictEqual(
+    SparkGuitarRhythmCurriculum.selectChartId({ segment: { meta: { skill: 'capo_transposition' } } }),
+    'capo_transpose_01'
+  );
+  assert.ok(SparkGuitarChartLibrary.getChartDefinition('capo_shapes_01').notes.length > 0);
+  assert.ok(SparkGuitarChartLibrary.getChartDefinition('capo_transpose_01').notes.length > 0);
+});
+
 test('bass register exposes a dedicated songs tab renderer', function() {
   global.getPerformanceChartLibrary = function(options) {
     if (options && options.instrument === 'bass') {

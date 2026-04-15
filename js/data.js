@@ -145,7 +145,7 @@ var CHORDS={
   {name:"F# Minor",short:"F#m",fingers:[[2,4,3,"#4ECDC4"],[3,4,4,"#45B7D1"],[4,2,1,"#FF6B6B"]],frets:[-1,-1,4,4,2,2],open:[],muted:[0,1],barFret:2,barStrings:[4,5]},
   {name:"A/C#",short:"A/C#",fingers:[[1,4,4,"#FF6B6B"],[2,2,1,"#4ECDC4"],[3,2,2,"#45B7D1"],[4,2,3,"#FFE66D"]],frets:[-1,4,2,2,2,0],open:[false,false,false,false,false,true],muted:[0]},
   {name:"D/F#",short:"D/F#",fingers:[[0,2,1,"#FF6B6B"],[3,2,2,"#4ECDC4"],[4,3,3,"#45B7D1"],[5,2,4,"#FFE66D"]],frets:[2,0,0,2,3,2],open:[false,true,true,false,false,false],muted:[]},
-  {name:"G Minor",short:"Gm",fingers:[[0,3,1,"#FF6B6B"],[1,3,1,"#FF6B6B"],[2,5,3,"#4ECDC4"],[3,5,4,"#45B7D1"],[4,3,1,"#FF6B6B"],[5,3,1,"#FF6B6B"]],frets:[3,5,5,3,3,3],open:[],muted:[],barFret:3,barStrings:[0,5]},
+  {name:"G Minor",short:"Gm",fingers:[[0,3,1,"#FF6B6B"],[1,5,3,"#4ECDC4"],[2,5,4,"#45B7D1"],[3,3,1,"#FF6B6B"],[4,3,1,"#FF6B6B"],[5,3,1,"#FF6B6B"]],frets:[3,5,5,3,3,3],open:[],muted:[],barFret:3,barStrings:[0,5]},
   {name:"C Minor",short:"Cm",fingers:[[1,3,1,"#FF6B6B"],[2,5,3,"#4ECDC4"],[3,5,4,"#45B7D1"],[4,4,2,"#FFE66D"],[5,3,1,"#FF6B6B"]],frets:[-1,3,5,5,4,3],open:[],muted:[0],barFret:3,barStrings:[1,5]}
 ]};
 

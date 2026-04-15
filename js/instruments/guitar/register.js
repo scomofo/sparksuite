@@ -45,6 +45,64 @@
     return current;
   }
 
+  function getCapoLessons(data) {
+    return data && Array.isArray(data.CAPO_LESSONS) ? data.CAPO_LESSONS.slice() : [];
+  }
+
+  function hasCapoProgress() {
+    var completedLessons = guitarRegisterRead("completedLessons", []);
+    var capoMastery = guitarRegisterRead(["mastery", "capo"], {}) || {};
+    var skillId;
+    if (Array.isArray(completedLessons)) {
+      for (var i = 0; i < completedLessons.length; i++) {
+        if (String(completedLessons[i]).indexOf("capo_") === 0) return true;
+      }
+    }
+    for (skillId in capoMastery) {
+      if (Object.prototype.hasOwnProperty.call(capoMastery, skillId) && capoMastery[skillId] > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function shouldExposeCapoCurriculum(data) {
+    var lessons = getCapoLessons(data);
+    if (!lessons.length) return false;
+    return (guitarRegisterRead("level", 1) || 1) >= 4 || hasCapoProgress();
+  }
+
+  function isCapoSkill(skill) {
+    return typeof skill === "string" && skill.indexOf("capo_") === 0;
+  }
+
+  function buildCapoExercisesForSkill(data, skill, lessonId) {
+    var lessons = getCapoLessons(data);
+    var exercises = [];
+    var lessonIndex;
+    var exerciseIndex;
+    if (!isCapoSkill(skill)) return exercises;
+    for (lessonIndex = 0; lessonIndex < lessons.length; lessonIndex++) {
+      var lesson = lessons[lessonIndex];
+      if (!lesson || lesson.skill !== skill) continue;
+      if (lessonId && lesson.id !== lessonId) continue;
+      for (exerciseIndex = 0; exerciseIndex < (lesson.exercises || []).length; exerciseIndex++) {
+        var exerciseKind = lesson.exercises[exerciseIndex];
+        exercises.push({
+          id: lesson.id + "__" + exerciseKind,
+          lessonId: lesson.id,
+          name: lesson.title,
+          focus: lesson.skill,
+          type: "lesson",
+          objective: lesson.objective || null,
+          spark: lesson.spark || null,
+          exerciseKind: exerciseKind
+        });
+      }
+    }
+    return exercises;
+  }
+
   SparkInstruments.register({
     id: "chordspark",
     instrument: "guitar",
@@ -190,15 +248,45 @@
     },
 
     getCurriculumMap: function() {
-      return typeof CURRICULUM !== "undefined" ? CURRICULUM : [];
+      var data = this.getData();
+      if (!shouldExposeCapoCurriculum(data)) return [];
+      return getCapoLessons(data);
     },
 
-    getExercises: function() {
-      return typeof FINGER_EXERCISES !== "undefined" ? FINGER_EXERCISES : [];
+    getExercises: function(skill) {
+      var data = this.getData();
+      if (isCapoSkill(skill)) return buildCapoExercisesForSkill(data, skill);
+      return data.FINGER_EXERCISES || [];
     },
 
     getSongs: function() {
       return typeof SONGS !== "undefined" ? SONGS : [];
+    },
+
+    pickPracticeExercise: function(lesson, exercises) {
+      exercises = Array.isArray(exercises) ? exercises : [];
+      if (!lesson || !lesson.id || !exercises.length) return exercises[0] || null;
+      for (var i = 0; i < exercises.length; i++) {
+        if (exercises[i] && exercises[i].lessonId === lesson.id) return exercises[i];
+      }
+      return exercises[0] || null;
+    },
+
+    getPracticeRecommendation: function(lesson, exercise) {
+      if (!lesson || !isCapoSkill(lesson.skill)) return null;
+      return {
+        priorityBoost: 4,
+        reason: lesson.objective || "Continue the capo lesson track.",
+        focusTag: "capo",
+        labelSuffix: "Capo",
+        progressSummary: exercise && exercise.exerciseKind
+          ? { weakestMetric: "lesson", lesson: exercise.exerciseKind }
+          : null
+      };
+    },
+
+    getRhythmAdapter: function() {
+      return typeof SparkGuitarRhythmAdapter !== "undefined" ? new SparkGuitarRhythmAdapter() : null;
     },
 
     getDifficultyRules: function(context) {
@@ -229,6 +317,12 @@
 
     getExercisesForLesson: function(lessonId) {
       var D = this.getData();
+      var capoLessons = getCapoLessons(D);
+      for (var capoIndex = 0; capoIndex < capoLessons.length; capoIndex++) {
+        if (capoLessons[capoIndex] && capoLessons[capoIndex].id === lessonId) {
+          return buildCapoExercisesForSkill(D, capoLessons[capoIndex].skill, lessonId);
+        }
+      }
       if (lessonId && D.CURRICULUM) {
         for (var i = 0; i < D.CURRICULUM.length; i++) {
           if (D.CURRICULUM[i].id === lessonId && D.CURRICULUM[i].exercises) {

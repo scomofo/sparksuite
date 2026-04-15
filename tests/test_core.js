@@ -265,6 +265,49 @@ test('all chords in CHORDS have a level map entry', function() {
   }
 });
 
+test('guitar chord chart finger positions agree with fretted strings', function() {
+  for (var lvl = 1; lvl <= 8; lvl++) {
+    var chords = CHORDS[lvl] || [];
+    for (var i = 0; i < chords.length; i++) {
+      var chord = chords[i];
+      var muted = {};
+      for (var m = 0; m < (chord.muted || []).length; m++) muted[chord.muted[m]] = true;
+      for (var f = 0; f < (chord.fingers || []).length; f++) {
+        var finger = chord.fingers[f];
+        var stringIndex = finger[0];
+        var fret = finger[1];
+        assert.ok(stringIndex >= 0 && stringIndex < 6, chord.name + ' finger string out of range');
+        assert.ok(!muted[stringIndex], chord.name + ' finger placed on muted string ' + stringIndex);
+        if (fret > 0) {
+          assert.strictEqual(chord.frets[stringIndex], fret, chord.name + ' finger fret mismatch on string ' + stringIndex);
+        }
+      }
+      if (chord.barFret) {
+        for (var b = 0; b < chord.barStrings.length; b++) {
+          assert.strictEqual(chord.frets[chord.barStrings[b]], chord.barFret, chord.name + ' barre fret mismatch on string ' + chord.barStrings[b]);
+        }
+      }
+    }
+  }
+});
+
+test('piano chord display fingerings match note counts across inversions', function() {
+  var pianoSource = fs.readFileSync(path.join(__dirname, '..', 'js/instruments/piano/data.js'), 'utf8');
+  global.window = global;
+  eval(pianoSource);
+  var pianoChords = global.PIANO_CHORDS_FULL || {};
+  for (var chordName in pianoChords) {
+    if (!Object.prototype.hasOwnProperty.call(pianoChords, chordName)) continue;
+    var chord = pianoChords[chordName];
+    ['rootPosition', 'firstInversion', 'secondInversion'].forEach(function(positionKey) {
+      var position = chord[positionKey];
+      assert.ok(position && Array.isArray(position.midi), chordName + ' missing ' + positionKey + ' midi data');
+      assert.strictEqual(position.fingers_rh.length, position.midi.length, chordName + ' ' + positionKey + ' RH fingering mismatch');
+      assert.strictEqual(position.fingers_lh.length, position.midi.length, chordName + ' ' + positionKey + ' LH fingering mismatch');
+    });
+  }
+});
+
 // ===== Tests: ChordEngine =====
 console.log('\n--- ChordEngine ---');
 
