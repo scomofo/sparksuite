@@ -455,6 +455,14 @@ test('career content bootstraps from the active instrument song library', functi
   assert.strictEqual(global.S.activeCareerId, 'career_career_test');
 });
 
+test('career registry resolves state through the shared root helper instead of window-only fallbacks', function() {
+  var registrySource = loadJS('js/career/registry.js');
+  assert.ok(registrySource.indexOf('function getCareerRegistryStateRoot(){') >= 0);
+  assert.ok(registrySource.indexOf('globalThis.__sparkState') >= 0);
+  assert.ok(registrySource.indexOf('var cursor = typeof window!=="undefined" && window.__sparkState ? window.__sparkState : (typeof window!=="undefined" ? window.S : null);') === -1);
+  assert.ok(registrySource.indexOf('var root = typeof window!=="undefined" && window.__sparkState ? window.__sparkState : (typeof window!=="undefined" ? window.S : null);') === -1);
+});
+
 test('challenge hub open initializes challenges when the cache is empty', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('if((appRead("activeChallenges", []) || []).length===0 && typeof initializeChallengesForCurrentCycle==="function"){') >= 0);

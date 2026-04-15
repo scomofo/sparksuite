@@ -8,12 +8,20 @@
     sourceInstrumentId: null
   };
 
+  function getCareerRegistryStateRoot(){
+    if(typeof globalThis!=="undefined" && globalThis.__sparkState) return globalThis.__sparkState;
+    if(typeof globalThis!=="undefined" && globalThis.S) return globalThis.S;
+    if(typeof window!=="undefined" && window.__sparkState) return window.__sparkState;
+    if(typeof window!=="undefined" && window.S) return window.S;
+    return null;
+  }
+
   function careerRegistryRead(path, fallback){
     if(typeof SparkState!=="undefined" && SparkState && typeof SparkState.read==="function"){
       return SparkState.read(path, fallback);
     }
     var parts = Array.isArray(path) ? path.slice() : [path];
-    var cursor = typeof window!=="undefined" && window.__sparkState ? window.__sparkState : (typeof window!=="undefined" ? window.S : null);
+    var cursor = getCareerRegistryStateRoot();
     for(var i=0;i<parts.length;i++){
       if(!cursor || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
       cursor = cursor[parts[i]];
@@ -26,7 +34,7 @@
       return SparkState.write(path, value);
     }
     var parts = Array.isArray(path) ? path.slice() : [path];
-    var root = typeof window!=="undefined" && window.__sparkState ? window.__sparkState : (typeof window!=="undefined" ? window.S : null);
+    var root = getCareerRegistryStateRoot();
     if(!root || !parts.length) return value;
     var cursor = root;
     for(var i=0;i<parts.length-1;i++){

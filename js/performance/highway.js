@@ -19,12 +19,29 @@ function getPerformanceHighwayThemeManifest() {
   return PERFORMANCE_HIGHWAY_ARCHIVE_ASSETS;
 }
 
+function getPerformanceHighwayStateRoot() {
+  if (typeof globalThis !== "undefined" && globalThis.__sparkState) {
+    return globalThis.__sparkState;
+  }
+  if (typeof globalThis !== "undefined" && globalThis.S) {
+    return globalThis.S;
+  }
+  if (typeof window !== "undefined" && window.__sparkState) {
+    return window.__sparkState;
+  }
+  if (typeof window !== "undefined" && window.S) {
+    return window.S;
+  }
+  return null;
+}
+
 function getStoredPerformanceHighwayThemeSelection() {
   if (typeof SparkState !== "undefined" && typeof SparkState.read === "function") {
     return SparkState.read(["settings", "performanceHighwayThemeSelection"], null);
   }
-  if (typeof window !== "undefined" && window.S && window.S.settings && window.S.settings.performanceHighwayThemeSelection) {
-    return window.S.settings.performanceHighwayThemeSelection;
+  var root = getPerformanceHighwayStateRoot();
+  if (root && root.settings && root.settings.performanceHighwayThemeSelection) {
+    return root.settings.performanceHighwayThemeSelection;
   }
   if (typeof window !== "undefined" && window.PERFORMANCE_HIGHWAY_THEME_SELECTION) {
     return window.PERFORMANCE_HIGHWAY_THEME_SELECTION;
@@ -36,9 +53,12 @@ function setStoredPerformanceHighwayThemeSelection(selection) {
   if (typeof window !== "undefined") window.PERFORMANCE_HIGHWAY_THEME_SELECTION = selection;
   if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
     SparkState.write(["settings", "performanceHighwayThemeSelection"], selection);
-  } else if (typeof window !== "undefined" && window.S) {
-    if (!window.S.settings || typeof window.S.settings !== "object") window.S.settings = {};
-    window.S.settings.performanceHighwayThemeSelection = selection;
+  } else {
+    var root = getPerformanceHighwayStateRoot();
+    if (root) {
+      if (!root.settings || typeof root.settings !== "object") root.settings = {};
+      root.settings.performanceHighwayThemeSelection = selection;
+    }
   }
   return selection;
 }

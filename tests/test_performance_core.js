@@ -153,6 +153,13 @@ test('performance calibration buttons route through shared actions', function() 
   assert.ok(performPageSource.indexOf('maxCombo: 0') >= 0);
 });
 
+test('performance highway theme persistence uses the shared state root instead of legacy window.S-only access', function() {
+  var highwaySource = loadJS('js/performance/highway.js');
+  assert.ok(highwaySource.indexOf('function getPerformanceHighwayStateRoot()') >= 0);
+  assert.ok(highwaySource.indexOf('globalThis.__sparkState') >= 0);
+  assert.ok(highwaySource.indexOf('window.S.settings.performanceHighwayThemeSelection') === -1);
+});
+
 test('shared onboarding calibration action routes through the calibration screen handler', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('if(a==="openCalibration"){') >= 0);
