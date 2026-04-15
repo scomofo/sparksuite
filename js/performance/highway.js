@@ -342,8 +342,15 @@ function renderPerformanceComboDisplay(combo, multiplier) {
   multiplier = typeof multiplier === "number" ? multiplier : 1;
   if (combo < 2) return "";
   var color = getPerformanceComboColor(multiplier);
-  var fontSize = Math.min(40, 28 + Math.floor(combo / 6) * 2);
-  return '<div class="perform-combo-display" style="position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:' + fontSize + 'px;font-weight:900;letter-spacing:.04em;color:' + color + ';text-shadow:0 6px 18px rgba(0,0,0,.45);pointer-events:none;z-index:3">' + combo + ' COMBO x' + multiplier + '</div>';
+  var fontSize = 28;
+  var scale = Math.min(2, 1 + combo * 0.02);
+  return '<div class="perform-combo-display" style="position:absolute;top:18px;left:50%;transform:translateX(-50%) scale(' + scale.toFixed(2) + ');font-size:' + fontSize + 'px;font-weight:900;letter-spacing:.04em;color:' + color + ';text-shadow:0 6px 18px rgba(0,0,0,.45);pointer-events:none;z-index:3">' + combo + ' COMBO x' + multiplier + '</div>';
+}
+
+function renderPerformanceMilestoneBurst(value) {
+  value = typeof value === "number" ? value : 0;
+  if (!value) return "";
+  return '<div class="perform-milestone-burst" style="position:absolute;top:180px;left:50%;transform:translateX(-50%);font-size:32px;font-weight:900;color:#ffd700;text-shadow:0 8px 24px rgba(0,0,0,.45);pointer-events:none;z-index:4">+' + value + '</div>';
 }
 
 function renderPerformanceHighwayHitFeedback(label, hitSparkAsset, grade) {
@@ -365,6 +372,7 @@ function renderPerformanceHighway(chart, nowSec, options) {
   var instrument = getPerformanceHighwayInstrument(chart);
   var combo = typeof options.combo === "number" ? options.combo : 0;
   var multiplier = typeof options.multiplier === "number" ? options.multiplier : 1;
+  var milestoneValue = typeof options.milestoneValue === "number" ? options.milestoneValue : 0;
   var hitLabel = typeof options.hitLabel === "string" ? options.hitLabel : "";
   var height = 400;
   var shellOverlayTop = getPerformanceHighwayShellOverlayValue(assets, "shellOverlayTop", 0.68);
@@ -376,6 +384,7 @@ function renderPerformanceHighway(chart, nowSec, options) {
   h += '<div class="perform-highway-surface" data-highway-surface="' + escapePerformanceHtml(assets.surface) + '" style="position:absolute;inset:0;pointer-events:none;' + surfaceBackground + '"></div>';
   h += renderPerformanceHighwayVfx(vfxAssets, combo);
   h += renderPerformanceComboDisplay(combo, multiplier);
+  h += renderPerformanceMilestoneBurst(milestoneValue);
   h += '<canvas id="spark-highway-canvas" style="width:100%;height:100%;display:block;position:relative;z-index:1"></canvas>';
   h += '<div id="perform-imported-overlay" style="position:absolute;inset:0;pointer-events:none">';
   h += renderImportedTechniqueOverlay(chart, nowSec, 3);

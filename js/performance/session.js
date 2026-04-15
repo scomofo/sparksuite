@@ -244,6 +244,9 @@ function startPerformance(chartIdOrChart, opts) {
         performMaxCombo: 0,
         performMultiplier: 1,
         performGraceActive: false,
+        performMilestoneHit: false,
+        performMilestoneValue: 0,
+        performMilestonesHit: [],
         performAccuracy: 0,
         performPhraseIdx: 0,
         performResults: null,
@@ -561,6 +564,9 @@ function maybeScorePendingEvents(nowSec) {
   var performMaxCombo = performanceSessionRead("performMaxCombo", 0);
   var performMultiplier = performanceSessionRead("performMultiplier", 1);
   var performGraceActive = performanceSessionRead("performGraceActive", false);
+  var performMilestoneHit = performanceSessionRead("performMilestoneHit", false);
+  var performMilestoneValue = performanceSessionRead("performMilestoneValue", 0);
+  var performMilestonesHit = performanceSessionRead("performMilestonesHit", []);
   var performScore = performanceSessionRead("performScore", 0);
   var offsetMs = performMode === "midi"
     ? (performanceSessionRead("performMidiOffsetMs", 0) || 0)
@@ -604,6 +610,8 @@ function maybeScorePendingEvents(nowSec) {
           performCombo: performCombo,
           performMultiplier: performMultiplier,
           performGraceActive: false,
+          performMilestoneHit: false,
+          performMilestoneValue: 0,
           performLastHitGrade: comboBreakType,
           performLastTimingOffsetMs: deltaMs,
           performLastExpectedLane: typeof getPerformanceLane === "function" ? getPerformanceLane(evt.chord || evt.laneLabel || null, evt) : null,
@@ -639,6 +647,8 @@ function maybeScorePendingEvents(nowSec) {
         performanceSessionPatch({
           performGraceActive: false,
           performMultiplier: performMultiplier,
+          performMilestoneHit: false,
+          performMilestoneValue: 0,
           performLastHitGrade: "grace",
           performLastTimingOffsetMs: result.offsetMs,
           performLastExpectedLane: result.expectedLane,
@@ -648,6 +658,8 @@ function maybeScorePendingEvents(nowSec) {
         });
         result.combo = performCombo;
         result.multiplier = performMultiplier;
+        result.milestoneHit = false;
+        result.milestoneValue = 0;
 
         _updatePerformanceAccuracy(chart);
       } else if (result.hit) {
@@ -662,14 +674,27 @@ function maybeScorePendingEvents(nowSec) {
         if (performCombo > performMaxCombo) performMaxCombo = performCombo;
         performMultiplier = typeof getPerformanceMultiplier === "function" ? getPerformanceMultiplier(performCombo) : 1;
         performGraceActive = false;
+        performMilestonesHit = Array.isArray(performMilestonesHit) ? performMilestonesHit.slice() : [];
+        performMilestoneHit = typeof shouldTriggerPerformanceComboMilestone === "function"
+          ? shouldTriggerPerformanceComboMilestone(performCombo, performMilestonesHit)
+          : false;
+        performMilestoneValue = performMilestoneHit && typeof getPerformanceComboMilestoneReward === "function"
+          ? getPerformanceComboMilestoneReward(performCombo)
+          : 0;
+        if (performMilestoneHit) {
+          performMilestonesHit.push(performCombo);
+        }
 
-        performScore += Math.round(result.points * performMultiplier);
+        performScore += Math.round(result.points * performMultiplier) + performMilestoneValue;
 
         performanceSessionPatch({
           performCombo: performCombo,
           performMaxCombo: performMaxCombo,
           performMultiplier: performMultiplier,
           performGraceActive: false,
+          performMilestoneHit: performMilestoneHit,
+          performMilestoneValue: performMilestoneValue,
+          performMilestonesHit: performMilestonesHit,
           performScore: performScore,
           performLastHitGrade: result.grade,
           performLastTimingOffsetMs: result.offsetMs,
@@ -682,6 +707,8 @@ function maybeScorePendingEvents(nowSec) {
         });
         result.combo = performCombo;
         result.multiplier = performMultiplier;
+        result.milestoneHit = performMilestoneHit;
+        result.milestoneValue = performMilestoneValue;
 
         _updatePerformanceAccuracy(chart);
       } else if (result.grade !== "miss" || result.laneMatch === false) {
@@ -702,6 +729,8 @@ function maybeScorePendingEvents(nowSec) {
           performCombo: performCombo,
           performMultiplier: performMultiplier,
           performGraceActive: false,
+          performMilestoneHit: false,
+          performMilestoneValue: 0,
           performLastHitGrade: comboFeedbackType,
           performLastTimingOffsetMs: result.offsetMs,
           performLastExpectedLane: result.expectedLane,
@@ -711,6 +740,8 @@ function maybeScorePendingEvents(nowSec) {
         });
         result.combo = performCombo;
         result.multiplier = performMultiplier;
+        result.milestoneHit = false;
+        result.milestoneValue = 0;
         _updatePerformanceAccuracy(chart);
       }
     }

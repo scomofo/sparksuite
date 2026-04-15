@@ -67,6 +67,7 @@ eval(loadJS('js/performance/timing_windows.js'));
 eval(loadJS('js/performance/lane_mapper.js'));
 eval(loadJS('js/performance/combo_system.js'));
 eval(loadJS('js/performance/combo_decay.js'));
+eval(loadJS('js/performance/combo_milestones.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway_themes.js'));
 eval(loadJS('js/performance/highway.js'));
@@ -223,6 +224,18 @@ test('performance combo decay uses grace-friendly threshold buckets', function()
   assert.strictEqual(getPerformanceComboDecayAmount(6), 3);
   assert.strictEqual(getPerformanceComboDecayAmount(18), 5);
   assert.strictEqual(getPerformanceComboDecayAmount(31), 8);
+});
+
+test('performance combo milestones trigger once per threshold with burst rewards', function() {
+  assert.deepStrictEqual(window.PERFORMANCE_COMBO_MILESTONES, [5, 10, 20, 30, 50]);
+  assert.strictEqual(isPerformanceComboMilestone(5), true);
+  assert.strictEqual(getPerformanceComboMilestoneReward(5), 100);
+  assert.strictEqual(getPerformanceComboMilestoneReward(10), 200);
+  assert.strictEqual(getPerformanceComboMilestoneReward(20), 400);
+  assert.strictEqual(getPerformanceComboMilestoneReward(30), 600);
+  assert.strictEqual(getPerformanceComboMilestoneReward(50), 1000);
+  assert.strictEqual(shouldTriggerPerformanceComboMilestone(10, []), true);
+  assert.strictEqual(shouldTriggerPerformanceComboMilestone(10, [5, 10]), false);
 });
 
 test('scorePerformanceEvent returns timing grade, lanes, and points for a matching hit', function() {
@@ -553,6 +566,7 @@ test('renderPerformanceHighway renders combo display only when combo is active a
   assert.ok(visibleHtml.indexOf('perform-combo-display') >= 0);
   assert.ok(visibleHtml.indexOf('12 COMBO x3') >= 0);
   assert.ok(visibleHtml.indexOf('#a970ff') >= 0);
+  assert.ok(visibleHtml.indexOf('scale(1.24)') >= 0);
 });
 
 test('renderPerformanceHighway hit feedback colors distinguish grace and decay', function() {
@@ -561,6 +575,13 @@ test('renderPerformanceHighway hit feedback colors distinguish grace and decay',
 
   assert.ok(graceHtml.indexOf('#8be9ff') >= 0);
   assert.ok(decayHtml.indexOf('#ffaa00') >= 0);
+});
+
+test('renderPerformanceHighway renders milestone burst when a reward is active', function() {
+  var html = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { combo: 10, multiplier: 3, milestoneValue: 200 });
+  assert.ok(html.indexOf('perform-milestone-burst') >= 0);
+  assert.ok(html.indexOf('+200') >= 0);
+  assert.ok(html.indexOf('#ffd700') >= 0);
 });
 
 test('setPerformanceHighwayThemeSelection stores per-instrument theme choice', function() {
@@ -1365,6 +1386,9 @@ test('syncPerformanceRuntimeState centralizes performance runtime flags and scre
   assert.strictEqual(S.performPaused, false);
   assert.strictEqual(S.performMultiplier, 1);
   assert.strictEqual(S.performGraceActive, false);
+  assert.strictEqual(S.performMilestoneHit, false);
+  assert.strictEqual(S.performMilestoneValue, 0);
+  assert.deepStrictEqual(S.performMilestonesHit, []);
   assert.strictEqual(S.performMode, 'audio');
   assert.strictEqual(S.performDifficulty, 'pro');
   assert.strictEqual(S.screen, 'perform');

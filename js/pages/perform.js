@@ -175,6 +175,8 @@ function performPage() {
   var performCombo = performRead("performCombo", 0);
   var performMultiplier = performRead("performMultiplier", 1);
   var performGraceActive = performRead("performGraceActive", false);
+  var performMilestoneHit = performRead("performMilestoneHit", false);
+  var performMilestoneValue = performRead("performMilestoneValue", 0);
   var performLastHitLabel = performRead("performLastHitLabel", "");
   var performLastHitGrade = performRead("performLastHitGrade", "");
   var performLastHitTime = performRead("performLastHitTime", 0);
@@ -259,7 +261,11 @@ function performPage() {
   }
 
   // Highway
-  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo, multiplier: performMultiplier, hitLabel: activeHitLabel, hitGrade: performLastHitGrade });
+  var activeMilestoneValue = 0;
+  if (performMilestoneHit && performMilestoneValue && Date.now() - performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
+    activeMilestoneValue = performMilestoneValue;
+  }
+  h += renderPerformanceHighway(chart, nowSec, { combo: performCombo, multiplier: performMultiplier, milestoneValue: activeMilestoneValue, hitLabel: activeHitLabel, hitGrade: performLastHitGrade });
 
   // Chord indicator panel
   var currentChord = null;
@@ -340,7 +346,7 @@ function performPage() {
     h += '<div style="background:rgba(0,0,0,.85);color:#0f0;font-family:monospace;font-size:11px;padding:8px;border-radius:6px;margin:4px 12px">';
     h += 'time: ' + nowSec.toFixed(2) + 's | phrase: ' + (debugPhrase ? debugPhrase.name : '-') + '<br>';
     h += 'speed: ' + performSpeedState + ' | diff: ' + performDifficultyState + '<br>';
-    h += 'combo: ' + performCombo + '/' + performMaxCombo + ' | multiplier: x' + performMultiplier + ' | grace: ' + (performGraceActive ? 'on' : 'off') + ' | score: ' + performScore + '<br>';
+    h += 'combo: ' + performCombo + '/' + performMaxCombo + ' | multiplier: x' + performMultiplier + ' | grace: ' + (performGraceActive ? 'on' : 'off') + ' | milestone: ' + (performMilestoneHit ? ('+' + performMilestoneValue) : '-') + ' | score: ' + performScore + '<br>';
     h += 'notes: [' + (performInputNotes || []).join(',') + ']<br>';
     h += 'lane: ' + (performLastExpectedLane == null ? '-' : performLastExpectedLane) + ' -> ' + (performLastDetectedLane == null ? '-' : performLastDetectedLane) + ' | ';
     h += 'offset: ' + (typeof performLastTimingOffsetMs === 'number' ? Math.round(performLastTimingOffsetMs) : 0) + 'ms | ';
