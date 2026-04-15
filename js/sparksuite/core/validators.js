@@ -41,7 +41,7 @@
         }
         throw new Error(msg);
       }
-      if (input.note === undefined || input.note === undefined) {
+      if (input.note === undefined) {
         input.note = null;
       }
       if (input.chord === undefined) {

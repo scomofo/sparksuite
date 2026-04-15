@@ -58,6 +58,8 @@ global.render = function() {};
 // Load ui.js (escHTML, checkBadges, shuffle, etc.)
 eval(loadJS('js/ui.js'));
 eval(loadJS('js/pages/guided.js'));
+global.window = global.window || {};
+eval(fs.readFileSync(path.join(__dirname, '..', 'js/sparksuite/core/validators.js'), 'utf8'));
 
 // ===== Tests: escHTML =====
 console.log('\n--- escHTML ---');
@@ -113,6 +115,20 @@ test('guided plan view fills missing presentation fields for raw lessons', funct
   assert.ok(plan.newMove && plan.newMove.text);
   assert.ok(plan.songSlice && plan.songSlice.text);
   assert.ok(plan.victoryLap && plan.victoryLap.text);
+});
+
+test('SparkValidators.validateInput fills missing optional fields', function() {
+  var input = window.SparkValidators.validateInput({ time: 1.25 });
+  assert.strictEqual(input.note, null);
+  assert.strictEqual(input.chord, null);
+  assert.strictEqual(input.confidence, 0);
+});
+
+test('SparkValidators.validateInput preserves existing optional fields', function() {
+  var input = window.SparkValidators.validateInput({ time: 2, note: 'E4', chord: 'E Major', confidence: 0.8 });
+  assert.strictEqual(input.note, 'E4');
+  assert.strictEqual(input.chord, 'E Major');
+  assert.strictEqual(input.confidence, 0.8);
 });
 
 // ===== Tests: shuffle =====
