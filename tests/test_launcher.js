@@ -168,6 +168,18 @@ test('shared app routes chart and exercise editor actions through the editor eng
   assert.ok(appSource.indexOf('_sharedPages[SCR.EDITOR] = typeof editorPage === "function" ? editorPage : null;') >= 0);
 });
 
+test('shared app routes editor toolbar actions through the shared editor engine', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('if(appRead("screen", null)===SCR.EDITOR){') >= 0);
+  assert.ok(appSource.indexOf('if(a==="editorField"){') >= 0);
+  assert.ok(appSource.indexOf('if(a==="editorItemField"){') >= 0);
+  assert.ok(appSource.indexOf('if(a==="editorAddAtPlayhead"){') >= 0);
+  assert.ok(appSource.indexOf('if(a==="editorDeleteSelected"){') >= 0);
+  assert.ok(appSource.indexOf('if(a==="editorPreview"){') >= 0);
+  assert.ok(appSource.indexOf('saveEditorObjectToLibrary') >= 0);
+  assert.ok(appSource.indexOf('exportEditorObjectDesktopAware') >= 0);
+});
+
 test('getPage returns page from active instrument', function() {
   SparkInstruments.activate('test_guitar');
   var page = SparkInstruments.getPage('home');

@@ -2426,6 +2426,145 @@ window.act=function(a,v){
     render();
     return;
   }
+  if(appRead("screen", null)===SCR.EDITOR){
+    if(a==="editorField"){
+      var editorFieldSep=String(v||"").indexOf("|");
+      if(editorFieldSep>=0&&typeof updateEditorField==="function"){
+        updateEditorField(String(v).slice(0, editorFieldSep), String(v).slice(editorFieldSep+1));
+        render();
+      }
+      return;
+    }
+    if(a==="editorItemField"){
+      var editorItemSep=String(v||"").indexOf("|");
+      if(editorItemSep>=0&&typeof updateSelectedEditorItemField==="function"){
+        updateSelectedEditorItemField(String(v).slice(0, editorItemSep), String(v).slice(editorItemSep+1));
+        render();
+      }
+      return;
+    }
+    if(a==="editorSelect"){
+      if(typeof selectEditorItem==="function"){
+        selectEditorItem(v);
+        render();
+      }
+      return;
+    }
+    if(a==="editorPlayheadLeft"){
+      if(typeof moveEditorPlayhead==="function"){
+        moveEditorPlayhead("left");
+        render();
+      }
+      return;
+    }
+    if(a==="editorPlayheadRight"){
+      if(typeof moveEditorPlayhead==="function"){
+        moveEditorPlayhead("right");
+        render();
+      }
+      return;
+    }
+    if(a==="editorToggleSnap"){
+      appWrite("editorSnapEnabled", !appRead("editorSnapEnabled", false));
+      render();
+      return;
+    }
+    if(a==="editorGrid"){
+      appWrite("editorGridDivision", v||"1/4");
+      render();
+      return;
+    }
+    if(a==="editorZoomOut"){
+      appWrite("editorTimelineWindowSec", Math.min(64, (appRead("editorTimelineWindowSec", 16)||16) + 4));
+      render();
+      return;
+    }
+    if(a==="editorZoomIn"){
+      appWrite("editorTimelineWindowSec", Math.max(4, (appRead("editorTimelineWindowSec", 16)||16) - 4));
+      render();
+      return;
+    }
+    if(a==="editorAddAtPlayhead"){
+      if(typeof addSeededDefaultEventAtPlayhead==="function"){
+        addSeededDefaultEventAtPlayhead();
+        render();
+      }
+      return;
+    }
+    if(a==="editorAddPhraseAtPlayhead"){
+      if(typeof addPhraseAtPlayhead==="function"){
+        addPhraseAtPlayhead();
+        render();
+      }
+      return;
+    }
+    if(a==="editorAddEvent"){
+      if(typeof addDefaultEditorEvent==="function"){
+        addDefaultEditorEvent();
+        render();
+      }
+      return;
+    }
+    if(a==="editorAddPhrase"){
+      if(typeof addDefaultEditorPhrase==="function"){
+        addDefaultEditorPhrase();
+        render();
+      }
+      return;
+    }
+    if(a==="editorAddStep"){
+      if(typeof addDefaultEditorStep==="function"){
+        addDefaultEditorStep();
+        render();
+      }
+      return;
+    }
+    if(a==="editorNudgeLeft"){
+      if((typeof nudgeSelectedEditorGroup==="function"&&nudgeSelectedEditorGroup("left"))||(typeof nudgeSelectedEditorItem==="function"&&nudgeSelectedEditorItem("left"))){
+        render();
+      }
+      return;
+    }
+    if(a==="editorNudgeRight"){
+      if((typeof nudgeSelectedEditorGroup==="function"&&nudgeSelectedEditorGroup("right"))||(typeof nudgeSelectedEditorItem==="function"&&nudgeSelectedEditorItem("right"))){
+        render();
+      }
+      return;
+    }
+    if(a==="editorDuplicate"){
+      if((typeof duplicateSelectedEditorGroup==="function"&&duplicateSelectedEditorGroup())||(typeof duplicateSelectedEditorItem==="function"&&duplicateSelectedEditorItem())||(typeof duplicateSelectedPhraseRegion==="function"&&duplicateSelectedPhraseRegion())){
+        render();
+      }
+      return;
+    }
+    if(a==="editorDeleteSelected"){
+      if(typeof deleteSelectedEditorItems==="function"){
+        deleteSelectedEditorItems();
+        render();
+      }
+      return;
+    }
+    if(a==="editorSave"){
+      if(typeof saveEditorObjectToLibrary==="function"&&saveEditorObjectToLibrary()){
+        render();
+      }
+      return;
+    }
+    if(a==="editorExport"){
+      if(typeof exportEditorObjectDesktopAware==="function"){
+        exportEditorObjectDesktopAware();
+      }else if(typeof exportEditorObject==="function"){
+        exportEditorObject();
+      }
+      return;
+    }
+    if(a==="editorPreview"){
+      if(typeof previewEditorObject==="function"){
+        previewEditorObject();
+      }
+      return;
+    }
+  }
   if(a==="openOnboarding"){if(typeof startOnboarding==="function")startOnboarding();return;}
   if(a==="resumeOnboarding"){if(typeof continueOnboarding==="function")continueOnboarding();return;}
   if(a==="refreshHome"){
