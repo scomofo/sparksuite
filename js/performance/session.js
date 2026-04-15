@@ -54,6 +54,14 @@ function performanceSessionPatch(patch) {
   }
 }
 
+function applyPerformanceComboDecay(combo) {
+  combo = typeof combo === "number" ? combo : 0;
+  var decay = typeof getPerformanceComboDecayAmount === "function"
+    ? getPerformanceComboDecayAmount(combo)
+    : combo;
+  return Math.max(0, combo - decay);
+}
+
 function buildPerformanceLaneDebugSnapshot(chart, nowSec) {
   if (!chart || !Array.isArray(chart.events)) {
     return { events: [], collapsed: false, distinctKeys: 0, distinctLanes: 0 };
@@ -235,6 +243,7 @@ function startPerformance(chartIdOrChart, opts) {
         performCombo: 0,
         performMaxCombo: 0,
         performMultiplier: 1,
+        performGraceActive: false,
         performAccuracy: 0,
         performPhraseIdx: 0,
         performResults: null,
@@ -551,6 +560,7 @@ function maybeScorePendingEvents(nowSec) {
   var performCombo = performanceSessionRead("performCombo", 0);
   var performMaxCombo = performanceSessionRead("performMaxCombo", 0);
   var performMultiplier = performanceSessionRead("performMultiplier", 1);
+  var performGraceActive = performanceSessionRead("performGraceActive", false);
   var performScore = performanceSessionRead("performScore", 0);
   var offsetMs = performMode === "midi"
     ? (performanceSessionRead("performMidiOffsetMs", 0) || 0)
@@ -565,43 +575,82 @@ function maybeScorePendingEvents(nowSec) {
     if (evt._scored) continue;
 
     var deltaMs = (nowSec - evt.t) * 1000 - offsetMs;
+    var graceWindowMs = typeof getPerformanceGraceWindowMs === "function" ? getPerformanceGraceWindowMs() : 120;
+    var graceDeadlineMs = performWindowMissMs + graceWindowMs;
 
     if (deltaMs < -performWindowMissMs) continue;
 
-    // Past miss window — mark as miss
+    // Past miss window — keep combo alive briefly before applying decay/reset.
     if (deltaMs > performWindowMissMs && !evt._hit) {
-      evt._scored = true;
-      evt._miss = true;
-      evt._result = { score: 0, grade: "miss", noteScore: 0, timingScore: 0 };
-      evt._result.combo = 0;
-      evt._result.multiplier = 1;
-      evt._score = 0;
-      updatePhraseStats(phraseStats, evt, evt._result);
-      performCombo = 0;
-      performMultiplier = typeof getPerformanceMultiplier === "function" ? getPerformanceMultiplier(performCombo) : 1;
-      performanceSessionPatch({
-        performCombo: performCombo,
-        performMultiplier: performMultiplier,
-        performLastHitGrade: "miss",
-        performLastTimingOffsetMs: deltaMs,
-        performLastExpectedLane: typeof getPerformanceLane === "function" ? getPerformanceLane(evt.chord || evt.laneLabel || null, evt) : null,
-        performLastDetectedLane: null
-      });
-      if (evt.sourceFlags && targetTechnique && evt.sourceFlags[targetTechnique] && typeof buildPerformanceFeedbackLabel === "function") {
+      if (deltaMs <= graceDeadlineMs) {
+        if (!performGraceActive) {
+          performGraceActive = true;
+          performanceSessionWrite("performGraceActive", true);
+        }
+      } else {
+        evt._scored = true;
+        evt._miss = true;
+        evt._result = { score: 0, grade: "miss", noteScore: 0, timingScore: 0 };
+        evt._result.combo = 0;
+        evt._result.multiplier = 1;
+        evt._score = 0;
+        updatePhraseStats(phraseStats, evt, evt._result);
+        var comboAfterLateDecay = applyPerformanceComboDecay(performCombo);
+        var comboBreakType = comboAfterLateDecay > 0 ? "decay" : "miss";
+        performCombo = comboAfterLateDecay;
+        performMultiplier = typeof getPerformanceMultiplier === "function" ? getPerformanceMultiplier(performCombo) : 1;
+        performGraceActive = false;
         performanceSessionPatch({
-          performLastHitLabel: buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique),
-          performLastHitTime: Date.now()
+          performCombo: performCombo,
+          performMultiplier: performMultiplier,
+          performGraceActive: false,
+          performLastHitGrade: comboBreakType,
+          performLastTimingOffsetMs: deltaMs,
+          performLastExpectedLane: typeof getPerformanceLane === "function" ? getPerformanceLane(evt.chord || evt.laneLabel || null, evt) : null,
+          performLastDetectedLane: null
         });
+        if (evt.sourceFlags && targetTechnique && evt.sourceFlags[targetTechnique] && typeof buildPerformanceFeedbackLabel === "function") {
+          performanceSessionPatch({
+            performLastHitLabel: buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique),
+            performLastHitTime: Date.now()
+          });
+        } else {
+          performanceSessionPatch({
+            performLastHitLabel: comboBreakType === "decay" ? "RECOVER" : "MISS!",
+            performLastHitTime: Date.now()
+          });
+        }
+        _updatePerformanceAccuracy(chart);
+        continue;
       }
-      _updatePerformanceAccuracy(chart);
-      continue;
     }
 
     // In scoring window — check snapshot
     if (performanceSnapshotHasActivity(snapshot, evt, performMode)) {
       var result = scorePerformanceEvent(evt, snapshot, deltaMs, performDifficulty, performMode);
 
-      if (result.hit) {
+      if (result.hit && result.graceUsed) {
+        evt._scored = true;
+        evt._hit = true;
+        evt._result = result;
+        evt._score = 0;
+        updatePhraseStats(phraseStats, evt, result);
+        performGraceActive = false;
+        performanceSessionPatch({
+          performGraceActive: false,
+          performMultiplier: performMultiplier,
+          performLastHitGrade: "grace",
+          performLastTimingOffsetMs: result.offsetMs,
+          performLastExpectedLane: result.expectedLane,
+          performLastDetectedLane: result.detectedLane,
+          performLastHitLabel: "SAVE",
+          performLastHitTime: Date.now()
+        });
+        result.combo = performCombo;
+        result.multiplier = performMultiplier;
+
+        _updatePerformanceAccuracy(chart);
+      } else if (result.hit) {
         evt._scored = true;
         evt._hit = true;
         evt._result = result;
@@ -612,6 +661,7 @@ function maybeScorePendingEvents(nowSec) {
         performCombo++;
         if (performCombo > performMaxCombo) performMaxCombo = performCombo;
         performMultiplier = typeof getPerformanceMultiplier === "function" ? getPerformanceMultiplier(performCombo) : 1;
+        performGraceActive = false;
 
         performScore += Math.round(result.points * performMultiplier);
 
@@ -619,6 +669,7 @@ function maybeScorePendingEvents(nowSec) {
           performCombo: performCombo,
           performMaxCombo: performMaxCombo,
           performMultiplier: performMultiplier,
+          performGraceActive: false,
           performScore: performScore,
           performLastHitGrade: result.grade,
           performLastTimingOffsetMs: result.offsetMs,
@@ -636,26 +687,30 @@ function maybeScorePendingEvents(nowSec) {
       } else if (result.grade !== "miss" || result.laneMatch === false) {
         evt._scored = true;
         evt._miss = true;
-        result.combo = 0;
-        result.multiplier = 1;
         evt._result = result;
         evt._score = 0;
         updatePhraseStats(phraseStats, evt, {
           score: 0,
           grade: "miss"
         });
-        performCombo = 0;
+        var comboAfterDecay = applyPerformanceComboDecay(performCombo);
+        var comboFeedbackType = comboAfterDecay > 0 ? "decay" : "miss";
+        performCombo = comboAfterDecay;
         performMultiplier = typeof getPerformanceMultiplier === "function" ? getPerformanceMultiplier(performCombo) : 1;
+        performGraceActive = false;
         performanceSessionPatch({
           performCombo: performCombo,
           performMultiplier: performMultiplier,
-          performLastHitGrade: "miss",
+          performGraceActive: false,
+          performLastHitGrade: comboFeedbackType,
           performLastTimingOffsetMs: result.offsetMs,
           performLastExpectedLane: result.expectedLane,
           performLastDetectedLane: result.detectedLane,
-          performLastHitLabel: "MISS!",
+          performLastHitLabel: comboFeedbackType === "decay" ? "RECOVER" : "MISS!",
           performLastHitTime: Date.now()
         });
+        result.combo = performCombo;
+        result.multiplier = performMultiplier;
         _updatePerformanceAccuracy(chart);
       }
     }

@@ -31,6 +31,12 @@ function getTimingWindows(difficulty) {
   };
 }
 
+function getPerformanceGraceWindowMs() {
+  return typeof window.PERFORMANCE_GRACE_WINDOW_MS === "number"
+    ? window.PERFORMANCE_GRACE_WINDOW_MS
+    : 120;
+}
+
 function getDetectedPerformanceLane(event, snapshot, mode) {
   snapshot = snapshot || {};
   event = event || {};
@@ -124,6 +130,7 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
     ? getPerformanceTimingScore(timingGrade)
     : 0;
   var timingScore = timingScorePct / 100;
+  var graceUsed = false;
 
   if (event.type === "tap" && mode === "midi" && !cluster) {
     return {
@@ -138,18 +145,23 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
       laneMatch: false,
       hit: false,
       correct: false,
+      graceUsed: false,
       offsetMs: hitDeltaMs
     };
   }
 
   var hit = laneMatch && noteScore > 0 && timingGrade !== "miss";
-  var normalizedScore = hit ? timingScore : 0;
-  var points = hit ? timingScorePct : 0;
+  if (!hit && laneMatch && noteScore > 0 && Math.abs(hitDeltaMs) <= (missMs + getPerformanceGraceWindowMs())) {
+    graceUsed = true;
+    hit = true;
+  }
+  var normalizedScore = hit && !graceUsed ? timingScore : 0;
+  var points = hit && !graceUsed ? timingScorePct : 0;
 
   return {
     score: Math.round(normalizedScore * 100) / 100,
     points: points,
-    grade: hit ? timingGrade : "miss",
+    grade: hit ? (graceUsed ? "grace" : timingGrade) : "miss",
     noteScore: noteScore,
     timingScore: timingScore,
     timingGrade: timingGrade,
@@ -158,11 +170,16 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
     laneMatch: laneMatch,
     hit: hit,
     correct: hit,
+    graceUsed: graceUsed,
     offsetMs: hitDeltaMs
   };
 }
 
 function scoreOpenPerformanceEvent(event, cluster, hitDeltaMs, difficulty) {
+  var diff = typeof getPerformanceDifficulty === "function" ? getPerformanceDifficulty(difficulty) : null;
+  var missMs = diff && typeof diff.missMs === "number"
+    ? diff.missMs
+    : performanceScoringRead("performWindowMissMs", 220);
   var timingGrade = typeof getPerformanceTimingGrade === "function"
     ? getPerformanceTimingGrade(hitDeltaMs)
     : "miss";
@@ -171,11 +188,16 @@ function scoreOpenPerformanceEvent(event, cluster, hitDeltaMs, difficulty) {
     : 0;
   var timingScore = timingScorePct / 100;
   var noteScore = cluster ? 1 : 0;
+  var graceUsed = false;
   var hit = !!cluster && timingGrade !== "miss";
+  if (!hit && !!cluster && Math.abs(hitDeltaMs) <= (missMs + getPerformanceGraceWindowMs())) {
+    graceUsed = true;
+    hit = true;
+  }
   return {
-    score: Math.round((hit ? timingScore : 0) * 100) / 100,
-    points: hit ? timingScorePct : 0,
-    grade: hit ? timingGrade : "miss",
+    score: Math.round((hit && !graceUsed ? timingScore : 0) * 100) / 100,
+    points: hit && !graceUsed ? timingScorePct : 0,
+    grade: hit ? (graceUsed ? "grace" : timingGrade) : "miss",
     noteScore: noteScore,
     timingScore: timingScore,
     timingGrade: timingGrade,
@@ -184,6 +206,7 @@ function scoreOpenPerformanceEvent(event, cluster, hitDeltaMs, difficulty) {
     laneMatch: !!cluster,
     hit: hit,
     correct: hit,
+    graceUsed: graceUsed,
     offsetMs: hitDeltaMs
   };
 }
@@ -232,8 +255,10 @@ function updatePhraseStats(phraseStats, event, result) {
     ps._currentCombo = 0;
   } else {
     ps.hits++;
-    ps._currentCombo++;
-    if (ps._currentCombo > ps.maxCombo) ps.maxCombo = ps._currentCombo;
+    if (result.grade !== "grace") {
+      ps._currentCombo++;
+      if (ps._currentCombo > ps.maxCombo) ps.maxCombo = ps._currentCombo;
+    }
     if (result.grade === "perfect") ps.perfects++;
     else if (result.grade === "good") ps.goods++;
     else if (result.grade === "ok") ps.oks++;

@@ -318,6 +318,8 @@ function renderPerformanceHighwayVfx(vfxAssets, combo) {
 
 function getPerformanceHitFeedbackColor(grade) {
   switch (grade) {
+    case "grace": return "#8be9ff";
+    case "decay": return "#ffaa00";
     case "perfect": return "#00ffcc";
     case "good": return "#66ccff";
     case "ok": return "#ffaa00";

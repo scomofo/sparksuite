@@ -66,6 +66,7 @@ eval(loadJS('js/sparksuite/input/chord_detector.js'));
 eval(loadJS('js/performance/timing_windows.js'));
 eval(loadJS('js/performance/lane_mapper.js'));
 eval(loadJS('js/performance/combo_system.js'));
+eval(loadJS('js/performance/combo_decay.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway_themes.js'));
 eval(loadJS('js/performance/highway.js'));
@@ -216,6 +217,14 @@ test('performance combo multiplier uses guitar-hero style thresholds', function(
   assert.strictEqual(getPerformanceMultiplier(20), 4);
 });
 
+test('performance combo decay uses grace-friendly threshold buckets', function() {
+  assert.strictEqual(window.PERFORMANCE_GRACE_WINDOW_MS, 120);
+  assert.strictEqual(getPerformanceComboDecayAmount(3), 3);
+  assert.strictEqual(getPerformanceComboDecayAmount(6), 3);
+  assert.strictEqual(getPerformanceComboDecayAmount(18), 5);
+  assert.strictEqual(getPerformanceComboDecayAmount(31), 8);
+});
+
 test('scorePerformanceEvent returns timing grade, lanes, and points for a matching hit', function() {
   var result = scorePerformanceEvent(
     { t: 1.0, chord: 'C', lane: 0, laneLabel: 'C', notes: ['C', 'E', 'G'], type: 'chord' },
@@ -245,6 +254,21 @@ test('scorePerformanceEvent treats wrong-lane activity inside the window as a mi
   assert.strictEqual(result.detectedLane, 1);
   assert.strictEqual(result.hit, false);
   assert.strictEqual(result.grade, 'miss');
+  assert.strictEqual(result.points, 0);
+});
+
+test('scorePerformanceEvent uses grace when the correct lane lands just beyond the miss window', function() {
+  var result = scorePerformanceEvent(
+    { t: 1.0, chord: 'C', lane: 0, laneLabel: 'C', notes: ['C', 'E', 'G'], type: 'chord' },
+    { pitchClasses: ['C', 'E', 'G'], heldMidiNotes: [60, 64, 67], recentAttacks: [{ note: 60, tSec: 1.0 }] },
+    250,
+    'normal',
+    'midi'
+  );
+
+  assert.strictEqual(result.hit, true);
+  assert.strictEqual(result.graceUsed, true);
+  assert.strictEqual(result.grade, 'grace');
   assert.strictEqual(result.points, 0);
 });
 
@@ -529,6 +553,14 @@ test('renderPerformanceHighway renders combo display only when combo is active a
   assert.ok(visibleHtml.indexOf('perform-combo-display') >= 0);
   assert.ok(visibleHtml.indexOf('12 COMBO x3') >= 0);
   assert.ok(visibleHtml.indexOf('#a970ff') >= 0);
+});
+
+test('renderPerformanceHighway hit feedback colors distinguish grace and decay', function() {
+  var graceHtml = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { hitLabel: 'SAVE', hitGrade: 'grace' });
+  var decayHtml = renderPerformanceHighway({ instrument: 'guitar', events: [] }, 0, { hitLabel: 'RECOVER', hitGrade: 'decay' });
+
+  assert.ok(graceHtml.indexOf('#8be9ff') >= 0);
+  assert.ok(decayHtml.indexOf('#ffaa00') >= 0);
 });
 
 test('setPerformanceHighwayThemeSelection stores per-instrument theme choice', function() {
@@ -1332,6 +1364,7 @@ test('syncPerformanceRuntimeState centralizes performance runtime flags and scre
   assert.strictEqual(S.performPlaying, true);
   assert.strictEqual(S.performPaused, false);
   assert.strictEqual(S.performMultiplier, 1);
+  assert.strictEqual(S.performGraceActive, false);
   assert.strictEqual(S.performMode, 'audio');
   assert.strictEqual(S.performDifficulty, 'pro');
   assert.strictEqual(S.screen, 'perform');

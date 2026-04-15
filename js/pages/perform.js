@@ -174,6 +174,7 @@ function performPage() {
   var performAccuracy = performRead("performAccuracy", 0);
   var performCombo = performRead("performCombo", 0);
   var performMultiplier = performRead("performMultiplier", 1);
+  var performGraceActive = performRead("performGraceActive", false);
   var performLastHitLabel = performRead("performLastHitLabel", "");
   var performLastHitGrade = performRead("performLastHitGrade", "");
   var performLastHitTime = performRead("performLastHitTime", 0);
@@ -339,7 +340,7 @@ function performPage() {
     h += '<div style="background:rgba(0,0,0,.85);color:#0f0;font-family:monospace;font-size:11px;padding:8px;border-radius:6px;margin:4px 12px">';
     h += 'time: ' + nowSec.toFixed(2) + 's | phrase: ' + (debugPhrase ? debugPhrase.name : '-') + '<br>';
     h += 'speed: ' + performSpeedState + ' | diff: ' + performDifficultyState + '<br>';
-    h += 'combo: ' + performCombo + '/' + performMaxCombo + ' | multiplier: x' + performMultiplier + ' | score: ' + performScore + '<br>';
+    h += 'combo: ' + performCombo + '/' + performMaxCombo + ' | multiplier: x' + performMultiplier + ' | grace: ' + (performGraceActive ? 'on' : 'off') + ' | score: ' + performScore + '<br>';
     h += 'notes: [' + (performInputNotes || []).join(',') + ']<br>';
     h += 'lane: ' + (performLastExpectedLane == null ? '-' : performLastExpectedLane) + ' -> ' + (performLastDetectedLane == null ? '-' : performLastDetectedLane) + ' | ';
     h += 'offset: ' + (typeof performLastTimingOffsetMs === 'number' ? Math.round(performLastTimingOffsetMs) : 0) + 'ms | ';
