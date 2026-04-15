@@ -3423,9 +3423,21 @@ window.act=function(a,v){
   // === Scale Explorer ===
   if(a==="selectScale"){appWrite("selectedScale",v);render();return;}
   // === Audio Input ===
-  if(a==="refreshAudioInputs"){refreshAudioInputs();return;}
-  if(a==="testAudioInput"){testAudioInput(v);return;}
-  if(a==="stopAudioTest"){stopAudioTest();render();return;}
+  if(a==="refreshAudioInputs"){
+    if(typeof refreshAudioInputs==="function"){refreshAudioInputs();return;}
+    if (typeof showToast === "function") showToast("Audio input refresh isn't available right now.");
+    return;
+  }
+  if(a==="testAudioInput"){
+    if(typeof testAudioInput==="function"){testAudioInput(v);return;}
+    if (typeof showToast === "function") showToast("Audio input testing isn't available right now.");
+    return;
+  }
+  if(a==="stopAudioTest"){
+    if(typeof stopAudioTest==="function"){stopAudioTest();render();return;}
+    if (typeof showToast === "function") showToast("Audio input testing isn't available right now.");
+    return;
+  }
   if(a==="selectAudioInput"){
     stopAudioTest();
     appWrite("audioInputId",v);
@@ -4588,7 +4600,10 @@ window.act=function(a,v){
     var email=prompt("Email:");
     var password=prompt("Password:");
     var loginError;
-    if(!email||!password)return;
+    if(!email||!password){
+      if (typeof showToast === "function") showToast("Enter both email and password to log in.");
+      return;
+    }
     appWrite("cloudLastError",null);
     if(typeof loginSpark!=="function"){
       loginError="Cloud login is unavailable right now.";
@@ -4621,8 +4636,16 @@ window.act=function(a,v){
     if (typeof showToast === "function") showToast("App updates are only available in the desktop build.");
     return;
   }
-  if(a==="exportBackup"){if(typeof exportFullBackupDesktopAware==="function")exportFullBackupDesktopAware();return;}
-  if(a==="exportFeedback"){if(typeof exportFeedbackDesktopAware==="function")exportFeedbackDesktopAware();return;}
+  if(a==="exportBackup"){
+    if(typeof exportFullBackupDesktopAware==="function"){exportFullBackupDesktopAware();return;}
+    if (typeof showToast === "function") showToast("Backup export isn't available right now.");
+    return;
+  }
+  if(a==="exportFeedback"){
+    if(typeof exportFeedbackDesktopAware==="function"){exportFeedbackDesktopAware();return;}
+    if (typeof showToast === "function") showToast("Feedback export isn't available right now.");
+    return;
+  }
   // === Curriculum ===
   if(a==="openCurriculum"){
     openUtilityScreenRequest("curriculum");

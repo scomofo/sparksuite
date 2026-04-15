@@ -240,6 +240,8 @@ test('feedback export falls back to browser download and surfaces status', funct
 test('check updates surfaces a browser fallback message', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('showToast("App updates are only available in the desktop build.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Backup export isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Feedback export isn\'t available right now.")') >= 0);
 });
 
 test('full backup export also falls back to browser download outside desktop builds', function() {
@@ -295,6 +297,7 @@ test('cloud actions surface login and sync errors instead of failing silently', 
   assert.ok(appSource.indexOf('appWrite("cloudLastError",loginError);') >= 0);
   assert.ok(appSource.indexOf('syncUnavailableError="Cloud sync is unavailable right now.";') >= 0);
   assert.ok(appSource.indexOf('pullUnavailableError="Cloud pull is unavailable right now.";') >= 0);
+  assert.ok(appSource.indexOf('showToast("Enter both email and password to log in.")') >= 0);
   assert.ok(appSource.indexOf('applyCloudWorkflowRequest("login_error",{lastSyncStatus:"error",lastError:loginError});') >= 0);
   assert.ok(pianoSource.indexOf('state.cloudLastError = clError;') >= 0);
   assert.ok(cloudUiSource.indexOf('<b>Error:</b>') >= 0);
@@ -325,6 +328,8 @@ test('secondary helper-driven actions surface feedback when handlers are unavail
   assert.ok(appSource.indexOf('showToast("That practice item couldn\'t be started right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Audio calibration isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Progress reset isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Audio input refresh isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Audio input testing isn\'t available right now.")') >= 0);
 });
 
 test('career page hides play CTA when unlocked song data is missing', function() {
