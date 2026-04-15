@@ -4529,6 +4529,7 @@ window.act=function(a,v){
         return;
       }
     }
+    if(typeof showToast === "function") showToast("Looping isn't available for this rhythm session right now.");
     render();return;
   }
   if(a==="rhythmHighwayClearLoop"){
@@ -4538,10 +4539,12 @@ window.act=function(a,v){
       startRhythmHighwaySegment(clearLoopSegmentId,appRead("rhythmHighwayPreset", "spark_learning"),null);
       return;
     }
+    if(typeof showToast === "function") showToast("This rhythm session couldn't be restarted right now.");
     render();return;
   }
   if(a==="restartRhythmHighway"){
-    if(appRead("activeCoreSegmentId", null)&&typeof startRhythmHighwaySegment==="function")startRhythmHighwaySegment(appRead("activeCoreSegmentId", null),appRead("rhythmHighwayPreset", "spark_learning"),appRead("rhythmHighwayLoop", null));
+    if(appRead("activeCoreSegmentId", null)&&typeof startRhythmHighwaySegment==="function"&&startRhythmHighwaySegment(appRead("activeCoreSegmentId", null),appRead("rhythmHighwayPreset", "spark_learning"),appRead("rhythmHighwayLoop", null)))return;
+    if(typeof showToast === "function") showToast("This rhythm session couldn't be restarted right now.");
     return;
   }
   // === MIDI Device/Profile Actions ===
