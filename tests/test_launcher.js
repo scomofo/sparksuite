@@ -219,8 +219,10 @@ test('analytics recommendation buttons route through shared and piano dispatcher
   assert.ok(appSource.indexOf('if(a==="launchAnalyticsRecommendation"){') >= 0);
   assert.ok(appSource.indexOf('showToast("Recommendations aren\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('launchPracticeItem(analyticsItems[analyticsIndex])') >= 0);
+  assert.ok(appSource.indexOf("That practice item couldn't be started right now.") >= 0);
   assert.ok(pianoSource.indexOf('case "launchAnalyticsRecommendation":') >= 0);
   assert.ok(pianoSource.indexOf('launchPracticeItem(pianoAnalyticsItems[pianoAnalyticsIndex])') >= 0);
+  assert.ok(pianoSource.indexOf("That practice item couldn't be started right now.") >= 0);
 });
 
 test('feedback draft input routes through the shared dispatcher', function() {

@@ -2085,7 +2085,7 @@ function act(action, param) {
       var pianoAnalyticsIndex = parseInt(param, 10);
       var pianoAnalyticsItems = pianoAnalyticsSummary && Array.isArray(pianoAnalyticsSummary.recommendations) ? pianoAnalyticsSummary.recommendations : [];
       if(pianoAnalyticsIndex >= 0 && pianoAnalyticsIndex < pianoAnalyticsItems.length && typeof launchPracticeItem === "function"){
-        launchPracticeItem(pianoAnalyticsItems[pianoAnalyticsIndex]);
+        if(!launchPracticeItem(pianoAnalyticsItems[pianoAnalyticsIndex])) showToast("That practice item couldn't be started right now.");
       }
       return;
 

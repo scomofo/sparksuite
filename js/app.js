@@ -2699,7 +2699,9 @@ window.act=function(a,v){
     var analyticsIndex = parseInt(v, 10);
     var analyticsItems = analyticsSummary && Array.isArray(analyticsSummary.recommendations) ? analyticsSummary.recommendations : [];
     if(analyticsIndex>=0 && analyticsIndex<analyticsItems.length && typeof launchPracticeItem==="function"){
-      launchPracticeItem(analyticsItems[analyticsIndex]);
+      if(!launchPracticeItem(analyticsItems[analyticsIndex]) && typeof showToast === "function"){
+        showToast("That practice item couldn't be started right now.");
+      }
     }
     return;
   }
