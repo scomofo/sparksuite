@@ -315,6 +315,16 @@ test('play-along and onboarding actions surface feedback when helpers are unavai
   assert.ok(appSource.indexOf('callPlayAlongHandler("openPlayAlong")') >= 0);
   assert.ok(appSource.indexOf('showToast("Play Along isn\'t available right now.")') >= 0);
   assert.ok(appSource.indexOf('showToast("Onboarding isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('if(a==="onboardingSetInstrument"){') >= 0);
+  assert.ok(appSource.indexOf('if(a==="onboardingGenerateRecommendations"){') >= 0);
+});
+
+test('secondary helper-driven actions surface feedback when handlers are unavailable', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('showToast("MIDI device refresh isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("That practice item couldn\'t be started right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Audio calibration isn\'t available right now.")') >= 0);
+  assert.ok(appSource.indexOf('showToast("Progress reset isn\'t available right now.")') >= 0);
 });
 
 test('career page hides play CTA when unlocked song data is missing', function() {

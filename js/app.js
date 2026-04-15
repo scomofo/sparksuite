@@ -1682,14 +1682,46 @@ window.act=function(a,v){
   if(a==="rhythmResultsBack"){ appWrite("rhythmResults", null); render(); return; }
   if(a==="runnerReplay"){ appWrite("runnerResults", null); act("startRunner"); return; }
   if(a==="runnerResultsBack"){ appWrite("runnerResults", null); render(); return; }
-  if(a==="onboardingSetInstrument"){ if(typeof setOnboardingInstrument==="function") setOnboardingInstrument(v); render(); return; }
-  if(a==="onboardingSetSkillLevel"){ if(typeof setOnboardingSkillLevel==="function") setOnboardingSkillLevel(v); render(); return; }
-  if(a==="onboardingToggleGoal"){ if(typeof toggleOnboardingGoal==="function") toggleOnboardingGoal(v); render(); return; }
-  if(a==="onboardingMarkMidiDone"){ if(typeof markOnboardingMidiSetupDone==="function") markOnboardingMidiSetupDone(); render(); return; }
-  if(a==="onboardingMarkCalibrationDone"){ if(typeof markOnboardingCalibrationDone==="function") markOnboardingCalibrationDone(); render(); return; }
-  if(a==="onboardingUnlockStarterContent"){ if(typeof applyStarterUnlocksFromOnboarding==="function") applyStarterUnlocksFromOnboarding(); render(); return; }
-  if(a==="onboardingGeneratePlan"){ if(typeof generateInitialPracticePlanFromOnboarding==="function") generateInitialPracticePlanFromOnboarding(); render(); return; }
-  if(a==="onboardingGenerateRecommendations"){ if(typeof generateInitialRecommendationsFromOnboarding==="function") generateInitialRecommendationsFromOnboarding(); render(); return; }
+  if(a==="onboardingSetInstrument"){
+    if(typeof setOnboardingInstrument==="function"){ setOnboardingInstrument(v); render(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingSetSkillLevel"){
+    if(typeof setOnboardingSkillLevel==="function"){ setOnboardingSkillLevel(v); render(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingToggleGoal"){
+    if(typeof toggleOnboardingGoal==="function"){ toggleOnboardingGoal(v); render(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingMarkMidiDone"){
+    if(typeof markOnboardingMidiSetupDone==="function"){ markOnboardingMidiSetupDone(); render(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingMarkCalibrationDone"){
+    if(typeof markOnboardingCalibrationDone==="function"){ markOnboardingCalibrationDone(); render(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingUnlockStarterContent"){
+    if(typeof applyStarterUnlocksFromOnboarding==="function"){ applyStarterUnlocksFromOnboarding(); render(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingGeneratePlan"){
+    if(typeof generateInitialPracticePlanFromOnboarding==="function"){ generateInitialPracticePlanFromOnboarding(); render(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
+  if(a==="onboardingGenerateRecommendations"){
+    if(typeof generateInitialRecommendationsFromOnboarding==="function"){ generateInitialRecommendationsFromOnboarding(); render(); return; }
+    if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
+    return;
+  }
   if(a==="onboardingFinish"){
     if(typeof finishOnboardingFlow==="function"){ finishOnboardingFlow(); return; }
     if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
@@ -1705,7 +1737,11 @@ window.act=function(a,v){
     if (typeof showToast === "function") showToast("Onboarding isn't available right now.");
     return;
   }
-  if(a==="refreshMidiDevices"){ if(typeof refreshMidiDevices==="function") refreshMidiDevices(); return; }
+  if(a==="refreshMidiDevices"){
+    if(typeof refreshMidiDevices==="function"){ refreshMidiDevices(); return; }
+    if (typeof showToast === "function") showToast("MIDI device refresh isn't available right now.");
+    return;
+  }
   // Switch instrument from v2 dashboard
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
@@ -1776,6 +1812,8 @@ window.act=function(a,v){
   if(a==="startPracticeItem"){
     if (typeof window.startPracticeItem === "function") {
       window.startPracticeItem(v);
+    } else if (typeof showToast === "function") {
+      showToast("That practice item couldn't be started right now.");
     }
     return;
   }
@@ -1786,12 +1824,16 @@ window.act=function(a,v){
   if(a==="startAudioCalibration"){
     if (typeof window.startAudioCalibration === "function") {
       window.startAudioCalibration();
+    } else if (typeof showToast === "function") {
+      showToast("Audio calibration isn't available right now.");
     }
     return;
   }
   if(a==="stopAudioCalibration"){
     if (typeof window.stopAudioCalibration === "function") {
       window.stopAudioCalibration();
+    } else if (typeof showToast === "function") {
+      showToast("Audio calibration isn't available right now.");
     }
     return;
   }
@@ -1813,6 +1855,8 @@ window.act=function(a,v){
   if(a==="resetProgress"){
     if (typeof window.resetProgress === "function") {
       window.resetProgress();
+    } else if (typeof showToast === "function") {
+      showToast("Progress reset isn't available right now.");
     }
     return;
   }
