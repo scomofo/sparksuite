@@ -2365,17 +2365,18 @@ window.act=function(a,v){
   if(a==="openCareerSong"){
     var nextSong=null;
     if(typeof getCareerItem==="function")nextSong=getCareerItem("songs",v);
-    if(nextSong){
-      openCareerSongSelectionRequest({
-        songId: v,
-        songData: nextSong,
-        songTitle: nextSong.title || null,
-        arrangementType: appRead("performArrangementType", "chords") || "chords",
-        difficultyId: appRead("performDifficulty", "normal") || "normal"
-      });
-      appWrite("performSongData",nextSong);
-      appWrite("performSongId",v);
+    if(!nextSong){
+      render();return;
     }
+    openCareerSongSelectionRequest({
+      songId: v,
+      songData: nextSong,
+      songTitle: nextSong.title || null,
+      arrangementType: appRead("performArrangementType", "chords") || "chords",
+      difficultyId: appRead("performDifficulty", "normal") || "normal"
+    });
+    appWrite("performSongData",nextSong);
+    appWrite("performSongId",v);
     appApplyLegacyActivityRuntime({setFields:{currentSong:nextSong,performSongData:nextSong,performSongId:v,screen:SCR.PERFORM_SONG}},function(){
       appWrite("currentSong",nextSong);
       appWrite("performSongData",nextSong);
@@ -3391,6 +3392,9 @@ window.act=function(a,v){
         arrangementType: arrangementType,
         difficultyId: difficultyId
       });
+      if(!planSelectionRequest || !planSelectionRequest.songData){
+        render();return;
+      }
       if (planSelectionRequest) {
         appWrite("performSongData", planSelectionRequest.songData || null);
         appWrite("performSongId", planSelectionRequest.songId || songId);
@@ -3439,12 +3443,15 @@ window.act=function(a,v){
       appWrite("performTargetTechnique",techniqueKey);
     });
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-      openPerformanceSongSelectionRequest({
+      var techniqueSelectionRequest = openPerformanceSongSelectionRequest({
         songId: techniqueSongId,
         arrangementType: techniqueArrangementType,
         difficultyId: techniqueDifficultyId,
         targetTechnique: techniqueKey
       });
+      if(!techniqueSelectionRequest || !techniqueSelectionRequest.songData){
+        render();return;
+      }
       appApplyLegacyActivityRuntime({setFields:{screen:SCR.PERFORM_SONG}},function(){
         appWrite("screen",SCR.PERFORM_SONG);
       });

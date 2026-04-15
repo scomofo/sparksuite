@@ -1639,6 +1639,9 @@ test("shared app performance launch paths mirror hydrated selection payloads int
   var appSource = loadJS("js/app.js");
   assert.ok(appSource.indexOf('var sharedSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);
   assert.ok(appSource.indexOf('var planSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);
+  assert.ok(appSource.indexOf('if(!planSelectionRequest || !planSelectionRequest.songData){') >= 0);
+  assert.ok(appSource.indexOf('var techniqueSelectionRequest = openPerformanceSongSelectionRequest({') >= 0);
+  assert.ok(appSource.indexOf('if(!techniqueSelectionRequest || !techniqueSelectionRequest.songData){') >= 0);
   assert.ok(appSource.indexOf('appWrite("performSongData", planSelectionRequest.songData || null);') >= 0);
 });
 

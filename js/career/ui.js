@@ -25,10 +25,13 @@ function careerPage(){
       for(var i=0;i<(stage.songs || []).length;i++){
         var songId = stage.songs[i];
         var unlocked = isCareerSongUnlocked(songId);
+        var song = getCareerItem("songs", songId);
         h += '<div style="margin-left:12px;opacity:'+(unlocked?1:0.4)+'">';
         h += escHTML(songId) + ' ';
-        if(unlocked){
+        if(unlocked && song){
           h += '<button onclick="act(\'openCareerSong\', \''+songId+'\')">Play</button>';
+        }else if(unlocked){
+          h += '<span>Unavailable</span>';
         }else{
           h += '<span>Locked</span>';
         }

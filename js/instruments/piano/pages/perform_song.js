@@ -14,7 +14,7 @@ function pianoPerformSongRead(path, fallback){
 
 function pianoPerformSongPage(){
   var performSongData = pianoPerformSongRead("performSongData", null);
-  if(!performSongData) return '<div class="card">No song selected</div>';
+  if(!performSongData) return '<div class="card"><p>No song selected.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
   var performSongId = pianoPerformSongRead("performSongId", null);
   var performArrangementType = pianoPerformSongRead("performArrangementType", "block_chords") || "block_chords";

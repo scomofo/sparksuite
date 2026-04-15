@@ -217,6 +217,32 @@ test('feedback draft input routes through the shared dispatcher', function() {
   assert.ok(appSource.indexOf('if(a==="feedbackDraftText"){') >= 0);
 });
 
+test('career page hides play CTA when unlocked song data is missing', function() {
+  global.S.activeCareerId = 'career_1';
+  global.SparkState.read = function(path, fallback) {
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = global.S;
+    var i;
+    for (i = 0; i < parts.length; i++) {
+      if (cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+      cursor = cursor[parts[i]];
+    }
+    return cursor == null ? fallback : cursor;
+  };
+  global.getCareerItem = function(type, id) {
+    if (type === 'careers' && id === 'career_1') return { id: 'career_1', tiers: ['tier_1'] };
+    if (type === 'tiers' && id === 'tier_1') return { id: 'tier_1', title: 'Tier One', stages: ['stage_1'] };
+    if (type === 'stages' && id === 'stage_1') return { id: 'stage_1', title: 'Stage One', songs: ['missing_song'] };
+    return null;
+  };
+  global.isCareerSongUnlocked = function() { return true; };
+  eval(loadJS('js/career/ui.js'));
+
+  var html = careerPage();
+  assert.ok(html.indexOf('Play') === -1);
+  assert.ok(html.indexOf('Unavailable') >= 0);
+});
+
 test('inline onclick handlers stay on shared act routing', function() {
   var allowed = [
     /^act\(/,

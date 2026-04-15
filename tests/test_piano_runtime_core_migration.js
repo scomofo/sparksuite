@@ -641,6 +641,12 @@ test("select_song mirrors piano song detail selection into song-session core hel
   assert.strictEqual(songRuntimeCalls[0].payload.source, "builtin");
 });
 
+test("piano perform song empty state keeps a back action", function() {
+  var source = loadJS("js/instruments/piano/pages/perform_song.js");
+  assert.ok(source.indexOf("No song selected.") >= 0);
+  assert.ok(source.indexOf("onclick=\\'act(\\'back\\')\\'") >= 0 || source.indexOf('onclick="act(\\\'back\\\')"') >= 0);
+});
+
 test("play_song mirrors piano song playback state into song-session core helpers", function() {
   S.songIdx = 1;
   S.songChordIdx = 0;
