@@ -518,7 +518,7 @@ function runnerTick(){
 }
 
 // ===== COMMUNITY API =====
-var COMMUNITY_URL="https://localhost:3456";
+var COMMUNITY_URL=(typeof window!=="undefined" && window.SPARK_COMMUNITY_URL) ? String(window.SPARK_COMMUNITY_URL) : "http://localhost:3456";
 if(!COMMUNITY_URL.startsWith("https")&&COMMUNITY_URL.indexOf("localhost")===-1&&COMMUNITY_URL.indexOf("127.0.0.1")===-1)
   console.warn("ChordSpark: Community URL should use HTTPS for non-local servers");
 

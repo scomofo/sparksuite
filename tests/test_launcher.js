@@ -362,6 +362,12 @@ test('community submit actions initialize draft state before editing', function(
   assert.ok(appSource.indexOf('var submitSong=ensureCommunitySubmitSong();') >= 0);
 });
 
+test('community API defaults to the local HTTP server and allows overrides', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('window.SPARK_COMMUNITY_URL') >= 0);
+  assert.ok(appSource.indexOf('"http://localhost:3456"') >= 0);
+});
+
 test('inline onclick handlers stay on shared act routing', function() {
   var allowed = [
     /^act\(/,
