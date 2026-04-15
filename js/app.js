@@ -1760,12 +1760,30 @@ window.act=function(a,v){
   if(a==="returnToLauncher"){
     if (typeof window.returnToLauncherFromHeader === "function") {
       window.returnToLauncherFromHeader();
+    } else {
+      if (window.SparkInstruments && typeof SparkInstruments.deactivate === "function") {
+        SparkInstruments.deactivate();
+      }
+      appWrite("activeInstrument", null);
+      appWrite("screen", SCR.HOME);
+      appWrite("tab", TAB.PRACTICE);
+      saveState();
+      render();
     }
     return;
   }
   if(a==="openInstrument" && v){
     if (typeof window.openInstrumentFromLauncher === "function") {
       window.openInstrumentFromLauncher(v);
+    } else {
+      if (window.SparkInstruments && typeof SparkInstruments.activate === "function") {
+        SparkInstruments.activate(v);
+      }
+      appWrite("activeInstrument", v);
+      appWrite("screen", SCR.HOME);
+      appWrite("tab", TAB.PRACTICE);
+      saveState();
+      render();
     }
     return;
   }

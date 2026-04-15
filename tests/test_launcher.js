@@ -176,6 +176,12 @@ test('launcher cards route through the shared openInstrument action', function()
   assert.ok(launcherJs.indexOf('onclick="act(\\\'openInstrument\\\',\\\'') >= 0);
 });
 
+test('shared app launcher actions keep local state fallbacks when launcher bridge helpers are unavailable', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(/if\(a==="returnToLauncher"\)\{\s*if \(typeof window\.returnToLauncherFromHeader === "function"\) \{\s*window\.returnToLauncherFromHeader\(\);\s*\} else \{[\s\S]*?appWrite\("activeInstrument", null\);[\s\S]*?appWrite\("screen", SCR\.HOME\);[\s\S]*?appWrite\("tab", TAB\.PRACTICE\);[\s\S]*?saveState\(\);[\s\S]*?render\(\);[\s\S]*?\}\s*return;\s*\}/.test(appSource));
+  assert.ok(/if\(a==="openInstrument" && v\)\{\s*if \(typeof window\.openInstrumentFromLauncher === "function"\) \{\s*window\.openInstrumentFromLauncher\(v\);\s*\} else \{[\s\S]*?appWrite\("activeInstrument", v\);[\s\S]*?appWrite\("screen", SCR\.HOME\);[\s\S]*?appWrite\("tab", TAB\.PRACTICE\);[\s\S]*?saveState\(\);[\s\S]*?render\(\);[\s\S]*?\}\s*return;\s*\}/.test(appSource));
+});
+
 test('app startup normalizes legacy active instrument aliases before activation', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('guitar: "chordspark"') >= 0);
