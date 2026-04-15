@@ -784,13 +784,29 @@ test("utility screen entry actions mirror piano navigation into shared utility h
   assert.strictEqual(S.screen, "midi_import");
 });
 
-test("piano cloud actions mirror into shared cloud workflow helper", function() {
+test("piano cloud sync and pull surface unavailable helper errors through shared workflow state", function() {
   pianoAct("cloudSync");
   pianoAct("cloudPull");
 
-  assert.strictEqual(cloudWorkflowCalls.length, 2);
+  assert.strictEqual(cloudWorkflowCalls.length, 4);
   assert.strictEqual(cloudWorkflowCalls[0].action, "sync_start");
-  assert.strictEqual(cloudWorkflowCalls[1].action, "pull_start");
+  assert.strictEqual(cloudWorkflowCalls[1].action, "sync_error");
+  assert.strictEqual(cloudWorkflowCalls[2].action, "pull_start");
+  assert.strictEqual(cloudWorkflowCalls[3].action, "pull_error");
+  assert.strictEqual(cloudWorkflowCalls[3].payload.lastError, "Cloud pull is unavailable right now.");
+  assert.strictEqual(S.cloudLastError, "Cloud pull is unavailable right now.");
+});
+
+test("piano cloud logout and login prompt surface fallback feedback", function() {
+  pianoAct("cloudLogout");
+  pianoAct("cloudLoginPrompt");
+
+  assert.deepStrictEqual(toasts, [
+    "Cloud logout is unavailable right now.",
+    "Enter both email and password to log in."
+  ]);
+  assert.strictEqual(cloudWorkflowCalls.length, 1);
+  assert.strictEqual(cloudWorkflowCalls[0].action, "logout");
 });
 
 test("piano midi import actions mirror into shared midi import sync helper", function() {

@@ -1975,28 +1975,49 @@ function act(action, param) {
 
     // ── Cloud Sync actions ──
     case "cloudSync":
+      var syncUnavailableError;
       state.cloudLastError = null;
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_start", { lastSyncStatus: "syncing", lastError: null });
-      if(typeof syncSparkNow === "function") syncSparkNow();
+      if(typeof syncSparkNow === "function") {
+        syncSparkNow();
+        return;
+      }
+      syncUnavailableError = "Cloud sync is unavailable right now.";
+      state.cloudLastError = syncUnavailableError;
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("sync_error", { lastSyncStatus: "error", lastError: syncUnavailableError });
+      render();
       return;
 
     case "cloudPull":
+      var pullUnavailableError;
       state.cloudLastError = null;
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_start", { lastSyncStatus: "syncing", lastError: null });
-      if(typeof pullSparkCloud === "function") pullSparkCloud();
+      if(typeof pullSparkCloud === "function") {
+        pullSparkCloud();
+        return;
+      }
+      pullUnavailableError = "Cloud pull is unavailable right now.";
+      state.cloudLastError = pullUnavailableError;
+      if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("pull_error", { lastSyncStatus: "error", lastError: pullUnavailableError });
+      render();
       return;
 
     case "cloudLogout":
       state.cloudLastError = null;
       if(typeof logoutSpark === "function") logoutSpark();
+      else showToast("Cloud logout is unavailable right now.");
       if(typeof applyCloudWorkflowRequest === "function") applyCloudWorkflowRequest("logout", { lastError: null });
-      break;
+      render();
+      return;
 
     case "cloudLoginPrompt": {
       var clEmail = prompt("Email:");
       var clPassword = prompt("Password:");
       var clError;
-      if(!clEmail || !clPassword) return;
+      if(!clEmail || !clPassword){
+        showToast("Enter both email and password to log in.");
+        return;
+      }
       state.cloudLastError = null;
       if(typeof loginSpark !== "function"){
         clError = "Cloud login is unavailable right now.";
