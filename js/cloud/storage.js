@@ -41,11 +41,13 @@
   }
 
   function buildCloudSnapshot(){
+    var playerXP = cloudRead("playerXP", cloudRead("xp", 0));
+    var playerLevel = cloudRead("playerLevel", cloudRead("level", 1));
     return {
       version: 1,
       profile: {
-        playerXP: cloudRead("playerXP", 0),
-        playerLevel: cloudRead("playerLevel", 1),
+        playerXP: playerXP || 0,
+        playerLevel: playerLevel || 1,
         playerAchievements: cloudRead("playerAchievements", {}),
         playerStats: cloudRead("playerStats", {})
       },
@@ -86,7 +88,9 @@
     if(snapshot.version !== 1){ console.warn("Cloud snapshot: unknown version", snapshot.version); return false; }
     if(snapshot.profile){
       cloudWrite("playerXP", snapshot.profile.playerXP || 0);
+      cloudWrite("xp", snapshot.profile.playerXP || 0);
       cloudWrite("playerLevel", snapshot.profile.playerLevel || 1);
+      cloudWrite("level", snapshot.profile.playerLevel || 1);
       cloudWrite("playerAchievements", snapshot.profile.playerAchievements || {});
       cloudWrite("playerStats", snapshot.profile.playerStats || {});
     }

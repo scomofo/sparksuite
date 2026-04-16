@@ -29,13 +29,27 @@
     return Math.floor(100 * Math.pow(level, 1.5));
   }
 
+  function getProgressionState(){
+    return {
+      level: levelStateRead("playerLevel", levelStateRead("level", 1)) || 1,
+      xp: levelStateRead("playerXP", levelStateRead("xp", 0)) || 0
+    };
+  }
+
+  function writeProgressionLevel(level){
+    levelStateWrite("playerLevel", level);
+    levelStateWrite("level", level);
+    return level;
+  }
+
   function checkLevelUp(){
-    var playerLevel = levelStateRead("playerLevel", 1) || 1;
-    var playerXP = levelStateRead("playerXP", 0) || 0;
+    var progressState = getProgressionState();
+    var playerLevel = progressState.level;
+    var playerXP = progressState.xp;
     var nextXP = xpForLevel(playerLevel + 1);
     while(playerXP >= nextXP){
       playerLevel++;
-      levelStateWrite("playerLevel", playerLevel);
+      writeProgressionLevel(playerLevel);
       onLevelUp(playerLevel);
       nextXP = xpForLevel(playerLevel + 1);
     }
@@ -48,8 +62,9 @@
   }
 
   function getLevelProgress(){
-    var playerLevel = levelStateRead("playerLevel", 1) || 1;
-    var playerXP = levelStateRead("playerXP", 0) || 0;
+    var progressState = getProgressionState();
+    var playerLevel = progressState.level;
+    var playerXP = progressState.xp;
     var current = xpForLevel(playerLevel);
     var next = xpForLevel(playerLevel + 1);
     var denom = (next - current) || 1;

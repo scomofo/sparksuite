@@ -42,7 +42,9 @@
 
   function awardXP(amount, reason){
     if(!amount) return;
-    xpStateWrite("playerXP", (xpStateRead("playerXP", 0) || 0) + amount);
+    var nextXP = (xpStateRead("playerXP", xpStateRead("xp", 0)) || 0) + amount;
+    xpStateWrite("playerXP", nextXP);
+    xpStateWrite("xp", nextXP);
     checkLevelUp();
     logXPEvent(amount, reason);
     saveState();
