@@ -1736,10 +1736,146 @@
     return null;
   };
 
+  SparkCore.prototype.getDashboardRecommendationActiveInstrumentId = function() {
+    var state = readLegacyAppState();
+    return this.runtimeState.activeInstrumentId
+      || this.runtimeState.activeInstrumentType
+      || (state && state.activeInstrument)
+      || null;
+  };
+
+  SparkCore.prototype.getDashboardRecommendationLessonSessionNum = function(recommendation) {
+    var lessonId;
+    var match;
+    var sessionNum;
+    if (!recommendation) return null;
+    if (recommendation.meta && recommendation.meta.guidedSession != null) {
+      sessionNum = parseInt(recommendation.meta.guidedSession, 10);
+      return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
+    }
+    if (recommendation.meta && recommendation.meta.sessionNum != null) {
+      sessionNum = parseInt(recommendation.meta.sessionNum, 10);
+      return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
+    }
+    lessonId = recommendation.meta && recommendation.meta.lessonId
+      ? String(recommendation.meta.lessonId)
+      : String(recommendation.id || "");
+    match = lessonId.match(/guided_session_(\d+)$/);
+    if (!match) return null;
+    sessionNum = parseInt(match[1], 10);
+    return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
+  };
+
+  SparkCore.prototype.getDashboardRecommendationActiveModule = function() {
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    return SparkInstruments.getActive();
+  };
+
+  SparkCore.prototype.buildDashboardModuleLessonLaunch = function(recommendation) {
+    var module = this.getDashboardRecommendationActiveModule();
+    var lessonId = recommendation && recommendation.meta && recommendation.meta.lessonId
+      ? recommendation.meta.lessonId
+      : null;
+    var curriculum = [];
+    var lesson = null;
+    var exercises = [];
+    var exercise = null;
+    var i;
+    if (!module || !lessonId || typeof module.getExercisesForLesson !== "function") return null;
+    if (typeof module.getCurriculumMap === "function") curriculum = module.getCurriculumMap() || [];
+    for (i = 0; i < curriculum.length; i++) {
+      if (curriculum[i] && curriculum[i].id === lessonId) {
+        lesson = curriculum[i];
+        break;
+      }
+    }
+    exercises = module.getExercisesForLesson(lessonId) || [];
+    if (!exercises.length) return null;
+    exercise = exercises[0];
+    return {
+      instrument: module.instrument || (recommendation.meta && recommendation.meta.instrument) || null,
+      lessonId: lessonId,
+      skill: recommendation.meta && recommendation.meta.skill
+        ? recommendation.meta.skill
+        : ((lesson && lesson.skill) || exercise.focus || null),
+      exerciseId: exercise.id || null,
+      exerciseName: exercise.name || (lesson && lesson.title) || recommendation.title || null,
+      exerciseFocus: exercise.focus || (lesson && lesson.skill) || null,
+      exerciseType: exercise.type || recommendation.type || "lesson"
+    };
+  };
+
+  SparkCore.prototype.resolveDashboardRecommendationLaunch = function(recommendation) {
+    var instrumentId;
+    var guidedSessionNum;
+    var moduleLaunch;
+    if (!recommendation) return null;
+
+    if (recommendation.source === "play_along") {
+      return {
+        helper: "play_along_section",
+        payload: {
+          trackId: recommendation.meta && recommendation.meta.trackId,
+          sectionIndex: recommendation.meta && recommendation.meta.sectionIndex
+        }
+      };
+    }
+
+    if (recommendation.source === "play_along_bookmark") {
+      return {
+        helper: "play_along_bookmark",
+        payload: {
+          trackId: recommendation.meta && recommendation.meta.trackId,
+          sectionIndex: recommendation.meta && recommendation.meta.sectionIndex
+        }
+      };
+    }
+
+    if (recommendation.type === "drill") {
+      instrumentId = this.getDashboardRecommendationActiveInstrumentId();
+      if (instrumentId === "pianospark") {
+        return {
+          sequence: [
+            { action: "goHome", value: undefined },
+            { action: "tab", value: "games" },
+            { action: "start_drill", value: "level" }
+          ]
+        };
+      }
+      return { action: "startDrill", value: undefined };
+    }
+
+    if (recommendation.type === "review") {
+      return { action: "quickStart", value: undefined };
+    }
+
+    if (recommendation.type === "challenge") {
+      return { action: "openChallengeHub", value: undefined };
+    }
+
+    if (recommendation.type === "lesson") {
+      guidedSessionNum = this.getDashboardRecommendationLessonSessionNum(recommendation);
+      if (guidedSessionNum != null) {
+        return { action: "guidedStart", value: guidedSessionNum };
+      }
+      moduleLaunch = this.buildDashboardModuleLessonLaunch(recommendation);
+      if (moduleLaunch) {
+        return { action: "planStartModuleExercise", value: JSON.stringify(moduleLaunch) };
+      }
+      return null;
+    }
+
+    return null;
+  };
+
   SparkCore.prototype.buildDashboardRecommendationLaunchRequest = function(id) {
+    var recommendation = id ? this.getDashboardRecommendationById(id) : null;
     return {
       recommendationId: id || null,
-      recommendation: id ? this.getDashboardRecommendationById(id) : null
+      recommendation: recommendation,
+      launch: this.resolveDashboardRecommendationLaunch(recommendation)
     };
   };
 

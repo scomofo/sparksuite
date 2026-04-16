@@ -2363,8 +2363,73 @@ test("SparkCore can build and apply dashboard recommendation launch requests", f
   var request = core.launchDashboardRecommendation("rec_song");
   assert.strictEqual(request.recommendationId, "rec_song");
   assert.strictEqual(request.recommendation.title, "Play Fire Road");
+  assert.strictEqual(request.launch, null);
   assert.strictEqual(core.getRuntimeState().activeScreen, "recommendations");
   assert.strictEqual(core.getRuntimeState().lastDashboardRecommendationId, "rec_song");
+});
+
+test("SparkCore can build guided dashboard recommendation launches without UI parsing", function() {
+  var core = createDefaultSparkCore();
+  core.applyDashboardRequest({
+    recommendations: [{
+      id: "guided_session_4",
+      type: "lesson",
+      title: "Session 4",
+      meta: { lessonId: "guided_session_4" }
+    }]
+  });
+
+  var request = core.launchDashboardRecommendation("guided_session_4");
+  assert.strictEqual(request.recommendationId, "guided_session_4");
+  assert.strictEqual(request.launch.action, "guidedStart");
+  assert.strictEqual(request.launch.value, 4);
+});
+
+test("SparkCore can build module lesson dashboard launches without UI-owned curriculum logic", function() {
+  var core = createDefaultSparkCore();
+  var previousGetActive = SparkInstruments.getActive;
+  SparkInstruments.getActive = function() {
+    return {
+      instrument: "bass",
+      getCurriculumMap: function() {
+        return [{ id: "bass_level_4", title: "Walking Lines", skill: "walking_bass" }];
+      },
+      getExercisesForLesson: function(lessonId) {
+        if (lessonId !== "bass_level_4") return [];
+        return [{
+          id: "bass_walk_lines_01",
+          name: "Walk Lines 01",
+          focus: "walking_bass",
+          type: "bassline"
+        }];
+      }
+    };
+  };
+  try {
+    core.applyDashboardRequest({
+      recommendations: [{
+        id: "bass_level_4",
+        type: "lesson",
+        title: "Walking Lines",
+        meta: { lessonId: "bass_level_4" }
+      }]
+    });
+
+    var request = core.launchDashboardRecommendation("bass_level_4");
+    assert.strictEqual(request.recommendationId, "bass_level_4");
+    assert.strictEqual(request.launch.action, "planStartModuleExercise");
+    assert.deepStrictEqual(JSON.parse(request.launch.value), {
+      instrument: "bass",
+      lessonId: "bass_level_4",
+      skill: "walking_bass",
+      exerciseId: "bass_walk_lines_01",
+      exerciseName: "Walk Lines 01",
+      exerciseFocus: "walking_bass",
+      exerciseType: "bassline"
+    });
+  } finally {
+    SparkInstruments.getActive = previousGetActive;
+  }
 });
 
 test("SparkCore can update dashboard challenge snapshots after reward claim", function() {

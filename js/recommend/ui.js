@@ -79,64 +79,37 @@ function renderRecommendationPlayAlongDetail(recommendation){
   return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
 }
 
-function getRecommendationLessonSessionNum(item){
-  var lessonId;
-  var match;
-  var sessionNum;
-  if(!item) return null;
-  if(item.meta && item.meta.guidedSession != null) {
-    sessionNum = parseInt(item.meta.guidedSession, 10);
-    return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
-  }
-  if(item.meta && item.meta.sessionNum != null) {
-    sessionNum = parseInt(item.meta.sessionNum, 10);
-    return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
-  }
-  lessonId = item.meta && item.meta.lessonId ? String(item.meta.lessonId) : String(item.id || "");
-  match = lessonId.match(/guided_session_(\d+)$/);
-  if(!match) return null;
-  sessionNum = parseInt(match[1], 10);
-  return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
-}
-
-function getRecommendationActiveModule(){
-  if(typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") return null;
-  return SparkInstruments.getActive();
-}
-
-function buildRecommendationModuleLessonLaunch(item){
-  var module = getRecommendationActiveModule();
-  var lessonId = item && item.meta && item.meta.lessonId ? item.meta.lessonId : null;
-  var curriculum = [];
-  var lesson = null;
-  var exercises = [];
-  var exercise = null;
+function executeDashboardRecommendationLaunch(request){
+  var launch;
   var i;
-  if(!module || !lessonId || typeof module.getExercisesForLesson !== "function") return null;
-  if(typeof module.getCurriculumMap === "function") curriculum = module.getCurriculumMap() || [];
-  for(i = 0; i < curriculum.length; i++){
-    if(curriculum[i] && curriculum[i].id === lessonId){
-      lesson = curriculum[i];
-      break;
-    }
+  if(!request) return false;
+  launch = request.launch || null;
+  if(!launch) return false;
+
+  if(launch.helper === "play_along_section" && typeof sparkPlayAlongJumpToSectionRecommendation === "function"){
+    sparkPlayAlongJumpToSectionRecommendation(launch.payload && launch.payload.trackId, launch.payload && launch.payload.sectionIndex);
+    return true;
   }
-  exercises = module.getExercisesForLesson(lessonId) || [];
-  if(!exercises.length) return null;
-  exercise = exercises[0];
-  return {
-    instrument: module.instrument || item.meta.instrument || null,
-    lessonId: lessonId,
-    skill: item.meta.skill || (lesson && lesson.skill) || exercise.focus || null,
-    exerciseId: exercise.id || null,
-    exerciseName: exercise.name || lesson && lesson.title || item.title || null,
-    exerciseFocus: exercise.focus || (lesson && lesson.skill) || null,
-    exerciseType: exercise.type || item.type || "lesson"
-  };
+  if(launch.helper === "play_along_bookmark" && typeof sparkPlayAlongLaunchBookmarkByKey === "function"){
+    sparkPlayAlongLaunchBookmarkByKey(launch.payload && launch.payload.trackId, launch.payload && launch.payload.sectionIndex);
+    return true;
+  }
+  if(Array.isArray(launch.sequence) && typeof act === "function"){
+    for(i = 0; i < launch.sequence.length; i++){
+      if(launch.sequence[i] && launch.sequence[i].action){
+        act(launch.sequence[i].action, launch.sequence[i].value);
+      }
+    }
+    return launch.sequence.length > 0;
+  }
+  if(launch.action && typeof act === "function"){
+    act(launch.action, launch.value);
+    return true;
+  }
+  return false;
 }
 
 function launchGenericRecommendationItem(item){
-  var moduleLessonLaunch;
-  var sessionNum;
   if(!item || typeof act !== "function") return false;
   if(item.type === "drill"){
     if(recommendationUiRead("activeInstrument", null) === "pianospark"){
@@ -157,17 +130,8 @@ function launchGenericRecommendationItem(item){
     return true;
   }
   if(item.type === "lesson"){
-    sessionNum = getRecommendationLessonSessionNum(item);
-    if(sessionNum != null){
-      act("guidedStart", sessionNum);
-      return true;
-    }
-    moduleLessonLaunch = buildRecommendationModuleLessonLaunch(item);
-    if(moduleLessonLaunch){
-      act("planStartModuleExercise", JSON.stringify(moduleLessonLaunch));
-      return true;
-    }
-    return false;
+    act("guidedStart");
+    return true;
   }
   return false;
 }
@@ -187,6 +151,7 @@ function launchRecommendationById(id){
     var coreRequest = window.sparkCore.launchDashboardRecommendation(id);
     if (coreRequest && coreRequest.recommendation) {
       recordRecommendationUse(coreRequest.recommendation);
+      if(executeDashboardRecommendationLaunch(coreRequest)) return;
       if(launchRecommendationItem(coreRequest.recommendation)) return;
       showRecommendationLaunchError();
       return;

@@ -328,6 +328,32 @@ test("launchRecommendationById routes play-along recommendation through section 
   assert.deepStrictEqual(called, { trackId: "demo_song_1", sectionIndex: 1 });
 });
 
+test("launchRecommendationById executes core-owned recommendation launch requests before UI fallbacks", function() {
+  var actions = [];
+  global.act = function(action, value) {
+    actions.push({ action: action, value: value });
+  };
+  global.window.sparkCore.launchDashboardRecommendation = function(id) {
+    return {
+      recommendationId: id,
+      recommendation: {
+        id: id,
+        type: "lesson",
+        source: "curriculum",
+        meta: { lessonId: "guided_session_4" }
+      },
+      launch: {
+        action: "guidedStart",
+        value: 4
+      }
+    };
+  };
+
+  launchRecommendationById("guided_session_4");
+
+  assert.deepStrictEqual(actions, [{ action: "guidedStart", value: 4 }]);
+});
+
 test("launchRecommendationById falls back to a drill launch for generic drill recommendations", function() {
   var actions = [];
   global.act = function(action, value) {
@@ -398,15 +424,21 @@ test("launchRecommendationById routes lesson recommendations to the intended gui
   global.act = function(action, value) {
     actions.push({ action: action, value: value });
   };
-  global.launchPracticeItem = function() {
-    return false;
+  global.window.sparkCore.launchDashboardRecommendation = function(id) {
+    return {
+      recommendationId: id,
+      recommendation: {
+        id: id,
+        type: "lesson",
+        source: "curriculum",
+        meta: { lessonId: "guided_session_4" }
+      },
+      launch: {
+        action: "guidedStart",
+        value: 4
+      }
+    };
   };
-  S.recommendations = [{
-    id: "guided_session_4",
-    type: "lesson",
-    source: "curriculum",
-    meta: { lessonId: "guided_session_4" }
-  }];
 
   launchRecommendationById("guided_session_4");
 
@@ -418,33 +450,30 @@ test("launchRecommendationById routes module curriculum lessons into explicit mo
   global.act = function(action, value) {
     actions.push({ action: action, value: value });
   };
-  global.launchPracticeItem = function() {
-    return false;
-  };
-  global.SparkInstruments.getActive = function() {
+  global.window.sparkCore.launchDashboardRecommendation = function(id) {
     return {
-      instrument: "bass",
-      getCurriculumMap: function() {
-        return [{ id: "bass_level_4", title: "Walking Lines", skill: "walking_bass" }];
+      recommendationId: id,
+      recommendation: {
+        id: id,
+        type: "lesson",
+        source: "curriculum",
+        title: "Walking Lines",
+        meta: { lessonId: "bass_level_4" }
       },
-      getExercisesForLesson: function(lessonId) {
-        if (lessonId !== "bass_level_4") return [];
-        return [{
-          id: "bass_walk_lines_01",
-          name: "Walk Lines 01",
-          focus: "walking_bass",
-          type: "bassline"
-        }];
+      launch: {
+        action: "planStartModuleExercise",
+        value: JSON.stringify({
+          instrument: "bass",
+          lessonId: "bass_level_4",
+          skill: "walking_bass",
+          exerciseId: "bass_walk_lines_01",
+          exerciseName: "Walk Lines 01",
+          exerciseFocus: "walking_bass",
+          exerciseType: "bassline"
+        })
       }
     };
   };
-  S.recommendations = [{
-    id: "bass_level_4",
-    type: "lesson",
-    source: "curriculum",
-    title: "Walking Lines",
-    meta: { lessonId: "bass_level_4" }
-  }];
 
   launchRecommendationById("bass_level_4");
 
