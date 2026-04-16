@@ -271,6 +271,45 @@ if (typeof SparkCurriculumService !== "undefined") {
     global.sparkCore = prevSparkCore;
     S.chordProgress = prevChordProgress;
   });
+
+  test("SparkCurriculumService falls back to global S when SparkState root is unavailable", function() {
+    var prevSparkState = global.SparkState;
+    var prevSparkCore = global.sparkCore;
+    var prevCompleted = S.completedLessons;
+    var prevMasteryLessons = S.mastery.lessons;
+
+    delete global.SparkState;
+    global.sparkCore = null;
+    S.completedLessons = ["uke_01"];
+    S.mastery.lessons = {};
+    global.SparkInstruments.getActive = function() {
+      return {
+        getCurriculumMap: function() {
+          return [
+            { id: "uke_01", title: "First Strum" },
+            { id: "uke_02", title: "Starter Chords" }
+          ];
+        }
+      };
+    };
+
+    var queue = SparkCurriculumService.buildLearningQueue({});
+    var lessonEntry = null;
+    for (var i = 0; i < queue.length; i++) {
+      if (queue[i].type === "lesson") {
+        lessonEntry = queue[i];
+        break;
+      }
+    }
+
+    assert.ok(lessonEntry, "No lesson entry returned");
+    assert.strictEqual(lessonEntry.id, "uke_02");
+
+    global.SparkState = prevSparkState;
+    global.sparkCore = prevSparkCore;
+    S.completedLessons = prevCompleted;
+    S.mastery.lessons = prevMasteryLessons;
+  });
 }
 
 // Summary

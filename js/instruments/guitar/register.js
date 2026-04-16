@@ -249,8 +249,8 @@
 
     getCurriculumMap: function() {
       var data = this.getData();
-      if (!shouldExposeCapoCurriculum(data)) return [];
-      return getCapoLessons(data);
+      if (shouldExposeCapoCurriculum(data)) return getCapoLessons(data);
+      return data.CURRICULUM || [];
     },
 
     getExercises: function(skill) {
