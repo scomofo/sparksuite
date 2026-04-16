@@ -64,7 +64,7 @@
 
   function buildHomePracticeSummary(){
     return {
-      todayPlan: homeStateRead("dailyPracticePlan", []),
+      todayPlan: homeStateRead("practicePlan", homeStateRead("dailyPracticePlan", [])),
       totalMinutes: homeStateRead("totalPracticeMinutes", homeStateRead(["profile", "totalPracticeMinutes"], 0))
     };
   }

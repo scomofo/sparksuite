@@ -627,6 +627,11 @@ test('plan pages do not ensure practice plans during render', function() {
   assert.ok(pianoPlanSource.indexOf('pianoPlanRead(["practicePlan"], null)') >= 0);
 });
 
+test('home practice summary prefers the active practicePlan fallback key', function() {
+  var homeEngineSource = loadJS('js/home/home_engine.js');
+  assert.ok(homeEngineSource.indexOf('todayPlan: homeStateRead("practicePlan", homeStateRead("dailyPracticePlan", []))') >= 0);
+});
+
 test('community submit actions initialize draft state before editing', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('function ensureCommunitySubmitSong(){') >= 0);
