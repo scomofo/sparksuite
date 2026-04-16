@@ -413,6 +413,54 @@ test("launchRecommendationById routes lesson recommendations to the intended gui
   assert.deepStrictEqual(actions, [{ action: "guidedStart", value: 4 }]);
 });
 
+test("launchRecommendationById routes module curriculum lessons into explicit module exercise launches", function() {
+  var actions = [];
+  global.act = function(action, value) {
+    actions.push({ action: action, value: value });
+  };
+  global.launchPracticeItem = function() {
+    return false;
+  };
+  global.SparkInstruments.getActive = function() {
+    return {
+      instrument: "bass",
+      getCurriculumMap: function() {
+        return [{ id: "bass_level_4", title: "Walking Lines", skill: "walking_bass" }];
+      },
+      getExercisesForLesson: function(lessonId) {
+        if (lessonId !== "bass_level_4") return [];
+        return [{
+          id: "bass_walk_lines_01",
+          name: "Walk Lines 01",
+          focus: "walking_bass",
+          type: "bassline"
+        }];
+      }
+    };
+  };
+  S.recommendations = [{
+    id: "bass_level_4",
+    type: "lesson",
+    source: "curriculum",
+    title: "Walking Lines",
+    meta: { lessonId: "bass_level_4" }
+  }];
+
+  launchRecommendationById("bass_level_4");
+
+  assert.strictEqual(actions.length, 1);
+  assert.strictEqual(actions[0].action, "planStartModuleExercise");
+  assert.deepStrictEqual(JSON.parse(actions[0].value), {
+    instrument: "bass",
+    lessonId: "bass_level_4",
+    skill: "walking_bass",
+    exerciseId: "bass_walk_lines_01",
+    exerciseName: "Walk Lines 01",
+    exerciseFocus: "walking_bass",
+    exerciseType: "bassline"
+  });
+});
+
 test("launchRecommendationById surfaces feedback when a recommendation cannot be launched", function() {
   global.launchPracticeItem = function() {
     return false;

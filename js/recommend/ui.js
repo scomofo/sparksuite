@@ -99,7 +99,43 @@ function getRecommendationLessonSessionNum(item){
   return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
 }
 
+function getRecommendationActiveModule(){
+  if(typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") return null;
+  return SparkInstruments.getActive();
+}
+
+function buildRecommendationModuleLessonLaunch(item){
+  var module = getRecommendationActiveModule();
+  var lessonId = item && item.meta && item.meta.lessonId ? item.meta.lessonId : null;
+  var curriculum = [];
+  var lesson = null;
+  var exercises = [];
+  var exercise = null;
+  var i;
+  if(!module || !lessonId || typeof module.getExercisesForLesson !== "function") return null;
+  if(typeof module.getCurriculumMap === "function") curriculum = module.getCurriculumMap() || [];
+  for(i = 0; i < curriculum.length; i++){
+    if(curriculum[i] && curriculum[i].id === lessonId){
+      lesson = curriculum[i];
+      break;
+    }
+  }
+  exercises = module.getExercisesForLesson(lessonId) || [];
+  if(!exercises.length) return null;
+  exercise = exercises[0];
+  return {
+    instrument: module.instrument || item.meta.instrument || null,
+    lessonId: lessonId,
+    skill: item.meta.skill || (lesson && lesson.skill) || exercise.focus || null,
+    exerciseId: exercise.id || null,
+    exerciseName: exercise.name || lesson && lesson.title || item.title || null,
+    exerciseFocus: exercise.focus || (lesson && lesson.skill) || null,
+    exerciseType: exercise.type || item.type || "lesson"
+  };
+}
+
 function launchGenericRecommendationItem(item){
+  var moduleLessonLaunch;
   var sessionNum;
   if(!item || typeof act !== "function") return false;
   if(item.type === "drill"){
@@ -126,8 +162,12 @@ function launchGenericRecommendationItem(item){
       act("guidedStart", sessionNum);
       return true;
     }
-    act("guidedStart");
-    return true;
+    moduleLessonLaunch = buildRecommendationModuleLessonLaunch(item);
+    if(moduleLessonLaunch){
+      act("planStartModuleExercise", JSON.stringify(moduleLessonLaunch));
+      return true;
+    }
+    return false;
   }
   return false;
 }
