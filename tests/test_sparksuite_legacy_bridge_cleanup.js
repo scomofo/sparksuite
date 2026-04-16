@@ -242,6 +242,17 @@ test("getNextPracticeItem reads the cached plan without generating one", functio
   assert.strictEqual(sparkCoreCalls.length, 0);
 });
 
+test("generateWeeklyPracticePlan preserves the cached daily plan", function() {
+  S.practicePlan = { id: "cached_daily_plan", items: [{ id: "existing_item" }] };
+
+  var weeklyPlan = generateWeeklyPracticePlan();
+
+  assert.ok(weeklyPlan);
+  assert.strictEqual(weeklyPlan.days.length, 7);
+  assert.strictEqual(S.practicePlan.id, "cached_daily_plan");
+  assert.strictEqual(S.practicePlan.items[0].id, "existing_item");
+});
+
 test("legacy daily practice completion delegates item result handling to sparkCore", function() {
   var result = legacyCompletePracticeItem("transition_1", { accuracy: 0.75 });
 

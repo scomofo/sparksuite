@@ -157,10 +157,12 @@
       practicePlanWrite("weeklyPracticePlan", sharedWeeklyPlan);
       return sharedWeeklyPlan;
     }
+    var cachedDailyPlan = practicePlanRead("practicePlan", null);
     var days = [];
     for(var i=0;i<7;i++){
       days.push(generateDailyPracticePlan());
     }
+    practicePlanWrite("practicePlan", cachedDailyPlan);
     var weeklyPlan = {
       weekStart: new Date().toISOString().slice(0,10),
       days: days
