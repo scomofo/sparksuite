@@ -1221,6 +1221,43 @@
     });
   };
 
+  SparkCore.prototype.buildGuidedContinuationRequest = function() {
+    var state = readLegacyAppState();
+    var currentPlan = this.getCurrentPlan();
+    var currentSessionNum = currentPlan && currentPlan.context && currentPlan.context.guidedSession != null
+      ? parseInt(currentPlan.context.guidedSession, 10)
+      : NaN;
+    if (isNaN(currentSessionNum) || currentSessionNum < 1) {
+      currentSessionNum = currentPlan && currentPlan.context && currentPlan.context.guidedPlan && currentPlan.context.guidedPlan.num != null
+        ? parseInt(currentPlan.context.guidedPlan.num, 10)
+        : NaN;
+    }
+    var nextSessionNum = state && state.guidedSession != null
+      ? parseInt(state.guidedSession, 10)
+      : NaN;
+
+    if (
+      this.runtimeState
+      && this.runtimeState.activeScreen === "guided_done"
+      && !isNaN(currentSessionNum)
+      && currentSessionNum > 0
+      && (isNaN(nextSessionNum) || nextSessionNum <= currentSessionNum)
+    ) {
+      nextSessionNum = currentSessionNum + 1;
+    }
+
+    if (isNaN(nextSessionNum) || nextSessionNum < 1) {
+      nextSessionNum = !isNaN(currentSessionNum) && currentSessionNum > 0
+        ? currentSessionNum + 1
+        : 1;
+    }
+
+    return {
+      action: "guidedStart",
+      sessionNum: nextSessionNum
+    };
+  };
+
   SparkCore.prototype.buildSongSessionRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};

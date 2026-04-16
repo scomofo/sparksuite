@@ -779,6 +779,7 @@ test('practice guided-session CTA passes the visible session number explicitly',
 
 test('guided completion CTA passes an explicit next session number', function() {
   var guidedSource = loadJS('js/pages/guided.js');
+  assert.ok(guidedSource.indexOf("buildGuidedContinuationRequest") >= 0);
   assert.ok(guidedSource.indexOf("act(\\'guidedStart\\',\\'' + nextSessionNum + '\\')") >= 0);
 });
 

@@ -2007,6 +2007,23 @@ test("SparkCore can open and complete guided sessions through explicit helpers",
   assert.strictEqual(core.getRuntimeState().transport.status, "completed");
 });
 
+test("SparkCore can build guided continuation requests from guided runtime progress", function() {
+  var core = createDefaultSparkCore();
+  var request;
+
+  S.guidedSession = 3;
+  request = core.buildGuidedContinuationRequest();
+  assert.strictEqual(request.action, "guidedStart");
+  assert.strictEqual(request.sessionNum, 3);
+
+  S.guidedSession = 2;
+  core.openGuidedSession({ sessionNum: 2 });
+  core.completeGuidedSession();
+  request = core.buildGuidedContinuationRequest();
+  assert.strictEqual(request.action, "guidedStart");
+  assert.strictEqual(request.sessionNum, 3);
+});
+
 test("SparkCore can apply guided navigation requests explicitly", function() {
   var core = createDefaultSparkCore();
   core.openGuidedSession({ sessionNum: 1 });
