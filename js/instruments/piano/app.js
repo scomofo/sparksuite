@@ -2322,6 +2322,7 @@ function act(action, param) {
     case "refreshHome":
       if(typeof generateRecommendations === "function") generateRecommendations();
       if(typeof generatePersonalInsights === "function") generatePersonalInsights();
+      if(typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();
       if (typeof refreshDashboardSnapshotRequest === "function") {
         refreshDashboardSnapshotRequest({
           recommendations: state.recommendations || [],

@@ -99,7 +99,6 @@
 
   function getNextPracticeItem(){
     var plan = practicePlanRead("practicePlan", null);
-    if(!plan) plan = generateDailyPracticePlan();
     if(!plan || !plan.items) return null;
     for(var i=0;i<plan.items.length;i++){
       if(!plan.items[i].completed){

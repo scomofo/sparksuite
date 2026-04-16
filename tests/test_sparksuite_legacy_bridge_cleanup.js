@@ -235,6 +235,13 @@ test("legacy daily practice generator delegates to sparkCore when available", fu
   assert.strictEqual(sparkCoreCalls[0].payload.flow, "daily_practice");
 });
 
+test("getNextPracticeItem reads the cached plan without generating one", function() {
+  var next = getNextPracticeItem();
+
+  assert.strictEqual(next, null);
+  assert.strictEqual(sparkCoreCalls.length, 0);
+});
+
 test("legacy daily practice completion delegates item result handling to sparkCore", function() {
   var result = legacyCompletePracticeItem("transition_1", { accuracy: 0.75 });
 

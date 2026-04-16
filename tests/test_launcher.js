@@ -593,6 +593,13 @@ test('dashboard open actions seed insights and challenges before rendering', fun
   assert.ok(pianoSource.indexOf('if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
 });
 
+test('dashboard refresh actions also refresh challenge snapshots before syncing', function() {
+  var appSource = loadJS('js/app.js');
+  var pianoSource = loadJS('js/instruments/piano/app.js');
+  assert.ok(appSource.indexOf('if(typeof initializeChallengesForCurrentCycle==="function"){initializeChallengesForCurrentCycle();refreshedHome = true;}') >= 0);
+  assert.ok(pianoSource.indexOf('if(typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
+});
+
 test('piano dashboard and plan actions use seeded challenges and the shared plan-screen helper', function() {
   var pianoSource = loadJS('js/instruments/piano/app.js');
   assert.ok(pianoSource.indexOf('case "openChallengeHub":') >= 0);

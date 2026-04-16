@@ -2704,6 +2704,7 @@ window.act=function(a,v){
     var refreshedHome = false;
     if(typeof generateRecommendations==="function"){generateRecommendations();refreshedHome = true;}
     if(typeof generatePersonalInsights==="function"){generatePersonalInsights();refreshedHome = true;}
+    if(typeof initializeChallengesForCurrentCycle==="function"){initializeChallengesForCurrentCycle();refreshedHome = true;}
     if(!refreshedHome && typeof showToast === "function") showToast("Dashboard refresh isn't available right now.");
     refreshDashboardSnapshotRequest({
       recommendations: appRead("recommendations", []) || [],
