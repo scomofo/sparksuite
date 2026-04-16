@@ -602,6 +602,14 @@ test('piano dashboard and plan actions use seeded challenges and the shared plan
   assert.ok(pianoSource.indexOf('state.screen = SCR.PLAN;') >= 0);
 });
 
+test('practice pages do not generate daily plans during render', function() {
+  var sharedPracticeSource = loadJS('js/pages/practice.js');
+  var pianoPracticeSource = loadJS('js/instruments/piano/pages/practice.js');
+  assert.ok(sharedPracticeSource.indexOf('if(!homeState.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice") && typeof generateDailyPracticePlan === "function") generateDailyPracticePlan();') === -1);
+  assert.ok(pianoPracticeSource.indexOf('if(!plan) plan = generateDailyPracticePlan();') === -1);
+  assert.ok(pianoPracticeSource.indexOf('No practice plan is available right now.') >= 0);
+});
+
 test('community submit actions initialize draft state before editing', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('function ensureCommunitySubmitSong(){') >= 0);

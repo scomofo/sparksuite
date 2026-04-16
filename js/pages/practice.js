@@ -590,7 +590,6 @@ function practicePage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var homeState = getPracticeHomeSnapshot();
-  if(!homeState.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice") && typeof generateDailyPracticePlan === "function") generateDailyPracticePlan();
 
   var stats = getPracticeStats();
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"

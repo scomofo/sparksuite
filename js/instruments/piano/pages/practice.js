@@ -194,9 +194,8 @@ function practicePlanSection(){
   }
 
   // Today's brain-generated practice plan
-  if(typeof generateDailyPracticePlan === "function"){
+  {
     var plan = pianoPracticeRead("practicePlan", null);
-    if(!plan) plan = generateDailyPracticePlan();
     if(plan && plan.items && plan.items.length){
       h += '<div class="card" style="margin-top:12px">';
       h += '<div><b>Today\'s Practice Plan</b></div>';
@@ -212,6 +211,11 @@ function practicePlanSection(){
         }
         h += '</div>';
       }
+      h += '</div>';
+    } else {
+      h += '<div class="card" style="margin-top:12px">';
+      h += '<div><b>Today\'s Practice Plan</b></div>';
+      h += '<div class="text-muted">No practice plan is available right now.</div>';
       h += '</div>';
     }
   }
