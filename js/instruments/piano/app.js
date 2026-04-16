@@ -2297,6 +2297,7 @@ function act(action, param) {
 
     // ── Challenge hub ──
     case "openChallengeHub":
+        if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();
         openPianoDashboardScreen(state, "challenges", SCR.CHALLENGES);
         break;
     case "claimChallengeReward":
@@ -2344,7 +2345,7 @@ function act(action, param) {
 
     // ── Practice plan ──
     case "openPracticePlan":
-      state.screen = SCR.PLAN;
+      openPianoPracticePlan(state);
       break;
 
     // ── Onboarding flow ──

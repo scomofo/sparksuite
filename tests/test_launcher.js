@@ -593,6 +593,15 @@ test('dashboard open actions seed insights and challenges before rendering', fun
   assert.ok(pianoSource.indexOf('if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
 });
 
+test('piano dashboard and plan actions use seeded challenges and the shared plan-screen helper', function() {
+  var pianoSource = loadJS('js/instruments/piano/app.js');
+  assert.ok(pianoSource.indexOf('case "openChallengeHub":') >= 0);
+  assert.ok(pianoSource.indexOf('if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
+  assert.ok(pianoSource.indexOf('case "openPracticePlan":') >= 0);
+  assert.ok(pianoSource.indexOf('openPianoPracticePlan(state);') >= 0);
+  assert.ok(pianoSource.indexOf('state.screen = SCR.PLAN;') >= 0);
+});
+
 test('community submit actions initialize draft state before editing', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('function ensureCommunitySubmitSong(){') >= 0);
