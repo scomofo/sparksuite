@@ -625,11 +625,17 @@ function startPracticeItem(id){
   var plan = null;
   if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
     var view = window.sparkCore.getActiveSessionView();
-    if(view && view.plan && view.plan.flow === "daily_practice" && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
-      plan = SparkPracticeBridge.toLegacyPlan(view.plan);
+    var corePlanActive = !!(view && view.plan && view.plan.flow === "daily_practice");
+    if(corePlanActive){
+      if(typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
+        plan = SparkPracticeBridge.toLegacyPlan(view.plan);
+      }
+    } else {
+      plan = practiceStateRead("practicePlan", null);
     }
+  } else {
+    plan = practiceStateRead("practicePlan", null);
   }
-  if(!plan) plan = practiceStateRead("practicePlan", null);
   if(!plan || !Array.isArray(plan.items)){
     if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
     return;

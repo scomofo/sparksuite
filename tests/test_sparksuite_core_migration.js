@@ -1703,6 +1703,33 @@ test("startPracticeItem surfaces feedback when the plan or launcher is unavailab
   assert.deepStrictEqual(toasts, ["That practice item couldn't be started right now."]);
 });
 
+test("startPracticeItem fails safely when a core-owned plan is active but the legacy bridge is unavailable", function() {
+  var core = createDefaultSparkCore();
+  var originalBridge = window.SparkPracticeBridge;
+  var originalLaunchPracticeItem = global.launchPracticeItem;
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.launchPracticeItem = function() {
+    throw new Error("should not launch from stale cached practice plan");
+  };
+  S.practicePlan = {
+    items: [
+      { id: "stale_practice_item", type: "guided_session", completed: false }
+    ]
+  };
+  try {
+    core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+    window.SparkPracticeBridge = undefined;
+    eval(loadJS("js/pages/practice.js"));
+
+    startPracticeItem("stale_practice_item");
+    assert.deepStrictEqual(toasts, ["That practice item couldn't be started right now."]);
+  } finally {
+    window.SparkPracticeBridge = originalBridge;
+    global.launchPracticeItem = originalLaunchPracticeItem;
+  }
+});
+
 test("practice page falls back gracefully when a core-owned plan is active but the legacy bridge is unavailable", function() {
   var core = createDefaultSparkCore();
   var originalBridge = window.SparkPracticeBridge;
