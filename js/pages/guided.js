@@ -330,13 +330,17 @@ function getGuidedSessionView() {
     ? coreView.plan.context.guidedPlan || null
     : null;
 
+  var guidedStep = coreView && coreView.runtimeState && coreView.runtimeState.guidedStep
+    ? coreView.runtimeState.guidedStep
+    : (guidedStateRead("guidedStep", "spark") || "spark");
+  var newMovePhase = coreView && coreView.runtimeState && coreView.runtimeState.guidedNewMovePhase
+    ? coreView.runtimeState.guidedNewMovePhase
+    : guidedStateRead("newMovePhase", null);
+  if (guidedStep === "newMove" && !newMovePhase) newMovePhase = "watch";
+
   return {
     plan: ensureGuidedPlanView(plan || guidedStateRead("guidedPlan", null)),
-    guidedStep: coreView && coreView.runtimeState && coreView.runtimeState.guidedStep
-      ? coreView.runtimeState.guidedStep
-      : (guidedStateRead("guidedStep", "spark") || "spark"),
-    newMovePhase: coreView && coreView.runtimeState && coreView.runtimeState.guidedNewMovePhase
-      ? coreView.runtimeState.guidedNewMovePhase
-      : guidedStateRead("newMovePhase", null)
+    guidedStep: guidedStep,
+    newMovePhase: newMovePhase
   };
 }

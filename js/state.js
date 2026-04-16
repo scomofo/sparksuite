@@ -424,6 +424,7 @@ function resetProgress(){
   state.totalPracticeMinutes=0;state.todayPracticeMinutes=0;
   state.mastery={chords:{},transitions:{},rhythm:{},scales:{},fingers:{},songs:{},lessons:{}};
   state.unlocks={lessons:{},songs:{},exercises:{}};state.progressionTree=null;
+  state.skillMastery={};state.unlockedLessonIds=[];state.skillGraph={};
   state.playerXP=0;state.playerLevel=1;state.playerAchievements={};
   state.playerStats={songsCompleted:0, lessonsCompleted:0, exercisesCompleted:0, totalPracticeMinutes:0, streakBest:0};
   state.xpLog=[];state.contentLibrary={rhythmPatterns:[], lhPatterns:[], chordProgressions:[], exercises:[]};
@@ -438,6 +439,10 @@ function resetProgress(){
   state.homeState={lastRefreshAt:null, cachedPlan:null, cachedRecommendations:null, cachedChallenges:null, cachedCareer:null, cachedInsights:null};
   state.tutorialProgress={completed:{}, skipped:{}};state.onboarding={completed:false, startedAt:null, completedAt:null, currentStep:"welcome", instrument:null, skillLevel:null, goals:[], midiSetupDone:false, calibrationDone:false, starterContentUnlocked:false};state.firstRun=true;
   state.dailyPracticePlan=[];state.psychologyComeback=false;
+  state.activeSessionPlanId=null;
+  if (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.resetProgressState === "function") {
+    window.sparkCore.resetProgressState();
+  }
   // Show undo toast
   state.showUndoToast=true;state.undoTimer=5;
   render();

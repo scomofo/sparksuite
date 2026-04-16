@@ -418,6 +418,24 @@ test("SparkCore can open and complete daily practice through explicit helpers", 
   assert.strictEqual(core.getRuntimeState().transport.status, "completed");
 });
 
+test("SparkCore resetProgressState clears cached daily practice plans", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.openDailyPracticePlan();
+
+  assert.ok(plan instanceof SessionPlan);
+  assert.strictEqual(core.getCurrentPlan().id, plan.id);
+
+  core.resetProgressState();
+
+  assert.strictEqual(core.getCurrentPlan(), null);
+  assert.strictEqual(core.getRuntimeState().activePlanId, null);
+  assert.strictEqual(core.getRuntimeState().activeFlow, null);
+
+  var rebuiltPlan = core.openDailyPracticePlan();
+  assert.ok(rebuiltPlan instanceof SessionPlan);
+  assert.notStrictEqual(rebuiltPlan.id, plan.id);
+});
+
 test("SparkCore can open daily practice from dashboard through an explicit helper", function() {
   var core = createDefaultSparkCore();
   var plan = core.openDashboardPracticePlan();

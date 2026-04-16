@@ -165,6 +165,10 @@ test('resetProgress clears piano guided session progress state', function() {
     JSON: JSON,
     Math: Math
   };
+  sandbox.sparkCoreResetCalls = 0;
+  sandbox.sparkCore = {
+    resetProgressState: function() { sandbox.sparkCoreResetCalls++; }
+  };
   sandbox.window = sandbox;
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
@@ -183,9 +187,13 @@ test('resetProgress clears piano guided session progress state', function() {
   sandbox.S.playerLevel = 4;
   sandbox.S.mastery = { lessons: { lesson_1: 0.8 }, rhythm: { strum: 0.7 } };
   sandbox.S.unlocks = { lessons: { lesson_2: true }, songs: {}, exercises: {} };
+  sandbox.S.skillMastery = { chord_switching: { mastery: 0.92, unlocked: true, lastPracticed: Date.now() } };
+  sandbox.S.unlockedLessonIds = ['lesson_7'];
+  sandbox.S.skillGraph = { timing: 0.9, rhythm: 0.85, chordAccuracy: 0.88 };
   sandbox.S.completedLessons = ['lesson_1'];
   sandbox.S.practicePlan = { id: 'today_plan' };
   sandbox.S.practicePlanHistory = [{ id: 'old_plan' }];
+  sandbox.S.activeSessionPlanId = 'plan_advanced';
   sandbox.S.careerProgress = { unlockedTiers: { 1: true }, unlockedStages: {}, unlockedSongs: {}, songRatings: {}, stageCompletion: {}, tierCompletion: {} };
   sandbox.S.performanceStats = { song_a: { attempts: 3 } };
   sandbox.S.challengeRegistry = { daily_a: { completed: true } };
@@ -207,12 +215,18 @@ test('resetProgress clears piano guided session progress state', function() {
   assert.strictEqual(sandbox.S.playerLevel, 1);
   assert.strictEqual(Object.keys(sandbox.S.mastery.lessons).length, 0);
   assert.strictEqual(Object.keys(sandbox.S.unlocks.lessons).length, 0);
+  assert.strictEqual(Object.keys(sandbox.S.skillMastery).length, 0);
+  assert.strictEqual(Array.isArray(sandbox.S.unlockedLessonIds), true);
+  assert.strictEqual(sandbox.S.unlockedLessonIds.length, 0);
+  assert.strictEqual(Object.keys(sandbox.S.skillGraph).length, 0);
   assert.strictEqual(sandbox.S.completedLessons.length, 0);
   assert.strictEqual(sandbox.S.practicePlan, null);
   assert.strictEqual(sandbox.S.practicePlanHistory.length, 0);
+  assert.strictEqual(sandbox.S.activeSessionPlanId, null);
   assert.strictEqual(Object.keys(sandbox.S.careerProgress.unlockedTiers).length, 0);
   assert.strictEqual(Object.keys(sandbox.S.performanceStats).length, 0);
   assert.strictEqual(Object.keys(sandbox.S.challengeRegistry).length, 0);
+  assert.strictEqual(sandbox.sparkCoreResetCalls, 1);
 });
 
 test('openInstrumentFromLauncher updates shared launcher state', function() {

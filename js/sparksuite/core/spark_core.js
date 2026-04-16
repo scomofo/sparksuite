@@ -274,6 +274,20 @@
     };
   };
 
+  SparkCore.prototype.resetProgressState = function() {
+    this.currentPlan = null;
+    this.lastSessionOutcome = null;
+    this.runtimeState = this.createInitialRuntimeState();
+    this.playAlongSession = this.createInitialPlayAlongSession();
+    if (this.storage && typeof this.storage.setCurrentPlanId === "function") {
+      this.storage.setCurrentPlanId(null);
+    }
+    return {
+      currentPlan: this.currentPlan,
+      runtimeState: this.runtimeState
+    };
+  };
+
   SparkCore.prototype.getRuntimeState = function() {
     return this.runtimeState;
   };

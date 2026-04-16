@@ -24,14 +24,52 @@ function loadJS(file) {
 
 function resetState() {
   global.window = global;
+  function createMockElement(tagName) {
+    return {
+      tagName: String(tagName || "").toUpperCase(),
+      className: "",
+      style: {},
+      children: [],
+      parentNode: null,
+      appendChild: function(child) {
+        if (child) {
+          child.parentNode = this;
+          this.children.push(child);
+          if (child.className === "confetti-container") confettiCalls++;
+        }
+        return child;
+      },
+      removeChild: function(child) {
+        var idx = this.children.indexOf(child);
+        if (idx >= 0) this.children.splice(idx, 1);
+        if (child) child.parentNode = null;
+        return child;
+      }
+    };
+  }
   global.document = {
     body: {
+      children: [],
       classList: {
         toggle: function() {}
+      },
+      appendChild: function(child) {
+        if (child) {
+          child.parentNode = this;
+          this.children.push(child);
+        }
+        return child;
+      },
+      removeChild: function(child) {
+        var idx = this.children.indexOf(child);
+        if (idx >= 0) this.children.splice(idx, 1);
+        if (child) child.parentNode = null;
+        return child;
       }
     },
     addEventListener: function() {},
-    getElementById: function() { return null; }
+    getElementById: function() { return null; },
+    createElement: function(tagName) { return createMockElement(tagName); }
   };
   global.navigator = {};
   global.prompt = function() { return ""; };
@@ -84,6 +122,15 @@ function resetState() {
   global.PIANO_DATA.PLAY_STYLES = [];
   global.PIANO_DATA.REWARD_PHASES = [];
   global.PIANO_DATA.CHORD_COLORS = {};
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return global.PIANO_DATA;
+        }
+      };
+    }
+  };
   global.KEYBOARD_SIZES = [
     { keys: 88, label: "Full Piano (88 keys)" },
     { keys: 76, label: "76-key keyboard" },
@@ -125,6 +172,8 @@ function resetState() {
   global.checkLevelUp = function() { levelChecks++; };
   global.pianoCheckBadges = function() { return []; };
   global.pianoShowConfetti = function() { confettiCalls++; };
+  try { pianoShowConfetti = global.pianoShowConfetti; } catch (_) {}
+  try { pianoCheckBadges = global.pianoCheckBadges; } catch (_) {}
   global.stopMetronome = function() {};
   global.stopLHPattern = function() {};
   global.stopWatchDemo = function() {};
@@ -418,6 +467,8 @@ function resetState() {
 
 resetState();
 eval(loadJS("js/instruments/piano/app.js"));
+eval(loadJS("js/instruments/piano/ui.js"));
+eval(loadJS("js/instruments/piano/pages/session.js"));
 eval(loadJS("js/instruments/piano/pages/tools.js"));
 
 console.log("\n--- Piano Runtime Core Migration ---");
@@ -542,6 +593,20 @@ test("drill_custom opens the games tab for saved custom sets", function() {
 
 test("piano perform song page routes Start Performance through the shared performance action", function() {
   assert.ok(loadJS("js/instruments/piano/pages/perform_song.js").indexOf("act(\\'performStartFromSong\\')") >= 0);
+});
+
+test("piano new-move view falls back to Watch when phase state is missing", function() {
+  S.newMovePhase = null;
+
+  var html = renderNewMove({
+    newMove: {
+      chord: "C",
+      text: "Place your fingers and get ready."
+    }
+  });
+
+  assert.ok(html.indexOf("Watch - Hands Off!") >= 0);
+  assert.ok(html.indexOf("I've Watched") >= 0);
 });
 
 test("piano runtime surfaces toast feedback for import and midi helper fallbacks", function() {

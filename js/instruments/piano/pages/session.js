@@ -132,6 +132,7 @@ function renderNewMove(plan) {
 
   var html = '<div class="session-step-card newmove-card">';
   var newMovePhase = pianoSessionRead("newMovePhase", null);
+  if (!newMovePhase) newMovePhase = "watch";
   var feedbackMessage = pianoSessionRead("feedbackMessage", null);
   var detecting = !!pianoSessionRead("detecting", false);
   var lastReviewChords = Array.isArray(pianoSessionRead("lastReviewChords", [])) ? pianoSessionRead("lastReviewChords", []) : [];
