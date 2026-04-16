@@ -179,7 +179,7 @@
       }
     }
 
-    if(rules.playerLevel && curriculumStateRead("playerLevel", 1) < rules.playerLevel){
+    if(rules.playerLevel && curriculumStateRead("playerLevel", curriculumStateRead("level", 1)) < rules.playerLevel){
       return false;
     }
 

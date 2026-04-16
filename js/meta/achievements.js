@@ -44,7 +44,7 @@
     { id:"first_song", name:"First Song", check:function(){return (achievementRead(["playerStats", "songsCompleted"], 0) || 0) >= 1;} },
     { id:"practice_100", name:"100 Minutes", check:function(){return (achievementRead(["playerStats", "totalPracticeMinutes"], 0) || 0) >= 100;} },
     { id:"streak_7", name:"7 Day Streak", check:function(){return (achievementRead("practiceStreak", 0) || 0) >= 7;} },
-    { id:"level_5", name:"Level 5", check:function(){return (achievementRead("playerLevel", 0) || 0) >= 5;} }
+    { id:"level_5", name:"Level 5", check:function(){return (achievementRead("playerLevel", achievementRead("level", 0)) || 0) >= 5;} }
   ];
 
   function evaluateAchievements(){

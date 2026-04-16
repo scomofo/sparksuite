@@ -23,10 +23,12 @@ function profileStateRead(path, fallback){
 
 function profilePage(){
   var ps = profileStateRead("playerStats", {}) || {};
+  var playerLevel = profileStateRead("playerLevel", profileStateRead("level", 1)) || 1;
+  var playerXP = profileStateRead("playerXP", profileStateRead("xp", 0)) || 0;
   var h = '<div class="card">';
   h += '<div><b>Player Profile</b></div>';
-  h += '<div>Level: '+(profileStateRead("playerLevel", 1) || 1)+'</div>';
-  h += '<div>XP: '+(profileStateRead("playerXP", 0) || 0)+'</div>';
+  h += '<div>Level: '+playerLevel+'</div>';
+  h += '<div>XP: '+playerXP+'</div>';
   h += '<div>Songs Completed: '+(ps.songsCompleted || 0)+'</div>';
   h += '<div>Practice Minutes: '+(ps.totalPracticeMinutes || 0)+'</div>';
   h += '<div>Lessons Completed: '+(ps.lessonsCompleted || 0)+'</div>';

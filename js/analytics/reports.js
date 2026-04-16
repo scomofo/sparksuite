@@ -29,7 +29,7 @@
       sessions: (analyticsReportRead("practiceHistory", []) || []).length,
       avgAccuracy: getAverageAccuracy(),
       currentStreak: analyticsReportRead("practiceStreak", 0) || 0,
-      level: analyticsReportRead("playerLevel", 1) || 1
+      level: analyticsReportRead("playerLevel", analyticsReportRead("level", 1)) || 1
     };
   }
 

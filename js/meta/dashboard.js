@@ -20,10 +20,12 @@ function dashboardStateRead(path, fallback){
 }
 
 function dashboardPage(){
+  var playerLevel = dashboardStateRead("playerLevel", dashboardStateRead("level", 0)) || 0;
+  var playerXP = dashboardStateRead("playerXP", dashboardStateRead("xp", 0)) || 0;
   var h = '<div class="card">';
   h += '<div><b>Progress Dashboard</b></div>';
-  h += '<div>Level: '+(dashboardStateRead("playerLevel", 0) || 0)+'</div>';
-  h += '<div>XP: '+(dashboardStateRead("playerXP", 0) || 0)+'</div>';
+  h += '<div>Level: '+playerLevel+'</div>';
+  h += '<div>XP: '+playerXP+'</div>';
   h += '<div>Challenges Completed: '+(dashboardStateRead(["metaProgress", "challengesCompleted"], 0) || 0)+'</div>';
   h += '<div>Weekly Goals Completed: '+(dashboardStateRead(["metaProgress", "goalsCompleted"], 0) || 0)+'</div>';
   h += '<div>Skill Points: '+(dashboardStateRead(["metaProgress", "skillPoints"], 0) || 0)+'</div>';
