@@ -606,6 +606,7 @@ test('practice pages do not generate daily plans during render', function() {
   var sharedPracticeSource = loadJS('js/pages/practice.js');
   var pianoPracticeSource = loadJS('js/instruments/piano/pages/practice.js');
   assert.ok(sharedPracticeSource.indexOf('if(!homeState.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice") && typeof generateDailyPracticePlan === "function") generateDailyPracticePlan();') === -1);
+  assert.ok(sharedPracticeSource.indexOf('if(typeof ensurePracticePlan==="function"){') === -1);
   assert.ok(pianoPracticeSource.indexOf('if(!plan) plan = generateDailyPracticePlan();') === -1);
   assert.ok(pianoPracticeSource.indexOf('No practice plan is available right now.') >= 0);
 });
