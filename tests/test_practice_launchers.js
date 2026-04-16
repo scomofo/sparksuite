@@ -115,6 +115,17 @@ test("launchPracticePlanItem resolves plan item ids before launching", function(
   assert.strictEqual(global._acts[0].value, "the_beat_goes_on|chords|normal");
 });
 
+test("launchPracticePlanItem does not generate a plan while resolving ids", function() {
+  global.ensurePracticePlan = function() {
+    throw new Error("launchPracticePlanItem should not create a plan while resolving an id");
+  };
+
+  var launched = launchPracticePlanItem("missing_plan_item");
+
+  assert.strictEqual(launched, false);
+  assert.strictEqual(global._acts.length, 0);
+});
+
 test("launchPracticePlanItem fails safely when a core-owned daily plan is active but the legacy bridge is unavailable", function() {
   global.S.practicePlan = {
     items: [{

@@ -15,10 +15,6 @@
       var statePlan = SparkState.read(["practicePlan"], null);
       if(statePlan && Array.isArray(statePlan.items)) return statePlan;
     }
-    if(typeof ensurePracticePlan === "function"){
-      var ensuredPlan = ensurePracticePlan();
-      if(ensuredPlan && Array.isArray(ensuredPlan.items)) return ensuredPlan;
-    }
     return null;
   }
 
