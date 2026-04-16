@@ -10,8 +10,10 @@ function planPage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"
     ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
-    : ensurePracticePlan();
+    : (typeof ensurePracticePlan === "function" ? ensurePracticePlan() : null);
+  var planItems = plan && Array.isArray(plan.items) ? plan.items : [];
   var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
     ? true
     : !!planStateRead(["practicePlanComplete"], false);
@@ -19,14 +21,14 @@ function planPage(){
 
   h += '<div class="card mb16">';
   h += '<h2>Today\'s Practice Plan</h2>';
-  h += '<div class="muted">'+escHTML(plan.focus)+'</div>';
+  h += '<div class="muted">'+escHTML(plan && plan.focus ? plan.focus : "No practice plan is available right now.")+'</div>';
   if(planCompleted){
     h += '<div style="margin-top:8px;color:var(--success);font-weight:700">Plan completed!</div>';
   }
   h += '</div>';
 
-  for(var i=0;i<plan.items.length;i++){
-    var item = plan.items[i];
+  for(var i=0;i<planItems.length;i++){
+    var item = planItems[i];
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(item.type)+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
@@ -72,7 +74,7 @@ function formatPlanItemSubtitle(item){
   if(meta.exerciseFocus) parts.push(prettyPlanToken(meta.exerciseFocus));
   else if(meta.skill) parts.push(prettyPlanToken(meta.skill));
   if(item.type) parts.push(prettyPlanToken(item.type));
-  return parts.join(" • ") || String(item.type || "practice");
+  return parts.join(" | ") || String(item.type || "practice");
 }
 
 function prettyPlanToken(value){

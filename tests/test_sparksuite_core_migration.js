@@ -1724,6 +1724,34 @@ test("practice page falls back gracefully when a core-owned plan is active but t
   }
 });
 
+test("shared plan page falls back gracefully when a core-owned plan is active but the legacy bridge is unavailable", function() {
+  var core = createDefaultSparkCore();
+  var originalBridge = window.SparkPracticeBridge;
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  try {
+    core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+    window.SparkPracticeBridge = undefined;
+    eval(loadJS("js/pages/plan.js"));
+
+    var html = planPage();
+    assert.ok(html.indexOf("Today's Practice Plan") >= 0);
+    assert.ok(html.indexOf("No practice plan is available right now.") >= 0);
+  } finally {
+    window.SparkPracticeBridge = originalBridge;
+  }
+});
+
+test("piano plan page renders a safe empty state when no plan is available", function() {
+  global.escHTML = function(value) { return String(value); };
+  global.ensurePracticePlan = function() { return null; };
+  eval(loadJS("js/instruments/piano/pages/plan.js"));
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("Today's Practice Plan") >= 0);
+  assert.ok(html.indexOf("No practice plan is available right now.") >= 0);
+});
+
 test("practice and plan buttons route practice item launches through shared actions", function() {
   assert.ok(loadJS("js/pages/practice.js").indexOf("onclick=\"act(\\'startPracticeItem\\'") >= 0);
   assert.ok(loadJS("js/pages/plan.js").indexOf("onclick=\"act(\\'startPracticeItem\\'") >= 0);
@@ -3895,6 +3923,17 @@ test("legacy practice plan labels use a readable ASCII chord transition separato
 
   var legacyPlan = plan.toLegacyPracticePlan();
   assert.strictEqual(legacyPlan.items[0].label, "G -> C");
+});
+
+test("shared plan subtitles use a readable ASCII separator", function() {
+  eval(loadJS("js/pages/plan.js"));
+  assert.strictEqual(formatPlanItemSubtitle({
+    type: "performance_song",
+    meta: {
+      instrument: "ukulele",
+      exerciseFocus: "rhythm_flow"
+    }
+  }), "ukulele | rhythm flow | performance song");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

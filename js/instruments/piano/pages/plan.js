@@ -20,19 +20,20 @@ function pianoPlanRead(path, fallback){
 }
 
 function pianoPlanPage(){
-  var plan = ensurePracticePlan();
+  var plan = typeof ensurePracticePlan === "function" ? ensurePracticePlan() : null;
+  var planItems = plan && Array.isArray(plan.items) ? plan.items : [];
   var h = '';
 
   h += '<div class="card mb16">';
   h += '<h2>Today\'s Practice Plan</h2>';
-  h += '<div class="muted">'+escHTML(plan.focus)+'</div>';
+  h += '<div class="muted">'+escHTML(plan && plan.focus ? plan.focus : "No practice plan is available right now.")+'</div>';
   if(pianoPlanRead("practicePlanComplete", false)){
     h += '<div style="margin-top:8px;color:var(--success);font-weight:700">Plan completed!</div>';
   }
   h += '</div>';
 
-  for(var i=0;i<plan.items.length;i++){
-    var item = plan.items[i];
+  for(var i=0;i<planItems.length;i++){
+    var item = planItems[i];
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(item.type)+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
