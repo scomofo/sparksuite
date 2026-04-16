@@ -124,6 +124,11 @@
     ui: {
       chord: function(chordObj, size, label, animate) {
         var renderChord = resolveBassRegisterChordShape(chordObj);
+        // Bass lesson shapes behave more like note/pattern diagrams than
+        // guitar-style chord charts, so prefer the dedicated bass renderer.
+        if (typeof bassSVG === "function" && renderChord) {
+          return bassSVG(renderChord, size, label, animate);
+        }
         if (typeof stringedChordSVG === "function" && renderChord) {
           var chart = {
             name: renderChord.name || label || "chord",
