@@ -1756,6 +1756,15 @@ window.act=function(a,v){
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
     appWrite("activeInstrument", v);
+    appWrite("recommendations", []);
+    appWrite("lastRecommendationRun", null);
+    appWrite("recommendationInstrumentId", null);
+    refreshDashboardSnapshotRequest({
+      recommendations: [],
+      insights: appRead("personalInsights", null) || null,
+      challenges: appRead("activeChallenges", []) || [],
+      refreshedAt: Date.now()
+    });
     appWrite("screen", SCR.HOME);
     appWrite("tab", TAB.PRACTICE);
     saveState();
@@ -1785,6 +1794,15 @@ window.act=function(a,v){
         SparkInstruments.activate(v);
       }
       appWrite("activeInstrument", v);
+      appWrite("recommendations", []);
+      appWrite("lastRecommendationRun", null);
+      appWrite("recommendationInstrumentId", null);
+      refreshDashboardSnapshotRequest({
+        recommendations: [],
+        insights: appRead("personalInsights", null) || null,
+        challenges: appRead("activeChallenges", []) || [],
+        refreshedAt: Date.now()
+      });
       appWrite("screen", SCR.HOME);
       appWrite("tab", TAB.PRACTICE);
       saveState();
@@ -2462,6 +2480,12 @@ window.act=function(a,v){
   // New system screens
   if(a==="openRecommendations"){
     if(typeof generateRecommendations==="function") generateRecommendations();
+    refreshDashboardSnapshotRequest({
+      recommendations: appRead("recommendations", []) || [],
+      insights: appRead("personalInsights", null) || null,
+      challenges: appRead("activeChallenges", []) || [],
+      refreshedAt: Date.now()
+    });
     openDashboardSectionRequest("recommendations");
     appApplyLegacyActivityRuntime({setFields:{screen:SCR.RECOMMENDATIONS}},function(){appWrite("screen",SCR.RECOMMENDATIONS);});
     render();return;

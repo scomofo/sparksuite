@@ -35,6 +35,45 @@
     return null;
   }
 
+  function getActiveRecommendationInstrumentKeys() {
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var keys = {};
+    var i;
+    var values = [
+      active ? active.id : null,
+      active ? active.appId : null,
+      active ? active.instrument : null,
+      recommendationCandidateRead("activeInstrument", null)
+    ];
+    for (i = 0; i < values.length; i++) {
+      if (values[i]) keys[String(values[i])] = true;
+    }
+    return keys;
+  }
+
+  function isPlayAlongEntryForActiveInstrument(entry, activeKeys) {
+    if (!entry) return false;
+    var values = [
+      entry.instrument,
+      entry.instrumentId,
+      entry.instrumentType,
+      entry.params && entry.params.instrument,
+      entry.params && entry.params.instrumentId,
+      entry.params && entry.params.instrumentType
+    ];
+    var hasInstrumentInfo = false;
+    var i;
+    for (i = 0; i < values.length; i++) {
+      if (values[i]) {
+        hasInstrumentInfo = true;
+        if (activeKeys[String(values[i])]) return true;
+      }
+    }
+    return !hasInstrumentInfo;
+  }
+
   function collectRecommendationCandidates(appType){
     var out = [];
     out = out.concat(getCurriculumCandidates(appType));
@@ -129,6 +168,7 @@
 
   function getPlayAlongCandidates(){
     var out = [];
+    var activeKeys = getActiveRecommendationInstrumentKeys();
     var playAlongView = getPlayAlongView();
     var outcome = playAlongView && Object.prototype.hasOwnProperty.call(playAlongView, "outcome")
       ? playAlongView.outcome
@@ -138,10 +178,16 @@
     var recent = playAlongView && Array.isArray(playAlongView.recent)
       ? playAlongView.recent
       : (Array.isArray(recommendationCandidateRead("playAlongRecent", [])) ? recommendationCandidateRead("playAlongRecent", []) : []);
+    recent = recent.filter(function(item) {
+      return isPlayAlongEntryForActiveInstrument(item, activeKeys);
+    });
     var latest = recent.length ? recent[0] : null;
     var bookmarks = playAlongView && Array.isArray(playAlongView.bookmarks)
       ? playAlongView.bookmarks
       : (Array.isArray(recommendationCandidateRead("playAlongBookmarks", [])) ? recommendationCandidateRead("playAlongBookmarks", []) : []);
+    bookmarks = bookmarks.filter(function(item) {
+      return isPlayAlongEntryForActiveInstrument(item, activeKeys);
+    });
     var weakAreas = playAlongView && Array.isArray(playAlongView.weakAreas)
       ? playAlongView.weakAreas.slice(0, 2)
       : (outcome && outcome.performance && Array.isArray(outcome.performance.weakAreas)

@@ -232,8 +232,18 @@ test('resetProgress clears piano guided session progress state', function() {
 test('openInstrumentFromLauncher updates shared launcher state', function() {
   renderCalls = 0;
   saveStateCalls = 0;
+  var dashboardPayloads = [];
+  global.refreshDashboardSnapshotRequest = function(payload) { dashboardPayloads.push(payload); return payload; };
+  S.recommendations = [{ id: 'stale_rec' }];
+  S.lastRecommendationRun = 123;
+  S.recommendationInstrumentId = 'ukespark';
   openInstrumentFromLauncher('test_guitar');
   assert.strictEqual(S.activeInstrument, 'test_guitar');
+  assert.deepStrictEqual(S.recommendations, []);
+  assert.strictEqual(S.lastRecommendationRun, null);
+  assert.strictEqual(S.recommendationInstrumentId, null);
+  assert.strictEqual(dashboardPayloads.length, 1);
+  assert.deepStrictEqual(dashboardPayloads[0].recommendations, []);
   assert.strictEqual(S.screen, 'home');
   assert.strictEqual(S.tab, 'practice');
   assert.strictEqual(renderCalls, 1);
@@ -272,7 +282,12 @@ test('launcher cards route through the shared openInstrument action', function()
 test('shared app launcher actions keep local state fallbacks when launcher bridge helpers are unavailable', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(/if\(a==="returnToLauncher"\)\{\s*if \(typeof window\.returnToLauncherFromHeader === "function"\) \{\s*window\.returnToLauncherFromHeader\(\);\s*\} else \{[\s\S]*?appWrite\("activeInstrument", null\);[\s\S]*?appWrite\("screen", SCR\.HOME\);[\s\S]*?appWrite\("tab", TAB\.PRACTICE\);[\s\S]*?saveState\(\);[\s\S]*?render\(\);[\s\S]*?\}\s*return;\s*\}/.test(appSource));
-  assert.ok(/if\(a==="openInstrument" && v\)\{\s*if \(typeof window\.openInstrumentFromLauncher === "function"\) \{\s*window\.openInstrumentFromLauncher\(v\);\s*\} else \{[\s\S]*?appWrite\("activeInstrument", v\);[\s\S]*?appWrite\("screen", SCR\.HOME\);[\s\S]*?appWrite\("tab", TAB\.PRACTICE\);[\s\S]*?saveState\(\);[\s\S]*?render\(\);[\s\S]*?\}\s*return;\s*\}/.test(appSource));
+  assert.ok(/if\(a==="openInstrument" && v\)\{\s*if \(typeof window\.openInstrumentFromLauncher === "function"\) \{\s*window\.openInstrumentFromLauncher\(v\);\s*\} else \{[\s\S]*?appWrite\("activeInstrument", v\);[\s\S]*?appWrite\("recommendations", \[\]\);[\s\S]*?appWrite\("lastRecommendationRun", null\);[\s\S]*?appWrite\("recommendationInstrumentId", null\);[\s\S]*?refreshDashboardSnapshotRequest\(\{[\s\S]*?recommendations: \[\],[\s\S]*?\}\);[\s\S]*?appWrite\("screen", SCR\.HOME\);[\s\S]*?appWrite\("tab", TAB\.PRACTICE\);[\s\S]*?saveState\(\);[\s\S]*?render\(\);[\s\S]*?\}\s*return;\s*\}/.test(appSource));
+});
+
+test('switchInstrument clears stale recommendations when changing instruments', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(/if\(a==="switchInstrument" && v\)\{[\s\S]*?appWrite\("activeInstrument", v\);[\s\S]*?appWrite\("recommendations", \[\]\);[\s\S]*?appWrite\("lastRecommendationRun", null\);[\s\S]*?appWrite\("recommendationInstrumentId", null\);[\s\S]*?refreshDashboardSnapshotRequest\(\{[\s\S]*?recommendations: \[\],[\s\S]*?\}\);[\s\S]*?appWrite\("screen", SCR\.HOME\);/.test(appSource));
 });
 
 test('app startup normalizes legacy active instrument aliases before activation', function() {
@@ -581,7 +596,9 @@ test('openRecommendations seeds recommendation state before rendering the dashbo
   var appSource = loadJS('js/app.js');
   var pianoSource = loadJS('js/instruments/piano/app.js');
   assert.ok(appSource.indexOf('if(typeof generateRecommendations==="function") generateRecommendations();') >= 0);
+  assert.ok(appSource.indexOf('refreshDashboardSnapshotRequest({') >= 0);
   assert.ok(pianoSource.indexOf('if(typeof generateRecommendations === "function") generateRecommendations();') >= 0);
+  assert.ok(pianoSource.indexOf('recommendations: state.recommendations || [],') >= 0);
 });
 
 test('dashboard open actions seed insights and challenges before rendering', function() {

@@ -792,6 +792,8 @@ test("dashboard entry actions mirror piano navigation into shared dashboard help
   pianoAct("openHomeDash");
 
   assert.deepStrictEqual(dashboardSectionCalls, ["recommendations", "insights", "challenges", "home_dash"]);
+  assert.strictEqual(dashboardRefreshCalls.length, 1);
+  assert.strictEqual(dashboardRefreshCalls[0].recommendations[0].id, "rec_1");
   assert.strictEqual(S.screen, "homeDash");
 });
 

@@ -16,6 +16,15 @@
       SparkInstruments.activate(instrumentId);
     }
     launcherStateWrite(["activeInstrument"], instrumentId);
+    launcherStateWrite(["recommendations"], []);
+    launcherStateWrite(["lastRecommendationRun"], null);
+    launcherStateWrite(["recommendationInstrumentId"], null);
+    if (typeof window.refreshDashboardSnapshotRequest === "function") {
+      window.refreshDashboardSnapshotRequest({
+        recommendations: [],
+        refreshedAt: Date.now()
+      });
+    }
     launcherStateWrite(["screen"], SCR.HOME);
     launcherStateWrite(["tab"], TAB.PRACTICE);
     if (typeof saveState === "function") saveState();

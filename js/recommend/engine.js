@@ -52,6 +52,7 @@
     var picked = balanceRecommendationSet(candidates, maxSuggestions);
     recommendationStateWrite("recommendations", picked);
     recommendationStateWrite("lastRecommendationRun", Date.now());
+    recommendationStateWrite("recommendationInstrumentId", recommendationStateRead("activeInstrument", null));
     return picked;
   }
 

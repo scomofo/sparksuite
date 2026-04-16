@@ -2246,6 +2246,14 @@ function act(action, param) {
     // ── Recommendation engine ──
     case "openRecommendations":
         if(typeof generateRecommendations === "function") generateRecommendations();
+        if (typeof refreshDashboardSnapshotRequest === "function") {
+          refreshDashboardSnapshotRequest({
+            recommendations: state.recommendations || [],
+            insights: state.personalInsights || null,
+            challenges: state.activeChallenges || [],
+            refreshedAt: Date.now()
+          });
+        }
         openPianoDashboardScreen(state, "recommendations", SCR.RECOMMENDATIONS);
         break;
     case "launchRecommendation":

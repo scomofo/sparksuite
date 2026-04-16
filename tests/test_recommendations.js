@@ -192,6 +192,53 @@ test("collectRecommendationCandidates includes play-along weak-section and bookm
   assert.strictEqual(bookmark.meta.sectionLabel, "Chorus");
 });
 
+test("collectRecommendationCandidates ignores play-along recents from other instruments", function() {
+  S.playAlongRecent = [{
+    trackId: "ukulele_island_package",
+    title: "Ukulele Island Package",
+    instrument: "ukulele",
+    transportMode: "generated",
+    params: { trackId: "ukulele_island_package", title: "Ukulele Island Package", instrument: "ukulele" }
+  }];
+  S.playAlongBookmarks = [{
+    trackId: "ukulele_island_package",
+    title: "Ukulele Island Package",
+    instrument: "ukulele",
+    sectionIndex: 1,
+    sectionLabel: "Chorus",
+    params: { trackId: "ukulele_island_package", title: "Ukulele Island Package", instrument: "ukulele" }
+  }];
+  global.window.sparkCore.getPlayAlongDashboardView = function() {
+    return {
+      recent: S.playAlongRecent.slice(),
+      bookmarks: S.playAlongBookmarks.slice(),
+      outcome: {
+        performance: { weakAreas: ["lane_2"] },
+        sectionSummary: { sectionIndex: 1, sectionLabel: "Chorus" }
+      },
+      transportMode: "generated",
+      weakAreas: ["lane_2"],
+      hasDrill: false,
+      weakSection: { sectionIndex: 1, sectionLabel: "Chorus" }
+    };
+  };
+  global.SparkInstruments.getActive = function() {
+    return {
+      id: "chordspark",
+      appId: "chordspark",
+      name: "Guitar",
+      instrument: "guitar"
+    };
+  };
+
+  var candidates = collectRecommendationCandidates("guitar");
+  var i;
+  for (i = 0; i < candidates.length; i++) {
+    assert.notStrictEqual(candidates[i].source, "play_along");
+    assert.notStrictEqual(candidates[i].source, "play_along_bookmark");
+  }
+});
+
 test("curriculum recommendation can read completed lessons from sparkCore", function() {
   S.completedLessons = [];
   global.getCurriculumItem = function(kind, lessonId) {
