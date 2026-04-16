@@ -307,6 +307,21 @@ test("recommendationsPage renders play-along section recommendation details", fu
   assert.ok(html.indexOf("Weak: lane_2 | late") >= 0);
 });
 
+test("recommendationsPage renders an empty state without generating during render", function() {
+  global.escHTML = function(value) { return String(value); };
+  var generateCalls = 0;
+  global.generateRecommendations = function() {
+    generateCalls++;
+    return [];
+  };
+  S.recommendations = [];
+
+  var html = recommendationsPage();
+
+  assert.strictEqual(generateCalls, 0);
+  assert.ok(html.indexOf("No recommendations are ready right now.") >= 0);
+});
+
 test("launchRecommendationById routes play-along recommendation through section jump helper", function() {
   var called = null;
   global.sparkPlayAlongJumpToSectionRecommendation = function(trackId, sectionIndex) {

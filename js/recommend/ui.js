@@ -34,12 +34,13 @@ function recommendationsPage(){
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var arr = getRecommendationUiList(runtimeState);
-  if(!arr || !arr.length){
-    generateRecommendations();
-    arr = getRecommendationUiList(null);
-  }
   var h = '<div class="card">';
   h += '<div><b>Recommended Next</b></div>';
+  if(!arr || !arr.length){
+    h += '<div style="font-size:12px;color:#aaa">No recommendations are ready right now.</div>';
+    h += '</div>';
+    return h;
+  }
   for(var i=0;i<arr.length;i++){
     h += '<div style="margin-bottom:12px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:8px">';
     h += '<div><b>' + escHTML(arr[i].title) + '</b></div>';

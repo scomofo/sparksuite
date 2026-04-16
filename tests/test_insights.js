@@ -270,7 +270,7 @@ test("buildHomeDashboardData falls back when sparkCore dashboard challenges are 
   assert.strictEqual(summary[0].id, "fallback_daily");
 });
 
-test("buildHomeDashboardData seeds challenges when both dashboard and cache are empty", function() {
+test("buildHomeDashboardData does not seed challenges during render when both dashboard and cache are empty", function() {
   var initCalls = 0;
   global.getIncompleteChallenges = function(limit) {
     if (initCalls > 0) return [{ id: "seeded_daily" }].slice(0, limit);
@@ -292,9 +292,26 @@ test("buildHomeDashboardData seeds challenges when both dashboard and cache are 
 
   var summary = buildHomeDashboardData().challenges;
 
-  assert.strictEqual(initCalls, 1);
-  assert.strictEqual(summary.length, 1);
-  assert.strictEqual(summary[0].id, "seeded_daily");
+  assert.strictEqual(initCalls, 0);
+  assert.strictEqual(summary.length, 0);
+});
+
+test("insightsDashboardPage does not generate insights during render", function() {
+  var originalGeneratePersonalInsights = global.generatePersonalInsights;
+  var generateCalls = 0;
+  global.generatePersonalInsights = function() {
+    generateCalls++;
+    return {};
+  };
+  global.renderInsightLineChart = function() { return "<svg></svg>"; };
+  S.personalInsights = null;
+  S.lastInsightRun = null;
+
+  var html = insightsDashboardPage();
+
+  assert.strictEqual(generateCalls, 0);
+  assert.ok(html.indexOf("Personal Progress Insights") >= 0);
+  global.generatePersonalInsights = originalGeneratePersonalInsights;
 });
 
 test("buildHomeDashboardData resolves career recommendation ids into song objects", function() {

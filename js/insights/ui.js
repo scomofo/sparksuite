@@ -27,10 +27,7 @@ function insightsDashboardPage(){
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var pi = runtimeState && runtimeState.dashboardInsights ? runtimeState.dashboardInsights : insightsUiRead("personalInsights", null);
-  if(!pi || !insightsUiRead("lastInsightRun", null)){
-    generatePersonalInsights();
-    pi = insightsUiRead("personalInsights", {}) || {};
-  }
+  if(!pi || !insightsUiRead("lastInsightRun", null)) pi = pi || {};
   var h = '';
   h += '<div class="card mb16">';
   h += '<div><b>Personal Progress Insights</b></div>';

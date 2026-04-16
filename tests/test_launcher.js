@@ -577,6 +577,22 @@ test('challenge hub open initializes challenges when the cache is empty', functi
   assert.ok(appSource.indexOf('openDashboardSectionRequest("challenges");') >= 0);
 });
 
+test('openRecommendations seeds recommendation state before rendering the dashboard', function() {
+  var appSource = loadJS('js/app.js');
+  var pianoSource = loadJS('js/instruments/piano/app.js');
+  assert.ok(appSource.indexOf('if(typeof generateRecommendations==="function") generateRecommendations();') >= 0);
+  assert.ok(pianoSource.indexOf('if(typeof generateRecommendations === "function") generateRecommendations();') >= 0);
+});
+
+test('dashboard open actions seed insights and challenges before rendering', function() {
+  var appSource = loadJS('js/app.js');
+  var pianoSource = loadJS('js/instruments/piano/app.js');
+  assert.ok(appSource.indexOf('if((!appRead("personalInsights", null) || !appRead("lastInsightRun", null)) && typeof generatePersonalInsights==="function"){') >= 0);
+  assert.ok(appSource.indexOf('if((appRead("activeChallenges", []) || []).length===0 && typeof initializeChallengesForCurrentCycle==="function"){') >= 0);
+  assert.ok(pianoSource.indexOf('if((!state.personalInsights || !state.lastInsightRun) && typeof generatePersonalInsights === "function") generatePersonalInsights();') >= 0);
+  assert.ok(pianoSource.indexOf('if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
+});
+
 test('community submit actions initialize draft state before editing', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('function ensureCommunitySubmitSong(){') >= 0);

@@ -83,10 +83,6 @@
     }
     var incomplete = typeof getIncompleteChallenges === "function" ? getIncompleteChallenges(3) : [];
     if (incomplete.length) return incomplete;
-    if (typeof initializeChallengesForCurrentCycle === "function") {
-      initializeChallengesForCurrentCycle();
-      return typeof getIncompleteChallenges === "function" ? getIncompleteChallenges(3) : [];
-    }
     return [];
   }
 

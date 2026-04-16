@@ -2461,6 +2461,7 @@ window.act=function(a,v){
   }
   // New system screens
   if(a==="openRecommendations"){
+    if(typeof generateRecommendations==="function") generateRecommendations();
     openDashboardSectionRequest("recommendations");
     appApplyLegacyActivityRuntime({setFields:{screen:SCR.RECOMMENDATIONS}},function(){appWrite("screen",SCR.RECOMMENDATIONS);});
     render();return;
@@ -2495,6 +2496,9 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="openInsights"){
+    if((!appRead("personalInsights", null) || !appRead("lastInsightRun", null)) && typeof generatePersonalInsights==="function"){
+      generatePersonalInsights();
+    }
     openDashboardSectionRequest("insights");
     appApplyLegacyActivityRuntime({setFields:{screen:SCR.INSIGHTS}},function(){appWrite("screen",SCR.INSIGHTS);});
     render();return;
@@ -2508,6 +2512,12 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="openHomeDash"){
+    if((appRead("activeChallenges", []) || []).length===0 && typeof initializeChallengesForCurrentCycle==="function"){
+      initializeChallengesForCurrentCycle();
+    }
+    if((!appRead("personalInsights", null) || !appRead("lastInsightRun", null)) && typeof generatePersonalInsights==="function"){
+      generatePersonalInsights();
+    }
     openDashboardSectionRequest("home_dash");
     appApplyLegacyActivityRuntime({setFields:{screen:SCR.HOME_DASH}},function(){appWrite("screen",SCR.HOME_DASH);});
     render();return;

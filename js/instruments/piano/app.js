@@ -2245,6 +2245,7 @@ function act(action, param) {
 
     // ── Recommendation engine ──
     case "openRecommendations":
+        if(typeof generateRecommendations === "function") generateRecommendations();
         openPianoDashboardScreen(state, "recommendations", SCR.RECOMMENDATIONS);
         break;
     case "launchRecommendation":
@@ -2290,6 +2291,7 @@ function act(action, param) {
 
     // ── Insights ──
     case "openInsights":
+        if((!state.personalInsights || !state.lastInsightRun) && typeof generatePersonalInsights === "function") generatePersonalInsights();
         openPianoDashboardScreen(state, "insights", SCR.INSIGHTS);
         break;
 
@@ -2312,6 +2314,8 @@ function act(action, param) {
     // ── Home dashboard ──
     case "openHome":
     case "openHomeDash":
+      if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();
+      if((!state.personalInsights || !state.lastInsightRun) && typeof generatePersonalInsights === "function") generatePersonalInsights();
       openPianoHomeDashboard(state);
       break;
     case "refreshHome":
