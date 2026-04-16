@@ -3,8 +3,12 @@
   function getCurrentPracticePlan(){
     if(typeof window.sparkCore !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
       var view = window.sparkCore.getActiveSessionView();
-      if(view && view.plan && view.plan.flow === "daily_practice" && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
-        return SparkPracticeBridge.toLegacyPlan(view.plan);
+      var corePlanActive = !!(view && view.plan && view.plan.flow === "daily_practice");
+      if(corePlanActive){
+        if(typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
+          return SparkPracticeBridge.toLegacyPlan(view.plan);
+        }
+        return null;
       }
     }
     if(typeof SparkState !== "undefined" && SparkState && typeof SparkState.read === "function"){

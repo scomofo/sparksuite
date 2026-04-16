@@ -115,6 +115,35 @@ test("launchPracticePlanItem resolves plan item ids before launching", function(
   assert.strictEqual(global._acts[0].value, "the_beat_goes_on|chords|normal");
 });
 
+test("launchPracticePlanItem fails safely when a core-owned daily plan is active but the legacy bridge is unavailable", function() {
+  global.S.practicePlan = {
+    items: [{
+      id: "stale_plan_item",
+      type: "performance_song",
+      meta: {
+        songId: "stale_song",
+        arrangementType: "chords",
+        difficultyId: "normal"
+      }
+    }]
+  };
+  global.window.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice"
+        }
+      };
+    }
+  };
+  global.SparkPracticeBridge = undefined;
+
+  var launched = launchPracticePlanItem("stale_plan_item");
+
+  assert.strictEqual(launched, false);
+  assert.strictEqual(global._acts.length, 0);
+});
+
 test("piano transition recommendations fall back to the games drill flow", function() {
   global.S.activeInstrument = "pianospark";
 
