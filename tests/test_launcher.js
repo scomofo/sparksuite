@@ -777,6 +777,11 @@ test('practice guided-session CTA passes the visible session number explicitly',
   assert.ok(practiceSource.indexOf("act(\\'guidedStart\\',\\''+gs.num+'\\')") >= 0);
 });
 
+test('guided completion CTA passes an explicit next session number', function() {
+  var guidedSource = loadJS('js/pages/guided.js');
+  assert.ok(guidedSource.indexOf("act(\\'guidedStart\\',\\'' + nextSessionNum + '\\')") >= 0);
+});
+
 test('practice warmup launcher always routes through the warmup session action', function() {
   var launcherSource = loadJS('js/practice/launchers.js');
   var match = launcherSource.match(/function launchWarmupItem\(item\)\{([\s\S]*?)\n  \}/);

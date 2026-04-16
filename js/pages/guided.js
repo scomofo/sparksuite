@@ -313,7 +313,9 @@ function guidedDonePage() {
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + (guidedStateRead("streak", 0) || 0) + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + ((guidedStateRead("completedGuidedSessions", []) || []).length) + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
   h += '</div></div>';
-  h += '<div class="flex-col"><button class="btn" onclick="act(\'guidedStart\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
+  var nextSessionNum = parseInt(guidedStateRead("guidedSession", null), 10);
+  if (isNaN(nextSessionNum) || nextSessionNum < 1) nextSessionNum = num ? (num + 1) : 1;
+  h += '<div class="flex-col"><button class="btn" onclick="act(\'guidedStart\',\'' + nextSessionNum + '\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';
   h += '</div>';
   return h;

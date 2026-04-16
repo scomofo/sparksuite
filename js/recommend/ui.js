@@ -79,7 +79,28 @@ function renderRecommendationPlayAlongDetail(recommendation){
   return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
 }
 
+function getRecommendationLessonSessionNum(item){
+  var lessonId;
+  var match;
+  var sessionNum;
+  if(!item) return null;
+  if(item.meta && item.meta.guidedSession != null) {
+    sessionNum = parseInt(item.meta.guidedSession, 10);
+    return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
+  }
+  if(item.meta && item.meta.sessionNum != null) {
+    sessionNum = parseInt(item.meta.sessionNum, 10);
+    return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
+  }
+  lessonId = item.meta && item.meta.lessonId ? String(item.meta.lessonId) : String(item.id || "");
+  match = lessonId.match(/guided_session_(\d+)$/);
+  if(!match) return null;
+  sessionNum = parseInt(match[1], 10);
+  return isNaN(sessionNum) || sessionNum < 1 ? null : sessionNum;
+}
+
 function launchGenericRecommendationItem(item){
+  var sessionNum;
   if(!item || typeof act !== "function") return false;
   if(item.type === "drill"){
     if(recommendationUiRead("activeInstrument", null) === "pianospark"){
@@ -100,6 +121,11 @@ function launchGenericRecommendationItem(item){
     return true;
   }
   if(item.type === "lesson"){
+    sessionNum = getRecommendationLessonSessionNum(item);
+    if(sessionNum != null){
+      act("guidedStart", sessionNum);
+      return true;
+    }
     act("guidedStart");
     return true;
   }

@@ -393,6 +393,26 @@ test("launchRecommendationById can open the challenge hub for challenge recommen
   assert.deepStrictEqual(actions, [{ action: "openChallengeHub", value: undefined }]);
 });
 
+test("launchRecommendationById routes lesson recommendations to the intended guided session", function() {
+  var actions = [];
+  global.act = function(action, value) {
+    actions.push({ action: action, value: value });
+  };
+  global.launchPracticeItem = function() {
+    return false;
+  };
+  S.recommendations = [{
+    id: "guided_session_4",
+    type: "lesson",
+    source: "curriculum",
+    meta: { lessonId: "guided_session_4" }
+  }];
+
+  launchRecommendationById("guided_session_4");
+
+  assert.deepStrictEqual(actions, [{ action: "guidedStart", value: 4 }]);
+});
+
 test("launchRecommendationById surfaces feedback when a recommendation cannot be launched", function() {
   global.launchPracticeItem = function() {
     return false;
