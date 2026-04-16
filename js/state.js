@@ -162,6 +162,8 @@ var S={
   // Practice plan
   practicePlan:null,
   practicePlanDate:null,
+  practicePlanInstrumentId:null,
+  practicePlanInstrumentType:null,
   practicePlanComplete:false,
   practicePlanHistory:[],
   practicePlanFocus:"",
@@ -332,7 +334,7 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "performMidiOffsetMs","performAudioOffsetMs","performCalibrated",
   "performanceDailyHistory",
   "performEditorLibrary",
-  "practicePlan","practicePlanDate","practicePlanHistory",
+  "practicePlan","practicePlanDate","practicePlanInstrumentId","practicePlanInstrumentType","practicePlanHistory",
   "weakSpots","practiceHistory","adaptiveState",
   "weeklyPracticePlan","practiceStreak","totalPracticeMinutes","todayPracticeMinutes",
   "mastery","unlocks",
@@ -419,7 +421,7 @@ function resetProgress(){
   state.actionsSinceReward=0;state.nextRewardAt=2;state.rewardPhase=null;state.performanceHistory=[];state.performanceMastery={};
   state.performSongStats={};state.performanceStats={};state.performanceUnlocks={};state.performanceBadges=[];
   state.performanceDailyChallenge=null;state.performanceDailyComplete=false;state.performanceDailyHistory=[];
-  state.practicePlan=null;state.practicePlanDate=null;state.practicePlanComplete=false;state.practicePlanHistory=[];state.practicePlanFocus="";
+  state.practicePlan=null;state.practicePlanDate=null;state.practicePlanInstrumentId=null;state.practicePlanInstrumentType=null;state.practicePlanComplete=false;state.practicePlanHistory=[];state.practicePlanFocus="";
   state.weakSpots={};state.practiceHistory=[];state.adaptiveState={};state.weeklyPracticePlan=null;state.practiceStreak=0;
   state.totalPracticeMinutes=0;state.todayPracticeMinutes=0;
   state.mastery={chords:{},transitions:{},rhythm:{},scales:{},fingers:{},songs:{},lessons:{}};

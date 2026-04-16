@@ -341,7 +341,7 @@ function practiceTab(){
     h+='<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
     h+='<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
     h+='<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+guidedSessions.length+' done</div>';
-    h+='<button onclick="act(\'guidedStart\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Start Session &#9654;</button>';
+    h+='<button onclick="act(\'guidedStart\',\''+gs.num+'\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Start Session &#9654;</button>';
     h+='</div>';
   }
 
@@ -590,12 +590,14 @@ function practicePage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var homeState = getPracticeHomeSnapshot();
-  if(!homeState.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice")) generateDailyPracticePlan();
+  if(!homeState.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice") && typeof generateDailyPracticePlan === "function") generateDailyPracticePlan();
 
   var stats = getPracticeStats();
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"
     ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
     : homeState.practicePlan;
+  var planItems = plan && Array.isArray(plan.items) ? plan.items : [];
 
   var h = '<div class="card mb16">';
   h += '<div><b>Practice Stats</b></div>';
@@ -606,12 +608,16 @@ function practicePage(){
 
   h += '<div class="card mb16">';
   h += '<div><b>Today\'s Practice Plan</b></div>';
-  for(var i=0;i<plan.items.length;i++){
-    var item = plan.items[i];
-    h += '<div class="row">';
-    h += '<span>'+escHTML(item.type)+'</span>';
-    h += '<button onclick="act(\'startPracticeItem\',\''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
-    h += '</div>';
+  if(planItems.length){
+    for(var i=0;i<planItems.length;i++){
+      var item = planItems[i];
+      h += '<div class="row">';
+      h += '<span>'+escHTML(item.type)+'</span>';
+      h += '<button onclick="act(\'startPracticeItem\',\''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
+      h += '</div>';
+    }
+  } else {
+    h += '<div class="muted">No practice plan is available right now.</div>';
   }
   h += '</div>';
 
@@ -622,12 +628,12 @@ function startPracticeItem(id){
   var plan = null;
   if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
     var view = window.sparkCore.getActiveSessionView();
-    if(view && view.plan && view.plan.flow === "daily_practice"){
+    if(view && view.plan && view.plan.flow === "daily_practice" && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
       plan = SparkPracticeBridge.toLegacyPlan(view.plan);
     }
   }
   if(!plan) plan = practiceStateRead("practicePlan", null);
-  if(!plan){
+  if(!plan || !Array.isArray(plan.items)){
     if (typeof showToast === "function") showToast("That practice item couldn't be started right now.");
     return;
   }

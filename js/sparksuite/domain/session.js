@@ -5,6 +5,7 @@
     this.flow = input.flow || "generic";
     this.generatedDate = input.generatedDate || new Date().toISOString().slice(0, 10);
     this.instrumentId = input.instrumentId || null;
+    this.instrumentType = input.instrumentType || null;
     this.focus = input.focus || "Well-rounded practice";
     this.segments = Array.isArray(input.segments) ? input.segments : [];
     this.exercises = Array.isArray(input.exercises) ? input.exercises : [];
@@ -39,7 +40,7 @@
     if (segment && segment.label && segment.label !== segment.type) return segment.label;
     if (flow === "guided_session" && core.sessionNum != null) return "Guided Session " + core.sessionNum;
     if (songId) return titleizeToken(songId);
-    if (Array.isArray(chordNames) && chordNames.length) return chordNames.join(" → ");
+    if (Array.isArray(chordNames) && chordNames.length) return chordNames.join(" -> ");
     if (chordName) return chordName;
     if (skill) return titleizeToken(skill);
     if (segment && segment.id) return titleizeToken(segment.id);
@@ -101,6 +102,8 @@
       id: this.id,
       flow: this.flow,
       generatedDate: this.generatedDate,
+      instrumentId: this.instrumentId,
+      instrumentType: this.instrumentType,
       focus: this.focus,
       items: items,
       totalItems: items.length,

@@ -74,12 +74,9 @@
   }
 
   function launchWarmupItem(item){
-    if(item.meta && item.meta.exerciseId && typeof act==="function"){
-      act("planStartWarmup", item.meta.exerciseId);
-      return true;
-    }
     if(typeof act==="function"){
-      act("tab", TAB.PRACTICE);
+      var exerciseId = item && item.meta && item.meta.exerciseId ? item.meta.exerciseId : "";
+      act("planStartWarmup", exerciseId);
       return true;
     }
     return false;

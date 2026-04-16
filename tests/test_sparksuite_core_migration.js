@@ -436,6 +436,46 @@ test("SparkCore resetProgressState clears cached daily practice plans", function
   assert.notStrictEqual(rebuiltPlan.id, plan.id);
 });
 
+test("SparkCore rebuilds today's practice plan when the active instrument changes", function() {
+  var core = createDefaultSparkCore();
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "ukespark"; },
+    getInstrumentType: function() { return "ukulele"; },
+    getCurriculumMap: function() { return SparkUkuleleLessons; },
+    getCurriculum: function() { return { SESSIONS: SparkUkuleleLessons }; },
+    getSongs: function() { return SparkUkuleleModule.getSongs(); }
+  };
+
+  var ukulelePlan = core.openDailyPracticePlan({ forceRebuild: true });
+
+  assert.strictEqual(ukulelePlan.instrumentId, "ukespark");
+  assert.strictEqual(S.practicePlan.instrumentId, "ukespark");
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "pianospark"; },
+    getInstrumentType: function() { return "piano"; },
+    getCurriculumMap: function() { return [{ num: 1, title: "White Keys Only" }]; },
+    getCurriculum: function() {
+      return {
+        SESSIONS: [
+          { num: 1, title: "Piano Spark 1", spark: { text: "Start" }, newMove: { chord: "C" } }
+        ]
+      };
+    },
+    getSongs: function() {
+      return [{ title: "River Walk", artist: "Piano Suite" }];
+    }
+  };
+
+  var pianoPlan = core.openDailyPracticePlan();
+
+  assert.strictEqual(pianoPlan.instrumentId, "pianospark");
+  assert.notStrictEqual(pianoPlan.id, ukulelePlan.id);
+  assert.strictEqual(core.getCurrentPlan().instrumentId, "pianospark");
+  assert.strictEqual(S.practicePlan.instrumentId, "pianospark");
+});
+
 test("SparkCore can open daily practice from dashboard through an explicit helper", function() {
   var core = createDefaultSparkCore();
   var plan = core.openDashboardPracticePlan();
@@ -1661,6 +1701,27 @@ test("startPracticeItem surfaces feedback when the plan or launcher is unavailab
 
   startPracticeItem("guided_session_1");
   assert.deepStrictEqual(toasts, ["That practice item couldn't be started right now."]);
+});
+
+test("practice page falls back gracefully when a core-owned plan is active but the legacy bridge is unavailable", function() {
+  var core = createDefaultSparkCore();
+  var originalBridge = window.SparkPracticeBridge;
+  window.sparkCore = core;
+  global.escHTML = function(value) { return String(value); };
+  global.getPracticeStats = function() {
+    return { streak: 0, todayMinutes: 0, totalMinutes: 0 };
+  };
+  try {
+    core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+    window.SparkPracticeBridge = undefined;
+    eval(loadJS("js/pages/practice.js"));
+
+    var html = practicePage();
+    assert.ok(html.indexOf("Today's Practice Plan") >= 0);
+    assert.ok(html.indexOf("Start") >= 0);
+  } finally {
+    window.SparkPracticeBridge = originalBridge;
+  }
 });
 
 test("practice and plan buttons route practice item launches through shared actions", function() {
@@ -3811,6 +3872,29 @@ test("daily practice sessions mark comeback sessions for returning players", fun
   assert.strictEqual(plan.context.psychology.sessionType, "comeback");
   assert.deepStrictEqual(plan.context.psychology.structure, ["easy_win", "review", "reward"]);
   assert.strictEqual(S.psychologyComeback, true);
+});
+
+test("legacy practice plan labels use a readable ASCII chord transition separator", function() {
+  var plan = new SessionPlan({
+    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+    segments: [{
+      id: "transition_gc",
+      type: "transition",
+      exerciseIds: ["ex_transition_gc"]
+    }],
+    exercises: [{
+      id: "ex_transition_gc",
+      type: "transition",
+      data: {
+        core: {
+          chords: ["G", "C"]
+        }
+      }
+    }]
+  });
+
+  var legacyPlan = plan.toLegacyPracticePlan();
+  assert.strictEqual(legacyPlan.items[0].label, "G -> C");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

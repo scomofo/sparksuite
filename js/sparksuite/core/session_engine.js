@@ -237,6 +237,7 @@
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
       instrumentId: context.instrumentContext ? context.instrumentContext.appId : null,
+      instrumentType: context.instrumentContext ? context.instrumentContext.instrumentType : null,
       focus: brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : practicePlan.focus,
       lesson: curriculumContext.nextLesson || null,
       difficulty: difficulty,
@@ -286,6 +287,7 @@
     return new SessionPlan({
       flow: "legacy_practice_session",
       instrumentId: instrumentContext.appId || null,
+      instrumentType: instrumentContext.instrumentType || null,
       focus: chordName || mode,
       lesson: chordName ? { id: chordName } : null,
       difficulty: level,
@@ -313,6 +315,7 @@
     return new SessionPlan({
       flow: "legacy_practice_drill",
       instrumentId: instrumentContext.appId || null,
+      instrumentType: instrumentContext.instrumentType || null,
       focus: "chord_transition",
       lesson: chordNames.length ? { id: chordNames.join("_") } : null,
       difficulty: parseLevel(context.level),
@@ -343,6 +346,7 @@
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       instrumentId: instrumentContext.appId || null,
+      instrumentType: instrumentContext.instrumentType || null,
       focus: "guided",
       lesson: guidedPlan,
       difficulty: guidedPlan ? guidedPlan.level || null : null,
@@ -369,6 +373,7 @@
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
       instrumentId: instrumentContext.appId || null,
+      instrumentType: instrumentContext.instrumentType || null,
       focus: "performance",
       lesson: song ? { id: songId } : null,
       difficulty: difficultyId,
@@ -462,6 +467,7 @@
     return new SessionPlan({
       flow: flow,
       instrumentId: context.instrumentContext ? context.instrumentContext.appId : null,
+      instrumentType: context.instrumentContext ? context.instrumentContext.instrumentType : null,
       segments: []
     });
   };

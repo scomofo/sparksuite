@@ -223,6 +223,7 @@
       performanceSongTitle: null,
       performanceDifficultyId: null,
       performanceArrangementType: null,
+      performanceTargetTechnique: null,
       performanceSpeed: null,
       performancePracticePreset: null,
       performanceLoop: null,
@@ -406,11 +407,18 @@
     if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
     var flow = input.flow || this.aiEngine.suggestNextFlow();
     var today = new Date().toISOString().slice(0, 10);
-    if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today) {
+    var instrumentContext = this.instrumentManager.getActiveContext();
+    if (
+      !input.forceRebuild &&
+      flow === SparkSessionTypes.FLOW_DAILY_PRACTICE &&
+      this.currentPlan &&
+      this.currentPlan.generatedDate === today &&
+      sparkCorePlanMatchesInstrument(this.currentPlan, instrumentContext)
+    ) {
       this.updateRuntimeState({
         activeFlow: this.currentPlan.flow,
-        activeInstrumentId: this.currentPlan.instrumentType || this.currentPlan.instrumentId || null,
-        activeInstrumentType: this.runtimeState.activeInstrumentType,
+        activeInstrumentId: this.currentPlan.instrumentId || this.currentPlan.instrumentType || null,
+        activeInstrumentType: this.currentPlan.instrumentType || instrumentContext.instrumentType || null,
         activePlanId: this.currentPlan.id,
         activeSegmentId: this.currentPlan.segments && this.currentPlan.segments.length ? this.currentPlan.segments[0].id : null,
         activeScreen: this.deriveRuntimeScreen(this.currentPlan.flow),
@@ -458,7 +466,6 @@
       return this.currentPlan;
     }
 
-    var instrumentContext = this.instrumentManager.getActiveContext();
     var plan = this.sessionEngine.buildSession(flow, {
       instrumentContext: instrumentContext,
       userProfile: input.userProfile || null,
@@ -500,8 +507,8 @@
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
-      activeInstrumentId: plan.instrumentType || plan.instrumentId || null,
-      activeInstrumentType: instrumentContext.instrumentType || null,
+      activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
+      activeInstrumentType: plan.instrumentType || instrumentContext.instrumentType || null,
       activePlanId: plan.id,
       activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
       activeScreen: this.deriveRuntimeScreen(plan.flow),
@@ -571,8 +578,8 @@
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
-      activeInstrumentId: plan.instrumentType || plan.instrumentId || null,
-      activeInstrumentType: instrumentContext.instrumentType || null,
+      activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
+      activeInstrumentType: plan.instrumentType || instrumentContext.instrumentType || null,
       activePlanId: plan.id,
       activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
       activeScreen: this.deriveRuntimeScreen(plan.flow),
@@ -1859,6 +1866,8 @@
     if (!state) return legacyPlan;
     state.practicePlan = legacyPlan;
     state.practicePlanDate = legacyPlan ? legacyPlan.generatedDate : null;
+    state.practicePlanInstrumentId = legacyPlan ? (legacyPlan.instrumentId || null) : null;
+    state.practicePlanInstrumentType = legacyPlan ? (legacyPlan.instrumentType || null) : null;
     state.practicePlanFocus = legacyPlan ? legacyPlan.focus : "";
     state.practicePlanComplete = !!(legacyPlan && legacyPlan.completedItems >= legacyPlan.totalItems);
     return legacyPlan;
@@ -3638,6 +3647,17 @@
     if (typeof prev !== "number") return typeof next === "number" ? next : 0;
     if (typeof next !== "number") return prev;
     return Math.round((((prev + next) / 2) * 100)) / 100;
+  }
+
+  function sparkCorePlanMatchesInstrument(plan, instrumentContext) {
+    if (!plan || !instrumentContext) return false;
+    if (plan.instrumentId && instrumentContext.appId) {
+      return plan.instrumentId === instrumentContext.appId;
+    }
+    if (plan.instrumentType && instrumentContext.instrumentType) {
+      return plan.instrumentType === instrumentContext.instrumentType;
+    }
+    return false;
   }
 
   function createDefaultSparkCore() {

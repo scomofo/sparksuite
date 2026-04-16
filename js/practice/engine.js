@@ -25,6 +25,24 @@
     return value;
   }
 
+  function getActivePracticeInstrument(){
+    var active = typeof SparkInstruments!=="undefined" && SparkInstruments && typeof SparkInstruments.getActive==="function"
+      ? SparkInstruments.getActive()
+      : null;
+    return {
+      instrumentId: active ? (active.id || null) : practiceEngineRead("activeInstrument", null),
+      instrumentType: active ? (active.instrument || null) : null
+    };
+  }
+
+  function practicePlanMatchesActiveInstrument(plan){
+    var active = getActivePracticeInstrument();
+    if(!plan) return false;
+    if(plan.instrumentId && active.instrumentId) return plan.instrumentId === active.instrumentId;
+    if(plan.instrumentType && active.instrumentType) return plan.instrumentType === active.instrumentType;
+    return false;
+  }
+
   function ensurePracticePlan(opts){
     opts = opts || {};
     if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
@@ -37,7 +55,7 @@
 
     var today = new Date().toISOString().slice(0,10);
     var plan = practiceEngineRead("practicePlan", null);
-    if(plan && practiceEngineRead("practicePlanDate", null)===today) return plan;
+    if(plan && practiceEngineRead("practicePlanDate", null)===today && practicePlanMatchesActiveInstrument(plan)) return plan;
     return buildPracticePlan();
   }
 
@@ -82,12 +100,16 @@
 
     var plan = {
       generatedDate: today,
+      instrumentId: getActivePracticeInstrument().instrumentId,
+      instrumentType: getActivePracticeInstrument().instrumentType,
       focus: focus,
       items: items
     };
 
     practiceEngineWrite("practicePlan", plan);
     practiceEngineWrite("practicePlanDate", today);
+    practiceEngineWrite("practicePlanInstrumentId", plan.instrumentId || null);
+    practiceEngineWrite("practicePlanInstrumentType", plan.instrumentType || null);
     practiceEngineWrite("practicePlanComplete", false);
     practiceEngineWrite("practicePlanFocus", focus);
     saveState();

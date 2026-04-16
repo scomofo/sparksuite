@@ -772,6 +772,19 @@ test('ukulele register prefers sparkCore progress view for practice and stats re
   assert.ok(statsHtml.indexOf('Rhythm skills tracked: 2') >= 0);
 });
 
+test('practice guided-session CTA passes the visible session number explicitly', function() {
+  var practiceSource = loadJS('js/pages/practice.js');
+  assert.ok(practiceSource.indexOf("act(\\'guidedStart\\',\\''+gs.num+'\\')") >= 0);
+});
+
+test('practice warmup launcher always routes through the warmup session action', function() {
+  var launcherSource = loadJS('js/practice/launchers.js');
+  var match = launcherSource.match(/function launchWarmupItem\(item\)\{([\s\S]*?)\n  \}/);
+  assert.ok(match, 'launchWarmupItem should exist');
+  assert.ok(match[1].indexOf('act("planStartWarmup", exerciseId);') >= 0);
+  assert.strictEqual(match[1].indexOf('act("tab", TAB.PRACTICE);'), -1);
+});
+
 test('ukulele chord charts keep explicit fingering for barre-heavy shapes', function() {
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_chords.js'));
 
