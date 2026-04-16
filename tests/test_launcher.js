@@ -2,6 +2,7 @@
 var assert = require('assert');
 var fs = require('fs');
 var path = require('path');
+var vm = require('vm');
 var passed = 0, failed = 0;
 
 function test(name, fn) {
@@ -134,6 +135,84 @@ test('activate sets active instrument', function() {
 test('deactivate clears active instrument', function() {
   SparkInstruments.deactivate();
   assert.strictEqual(SparkInstruments.getActive(), null);
+});
+
+test('resetProgress clears piano guided session progress state', function() {
+  var persistenceSource = loadJS('js/core/persistence.js');
+  var stateSource = loadJS('js/state.js');
+  var timers = [];
+  var sandbox = {
+    console: console,
+    window: null,
+    globalThis: null,
+    localStorage: (function() {
+      var store = {};
+      return {
+        getItem: function(k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
+        setItem: function(k, v) { store[k] = String(v); },
+        removeItem: function(k) { delete store[k]; }
+      };
+    })(),
+    SCR: { HOME: 'home' },
+    TAB: { PRACTICE: 'practice' },
+    T: {},
+    render: function() {},
+    setTimeout: function(fn) { timers.push(fn); return timers.length; },
+    clearTimeout: function() {},
+    setInterval: function(fn) { timers.push(fn); return timers.length; },
+    clearInterval: function() {},
+    Date: Date,
+    JSON: JSON,
+    Math: Math
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(persistenceSource, sandbox);
+  vm.runInContext(stateSource, sandbox);
+
+  sandbox.S.currentSession = 7;
+  sandbox.S.guidedSession = 7;
+  sandbox.S.completedSessions = [1, 2, 3, 4, 5, 6];
+  sandbox.S.completedGuidedSessions = [1, 2, 3, 4, 5, 6];
+  sandbox.S.sessionPlan = { num: 7 };
+  sandbox.S.guidedPlan = { num: 7 };
+  sandbox.S.onboardingComplete = true;
+  sandbox.S.chordProg = { C: 55 };
+  sandbox.S.playerXP = 420;
+  sandbox.S.playerLevel = 4;
+  sandbox.S.mastery = { lessons: { lesson_1: 0.8 }, rhythm: { strum: 0.7 } };
+  sandbox.S.unlocks = { lessons: { lesson_2: true }, songs: {}, exercises: {} };
+  sandbox.S.completedLessons = ['lesson_1'];
+  sandbox.S.practicePlan = { id: 'today_plan' };
+  sandbox.S.practicePlanHistory = [{ id: 'old_plan' }];
+  sandbox.S.careerProgress = { unlockedTiers: { 1: true }, unlockedStages: {}, unlockedSongs: {}, songRatings: {}, stageCompletion: {}, tierCompletion: {} };
+  sandbox.S.performanceStats = { song_a: { attempts: 3 } };
+  sandbox.S.challengeRegistry = { daily_a: { completed: true } };
+
+  sandbox.resetProgress();
+
+  assert.strictEqual(sandbox.S.currentSession, 1);
+  assert.strictEqual(sandbox.S.guidedSession, 1);
+  assert.strictEqual(Array.isArray(sandbox.S.completedSessions), true);
+  assert.strictEqual(sandbox.S.completedSessions.length, 0);
+  assert.strictEqual(Array.isArray(sandbox.S.completedGuidedSessions), true);
+  assert.strictEqual(sandbox.S.completedGuidedSessions.length, 0);
+  assert.strictEqual(sandbox.S.sessionPlan, null);
+  assert.strictEqual(sandbox.S.guidedPlan, null);
+  assert.strictEqual(sandbox.S.onboardingComplete, false);
+  assert.strictEqual(typeof sandbox.S.chordProg, 'object');
+  assert.strictEqual(Object.keys(sandbox.S.chordProg).length, 0);
+  assert.strictEqual(sandbox.S.playerXP, 0);
+  assert.strictEqual(sandbox.S.playerLevel, 1);
+  assert.strictEqual(Object.keys(sandbox.S.mastery.lessons).length, 0);
+  assert.strictEqual(Object.keys(sandbox.S.unlocks.lessons).length, 0);
+  assert.strictEqual(sandbox.S.completedLessons.length, 0);
+  assert.strictEqual(sandbox.S.practicePlan, null);
+  assert.strictEqual(sandbox.S.practicePlanHistory.length, 0);
+  assert.strictEqual(Object.keys(sandbox.S.careerProgress.unlockedTiers).length, 0);
+  assert.strictEqual(Object.keys(sandbox.S.performanceStats).length, 0);
+  assert.strictEqual(Object.keys(sandbox.S.challengeRegistry).length, 0);
 });
 
 test('openInstrumentFromLauncher updates shared launcher state', function() {
