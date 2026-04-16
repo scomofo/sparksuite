@@ -9,10 +9,11 @@ function planPage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
-  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+  var corePlanActive = !!(coreView && coreView.plan && coreView.plan.flow === "daily_practice");
+  var plan = corePlanActive
     && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"
     ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
-    : (typeof ensurePracticePlan === "function" ? ensurePracticePlan() : null);
+    : (corePlanActive ? null : planStateRead(["practicePlan"], null));
   var planItems = plan && Array.isArray(plan.items) ? plan.items : [];
   var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
     ? true

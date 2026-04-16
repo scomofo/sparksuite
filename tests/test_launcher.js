@@ -610,6 +610,15 @@ test('practice pages do not generate daily plans during render', function() {
   assert.ok(pianoPracticeSource.indexOf('No practice plan is available right now.') >= 0);
 });
 
+test('plan pages do not ensure practice plans during render', function() {
+  var sharedPlanSource = loadJS('js/pages/plan.js');
+  var pianoPlanSource = loadJS('js/instruments/piano/pages/plan.js');
+  assert.ok(sharedPlanSource.indexOf('typeof ensurePracticePlan === "function" ? ensurePracticePlan() : null') === -1);
+  assert.ok(sharedPlanSource.indexOf('planStateRead(["practicePlan"], null)') >= 0);
+  assert.ok(pianoPlanSource.indexOf('typeof ensurePracticePlan === "function" ? ensurePracticePlan() : null') === -1);
+  assert.ok(pianoPlanSource.indexOf('pianoPlanRead(["practicePlan"], null)') >= 0);
+});
+
 test('community submit actions initialize draft state before editing', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('function ensureCommunitySubmitSong(){') >= 0);

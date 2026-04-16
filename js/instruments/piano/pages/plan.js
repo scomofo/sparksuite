@@ -20,7 +20,7 @@ function pianoPlanRead(path, fallback){
 }
 
 function pianoPlanPage(){
-  var plan = typeof ensurePracticePlan === "function" ? ensurePracticePlan() : null;
+  var plan = pianoPlanRead(["practicePlan"], null);
   var planItems = plan && Array.isArray(plan.items) ? plan.items : [];
   var h = '';
 
