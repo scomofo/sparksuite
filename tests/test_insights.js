@@ -60,6 +60,7 @@ function resetState() {
 resetState();
 eval(loadJS("js/insights/recommendations.js"));
 eval(loadJS("js/insights/engine.js"));
+eval(loadJS("js/insights/snapshots.js"));
 eval(loadJS("js/insights/ui.js"));
 eval(loadJS("js/home/home_engine.js"));
 eval(loadJS("js/home/home_cards.js"));
@@ -434,6 +435,16 @@ test("generatePersonalInsights carries play-along summary", function() {
   assert.strictEqual(insights.playAlongSummary.hasDrill, true);
   assert.strictEqual(insights.playAlongSummary.weakSection, "Chorus");
   assert.strictEqual(insights.playAlongSummary.bookmarks[0].sectionLabel, "Verse");
+});
+
+test("buildInsightSnapshot falls back to shared xp and level keys", function() {
+  S.xp = 245;
+  S.level = 6;
+
+  var snapshot = buildInsightSnapshot();
+
+  assert.strictEqual(snapshot.meta.xp, 245);
+  assert.strictEqual(snapshot.meta.level, 6);
 });
 
 test("renderSmartCoachCard includes play-along weak spot carryover", function() {

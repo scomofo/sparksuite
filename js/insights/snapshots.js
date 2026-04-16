@@ -48,8 +48,8 @@
         avgAccuracy: typeof getAverageAccuracy === "function" ? getAverageAccuracy() : 0
       },
       meta: {
-        xp: insightSnapshotRead("playerXP", 0) || 0,
-        level: insightSnapshotRead("playerLevel", 1) || 1,
+        xp: insightSnapshotRead("playerXP", insightSnapshotRead("xp", 0)) || 0,
+        level: insightSnapshotRead("playerLevel", insightSnapshotRead("level", 1)) || 1,
         challengesCompleted: metaProgress.challengesCompleted || 0,
         goalsCompleted: metaProgress.goalsCompleted || 0
       },
