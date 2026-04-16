@@ -20,7 +20,9 @@ function pianoPlanRead(path, fallback){
 }
 
 function pianoPlanPage(){
-  var plan = pianoPlanRead(["practicePlan"], null);
+  var plan = typeof getCachedPracticePlanForActiveInstrument === "function"
+    ? getCachedPracticePlanForActiveInstrument()
+    : pianoPlanRead(["practicePlan"], null);
   var planItems = plan && Array.isArray(plan.items) ? plan.items : [];
   var h = '';
 

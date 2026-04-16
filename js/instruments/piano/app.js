@@ -318,6 +318,9 @@ function openPianoHomeDashboard(state) {
 }
 
 function openPianoPracticePlan(state) {
+  if (typeof ensurePracticePlan === "function") {
+    ensurePracticePlan();
+  }
   if (typeof openPracticePlanScreenRequest === "function") {
     openPracticePlanScreenRequest();
   } else if (typeof openDashboardPracticePlanRequest === "function") {

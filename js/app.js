@@ -1756,6 +1756,10 @@ window.act=function(a,v){
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);
     appWrite("activeInstrument", v);
+    appWrite("practicePlan", null);
+    appWrite("practicePlanComplete", false);
+    appWrite("practicePlanInstrumentId", null);
+    appWrite("practicePlanInstrumentType", null);
     appWrite("recommendations", []);
     appWrite("lastRecommendationRun", null);
     appWrite("recommendationInstrumentId", null);
@@ -1794,6 +1798,10 @@ window.act=function(a,v){
         SparkInstruments.activate(v);
       }
       appWrite("activeInstrument", v);
+      appWrite("practicePlan", null);
+      appWrite("practicePlanComplete", false);
+      appWrite("practicePlanInstrumentId", null);
+      appWrite("practicePlanInstrumentType", null);
       appWrite("recommendations", []);
       appWrite("lastRecommendationRun", null);
       appWrite("recommendationInstrumentId", null);
@@ -2775,6 +2783,9 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="openPracticePlan"){
+    if(typeof ensurePracticePlan==="function"){
+      ensurePracticePlan();
+    }
     openPracticePlanScreenRequest();
     appApplyLegacyActivityRuntime({setFields:{screen:SCR.PLAN}},function(){appWrite("screen",SCR.PLAN);});
     render();return;
@@ -3821,6 +3832,9 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="openPlan"){
+    if(typeof ensurePracticePlan==="function"){
+      ensurePracticePlan();
+    }
     if(window.sparkCore){
       openPracticePlanScreenRequest();
     }

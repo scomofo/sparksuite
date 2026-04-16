@@ -16,6 +16,10 @@
       SparkInstruments.activate(instrumentId);
     }
     launcherStateWrite(["activeInstrument"], instrumentId);
+    launcherStateWrite(["practicePlan"], null);
+    launcherStateWrite(["practicePlanComplete"], false);
+    launcherStateWrite(["practicePlanInstrumentId"], null);
+    launcherStateWrite(["practicePlanInstrumentType"], null);
     launcherStateWrite(["recommendations"], []);
     launcherStateWrite(["lastRecommendationRun"], null);
     launcherStateWrite(["recommendationInstrumentId"], null);

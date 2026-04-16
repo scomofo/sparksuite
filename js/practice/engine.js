@@ -37,10 +37,21 @@
 
   function practicePlanMatchesActiveInstrument(plan){
     var active = getActivePracticeInstrument();
+    var planInstrumentId = plan ? (plan.instrumentId || practiceEngineRead("practicePlanInstrumentId", null)) : null;
+    var planInstrumentType = plan ? (plan.instrumentType || practiceEngineRead("practicePlanInstrumentType", null)) : null;
     if(!plan) return false;
-    if(plan.instrumentId && active.instrumentId) return plan.instrumentId === active.instrumentId;
-    if(plan.instrumentType && active.instrumentType) return plan.instrumentType === active.instrumentType;
+    if(planInstrumentId && active.instrumentId) return planInstrumentId === active.instrumentId;
+    if(planInstrumentType && active.instrumentType) return planInstrumentType === active.instrumentType;
     return false;
+  }
+
+  function getCachedPracticePlanForActiveInstrument(){
+    var today = new Date().toISOString().slice(0,10);
+    var plan = practiceEngineRead("practicePlan", null);
+    if(!plan) return null;
+    if(practiceEngineRead("practicePlanDate", null)!==today) return null;
+    if(!practicePlanMatchesActiveInstrument(plan)) return null;
+    return plan;
   }
 
   function ensurePracticePlan(opts){
@@ -53,9 +64,8 @@
       return plan ? plan.toLegacyPracticePlan() : null;
     }
 
-    var today = new Date().toISOString().slice(0,10);
-    var plan = practiceEngineRead("practicePlan", null);
-    if(plan && practiceEngineRead("practicePlanDate", null)===today && practicePlanMatchesActiveInstrument(plan)) return plan;
+    var plan = getCachedPracticePlanForActiveInstrument();
+    if(plan) return plan;
     return buildPracticePlan();
   }
 
@@ -162,5 +172,6 @@
   window.ensurePracticePlan = ensurePracticePlan;
   window.buildPracticePlan = buildPracticePlan;
   window.completePracticePlan = completePracticePlan;
+  window.getCachedPracticePlanForActiveInstrument = getCachedPracticePlanForActiveInstrument;
 
 })();

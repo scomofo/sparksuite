@@ -234,11 +234,19 @@ test('openInstrumentFromLauncher updates shared launcher state', function() {
   saveStateCalls = 0;
   var dashboardPayloads = [];
   global.refreshDashboardSnapshotRequest = function(payload) { dashboardPayloads.push(payload); return payload; };
+  S.practicePlan = { id: 'stale_plan' };
+  S.practicePlanComplete = true;
+  S.practicePlanInstrumentId = 'ukespark';
+  S.practicePlanInstrumentType = 'ukulele';
   S.recommendations = [{ id: 'stale_rec' }];
   S.lastRecommendationRun = 123;
   S.recommendationInstrumentId = 'ukespark';
   openInstrumentFromLauncher('test_guitar');
   assert.strictEqual(S.activeInstrument, 'test_guitar');
+  assert.strictEqual(S.practicePlan, null);
+  assert.strictEqual(S.practicePlanComplete, false);
+  assert.strictEqual(S.practicePlanInstrumentId, null);
+  assert.strictEqual(S.practicePlanInstrumentType, null);
   assert.deepStrictEqual(S.recommendations, []);
   assert.strictEqual(S.lastRecommendationRun, null);
   assert.strictEqual(S.recommendationInstrumentId, null);
@@ -287,7 +295,7 @@ test('shared app launcher actions keep local state fallbacks when launcher bridg
 
 test('switchInstrument clears stale recommendations when changing instruments', function() {
   var appSource = loadJS('js/app.js');
-  assert.ok(/if\(a==="switchInstrument" && v\)\{[\s\S]*?appWrite\("activeInstrument", v\);[\s\S]*?appWrite\("recommendations", \[\]\);[\s\S]*?appWrite\("lastRecommendationRun", null\);[\s\S]*?appWrite\("recommendationInstrumentId", null\);[\s\S]*?refreshDashboardSnapshotRequest\(\{[\s\S]*?recommendations: \[\],[\s\S]*?\}\);[\s\S]*?appWrite\("screen", SCR\.HOME\);/.test(appSource));
+  assert.ok(/if\(a==="switchInstrument" && v\)\{[\s\S]*?appWrite\("activeInstrument", v\);[\s\S]*?appWrite\("practicePlan", null\);[\s\S]*?appWrite\("practicePlanComplete", false\);[\s\S]*?appWrite\("practicePlanInstrumentId", null\);[\s\S]*?appWrite\("practicePlanInstrumentType", null\);[\s\S]*?appWrite\("recommendations", \[\]\);[\s\S]*?appWrite\("lastRecommendationRun", null\);[\s\S]*?appWrite\("recommendationInstrumentId", null\);[\s\S]*?refreshDashboardSnapshotRequest\(\{[\s\S]*?recommendations: \[\],[\s\S]*?\}\);[\s\S]*?appWrite\("screen", SCR\.HOME\);/.test(appSource));
 });
 
 test('app startup normalizes legacy active instrument aliases before activation', function() {
@@ -622,6 +630,8 @@ test('piano dashboard and plan actions use seeded challenges and the shared plan
   assert.ok(pianoSource.indexOf('case "openChallengeHub":') >= 0);
   assert.ok(pianoSource.indexOf('if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
   assert.ok(pianoSource.indexOf('case "openPracticePlan":') >= 0);
+  assert.ok(pianoSource.indexOf('if (typeof ensurePracticePlan === "function") {') >= 0);
+  assert.ok(pianoSource.indexOf('ensurePracticePlan();') >= 0);
   assert.ok(pianoSource.indexOf('openPianoPracticePlan(state);') >= 0);
   assert.ok(pianoSource.indexOf('state.screen = SCR.PLAN;') >= 0);
 });

@@ -10,10 +10,13 @@ function planPage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var corePlanActive = !!(coreView && coreView.plan && coreView.plan.flow === "daily_practice");
+  var cachedPlan = typeof getCachedPracticePlanForActiveInstrument === "function"
+    ? getCachedPracticePlanForActiveInstrument()
+    : planStateRead(["practicePlan"], null);
   var plan = corePlanActive
     && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"
     ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
-    : (corePlanActive ? null : planStateRead(["practicePlan"], null));
+    : (corePlanActive ? null : cachedPlan);
   var planItems = plan && Array.isArray(plan.items) ? plan.items : [];
   var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
     ? true
