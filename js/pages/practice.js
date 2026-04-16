@@ -588,12 +588,13 @@ function practicePage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var homeState = getPracticeHomeSnapshot();
+  var corePlanActive = !!(coreView && coreView.plan && coreView.plan.flow === "daily_practice");
 
   var stats = getPracticeStats();
-  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+  var plan = corePlanActive
     && typeof SparkPracticeBridge !== "undefined" && SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"
     ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
-    : homeState.practicePlan;
+    : (corePlanActive ? null : homeState.practicePlan);
   var planItems = plan && Array.isArray(plan.items) ? plan.items : [];
 
   var h = '<div class="card mb16">';

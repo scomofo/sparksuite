@@ -1745,7 +1745,7 @@ test("practice page falls back gracefully when a core-owned plan is active but t
 
     var html = practicePage();
     assert.ok(html.indexOf("Today's Practice Plan") >= 0);
-    assert.ok(html.indexOf("Start") >= 0);
+    assert.ok(html.indexOf("No practice plan is available right now.") >= 0);
   } finally {
     window.SparkPracticeBridge = originalBridge;
   }
