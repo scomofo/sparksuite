@@ -430,6 +430,64 @@ test("rhythm highway can launch directly from an authored bass module payload", 
   assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["E", "A", "D", "G"]);
 });
 
+test("rhythm highway normalizes app-id instruments for adapter, clock, and loop payloads", function() {
+  global.SparkInstruments = {
+    getAll: function() {
+      return [
+        { id: "ukespark", appId: "ukespark", instrument: "ukulele" }
+      ];
+    }
+  };
+
+  var capturedClockInstrument = null;
+  var capturedAdapter = null;
+  var OriginalTimingEngine = global.SparkTimingEngine;
+  var OriginalGameplayEngine = global.SparkRhythmGameplayEngine;
+
+  global.SparkTimingEngine = function() {};
+  SparkTimingEngine.prototype.createClock = function(instrument) {
+    capturedClockInstrument = instrument;
+    return { getSongTime: function() { return 0; }, close: function() {} };
+  };
+  SparkTimingEngine.prototype.tickToSeconds = function(tempoMap, tick) {
+    return tempoMap && typeof tempoMap.tickToSeconds === "function" ? tempoMap.tickToSeconds(tick) : 0;
+  };
+
+  global.SparkRhythmGameplayEngine = function(options) {
+    capturedAdapter = options.adapter;
+    this.update = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+    this.getSnapshot = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+  };
+
+  try {
+    var payload = new SparkUkuleleRhythmAdapter().createPayload({});
+    payload.adapterType = "ukespark";
+    payload.laneLabels = null;
+
+    var started = startRhythmHighwayPayload(payload, "spark_balanced", {
+      source: "module_exercise",
+      instrument: "ukespark"
+    });
+    var loopSpec = _createRhythmHighwayLoopSpec(payload, { songTimeSec: 0 });
+    var loopPayload = _buildRhythmHighwayLoopPayload(payload, loopSpec);
+
+    assert.strictEqual(started, true);
+    assert.strictEqual(capturedClockInstrument, "ukulele");
+    assert.ok(capturedAdapter instanceof SparkUkuleleRhythmAdapter);
+    assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "ukulele");
+    assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["G", "C", "E", "A"]);
+    assert.strictEqual(loopPayload.adapterType, "ukulele");
+  } finally {
+    global.SparkTimingEngine = OriginalTimingEngine;
+    global.SparkRhythmGameplayEngine = OriginalGameplayEngine;
+    delete global.SparkInstruments;
+  }
+});
+
 test("bass module can provide rhythm guidance for focused authored drills", function() {
   var guidance = SparkBassModule.getRhythmGuidance("walking_bass", {
     gameplay: { accuracy: 71 / 100 },

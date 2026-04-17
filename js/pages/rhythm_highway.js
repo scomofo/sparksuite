@@ -14,6 +14,39 @@
     { id: "spark_challenge", label: "Challenge", hint: "Tighter timing and stricter fret checks" }
   ];
 
+  function normalizeRhythmInstrumentType(instrument) {
+    var candidate = instrument || "guitar";
+    if (!window.SparkInstruments || typeof SparkInstruments.getAll !== "function") return candidate;
+    var instruments = SparkInstruments.getAll() || [];
+    for (var i = 0; i < instruments.length; i++) {
+      var entry = instruments[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) {
+        return entry.instrument || entry.instrumentType || candidate;
+      }
+    }
+    return candidate;
+  }
+
+  function createRhythmHighwayAdapter(instrumentType) {
+    var type = normalizeRhythmInstrumentType(instrumentType);
+    var moduleMap = {
+      bass: window.SparkBassModule,
+      ukulele: window.SparkUkuleleModule,
+      guitar: window.SparkGuitarModule,
+      piano: window.SparkPianoModule
+    };
+    var instrumentModule = moduleMap[type] || null;
+    if (instrumentModule && typeof instrumentModule.getRhythmAdapter === "function") {
+      return instrumentModule.getRhythmAdapter();
+    }
+    if (type === "bass" && typeof SparkBassRhythmAdapter === "function") return new SparkBassRhythmAdapter();
+    if (type === "ukulele" && typeof SparkUkuleleRhythmAdapter === "function") return new SparkUkuleleRhythmAdapter();
+    if (typeof SparkGuitarRhythmAdapter === "function") return new SparkGuitarRhythmAdapter();
+    return {
+      getLaneCount: function() { return type === "bass" || type === "ukulele" ? 4 : 5; }
+    };
+  }
+
   function startRhythmHighwaySegment(segmentId, presetName, loopSpec) {
     if (!window.sparkCore || typeof window.sparkCore.getSegmentById !== "function") return false;
     var segment = window.sparkCore.getSegmentById(segmentId);
@@ -40,10 +73,13 @@
     runtime.segmentId = launchContext.segmentId || null;
     runtime.sourcePayload = payload;
     runtime.activePayload = activePayload;
-    runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock("guitar");
+    var instrumentType = normalizeRhythmInstrumentType(
+      launchContext.instrument || activePayload.adapterType || payload.adapterType || null
+    );
+    runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock(instrumentType);
     runtime.engine = new SparkRhythmGameplayEngine({
       chart: activePayload.songChart,
-      adapter: new SparkGuitarRhythmAdapter(),
+      adapter: createRhythmHighwayAdapter(instrumentType),
       preset: SparkEnginePresetRegistry.get(resolvedPresetName)
     });
 
@@ -53,7 +89,7 @@
     S.rhythmHighwayLaunchContext = {
       source: launchContext.source || "ad_hoc",
       label: launchContext.label || payload.chartId || (payload.songChart.song && payload.songChart.song.title) || null,
-      instrument: launchContext.instrument || payload.adapterType || null,
+      instrument: instrumentType,
       exerciseId: launchContext.exerciseId || null,
       exerciseFocus: launchContext.exerciseFocus || null
     };
@@ -296,6 +332,10 @@
       return payload.laneLabels.slice();
     }
     var laneCount = payload && payload.laneCount ? payload.laneCount : 5;
+    var instrumentType = normalizeRhythmInstrumentType(
+      (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.instrument) || (payload && payload.adapterType) || null
+    );
+    if (laneCount === 4 && instrumentType === "bass") return ["E", "A", "D", "G"];
     if (laneCount === 4) return ["G", "C", "E", "A"];
     return ["G", "R", "Y", "B", "O"];
   }
@@ -337,7 +377,7 @@
 
     return {
       chartId: payload.chartId ? payload.chartId + "_loop" : "rhythm_loop",
-      adapterType: payload.adapterType || "guitar",
+      adapterType: normalizeRhythmInstrumentType(payload.adapterType),
       enginePreset: payload.enginePreset || "spark_learning",
       laneCount: payload.laneCount || 5,
       laneLabels: Array.isArray(payload.laneLabels) ? payload.laneLabels.slice() : null,
