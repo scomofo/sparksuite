@@ -340,9 +340,11 @@ function importSection(){
     h+='<div class="flex-col">';
     for(var i=0;i<S.importedSongs.length;i++){
       var sg=S.importedSongs[i];
+      var importedTitle = _firstSongsTextToken(sg.title, sg.songTitle, sg.id, "Imported song");
+      var importedArtist = _firstSongsTextToken(sg.artist, "Unknown Artist");
       h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--input-bg);border-radius:12px">';
-      h+='<div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+escHTML(sg.title)+'</div>';
-      h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(sg.artist)+' | '+sg.chords.length+' chords | '+sg.bpm+' BPM</div></div>';
+      h+='<div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+escHTML(importedTitle)+'</div>';
+      h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(importedArtist)+' | '+sg.chords.length+' chords | '+sg.bpm+' BPM</div></div>';
       h+='<div style="display:flex;gap:6px">';
       h+='<button onclick="act(\'playImport\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700">&#9654; Play</button>';
       h+='<button onclick="act(\'deleteImport\',\''+i+'\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid var(--border)">&#128465;</button>';
