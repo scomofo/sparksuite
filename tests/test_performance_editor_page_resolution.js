@@ -1,0 +1,114 @@
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+
+function loadJS(file) {
+  return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+}
+
+function resetEnvironment() {
+  global.window = global;
+  global.S = {
+    performEditorChart: null,
+    performEditorLibrary: []
+  };
+  global.escHTML = function(value) { return String(value); };
+  global.act = function() {};
+}
+
+function test(name, fn) {
+  try {
+    resetEnvironment();
+    global.eval(loadJS("js/pages/performance_editor.js"));
+    fn();
+    console.log("  PASS: " + name);
+  } catch (err) {
+    console.error("  FAIL: " + name);
+    console.error("    " + err.message);
+    process.exitCode = 1;
+  }
+}
+
+console.log("\n--- Performance Editor Page Resolution ---");
+
+test("performanceEditorPage ignores stale active chart and event text tokens", function() {
+  S.performEditorLibrary = [{
+    id: "saved_chart_1",
+    title: "undefined",
+    arrangementType: "null",
+    events: [{ id: 1 }]
+  }];
+  S.performEditorChart = {
+    id: "editor_chart_1",
+    title: "undefined",
+    bpm: 120,
+    events: [{
+      id: 7,
+      laneLabel: "undefined",
+      chord: "null",
+      note: "NaN",
+      t: 1,
+      dur: 0.5
+    }],
+    phrases: []
+  };
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: S.performEditorChart,
+        library: S.performEditorLibrary,
+        title: "undefined",
+        source: "null",
+        dirty: false,
+        mode: "chords",
+        snap: "1/8",
+        selectedEventId: 7,
+        selectedEventLabel: "undefined",
+        selectedEventTime: 1,
+        selectedEventDuration: 0.5
+      };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: {} };
+    }
+  };
+
+  var html = performanceEditorPage();
+  assert.ok(html.indexOf("Untitled") >= 0);
+  assert.ok(html.indexOf("blank") >= 0);
+  assert.ok(html.indexOf(">undefined<") === -1);
+  assert.ok(html.indexOf(">null<") === -1);
+  assert.ok(html.indexOf(">NaN<") === -1);
+});
+
+test("performanceEditorPage ignores stale saved chart library text tokens", function() {
+  S.performEditorChart = null;
+  S.performEditorLibrary = [{
+    id: "saved_chart_1",
+    title: "undefined",
+    arrangementType: "null",
+    events: [{ id: 1 }]
+  }];
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: null,
+        library: S.performEditorLibrary,
+        source: "null",
+        dirty: false,
+        mode: "chords",
+        snap: "1/8"
+      };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: {} };
+    }
+  };
+
+  var html = performanceEditorPage();
+  assert.ok(html.indexOf("saved_chart_1") >= 0);
+  assert.ok(html.indexOf(">null<") === -1);
+  assert.ok(html.indexOf(">undefined<") === -1);
+});
+
+if (process.exitCode) process.exit(process.exitCode);
