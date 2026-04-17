@@ -52,6 +52,11 @@ async function test(name, fn) {
 console.log("\n--- Audio State Fallbacks ---");
 
 async function run() {
+  await test("shared audio root helper includes plain global S fallback", function() {
+    var source = loadJS("js/audio.js");
+    assert.ok(source.indexOf('if(typeof globalThis!=="undefined"&&globalThis.S)return globalThis.S;') >= 0);
+  });
+
   await test("audio calibration page and actions can use plain global S", function() {
     eval(loadJS("js/audio/calibration.js"));
 

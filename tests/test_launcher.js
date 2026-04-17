@@ -697,6 +697,7 @@ test('home practice summary prefers the active practicePlan fallback key', funct
 });
 
 test('shared root helpers fall back to global S when SparkState returns a null root', function() {
+  var appSource = loadJS('js/app.js');
   var homeEngineSource = loadJS('js/home/home_engine.js');
   var feedbackSource = loadJS('js/desktop/feedback.js');
   var channelSource = loadJS('js/desktop/channels.js');
@@ -709,6 +710,7 @@ test('shared root helpers fall back to global S when SparkState returns a null r
   var guitarAppSource = loadJS('js/instruments/guitar/app.js');
   var bassAppSource = loadJS('js/instruments/bass/app.js');
   var pianoSharedSource = loadJS('js/instruments/piano/pages/shared.js');
+  assert.ok(appSource.indexOf('if(typeof globalThis!=="undefined"&&globalThis.S)return globalThis.S;') >= 0);
   assert.ok(homeEngineSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
   assert.ok(homeEngineSource.indexOf('if(sparkRoot) return sparkRoot;') >= 0);
   assert.ok(feedbackSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
