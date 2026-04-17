@@ -222,6 +222,30 @@ test("practicePage does not render completed items as clickable start buttons", 
   assert.ok(html.indexOf(">Done<") >= 0);
 });
 
+test("practicePage derives readable fallback labels and subtitles for sparse plan items", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    practicePlan: {
+      items: [
+        { id: "song_1", type: "song", completed: false, meta: { songId: "island_strum", instrument: "ukulele", skill: "strum_pattern" } },
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseId: "warmup_1", instrument: "piano", exerciseFocus: "left_hand" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = practicePage();
+  assert.ok(html.indexOf("island strum") >= 0);
+  assert.ok(html.indexOf("left hand") >= 0);
+  assert.strictEqual(html.indexOf("undefined"), -1);
+});
+
 test("plan page infers richer display types from generic core-backed items", function() {
   global.SparkPracticeBridge = {
     toLegacyPlan: function(plan) { return plan._legacyPlan; }
@@ -234,8 +258,8 @@ test("plan page infers richer display types from generic core-backed items", fun
           _legacyPlan: {
             focus: "Song mastery",
             items: [
-              { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: 240, meta: { songId: "island_strum" } },
-              { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120, meta: { exerciseId: "warmup_1" } }
+              { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: 240, meta: { songId: "island_strum", instrument: "ukulele", skill: "strum_pattern" } },
+              { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120, meta: { exerciseId: "warmup_1", instrument: "piano", exerciseFocus: "left_hand" } }
             ]
           }
         },
@@ -252,8 +276,8 @@ test("plan page infers richer display types from generic core-backed items", fun
   global.eval(loadJS("js/pages/plan.js"));
 
   var html = planPage();
-  assert.ok(html.indexOf("performance song") >= 0);
-  assert.ok(html.indexOf("finger") >= 0);
+  assert.ok(html.indexOf("ukulele - strum pattern - performance song") >= 0);
+  assert.ok(html.indexOf("piano - left hand - finger") >= 0);
   assert.strictEqual(html.indexOf("â€¢"), -1);
   assert.strictEqual(html.indexOf(">song<"), -1);
   assert.strictEqual(html.indexOf(">practice<"), -1);
@@ -337,6 +361,30 @@ test("planPage does not render completed items as clickable go buttons", functio
   assert.ok(html.indexOf("launchPracticePlanItem('done_1')") === -1);
   assert.ok(html.indexOf("launchPracticePlanItem('todo_1')") >= 0);
   assert.ok(html.indexOf(">Done<") >= 0);
+});
+
+test("planPage derives readable fallback labels for sparse plan items", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "song", durationSec: 240, meta: { songId: "island_strum", instrument: "ukulele", skill: "strum_pattern" } },
+        { id: "practice_1", type: "practice", durationSec: 120, meta: { exerciseId: "warmup_1", instrument: "piano", exerciseFocus: "left_hand" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("island strum") >= 0);
+  assert.ok(html.indexOf("left hand") >= 0);
+  assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
 test("practiceTab reads the active core-backed plan without calling ensurePracticePlan during render", function() {

@@ -65,8 +65,8 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
         _legacyPlan: {
           focus: "Song mastery",
           items: [
-            { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: 240, meta: { songId: "island_strum" } },
-            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120, meta: { exerciseId: "warmup_1" } }
+            { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: 240, meta: { songId: "island_strum", instrument: "ukulele", skill: "strum_pattern" } },
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120, meta: { exerciseId: "warmup_1", instrument: "piano", exerciseFocus: "left_hand" } }
           ]
         }
       },
@@ -81,8 +81,8 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
   assert.ok(html.indexOf("launchPracticePlanItem('song_1')") >= 0);
   assert.ok(html.indexOf("launchPracticePlanItem('practice_1')") >= 0);
-  assert.ok(html.indexOf("performance song") >= 0);
-  assert.ok(html.indexOf("finger") >= 0);
+  assert.ok(html.indexOf("ukulele - strum pattern - performance song") >= 0);
+  assert.ok(html.indexOf("piano - left hand - finger") >= 0);
 });
 
 test("piano practice plan section reads the active core-backed plan without generating one during render", function() {
@@ -182,6 +182,35 @@ test("piano practice plan section shows an empty state when no plan exists", fun
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
 });
 
+test("piano practice plan section derives fallback labels for sparse plan items", function() {
+  global.S = {
+    practicePlan: {
+      items: [
+        { id: "song_1", type: "song", completed: false, meta: { songId: "island_strum" } },
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseFocus: "left_hand", exerciseId: "warmup_1" } }
+      ]
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = practicePlanSection();
+  assert.ok(html.indexOf("island strum") >= 0);
+  assert.ok(html.indexOf("left hand") >= 0);
+  assert.strictEqual(html.indexOf("undefined"), -1);
+});
+
 test("pianoPlanPage stays read-only when no plan exists and shows an empty state", function() {
   var ensureCalls = 0;
   global.sparkCore = {
@@ -256,6 +285,29 @@ test("pianoPlanPage does not render completed items as clickable go buttons", fu
   assert.ok(html.indexOf("launchPracticePlanItem('done_1')") === -1);
   assert.ok(html.indexOf("launchPracticePlanItem('todo_1')") >= 0);
   assert.ok(html.indexOf(">Done<") >= 0);
+});
+
+test("pianoPlanPage derives readable fallback labels for sparse plan items", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "song", durationSec: 240, meta: { songId: "island_strum", instrument: "ukulele", skill: "strum_pattern" } },
+        { id: "practice_1", type: "practice", durationSec: 120, meta: { exerciseId: "warmup_1", instrument: "piano", exerciseFocus: "left_hand" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("island strum") >= 0);
+  assert.ok(html.indexOf("left hand") >= 0);
+  assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
