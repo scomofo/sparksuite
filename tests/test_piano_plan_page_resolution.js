@@ -481,6 +481,37 @@ test("pianoPlanPage does not render completed items as clickable go buttons", fu
   assert.ok(html.indexOf(">Done<") >= 0);
 });
 
+test("piano plan and practice sections ignore string false completion flags in cached items", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "song", label: "Replay Island Strum", completed: "false", meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+  assert.ok(planHtml.indexOf("launchPracticePlanItem('song_1')") >= 0);
+  assert.ok(practiceHtml.indexOf("practiceStartItem', 'song_1") >= 0);
+  assert.strictEqual(planHtml.indexOf(">Done<"), -1);
+  assert.strictEqual(practiceHtml.indexOf(">Done<"), -1);
+  assert.strictEqual(planHtml.indexOf("Plan completed!"), -1);
+});
+
 test("pianoPlanPage derives plan completion from completed items when the stale completion flag is false", function() {
   global.S = {
     practicePlanComplete: false,
