@@ -144,4 +144,52 @@ test("songsTab rehydrates an app-id-only active instrument shell", function() {
   assert.ok(html.indexOf("Lvl 1") >= 0);
 });
 
+test("songsTab ignores stale performance daily copy tokens", function() {
+  S.performanceDailyChallenge = {
+    label: "undefined",
+    songTitle: "Moonlight",
+    reason: "null",
+    techniqueKey: " undefined ",
+    xp: 25
+  };
+
+  var html = songsTab();
+  assert.ok(html.indexOf("Moonlight") >= 0);
+  assert.ok(html.indexOf(">null<") === -1);
+  assert.ok(html.indexOf("Technique focus") === -1);
+});
+
+test("songs surfaces ignore stale chart and community text tokens", function() {
+  S.songsSubTab = "community";
+  S.communitySongs = [{
+    id: "community_song_1",
+    title: "undefined",
+    artist: "null",
+    bpm: 96,
+    votes: 3,
+    chords: "[]"
+  }];
+  global.getPerformanceChartLibrary = function() {
+    return [{
+      id: "chart_1",
+      title: "undefined",
+      artist: "null",
+      badge: " NaN ",
+      description: "undefined",
+      bpm: 110
+    }];
+  };
+
+  var communityHtml = songsTab();
+  assert.ok(communityHtml.indexOf("community_song_1") >= 0);
+  assert.ok(communityHtml.indexOf(">null<") === -1);
+
+  S.songsSubTab = "perform";
+  var performHtml = songsTab();
+  assert.ok(performHtml.indexOf("chart 1") >= 0);
+  assert.ok(performHtml.indexOf("Unknown Artist") >= 0);
+  assert.ok(performHtml.indexOf(">undefined<") === -1);
+  assert.ok(performHtml.indexOf(">NaN<") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

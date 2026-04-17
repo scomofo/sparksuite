@@ -36,7 +36,30 @@ function _formatPerformanceTechniqueLabel(key){
     forced:"Forced-note transitions",
     specialPhrase:"Phrase section control"
   };
+  key = _normalizeSongsTextToken(key);
+  if (!key) return "";
   return labels[key]||"Technique focus";
+}
+
+function _normalizeSongsTextToken(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function _firstSongsTextToken(){
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = _normalizeSongsTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
 }
 
 // ===== STRUM TAB =====
@@ -94,11 +117,18 @@ function songsTab(){
 
   // Performance Daily Challenge card
   if(performanceDailyChallenge){
+    var performanceDailyLabel = _firstSongsTextToken(
+      performanceDailyChallenge.label,
+      performanceDailyChallenge.songTitle,
+      performanceDailyChallenge.songId,
+      "Performance challenge"
+    );
+    var performanceDailyReason = _firstSongsTextToken(performanceDailyChallenge.reason);
     var dailyTechniqueLabel=performanceDailyChallenge.techniqueKey?_formatPerformanceTechniqueLabel(performanceDailyChallenge.techniqueKey):"";
     h+='<div class="card mb20" style="border:2px solid '+(performanceDailyComplete?"#4ECDC4":"#FFE66D")+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
     h+='<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+(performanceDailyComplete?'&#9989;':'&#127919;')+' Performance Daily</h3>';
-    h+='<p style="margin:3px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(performanceDailyChallenge.label)+'</p>';
+    h+='<p style="margin:3px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(performanceDailyLabel)+'</p>';
     if(dailyTechniqueLabel){
       h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">';
       h+='<span style="background:#FF6B6B22;color:#FF6B6B;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">Focus: '+escHTML(dailyTechniqueLabel)+'</span>';
@@ -107,8 +137,8 @@ function songsTab(){
       }
       h+='</div>';
     }
-    if(performanceDailyChallenge.reason){
-      h+='<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(performanceDailyChallenge.reason)+'</p>';
+    if(performanceDailyReason){
+      h+='<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(performanceDailyReason)+'</p>';
     }
     h+='<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">+'+performanceDailyChallenge.xp+' XP</p></div>';
     if(!performanceDailyComplete){
@@ -161,8 +191,10 @@ function songsTab(){
   h+='<div class="flex-col">';
   for(var i=0;i<filtered.length;i++){
     var s=filtered[i],lk=s.level>S.level;
+    var songTitle = _firstSongsTextToken(s.title, s.songTitle, s.id, "Song");
+    var songArtist = _firstSongsTextToken(s.artist, "Unknown Artist");
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(s.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(s.artist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+s.bpm+' BPM &bull; '+s.chords.length+' chords</div>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(songTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+s.bpm+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
       var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",S.performDifficulty);
       if(_ps.mastery!=="none"){
@@ -214,7 +246,9 @@ function communitySection(){
     h+='<div class="flex-col">';
     for(var i=0;i<S.communitySongs.length;i++){
       var cs=S.communitySongs[i];
-      h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.title)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(cs.artist)+' | '+escHTML(String(cs.bpm))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
+      var communityTitle = _firstSongsTextToken(cs.title, cs.songTitle, cs.id, "Community song");
+      var communityArtist = _firstSongsTextToken(cs.artist, "Unknown Artist");
+      h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(communityTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(communityArtist)+' | '+escHTML(String(cs.bpm))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
       var chords=[];try{chords=JSON.parse(cs.chords);}catch(e){console.error("ChordSpark: failed to parse community song chords",e);}
       if(chords.length){
         h+='<div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">';
@@ -454,13 +488,17 @@ function performSubTab(){
     var chart=charts[i];
     var accent=chart.accentColor||"#4ECDC4";
     var icon=chart.sourceType==="imported_package"?"&#128230;":"&#127918;";
-    var badge=chart.badge?'<span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:'+accent+'">'+escHTML(chart.badge)+'</span>':'';
+    var chartTitle = _firstSongsTextToken(chart.title, chart.songTitle, chart.id, "Performance chart");
+    var chartArtist = _firstSongsTextToken(chart.artist, "Unknown Artist");
+    var chartBadgeText = _firstSongsTextToken(chart.badge);
+    var chartDescription = _firstSongsTextToken(chart.description);
+    var badge=chartBadgeText?'<span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:'+accent+'">'+escHTML(chartBadgeText)+'</span>':'';
     h+='<div class="card" style="cursor:pointer;border:2px solid '+accent+';margin-bottom:12px"'
       +clickableDiv("act(\'openPerform\',\'"+chart.id+"\')")+'>';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
-    h+='<div style="text-align:left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(chart.title)+'</h4>'+badge+'</div>';
-    h+='<p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(chart.artist||"Unknown Artist")+' &bull; '+escHTML(String(chart.bpm||"--"))+' BPM</p>';
-    if(chart.description)h+='<p style="margin:4px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(chart.description)+'</p>';
+    h+='<div style="text-align:left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(chartTitle)+'</h4>'+badge+'</div>';
+    h+='<p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(chartArtist)+' &bull; '+escHTML(String(chart.bpm||"--"))+' BPM</p>';
+    if(chartDescription)h+='<p style="margin:4px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(chartDescription)+'</p>';
     h+='</div>';
     h+='<div style="font-size:24px">'+icon+'</div></div></div>';
   }
