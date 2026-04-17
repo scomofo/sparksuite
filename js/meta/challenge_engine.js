@@ -70,6 +70,19 @@
   }
 
   function inferChallengeEngineAppType(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var activeHints = [
+      active ? active.instrument : null,
+      active ? active.id : null,
+      challengeEngineRead("activeInstrument", null)
+    ];
+    var i;
+    for(i = 0; i < activeHints.length; i++){
+      if(/piano/i.test(String(activeHints[i] || ""))) return "piano";
+      if(activeHints[i]) return "guitar";
+    }
     return /piano/i.test(typeof APP_NAME !== "undefined" ? APP_NAME : "") ? "piano" : "guitar";
   }
 
