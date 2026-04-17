@@ -44,6 +44,24 @@
     return value;
   }
 
+  function inferMidiImportAppType(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var hints = [
+      active ? active.instrument : null,
+      active ? active.id : null,
+      active ? active.appId : null,
+      midiImportRead("activeInstrument", null)
+    ];
+    var i;
+    for(i = 0; i < hints.length; i++){
+      if(/piano/i.test(String(hints[i] || ""))) return "piano";
+      if(hints[i]) return "guitar";
+    }
+    return /piano/i.test(typeof APP_NAME !== "undefined" ? APP_NAME : "") ? "piano" : "guitar";
+  }
+
   function midiImportPage(){
     var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
       ? window.sparkCore.getRuntimeState()
@@ -113,7 +131,7 @@
       midiImportWrite("midiImportError", "");
       midiImportWrite("importedMidi", normalized);
       midiImportWrite("importedMidiTracks", normalized.tracks || []);
-      var appType = "guitar"; // ChordSpark default
+      var appType = inferMidiImportAppType();
       var assignments = autoAssignMidiTracks(normalized, appType);
       midiImportWrite("importedMidiAssignments", assignments);
       if(typeof syncMidiImportStateRequest === "function"){
