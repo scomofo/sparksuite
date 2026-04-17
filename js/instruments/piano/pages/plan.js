@@ -1,4 +1,7 @@
 function pianoPlanPage(){
+  function hasRenderablePlanItems(plan){
+    return !!(plan && Array.isArray(plan.items) && plan.items.some(function(item){ return !!item; }));
+  }
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
@@ -7,7 +10,7 @@ function pianoPlanPage(){
     ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
   if(!plan) plan = S.practicePlan;
-  var hasPlanItems = !!(plan && Array.isArray(plan.items) && plan.items.length);
+  var hasPlanItems = hasRenderablePlanItems(plan);
   var planCompleted = (coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted)
     ? true
     : !!S.practicePlanComplete;
@@ -114,7 +117,7 @@ function getPianoPlanItemLabel(item){
 }
 
 function getPianoPlanFocusLabel(plan){
-  if(!plan || !Array.isArray(plan.items) || !plan.items.length) return "No practice plan yet.";
+  if(!plan || !Array.isArray(plan.items) || !plan.items.some(function(item){ return !!item; })) return "No practice plan yet.";
   return plan.focus ? plan.focus : "No practice focus yet.";
 }
 
