@@ -259,6 +259,8 @@ function guitarAct(a, v) {
       var nextQuizScore = S.quizScore + (ok ? 1 : 0);
       var nextQuizTotal = S.quizTotal + 1;
       var nextQuizStreak = ok ? (S.quizStreak + 1) : 0;
+      var activityInstrument = getGuitarAppInstrument();
+      var activityAppId = activityInstrument ? (activityInstrument.id || activityInstrument.appId || activityInstrument.instrumentId || "chordspark") : "chordspark";
       if (window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
         window.sparkCore.syncLegacyQuizRuntimeState({
           question: S.quizQ,
@@ -270,7 +272,7 @@ function guitarAct(a, v) {
         });
       }
       S.quizAns = ch.name;
-      if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: "chordspark", skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
+      if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
       else { snd("wrong"); S.quizStreak = 0; }
       S.quizTotal++; render(); setTimeout(genQ, 1200);
     }
