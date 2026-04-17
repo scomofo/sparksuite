@@ -81,6 +81,17 @@
   function completePracticePlan(){
     if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
       var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+      if (activeInstrument && !activeInstrument.instrument && typeof SparkInstruments.getAll === "function") {
+        var activeId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+        var allInstruments = SparkInstruments.getAll() || [];
+        for (var i = 0; i < allInstruments.length; i++) {
+          var entry = allInstruments[i] || {};
+          if (entry.id === activeId || entry.appId === activeId) {
+            activeInstrument = entry;
+            break;
+          }
+        }
+      }
       window.sparkCore.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         markPlanComplete: true

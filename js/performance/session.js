@@ -552,6 +552,17 @@ function finishPerformance() {
   // Route through contract-based progress path (Phase 6 migration)
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
     var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+    if (activeInstrument && !activeInstrument.instrument && typeof SparkInstruments.getAll === "function") {
+      var activeId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+      var allInstruments = SparkInstruments.getAll() || [];
+      for (var i = 0; i < allInstruments.length; i++) {
+        var entry = allInstruments[i] || {};
+        if (entry.id === activeId || entry.appId === activeId) {
+          activeInstrument = entry;
+          break;
+        }
+      }
+    }
     var perfSessionResult = SparkContracts.createSessionResult({
       mode: "song",
       instrumentId: activeInstrument ? (activeInstrument.id || activeInstrument.appId || null) : null,

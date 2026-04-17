@@ -18,7 +18,10 @@ function resetPracticeEnvironment() {
   };
   global.SparkInstruments = {
     getActive: function() {
-      return { appId: "pianospark", instrument: "piano" };
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
     }
   };
   global.sparkCorePayloads = [];
@@ -61,7 +64,10 @@ function resetPerformanceEnvironment() {
   };
   global.SparkInstruments = {
     getActive: function() {
-      return { appId: "pianospark", instrument: "piano" };
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
     }
   };
   global.performanceProgressPayloads = [];
