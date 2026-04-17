@@ -1,5 +1,26 @@
 /* PianoSpark - Games tab (drill, daily, quiz, ear, rhythm, runner) */
 
+function pianoGameTextToken(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstGameTextToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = pianoGameTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function pianoGamesTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -107,22 +128,23 @@ function dailyTab() {
 function quizTab() {
   var html = '<div class="card"><h2>Chord Quiz</h2>';
   if (S.quizQ) {
+    var quizAnswerLabel = pianoFirstGameTextToken(S.quizQ.answer, "Chord");
     html += '<p>Which chord is shown below?</p>';
-    var _quizChord = findChord(S.quizQ.answer);
-    html += _quizChord ? pianoSVG(_quizChord, { showFingers: false }) : '<div class="text-muted">(' + escHTML(S.quizQ.answer) + ')</div>';
+    var _quizChord = findChord(quizAnswerLabel);
+    html += _quizChord ? pianoSVG(_quizChord, { showFingers: false }) : '<div class="text-muted">(' + escHTML(quizAnswerLabel) + ')</div>';
     html += '<div class="quiz-options">';
     S.quizQ.options.forEach(function(opt) {
       var cls = "btn quiz-btn";
       if (S.quizAns) {
-        if (opt === S.quizQ.answer) cls += " correct";
-        else if (opt === S.quizAns && opt !== S.quizQ.answer) cls += " wrong";
+        if (opt === quizAnswerLabel) cls += " correct";
+        else if (opt === S.quizAns && opt !== quizAnswerLabel) cls += " wrong";
       }
       html += '<button class="' + cls + '" onclick="act(\'quiz_answer\',\'' + opt + '\')" ' + (S.quizAns ? "disabled" : "") + '>' + escHTML(opt) + '</button>';
     });
     html += '</div>';
     if (S.quizAns) {
-      var correct = S.quizAns === S.quizQ.answer;
-      html += '<div class="quiz-result ' + (correct ? 'correct' : 'wrong') + '">' + (correct ? "\u2705 Correct!" : "\u274C It was " + S.quizQ.answer) + '</div>';
+      var correct = S.quizAns === quizAnswerLabel;
+      html += '<div class="quiz-result ' + (correct ? 'correct' : 'wrong') + '">' + (correct ? "\u2705 Correct!" : "\u274C It was " + quizAnswerLabel) + '</div>';
       html += '<button class="btn" onclick="act(\'next_quiz\')">Next Question</button>';
     }
     html += '<div class="text-muted">Score: ' + S.quizCorrect + '</div>';
@@ -139,19 +161,20 @@ function quizTab() {
 function earTrainTab() {
   var html = '<div class="card"><h2>Ear Training</h2>';
   if (S.earChord) {
+    var earChordLabel = pianoFirstGameTextToken(S.earChord, "Chord");
     html += '<p>Listen and identify the chord:</p>';
     html += '<button class="btn btn-accent" onclick="act(\'ear_play\')">\u{1F50A} Play Again</button>';
     html += '<div class="quiz-options">';
     var pool = chordsUpToLevel(Math.min(S.level + 1, 8)).slice(0, 12);
     pool.forEach(function(c) {
       var cls = "btn quiz-btn";
-      if (S.earRevealed && c.short === S.earChord) cls += " correct";
+      if (S.earRevealed && c.short === earChordLabel) cls += " correct";
       html += '<button class="' + cls + '" onclick="act(\'ear_guess\',\'' + c.short + '\')" ' + (S.earRevealed ? "disabled" : "") + '>' + escHTML(c.short) + '</button>';
     });
     html += '</div>';
     if (S.earRevealed) {
-      html += '<div class="reveal-box">It was: <strong>' + escHTML(S.earChord) + '</strong></div>';
-      html += pianoSVG(findChord(S.earChord));
+      html += '<div class="reveal-box">It was: <strong>' + escHTML(earChordLabel) + '</strong></div>';
+      html += pianoSVG(findChord(earChordLabel));
       html += '<button class="btn" onclick="act(\'next_ear\')">Next</button>';
     }
   } else {
@@ -190,9 +213,10 @@ function rhythmTab() {
 function runnerTab() {
   var html = '<div class="card"><h2>Chord Runner</h2>';
   if (S.runnerActive) {
+    var runnerTargetLabel = pianoFirstGameTextToken(S.runnerTarget, "Target chord");
     html += '<div class="runner-display">';
     html += '<div class="runner-score">Score: ' + S.runnerScore + '</div>';
-    html += '<div class="runner-target">Play: <strong>' + (S.runnerTarget ? escHTML(S.runnerTarget) : "...") + '</strong></div>';
+    html += '<div class="runner-target">Play: <strong>' + escHTML(runnerTargetLabel || "...") + '</strong></div>';
     html += '<div class="runner-lanes">';
     var options = getRunnerOptions();
     options.forEach(function(opt) {
@@ -220,7 +244,7 @@ function fingersTab() {
     html += '<div style="font-size:2rem;font-weight:800;color:var(--accent);margin:8px 0">' + S.chordChangeCount + '</div>';
     html += '<div class="text-muted">clean changes</div>';
     if (S.chordChangePair.length === 2) {
-      html += '<div style="font-size:1.2rem;margin:12px 0">' + escHTML(S.chordChangePair[0]) + ' \u2194 ' + escHTML(S.chordChangePair[1]) + '</div>';
+      html += '<div style="font-size:1.2rem;margin:12px 0">' + escHTML(pianoFirstGameTextToken(S.chordChangePair[0], "?")) + ' \u2194 ' + escHTML(pianoFirstGameTextToken(S.chordChangePair[1], "?")) + '</div>';
     }
     html += '<button class="btn btn-lg btn-accent" onclick="act(\'chord_change_tap\')" style="width:100%;padding:20px;margin:8px 0">TAP for each clean change</button>';
     html += '<button class="btn btn-secondary" onclick="act(\'stop_chord_change\')">Stop</button>';
@@ -341,9 +365,10 @@ function _getChordChangePairs() {
 }
 
 function getRunnerOptions() {
-  if (!S.runnerTarget) return ["C", "Am", "F"];
+  var runnerTarget = pianoFirstGameTextToken(S.runnerTarget);
+  if (!runnerTarget) return ["C", "Am", "F"];
   var all = chordsUpToLevel(S.level).map(function(c) { return c.short; });
-  var opts = [S.runnerTarget];
+  var opts = [runnerTarget];
   while (opts.length < 3 && all.length >= 3) {
     var r = all[Math.floor(Math.random() * all.length)];
     if (opts.indexOf(r) < 0) opts.push(r);
