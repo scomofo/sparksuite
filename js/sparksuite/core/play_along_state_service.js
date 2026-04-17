@@ -56,6 +56,11 @@
       ? core.getRuntimeState()
       : null;
     if (runtime && runtime.activeInstrumentId) return runtime.activeInstrumentId;
+    if (runtime && runtime.activeInstrumentType) {
+      var runtimeInstrumentId = getRegisteredPlayAlongInstrumentId(runtime.activeInstrumentType);
+      if (runtimeInstrumentId) return runtimeInstrumentId;
+      return runtime.activeInstrumentType;
+    }
     var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
     if (active && (active.id || active.appId)) return active.id || active.appId;
     return "guitar";
@@ -84,6 +89,23 @@
       inst = all[i] || {};
       if (inst.id === instrumentId || inst.appId === instrumentId) {
         return inst.instrument || null;
+      }
+    }
+    return null;
+  }
+
+  function getRegisteredPlayAlongInstrumentId(instrumentType) {
+    var all;
+    var i;
+    var inst;
+    if (!instrumentType || typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+      return null;
+    }
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      inst = all[i] || {};
+      if (inst.instrument === instrumentType) {
+        return inst.id || inst.appId || null;
       }
     }
     return null;

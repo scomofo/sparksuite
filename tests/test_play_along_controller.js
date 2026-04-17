@@ -269,6 +269,23 @@ test("play along state service falls back to plain global S when SparkState root
   assert.strictEqual(service.readValue(["playAlongTest", "value"], 0), 42);
 });
 
+test("play along state service resolves instrument ids from runtime instrument types", function() {
+  sparkCore.getRuntimeState = function() {
+    return { activeInstrumentType: "piano" };
+  };
+  global.SparkInstruments = {
+    getActive: function() { return null; },
+    getAll: function() {
+      return [{ id: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  var service = new SparkPlayAlongStateService();
+
+  assert.strictEqual(service.getInstrumentType(), "piano");
+  assert.strictEqual(service.getInstrumentId(), "pianospark");
+});
+
 test("sparkPlayAlongStartDrill relaunches current session into drill loop", async function() {
   sparkCore.lastSessionOutcome = {
     drills: [{ label: "Fix timing", startMs: 3200, endMs: 5200, speed: 0.75 }]
