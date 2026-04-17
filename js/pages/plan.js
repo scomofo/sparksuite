@@ -172,9 +172,15 @@ function formatPlanItemSubtitle(item){
 }
 
 function prettyPlanToken(value){
+  var text;
+  var lower;
   if(value == null) return "";
   if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
-  return String(value || "").replace(/_/g, " ").trim();
+  text = String(value || "").replace(/_/g, " ").trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
 }
 
 function firstPrettyPlanToken() {
@@ -189,7 +195,7 @@ function firstPrettyPlanToken() {
 
 function getPlanItemLabel(item){
   var meta = item && item.meta ? item.meta : {};
-  var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
+  var label = prettyPlanToken(item ? item.label : null);
   return label
     ? label
     : firstPrettyPlanToken(
@@ -208,12 +214,12 @@ function getPlanItemLabel(item){
 function getPlanFocusLabel(plan){
   if(!plan || !Array.isArray(plan.items) || !plan.items.some(function(item){
     var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
-    var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
-    var type = item && typeof item.type === "string" ? item.type.trim() : (item ? item.type : null);
+    var label = prettyPlanToken(item ? item.label : null);
+    var type = prettyPlanToken(item ? item.type : null);
     var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && !Array.isArray(item.meta) && Object.keys(item.meta).some(function(key) {
       var value = item.meta[key];
       if (value == null) return false;
-      if (typeof value === "string") return !!value.trim();
+      if (typeof value === "string") return !!prettyPlanToken(value);
       if (typeof value === "number" || typeof value === "boolean") return false;
       if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return false;
       return true;
@@ -226,7 +232,7 @@ function getPlanFocusLabel(plan){
        metaHasValue)
     );
   })) return "No practice plan yet.";
-  var focus = typeof plan.focus === "string" ? plan.focus.trim() : null;
+  var focus = prettyPlanToken(plan ? plan.focus : null);
   return focus ? focus : "No practice focus yet.";
 }
 
