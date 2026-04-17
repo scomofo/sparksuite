@@ -96,6 +96,9 @@
         label: "Practice " + weakChords[c].chord,
         desc: weakChords[c].mastery + "% mastery - needs work",
         chord: weakChords[c].chord,
+        meta: {
+          chordName: weakChords[c].chord
+        },
         durationSec: 120,
         completed: false
       });

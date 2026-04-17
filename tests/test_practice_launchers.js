@@ -25,10 +25,15 @@ function loadJS(file) {
 function resetState() {
   global.window = global;
   global.S = { guidedSession: 1 };
-  global.TAB = { PRACTICE: "practice" };
+  global.TAB = { PRACTICE: "practice", SONGS: "songs" };
   global._acts = [];
   global.act = function(name, value) {
     global._acts.push({ name: name, value: value });
+  };
+  global._openPerformanceSongSelectionCalls = [];
+  global.openPerformanceSongSelectionRequest = function(options) {
+    global._openPerformanceSongSelectionCalls.push(options || {});
+    return { opened: true };
   };
   global.SparkInstrumentAdapter = {
     getInstrumentType: function() { return "guitar"; }
@@ -141,6 +146,48 @@ test("launchPracticeItem infers guided launches from generic core practice segme
   assert.strictEqual(launched, true);
   assert.deepStrictEqual(global._acts, [
     { name: "guidedStart", value: 2 }
+  ]);
+});
+
+test("launchPracticeItem routes chord practice items into a specific chord session", function() {
+  var launched = launchPracticeItem({
+    id: "chord_g",
+    type: "chord_practice",
+    chord: "G"
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "startSession", value: "G" }
+  ]);
+});
+
+test("launchPracticeItem routes explore items into the performance song browser", function() {
+  var launched = launchPracticeItem({
+    id: "explore_1",
+    type: "explore"
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._openPerformanceSongSelectionCalls, [{}]);
+  assert.deepStrictEqual(global._acts, []);
+});
+
+test("launchPracticeItem falls back to the songs tab when the performance browser request is unavailable", function() {
+  global.openPerformanceSongSelectionRequest = function(options) {
+    global._openPerformanceSongSelectionCalls.push(options || {});
+    return null;
+  };
+
+  var launched = launchPracticeItem({
+    id: "explore_legacy",
+    type: "explore"
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._openPerformanceSongSelectionCalls, [{}]);
+  assert.deepStrictEqual(global._acts, [
+    { name: "tab", value: "songs" }
   ]);
 });
 

@@ -54,9 +54,11 @@ test("getWeakTransitions parses legacy and normalized transition delimiters", fu
 test("generatePracticePlan stores transition and song launch data inside item meta", function() {
   var plan = generatePracticePlan();
   var transition = null;
+  var chordPractice = null;
   var performanceSong = null;
   for (var i = 0; i < plan.items.length; i++) {
     if (!transition && plan.items[i].type === "transition") transition = plan.items[i];
+    if (!chordPractice && plan.items[i].type === "chord_practice") chordPractice = plan.items[i];
     if (!performanceSong && plan.items[i].type === "performance_song") performanceSong = plan.items[i];
   }
 
@@ -65,6 +67,11 @@ test("generatePracticePlan stores transition and song launch data inside item me
     from: transition.label.split(" -> ")[0],
     to: transition.label.split(" -> ")[1],
     key: transition.label.split(" -> ")[0] + "|" + transition.label.split(" -> ")[1]
+  });
+
+  assert.ok(chordPractice);
+  assert.deepStrictEqual(chordPractice.meta, {
+    chordName: "G"
   });
 
   assert.ok(performanceSong);

@@ -20,7 +20,9 @@
     if(!item) return false;
     var type = getEffectivePracticeItemType(item);
     if(type==="warmup") return launchWarmupItem(item);
+    if(type==="chord_practice") return launchChordPracticeItem(item);
     if(type==="transition") return launchTransitionItem(item);
+    if(type==="explore") return launchExploreItem(item);
     if(type==="rhythm_highway") return launchRhythmHighwayItem(item);
     if(isModuleExerciseItem(item)) return launchModuleExerciseItem(item);
     if(type==="performance_song") return launchPerformanceSongItem(item);
@@ -62,6 +64,16 @@
     return false;
   }
 
+  function launchChordPracticeItem(item){
+    if(typeof act!=="function") return false;
+    var chordName = item && item.chord
+      ? item.chord
+      : (item && item.meta && item.meta.chordName ? item.meta.chordName : "");
+    if(!chordName) return launchWarmupItem(item);
+    act("startSession", chordName);
+    return true;
+  }
+
   function launchPerformanceSongItem(item){
     if(!item.meta || typeof act!=="function") return false;
     var songId = item.meta.songId || "";
@@ -95,6 +107,19 @@
     var bpm = item && item.meta && item.meta.bpm ? item.meta.bpm : 90;
     if(typeof act==="function"){
       act("planStartRhythm", String(bpm));
+      return true;
+    }
+    return false;
+  }
+
+  function launchExploreItem(item){
+    var requestResult;
+    if(typeof openPerformanceSongSelectionRequest==="function"){
+      requestResult = openPerformanceSongSelectionRequest({});
+      if(requestResult != null) return true;
+    }
+    if(typeof act==="function"){
+      act("tab", TAB && TAB.SONGS ? TAB.SONGS : "songs");
       return true;
     }
     return false;
@@ -144,12 +169,14 @@
 
   window.launchPracticeItem = launchPracticeItem;
   window.launchWarmupItem = launchWarmupItem;
+  window.launchChordPracticeItem = launchChordPracticeItem;
   window.launchTransitionItem = launchTransitionItem;
   window.launchPerformanceSongItem = launchPerformanceSongItem;
   window.launchPerformancePhraseItem = launchPerformancePhraseItem;
   window.launchPerformanceTechniqueItem = launchPerformanceTechniqueItem;
   window.launchRhythmItem = launchRhythmItem;
   window.launchRhythmHighwayItem = launchRhythmHighwayItem;
+  window.launchExploreItem = launchExploreItem;
   window.launchFingerItem = launchFingerItem;
   window.launchModuleExerciseItem = launchModuleExerciseItem;
   window.launchPracticePlanItem = launchPracticeItem;
