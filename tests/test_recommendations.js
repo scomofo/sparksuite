@@ -383,6 +383,39 @@ test("curriculum recommendation falls back to legacy curriculum roots when no ac
   assert.strictEqual(curriculum.id, "piano_intro_2");
 });
 
+test("curriculum recommendation falls back to ukulele lesson roots when the active map is unavailable", function() {
+  global.SparkInstruments.getActive = function() {
+    return {
+      id: "ukespark",
+      appId: "ukespark",
+      instrument: "ukulele"
+    };
+  };
+  global.getCurriculumItem = function(kind, lessonId) {
+    if (kind === "lessons" && lessonId === "uke_02") {
+      return { id: "uke_02", title: "Starter Chords", level: 2 };
+    }
+    return null;
+  };
+  global.getNextLessonFromCurriculum = function(rootLessonId) {
+    if (rootLessonId !== "uke_01") return null;
+    return "uke_02";
+  };
+
+  var candidates = collectRecommendationCandidates("ukulele");
+  var curriculum = null;
+  var i;
+  for (i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "curriculum") {
+      curriculum = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(curriculum);
+  assert.strictEqual(curriculum.id, "uke_02");
+});
+
 test("generateRecommendations prioritizes play-along recovery and module-progress ahead of generic challenges", function() {
   S.dailyChallenges = [{ id: "daily_walk", type: "practice", completed: false }];
 

@@ -105,6 +105,17 @@
     return out;
   }
 
+  function getRecommendationCurriculumRoot(appType, activeCurriculum){
+    if (activeCurriculum.length && activeCurriculum[0] && activeCurriculum[0].id) {
+      return activeCurriculum[0].id;
+    }
+    if (appType === "ukulele") return "uke_01";
+    if (appType === "bass") return "bass_level_1";
+    return appType === "piano"
+      ? "curriculum_pianospark_main"
+      : "curriculum_chordspark_main";
+  }
+
   function getCurriculumCandidates(appType){
     var out = [];
     var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
@@ -113,11 +124,7 @@
     var activeCurriculum = active && typeof active.getCurriculumMap === "function"
       ? (active.getCurriculumMap() || [])
       : [];
-    var curriculumId = activeCurriculum.length && activeCurriculum[0] && activeCurriculum[0].id
-      ? activeCurriculum[0].id
-      : (appType === "piano"
-        ? "curriculum_pianospark_main"
-        : "curriculum_chordspark_main");
+    var curriculumId = getRecommendationCurriculumRoot(appType, activeCurriculum);
     var completedLessons = getCompletedLessons();
     var nextLessonId = typeof getNextLessonFromCurriculum === "function"
       ? getNextLessonFromCurriculum(curriculumId, completedLessons)
