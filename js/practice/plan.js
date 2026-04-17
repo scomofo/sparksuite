@@ -146,10 +146,22 @@
   // Weekly plan generator
   function generateWeeklyPracticePlan(){
     if(typeof buildPracticePlan === "function" && buildPracticePlan !== generateDailyPracticePlan){
+      var cachedDailyPlan = practicePlanRead("practicePlan", null);
+      var cachedDailyPlanDate = practicePlanRead("practicePlanDate", null);
+      var cachedDailyPlanInstrumentId = practicePlanRead("practicePlanInstrumentId", null);
+      var cachedDailyPlanInstrumentType = practicePlanRead("practicePlanInstrumentType", null);
+      var cachedDailyPlanComplete = practicePlanRead("practicePlanComplete", false);
+      var cachedDailyPlanFocus = practicePlanRead("practicePlanFocus", null);
       var sharedDays = [];
       for(var d=0; d<7; d++){
         sharedDays.push(buildPracticePlan());
       }
+      practicePlanWrite("practicePlan", cachedDailyPlan);
+      practicePlanWrite("practicePlanDate", cachedDailyPlanDate);
+      practicePlanWrite("practicePlanInstrumentId", cachedDailyPlanInstrumentId);
+      practicePlanWrite("practicePlanInstrumentType", cachedDailyPlanInstrumentType);
+      practicePlanWrite("practicePlanComplete", cachedDailyPlanComplete);
+      practicePlanWrite("practicePlanFocus", cachedDailyPlanFocus);
       var sharedWeeklyPlan = {
         weekStart: new Date().toISOString().slice(0,10),
         days: sharedDays

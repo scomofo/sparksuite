@@ -2783,7 +2783,7 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="openPracticePlan"){
-    if(typeof ensurePracticePlan==="function"){
+    if(!window.sparkCore && typeof ensurePracticePlan==="function"){
       ensurePracticePlan();
     }
     openPracticePlanScreenRequest();
@@ -3804,13 +3804,13 @@ window.act=function(a,v){
   }
   if(a==="planStartWarmup"){
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-      window.sparkCore.startSession({flow:"daily_practice",forceRebuild:true});
+      window.sparkCore.startSession({flow:"daily_practice"});
     }
     appWrite("screen",SCR.SESSION);render();return;
   }
   if(a==="planStartTransition"){
     if(window.sparkCore && typeof window.sparkCore.startSession==="function"){
-      window.sparkCore.startSession({flow:"daily_practice",forceRebuild:true});
+      window.sparkCore.startSession({flow:"daily_practice"});
     }
     appWrite("screen",SCR.SESSION);render();return;
   }
@@ -3832,11 +3832,13 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="openPlan"){
-    if(typeof ensurePracticePlan==="function"){
+    if(!window.sparkCore && typeof ensurePracticePlan==="function"){
       ensurePracticePlan();
     }
     if(window.sparkCore){
       openPracticePlanScreenRequest();
+    } else if(typeof ensurePracticePlan==="function"){
+      ensurePracticePlan();
     }
     appWrite("screen",SCR.PLAN);render();return;
   }

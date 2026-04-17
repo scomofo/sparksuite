@@ -626,7 +626,13 @@ test('dashboard refresh actions also refresh challenge snapshots before syncing'
 });
 
 test('piano dashboard and plan actions use seeded challenges and the shared plan-screen helper', function() {
+  var appSource = loadJS('js/app.js');
   var pianoSource = loadJS('js/instruments/piano/app.js');
+  assert.ok(appSource.indexOf('if(a==="openPracticePlan"){') >= 0);
+  assert.ok(appSource.indexOf('if(!window.sparkCore && typeof ensurePracticePlan==="function"){') >= 0);
+  assert.ok(appSource.indexOf('openPracticePlanScreenRequest();') >= 0);
+  assert.ok(appSource.indexOf('if(a==="openPlan"){') >= 0);
+  assert.ok(appSource.indexOf('} else if(typeof ensurePracticePlan==="function"){') >= 0);
   assert.ok(pianoSource.indexOf('case "openChallengeHub":') >= 0);
   assert.ok(pianoSource.indexOf('if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
   assert.ok(pianoSource.indexOf('case "openPracticePlan":') >= 0);
@@ -638,6 +644,18 @@ test('piano dashboard and plan actions use seeded challenges and the shared plan
   assert.ok(pianoSource.indexOf('case "regeneratePlan":') >= 0);
   assert.ok(pianoSource.indexOf('openPianoPracticePlan(state, { forceRebuild: true }); break;') >= 0);
   assert.ok(pianoSource.indexOf('state.screen = SCR.PLAN;') >= 0);
+});
+
+test('plan item launches do not force-rebuild the daily plan before opening session screens', function() {
+  var appSource = loadJS('js/app.js');
+  var warmupMatch = appSource.match(/if\(a==="planStartWarmup"\)\{([\s\S]*?)appWrite\("screen",SCR\.SESSION\);render\(\);return;\n  \}/);
+  var transitionMatch = appSource.match(/if\(a==="planStartTransition"\)\{([\s\S]*?)appWrite\("screen",SCR\.SESSION\);render\(\);return;\n  \}/);
+  assert.ok(warmupMatch);
+  assert.ok(transitionMatch);
+  assert.ok(warmupMatch[1].indexOf('window.sparkCore.startSession({flow:"daily_practice"});') >= 0);
+  assert.ok(transitionMatch[1].indexOf('window.sparkCore.startSession({flow:"daily_practice"});') >= 0);
+  assert.ok(warmupMatch[1].indexOf('forceRebuild:true') === -1);
+  assert.ok(transitionMatch[1].indexOf('forceRebuild:true') === -1);
 });
 
 test('practice pages do not generate daily plans during render', function() {

@@ -244,6 +244,11 @@ test("getNextPracticeItem reads the cached plan without generating one", functio
 
 test("generateWeeklyPracticePlan preserves the cached daily plan", function() {
   S.practicePlan = { id: "cached_daily_plan", items: [{ id: "existing_item" }] };
+  S.practicePlanDate = "2026-04-16";
+  S.practicePlanInstrumentId = "pianospark";
+  S.practicePlanInstrumentType = "piano";
+  S.practicePlanComplete = true;
+  S.practicePlanFocus = "Song mastery";
 
   var weeklyPlan = generateWeeklyPracticePlan();
 
@@ -251,6 +256,11 @@ test("generateWeeklyPracticePlan preserves the cached daily plan", function() {
   assert.strictEqual(weeklyPlan.days.length, 7);
   assert.strictEqual(S.practicePlan.id, "cached_daily_plan");
   assert.strictEqual(S.practicePlan.items[0].id, "existing_item");
+  assert.strictEqual(S.practicePlanDate, "2026-04-16");
+  assert.strictEqual(S.practicePlanInstrumentId, "pianospark");
+  assert.strictEqual(S.practicePlanInstrumentType, "piano");
+  assert.strictEqual(S.practicePlanComplete, true);
+  assert.strictEqual(S.practicePlanFocus, "Song mastery");
 });
 
 test("legacy daily practice completion delegates item result handling to sparkCore", function() {
