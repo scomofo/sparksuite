@@ -241,6 +241,13 @@ test("legacy session engine preserves thin active instrument app ids in session 
   assert.ok(sessionEngineSource.indexOf('instrumentId = activeInstrument.id || activeInstrument.appId || null;') >= 0);
 });
 
+test("legacy session engine emits practice completion events with the active instrument app id", function() {
+  var sessionEngineSource = loadJS("js/spark-core/session-engine.js");
+  assert.ok(sessionEngineSource.indexOf('var emitActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
+  assert.ok(sessionEngineSource.indexOf('var emitInstrumentId = emitActiveInstrument ? (emitActiveInstrument.id || emitActiveInstrument.appId || null) : null;') >= 0);
+  assert.ok(sessionEngineSource.indexOf('appId:     emitInstrumentId || results.instrumentId || "chordspark",') >= 0);
+});
+
 test("getNextPracticeItem reads the cached plan without generating one", function() {
   var next = getNextPracticeItem();
 

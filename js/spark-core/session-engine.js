@@ -309,8 +309,10 @@
 
       // --- Emit event ---
       if (typeof _sparkEmit === "function") {
+        var emitActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
+        var emitInstrumentId = emitActiveInstrument ? (emitActiveInstrument.id || emitActiveInstrument.appId || null) : null;
         _sparkEmit("practice_session_completed", {
-          appId:     "chordspark",
+          appId:     emitInstrumentId || results.instrumentId || "chordspark",
           type:      results.type || "session",
           xp:        xpEarned,
           chord:     chordName,
