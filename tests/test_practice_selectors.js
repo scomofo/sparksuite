@@ -484,6 +484,27 @@ test("selectInstrumentModuleCandidate returns the next ukulele lesson focus", fu
   assert.ok(candidate.reason.indexOf("down-strums") >= 0);
 });
 
+test("selectInstrumentModuleCandidate rehydrates thin active instruments before reading module methods", function() {
+  var registeredModule = SparkInstruments.getActive();
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "ukespark",
+        instrument: "ukulele"
+      };
+    },
+    getAll: function() {
+      return [registeredModule];
+    }
+  };
+
+  var candidate = selectInstrumentModuleCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.lessonId, "uke_01");
+  assert.strictEqual(candidate.meta.exerciseId, "uke_down_strum_01");
+});
+
 test("buildPracticeCandidates includes the module-driven ukulele candidate", function() {
   var candidates = buildPracticeCandidates();
 

@@ -40,8 +40,23 @@
   }
 
   function getActiveInstrumentModule(){
+    var active;
+    var candidate;
+    var all;
+    var i;
+    var entry;
     if(typeof SparkInstruments==="undefined" || !SparkInstruments.getActive) return null;
-    return SparkInstruments.getActive();
+    active = SparkInstruments.getActive();
+    if(!active) return null;
+    if(typeof active.getCurriculumMap==="function" || typeof active.getExercises==="function" || typeof active.getSongs==="function") return active;
+    candidate = active.id || active.appId || null;
+    if(!candidate || typeof SparkInstruments.getAll!=="function") return active;
+    all = SparkInstruments.getAll() || [];
+    for(i=0;i<all.length;i++){
+      entry = all[i] || {};
+      if(entry.id===candidate || entry.appId===candidate) return entry;
+    }
+    return active;
   }
 
   function normalizePracticeSongId(value){
