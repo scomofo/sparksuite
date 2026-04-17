@@ -37,11 +37,14 @@
     input = input || {};
     var self = this;
     var instrumentContext = this.instrumentManager.getActiveContext();
+    var instrument = input.instrument
+      || (instrumentContext && (instrumentContext.instrumentType || instrumentContext.instrumentId || instrumentContext.appId))
+      || "guitar";
 
     return this.sessionEngine.buildSpotifyPlayAlongSession({
       trackId: input.trackId,
       difficulty: input.difficulty || "easy",
-      instrument: input.instrument || "guitar",
+      instrument: instrument,
       instrumentContext: instrumentContext
     }).then(function(plan) {
       self.currentPlan = plan;
