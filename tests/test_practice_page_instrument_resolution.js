@@ -299,6 +299,20 @@ test("practicePage and practiceTab safely render cached item ids containing apos
   assert.strictEqual(planHtml.indexOf("launchPracticePlanItem('song_'_1')"), -1);
 });
 
+test("customSetsSection ignores stale sentinel set names in the editor input", function() {
+  global.S = {
+    level: 1,
+    editingSet: true,
+    editingSetIdx: -1,
+    customSetName: "undefined",
+    customSetChords: []
+  };
+
+  var html = customSetsSection();
+  assert.ok(html.indexOf('value="undefined"') === -1);
+  assert.ok(html.indexOf('id="set-name-input"') >= 0);
+});
+
 test("practicePage derives readable fallback labels and subtitles for sparse plan items", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };

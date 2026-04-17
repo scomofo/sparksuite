@@ -76,6 +76,12 @@ function firstPrettyPracticeSummaryToken() {
   return "";
 }
 
+function normalizePracticeTextInputValue(value) {
+  if (typeof value !== "string") return "";
+  if (!prettyPracticeSummaryToken(value)) return "";
+  return value;
+}
+
 function getPracticeSummaryItemLabel(item) {
   var meta = item && item.meta ? item.meta : {};
   var label = prettyPracticeSummaryToken(item ? item.label : null);
@@ -460,7 +466,8 @@ function customSetsSection(){
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
   if(S.editingSet){
-    h+='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(S.customSetName)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
+    var customSetNameValue = normalizePracticeTextInputValue(S.customSetName);
+    h+='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(customSetNameValue)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Select chords (min 2):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
     for(var l=1;l<=S.level;l++){
