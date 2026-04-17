@@ -89,6 +89,7 @@
     var activeHints = [
       active ? active.instrument : null,
       active ? active.id : null,
+      active ? active.appId : null,
       typeof SparkState !== "undefined" && typeof SparkState.read === "function"
         ? SparkState.read("activeInstrument", null)
         : (typeof globalThis !== "undefined" && (globalThis.__sparkState || globalThis.S)

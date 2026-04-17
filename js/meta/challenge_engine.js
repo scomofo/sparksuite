@@ -77,6 +77,7 @@
     var activeHints = [
       active ? active.instrument : null,
       active ? active.id : null,
+      active ? active.appId : null,
       challengeEngineRead("activeInstrument", null)
     ];
     var i;

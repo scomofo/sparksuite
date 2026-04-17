@@ -17,6 +17,7 @@
     var hints = [
       active ? active.instrument : null,
       active ? active.id : null,
+      active ? active.appId : null,
       editorSeedRead("activeInstrument", null)
     ];
     var i;

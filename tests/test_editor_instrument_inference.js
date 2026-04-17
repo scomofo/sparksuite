@@ -87,4 +87,19 @@ test("editor seed arrangement follows the active piano instrument in the shared 
   assert.strictEqual(seeded.arrangementType, "block_chords");
 });
 
+test("editor helpers infer piano from appId-only active instruments", function() {
+  global.S.activeInstrument = null;
+  global.SparkInstruments.getActive = function() {
+    return {
+      appId: "pianospark"
+    };
+  };
+
+  var chart = createEmptyChart();
+  var seeded = seedChartFromSong({ id: "song_1", title: "Shared Piano Song" });
+
+  assert.strictEqual(chart.arrangementType, "block_chords");
+  assert.strictEqual(seeded.arrangementType, "block_chords");
+});
+
 if (process.exitCode) process.exit(process.exitCode);

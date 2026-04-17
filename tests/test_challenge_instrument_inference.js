@@ -91,10 +91,9 @@ test("challenge initialization infers bass from thin active instrument ids befor
   var originalBuildDailyChallenges = buildDefaultDailyChallenges;
   var originalBuildWeeklyChallenges = buildDefaultWeeklyChallenges;
   var capturedAppType = null;
-  global.S.activeInstrument = "bassspark";
+  global.S.activeInstrument = null;
   global.SparkInstruments.getActive = function() {
     return {
-      id: "bassspark",
       appId: "bassspark"
     };
   };
@@ -111,6 +110,20 @@ test("challenge initialization infers bass from thin active instrument ids befor
   buildDefaultDailyChallenges = originalBuildDailyChallenges;
   buildDefaultWeeklyChallenges = originalBuildWeeklyChallenges;
   assert.strictEqual(capturedAppType, "bass");
+});
+
+test("default challenge builders infer piano from appId-only active instruments", function() {
+  global.S.activeInstrument = null;
+  global.SparkInstruments.getActive = function() {
+    return {
+      appId: "pianospark"
+    };
+  };
+
+  var daily = buildDefaultDailyChallenges();
+
+  assert.strictEqual(daily[2].title, "Practice Left Hand");
+  assert.strictEqual(daily[2].type, "left_hand_focus");
 });
 
 test("challenge initialization falls back to global S when SparkState.getRoot returns null", function() {
