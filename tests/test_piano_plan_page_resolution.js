@@ -508,6 +508,37 @@ test("piano plan and practice sections do not render action buttons for whitespa
   assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
 });
 
+test("piano plan and practice sections do not render action buttons for numeric item ids", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: 123, type: "song", label: "Replay Island Strum", completed: false, meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.strictEqual(planHtml.indexOf('data-item-id="123"'), -1);
+  assert.strictEqual(practiceHtml.indexOf('data-item-id="123"'), -1);
+  assert.ok(planHtml.indexOf(">Unavailable<") >= 0);
+  assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
+});
+
 test("pianoPlanPage treats whitespace-only item ids without other data as missing plans", function() {
   global.S = {
     practicePlanComplete: false,

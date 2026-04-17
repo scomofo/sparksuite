@@ -23,7 +23,7 @@ function pianoPlanPage(){
       : null;
   }
   function getPlanItemId(item){
-    var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+    var id = item && typeof item.id === "string" ? item.id.trim() : null;
     return id || null;
   }
   function isRenderablePlanItem(item){

@@ -23,7 +23,7 @@ function planPage(){
       : null;
   }
   function getPlanItemId(item){
-    var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+    var id = item && typeof item.id === "string" ? item.id.trim() : null;
     return id || null;
   }
   function isRenderablePlanItem(item){
@@ -240,7 +240,7 @@ function launchPracticePlanItem(itemId){
 
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
-    var candidateId = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+    var candidateId = item && typeof item.id === "string" ? item.id.trim() : null;
     if(item && candidateId === itemId){
       launchPracticeItem(item);
       return;
