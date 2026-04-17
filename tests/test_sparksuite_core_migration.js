@@ -1328,7 +1328,7 @@ test("finger exercise card can fall back to SparkCore finger exercise runtime st
   window.sparkCore = core;
   global.escHTML = function(value) { return String(value); };
   global.FINGER_EXERCISES = [
-    { id: "spider_walk", name: "Spider Walk", desc: "Walk each finger in order.", duration: 90, frequency: "Daily", tier: 1, goal: "Clean finger independence" }
+    { id: "spider_walk", name: "Spider Walk", desc: "Walk each finger in order.", duration: 90, frequency: "Daily", tier: 1, goal: "Clean finger independence", offInstrument: true }
   ];
   S.fingerExActive = undefined;
   S.fingerExId = undefined;
@@ -1357,6 +1357,8 @@ test("finger exercise card can fall back to SparkCore finger exercise runtime st
   });
   cardHtml = fingerExerciseCard();
   assert.ok(cardHtml.indexOf("3x") >= 0);
+  assert.ok(cardHtml.indexOf("no guitar") === -1);
+  assert.ok(cardHtml.indexOf("no instrument") >= 0);
 });
 
 test("strum page can fall back to SparkCore strum runtime state", function() {

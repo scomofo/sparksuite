@@ -114,7 +114,7 @@ function tunerTab(){
   // Audio Input Device
   var audioRuntime = getLegacyAudioInputRuntime();
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127911; Audio Input</h3>';
-  h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Select your audio input device for the Tuner and Chord Check. Use this to pick your USB guitar cable instead of the default microphone.</p>';
+  h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Select your audio input device for the Tuner and Chord Check. Use this to pick your USB instrument cable or audio interface instead of the default microphone.</p>';
   h+='<button onclick="act(\'refreshAudioInputs\')" class="btn" style="margin-bottom:12px;padding:8px 16px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;border:none;border-radius:10px">&#128260; Refresh Devices</button>';
   if(audioRuntime.devices.length>0){
     h+='<div style="display:flex;flex-direction:column;gap:8px">';
