@@ -34,6 +34,14 @@ function pianoFirstSongPageTextToken() {
   return "";
 }
 
+function pianoSongListTitle(song) {
+  return pianoFirstSongPageTextToken(song && song.title, song && song.id, "Song");
+}
+
+function pianoSongListArtist(song) {
+  return pianoFirstSongPageTextToken(song && song.artist, "Unknown Artist");
+}
+
 function pianoSongsTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -130,8 +138,8 @@ function songLibrary() {
       var q = safeSongFilter.toLowerCase();
       filtered = filtered.filter(function(item) {
         var s = item.song;
-        return s.title.toLowerCase().indexOf(q) !== -1 ||
-               s.artist.toLowerCase().indexOf(q) !== -1 ||
+        return pianoSongListTitle(s).toLowerCase().indexOf(q) !== -1 ||
+               pianoSongListArtist(s).toLowerCase().indexOf(q) !== -1 ||
                s.chords.join(" ").toLowerCase().indexOf(q) !== -1;
       });
     }
@@ -140,8 +148,8 @@ function songLibrary() {
     var sortKey = S.songSort || "level", asc = S.songSortAsc;
     filtered.sort(function(a, b) {
       var va, vb;
-      if (sortKey === "title") { va = a.song.title.toLowerCase(); vb = b.song.title.toLowerCase(); }
-      else if (sortKey === "artist") { va = a.song.artist.toLowerCase(); vb = b.song.artist.toLowerCase(); }
+      if (sortKey === "title") { va = pianoSongListTitle(a.song).toLowerCase(); vb = pianoSongListTitle(b.song).toLowerCase(); }
+      else if (sortKey === "artist") { va = pianoSongListArtist(a.song).toLowerCase(); vb = pianoSongListArtist(b.song).toLowerCase(); }
       else if (sortKey === "bpm") { va = a.song.bpm; vb = b.song.bpm; }
       else if (sortKey === "chords") { va = a.song.chords.length; vb = b.song.chords.length; }
       else { va = a.song.level; vb = b.song.level; }
@@ -165,9 +173,11 @@ function songLibrary() {
         lvlSongs.forEach(function(item) {
           var s = item.song, idx = item.origIdx;
           var done = S.songsDone && S.songsDone.indexOf(s.title) >= 0;
+          var songTitle = pianoSongListTitle(s);
+          var songArtist = pianoSongListArtist(s);
           html += pianoClickableDiv(
             locked ? '' : "act('select_song'," + idx + ")",
-            '<div class="song-row-inner"><span>' + (done ? "\u2705 " : "") + escHTML(s.title) + '</span><span class="text-muted">' + escHTML(s.artist) + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
+            '<div class="song-row-inner"><span>' + (done ? "\u2705 " : "") + escHTML(songTitle) + '</span><span class="text-muted">' + escHTML(songArtist) + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
             "song-row" + (locked ? " locked" : "")
           );
         });
@@ -180,9 +190,11 @@ function songLibrary() {
         var s = item.song, idx = item.origIdx;
         var locked = s.level > S.level + 1;
         var done = S.songsDone && S.songsDone.indexOf(s.title) >= 0;
+        var songTitle = pianoSongListTitle(s);
+        var songArtist = pianoSongListArtist(s);
         html += pianoClickableDiv(
           locked ? '' : "act('select_song'," + idx + ")",
-          '<div class="song-row-inner"><span style="' + (locked ? 'opacity:0.4' : '') + '">' + (done ? "\u2705 " : "") + escHTML(s.title) + '</span><span class="text-muted">' + escHTML(s.artist) + ' \u2022 Lvl ' + s.level + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
+          '<div class="song-row-inner"><span style="' + (locked ? 'opacity:0.4' : '') + '">' + (done ? "\u2705 " : "") + escHTML(songTitle) + '</span><span class="text-muted">' + escHTML(songArtist) + ' \u2022 Lvl ' + s.level + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
           "song-row" + (locked ? " locked" : "")
         );
       });
