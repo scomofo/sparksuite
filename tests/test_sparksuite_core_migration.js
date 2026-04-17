@@ -4070,6 +4070,7 @@ test("createDefaultSparkCore registers ukulele and builds a ukulele-ready practi
 });
 
 test("createDefaultSparkCore can recover active instrument context when SparkInstrumentAdapter is unavailable", function() {
+  var previousSparkInstruments = SparkInstruments;
   SparkInstrumentAdapter = undefined;
   SparkInstruments = {
     getActive: function() {
@@ -4089,18 +4090,82 @@ test("createDefaultSparkCore can recover active instrument context when SparkIns
       };
     }
   };
+  try {
+    var core = createDefaultSparkCore();
+    var context = core.instrumentManager.getActiveContext();
+    var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
 
-  var core = createDefaultSparkCore();
-  var context = core.instrumentManager.getActiveContext();
-  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+    assert.strictEqual(context.appId, "pianospark");
+    assert.strictEqual(context.instrumentType, "piano");
+    assert.strictEqual(context.songs[0].title, "River Walk");
+    assert.strictEqual(plan.instrumentId, "pianospark");
+    assert.strictEqual(plan.instrumentType, "piano");
+    assert.strictEqual(S.practicePlan.instrumentId, "pianospark");
+    assert.strictEqual(S.practicePlan.instrumentType, "piano");
+  } finally {
+    SparkInstruments = previousSparkInstruments;
+  }
+});
 
-  assert.strictEqual(context.appId, "pianospark");
-  assert.strictEqual(context.instrumentType, "piano");
-  assert.strictEqual(context.songs[0].title, "River Walk");
-  assert.strictEqual(plan.instrumentId, "pianospark");
-  assert.strictEqual(plan.instrumentType, "piano");
-  assert.strictEqual(S.practicePlan.instrumentId, "pianospark");
-  assert.strictEqual(S.practicePlan.instrumentType, "piano");
+test("createDefaultSparkCore prefers the rehydrated active instrument over a stale adapter singleton", function() {
+  var previousGetActive = SparkInstruments && SparkInstruments.getActive;
+  var previousGetAll = SparkInstruments && SparkInstruments.getAll;
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculum: function() {
+      return {
+        SESSIONS: [
+          { num: 1, title: "Guitar Spark 1", spark: { text: "Strum" }, newMove: { chord: "G" } }
+        ]
+      };
+    },
+    getSongs: function() {
+      return [{ title: "Six Strings", artist: "Guitar Suite" }];
+    }
+  };
+  SparkInstruments.getActive = function() {
+    return { appId: "pianospark" };
+  };
+  SparkInstruments.getAll = function() {
+    return [{
+      id: "pianospark",
+      appId: "pianospark",
+      instrument: "piano",
+      getData: function() {
+        return {
+          SESSIONS: [
+            { num: 1, title: "Piano Spark 1", spark: { text: "Start" }, newMove: { chord: "C" } }
+          ]
+        };
+      },
+      getSongs: function() {
+        return [{ title: "River Walk", artist: "Piano Suite" }];
+      },
+      getCurriculumMap: function() {
+        return [{ num: 1, title: "White Keys Only" }];
+      }
+    }];
+  };
+
+  try {
+    var core = createDefaultSparkCore();
+    var context = core.instrumentManager.getActiveContext();
+    var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+    assert.strictEqual(context.appId, "pianospark");
+    assert.strictEqual(context.instrumentType, "piano");
+    assert.strictEqual(context.adapter.getType(), "piano");
+    assert.strictEqual(context.songs[0].title, "River Walk");
+    assert.strictEqual(context.sessions[0].title, "Piano Spark 1");
+    assert.strictEqual(plan.instrumentId, "pianospark");
+    assert.strictEqual(plan.instrumentType, "piano");
+    assert.strictEqual(S.practicePlan.instrumentId, "pianospark");
+    assert.strictEqual(S.practicePlan.instrumentType, "piano");
+  } finally {
+    SparkInstruments.getActive = previousGetActive;
+    SparkInstruments.getAll = previousGetAll;
+  }
 });
 
 test("ukulele guided sessions get a renderable guided plan shape", function() {
