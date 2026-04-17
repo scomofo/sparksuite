@@ -9,6 +9,19 @@
 
   if (typeof SparkCore === "undefined") return;
 
+  function normalizeInstrumentType(instrument) {
+    var candidate = instrument || "guitar";
+    if (!window.SparkInstruments || typeof SparkInstruments.getAll !== "function") return candidate;
+    var instruments = SparkInstruments.getAll() || [];
+    for (var i = 0; i < instruments.length; i++) {
+      var entry = instruments[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) {
+        return entry.instrument || candidate;
+      }
+    }
+    return candidate;
+  }
+
   // ---------------------------------------------------------------
   // initPlayAlongSystems
   // ---------------------------------------------------------------
@@ -200,10 +213,10 @@
     if (typeof SparkDebugState !== "undefined") {
       SparkDebugState.update({
         time: timeMs,
-        expected: visible.length ? (visible[0].lane != null ? visible[0].lane : visible[0].chord) : null,
-        bpm: (self._activeChart && self._activeChart.getBpm) ? self._activeChart.getBpm() : 0,
-        audioMode: self.audioEngine && self.audioEngine.isPlaying() ? "local" : (self.stemMixer && self.stemMixer.isPlaying() ? "stems" : "spotify"),
-        latencyMs: self.latencyCalibrator ? self.latencyCalibrator.getOffset() : 0
+        expected: visibleNotes.length ? (visibleNotes[0].lane != null ? visibleNotes[0].lane : visibleNotes[0].chord) : null,
+        bpm: (this._activeChart && this._activeChart.getBpm) ? this._activeChart.getBpm() : 0,
+        audioMode: this.audioEngine && this.audioEngine.isPlaying() ? "local" : (this.stemMixer && this.stemMixer.isPlaying() ? "stems" : "spotify"),
+        latencyMs: this.latencyCalibrator ? this.latencyCalibrator.getOffset() : 0
       });
     }
 
@@ -228,17 +241,17 @@
 
     if (!chart || !chart.timeline) {
       // Update debug state with input
-    if (typeof SparkDebugState !== "undefined") {
-      SparkDebugState.update({
-        detected: inputEvent.note || null,
-        chord: inputEvent.chord || null,
-        confidence: inputEvent.confidence || 0,
-        delta: nearestDelta || 0,
-        accuracy: self.performanceTracker ? self.performanceTracker.getAccuracy() : 0
-      });
-    }
+      if (typeof SparkDebugState !== "undefined") {
+        SparkDebugState.update({
+          detected: inputEvent.note || null,
+          chord: inputEvent.chord || null,
+          confidence: inputEvent.confidence || 0,
+          delta: null,
+          accuracy: this.performanceTracker ? this.performanceTracker.getAccuracy() : 0
+        });
+      }
 
-    return { result: null, chordResult: null, delta: null };
+      return { result: null, chordResult: null, delta: null };
     }
 
     // Find nearest expected note
@@ -311,8 +324,16 @@
     var reward = this.rewardModel.compute(performance);
 
     // 6. Update learner model
-    var updatedModel = this.policyEngine.update(model, performance);
-    this.learnerModel.save(userId, updatedModel);
+    var userId = this._activeUserId || null;
+    var model = this.learnerModel && typeof this.learnerModel.load === "function"
+      ? this.learnerModel.load(userId)
+      : null;
+    var updatedModel = this.policyEngine && typeof this.policyEngine.update === "function"
+      ? this.policyEngine.update(model, performance)
+      : model;
+    if (userId && this.learnerModel && typeof this.learnerModel.save === "function") {
+      this.learnerModel.save(userId, updatedModel);
+    }
 
     // 7. Generate feedback
     var feedback = this.feedbackEngine.generate(performance, style);
@@ -328,7 +349,7 @@
     // 10. Compute accuracy
     var accuracy = this._computeAvgTiming(events);
 
-    var model = this.learnerModel.toJSON ? this.learnerModel.toJSON() : null;
+    model = this.learnerModel && this.learnerModel.toJSON ? this.learnerModel.toJSON() : updatedModel;
 
     return {
       accuracy: accuracy,
@@ -443,10 +464,16 @@
 
   SparkCore.prototype._generateChartFromAudio = function (audioFile, trackId, difficulty, instrument) {
     var self = this;
+    var loadedAudio = null;
     return SparkAudioLoader.fromFile(audioFile).then(function (audioData) {
+      loadedAudio = audioData;
       return self.audioEngine.load(audioData);
     }).then(function () {
-      return self.audioChartGenerator.generate(trackId, difficulty, instrument);
+      return self.audioChartGenerator.generate(loadedAudio, {
+        trackId: trackId,
+        difficulty: difficulty,
+        instrument: normalizeInstrumentType(instrument)
+      });
     });
   };
 

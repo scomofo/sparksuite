@@ -1,6 +1,19 @@
 (function() {
   function AudioChartGenerator() { this.beatDetector = new SparkBeatDetector(); }
 
+  function normalizeInstrumentType(instrument) {
+    var candidate = instrument || "guitar";
+    if (!window.SparkInstruments || typeof SparkInstruments.getAll !== "function") return candidate;
+    var instruments = SparkInstruments.getAll() || [];
+    for (var i = 0; i < instruments.length; i++) {
+      var entry = instruments[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) {
+        return entry.instrument || candidate;
+      }
+    }
+    return candidate;
+  }
+
   AudioChartGenerator.prototype.generate = function(audioBuffer, options) {
     options = options || {};
     var difficulty = options.difficulty || "easy";
@@ -29,7 +42,7 @@
         laneCount: difficulty === "hard" ? 5 : 4, detectedBpm: bpm, beatConfidence: detection.confidence }
     });
     return new SparkPlayAlongChart({
-      trackId: trackId, trackUri: null, difficulty: difficulty, instrument: options.instrument || "guitar",
+      trackId: trackId, trackUri: null, difficulty: difficulty, instrument: normalizeInstrumentType(options.instrument),
       audio: { bpm: bpm, detectedBpm: bpm, confidence: detection.confidence },
       songChart: songChart, chords: chords, sections: this._detectSections(beats, audioBuffer.duration)
     });
