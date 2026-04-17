@@ -26,7 +26,7 @@ function pianoPlanPage(){
   function isRenderablePlanItem(item){
     var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
     var type = item && typeof item.type === "string" ? item.type.trim() : (item ? item.type : null);
-    var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && Object.keys(item.meta).some(function(key) {
+    var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && !Array.isArray(item.meta) && Object.keys(item.meta).some(function(key) {
       var value = item.meta[key];
       if (value == null) return false;
       if (typeof value === "string") return !!value.trim();
@@ -192,7 +192,7 @@ function getPianoPlanFocusLabel(plan){
     var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
     var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
     var type = item && typeof item.type === "string" ? item.type.trim() : (item ? item.type : null);
-    var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && Object.keys(item.meta).some(function(key) {
+    var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && !Array.isArray(item.meta) && Object.keys(item.meta).some(function(key) {
       var value = item.meta[key];
       if (value == null) return false;
       if (typeof value === "string") return !!value.trim();
