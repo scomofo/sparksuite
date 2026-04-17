@@ -94,8 +94,12 @@ function performSongPage() {
     if(recs&&recs.length){
       h+='<div class="card mb20"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Recommended</div>';
       for(var ri=0;ri<Math.min(3,recs.length);ri++){
-        h+='<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">'+escHTML(recs[ri].label)+'</div>';
-        h+='<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">'+escHTML(recs[ri].reason)+'</div>';
+        var recLabel = prettyPerformSongToken(recs[ri] && recs[ri].label) || "Recommendation";
+        var recReason = prettyPerformSongToken(recs[ri] && recs[ri].reason);
+        h+='<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">'+escHTML(recLabel)+'</div>';
+        if (recReason) {
+          h+='<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">'+escHTML(recReason)+'</div>';
+        }
       }
       h+='</div>';
     }

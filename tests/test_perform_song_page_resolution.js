@@ -57,6 +57,12 @@ console.log("\n--- Perform Song Page Resolution ---");
 
 test("performSongPage ignores sentinel song text and technique labels", function() {
   global.S.performTargetTechnique = "undefined";
+  global.buildPerformanceRecommendationsForSong = function() {
+    return [{
+      label: "undefined",
+      reason: "null"
+    }];
+  };
   global.sparkCore.getActiveSessionView = function() {
     return {
       runtimeState: {
@@ -78,6 +84,7 @@ test("performSongPage ignores sentinel song text and technique labels", function
   assert.ok(html.indexOf("song x") >= 0);
   assert.strictEqual(html.indexOf(">undefined<"), -1);
   assert.strictEqual(html.indexOf(">null<"), -1);
+  assert.ok(html.indexOf("Recommendation") >= 0);
   assert.ok(html.indexOf("Technique") >= 0);
 });
 
