@@ -152,20 +152,30 @@ function prettyPlanToken(value){
   return String(value || "").replace(/_/g, " ").trim();
 }
 
+function firstPrettyPlanToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = prettyPlanToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function getPlanItemLabel(item){
   var meta = item && item.meta ? item.meta : {};
   var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
   return label
     ? label
-    : prettyPlanToken(
-        meta.exerciseName ||
-        meta.songTitle ||
-        meta.songId ||
-        meta.exerciseFocus ||
-        meta.skill ||
-        meta.exerciseId ||
-        getPlanDisplayType(item) ||
-        (item && item.type) ||
+    : firstPrettyPlanToken(
+        meta.exerciseName,
+        meta.songTitle,
+        meta.songId,
+        meta.exerciseFocus,
+        meta.skill,
+        meta.exerciseId,
+        getPlanDisplayType(item),
+        item && item.type,
         "practice"
       );
 }

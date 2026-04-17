@@ -44,20 +44,30 @@ function prettyPracticeSummaryToken(value) {
   return String(value || "").replace(/_/g, " ").trim();
 }
 
+function firstPrettyPracticeSummaryToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = prettyPracticeSummaryToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function getPracticeSummaryItemLabel(item) {
   var meta = item && item.meta ? item.meta : {};
   var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
   return label
     ? label
-    : prettyPracticeSummaryToken(
-        meta.exerciseName ||
-        meta.songTitle ||
-        meta.songId ||
-        meta.exerciseFocus ||
-        meta.skill ||
-        meta.exerciseId ||
-        getPracticeSummaryItemType(item) ||
-        (item && item.type) ||
+    : firstPrettyPracticeSummaryToken(
+        meta.exerciseName,
+        meta.songTitle,
+        meta.songId,
+        meta.exerciseFocus,
+        meta.skill,
+        meta.exerciseId,
+        getPracticeSummaryItemType(item),
+        item && item.type,
         "practice"
       );
 }

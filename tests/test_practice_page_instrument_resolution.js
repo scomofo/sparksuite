@@ -294,6 +294,52 @@ test("practicePage and planPage ignore whitespace-only labels and descriptions",
   assert.ok(planHtml.indexOf("ukulele - strum pattern - performance song") >= 0);
 });
 
+test("practicePage and planPage skip whitespace-only fallback meta labels", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [
+        { id: "song_1", type: "song", completed: false, meta: { songTitle: "   ", songId: "island_strum", instrument: "ukulele" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var summaryHtml = practiceTab();
+  var practiceHtml = practicePage();
+  var planHtml = planPage();
+
+  assert.ok(summaryHtml.indexOf("island strum") >= 0);
+  assert.ok(practiceHtml.indexOf("island strum") >= 0);
+  assert.ok(planHtml.indexOf("island strum") >= 0);
+});
+
 test("practiceTab and planPage ignore whitespace-only subtitle meta tokens", function() {
   global.S = {
     level: 1,
