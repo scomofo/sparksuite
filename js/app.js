@@ -54,7 +54,7 @@ function normalizeActiveInstrumentId(instrumentId){
     piano: "pianospark",
     ukulele: "ukespark",
     bass: "bassspark",
-    drums: "drumsspark"
+    drums: "drumspark"
   };
   return map[instrumentId] || instrumentId;
 }

@@ -302,6 +302,7 @@ test('app startup normalizes legacy active instrument aliases before activation'
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('guitar: "chordspark"') >= 0);
   assert.ok(appSource.indexOf('ukulele: "ukespark"') >= 0);
+  assert.ok(appSource.indexOf('drums: "drumspark"') >= 0);
   assert.ok(appSource.indexOf('var persistedActiveInstrument=normalizeActiveInstrumentId(appRead("activeInstrument", null));') >= 0);
 });
 
