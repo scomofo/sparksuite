@@ -23,6 +23,27 @@ function getGuidedPageInstrument() {
   return inst;
 }
 
+function normalizeGuidedTextToken(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function firstGuidedTextToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = normalizeGuidedTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function guidedStepIndicator(step) {
   var steps = [
     {id:"spark",label:"Spark",icon:"&#10024;"},
@@ -73,10 +94,11 @@ function guidedSessionPage() {
   var plan = guidedView.plan;
   var guidedStep = guidedView.guidedStep;
   if (!plan) return '<div class="card text-center"><p>No session loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  var guidedTitle = firstGuidedTextToken(plan.title, plan.id, "Guided session");
 
   var h = '<div class="text-center">';
   h += '<button class="back-btn" onclick="if(confirm(\'End session early?\'))act(\'guidedStop\')">&#8592; Exit</button>';
-  h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(plan.title) + '</h2>';
+  h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + plan.bpm + ' BPM</div>';
 
   h += guidedStepIndicator(guidedStep);
@@ -250,7 +272,7 @@ function guidedDonePage() {
     ? window.sparkCore.getActiveSessionView()
     : null;
   var lastOutcome = coreView && coreView.lastSessionOutcome ? coreView.lastSessionOutcome : null;
-  var title = plan ? plan.title : "";
+  var title = plan ? firstGuidedTextToken(plan.title, plan.id, "Guided session") : "";
   var num = plan ? plan.num : 0;
   var xpAwarded = lastOutcome && typeof lastOutcome.xpAwarded === "number" ? lastOutcome.xpAwarded : 30;
   var h = '<div class="text-center" style="padding-top:30px">';
