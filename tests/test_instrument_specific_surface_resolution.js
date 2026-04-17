@@ -212,6 +212,24 @@ test("piano onboarding and tools ignore stale intention strings", function() {
   assert.ok(toolsHtml.indexOf('value="null"') === -1);
 });
 
+test("piano tools stats ignore stale history labels", function() {
+  resetEnvironment("pianospark");
+  global.S._toolTab = "stats";
+  global.S.history = [
+    { type: "undefined", chord: "null", session: "NaN", ts: Date.now() }
+  ];
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+
+  var html = pianoToolsTab();
+  assert.ok(html.indexOf("Activity") >= 0);
+  assert.ok(html.indexOf("🏅") >= 0);
+  assert.ok(html.indexOf("undefined") === -1);
+  assert.ok(html.indexOf("null") === -1);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("piano songs library ignores stale sentinel search text", function() {
   resetEnvironment("pianospark");
   global.S.songFilter = "undefined";

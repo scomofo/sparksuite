@@ -11,6 +11,23 @@ function pianoNormalizeToolsTextInputValue(value) {
   return value;
 }
 
+function pianoToolsHistoryTextToken(value) {
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  var text = String(value).trim();
+  if (!text) return "";
+  var lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstToolsHistoryTextToken() {
+  for (var i = 0; i < arguments.length; i++) {
+    var text = pianoToolsHistoryTextToken(arguments[i]);
+    if (text) return text;
+  }
+  return "";
+}
+
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -98,7 +115,10 @@ function statsTab() {
   recent.forEach(function(h) {
     var d = new Date(h.ts || h.timestamp);
     var time = d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    html += '<div class="history-row"><span>' + h.type + (h.chord ? ": " + h.chord : "") + (h.session ? " (S" + h.session + ")" : "") + '</span><span class="text-muted">' + time + '</span></div>';
+    var activityType = pianoFirstToolsHistoryTextToken(h.type, "Activity");
+    var chordLabel = pianoFirstToolsHistoryTextToken(h.chord);
+    var sessionLabel = pianoFirstToolsHistoryTextToken(h.session);
+    html += '<div class="history-row"><span>' + activityType + (chordLabel ? ": " + chordLabel : "") + (sessionLabel ? " (S" + sessionLabel + ")" : "") + '</span><span class="text-muted">' + time + '</span></div>';
   });
   if (!recent.length) html += '<div class="text-muted">No activity yet</div>';
   html += '</div>';
@@ -110,8 +130,9 @@ function statsTab() {
   html += '<h3>Badges</h3><div class="badges-grid">';
   BADGES.forEach(function(b) {
     var earned = S.earned.indexOf(b.id) >= 0;
+    var badgeIcon = pianoFirstToolsHistoryTextToken(b.icon, "🏅");
     html += '<div class="badge-card ' + (earned ? 'earned' : 'locked') + '">';
-    html += '<span class="badge-icon">' + b.icon + '</span>';
+    html += '<span class="badge-icon">' + badgeIcon + '</span>';
     html += '<span class="badge-label">' + b.label + '</span>';
     html += '<span class="badge-desc text-muted">' + b.desc + '</span>';
     html += '</div>';
