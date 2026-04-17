@@ -2,6 +2,28 @@
 // Barrel — all spark-core modules are loaded as individual scripts.
 // This file bridges the legacy namespace to the new composition root.
 (function() {
+  function resolveLegacySparkCoreInstrument() {
+    var inst;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    inst = SparkInstruments.getActive();
+    if (!inst) return null;
+    if (typeof inst.getData === "function" || inst.ui || inst.instrument || inst.instrumentType) return inst;
+    candidate = inst.id || inst.appId || inst.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return inst;
+  }
+
   window.SparkCore = {
     version: "0.3.0",
 
@@ -94,11 +116,19 @@
      */
     startSession: function(opts) {
       opts = opts || {};
+      var instrument = resolveLegacySparkCoreInstrument();
 
       // Resolve instrument context
+      if (!opts.instrumentId && instrument) {
+        opts.instrumentId = instrument.id || instrument.appId || instrument.instrumentId || null;
+        opts.instrumentType = instrument.instrument || instrument.instrumentType || null;
+      }
       if (!opts.instrumentId && typeof SparkInstrumentAdapter !== "undefined") {
         opts.instrumentId = SparkInstrumentAdapter.getAppId();
         opts.instrumentType = SparkInstrumentAdapter.getInstrumentType();
+      }
+      if (!opts.instrumentData && instrument && typeof instrument.getData === "function") {
+        opts.instrumentData = instrument.getData();
       }
       if (!opts.instrumentData && typeof SparkInstrumentAdapter !== "undefined") {
         opts.instrumentData = SparkInstrumentAdapter.getCurriculum();
