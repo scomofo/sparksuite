@@ -45,6 +45,14 @@
     return typeof window.sparkDesktop !== 'undefined';
   }
 
+  function resolveDesktopBackupAppId() {
+    var releaseAppId = desktopBridgeRead(["releaseInfo", "appId"], null);
+    var activeInstrument = desktopBridgeRead(["activeInstrument"], null);
+    if (releaseAppId) return releaseAppId;
+    if (activeInstrument) return activeInstrument;
+    return "sparksuite";
+  }
+
   async function exportEditorObjectDesktopAware() {
     var chart = desktopBridgeRead("performEditorChart", null);
     if (!chart) return false;
@@ -87,7 +95,7 @@
   function buildFullLocalBackup(){
     return {
       exportedAt: Date.now(),
-      app: desktopBridgeRead(["releaseInfo", "appId"], "chordspark") || "chordspark",
+      app: resolveDesktopBackupAppId(),
       version: desktopBridgeRead(["releaseInfo", "version"], "dev") || "dev",
       state: getDesktopBridgeRoot()
     };

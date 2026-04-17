@@ -101,6 +101,17 @@ async function run() {
     assert.ok(S.desktopInfo.lastBackupAt);
   });
 
+  await test("desktop bridge backup prefers active instrument app ids when release info is missing", async function() {
+    S.releaseInfo = {};
+    S.activeInstrument = "pianospark";
+    eval(loadJS("js/desktop/bridge.js"));
+
+    var backup = buildFullLocalBackup();
+
+    assert.strictEqual(backup.app, "pianospark");
+    assert.strictEqual(backup.version, "dev");
+  });
+
   await test("editor io can save, load, export, and import through plain global S", function() {
     eval(loadJS("js/editor/io.js"));
 
