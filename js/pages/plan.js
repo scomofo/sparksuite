@@ -2,6 +2,11 @@ function planPage(){
   function hasRenderablePlanItems(plan){
     return !!(plan && Array.isArray(plan.items) && plan.items.some(function(item){ return !!item; }));
   }
+  function getRenderablePlanItems(plan){
+    return plan && Array.isArray(plan.items)
+      ? plan.items.filter(function(item){ return !!item; })
+      : [];
+  }
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
@@ -10,12 +15,13 @@ function planPage(){
     ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
   if(!plan) plan = S.practicePlan;
+  var renderableItems = getRenderablePlanItems(plan);
   var hasPlanItems = hasRenderablePlanItems(plan);
   var planCompleted = (coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted)
     ? true
     : !!S.practicePlanComplete;
   if(!planCompleted && hasPlanItems){
-    planCompleted = plan.items.every(function(item){ return !!(item && item.completed); });
+    planCompleted = renderableItems.every(function(item){ return !!item.completed; });
   }
   var h = '';
 
