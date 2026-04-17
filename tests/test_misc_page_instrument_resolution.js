@@ -49,6 +49,23 @@ function resetEnvironment() {
   };
   var elements = {};
   global.window = global;
+  global.localStorage = (function() {
+    var store = {};
+    return {
+      getItem: function(key) {
+        return Object.prototype.hasOwnProperty.call(store, key) ? store[key] : null;
+      },
+      setItem: function(key, value) {
+        store[key] = String(value);
+      },
+      removeItem: function(key) {
+        delete store[key];
+      },
+      clear: function() {
+        store = {};
+      }
+    };
+  })();
   global.document = {
     getElementById: function(id) {
       return elements[id] || null;
@@ -72,6 +89,8 @@ function resetEnvironment() {
     }
   };
   global.S = {
+    xp: 14,
+    level: 2,
     dualChord: "G Major",
     dualAnchorOn: false,
     runnerActive: false,
@@ -93,6 +112,9 @@ function resetEnvironment() {
   };
   global.escHTML = function(value) { return String(value); };
   global.act = function() {};
+  global.getChordTier = function() { return { tier: "none" }; };
+  global.tierBadgeHTML = function() { return ""; };
+  global.ringHTML = function(_pct, _size, _stroke, _color, inner) { return inner; };
   global.GUITAR_ANCHOR = {
     activeChords: ["G Major"],
     targetString: 1,
@@ -204,6 +226,14 @@ test("updateTunerUI rehydrates an app-id-only active instrument shell", function
   assert.strictEqual(__elements["tuner-freq-display"].textContent, "110 Hz");
   assert.strictEqual(__elements["tuner-needle"].style.left, "51%");
   assert.strictEqual(strings[1].style.borderColor, "#4ECDC4");
+});
+
+test("statsTab uses the active instrument label in the music journey card", function() {
+  localStorage.setItem("pianospark_jeeves_export", JSON.stringify({ xp: 22, level: 4 }));
+  var html = statsTab();
+  assert.ok(html.indexOf("My Music Journey") >= 0);
+  assert.ok(html.indexOf(">Piano<") >= 0);
+  assert.ok(html.indexOf(">Guitar<") === -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
