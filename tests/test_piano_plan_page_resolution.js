@@ -79,8 +79,8 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
   assert.ok(html.indexOf("Quick warmup") >= 0);
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
-  assert.ok(html.indexOf("launchPracticePlanItem('song_1')") >= 0);
-  assert.ok(html.indexOf("launchPracticePlanItem('practice_1')") >= 0);
+  assert.ok(html.indexOf('data-item-id="song_1"') >= 0);
+  assert.ok(html.indexOf('data-item-id="practice_1"') >= 0);
   assert.ok(html.indexOf("ukulele - strum pattern - performance song") >= 0);
   assert.ok(html.indexOf("piano - left hand - finger") >= 0);
 });
@@ -348,8 +348,8 @@ test("piano practice plan section does not render start buttons for sparse plan 
   global.eval(loadJS("js/instruments/piano/pages/practice.js"));
 
   var html = practicePlanSection();
-  assert.strictEqual(html.indexOf("practiceStartItem', 'undefined'"), -1);
-  assert.ok(html.indexOf("practiceStartItem', 'practice_1'") >= 0);
+  assert.strictEqual(html.indexOf('data-item-id="undefined"'), -1);
+  assert.ok(html.indexOf('data-item-id="practice_1"') >= 0);
   assert.ok(html.indexOf(">Unavailable<") >= 0);
 });
 
@@ -476,8 +476,8 @@ test("pianoPlanPage does not render completed items as clickable go buttons", fu
   var html = pianoPlanPage();
   assert.ok(html.indexOf("Completed Warmup") >= 0);
   assert.ok(html.indexOf("Next Warmup") >= 0);
-  assert.ok(html.indexOf("launchPracticePlanItem('done_1')") === -1);
-  assert.ok(html.indexOf("launchPracticePlanItem('todo_1')") >= 0);
+  assert.ok(html.indexOf('data-item-id="done_1"') === -1);
+  assert.ok(html.indexOf('data-item-id="todo_1"') >= 0);
   assert.ok(html.indexOf(">Done<") >= 0);
 });
 
@@ -505,8 +505,8 @@ test("piano plan and practice sections ignore string false completion flags in c
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
-  assert.ok(planHtml.indexOf("launchPracticePlanItem('song_1')") >= 0);
-  assert.ok(practiceHtml.indexOf("practiceStartItem', 'song_1") >= 0);
+  assert.ok(planHtml.indexOf('data-item-id="song_1"') >= 0);
+  assert.ok(practiceHtml.indexOf('data-item-id="song_1"') >= 0);
   assert.strictEqual(planHtml.indexOf(">Done<"), -1);
   assert.strictEqual(practiceHtml.indexOf(">Done<"), -1);
   assert.strictEqual(planHtml.indexOf("Plan completed!"), -1);
@@ -903,9 +903,40 @@ test("pianoPlanPage does not render go buttons for sparse plan items without ids
   };
 
   var html = pianoPlanPage();
-  assert.strictEqual(html.indexOf("launchPracticePlanItem('undefined')"), -1);
-  assert.ok(html.indexOf("launchPracticePlanItem('practice_1')") >= 0);
+  assert.strictEqual(html.indexOf('data-item-id="undefined"'), -1);
+  assert.ok(html.indexOf('data-item-id="practice_1"') >= 0);
   assert.ok(html.indexOf(">Unavailable<") >= 0);
+});
+
+test("piano plan and practice sections safely render cached item ids containing apostrophes", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_'_1", type: "song", label: "Replay Island Strum", completed: false }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+  assert.ok(planHtml.indexOf('data-item-id="song_\'_1"') >= 0);
+  assert.ok(practiceHtml.indexOf('data-item-id="song_\'_1"') >= 0);
+  assert.strictEqual(planHtml.indexOf("launchPracticePlanItem('song_'_1')"), -1);
+  assert.strictEqual(practiceHtml.indexOf("act('practiceStartItem', 'song_'_1')"), -1);
 });
 
 test("piano plan and practice sections tolerate sparse cached plan items that contain null entries", function() {

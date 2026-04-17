@@ -190,7 +190,7 @@ function practicePlanSection(){
       h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (target ? ' (' + escHTML(target) + ')' : '') + '</span>';
       if(!isCompleted){
         if(itemId){
-          h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+itemId+'\')">Start</button>';
+          h += '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))">Start</button>';
         }else{
           h += '<span class="text-muted">Unavailable</span>';
         }

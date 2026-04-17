@@ -217,8 +217,8 @@ test("practicePage does not render completed items as clickable start buttons", 
   var html = practicePage();
   assert.ok(html.indexOf("Completed Warmup") >= 0);
   assert.ok(html.indexOf("Next Warmup") >= 0);
-  assert.ok(html.indexOf("practiceStartItem', 'done_1") === -1);
-  assert.ok(html.indexOf("practiceStartItem', 'todo_1") >= 0);
+  assert.ok(html.indexOf('data-item-id="done_1"') === -1);
+  assert.ok(html.indexOf('data-item-id="todo_1"') >= 0);
   assert.ok(html.indexOf(">Done<") >= 0);
 });
 
@@ -244,11 +244,59 @@ test("practicePage and planPage ignore string false completion flags in cached i
 
   var practiceHtml = practicePage();
   var planHtml = planPage();
-  assert.ok(practiceHtml.indexOf("practiceStartItem', 'song_1") >= 0);
-  assert.ok(planHtml.indexOf("launchPracticePlanItem('song_1')") >= 0);
+  assert.ok(practiceHtml.indexOf('data-item-id="song_1"') >= 0);
+  assert.ok(planHtml.indexOf('data-item-id="song_1"') >= 0);
   assert.strictEqual(practiceHtml.indexOf(">Done<"), -1);
   assert.strictEqual(planHtml.indexOf(">Done<"), -1);
   assert.strictEqual(planHtml.indexOf("Plan completed!"), -1);
+});
+
+test("practicePage and practiceTab safely render cached item ids containing apostrophes", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [
+        { id: "song_'_1", type: "song", label: "Replay Island Strum", completed: false }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var practiceHtml = practicePage();
+  var summaryHtml = practiceTab();
+  global.eval(loadJS("js/pages/plan.js"));
+  var planHtml = planPage();
+  assert.ok(practiceHtml.indexOf('data-item-id="song_\'_1"') >= 0);
+  assert.ok(summaryHtml.indexOf('data-item-id="song_\'_1"') >= 0);
+  assert.ok(planHtml.indexOf('data-item-id="song_\'_1"') >= 0);
+  assert.strictEqual(practiceHtml.indexOf("act('practiceStartItem', 'song_'_1')"), -1);
+  assert.strictEqual(summaryHtml.indexOf("act('completePlanItem','song_'_1')"), -1);
+  assert.strictEqual(planHtml.indexOf("launchPracticePlanItem('song_'_1')"), -1);
 });
 
 test("practicePage derives readable fallback labels and subtitles for sparse plan items", function() {
@@ -565,8 +613,8 @@ test("practicePage does not render start buttons for sparse plan items without i
   };
 
   var html = practicePage();
-  assert.strictEqual(html.indexOf("practiceStartItem', 'undefined'"), -1);
-  assert.ok(html.indexOf("practiceStartItem', 'practice_1'") >= 0);
+  assert.strictEqual(html.indexOf('data-item-id="undefined"'), -1);
+  assert.ok(html.indexOf('data-item-id="practice_1"') >= 0);
   assert.ok(html.indexOf(">Unavailable<") >= 0);
 });
 
@@ -768,8 +816,8 @@ test("planPage does not render completed items as clickable go buttons", functio
   var html = planPage();
   assert.ok(html.indexOf("Completed Warmup") >= 0);
   assert.ok(html.indexOf("Next Warmup") >= 0);
-  assert.ok(html.indexOf("launchPracticePlanItem('done_1')") === -1);
-  assert.ok(html.indexOf("launchPracticePlanItem('todo_1')") >= 0);
+  assert.ok(html.indexOf('data-item-id="done_1"') === -1);
+  assert.ok(html.indexOf('data-item-id="todo_1"') >= 0);
   assert.ok(html.indexOf(">Done<") >= 0);
 });
 
@@ -1025,8 +1073,8 @@ test("planPage does not render go buttons for sparse plan items without ids", fu
   global.eval(loadJS("js/pages/plan.js"));
 
   var html = planPage();
-  assert.strictEqual(html.indexOf("launchPracticePlanItem('undefined')"), -1);
-  assert.ok(html.indexOf("launchPracticePlanItem('practice_1')") >= 0);
+  assert.strictEqual(html.indexOf('data-item-id="undefined"'), -1);
+  assert.ok(html.indexOf('data-item-id="practice_1"') >= 0);
   assert.ok(html.indexOf(">Unavailable<") >= 0);
 });
 
