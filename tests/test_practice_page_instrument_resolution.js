@@ -582,8 +582,54 @@ test("planPage and practicePage tolerate sparse cached plan items that contain n
 
   assert.strictEqual(practiceHtml.indexOf("undefined"), -1);
   assert.strictEqual(planHtml.indexOf("undefined"), -1);
-  assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
-  assert.ok(planHtml.indexOf(">Unavailable<") >= 0);
+  assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
+  assert.ok(practiceHtml.indexOf("warmup 1") >= 0);
+  assert.ok(planHtml.indexOf("warmup 1") >= 0);
+});
+
+test("planPage and practice summaries skip null slots when real plan items exist", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      completedItems: 1,
+      items: [
+        { id: "practice_1", type: "practice", completed: true, meta: { exerciseId: "warmup_1" } },
+        null
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practiceTab();
+  var planHtml = planPage();
+
+  assert.ok(practiceHtml.indexOf("1/1") >= 0);
+  assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
   assert.ok(practiceHtml.indexOf("warmup 1") >= 0);
   assert.ok(planHtml.indexOf("warmup 1") >= 0);
 });

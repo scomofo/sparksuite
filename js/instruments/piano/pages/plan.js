@@ -43,7 +43,8 @@ function pianoPlanPage(){
   }
 
   for(var i=0;i<plan.items.length;i++){
-    var item = plan.items[i] || {};
+    var item = plan.items[i];
+    if(!item) continue;
     var canLaunch = !!item.id;
     var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
     var actionHtml = item.completed
