@@ -176,9 +176,10 @@ function practicePlanSection(){
       var item = plan.items[i];
       if(!isRenderablePlanItem(item)) continue;
       var itemId = getPlanItemId(item);
+      var target = item && typeof item.target === "string" ? item.target.trim() : null;
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       h += '<div class="row"' + done + '>';
-      h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
+      h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (target ? ' (' + escHTML(target) + ')' : '') + '</span>';
       if(!item.completed){
         if(itemId){
           h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+itemId+'\')">Start</button>';

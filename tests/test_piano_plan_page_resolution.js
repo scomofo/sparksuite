@@ -657,6 +657,36 @@ test("piano plan and practice sections ignore whitespace-only exercise types", f
   assert.strictEqual(planHtml.indexOf(" -  - "), -1);
 });
 
+test("piano practice plan section ignores malformed target display values", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "practice_1", type: "practice", label: "Quick warmup", target: { reps: 10 } },
+        { id: "practice_2", type: "practice", label: "Finger drill", target: "   " }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = practicePlanSection();
+  assert.ok(html.indexOf("Quick warmup") >= 0);
+  assert.ok(html.indexOf("Finger drill") >= 0);
+  assert.strictEqual(html.indexOf("[object Object]"), -1);
+  assert.strictEqual(html.indexOf("()"), -1);
+});
+
 test("pianoPlanPage ignores whitespace-only subtitle meta tokens", function() {
   global.S = {
     practicePlanComplete: false,
