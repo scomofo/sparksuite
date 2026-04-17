@@ -179,7 +179,10 @@ test("selectWeakPerformanceCandidate ignores known buckets from another instrume
           return [];
         },
         getSongs: function() {
-          return [{ title: "Piano Daydreams" }];
+          return [
+            { title: "Piano Daydreams" },
+            { title: "Mystery Piece" }
+          ];
         }
       };
     },
@@ -237,7 +240,10 @@ test("selectWeakPerformanceCandidate ignores arrangement types from another inst
           return [];
         },
         getSongs: function() {
-          return [{ title: "Piano Daydreams" }];
+          return [
+            { title: "Piano Daydreams" },
+            { title: "Mystery Piece" }
+          ];
         }
       };
     },
@@ -267,6 +273,51 @@ test("selectWeakPerformanceCandidate ignores arrangement types from another inst
   assert.ok(candidate);
   assert.strictEqual(candidate.meta.songId, "piano_daydreams");
   assert.strictEqual(candidate.meta.arrangementType, "block_chords");
+});
+
+test("selectWeakPerformanceCandidate matches app-scoped buckets when the active instrument only exposes id", function() {
+  global.getPerformanceChartLibrary = function() {
+    return [];
+  };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        name: "Piano",
+        id: "pianospark",
+        instrument: "piano",
+        getCurriculumMap: function() {
+          return [];
+        },
+        getExercises: function() {
+          return [];
+        },
+        getSongs: function() {
+          return [
+            { title: "Piano Daydreams" },
+            { title: "Mystery Piece" }
+          ];
+        }
+      };
+    },
+    getAll: function() {
+      return [this.getActive()];
+    }
+  };
+  S.performanceStats = {
+    mystery_piece_imported_chart_normal: {
+      songId: "mystery_piece",
+      arrangement: "imported_chart",
+      difficulty: "normal",
+      bestAccuracy: 41,
+      runs: 2,
+      appId: "pianospark"
+    }
+  };
+
+  var candidate = selectWeakPerformanceCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.songId, "mystery_piece");
 });
 
 test("selectWeakPerformanceCandidate ignores unknown generic legacy guitar song buckets while piano is active", function() {

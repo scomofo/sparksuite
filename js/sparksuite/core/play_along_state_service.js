@@ -54,7 +54,7 @@
       : null;
     if (runtime && runtime.activeInstrumentId) return runtime.activeInstrumentId;
     var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
-    if (active && active.appId) return active.appId;
+    if (active && (active.id || active.appId)) return active.id || active.appId;
     return "guitar";
   }
 

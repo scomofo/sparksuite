@@ -73,7 +73,7 @@
         : (active && active.id ? active.id : null),
       appId: instrumentContext && instrumentContext.appId
         ? instrumentContext.appId
-        : (active && active.appId ? active.appId : null),
+        : (active && (active.appId || active.id) ? (active.appId || active.id) : null),
       instrumentType: instrumentContext && instrumentContext.instrumentType
         ? instrumentContext.instrumentType
         : (active && active.instrument ? active.instrument : null),

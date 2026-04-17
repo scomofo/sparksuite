@@ -133,6 +133,9 @@ function resetState() {
       }
     }
   };
+  global.SparkInstruments = {
+    getActive: function() { return null; }
+  };
   global.saveState = function() {};
   global.toasts = [];
   global.showToast = function(msg) { toasts.push(msg); };
@@ -181,6 +184,20 @@ test("sparkPlayAlongStop stores outcome for results screen", function() {
 test("sparkPlayAlongReplay reuses active params", async function() {
   await sparkPlayAlongReplay();
   assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc", instrument: "guitar" });
+  assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
+});
+
+test("sparkPlayAlongReplay falls back to the active registered instrument id", async function() {
+  sparkCore.runtimeState = null;
+  global.SparkInstruments = {
+    getActive: function() {
+      return { id: "pianospark", instrument: "piano" };
+    }
+  };
+
+  await sparkPlayAlongReplay();
+
+  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc", instrument: "pianospark" });
   assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
 });
 
