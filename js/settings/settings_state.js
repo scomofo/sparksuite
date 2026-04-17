@@ -1,5 +1,33 @@
 (function(){
 
+  function inferPrimaryInstrumentFromName(name) {
+    var value = String(name || "").toLowerCase();
+    if (value.indexOf("piano") >= 0) return "piano";
+    if (value.indexOf("ukulele") >= 0 || value.indexOf("uke") >= 0) return "ukulele";
+    if (value.indexOf("bass") >= 0) return "bass";
+    if (value.indexOf("drum") >= 0) return "drums";
+    return "guitar";
+  }
+
+  function inferPrimaryInstrumentDefault() {
+    if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
+      var active = SparkInstruments.getActive();
+      var candidate = active ? (active.instrument || active.instrumentType || active.id || active.appId || null) : null;
+      if (candidate && typeof SparkInstruments.getAll === "function") {
+        var entries = SparkInstruments.getAll() || [];
+        for (var i = 0; i < entries.length; i++) {
+          var entry = entries[i] || {};
+          if (entry.id === candidate || entry.appId === candidate) {
+            candidate = entry.instrument || entry.instrumentType || candidate;
+            break;
+          }
+        }
+      }
+      if (candidate) return candidate;
+    }
+    return inferPrimaryInstrumentFromName(typeof APP_NAME !== "undefined" ? APP_NAME : "");
+  }
+
   function initSettingsDefaults(){
     S.settings = S.settings || {
       audioLatencyMs: 0,
@@ -15,7 +43,7 @@
     S.profile = S.profile || {
       displayName: "",
       avatar: "default",
-      instrumentPrimary: "guitar",
+      instrumentPrimary: inferPrimaryInstrumentDefault(),
       instrumentSecondary: "piano",
       joinDate: 0,
       totalPracticeMinutes: 0,
