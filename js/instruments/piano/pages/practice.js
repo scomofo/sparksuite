@@ -152,7 +152,7 @@ function practicePlanSection(){
     h += '<div class="card" style="margin-top:12px">';
     h += '<div><b>Today\'s Practice Plan</b></div>';
     for(var i=0;i<plan.items.length;i++){
-      var item = plan.items[i];
+      var item = plan.items[i] || {};
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       h += '<div class="row"' + done + '>';
       h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
