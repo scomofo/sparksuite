@@ -50,7 +50,12 @@ test("performanceEditorPage ignores stale active chart and event text tokens", f
       t: 1,
       dur: 0.5
     }],
-    phrases: []
+    phrases: [{
+      id: 3,
+      name: "undefined",
+      startSec: 0,
+      endSec: 4
+    }]
   };
   global.sparkCore = {
     getPerformanceEditorDocumentView: function() {
@@ -65,7 +70,9 @@ test("performanceEditorPage ignores stale active chart and event text tokens", f
         selectedEventId: 7,
         selectedEventLabel: "undefined",
         selectedEventTime: 1,
-        selectedEventDuration: 0.5
+        selectedEventDuration: 0.5,
+        selectedPhraseId: 3,
+        selectedPhraseName: "null"
       };
     },
     getActiveSessionView: function() {
@@ -79,6 +86,9 @@ test("performanceEditorPage ignores stale active chart and event text tokens", f
   assert.ok(html.indexOf(">undefined<") === -1);
   assert.ok(html.indexOf(">null<") === -1);
   assert.ok(html.indexOf(">NaN<") === -1);
+  assert.ok(html.indexOf('value="editor_chart_1"') >= 0);
+  assert.ok(html.indexOf(">Phrase 1<") >= 0);
+  assert.ok(html.indexOf(">?<") >= 0);
 });
 
 test("performanceEditorPage ignores stale saved chart library text tokens", function() {

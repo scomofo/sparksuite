@@ -98,7 +98,7 @@ function performanceEditorPage() {
   } else {
     // Chart info
     h += '<div class="card mb20" style="display:flex;gap:12px;align-items:center">';
-    h += '<div style="flex:1"><input type="text" class="set-input" value="' + escHTML(chart.title || "") + '" onchange="act(\'editorTitle\',this.value)" placeholder="Chart title" style="font-weight:800;font-size:15px"></div>';
+    h += '<div style="flex:1"><input type="text" class="set-input" value="' + escHTML(_firstPerformanceEditorTextToken(chart.title, chart.id)) + '" onchange="act(\'editorTitle\',this.value)" placeholder="Chart title" style="font-weight:800;font-size:15px"></div>';
     h += '<div><input type="number" class="set-input" value="' + editorBpm + '" onchange="act(\'editorBpm\',this.value)" style="width:60px;text-align:center" min="40" max="300"> BPM</div>';
     h += '</div>';
 
@@ -108,8 +108,9 @@ function performanceEditorPage() {
       for (var pi = 0; pi < chart.phrases.length; pi++) {
         var p = chart.phrases[pi];
         var phraseSelected = selectedPhraseId === p.id;
+        var phraseName = _firstPerformanceEditorTextToken(p.name, "Phrase " + (pi + 1));
         h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:'+(phraseSelected?"#45B7D122":"transparent")+';border:1px solid '+(phraseSelected?"#45B7D1":"transparent")+'" onclick="act(\'editorSelectPhrase\','+p.id+')">';
-        h += '<span style="font-weight:700;color:var(--text-primary)">' + escHTML(p.name || "Phrase " + (pi + 1)) + '</span>';
+        h += '<span style="font-weight:700;color:var(--text-primary)">' + escHTML(phraseName) + '</span>';
         h += '<span style="color:var(--text-muted)">' + (p.startSec || 0).toFixed(1) + 's - ' + (p.endSec || 0).toFixed(1) + 's</span>';
         h += '</div>';
       }
@@ -119,7 +120,7 @@ function performanceEditorPage() {
         h += '<div style="font-size:12px;font-weight:700;color:#45B7D1;margin-bottom:8px">Selected Phrase</div>';
         h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">Name</label>'
-          + '<input type="text" class="set-input" value="' + escHTML(selectedPhraseName || ("Phrase " + (selectedPhraseId + 1))) + '"'
+          + '<input type="text" class="set-input" value="' + escHTML(_firstPerformanceEditorTextToken(selectedPhraseName, "Phrase " + (selectedPhraseId + 1))) + '"'
           + ' onchange="act(\'editorPhrase\',JSON.stringify({id:' + selectedPhraseId + ',prop:\'name\',val:this.value}))"'
           + ' style="width:120px"></div>';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">Start (s)</label>'
@@ -170,7 +171,7 @@ function performanceEditorPage() {
           + 's</div>';
         h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">Chord/Note</label>'
-          + '<input type="text" class="set-input" value="' + escHTML(selEvt.laneLabel || "") + '"'
+          + '<input type="text" class="set-input" value="' + escHTML(_firstPerformanceEditorTextToken(selEvt.laneLabel)) + '"'
           + ' onchange="act(\'editorEvt\',JSON.stringify({id:' + eid + ',prop:\'label\',val:this.value}))"'
           + ' style="width:80px"></div>';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">Time (s)</label>'
