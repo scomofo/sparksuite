@@ -94,6 +94,10 @@ function getPracticeSummaryFocus(plan) {
   return plan && plan.focus ? plan.focus : "No practice focus yet.";
 }
 
+function hasRenderablePracticeSummaryItems(plan) {
+  return !!(plan && Array.isArray(plan.items) && plan.items.some(function(item) { return !!item; }));
+}
+
 function sv2HomeDashboard() {
   var inst = getPracticePageInstrument();
   if (!inst) return "";
@@ -271,7 +275,7 @@ function practiceTab(){
     ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
   if(!plan) plan = S.practicePlan;
-  if(plan && Array.isArray(plan.items) && plan.items.length){
+  if(hasRenderablePracticeSummaryItems(plan)){
     var planProgress = getPracticeSummaryProgress(plan);
     h+='<div class="card mb20" style="border:2px solid '+(planProgress.completedItems>=planProgress.totalItems?"#4ECDC4":"#45B7D1")+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
@@ -532,7 +536,7 @@ function practicePage(){
 
   h += '<div class="card mb16">';
   h += '<div><b>Today\'s Practice Plan</b></div>';
-  if(plan && Array.isArray(plan.items) && plan.items.length){
+  if(hasRenderablePracticeSummaryItems(plan)){
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i] || {};
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';

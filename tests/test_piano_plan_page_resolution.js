@@ -208,6 +208,36 @@ test("piano practice plan section treats malformed cached plan shells without ar
   assert.strictEqual(html.indexOf("Broken Row"), -1);
 });
 
+test("piano plan and practice sections treat null-only cached plan arrays as empty state", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [null, null]
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.ok(planHtml.indexOf("No practice plan yet.") >= 0);
+  assert.ok(practiceHtml.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
+});
+
 test("piano practice plan section derives fallback labels for sparse plan items", function() {
   global.S = {
     practicePlan: {
