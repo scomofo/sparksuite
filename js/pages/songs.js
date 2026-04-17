@@ -1,5 +1,27 @@
 // ===== ChordSpark: Song-related pages and sections =====
 
+function getSongsPageInstrument(){
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 // Helper: check if only one stem is on (solo mode)
 function _isStemSolo(name){
   var onCount=0,soloName="";
@@ -19,7 +41,8 @@ function _formatPerformanceTechniqueLabel(key){
 
 // ===== STRUM TAB =====
 function strumTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getSongsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Strum Patterns &#127932;</h2></div><div class="flex-col">';
   for(var i=0;i<STRUM_PATTERNS.length;i++){
     var sp=STRUM_PATTERNS[i],lk=sp.level>S.level;
@@ -38,7 +61,8 @@ function strumTab(){
 
 // ===== SONGS TAB =====
 function songsTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getSongsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
@@ -206,7 +230,8 @@ function communitySection(){
 }
 
 function communitySubmitForm(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getSongsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var ss=S.submitSong;
   var h='<div class="card"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">Submit a Song</h3>';
   h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(ss.title)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
@@ -236,7 +261,8 @@ function communitySubmitForm(){
 
 // ===== IMPORT CHORD SHEET SECTION =====
 function importSection(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getSongsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var h='<div class="card mb16">';
   h+='<h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128196; Import Chord Sheet</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Paste a chord sheet using [Am] [G] bracket notation or chord names on their own lines.</p>';
