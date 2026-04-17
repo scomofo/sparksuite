@@ -23,7 +23,7 @@ function resetEnvironment() {
       artist: "null",
       bpm: 92,
       events: [
-        { id: "evt_1", type: "undefined", t: 1.5 }
+        { id: "undefined", type: "undefined", t: 1.5 }
       ],
       phrases: [
         { id: "phrase_1", name: "null", startSec: 0, endSec: 4 }
@@ -60,6 +60,8 @@ test("editorPage ignores stale metadata and item labels", function() {
   assert.ok(html.indexOf("value=\"null\"") === -1);
   assert.ok(html.indexOf("undefined @ 1.5") === -1);
   assert.ok(html.indexOf("event @ 1.5") >= 0);
+  assert.ok(html.indexOf("event · event") >= 0);
+  assert.ok(html.indexOf("editorSelect','undefined") === -1);
   assert.ok(html.indexOf("null · 0 → 4") === -1);
   assert.ok(html.indexOf("phrase · 0 → 4") >= 0);
   assert.ok(html.indexOf(">C4<") >= 0);
