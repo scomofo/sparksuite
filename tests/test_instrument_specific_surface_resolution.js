@@ -230,6 +230,24 @@ test("piano tools stats ignore stale history labels", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("piano clips tab ignores stale clip timestamps, durations, and urls", function() {
+  resetEnvironment("pianospark");
+  global.S._toolTab = "clips";
+  global.S.practiceClips = [
+    { ts: "not-a-date", duration: "NaN", url: "undefined" }
+  ];
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+
+  var html = pianoToolsTab();
+  assert.ok(html.indexOf("Unknown time") >= 0);
+  assert.ok(html.indexOf(">->") >= 0 || html.indexOf(">-<") >= 0);
+  assert.ok(html.indexOf("Unavailable") >= 0);
+  assert.ok(html.indexOf("undefined") === -1);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("piano songs library ignores stale sentinel search text", function() {
   resetEnvironment("pianospark");
   global.S.songFilter = "undefined";
