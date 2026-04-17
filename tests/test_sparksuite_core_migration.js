@@ -3160,6 +3160,45 @@ test("SparkCore can hydrate performance song selection from chart library metada
   }
 });
 
+test("SparkCore can hydrate chart metadata when the active context only exposes instrumentId", function() {
+  var core = createDefaultSparkCore();
+  var originalGetPerformanceChartLibrary = global.getPerformanceChartLibrary;
+  core.instrumentManager.getActiveContext = function() {
+    return {
+      instrumentId: "ukespark",
+      instrumentType: "ukulele",
+      songs: []
+    };
+  };
+  global.getPerformanceChartLibrary = function(options) {
+    options = options || {};
+    if (options.instrument === "ukespark") return [];
+    return [
+      {
+        id: "ukulele_island_package",
+        title: "Island Loop",
+        artist: "SparkSuite Ukulele",
+        bpm: 78,
+        instrument: "ukulele",
+        sourceType: "imported_package"
+      }
+    ];
+  };
+  try {
+    var selectionRequest = core.openPerformanceSongSelection({
+      songId: "ukulele_island_package",
+      arrangementType: "ukulele_strum",
+      difficultyId: "normal"
+    });
+
+    assert.strictEqual(selectionRequest.songId, "ukulele_island_package");
+    assert.strictEqual(selectionRequest.songData.title, "Island Loop");
+    assert.strictEqual(core.getRuntimeState().performanceSongData.title, "Island Loop");
+  } finally {
+    global.getPerformanceChartLibrary = originalGetPerformanceChartLibrary;
+  }
+});
+
 test("SparkCore can open career song selection through an explicit helper", function() {
   var core = createDefaultSparkCore();
   var request = core.openCareerSongSelection({
@@ -3233,6 +3272,78 @@ test("SparkCore falls back to the first performance chart for empty daily challe
     assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Daily Demo Song");
   } finally {
     global.getPerformanceChartLibrary = originalGetPerformanceChartLibrary;
+  }
+});
+
+test("SparkCore prefers active instrument type over app id for daily performance challenges", function() {
+  var core = createDefaultSparkCore();
+  var originalGetPerformanceChartLibrary = global.getPerformanceChartLibrary;
+  core.instrumentManager.getActiveContext = function() {
+    return {
+      instrumentId: "ukespark",
+      instrumentType: "ukulele",
+      songs: []
+    };
+  };
+  global.getPerformanceChartLibrary = function(options) {
+    options = options || {};
+    if (options.instrument === "ukulele") {
+      return [{
+        id: "ukulele_daily_song",
+        title: "Island Daily",
+        artist: "SparkSuite Ukulele",
+        instrument: "ukulele",
+        sourceType: "built_in"
+      }];
+    }
+    if (options.instrument === "ukespark") {
+      return [];
+    }
+    return [{
+      id: "guitar_daily_song",
+      title: "Guitar Daily",
+      artist: "SparkSuite Guitar",
+      instrument: "guitar",
+      sourceType: "built_in"
+    }];
+  };
+  core.updateRuntimeState({ activeInstrumentId: "ukespark", activeInstrumentType: "ukulele" });
+  try {
+    var selection = core.openPerformanceDailyChallenge({
+      arrangementType: "ukulele_strum",
+      difficultyId: "easy"
+    });
+
+    assert.strictEqual(selection.songId, "ukulele_daily_song");
+    assert.strictEqual(selection.songData.title, "Island Daily");
+  } finally {
+    global.getPerformanceChartLibrary = originalGetPerformanceChartLibrary;
+  }
+});
+
+test("SparkCore startPracticeFromLesson uses the active instrument type for playable launches", function() {
+  var core = createDefaultSparkCore();
+  var originalGateway = window.SparkExecutionGateway;
+  var captured = null;
+  window.SparkExecutionGateway = {
+    runPlayablePayload: function(payload, options) {
+      captured = { payload: payload, options: options };
+      return true;
+    }
+  };
+  core.updateRuntimeState({ activeInstrumentId: "pianospark", activeInstrumentType: "piano" });
+  try {
+    var ok = core.startPracticeFromLesson({
+      type: "timing",
+      tempo: 84,
+      label: "Timing Builder"
+    });
+
+    assert.strictEqual(ok, true);
+    assert.ok(captured);
+    assert.strictEqual(captured.options.instrument, "piano");
+  } finally {
+    window.SparkExecutionGateway = originalGateway;
   }
 });
 

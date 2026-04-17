@@ -3208,10 +3208,13 @@
 
     if (typeof getPerformanceChartLibrary !== "function") return null;
 
-    var instrumentId = instrumentContext.instrumentType || instrumentContext.appId || null;
+    var instrumentId = instrumentContext.instrumentType || instrumentContext.instrumentId || instrumentContext.appId || null;
     var chartLibrary = instrumentId
       ? (getPerformanceChartLibrary({ instrument: instrumentId }) || [])
       : (getPerformanceChartLibrary() || []);
+    if (!chartLibrary.length && instrumentId) {
+      chartLibrary = getPerformanceChartLibrary({}) || [];
+    }
     var chartAliasMap = {};
 
     for (i = 0; i < chartLibrary.length; i++) {
@@ -3317,7 +3320,7 @@
       return this.openPerformanceSongSelection(options);
     }
     if (typeof getPerformanceChartLibrary === "function") {
-      var instrumentId = this.runtimeState.activeInstrumentId || this.runtimeState.activeInstrumentType || null;
+      var instrumentId = this.runtimeState.activeInstrumentType || this.runtimeState.activeInstrumentId || null;
       var chartLibrary = getPerformanceChartLibrary(instrumentId ? { instrument: instrumentId } : {}) || [];
       if (!chartLibrary.length && instrumentId) {
         chartLibrary = getPerformanceChartLibrary({}) || [];
@@ -3845,7 +3848,7 @@
       return window.SparkExecutionGateway.runPlayablePayload(payload, {
         source: "lesson_generator",
         label: lesson.label,
-        instrument: this.runtimeState.activeInstrumentId || "guitar"
+        instrument: this.runtimeState.activeInstrumentType || this.runtimeState.activeInstrumentId || "guitar"
       });
     }
     return false;
