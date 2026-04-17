@@ -175,7 +175,8 @@ test("guided review rehydrates an app-id-only active instrument shell", function
 
 test("tunerTab rehydrates an app-id-only active instrument shell", function() {
   var html = tunerTab();
-  assert.ok(html.indexOf("Guitar Tuner") >= 0);
+  assert.ok(html.indexOf("Piano Tuner") >= 0);
+  assert.ok(html.indexOf("Standard tuning: E A D G B e") >= 0);
   assert.ok(html.indexOf("329.63Hz") >= 0);
 });
 
