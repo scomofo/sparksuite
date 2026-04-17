@@ -1,3 +1,15 @@
+function prettyRecommendationUiToken(value){
+  var text;
+  var lower;
+  if(value == null) return "";
+  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
 function recommendationsPage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
@@ -26,12 +38,14 @@ function recommendationsPage(){
 function renderRecommendationModuleProgress(recommendation){
   if(!recommendation || recommendation.source !== "module_progress" || !recommendation.meta) return "";
   var bits = [];
-  if(recommendation.meta.recommendationFocus){
-    bits.push("Focus: " + recommendation.meta.recommendationFocus.replace(/_/g, " "));
+  var focus = prettyRecommendationUiToken(recommendation.meta.recommendationFocus);
+  if(focus){
+    bits.push("Focus: " + focus);
   }
   var summary = recommendation.meta.progressSummary;
-  if(summary && summary.weakestMetric && typeof summary[summary.weakestMetric] === "number"){
-    bits.push("Weakest: " + summary.weakestMetric.replace(/_/g, " ") + " " + Math.round(summary[summary.weakestMetric] * 100) + "%");
+  var weakestMetric = prettyRecommendationUiToken(summary && summary.weakestMetric);
+  if(summary && weakestMetric && typeof summary[summary.weakestMetric] === "number"){
+    bits.push("Weakest: " + weakestMetric + " " + Math.round(summary[summary.weakestMetric] * 100) + "%");
   }
   if(!bits.length) return "";
   return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(bits.join(" | ")) + '</div>';
