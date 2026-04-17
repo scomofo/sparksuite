@@ -1,7 +1,29 @@
 // ===== ChordSpark: Home page and practice-related tabs =====
 
+function getPracticePageInstrument() {
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui || inst.tabs || inst.tabRenderers) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 function sv2HomeDashboard() {
-  var inst = SparkInstruments.getActive();
+  var inst = getPracticePageInstrument();
   if (!inst) return "";
   var D = inst.getData ? inst.getData() : {};
   var instrumentType = inst.instrument || "guitar";
@@ -96,7 +118,7 @@ function homePage(){
   var v2Home = typeof sv2HomeDashboard === "function" && document.body.classList.contains("sv2") ? sv2HomeDashboard() : "";
 
   // Build tab bar from active instrument's tabs array
-  var inst = SparkInstruments.getActive();
+  var inst = getPracticePageInstrument();
   var instTabs = inst && inst.tabs ? inst.tabs : [];
   var h='<div class="tabs" role="tablist">';
   for(var i=0;i<instTabs.length;i++){
@@ -138,8 +160,9 @@ function gamesTab(){ return '<div class="card"><div><b>Games</b></div><div class
 function toolsTab(){ return '<div class="card"><div><b>Tools</b></div><div class="muted">Tuner, metronome, and utilities.</div></div>'; }
 // ===== PRACTICE TAB =====
 function practiceTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getPracticePageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   // Daily goal progress at top
   var goalPct=Math.min(100,Math.round((S.todayPracticeSeconds/(S.dailyGoalMinutes*60))*100));
   var goalMins=Math.floor(S.todayPracticeSeconds/60);
@@ -263,7 +286,8 @@ function practiceTab(){
 
 // ===== CUSTOM PRACTICE SETS =====
 function customSetsSection(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getPracticePageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
   if(S.editingSet){
