@@ -9,6 +9,11 @@ global.window = {};
 global.S = {};
 global.SparkSessionTypes = { FLOW_DAILY_PRACTICE: "daily_practice" };
 global.SparkSessionSegmentTypes = { normalize: function(t) { return t || "practice"; } };
+global.SparkInstruments = {
+  getAll: function() {
+    return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+  }
+};
 
 require("../js/sparksuite/core/session_runtime.js");
 var Runtime = window.SparkSessionRuntime;
@@ -41,6 +46,39 @@ test("getActiveSession returns null initially", function() {
 
 test("getActiveSegmentIndex returns -1 initially", function() {
   assert.strictEqual(Runtime.getActiveSegmentIndex(), -1);
+});
+
+test("runSegment normalizes app-id instruments for playable practice payloads", function() {
+  var captured = null;
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+    return true;
+  };
+
+  global.window.sparkCore = {
+    startSession: function() {
+      return {
+        segments: [{ id: "seg_1", type: "practice", exerciseIds: ["ex_1"] }],
+        exercises: [{
+          id: "ex_1",
+          data: {
+            core: { skill: "timing", instrument: "pianospark" },
+            gameplay: { payload: { adapterType: "pianospark" } }
+          }
+        }]
+      };
+    }
+  };
+
+  Runtime.startSessionLoop();
+  var launched = Runtime.runSegment(0);
+
+  assert.strictEqual(launched, true);
+  assert.ok(captured);
+  assert.strictEqual(captured.options.instrument, "piano");
+
+  delete global.window.sparkCore;
+  delete global.startPlayableRhythmHighwayPayload;
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");
