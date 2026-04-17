@@ -196,6 +196,32 @@ test("practicePage falls back to cached plan state when the practice bridge is u
   assert.strictEqual(html.indexOf("Core Warmup"), -1);
 });
 
+test("practicePage does not render completed items as clickable start buttons", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    practicePlan: {
+      items: [
+        { id: "done_1", type: "practice", label: "Completed Warmup", completed: true },
+        { id: "todo_1", type: "practice", label: "Next Warmup", completed: false }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = practicePage();
+  assert.ok(html.indexOf("Completed Warmup") >= 0);
+  assert.ok(html.indexOf("Next Warmup") >= 0);
+  assert.ok(html.indexOf("practiceStartItem', 'done_1") === -1);
+  assert.ok(html.indexOf("practiceStartItem', 'todo_1") >= 0);
+  assert.ok(html.indexOf(">Done<") >= 0);
+});
+
 test("plan page infers richer display types from generic core-backed items", function() {
   global.SparkPracticeBridge = {
     toLegacyPlan: function(plan) { return plan._legacyPlan; }
