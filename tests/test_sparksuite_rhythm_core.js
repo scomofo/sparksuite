@@ -403,6 +403,17 @@ test("instrument rhythm adapters expose lane metadata for non-guitar highway lay
   assert.deepStrictEqual(ukulelePayload.laneLabels, ["G", "C", "E", "A"]);
 });
 
+test("loop payloads preserve non-guitar adapter types", function() {
+  var bassPayload = new SparkBassRhythmAdapter().createPayload({});
+  var loopSpec = _createRhythmHighwayLoopSpec(bassPayload, { songTimeSec: 0 });
+  var loopPayload = _buildRhythmHighwayLoopPayload(bassPayload, loopSpec);
+
+  assert.ok(loopPayload);
+  assert.strictEqual(loopPayload.adapterType, "bass");
+  assert.strictEqual(loopPayload.laneCount, 4);
+  assert.deepStrictEqual(loopPayload.laneLabels, ["E", "A", "D", "G"]);
+});
+
 test("rhythm highway can launch directly from an authored bass module payload", function() {
   var payload = new SparkBassRhythmAdapter().createPayload({
     segment: {
@@ -429,6 +440,51 @@ test("rhythm highway can launch directly from an authored bass module payload", 
   assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "bass");
   assert.strictEqual(S.rhythmHighwayLaunchContext.exerciseFocus, "walking_bass");
   assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["E", "A", "D", "G"]);
+});
+
+test("rhythm highway uses the payload adapter type for the clock and gameplay engine", function() {
+  var payload = new SparkBassRhythmAdapter().createPayload({});
+  var originalCreateClock = SparkTimingEngine.prototype.createClock;
+  var originalGameplayEngine = global.SparkRhythmGameplayEngine;
+  var capturedClockInstrument = null;
+  var capturedAdapter = null;
+
+  SparkTimingEngine.prototype.createClock = function(instrument) {
+    capturedClockInstrument = instrument;
+    return {
+      getSongTime: function() { return 0; },
+      close: function() {}
+    };
+  };
+  global.SparkRhythmGameplayEngine = function(options) {
+    capturedAdapter = options.adapter;
+    return {
+      getSnapshot: function() {
+        return {
+          gameplay: { score: 0, combo: 0, maxCombo: 0, accuracy: 0, totalNotes: 0, hitNotes: 0 },
+          visibleNotes: [],
+          finished: false,
+          songTimeSec: 0
+        };
+      },
+      update: function() {
+        return this.getSnapshot();
+      },
+      finalize: function() {
+        return { gameplay: {}, learning: {} };
+      }
+    };
+  };
+
+  try {
+    var started = startRhythmHighwayPayload(payload, "spark_balanced", { instrument: "bass" });
+    assert.strictEqual(started, true);
+    assert.strictEqual(capturedClockInstrument, "bass");
+    assert.ok(capturedAdapter instanceof SparkBassRhythmAdapter);
+  } finally {
+    SparkTimingEngine.prototype.createClock = originalCreateClock;
+    global.SparkRhythmGameplayEngine = originalGameplayEngine;
+  }
 });
 
 test("bass module can provide rhythm guidance for focused authored drills", function() {

@@ -50,15 +50,16 @@
     var resolvedPresetName = resolveRhythmHighwayPresetName(presetName || state.rhythmHighwayPreset || payload.enginePreset);
     var resolvedLoopSpec = launchContext.loopSpec || state.rhythmHighwayLoop || null;
     var activePayload = resolvedLoopSpec ? buildRhythmHighwayLoopPayload(payload, resolvedLoopSpec) : payload;
+    var resolvedAdapterType = resolveRhythmHighwayAdapterType(activePayload || payload, launchContext);
     if (!activePayload || !activePayload.songChart) activePayload = payload;
 
     runtime.segmentId = launchContext.segmentId || null;
     runtime.sourcePayload = payload;
     runtime.activePayload = activePayload;
-    runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock("guitar");
+    runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock(resolvedAdapterType);
     runtime.engine = new SparkRhythmGameplayEngine({
       chart: activePayload.songChart,
-      adapter: new SparkGuitarRhythmAdapter(),
+      adapter: createRhythmHighwayAdapter(resolvedAdapterType),
       preset: SparkEnginePresetRegistry.get(resolvedPresetName)
     });
 
@@ -68,7 +69,7 @@
     state.rhythmHighwayLaunchContext = {
       source: launchContext.source || "ad_hoc",
       label: launchContext.label || payload.chartId || (payload.songChart.song && payload.songChart.song.title) || null,
-      instrument: launchContext.instrument || payload.adapterType || null,
+      instrument: launchContext.instrument || resolvedAdapterType || null,
       exerciseId: launchContext.exerciseId || null,
       exerciseFocus: launchContext.exerciseFocus || null
     };
@@ -364,6 +365,28 @@
     return ["G", "R", "Y", "B", "O"];
   }
 
+  function resolveRhythmHighwayAdapterType(payload, launchContext) {
+    var chartSong = payload && payload.songChart ? (payload.songChart.song || {}) : {};
+    return (launchContext && launchContext.instrument)
+      || (payload && payload.adapterType)
+      || (payload && payload.instrument)
+      || chartSong.instrument
+      || "guitar";
+  }
+
+  function createRhythmHighwayAdapter(adapterType) {
+    if (adapterType === "bass" && typeof SparkBassRhythmAdapter === "function") {
+      return new SparkBassRhythmAdapter();
+    }
+    if (adapterType === "ukulele" && typeof SparkUkuleleRhythmAdapter === "function") {
+      return new SparkUkuleleRhythmAdapter();
+    }
+    if (adapterType === "piano" && typeof SparkPianoRhythmAdapter === "function") {
+      return new SparkPianoRhythmAdapter();
+    }
+    return new SparkGuitarRhythmAdapter();
+  }
+
   function buildRhythmHighwayLoopPayload(payload, loopSpec) {
     if (!payload || !payload.songChart || !loopSpec) return payload;
     var chart = payload.songChart;
@@ -401,7 +424,7 @@
 
     return {
       chartId: payload.chartId ? payload.chartId + "_loop" : "rhythm_loop",
-      adapterType: payload.adapterType || "guitar",
+      adapterType: resolveRhythmHighwayAdapterType(payload, null),
       enginePreset: payload.enginePreset || "spark_learning",
       laneCount: payload.laneCount || 5,
       laneLabels: Array.isArray(payload.laneLabels) ? payload.laneLabels.slice() : null,
