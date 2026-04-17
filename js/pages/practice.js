@@ -45,7 +45,7 @@ function getPracticeSummaryItemType(item) {
 
 function prettyPracticeSummaryToken(value) {
   if (value == null) return "";
-  if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if (typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
   return String(value || "").replace(/_/g, " ").trim();
 }
 
@@ -138,6 +138,7 @@ function isRenderablePracticeSummaryItem(item) {
     var value = item.meta[key];
     if (value == null) return false;
     if (typeof value === "string") return !!value.trim();
+    if (typeof value === "boolean") return false;
     if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return false;
     return true;
   }));
