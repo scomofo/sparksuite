@@ -3,6 +3,14 @@
   "version": "1.0.0",
   "description": "Multi-instrument music learning suite",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scomofo/sparksuite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/scomofo/sparksuite/issues"
+  },
+  "homepage": "https://github.com/scomofo/sparksuite#readme",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win",

@@ -1,117 +1,130 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/JavaScript-ES2024-f7df1e?style=for-the-badge&logo=javascript&logoColor=black" />
-  <img src="https://img.shields.io/badge/Electron-34-47848f?style=for-the-badge&logo=electron&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tauri-2.0-ffc131?style=for-the-badge&logo=tauri&logoColor=white" />
-  <img src="https://img.shields.io/badge/Capacitor-Mobile-119eff?style=for-the-badge&logo=capacitor&logoColor=white" />
-</p>
+# 🎸 SparkSuite
 
-<h1 align="center">🎸 ChordSpark</h1>
-
-<p align="center">
-  <strong>Guitar chord learning app with practice tracking, drill modes, games, and ear training</strong>
-</p>
-
-<p align="center">
-  <em>Desktop &bull; Mobile &bull; Web &mdash; one codebase, every platform</em>
-</p>
+An engine-driven music learning platform.
+Guitar, bass, piano, ukulele — one core, every instrument.
+Desktop • Mobile • Web — one codebase, every platform.
 
 ---
 
-## ✨ Features
+## ✨ What it is
 
-<table>
-<tr>
-<td width="50%">
+SparkSuite is a modular practice platform built **engine-first, not UI-first**. A shared core handles lesson flow, exercise generation, adaptive difficulty, progression, and rewards. Instrument modules plug into that core — guitar (ChordSpark), bass (BassSpark), piano (PianoSpark), and ukulele — each contributing its own curriculum, audio, and visuals while reusing the same session lifecycle.
 
-### 🎵 Learn
-- **Chord Library** &mdash; Full chord database with diagrams and audio
-- **Guided Lessons** &mdash; Beginner to advanced, step by step
-- **Song Library** &mdash; Play along with real chord progressions
+## 🧠 Architecture
 
-</td>
-<td width="50%">
+```
+SparkCore
+  ├── SessionEngine       session lifecycle & results processing
+  ├── CurriculumEngine    lessons, progression paths
+  ├── PsychologyEngine    adaptive difficulty & reward scheduling
+  ├── PracticeEngine      exercise generation
+  ├── ProgressEngine      XP, mastery, badges, streaks
+  ├── InstrumentManager   pluggable instrument modules
+  ├── Storage             persistence
+  └── AIEngine            recommendations
+        ↓
+Instrument Modules  (guitar, bass, piano, ukulele)
+        ↓
+SessionPlan
+        ↓
+UI Rendering Layer  (PixiJS highway, React components)
+```
 
-### 🏋️ Practice
-- **Drill Mode** &mdash; Rapid-fire chord recognition
-- **Timed Sessions** &mdash; Track practice with streaks
-- **Dual Mode** &mdash; Side-by-side chord comparison
+The UI is a **dumb renderer of session state** — all logic lives in the engines. See `CLAUDE.md` for the full architectural contract and `REFACTOR_PLAN.md` for migration status.
 
-</td>
-</tr>
-<tr>
-<td>
+## 🎵 Features
 
-### 🎮 Play
-- **Chord Games** &mdash; Interactive challenges
-- **Ear Training** &mdash; Identify chords by sound
-- **Progress Stats** &mdash; Track accuracy over time
+**Learn**
+- Chord & note libraries with diagrams and real-instrument audio
+- Guided lessons, beginner to advanced
+- Song library with real chord progressions and playable charts
 
-</td>
-<td>
+**Practice**
+- Drill mode — rapid-fire recognition
+- Timed sessions with streak tracking
+- Dual mode — side-by-side comparison
+- NoteHighway — PixiJS-rendered scrolling note chart with ms-level timing accuracy
 
-### 🔊 Audio
-- **Real Guitar Samples** &mdash; WAV chord recordings
-- **Web Audio API** &mdash; Low-latency playback
-- **Freesound Integration** &mdash; Extended sound library
+**Play**
+- Mic-based pitch & chord detection (autocorrelation / YIN-style)
+- Chord games and ear training
+- Unified progression: XP, badges, unlocks, streaks
 
-</td>
-</tr>
-</table>
+**Audio**
+- Real instrument samples (WAV)
+- Web Audio API — low-latency playback
+- Freesound integration for extended sample library
 
----
-
-## 🚀 Quick Start
+## 🚀 Quick start
 
 ```bash
 npm install
-npm start          # 🖥️ Electron desktop
-npm run tauri:dev  # ⚡ Tauri (lightweight)
+npm start              # 🖥️  Electron desktop
+npm run tauri:dev      # ⚡  Tauri (lightweight native)
+npm run cap:android    # 📱  Android via Capacitor
+npm run cap:ios        # 📱  iOS via Capacitor
 ```
 
 Or just open `index.html` in any browser.
 
-## 🌐 Multi-Platform
+## 🌐 Platforms
 
-| Platform | Command | Engine |
-|:---------|:--------|:-------|
-| 🖥️ **Windows / Mac / Linux** | `npm start` | Electron 34 |
-| ⚡ **Lightweight Native** | `npm run tauri:dev` | Tauri (Rust) |
-| 📱 **iOS / Android** | `npx cap run` | Capacitor |
-| 🌐 **Web Browser** | Open `index.html` | None needed |
+| Platform                    | Command              | Engine        |
+| --------------------------- | -------------------- | ------------- |
+| 🖥️  Windows / Mac / Linux   | `npm start`          | Electron 34   |
+| ⚡  Lightweight native       | `npm run tauri:dev`  | Tauri (Rust)  |
+| 📱  iOS / Android           | `npm run cap:*`      | Capacitor     |
+| 🌐  Web browser             | open `index.html`    | —             |
 
 ## 📁 Structure
 
 ```
-chordspark/
-├── 🎵 guitar_chords/        Real WAV chord audio samples
-├── 📄 index.html             App entry point
-├── 🎨 styles.css             Styling
+sparksuite/
 ├── js/
-│   ├── app.js                App coordinator
-│   ├── audio.js              Audio playback engine
-│   ├── data.js               Chord database
-│   ├── state.js              State management
-│   ├── ui.js                 UI rendering
-│   └── pages/
-│       ├── practice.js       Practice sessions
-│       ├── guided.js         Guided lessons
-│       ├── songs.js          Song library
-│       ├── games.js          Chord games
-│       ├── dual.js           Dual comparison
-│       ├── session.js        Session tracking
-│       └── tools.js          Tuner, metronome
-└── server/
-    └── server.js             Express dev server
+│   ├── spark-core/          Core engines (session, curriculum, psychology, progress, AI)
+│   ├── instruments/         Instrument modules (guitar, bass, piano, ukulele)
+│   ├── performance-core/    Session runtime & scoring
+│   ├── curriculum/          Lesson content & progression data
+│   ├── pages/               UI pages (practice, songs, games, tools…)
+│   ├── spark-highway.js     PixiJS note-highway renderer
+│   └── app.js               App coordinator
+├── engine/
+│   ├── audio/               Mic input, analyser, pitch detection
+│   ├── gameplay/            Runtime loop, scoring, event logging
+│   ├── runtime/             Session runtime orchestration
+│   └── timing/              Timeline → notes, bar/beat conversion
+├── guitar_chords/           Real WAV chord samples
+├── harmony_knight/          Companion Flutter app (experimental)
+├── src-tauri/               Tauri shell
+├── desktop/                 Electron/desktop config
+├── tests/                   ~30 test suites across core, runtime, curriculum
+├── index.html               Web entry point
+├── main.js                  Electron main process
+└── server/server.js         Express dev server
 ```
 
-## 🎹 Sister App
+## 🧪 Testing
 
-PianoSpark shares content with ChordSpark &mdash; same lessons, same format, different instrument.
+```bash
+npm test
+```
 
-**[PianoSpark &rarr;](https://github.com/scomofo/Pianospark)**
+Test suites cover the core engines, instrument runtime migrations (piano, bass), curriculum guardrails, timing, payload validation, launcher integrity, and the full SparkSuite migration. Browser-based smoke tests live in `tests/smoke_test.html` and `tests/ukulele_chord_gallery.html`.
 
----
+## 📄 Documentation
 
-<p align="center">
-  <sub>Built by Scott Morley</sub>
-</p>
+- `CLAUDE.md` — architecture rules for AI coding agents (the non-negotiables)
+- `REFACTOR_PLAN.md` — engine-first migration plan
+- `IMPROVEMENTS.md` — roadmap and follow-ups
+- `CHANGELOG.md` — release notes
+- `chordspark-addendum.md`, `fingering-mastery-module.md`, `stickiness-layer.md` — design docs
+
+## 🎹 Companion project
+
+`harmony_knight/` is an experimental Flutter-based companion app exploring a different UI approach to the same curriculum model.
+
+## 📜 License
+
+MIT — see [LICENSE](./LICENSE).
+
+Built by Scott Morley.
