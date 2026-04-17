@@ -98,6 +98,66 @@
     return JSON.parse(JSON.stringify(params || {}));
   }
 
+  function getRegisteredInstrumentType(instrumentId) {
+    var all;
+    var i;
+    var inst;
+    if (!instrumentId || typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+      return null;
+    }
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      inst = all[i] || {};
+      if (inst.id === instrumentId || inst.appId === instrumentId) {
+        return inst.instrument || null;
+      }
+    }
+    return null;
+  }
+
+  function getPlayAlongRuntimeState(core) {
+    if (!core || typeof core.getRuntimeState !== "function") return null;
+    return core.getRuntimeState() || null;
+  }
+
+  function getPlayAlongInstrumentContext(core) {
+    if (!core || !core.instrumentManager || typeof core.instrumentManager.getActiveContext !== "function") {
+      return null;
+    }
+    return core.instrumentManager.getActiveContext() || null;
+  }
+
+  function resolvePlayAlongInstrumentType(core, params) {
+    var runtimeState = getPlayAlongRuntimeState(core) || {};
+    var instrumentContext = getPlayAlongInstrumentContext(core) || {};
+    var candidate = params.instrumentType
+      || params.instrument
+      || params.instrumentId
+      || runtimeState.activeInstrumentType
+      || runtimeState.activeInstrumentId
+      || instrumentContext.instrumentType
+      || instrumentContext.appId
+      || null;
+    var resolvedType = getRegisteredInstrumentType(candidate);
+    return resolvedType || candidate || "guitar";
+  }
+
+  function resolvePlayAlongInstrumentId(core, params, instrumentType) {
+    var runtimeState = getPlayAlongRuntimeState(core) || {};
+    var instrumentContext = getPlayAlongInstrumentContext(core) || {};
+    var candidateId = params.instrumentId || null;
+    if (!candidateId && params.instrument && params.instrument !== instrumentType) {
+      candidateId = params.instrument;
+    }
+    if (!candidateId && runtimeState.activeInstrumentId && runtimeState.activeInstrumentId !== instrumentType) {
+      candidateId = runtimeState.activeInstrumentId;
+    }
+    if (!candidateId && instrumentContext.appId && instrumentContext.appId !== instrumentType) {
+      candidateId = instrumentContext.appId;
+    }
+    return candidateId || null;
+  }
+
   function setPlayAlongSessionState(core, patch) {
     if (core && typeof core.setPlayAlongSession === "function") {
       return core.setPlayAlongSession(patch);
@@ -276,7 +336,18 @@
 
   SparkCore.prototype.startPlayAlongSession = function (params) {
     var self = this;
+    var originalInstrument;
+    var originalInstrumentId;
     params = params || {};
+    params = clonePlayAlongParams(this, params);
+    originalInstrument = params.instrument;
+    originalInstrumentId = params.instrumentId;
+    params.instrument = resolvePlayAlongInstrumentType(this, params);
+    params.instrumentType = params.instrument;
+    params.instrumentId = resolvePlayAlongInstrumentId(this, {
+      instrument: originalInstrument,
+      instrumentId: originalInstrumentId
+    }, params.instrument);
     setPlayAlongSessionState(this, {
       params: clonePlayAlongParams(this, params),
       chart: null,

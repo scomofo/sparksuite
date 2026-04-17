@@ -28,6 +28,9 @@ function resetState() {
   global.SparkLog = { info: function() {} };
   global.SparkCoreRuntime = function SparkCoreRuntime() {};
   global.window.SparkCoreRuntime = global.SparkCoreRuntime;
+  global.SparkInstruments = {
+    getAll: function() { return []; }
+  };
 }
 
 function bootstrap() {
@@ -169,6 +172,81 @@ test("startPlayAlongSession stores active params and calls chart service with a 
       instrument: "bass"
     });
     assert.ok(result.chart);
+  });
+});
+
+test("startPlayAlongSession normalizes app-id instruments before chart generation", function() {
+  var core = new SparkCoreRuntime();
+  var generatedWith = null;
+  core.learnerModel = { load: function() { return { baseline: true }; } };
+  core.policyEngine = { decide: function() { return { action: "maintain", difficulty: "hard" }; } };
+  core.performanceTracker = { reset: function() {} };
+  core.chordPredictor = { reset: function() {} };
+  core.fingeringOptimizer = { reset: function() {} };
+  core.chartService = {
+    generate: function(params) {
+      generatedWith = params;
+      return Promise.resolve({ timeline: [], sections: [] });
+    }
+  };
+  core._startAudioForSession = function() {};
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  return core.startPlayAlongSession({
+    trackId: "track_piano",
+    difficulty: "easy",
+    instrument: "pianospark"
+  }).then(function() {
+    assert.deepStrictEqual(generatedWith, {
+      trackId: "track_piano",
+      difficulty: "hard",
+      instrument: "piano"
+    });
+    assert.strictEqual(core._activeParams.instrument, "piano");
+    assert.strictEqual(core._activeParams.instrumentType, "piano");
+    assert.strictEqual(core._activeParams.instrumentId, "pianospark");
+  });
+});
+
+test("startPlayAlongSession falls back to the active instrument context for chart generation", function() {
+  var core = new SparkCoreRuntime();
+  var generatedWith = null;
+  core.learnerModel = { load: function() { return { baseline: true }; } };
+  core.policyEngine = { decide: function() { return { action: "maintain", difficulty: "normal" }; } };
+  core.performanceTracker = { reset: function() {} };
+  core.chordPredictor = { reset: function() {} };
+  core.fingeringOptimizer = { reset: function() {} };
+  core.chartService = {
+    generate: function(params) {
+      generatedWith = params;
+      return Promise.resolve({ timeline: [], sections: [] });
+    }
+  };
+  core._startAudioForSession = function() {};
+  core.instrumentManager = {
+    getActiveContext: function() {
+      return {
+        appId: "ukespark",
+        instrumentType: "ukulele"
+      };
+    }
+  };
+
+  return core.startPlayAlongSession({
+    trackId: "track_context"
+  }).then(function() {
+    assert.deepStrictEqual(generatedWith, {
+      trackId: "track_context",
+      difficulty: "normal",
+      instrument: "ukulele"
+    });
+    assert.strictEqual(core._activeParams.instrument, "ukulele");
+    assert.strictEqual(core._activeParams.instrumentType, "ukulele");
+    assert.strictEqual(core._activeParams.instrumentId, "ukespark");
   });
 });
 
