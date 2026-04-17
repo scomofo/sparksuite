@@ -3120,6 +3120,131 @@
     return this.applyPerformanceCalibrationRequest("open_calibration", options || {});
   };
 
+  function normalizePerformanceSelectionToken(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function addPerformanceSelectionAlias(map, value, resolved) {
+    var raw = String(value || "").trim();
+    var normalized = normalizePerformanceSelectionToken(raw);
+    if (raw && !map[raw]) map[raw] = resolved;
+    if (normalized && !map[normalized]) map[normalized] = resolved;
+  }
+
+  function addPerformanceSelectionSuffixAliases(map, value, resolved) {
+    var normalized = normalizePerformanceSelectionToken(value);
+    var suffixes = [
+      "_block_chords",
+      "_rhythm_chords",
+      "_lead",
+      "_chords",
+      "_imported_chart"
+    ];
+    var aliases = [];
+    var i;
+    if (!normalized) return;
+    aliases.push(normalized);
+    aliases.push(normalized + "_perf");
+    for (i = 0; i < suffixes.length; i++) {
+      if (normalized.slice(-suffixes[i].length) === suffixes[i]) {
+        aliases.push(normalized.slice(0, -suffixes[i].length));
+      }
+    }
+    for (i = 0; i < aliases.length; i++) {
+      addPerformanceSelectionAlias(map, aliases[i], resolved);
+    }
+  }
+
+  SparkCore.prototype.resolvePerformanceSongSelection = function(request) {
+    var instrumentContext = this.instrumentManager && typeof this.instrumentManager.getActiveContext === "function"
+      ? (this.instrumentManager.getActiveContext() || {})
+      : {};
+    var songs = Array.isArray(instrumentContext.songs) ? instrumentContext.songs : [];
+    var aliasMap = {};
+    var i;
+
+    if (!request.songId && !request.songTitle && request.songIndex != null && songs[request.songIndex]) {
+      var indexedSong = this.cloneValue(songs[request.songIndex]);
+      return {
+        songId: normalizePerformanceSelectionToken(indexedSong.title || indexedSong.id || indexedSong.songId || indexedSong.trackId),
+        songData: indexedSong,
+        songTitle: indexedSong.title || request.songTitle || null,
+        songIndex: request.songIndex,
+        source: "song"
+      };
+    }
+
+    for (i = 0; i < songs.length; i++) {
+      var song = songs[i] || {};
+      var canonicalSongId = normalizePerformanceSelectionToken(song.title || song.id || song.songId || song.trackId);
+      var resolvedSong = {
+        songId: canonicalSongId,
+        songData: this.cloneValue(song),
+        songTitle: song.title || request.songTitle || null,
+        source: "song"
+      };
+      addPerformanceSelectionAlias(aliasMap, song.id, resolvedSong);
+      addPerformanceSelectionAlias(aliasMap, song.songId, resolvedSong);
+      addPerformanceSelectionAlias(aliasMap, song.trackId, resolvedSong);
+      addPerformanceSelectionAlias(aliasMap, song.title, resolvedSong);
+      addPerformanceSelectionSuffixAliases(aliasMap, canonicalSongId, resolvedSong);
+    }
+
+    var requestedSongId = String(request.songId || "").trim();
+    var requestedSongTitle = String(request.songTitle || "").trim();
+    var normalizedSongId = normalizePerformanceSelectionToken(requestedSongId);
+    var normalizedSongTitle = normalizePerformanceSelectionToken(requestedSongTitle);
+    var resolved = aliasMap[requestedSongId]
+      || aliasMap[normalizedSongId]
+      || aliasMap[requestedSongTitle]
+      || aliasMap[normalizedSongTitle]
+      || null;
+
+    if (resolved) return resolved;
+
+    if (typeof getPerformanceChartLibrary !== "function") return null;
+
+    var instrumentId = instrumentContext.instrumentType || instrumentContext.appId || null;
+    var chartLibrary = instrumentId
+      ? (getPerformanceChartLibrary({ instrument: instrumentId }) || [])
+      : (getPerformanceChartLibrary() || []);
+    var chartAliasMap = {};
+
+    for (i = 0; i < chartLibrary.length; i++) {
+      var chart = chartLibrary[i] || {};
+      var resolvedChart = {
+        songId: chart.id || normalizePerformanceSelectionToken(chart.title || chart.songId || chart.trackId),
+        songData: {
+          title: chart.title || request.songTitle || request.songId || "Performance Song",
+          artist: chart.artist || "",
+          bpm: chart.bpm || null,
+          chords: Array.isArray(chart.chords) ? chart.chords.slice() : [],
+          progression: Array.isArray(chart.progression) ? chart.progression.slice() : [],
+          description: chart.description || "",
+          instrument: chart.instrument || null,
+          sourceType: chart.sourceType || null
+        },
+        songTitle: chart.title || request.songTitle || null,
+        source: "chart"
+      };
+      addPerformanceSelectionAlias(chartAliasMap, chart.id, resolvedChart);
+      addPerformanceSelectionAlias(chartAliasMap, chart.songId, resolvedChart);
+      addPerformanceSelectionAlias(chartAliasMap, chart.trackId, resolvedChart);
+      addPerformanceSelectionAlias(chartAliasMap, chart.title, resolvedChart);
+      addPerformanceSelectionSuffixAliases(chartAliasMap, chart.id || chart.songId || chart.trackId || chart.title, resolvedChart);
+      addPerformanceSelectionSuffixAliases(chartAliasMap, chart.title, resolvedChart);
+    }
+
+    return chartAliasMap[requestedSongId]
+      || chartAliasMap[normalizedSongId]
+      || chartAliasMap[requestedSongTitle]
+      || chartAliasMap[normalizedSongTitle]
+      || null;
+  };
+
   SparkCore.prototype.openPerformanceSongSelection = function(options) {
     options = options || {};
     var request = {
@@ -3135,34 +3260,13 @@
         ? options.difficultyId
         : (this.runtimeState.performanceDifficultyId || "normal")
     };
-    if (!request.songData && typeof getPerformanceChartLibrary === "function") {
-      var chartLibrary = getPerformanceChartLibrary();
-      var chartEntry = null;
-      var chartIndex;
-      if (Array.isArray(chartLibrary)) {
-        for (chartIndex = 0; chartIndex < chartLibrary.length; chartIndex++) {
-          if (!chartLibrary[chartIndex]) continue;
-          if (request.songId && chartLibrary[chartIndex].id === request.songId) {
-            chartEntry = chartLibrary[chartIndex];
-            break;
-          }
-          if (request.songIndex != null && chartIndex === request.songIndex) {
-            chartEntry = chartLibrary[chartIndex];
-            break;
-          }
-        }
-      }
-      if (chartEntry) {
-        request.songData = {
-          title: chartEntry.title || request.songTitle || request.songId || "Performance Song",
-          artist: chartEntry.artist || "",
-          bpm: chartEntry.bpm || null,
-          chords: Array.isArray(chartEntry.chords) ? chartEntry.chords.slice() : [],
-          progression: Array.isArray(chartEntry.progression) ? chartEntry.progression.slice() : [],
-          description: chartEntry.description || "",
-          instrument: chartEntry.instrument || null,
-          sourceType: chartEntry.sourceType || null
-        };
+    if (!request.songData) {
+      var resolvedSelection = this.resolvePerformanceSongSelection(request);
+      if (resolvedSelection) {
+        if (resolvedSelection.songId) request.songId = resolvedSelection.songId;
+        if (resolvedSelection.songData) request.songData = this.cloneValue(resolvedSelection.songData);
+        if (resolvedSelection.songTitle && !request.songTitle) request.songTitle = resolvedSelection.songTitle;
+        if (resolvedSelection.songIndex != null && request.songIndex == null) request.songIndex = resolvedSelection.songIndex;
       }
     }
     if (!request.songId && request.songData && request.songData.title) {
@@ -3175,13 +3279,20 @@
       request.songTitle = request.songData.title;
     }
     if (request.songId) {
-      this.startSession({
+      var plan = this.startSession({
         flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
         songIndex: request.songIndex,
         songId: request.songId,
         arrangementType: request.arrangementType,
         difficultyId: request.difficultyId
       });
+      var performanceSong = plan && plan.context ? plan.context.performanceSong : null;
+      if (!request.songData && performanceSong && performanceSong.songData) {
+        request.songData = this.cloneValue(performanceSong.songData);
+      }
+      if (!request.songTitle && request.songData && request.songData.title) {
+        request.songTitle = request.songData.title;
+      }
     }
     this.syncPerformanceRuntimeState("select_song", {
       chartId: request.songId,

@@ -43,6 +43,267 @@
     return SparkInstruments.getActive();
   }
 
+  function normalizePracticeSongId(value){
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function addPracticeScopeValue(map, value){
+    if(!value) return;
+    map[String(value)] = true;
+  }
+
+  function addPracticeSongScopeValue(map, value){
+    var raw = String(value || "").trim();
+    var normalized = normalizePracticeSongId(raw);
+    if(raw) map[raw] = true;
+    if(normalized) map[normalized] = true;
+  }
+
+  function getPracticeCandidateInstrumentContext(context){
+    var active = getActiveInstrumentModule();
+    var instrumentContext = context && context.instrumentContext ? context.instrumentContext : null;
+    return {
+      activeModule: active,
+      instrumentId: instrumentContext && instrumentContext.instrumentId
+        ? instrumentContext.instrumentId
+        : (active && active.id ? active.id : null),
+      appId: instrumentContext && instrumentContext.appId
+        ? instrumentContext.appId
+        : (active && active.appId ? active.appId : null),
+      instrumentType: instrumentContext && instrumentContext.instrumentType
+        ? instrumentContext.instrumentType
+        : (active && active.instrument ? active.instrument : null),
+      songs: instrumentContext && Array.isArray(instrumentContext.songs)
+        ? instrumentContext.songs.slice()
+        : (active && typeof active.getSongs==="function" ? (active.getSongs() || []) : [])
+    };
+  }
+
+  function getPracticeInstrumentScope(context){
+    var instrument = getPracticeCandidateInstrumentContext(context);
+    var activeKeys = {};
+    var allowedSongIds = {};
+    var chartIds = [];
+    var i;
+
+    addPracticeScopeValue(activeKeys, instrument.instrumentId);
+    addPracticeScopeValue(activeKeys, instrument.appId);
+    addPracticeScopeValue(activeKeys, instrument.instrumentType);
+
+    for(i = 0; i < instrument.songs.length; i++){
+      var song = instrument.songs[i] || {};
+      addPracticeSongScopeValue(allowedSongIds, song.id);
+      addPracticeSongScopeValue(allowedSongIds, song.songId);
+      addPracticeSongScopeValue(allowedSongIds, song.trackId);
+      addPracticeSongScopeValue(allowedSongIds, song.title);
+    }
+
+    if(typeof getPerformanceChartLibrary==="function" && instrument.instrumentType){
+      chartIds = getPerformanceChartLibrary({ instrument: instrument.instrumentType }) || [];
+      for(i = 0; i < chartIds.length; i++){
+        addPracticeSongScopeValue(allowedSongIds, chartIds[i] && chartIds[i].id);
+        addPracticeSongScopeValue(allowedSongIds, chartIds[i] && chartIds[i].songId);
+        addPracticeSongScopeValue(allowedSongIds, chartIds[i] && chartIds[i].trackId);
+        addPracticeSongScopeValue(allowedSongIds, chartIds[i] && chartIds[i].title);
+      }
+    }
+
+    return {
+      instrument: instrument,
+      activeKeys: activeKeys,
+      allowedSongIds: allowedSongIds,
+      hasAllowedSongIds: Object.keys(allowedSongIds).length > 0
+    };
+  }
+
+  function getKnownPracticeInstrumentSongMap(){
+    var out = {};
+    if(typeof SparkInstruments==="undefined" || !SparkInstruments || typeof SparkInstruments.getAll!=="function") return out;
+    var all = SparkInstruments.getAll() || [];
+    var i;
+    for(i = 0; i < all.length; i++){
+      var inst = all[i] || {};
+      var instrumentType = inst.instrument || null;
+      var songs = typeof inst.getSongs==="function" ? (inst.getSongs() || []) : [];
+      var charts = typeof getPerformanceChartLibrary==="function" && instrumentType
+        ? (getPerformanceChartLibrary({ instrument: instrumentType }) || [])
+        : [];
+      var j;
+      for(j = 0; j < songs.length; j++){
+        assignKnownPracticeSong(out, songs[j] && songs[j].id, instrumentType);
+        assignKnownPracticeSong(out, songs[j] && songs[j].songId, instrumentType);
+        assignKnownPracticeSong(out, songs[j] && songs[j].trackId, instrumentType);
+        assignKnownPracticeSong(out, songs[j] && songs[j].title, instrumentType);
+      }
+      for(j = 0; j < charts.length; j++){
+        assignKnownPracticeSong(out, charts[j] && charts[j].id, instrumentType);
+        assignKnownPracticeSong(out, charts[j] && charts[j].songId, instrumentType);
+        assignKnownPracticeSong(out, charts[j] && charts[j].trackId, instrumentType);
+        assignKnownPracticeSong(out, charts[j] && charts[j].title, instrumentType);
+      }
+    }
+    return out;
+  }
+
+  function assignKnownPracticeSong(map, value, instrumentType){
+    if(!instrumentType) return;
+    var raw = String(value || "").trim();
+    var normalized = normalizePracticeSongId(raw);
+    if(raw){
+      if(!map[raw]) map[raw] = {};
+      map[raw][instrumentType] = true;
+    }
+    if(normalized){
+      if(!map[normalized]) map[normalized] = {};
+      map[normalized][instrumentType] = true;
+    }
+  }
+
+  function matchesPracticeInstrumentKeys(values, activeKeys){
+    var hasInstrumentInfo = false;
+    var i;
+    for(i = 0; i < values.length; i++){
+      if(!values[i]) continue;
+      hasInstrumentInfo = true;
+      if(activeKeys[String(values[i])]) return true;
+    }
+    return !hasInstrumentInfo ? null : false;
+  }
+
+  function getArrangementInstrumentHint(arrangementType){
+    var value = String(arrangementType || "").toLowerCase();
+    if(!value) return null;
+    if(value.indexOf("ukulele") >= 0 || value.indexOf("uke_") === 0) return "ukulele";
+    if(value.indexOf("piano") >= 0) return "piano";
+    if(value.indexOf("bass") >= 0) return "bass";
+    if(value.indexOf("guitar") >= 0) return "guitar";
+    return null;
+  }
+
+  function addPracticePerformanceAlias(map, value, resolved){
+    var raw = String(value || "").trim();
+    var normalized = normalizePracticeSongId(raw);
+    if(raw && !map[raw]) map[raw] = resolved;
+    if(normalized && !map[normalized]) map[normalized] = resolved;
+  }
+
+  function addPracticePerformanceSuffixAliases(map, value, resolved){
+    var normalized = normalizePracticeSongId(value);
+    var suffixes = [
+      "_block_chords",
+      "_rhythm_chords",
+      "_lead",
+      "_chords",
+      "_imported_chart"
+    ];
+    var aliases = [];
+    var i;
+    if(!normalized) return;
+    aliases.push(normalized);
+    aliases.push(normalized + "_perf");
+    for(i = 0; i < suffixes.length; i++){
+      if(normalized.slice(-suffixes[i].length) === suffixes[i]){
+        aliases.push(normalized.slice(0, -suffixes[i].length));
+      }
+    }
+    for(i = 0; i < aliases.length; i++){
+      addPracticePerformanceAlias(map, aliases[i], resolved);
+    }
+  }
+
+  function buildPracticePerformanceResolutionMap(context){
+    var scope = getPracticeInstrumentScope(context);
+    var map = {};
+    var songs = scope.instrument && Array.isArray(scope.instrument.songs) ? scope.instrument.songs : [];
+    var charts = typeof getPerformanceChartLibrary==="function"
+      ? (scope.instrument.instrumentType
+        ? (getPerformanceChartLibrary({ instrument: scope.instrument.instrumentType }) || [])
+        : (getPerformanceChartLibrary({}) || []))
+      : [];
+    var i;
+
+    for(i = 0; i < songs.length; i++){
+      var song = songs[i] || {};
+      var canonicalSongId = normalizePracticeSongId(song.title || song.id || song.songId || song.trackId);
+      var resolvedSong = {
+        songId: canonicalSongId,
+        songTitle: song.title || prettySongId(canonicalSongId),
+        source: "song"
+      };
+      addPracticePerformanceAlias(map, song.id, resolvedSong);
+      addPracticePerformanceAlias(map, song.songId, resolvedSong);
+      addPracticePerformanceAlias(map, song.trackId, resolvedSong);
+      addPracticePerformanceAlias(map, song.title, resolvedSong);
+      addPracticePerformanceSuffixAliases(map, canonicalSongId, resolvedSong);
+    }
+
+    for(i = 0; i < charts.length; i++){
+      var chart = charts[i] || {};
+      var resolvedChart = {
+        songId: chart.id || normalizePracticeSongId(chart.title || chart.songId || chart.trackId),
+        songTitle: chart.title || prettySongId(chart.id || chart.songId || chart.trackId),
+        source: "chart"
+      };
+      addPracticePerformanceAlias(map, chart.id, resolvedChart);
+      addPracticePerformanceAlias(map, chart.songId, resolvedChart);
+      addPracticePerformanceAlias(map, chart.trackId, resolvedChart);
+      addPracticePerformanceAlias(map, chart.title, resolvedChart);
+      addPracticePerformanceSuffixAliases(map, chart.id || chart.songId || chart.trackId || chart.title, resolvedChart);
+      addPracticePerformanceSuffixAliases(map, chart.title, resolvedChart);
+    }
+
+    return map;
+  }
+
+  function resolvePracticePerformanceTarget(bucket, context){
+    var songId = bucket && bucket.songId ? bucket.songId : "";
+    var normalizedSongId = normalizePracticeSongId(songId);
+    var resolutionMap = buildPracticePerformanceResolutionMap(context);
+    return resolutionMap[songId] || resolutionMap[normalizedSongId] || null;
+  }
+
+  function isPerformanceBucketForInstrument(bucket, context){
+    bucket = bucket || {};
+    var scope = getPracticeInstrumentScope(context);
+    var instrumentMatch = matchesPracticeInstrumentKeys([
+      bucket.instrument,
+      bucket.instrumentId,
+      bucket.instrumentType,
+      bucket.appId
+    ], scope.activeKeys);
+    if(instrumentMatch !== null) return instrumentMatch;
+
+    var arrangementInstrument = getArrangementInstrumentHint(bucket.arrangementType);
+    if(arrangementInstrument && scope.instrument.instrumentType) {
+      return arrangementInstrument === scope.instrument.instrumentType;
+    }
+    if(arrangementInstrument && !scope.instrument.instrumentType) {
+      return false;
+    }
+
+    var songId = String(bucket.songId || "").trim();
+    var normalizedSongId = normalizePracticeSongId(songId);
+    if(scope.instrument.instrumentType === "piano" && scope.hasAllowedSongIds){
+      return !!((songId && scope.allowedSongIds[songId]) || (normalizedSongId && scope.allowedSongIds[normalizedSongId]));
+    }
+    if(scope.hasAllowedSongIds){
+      if((songId && scope.allowedSongIds[songId]) || (normalizedSongId && scope.allowedSongIds[normalizedSongId])) return true;
+    }
+
+    var knownSongMap = getKnownPracticeInstrumentSongMap();
+    var knownInstruments = (songId && knownSongMap[songId]) || (normalizedSongId && knownSongMap[normalizedSongId]) || null;
+    if(knownInstruments){
+      var activeInstrumentType = scope.instrument.instrumentType;
+      if(activeInstrumentType && knownInstruments[activeInstrumentType]) return true;
+      return false;
+    }
+
+    return true;
+  }
+
   function getActiveInstrumentProgressView(module){
     module = module || getActiveInstrumentModule();
     var instrumentId = module && module.instrument ? module.instrument : null;
@@ -185,12 +446,15 @@
     return best;
   }
 
-  function selectWeakPerformanceCandidate(){
+  function selectWeakPerformanceCandidate(context){
     var perf = getPracticeSelectorState().performanceStats || {};
     var weakest = null;
     var buckets = normalizePerformanceBuckets(perf);
     for(var i=0;i<buckets.length;i++){
       var bucket = buckets[i];
+      if(!isPerformanceBucketForInstrument(bucket, context)) continue;
+      var resolvedTarget = resolvePracticePerformanceTarget(bucket, context);
+      if(!resolvedTarget || !resolvedTarget.songId) continue;
       var acc = bucket.bestAccuracy != null ? bucket.bestAccuracy : bucket.avgAccuracy || 0;
       var priority = 100 - acc;
       if(bucket.mastery==="mastered" || bucket.mastered) priority -= 25;
@@ -201,15 +465,15 @@
 
       if(!weakest || priority > weakest.priority){
         weakest = {
-          id:"perf_" + bucket.songId + "_" + bucket.arrangementType + "_" + bucket.difficultyId,
+          id:"perf_" + resolvedTarget.songId + "_" + bucket.arrangementType + "_" + bucket.difficultyId,
           type:"performance_song",
           priority:priority,
-          label:"Replay " + prettySongId(bucket.songId),
+          label:"Replay " + (resolvedTarget.songTitle || prettySongId(bucket.songId)),
           reason:weakTechnique
             ? ("Weak " + weakTechnique.label + " accuracy")
             : "Low recent performance accuracy",
           meta:{
-            songId:bucket.songId,
+            songId:resolvedTarget.songId,
             arrangementType:bucket.arrangementType,
             difficultyId:bucket.difficultyId,
             accuracy:acc,
@@ -223,13 +487,13 @@
         var phrasePriority = priority + 8;
         if(!weakest || phrasePriority > weakest.priority){
           weakest = {
-            id:"phrase_" + bucket.songId + "_" + weakPhrase.phraseId,
+            id:"phrase_" + resolvedTarget.songId + "_" + weakPhrase.phraseId,
             type:"performance_phrase",
             priority:phrasePriority,
-            label:"Practice weakest phrase in " + prettySongId(bucket.songId),
+            label:"Practice weakest phrase in " + (resolvedTarget.songTitle || prettySongId(bucket.songId)),
             reason:"Phrase accuracy is lagging",
             meta:{
-              songId:bucket.songId,
+              songId:resolvedTarget.songId,
               arrangementType:bucket.arrangementType,
               difficultyId:bucket.difficultyId,
               phraseId:weakPhrase.phraseId,
@@ -242,27 +506,30 @@
     return weakest;
   }
 
-  function selectImportedTechniqueCandidate(){
+  function selectImportedTechniqueCandidate(context){
     var perf = getPracticeSelectorState().performanceStats || {};
     var buckets = normalizePerformanceBuckets(perf);
     var strongestNeed = null;
     for(var i=0;i<buckets.length;i++){
       var bucket = buckets[i];
+      if(!isPerformanceBucketForInstrument(bucket, context)) continue;
+      var resolvedTarget = resolvePracticePerformanceTarget(bucket, context);
+      if(!resolvedTarget || !resolvedTarget.songId) continue;
       var weakTechnique = getFocusedTechniqueNeed(bucket) || getWeakestTechniqueFromBucket(bucket);
       if(!weakTechnique) continue;
       var priority = (weakTechnique.fromFocus ? 195 : 120) - weakTechnique.accuracy;
       if((bucket.runs || bucket.attempts || 0) < 3) priority += 6;
       if(!strongestNeed || priority > strongestNeed.priority){
         strongestNeed = {
-          id:"imported_technique_" + bucket.songId + "_" + weakTechnique.key,
+          id:"imported_technique_" + resolvedTarget.songId + "_" + weakTechnique.key,
           type:"performance_technique",
           priority:priority,
-          label:(weakTechnique.fromFocus ? "Stay on " : "Fix ") + weakTechnique.label + " timing in " + prettySongId(bucket.songId),
+          label:(weakTechnique.fromFocus ? "Stay on " : "Fix ") + weakTechnique.label + " timing in " + (resolvedTarget.songTitle || prettySongId(bucket.songId)),
           reason:weakTechnique.fromFocus
             ? ("Current focus block still has " + weakTechnique.label + " at " + weakTechnique.accuracy + "%")
             : ("Imported " + weakTechnique.label + " accuracy is at " + weakTechnique.accuracy + "%"),
           meta:{
-            songId:bucket.songId,
+            songId:resolvedTarget.songId,
             arrangementType:bucket.arrangementType,
             difficultyId:bucket.difficultyId,
             techniqueKey:weakTechnique.key,
@@ -319,7 +586,7 @@
     return weakest;
   }
 
-  function buildPracticeCandidates(){
+  function buildPracticeCandidates(context){
     var out = [];
     var fns = [
       selectInstrumentModuleCandidate,
@@ -331,7 +598,7 @@
       selectFingerCandidate
     ];
     for(var i=0;i<fns.length;i++){
-      var item = fns[i]();
+      var item = fns[i](context);
       if(item) out.push(item);
     }
     out.sort(function(a,b){ return (b.priority||0) - (a.priority||0); });
@@ -426,7 +693,11 @@
           mastered:row.mastered,
           phrases:row.phrases,
           importedTechniqueTotals:row.importedTechniqueTotals,
-          lastFocusedTechnique:row.lastFocusedTechnique
+          lastFocusedTechnique:row.lastFocusedTechnique,
+          instrument:row.instrument,
+          instrumentId:row.instrumentId,
+          instrumentType:row.instrumentType,
+          appId:row.appId
         });
         continue;
       }
@@ -449,7 +720,11 @@
             mastered:bucket.mastered,
             phrases:bucket.phrases,
             importedTechniqueTotals:bucket.importedTechniqueTotals,
-            lastFocusedTechnique:bucket.lastFocusedTechnique
+            lastFocusedTechnique:bucket.lastFocusedTechnique,
+            instrument:bucket.instrument || row.instrument,
+            instrumentId:bucket.instrumentId || row.instrumentId,
+            instrumentType:bucket.instrumentType || row.instrumentType,
+            appId:bucket.appId || row.appId
           });
         }
       }
@@ -532,8 +807,8 @@
   }
 
   var _baseBuildPracticeCandidates = buildPracticeCandidates;
-  buildPracticeCandidates = function(){
-    var out = _baseBuildPracticeCandidates();
+  buildPracticeCandidates = function(context){
+    var out = _baseBuildPracticeCandidates(context);
     var g = selectGuidedSessionCandidate();
     if(g) out.push(g);
     out.sort(function(a,b){ return (b.priority||0) - (a.priority||0); });

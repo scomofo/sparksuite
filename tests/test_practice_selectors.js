@@ -48,6 +48,8 @@ function resetState() {
     getActive: function() {
       return {
         name: "Ukulele",
+        id: "ukespark",
+        appId: "ukespark",
         instrument: "ukulele",
         getCurriculumMap: function() {
           return [
@@ -90,6 +92,9 @@ function resetState() {
           };
         }
       };
+    },
+    getAll: function() {
+      return [this.getActive()];
     }
   };
 }
@@ -120,6 +125,13 @@ test("normalizePerformanceBuckets supports flat performance stats shape", functi
 });
 
 test("selectWeakPerformanceCandidate uses imported technique weakness from flat stats", function() {
+  global.getPerformanceChartLibrary = function(options) {
+    options = options || {};
+    if (options.instrument === "ukulele") {
+      return [{ id: "song_a", title: "Song A", instrument: "ukulele" }];
+    }
+    return [];
+  };
   S.performanceStats = {
     song_a_imported_chart_normal: {
       songId: "song_a",
@@ -142,7 +154,219 @@ test("selectWeakPerformanceCandidate uses imported technique weakness from flat 
   assert.ok(candidate.reason.indexOf("open-note") >= 0);
 });
 
+test("selectWeakPerformanceCandidate ignores known buckets from another instrument", function() {
+  global.getPerformanceChartLibrary = function(options) {
+    options = options || {};
+    if (options.instrument === "piano") {
+      return [{ id: "piano_daydreams", title: "Piano Daydreams", instrument: "piano" }];
+    }
+    if (options.instrument === "ukulele") {
+      return [{ id: "ukulele_island_package", title: "Ukulele Island Package", instrument: "ukulele" }];
+    }
+    return [];
+  };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        name: "Piano",
+        id: "pianospark",
+        appId: "pianospark",
+        instrument: "piano",
+        getCurriculumMap: function() {
+          return [];
+        },
+        getExercises: function() {
+          return [];
+        },
+        getSongs: function() {
+          return [{ title: "Piano Daydreams" }];
+        }
+      };
+    },
+    getAll: function() {
+      return [
+        this.getActive(),
+        {
+          name: "Ukulele",
+          id: "ukespark",
+          appId: "ukespark",
+          instrument: "ukulele",
+          getSongs: function() {
+            return [{ title: "Ukulele Island Package" }];
+          }
+        }
+      ];
+    }
+  };
+  S.performanceStats = {
+    ukulele_island_package_imported_chart_normal: {
+      songId: "ukulele_island_package",
+      arrangement: "imported_chart",
+      difficulty: "normal",
+      bestAccuracy: 22,
+      runs: 4
+    },
+    piano_daydreams_block_chords_normal: {
+      songId: "piano_daydreams",
+      arrangement: "block_chords",
+      difficulty: "normal",
+      bestAccuracy: 68,
+      runs: 3
+    }
+  };
+
+  var candidate = selectWeakPerformanceCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.songId, "piano_daydreams");
+  assert.strictEqual(candidate.label.indexOf("ukulele island package"), -1);
+});
+
+test("selectWeakPerformanceCandidate ignores arrangement types from another instrument when the song id is ambiguous", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        name: "Piano",
+        id: "pianospark",
+        appId: "pianospark",
+        instrument: "piano",
+        getCurriculumMap: function() {
+          return [];
+        },
+        getExercises: function() {
+          return [];
+        },
+        getSongs: function() {
+          return [{ title: "Piano Daydreams" }];
+        }
+      };
+    },
+    getAll: function() {
+      return [this.getActive()];
+    }
+  };
+  S.performanceStats = {
+    imported_pkg_normal: {
+      songId: "imported_pkg",
+      arrangement: "ukulele_strum",
+      difficulty: "normal",
+      bestAccuracy: 0,
+      runs: 1
+    },
+    piano_daydreams_block_chords_normal: {
+      songId: "piano_daydreams",
+      arrangement: "block_chords",
+      difficulty: "normal",
+      bestAccuracy: 64,
+      runs: 2
+    }
+  };
+
+  var candidate = selectWeakPerformanceCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.songId, "piano_daydreams");
+  assert.strictEqual(candidate.meta.arrangementType, "block_chords");
+});
+
+test("selectWeakPerformanceCandidate ignores unknown generic legacy guitar song buckets while piano is active", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        name: "Piano",
+        id: "pianospark",
+        appId: "pianospark",
+        instrument: "piano",
+        getCurriculumMap: function() {
+          return [];
+        },
+        getExercises: function() {
+          return [];
+        },
+        getSongs: function() {
+          return [
+            { title: "Happy Birthday" },
+            { title: "Piano Daydreams" }
+          ];
+        }
+      };
+    },
+    getAll: function() {
+      return [this.getActive()];
+    }
+  };
+  S.performanceStats = {
+    the_beat_goes_on_perf_chords_normal: {
+      songId: "the_beat_goes_on_perf",
+      arrangement: "chords",
+      difficulty: "normal",
+      bestAccuracy: 0,
+      runs: 0
+    },
+    happy_birthday_block_chords_normal: {
+      songId: "happy_birthday",
+      arrangement: "block_chords",
+      difficulty: "normal",
+      bestAccuracy: 72,
+      runs: 3
+    }
+  };
+
+  var candidate = selectWeakPerformanceCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.songId, "happy_birthday");
+  assert.strictEqual(candidate.meta.arrangementType, "block_chords");
+});
+
+test("selectWeakPerformanceCandidate resolves legacy perf song ids through the active instrument song list", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        name: "Guitar",
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMap: function() {
+          return [];
+        },
+        getExercises: function() {
+          return [];
+        },
+        getSongs: function() {
+          return [{ title: "The Beat Goes On" }];
+        }
+      };
+    },
+    getAll: function() {
+      return [this.getActive()];
+    }
+  };
+  S.performanceStats = {
+    the_beat_goes_on_perf_chords_normal: {
+      songId: "the_beat_goes_on_perf",
+      arrangement: "chords",
+      difficulty: "normal",
+      bestAccuracy: 54,
+      runs: 2
+    }
+  };
+
+  var candidate = selectWeakPerformanceCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.songId, "the_beat_goes_on");
+  assert.strictEqual(candidate.label, "Replay The Beat Goes On");
+});
+
 test("selectImportedTechniqueCandidate creates a focused imported-technique practice candidate", function() {
+  global.getPerformanceChartLibrary = function(options) {
+    options = options || {};
+    if (options.instrument === "ukulele") {
+      return [{ id: "song_b", title: "Song B", instrument: "ukulele" }];
+    }
+    return [];
+  };
   S.performanceStats = {
     song_b_imported_chart_hard: {
       songId: "song_b",
@@ -168,6 +392,13 @@ test("selectImportedTechniqueCandidate creates a focused imported-technique prac
 });
 
 test("selectImportedTechniqueCandidate continues the current focused technique block when still weak", function() {
+  global.getPerformanceChartLibrary = function(options) {
+    options = options || {};
+    if (options.instrument === "ukulele") {
+      return [{ id: "song_focus", title: "Song Focus", instrument: "ukulele" }];
+    }
+    return [];
+  };
   S.performanceStats = {
     song_focus_imported_chart_hard: {
       songId: "song_focus",
@@ -210,6 +441,13 @@ test("buildPracticeCandidates includes the module-driven ukulele candidate", fun
 });
 
 test("buildPracticeCandidates includes imported-technique focus when imported chart weakness is present", function() {
+  global.getPerformanceChartLibrary = function(options) {
+    options = options || {};
+    if (options.instrument === "ukulele") {
+      return [{ id: "imported_song", title: "Imported Song", instrument: "ukulele" }];
+    }
+    return [];
+  };
   S.performanceStats = {
     imported_song_imported_chart_normal: {
       songId: "imported_song",

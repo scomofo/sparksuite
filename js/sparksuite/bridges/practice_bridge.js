@@ -12,7 +12,7 @@
       })];
     }
 
-    var candidates = buildPracticeCandidates();
+    var candidates = buildPracticeCandidates(context);
     var segments = [];
     for (var i = 0; i < candidates.length; i++) {
       segments.push(mapCandidateToSegment(candidates[i], context));

@@ -3027,12 +3027,30 @@ test("SparkCore can open performance song selection through an explicit helper",
   assert.strictEqual(selectionRequest.songId, "night_drive");
   assert.strictEqual(selectionRequest.songIndex, 1);
   assert.strictEqual(selectionRequest.songTitle, "Night Drive");
+  assert.ok(selectionRequest.songData);
+  assert.strictEqual(selectionRequest.songData.title, "Night Drive");
   assert.strictEqual(core.getRuntimeState().activeScreen, "performance_song");
   assert.strictEqual(core.getRuntimeState().performanceChartId, "night_drive");
   assert.strictEqual(core.getRuntimeState().performanceSongIndex, 1);
   assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Night Drive");
   assert.strictEqual(core.getRuntimeState().performanceArrangementType, "rhythm_chords");
   assert.strictEqual(core.getRuntimeState().performanceDifficultyId, "hard");
+});
+
+test("SparkCore can resolve legacy perf song ids through the active instrument songs", function() {
+  var core = createDefaultSparkCore();
+
+  var selectionRequest = core.openPerformanceSongSelection({
+    songId: "fire_road_perf",
+    arrangementType: "chords",
+    difficultyId: "normal"
+  });
+
+  assert.strictEqual(selectionRequest.songId, "fire_road");
+  assert.ok(selectionRequest.songData);
+  assert.strictEqual(selectionRequest.songData.title, "Fire Road");
+  assert.strictEqual(core.getRuntimeState().performanceChartId, "fire_road");
+  assert.strictEqual(core.getRuntimeState().performanceSongTitle, "Fire Road");
 });
 
 test("SparkCore can open performance song selection from direct song data", function() {
@@ -3628,6 +3646,40 @@ test("createDefaultSparkCore registers ukulele and builds a ukulele-ready practi
   assert.strictEqual(context.rhythmAdapter.getLaneCount(), 4);
   assert.strictEqual(plan.segments.length, 2);
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "uke_01");
+});
+
+test("createDefaultSparkCore can recover active instrument context when SparkInstrumentAdapter is unavailable", function() {
+  SparkInstrumentAdapter = undefined;
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        id: "pianospark",
+        instrument: "piano",
+        getData: function() {
+          return {
+            SESSIONS: [
+              { num: 1, title: "Piano Spark 1", spark: { text: "Start" }, newMove: { chord: "C" } }
+            ]
+          };
+        },
+        getSongs: function() {
+          return [{ title: "River Walk", artist: "Piano Suite" }];
+        }
+      };
+    }
+  };
+
+  var core = createDefaultSparkCore();
+  var context = core.instrumentManager.getActiveContext();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  assert.strictEqual(context.appId, "pianospark");
+  assert.strictEqual(context.instrumentType, "piano");
+  assert.strictEqual(context.songs[0].title, "River Walk");
+  assert.strictEqual(plan.instrumentId, "pianospark");
+  assert.strictEqual(plan.instrumentType, "piano");
+  assert.strictEqual(S.practicePlan.instrumentId, "pianospark");
+  assert.strictEqual(S.practicePlan.instrumentType, "piano");
 });
 
 test("ukulele guided sessions get a renderable guided plan shape", function() {
