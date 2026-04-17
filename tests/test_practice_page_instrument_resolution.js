@@ -1107,6 +1107,47 @@ test("practiceTab and planPage treat null-only cached plan arrays as empty state
   assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
 });
 
+test("practiceTab and practicePage treat empty-object cached plan rows as missing items", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [{}, {}]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practiceTab();
+  var fullHtml = practicePage();
+
+  assert.ok(practiceHtml.indexOf("No practice plan yet.") >= 0);
+  assert.ok(fullHtml.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(fullHtml.indexOf(">Unavailable<"), -1);
+});
+
 test("sv2HomeDashboard uses instrumentType when the rehydrated module does not expose instrument", function() {
   var themeRequests = [];
   SparkTheme.get = function(instrument) {

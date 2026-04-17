@@ -75,7 +75,7 @@ function getPracticeSummaryItemDesc(item) {
 
 function getPracticeSummaryProgress(plan) {
   var rawItems = plan && Array.isArray(plan.items) ? plan.items : [];
-  var items = rawItems.filter(function(item) { return !!item; });
+  var items = rawItems.filter(isRenderablePracticeSummaryItem);
   var hasSparseItems = rawItems.length !== items.length;
   var derivedTotalItems = items.length;
   var rawTotalItems = !hasSparseItems && plan && typeof plan.totalItems === "number" ? plan.totalItems : null;
@@ -97,8 +97,18 @@ function getPracticeSummaryFocus(plan) {
   return focus ? focus : "No practice focus yet.";
 }
 
+function isRenderablePracticeSummaryItem(item) {
+  return !!(
+    item &&
+    (item.id ||
+     item.label ||
+     item.type ||
+     (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
+  );
+}
+
 function hasRenderablePracticeSummaryItems(plan) {
-  return !!(plan && Array.isArray(plan.items) && plan.items.some(function(item) { return !!item; }));
+  return !!(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePracticeSummaryItem));
 }
 
 function sv2HomeDashboard() {
@@ -288,7 +298,7 @@ function practiceTab(){
     h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(getPracticeSummaryFocus(plan))+'</div>';
     for(var pi=0;pi<plan.items.length;pi++){
       var item=plan.items[pi];
-      if(!item) continue;
+      if(!isRenderablePracticeSummaryItem(item)) continue;
       h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
       h+='<span style="font-size:16px">'+(item.completed?"&#9989;":"&#9744;")+'</span>';
       h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
@@ -543,7 +553,7 @@ function practicePage(){
   if(hasRenderablePracticeSummaryItems(plan)){
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
-      if(!item) continue;
+      if(!isRenderablePracticeSummaryItem(item)) continue;
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       var actionHtml = item.completed
         ? '<span class="text-muted">Done</span>'

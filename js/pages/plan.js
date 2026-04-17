@@ -1,10 +1,19 @@
 function planPage(){
+  function isRenderablePlanItem(item){
+    return !!(
+      item &&
+      (item.id ||
+       item.label ||
+       item.type ||
+       (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
+    );
+  }
   function hasRenderablePlanItems(plan){
-    return !!(plan && Array.isArray(plan.items) && plan.items.some(function(item){ return !!item; }));
+    return !!(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePlanItem));
   }
   function getRenderablePlanItems(plan){
     return plan && Array.isArray(plan.items)
-      ? plan.items.filter(function(item){ return !!item; })
+      ? plan.items.filter(isRenderablePlanItem)
       : [];
   }
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
@@ -44,7 +53,7 @@ function planPage(){
 
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
-    if(!item) continue;
+    if(!isRenderablePlanItem(item)) continue;
     var canLaunch = !!item.id;
     var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
     var actionHtml = item.completed
@@ -136,7 +145,15 @@ function getPlanItemLabel(item){
 }
 
 function getPlanFocusLabel(plan){
-  if(!plan || !Array.isArray(plan.items) || !plan.items.some(function(item){ return !!item; })) return "No practice plan yet.";
+  if(!plan || !Array.isArray(plan.items) || !plan.items.some(function(item){
+    return !!(
+      item &&
+      (item.id ||
+       item.label ||
+       item.type ||
+       (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
+    );
+  })) return "No practice plan yet.";
   var focus = typeof plan.focus === "string" ? plan.focus.trim() : plan.focus;
   return focus ? focus : "No practice focus yet.";
 }
