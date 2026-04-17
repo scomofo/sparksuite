@@ -301,7 +301,14 @@ test('switchInstrument clears stale recommendations when changing instruments', 
 test('app startup normalizes legacy active instrument aliases before activation', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('guitar: "chordspark"') >= 0);
+  assert.ok(appSource.indexOf('ukulele: "ukespark"') >= 0);
   assert.ok(appSource.indexOf('var persistedActiveInstrument=normalizeActiveInstrumentId(appRead("activeInstrument", null));') >= 0);
+});
+
+test('app shell resolves thin active instrument ids before applying the theme', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('function resolveAppInstrumentType(activeInstrument){') >= 0);
+  assert.ok(appSource.indexOf('SparkTheme.apply(resolveAppInstrumentType(_inst));') >= 0);
 });
 
 test('shared app routes chart and exercise editor actions through the editor engine', function() {

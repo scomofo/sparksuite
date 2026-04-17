@@ -52,11 +52,28 @@ function normalizeActiveInstrumentId(instrumentId){
   var map = {
     guitar: "chordspark",
     piano: "pianospark",
-    ukulele: "ukulelespark",
+    ukulele: "ukespark",
     bass: "bassspark",
     drums: "drumsspark"
   };
   return map[instrumentId] || instrumentId;
+}
+
+function resolveAppInstrumentType(activeInstrument){
+  var candidate=activeInstrument&&activeInstrument.instrument?activeInstrument.instrument:(activeInstrument&&(activeInstrument.id||activeInstrument.appId)?(activeInstrument.id||activeInstrument.appId):null);
+  var all;
+  var i;
+  var inst;
+  if(!candidate) return "guitar";
+  if(candidate==="guitar"||candidate==="piano"||candidate==="ukulele"||candidate==="bass"||candidate==="drums") return candidate;
+  if(typeof SparkInstruments!=="undefined"&&SparkInstruments&&typeof SparkInstruments.getAll==="function"){
+    all=SparkInstruments.getAll()||[];
+    for(i=0;i<all.length;i++){
+      inst=all[i]||{};
+      if(inst.id===candidate||inst.appId===candidate) return inst.instrument||candidate;
+    }
+  }
+  return candidate;
 }
 
 function appApplyLegacyReward(reward, fallback){
@@ -4918,7 +4935,7 @@ function _renderInner(){
   }
   // Apply instrument theme (v2 neon system)
   if (typeof SparkTheme !== "undefined" && _inst) {
-    SparkTheme.apply(_inst.instrument || "guitar");
+    SparkTheme.apply(resolveAppInstrumentType(_inst));
   }
 
   document.getElementById("hdr-xp").textContent=playerSnapshot&&typeof playerSnapshot.xp==="number"?playerSnapshot.xp:appRead("xp",0);
