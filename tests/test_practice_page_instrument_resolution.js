@@ -702,6 +702,36 @@ test("practicePage and planPage do not render action buttons for whitespace-only
   assert.ok(planHtml.indexOf(">Unavailable<") >= 0);
 });
 
+test("practicePage and planPage do not render action buttons for sentinel string item ids", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "undefined", type: "practice", label: "Ghost Item", completed: false, meta: { exerciseId: "ghost_1" } },
+        { id: "practice_1", type: "practice", label: "Real Warmup", completed: false }
+      ]
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practicePage();
+  var planHtml = planPage();
+
+  assert.strictEqual(practiceHtml.indexOf('data-item-id="undefined"'), -1);
+  assert.strictEqual(planHtml.indexOf('data-item-id="undefined"'), -1);
+  assert.ok(practiceHtml.indexOf('data-item-id="practice_1"') >= 0);
+  assert.ok(planHtml.indexOf('data-item-id="practice_1"') >= 0);
+  assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
+  assert.ok(planHtml.indexOf(">Unavailable<") >= 0);
+});
+
 test("practicePage and planPage do not render action buttons for numeric item ids", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };

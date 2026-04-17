@@ -55,6 +55,17 @@ function prettyPracticeSummaryToken(value) {
   return text;
 }
 
+function normalizePracticeSummaryItemId(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return null;
+  text = value.trim();
+  if (!text) return null;
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return null;
+  return text;
+}
+
 function firstPrettyPracticeSummaryToken() {
   var i;
   var token;
@@ -137,7 +148,7 @@ function isCompletedPracticeSummaryItem(item) {
 }
 
 function isRenderablePracticeSummaryItem(item) {
-  var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+  var id = normalizePracticeSummaryItemId(item ? item.id : null);
   var label = prettyPracticeSummaryToken(item ? item.label : null);
   var type = prettyPracticeSummaryToken(item ? item.type : null);
   var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && !Array.isArray(item.meta) && Object.keys(item.meta).some(function(key) {
@@ -356,7 +367,7 @@ function practiceTab(){
       h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(isCompleted?"var(--text-muted)":"var(--text-primary)")+';'+(isCompleted?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
       h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(getPracticeSummaryItemDesc(item))+'</div></div>';
       if(!isCompleted){
-        var itemId = item && typeof item.id === "string" ? item.id.trim() : null;
+        var itemId = normalizePracticeSummaryItemId(item ? item.id : null);
         if(itemId){
           h+='<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'completePlanItem\', this.getAttribute(\'data-item-id\'))" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
         }else{
@@ -607,7 +618,7 @@ function practicePage(){
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
       if(!isRenderablePracticeSummaryItem(item)) continue;
-      var itemId = item && typeof item.id === "string" ? item.id.trim() : null;
+      var itemId = normalizePracticeSummaryItemId(item ? item.id : null);
       var isCompleted = isCompletedPracticeSummaryItem(item);
       var done = isCompleted ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       var actionHtml = isCompleted
@@ -640,7 +651,7 @@ function startPracticeItem(id){
   if(!plan || !Array.isArray(plan.items)) return;
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
-    var candidateId = item && typeof item.id === "string" ? item.id.trim() : null;
+    var candidateId = normalizePracticeSummaryItemId(item ? item.id : null);
     if(item && candidateId === id){
       launchPracticeItem(item);
       return;
