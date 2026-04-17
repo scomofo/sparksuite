@@ -41,7 +41,7 @@ function getPracticeSummaryItemType(item) {
 }
 
 function prettyPracticeSummaryToken(value) {
-  return String(value || "").replace(/_/g, " ");
+  return String(value || "").replace(/_/g, " ").trim();
 }
 
 function getPracticeSummaryItemLabel(item) {
@@ -65,10 +65,14 @@ function getPracticeSummaryItemLabel(item) {
 function getPracticeSummaryItemDesc(item) {
   var meta = item && item.meta ? item.meta : {};
   var parts = [];
-  if (meta.instrument) parts.push(prettyPracticeSummaryToken(meta.instrument));
-  if (meta.exerciseFocus) parts.push(prettyPracticeSummaryToken(meta.exerciseFocus));
-  else if (meta.skill) parts.push(prettyPracticeSummaryToken(meta.skill));
-  if (getPracticeSummaryItemType(item)) parts.push(prettyPracticeSummaryToken(getPracticeSummaryItemType(item)));
+  var instrument = prettyPracticeSummaryToken(meta.instrument);
+  var exerciseFocus = prettyPracticeSummaryToken(meta.exerciseFocus);
+  var skill = prettyPracticeSummaryToken(meta.skill);
+  var itemType = prettyPracticeSummaryToken(getPracticeSummaryItemType(item));
+  if (instrument) parts.push(instrument);
+  if (exerciseFocus) parts.push(exerciseFocus);
+  else if (skill) parts.push(skill);
+  if (itemType) parts.push(itemType);
   var desc = item && typeof item.desc === "string" ? item.desc.trim() : (item ? item.desc : null);
   return desc
     ? desc
