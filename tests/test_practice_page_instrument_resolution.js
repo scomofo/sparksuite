@@ -564,6 +564,60 @@ test("planPage and practicePage tolerate sparse cached plan items that contain n
   assert.ok(planHtml.indexOf("warmup 1") >= 0);
 });
 
+test("startPracticeItem skips null cached plan rows when launching by id", function() {
+  var launched = [];
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    practicePlan: {
+      items: [
+        null,
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseId: "warmup_1" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.launchPracticeItem = function(item) {
+    launched.push(item && item.id);
+  };
+
+  startPracticeItem("practice_1");
+
+  assert.deepStrictEqual(launched, ["practice_1"]);
+});
+
+test("launchPracticePlanItem skips null cached plan rows when launching by id", function() {
+  var launched = [];
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        null,
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseId: "warmup_1" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.launchPracticeItem = function(item) {
+    launched.push(item && item.id);
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  launchPracticePlanItem("practice_1");
+
+  assert.deepStrictEqual(launched, ["practice_1"]);
+});
+
 test("practiceTab reads the active core-backed plan without calling ensurePracticePlan during render", function() {
   var ensureCalls = 0;
   global.ensurePracticePlan = function() {

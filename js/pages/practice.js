@@ -565,8 +565,9 @@ function startPracticeItem(id){
   if(!plan) plan = S.practicePlan;
   if(!plan) return;
   for(var i=0;i<plan.items.length;i++){
-    if(plan.items[i].id === id){
-      launchPracticeItem(plan.items[i]);
+    var item = plan.items[i];
+    if(item && item.id === id){
+      launchPracticeItem(item);
       return;
     }
   }
