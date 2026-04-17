@@ -1,4 +1,15 @@
 // ===== TIMERS =====
+function normalizeAppTextInputValue(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return value;
+}
+
 function tickS(){
   if(S.timerActive&&S.timer>0){
     S.timer--;
@@ -3796,6 +3807,7 @@ function _renderInner(){
 
   // Onboarding overlay — shown once on first launch
   if(!S.onboardingDone && !S.activeInstrument){
+    var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);
     h+='<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
     h+='<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
     h+='<h1 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Welcome to SparkSuite!</h1>';
@@ -3803,7 +3815,7 @@ function _renderInner(){
     h+='<div class="card" style="width:100%;max-width:340px;text-align:left;margin-bottom:20px">';
     h+='<p style="font-size:13px;font-weight:700;color:var(--text-primary);margin:0 0 8px">Complete this sentence:</p>';
     h+='<p style="font-size:14px;color:var(--text-muted);margin:0 0 8px">&#8220;Every day, when I&nbsp;&hellip;</p>';
-    h+='<input type="text" id="intention-input" class="set-input" placeholder="finish dinner, make coffee..." value="'+escHTML(S.practiceIntention)+'" oninput="act(\'setIntention\',this.value)" style="margin-bottom:8px" aria-label="Practice trigger"/>';
+    h+='<input type="text" id="intention-input" class="set-input" placeholder="finish dinner, make coffee..." value="'+escHTML(onboardingPracticeIntention)+'" oninput="act(\'setIntention\',this.value)" style="margin-bottom:8px" aria-label="Practice trigger"/>';
     h+='<p style="font-size:14px;color:var(--text-muted);margin:0">&#8230;&nbsp;I will open SparkSuite.&#8221;</p>';
     h+='</div>';
     h+='<button class="btn" onclick="act(\'completeOnboarding\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:14px 40px;font-size:17px;font-weight:800">Let\'s Go!</button>';

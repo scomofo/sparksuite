@@ -166,6 +166,12 @@ test('shared guided completion preserves app ids for thin active instruments', f
   assert.ok(appSource.indexOf('instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,') >= 0);
 });
 
+test('onboarding intention input ignores stale sentinel strings', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);') >= 0);
+  assert.ok(appSource.indexOf('value="\'+escHTML(onboardingPracticeIntention)+\'"') >= 0);
+});
+
 // Summary
 console.log('\n' + '='.repeat(40));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');
