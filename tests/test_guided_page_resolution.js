@@ -73,4 +73,26 @@ test("guided pages ignore stale plan titles", function() {
   assert.ok(doneHtml.indexOf(">undefined<") === -1);
 });
 
+test("guided song slice ignores stale cached copy", function() {
+  S.guidedPlan.songSlice = {
+    text: "undefined",
+    song: "null"
+  };
+  S.guidedStep = "songSlice";
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: { guidedStep: "songSlice" },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  var html = guidedSessionPage();
+  assert.ok(html.indexOf("Play this short song slice with steady timing.") >= 0);
+  assert.ok(html.indexOf("null") === -1);
+  assert.ok(html.indexOf("undefined") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
