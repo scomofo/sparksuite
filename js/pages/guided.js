@@ -197,6 +197,7 @@ function _guidedNewMove(plan) {
   if (!plan.newMove) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FF6B6B;font-weight:800">&#127919; New Move</h3>';
+  h += guidedNewMoveAnimationStyles();
   h += newMovePhaseIndicator(guidedView.newMovePhase);
 
   // Find chord
@@ -209,6 +210,7 @@ function _guidedNewMove(plan) {
       h += '<div style="font-size:14px;font-weight:800;color:#FF6B6B;margin-bottom:6px">&#128064; Watch \u2014 Hands Off!</div>';
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Observe the chord shape and finger placement. Don\'t play yet.</p>';
       h += '</div>';
+      h += guidedNewMoveAnimation("watch", ch ? ch.short : plan.newMove.chord);
       if (ch) {
         h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200, ch.name, true) + '</div>';
         h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
@@ -221,12 +223,14 @@ function _guidedNewMove(plan) {
       h += '<div style="font-size:14px;font-weight:800;color:#45B7D1;margin-bottom:6px">&#129306; Shadow \u2014 Mirror Slowly</div>';
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Copy what you saw. Place your fingers on the strings. No pressure to be perfect.</p>';
       h += '</div>';
+      h += guidedNewMoveAnimation("shadow", ch ? ch.short : plan.newMove.chord);
       if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200) + '</div>';
       h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">I\'ve Shadowed &#8594;</button>';
       break;
 
     case "try":
       h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(plan.newMove.text) + '</p>';
+      h += guidedNewMoveAnimation("try", ch ? ch.short : plan.newMove.chord);
       if (ch) {
         h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 180) + '</div>';
         h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:8px">&#128264; Listen</button><br>';
@@ -242,6 +246,7 @@ function _guidedNewMove(plan) {
       h += '<div style="font-size:14px;font-weight:800;color:#A78BFA;margin-bottom:6px">&#128161; Refine</div>';
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Focus on clean transitions and consistent finger placement.</p>';
       h += '</div>';
+      h += guidedNewMoveAnimation("refine", ch ? ch.short : plan.newMove.chord);
       if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 160) + '</div>';
       // Transition tip
       var tipKey = plan.review && plan.review.chords ? plan.review.chords[0] + "->" + plan.newMove.chord : null;
@@ -323,6 +328,47 @@ function guidedDonePage() {
   h += '<div class="flex-col"><button class="btn" onclick="act(\'guidedStart\',\'' + nextSessionNum + '\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';
   h += '</div>';
+  return h;
+}
+
+function guidedNewMoveAnimationStyles() {
+  return '' +
+    '<style>' +
+    '@keyframes guidedWatchPulse{0%{transform:scale(.92);opacity:.45}50%{transform:scale(1.06);opacity:1}100%{transform:scale(.92);opacity:.45}}' +
+    '@keyframes guidedShadowFloat{0%{transform:translateX(-12px);opacity:.18}50%{transform:translateX(0);opacity:.62}100%{transform:translateX(12px);opacity:.18}}' +
+    '@keyframes guidedTryTarget{0%{transform:scale(.82);opacity:.22}70%{transform:scale(1.08);opacity:.78}100%{transform:scale(1.2);opacity:0}}' +
+    '@keyframes guidedRefineGlow{0%{opacity:.25;transform:translateX(-10px)}50%{opacity:.85;transform:translateX(0)}100%{opacity:.25;transform:translateX(10px)}}' +
+    '</style>';
+}
+
+function guidedNewMoveAnimation(phase, chordLabel) {
+  var label = chordLabel || "MOVE";
+  var h = '<div style="display:flex;justify-content:center;margin:6px 0 14px">' +
+    '<div style="position:relative;width:220px;height:92px;border-radius:20px;overflow:hidden;background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08)">';
+
+  if (phase === "watch") {
+    h += '<div style="position:absolute;inset:16px;border-radius:16px;background:radial-gradient(circle,rgba(255,107,107,.35),rgba(255,107,107,0));animation:guidedWatchPulse 1.8s ease-in-out infinite"></div>';
+    h += '<div style="position:absolute;left:24px;right:24px;top:34px;height:10px;border-radius:999px;background:linear-gradient(90deg,rgba(255,107,107,.12),rgba(255,107,107,.72),rgba(255,107,107,.12))"></div>';
+    h += '<div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;letter-spacing:.08em;color:#FF6B6B;text-transform:uppercase">Observe</div>';
+  } else if (phase === "shadow") {
+    h += '<div style="position:absolute;left:34px;top:20px;width:68px;height:52px;border-radius:16px;background:rgba(69,183,209,.22);animation:guidedShadowFloat 1.7s ease-in-out infinite"></div>';
+    h += '<div style="position:absolute;right:34px;top:20px;width:68px;height:52px;border-radius:16px;background:rgba(69,183,209,.22);animation:guidedShadowFloat 1.7s ease-in-out .22s infinite reverse"></div>';
+    h += '<div style="position:absolute;inset:24px 58px;border-radius:16px;border:2px dashed rgba(69,183,209,.6)"></div>';
+    h += '<div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;letter-spacing:.08em;color:#45B7D1;text-transform:uppercase">Mirror</div>';
+  } else if (phase === "try") {
+    h += '<div style="position:absolute;left:50%;top:50%;width:26px;height:26px;margin-left:-13px;margin-top:-13px;border-radius:50%;background:rgba(78,205,196,.85)"></div>';
+    h += '<div style="position:absolute;left:50%;top:50%;width:26px;height:26px;margin-left:-13px;margin-top:-13px;border:3px solid rgba(78,205,196,.65);border-radius:50%;animation:guidedTryTarget 1.4s ease-out infinite"></div>';
+    h += '<div style="position:absolute;left:50%;top:50%;width:26px;height:26px;margin-left:-13px;margin-top:-13px;border:3px solid rgba(78,205,196,.45);border-radius:50%;animation:guidedTryTarget 1.4s ease-out .45s infinite"></div>';
+    h += '<div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;letter-spacing:.08em;color:#4ECDC4;text-transform:uppercase">Hit It</div>';
+  } else if (phase === "refine") {
+    h += '<div style="position:absolute;left:24px;right:24px;top:28px;height:6px;border-radius:999px;background:rgba(167,139,250,.18)"></div>';
+    h += '<div style="position:absolute;left:34px;right:34px;top:26px;height:10px;border-radius:999px;background:linear-gradient(90deg,rgba(167,139,250,.08),rgba(167,139,250,.88),rgba(167,139,250,.08));animation:guidedRefineGlow 1.6s ease-in-out infinite"></div>';
+    h += '<div style="position:absolute;left:44px;right:44px;bottom:24px;height:10px;border-radius:999px;background:linear-gradient(90deg,rgba(167,139,250,.08),rgba(167,139,250,.72),rgba(167,139,250,.08));animation:guidedRefineGlow 1.6s ease-in-out .35s infinite reverse"></div>';
+    h += '<div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;letter-spacing:.08em;color:#A78BFA;text-transform:uppercase">Polish</div>';
+  }
+
+  h += '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:8px 14px;border-radius:999px;background:rgba(15,23,42,.72);border:1px solid rgba(255,255,255,.12);font-weight:900;color:#fff;letter-spacing:.08em">' + escHTML(label) + '</div>';
+  h += '</div></div>';
   return h;
 }
 
