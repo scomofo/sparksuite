@@ -147,7 +147,7 @@
       loadFile: function(value) {
         var params;
         if (!value) return false;
-        params = stateService.prepareLocalFileLaunch(value, stateService.getInstrumentId());
+        params = stateService.prepareLocalFileLaunch(value, stateService.getInstrumentType(), stateService.getInstrumentId());
         launchPreparedSession(params);
         return !!params;
       },
@@ -326,7 +326,9 @@
       artist: overrides.artist != null ? overrides.artist : (track.artist || null),
       audioOffsetMs: overrides.audioOffsetMs != null ? overrides.audioOffsetMs : (track.audioOffsetMs || 0),
       difficulty: overrides.difficulty || track.difficulty || this.getDifficulty(),
-      instrument: overrides.instrument || track.instrument || this.stateService.getInstrumentId()
+      instrument: overrides.instrument || track.instrumentType || track.instrument || this.stateService.getInstrumentType(),
+      instrumentType: overrides.instrumentType || track.instrumentType || track.instrument || this.stateService.getInstrumentType(),
+      instrumentId: overrides.instrumentId || track.instrumentId || this.stateService.getInstrumentId()
     };
     if (Object.prototype.hasOwnProperty.call(overrides, "audioFile")) {
       params.audioFile = overrides.audioFile;

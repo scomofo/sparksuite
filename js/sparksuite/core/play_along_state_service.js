@@ -58,6 +58,63 @@
     return "guitar";
   }
 
+  function getPlayAlongInstrumentType() {
+    var core = getPlayAlongCore();
+    var runtime = core && typeof core.getRuntimeState === "function"
+      ? core.getRuntimeState()
+      : null;
+    if (runtime && runtime.activeInstrumentType) return runtime.activeInstrumentType;
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+    if (active && active.instrument) return active.instrument;
+    return "guitar";
+  }
+
+  function getRegisteredPlayAlongInstrumentType(instrumentId) {
+    var all;
+    var i;
+    var inst;
+    if (!instrumentId || typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+      return null;
+    }
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      inst = all[i] || {};
+      if (inst.id === instrumentId || inst.appId === instrumentId) {
+        return inst.instrument || null;
+      }
+    }
+    return null;
+  }
+
+  function normalizePlayAlongLaunchParams(params) {
+    var normalized = clonePlainObject(params || {});
+    var instrumentId = normalized.instrumentId || null;
+    var instrumentType = normalized.instrumentType || null;
+    var instrumentValue = normalized.instrument || null;
+
+    if (!instrumentType && instrumentValue) {
+      instrumentType = getRegisteredPlayAlongInstrumentType(instrumentValue);
+      if (instrumentType && !instrumentId) instrumentId = instrumentValue;
+    }
+    if (!instrumentType && instrumentId) {
+      instrumentType = getRegisteredPlayAlongInstrumentType(instrumentId);
+    }
+    if (!instrumentType) {
+      instrumentType = getPlayAlongInstrumentType();
+    }
+    if (!instrumentId && instrumentValue && instrumentValue !== instrumentType) {
+      instrumentId = instrumentValue;
+    }
+    if (!instrumentId) {
+      instrumentId = getPlayAlongInstrumentId();
+    }
+
+    normalized.instrument = instrumentType || "guitar";
+    normalized.instrumentType = instrumentType || normalized.instrument;
+    normalized.instrumentId = instrumentId || null;
+    return normalized;
+  }
+
   function getActiveChart(core) {
     return core && typeof core.getActivePlayAlongChart === "function"
       ? core.getActivePlayAlongChart()
@@ -163,13 +220,15 @@
     return this.cloneValue(params);
   };
 
-  SparkPlayAlongStateService.prototype.prepareLocalFileLaunch = function(file, instrumentId) {
+  SparkPlayAlongStateService.prototype.prepareLocalFileLaunch = function(file, instrumentType, instrumentId) {
     if (!file) return null;
     this.resetSelectedDrillState();
     return {
       audioFile: file,
       difficulty: this.getDifficulty(),
-      instrument: instrumentId || "guitar"
+      instrument: instrumentType || "guitar",
+      instrumentType: instrumentType || "guitar",
+      instrumentId: instrumentId || null
     };
   };
 
@@ -181,6 +240,10 @@
     return getPlayAlongInstrumentId();
   };
 
+  SparkPlayAlongStateService.prototype.getInstrumentType = function() {
+    return getPlayAlongInstrumentType();
+  };
+
   SparkPlayAlongStateService.prototype.startSession = function(params) {
     var core = getPlayAlongCore();
     if (!core || typeof core.startPlayAlongSession !== "function") return Promise.resolve(false);
@@ -190,13 +253,16 @@
   SparkPlayAlongStateService.prototype.beginSessionLaunch = function(params) {
     if (!params) return Promise.resolve(false);
     this.clearError();
+    params = normalizePlayAlongLaunchParams(params);
     this.rememberLaunch(params);
     return this.startSession(params);
   };
 
   SparkPlayAlongStateService.prototype.launchSession = function(params, instrumentId, onRender, onStartLoop) {
     if (!params) return Promise.resolve(false);
-    if (!params.instrument) params.instrument = instrumentId || getPlayAlongInstrumentId();
+    if (!params.instrument) params.instrument = getPlayAlongInstrumentType();
+    if (!params.instrumentType) params.instrumentType = params.instrument || getPlayAlongInstrumentType();
+    if (!params.instrumentId) params.instrumentId = instrumentId || getPlayAlongInstrumentId();
     return this.beginSessionLaunch(params).then(function(started) {
       if (!started) return false;
       return this.activateStartedSession(onRender, onStartLoop);
@@ -382,13 +448,13 @@
 
   SparkPlayAlongStateService.prototype.getReplayParams = function() {
     var params = this.getActiveParams();
-    return params ? this.cloneValue(params) : null;
+    return params ? normalizePlayAlongLaunchParams(params) : null;
   };
 
   SparkPlayAlongStateService.prototype.getSectionRecommendationLaunchParams = function(trackId) {
     var activeParams = this.getActiveParams();
     if (activeParams && activeParams.trackId === trackId) {
-      return this.cloneValue(activeParams);
+      return normalizePlayAlongLaunchParams(activeParams);
     }
     return this.getRecentLaunchParamsByTrackId(trackId);
   };
@@ -600,7 +666,9 @@
       title: normalizedParams.title || normalizedParams.trackId || "Untitled Song",
       artist: normalizedParams.artist || null,
       difficulty: normalizedParams.difficulty || null,
-      instrument: normalizedParams.instrument || null,
+      instrument: normalizedParams.instrument || normalizedParams.instrumentType || null,
+      instrumentId: normalizedParams.instrumentId || null,
+      instrumentType: normalizedParams.instrumentType || normalizedParams.instrument || null,
       transportMode: normalizedParams.trackUri ? "spotify" : (normalizedParams.stems ? "stems" : "generated"),
       params: normalizedParams
     };
@@ -634,7 +702,7 @@
     var i;
     for (i = 0; i < recent.length; i++) {
       if (recent[i] && recent[i].trackId === trackId && recent[i].params) {
-        return this.cloneValue(recent[i].params);
+        return normalizePlayAlongLaunchParams(recent[i].params);
       }
     }
     return null;

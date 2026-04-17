@@ -183,7 +183,12 @@ test("sparkPlayAlongStop stores outcome for results screen", function() {
 
 test("sparkPlayAlongReplay reuses active params", async function() {
   await sparkPlayAlongReplay();
-  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc", instrument: "guitar" });
+  assert.deepStrictEqual(sparkCore.startedWith, {
+    trackId: "abc",
+    instrument: "guitar",
+    instrumentType: "guitar",
+    instrumentId: "guitar"
+  });
   assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
 });
 
@@ -192,13 +197,65 @@ test("sparkPlayAlongReplay falls back to the active registered instrument id", a
   global.SparkInstruments = {
     getActive: function() {
       return { id: "pianospark", instrument: "piano" };
+    },
+    getAll: function() {
+      return [{ id: "pianospark", instrument: "piano" }];
     }
   };
 
   await sparkPlayAlongReplay();
 
-  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc", instrument: "pianospark" });
+  assert.deepStrictEqual(sparkCore.startedWith, {
+    trackId: "abc",
+    instrument: "piano",
+    instrumentType: "piano",
+    instrumentId: "pianospark"
+  });
   assert.strictEqual(S.screen, SCR.PLAY_ALONG_SESSION);
+});
+
+test("sparkPlayAlongReplay normalizes legacy app-id instruments from saved params", async function() {
+  sparkCore.runtimeState = null;
+  sparkCore._activeParams = {
+    trackId: "abc",
+    instrument: "pianospark"
+  };
+  global.SparkInstruments = {
+    getActive: function() {
+      return { id: "pianospark", instrument: "piano" };
+    },
+    getAll: function() {
+      return [{ id: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  await sparkPlayAlongReplay();
+
+  assert.deepStrictEqual(sparkCore.startedWith, {
+    trackId: "abc",
+    instrument: "piano",
+    instrumentType: "piano",
+    instrumentId: "pianospark"
+  });
+});
+
+test("sparkPlayAlongLoadFile uses the active instrument type for generated charts", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return { id: "pianospark", instrument: "piano" };
+    }
+  };
+
+  var ok = sparkPlayAlongLoadFile({ name: "demo.mp3" });
+
+  assert.strictEqual(ok, true);
+  assert.deepStrictEqual(sparkCore.startedWith, {
+    audioFile: { name: "demo.mp3" },
+    difficulty: "easy",
+    instrument: "piano",
+    instrumentType: "piano",
+    instrumentId: "pianospark"
+  });
 });
 
 test("sparkPlayAlongStartDrill relaunches current session into drill loop", async function() {
@@ -217,7 +274,12 @@ test("sparkPlayAlongStartDrill relaunches current session into drill loop", asyn
   assert.strictEqual(S.playAlongSpeed, "0.75");
   assert.strictEqual(global._audioRate, 0.75);
   assert.strictEqual(global._audioPlayedAt, 3.2);
-  assert.deepStrictEqual(sparkCore.startedWith, { trackId: "abc", instrument: "guitar" });
+  assert.deepStrictEqual(sparkCore.startedWith, {
+    trackId: "abc",
+    instrument: "guitar",
+    instrumentType: "guitar",
+    instrumentId: "guitar"
+  });
 });
 
 test("sparkPlayAlongTogglePause stores current position and resumes local audio", function() {
@@ -320,7 +382,9 @@ test("sparkPlayAlongLaunchDemo launches curated song metadata", async function()
     artist: "SparkSuite Demo",
     audioOffsetMs: 24,
     difficulty: "easy",
-    instrument: "guitar"
+    instrument: "guitar",
+    instrumentType: "guitar",
+    instrumentId: "guitar"
   });
 });
 
