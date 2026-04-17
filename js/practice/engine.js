@@ -31,7 +31,7 @@
       ? SparkInstruments.getActive()
       : null;
     return {
-      instrumentId: active ? (active.id || null) : practiceEngineRead("activeInstrument", null),
+      instrumentId: active ? (active.id || active.appId || null) : practiceEngineRead("activeInstrument", null),
       instrumentType: active ? (active.instrument || null) : null
     };
   }

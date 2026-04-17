@@ -110,6 +110,27 @@ async function run() {
     assert.strictEqual(getNextPracticeItem().id, "warmup_1");
   });
 
+  await test("practice engine preserves appId-only active instrument ownership", function() {
+    global.S.activeInstrument = null;
+    global.SparkInstruments.getActive = function() {
+      return { appId: "pianospark", instrument: "piano" };
+    };
+    eval(loadJS("js/practice/engine.js"));
+    eval(loadJS("js/practice/plan.js"));
+    global.getTopWeakSpots = function() {
+      return {
+        transitions: [{ key: "G->C" }],
+        rhythm: [{ key: "strum" }],
+        phrases: [{ key: "phrase_1" }]
+      };
+    };
+
+    var built = buildPracticePlan();
+
+    assert.strictEqual(built.instrumentId, "pianospark");
+    assert.strictEqual(getCachedPracticePlanForActiveInstrument().instrumentId, "pianospark");
+  });
+
   await test("performance recommendations can use plain global S", function() {
     eval(loadJS("js/performance/recommendations.js"));
 
