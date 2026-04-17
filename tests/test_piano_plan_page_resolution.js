@@ -460,6 +460,26 @@ test("pianoPlanPage derives a readable focus label when a cached plan omits focu
   assert.strictEqual(html.indexOf("<div class=\"muted\">No practice plan yet.</div>"), -1);
 });
 
+test("pianoPlanPage treats whitespace-only focus as missing focus", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "   ",
+      items: [
+        { id: "song_1", type: "song", durationSec: 240, meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("No practice focus yet.") >= 0);
+});
+
 test("pianoPlanPage does not render a completed banner when the plan is missing but the stale completion flag remains", function() {
   global.S = {
     practicePlanComplete: true,
