@@ -725,6 +725,27 @@ test("pianoPlanPage ignores malformed duration values in cached plan items", fun
   assert.strictEqual(html.indexOf("NaNm"), -1);
 });
 
+test("pianoPlanPage ignores boolean duration values in cached plan items", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: true, meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("Replay Island Strum") >= 0);
+  assert.strictEqual(html.indexOf("0m"), -1);
+});
+
 test("piano plan and practice sections ignore whitespace-only labels", function() {
   global.S = {
     practicePlanComplete: false,

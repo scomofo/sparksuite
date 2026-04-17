@@ -14,6 +14,9 @@ function planPage(){
   }
   function getPlanItemDurationMinutes(item){
     var raw = item ? item.durationSec : null;
+    if (typeof raw === "boolean" || typeof raw === "object" || typeof raw === "function" || typeof raw === "symbol") {
+      return null;
+    }
     var durationSec = typeof raw === "number" ? raw : Number(raw);
     return Number.isFinite(durationSec) && durationSec > 0
       ? Math.round(durationSec / 60)
