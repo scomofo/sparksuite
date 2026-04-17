@@ -177,6 +177,7 @@ test("piano surfaces rehydrate an app-id-only active instrument shell", function
   global.eval(loadJS("js/instruments/piano/pages/shared.js"));
   global.eval(loadJS("js/instruments/piano/ui.js"));
   global.eval(loadJS("js/instruments/piano/pages/games.js"));
+  global.eval(loadJS("js/instruments/piano/pages/onboarding.js"));
   global.eval(loadJS("js/instruments/piano/pages/practice.js"));
   global.eval(loadJS("js/instruments/piano/pages/songs.js"));
   global.eval(loadJS("js/instruments/piano/pages/tools.js"));
@@ -187,6 +188,28 @@ test("piano surfaces rehydrate an app-id-only active instrument shell", function
   assert.ok(statsTab().indexOf("Starter") >= 0);
   assert.strictEqual(levelColor(1), "#3366ff");
   assert.deepStrictEqual(pianoCheckBadges(), ["starter"]);
+});
+
+test("piano onboarding and tools ignore stale intention strings", function() {
+  resetEnvironment("pianospark");
+  global.S.practiceIntention = "undefined";
+  global.S.onboardingStep = 3;
+  global.S._toolTab = "settings";
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/onboarding.js"));
+  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+
+  var onboardingHtml = pianoOnboardingPage();
+  assert.ok(onboardingHtml.indexOf('value="undefined"') === -1);
+
+  global.S.practiceIntention = "null";
+  global.S.onboardingStep = 4;
+  onboardingHtml = pianoOnboardingPage();
+  assert.ok(onboardingHtml.indexOf("When I null") === -1);
+
+  var toolsHtml = pianoToolsTab();
+  assert.ok(toolsHtml.indexOf('value="null"') === -1);
 });
 
 test("piano songs library ignores stale sentinel search text", function() {
