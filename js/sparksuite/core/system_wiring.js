@@ -156,7 +156,11 @@
             params.audioFile, params.trackId, difficulty, params.instrument
           );
         } else if (params.trackId && self.chartService) {
-          chartPromise = self.chartService.generate(params.trackId, difficulty, params.instrument);
+          chartPromise = self.chartService.generate({
+            trackId: params.trackId,
+            difficulty: difficulty,
+            instrument: normalizeInstrumentType(params.instrument)
+          });
         } else {
           chartPromise = Promise.resolve(null);
         }

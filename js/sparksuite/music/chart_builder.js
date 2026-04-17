@@ -5,6 +5,19 @@
    */
   function ChartBuilder() {}
 
+  function normalizeInstrumentType(instrument) {
+    var candidate = instrument || "guitar";
+    if (!window.SparkInstruments || typeof SparkInstruments.getAll !== "function") return candidate;
+    var instruments = SparkInstruments.getAll() || [];
+    for (var i = 0; i < instruments.length; i++) {
+      var entry = instruments[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) {
+        return entry.instrument || candidate;
+      }
+    }
+    return candidate;
+  }
+
   /**
    * Build a complete play-along chart.
    * @param {Object} params
@@ -81,7 +94,7 @@
       trackId: trackId,
       trackUri: "spotify:track:" + trackId,
       difficulty: difficulty,
-      instrument: analysis.instrument || "guitar",
+      instrument: normalizeInstrumentType(analysis.instrument),
       audio: { bpm: bpm, key: analysis.key, mode: analysis.mode, timeSignature: analysis.timeSignature },
       songChart: songChart,
       chords: chords,
