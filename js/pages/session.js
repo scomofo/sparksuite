@@ -91,6 +91,27 @@ function getSessionChordDetectRuntime(){
   };
 }
 
+function _normalizeSessionSongTextToken(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function _firstSessionSongTextToken(){
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = _normalizeSessionSongTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 // ===== SESSION PAGES =====
 function sessionPage(){
   var inst = getSessionPageInstrument();
@@ -285,11 +306,13 @@ function songDetailPage(){
   var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var sg = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : S.selectedSong;
   if(!sg)return '';
+  var songTitle = _firstSessionSongTextToken(sg.title, sg.songTitle, sg.id, "Song");
+  var songArtist = _firstSessionSongTextToken(sg.artist, "Unknown Artist");
   var songPlaying = songRuntime && typeof songRuntime.songPlaying === "boolean" ? songRuntime.songPlaying : S.songPlaying;
   var songBeat = songRuntime && typeof songRuntime.songBeat === "number" ? songRuntime.songBeat : S.songBeat;
   var patBeat=songPlaying?(songBeat%sg.pattern.length):-1;
   var curDir=patBeat>=0?sg.pattern[patBeat]:"x";
-  var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(sg.title)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(sg.artist)+' &#8226; '+sg.bpm+' BPM</p>';
+  var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(songTitle)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(songArtist)+' &#8226; '+sg.bpm+' BPM</p>';
   h+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
   for(var i=0;i<sg.chords.length;i++)
     h+='<span style="background:var(--chip-bg);padding:4px 12px;border-radius:10px;font-size:13px;font-weight:700;color:var(--chip-color)">'+escHTML(sg.chords[i])+'</span>';
@@ -328,6 +351,16 @@ function songDonePage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var t=songRuntime && songRuntime.songSessionData ? escHTML(songRuntime.songSessionData.title || "") : (S.selectedSong?escHTML(S.selectedSong.title):"");
+  var runtimeSong = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : null;
+  var selectedSong = S.selectedSong || null;
+  var t = escHTML(_firstSessionSongTextToken(
+    runtimeSong && runtimeSong.title,
+    runtimeSong && runtimeSong.songTitle,
+    runtimeSong && runtimeSong.id,
+    selectedSong && selectedSong.title,
+    selectedSong && selectedSong.songTitle,
+    selectedSong && selectedSong.id,
+    "this song"
+  ));
   return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#127925;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Song Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px">You played <strong>'+t+'</strong></p><div class="card mb20"><div style="font-size:28px;font-weight:900;color:#FFE66D">+40 XP</div></div><button class="btn" onclick="act(\'songDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div>';
 }
