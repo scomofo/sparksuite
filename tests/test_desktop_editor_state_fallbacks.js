@@ -122,6 +122,18 @@ async function run() {
     assert.strictEqual(addedItems[0].item.t, 8);
   });
 
+  await test("desktop and editor helpers fall back to global S when SparkState.getRoot returns null", async function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/desktop/bridge.js"));
+    eval(loadJS("js/editor/io.js"));
+    eval(loadJS("js/editor/clipboard.js"));
+
+    assert.strictEqual(buildFullLocalBackup().state, S);
+    assert.strictEqual(saveEditorObjectToLibrary(), true);
+    assert.strictEqual(copySelectedEditorItem(), true);
+    assert.strictEqual(S.editorClipboard.kind, "event");
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

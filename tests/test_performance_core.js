@@ -711,6 +711,21 @@ test('setPerformanceHighwayThemeSelection stores per-instrument theme choice', f
   global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
 });
 
+test('performance highway theme helpers fall back to global S when SparkState.getRoot returns null', function() {
+  var originalSparkState = global.SparkState;
+  var originalSelection = global.PERFORMANCE_HIGHWAY_THEME_SELECTION;
+  global.SparkState = { getRoot: function() { return null; } };
+  S.settings = {};
+
+  setPerformanceHighwayThemeSelection('legacy', 'piano');
+
+  assert.strictEqual(S.settings.performanceHighwayThemeSelection.piano, 'legacy');
+  assert.strictEqual(getStoredPerformanceHighwayThemeSelection().piano, 'legacy');
+
+  global.SparkState = originalSparkState;
+  global.PERFORMANCE_HIGHWAY_THEME_SELECTION = originalSelection;
+});
+
 test('perform page renders highway theme toggles when multiple themes are available', function() {
   S.performChart = { title: 'Theme Test', artist: 'Spark', instrument: 'piano', events: [], phrases: [] };
   S.settings = { performanceHighwayThemeSelection: { piano: 'legacy' } };

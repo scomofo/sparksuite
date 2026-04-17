@@ -125,6 +125,28 @@ async function run() {
     assert.strictEqual(syncPerformanceDailyChallengeStateCalls.length, 2);
   });
 
+  await test("practice helpers fall back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/practice/weakspots.js"));
+    eval(loadJS("js/practice/progress.js"));
+    eval(loadJS("js/practice/engine.js"));
+    eval(loadJS("js/practice/plan.js"));
+    eval(loadJS("js/performance/recommendations.js"));
+    global.getTopWeakSpots = function() {
+      return {
+        transitions: [{ key: "G->C" }],
+        rhythm: [{ key: "strum" }],
+        phrases: [{ key: "phrase_1" }]
+      };
+    };
+
+    recordPracticeSession({ id: "practice_1", durationMin: 12 });
+    assert.strictEqual(S.practiceHistory.length, 1);
+    assert.strictEqual(buildPracticePlan().instrumentId, "pianospark");
+    assert.strictEqual(generateDailyPracticePlan().items[0].type, "warmup");
+    assert.strictEqual(buildPerformanceRecommendationsForSong("focus_song")[0].type, "imported_technique_focus");
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

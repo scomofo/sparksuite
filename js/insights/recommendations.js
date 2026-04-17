@@ -1,7 +1,8 @@
 (function(){
   function insightRecommendationRoot(){
     if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
-      return SparkState.getRoot();
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
     }
     return typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
   }

@@ -111,4 +111,15 @@ test("checkLessonUnlockRules falls back to shared level state", function() {
   assert.strictEqual(checkLessonUnlockRules("locked_lesson"), true);
 });
 
+test("shared progress helpers fall back to global S when SparkState.getRoot returns null", function() {
+  global.SparkState = { getRoot: function() { return null; } };
+  eval(loadJS("js/analytics/reports.js"));
+  eval(loadJS("js/meta/profile.js"));
+  eval(loadJS("js/curriculum/curriculum_engine.js"));
+
+  assert.strictEqual(generatePracticeReport().level, 7);
+  assert.ok(profilePage().indexOf("Level: 7") >= 0);
+  assert.strictEqual(checkLessonUnlockRules("locked_lesson"), true);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

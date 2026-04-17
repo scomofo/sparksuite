@@ -10,7 +10,8 @@
 
   function getCareerRegistryStateRoot(){
     if(typeof SparkState!=="undefined" && SparkState && typeof SparkState.getRoot==="function"){
-      return SparkState.getRoot();
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
     }
     if(typeof globalThis!=="undefined" && globalThis.__sparkState) return globalThis.__sparkState;
     if(typeof globalThis!=="undefined" && globalThis.S) return globalThis.S;

@@ -127,6 +127,21 @@ async function run() {
     assert.ok(html.indexOf("Cleared songs: 2") >= 0);
   });
 
+  await test("insight helpers fall back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/insights/recommendations.js"));
+    eval(loadJS("js/insights/practice.js"));
+    eval(loadJS("js/insights/mastery.js"));
+    eval(loadJS("js/insights/snapshots.js"));
+    eval(loadJS("js/insights/engine.js"));
+
+    assert.strictEqual(buildRecommendationInsights().totalAccepted, 3);
+    assert.strictEqual(buildPracticeInsights().currentStreak, 4);
+    assert.strictEqual(getWeakestMasterySkills(1)[0].id, "G_C");
+    assert.strictEqual(buildInsightSnapshot().meta.level, 6);
+    assert.ok(generatePersonalInsights());
+  });
+
   await test("insights dashboard falls back to global S when SparkState.getRoot returns null", function() {
     global.SparkState = { getRoot: function() { return null; } };
     eval(loadJS("js/insights/ui.js"));

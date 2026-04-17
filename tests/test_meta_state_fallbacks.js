@@ -140,6 +140,25 @@ async function run() {
     assert.strictEqual(getPackCompletionRatio("pack_alpha"), 1);
   });
 
+  await test("meta helpers fall back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/meta/achievements.js"));
+    eval(loadJS("js/meta/challenges.js"));
+    eval(loadJS("js/meta/events.js"));
+    eval(loadJS("js/meta/pack_rewards.js"));
+    eval(loadJS("js/meta/levels.js"));
+
+    evaluateAchievements();
+    checkLevelUp();
+    generateDailyChallenges();
+    updateChallengeProgress("practice_minutes", 15);
+    assert.strictEqual(S.playerAchievements.first_song, true);
+    assert.strictEqual(S.dailyChallenges[0].completed, true);
+    assert.strictEqual(activateSeasonalEvent("spring_fest"), true);
+    updateSeasonalChallengeProgress("practice_minutes", 2);
+    assert.strictEqual(S.challengeRewards.eventClaimed.spring_fest, true);
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

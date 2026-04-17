@@ -111,6 +111,18 @@ async function run() {
     assert.strictEqual(hasSongClearedCareer("song_a"), true);
   });
 
+  await test("career helpers fall back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/career/scoring.js"));
+    eval(loadJS("js/career/unlocks.js"));
+    eval(loadJS("js/career/engine.js"));
+
+    evaluateCareerUnlocks("career_main");
+    assert.strictEqual(getRecommendedCareerSong(), "song_a");
+    updateSongCareerRating({ songId: "song_a", arrangementType: "block_chords", accuracy: 0.91 });
+    assert.ok(S.careerProgress.songRatings["song_a::block_chords"]);
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

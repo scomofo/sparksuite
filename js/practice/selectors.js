@@ -2,7 +2,8 @@
 
   function practiceSelectorRoot(){
     if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
-      return SparkState.getRoot();
+      var sparkRoot = SparkState.getRoot();
+      if(sparkRoot) return sparkRoot;
     }
     return typeof globalThis!=="undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
   }
@@ -778,9 +779,13 @@
     if(typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
       return SparkState.read(path, fallback);
     }
-    var root = typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"
-      ? SparkState.getRoot()
-      : (typeof globalThis!=="undefined" ? (globalThis.__sparkState || globalThis.S || null) : null);
+    var root = null;
+    if(typeof SparkState!=="undefined" && typeof SparkState.getRoot==="function"){
+      root = SparkState.getRoot();
+    }
+    if(!root){
+      root = typeof globalThis!=="undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
+    }
     if(!root) return fallback;
     var parts = Array.isArray(path) ? path.slice() : [path];
     var cursor = root;

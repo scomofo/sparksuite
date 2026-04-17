@@ -89,6 +89,24 @@ async function run() {
     assert.strictEqual(getNextRecommendedLesson(), "lesson2");
   });
 
+  await test("progression helpers fall back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/progression/mastery.js"));
+    eval(loadJS("js/progression/unlocks.js"));
+    eval(loadJS("js/progression/tree.js"));
+
+    updateMasteryFromPerformance({
+      chords: { C: 0.9, G: 0.8 },
+      transitions: { "C_G": 0.75 },
+      rhythm: { strum: 0.7 },
+      songId: "song_one",
+      accuracy: 0.85
+    });
+    buildProgressionTree();
+    assert.ok(S.mastery.chords.C > 0);
+    assert.ok(S.progressionTree);
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

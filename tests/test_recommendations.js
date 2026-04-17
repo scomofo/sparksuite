@@ -331,6 +331,27 @@ test("generateRecommendations prioritizes play-along recovery and module-progres
   assert.strictEqual(S.recommendations[0].source, "play_along");
 });
 
+test("recommendation engine helpers fall back to global S when SparkState.getRoot returns null", function() {
+  global.SparkState = { getRoot: function() { return null; } };
+
+  var recommendations = generateRecommendations("guitar");
+  var scored = scoreRecommendationCandidate({
+    id: "module_progress_test",
+    source: "module_progress",
+    type: "bassline",
+    meta: {
+      progressSummary: {
+        weakestMetric: "timing",
+        timing: 0.48
+      }
+    },
+    reasons: ["Recover weak timing"]
+  });
+
+  assert.ok(recommendations.length > 0);
+  assert.ok(scored.score > 0);
+});
+
 test("module-progress scoring increases when the weakest metric is lower", function() {
   var stronger = {
     id: "module_stronger",
