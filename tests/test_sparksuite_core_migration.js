@@ -85,6 +85,10 @@ function resetState() {
       { id: "transition_1", type: "transition", label: "Practice G to C", reason: "Weak transition", meta: { key: "G|C", from: "G", to: "C" } }
     ];
   };
+  global.SparkInstruments = {
+    getActive: function() { return null; },
+    getAll: function() { return []; }
+  };
   global.SparkInstrumentAdapter = {
     getAppId: function() { return "chordspark"; },
     getInstrumentType: function() { return "guitar"; },
@@ -3003,6 +3007,52 @@ test("createDefaultSparkCore registers piano as a first-class instrument adapter
   assert.strictEqual(S.performSongData.title, "River Walk");
   assert.strictEqual(S.performArrangementType, "melody");
   assert.strictEqual(S.performDifficulty, "pro");
+});
+
+test("createDefaultSparkCore prefers the rehydrated active instrument over a stale singleton adapter", function() {
+  var pianoSongs = [
+    { title: "Midnight Train", artist: "Piano Suite" },
+    { title: "River Walk", artist: "Piano Suite" }
+  ];
+  var pianoSessions = [
+    { num: 1, title: "Piano Spark 1", spark: { text: "Start" }, newMove: { chord: "C" } },
+    { num: 2, title: "Piano Spark 2", spark: { text: "Continue" }, newMove: { chord: "G" } }
+  ];
+  var pianoInstrument = {
+    id: "pianospark",
+    appId: "pianospark",
+    instrument: "piano",
+    getCurriculumMap: function() { return [{ num: 1, title: "White Keys Only" }]; },
+    getSongs: function() { return pianoSongs; },
+    getData: function() { return { SESSIONS: pianoSessions }; }
+  };
+
+  SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [pianoInstrument];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return [{ num: 1, title: "Stale Guitar Lesson" }]; },
+    getCurriculum: function() { return { SESSIONS: [{ num: 1, title: "Stale Guitar Session" }] }; },
+    getSongs: function() { return [{ title: "Stale Guitar Song", artist: "Spark Suite" }]; }
+  };
+
+  var core = createDefaultSparkCore();
+  var context = core.instrumentManager.getActiveContext();
+
+  assert.strictEqual(context.appId, "pianospark");
+  assert.strictEqual(context.instrumentType, "piano");
+  assert.strictEqual(context.adapter.getType(), "piano");
+  assert.strictEqual(context.curriculumMap[0].title, "White Keys Only");
+  assert.strictEqual(context.sessions[0].title, "Piano Spark 1");
+  assert.strictEqual(context.songs[1].title, "River Walk");
 });
 
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
