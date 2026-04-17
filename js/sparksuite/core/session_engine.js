@@ -125,6 +125,27 @@
     return instrumentContext.appId || instrumentContext.instrumentId || null;
   }
 
+  function resolveSpotifyInstrumentType(instrument, instrumentContext) {
+    var candidate = instrument || null;
+    var all;
+    var i;
+    var inst;
+    instrumentContext = instrumentContext || {};
+    if (instrumentContext.instrumentType) return instrumentContext.instrumentType;
+    if (!candidate && instrumentContext.instrumentId) candidate = instrumentContext.instrumentId;
+    if (!candidate && instrumentContext.appId) candidate = instrumentContext.appId;
+    if (candidate && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+      all = SparkInstruments.getAll() || [];
+      for (i = 0; i < all.length; i++) {
+        inst = all[i] || {};
+        if (inst.id === candidate || inst.appId === candidate) {
+          return inst.instrument || candidate;
+        }
+      }
+    }
+    return candidate || "guitar";
+  }
+
   SessionEngine.prototype.buildSession = function(flow, context) {
     context = context || {};
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.buildGuidedSession(context);
@@ -408,8 +429,8 @@
     context = context || {};
     var trackId = context.trackId;
     var difficulty = context.difficulty || "easy";
-    var instrument = context.instrument || "guitar";
     var instrumentContext = context.instrumentContext || {};
+    var instrument = resolveSpotifyInstrumentType(context.instrument, instrumentContext);
 
     if (!trackId) return Promise.resolve(this.buildEmptySession("spotify_play_along", context));
 
