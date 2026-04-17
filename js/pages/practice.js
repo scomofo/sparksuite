@@ -280,7 +280,7 @@ function practiceTab(){
     h+='</div>';
     h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(getPracticeSummaryFocus(plan))+'</div>';
     for(var pi=0;pi<plan.items.length;pi++){
-      var item=plan.items[pi];
+      var item=plan.items[pi] || {};
       h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
       h+='<span style="font-size:16px">'+(item.completed?"&#9989;":"&#9744;")+'</span>';
       h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
@@ -534,7 +534,7 @@ function practicePage(){
   h += '<div><b>Today\'s Practice Plan</b></div>';
   if(plan && Array.isArray(plan.items) && plan.items.length){
     for(var i=0;i<plan.items.length;i++){
-      var item = plan.items[i];
+      var item = plan.items[i] || {};
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       var actionHtml = item.completed
         ? '<span class="text-muted">Done</span>'

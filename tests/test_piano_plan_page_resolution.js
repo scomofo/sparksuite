@@ -438,4 +438,39 @@ test("pianoPlanPage does not render go buttons for sparse plan items without ids
   assert.ok(html.indexOf(">Unavailable<") >= 0);
 });
 
+test("piano plan and practice sections tolerate sparse cached plan items that contain null entries", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        null,
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseId: "warmup_1" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.strictEqual(planHtml.indexOf("undefined"), -1);
+  assert.strictEqual(practiceHtml.indexOf("undefined"), -1);
+  assert.ok(planHtml.indexOf(">Unavailable<") >= 0);
+  assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
+  assert.ok(planHtml.indexOf("warmup 1") >= 0);
+  assert.ok(practiceHtml.indexOf("warmup 1") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

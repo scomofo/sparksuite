@@ -34,8 +34,8 @@ function planPage(){
   }
 
   for(var i=0;i<plan.items.length;i++){
-    var item = plan.items[i];
-    var canLaunch = !!(item && item.id);
+    var item = plan.items[i] || {};
+    var canLaunch = !!item.id;
     var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
     var actionHtml = item.completed
       ? '<span class="text-muted">Done</span>'
