@@ -718,6 +718,27 @@ test("pianoPlanPage treats whitespace-only focus as missing focus", function() {
   assert.ok(html.indexOf("No practice focus yet.") >= 0);
 });
 
+test("pianoPlanPage ignores non-string stale focus values", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: { label: "Song mastery" },
+      items: [
+        { id: "song_1", type: "song", durationSec: 240, meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("No practice focus yet.") >= 0);
+  assert.strictEqual(html.indexOf("[object Object]"), -1);
+});
+
 test("pianoPlanPage does not render a completed banner when the plan is missing but the stale completion flag remains", function() {
   global.S = {
     practicePlanComplete: true,
