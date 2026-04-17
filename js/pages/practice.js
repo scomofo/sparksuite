@@ -104,9 +104,10 @@ function getPracticeSummaryFocus(plan) {
 }
 
 function isRenderablePracticeSummaryItem(item) {
+  var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
   return !!(
     item &&
-    (item.id ||
+    (id ||
      item.label ||
      item.type ||
      (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
@@ -310,8 +311,9 @@ function practiceTab(){
       h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
       h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(getPracticeSummaryItemDesc(item))+'</div></div>';
       if(!item.completed){
-        if(item && item.id){
-          h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+item.id+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
+        var itemId = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+        if(itemId){
+          h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+itemId+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
         }else{
           h+='<span class="text-muted">Unavailable</span>';
         }
@@ -560,11 +562,12 @@ function practicePage(){
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
       if(!isRenderablePracticeSummaryItem(item)) continue;
+      var itemId = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       var actionHtml = item.completed
         ? '<span class="text-muted">Done</span>'
-        : (item && item.id
-          ? '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>'
+        : (itemId
+          ? '<button onclick="act(\'practiceStartItem\', \''+itemId+'\')">Start</button>'
           : '<span class="text-muted">Unavailable</span>');
       h += '<div class="row">';
       h += '<span'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
@@ -591,7 +594,8 @@ function startPracticeItem(id){
   if(!plan || !Array.isArray(plan.items)) return;
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
-    if(item && item.id === id){
+    var candidateId = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+    if(item && candidateId === id){
       launchPracticeItem(item);
       return;
     }
