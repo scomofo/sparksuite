@@ -188,7 +188,7 @@ function getPianoPlanFocusLabel(plan){
        metaHasValue)
     );
   })) return "No practice plan yet.";
-  var focus = typeof plan.focus === "string" ? plan.focus.trim() : plan.focus;
+  var focus = typeof plan.focus === "string" ? plan.focus.trim() : null;
   return focus ? focus : "No practice focus yet.";
 }
 

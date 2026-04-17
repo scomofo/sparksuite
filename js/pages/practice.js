@@ -116,7 +116,7 @@ function getPracticeSummaryProgress(plan) {
 }
 
 function getPracticeSummaryFocus(plan) {
-  var focus = plan && typeof plan.focus === "string" ? plan.focus.trim() : (plan ? plan.focus : null);
+  var focus = plan && typeof plan.focus === "string" ? plan.focus.trim() : null;
   return focus ? focus : "No practice focus yet.";
 }
 
