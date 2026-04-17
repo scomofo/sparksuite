@@ -37,6 +37,28 @@
     return value;
   }
 
+  function getLegacySessionActiveInstrument() {
+    var activeInstrument;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    activeInstrument = SparkInstruments.getActive();
+    if (!activeInstrument) return null;
+    if (typeof activeInstrument.getData === "function") return activeInstrument;
+    candidate = activeInstrument.id || activeInstrument.appId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return activeInstrument;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return activeInstrument;
+  }
+
   function applyLegacySessionOutcomeUpdate(update) {
     var stateFacade = getStateFacade();
     var chordName;
@@ -105,15 +127,16 @@
       if (!opts.instrumentData) {
         if (typeof SparkInstrumentAdapter !== "undefined") {
           D = SparkInstrumentAdapter.getCurriculum() || {};
-        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-          D = SparkInstruments.getActive().getData();
+        } else {
+          var sessionInstrument = getLegacySessionActiveInstrument();
+          D = sessionInstrument && typeof sessionInstrument.getData === "function" ? sessionInstrument.getData() : {};
         }
       }
 
       // Resolve instrument identity for contract
       var instrumentId = opts.instrumentId || null;
       var instrumentType = opts.instrumentType || null;
-      var activeInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
+      var activeInstrument = getLegacySessionActiveInstrument();
       if (!instrumentId && activeInstrument) {
         instrumentId = activeInstrument.id || activeInstrument.appId || null;
         instrumentType = activeInstrument.instrument || null;
@@ -283,8 +306,9 @@
       if (!results.instrumentData) {
         if (typeof SparkInstrumentAdapter !== "undefined") {
           D = SparkInstrumentAdapter.getCurriculum() || {};
-        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-          D = SparkInstruments.getActive().getData();
+        } else {
+          var resultInstrument = getLegacySessionActiveInstrument();
+          D = resultInstrument && typeof resultInstrument.getData === "function" ? resultInstrument.getData() : {};
         }
       }
       var activeLevel = stateFacade && typeof stateFacade.getLevel === "function" ? stateFacade.getLevel() : readSessionState("level", 1);

@@ -3,6 +3,28 @@
 // Delegates to instrument modules via SparkInstrumentAdapter.
 (function() {
 
+  function getActivePracticeEngineInstrument() {
+    var active;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    active = SparkInstruments.getActive();
+    if (!active) return null;
+    if (typeof active.getData === "function") return active;
+    candidate = active.id || active.appId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return active;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return active;
+  }
+
   function getPracticeEngineLevelFallback() {
     if (typeof SparkState !== "undefined" && typeof SparkState.getLevel === "function") {
       return SparkState.getLevel();
@@ -34,8 +56,9 @@
       }
 
       // Fallback: pull from active instrument's chord pool
-      if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-        var D = SparkInstruments.getActive().getData();
+      var activeInstrument = getActivePracticeEngineInstrument();
+      if (activeInstrument && typeof activeInstrument.getData === "function") {
+        var D = activeInstrument.getData();
         var pool = (D.CHORDS && D.CHORDS[level]) || (D.CHORDS && D.CHORDS[1]) || [];
         if (pool.length >= count) {
           var selected = [];

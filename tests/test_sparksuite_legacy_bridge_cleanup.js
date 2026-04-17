@@ -237,8 +237,67 @@ test("legacy daily practice generator delegates to sparkCore when available", fu
 
 test("legacy session engine preserves thin active instrument app ids in session plans", function() {
   var sessionEngineSource = loadJS("js/spark-core/session-engine.js");
-  assert.ok(sessionEngineSource.indexOf('var activeInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
+  assert.ok(sessionEngineSource.indexOf('var activeInstrument = getLegacySessionActiveInstrument();') >= 0);
   assert.ok(sessionEngineSource.indexOf('instrumentId = activeInstrument.id || activeInstrument.appId || null;') >= 0);
+});
+
+test("legacy session engine rehydrates thin active instruments before reading curriculum data", function() {
+  SparkInstrumentAdapter = undefined;
+  SparkContracts = {
+    createSessionPlan: function(plan) { return plan; }
+  };
+  SparkInstruments.getAll = function() {
+    return [{
+      id: "pianospark",
+      appId: "pianospark",
+      instrument: "piano",
+      getData: function() {
+        return {
+          CHORDS: { 1: [{ name: "C Major" }] }
+        };
+      }
+    }];
+  };
+  SparkInstruments.getActive = function() {
+    return { appId: "pianospark" };
+  };
+  var previousRandom = Math.random;
+  Math.random = function() { return 0.5; };
+
+  var plan = SparkSession.buildSession({ mode: "quickStart", level: 1 });
+
+  Math.random = previousRandom;
+  assert.strictEqual(plan.chordName, "C Major");
+  assert.strictEqual(plan.instrumentId, "pianospark");
+});
+
+test("legacy practice engine rehydrates thin active instruments before reading drill pools", function() {
+  SparkInstrumentAdapter = undefined;
+  SparkInstruments.getAll = function() {
+    return [{
+      id: "pianospark",
+      appId: "pianospark",
+      instrument: "piano",
+      getData: function() {
+        return {
+          CHORDS: { 1: [{ name: "C Major" }, { name: "G Major" }] }
+        };
+      }
+    }];
+  };
+  SparkInstruments.getActive = function() {
+    return { appId: "pianospark" };
+  };
+  var previousRandom = Math.random;
+  Math.random = function() { return 0.5; };
+  eval(loadJS("js/spark-core/practice-engine.js"));
+
+  var drill = SparkPracticeEngine.generateDrill({ level: 1, count: 1 });
+
+  Math.random = previousRandom;
+  assert.strictEqual(Array.isArray(drill), true);
+  assert.strictEqual(drill.length, 1);
+  assert.strictEqual(drill[0].name, "G Major");
 });
 
 test("legacy session engine emits practice completion events with the active instrument app id", function() {
