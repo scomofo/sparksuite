@@ -340,6 +340,51 @@ test("practicePage and planPage skip whitespace-only fallback meta labels", func
   assert.ok(planHtml.indexOf("island strum") >= 0);
 });
 
+test("practicePage and planPage ignore whitespace-only exercise types", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseType: "   ", exerciseId: "warmup_1", instrument: "piano" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practicePage();
+  var planHtml = planPage();
+  assert.ok(practiceHtml.indexOf("warmup 1") >= 0);
+  assert.ok(planHtml.indexOf("warmup 1") >= 0);
+  assert.strictEqual(practiceHtml.indexOf(" -  - "), -1);
+  assert.strictEqual(planHtml.indexOf(" -  - "), -1);
+});
+
 test("practiceTab and planPage ignore whitespace-only subtitle meta tokens", function() {
   global.S = {
     level: 1,
