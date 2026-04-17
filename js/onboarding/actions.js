@@ -119,9 +119,8 @@
 
   function generateInitialRecommendationsFromOnboarding(){
     if(typeof generateRecommendations !== "function") return [];
-    if(S.onboarding.instrument === "piano") return generateRecommendations("piano");
-    if(S.onboarding.instrument === "ukulele") return generateRecommendations("guitar");
-    return generateRecommendations("guitar");
+    var instrument = S.onboarding && S.onboarding.instrument ? S.onboarding.instrument : null;
+    return generateRecommendations(instrument || undefined);
   }
 
   window.setOnboardingInstrument = setOnboardingInstrument;

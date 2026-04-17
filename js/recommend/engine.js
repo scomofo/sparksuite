@@ -1,5 +1,19 @@
 (function(){
 
+  function rehydrateRecommendationInstrument(active) {
+    if (!active) return null;
+    var key = active.id || active.appId || active.instrumentId || active.instrument || null;
+    if (typeof SparkInstruments === "undefined" || typeof SparkInstruments.getAll !== "function" || !key) {
+      return active;
+    }
+    var entries = SparkInstruments.getAll() || [];
+    for (var i = 0; i < entries.length; i++) {
+      var entry = entries[i] || {};
+      if (entry.id === key || entry.appId === key || entry.instrument === key) return entry;
+    }
+    return active;
+  }
+
   function generateRecommendations(appType){
     var candidates = collectRecommendationCandidates(appType || inferRecommendationAppType());
     candidates = filterRecommendationCandidates(candidates);
@@ -34,6 +48,12 @@
   }
 
   function inferRecommendationAppType(){
+    if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
+      var active = rehydrateRecommendationInstrument(SparkInstruments.getActive());
+      if (active && (active.instrument || active.instrumentType)) {
+        return active.instrument || active.instrumentType;
+      }
+    }
     return /piano/i.test(typeof APP_NAME !== "undefined" ? APP_NAME : "") ? "piano" : "guitar";
   }
 
