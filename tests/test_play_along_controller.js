@@ -399,6 +399,30 @@ test("sparkPlayAlongLaunchDemo launches curated song metadata", async function()
   });
 });
 
+test("sparkPlayAlongLaunchDemo prefers the active instrument context over demo defaults", async function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return { id: "pianospark", instrument: "piano" };
+    }
+  };
+
+  var ok = sparkPlayAlongLaunchDemo(0);
+  await Promise.resolve();
+
+  assert.strictEqual(ok, true);
+  assert.deepStrictEqual(sparkCore.startedWith, {
+    trackId: "demo_song_1",
+    trackUri: null,
+    title: "Sunrise Drive",
+    artist: "SparkSuite Demo",
+    audioOffsetMs: 24,
+    difficulty: "easy",
+    instrument: "piano",
+    instrumentType: "piano",
+    instrumentId: "pianospark"
+  });
+});
+
 test("launch remembers recent play along songs", async function() {
   sparkPlayAlongLaunchDemo(0);
   await Promise.resolve();

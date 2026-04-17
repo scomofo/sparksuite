@@ -575,14 +575,20 @@
 
   SparkPlayAlongActionService.prototype.getDemoLaunchParams = function(index) {
     var demo = this.getDemo(index);
+    var activeInstrumentType;
+    var activeInstrumentId;
     if (!demo) return null;
+    activeInstrumentType = this.stateService.getInstrumentType();
+    activeInstrumentId = this.stateService.getInstrumentId();
     return this.buildLaunchParams(demo, {
       trackId: demo.trackId,
       trackUri: demo.trackUri || null,
       title: demo.title || null,
       audioOffsetMs: demo.audioOffsetMs || 0,
       difficulty: demo.difficulty || this.getDifficulty(),
-      instrument: demo.instrument || "guitar"
+      instrument: activeInstrumentType || demo.instrument || "guitar",
+      instrumentType: activeInstrumentType || demo.instrument || "guitar",
+      instrumentId: activeInstrumentId || demo.instrumentId || null
     });
   };
 
