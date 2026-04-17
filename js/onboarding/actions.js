@@ -64,10 +64,10 @@
       return { appId: "pianospark", recommendationAppType: "piano" };
     }
     if(instrument === "ukulele"){
-      return { appId: "ukespark", recommendationAppType: "guitar" };
+      return { appId: "ukespark", recommendationAppType: "ukulele" };
     }
     if(instrument === "bass"){
-      return { appId: "bassspark", recommendationAppType: "guitar" };
+      return { appId: "bassspark", recommendationAppType: "bass" };
     }
     return { appId: "chordspark", recommendationAppType: "guitar" };
   }

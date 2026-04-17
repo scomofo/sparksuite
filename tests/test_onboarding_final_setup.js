@@ -115,7 +115,19 @@ test("initial recommendations generation uses the onboarding instrument mapping"
   assert.strictEqual(global.activatedInstrument, "ukespark");
   assert.strictEqual(global.S.activeInstrument, "ukespark");
   assert.strictEqual(global.generatedRecommendationActiveInstrument, "ukespark");
-  assert.strictEqual(global.generatedRecommendationType, "guitar");
+  assert.strictEqual(global.generatedRecommendationType, "ukulele");
+  assert.strictEqual(Array.isArray(recommendations), true);
+});
+
+test("initial recommendations generation preserves bass onboarding type", function() {
+  global.S.onboarding.instrument = "bass";
+
+  var recommendations = generateInitialRecommendationsFromOnboarding();
+
+  assert.strictEqual(global.activatedInstrument, "bassspark");
+  assert.strictEqual(global.S.activeInstrument, "bassspark");
+  assert.strictEqual(global.generatedRecommendationActiveInstrument, "bassspark");
+  assert.strictEqual(global.generatedRecommendationType, "bass");
   assert.strictEqual(Array.isArray(recommendations), true);
 });
 
