@@ -62,6 +62,17 @@ function _firstSongsTextToken(){
   return "";
 }
 
+function _normalizeSongsInputValue(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return value;
+}
+
 // ===== STRUM TAB =====
 function strumTab(){
   var inst = getSongsPageInstrument();
@@ -148,7 +159,8 @@ function songsTab(){
   }
 
   // Search filter
-  h+='<div style="margin-bottom:12px"><input class="set-input" type="text" placeholder="Search by title, artist, or chord..." value="'+escHTML(songFilter)+'" oninput="act(\'songFilter\',this.value)" aria-label="Filter songs"/></div>';
+  var safeSongFilter = _normalizeSongsInputValue(songFilter);
+  h+='<div style="margin-bottom:12px"><input class="set-input" type="text" placeholder="Search by title, artist, or chord..." value="'+escHTML(safeSongFilter)+'" oninput="act(\'songFilter\',this.value)" aria-label="Filter songs"/></div>';
 
   // Sort controls
   var sorts=[["level","Level"],["title","Title"],["artist","Artist"],["bpm","BPM"],["chords","Chords"]];
@@ -186,7 +198,7 @@ function songsTab(){
   });
 
   // Count
-  h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(songFilter?" matching &ldquo;"+escHTML(songFilter)+"&rdquo;":"")+'</div>';
+  h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(safeSongFilter?" matching &ldquo;"+escHTML(safeSongFilter)+"&rdquo;":"")+'</div>';
 
   h+='<div class="flex-col">';
   for(var i=0;i<filtered.length;i++){
@@ -233,7 +245,8 @@ function communitySection(){
   if(communityTab==="submit") return h+communitySubmitForm();
 
   // Browse
-  h+='<div style="display:flex;gap:8px;margin-bottom:12px"><input class="set-input" style="flex:1" type="text" placeholder="Search songs..." value="'+escHTML(communitySearch)+'" oninput="act(\'communitySearch\',this.value)" aria-label="Search community songs"/>';
+  var safeCommunitySearch = _normalizeSongsInputValue(communitySearch);
+  h+='<div style="display:flex;gap:8px;margin-bottom:12px"><input class="set-input" style="flex:1" type="text" placeholder="Search songs..." value="'+escHTML(safeCommunitySearch)+'" oninput="act(\'communitySearch\',this.value)" aria-label="Search community songs"/>';
   h+='<button onclick="act(\'communitySort\',\''+(communitySort==="votes"?"newest":"votes")+'\')" style="padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;background:var(--input-bg);color:var(--text-muted)">'+(communitySort==="votes"?"&#11088; Top":"&#128337; New")+'</button></div>';
 
   if(S.communityLoading){
@@ -267,10 +280,13 @@ function communitySubmitForm(){
   var inst = getSongsPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
   var ss=S.submitSong;
+  var submitTitle = _firstSongsTextToken(ss.title);
+  var submitArtist = _firstSongsTextToken(ss.artist);
+  var submitterName = _firstSongsTextToken(ss.submittedBy);
   var h='<div class="card"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">Submit a Song</h3>';
-  h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(ss.title)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
-  h+='<input class="set-input mb12" type="text" placeholder="Artist" value="'+escHTML(ss.artist)+'" oninput="act(\'submitField\',\'artist:\'+this.value)" aria-label="Artist name"/>';
-  h+='<input class="set-input mb12" type="text" placeholder="Your name (optional)" value="'+escHTML(ss.submittedBy)+'" oninput="act(\'submitField\',\'submittedBy:\'+this.value)" aria-label="Your name"/>';
+  h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(submitTitle)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
+  h+='<input class="set-input mb12" type="text" placeholder="Artist" value="'+escHTML(submitArtist)+'" oninput="act(\'submitField\',\'artist:\'+this.value)" aria-label="Artist name"/>';
+  h+='<input class="set-input mb12" type="text" placeholder="Your name (optional)" value="'+escHTML(submitterName)+'" oninput="act(\'submitField\',\'submittedBy:\'+this.value)" aria-label="Your name"/>';
   h+='<div style="display:flex;gap:8px;margin-bottom:12px"><label style="font-size:12px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+ss.bpm+'" oninput="act(\'submitField\',\'bpm:\'+this.value)" aria-label="BPM" min="40" max="200"/></div>';
   h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Chords used:</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
@@ -309,10 +325,12 @@ function importSection(){
     h+='<div class="card mb16"><p style="color:#FF6B6B;font-size:13px;margin:0">'+escHTML(S.importError)+'</p></div>';
   }
   if(S.importedSong){
+    var importedFormTitle = _firstSongsTextToken(S.importedSong.title, S.importedSong.songTitle, S.importedSong.id);
+    var importedFormArtist = _firstSongsTextToken(S.importedSong.artist);
     h+='<div class="card mb16">';
     h+='<h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#9989; Parsed Successfully</h4>';
-    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(S.importedSong.title)+'" oninput="act(\'importTitle\',this.value)"/></div>';
-    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(S.importedSong.artist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
+    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(importedFormTitle)+'" oninput="act(\'importTitle\',this.value)"/></div>';
+    h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(importedFormArtist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
     h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+S.importedSong.bpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Chords found ('+S.importedSong.chords.length+'):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">';
