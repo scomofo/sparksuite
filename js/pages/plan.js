@@ -95,6 +95,18 @@ function prettyPlanToken(value){
   return String(value || "").replace(/_/g, " ");
 }
 
+// Override the legacy subtitle formatter with an ASCII-safe joiner.
+function formatPlanItemSubtitle(item){
+  item = item || {};
+  var meta = item.meta || {};
+  var parts = [];
+  if(meta.instrument) parts.push(prettyPlanToken(meta.instrument));
+  if(meta.exerciseFocus) parts.push(prettyPlanToken(meta.exerciseFocus));
+  else if(meta.skill) parts.push(prettyPlanToken(meta.skill));
+  if(getPlanDisplayType(item)) parts.push(prettyPlanToken(getPlanDisplayType(item)));
+  return parts.join(" - ") || String(getPlanDisplayType(item) || item.type || "practice");
+}
+
 function launchPracticePlanItem(itemId){
   var plan = null;
   if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){

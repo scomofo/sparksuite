@@ -200,6 +200,7 @@ test("plan page infers richer display types from generic core-backed items", fun
   var html = planPage();
   assert.ok(html.indexOf("performance song") >= 0);
   assert.ok(html.indexOf("finger") >= 0);
+  assert.strictEqual(html.indexOf("â€¢"), -1);
   assert.strictEqual(html.indexOf(">song<"), -1);
   assert.strictEqual(html.indexOf(">practice<"), -1);
 });
