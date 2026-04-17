@@ -184,7 +184,7 @@ function fingerExerciseCard(){
 
   // Exercise list by tier
   var tiers=[
-    {num:1,label:"Off-Instrument",icon:"&#128400;",note:"No guitar needed \u2014 do anywhere!"},
+    {num:1,label:"Off-Instrument",icon:"&#128400;",note:"No instrument needed \u2014 do anywhere!"},
     {num:2,label:"On-Instrument",icon:"&#127928;",note:"Single-string warm-ups"},
     {num:3,label:"Chord-Specific",icon:"&#9889;",note:"Transition speed builders"}
   ];
@@ -206,7 +206,7 @@ function fingerExerciseCard(){
       if(done>0)h+=' <span style="font-size:10px;color:#4ECDC4">&#9989; '+done+'x</span>';
       h+='</div>';
       h+='<div style="font-size:11px;color:var(--text-muted)">'+m+':'+(s<10?'0':'')+s+' &bull; '+escHTML(ex.frequency);
-      if(ex.offInstrument)h+=' &bull; <span style="color:#FFE66D">no guitar</span>';
+      if(ex.offInstrument)h+=' &bull; <span style="color:#FFE66D">no instrument</span>';
       h+='</div></div>';
       h+='<button onclick="act(\'startFingerEx\',\''+ex.id+'\')" style="padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Go</button>';
       h+='</div>';
