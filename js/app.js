@@ -179,8 +179,13 @@ function tickS(){
     });
     // Route through contract-based progress path (Phase 3 migration)
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var sessionActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"
+        ? resolveAppActiveInstrument(SparkInstruments.getActive())
+        : null;
       var sessionResult = SparkContracts.createSessionResult({
         mode: lastChordName ? "chord" : "quickStart",
+        instrumentId: sessionActiveInstrument ? (sessionActiveInstrument.id || sessionActiveInstrument.appId || null) : null,
+        instrumentType: sessionActiveInstrument ? (sessionActiveInstrument.instrument || null) : null,
         chordName: currentChord ? currentChord.name : null,
         duration: 120,
         accuracy: 0.75,
@@ -245,8 +250,11 @@ function tickD(){
     });
     // Route through contract-based progress path (Phase 6 migration)
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var drillProgressInstrument = resolveAppActiveInstrument(drillActiveInstrument);
       var drillSessionResult = SparkContracts.createSessionResult({
         mode: "drill",
+        instrumentId: drillProgressInstrument ? (drillProgressInstrument.id || drillProgressInstrument.appId || null) : null,
+        instrumentType: drillProgressInstrument ? (drillProgressInstrument.instrument || null) : null,
         chordName: drillChords && drillChords[0] ? drillChords[0].name : null,
         duration: 60,
         accuracy: 0.75,
@@ -298,8 +306,13 @@ function tickDy(){
     });
     // Route through contract-based progress path
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var dailyActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"
+        ? resolveAppActiveInstrument(SparkInstruments.getActive())
+        : null;
       var dailyResult = SparkContracts.createSessionResult({
         mode: "daily",
+        instrumentId: dailyActiveInstrument ? (dailyActiveInstrument.id || dailyActiveInstrument.appId || null) : null,
+        instrumentType: dailyActiveInstrument ? (dailyActiveInstrument.instrument || null) : null,
         duration: dailyChallenge && dailyChallenge.id === "hold" ? 30 : dailyChallenge && dailyChallenge.id === "marathon" ? 180 : 60,
         accuracy: 1.0,
         completed: true
@@ -406,8 +419,13 @@ function finishRhythm(){
   }
   // Route through contract-based progress path
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var rhythmActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"
+      ? resolveAppActiveInstrument(SparkInstruments.getActive())
+      : null;
     var rhythmResult = SparkContracts.createSessionResult({
       mode: "rhythm",
+      instrumentId: rhythmActiveInstrument ? (rhythmActiveInstrument.id || rhythmActiveInstrument.appId || null) : null,
+      instrumentType: rhythmActiveInstrument ? (rhythmActiveInstrument.instrument || null) : null,
       accuracy: total > 0 ? hits / total : 0,
       completed: true
     });
@@ -513,8 +531,13 @@ function finishRunner(){
   });
   // Route through contract-based progress path
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var runnerActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"
+      ? resolveAppActiveInstrument(SparkInstruments.getActive())
+      : null;
     var runnerSessionResult = SparkContracts.createSessionResult({
       mode: "runner",
+      instrumentId: runnerActiveInstrument ? (runnerActiveInstrument.id || runnerActiveInstrument.appId || null) : null,
+      instrumentType: runnerActiveInstrument ? (runnerActiveInstrument.instrument || null) : null,
       accuracy: runnerScore > 0 ? Math.min(1, runnerScore / 100) : 0,
       completed: true
     });

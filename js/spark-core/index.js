@@ -126,16 +126,25 @@
     completeSession: function(result) {
       result = result || {};
       var outcome = null;
+      var instrumentId = result.instrumentId || null;
+      var instrumentType = result.instrumentType || null;
 
       // Legacy path
       if (typeof SparkSession !== "undefined") {
         outcome = SparkSession.processResults(result);
       }
 
+      if ((!instrumentId || !instrumentType) && typeof SparkInstrumentAdapter !== "undefined") {
+        if (!instrumentId && typeof SparkInstrumentAdapter.getAppId === "function") instrumentId = SparkInstrumentAdapter.getAppId();
+        if (!instrumentType && typeof SparkInstrumentAdapter.getInstrumentType === "function") instrumentType = SparkInstrumentAdapter.getInstrumentType();
+      }
+
       // Contract path
       if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
         var sessionResult = SparkContracts.createSessionResult({
           mode: result.type || result.mode || "session",
+          instrumentId: instrumentId,
+          instrumentType: instrumentType,
           chordName: result.chordName || null,
           duration: result.duration || 0,
           accuracy: result.accuracy || 0,

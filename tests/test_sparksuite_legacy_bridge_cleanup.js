@@ -241,6 +241,14 @@ test("legacy session engine preserves thin active instrument app ids in session 
   assert.ok(sessionEngineSource.indexOf('instrumentId = activeInstrument.id || activeInstrument.appId || null;') >= 0);
 });
 
+test("legacy spark-core completeSession includes instrument ownership in contract results", function() {
+  var sparkCoreSource = loadJS("js/spark-core/index.js");
+  assert.ok(sparkCoreSource.indexOf('var instrumentId = result.instrumentId || null;') >= 0);
+  assert.ok(sparkCoreSource.indexOf('var instrumentType = result.instrumentType || null;') >= 0);
+  assert.ok(sparkCoreSource.indexOf('instrumentId: instrumentId,') >= 0);
+  assert.ok(sparkCoreSource.indexOf('instrumentType: instrumentType,') >= 0);
+});
+
 test("legacy session engine rehydrates thin active instruments before reading curriculum data", function() {
   SparkInstrumentAdapter = undefined;
   SparkContracts = {

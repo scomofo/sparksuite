@@ -178,8 +178,10 @@ test('performance highway theme persistence uses the shared state root instead o
 
 test('performance session completion preserves thin active instrument app ids in session results', function() {
   var performanceSessionSource = loadJS('js/performance/session.js');
-  assert.ok(performanceSessionSource.indexOf('var perfActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
+  assert.ok(performanceSessionSource.indexOf('function resolvePerformanceSessionActiveInstrument() {') >= 0);
+  assert.ok(performanceSessionSource.indexOf('var perfActiveInstrument = resolvePerformanceSessionActiveInstrument();') >= 0);
   assert.ok(performanceSessionSource.indexOf('instrumentId: perfActiveInstrument ? (perfActiveInstrument.id || perfActiveInstrument.appId || null) : null,') >= 0);
+  assert.ok(performanceSessionSource.indexOf('instrumentType: perfActiveInstrument ? (perfActiveInstrument.instrument || null) : null,') >= 0);
 });
 
 test('shared onboarding calibration action routes through the calibration screen handler', function() {

@@ -58,6 +58,25 @@ function performanceSessionPatch(patch) {
   }
 }
 
+function resolvePerformanceSessionActiveInstrument() {
+  var active = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"
+    ? SparkInstruments.getActive()
+    : null;
+  var activeId = active ? (active.id || active.appId || active.instrumentId || null) : null;
+  var all;
+  var i;
+  var inst;
+  if (active && (typeof active.getData === "function" || active.ui || active.pages || active.instrument)) return active;
+  if (activeId && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      inst = all[i] || {};
+      if (inst.id === activeId || inst.appId === activeId || inst.instrumentId === activeId) return inst;
+    }
+  }
+  return active;
+}
+
 function applyPerformanceComboDecay(combo) {
   combo = typeof combo === "number" ? combo : 0;
   var decay = typeof getPerformanceComboDecayAmount === "function"
@@ -880,7 +899,7 @@ function finishPerformance() {
   }
   // Route through contract-based progress path (Phase 6 migration)
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var perfActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
+    var perfActiveInstrument = resolvePerformanceSessionActiveInstrument();
     var perfSessionResult = SparkContracts.createSessionResult({
       mode: "song",
       instrumentId: perfActiveInstrument ? (perfActiveInstrument.id || perfActiveInstrument.appId || null) : null,

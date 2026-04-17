@@ -170,8 +170,10 @@ async function run() {
 
   await test("practice completion preserves thin active instrument app ids in session results", function() {
     var practiceEngineSource = loadJS("js/practice/engine.js");
-    assert.ok(practiceEngineSource.indexOf('var practiceActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
+    assert.ok(practiceEngineSource.indexOf('function resolvePracticeEngineActiveInstrument(){') >= 0);
+    assert.ok(practiceEngineSource.indexOf('var practiceActiveInstrument = resolvePracticeEngineActiveInstrument();') >= 0);
     assert.ok(practiceEngineSource.indexOf('instrumentId: practiceActiveInstrument ? (practiceActiveInstrument.id || practiceActiveInstrument.appId || null) : null,') >= 0);
+    assert.ok(practiceEngineSource.indexOf('instrumentType: practiceActiveInstrument ? (practiceActiveInstrument.instrument || null) : null,') >= 0);
   });
 
   if (failed) {

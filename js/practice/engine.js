@@ -26,10 +26,27 @@
     return value;
   }
 
-  function getActivePracticeInstrument(){
+  function resolvePracticeEngineActiveInstrument(){
     var active = typeof SparkInstruments!=="undefined" && SparkInstruments && typeof SparkInstruments.getActive==="function"
       ? SparkInstruments.getActive()
       : null;
+    var activeId = active ? (active.id || active.appId || active.instrumentId || null) : null;
+    var all;
+    var i;
+    var inst;
+    if(active && active.instrument) return active;
+    if(activeId && typeof SparkInstruments!=="undefined" && SparkInstruments && typeof SparkInstruments.getAll==="function"){
+      all = SparkInstruments.getAll() || [];
+      for(i=0;i<all.length;i++){
+        inst = all[i] || {};
+        if(inst.id===activeId || inst.appId===activeId || inst.instrumentId===activeId) return inst;
+      }
+    }
+    return active;
+  }
+
+  function getActivePracticeInstrument(){
+    var active = resolvePracticeEngineActiveInstrument();
     return {
       instrumentId: active ? (active.id || active.appId || null) : practiceEngineRead("activeInstrument", null),
       instrumentType: active ? (active.instrument || null) : null
@@ -145,7 +162,7 @@
       });
       // Route through contract-based progress path
       if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-        var practiceActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
+        var practiceActiveInstrument = resolvePracticeEngineActiveInstrument();
         var practiceResult = SparkContracts.createSessionResult({
           mode: "practice",
           instrumentId: practiceActiveInstrument ? (practiceActiveInstrument.id || practiceActiveInstrument.appId || null) : null,

@@ -383,6 +383,17 @@ test('guided completion preserves thin active instrument app ids in session resu
   assert.ok(appSource.indexOf('instrumentType: guidedActiveInstrument ? (guidedActiveInstrument.instrument || null) : null,') >= 0);
 });
 
+test('shared contract-based completion flows preserve active instrument ownership', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('var sessionActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"') >= 0);
+  assert.ok(appSource.indexOf('instrumentId: sessionActiveInstrument ? (sessionActiveInstrument.id || sessionActiveInstrument.appId || null) : null,') >= 0);
+  assert.ok(appSource.indexOf('instrumentType: sessionActiveInstrument ? (sessionActiveInstrument.instrument || null) : null,') >= 0);
+  assert.ok(appSource.indexOf('var drillProgressInstrument = resolveAppActiveInstrument(drillActiveInstrument);') >= 0);
+  assert.ok(appSource.indexOf('var dailyActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"') >= 0);
+  assert.ok(appSource.indexOf('var rhythmActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"') >= 0);
+  assert.ok(appSource.indexOf('var runnerActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"') >= 0);
+});
+
 test('shared app routes chart and exercise editor actions through the editor engine', function() {
   var appSource = loadJS('js/app.js');
   var dataSource = loadJS('js/data.js');
