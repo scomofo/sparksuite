@@ -579,6 +579,30 @@ test('renderPerformanceHighway uses archive-backed backgrounds for guitar and pi
   assert.ok(pianoHtml.indexOf('sparkgame/assets/highway/piano_highway_v3.png') >= 0);
 });
 
+test('performance highway resolves registered app ids before choosing skins and assets', function() {
+  var originalInstruments = global.SparkInstruments;
+  var originalSparkHighway = global.SparkHighway;
+  global.SparkInstruments = {
+    getActive: function() {
+      return { id: 'pianospark' };
+    },
+    getAll: function() {
+      return [{ id: 'pianospark', appId: 'pianospark', instrument: 'piano' }];
+    }
+  };
+  global.SparkHighway = global.SparkHighway || { PIANO_SKIN: 'piano-skin', GUITAR_SKIN: 'guitar-skin' };
+
+  assert.strictEqual(getPerformanceHighwayInstrument(null), 'piano');
+  assert.strictEqual(getPerformanceHighwaySkin(getPerformanceHighwayInstrument(null)), 'piano-skin');
+
+  var html = renderPerformanceHighway({ instrument: 'pianospark', events: [] }, 0);
+  assert.ok(html.indexOf('data-highway-instrument="piano"') >= 0);
+  assert.ok(html.indexOf('sparkgame/assets/highway/bg_recital.png') >= 0);
+
+  global.SparkInstruments = originalInstruments;
+  global.SparkHighway = originalSparkHighway;
+});
+
 test('renderPerformanceHighway honors theme manifest overrides', function() {
   var originalManifest = global.PERFORMANCE_HIGHWAY_THEME_MANIFEST;
   global.PERFORMANCE_HIGHWAY_THEME_MANIFEST = {

@@ -103,15 +103,37 @@ function setPerformanceHighwayThemeSelection(themeId, instrument) {
 
 installSparkHighwayLanePatch();
 
+function resolvePerformanceHighwayInstrument(candidate) {
+  var normalized = typeof candidate === "string" && candidate ? candidate : null;
+  var all;
+  var i;
+  var inst;
+  if (!normalized) return null;
+  if (normalized === "guitar" || normalized === "piano" || normalized === "ukulele" || normalized === "bass") {
+    return normalized;
+  }
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      inst = all[i] || {};
+      if (inst.id === normalized || inst.appId === normalized) {
+        return inst.instrument || normalized;
+      }
+    }
+  }
+  return normalized;
+}
+
 function getPerformanceHighwayInstrument(chart) {
   if (chart) {
-    if (typeof chart.instrument === "string" && chart.instrument) return chart.instrument;
-    if (chart.metadata && typeof chart.metadata.instrument === "string" && chart.metadata.instrument) return chart.metadata.instrument;
+    if (typeof chart.instrument === "string" && chart.instrument) return resolvePerformanceHighwayInstrument(chart.instrument);
+    if (chart.metadata && typeof chart.metadata.instrument === "string" && chart.metadata.instrument) return resolvePerformanceHighwayInstrument(chart.metadata.instrument);
   }
   if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
     var active = SparkInstruments.getActive();
-    if (active && typeof active.instrument === "string" && active.instrument) return active.instrument;
-    if (active && typeof active.id === "string" && active.id) return active.id;
+    if (active && typeof active.instrument === "string" && active.instrument) return resolvePerformanceHighwayInstrument(active.instrument);
+    if (active && typeof active.id === "string" && active.id) return resolvePerformanceHighwayInstrument(active.id);
+    if (active && typeof active.appId === "string" && active.appId) return resolvePerformanceHighwayInstrument(active.appId);
   }
   return "guitar";
 }
