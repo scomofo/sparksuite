@@ -76,6 +76,23 @@ function resolveAppInstrumentType(activeInstrument){
   return candidate;
 }
 
+function resolveAppInstrumentName(activeInstrument){
+  var candidate=activeInstrument&&activeInstrument.name?activeInstrument.name:null;
+  var lookupId=activeInstrument&&(activeInstrument.id||activeInstrument.appId)?(activeInstrument.id||activeInstrument.appId):null;
+  var all;
+  var i;
+  var inst;
+  if(candidate) return candidate;
+  if(lookupId&&typeof SparkInstruments!=="undefined"&&SparkInstruments&&typeof SparkInstruments.getAll==="function"){
+    all=SparkInstruments.getAll()||[];
+    for(i=0;i<all.length;i++){
+      inst=all[i]||{};
+      if(inst.id===lookupId||inst.appId===lookupId) return inst.name||lookupId;
+    }
+  }
+  return lookupId||"SparkSuite";
+}
+
 function appApplyLegacyReward(reward, fallback){
   if(window.sparkCore&&typeof window.sparkCore.applyLegacyReward==="function"){
     return window.sparkCore.applyLegacyReward(reward||{});
@@ -4931,7 +4948,7 @@ function _renderInner(){
   var logoText = document.querySelector(".logo-text");
   if (logoText) {
     var _inst = SparkInstruments.getActive();
-    logoText.textContent = _inst ? _inst.name + "Spark" : "SparkSuite";
+    logoText.textContent = _inst ? resolveAppInstrumentName(_inst) + "Spark" : "SparkSuite";
   }
   // Apply instrument theme (v2 neon system)
   if (typeof SparkTheme !== "undefined" && _inst) {

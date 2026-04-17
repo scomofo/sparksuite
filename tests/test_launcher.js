@@ -311,6 +311,12 @@ test('app shell resolves thin active instrument ids before applying the theme', 
   assert.ok(appSource.indexOf('SparkTheme.apply(resolveAppInstrumentType(_inst));') >= 0);
 });
 
+test('app shell resolves thin active instrument ids before rendering the logo text', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('function resolveAppInstrumentName(activeInstrument){') >= 0);
+  assert.ok(appSource.indexOf('logoText.textContent = _inst ? resolveAppInstrumentName(_inst) + "Spark" : "SparkSuite";') >= 0);
+});
+
 test('shared app routes chart and exercise editor actions through the editor engine', function() {
   var appSource = loadJS('js/app.js');
   var dataSource = loadJS('js/data.js');
