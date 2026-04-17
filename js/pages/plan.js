@@ -7,10 +7,13 @@ function planPage(){
     ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
   if(!plan) plan = S.practicePlan;
-  var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
+  var hasPlanItems = !!(plan && Array.isArray(plan.items) && plan.items.length);
+  var planCompleted = (coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted)
     ? true
     : !!S.practicePlanComplete;
-  var hasPlanItems = !!(plan && Array.isArray(plan.items) && plan.items.length);
+  if(!planCompleted && hasPlanItems){
+    planCompleted = plan.items.every(function(item){ return !!(item && item.completed); });
+  }
   var h = '';
 
   h += '<div class="card mb16">';

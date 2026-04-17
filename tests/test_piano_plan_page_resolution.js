@@ -316,6 +316,28 @@ test("pianoPlanPage does not render completed items as clickable go buttons", fu
   assert.ok(html.indexOf(">Done<") >= 0);
 });
 
+test("pianoPlanPage derives plan completion from completed items when the stale completion flag is false", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "done_1", type: "practice", label: "Completed Warmup", durationSec: 120, completed: true },
+        { id: "done_2", type: "practice", label: "Completed Rhythm", durationSec: 120, completed: true }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("Plan completed!") >= 0);
+  assert.strictEqual(html.indexOf("Mark Plan Complete"), -1);
+});
+
 test("pianoPlanPage derives readable fallback labels for sparse plan items", function() {
   global.S = {
     practicePlanComplete: false,
