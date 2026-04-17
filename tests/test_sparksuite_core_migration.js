@@ -1686,6 +1686,58 @@ test("sv2 home dashboard merges missing player session counts from fallback stat
   assert.ok(homeHtml.indexOf("undefined") === -1);
 });
 
+test("sv2 home dashboard resolves thin active instrument ids before requesting a theme", function() {
+  var requestedThemeInstrument = null;
+  window.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        player: { xp: 12, level: 1, streak: 0, sessions: 1 },
+        progress: { chordProgress: {} }
+      };
+    }
+  };
+  global.document = { body: { classList: { contains: function() { return true; } } } };
+  global.SparkTheme = {
+    get: function(instrument) { requestedThemeInstrument = instrument; return {}; },
+    getColor: function() { return "#4ECDC4"; }
+  };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        id: "pianospark",
+        icon: "P",
+        name: "Piano",
+        tabs: ["practice"],
+        getData: function() {
+          return {
+            LN: { 1: "Stage 1" },
+            ALL_CHORDS: [],
+            LC: { 1: "#111" },
+            CHORDS: { 1: [] }
+          };
+        }
+      };
+    },
+    getAll: function() {
+      return [{ id: "pianospark", instrument: "piano", available: true }];
+    }
+  };
+  global.escHTML = function(value) { return String(value); };
+  S.level = 1;
+  S.playerLevel = 1;
+  S.selectedLevel = 1;
+  S.sessions = 1;
+  S.todayPracticeSeconds = 0;
+  S.dailyGoalMinutes = 10;
+  S.goalReachedToday = false;
+  S.goalStreak = 0;
+
+  eval(loadJS("js/pages/practice.js"));
+
+  sv2HomeDashboard();
+  assert.strictEqual(requestedThemeInstrument, "piano");
+});
+
 test("practice home level labels fall back to generic names when LN entries are missing", function() {
   eval(loadJS("js/pages/practice.js"));
   assert.strictEqual(getPracticeLevelName({ 1: "First Groove" }, 7), "Level 7");

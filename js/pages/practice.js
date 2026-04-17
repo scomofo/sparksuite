@@ -130,11 +130,28 @@ function getPracticeLevelName(levelNames, level) {
   return levelNames && levelNames[level] ? levelNames[level] : ("Level " + level);
 }
 
+function resolvePracticeDashboardInstrumentType(inst) {
+  var candidate = inst && inst.instrument ? inst.instrument : (inst && (inst.id || inst.appId) ? (inst.id || inst.appId) : null);
+  var all;
+  var i;
+  var entry;
+  if (!candidate) return "guitar";
+  if (candidate === "guitar" || candidate === "piano" || candidate === "ukulele" || candidate === "bass") return candidate;
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry.instrument || candidate;
+    }
+  }
+  return candidate;
+}
+
 function sv2HomeDashboard() {
   var inst = SparkInstruments.getActive();
   if (!inst) return "";
   var D = inst.getData ? inst.getData() : {};
-  var instrumentType = inst.instrument || "guitar";
+  var instrumentType = resolvePracticeDashboardInstrumentType(inst);
   var theme = typeof SparkTheme !== "undefined" ? SparkTheme.get(instrumentType) : null;
   if (!theme) return "";
 
