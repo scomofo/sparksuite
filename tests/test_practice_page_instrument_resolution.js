@@ -144,6 +144,30 @@ test("practicePage renders human plan labels from a core-backed daily practice p
   assert.strictEqual(html.indexOf(">practice<"), -1);
 });
 
+test("practicePage does not generate a plan during render and shows an empty state when none exists", function() {
+  var generateCalls = 0;
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.generateDailyPracticePlan = function() {
+    generateCalls++;
+    return {
+      items: [{ id: "generated_1", label: "Generated Plan Row" }]
+    };
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.S.practicePlan = null;
+
+  var html = practicePage();
+  assert.strictEqual(generateCalls, 0);
+  assert.ok(html.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
+});
+
 test("plan page infers richer display types from generic core-backed items", function() {
   global.SparkPracticeBridge = {
     toLegacyPlan: function(plan) { return plan._legacyPlan; }
