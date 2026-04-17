@@ -1,5 +1,27 @@
 (function(){
 
+  function getActiveCurriculumInstrument() {
+    var inst;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    inst = SparkInstruments.getActive();
+    if (!inst) return null;
+    if (typeof inst.getCurriculumMap === "function") return inst;
+    candidate = inst.id || inst.appId || inst.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return inst;
+  }
+
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
     var curriculum = getCurriculumItem("curriculums", curriculumId);
     if(!curriculum) return null;
@@ -134,7 +156,7 @@
       // Try to find next lesson from active instrument's curriculum map
       // currMap is an array of lesson/level objects (not a curriculum root ID),
       // so iterate directly for the first incomplete lesson.
-      var inst = typeof SparkInstruments !== "undefined" ? SparkInstruments.getActive() : null;
+      var inst = getActiveCurriculumInstrument();
       if (inst) {
         var currMap = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
         for (var ci = 0; ci < currMap.length; ci++) {
