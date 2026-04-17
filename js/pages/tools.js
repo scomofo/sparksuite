@@ -39,6 +39,19 @@ function getToolsInstrumentName(inst) {
   );
 }
 
+function getToolsInstrumentType(inst) {
+  return normalizeToolsTextToken(
+    inst && (inst.instrumentType || inst.instrument || inst.type)
+  ).toLowerCase();
+}
+
+function getToolsInstrumentIcon(inst) {
+  var type = getToolsInstrumentType(inst);
+  if (type === "piano") return "&#127929;";
+  if (type === "drums") return "&#129345;";
+  return "&#127930;";
+}
+
 function getToolsTuningLabel(strings) {
   var notes = [];
   var i;
@@ -284,12 +297,15 @@ function crossAppProgressCard(){
     var raw=localStorage.getItem("pianospark_jeeves_export");
     if(!raw)return '';
     var ps=JSON.parse(raw);
+    var inst = getToolsPageInstrument();
+    var activeInstrumentName = getToolsInstrumentName(inst) || "Current";
+    var activeInstrumentIcon = getToolsInstrumentIcon(inst);
     h+='<div class="card mb16" style="border:1px solid #45B7D1"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:#45B7D1">&#127929; My Music Journey</h3>';
     h+='<div style="display:flex;gap:12px;margin-bottom:12px">';
-    // Guitar stats
+    // Active instrument stats
     h+='<div style="flex:1;background:var(--input-bg);border-radius:12px;padding:12px;text-align:center">';
-    h+='<div style="font-size:20px;margin-bottom:4px">&#127930;</div>';
-    h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Guitar</div>';
+    h+='<div style="font-size:20px;margin-bottom:4px">' + activeInstrumentIcon + '</div>';
+    h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">' + escHTML(activeInstrumentName) + '</div>';
     h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+S.xp+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
     h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+S.level+'</div>';
     h+='</div>';
