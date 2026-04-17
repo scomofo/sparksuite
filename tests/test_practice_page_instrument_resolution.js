@@ -11,20 +11,27 @@ function resetEnvironment() {
   global.document = { body: { classList: { contains: function(cls) { return cls === "sv2"; } } } };
   global.S = {
     level: 1,
+    selectedLevel: 1,
     xp: 12,
     streak: 3,
+    sessions: 2,
     chordProgress: { C: 100 },
     todayPracticeSeconds: 300,
     dailyGoalMinutes: 10,
     goalReachedToday: false,
     goalStreak: 1,
-    tab: "practice"
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null
   };
   global.escHTML = function(value) { return String(value); };
   global.SparkTheme = {
     get: function() { return { ok: true }; },
     getColor: function(instrument) { return instrument === "piano" ? "#3366ff" : "#888"; }
   };
+  global.BADGES = [];
   global.ringHTML = function() { return "<div>ring</div>"; };
   global.act = function() {};
   global.practiceTab = function() { return "<div>Practice</div>"; };
@@ -43,6 +50,8 @@ function resetEnvironment() {
   global.guideTab = function() { return ""; };
   global.gamesTab = function() { return ""; };
   global.toolsTab = function() { return ""; };
+  global.strumTrackCard = function() { return ""; };
+  global.fingerExerciseCard = function() { return ""; };
 
   var pianoModule = {
     id: "pianospark",
@@ -56,7 +65,12 @@ function resetEnvironment() {
     },
     getData: function() {
       return {
+        LC: { 1: "#3366ff" },
         LN: { 1: "First Keys" },
+        CURRICULUM: [{ num: 1, title: "First Keys", desc: "Foundations", icon: "\uD83C\uDFB9", tip: "" }],
+        CHORDS: { 1: [] },
+        SESSIONS: [],
+        BADGES: [],
         ALL_CHORDS: [{ name: "C" }]
       };
     }
@@ -128,6 +142,46 @@ test("practicePage renders human plan labels from a core-backed daily practice p
   assert.ok(html.indexOf("Quick warmup") >= 0);
   assert.strictEqual(html.indexOf(">song<"), -1);
   assert.strictEqual(html.indexOf(">practice<"), -1);
+});
+
+test("practiceTab reads the active core-backed plan without calling ensurePracticePlan during render", function() {
+  var ensureCalls = 0;
+  global.ensurePracticePlan = function() {
+    ensureCalls++;
+    return {
+      focus: "Stale plan",
+      completedItems: 0,
+      totalItems: 1,
+      items: [{ id: "stale_1", label: "Old Stale Song", desc: "stale", completed: false }]
+    };
+  };
+  global.SparkPracticeBridge = {
+    toLegacyPlan: function(plan) { return plan._legacyPlan; }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            focus: "Song mastery",
+            completedItems: 1,
+            totalItems: 2,
+            items: [
+              { id: "song_1", type: "song", label: "Replay Island Strum", desc: "Tune recall", completed: false },
+              { id: "practice_1", type: "practice", label: "Quick warmup", desc: "Loosen up", completed: true }
+            ]
+          }
+        }
+      };
+    }
+  };
+
+  var html = practiceTab();
+  assert.strictEqual(ensureCalls, 0);
+  assert.ok(html.indexOf("Replay Island Strum") >= 0);
+  assert.ok(html.indexOf("Quick warmup") >= 0);
+  assert.strictEqual(html.indexOf("Old Stale Song"), -1);
 });
 
 test("sv2HomeDashboard uses instrumentType when the rehydrated module does not expose instrument", function() {
