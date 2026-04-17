@@ -93,6 +93,12 @@ function resolveAppInstrumentName(activeInstrument){
   return lookupId||"SparkSuite";
 }
 
+function resolveAppActiveInstrumentId(activeInstrument){
+  var lookupId=activeInstrument&&(activeInstrument.id||activeInstrument.appId)?(activeInstrument.id||activeInstrument.appId):null;
+  var persistedId=normalizeActiveInstrumentId(appRead("activeInstrument", null));
+  return lookupId||persistedId||"chordspark";
+}
+
 function appApplyLegacyReward(reward, fallback){
   if(window.sparkCore&&typeof window.sparkCore.applyLegacyReward==="function"){
     return window.sparkCore.applyLegacyReward(reward||{});
@@ -197,6 +203,10 @@ function tickD(){
   } else if(screen===SCR.DRILL&&drillTimer<=0){
     clearTimeout(T.drill);snd("complete");
     var detail=drillChords.map(function(c){return c.name;}).join(" / ");
+    var drillActiveInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var drillAppId = resolveAppActiveInstrumentId(drillActiveInstrument);
     if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function"){
       window.sparkCore.completeLegacyPracticeDrill({
         durationSec: 60,
@@ -208,12 +218,12 @@ function tickD(){
       toastAmount:20,
       incrementFields:{drillCount:1},
       history:{type:"drill",detail:detail,xp:20},
-      emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
+      emit:{type:"practice_session_completed",payload:{ appId: drillAppId, type: "drill", xp: 20, detail: detail }},
       checkBadges:true
     },function(){
       appIncrement("drillCount",1);appApplyLegacyReward({xpDelta:20,toastAmount:20},function(){appIncrement("xp",20);appWrite("xpToast",{amount:20,time:Date.now()});});
       logHistory("drill",detail,20);
-      _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
+      _sparkEmit("practice_session_completed", { appId: drillAppId, type: "drill", xp: 20, detail: detail });
       checkBadges();saveState();
     });
     // Route through contract-based progress path (Phase 6 migration)
@@ -2391,6 +2401,10 @@ window.act=function(a,v){
     var completeSongRuntimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
       ? (window.sparkCore.getRuntimeState() || {})
       : {};
+    var completeSongActiveInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var completeSongAppId = resolveAppActiveInstrumentId(completeSongActiveInstrument);
     appApplyLegacyActivityRuntime({
       setFields:{songPlaying:false},
       clearIntervals:["song"]
@@ -2402,12 +2416,12 @@ window.act=function(a,v){
       xpDelta:40,
       incrementFields:{songsPlayed:1},
       history:{type:"song",detail:completeSongData?completeSongData.title:"Song",xp:40},
-      emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 }},
+      emit:{type:"lesson_completed",payload:{ appId: completeSongAppId, lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 }},
       checkBadges:true
     },function(){
       appIncrement("songsPlayed",1);appApplyLegacyReward({xpDelta:40},function(){appIncrement("xp",40);});
       logHistory("song",completeSongData?completeSongData.title:"Song",40);
-      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 });
+      _sparkEmit("lesson_completed", { appId: completeSongAppId, lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 });
       checkBadges();saveState();
     });
     completeSongSessionRequest({
