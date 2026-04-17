@@ -451,7 +451,7 @@ function practicePage(){
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
     h += '<div class="row">';
-    h += '<span>'+escHTML(item.type)+'</span>';
+    h += '<span>'+escHTML(item.label || item.type || "practice")+'</span>';
     h += '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
     h += '</div>';
   }
