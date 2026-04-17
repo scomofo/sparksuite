@@ -405,7 +405,7 @@
           // Cache generated chart to localStorage if we have a track ID
           if (self.chartService && params.trackId && chart) {
             var diff = difficulty || params.difficulty || "easy";
-            var inst = params.instrument || "guitar";
+            var inst = resolvePlayAlongInstrumentType(self, params);
             if (typeof self.chartService.cacheChart === "function") {
               self.chartService.cacheChart(params.trackId, chart, diff, inst);
             }
@@ -942,7 +942,16 @@
     return SparkAudioLoader.fromFile(audioFile).then(function (audioData) {
       return self.audioEngine.load(audioData);
     }).then(function () {
-      return self.audioChartGenerator.generate(self.audioEngine.buffer, { trackId: trackId || audioFile.name, difficulty: difficulty, instrument: instrument || "guitar", title: audioFile.name || "Local Track" });
+      var resolvedInstrument = resolvePlayAlongInstrumentType(self, {
+        instrument: instrument,
+        instrumentType: instrument
+      });
+      return self.audioChartGenerator.generate(self.audioEngine.buffer, {
+        trackId: trackId || audioFile.name,
+        difficulty: difficulty,
+        instrument: resolvedInstrument,
+        title: audioFile.name || "Local Track"
+      });
     });
   };
 

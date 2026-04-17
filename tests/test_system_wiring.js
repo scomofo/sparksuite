@@ -250,6 +250,42 @@ test("startPlayAlongSession falls back to the active instrument context for char
   });
 });
 
+test("startPlayAlongSession caches generated charts under normalized instrument types", function() {
+  var core = new SparkCoreRuntime();
+  var cachedWith = null;
+  core.learnerModel = { load: function() { return { baseline: true }; } };
+  core.policyEngine = { decide: function() { return { action: "maintain", difficulty: "hard" }; } };
+  core.performanceTracker = { reset: function() {} };
+  core.chordPredictor = { reset: function() {} };
+  core.fingeringOptimizer = { reset: function() {} };
+  core.chartService = {
+    generate: function() {
+      return Promise.resolve({ timeline: [], sections: [] });
+    },
+    cacheChart: function(trackId, chart, diff, instrument) {
+      cachedWith = { trackId: trackId, difficulty: diff, instrument: instrument };
+    }
+  };
+  core._startAudioForSession = function() {};
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  return core.startPlayAlongSession({
+    trackId: "track_cache",
+    difficulty: "easy",
+    instrument: "pianospark"
+  }).then(function() {
+    assert.deepStrictEqual(cachedWith, {
+      trackId: "track_cache",
+      difficulty: "hard",
+      instrument: "piano"
+    });
+  });
+});
+
 test("startPlayAlongSession carries title, artist, track uri, and offset into the active chart", function() {
   var core = new SparkCoreRuntime();
   core.updateRuntimeState = function(patch) { this._lastRuntimePatch = patch; };
@@ -283,6 +319,39 @@ test("startPlayAlongSession carries title, artist, track uri, and offset into th
     assert.strictEqual(core._activeChart.songChart.song.artist, "New Artist");
     assert.strictEqual(core._activeChart.audio.offset_ms, 33);
     assert.strictEqual(core._lastRuntimePatch.playAlongTransportMode, "spotify");
+  });
+});
+
+test("_generateChartFromAudio normalizes app-id instruments before chart generation", function() {
+  var core = new SparkCoreRuntime();
+  var generatedWith = null;
+  core.audioEngine = {
+    buffer: { duration: 1 },
+    load: function() { return Promise.resolve(); }
+  };
+  core.audioChartGenerator = {
+    generate: function(buffer, options) {
+      generatedWith = { buffer: buffer, options: options };
+      return Promise.resolve({ ok: true });
+    }
+  };
+  global.SparkAudioLoader = {
+    fromFile: function() {
+      return Promise.resolve(new Uint8Array([1, 2, 3]));
+    }
+  };
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  return core._generateChartFromAudio({ name: "demo.mp3" }, "audio_track", "easy", "pianospark").then(function() {
+    assert.ok(generatedWith);
+    assert.strictEqual(generatedWith.options.trackId, "audio_track");
+    assert.strictEqual(generatedWith.options.difficulty, "easy");
+    assert.strictEqual(generatedWith.options.instrument, "piano");
+    assert.strictEqual(generatedWith.options.title, "demo.mp3");
   });
 });
 
