@@ -50,8 +50,23 @@
   }
 
   function getCareerActiveInstrument(){
+    var activeInstrument;
+    var candidate;
+    var all;
+    var i;
+    var entry;
     if(typeof SparkInstruments==="undefined" || !SparkInstruments || typeof SparkInstruments.getActive!=="function") return null;
-    return SparkInstruments.getActive();
+    activeInstrument = SparkInstruments.getActive();
+    if(!activeInstrument) return null;
+    if(typeof activeInstrument.getData === "function") return activeInstrument;
+    candidate = activeInstrument.id || activeInstrument.appId || null;
+    if(!candidate || typeof SparkInstruments.getAll!=="function") return activeInstrument;
+    all = SparkInstruments.getAll() || [];
+    for(i=0;i<all.length;i++){
+      entry = all[i] || {};
+      if(entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return activeInstrument;
   }
 
   function resetCareerRegistry(sourceInstrumentId){

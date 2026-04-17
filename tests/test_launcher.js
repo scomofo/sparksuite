@@ -630,6 +630,47 @@ test('career content bootstraps from the active instrument song library', functi
   assert.strictEqual(global.S.activeCareerId, 'career_career_test');
 });
 
+test('career content bootstraps from appId-only active instruments', function() {
+  global.S.activeCareerId = 'career_main';
+  global.S.careerProgress = { unlockedTiers: {}, unlockedStages: {}, unlockedSongs: {}, songRatings: {}, stageCompletion: {}, tierCompletion: {} };
+  SparkInstruments.register({
+    id: 'career_test_piano',
+    appId: 'career_test_piano',
+    instrument: 'piano',
+    name: 'Career Test Piano',
+    icon: 'P',
+    skin: SparkHighway.PIANO_SKIN,
+    available: true,
+    getData: function() {
+      return {
+        SONGS: [
+          { title: 'Moon Etude', level: 1, artist: 'M' }
+        ]
+      };
+    },
+    pages: {},
+    tabs: [],
+    stemMutePreset: {},
+    init: function() {}
+  });
+  SparkInstruments.activate('career_test_piano');
+  var registeredCareerInstrument = SparkInstruments.getActive();
+  SparkInstruments.getActive = function() {
+    return { appId: 'career_test_piano' };
+  };
+  eval(loadJS('js/career/registry.js'));
+  eval(loadJS('js/career/unlocks.js'));
+  eval(loadJS('js/career/ui.js'));
+
+  var html = careerPage();
+
+  SparkInstruments.getActive = function() {
+    return registeredCareerInstrument;
+  };
+  assert.ok(html.indexOf('Moon Etude') >= 0);
+  assert.strictEqual(global.S.activeCareerId, 'career_career_test_piano');
+});
+
 test('career registry resolves state through the shared root helper instead of window-only fallbacks', function() {
   var registrySource = loadJS('js/career/registry.js');
   assert.ok(registrySource.indexOf('function getCareerRegistryStateRoot(){') >= 0);
