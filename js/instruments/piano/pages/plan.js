@@ -27,7 +27,9 @@ function pianoPlanPage(){
   }
   function getPlanItemId(item){
     var id = item && typeof item.id === "string" ? item.id.trim() : null;
-    return id || null;
+    var lower = id ? id.toLowerCase() : "";
+    if(!id || lower === "undefined" || lower === "null" || lower === "nan") return null;
+    return id;
   }
   function isRenderablePlanItem(item){
     var label = prettyPianoPlanToken(item ? item.label : null);

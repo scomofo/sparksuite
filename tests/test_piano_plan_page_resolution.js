@@ -508,6 +508,38 @@ test("piano plan and practice sections do not render action buttons for whitespa
   assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
 });
 
+test("piano plan and practice sections do not render action buttons for sentinel string item ids", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "undefined", type: "practice", label: "Ghost Item", completed: false, meta: { exerciseId: "ghost_1" } },
+        { id: "practice_1", type: "practice", label: "Real Warmup", completed: false }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.SparkPracticeBridge = undefined;
+  global.getAverageMastery = function() { return 0.5; };
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.strictEqual(planHtml.indexOf('data-item-id="undefined"'), -1);
+  assert.strictEqual(practiceHtml.indexOf('data-item-id="undefined"'), -1);
+  assert.ok(planHtml.indexOf('data-item-id="practice_1"') >= 0);
+  assert.ok(practiceHtml.indexOf('data-item-id="practice_1"') >= 0);
+  assert.ok(planHtml.indexOf(">Unavailable<") >= 0);
+  assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
+});
+
 test("piano plan and practice sections do not render action buttons for numeric item ids", function() {
   global.S = {
     practicePlanComplete: false,
