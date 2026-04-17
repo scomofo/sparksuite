@@ -28,6 +28,10 @@ function pianoFirstToolsHistoryTextToken() {
   return "";
 }
 
+function pianoToolsFiniteNumber(value) {
+  return typeof value === "number" && isFinite(value) ? value : null;
+}
+
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -254,14 +258,20 @@ function clipsTab() {
     clips.slice().reverse().forEach(function(clip, ri) {
       var idx = clips.length - 1 - ri;
       var d = new Date(clip.ts);
-      var time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      var time = isNaN(d.getTime()) ? "Unknown time" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      var duration = pianoToolsFiniteNumber(clip.duration);
+      var clipUrl = pianoFirstToolsHistoryTextToken(clip.url);
       html += '<div class="clip-row">';
       html += '<div class="clip-info">';
       html += '<span class="clip-time">' + time + '</span>';
-      html += '<span class="clip-dur text-muted">' + clip.duration + 's</span>';
+      html += '<span class="clip-dur text-muted">' + (duration != null ? duration + 's' : '-') + '</span>';
       html += '</div>';
       html += '<div class="clip-actions">';
-      html += '<button class="btn btn-sm btn-secondary" onclick="act(\'play_clip\',\'' + clip.url + '\')">\u25B6 Play</button>';
+      if (clipUrl) {
+        html += '<button class="btn btn-sm btn-secondary" onclick="act(\'play_clip\',\'' + clipUrl + '\')">\u25B6 Play</button>';
+      } else {
+        html += '<button class="btn btn-sm btn-secondary" disabled>Unavailable</button>';
+      }
       html += '<button class="btn btn-sm btn-danger" onclick="act(\'delete_clip\',\'' + idx + '\')">Delete</button>';
       html += '</div>';
       html += '</div>';
