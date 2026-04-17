@@ -113,6 +113,40 @@ console.log("=== System Wiring Runtime Tests ===");
     });
   });
 
+  await test("startPlayAlongSession calls chartService.generate with an options object and normalized instrument", function () {
+    resetCoreEnv();
+
+    var captured = null;
+    var core = new SparkCore();
+    core.learnerModel = {
+      load: function () { return { learner: true }; }
+    };
+    core.policyEngine = {
+      decide: function () { return { difficulty: "hard", action: "play" }; }
+    };
+    core.performanceTracker = { reset: function () {} };
+    core._startAudioForSession = function () {};
+    core.chartService = {
+      generate: function (options) {
+        captured = options;
+        return Promise.resolve({ id: "chart_1" });
+      }
+    };
+
+    return core.startPlayAlongSession({
+      userId: "user_1",
+      trackId: "track_99",
+      instrument: "pianospark"
+    }).then(function (result) {
+      assert.ok(result.chart);
+      assert.deepStrictEqual(captured, {
+        trackId: "track_99",
+        difficulty: "hard",
+        instrument: "piano"
+      });
+    });
+  });
+
   await test("processPlayAlongFrame updates debug state from visible notes without throwing", function () {
     resetCoreEnv();
 
