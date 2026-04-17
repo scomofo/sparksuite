@@ -317,14 +317,17 @@ function openPianoHomeDashboard(state) {
   openPianoDashboardScreen(state, "home_dash", SCR.HOME_DASH);
 }
 
-function openPianoPracticePlan(state) {
-  if (typeof ensurePracticePlan === "function") {
-    ensurePracticePlan();
+function openPianoPracticePlan(state, options) {
+  options = options || {};
+  if (!window.sparkCore && typeof ensurePracticePlan === "function") {
+    ensurePracticePlan(options);
   }
   if (typeof openPracticePlanScreenRequest === "function") {
-    openPracticePlanScreenRequest();
+    openPracticePlanScreenRequest(options);
   } else if (typeof openDashboardPracticePlanRequest === "function") {
-    openDashboardPracticePlanRequest();
+    openDashboardPracticePlanRequest(options);
+  } else if (typeof ensurePracticePlan === "function") {
+    ensurePracticePlan(options);
   }
   state.screen = SCR.PLAN;
 }
@@ -1650,7 +1653,7 @@ function act(action, param) {
     case "completePlan":
       completePracticePlan(); break;
     case "regeneratePlan":
-      buildPracticePlan(); break;
+      openPianoPracticePlan(state, { forceRebuild: true }); break;
 
     // ── Performance Mode ──
     case "open_perform_song": {

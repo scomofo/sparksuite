@@ -630,9 +630,13 @@ test('piano dashboard and plan actions use seeded challenges and the shared plan
   assert.ok(pianoSource.indexOf('case "openChallengeHub":') >= 0);
   assert.ok(pianoSource.indexOf('if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
   assert.ok(pianoSource.indexOf('case "openPracticePlan":') >= 0);
-  assert.ok(pianoSource.indexOf('if (typeof ensurePracticePlan === "function") {') >= 0);
-  assert.ok(pianoSource.indexOf('ensurePracticePlan();') >= 0);
+  assert.ok(pianoSource.indexOf('function openPianoPracticePlan(state, options) {') >= 0);
+  assert.ok(pianoSource.indexOf('if (!window.sparkCore && typeof ensurePracticePlan === "function") {') >= 0);
+  assert.ok(pianoSource.indexOf('ensurePracticePlan(options);') >= 0);
+  assert.ok(pianoSource.indexOf('} else if (typeof ensurePracticePlan === "function") {') >= 0);
   assert.ok(pianoSource.indexOf('openPianoPracticePlan(state);') >= 0);
+  assert.ok(pianoSource.indexOf('case "regeneratePlan":') >= 0);
+  assert.ok(pianoSource.indexOf('openPianoPracticePlan(state, { forceRebuild: true }); break;') >= 0);
   assert.ok(pianoSource.indexOf('state.screen = SCR.PLAN;') >= 0);
 });
 
