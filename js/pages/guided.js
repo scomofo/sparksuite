@@ -1,6 +1,27 @@
 // ===== ChordSpark: Guided Session Pages =====
 // Mirrors PianoSpark's 5-phase session flow: Spark → Review → NewMove → SongSlice → VictoryLap
 // NewMove uses Watch→Shadow→Try→Refine (stickiness technique #3)
+function getGuidedPageInstrument() {
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
 
 function guidedStepIndicator(step) {
   var steps = [
@@ -87,8 +108,9 @@ function _guidedSpark(plan) {
 }
 
 function _guidedReview(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getGuidedPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   if (!plan.review) {
     return '<div class="card mb16"><h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>' +
       '<p style="color:var(--text-muted)">No review for this session \u2014 it\'s your first!</p>' +
@@ -116,8 +138,9 @@ function _guidedReview(plan) {
 }
 
 function _guidedNewMove(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getGuidedPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var guidedView = getGuidedSessionView();
   if (!plan.newMove) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
@@ -199,8 +222,9 @@ function _guidedSongSlice(plan) {
 }
 
 function _guidedVictoryLap(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getGuidedPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D;background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#127942; Victory Lap!</h3>';
