@@ -164,6 +164,11 @@ function practicePlanSection(){
       h += '</div>';
     }
     h += '</div>';
+  } else {
+    h += '<div class="card" style="margin-top:12px">';
+    h += '<div><b>Today\'s Practice Plan</b></div>';
+    h += '<div class="text-muted">No practice plan yet.</div>';
+    h += '</div>';
   }
 
   // Progression mastery summary
