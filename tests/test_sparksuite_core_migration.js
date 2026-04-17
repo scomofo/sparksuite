@@ -3782,6 +3782,35 @@ test("completeSession preserves instrument ids in runtime state instead of colla
   assert.strictEqual(core.runtimeState.activeInstrumentType, "piano");
 });
 
+test("startLegacyPracticeSession prefers active context app ids when plans only provide instrument types", function() {
+  var core = createDefaultSparkCore();
+  core.instrumentManager = {
+    getActiveContext: function() {
+      return {
+        appId: "pianospark",
+        instrumentType: "piano"
+      };
+    }
+  };
+  core.sessionEngine = {
+    buildLegacyPracticeSession: function() {
+      return {
+        id: "legacy_plan_1",
+        flow: "legacy_practice_session",
+        instrumentType: "piano",
+        segments: [{ id: "seg_1" }],
+        context: { legacyPractice: { mode: "quickStart", durationSec: 60 } }
+      };
+    }
+  };
+
+  var plan = core.startLegacyPracticeSession({ mode: "quickStart" });
+
+  assert.strictEqual(plan.instrumentType, "piano");
+  assert.strictEqual(core.runtimeState.activeInstrumentId, "pianospark");
+  assert.strictEqual(core.runtimeState.activeInstrumentType, "piano");
+});
+
 test("completeSession returns engine-owned rhythm learning summary while bridge syncs legacy mastery state", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });

@@ -421,7 +421,7 @@
     ) {
       this.updateRuntimeState({
         activeFlow: this.currentPlan.flow,
-        activeInstrumentId: this.currentPlan.instrumentId || this.currentPlan.instrumentType || null,
+        activeInstrumentId: sparkCoreResolveRuntimeInstrumentId(this.currentPlan, instrumentContext, this.runtimeState),
         activeInstrumentType: this.currentPlan.instrumentType || instrumentContext.instrumentType || null,
         activePlanId: this.currentPlan.id,
         activeSegmentId: this.currentPlan.segments && this.currentPlan.segments.length ? this.currentPlan.segments[0].id : null,
@@ -511,7 +511,7 @@
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
-      activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
+      activeInstrumentId: sparkCoreResolveRuntimeInstrumentId(plan, instrumentContext, this.runtimeState),
       activeInstrumentType: plan.instrumentType || instrumentContext.instrumentType || null,
       activePlanId: plan.id,
       activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
@@ -582,7 +582,7 @@
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
-      activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
+      activeInstrumentId: sparkCoreResolveRuntimeInstrumentId(plan, instrumentContext, this.runtimeState),
       activeInstrumentType: plan.instrumentType || instrumentContext.instrumentType || null,
       activePlanId: plan.id,
       activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
@@ -2382,13 +2382,14 @@
       this.startSession({ flow: payload.flow || SparkSessionTypes.FLOW_DAILY_PRACTICE });
     }
 
+    var completionInstrumentContext = this.instrumentManager && typeof this.instrumentManager.getActiveContext === "function"
+      ? (this.instrumentManager.getActiveContext() || null)
+      : null;
     var result = this.progressEngine.completeSession(this.currentPlan, payload);
     this.setLastSessionOutcome(result);
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
-      activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
-        ? (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
-        : this.runtimeState.activeInstrumentId,
+      activeInstrumentId: sparkCoreResolveRuntimeInstrumentId(this.currentPlan, completionInstrumentContext, this.runtimeState),
       activeInstrumentType: this.runtimeState.activeInstrumentType,
       activePlanId: this.currentPlan ? this.currentPlan.id : this.runtimeState.activePlanId,
       activeSegmentId: payload.itemId || this.runtimeState.activeSegmentId,
@@ -3951,6 +3952,15 @@
       return plan.instrumentType === instrumentContext.instrumentType;
     }
     return false;
+  }
+
+  function sparkCoreResolveRuntimeInstrumentId(plan, instrumentContext, runtimeState) {
+    var contextId = instrumentContext ? (instrumentContext.appId || instrumentContext.instrumentId || null) : null;
+    var runtimeId = runtimeState ? (runtimeState.activeInstrumentId || null) : null;
+    if (plan && plan.instrumentId) return plan.instrumentId;
+    if (contextId) return contextId;
+    if (runtimeId) return runtimeId;
+    return null;
   }
 
   function createDefaultSparkCore() {
