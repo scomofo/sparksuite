@@ -411,6 +411,27 @@ test("planPage derives readable fallback labels for sparse plan items", function
   assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
+test("planPage derives a readable focus label when a cached plan omits focus", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      items: [
+        { id: "song_1", type: "song", durationSec: 240, meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("No practice focus yet.") >= 0);
+  assert.strictEqual(html.indexOf("<div class=\"muted\">No practice plan yet.</div>"), -1);
+});
+
 test("planPage does not render go buttons for sparse plan items without ids", function() {
   global.S = {
     practicePlanComplete: false,

@@ -14,7 +14,7 @@ function planPage(){
 
   h += '<div class="card mb16">';
   h += '<h2>Today\'s Practice Plan</h2>';
-  h += '<div class="muted">'+escHTML(plan && plan.focus ? plan.focus : 'No practice plan yet.')+'</div>';
+  h += '<div class="muted">'+escHTML(getPlanFocusLabel(plan))+'</div>';
   if(planCompleted){
     h += '<div style="margin-top:8px;color:var(--success);font-weight:700">Plan completed!</div>';
   }
@@ -119,6 +119,11 @@ function getPlanItemLabel(item){
         (item && item.type) ||
         "practice"
       );
+}
+
+function getPlanFocusLabel(plan){
+  if(!plan) return "No practice plan yet.";
+  return plan.focus ? plan.focus : "No practice focus yet.";
 }
 
 function launchPracticePlanItem(itemId){
