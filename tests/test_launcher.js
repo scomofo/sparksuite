@@ -550,6 +550,18 @@ test('career and performance daily actions surface feedback instead of silently 
   assert.ok(appSource.indexOf('dispatchWindowAction("startPerformance", "Performance isn\'t available right now.",') >= 0);
 });
 
+test('song and performance runtime sync fallbacks tolerate partial sparkCore runtime snapshots', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('var songRuntimeState = typeof window.sparkCore.getRuntimeState === "function"') >= 0);
+  assert.ok(appSource.indexOf('? (window.sparkCore.getRuntimeState() || {})') >= 0);
+  assert.ok(appSource.indexOf('songSessionData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : songRuntimeState.songSessionData') >= 0);
+  assert.ok(appSource.indexOf('source: toggleSongRuntimeState.songSessionSource || "builtin"') >= 0);
+  assert.ok(appSource.indexOf('source: completeSongRuntimeState.songSessionSource || "builtin"') >= 0);
+  assert.ok(appSource.indexOf('var arrangementState = typeof window.sparkCore.getRuntimeState === "function"') >= 0);
+  assert.ok(appSource.indexOf('var difficultyState = typeof window.sparkCore.getRuntimeState === "function"') >= 0);
+  assert.ok(appSource.indexOf('var speedState = typeof window.sparkCore.getRuntimeState === "function"') >= 0);
+});
+
 test('career content bootstraps from the active instrument song library', function() {
   global.S.activeCareerId = 'career_main';
   global.S.careerProgress = { unlockedTiers: {}, unlockedStages: {}, unlockedSongs: {}, songRatings: {}, stageCompletion: {}, tierCompletion: {} };

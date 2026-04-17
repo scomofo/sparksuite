@@ -2,7 +2,16 @@ function skillTreeStateRead(path, fallback){
   if(typeof SparkState!=="undefined"&&typeof SparkState.read==="function"){
     return SparkState.read(path, fallback);
   }
-  return fallback;
+  var root = typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
+  var parts = Array.isArray(path) ? path.slice() : [path];
+  var cursor = root;
+  var i;
+  if(!cursor) return fallback;
+  for(i=0;i<parts.length;i++){
+    if(cursor == null || !Object.prototype.hasOwnProperty.call(cursor, parts[i])) return fallback;
+    cursor = cursor[parts[i]];
+  }
+  return cursor == null ? fallback : cursor;
 }
 
 function skillTreePage(){

@@ -1154,12 +1154,15 @@ function syncSongRuntimeRequest(action, options) {
   }
   if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
     options = options || {};
+    var songRuntimeState = typeof window.sparkCore.getRuntimeState === "function"
+      ? (window.sparkCore.getRuntimeState() || {})
+      : {};
     return window.sparkCore.updateRuntimeState({
       activeFlow: "song_session",
       activeScreen: options.targetScreen || (action === "complete" ? "song_done" : "song"),
       activeTab: "songs",
-      songSessionData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : window.sparkCore.getRuntimeState().songSessionData,
-      songSessionSource: options.source || window.sparkCore.getRuntimeState().songSessionSource || "builtin",
+      songSessionData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : songRuntimeState.songSessionData,
+      songSessionSource: options.source || songRuntimeState.songSessionSource || "builtin",
       songPlaying: action === "play" ? true : !!options.songPlaying,
       songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat") ? options.songBeat : 0,
       transport: {
@@ -2319,9 +2322,12 @@ window.act=function(a,v){
     snd("click");
     var selectedSongData=appRead("selectedSong", null);
     var nextSongPlaying=!appRead("songPlaying", false);
+    var toggleSongRuntimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
+      ? (window.sparkCore.getRuntimeState() || {})
+      : {};
     syncSongRuntimeRequest(nextSongPlaying ? "play" : "pause", {
       songData: selectedSongData,
-      source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
+      source: toggleSongRuntimeState.songSessionSource || "builtin",
       songBeat: nextSongPlaying ? 0 : appRead("songBeat", 0)
     });
     appApplyLegacyActivityRuntime({
@@ -2346,6 +2352,9 @@ window.act=function(a,v){
   }
   if(a==="completeSong"){
     var completeSongData=appRead("selectedSong", null);
+    var completeSongRuntimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
+      ? (window.sparkCore.getRuntimeState() || {})
+      : {};
     appApplyLegacyActivityRuntime({
       setFields:{songPlaying:false},
       clearIntervals:["song"]
@@ -2367,7 +2376,7 @@ window.act=function(a,v){
     });
     completeSongSessionRequest({
       songData: completeSongData,
-      source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
+      source: completeSongRuntimeState.songSessionSource || "builtin",
       songBeat: appRead("songBeat", 0)
     });
     fireMicro("full_song","Rockstar!","&#127908;");
@@ -4317,7 +4326,9 @@ window.act=function(a,v){
   if(a==="performArrangement"){
     appWrite("performArrangementType",v||"chords");
     if(window.sparkCore&&typeof window.sparkCore.syncPerformanceRuntimeState==="function"){
-      var arrangementState = window.sparkCore.getRuntimeState();
+      var arrangementState = typeof window.sparkCore.getRuntimeState === "function"
+        ? (window.sparkCore.getRuntimeState() || {})
+        : {};
       window.sparkCore.syncPerformanceRuntimeState("configure", {
         arrangementType: appRead("performArrangementType", "chords"),
         songIndex: arrangementState.performanceSongIndex,
@@ -4516,10 +4527,13 @@ window.act=function(a,v){
   if(a==="performDifficulty"){
     applyPerformanceDifficultyToState(v||"normal");
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
+      var difficultyState = typeof window.sparkCore.getRuntimeState === "function"
+        ? (window.sparkCore.getRuntimeState() || {})
+        : {};
       window.sparkCore.syncPerformanceRuntimeState("configure", {
         difficulty: appRead("performDifficulty", "normal"),
-        songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
-        songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
+        songIndex: difficultyState.performanceSongIndex,
+        songTitle: difficultyState.performanceSongTitle
       });
     }
     saveState();render();return;
@@ -4527,10 +4541,13 @@ window.act=function(a,v){
   if(a==="performSpeed"){
     appWrite("performSpeed",parseFloat(v));PerformanceTransport.setSpeed(appRead("performSpeed", 1));
     if(window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function"){
+      var speedState = typeof window.sparkCore.getRuntimeState === "function"
+        ? (window.sparkCore.getRuntimeState() || {})
+        : {};
       window.sparkCore.syncPerformanceRuntimeState("configure", {
         speed: appRead("performSpeed", 1),
-        songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
-        songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
+        songIndex: speedState.performanceSongIndex,
+        songTitle: speedState.performanceSongTitle
       });
     }
     saveState();render();return;

@@ -154,6 +154,33 @@ async function run() {
     assert.ok(performCalibrationPage().indexOf("Performance Calibration") >= 0);
   });
 
+  await test("skill tree page can read focus from plain global S", function() {
+    global.S.skillTreeFocus = "rhythm";
+    global.SparkInstruments = {
+      getActive: function() {
+        return {
+          getSkillTree: function() {
+            return {
+              branches: [
+                { id: "rhythm", title: "Rhythm", nodes: [] },
+                { id: "chords", title: "Chords", nodes: [] }
+              ]
+            };
+          }
+        };
+      }
+    };
+    global.renderSkillTreeBranch = function(branch) {
+      return '<div class="branch">' + branch.title + '</div>';
+    };
+    eval(loadJS("js/pages/skill_tree.js"));
+
+    var html = skillTreePage();
+
+    assert.ok(html.indexOf("Skill Tree") >= 0);
+    assert.ok(html.indexOf("Rhythm") >= 0);
+  });
+
   await test("progress dashboard can render from plain global S", function() {
     global.sparkCore = {
       progressEngine: {
@@ -196,6 +223,7 @@ async function run() {
     eval(loadJS("js/pages/perform_song.js"));
     eval(loadJS("js/pages/games.js"));
     eval(loadJS("js/pages/perform_calibration.js"));
+    eval(loadJS("js/pages/skill_tree.js"));
     eval(loadJS("js/pages/progress_dashboard.js"));
 
     assert.ok(editorPage().indexOf("Demo Chart") >= 0);
@@ -203,6 +231,7 @@ async function run() {
     assert.ok(performSongPage().indexOf("River Run") >= 0);
     assert.ok(rhythmTab().indexOf("Rhythm Game") >= 0);
     assert.ok(performCalibrationPage().indexOf("Performance Calibration") >= 0);
+    assert.ok(skillTreePage().indexOf("Skill Tree") >= 0);
     assert.ok(progressDashboardPage().indexOf("Your Progress") >= 0);
   });
 
