@@ -519,6 +519,42 @@ test("practiceTab derives progress counts when cached plans omit completedItems 
   assert.strictEqual(html.indexOf("undefined/undefined"), -1);
 });
 
+test("practiceTab derives a readable focus label when cached plans omit focus", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlan: {
+      items: [
+        { id: "song_1", type: "song", label: "Replay Island Strum", completed: false }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = practiceTab();
+  assert.ok(html.indexOf("Focus: No practice focus yet.") >= 0);
+  assert.strictEqual(html.indexOf("Focus: undefined"), -1);
+});
+
 test("practiceTab falls back to cached plan state when the practice bridge is unavailable", function() {
   global.S = {
     level: 1,
