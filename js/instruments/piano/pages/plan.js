@@ -111,7 +111,7 @@ function getPianoPlanItemLabel(item){
 }
 
 function getPianoPlanFocusLabel(plan){
-  if(!plan) return "No practice plan yet.";
+  if(!plan || !Array.isArray(plan.items) || !plan.items.length) return "No practice plan yet.";
   return plan.focus ? plan.focus : "No practice focus yet.";
 }
 
