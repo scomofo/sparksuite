@@ -233,4 +233,29 @@ test("pianoPlanPage falls back to cached plan state when the practice bridge is 
   assert.strictEqual(html.indexOf("Core Warmup"), -1);
 });
 
+test("pianoPlanPage does not render completed items as clickable go buttons", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "done_1", type: "practice", label: "Completed Warmup", durationSec: 120, completed: true },
+        { id: "todo_1", type: "practice", label: "Next Warmup", durationSec: 120, completed: false }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("Completed Warmup") >= 0);
+  assert.ok(html.indexOf("Next Warmup") >= 0);
+  assert.ok(html.indexOf("launchPracticePlanItem('done_1')") === -1);
+  assert.ok(html.indexOf("launchPracticePlanItem('todo_1')") >= 0);
+  assert.ok(html.indexOf(">Done<") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

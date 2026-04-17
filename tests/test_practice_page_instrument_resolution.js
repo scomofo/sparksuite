@@ -313,6 +313,32 @@ test("planPage falls back to cached plan state when the practice bridge is unava
   assert.strictEqual(html.indexOf("Core Warmup"), -1);
 });
 
+test("planPage does not render completed items as clickable go buttons", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "done_1", type: "practice", label: "Completed Warmup", durationSec: 120, completed: true },
+        { id: "todo_1", type: "practice", label: "Next Warmup", durationSec: 120, completed: false }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("Completed Warmup") >= 0);
+  assert.ok(html.indexOf("Next Warmup") >= 0);
+  assert.ok(html.indexOf("launchPracticePlanItem('done_1')") === -1);
+  assert.ok(html.indexOf("launchPracticePlanItem('todo_1')") >= 0);
+  assert.ok(html.indexOf(">Done<") >= 0);
+});
+
 test("practiceTab reads the active core-backed plan without calling ensurePracticePlan during render", function() {
   var ensureCalls = 0;
   global.ensurePracticePlan = function() {
