@@ -53,6 +53,26 @@
     return keys;
   }
 
+  function getResolvedRecommendationInstrument() {
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (!active) return null;
+    if (typeof active.getCurriculumMap === "function") return active;
+    candidate = active.id || active.appId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return active;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return active;
+  }
+
   function isPlayAlongEntryForActiveInstrument(entry, activeKeys) {
     if (!entry) return false;
     var values = [
@@ -118,9 +138,7 @@
 
   function getCurriculumCandidates(appType){
     var out = [];
-    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
-      ? SparkInstruments.getActive()
-      : null;
+    var active = getResolvedRecommendationInstrument();
     var activeCurriculum = active && typeof active.getCurriculumMap === "function"
       ? (active.getCurriculumMap() || [])
       : [];

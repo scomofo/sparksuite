@@ -443,6 +443,51 @@ test("curriculum recommendation falls back to legacy curriculum roots when no ac
   assert.strictEqual(curriculum.id, "piano_intro_2");
 });
 
+test("curriculum recommendation rehydrates thin active instruments before reading active maps", function() {
+  global.SparkInstruments.getAll = function() {
+    return [{
+      id: "ukespark",
+      appId: "ukespark",
+      instrument: "ukulele",
+      getCurriculumMap: function() {
+        return [
+          { id: "uke_01", title: "Island Basics" },
+          { id: "uke_02", title: "Palm Muting" }
+        ];
+      }
+    }];
+  };
+  global.SparkInstruments.getActive = function() {
+    return {
+      appId: "ukespark",
+      instrument: "ukulele"
+    };
+  };
+  global.getCurriculumItem = function(kind, lessonId) {
+    if (kind === "lessons" && lessonId === "uke_02") {
+      return { id: "uke_02", title: "Palm Muting", level: 2 };
+    }
+    return null;
+  };
+  global.getNextLessonFromCurriculum = function(rootLessonId) {
+    if (rootLessonId !== "uke_01") return null;
+    return "uke_02";
+  };
+
+  var candidates = collectRecommendationCandidates("ukulele");
+  var curriculum = null;
+  var i;
+  for (i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "curriculum") {
+      curriculum = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(curriculum);
+  assert.strictEqual(curriculum.id, "uke_02");
+});
+
 test("curriculum recommendation falls back to ukulele lesson roots when the active map is unavailable", function() {
   global.SparkInstruments.getActive = function() {
     return {
