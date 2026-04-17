@@ -99,12 +99,12 @@ function getPracticeSummaryProgress(plan) {
   var items = rawItems.filter(isRenderablePracticeSummaryItem);
   var hasSparseItems = rawItems.length !== items.length;
   var derivedTotalItems = items.length;
-  var rawTotalItems = !hasSparseItems && plan && typeof plan.totalItems === "number" && Number.isFinite(plan.totalItems)
+  var rawTotalItems = !hasSparseItems && plan && typeof plan.totalItems === "number" && Number.isInteger(plan.totalItems)
     ? plan.totalItems
     : null;
   var totalItems = rawTotalItems && rawTotalItems > 0 ? rawTotalItems : derivedTotalItems;
   var derivedCompletedItems = items.filter(isCompletedPracticeSummaryItem).length;
-  var rawCompletedItems = !hasSparseItems && plan && typeof plan.completedItems === "number" && Number.isFinite(plan.completedItems)
+  var rawCompletedItems = !hasSparseItems && plan && typeof plan.completedItems === "number" && Number.isInteger(plan.completedItems)
     ? plan.completedItems
     : null;
   var completedItems = rawCompletedItems != null ? rawCompletedItems : derivedCompletedItems;
