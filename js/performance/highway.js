@@ -2,10 +2,35 @@
 
 var _sparkHighway = null;
 
-function ensureSparkHighway(canvasEl) {
+function resolvePerformanceHighwayInstrument(chart) {
+  var instrument = chart && chart.instrument ? chart.instrument : null;
+  if (!instrument && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
+    var active = SparkInstruments.getActive();
+    if (active) instrument = active.instrument || active.instrumentType || active.id || active.appId || null;
+  }
+  if (instrument && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+    var all = SparkInstruments.getAll() || [];
+    for (var i = 0; i < all.length; i++) {
+      var entry = all[i] || {};
+      if (entry.id === instrument || entry.appId === instrument) {
+        instrument = entry.instrument || entry.instrumentType || instrument;
+        break;
+      }
+    }
+  }
+  return instrument || "guitar";
+}
+
+function resolvePerformanceHighwaySkin(chart) {
+  var instrument = resolvePerformanceHighwayInstrument(chart);
+  if (instrument === "piano" && SparkHighway.PIANO_SKIN) return SparkHighway.PIANO_SKIN;
+  return SparkHighway.GUITAR_SKIN;
+}
+
+function ensureSparkHighway(canvasEl, chart) {
   if (_sparkHighway && _sparkHighway.canvas === canvasEl) return _sparkHighway;
   if (_sparkHighway) _sparkHighway.destroy();
-  _sparkHighway = new SparkHighway(canvasEl, SparkHighway.GUITAR_SKIN);
+  _sparkHighway = new SparkHighway(canvasEl, resolvePerformanceHighwaySkin(chart));
   _sparkHighway._initPromise = _sparkHighway.init();
   return _sparkHighway;
 }
