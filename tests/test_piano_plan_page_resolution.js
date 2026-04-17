@@ -326,6 +326,37 @@ test("piano practice plan section does not render start buttons for sparse plan 
   assert.ok(html.indexOf(">Unavailable<") >= 0);
 });
 
+test("piano plan and practice sections do not render action buttons for whitespace-only item ids", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "   ", type: "song", label: "Replay Island Strum", completed: false, meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.strictEqual(planHtml.indexOf("launchPracticePlanItem('"), -1);
+  assert.strictEqual(practiceHtml.indexOf("practiceStartItem', '"), -1);
+  assert.ok(planHtml.indexOf(">Unavailable<") >= 0);
+  assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
+});
+
 test("pianoPlanPage stays read-only when no plan exists and shows an empty state", function() {
   var ensureCalls = 0;
   global.sparkCore = {

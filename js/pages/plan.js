@@ -1,8 +1,12 @@
 function planPage(){
+  function getPlanItemId(item){
+    var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+    return id || null;
+  }
   function isRenderablePlanItem(item){
     return !!(
       item &&
-      (item.id ||
+      (getPlanItemId(item) ||
        item.label ||
        item.type ||
        (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
@@ -54,12 +58,13 @@ function planPage(){
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
     if(!isRenderablePlanItem(item)) continue;
-    var canLaunch = !!item.id;
+    var itemId = getPlanItemId(item);
+    var canLaunch = !!itemId;
     var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
     var actionHtml = item.completed
       ? '<span class="text-muted">Done</span>'
       : (canLaunch
-        ? '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(item.id)+'\')" style="background:var(--accent);color:#fff">Go</button>'
+        ? '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(itemId)+'\')" style="background:var(--accent);color:#fff">Go</button>'
         : '<span class="text-muted">Unavailable</span>');
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPlanDisplayType(item))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
@@ -176,7 +181,8 @@ function launchPracticePlanItem(itemId){
 
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
-    if(item && item.id === itemId){
+    var candidateId = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+    if(item && candidateId === itemId){
       launchPracticeItem(item);
       return;
     }

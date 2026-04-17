@@ -125,10 +125,14 @@ function pianoPracticeTab() {
 
 /* Practice Plan section – shows stats, today's plan, and progression overview */
 function practicePlanSection(){
+  function getPlanItemId(item){
+    var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+    return id || null;
+  }
   function isRenderablePlanItem(item){
     return !!(
       item &&
-      (item.id ||
+      (getPlanItemId(item) ||
        item.label ||
        item.type ||
        (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
@@ -163,12 +167,13 @@ function practicePlanSection(){
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
       if(!isRenderablePlanItem(item)) continue;
+      var itemId = getPlanItemId(item);
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       h += '<div class="row"' + done + '>';
       h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
       if(!item.completed){
-        if(item && item.id){
-          h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
+        if(itemId){
+          h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+itemId+'\')">Start</button>';
         }else{
           h += '<span class="text-muted">Unavailable</span>';
         }
