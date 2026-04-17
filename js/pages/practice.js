@@ -349,7 +349,7 @@ function practiceTab(){
       if(!isCompleted){
         var itemId = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
         if(itemId){
-          h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+itemId+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
+          h+='<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'completePlanItem\', this.getAttribute(\'data-item-id\'))" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
         }else{
           h+='<span class="text-muted">Unavailable</span>';
         }
@@ -604,7 +604,7 @@ function practicePage(){
       var actionHtml = isCompleted
         ? '<span class="text-muted">Done</span>'
         : (itemId
-          ? '<button onclick="act(\'practiceStartItem\', \''+itemId+'\')">Start</button>'
+          ? '<button data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))">Start</button>'
           : '<span class="text-muted">Unavailable</span>');
       h += '<div class="row">';
       h += '<span'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
