@@ -1815,6 +1815,50 @@ test("practiceTab and practicePage treat boolean-only meta shells as missing ite
   assert.strictEqual(planHtml.indexOf("true"), -1);
 });
 
+test("practiceTab and practicePage treat array-shaped meta shells as missing items", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [{ meta: ["stale"] }]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practiceTab();
+  var fullHtml = practicePage();
+  var planHtml = planPage();
+
+  assert.ok(practiceHtml.indexOf("No practice plan yet.") >= 0);
+  assert.ok(fullHtml.indexOf("No practice plan yet.") >= 0);
+  assert.ok(planHtml.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(fullHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
+});
+
 test("practiceTab, practicePage, and planPage treat whitespace-only label shells as missing items", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
