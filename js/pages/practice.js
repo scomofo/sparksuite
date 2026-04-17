@@ -73,6 +73,18 @@ function getPracticeSummaryItemDesc(item) {
     : (parts.join(" - ") || prettyPracticeSummaryToken(getPracticeSummaryItemType(item) || (item && item.type) || "practice"));
 }
 
+function getPracticeSummaryProgress(plan) {
+  var items = plan && Array.isArray(plan.items) ? plan.items : [];
+  var totalItems = typeof plan.totalItems === "number" ? plan.totalItems : items.length;
+  var completedItems = typeof plan.completedItems === "number"
+    ? plan.completedItems
+    : items.filter(function(item) { return !!(item && item.completed); }).length;
+  return {
+    completedItems: completedItems,
+    totalItems: totalItems
+  };
+}
+
 function sv2HomeDashboard() {
   var inst = getPracticePageInstrument();
   if (!inst) return "";
@@ -251,10 +263,11 @@ function practiceTab(){
     : S.practicePlan;
   if(!plan) plan = S.practicePlan;
   if(plan&&plan.items&&plan.items.length){
-    h+='<div class="card mb20" style="border:2px solid '+(plan.completedItems>=plan.totalItems?"#4ECDC4":"#45B7D1")+'">';
+    var planProgress = getPracticeSummaryProgress(plan);
+    h+='<div class="card mb20" style="border:2px solid '+(planProgress.completedItems>=planProgress.totalItems?"#4ECDC4":"#45B7D1")+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
     h+='<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
-    h+='<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+plan.completedItems+'/'+plan.totalItems+'</span>';
+    h+='<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+planProgress.completedItems+'/'+planProgress.totalItems+'</span>';
     h+='</div>';
     h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(plan.focus)+'</div>';
     for(var pi=0;pi<plan.items.length;pi++){
@@ -264,7 +277,11 @@ function practiceTab(){
       h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
       h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(getPracticeSummaryItemDesc(item))+'</div></div>';
       if(!item.completed){
-        h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+item.id+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
+        if(item && item.id){
+          h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+item.id+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
+        }else{
+          h+='<span class="text-muted">Unavailable</span>';
+        }
       }
       h+='</div>';
     }
@@ -507,7 +524,9 @@ function practicePage(){
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       var actionHtml = item.completed
         ? '<span class="text-muted">Done</span>'
-        : '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
+        : (item && item.id
+          ? '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>'
+          : '<span class="text-muted">Unavailable</span>');
       h += '<div class="row">';
       h += '<span'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
       h += actionHtml;

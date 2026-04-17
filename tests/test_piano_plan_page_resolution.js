@@ -211,6 +211,35 @@ test("piano practice plan section derives fallback labels for sparse plan items"
   assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
+test("piano practice plan section does not render start buttons for sparse plan items without ids", function() {
+  global.S = {
+    practicePlan: {
+      items: [
+        { type: "song", completed: false, meta: { songId: "island_strum" } },
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseId: "warmup_1" } }
+      ]
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = practicePlanSection();
+  assert.strictEqual(html.indexOf("practiceStartItem', 'undefined'"), -1);
+  assert.ok(html.indexOf("practiceStartItem', 'practice_1'") >= 0);
+  assert.ok(html.indexOf(">Unavailable<") >= 0);
+});
+
 test("pianoPlanPage stays read-only when no plan exists and shows an empty state", function() {
   var ensureCalls = 0;
   global.sparkCore = {
@@ -308,6 +337,29 @@ test("pianoPlanPage derives readable fallback labels for sparse plan items", fun
   assert.ok(html.indexOf("island strum") >= 0);
   assert.ok(html.indexOf("left hand") >= 0);
   assert.strictEqual(html.indexOf("undefined"), -1);
+});
+
+test("pianoPlanPage does not render go buttons for sparse plan items without ids", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { type: "song", durationSec: 240, meta: { songId: "island_strum" } },
+        { id: "practice_1", type: "practice", durationSec: 120, meta: { exerciseId: "warmup_1" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.strictEqual(html.indexOf("launchPracticePlanItem('undefined')"), -1);
+  assert.ok(html.indexOf("launchPracticePlanItem('practice_1')") >= 0);
+  assert.ok(html.indexOf(">Unavailable<") >= 0);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
