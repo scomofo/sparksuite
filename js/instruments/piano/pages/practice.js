@@ -1,5 +1,22 @@
 /* PianoSpark - Practice tab (home page) */
 
+function pianoPracticeCardTextToken(value) {
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  var text = String(value).trim();
+  if (!text) return "";
+  var lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstPracticeCardTextToken() {
+  for (var i = 0; i < arguments.length; i++) {
+    var text = pianoPracticeCardTextToken(arguments[i]);
+    if (text) return text;
+  }
+  return "";
+}
+
 function pianoPracticeTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -30,10 +47,12 @@ function pianoPracticeTab() {
   // Quick start / Resume session card
   var plan = getCurrentSessionPlan();
   if (plan) {
+    var sessionTitle = pianoFirstPracticeCardTextToken(plan.title, "Guided session");
+    var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[plan.level - 1] && CURRICULUM[plan.level - 1].title, "Level");
     html += pianoClickableDiv(
       "act('start_guided_session')",
-      '<h3>Session ' + plan.num + ': ' + escHTML(plan.title) + '</h3>' +
-      '<p>Level ' + plan.level + ' \u2022 ' + escHTML(CURRICULUM[plan.level - 1].title) + '</p>',
+      '<h3>Session ' + plan.num + ': ' + escHTML(sessionTitle) + '</h3>' +
+      '<p>Level ' + plan.level + ' \u2022 ' + escHTML(levelTitle) + '</p>',
       "quick-start"
     );
   }
@@ -59,11 +78,14 @@ function pianoPracticeTab() {
     if (CURRICULUM[j].num === viewLvlNum) { viewedLvl = CURRICULUM[j]; break; }
   }
   if (!viewedLvl) viewedLvl = getCurrentLevel();
+  var viewedLevelTitle = pianoFirstPracticeCardTextToken(viewedLvl && viewedLvl.title, "Level");
+  var viewedLevelDesc = pianoFirstPracticeCardTextToken(viewedLvl && viewedLvl.desc, "Keep going.");
+  var viewedLevelTip = pianoFirstPracticeCardTextToken(viewedLvl && viewedLvl.tip);
   html += '<div class="card">';
-  html += '<h3 style="color:' + levelColor(viewedLvl.num) + '">' + viewedLvl.icon + ' Level ' + viewedLvl.num + ': ' + escHTML(viewedLvl.title) + '</h3>';
-  html += '<p>' + escHTML(viewedLvl.desc) + '</p>';
-  if (viewedLvl.tip) {
-    html += '<div class="text-muted" style="margin-bottom:12px">\u{1F4A1} ' + escHTML(viewedLvl.tip) + '</div>';
+  html += '<h3 style="color:' + levelColor(viewedLvl.num) + '">' + viewedLvl.icon + ' Level ' + viewedLvl.num + ': ' + escHTML(viewedLevelTitle) + '</h3>';
+  html += '<p>' + escHTML(viewedLevelDesc) + '</p>';
+  if (viewedLevelTip) {
+    html += '<div class="text-muted" style="margin-bottom:12px">\u{1F4A1} ' + escHTML(viewedLevelTip) + '</div>';
   }
 
   // Chord cards for the viewed level (or all unlocked when viewing current level)
@@ -91,8 +113,9 @@ function pianoPracticeTab() {
   html += '<div class="custom-sets"><h4>Custom Practice Sets</h4>';
   if (S.customSets.length) {
     S.customSets.forEach(function(set, i) {
+      var setName = pianoFirstPracticeCardTextToken(set && set.name, "Custom Set");
       html += '<div class="custom-set-row">';
-      html += '<button class="btn btn-sm" onclick="act(\'drill_custom\',' + i + ')">' + escHTML(set.name) + ' (' + set.chords.length + ')</button>';
+      html += '<button class="btn btn-sm" onclick="act(\'drill_custom\',' + i + ')">' + escHTML(setName) + ' (' + set.chords.length + ')</button>';
       html += '<button class="btn btn-sm btn-danger" onclick="act(\'del_custom\',' + i + ')">\u2715</button>';
       html += '</div>';
     });
@@ -110,7 +133,7 @@ function pianoPracticeTab() {
     html += '<div class="badges-row">';
     BADGES.forEach(function(b) {
       var earned = S.earned.indexOf(b.id) >= 0;
-      html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(b.desc) + '">' + b.icon + '</span>';
+      html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(pianoFirstPracticeCardTextToken(b.desc, "Badge")) + '">' + pianoFirstPracticeCardTextToken(b.icon, "\u{1F3C5}") + '</span>';
     });
     html += '</div>';
   }

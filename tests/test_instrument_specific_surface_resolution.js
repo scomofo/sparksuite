@@ -190,6 +190,39 @@ test("piano surfaces rehydrate an app-id-only active instrument shell", function
   assert.deepStrictEqual(pianoCheckBadges(), ["starter"]);
 });
 
+test("piano practice tab ignores stale curriculum and custom set labels", function() {
+  resetEnvironment("pianospark");
+  global.getPianoPageInstrument = function() {
+    return {
+      getData: function() {
+        return {
+          CURRICULUM: [{ num: 1, title: "undefined", desc: "null", tip: "NaN", icon: "P" }],
+          BADGES: [{ id: "starter", label: "Starter", desc: "undefined", icon: "null", check: function() { return true; } }],
+          SONGS: [],
+          LC: { 1: "#3366ff" },
+          CHORD_COLORS: { major: "#3366ff" },
+          DAILY_TYPES: [],
+          FINGER_EXERCISES: [],
+          FINGER_BADGES: []
+        };
+      }
+    };
+  };
+  global.S.customSets = [{ name: "undefined", chords: ["C"] }];
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+  assert.ok(html.indexOf("Guided session") >= 0 || html.indexOf("Warmup") >= 0);
+  assert.ok(html.indexOf("Level 1") >= 0);
+  assert.ok(html.indexOf("Custom Set (1)") >= 0);
+  assert.ok(html.indexOf("🏅") >= 0);
+  assert.ok(html.indexOf("undefined") === -1);
+  assert.ok(html.indexOf("null") === -1);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("piano onboarding and tools ignore stale intention strings", function() {
   resetEnvironment("pianospark");
   global.S.practiceIntention = "undefined";
