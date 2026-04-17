@@ -435,7 +435,6 @@ function practicePage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
-  if(!S.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice")) generateDailyPracticePlan();
 
   var stats = getPracticeStats();
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
@@ -451,12 +450,16 @@ function practicePage(){
 
   h += '<div class="card mb16">';
   h += '<div><b>Today\'s Practice Plan</b></div>';
-  for(var i=0;i<plan.items.length;i++){
-    var item = plan.items[i];
-    h += '<div class="row">';
-    h += '<span>'+escHTML(item.label || item.type || "practice")+'</span>';
-    h += '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
-    h += '</div>';
+  if(plan && Array.isArray(plan.items) && plan.items.length){
+    for(var i=0;i<plan.items.length;i++){
+      var item = plan.items[i];
+      h += '<div class="row">';
+      h += '<span>'+escHTML(item.label || item.type || "practice")+'</span>';
+      h += '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
+      h += '</div>';
+    }
+  } else {
+    h += '<div class="muted">No practice plan yet.</div>';
   }
   h += '</div>';
 
