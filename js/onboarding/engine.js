@@ -87,10 +87,14 @@
   }
 
   function runFinalOnboardingSetup(){
-    if(typeof generateDailyPracticePlan === "function"){
+    if(typeof generateInitialPracticePlanFromOnboarding === "function"){
+      generateInitialPracticePlanFromOnboarding();
+    } else if(typeof generateDailyPracticePlan === "function"){
       generateDailyPracticePlan();
     }
-    if(typeof generateRecommendations === "function"){
+    if(typeof generateInitialRecommendationsFromOnboarding === "function"){
+      generateInitialRecommendationsFromOnboarding();
+    } else if(typeof generateRecommendations === "function"){
       generateRecommendations();
     }
     if(typeof generatePersonalInsights === "function"){

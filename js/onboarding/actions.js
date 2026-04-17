@@ -39,6 +39,56 @@
     return value;
   }
 
+  function writeSharedOnboardingState(path, value){
+    var root = getOnboardingActionStateRoot();
+    var parts = Array.isArray(path) ? path.slice() : [path];
+    var cursor = root;
+    var i;
+    if(typeof SparkState !== "undefined" && typeof SparkState.write === "function"){
+      return SparkState.write(path, value);
+    }
+    if(!cursor || !parts.length) return value;
+    for(i = 0; i < parts.length - 1; i++){
+      if(!cursor[parts[i]] || typeof cursor[parts[i]] !== "object") cursor[parts[i]] = {};
+      cursor = cursor[parts[i]];
+    }
+    cursor[parts[parts.length - 1]] = value;
+    return value;
+  }
+
+  function getOnboardingInstrumentConfig(instrument){
+    if(instrument === "piano"){
+      return { appId: "pianospark", recommendationAppType: "piano" };
+    }
+    if(instrument === "ukulele"){
+      return { appId: "ukespark", recommendationAppType: "guitar" };
+    }
+    if(instrument === "bass"){
+      return { appId: "bassspark", recommendationAppType: "guitar" };
+    }
+    return { appId: "chordspark", recommendationAppType: "guitar" };
+  }
+
+  function applyOnboardingInstrumentSelection(){
+    var instrument = readOnboardingActionState(["onboarding", "instrument"], null);
+    var config = getOnboardingInstrumentConfig(instrument);
+    if(config && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.activate === "function"){
+      SparkInstruments.activate(config.appId);
+    }
+    if(config){
+      writeSharedOnboardingState(["activeInstrument"], config.appId);
+      writeSharedOnboardingState(["practicePlan"], null);
+      writeSharedOnboardingState(["practicePlanComplete"], false);
+      writeSharedOnboardingState(["practicePlanInstrumentId"], null);
+      writeSharedOnboardingState(["practicePlanInstrumentType"], null);
+      writeSharedOnboardingState(["recommendations"], []);
+      writeSharedOnboardingState(["lastRecommendationRun"], null);
+      writeSharedOnboardingState(["recommendationInstrumentId"], null);
+      if(typeof saveState === "function") saveState();
+    }
+    return config;
+  }
+
   function getOnboardingStateSnapshot(){
     var onboarding = readOnboardingActionState("onboarding", null);
     if(!onboarding || typeof onboarding !== "object" || Array.isArray(onboarding)){
@@ -167,15 +217,15 @@
   }
 
   function generateInitialPracticePlanFromOnboarding(){
+    applyOnboardingInstrumentSelection();
     if(typeof generateDailyPracticePlan !== "function") return null;
     return generateDailyPracticePlan();
   }
 
   function generateInitialRecommendationsFromOnboarding(){
+    var config = applyOnboardingInstrumentSelection();
     if(typeof generateRecommendations !== "function") return [];
-    if(readOnboardingActionState(["onboarding", "instrument"], null) === "piano") return generateRecommendations("piano");
-    if(readOnboardingActionState(["onboarding", "instrument"], null) === "ukulele") return generateRecommendations("guitar");
-    return generateRecommendations("guitar");
+    return generateRecommendations(config ? config.recommendationAppType : "guitar");
   }
 
   window.setOnboardingInstrument = setOnboardingInstrument;
@@ -185,6 +235,7 @@
   window.markOnboardingCalibrationDone = markOnboardingCalibrationDone;
   window.markOnboardingStarterUnlocksDone = markOnboardingStarterUnlocksDone;
   window.applyStarterUnlocksFromOnboarding = applyStarterUnlocksFromOnboarding;
+  window.applyOnboardingInstrumentSelection = applyOnboardingInstrumentSelection;
   window.generateInitialPracticePlanFromOnboarding = generateInitialPracticePlanFromOnboarding;
   window.generateInitialRecommendationsFromOnboarding = generateInitialRecommendationsFromOnboarding;
 

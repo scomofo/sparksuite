@@ -239,6 +239,39 @@ test("collectRecommendationCandidates ignores play-along recents from other inst
   }
 });
 
+test("generateRecommendations infers piano from the active instrument before app name defaults", function() {
+  var originalCollect = collectRecommendationCandidates;
+  var originalFilter = filterRecommendationCandidates;
+  var originalBalance = balanceRecommendationSet;
+  var capturedAppType = null;
+  global.APP_NAME = "SparkSuite";
+  S.activeInstrument = "pianospark";
+  global.SparkInstruments.getActive = function() {
+    return {
+      id: "pianospark",
+      appId: "pianospark",
+      instrument: "piano"
+    };
+  };
+  collectRecommendationCandidates = function(appType) {
+    capturedAppType = appType;
+    return [];
+  };
+  filterRecommendationCandidates = function(candidates) {
+    return candidates;
+  };
+  balanceRecommendationSet = function(candidates) {
+    return candidates;
+  };
+
+  generateRecommendations();
+
+  collectRecommendationCandidates = originalCollect;
+  filterRecommendationCandidates = originalFilter;
+  balanceRecommendationSet = originalBalance;
+  assert.strictEqual(capturedAppType, "piano");
+});
+
 test("curriculum recommendation can read completed lessons from sparkCore", function() {
   S.completedLessons = [];
   global.getCurriculumItem = function(kind, lessonId) {
