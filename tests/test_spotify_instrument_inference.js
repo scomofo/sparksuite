@@ -8,6 +8,11 @@ function loadJS(file) {
 
 async function run() {
   global.window = global;
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "ukespark", appId: "ukespark", instrument: "ukulele" }];
+    }
+  };
 
   function FakeSparkCore() {
     this.instrumentManager = {
@@ -52,6 +57,22 @@ async function run() {
   assert.strictEqual(core.runtimeState.activeFlow, "spotify_play_along");
   assert.strictEqual(core.runtimeState.spotifyTrackId, "spotify_track_1");
   assert.strictEqual(core.runtimeState.spotifyDifficulty, "hard");
+
+  core.instrumentManager.getActiveContext = function() {
+    return {
+      instrumentId: "ukespark",
+      appId: "ukespark"
+    };
+  };
+
+  await core.startSpotifySession({
+    trackId: "spotify_track_2",
+    difficulty: "easy"
+  });
+
+  assert.strictEqual(global._capturedSpotifyInput.instrument, "ukulele");
+  assert.strictEqual(core.runtimeState.spotifyTrackId, "spotify_track_2");
+  assert.strictEqual(core.runtimeState.spotifyDifficulty, "easy");
 
   console.log("PASS: Spotify session inherits the active instrument context");
 }

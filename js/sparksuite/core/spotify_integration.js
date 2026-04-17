@@ -9,6 +9,27 @@
   var SparkCore = window.SparkCoreRuntime;
   if (typeof SparkCore === "undefined" || !SparkCore) return;
 
+  function resolveSpotifyInstrumentType(instrument, instrumentContext) {
+    var candidate = instrument
+      || (instrumentContext && (instrumentContext.instrumentType || instrumentContext.instrumentId || instrumentContext.appId))
+      || null;
+    var all;
+    var i;
+    var inst;
+    if (!candidate) return "guitar";
+    if (instrumentContext && instrumentContext.instrumentType) return instrumentContext.instrumentType;
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+      all = SparkInstruments.getAll() || [];
+      for (i = 0; i < all.length; i++) {
+        inst = all[i] || {};
+        if (inst.id === candidate || inst.appId === candidate) {
+          return inst.instrument || candidate;
+        }
+      }
+    }
+    return candidate;
+  }
+
   /**
    * Initialize Spotify integration. Call once after obtaining an OAuth token.
    */
@@ -37,9 +58,7 @@
     input = input || {};
     var self = this;
     var instrumentContext = this.instrumentManager.getActiveContext();
-    var instrument = input.instrument
-      || (instrumentContext && (instrumentContext.instrumentType || instrumentContext.instrumentId || instrumentContext.appId))
-      || "guitar";
+    var instrument = resolveSpotifyInstrumentType(input.instrument, instrumentContext);
 
     return this.sessionEngine.buildSpotifyPlayAlongSession({
       trackId: input.trackId,
