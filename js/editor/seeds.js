@@ -10,6 +10,23 @@
     return fallback;
   }
 
+  function inferEditorSeedInstrumentType(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var hints = [
+      active ? active.instrument : null,
+      active ? active.id : null,
+      editorSeedRead("activeInstrument", null)
+    ];
+    var i;
+    for(i = 0; i < hints.length; i++){
+      if(/piano/i.test(String(hints[i] || ""))) return "piano";
+      if(hints[i]) return "guitar";
+    }
+    return /piano/i.test(typeof APP_NAME!=="undefined" ? APP_NAME : "") ? "piano" : "guitar";
+  }
+
   function seedChartFromSong(song, arrangementType){
     if(!song || typeof buildPerformanceChartFromSong!=="function") return null;
     return JSON.parse(JSON.stringify(
@@ -32,7 +49,7 @@
   }
 
   function defaultSeedArrangementType(){
-    if(typeof APP_NAME!=="undefined" && /piano/i.test(APP_NAME)) return "block_chords";
+    if(inferEditorSeedInstrumentType() === "piano") return "block_chords";
     return "chords";
   }
 

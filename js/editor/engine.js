@@ -47,6 +47,23 @@
     return value;
   }
 
+  function inferEditorInstrumentType(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var hints = [
+      active ? active.instrument : null,
+      active ? active.id : null,
+      editorStateRead("activeInstrument", null)
+    ];
+    var i;
+    for(i = 0; i < hints.length; i++){
+      if(/piano/i.test(String(hints[i] || ""))) return "piano";
+      if(hints[i]) return "guitar";
+    }
+    return /piano/i.test(typeof APP_NAME !== "undefined" ? APP_NAME : "") ? "piano" : "guitar";
+  }
+
   function openEditor(mode, object){
     var editorMode = mode || "chart";
     editorStateWrite("editorMode", editorMode);
@@ -147,7 +164,7 @@
   }
 
   function defaultArrangementType(){
-    if(typeof APP_NAME!=="undefined" && /piano/i.test(APP_NAME)) return "block_chords";
+    if(inferEditorInstrumentType() === "piano") return "block_chords";
     return "chords";
   }
 
