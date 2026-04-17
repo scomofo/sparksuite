@@ -164,6 +164,8 @@ function formatPlanItemSubtitle(item){
 }
 
 function prettyPlanToken(value){
+  if(value == null) return "";
+  if(typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
   return String(value || "").replace(/_/g, " ").trim();
 }
 
