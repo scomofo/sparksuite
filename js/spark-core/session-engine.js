@@ -113,9 +113,10 @@
       // Resolve instrument identity for contract
       var instrumentId = opts.instrumentId || null;
       var instrumentType = opts.instrumentType || null;
-      if (!instrumentId && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-        instrumentId = SparkInstruments.getActive().id || null;
-        instrumentType = SparkInstruments.getActive().instrument || null;
+      var activeInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
+      if (!instrumentId && activeInstrument) {
+        instrumentId = activeInstrument.id || activeInstrument.appId || null;
+        instrumentType = activeInstrument.instrument || null;
       }
 
       function wrapPlan(raw) {

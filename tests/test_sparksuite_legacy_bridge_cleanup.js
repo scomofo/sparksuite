@@ -235,6 +235,12 @@ test("legacy daily practice generator delegates to sparkCore when available", fu
   assert.strictEqual(sparkCoreCalls[0].payload.flow, "daily_practice");
 });
 
+test("legacy session engine preserves thin active instrument app ids in session plans", function() {
+  var sessionEngineSource = loadJS("js/spark-core/session-engine.js");
+  assert.ok(sessionEngineSource.indexOf('var activeInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
+  assert.ok(sessionEngineSource.indexOf('instrumentId = activeInstrument.id || activeInstrument.appId || null;') >= 0);
+});
+
 test("getNextPracticeItem reads the cached plan without generating one", function() {
   var next = getNextPracticeItem();
 
