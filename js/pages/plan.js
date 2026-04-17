@@ -4,7 +4,7 @@ function planPage(){
     : null;
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
     ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
-    : ensurePracticePlan();
+    : S.practicePlan;
   var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
     ? true
     : !!S.practicePlanComplete;
@@ -12,11 +12,20 @@ function planPage(){
 
   h += '<div class="card mb16">';
   h += '<h2>Today\'s Practice Plan</h2>';
-  h += '<div class="muted">'+escHTML(plan.focus)+'</div>';
+  h += '<div class="muted">'+escHTML(plan && plan.focus ? plan.focus : 'No practice plan yet.')+'</div>';
   if(planCompleted){
     h += '<div style="margin-top:8px;color:var(--success);font-weight:700">Plan completed!</div>';
   }
   h += '</div>';
+
+  if(!plan || !Array.isArray(plan.items) || !plan.items.length){
+    h += '<div class="card mb16"><div class="muted">No practice plan yet.</div></div>';
+    h += '<div class="card mb16" style="text-align:center">';
+    h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
+    h += '<button class="btn" onclick="act(\'back\')">Back</button>';
+    h += '</div>';
+    return h;
+  }
 
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
@@ -94,7 +103,7 @@ function launchPracticePlanItem(itemId){
       plan = SparkPracticeBridge.toLegacyPlan(view.plan);
     }
   }
-  if(!plan) plan = S.practicePlan || ensurePracticePlan();
+  if(!plan) plan = S.practicePlan;
   if(!plan || !Array.isArray(plan.items)) return;
 
   for(var i=0;i<plan.items.length;i++){
