@@ -6,6 +6,9 @@ function uiStateRoot(){
     return SparkState.getRoot();
   }
   if(typeof globalThis!=="undefined"&&globalThis.__sparkState) return globalThis.__sparkState;
+  if(typeof globalThis!=="undefined"&&globalThis.S) return globalThis.S;
+  if(typeof window!=="undefined"&&window.__sparkState) return window.__sparkState;
+  if(typeof window!=="undefined"&&window.S) return window.S;
   return null;
 }
 

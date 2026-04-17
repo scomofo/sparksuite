@@ -176,6 +176,24 @@ test('returns gold for 75+ progress', function() {
   assert.strictEqual(getChordTier('E Major').tier, 'gold');
 });
 
+test('ui state helpers can read and write through plain global S', function() {
+  global.__sparkState = null;
+  global.S = {
+    soundOn: false,
+    darkMode: false,
+    chordProgress: {},
+    earnedBadges: [],
+    sessionMicros: [],
+    detectedNotes: [],
+    chordMatch: -1
+  };
+
+  assert.deepStrictEqual(uiStateRead(['earnedBadges'], []), []);
+  uiStateWrite(['uiTest', 'nested'], 42);
+  assert.strictEqual(global.S.uiTest.nested, 42);
+  assert.strictEqual(uiStateRead(['uiTest', 'nested'], 0), 42);
+});
+
 // ===== Tests: checkBadges =====
 console.log('\n--- checkBadges ---');
 

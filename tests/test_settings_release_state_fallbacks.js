@@ -86,6 +86,16 @@ async function run() {
   assert.ok(html.indexOf("Build: 456") >= 0);
   });
 
+  await test("settings page falls back to global S when SparkState.getRoot returns null", function() {
+  global.SparkState = { getRoot: function() { return null; } };
+  eval(loadJS("js/settings/settings_ui.js"));
+
+  var html = settingsPage();
+
+  assert.ok(html.indexOf("Theme:") >= 0);
+  assert.ok(html.indexOf("Version: 1.2.3") >= 0);
+  });
+
   await test("release info helpers can read and write through plain global S", async function() {
   eval(loadJS("js/release/info.js"));
 

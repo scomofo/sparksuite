@@ -164,6 +164,27 @@ async function run() {
     assert.ok(html.indexOf("Needs Review") >= 0);
   });
 
+  await test("shared page roots fall back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    global.sparkCore = {
+      progressEngine: {
+        getSkillGraph: function() { return {}; },
+        getDecayedSkills: function() { return []; },
+        getMasteryLevel: function() { return "LEARNING"; }
+      }
+    };
+
+    eval(loadJS("js/pages/editor.js"));
+    eval(loadJS("js/pages/performance_editor.js"));
+    eval(loadJS("js/pages/perform_song.js"));
+    eval(loadJS("js/pages/progress_dashboard.js"));
+
+    assert.ok(editorPage().indexOf("Demo Chart") >= 0);
+    assert.ok(performanceEditorPage().indexOf("Performance Chart") >= 0);
+    assert.ok(performSongPage().indexOf("River Run") >= 0);
+    assert.ok(progressDashboardPage().indexOf("Your Progress") >= 0);
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

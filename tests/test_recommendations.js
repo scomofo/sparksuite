@@ -239,6 +239,25 @@ test("collectRecommendationCandidates ignores play-along recents from other inst
   }
 });
 
+test("recommendations page falls back to global S when SparkState.getRoot returns null", function() {
+  var originalSparkState = global.SparkState;
+  global.SparkState = { getRoot: function() { return null; } };
+  global.escHTML = function(value) { return String(value); };
+  S.recommendations = [{
+    id: "fallback_rec",
+    title: "Fallback Recommendation",
+    type: "lesson",
+    source: "curriculum",
+    reasons: ["Plain global S still works"]
+  }];
+
+  var html = recommendationsPage();
+
+  global.SparkState = originalSparkState;
+  assert.ok(html.indexOf("Recommended Next") >= 0);
+  assert.ok(html.indexOf("Fallback Recommendation") >= 0);
+});
+
 test("generateRecommendations infers piano from the active instrument before app name defaults", function() {
   var originalCollect = collectRecommendationCandidates;
   var originalFilter = filterRecommendationCandidates;

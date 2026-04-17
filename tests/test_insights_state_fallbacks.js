@@ -127,6 +127,16 @@ async function run() {
     assert.ok(html.indexOf("Cleared songs: 2") >= 0);
   });
 
+  await test("insights dashboard falls back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/insights/ui.js"));
+
+    var html = insightsDashboardPage();
+
+    assert.ok(html.indexOf("Personal Progress Insights") >= 0);
+    assert.ok(html.indexOf("songs: demo_song") >= 0);
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {
