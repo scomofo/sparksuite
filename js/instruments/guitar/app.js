@@ -506,7 +506,13 @@ function guitarAct(a, v) {
         guitarStateIncrement("quizCorrect", 1);
         guitarStateIncrement("xp", 10);
         logHistory("quiz", quizQuestion.name, 10);
-        _sparkEmit("drill_answered", { appId: "chordspark", skillId: quizQuestion.name, correct: true, xp: 10 });
+        var quizActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
+        _sparkEmit("drill_answered", {
+          appId: quizActiveInstrument ? (quizActiveInstrument.id || quizActiveInstrument.appId || "chordspark") : "chordspark",
+          skillId: quizQuestion.name,
+          correct: true,
+          xp: 10
+        });
         checkBadges();
         saveState();
         if (nextQuizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;");

@@ -52,6 +52,28 @@
     return completedLessons;
   }
 
+  function resolveActiveCurriculumInstrument() {
+    var active;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    active = SparkInstruments.getActive();
+    if (!active) return null;
+    if (typeof active.getCurriculumMap === "function") return active;
+    candidate = active.id || active.appId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return active;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return active;
+  }
+
   function getActiveCurriculumMap(instrumentContext) {
     instrumentContext = instrumentContext || {};
     if (Array.isArray(instrumentContext.curriculumMap)) return instrumentContext.curriculumMap.slice();
@@ -59,8 +81,9 @@
       var map = SparkInstrumentAdapter.getCurriculumMap();
       if (Array.isArray(map)) return map.slice();
     }
-    if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() && typeof SparkInstruments.getActive().getCurriculumMap === "function") {
-      var activeMap = SparkInstruments.getActive().getCurriculumMap();
+    var activeInstrument = resolveActiveCurriculumInstrument();
+    if (activeInstrument && typeof activeInstrument.getCurriculumMap === "function") {
+      var activeMap = activeInstrument.getCurriculumMap();
       if (Array.isArray(activeMap)) return activeMap.slice();
     }
     return [];

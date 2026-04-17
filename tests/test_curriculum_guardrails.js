@@ -208,23 +208,33 @@ if (typeof SparkCurriculumService !== "undefined") {
     var prevSparkCore = global.sparkCore;
     var prevCompleted = S.completedLessons;
     var prevMasteryLessons = S.mastery.lessons;
+    var prevAdapter = global.SparkInstrumentAdapter;
+    var prevGetAll = global.SparkInstruments.getAll;
+    var prevGetActive = global.SparkInstruments.getActive;
 
     S.completedLessons = [];
     S.mastery.lessons = {};
+    global.SparkInstrumentAdapter = undefined;
     global.sparkCore = {
       getCompletedLessonIds: function() {
         return ["uke_01"];
       }
     };
-    global.SparkInstruments.getActive = function() {
-      return {
+    global.SparkInstruments.getAll = function() {
+      return [{
+        id: "ukespark",
+        appId: "ukespark",
+        instrument: "ukulele",
         getCurriculumMap: function() {
           return [
             { id: "uke_01", title: "First Strum" },
             { id: "uke_02", title: "Starter Chords" }
           ];
         }
-      };
+      }];
+    };
+    global.SparkInstruments.getActive = function() {
+      return { appId: "ukespark" };
     };
 
     var queue = SparkCurriculumService.buildLearningQueue({});
@@ -240,6 +250,9 @@ if (typeof SparkCurriculumService !== "undefined") {
     assert.strictEqual(lessonEntry.id, "uke_02");
 
     global.sparkCore = prevSparkCore;
+    global.SparkInstrumentAdapter = prevAdapter;
+    global.SparkInstruments.getAll = prevGetAll;
+    global.SparkInstruments.getActive = prevGetActive;
     S.completedLessons = prevCompleted;
     S.mastery.lessons = prevMasteryLessons;
   });

@@ -325,6 +325,12 @@ test('shared completion events resolve app ids from the active instrument instea
   assert.ok(appSource.indexOf('_sparkEmit("lesson_completed", { appId: completeSongAppId, lessonId: "song_" + (completeSongData ? completeSongData.title : ""), xp: 40 });') >= 0);
 });
 
+test('guitar drill analytics resolve app ids from the active instrument instead of hardcoding chordspark', function() {
+  var guitarAppSource = loadJS('js/instruments/guitar/app.js');
+  assert.ok(guitarAppSource.indexOf('var quizActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
+  assert.ok(guitarAppSource.indexOf('appId: quizActiveInstrument ? (quizActiveInstrument.id || quizActiveInstrument.appId || "chordspark") : "chordspark",') >= 0);
+});
+
 test('guided completion preserves thin active instrument app ids in session results', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
