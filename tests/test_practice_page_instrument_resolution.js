@@ -449,6 +449,25 @@ test("planPage does not render a completed banner when the plan is missing but t
   assert.strictEqual(html.indexOf("Plan completed!"), -1);
 });
 
+test("planPage treats empty cached plan shells as missing plans in the header copy", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      items: []
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("<div class=\"muted\">No practice plan yet.</div>") >= 0);
+  assert.strictEqual(html.indexOf("No practice focus yet."), -1);
+});
+
 test("planPage does not render go buttons for sparse plan items without ids", function() {
   global.S = {
     practicePlanComplete: false,
