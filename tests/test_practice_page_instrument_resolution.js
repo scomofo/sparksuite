@@ -880,6 +880,41 @@ test("practiceTab falls back to cached plan state when the practice bridge is un
   assert.strictEqual(html.indexOf("Core Warmup"), -1);
 });
 
+test("practiceTab treats malformed cached plan shells without array items as empty state", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlan: {
+      focus: "Song mastery",
+      items: { length: 1, 0: { id: "bad_1", label: "Broken Row" } }
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = practiceTab();
+  assert.ok(html.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(html.indexOf("Broken Row"), -1);
+});
+
 test("sv2HomeDashboard uses instrumentType when the rehydrated module does not expose instrument", function() {
   var themeRequests = [];
   SparkTheme.get = function(instrument) {
