@@ -222,6 +222,34 @@ test("SparkCore exposes engine-owned runtime state for active session context", 
   assert.strictEqual(view.lastSessionOutcome, null);
 });
 
+test("startPracticeFromLesson prefers the active instrument type over the app id for rhythm launches", function() {
+  var core = createDefaultSparkCore();
+  var captured = null;
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+    return true;
+  };
+
+  core.updateRuntimeState({
+    activeInstrumentId: "pianospark",
+    activeInstrumentType: "piano"
+  });
+
+  var launched = core.startPracticeFromLesson({
+    type: "timing",
+    tempo: 90,
+    label: "Timing Drill"
+  });
+
+  assert.strictEqual(launched, true);
+  assert.ok(captured);
+  assert.strictEqual(captured.options.source, "lesson_generator");
+  assert.strictEqual(captured.options.label, "Timing Drill");
+  assert.strictEqual(captured.options.instrument, "piano");
+
+  delete global.startPlayableRhythmHighwayPayload;
+});
+
 test("SparkCore runtime state tracks manual patches and completion summaries", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
