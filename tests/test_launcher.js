@@ -137,6 +137,40 @@ test('deactivate clears active instrument', function() {
   assert.strictEqual(SparkInstruments.getActive(), null);
 });
 
+test('getActive rehydrates thin active instruments through the registry', function() {
+  var launcherSource = loadJS('js/launcher.js').replace('var _active = null;', 'var _active = { appId: "test_piano_thin" };');
+  var sandbox = {
+    console: console,
+    window: null,
+    globalThis: null,
+    SparkState: undefined,
+    SCR: { HOME: 'home' },
+    TAB: { PRACTICE: 'practice' },
+    saveState: function() {},
+    render: function() {},
+    escHTML: function(s) { return String(s); }
+  };
+  sandbox.window = sandbox;
+  sandbox.globalThis = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(launcherSource, sandbox);
+
+  sandbox.SparkInstruments.register({
+    id: 'test_piano_thin',
+    appId: 'test_piano_thin',
+    instrument: 'piano',
+    name: 'Thin Piano',
+    getData: function() { return { SONGS: [] }; },
+    pages: {}
+  });
+
+  var active = sandbox.SparkInstruments.getActive();
+
+  assert.ok(active);
+  assert.strictEqual(active.instrument, 'piano');
+  assert.strictEqual(typeof active.getData, 'function');
+});
+
 test('resetProgress clears piano guided session progress state', function() {
   var persistenceSource = loadJS('js/core/persistence.js');
   var stateSource = loadJS('js/state.js');

@@ -4,6 +4,19 @@
   var _instruments = [];
   var _active = null;
 
+  function resolveInstrumentRecord(instrument) {
+    var candidateId;
+    var i;
+    if (!instrument) return null;
+    if (instrument.getData || instrument.getCurriculumMap || instrument.pages || instrument.ui) return instrument;
+    candidateId = instrument.id || instrument.appId || null;
+    if (!candidateId) return instrument;
+    for (i = 0; i < _instruments.length; i++) {
+      if (_instruments[i].id === candidateId || _instruments[i].appId === candidateId) return _instruments[i];
+    }
+    return instrument;
+  }
+
   function launcherStateWrite(path, value) {
     if (typeof SparkState !== "undefined" && typeof SparkState.write === "function") {
       return SparkState.write(path, value);
@@ -85,7 +98,7 @@
     },
 
     getActive: function() {
-      return _active;
+      return resolveInstrumentRecord(_active);
     },
 
     getAll: function() {
