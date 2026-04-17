@@ -148,7 +148,7 @@ function formatPianoPlanItemSubtitle(item){
   if(exerciseFocus) parts.push(exerciseFocus);
   else if(skill) parts.push(skill);
   if(displayType) parts.push(displayType);
-  return parts.join(" - ") || String(getPianoPlanDisplayType(item) || item.type || "practice");
+  return parts.join(" - ") || firstPrettyPianoPlanToken(getPianoPlanDisplayType(item), item.type, "practice");
 }
 
 function prettyPianoPlanToken(value){

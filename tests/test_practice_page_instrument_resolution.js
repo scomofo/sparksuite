@@ -457,6 +457,48 @@ test("practiceTab and planPage ignore whitespace-only subtitle meta tokens", fun
   assert.strictEqual(planHtml.indexOf(" -  - "), -1);
 });
 
+test("practiceTab and planPage ignore whitespace-only item types in subtitle fallback", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [
+        { id: "song_1", type: "   ", label: "Replay Island Strum", completed: false, meta: {} }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var summaryHtml = practiceTab();
+  var planHtml = planPage();
+  assert.ok(summaryHtml.indexOf(">practice<") >= 0);
+  assert.ok(planHtml.indexOf(">practice<") >= 0);
+  assert.strictEqual(summaryHtml.indexOf(" -  - "), -1);
+  assert.strictEqual(planHtml.indexOf(" -  - "), -1);
+});
+
 test("practicePage does not render start buttons for sparse plan items without ids", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
