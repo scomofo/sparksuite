@@ -142,8 +142,9 @@ function launchPracticePlanItem(itemId){
   if(!plan || !Array.isArray(plan.items)) return;
 
   for(var i=0;i<plan.items.length;i++){
-    if(plan.items[i].id === itemId){
-      launchPracticeItem(plan.items[i]);
+    var item = plan.items[i];
+    if(item && item.id === itemId){
+      launchPracticeItem(item);
       return;
     }
   }
