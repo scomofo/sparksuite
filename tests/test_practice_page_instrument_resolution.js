@@ -591,6 +591,30 @@ test("startPracticeItem skips null cached plan rows when launching by id", funct
   assert.deepStrictEqual(launched, ["practice_1"]);
 });
 
+test("startPracticeItem fails safely when a cached plan shell omits items", function() {
+  var launched = [];
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    practicePlan: {
+      focus: "Song mastery"
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.launchPracticeItem = function(item) {
+    launched.push(item && item.id);
+  };
+
+  startPracticeItem("practice_1");
+
+  assert.deepStrictEqual(launched, []);
+});
+
 test("launchPracticePlanItem skips null cached plan rows when launching by id", function() {
   var launched = [];
   global.S = {

@@ -563,7 +563,7 @@ function startPracticeItem(id){
     }
   }
   if(!plan) plan = S.practicePlan;
-  if(!plan) return;
+  if(!plan || !Array.isArray(plan.items)) return;
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
     if(item && item.id === id){
