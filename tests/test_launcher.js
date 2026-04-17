@@ -684,6 +684,21 @@ test('home practice summary prefers the active practicePlan fallback key', funct
   assert.ok(homeEngineSource.indexOf('todayPlan: homeStateRead("practicePlan", homeStateRead("dailyPracticePlan", []))') >= 0);
 });
 
+test('shared root helpers fall back to global S when SparkState returns a null root', function() {
+  var homeEngineSource = loadJS('js/home/home_engine.js');
+  var feedbackSource = loadJS('js/desktop/feedback.js');
+  var channelSource = loadJS('js/desktop/channels.js');
+  var playAlongStateSource = loadJS('js/sparksuite/core/play_along_state_service.js');
+  assert.ok(homeEngineSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(homeEngineSource.indexOf('if(sparkRoot) return sparkRoot;') >= 0);
+  assert.ok(feedbackSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(feedbackSource.indexOf('if(sparkRoot) return sparkRoot;') >= 0);
+  assert.ok(channelSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(channelSource.indexOf('if(sparkRoot) return sparkRoot;') >= 0);
+  assert.ok(playAlongStateSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(playAlongStateSource.indexOf('if (sparkRoot) return sparkRoot;') >= 0);
+});
+
 test('community submit actions initialize draft state before editing', function() {
   var appSource = loadJS('js/app.js');
   assert.ok(appSource.indexOf('function ensureCommunitySubmitSong(){') >= 0);

@@ -142,4 +142,17 @@ test("onboarding generators fall back to global S when SparkState.getRoot return
   assert.strictEqual(Array.isArray(recommendations), true);
 });
 
+test("onboarding page reads selected state through global S when SparkState.getRoot returns null", function() {
+  global.SparkState = { getRoot: function() { return null; } };
+  global.escHTML = function(value) { return String(value); };
+  global.act = function() {};
+  global.getCurrentOnboardingStep = function() { return "instrument"; };
+  global.renderOnboardingNav = function() { return "<div>nav</div>"; };
+
+  eval(loadJS("js/onboarding/ui.js"));
+  var html = onboardingPage();
+
+  assert.ok(html.indexOf("Selected: piano") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

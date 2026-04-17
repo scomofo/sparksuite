@@ -194,6 +194,25 @@ test('ui state helpers can read and write through plain global S', function() {
   assert.strictEqual(uiStateRead(['uiTest', 'nested'], 0), 42);
 });
 
+test('ui state helpers fall back to global S when SparkState.getRoot returns null', function() {
+  global.__sparkState = null;
+  global.S = {
+    soundOn: false,
+    darkMode: false,
+    chordProgress: {},
+    earnedBadges: [],
+    sessionMicros: [],
+    detectedNotes: [],
+    chordMatch: -1
+  };
+  global.SparkState = { getRoot: function() { return null; } };
+
+  uiStateWrite(['uiNullRoot', 'value'], 7);
+
+  assert.strictEqual(global.S.uiNullRoot.value, 7);
+  assert.strictEqual(uiStateRead(['uiNullRoot', 'value'], 0), 7);
+});
+
 // ===== Tests: checkBadges =====
 console.log('\n--- checkBadges ---');
 

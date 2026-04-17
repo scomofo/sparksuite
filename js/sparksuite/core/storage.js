@@ -3,7 +3,8 @@
 
   function getSparkSuiteStorageRoot() {
     if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
-      return SparkState.getRoot();
+      var sparkRoot = SparkState.getRoot();
+      if (sparkRoot) return sparkRoot;
     }
     if (typeof globalThis !== "undefined" && globalThis.__sparkState) return globalThis.__sparkState;
     return null;

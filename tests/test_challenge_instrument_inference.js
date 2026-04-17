@@ -87,4 +87,14 @@ test("challenge initialization seeds piano challenges in the shared app shell", 
   assert.strictEqual(global.saved, 1);
 });
 
+test("challenge initialization falls back to global S when SparkState.getRoot returns null", function() {
+  global.SparkState = { getRoot: function() { return null; } };
+
+  var challenges = initializeChallengesForCurrentCycle();
+
+  assert.strictEqual(challenges[2].title, "Practice Left Hand");
+  assert.strictEqual(global.S.activeChallenges[2].type, "left_hand_focus");
+  assert.strictEqual(global.saved, 1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

@@ -230,6 +230,21 @@ test("SparkCore exposes engine-owned runtime state for active session context", 
   assert.strictEqual(view.lastSessionOutcome, null);
 });
 
+test("SparkCore and storage fall back to global S when SparkState.getRoot returns null", function() {
+  var originalSparkState = global.SparkState;
+  global.S.playerXP = 55;
+  global.S.activeSessionPlanId = "legacy_plan";
+  global.SparkState = { getRoot: function() { return null; } };
+
+  var storage = new SparkSuiteStorage();
+  var core = createDefaultSparkCore();
+
+  assert.strictEqual(storage.getCurrentPlanId(), "legacy_plan");
+  assert.strictEqual(core.getPlayerXP(), 55);
+
+  global.SparkState = originalSparkState;
+});
+
 test("SparkCore exposes completed lesson ids through a normalized accessor", function() {
   var core = createDefaultSparkCore();
   S.completedLessons = ["uke_01"];
