@@ -4,6 +4,16 @@
     return typeof window.sparkDesktop !== 'undefined';
   }
 
+  function resolveDesktopBackupAppId() {
+    if (S.releaseInfo && S.releaseInfo.appId) return S.releaseInfo.appId;
+    if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
+      var active = SparkInstruments.getActive();
+      var activeId = active ? (active.id || active.appId || active.instrumentId || null) : null;
+      if (activeId) return activeId;
+    }
+    return "sparksuite";
+  }
+
   async function exportEditorObjectDesktopAware() {
     if (!S.performEditorChart) return false;
     if (isDesktopBuild()) {
@@ -45,7 +55,7 @@
   function buildFullLocalBackup(){
     return {
       exportedAt: Date.now(),
-      app: (S.releaseInfo && S.releaseInfo.appId) || "chordspark",
+      app: resolveDesktopBackupAppId(),
       version: (S.releaseInfo && S.releaseInfo.version) || "dev",
       state: S
     };
