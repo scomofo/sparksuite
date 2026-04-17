@@ -99,6 +99,23 @@ function resolveAppActiveInstrumentId(activeInstrument){
   return lookupId||persistedId||"chordspark";
 }
 
+function resolveAppActiveInstrument(activeInstrument){
+  var candidate=activeInstrument||null;
+  var lookupId=resolveAppActiveInstrumentId(candidate);
+  var all;
+  var i;
+  var inst;
+  if(candidate&&(typeof candidate.act==="function"||typeof candidate.getData==="function"||candidate.ui||candidate.pages)) return candidate;
+  if(typeof SparkInstruments!=="undefined"&&SparkInstruments&&typeof SparkInstruments.getAll==="function"){
+    all=SparkInstruments.getAll()||[];
+    for(i=0;i<all.length;i++){
+      inst=all[i]||{};
+      if(inst.id===lookupId||inst.appId===lookupId||inst.instrumentId===lookupId) return inst;
+    }
+  }
+  return candidate;
+}
+
 function appApplyLegacyReward(reward, fallback){
   if(window.sparkCore&&typeof window.sparkCore.applyLegacyReward==="function"){
     return window.sparkCore.applyLegacyReward(reward||{});
@@ -939,7 +956,7 @@ function resolveModuleExerciseLaunchOptions(rawValue) {
 
 function getInstrumentModuleForLaunch(instrumentId) {
   if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
-    var active = SparkInstruments.getActive();
+    var active = resolveAppActiveInstrument(SparkInstruments.getActive());
     if (active && (!instrumentId || active.instrument === instrumentId || active.id === instrumentId)) return active;
   }
   var map = {
@@ -1636,7 +1653,9 @@ function completeGuidedSessionRequest(options) {
   }
   // Route through contract-based progress path (Phase 6 migration)
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
+    var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"
+      ? resolveAppActiveInstrument(SparkInstruments.getActive())
+      : null;
     var guidedResult = SparkContracts.createSessionResult({
       mode: "guided",
       instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,
@@ -1709,7 +1728,7 @@ function dispatchWindowActionAndRender(name, fallbackMessage, arg1, arg2) {
 
 window.act=function(a,v){
   // Delegate to active instrument's handler first
-  var _inst = SparkInstruments.getActive();
+  var _inst = resolveAppActiveInstrument(SparkInstruments.getActive());
   if (_inst && _inst.act && _inst.act(a, v)) return;
   // Spotify connect
   if(a==="spotifyConnect"){ dispatchPlayAlongAction("sparkPlayAlongConnectSpotify"); return; }
@@ -4962,7 +4981,7 @@ function _renderInner(){
   if (backBtn) backBtn.style.display = "";
   var logoText = document.querySelector(".logo-text");
   if (logoText) {
-    var _inst = SparkInstruments.getActive();
+    var _inst = resolveAppActiveInstrument(SparkInstruments.getActive());
     logoText.textContent = _inst ? resolveAppInstrumentName(_inst) + "Spark" : "SparkSuite";
   }
   // Apply instrument theme (v2 neon system)

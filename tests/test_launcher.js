@@ -348,8 +348,18 @@ test('app shell resolves thin active instrument ids before applying the theme', 
 
 test('app shell resolves thin active instrument ids before rendering the logo text', function() {
   var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('function resolveAppActiveInstrument(activeInstrument){') >= 0);
+  assert.ok(appSource.indexOf('var _inst = resolveAppActiveInstrument(SparkInstruments.getActive());') >= 0);
   assert.ok(appSource.indexOf('function resolveAppInstrumentName(activeInstrument){') >= 0);
   assert.ok(appSource.indexOf('logoText.textContent = _inst ? resolveAppInstrumentName(_inst) + "Spark" : "SparkSuite";') >= 0);
+});
+
+test('shared app action routing rehydrates thin active instruments before delegating to instrument handlers', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('function resolveAppActiveInstrument(activeInstrument){') >= 0);
+  assert.ok(appSource.indexOf('var _inst = resolveAppActiveInstrument(SparkInstruments.getActive());') >= 0);
+  assert.ok(appSource.indexOf('if (_inst && _inst.act && _inst.act(a, v)) return;') >= 0);
+  assert.ok(appSource.indexOf('var active = resolveAppActiveInstrument(SparkInstruments.getActive());') >= 0);
 });
 
 test('shared completion events resolve app ids from the active instrument instead of hardcoding chordspark', function() {
@@ -367,8 +377,10 @@ test('guitar drill analytics resolve app ids from the active instrument instead 
 
 test('guided completion preserves thin active instrument app ids in session results', function() {
   var appSource = loadJS('js/app.js');
-  assert.ok(appSource.indexOf('var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
+  assert.ok(appSource.indexOf('var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"') >= 0);
+  assert.ok(appSource.indexOf('? resolveAppActiveInstrument(SparkInstruments.getActive())') >= 0);
   assert.ok(appSource.indexOf('instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,') >= 0);
+  assert.ok(appSource.indexOf('instrumentType: guidedActiveInstrument ? (guidedActiveInstrument.instrument || null) : null,') >= 0);
 });
 
 test('shared app routes chart and exercise editor actions through the editor engine', function() {
