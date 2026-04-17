@@ -2383,8 +2383,8 @@
     this.setLastSessionOutcome(result);
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
-      activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
-        ? (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
+      activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
+        ? (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
         : this.runtimeState.activeInstrumentId,
       activeInstrumentType: this.runtimeState.activeInstrumentType,
       activePlanId: this.currentPlan ? this.currentPlan.id : this.runtimeState.activePlanId,

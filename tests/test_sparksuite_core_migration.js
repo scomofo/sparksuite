@@ -3706,6 +3706,27 @@ test("completeSession finalizes the migrated daily plan and awards completion pr
   assert.strictEqual(lastProgressEvent.xpAwarded, 20);
 });
 
+test("completeSession preserves instrument ids in runtime state instead of collapsing to instrument types", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  plan.instrumentId = "pianospark";
+  plan.instrumentType = "piano";
+  core.currentPlan = plan;
+  core.updateRuntimeState({
+    activeInstrumentId: "pianospark",
+    activeInstrumentType: "piano"
+  });
+
+  core.completeSession({
+    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+    itemId: plan.segments[0].id
+  });
+
+  assert.strictEqual(core.runtimeState.activeInstrumentId, "pianospark");
+  assert.strictEqual(core.runtimeState.activeInstrumentType, "piano");
+});
+
 test("completeSession returns engine-owned rhythm learning summary while bridge syncs legacy mastery state", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
