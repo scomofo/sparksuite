@@ -1,0 +1,58 @@
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+
+var passed = 0;
+var failed = 0;
+
+function loadJS(file) {
+  return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+}
+
+function test(name, fn) {
+  try {
+    resetEnv();
+    fn();
+    passed++;
+    console.log("  PASS: " + name);
+  } catch (err) {
+    failed++;
+    console.error("  FAIL: " + name);
+    console.error("    " + err.message);
+  }
+}
+
+function resetEnv() {
+  global.window = global;
+  global.escHTML = function(value) { return String(value == null ? "" : value); };
+  global.act = function() {};
+  global.buildAnalyticsSummary = function() { return null; };
+}
+
+console.log("\n--- Analytics Page Resolution ---");
+
+test("analyticsPage ignores sentinel recommendation labels and reasons", function() {
+  global.buildAnalyticsSummary = function() {
+    return {
+      weakestTransitions: [],
+      weakestSongs: [],
+      weakestPhrases: [],
+      strongestSkills: [],
+      recentImprovement: [],
+      practiceConsistency: {},
+      recommendations: [
+        { label: "undefined", reason: "null" }
+      ]
+    };
+  };
+
+  global.eval(loadJS("js/pages/analytics.js"));
+
+  var html = analyticsPage();
+  assert.ok(html.indexOf("Recommendation") >= 0);
+  assert.strictEqual(html.indexOf("undefined"), -1);
+  assert.strictEqual(html.indexOf("null"), -1);
+});
+
+console.log("\n" + passed + " passed, " + failed + " failed");
+if (failed > 0) process.exit(1);
