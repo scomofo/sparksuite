@@ -89,7 +89,7 @@ function getPracticeSummaryItemDesc(item) {
   var desc = item && typeof item.desc === "string" ? item.desc.trim() : (item ? item.desc : null);
   return desc
     ? desc
-    : (parts.join(" - ") || prettyPracticeSummaryToken(getPracticeSummaryItemType(item) || (item && item.type) || "practice"));
+    : (parts.join(" - ") || firstPrettyPracticeSummaryToken(getPracticeSummaryItemType(item), item && item.type, "practice"));
 }
 
 function getPracticeSummaryProgress(plan) {

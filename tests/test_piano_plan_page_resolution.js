@@ -739,6 +739,27 @@ test("pianoPlanPage ignores whitespace-only subtitle meta tokens", function() {
   assert.strictEqual(html.indexOf(" -  - "), -1);
 });
 
+test("pianoPlanPage ignores whitespace-only item types in subtitle fallback", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "   ", label: "Replay Island Strum", durationSec: 240, meta: {} }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("practice") >= 0);
+  assert.strictEqual(html.indexOf(" -  - "), -1);
+});
+
 test("pianoPlanPage derives a readable focus label when a cached plan omits focus", function() {
   global.S = {
     practicePlanComplete: false,

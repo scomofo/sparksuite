@@ -160,7 +160,7 @@ function formatPlanItemSubtitle(item){
   if(exerciseFocus) parts.push(exerciseFocus);
   else if(skill) parts.push(skill);
   if(displayType) parts.push(displayType);
-  return parts.join(" - ") || String(getPlanDisplayType(item) || item.type || "practice");
+  return parts.join(" - ") || firstPrettyPlanToken(getPlanDisplayType(item), item.type, "practice");
 }
 
 function prettyPlanToken(value){
