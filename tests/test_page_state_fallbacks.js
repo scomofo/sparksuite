@@ -33,6 +33,13 @@ function resetState() {
       phrases: [{ id: 1, name: "Intro", startSec: 0, endSec: 4 }]
     },
     performEditorLibrary: [{ title: "Saved Chart", events: [] }],
+    performChart: {
+      title: "Night Drive",
+      artist: "Spark Artist",
+      instrument: "piano",
+      events: [],
+      phrases: []
+    },
     performSongData: {
       title: "River Run",
       artist: "Spark Artist",
@@ -58,6 +65,12 @@ function resetState() {
   global.validateEditorObject = function() { return []; };
   global.renderVisualTimeline = null;
   global.renderEditorInspector = function() { return '<div class="card">Inspector</div>'; };
+  global.getPerformancePhraseForTime = function() { return null; };
+  global.getNextPerformEvent = function() { return null; };
+  global.renderPerformanceHighway = function() { return '<div class="perform-highway">Highway</div>'; };
+  global.getAvailablePerformanceHighwayThemes = function() { return ["classic"]; };
+  global.getPerformanceHighwayThemeId = function() { return "classic"; };
+  global.getPerformanceHighwayInstrument = function() { return "piano"; };
   global.getPerformanceStats = function() {
     return { mastery: "solid", runs: 2, bestScore: 900, bestAccuracy: 88, bestStars: 4 };
   };
@@ -112,6 +125,16 @@ async function run() {
     assert.ok(html.indexOf("River Run") >= 0);
     assert.ok(html.indexOf("Start Performance") >= 0);
     assert.ok(html.indexOf("Best Accuracy") >= 0);
+  });
+
+  await test("perform page can render from plain global S", function() {
+    eval(loadJS("js/pages/perform.js"));
+
+    var html = performPage();
+
+    assert.ok(html.indexOf("Night Drive") >= 0);
+    assert.ok(html.indexOf("Score") >= 0);
+    assert.ok(html.indexOf("Highway") >= 0);
   });
 
   await test("progress dashboard can render from plain global S", function() {
