@@ -17,6 +17,9 @@ function planPage(){
     if (typeof raw === "boolean" || typeof raw === "object" || typeof raw === "function" || typeof raw === "symbol") {
       return null;
     }
+    if (typeof raw === "string" && !/^\s*\d+\s*$/.test(raw)) {
+      return null;
+    }
     var durationSec = typeof raw === "number" ? raw : Number(raw);
     return Number.isFinite(durationSec) && Number.isInteger(durationSec) && durationSec > 0
       ? Math.round(durationSec / 60)
