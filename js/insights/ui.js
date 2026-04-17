@@ -10,6 +10,13 @@ function prettyInsightUiToken(value){
   return text;
 }
 
+function buildInsightSkillLabel(entry) {
+  var bucket = prettyInsightUiToken(entry && entry.bucket);
+  var id = prettyInsightUiToken(entry && entry.id);
+  if (bucket && id) return bucket + ": " + id;
+  return bucket || id || "";
+}
+
 function insightsDashboardPage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
@@ -39,12 +46,16 @@ function renderStrengthWeaknessCard(pi){
   h += '<div style="margin-top:8px"><b>Strongest</b></div>';
   var strong = pi.strongestSkills || [];
   for(var i=0;i<strong.length;i++){
-    h += '<div>'+escHTML((strong[i].bucket || '') + ': ' + (strong[i].id || ''))+'  '+Math.round((strong[i].value || 0)*100)+'%</div>';
+    var strongLabel = buildInsightSkillLabel(strong[i]);
+    if(!strongLabel) continue;
+    h += '<div>'+escHTML(strongLabel)+'  '+Math.round((strong[i].value || 0)*100)+'%</div>';
   }
   h += '<div style="margin-top:8px"><b>Weakest</b></div>';
   var weak = pi.weakestSkills || [];
   for(var j=0;j<weak.length;j++){
-    h += '<div>'+escHTML((weak[j].bucket || '') + ': ' + (weak[j].id || ''))+'  '+Math.round((weak[j].value || 0)*100)+'%</div>';
+    var weakLabel = buildInsightSkillLabel(weak[j]);
+    if(!weakLabel) continue;
+    h += '<div>'+escHTML(weakLabel)+'  '+Math.round((weak[j].value || 0)*100)+'%</div>';
   }
   h += '</div>';
   return h;
