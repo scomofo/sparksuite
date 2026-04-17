@@ -198,9 +198,11 @@ function practiceTab(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
+  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
+  if(!plan) plan = S.practicePlan;
   if(plan&&plan.items&&plan.items.length){
     h+='<div class="card mb20" style="border:2px solid '+(plan.completedItems>=plan.totalItems?"#4ECDC4":"#45B7D1")+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
@@ -435,11 +437,13 @@ function practicePage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
+  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
 
   var stats = getPracticeStats();
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
+  if(!plan) plan = S.practicePlan;
 
   var h = '<div class="card mb16">';
   h += '<div><b>Practice Stats</b></div>';
@@ -470,7 +474,7 @@ function startPracticeItem(id){
   var plan = null;
   if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
     var view = window.sparkCore.getActiveSessionView();
-    if(view && view.plan && view.plan.flow === "daily_practice"){
+    if(view && view.plan && view.plan.flow === "daily_practice" && window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
       plan = SparkPracticeBridge.toLegacyPlan(view.plan);
     }
   }

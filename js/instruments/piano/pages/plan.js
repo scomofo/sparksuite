@@ -2,9 +2,11 @@ function pianoPlanPage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
+  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
+  if(!plan) plan = S.practicePlan;
   var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
     ? true
     : !!S.practicePlanComplete;
