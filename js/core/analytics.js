@@ -3,7 +3,7 @@
     if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
       return SparkState.getRoot();
     }
-    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
   }
 
   function coreAnalyticsRead(path, fallback){
