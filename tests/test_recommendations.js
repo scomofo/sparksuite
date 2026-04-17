@@ -178,6 +178,27 @@ test("generateRecommendations infers thin active instruments through the registr
   assert.strictEqual(requestedType, "ukulele");
 });
 
+test("generateRecommendations falls back to APP_NAME for non-guitar app shells", function() {
+  global.APP_NAME = "BassSpark";
+  SparkInstruments.getActive = function() {
+    return null;
+  };
+  var requestedType = null;
+  global.collectRecommendationCandidates = function(appType) {
+    requestedType = appType;
+    return [];
+  };
+  global.filterRecommendationCandidates = function(candidates) {
+    return candidates;
+  };
+  global.balanceRecommendationSet = function(candidates) {
+    return candidates;
+  };
+
+  generateRecommendations();
+  assert.strictEqual(requestedType, "bass");
+});
+
 test("module-progress scoring increases when the weakest metric is lower", function() {
   var stronger = {
     id: "module_stronger",

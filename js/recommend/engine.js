@@ -1,5 +1,14 @@
 (function(){
 
+  function inferRecommendationAppTypeFromName(name) {
+    var value = String(name || "").toLowerCase();
+    if (value.indexOf("piano") >= 0) return "piano";
+    if (value.indexOf("ukulele") >= 0 || value.indexOf("uke") >= 0) return "ukulele";
+    if (value.indexOf("bass") >= 0) return "bass";
+    if (value.indexOf("drum") >= 0) return "drums";
+    return "guitar";
+  }
+
   function rehydrateRecommendationInstrument(active) {
     if (!active) return null;
     var key = active.id || active.appId || active.instrumentId || active.instrument || null;
@@ -54,7 +63,7 @@
         return active.instrument || active.instrumentType;
       }
     }
-    return /piano/i.test(typeof APP_NAME !== "undefined" ? APP_NAME : "") ? "piano" : "guitar";
+    return inferRecommendationAppTypeFromName(typeof APP_NAME !== "undefined" ? APP_NAME : "");
   }
 
   // Service wrapper for engine-first architecture
