@@ -22,6 +22,27 @@ function getGamesPageInstrument(){
   return inst;
 }
 
+function _normalizeGamesTextToken(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function _firstGamesTextToken(){
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = _normalizeGamesTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 // ===== RHYTHM GAME TAB =====
 function getLegacyRhythmRuntime(){
   var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
@@ -156,10 +177,12 @@ function runnerGamePage(){
   // Target chord card
   h+='<div class="card mb12" style="padding:10px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(69,183,209,.12));border:2px solid rgba(78,205,196,.3)">';
   if(runtime.target){
+    var targetShort = _firstGamesTextToken(runtime.target.short, runtime.target.name, "?");
+    var targetName = _firstGamesTextToken(runtime.target.name, runtime.target.short, "Target chord");
     h+=UI.chord(runtime.target,55);
     h+='<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Target Chord</div>';
-    h+='<div style="font-size:22px;font-weight:900;color:var(--text-primary)">'+escHTML(runtime.target.short)+'</div>';
-    h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(runtime.target.name)+'</div></div>';
+    h+='<div style="font-size:22px;font-weight:900;color:var(--text-primary)">'+escHTML(targetShort)+'</div>';
+    h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(targetName)+'</div></div>';
   }
   h+='</div>';
 
@@ -172,11 +195,12 @@ function runnerGamePage(){
     var o=runtime.obstacles[i];
     if(o.x<-80||o.x>500)continue;
     var cls="runner-obstacle";
+    var obstacleShort = _firstGamesTextToken(o.short, o.name, "?");
     if(o.result==="correct")cls+=" correct";
     else if(o.result==="wrong")cls+=" wrong";
     else if(o.result==="missed")cls+=" missed";
     else cls+=" normal";
-    h+='<div class="'+cls+'" style="left:'+Math.round(o.x)+'px">'+escHTML(o.short)+'</div>';
+    h+='<div class="'+cls+'" style="left:'+Math.round(o.x)+'px">'+escHTML(obstacleShort)+'</div>';
   }
   // Scrolling ground dashes
   var offset=Math.round(runtime.distance%30);
