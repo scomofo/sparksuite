@@ -41,8 +41,8 @@ function editorPage(){
   var errors = validateEditorObject ? validateEditorObject(obj) : [];
 
   h += '<div class="card mb16">';
-  h += '<div><b>Mode:</b> '+escHTML(S.editorMode || "chart")+'</div>';
-  h += '<div><b>ID:</b> '+escHTML(obj.id || "")+'</div>';
+  h += '<div><b>Mode:</b> '+escHTML(firstEditorTextToken(S.editorMode, "chart"))+'</div>';
+  h += '<div><b>ID:</b> '+escHTML(firstEditorTextToken(obj.id))+'</div>';
   h += '<div><b>Dirty:</b> '+(S.editorDirty ? 'Yes' : 'No')+'</div>';
   h += '</div>';
 
@@ -102,7 +102,7 @@ function renderEditorTimeline(obj){
   var bpm = typeof getEditorBpm === "function" ? getEditorBpm() : 80;
   var grid = typeof buildTimelineGridLines === "function" ? buildTimelineGridLines(range.startSec, range.endSec, bpm, S.editorGridDivision || "1/4") : [];
   var h = '';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(S.editorGridDivision||"1/4")+'</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(firstEditorTextToken(S.editorGridDivision, "1/4"))+'</div>';
   h += '<div style="padding:12px;border-radius:12px;background:var(--input-bg)">';
   for(var i=0;i<grid.length;i++){
     h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+escHTML(grid[i].label)+' ('+grid[i].t.toFixed(2)+'s)</div>';
