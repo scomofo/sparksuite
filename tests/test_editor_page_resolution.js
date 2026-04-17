@@ -11,11 +11,11 @@ function resetEnvironment() {
   global.escHTML = function(value) { return String(value == null ? "" : value); };
   global.act = function() {};
   global.S = {
-    editorMode: "chart",
+    editorMode: "undefined",
     editorDirty: false,
     editorSelectedId: "evt_1",
     editorPlayheadSec: 0,
-    editorGridDivision: "1/4",
+    editorGridDivision: "null",
     editorSnapEnabled: true,
     editorObject: {
       id: "song_chart_1",
@@ -56,6 +56,7 @@ console.log("\n--- Editor Page Resolution ---");
 test("editorPage ignores stale metadata and item labels", function() {
   var html = editorPage();
   assert.ok(html.indexOf("song_chart_1") >= 0);
+  assert.ok(html.indexOf("Mode:</b> chart") >= 0);
   assert.ok(html.indexOf("value=\"song_chart_1\"") >= 0);
   assert.ok(html.indexOf("value=\"null\"") === -1);
   assert.ok(html.indexOf("undefined @ 1.5") === -1);
