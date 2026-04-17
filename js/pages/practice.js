@@ -85,6 +85,10 @@ function getPracticeSummaryProgress(plan) {
   };
 }
 
+function getPracticeSummaryFocus(plan) {
+  return plan && plan.focus ? plan.focus : "No practice focus yet.";
+}
+
 function sv2HomeDashboard() {
   var inst = getPracticePageInstrument();
   if (!inst) return "";
@@ -269,7 +273,7 @@ function practiceTab(){
     h+='<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
     h+='<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+planProgress.completedItems+'/'+planProgress.totalItems+'</span>';
     h+='</div>';
-    h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(plan.focus)+'</div>';
+    h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(getPracticeSummaryFocus(plan))+'</div>';
     for(var pi=0;pi<plan.items.length;pi++){
       var item=plan.items[pi];
       h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
