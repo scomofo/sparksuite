@@ -10,17 +10,18 @@ function planPage(){
   var planCompleted = coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted
     ? true
     : !!S.practicePlanComplete;
+  var hasPlanItems = !!(plan && Array.isArray(plan.items) && plan.items.length);
   var h = '';
 
   h += '<div class="card mb16">';
   h += '<h2>Today\'s Practice Plan</h2>';
   h += '<div class="muted">'+escHTML(getPlanFocusLabel(plan))+'</div>';
-  if(planCompleted){
+  if(hasPlanItems && planCompleted){
     h += '<div style="margin-top:8px;color:var(--success);font-weight:700">Plan completed!</div>';
   }
   h += '</div>';
 
-  if(!plan || !Array.isArray(plan.items) || !plan.items.length){
+  if(!hasPlanItems){
     h += '<div class="card mb16"><div class="muted">No practice plan yet.</div></div>';
     h += '<div class="card mb16" style="text-align:center">';
     h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
