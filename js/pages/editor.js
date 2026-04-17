@@ -1,6 +1,27 @@
 /* ===== Shared Editor Page ===== */
 /* Handoffs 6-9: editor shell with items list, inspector, timeline, visual timeline */
 
+function normalizeEditorTextToken(value){
+  var text;
+  var lower;
+  if(typeof value !== "string") return "";
+  text = value.trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function firstEditorTextToken(){
+  var i;
+  var token;
+  for(i = 0; i < arguments.length; i++){
+    token = normalizeEditorTextToken(arguments[i]);
+    if(token) return token;
+  }
+  return "";
+}
+
 function editorPage(){
   var obj = S.editorObject;
   var h = '';
@@ -27,9 +48,9 @@ function editorPage(){
 
   h += '<div class="card mb16">';
   h += '<div class="mb8"><b>Metadata</b></div>';
-  h += '<input class="set-input mb8" value="'+escHTML(obj.title || "")+'" oninput="act(\'editorField\',\'title|\' + this.value)"/>';
+  h += '<input class="set-input mb8" value="'+escHTML(firstEditorTextToken(obj.title, obj.id))+'" oninput="act(\'editorField\',\'title|\' + this.value)"/>';
   if(obj.artist !== undefined){
-    h += '<input class="set-input mb8" value="'+escHTML(obj.artist || "")+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
+    h += '<input class="set-input mb8" value="'+escHTML(firstEditorTextToken(obj.artist))+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
   }
   if(obj.bpm !== undefined){
     h += '<input class="set-input mb8" type="number" value="'+(obj.bpm || 80)+'" oninput="act(\'editorField\',\'bpm|\' + this.value)"/>';
@@ -141,13 +162,13 @@ function renderEditorItemsList(obj){
 
 function getEditorItemSummary(kind, item){
   if(kind==="event"){
-    return (item.type || "event") + " @ " + (item.t || 0);
+    return firstEditorTextToken(item.type, "event") + " @ " + (item.t || 0);
   }
   if(kind==="phrase"){
-    return (item.name || "phrase") + " \u00b7 " + (item.startSec || 0) + " \u2192 " + (item.endSec || 0);
+    return firstEditorTextToken(item.name, "phrase") + " \u00b7 " + (item.startSec || 0) + " \u2192 " + (item.endSec || 0);
   }
   if(kind==="step"){
-    return item.chord || item.note || item.type || "step";
+    return firstEditorTextToken(item.chord, item.note, item.type, "step");
   }
   return kind;
 }
