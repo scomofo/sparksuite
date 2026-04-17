@@ -73,6 +73,9 @@ function resetState() {
           };
         }
       };
+    },
+    getAll: function() {
+      return [global.SparkInstruments.getActive()];
     }
   };
 
@@ -313,6 +316,28 @@ test("quickStart resolves a chord object when legacy context only provides chord
         }
       }
     };
+  };
+
+  bassAct("quickStart");
+
+  assert.strictEqual(S.currentChord && S.currentChord.name, "E");
+  assert.strictEqual(S.screen, "session");
+});
+
+test("quickStart rehydrates thin active instruments before reading bass session data", function() {
+  var fullInstrument = {
+    appId: "bassspark",
+    id: "bassspark",
+    getData: function() {
+      return {
+        ALL_CHORDS: [{ name: "E" }, { name: "A" }],
+        SESSIONS: []
+      };
+    }
+  };
+  global.SparkInstruments = {
+    getActive: function() { return { appId: "bassspark" }; },
+    getAll: function() { return [fullInstrument]; }
   };
 
   bassAct("quickStart");

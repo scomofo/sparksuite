@@ -85,6 +85,9 @@ function resetState() {
           };
         }
       };
+    },
+    getAll: function() {
+      return [global.SparkInstruments.getActive()];
     }
   };
 
@@ -272,6 +275,29 @@ test("quickStart resolves a chord object when legacy context only provides chord
         }
       }
     };
+  };
+
+  guitarAct("quickStart");
+
+  assert.strictEqual(S.currentChord && S.currentChord.name, "E");
+  assert.strictEqual(S.screen, "session");
+});
+
+test("quickStart rehydrates thin active instruments before reading guitar session data", function() {
+  var fullInstrument = {
+    appId: "chordspark",
+    id: "chordspark",
+    getData: function() {
+      return {
+        ALL_CHORDS: [{ name: "E" }, { name: "A" }],
+        FINGER_EXERCISES: [],
+        SESSIONS: []
+      };
+    }
+  };
+  global.SparkInstruments = {
+    getActive: function() { return { appId: "chordspark" }; },
+    getAll: function() { return [fullInstrument]; }
   };
 
   guitarAct("quickStart");

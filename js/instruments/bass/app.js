@@ -298,8 +298,29 @@
     return true;
   }
 
+  function resolveBassActiveInstrument() {
+    var active = (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function")
+      ? SparkInstruments.getActive()
+      : null;
+    if (active && typeof active.getData === "function") return active;
+    if (!active || typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+      return active;
+    }
+    var activeId = active.appId || active.id || active.instrumentId || null;
+    var instruments = SparkInstruments.getAll() || [];
+    for (var i = 0; i < instruments.length; i++) {
+      var instrument = instruments[i];
+      if (!instrument) continue;
+      if (instrument.appId === activeId || instrument.id === activeId || instrument.instrumentId === activeId) {
+        return instrument;
+      }
+    }
+    return active;
+  }
+
   function bassAct(a, v) {
-    var D = SparkInstruments.getActive().getData();
+    var activeInstrument = resolveBassActiveInstrument();
+    var D = activeInstrument && typeof activeInstrument.getData === "function" ? activeInstrument.getData() : {};
 
     if (a === "quickStart") {
       var session = getLegacyPracticeContext(buildLegacyPracticePlan({ mode: "quickStart", level: bassStateRead("level", 1) }));
