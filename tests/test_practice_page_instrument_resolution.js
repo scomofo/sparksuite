@@ -836,6 +836,46 @@ test("practiceTab ignores stale zero totalItems when cached plans still have ite
   assert.strictEqual(html.indexOf("1/0"), -1);
 });
 
+test("practiceTab derives counts from real items when stale sparse arrays leave raw totals behind", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlan: {
+      focus: "Song mastery",
+      completedItems: 1,
+      totalItems: 2,
+      items: [
+        { id: "song_1", type: "song", label: "Replay Island Strum", completed: true },
+        null
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = practiceTab();
+  assert.ok(html.indexOf("1/1") >= 0);
+  assert.strictEqual(html.indexOf("1/2"), -1);
+});
+
 test("practiceTab derives a readable focus label when cached plans omit focus", function() {
   global.S = {
     level: 1,
