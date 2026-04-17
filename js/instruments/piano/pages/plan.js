@@ -20,11 +20,11 @@ function pianoPlanPage(){
 
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
-    h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(item.type)+'">';
+    h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPianoPlanDisplayType(item))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
     h += '<div style="font-weight:700;font-size:14px">'+escHTML(item.label)+'</div>';
-    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(item.type)+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
+    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(String(getPianoPlanDisplayType(item) || item.type || "practice").replace(/_/g," "))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
     h += '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(item.id)+'\')" style="background:var(--accent);color:#fff">Go</button>';
     h += '</div>';
@@ -43,6 +43,20 @@ function pianoPlanPage(){
   h += '</div>';
 
   return h;
+}
+
+function getPianoPlanDisplayType(item){
+  item = item || {};
+  var meta = item.meta || {};
+  if(item.type === "song" && meta.songId) return "performance_song";
+  if(item.type === "practice"){
+    if(meta.guidedSession != null) return "guided_session";
+    if(meta.from || meta.to || meta.key) return "transition";
+    if(meta.bpm != null) return "rhythm";
+    if(meta.exerciseType) return meta.exerciseType;
+    if(meta.exerciseId) return "finger";
+  }
+  return item.type;
 }
 
 function planItemColor(type){

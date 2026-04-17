@@ -112,5 +112,37 @@ test("launchGuidedSessionItem rehydrates a thin active piano shell before choosi
   ]);
 });
 
+test("launchPracticeItem infers performance song launches from generic core song segments", function() {
+  var launched = launchPracticeItem({
+    id: "performance_song_river_walk",
+    type: "song",
+    meta: {
+      songId: "river_walk",
+      arrangementType: "chords",
+      difficultyId: "normal"
+    }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "planStartPerformanceSong", value: "river_walk|chords|normal" }
+  ]);
+});
+
+test("launchPracticeItem infers guided launches from generic core practice segments", function() {
+  var launched = launchPracticeItem({
+    id: "guided_session_2",
+    type: "practice",
+    meta: {
+      guidedSession: 2
+    }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "guidedStart", value: 2 }
+  ]);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);
