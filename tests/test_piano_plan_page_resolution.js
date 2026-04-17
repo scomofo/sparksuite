@@ -546,8 +546,41 @@ test("piano plan and practice sections tolerate sparse cached plan items that co
 
   assert.strictEqual(planHtml.indexOf("undefined"), -1);
   assert.strictEqual(practiceHtml.indexOf("undefined"), -1);
-  assert.ok(planHtml.indexOf(">Unavailable<") >= 0);
-  assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
+  assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
+  assert.ok(planHtml.indexOf("warmup 1") >= 0);
+  assert.ok(practiceHtml.indexOf("warmup 1") >= 0);
+});
+
+test("piano plan and practice sections skip null slots when real plan items exist", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseId: "warmup_1" } },
+        null
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
   assert.ok(planHtml.indexOf("warmup 1") >= 0);
   assert.ok(practiceHtml.indexOf("warmup 1") >= 0);
 });
