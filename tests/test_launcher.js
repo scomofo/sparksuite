@@ -689,6 +689,14 @@ test('shared root helpers fall back to global S when SparkState returns a null r
   var feedbackSource = loadJS('js/desktop/feedback.js');
   var channelSource = loadJS('js/desktop/channels.js');
   var playAlongStateSource = loadJS('js/sparksuite/core/play_along_state_service.js');
+  var sharedPageSource = loadJS('js/pages/shared.js');
+  var practicePageSource = loadJS('js/pages/practice.js');
+  var sessionPageSource = loadJS('js/pages/session.js');
+  var songsPageSource = loadJS('js/pages/songs.js');
+  var toolsPageSource = loadJS('js/pages/tools.js');
+  var guitarAppSource = loadJS('js/instruments/guitar/app.js');
+  var bassAppSource = loadJS('js/instruments/bass/app.js');
+  var pianoSharedSource = loadJS('js/instruments/piano/pages/shared.js');
   assert.ok(homeEngineSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
   assert.ok(homeEngineSource.indexOf('if(sparkRoot) return sparkRoot;') >= 0);
   assert.ok(feedbackSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
@@ -697,6 +705,22 @@ test('shared root helpers fall back to global S when SparkState returns a null r
   assert.ok(channelSource.indexOf('if(sparkRoot) return sparkRoot;') >= 0);
   assert.ok(playAlongStateSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
   assert.ok(playAlongStateSource.indexOf('if (sparkRoot) return sparkRoot;') >= 0);
+  assert.ok(sharedPageSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(sharedPageSource.indexOf('if(sparkRoot) root = sparkRoot;') >= 0);
+  assert.ok(practicePageSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(practicePageSource.indexOf('if (sparkRoot) root = sparkRoot;') >= 0);
+  assert.ok(sessionPageSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(sessionPageSource.indexOf('if(sparkRoot) root = sparkRoot;') >= 0);
+  assert.ok(songsPageSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(songsPageSource.indexOf('if(sparkRoot) root = sparkRoot;') >= 0);
+  assert.ok(toolsPageSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(toolsPageSource.indexOf('if(sparkRoot) root = sparkRoot;') >= 0);
+  assert.ok(guitarAppSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(guitarAppSource.indexOf('if (sparkRoot) root = sparkRoot;') >= 0);
+  assert.ok(bassAppSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(bassAppSource.indexOf('if (sparkRoot) root = sparkRoot;') >= 0);
+  assert.ok(pianoSharedSource.indexOf('var sparkRoot = SparkState.getRoot();') >= 0);
+  assert.ok(pianoSharedSource.indexOf('if (sparkRoot) root = sparkRoot;') >= 0);
 });
 
 test('community submit actions initialize draft state before editing', function() {

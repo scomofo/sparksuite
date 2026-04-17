@@ -473,6 +473,21 @@ eval(loadJS("js/instruments/piano/pages/tools.js"));
 
 console.log("\n--- Piano Runtime Core Migration ---");
 
+test("piano page helpers guard null SparkState roots before falling back to global S", function() {
+  var pianoPracticeSource = loadJS("js/instruments/piano/pages/practice.js");
+  var pianoToolsSource = loadJS("js/instruments/piano/pages/tools.js");
+  var pianoSharedSource = loadJS("js/instruments/piano/pages/shared.js");
+  var pianoSongsSource = loadJS("js/instruments/piano/pages/songs.js");
+  assert.ok(pianoPracticeSource.indexOf("var sparkRoot = SparkState.getRoot();") >= 0);
+  assert.ok(pianoPracticeSource.indexOf("if (sparkRoot) root = sparkRoot;") >= 0);
+  assert.ok(pianoToolsSource.indexOf("var sparkRoot = SparkState.getRoot();") >= 0);
+  assert.ok(pianoToolsSource.indexOf("if (sparkRoot) root = sparkRoot;") >= 0);
+  assert.ok(pianoSharedSource.indexOf("var sparkRoot = SparkState.getRoot();") >= 0);
+  assert.ok(pianoSharedSource.indexOf("if (sparkRoot) root = sparkRoot;") >= 0);
+  assert.ok(pianoSongsSource.indexOf("var sparkRoot = SparkState.getRoot();") >= 0);
+  assert.ok(pianoSongsSource.indexOf("if (sparkRoot) root = sparkRoot;") >= 0);
+});
+
 test("start_guided_session delegates to sparkCore and syncs piano session aliases", function() {
   pianoAct("start_guided_session");
 

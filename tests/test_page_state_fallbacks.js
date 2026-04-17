@@ -137,6 +137,23 @@ async function run() {
     assert.ok(html.indexOf("Highway") >= 0);
   });
 
+  await test("games and calibration pages can render from plain global S", function() {
+    global.getPerformanceCalibrationView = function() {
+      return {
+        source: "midi",
+        mode: null,
+        globalOffsetMs: 0,
+        midiOffsetMs: 5,
+        micOffsetMs: -3
+      };
+    };
+    eval(loadJS("js/pages/games.js"));
+    eval(loadJS("js/pages/perform_calibration.js"));
+
+    assert.ok(rhythmTab().indexOf("Rhythm Game") >= 0);
+    assert.ok(performCalibrationPage().indexOf("Performance Calibration") >= 0);
+  });
+
   await test("progress dashboard can render from plain global S", function() {
     global.sparkCore = {
       progressEngine: {
@@ -177,11 +194,15 @@ async function run() {
     eval(loadJS("js/pages/editor.js"));
     eval(loadJS("js/pages/performance_editor.js"));
     eval(loadJS("js/pages/perform_song.js"));
+    eval(loadJS("js/pages/games.js"));
+    eval(loadJS("js/pages/perform_calibration.js"));
     eval(loadJS("js/pages/progress_dashboard.js"));
 
     assert.ok(editorPage().indexOf("Demo Chart") >= 0);
     assert.ok(performanceEditorPage().indexOf("Performance Chart") >= 0);
     assert.ok(performSongPage().indexOf("River Run") >= 0);
+    assert.ok(rhythmTab().indexOf("Rhythm Game") >= 0);
+    assert.ok(performCalibrationPage().indexOf("Performance Calibration") >= 0);
     assert.ok(progressDashboardPage().indexOf("Your Progress") >= 0);
   });
 

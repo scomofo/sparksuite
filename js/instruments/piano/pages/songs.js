@@ -6,9 +6,11 @@ var _pianoSongs = [];
 var _pianoCurriculum = [];
 
 function pianoSongRead(path, fallback) {
-  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
-    ? SparkState.getRoot()
-    : null;
+  var root = null;
+  if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+    var sparkRoot = SparkState.getRoot();
+    if (sparkRoot) root = sparkRoot;
+  }
   if (!root && typeof globalThis !== "undefined") {
     root = globalThis.__sparkState || globalThis.S || null;
   }
@@ -27,9 +29,11 @@ function pianoSongRead(path, fallback) {
 }
 
 function pianoSongWrite(path, value) {
-  var root = typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"
-    ? SparkState.getRoot()
-    : null;
+  var root = null;
+  if (typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function") {
+    var sparkRoot = SparkState.getRoot();
+    if (sparkRoot) root = sparkRoot;
+  }
   if (!root && typeof globalThis !== "undefined") {
     root = globalThis.__sparkState || globalThis.S || null;
   }
