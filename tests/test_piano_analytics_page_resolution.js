@@ -15,9 +15,9 @@ function resetEnvironment() {
       weakestTransitions: [{ label: "undefined", avgMs: 180 }],
       weakestSongs: [{ label: "null", accuracy: 62 }],
       weakestPhrases: [{ label: "NaN", accuracy: 58 }],
-      strongestSkills: [{ label: "undefined", value: "92%" }],
-      recentImprovement: [{ label: "null", value: "+8%" }],
-      practiceConsistency: { streak: 4, sessions: 12, historyCount: 20 },
+      strongestSkills: [{ label: "undefined", value: { bad: true } }],
+      recentImprovement: [{ label: "null", value: ["junk"] }],
+      practiceConsistency: { streak: { bad: true }, sessions: 12, historyCount: "NaN" },
       recommendations: [{ label: "undefined", reason: "null" }]
     };
   };
@@ -49,6 +49,10 @@ test("piano analytics page ignores stale weakness and recommendation labels", fu
   assert.ok(html.indexOf("Skill") >= 0);
   assert.ok(html.indexOf("Improvement") >= 0);
   assert.ok(html.indexOf("Recommendation") >= 0);
+  assert.ok(html.indexOf("[object Object]") === -1);
+  assert.ok(html.indexOf("junk") === -1);
+  assert.ok(html.indexOf("Streak: 0") >= 0);
+  assert.ok(html.indexOf("History Entries: 0") >= 0);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
