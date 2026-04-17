@@ -1,12 +1,33 @@
 /* ===== ChordSpark: Performance Chart Editor ===== */
 
+function _normalizePerformanceEditorTextToken(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function _firstPerformanceEditorTextToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = _normalizePerformanceEditorTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function performanceEditorPage() {
   var editorView = getPerformanceEditorView();
   var chart = editorView.chart || S.performEditorChart;
   var editorMode = editorView.mode;
   var editorSnap = editorView.snap;
-  var editorTitle = editorView.chartTitle || (chart && chart.title) || "Untitled";
-  var editorSource = editorView.source || "blank";
+  var editorTitle = _firstPerformanceEditorTextToken(editorView.chartTitle, chart && chart.title, "Untitled");
+  var editorSource = _firstPerformanceEditorTextToken(editorView.source, "blank");
   var editorDirty = !!editorView.dirty;
   var selectedEventId = editorView.selectedEventId;
   var selectedEventLabel = editorView.selectedEventLabel;
@@ -64,9 +85,11 @@ function performanceEditorPage() {
       h += '<h4 style="margin-top:20px;font-size:14px;font-weight:800;color:var(--text-primary)">Saved Charts</h4>';
       for (var li = 0; li < editorLibrary.length; li++) {
         var lc = editorLibrary[li];
+        var libraryTitle = _firstPerformanceEditorTextToken(lc.title, lc.id, "Untitled");
+        var libraryArrangement = _firstPerformanceEditorTextToken(lc.arrangementType, "chords");
         h += '<div class="card" style="cursor:pointer;margin-top:8px" onclick="act(\'editorLoad\',' + li + ')">';
         h += '<div style="display:flex;justify-content:space-between;align-items:center">';
-        h += '<div><strong>' + escHTML(lc.title || "Untitled") + '</strong><br><span style="font-size:11px;color:var(--text-muted)">' + (lc.events ? lc.events.length : 0) + ' events &bull; ' + escHTML(lc.arrangementType || "chords") + '</span></div>';
+        h += '<div><strong>' + escHTML(libraryTitle) + '</strong><br><span style="font-size:11px;color:var(--text-muted)">' + (lc.events ? lc.events.length : 0) + ' events &bull; ' + escHTML(libraryArrangement) + '</span></div>';
         h += '<button class="btn btn-sm" onclick="event.stopPropagation();act(\'editorDelete\',' + li + ')" style="color:#FF6B6B;background:none;font-size:16px">&times;</button>';
         h += '</div></div>';
       }
@@ -119,8 +142,9 @@ function performanceEditorPage() {
       for (var ei = 0; ei < chart.events.length; ei++) {
         var evt = chart.events[ei];
         var sel = selectedEventId === evt.id;
+        var eventLabel = _firstPerformanceEditorTextToken(evt.laneLabel, evt.chord, evt.note, "?");
         h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px;margin:2px 0;border-radius:6px;background:' + (sel ? "#4ECDC422" : "transparent") + ';border:1px solid ' + (sel ? "#4ECDC4" : "transparent") + ';cursor:pointer" onclick="act(\'editorSelectEvent\',' + evt.id + ')">';
-        h += '<div><span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(evt.laneLabel || evt.chord || evt.note || "?") + '</span>';
+        h += '<div><span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(eventLabel) + '</span>';
         h += ' <span style="font-size:11px;color:var(--text-muted)">' + (evt.t || 0).toFixed(2) + 's / ' + (evt.dur || 0).toFixed(2) + 's</span></div>';
         h += '<button class="btn btn-sm" onclick="event.stopPropagation();act(\'editorDeleteEvent\',' + evt.id + ')" style="color:#FF6B6B;background:none;padding:2px 6px">&times;</button>';
         h += '</div>';
@@ -136,10 +160,11 @@ function performanceEditorPage() {
       }
       if (selEvt) {
         var eid = selEvt.id;
+        var selectedDisplayLabel = _firstPerformanceEditorTextToken(selectedEventLabel, selEvt.laneLabel, selEvt.chord, selEvt.note, "?");
         h += '<div class="card mb20" style="border:2px solid #4ECDC4">';
         h += '<div style="font-size:12px;font-weight:700;color:#4ECDC4;margin-bottom:8px">Edit Event #' + eid + '</div>';
         h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Selected: '
-          + escHTML(selectedEventLabel || selEvt.laneLabel || selEvt.chord || selEvt.note || "?")
+          + escHTML(selectedDisplayLabel)
           + ' @ ' + ((selectedEventTime != null ? selectedEventTime : selEvt.t || 0).toFixed(2))
           + 's for ' + ((selectedEventDuration != null ? selectedEventDuration : selEvt.dur || 0).toFixed(2))
           + 's</div>';
@@ -188,80 +213,80 @@ function getPerformanceEditorView() {
       : (S.performEditorLibrary || []),
     mode: documentView && documentView.mode
       ? documentView.mode
-      : (runtimeState && runtimeState.performanceEditorMode
+      : ((runtimeState && runtimeState.performanceEditorMode)
       ? runtimeState.performanceEditorMode
-      : (S.performEditorMode || "chords"),
+      : (S.performEditorMode || "chords")),
     snap: documentView && documentView.snap
       ? documentView.snap
-      : (runtimeState && runtimeState.performanceEditorSnap
+      : ((runtimeState && runtimeState.performanceEditorSnap)
       ? runtimeState.performanceEditorSnap
-      : (S.performEditorSnap || "1/8"),
+      : (S.performEditorSnap || "1/8")),
     chartId: documentView && Object.prototype.hasOwnProperty.call(documentView, "chartId")
       ? documentView.chartId
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorChartId")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorChartId"))
       ? runtimeState.performanceEditorChartId
-      : (S.performEditorChart && S.performEditorChart.id ? S.performEditorChart.id : null),
+      : (S.performEditorChart && S.performEditorChart.id ? S.performEditorChart.id : null)),
     chartTitle: documentView && Object.prototype.hasOwnProperty.call(documentView, "title")
       ? documentView.title
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorChartTitle")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorChartTitle"))
       ? runtimeState.performanceEditorChartTitle
-      : (S.performEditorChart && S.performEditorChart.title ? S.performEditorChart.title : null),
+      : (S.performEditorChart && S.performEditorChart.title ? S.performEditorChart.title : null)),
     source: documentView && Object.prototype.hasOwnProperty.call(documentView, "source")
       ? documentView.source
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSource")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSource"))
       ? runtimeState.performanceEditorSource
-      : (S.performEditorChart ? "existing" : "blank"),
+      : (S.performEditorChart ? "existing" : "blank")),
     dirty: documentView && Object.prototype.hasOwnProperty.call(documentView, "dirty")
       ? documentView.dirty
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorDirty")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorDirty"))
       ? runtimeState.performanceEditorDirty
-      : !!S.performEditorDirty,
+      : !!S.performEditorDirty),
     selectedEventId: documentView && documentView.selectedEvent ? documentView.selectedEvent.id
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedEventId")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedEventId"))
       ? runtimeState.performanceEditorSelectedEventId
-      : S.performEditorSelectedEventId,
+      : S.performEditorSelectedEventId),
     selectedEventLabel: documentView && documentView.selectedEvent ? documentView.selectedEvent.label
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedEventLabel")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedEventLabel"))
       ? runtimeState.performanceEditorSelectedEventLabel
-      : null,
+      : null),
     selectedEventTime: documentView && documentView.selectedEvent ? documentView.selectedEvent.time
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedEventTime")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedEventTime"))
       ? runtimeState.performanceEditorSelectedEventTime
-      : null,
+      : null),
     selectedEventDuration: documentView && documentView.selectedEvent ? documentView.selectedEvent.duration
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedEventDuration")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedEventDuration"))
       ? runtimeState.performanceEditorSelectedEventDuration
-      : null,
+      : null),
     selectedPhraseId: documentView && documentView.selectedPhrase ? documentView.selectedPhrase.id
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedPhraseId")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedPhraseId"))
       ? runtimeState.performanceEditorSelectedPhraseId
-      : null,
+      : null),
     selectedPhraseName: documentView && documentView.selectedPhrase ? documentView.selectedPhrase.name
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedPhraseName")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedPhraseName"))
       ? runtimeState.performanceEditorSelectedPhraseName
-      : null,
+      : null),
     selectedPhraseStart: documentView && documentView.selectedPhrase ? documentView.selectedPhrase.start
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedPhraseStart")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedPhraseStart"))
       ? runtimeState.performanceEditorSelectedPhraseStart
-      : null,
+      : null),
     selectedPhraseEnd: documentView && documentView.selectedPhrase ? documentView.selectedPhrase.end
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedPhraseEnd")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorSelectedPhraseEnd"))
       ? runtimeState.performanceEditorSelectedPhraseEnd
-      : null,
+      : null),
     bpm: documentView && Object.prototype.hasOwnProperty.call(documentView, "bpm")
       ? documentView.bpm
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorBpm")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorBpm"))
       ? runtimeState.performanceEditorBpm
-      : (S.performEditorChart && S.performEditorChart.bpm ? S.performEditorChart.bpm : null),
+      : (S.performEditorChart && S.performEditorChart.bpm ? S.performEditorChart.bpm : null)),
     eventCount: documentView && Object.prototype.hasOwnProperty.call(documentView, "eventCount")
       ? documentView.eventCount
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorEventCount")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorEventCount"))
       ? runtimeState.performanceEditorEventCount
-      : (S.performEditorChart && S.performEditorChart.events ? S.performEditorChart.events.length : 0),
+      : (S.performEditorChart && S.performEditorChart.events ? S.performEditorChart.events.length : 0)),
     phraseCount: documentView && Object.prototype.hasOwnProperty.call(documentView, "phraseCount")
       ? documentView.phraseCount
-      : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorPhraseCount")
+      : ((runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceEditorPhraseCount"))
       ? runtimeState.performanceEditorPhraseCount
-      : (S.performEditorChart && S.performEditorChart.phrases ? S.performEditorChart.phrases.length : 0)
+      : (S.performEditorChart && S.performEditorChart.phrases ? S.performEditorChart.phrases.length : 0))
   };
 }
