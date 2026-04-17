@@ -1,8 +1,23 @@
 (function(){
 
   function getActiveInstrumentModule(){
+    var module;
+    var candidate;
+    var all;
+    var i;
+    var entry;
     if(typeof SparkInstruments==="undefined" || !SparkInstruments.getActive) return null;
-    return SparkInstruments.getActive();
+    module = SparkInstruments.getActive();
+    if(!module) return null;
+    if(typeof module.getCurriculumMap==="function" || typeof module.getExercises==="function") return module;
+    candidate = module.id || module.appId || module.instrumentId || null;
+    if(!candidate || typeof SparkInstruments.getAll!=="function") return module;
+    all = SparkInstruments.getAll() || [];
+    for(i=0;i<all.length;i++){
+      entry = all[i] || {};
+      if(entry.id===candidate || entry.appId===candidate) return entry;
+    }
+    return module;
   }
 
   function getCompletedLessonIds(){
