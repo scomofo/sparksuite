@@ -58,6 +58,8 @@ function resetState() {
   global.SparkInstruments = {
     getActive: function() {
       return {
+        id: "bassspark",
+        appId: "bassspark",
         name: "Bass",
         instrument: "bass",
         getCurriculumMap: function() {
@@ -97,6 +99,20 @@ function resetState() {
           };
         }
       };
+    },
+    getAll: function() {
+      return [
+        {
+          id: "bassspark",
+          appId: "bassspark",
+          instrument: "bass"
+        },
+        {
+          id: "ukespark",
+          appId: "ukespark",
+          instrument: "ukulele"
+        }
+      ];
     }
   };
 }
@@ -140,6 +156,26 @@ test("generateRecommendations prioritizes module-progress candidates ahead of ge
   assert.strictEqual(recommendations[0].source, "module_progress");
   assert.strictEqual(recommendations[0].meta.exerciseId, "bass_turnaround_01");
   assert.strictEqual(S.recommendations[0].source, "module_progress");
+});
+
+test("generateRecommendations infers thin active instruments through the registry", function() {
+  SparkInstruments.getActive = function() {
+    return { appId: "ukespark" };
+  };
+  var requestedType = null;
+  global.collectRecommendationCandidates = function(appType) {
+    requestedType = appType;
+    return [];
+  };
+  global.filterRecommendationCandidates = function(candidates) {
+    return candidates;
+  };
+  global.balanceRecommendationSet = function(candidates) {
+    return candidates;
+  };
+
+  generateRecommendations();
+  assert.strictEqual(requestedType, "ukulele");
 });
 
 test("module-progress scoring increases when the weakest metric is lower", function() {
