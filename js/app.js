@@ -71,6 +71,7 @@ function tickD(){
   } else if(S.screen===SCR.DRILL&&S.drillTimer<=0){
     clearTimeout(T.drill);snd("complete");
     var detail=S.drillChords.map(function(c){return c.name;}).join(" / ");
+    var activityInstrument = getActiveInstrumentIdentityForActivity();
     if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function"){
       window.sparkCore.completeLegacyPracticeDrill({
         durationSec: 60,
@@ -83,13 +84,13 @@ function tickD(){
         toastAmount:20,
         incrementFields:{drillCount:1},
         history:{type:"drill",detail:detail,xp:20},
-        emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
+        emit:{type:"practice_session_completed",payload:{ appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail }},
         checkBadges:true
       });
     }else{
       S.drillCount++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{S.xp+=20;S.xpToast={amount:20,time:Date.now()};}
       logHistory("drill",detail,20);
-      _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
+      _sparkEmit("practice_session_completed", { appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail });
       checkBadges();saveState();
     }
     // Route through contract-based progress path (Phase 6 migration)
@@ -761,6 +762,40 @@ function getInstrumentModuleForLaunch(instrumentId) {
     piano: window.SparkPianoModule
   };
   return instrumentId ? (map[instrumentId] || null) : null;
+}
+
+function getActiveInstrumentIdentityForActivity() {
+  var active;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
+    active = SparkInstruments.getActive();
+    if (active) {
+      if (!active.instrument && !active.instrumentType) {
+        candidate = active.id || active.appId || active.instrumentId || null;
+        if (candidate && typeof SparkInstruments.getAll === "function") {
+          all = SparkInstruments.getAll() || [];
+          for (i = 0; i < all.length; i++) {
+            entry = all[i] || {};
+            if (entry.id === candidate || entry.appId === candidate) {
+              active = entry;
+              break;
+            }
+          }
+        }
+      }
+      return {
+        appId: active.id || active.appId || active.instrumentId || "chordspark",
+        instrumentType: active.instrument || active.instrumentType || null
+      };
+    }
+  }
+  return {
+    appId: "chordspark",
+    instrumentType: null
+  };
 }
 
 function buildModuleExerciseRhythmPayload(options) {
@@ -1726,18 +1761,19 @@ window.act=function(a,v){
       S.songPlaying=false;clearInterval(T.song);
     }
     snd("complete");
+    var songActivityInstrument = getActiveInstrumentIdentityForActivity();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:40,
         incrementFields:{songsPlayed:1},
         history:{type:"song",detail:S.selectedSong?S.selectedSong.title:"Song",xp:40},
-        emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 }},
+        emit:{type:"lesson_completed",payload:{ appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 }},
         checkBadges:true
       });
     }else{
       S.songsPlayed++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:40});else S.xp+=40;
       logHistory("song",S.selectedSong?S.selectedSong.title:"Song",40);
-      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
+      _sparkEmit("lesson_completed", { appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
       checkBadges();saveState();
     }
     completeSongSessionRequest({
