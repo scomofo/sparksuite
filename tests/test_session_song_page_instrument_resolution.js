@@ -230,4 +230,50 @@ test("songs import list ignores stale imported song text tokens", function() {
   assert.ok(html.indexOf(">null<") === -1);
 });
 
+test("songs forms ignore stale cached submit and import field values", function() {
+  S.songsSubTab = "community";
+  S.communityTab = "submit";
+  S.submitSong = {
+    title: "undefined",
+    artist: "null",
+    submittedBy: "NaN",
+    bpm: 90,
+    chords: [],
+    progression: []
+  };
+
+  var submitHtml = songsTab();
+  assert.ok(submitHtml.indexOf('value="undefined"') === -1);
+  assert.ok(submitHtml.indexOf('value="null"') === -1);
+  assert.ok(submitHtml.indexOf('value="NaN"') === -1);
+
+  S.songsSubTab = "import";
+  S.importedSong = {
+    id: "import_song_2",
+    title: "undefined",
+    artist: "null",
+    bpm: 88,
+    chords: ["C", "G"],
+    progression: ["C", "G"]
+  };
+
+  var importHtml = songsTab();
+  assert.ok(importHtml.indexOf('value="undefined"') === -1);
+  assert.ok(importHtml.indexOf('value="null"') === -1);
+  assert.ok(importHtml.indexOf('value="import song 2"') >= 0);
+});
+
+test("songs search inputs ignore stale sentinel strings", function() {
+  S.songsSubTab = "builtin";
+  S.songFilter = "undefined";
+  var libraryHtml = songsTab();
+  assert.ok(libraryHtml.indexOf('value="undefined"') === -1);
+  assert.ok(libraryHtml.indexOf('matching &ldquo;undefined&rdquo;') === -1);
+
+  S.songsSubTab = "community";
+  S.communitySearch = "null";
+  var communityHtml = songsTab();
+  assert.ok(communityHtml.indexOf('value="null"') === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
