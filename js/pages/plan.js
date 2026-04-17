@@ -1,4 +1,11 @@
 function planPage(){
+  function getPlanItemDurationMinutes(item){
+    var raw = item ? item.durationSec : null;
+    var durationSec = typeof raw === "number" ? raw : Number(raw);
+    return Number.isFinite(durationSec) && durationSec > 0
+      ? Math.round(durationSec / 60)
+      : null;
+  }
   function getPlanItemId(item){
     var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
     return id || null;
@@ -68,6 +75,7 @@ function planPage(){
     if(!isRenderablePlanItem(item)) continue;
     var itemId = getPlanItemId(item);
     var canLaunch = !!itemId;
+    var durationMinutes = getPlanItemDurationMinutes(item);
     var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
     var actionHtml = item.completed
       ? '<span class="text-muted">Done</span>'
@@ -78,7 +86,7 @@ function planPage(){
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
     h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPlanItemLabel(item))+'</div>';
-    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
+    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(durationMinutes != null ? ' \u2022 '+durationMinutes+'m' : '')+'</div>';
     h += '</div>';
     h += actionHtml;
     h += '</div>';
@@ -164,6 +172,7 @@ function getPlanItemLabel(item){
 
 function getPlanFocusLabel(plan){
   if(!plan || !Array.isArray(plan.items) || !plan.items.some(function(item){
+    var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
     var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
     var type = item && typeof item.type === "string" ? item.type.trim() : (item ? item.type : null);
     var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && Object.keys(item.meta).some(function(key) {
@@ -174,7 +183,7 @@ function getPlanFocusLabel(plan){
     }));
     return !!(
       item &&
-      (item.id ||
+      (id ||
        label ||
        type ||
        metaHasValue)
