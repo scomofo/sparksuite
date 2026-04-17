@@ -1,5 +1,37 @@
 /* pages/editor.js — Editor shell page (handoffs 6-9) */
 
+function pianoNormalizeEditorTextToken(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstEditorTextToken(){
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = pianoNormalizeEditorTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
+function pianoNormalizeEditorItemId(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return null;
+  text = value.trim();
+  if (!text) return null;
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return null;
+  return text;
+}
+
 function pianoEditorPage(){
   var obj = S.editorObject;
   var h = '';
@@ -19,16 +51,16 @@ function pianoEditorPage(){
   var errors = validateEditorObject ? validateEditorObject(obj) : [];
 
   h += '<div class="card mb16">';
-  h += '<div><b>Mode:</b> '+escHTML(S.editorMode || "chart")+'</div>';
-  h += '<div><b>ID:</b> '+escHTML(obj.id || "")+'</div>';
+  h += '<div><b>Mode:</b> '+escHTML(pianoFirstEditorTextToken(S.editorMode, "chart"))+'</div>';
+  h += '<div><b>ID:</b> '+escHTML(pianoFirstEditorTextToken(obj.id))+'</div>';
   h += '<div><b>Dirty:</b> '+(S.editorDirty ? 'Yes' : 'No')+'</div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
   h += '<div class="mb8"><b>Metadata</b></div>';
-  h += '<input class="set-input mb8" value="'+escHTML(obj.title || "")+'" oninput="act(\'editorField\',\'title|\' + this.value)"/>';
+  h += '<input class="set-input mb8" value="'+escHTML(pianoFirstEditorTextToken(obj.title, obj.id))+'" oninput="act(\'editorField\',\'title|\' + this.value)"/>';
   if(obj.artist !== undefined){
-    h += '<input class="set-input mb8" value="'+escHTML(obj.artist || "")+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
+    h += '<input class="set-input mb8" value="'+escHTML(pianoFirstEditorTextToken(obj.artist))+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
   }
   if(obj.bpm !== undefined){
     h += '<input class="set-input mb8" type="number" value="'+(obj.bpm || 80)+'" oninput="act(\'editorField\',\'bpm|\' + this.value)"/>';
@@ -78,7 +110,7 @@ function renderEditorObjectSummary(obj){
 function renderEditorTimelineToolbar(obj){
   var h = '<div class="card mb16">';
   h += '<div class="mb8"><b>Timeline</b></div>';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(S.editorGridDivision||"1/4")+'</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(pianoFirstEditorTextToken(S.editorGridDivision, "1/4"))+'</div>';
   h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
   h += '<button class="btn" onclick="act(\'editorPlayheadLeft\')">\u25C0</button>';
   h += '<button class="btn" onclick="act(\'editorPlayheadRight\')">\u25B6</button>';
@@ -113,9 +145,10 @@ function renderEditorItemsList(obj){
     for(var e=0;e<entries.length;e++){
       var entry = entries[e];
       var item = entry.item;
-      var selected = String(S.editorSelectedId)===String(item.id);
-      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'" onclick="act(\'editorSelect\',\''+item.id+'\')">';
-      h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(String(item.id))+'</div>';
+      var itemId = pianoNormalizeEditorItemId(item.id);
+      var selected = itemId && String(S.editorSelectedId)===String(itemId);
+      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'"'+(itemId?' onclick="act(\'editorSelect\',\''+itemId+'\')"':'')+'>';
+      h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(pianoFirstEditorTextToken(item.id, entry.kind))+'</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(getEditorItemSummary(entry.kind, item))+'</div>';
       h += '</div>';
     }
@@ -126,13 +159,13 @@ function renderEditorItemsList(obj){
 
 function getEditorItemSummary(kind, item){
   if(kind==="event"){
-    return (item.type || "event") + " @ " + (item.t || 0);
+    return pianoFirstEditorTextToken(item.type, "event") + " @ " + (item.t || 0);
   }
   if(kind==="phrase"){
-    return (item.name || "phrase") + " \u00b7 " + (item.startSec || 0) + " \u2192 " + (item.endSec || 0);
+    return pianoFirstEditorTextToken(item.name, "phrase") + " \u00b7 " + (item.startSec || 0) + " \u2192 " + (item.endSec || 0);
   }
   if(kind==="step"){
-    return item.chord || item.note || item.type || "step";
+    return pianoFirstEditorTextToken(item.chord, item.note, item.type, "step");
   }
   return kind;
 }
