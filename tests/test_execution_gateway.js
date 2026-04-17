@@ -65,5 +65,70 @@ test("runDirectExercise publishes execution trace", function() {
   delete global.startPerformance;
 });
 
+test("runDirectExercise normalizes app-id instruments for playable practice launches", function() {
+  var captured = null;
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+  };
+
+  GW.runDirectExercise({
+    id: "practice_payload",
+    type: "practice",
+    data: {
+      core: { instrument: "pianospark" },
+      gameplay: {
+        payload: { adapterType: "pianospark", chartId: "practice_chart" }
+      }
+    }
+  }, { source: "practice_test" });
+
+  assert.ok(captured);
+  assert.strictEqual(captured.options.instrument, "piano");
+
+  delete global.startPlayableRhythmHighwayPayload;
+  delete global.SparkInstruments;
+});
+
+test("runDirectExercise normalizes app-id instruments for spotify playable launches", function() {
+  var captured = null;
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "ukespark", appId: "ukespark", instrument: "ukulele" }];
+    }
+  };
+  global.window.sparkCore = { playbackEngine: {} };
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+  };
+
+  GW.runDirectExercise({
+    id: "spotify_payload",
+    type: "song",
+    data: {
+      core: {
+        instrument: "ukespark",
+        spotifyTrackUri: "spotify:track:test"
+      },
+      gameplay: {
+        chart: { metadata: { source: "spotify", laneCount: 4 }, song: { title: "Island Song" } },
+        playAlongChart: { trackUri: "spotify:track:test" },
+        preset: "spark_learning"
+      }
+    }
+  }, { source: "spotify_test" });
+
+  assert.ok(captured);
+  assert.strictEqual(captured.payload.adapterType, "ukulele");
+  assert.strictEqual(captured.options.instrument, "ukulele");
+
+  delete global.startPlayableRhythmHighwayPayload;
+  delete global.SparkInstruments;
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

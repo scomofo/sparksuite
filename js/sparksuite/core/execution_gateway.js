@@ -100,6 +100,27 @@
     throw new Error("SparkExecutionGateway: " + message);
   }
 
+  function resolveGatewayInstrumentType(candidate) {
+    var normalized = typeof candidate === "string" && candidate ? candidate : null;
+    var all;
+    var i;
+    var inst;
+    if (!normalized) return null;
+    if (normalized === "guitar" || normalized === "piano" || normalized === "ukulele" || normalized === "bass") {
+      return normalized;
+    }
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+      all = SparkInstruments.getAll() || [];
+      for (i = 0; i < all.length; i++) {
+        inst = all[i] || {};
+        if (inst.id === normalized || inst.appId === normalized) {
+          return inst.instrument || normalized;
+        }
+      }
+    }
+    return normalized;
+  }
+
   function runSessionSegment(session, segment, options) {
     options = options || {};
     if (!session || !segment) return false;
@@ -251,19 +272,20 @@
         source: options.source || "song"
       });
       if (typeof startPlayableRhythmHighwayPayload === "function" && gameplay.chart) {
+        var instrumentType = resolveGatewayInstrumentType(core.instrument) || "guitar";
         var spotifyPayload = {
           songChart: gameplay.chart,
           chartId: gameplay.chart.metadata ? gameplay.chart.metadata.source : "spotify",
           enginePreset: gameplay.preset || "spark_learning",
           laneCount: (gameplay.chart.metadata && gameplay.chart.metadata.laneCount) || 4,
-          adapterType: core.instrument || "guitar",
+          adapterType: instrumentType,
           spotifyTrackUri: core.spotifyTrackUri,
           playAlongChart: gameplay.playAlongChart
         };
         startPlayableRhythmHighwayPayload(spotifyPayload, {
           source: "spotify_play_along",
           label: gameplay.chart.song ? gameplay.chart.song.title : "Spotify Track",
-          instrument: core.instrument || "guitar"
+          instrument: instrumentType
         });
         return true;
       }
@@ -292,6 +314,7 @@
     }
 
     if (payload && typeof startPlayableRhythmHighwayPayload === "function") {
+      var payloadInstrument = resolveGatewayInstrumentType(options.instrument || core.instrument || (payload && payload.adapterType)) || "guitar";
       publishExecutionTrace({
         level: "info",
         message: "launchPracticeExercise.playable",
@@ -302,7 +325,7 @@
       startPlayableRhythmHighwayPayload(payload, {
         source: options.source || "exercise",
         label: options.label || core.skill || core.chartId || core.songId || "Practice",
-        instrument: options.instrument || core.instrument || (payload && payload.adapterType) || "guitar",
+        instrument: payloadInstrument,
         segmentId: options.segment ? options.segment.id : (options.segmentId || null),
         exerciseId: exercise.id,
         exerciseFocus: core.skill || null,
