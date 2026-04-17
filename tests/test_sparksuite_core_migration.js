@@ -1767,13 +1767,13 @@ test("practice page rehydrates thin active instruments before reading curriculum
   window.sparkCore = null;
   global.SparkInstruments = {
     getActive: function() {
-      return { appId: "pianospark" };
+      return { appId: "drumspark" };
     },
     getAll: function() {
       return [{
-        id: "pianospark",
-        appId: "pianospark",
-        instrument: "piano",
+        id: "drumspark",
+        appId: "drumspark",
+        instrument: "drums",
         tabs: ["practice", "stats"],
         ui: {},
         getData: function() {
@@ -1793,7 +1793,8 @@ test("practice page rehydrates thin active instruments before reading curriculum
   var activeInstrument = resolvePracticeActiveInstrument();
 
   assert.ok(activeInstrument);
-  assert.strictEqual(activeInstrument.id, "pianospark");
+  assert.strictEqual(activeInstrument.id, "drumspark");
+  assert.strictEqual(resolvePracticeDashboardInstrumentType(activeInstrument), "drums");
   assert.strictEqual(typeof activeInstrument.getData, "function");
 });
 
@@ -3453,6 +3454,11 @@ test("SparkCore startPracticeFromLesson uses the active instrument type for play
   var core = createDefaultSparkCore();
   var originalGateway = window.SparkExecutionGateway;
   var captured = null;
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
   window.SparkExecutionGateway = {
     runPlayablePayload: function(payload, options) {
       captured = { payload: payload, options: options };
@@ -3460,6 +3466,37 @@ test("SparkCore startPracticeFromLesson uses the active instrument type for play
     }
   };
   core.updateRuntimeState({ activeInstrumentId: "pianospark", activeInstrumentType: "piano" });
+  try {
+    var ok = core.startPracticeFromLesson({
+      type: "timing",
+      tempo: 84,
+      label: "Timing Builder"
+    });
+
+    assert.strictEqual(ok, true);
+    assert.ok(captured);
+    assert.strictEqual(captured.options.instrument, "piano");
+  } finally {
+    window.SparkExecutionGateway = originalGateway;
+  }
+});
+
+test("SparkCore startPracticeFromLesson resolves playable launch types from active instrument ids", function() {
+  var core = createDefaultSparkCore();
+  var originalGateway = window.SparkExecutionGateway;
+  var captured = null;
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+  window.SparkExecutionGateway = {
+    runPlayablePayload: function(payload, options) {
+      captured = { payload: payload, options: options };
+      return true;
+    }
+  };
+  core.updateRuntimeState({ activeInstrumentId: "pianospark", activeInstrumentType: null });
   try {
     var ok = core.startPracticeFromLesson({
       type: "timing",

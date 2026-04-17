@@ -69,6 +69,9 @@
     if(instrument === "bass"){
       return { appId: "bassspark", recommendationAppType: "bass" };
     }
+    if(instrument === "drums"){
+      return { appId: "drumspark", recommendationAppType: "drums" };
+    }
     return { appId: "chordspark", recommendationAppType: "guitar" };
   }
 

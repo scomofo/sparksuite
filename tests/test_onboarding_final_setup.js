@@ -131,6 +131,18 @@ test("initial recommendations generation preserves bass onboarding type", functi
   assert.strictEqual(Array.isArray(recommendations), true);
 });
 
+test("initial recommendations generation preserves drums onboarding type", function() {
+  global.S.onboarding.instrument = "drums";
+
+  var recommendations = generateInitialRecommendationsFromOnboarding();
+
+  assert.strictEqual(global.activatedInstrument, "drumspark");
+  assert.strictEqual(global.S.activeInstrument, "drumspark");
+  assert.strictEqual(global.generatedRecommendationActiveInstrument, "drumspark");
+  assert.strictEqual(global.generatedRecommendationType, "drums");
+  assert.strictEqual(Array.isArray(recommendations), true);
+});
+
 test("final onboarding setup uses onboarding-aware generators and keeps follow-up setup intact", function() {
   runFinalOnboardingSetup();
 

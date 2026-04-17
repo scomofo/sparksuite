@@ -2390,7 +2390,7 @@
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
       activeInstrumentId: sparkCoreResolveRuntimeInstrumentId(this.currentPlan, completionInstrumentContext, this.runtimeState),
-      activeInstrumentType: this.runtimeState.activeInstrumentType,
+      activeInstrumentType: sparkCoreResolveRuntimeInstrumentType(this.currentPlan, completionInstrumentContext, this.runtimeState),
       activePlanId: this.currentPlan ? this.currentPlan.id : this.runtimeState.activePlanId,
       activeSegmentId: payload.itemId || this.runtimeState.activeSegmentId,
       activeScreen: this.currentPlan ? this.deriveRuntimeScreen(this.currentPlan.flow) : this.runtimeState.activeScreen,
@@ -3849,10 +3849,17 @@
       mode: "practice"
     };
     if (window.SparkExecutionGateway && typeof window.SparkExecutionGateway.runPlayablePayload === "function") {
+      var lessonInstrumentType = sparkCoreResolveRuntimeInstrumentType(
+        null,
+        this.instrumentManager && typeof this.instrumentManager.getActiveContext === "function"
+          ? this.instrumentManager.getActiveContext()
+          : null,
+        this.runtimeState
+      );
       return window.SparkExecutionGateway.runPlayablePayload(payload, {
         source: "lesson_generator",
         label: lesson.label,
-        instrument: this.runtimeState.activeInstrumentType || this.runtimeState.activeInstrumentId || "guitar"
+        instrument: lessonInstrumentType || "guitar"
       });
     }
     return false;
@@ -3960,6 +3967,38 @@
     if (plan && plan.instrumentId) return plan.instrumentId;
     if (contextId) return contextId;
     if (runtimeId) return runtimeId;
+    return null;
+  }
+
+  function sparkCoreResolveRuntimeInstrumentType(plan, instrumentContext, runtimeState) {
+    var runtimeType = runtimeState ? (runtimeState.activeInstrumentType || null) : null;
+    var contextType = instrumentContext ? (instrumentContext.instrumentType || null) : null;
+    var runtimeId = runtimeState ? (runtimeState.activeInstrumentId || null) : null;
+    var contextId = instrumentContext ? (instrumentContext.appId || instrumentContext.instrumentId || null) : null;
+    var all;
+    var i;
+    var inst;
+    if (plan && plan.instrumentType) return plan.instrumentType;
+    if (runtimeType) return runtimeType;
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+      all = SparkInstruments.getAll() || [];
+      if (runtimeId) {
+        for (i = 0; i < all.length; i++) {
+          inst = all[i] || {};
+          if (inst.id === runtimeId || inst.appId === runtimeId) return inst.instrument || null;
+        }
+      }
+    }
+    if (contextType) return contextType;
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+      all = SparkInstruments.getAll() || [];
+      if (contextId) {
+        for (i = 0; i < all.length; i++) {
+          inst = all[i] || {};
+          if (inst.id === contextId || inst.appId === contextId) return inst.instrument || null;
+        }
+      }
+    }
     return null;
   }
 

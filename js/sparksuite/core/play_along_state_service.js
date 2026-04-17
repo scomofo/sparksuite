@@ -74,6 +74,10 @@
     if (runtime && runtime.activeInstrumentType) return runtime.activeInstrumentType;
     var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
     if (active && active.instrument) return active.instrument;
+    if (active && (active.id || active.appId)) {
+      var registeredType = getRegisteredPlayAlongInstrumentType(active.id || active.appId);
+      if (registeredType) return registeredType;
+    }
     return "guitar";
   }
 

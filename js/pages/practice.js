@@ -136,7 +136,7 @@ function resolvePracticeDashboardInstrumentType(inst) {
   var i;
   var entry;
   if (!candidate) return "guitar";
-  if (candidate === "guitar" || candidate === "piano" || candidate === "ukulele" || candidate === "bass") return candidate;
+  if (candidate === "guitar" || candidate === "piano" || candidate === "ukulele" || candidate === "bass" || candidate === "drums") return candidate;
   if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
     all = SparkInstruments.getAll() || [];
     for (i = 0; i < all.length; i++) {

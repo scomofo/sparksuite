@@ -286,6 +286,22 @@ test("play along state service resolves instrument ids from runtime instrument t
   assert.strictEqual(service.getInstrumentId(), "pianospark");
 });
 
+test("play along state service resolves instrument types from thin active instrument ids", function() {
+  sparkCore.getRuntimeState = function() {
+    return null;
+  };
+  global.SparkInstruments = {
+    getActive: function() { return { appId: "pianospark" }; },
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  var service = new SparkPlayAlongStateService();
+
+  assert.strictEqual(service.getInstrumentType(), "piano");
+});
+
 test("sparkPlayAlongStartDrill relaunches current session into drill loop", async function() {
   sparkCore.lastSessionOutcome = {
     drills: [{ label: "Fix timing", startMs: 3200, endMs: 5200, speed: 0.75 }]
