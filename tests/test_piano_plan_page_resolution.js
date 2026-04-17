@@ -161,6 +161,27 @@ test("piano practice plan section falls back to cached plan state when the pract
   assert.strictEqual(html.indexOf("Core Warmup"), -1);
 });
 
+test("piano practice plan section shows an empty state when no plan exists", function() {
+  global.S = { practicePlan: null };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = practicePlanSection();
+  assert.ok(html.indexOf("Today's Practice Plan") >= 0 || html.indexOf("Today\\'s Practice Plan") >= 0);
+  assert.ok(html.indexOf("No practice plan yet.") >= 0);
+});
+
 test("pianoPlanPage stays read-only when no plan exists and shows an empty state", function() {
   var ensureCalls = 0;
   global.sparkCore = {
