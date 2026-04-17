@@ -15,7 +15,12 @@
   ];
 
   function normalizeRhythmInstrumentType(instrument) {
-    var candidate = instrument || "guitar";
+    var candidate = instrument || null;
+    if (!candidate && window.SparkInstruments && typeof SparkInstruments.getActive === "function") {
+      var active = SparkInstruments.getActive();
+      candidate = active ? (active.instrument || active.instrumentType || active.id || active.appId || null) : null;
+    }
+    if (!candidate) candidate = "guitar";
     if (!window.SparkInstruments || typeof SparkInstruments.getAll !== "function") return candidate;
     var instruments = SparkInstruments.getAll() || [];
     for (var i = 0; i < instruments.length; i++) {
