@@ -15,7 +15,7 @@ function resetEnv() {
   global.renderPerformanceHighway = function() { return "<div>highway</div>"; };
   global.getPerformancePhraseForTime = function() { return { name: "undefined" }; };
   global.getNextPerformEvent = function() { return null; };
-  global.getImportedTechniquePreview = function() { return []; };
+  global.getImportedTechniquePreview = function() { return [{ label: "undefined", color: "#fff" }]; };
   global.hasImportedTechniqueFlags = function() { return false; };
   global.renderImportedTechniqueFlags = function() { return ""; };
   global.getPerformancePracticePresetStemLabel = function() { return "Guitar"; };
@@ -48,7 +48,7 @@ function resetEnv() {
     performInputSource: "midi",
     performInputNotes: [],
     performDebug: false,
-    performLoop: null,
+    performLoop: { phraseId: 2, startSec: 0, endSec: 4 },
     performMode: "midi",
     performDifficulty: "normal",
     performSpeed: 1,
@@ -64,8 +64,14 @@ function resetEnv() {
       score: 1000,
       accuracy: 90,
       maxCombo: 4,
-      phraseStats: [],
-      importedTechniqueSummary: null
+      phraseStats: [
+        { name: "undefined", total: 2, scoreSum: 2, perfects: 1, goods: 1, oks: 0, misses: 0 },
+        { name: "null", total: 2, scoreSum: 0, perfects: 0, goods: 0, oks: 0, misses: 2 }
+      ],
+      importedTechniqueSummary: {
+        open: { label: "undefined", hits: 1, total: 2, accuracy: 50 }
+      },
+      unlocks: [{ label: "null", xp: 25 }]
     },
     performChartId: "chart_1",
     performSongStats: {},
@@ -73,6 +79,7 @@ function resetEnv() {
     performAudioOffsetMs: 0,
     _calibrating: false
   };
+  global.S.performChart.phrases = [{ id: 2, name: "undefined" }];
   global.sparkCore = {
     getActiveSessionView: function() {
       return {
@@ -108,11 +115,17 @@ test("perform pages ignore stale chart and result text tokens", function() {
   assert.ok(activeHtml.indexOf("chart_1") >= 0);
   assert.ok(activeHtml.indexOf("Unknown Artist") >= 0);
   assert.ok(activeHtml.indexOf("Phrase") >= 0);
+  assert.ok(activeHtml.indexOf("Looping: Phrase") >= 0);
+  assert.ok(activeHtml.indexOf("Technique") >= 0);
   assert.ok(activeHtml.indexOf(">undefined<") === -1);
   assert.ok(activeHtml.indexOf(">null<") === -1);
   assert.ok(doneHtml.indexOf("chart_1") >= 0);
   assert.ok(doneHtml.indexOf("Unknown Artist") >= 0);
   assert.ok(doneHtml.indexOf("Recommendation") >= 0);
+  assert.ok(doneHtml.indexOf("Unlock") >= 0);
+  assert.ok(doneHtml.indexOf("Open-note timing") >= 0);
+  assert.ok(doneHtml.indexOf("Phrase 1") >= 0);
+  assert.ok(doneHtml.indexOf("Phrase 2") >= 0);
   assert.ok(doneHtml.indexOf(">undefined<") === -1);
   assert.ok(doneHtml.indexOf(">null<") === -1);
 });

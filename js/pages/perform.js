@@ -211,8 +211,9 @@ function performPage() {
   if (techniquePreview.length) {
     h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:6px 12px 0">';
     for (var ti = 0; ti < techniquePreview.length; ti++) {
+      var previewLabel = firstPerformPageTextToken(techniquePreview[ti].label, "Technique");
       h += '<span style="background:' + techniquePreview[ti].color + ';color:#fff;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em">'
-        + escHTML(techniquePreview[ti].label) + '</span>';
+        + escHTML(previewLabel) + '</span>';
     }
     h += '</div>';
   }
@@ -255,12 +256,14 @@ function performPage() {
   // Loop practice banner
   if (S.performLoop) {
     var loopPhrase = null;
+    var loopPhraseName;
     if (chart && chart.phrases) {
       for (var li = 0; li < chart.phrases.length; li++) {
         if (chart.phrases[li].id === S.performLoop.phraseId) { loopPhrase = chart.phrases[li]; break; }
       }
     }
-    h += '<div style="text-align:center;padding:4px 12px;background:#FFE66D22;border-radius:8px;margin:4px 12px"><span style="font-size:11px;font-weight:700;color:#FFE66D">&#128257; Looping: ' + escHTML(loopPhrase ? loopPhrase.name : 'Phrase') + '</span></div>';
+    loopPhraseName = firstPerformPageTextToken(loopPhrase ? loopPhrase.name : "", "Phrase");
+    h += '<div style="text-align:center;padding:4px 12px;background:#FFE66D22;border-radius:8px;margin:4px 12px"><span style="font-size:11px;font-weight:700;color:#FFE66D">&#128257; Looping: ' + escHTML(loopPhraseName) + '</span></div>';
   }
 
   // Controls
@@ -392,7 +395,8 @@ function performDonePage() {
   // Unlock celebrations
   if (r.unlocks && r.unlocks.length > 0) {
     for (var ui = 0; ui < r.unlocks.length; ui++) {
-      h += '<div style="background:linear-gradient(135deg,#FFE66D22,#FF8A5C22);border:1px solid #FFE66D44;border-radius:12px;padding:8px 16px;margin-bottom:8px;text-align:center"><span style="font-weight:800;color:#FFE66D">' + escHTML(r.unlocks[ui].label) + '</span> <span style="font-size:12px;color:var(--text-muted)">+' + r.unlocks[ui].xp + ' XP</span></div>';
+      var unlockLabel = firstPerformPageTextToken(r.unlocks[ui].label, "Unlock");
+      h += '<div style="background:linear-gradient(135deg,#FFE66D22,#FF8A5C22);border:1px solid #FFE66D44;border-radius:12px;padding:8px 16px;margin-bottom:8px;text-align:center"><span style="font-weight:800;color:#FFE66D">' + escHTML(unlockLabel) + '</span> <span style="font-size:12px;color:var(--text-muted)">+' + r.unlocks[ui].xp + ' XP</span></div>';
     }
   }
 
@@ -409,8 +413,9 @@ function performDonePage() {
     for (var pi = 0; pi < r.phraseStats.length; pi++) {
       var ps = r.phraseStats[pi];
       var pct = ps.total > 0 ? Math.round(ps.scoreSum / ps.total * 100) : 0;
+      var phraseLabel = firstPerformPageTextToken(ps.name, "Phrase " + (pi + 1));
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
-      h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(ps.name || "Phrase " + (pi + 1)) + '</span>';
+      h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(phraseLabel) + '</span>';
       h += '<span style="font-size:12px;color:var(--text-muted)">' + ps.perfects + 'P / ' + ps.goods + 'G / ' + ps.oks + 'O / ' + ps.misses + 'M &mdash; ' + pct + '%</span>';
       h += '</div>';
     }
@@ -442,8 +447,8 @@ function performDonePage() {
       if (bAvg < worstAvg) worstIdx = bi;
     }
     h += '<div style="display:flex;gap:10px;margin-bottom:16px">';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Best Phrase</div><div style="font-size:14px;font-weight:800;color:#4ECDC4">' + escHTML(r.phraseStats[bestIdx].name) + '</div></div>';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Weakest Phrase</div><div style="font-size:14px;font-weight:800;color:#FF6B6B">' + escHTML(r.phraseStats[worstIdx].name) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Best Phrase</div><div style="font-size:14px;font-weight:800;color:#4ECDC4">' + escHTML(firstPerformPageTextToken(r.phraseStats[bestIdx].name, "Phrase " + (bestIdx + 1))) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Weakest Phrase</div><div style="font-size:14px;font-weight:800;color:#FF6B6B">' + escHTML(firstPerformPageTextToken(r.phraseStats[worstIdx].name, "Phrase " + (worstIdx + 1))) + '</div></div>';
     h += '</div>';
   }
 
@@ -502,8 +507,9 @@ function renderImportedTechniqueSummaryRows(summary) {
   for (var i = 0; i < order.length; i++) {
     var row = summary[order[i]];
     if (!row || !row.total) continue;
+    var rowLabel = firstPerformPageTextToken(row.label, formatTechniqueFocusLabel(order[i]), "Technique");
     h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
-    h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(row.label) + '</span>';
+    h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(rowLabel) + '</span>';
     h += '<span style="font-size:12px;color:var(--text-muted)">' + row.hits + '/' + row.total + ' hit &mdash; ' + row.accuracy + '%</span>';
     h += '</div>';
   }
