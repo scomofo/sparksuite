@@ -253,8 +253,8 @@
     context = context || {};
     var trackId = context.trackId;
     var difficulty = context.difficulty || "easy";
-    var instrument = context.instrument || "guitar";
     var instrumentContext = context.instrumentContext || {};
+    var instrument = context.instrument || instrumentContext.instrumentType || "guitar";
 
     if (!trackId) return Promise.resolve(this.buildEmptySession("spotify_play_along", context));
 
