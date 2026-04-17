@@ -268,6 +268,36 @@ test("piano plan and practice sections treat empty-object cached plan rows as mi
   assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
 });
 
+test("piano plan and practice sections treat object-only meta shells as missing items", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [{ meta: { songTitle: { bad: true } } }]
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.ok(planHtml.indexOf("No practice plan yet.") >= 0);
+  assert.ok(practiceHtml.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
+  assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
+});
+
 test("piano plan and practice sections treat whitespace-only label shells as missing items", function() {
   global.S = {
     practicePlanComplete: false,
