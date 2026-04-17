@@ -189,6 +189,18 @@ test("piano surfaces rehydrate an app-id-only active instrument shell", function
   assert.deepStrictEqual(pianoCheckBadges(), ["starter"]);
 });
 
+test("piano songs library ignores stale sentinel search text", function() {
+  resetEnvironment("pianospark");
+  global.S.songFilter = "undefined";
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/songs.js"));
+
+  var html = pianoSongsTab();
+  assert.ok(html.indexOf('value="undefined"') === -1);
+  assert.ok(html.indexOf('matching “undefined”') === -1);
+});
+
 test("guitarAct rehydrates an app-id-only active instrument shell", function() {
   resetEnvironment("chordspark");
   global.eval(loadJS("js/instruments/guitar/app.js"));

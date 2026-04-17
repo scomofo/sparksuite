@@ -5,6 +5,17 @@ var _pianoSongsData = {};
 var _pianoSongs = [];
 var _pianoCurriculum = [];
 
+function pianoNormalizeSongTextInput(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return value;
+}
+
 function pianoSongsTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -77,7 +88,8 @@ function songLibrary() {
     html += '</div></div>';
   } else {
     // Search filter
-    html += '<input class="intention-input" type="text" placeholder="Search by title, artist, or chord..." value="' + escHTML(S.songFilter) + '" oninput="act(\'song_filter\',this.value)" style="width:100%;margin-bottom:10px"/>';
+    var safeSongFilter = pianoNormalizeSongTextInput(S.songFilter);
+    html += '<input class="intention-input" type="text" placeholder="Search by title, artist, or chord..." value="' + escHTML(safeSongFilter) + '" oninput="act(\'song_filter\',this.value)" style="width:100%;margin-bottom:10px"/>';
 
     // Sort controls
     var sorts = [["level","Level"],["title","Title"],["artist","Artist"],["bpm","BPM"],["chords","Chords"]];
@@ -94,8 +106,8 @@ function songLibrary() {
     for (var i = 0; i < SONGS.length; i++) {
       filtered.push({ song: SONGS[i], origIdx: i });
     }
-    if (S.songFilter) {
-      var q = S.songFilter.toLowerCase();
+    if (safeSongFilter) {
+      var q = safeSongFilter.toLowerCase();
       filtered = filtered.filter(function(item) {
         var s = item.song;
         return s.title.toLowerCase().indexOf(q) !== -1 ||
@@ -119,9 +131,9 @@ function songLibrary() {
     });
 
     // Count
-    html += '<div class="text-muted" style="font-size:0.75rem;margin-bottom:8px">' + filtered.length + ' song' + (filtered.length === 1 ? '' : 's') + (S.songFilter ? ' matching \u201C' + escHTML(S.songFilter) + '\u201D' : '') + '</div>';
+    html += '<div class="text-muted" style="font-size:0.75rem;margin-bottom:8px">' + filtered.length + ' song' + (filtered.length === 1 ? '' : 's') + (safeSongFilter ? ' matching \u201C' + escHTML(safeSongFilter) + '\u201D' : '') + '</div>';
 
-    if (S.songSort === "level" && !S.songFilter) {
+    if (S.songSort === "level" && !safeSongFilter) {
       // Grouped by level (original view, respecting sort direction)
       var levels = asc ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1];
       levels.forEach(function(l) {
