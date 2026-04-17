@@ -125,6 +125,15 @@ function pianoPracticeTab() {
 
 /* Practice Plan section – shows stats, today's plan, and progression overview */
 function practicePlanSection(){
+  function isRenderablePlanItem(item){
+    return !!(
+      item &&
+      (item.id ||
+       item.label ||
+       item.type ||
+       (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
+    );
+  }
   var h = '';
 
   // Practice stats card
@@ -148,12 +157,12 @@ function practicePlanSection(){
     ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
   if(!plan) plan = S.practicePlan;
-  if(plan && Array.isArray(plan.items) && plan.items.some(function(item){ return !!item; })){
+  if(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePlanItem)){
     h += '<div class="card" style="margin-top:12px">';
     h += '<div><b>Today\'s Practice Plan</b></div>';
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
-      if(!item) continue;
+      if(!isRenderablePlanItem(item)) continue;
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       h += '<div class="row"' + done + '>';
       h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
