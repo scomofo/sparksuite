@@ -57,8 +57,17 @@ function setPianoSongTab(tabId) {
   render();
 }
 
+function getPianoSongInstrumentData() {
+  var activeInstrument = typeof resolvePianoSharedActiveInstrument === "function"
+    ? resolvePianoSharedActiveInstrument()
+    : (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null);
+  return activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+}
+
 function pianoSongsTab() {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var D = getPianoSongInstrumentData();
   _pianoSongsData = D;
   _pianoSongs = D.SONGS || [];
   _pianoCurriculum = D.CURRICULUM || [];

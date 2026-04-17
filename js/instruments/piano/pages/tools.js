@@ -52,6 +52,15 @@ function setPianoToolTab(tabId) {
   render();
 }
 
+function getPianoToolInstrumentData() {
+  var activeInstrument = typeof resolvePianoSharedActiveInstrument === "function"
+    ? resolvePianoSharedActiveInstrument()
+    : (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null);
+  return activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+}
+
 function normalizePianoToolVolume(value, fallback) {
   var resolvedFallback = typeof fallback === "number" ? fallback : 0.8;
   var numeric = Number(value);
@@ -155,7 +164,7 @@ function statsTab() {
   if (!recent.length) html += '<div class="text-muted">No activity yet</div>';
   html += '</div>';
 
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var D = getPianoToolInstrumentData();
   var BADGES = D.BADGES || [];
   html += '<h3>Badges</h3><div class="badges-grid">';
   BADGES.forEach(function(b) {

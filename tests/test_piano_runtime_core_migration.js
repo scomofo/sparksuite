@@ -488,6 +488,146 @@ test("piano page helpers guard null SparkState roots before falling back to glob
   assert.ok(pianoSongsSource.indexOf("if (sparkRoot) root = sparkRoot;") >= 0);
 });
 
+test("piano shared helpers rehydrate thin active instruments for level colors and chord tags", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{
+        id: "pianospark",
+        appId: "pianospark",
+        getData: function() {
+          return {
+            LC: { 1: "#123456" },
+            CHORD_COLORS: { triad: "#654321" }
+          };
+        }
+      }];
+    }
+  };
+
+  eval(loadJS("js/instruments/piano/pages/shared.js"));
+
+  assert.strictEqual(resolvePianoSharedActiveInstrument().id, "pianospark");
+  assert.strictEqual(levelColor(1), "#123456");
+  assert.ok(chordTypeTag({ short: "C", type: "triad" }).indexOf("#654321") >= 0);
+});
+
+test("piano practice page rehydrates thin active instruments before rendering", function() {
+  global.getCurrentSessionPlan = function() { return null; };
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{
+        id: "pianospark",
+        appId: "pianospark",
+        getData: function() {
+          return global.PIANO_DATA;
+        }
+      }];
+    }
+  };
+  eval(loadJS("js/instruments/piano/pages/shared.js"));
+  eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+
+  assert.ok(html.indexOf("Today's Practice Plan") >= 0);
+  assert.ok(html.indexOf("Level 1: First Steps") >= 0);
+});
+
+test("piano games and songs pages rehydrate thin active instruments before rendering", function() {
+  global.PIANO_DATA.SONGS = [
+    { title: "Midnight Train", artist: "Piano Suite", level: 1, bpm: 72, chords: ["C", "G"], progression: ["C", "G"] },
+    { title: "River Walk", artist: "Piano Suite", level: 1, bpm: 88, chords: ["F", "Am"], progression: ["F", "Am", "F"] }
+  ];
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{
+        id: "pianospark",
+        appId: "pianospark",
+        getData: function() {
+          return global.PIANO_DATA;
+        }
+      }];
+    }
+  };
+  eval(loadJS("js/instruments/piano/pages/shared.js"));
+  eval(loadJS("js/instruments/piano/pages/games.js"));
+  eval(loadJS("js/instruments/piano/pages/songs.js"));
+
+  var gamesHtml = pianoGamesTab();
+  var songsHtml = pianoSongsTab();
+
+  assert.ok(gamesHtml.indexOf("Drill") >= 0);
+  assert.ok(songsHtml.indexOf("Song Library") >= 0);
+  assert.ok(songsHtml.indexOf("Midnight Train") >= 0);
+});
+
+test("piano tools stats page rehydrates thin active instruments before rendering badges", function() {
+  global.S.earned = ["starter"];
+  global.PIANO_DATA.BADGES = [{ id: "starter", icon: "*", label: "Starter", desc: "Begin." }];
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{
+        id: "pianospark",
+        appId: "pianospark",
+        getData: function() {
+          return global.PIANO_DATA;
+        }
+      }];
+    }
+  };
+  eval(loadJS("js/instruments/piano/pages/shared.js"));
+  eval(loadJS("js/instruments/piano/pages/tools.js"));
+
+  var html = statsTab();
+
+  assert.ok(html.indexOf("Statistics") >= 0);
+  assert.ok(html.indexOf("Starter") >= 0);
+});
+
+test("piano badge checks rehydrate thin active instruments before reading badge definitions", function() {
+  global.PIANO_DATA.BADGES = [{
+    id: "starter",
+    icon: "*",
+    label: "Starter",
+    desc: "Begin.",
+    check: function() { return true; }
+  }];
+  global.S.earned = [];
+  global.playSound = function() {};
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{
+        id: "pianospark",
+        appId: "pianospark",
+        getData: function() {
+          return global.PIANO_DATA;
+        }
+      }];
+    }
+  };
+  eval(loadJS("js/instruments/piano/pages/shared.js"));
+  eval(loadJS("js/instruments/piano/ui.js"));
+
+  var newBadges = pianoCheckBadges();
+
+  assert.deepStrictEqual(newBadges, ["starter"]);
+});
+
 test("start_guided_session delegates to sparkCore and syncs piano session aliases", function() {
   pianoAct("start_guided_session");
 

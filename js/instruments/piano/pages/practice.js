@@ -32,8 +32,17 @@ function pianoPracticeWrite(path, value) {
   return value;
 }
 
+function getPianoPracticeInstrumentData() {
+  var activeInstrument = typeof resolvePianoSharedActiveInstrument === "function"
+    ? resolvePianoSharedActiveInstrument()
+    : (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null);
+  return activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+}
+
 function pianoPracticeTab() {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var D = getPianoPracticeInstrumentData();
   var CURRICULUM = D.CURRICULUM || [];
   var BADGES = D.BADGES || [];
   var html = '';

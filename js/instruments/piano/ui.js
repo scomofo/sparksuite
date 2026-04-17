@@ -261,7 +261,12 @@ function styleHTML(styleObj) {
 
 // ── Badge checking (expanded for 8 levels) ──
 function pianoCheckBadges() {
-  var _D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = typeof resolvePianoSharedActiveInstrument === "function"
+    ? resolvePianoSharedActiveInstrument()
+    : (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null);
+  var _D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var BADGES = _D.BADGES || [];
   var newBadges = [];
   var earned = pianoUiEarnedBadges();

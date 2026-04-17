@@ -23,6 +23,25 @@ function pianoSharedRead(path, fallback) {
   return cursor == null ? fallback : cursor;
 }
 
+function resolvePianoSharedActiveInstrument() {
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  var instrument = SparkInstruments.getActive();
+  if (!instrument) return null;
+  if (instrument.getData || instrument.ui || instrument.pages || instrument.tabs || instrument.tabRenderers) {
+    return instrument;
+  }
+  var instrumentId = instrument.id || instrument.appId || null;
+  if (!instrumentId || typeof SparkInstruments.getAll !== "function") return instrument;
+  var instruments = SparkInstruments.getAll() || [];
+  for (var i = 0; i < instruments.length; i++) {
+    if (!instruments[i]) continue;
+    if (instruments[i].id === instrumentId || instruments[i].appId === instrumentId) return instruments[i];
+  }
+  return instrument;
+}
+
 // Performance helpers
 function getPerformanceBest(songId, arrangementType, difficulty) {
   var key = (songId || "") + "_" + (arrangementType || "chords") + "_" + (difficulty || "normal");
@@ -99,14 +118,16 @@ function backBtnHTML(action) {
 
 // Level color helper
 function levelColor(lvl) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolvePianoSharedActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   return (D.LC && D.LC[lvl]) ? D.LC[lvl] : "#7c3aed";
 }
 
 // Chord type color tag
 function chordTypeTag(chord) {
   if (!chord) return "";
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolvePianoSharedActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var color = chord.color || (D.CHORD_COLORS && D.CHORD_COLORS[chord.type]) || "#888";
   return '<span class="song-chord-tag" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + escHTML(chord.short) + '</span>';
 }

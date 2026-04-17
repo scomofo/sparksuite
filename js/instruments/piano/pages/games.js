@@ -52,8 +52,17 @@ function setPianoGameTab(tabId) {
   render();
 }
 
+function getPianoGameInstrumentData() {
+  var activeInstrument = typeof resolvePianoSharedActiveInstrument === "function"
+    ? resolvePianoSharedActiveInstrument()
+    : (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null);
+  return activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+}
+
 function pianoGamesTab() {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var D = getPianoGameInstrumentData();
   var DAILY_TYPES = D.DAILY_TYPES || [];
   var FINGER_EXERCISES = D.FINGER_EXERCISES || [];
   var FINGER_BADGES = D.FINGER_BADGES || [];
