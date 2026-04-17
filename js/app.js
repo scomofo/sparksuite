@@ -3837,8 +3837,6 @@ window.act=function(a,v){
     }
     if(window.sparkCore){
       openPracticePlanScreenRequest();
-    } else if(typeof ensurePracticePlan==="function"){
-      ensurePracticePlan();
     }
     appWrite("screen",SCR.PLAN);render();return;
   }

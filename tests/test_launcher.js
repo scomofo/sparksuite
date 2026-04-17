@@ -632,7 +632,10 @@ test('piano dashboard and plan actions use seeded challenges and the shared plan
   assert.ok(appSource.indexOf('if(!window.sparkCore && typeof ensurePracticePlan==="function"){') >= 0);
   assert.ok(appSource.indexOf('openPracticePlanScreenRequest();') >= 0);
   assert.ok(appSource.indexOf('if(a==="openPlan"){') >= 0);
-  assert.ok(appSource.indexOf('} else if(typeof ensurePracticePlan==="function"){') >= 0);
+  var openPlanMatch = appSource.match(/if\(a==="openPlan"\)\{([\s\S]*?)appWrite\("screen",SCR\.PLAN\);render\(\);return;\n  \}/);
+  assert.ok(openPlanMatch);
+  assert.ok(openPlanMatch[1].indexOf('ensurePracticePlan();') >= 0);
+  assert.strictEqual((openPlanMatch[1].match(/ensurePracticePlan\(\);/g) || []).length, 1);
   assert.ok(pianoSource.indexOf('case "openChallengeHub":') >= 0);
   assert.ok(pianoSource.indexOf('if((state.activeChallenges || []).length === 0 && typeof initializeChallengesForCurrentCycle === "function") initializeChallengesForCurrentCycle();') >= 0);
   assert.ok(pianoSource.indexOf('case "openPracticePlan":') >= 0);
