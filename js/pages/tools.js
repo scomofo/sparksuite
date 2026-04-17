@@ -1,5 +1,27 @@
 // ===== ChordSpark: Tool and info tabs =====
 
+function getToolsPageInstrument(){
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 // ===== TUNER TAB =====
 function getLegacyTunerRuntime(){
   var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
@@ -29,7 +51,8 @@ function getLegacyAudioInputRuntime(){
 }
 
 function tunerTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getToolsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var runtime = getLegacyTunerRuntime();
   var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; Guitar Tuner</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Standard tuning: E A D G B e</p>';
   h+='<div id="tuner-strings" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
@@ -93,7 +116,8 @@ function tunerTab(){
 
 // ===== STATS TAB =====
 function statsTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getToolsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats</h2></div>';
   var hist=S.history||[];
 
@@ -258,8 +282,9 @@ function crossAppProgressCard(){
 
 // ===== GUIDE TAB =====
 function guideTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getToolsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128214; How to Read Chord Charts</h2></div>';
   h+='<div class="card mb16"><div class="flex-center mb12">'+UI.chord(D.CHORDS[1][0],200)+'</div><div style="text-align:center;font-size:13px;color:var(--text-dim);font-weight:600">Example: E Major</div></div>';
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127912; Chart Legend</h3>';

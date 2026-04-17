@@ -1,5 +1,27 @@
 // ===== ChordSpark: Shared rendering helpers =====
 
+function getSharedPageInstrument(){
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 function getLegacyChordDetectRuntime(){
   var runtime = null;
   if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
@@ -58,7 +80,8 @@ function updateChordCheckUI(){
 
 // Targeted tuner UI update (avoids full DOM rebuild at ~30fps)
 function updateTunerUI(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getSharedPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var noteEl=document.getElementById("tuner-note-display");
   var freqEl=document.getElementById("tuner-freq-display");
   var needleEl=document.getElementById("tuner-needle");

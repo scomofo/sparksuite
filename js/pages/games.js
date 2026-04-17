@@ -1,5 +1,27 @@
 // ===== ChordSpark: Game tabs =====
 
+function getGamesPageInstrument(){
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 // ===== RHYTHM GAME TAB =====
 function getLegacyRhythmRuntime(){
   var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
@@ -102,7 +124,8 @@ function getLegacyRunnerRuntime(D){
 }
 
 function runnerTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getGamesPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var runtime = getLegacyRunnerRuntime(D);
   if(runtime.results)return runnerResultsPage();
   if(runtime.active)return runnerGamePage();
@@ -116,8 +139,9 @@ function runnerTab(){
 }
 
 function runnerGamePage(){
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getGamesPageInstrument();
+  var UI = inst && inst.ui ? inst.ui : {};
+  var D = inst && inst.getData ? inst.getData() : {};
   var runtime = getLegacyRunnerRuntime(D);
   var h='<div>';
   // Lives, Score, Combo row
@@ -170,7 +194,8 @@ function runnerGamePage(){
 }
 
 function runnerResultsPage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getGamesPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var runtime = getLegacyRunnerRuntime(D);
   var r=runtime.results;
   var isHigh=r.score>=S.runnerHighScore&&r.score>0;
@@ -190,8 +215,9 @@ function runnerResultsPage(){
 
 // ===== BUILD (PROGRESSION BUILDER) TAB =====
 function buildTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getGamesPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Progression Builder &#128295;</h2><p style="color:var(--text-dim);font-size:13px">Build and play chord progressions</p></div>';
 
   // Progression display
