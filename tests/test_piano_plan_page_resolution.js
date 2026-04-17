@@ -735,6 +735,46 @@ test("pianoPlanPage derives readable fallback labels for sparse plan items", fun
   assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
+test("piano plan surfaces ignore sentinel string labels and descriptions", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [
+        {
+          id: "song_1",
+          label: "undefined",
+          desc: "null",
+          completed: false,
+          meta: {
+            songId: "island_strum",
+            instrument: "piano",
+            skill: "left_hand"
+          }
+        }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.SparkPracticeBridge = undefined;
+  global.getAverageMastery = function() { return 0.5; };
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+  assert.ok(planHtml.indexOf("island strum") >= 0);
+  assert.ok(practiceHtml.indexOf("island strum") >= 0);
+  assert.strictEqual(planHtml.indexOf("undefined"), -1);
+  assert.strictEqual(planHtml.indexOf("null"), -1);
+  assert.strictEqual(practiceHtml.indexOf("undefined"), -1);
+  assert.strictEqual(practiceHtml.indexOf("null"), -1);
+});
+
 test("pianoPlanPage ignores malformed duration values in cached plan items", function() {
   global.S = {
     practicePlanComplete: false,
@@ -1067,6 +1107,32 @@ test("pianoPlanPage ignores non-string stale focus values", function() {
   var html = pianoPlanPage();
   assert.ok(html.indexOf("No practice focus yet.") >= 0);
   assert.strictEqual(html.indexOf("[object Object]"), -1);
+});
+
+test("pianoPlanPage treats sentinel string focus as missing focus", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "undefined",
+      items: [
+        {
+          id: "song_1",
+          label: "Replay Island Strum",
+          completed: false
+        }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.SparkPracticeBridge = undefined;
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("No practice focus yet.") >= 0);
+  assert.strictEqual(html.indexOf(">undefined<"), -1);
 });
 
 test("pianoPlanPage does not render a completed banner when the plan is missing but the stale completion flag remains", function() {

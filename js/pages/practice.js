@@ -44,9 +44,15 @@ function getPracticeSummaryItemType(item) {
 }
 
 function prettyPracticeSummaryToken(value) {
+  var text;
+  var lower;
   if (value == null) return "";
   if (typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
-  return String(value || "").replace(/_/g, " ").trim();
+  text = String(value || "").replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
 }
 
 function firstPrettyPracticeSummaryToken() {
@@ -61,7 +67,7 @@ function firstPrettyPracticeSummaryToken() {
 
 function getPracticeSummaryItemLabel(item) {
   var meta = item && item.meta ? item.meta : {};
-  var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
+  var label = prettyPracticeSummaryToken(item ? item.label : null);
   return label
     ? label
     : firstPrettyPracticeSummaryToken(
@@ -88,7 +94,7 @@ function getPracticeSummaryItemDesc(item) {
   if (exerciseFocus) parts.push(exerciseFocus);
   else if (skill) parts.push(skill);
   if (itemType) parts.push(itemType);
-  var desc = item && typeof item.desc === "string" ? item.desc.trim() : (item ? item.desc : null);
+  var desc = prettyPracticeSummaryToken(item ? item.desc : null);
   return desc
     ? desc
     : (parts.join(" - ") || firstPrettyPracticeSummaryToken(getPracticeSummaryItemType(item), item && item.type, "practice"));
@@ -118,7 +124,7 @@ function getPracticeSummaryProgress(plan) {
 }
 
 function getPracticeSummaryFocus(plan) {
-  var focus = plan && typeof plan.focus === "string" ? plan.focus.trim() : null;
+  var focus = prettyPracticeSummaryToken(plan ? plan.focus : null);
   return focus ? focus : "No practice focus yet.";
 }
 
@@ -132,12 +138,12 @@ function isCompletedPracticeSummaryItem(item) {
 
 function isRenderablePracticeSummaryItem(item) {
   var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
-  var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
-  var type = item && typeof item.type === "string" ? item.type.trim() : (item ? item.type : null);
+  var label = prettyPracticeSummaryToken(item ? item.label : null);
+  var type = prettyPracticeSummaryToken(item ? item.type : null);
   var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && !Array.isArray(item.meta) && Object.keys(item.meta).some(function(key) {
     var value = item.meta[key];
     if (value == null) return false;
-    if (typeof value === "string") return !!value.trim();
+    if (typeof value === "string") return !!prettyPracticeSummaryToken(value);
     if (typeof value === "number") return false;
     if (typeof value === "boolean") return false;
     if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return false;

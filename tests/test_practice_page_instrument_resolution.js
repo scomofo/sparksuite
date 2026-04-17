@@ -323,6 +323,44 @@ test("practicePage derives readable fallback labels and subtitles for sparse pla
   assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
+test("practicePage and planPage ignore sentinel string labels and descriptions", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [
+        {
+          id: "song_1",
+          label: "undefined",
+          desc: "null",
+          completed: false,
+          meta: {
+            songId: "island_strum",
+            instrument: "ukulele",
+            skill: "strum_pattern"
+          }
+        }
+      ]
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practicePage();
+  var planHtml = planPage();
+  assert.ok(practiceHtml.indexOf("island strum") >= 0);
+  assert.ok(planHtml.indexOf("island strum") >= 0);
+  assert.strictEqual(practiceHtml.indexOf("undefined"), -1);
+  assert.strictEqual(practiceHtml.indexOf("null"), -1);
+  assert.strictEqual(planHtml.indexOf("undefined"), -1);
+  assert.strictEqual(planHtml.indexOf("null"), -1);
+});
+
 test("practicePage and planPage ignore whitespace-only labels and descriptions", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
@@ -1128,6 +1166,52 @@ test("planPage and practiceTab ignore non-string stale focus values", function()
   assert.ok(practiceHtml.indexOf("Focus: No practice focus yet.") >= 0);
   assert.strictEqual(planHtml.indexOf("[object Object]"), -1);
   assert.strictEqual(practiceHtml.indexOf("[object Object]"), -1);
+});
+
+test("planPage and practiceTab treat sentinel string focus as missing focus", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "undefined",
+      items: [
+        {
+          id: "song_1",
+          label: "Replay Island Strum",
+          completed: false
+        }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var planHtml = planPage();
+  var practiceHtml = practiceTab();
+  assert.ok(planHtml.indexOf("No practice focus yet.") >= 0);
+  assert.ok(practiceHtml.indexOf("Focus: No practice focus yet.") >= 0);
+  assert.strictEqual(planHtml.indexOf(">undefined<"), -1);
+  assert.strictEqual(practiceHtml.indexOf("Focus: undefined"), -1);
 });
 
 test("planPage does not render a completed banner when the plan is missing but the stale completion flag remains", function() {
