@@ -1,5 +1,16 @@
 /* PianoSpark - Tools tab (stats, settings, guide) */
 
+function pianoNormalizeToolsTextInputValue(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return value;
+}
+
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -139,7 +150,7 @@ function settingsTab() {
   html += '<button class="btn btn-sm ' + (S.focusMode ? 'btn-accent' : 'btn-secondary') + '" onclick="act(\'toggle_focus\')">' + (S.focusMode ? 'ON' : 'OFF') + '</button></div>';
 
   html += '<div class="setting-row"><label>Practice Intention:</label></div>';
-  html += '<input class="intention-input" type="text" placeholder="When I [event], I will open PianoSpark" value="' + escHTML(S.practiceIntention) + '" onchange="act(\'set_intention\',this.value)" style="width:100%" />';
+  html += '<input class="intention-input" type="text" placeholder="When I [event], I will open PianoSpark" value="' + escHTML(pianoNormalizeToolsTextInputValue(S.practiceIntention)) + '" onchange="act(\'set_intention\',this.value)" style="width:100%" />';
 
   // ── MIDI ──
   html += '<h3 style="margin-top:20px">MIDI Input</h3>';

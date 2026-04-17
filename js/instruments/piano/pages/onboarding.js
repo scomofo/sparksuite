@@ -1,7 +1,19 @@
 /* PianoSpark - Onboarding (5 screens) */
 
+function pianoNormalizeIntentionInputValue(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return value;
+}
+
 function pianoOnboardingPage() {
   var step = S.onboardingStep || 0;
+  var safePracticeIntention = pianoNormalizeIntentionInputValue(S.practiceIntention);
 
   // Step dots
   var dots = '<div class="onboarding-dots">';
@@ -58,7 +70,7 @@ function pianoOnboardingPage() {
       html += dots;
       html += '<div class="intention-template">Complete this sentence:</div>';
       html += '<div style="font-weight:700;margin:8px 0">"When I <span style="color:var(--accent)">[daily event]</span>, I will open PianoSpark."</div>';
-      html += '<input class="intention-input" type="text" placeholder="e.g. finish dinner" value="' + escHTML(S.practiceIntention) + '" onchange="act(\'set_intention\',this.value)" />';
+      html += '<input class="intention-input" type="text" placeholder="e.g. finish dinner" value="' + escHTML(safePracticeIntention) + '" onchange="act(\'set_intention\',this.value)" />';
       html += '<div class="text-muted" style="margin-top:8px">Examples: finish dinner, morning coffee is ready, sit down after work</div>';
       html += '<div style="margin-top:16px"><button class="btn btn-accent" onclick="act(\'onboard_next\')">Next</button></div>';
       break;
@@ -68,8 +80,8 @@ function pianoOnboardingPage() {
       html += '<h2>Ready to Play!</h2>';
       html += '<p>Session 1 awaits. You\'ll learn your first chord in under 2 minutes.</p>';
       html += dots;
-      if (S.practiceIntention) {
-        html += pianoIfThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
+      if (safePracticeIntention) {
+        html += pianoIfThenCard("When I " + safePracticeIntention + ", I will open PianoSpark.");
       }
       html += '<div style="margin-top:16px"><button class="btn btn-lg btn-accent" onclick="act(\'onboard_complete\')">Start Your First Session</button></div>';
       break;
