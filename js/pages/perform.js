@@ -92,6 +92,18 @@ function cancelCalibration() {
   render();
 }
 
+function getPerformancePracticePresetOptions() {
+  var stemLabel = typeof getPerformancePracticePresetStemLabel === "function"
+    ? getPerformancePracticePresetStemLabel()
+    : "Guitar";
+  return [
+    { id: "full_mix", label: "Full" },
+    { id: "no_guitar", label: "No " + stemLabel },
+    { id: "guitar_quiet", label: "Quiet " + stemLabel },
+    { id: "guitar_solo", label: "Solo " + stemLabel }
+  ];
+}
+
 function performPage() {
   var chart = S.performChart;
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
@@ -246,12 +258,7 @@ function performPage() {
 
   // Practice presets
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Mix</span>';
-  var presets = [
-    { id: "full_mix", label: "Full" },
-    { id: "no_guitar", label: "No Guitar" },
-    { id: "guitar_quiet", label: "Quiet Guitar" },
-    { id: "guitar_solo", label: "Solo Guitar" }
-  ];
+  var presets = getPerformancePracticePresetOptions();
   var performPracticePreset = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : S.performPracticePreset;
   for (var pr = 0; pr < presets.length; pr++) {
     h += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
