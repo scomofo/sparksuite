@@ -144,6 +144,42 @@ test("practicePage renders human plan labels from a core-backed daily practice p
   assert.strictEqual(html.indexOf(">practice<"), -1);
 });
 
+test("plan page infers richer display types from generic core-backed items", function() {
+  global.SparkPracticeBridge = {
+    toLegacyPlan: function(plan) { return plan._legacyPlan; }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            focus: "Song mastery",
+            items: [
+              { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: 240, meta: { songId: "island_strum" } },
+              { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120, meta: { exerciseId: "warmup_1" } }
+            ]
+          }
+        },
+        lastSessionOutcome: null
+      };
+    }
+  };
+  global.ensurePracticePlan = function() {
+    throw new Error("should not be called");
+  };
+  global.S = { practicePlanComplete: false };
+  global.act = function() {};
+  global.launchPracticeItem = function() {};
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("performance song") >= 0);
+  assert.ok(html.indexOf("finger") >= 0);
+  assert.strictEqual(html.indexOf(">song<"), -1);
+  assert.strictEqual(html.indexOf(">practice<"), -1);
+});
+
 test("practiceTab reads the active core-backed plan without calling ensurePracticePlan during render", function() {
   var ensureCalls = 0;
   global.ensurePracticePlan = function() {

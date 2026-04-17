@@ -20,7 +20,7 @@ function planPage(){
 
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
-    h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(item.type)+'">';
+    h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPlanDisplayType(item))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
     h += '<div style="font-weight:700;font-size:14px">'+escHTML(item.label)+'</div>';
@@ -57,6 +57,20 @@ function planItemColor(type){
   return "#6b7280";
 }
 
+function getPlanDisplayType(item){
+  item = item || {};
+  var meta = item.meta || {};
+  if(item.type === "song" && meta.songId) return "performance_song";
+  if(item.type === "practice"){
+    if(meta.guidedSession != null) return "guided_session";
+    if(meta.from || meta.to || meta.key) return "transition";
+    if(meta.bpm != null) return "rhythm";
+    if(meta.exerciseType) return meta.exerciseType;
+    if(meta.exerciseId) return "finger";
+  }
+  return item.type;
+}
+
 function formatPlanItemSubtitle(item){
   item = item || {};
   var meta = item.meta || {};
@@ -64,8 +78,8 @@ function formatPlanItemSubtitle(item){
   if(meta.instrument) parts.push(prettyPlanToken(meta.instrument));
   if(meta.exerciseFocus) parts.push(prettyPlanToken(meta.exerciseFocus));
   else if(meta.skill) parts.push(prettyPlanToken(meta.skill));
-  if(item.type) parts.push(prettyPlanToken(item.type));
-  return parts.join(" • ") || String(item.type || "practice");
+  if(getPlanDisplayType(item)) parts.push(prettyPlanToken(getPlanDisplayType(item)));
+  return parts.join(" • ") || String(getPlanDisplayType(item) || item.type || "practice");
 }
 
 function prettyPlanToken(value){

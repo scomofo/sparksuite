@@ -58,6 +58,21 @@ function test(name, fn) {
 console.log("\n--- Piano Plan Page Resolution ---");
 
 test("pianoPlanPage prefers the active core-backed practice plan and launches by item id", function() {
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "daily_practice",
+        _legacyPlan: {
+          focus: "Song mastery",
+          items: [
+            { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: 240, meta: { songId: "island_strum" } },
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120, meta: { exerciseId: "warmup_1" } }
+          ]
+        }
+      },
+      lastSessionOutcome: null
+    };
+  };
   var html = pianoPlanPage();
 
   assert.ok(html.indexOf("Song mastery") >= 0);
@@ -66,6 +81,8 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
   assert.ok(html.indexOf("launchPracticePlanItem('song_1')") >= 0);
   assert.ok(html.indexOf("launchPracticePlanItem('practice_1')") >= 0);
+  assert.ok(html.indexOf("performance song") >= 0);
+  assert.ok(html.indexOf("finger") >= 0);
 });
 
 test("piano practice plan section reads the active core-backed plan without generating one during render", function() {

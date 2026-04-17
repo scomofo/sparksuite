@@ -1,20 +1,37 @@
 (function(){
 
+  function getEffectivePracticeItemType(item){
+    var meta = item && item.meta ? item.meta : {};
+    var type = item && item.type ? item.type : null;
+
+    if (type === "song" && meta.songId) return "performance_song";
+    if (type === "practice") {
+      if (meta.guidedSession != null) return "guided_session";
+      if (meta.from || meta.to || meta.key) return "transition";
+      if (meta.bpm != null) return "rhythm";
+      if (meta.exerciseId && meta.instrument && meta.exerciseType) return meta.exerciseType;
+      if (meta.exerciseId) return "finger";
+    }
+
+    return type;
+  }
+
   function launchPracticeItem(item){
     if(!item) return false;
-    if(item.type==="warmup") return launchWarmupItem(item);
-    if(item.type==="transition") return launchTransitionItem(item);
-    if(item.type==="rhythm_highway") return launchRhythmHighwayItem(item);
+    var type = getEffectivePracticeItemType(item);
+    if(type==="warmup") return launchWarmupItem(item);
+    if(type==="transition") return launchTransitionItem(item);
+    if(type==="rhythm_highway") return launchRhythmHighwayItem(item);
     if(isModuleExerciseItem(item)) return launchModuleExerciseItem(item);
-    if(item.type==="performance_song") return launchPerformanceSongItem(item);
-    if(item.type==="performance_phrase") return launchPerformancePhraseItem(item);
-    if(item.type==="performance_technique") return launchPerformanceTechniqueItem(item);
-    if(item.type==="rhythm") return launchRhythmItem(item);
-    if(item.type==="finger") return launchFingerItem(item);
-    if(item.type==="guided_session" && typeof launchGuidedSessionItem==="function"){
+    if(type==="performance_song") return launchPerformanceSongItem(item);
+    if(type==="performance_phrase") return launchPerformancePhraseItem(item);
+    if(type==="performance_technique") return launchPerformanceTechniqueItem(item);
+    if(type==="rhythm") return launchRhythmItem(item);
+    if(type==="finger") return launchFingerItem(item);
+    if(type==="guided_session" && typeof launchGuidedSessionItem==="function"){
       return launchGuidedSessionItem(item);
     }
-    if(item.type==="left_hand_pattern" && typeof launchLeftHandItem==="function"){
+    if(type==="left_hand_pattern" && typeof launchLeftHandItem==="function"){
       return launchLeftHandItem(item);
     }
     console.warn("Spark: no launcher for item type", item.type);
