@@ -19,6 +19,18 @@ function pianoFirstAnalyticsTextToken(){
   return "";
 }
 
+function pianoAnalyticsValueToken(value) {
+  if (typeof value === "number") {
+    return isFinite(value) ? String(value) : "";
+  }
+  if (typeof value !== "string") return "";
+  return pianoAnalyticsTextToken(value);
+}
+
+function pianoAnalyticsCountValue(value) {
+  return typeof value === "number" && isFinite(value) ? value : 0;
+}
+
 function pianoAnalyticsPage(){
   var summary = typeof buildAnalyticsSummary === "function" ? buildAnalyticsSummary() : null;
   var h = '';
@@ -87,7 +99,7 @@ function renderAnalyticsStrengths(summary){
   }else{
     for(var i=0;i<summary.strongestSkills.length;i++){
       var s = summary.strongestSkills[i];
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(pianoFirstAnalyticsTextToken(s.label, "Skill"))+': '+escHTML(String(s.value))+'</div>';
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(pianoFirstAnalyticsTextToken(s.label, "Skill"))+': '+escHTML(pianoFirstAnalyticsTextToken(pianoAnalyticsValueToken(s.value), "Skill"))+'</div>';
     }
   }
   h += '</div>';
@@ -102,7 +114,7 @@ function renderAnalyticsImprovement(summary){
   }else{
     for(var i=0;i<summary.recentImprovement.length;i++){
       var r = summary.recentImprovement[i];
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(pianoFirstAnalyticsTextToken(r.label, "Improvement"))+': '+escHTML(String(r.value))+'</div>';
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(pianoFirstAnalyticsTextToken(r.label, "Improvement"))+': '+escHTML(pianoFirstAnalyticsTextToken(pianoAnalyticsValueToken(r.value), "Improvement"))+'</div>';
     }
   }
   h += '</div>';
@@ -113,9 +125,9 @@ function renderAnalyticsConsistency(summary){
   var c = summary.practiceConsistency || {};
   var h = '<div class="card mb16">';
   h += '<div class="mb8"><b>Practice Consistency</b></div>';
-  h += '<div style="font-size:13px;margin-bottom:6px">Streak: '+(c.streak||0)+'</div>';
-  h += '<div style="font-size:13px;margin-bottom:6px">Sessions: '+(c.sessions||0)+'</div>';
-  h += '<div style="font-size:13px;margin-bottom:6px">History Entries: '+(c.historyCount||0)+'</div>';
+  h += '<div style="font-size:13px;margin-bottom:6px">Streak: '+pianoAnalyticsCountValue(c.streak)+'</div>';
+  h += '<div style="font-size:13px;margin-bottom:6px">Sessions: '+pianoAnalyticsCountValue(c.sessions)+'</div>';
+  h += '<div style="font-size:13px;margin-bottom:6px">History Entries: '+pianoAnalyticsCountValue(c.historyCount)+'</div>';
   h += '</div>';
   return h;
 }
