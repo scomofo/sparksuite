@@ -213,6 +213,90 @@ async function run() {
     assert.ok(html.indexOf("Rhythm") >= 0);
   });
 
+  await test("guided page rehydrates thin active instruments before reading page ui", function() {
+    global.SparkInstruments = {
+      getActive: function() {
+        return { appId: "pianospark" };
+      },
+      getAll: function() {
+        return [{
+          id: "pianospark",
+          appId: "pianospark",
+          getData: function() { return { ALL_CHORDS: [] }; },
+          ui: { chord: function() { return "<svg></svg>"; } }
+        }];
+      }
+    };
+    eval(loadJS("js/pages/guided.js"));
+
+    var instrument = resolveGuidedActiveInstrument();
+
+    assert.ok(instrument);
+    assert.strictEqual(instrument.id, "pianospark");
+    assert.strictEqual(typeof instrument.getData, "function");
+    assert.strictEqual(typeof instrument.ui.chord, "function");
+  });
+
+  await test("session page rehydrates thin active instruments before reading page ui", function() {
+    global.SparkInstruments = {
+      getActive: function() {
+        return { appId: "pianospark" };
+      },
+      getAll: function() {
+        return [{
+          id: "pianospark",
+          appId: "pianospark",
+          getData: function() { return { ALL_CHORDS: [] }; },
+          ui: { chord: function() { return "<svg></svg>"; } }
+        }];
+      }
+    };
+    eval(loadJS("js/pages/session.js"));
+
+    var instrument = resolveSessionActiveInstrument();
+
+    assert.ok(instrument);
+    assert.strictEqual(instrument.id, "pianospark");
+    assert.strictEqual(typeof instrument.getData, "function");
+    assert.strictEqual(typeof instrument.ui.chord, "function");
+  });
+
+  await test("songs page rehydrates thin active instruments before rendering the library", function() {
+    global.clickableDiv = function() { return ""; };
+    global.SparkInstruments = {
+      getActive: function() {
+        return { appId: "pianospark" };
+      },
+      getAll: function() {
+        return [{
+          id: "pianospark",
+          appId: "pianospark",
+          getData: function() {
+            return {
+              LC: { 1: "#4ECDC4" },
+              SONGS: [{
+                title: "River Run",
+                artist: "Spark Artist",
+                level: 1,
+                bpm: 92,
+                chords: ["C", "G"],
+                progression: ["C", "G", "Am", "F"]
+              }],
+              ALL_CHORDS: [{ name: "C Major", short: "C" }, { name: "G Major", short: "G" }]
+            };
+          }
+        }];
+      }
+    };
+    eval(loadJS("js/pages/songs.js"));
+
+    var html = songsTab();
+
+    assert.ok(html.indexOf("Song Library") >= 0);
+    assert.ok(html.indexOf("River Run") >= 0);
+    assert.ok(html.indexOf("Spark Artist") >= 0);
+  });
+
   await test("progress dashboard can render from plain global S", function() {
     global.sparkCore = {
       progressEngine: {

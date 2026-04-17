@@ -23,6 +23,25 @@ function songsStateRead(path, fallback){
   return cursor == null ? fallback : cursor;
 }
 
+function resolveSongsActiveInstrument(){
+  if(typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function"){
+    return null;
+  }
+  var instrument = SparkInstruments.getActive();
+  if(!instrument) return null;
+  if(instrument.getData || instrument.ui || instrument.pages || instrument.tabs || instrument.tabRenderers){
+    return instrument;
+  }
+  var instrumentId = instrument.id || instrument.appId || null;
+  if(!instrumentId || typeof SparkInstruments.getAll !== "function") return instrument;
+  var instruments = SparkInstruments.getAll() || [];
+  for(var i = 0; i < instruments.length; i++){
+    if(!instruments[i]) continue;
+    if(instruments[i].id === instrumentId || instruments[i].appId === instrumentId) return instruments[i];
+  }
+  return instrument;
+}
+
 function getSongsCoreView(){
   if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
   return window.sparkCore.getActiveSessionView() || null;
@@ -126,7 +145,8 @@ function _formatPerformanceTechniqueLabel(key){
 
 // ===== STRUM TAB =====
 function strumTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolveSongsActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var player = getSongsPlayerSnapshot();
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Strum Patterns &#127932;</h2></div><div class="flex-col">';
   for(var i=0;i<STRUM_PATTERNS.length;i++){
@@ -146,7 +166,8 @@ function strumTab(){
 
 // ===== SONGS TAB =====
 function songsTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolveSongsActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var browserState = getSongsBrowserSnapshot();
   var player = getSongsPlayerSnapshot();
   var songsSubTab = browserState.songsSubTab;
@@ -306,7 +327,8 @@ function communitySection(){
 }
 
 function communitySubmitForm(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolveSongsActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var communityState=getSongsCommunitySnapshot();
   var ss=getSongsSubmitSnapshot();
   var h='<div class="card"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">Submit a Song</h3>';
@@ -340,7 +362,8 @@ function communitySubmitForm(){
 
 // ===== IMPORT CHORD SHEET SECTION =====
 function importSection(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolveSongsActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var importState = getSongsImportSnapshot();
   var h='<div class="card mb16">';
   h+='<h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128196; Import Chord Sheet</h3>';

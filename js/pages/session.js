@@ -23,6 +23,25 @@ function sessionStateRead(path, fallback){
   return cursor == null ? fallback : cursor;
 }
 
+function resolveSessionActiveInstrument(){
+  if(typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function"){
+    return null;
+  }
+  var instrument = SparkInstruments.getActive();
+  if(!instrument) return null;
+  if(instrument.getData || instrument.ui || instrument.pages || instrument.tabs || instrument.tabRenderers){
+    return instrument;
+  }
+  var instrumentId = instrument.id || instrument.appId || null;
+  if(!instrumentId || typeof SparkInstruments.getAll !== "function") return instrument;
+  var instruments = SparkInstruments.getAll() || [];
+  for(var i = 0; i < instruments.length; i++){
+    if(!instruments[i]) continue;
+    if(instruments[i].id === instrumentId || instruments[i].appId === instrumentId) return instruments[i];
+  }
+  return instrument;
+}
+
 function getSparkCoreRuntimeState(){
   if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
   var view = window.sparkCore.getActiveSessionView();
@@ -117,8 +136,9 @@ function getSessionChordDetectRuntime(){
 
 // ===== SESSION PAGES =====
 function sessionPage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveSessionActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   var runtime = getLegacySessionRuntime(D);
   var c = runtime.chord;
   if(!c)return '';
@@ -184,7 +204,8 @@ function sessionPage(){
 }
 
 function completePage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolveSessionActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var runtime = getLegacySessionRuntime(D);
   var player = getSessionPlayerSnapshot();
   var progress = getSessionProgressSnapshot();
@@ -195,8 +216,9 @@ function completePage(){
 }
 
 function drillPage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveSessionActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   var runtime = getLegacyDrillRuntime(D);
   if(runtime.chords.length<2)return '';
   var drillIdx = sessionStateRead("drillIdx", 0);
@@ -244,7 +266,8 @@ function dailyPage(){
 }
 
 function quizPage(){
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveSessionActiveInstrument();
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   var runtime = null;
   if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
     var view = window.sparkCore.getActiveSessionView();
@@ -305,8 +328,9 @@ function strumDetailPage(){
 }
 
 function songDetailPage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveSessionActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;

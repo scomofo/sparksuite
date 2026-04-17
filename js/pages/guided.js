@@ -26,6 +26,25 @@ function guidedStateRead(path, fallback) {
   return cursor == null ? fallback : cursor;
 }
 
+function resolveGuidedActiveInstrument() {
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  var instrument = SparkInstruments.getActive();
+  if (!instrument) return null;
+  if (instrument.getData || instrument.ui || instrument.pages || instrument.tabs || instrument.tabRenderers) {
+    return instrument;
+  }
+  var instrumentId = instrument.id || instrument.appId || null;
+  if (!instrumentId || typeof SparkInstruments.getAll !== "function") return instrument;
+  var instruments = SparkInstruments.getAll() || [];
+  for (var i = 0; i < instruments.length; i++) {
+    if (!instruments[i]) continue;
+    if (instruments[i].id === instrumentId || instruments[i].appId === instrumentId) return instruments[i];
+  }
+  return instrument;
+}
+
 function titleizeGuidedToken(value) {
   return String(value || "")
     .replace(/[_-]+/g, " ")
@@ -163,8 +182,9 @@ function _guidedSpark(plan) {
 }
 
 function _guidedReview(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveGuidedActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   if (!plan.review) {
     return '<div class="card mb16"><h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>' +
       '<p style="color:var(--text-muted)">No review for this session \u2014 it\'s your first!</p>' +
@@ -192,8 +212,9 @@ function _guidedReview(plan) {
 }
 
 function _guidedNewMove(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveGuidedActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   var guidedView = getGuidedSessionView();
   if (!plan.newMove) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
@@ -280,8 +301,9 @@ function _guidedSongSlice(plan) {
 }
 
 function _guidedVictoryLap(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveGuidedActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D;background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#127942; Victory Lap!</h3>';
