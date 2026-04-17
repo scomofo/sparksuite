@@ -16,6 +16,24 @@ function pianoNormalizeSongTextInput(value) {
   return value;
 }
 
+function pianoSongPageTextToken(value) {
+  if (value == null) return "";
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  var text = String(value).trim();
+  if (!text) return "";
+  var lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstSongPageTextToken() {
+  for (var i = 0; i < arguments.length; i++) {
+    var text = pianoSongPageTextToken(arguments[i]);
+    if (text) return text;
+  }
+  return "";
+}
+
 function pianoSongsTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -57,9 +75,11 @@ function songLibrary() {
 
   if (S.songIdx !== null && SONGS[S.songIdx]) {
     var song = SONGS[S.songIdx];
+    var songTitle = pianoFirstSongPageTextToken(song.title, song.id, "Song");
+    var songArtist = pianoFirstSongPageTextToken(song.artist, "Unknown Artist");
     html += '<div class="song-detail">';
-    html += '<h3>' + escHTML(song.title) + '</h3>';
-    html += '<div class="text-muted">' + escHTML(song.artist) + ' \u2022 Level ' + song.level + '</div>';
+    html += '<h3>' + escHTML(songTitle) + '</h3>';
+    html += '<div class="text-muted">' + escHTML(songArtist) + ' \u2022 Level ' + song.level + '</div>';
     html += '<div class="song-chords">';
     song.chords.forEach(function(ch) {
       var chord = findChord(ch);
@@ -238,6 +258,8 @@ function _isStemSolo(name) {
 }
 
 function stemsSection() {
+  var stemFileName = pianoFirstSongPageTextToken(S.stemFile && S.stemFile.fileName);
+  var stemError = pianoFirstSongPageTextToken(S.stemError);
   var html = '<div class="card" style="text-align:center">';
   html += '<div style="font-size:32px;margin-bottom:8px">\u{1F3A7}</div>';
   html += '<h3>Stem Separator</h3>';
@@ -254,15 +276,15 @@ function stemsSection() {
   }
   html += '</div>';
 
-  if (S.stemError) {
-    html += '<div class="card" style="border:1px solid var(--danger)"><p style="color:var(--danger)">' + escHTML(S.stemError) + '</p></div>';
+  if (stemError) {
+    html += '<div class="card" style="border:1px solid var(--danger)"><p style="color:var(--danger)">' + escHTML(stemError) + '</p></div>';
   }
 
   if (S.stemStatus === "separating") {
     html += '<div class="card">';
     html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
     html += '<div class="spinner"></div>';
-    html += '<div><strong>Separating stems...</strong><br><span class="text-muted">' + (S.stemFile ? escHTML(S.stemFile.fileName) : "") + '</span></div></div>';
+    html += '<div><strong>Separating stems...</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div></div>';
     html += '<div class="prog-bar" style="margin-bottom:8px"><div class="prog-fill" style="width:' + S.stemProgress + '%;background:var(--accent)"></div></div>';
     html += '<div style="display:flex;justify-content:space-between;align-items:center">';
     html += '<span class="text-muted" style="font-size:0.8rem">This may take 5-10 minutes</span>';
@@ -274,7 +296,7 @@ function stemsSection() {
     html += '<div class="card" style="border:1px solid var(--accent)">';
     html += '<div style="display:flex;align-items:center;gap:12px">';
     html += '<span style="font-size:28px">\u2705</span>';
-    html += '<div style="flex:1"><strong>Stems Ready!</strong><br><span class="text-muted">' + (S.stemFile ? escHTML(S.stemFile.fileName) : "") + '</span></div>';
+    html += '<div style="flex:1"><strong>Stems Ready!</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div>';
     html += '<button class="btn btn-accent" onclick="act(\'stemOpen\')">\u{1F3A7} Open Player</button>';
     html += '</div></div>';
   }
@@ -289,10 +311,11 @@ function stemsSection() {
 }
 
 function pianoStemsPlayerPage() {
+  var stemFileName = pianoFirstSongPageTextToken(S.stemFile && S.stemFile.fileName);
   var html = '<div style="padding:8px 0">';
   html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
   html += '<button class="btn btn-sm" onclick="act(\'stemBack\')">\u2190</button>';
-  html += '<div style="flex:1"><strong>\u{1F3A7} Stem Player</strong><br><span class="text-muted">' + (S.stemFile ? escHTML(S.stemFile.fileName) : "") + '</span></div></div>';
+  html += '<div style="flex:1"><strong>\u{1F3A7} Stem Player</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div></div>';
 
   html += '<div class="card">';
   html += '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px">';
