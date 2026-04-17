@@ -34,6 +34,10 @@ function resetState() {
   global.SparkInstrumentAdapter = {
     getInstrumentType: function() { return "guitar"; }
   };
+  global.SparkInstruments = {
+    getActive: function() { return null; },
+    getAll: function() { return []; }
+  };
   global.SparkState = {
     read: function(path, fallback) {
       var key = Array.isArray(path) ? path[0] : path;
@@ -186,6 +190,30 @@ test("piano rhythm recommendations fall back to the games rhythm flow", function
     { name: "go_home", value: undefined },
     { name: "tab", value: "games" },
     { name: "start_rhythm", value: undefined }
+  ]);
+});
+
+test("guided session recommendations infer piano from the active instrument id instead of the legacy adapter", function() {
+  global.S.activeInstrument = "pianospark";
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  var launched = launchPracticeItem({
+    id: "guided_session_3",
+    type: "guided_session",
+    meta: { guidedSession: 3 }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "tab", value: "practice" },
+    { name: "start_guided_session", value: 3 }
   ]);
 });
 

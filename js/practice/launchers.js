@@ -235,10 +235,41 @@
     return 1;
   }
 
+  function getActivePracticeLauncherInstrumentType(){
+    var active = typeof SparkInstruments!=="undefined" && SparkInstruments && typeof SparkInstruments.getActive==="function"
+      ? SparkInstruments.getActive()
+      : null;
+    var activeId = active ? (active.id || active.appId || active.instrumentId || null) : null;
+    var all;
+    var i;
+    var inst;
+    if(active && active.instrument) return active.instrument;
+    if(!activeId && typeof SparkState!=="undefined" && typeof SparkState.read==="function"){
+      activeId = SparkState.read(["activeInstrument"], null);
+    }
+    if(!activeId && typeof globalThis!=="undefined" && globalThis.S){
+      activeId = globalThis.S.activeInstrument || null;
+    }
+    if(activeId && typeof SparkInstruments!=="undefined" && SparkInstruments && typeof SparkInstruments.getAll==="function"){
+      all = SparkInstruments.getAll() || [];
+      for(i=0;i<all.length;i++){
+        inst = all[i];
+        if(!inst) continue;
+        if(inst.id===activeId || inst.appId===activeId || inst.instrumentId===activeId){
+          return inst.instrument || null;
+        }
+      }
+    }
+    if(typeof SparkInstrumentAdapter!=="undefined" && SparkInstrumentAdapter.getInstrumentType){
+      return SparkInstrumentAdapter.getInstrumentType();
+    }
+    return null;
+  }
+
   function launchGuidedSessionItem(item){
     if(typeof act!=="function") return false;
     var sessionNum = getGuidedSessionNumber(item);
-    if(typeof SparkInstrumentAdapter!=="undefined" && SparkInstrumentAdapter.getInstrumentType && SparkInstrumentAdapter.getInstrumentType()==="piano"){
+    if(getActivePracticeLauncherInstrumentType()==="piano"){
       act("tab", TAB.PRACTICE);
       act("start_guided_session", sessionNum);
       return true;
