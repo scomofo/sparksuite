@@ -230,6 +230,42 @@ test("SparkCore exposes engine-owned runtime state for active session context", 
   assert.strictEqual(view.lastSessionOutcome, null);
 });
 
+test("SparkCore reuses daily practice plans when the active context only provides instrumentId", function() {
+  var core = createDefaultSparkCore();
+  var buildCalls = 0;
+  var today = new Date().toISOString().slice(0, 10);
+
+  core.instrumentManager.getActiveContext = function() {
+    return {
+      instrumentId: "pianospark",
+      instrumentType: "piano",
+      curriculumMap: [],
+      sessions: [],
+      songs: []
+    };
+  };
+  core.sessionEngine.buildSession = function(flow, options) {
+    buildCalls++;
+    return new SessionPlan({
+      id: "daily_piano_plan",
+      flow: flow,
+      generatedDate: today,
+      instrumentId: options.instrumentContext.instrumentId || options.instrumentContext.appId || null,
+      instrumentType: options.instrumentContext.instrumentType || null,
+      segments: [],
+      exercises: [],
+      rewards: [{ type: "xp", amount: 40 }]
+    });
+  };
+
+  var firstPlan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+  var secondPlan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  assert.strictEqual(firstPlan.instrumentId, "pianospark");
+  assert.strictEqual(secondPlan, firstPlan);
+  assert.strictEqual(buildCalls, 1);
+});
+
 test("SparkCore and storage fall back to global S when SparkState.getRoot returns null", function() {
   var originalSparkState = global.SparkState;
   global.S.playerXP = 55;

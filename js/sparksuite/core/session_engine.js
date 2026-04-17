@@ -120,6 +120,11 @@
     };
   };
 
+  function getInstrumentContextId(instrumentContext) {
+    instrumentContext = instrumentContext || {};
+    return instrumentContext.appId || instrumentContext.instrumentId || null;
+  }
+
   SessionEngine.prototype.buildSession = function(flow, context) {
     context = context || {};
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.buildGuidedSession(context);
@@ -236,7 +241,7 @@
 
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-      instrumentId: context.instrumentContext ? context.instrumentContext.appId : null,
+      instrumentId: getInstrumentContextId(context.instrumentContext),
       instrumentType: context.instrumentContext ? context.instrumentContext.instrumentType : null,
       focus: brainAnalysis && brainAnalysis.focusSkill ? brainAnalysis.focusSkill : practicePlan.focus,
       lesson: curriculumContext.nextLesson || null,
@@ -286,7 +291,7 @@
 
     return new SessionPlan({
       flow: "legacy_practice_session",
-      instrumentId: instrumentContext.appId || null,
+      instrumentId: getInstrumentContextId(instrumentContext),
       instrumentType: instrumentContext.instrumentType || null,
       focus: chordName || mode,
       lesson: chordName ? { id: chordName } : null,
@@ -314,7 +319,7 @@
 
     return new SessionPlan({
       flow: "legacy_practice_drill",
-      instrumentId: instrumentContext.appId || null,
+      instrumentId: getInstrumentContextId(instrumentContext),
       instrumentType: instrumentContext.instrumentType || null,
       focus: "chord_transition",
       lesson: chordNames.length ? { id: chordNames.join("_") } : null,
@@ -345,7 +350,7 @@
 
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
-      instrumentId: instrumentContext.appId || null,
+      instrumentId: getInstrumentContextId(instrumentContext),
       instrumentType: instrumentContext.instrumentType || null,
       focus: "guided",
       lesson: guidedPlan,
@@ -372,7 +377,7 @@
 
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
-      instrumentId: instrumentContext.appId || null,
+      instrumentId: getInstrumentContextId(instrumentContext),
       instrumentType: instrumentContext.instrumentType || null,
       focus: "performance",
       lesson: song ? { id: songId } : null,
@@ -422,7 +427,7 @@
 
       return new SessionPlan({
         flow: "spotify_play_along",
-        instrumentId: instrumentContext.appId || null,
+        instrumentId: getInstrumentContextId(instrumentContext),
         focus: "play_along",
         lesson: { id: trackId, type: "song" },
         difficulty: difficulty,
@@ -466,7 +471,7 @@
   SessionEngine.prototype.buildEmptySession = function(flow, context) {
     return new SessionPlan({
       flow: flow,
-      instrumentId: context.instrumentContext ? context.instrumentContext.appId : null,
+      instrumentId: getInstrumentContextId(context.instrumentContext),
       instrumentType: context.instrumentContext ? context.instrumentContext.instrumentType : null,
       segments: []
     });

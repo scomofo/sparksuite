@@ -114,4 +114,14 @@ assert.strictEqual(plan.exercises[1].data.presentation.label, "C to Am");
 assert.deepStrictEqual(plan.rewards, { xp: 40, unlocks: [], achievements: [] });
 assert.strictEqual(SparkSessionV2.getExercise(plan.segments[0], plan).id, "ex_0");
 
+var instrumentIdOnlyPlan = sessionEngine.buildSession(SparkSessionTypes.FLOW_DAILY_PRACTICE, {
+  instrumentContext: {
+    instrumentId: "ukespark",
+    instrumentType: "ukulele",
+    rhythmAdapter: SparkUkuleleModule.getRhythmAdapter()
+  }
+});
+
+assert.strictEqual(instrumentIdOnlyPlan.instrumentId, "ukespark");
+
 console.log("PASS: Session engine v2 produces normalized lesson/segment/exercise contracts");

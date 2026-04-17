@@ -7,18 +7,19 @@
 
   SessionEngineV2.prototype.buildSession = function(flow, context) {
     context = context || {};
+    var instrumentContext = context.instrumentContext || {};
 
-    var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
+    var curriculumContext = this.curriculumEngine.getDailyPracticeContext(instrumentContext);
     var difficulty = resolveDifficulty(this.psychologyEngine, context.user || {});
     var practicePlan = this.practiceEngine.buildDailyPracticePlan({
       curriculum: curriculumContext,
-      instrumentContext: context.instrumentContext || {},
+      instrumentContext: instrumentContext,
       difficulty: difficulty
     });
 
     return new SessionPlan({
       flow: flow,
-      instrumentId: context.instrumentContext ? context.instrumentContext.appId : null,
+      instrumentId: instrumentContext.appId || instrumentContext.instrumentId || null,
       lesson: curriculumContext.nextLesson || null,
       focus: practicePlan.focus,
       difficulty: difficulty,

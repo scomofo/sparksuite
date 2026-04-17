@@ -3935,9 +3935,11 @@
   }
 
   function sparkCorePlanMatchesInstrument(plan, instrumentContext) {
+    var instrumentContextId;
     if (!plan || !instrumentContext) return false;
-    if (plan.instrumentId && instrumentContext.appId) {
-      return plan.instrumentId === instrumentContext.appId;
+    instrumentContextId = instrumentContext.appId || instrumentContext.instrumentId || null;
+    if (plan.instrumentId && instrumentContextId) {
+      return plan.instrumentId === instrumentContextId;
     }
     if (plan.instrumentType && instrumentContext.instrumentType) {
       return plan.instrumentType === instrumentContext.instrumentType;
