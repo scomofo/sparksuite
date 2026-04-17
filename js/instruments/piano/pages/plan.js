@@ -18,7 +18,7 @@ function pianoPlanPage(){
       return null;
     }
     var durationSec = typeof raw === "number" ? raw : Number(raw);
-    return Number.isFinite(durationSec) && durationSec > 0
+    return Number.isFinite(durationSec) && Number.isInteger(durationSec) && durationSec > 0
       ? Math.round(durationSec / 60)
       : null;
   }
