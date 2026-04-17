@@ -99,6 +99,26 @@
         ]);
       }
     }
+    if(instrument === "bass"){
+      if(level === "beginner"){
+        unlockStarterIds([
+          "bass_level_1",
+          "bass_level_2"
+        ]);
+      }else if(level === "early_intermediate"){
+        unlockStarterIds([
+          "bass_level_3",
+          "bass_level_4",
+          "bass_level_5"
+        ]);
+      }else{
+        unlockStarterIds([
+          "bass_level_6",
+          "bass_level_7",
+          "bass_level_8"
+        ]);
+      }
+    }
     markOnboardingStarterUnlocksDone();
   }
 
