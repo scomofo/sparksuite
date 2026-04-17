@@ -137,6 +137,27 @@ test("sessionPage rehydrates an app-id-only active instrument shell", function()
   assert.ok(html.indexOf("chord-svg") >= 0);
 });
 
+test("songDetailPage and songDonePage ignore stale song copy tokens", function() {
+  S.selectedSong = {
+    id: "moonlight_sonata",
+    title: "undefined",
+    artist: "null",
+    bpm: 72,
+    chords: ["C", "G"],
+    progression: ["C", "G"],
+    pattern: ["D", "U"]
+  };
+
+  var detailHtml = songDetailPage();
+  var doneHtml = songDonePage();
+  assert.ok(detailHtml.indexOf("moonlight_sonata") >= 0);
+  assert.ok(detailHtml.indexOf("Unknown Artist") >= 0);
+  assert.ok(detailHtml.indexOf(">undefined<") === -1);
+  assert.ok(detailHtml.indexOf(">null<") === -1);
+  assert.ok(doneHtml.indexOf("moonlight_sonata") >= 0);
+  assert.ok(doneHtml.indexOf(">undefined<") === -1);
+});
+
 test("songsTab rehydrates an app-id-only active instrument shell", function() {
   var html = songsTab();
   assert.ok(html.indexOf("Song Library") >= 0);
