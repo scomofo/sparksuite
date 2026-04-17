@@ -68,4 +68,48 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
   assert.ok(html.indexOf("launchPracticePlanItem('practice_1')") >= 0);
 });
 
+test("piano practice plan section reads the active core-backed plan without generating one during render", function() {
+  var generateCalls = 0;
+  global.S = {
+    practicePlan: {
+      items: [{ id: "stale_1", label: "Old Stale Song", completed: false }]
+    }
+  };
+  global.generateDailyPracticePlan = function() {
+    generateCalls++;
+    return S.practicePlan;
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = {
+    toLegacyPlan: function(plan) { return plan._legacyPlan; }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            items: [
+              { id: "song_1", type: "song", label: "Replay Island Strum", completed: false },
+              { id: "practice_1", type: "practice", label: "Quick warmup", completed: true }
+            ]
+          }
+        }
+      };
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = practicePlanSection();
+  assert.strictEqual(generateCalls, 0);
+  assert.ok(html.indexOf("Replay Island Strum") >= 0);
+  assert.ok(html.indexOf("Quick warmup") >= 0);
+  assert.strictEqual(html.indexOf("Old Stale Song"), -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

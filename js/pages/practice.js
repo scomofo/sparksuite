@@ -195,28 +195,31 @@ function practiceTab(){
   }
 
   // Adaptive Practice Plan
-  if(typeof ensurePracticePlan==="function"){
-    var plan=ensurePracticePlan();
-    if(plan&&plan.items&&plan.items.length){
-      h+='<div class="card mb20" style="border:2px solid '+(plan.completedItems>=plan.totalItems?"#4ECDC4":"#45B7D1")+'">';
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-      h+='<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
-      h+='<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+plan.completedItems+'/'+plan.totalItems+'</span>';
-      h+='</div>';
-      h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(plan.focus)+'</div>';
-      for(var pi=0;pi<plan.items.length;pi++){
-        var item=plan.items[pi];
-        h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
-        h+='<span style="font-size:16px">'+(item.completed?"&#9989;":"&#9744;")+'</span>';
-        h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(item.label)+'</div>';
-        h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(item.desc)+'</div></div>';
-        if(!item.completed){
-          h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+item.id+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
-        }
-        h+='</div>';
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    : S.practicePlan;
+  if(plan&&plan.items&&plan.items.length){
+    h+='<div class="card mb20" style="border:2px solid '+(plan.completedItems>=plan.totalItems?"#4ECDC4":"#45B7D1")+'">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    h+='<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
+    h+='<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+plan.completedItems+'/'+plan.totalItems+'</span>';
+    h+='</div>';
+    h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(plan.focus)+'</div>';
+    for(var pi=0;pi<plan.items.length;pi++){
+      var item=plan.items[pi];
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
+      h+='<span style="font-size:16px">'+(item.completed?"&#9989;":"&#9744;")+'</span>';
+      h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(item.label)+'</div>';
+      h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(item.desc)+'</div></div>';
+      if(!item.completed){
+        h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+item.id+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
       }
       h+='</div>';
     }
+    h+='</div>';
   }
 
   // Quick Start / Resume

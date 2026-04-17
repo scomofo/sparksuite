@@ -140,26 +140,28 @@ function practicePlanSection(){
   }
 
   // Today's brain-generated practice plan
-  if(typeof generateDailyPracticePlan === "function"){
-    if(!S.practicePlan) generateDailyPracticePlan();
-    var plan = S.practicePlan;
-    if(plan && plan.items && plan.items.length){
-      h += '<div class="card" style="margin-top:12px">';
-      h += '<div><b>Today\'s Practice Plan</b></div>';
-      for(var i=0;i<plan.items.length;i++){
-        var item = plan.items[i];
-        var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
-        h += '<div class="row"' + done + '>';
-        h += '<span>' + escHTML(item.label || item.type || "practice") + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
-        if(!item.completed){
-          h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
-        }else{
-          h += '<span class="text-muted">Done</span>';
-        }
-        h += '</div>';
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    : S.practicePlan;
+  if(plan && plan.items && plan.items.length){
+    h += '<div class="card" style="margin-top:12px">';
+    h += '<div><b>Today\'s Practice Plan</b></div>';
+    for(var i=0;i<plan.items.length;i++){
+      var item = plan.items[i];
+      var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+      h += '<div class="row"' + done + '>';
+      h += '<span>' + escHTML(item.label || item.type || "practice") + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
+      if(!item.completed){
+        h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
+      }else{
+        h += '<span class="text-muted">Done</span>';
       }
       h += '</div>';
     }
+    h += '</div>';
   }
 
   // Progression mastery summary
