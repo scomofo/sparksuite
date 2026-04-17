@@ -333,7 +333,7 @@ test("curriculum recommendation can read completed lessons from sparkCore", func
   };
   global.getNextLessonFromCurriculum = function(rootLessonId, completedLessonIds) {
     completedLessonIds = completedLessonIds || [];
-    if (rootLessonId !== "curriculum_chordspark_main") return null;
+    if (rootLessonId !== "bass_level_1") return null;
     return completedLessonIds.indexOf("bass_level_4") === -1 ? "bass_level_4" : null;
   };
 
@@ -348,6 +348,39 @@ test("curriculum recommendation can read completed lessons from sparkCore", func
 
   assert.ok(curriculum);
   assert.strictEqual(curriculum.id, "bass_level_4");
+});
+
+test("curriculum recommendation falls back to legacy curriculum roots when no active map exists", function() {
+  global.SparkInstruments.getActive = function() {
+    return {
+      id: "pianospark",
+      appId: "pianospark",
+      instrument: "piano"
+    };
+  };
+  global.getCurriculumItem = function(kind, lessonId) {
+    if (kind === "lessons" && lessonId === "piano_intro_2") {
+      return { id: "piano_intro_2", title: "Left Hand Steps", level: 2 };
+    }
+    return null;
+  };
+  global.getNextLessonFromCurriculum = function(rootLessonId) {
+    if (rootLessonId !== "curriculum_pianospark_main") return null;
+    return "piano_intro_2";
+  };
+
+  var candidates = collectRecommendationCandidates("piano");
+  var curriculum = null;
+  var i;
+  for (i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "curriculum") {
+      curriculum = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(curriculum);
+  assert.strictEqual(curriculum.id, "piano_intro_2");
 });
 
 test("generateRecommendations prioritizes play-along recovery and module-progress ahead of generic challenges", function() {

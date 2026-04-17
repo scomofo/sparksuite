@@ -107,9 +107,17 @@
 
   function getCurriculumCandidates(appType){
     var out = [];
-    var curriculumId = appType === "piano"
-      ? "curriculum_pianospark_main"
-      : "curriculum_chordspark_main";
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    var activeCurriculum = active && typeof active.getCurriculumMap === "function"
+      ? (active.getCurriculumMap() || [])
+      : [];
+    var curriculumId = activeCurriculum.length && activeCurriculum[0] && activeCurriculum[0].id
+      ? activeCurriculum[0].id
+      : (appType === "piano"
+        ? "curriculum_pianospark_main"
+        : "curriculum_chordspark_main");
     var completedLessons = getCompletedLessons();
     var nextLessonId = typeof getNextLessonFromCurriculum === "function"
       ? getNextLessonFromCurriculum(curriculumId, completedLessons)
