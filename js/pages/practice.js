@@ -29,12 +29,15 @@ function getPracticePageInstrumentType(inst) {
 function getPracticeSummaryItemType(item) {
   var meta = item && item.meta ? item.meta : {};
   var type = item && item.type ? item.type : null;
+  var exerciseType = meta && typeof meta.exerciseType === "string"
+    ? meta.exerciseType.trim()
+    : meta.exerciseType;
   if (type === "song" && meta.songId) return "performance_song";
   if (type === "practice") {
     if (meta.guidedSession != null) return "guided_session";
     if (meta.from || meta.to || meta.key) return "transition";
     if (meta.bpm != null) return "rhythm";
-    if (meta.exerciseType) return meta.exerciseType;
+    if (exerciseType) return exerciseType;
     if (meta.exerciseId) return "finger";
   }
   return type;

@@ -122,12 +122,13 @@ function planItemColor(type){
 function getPlanDisplayType(item){
   item = item || {};
   var meta = item.meta || {};
+  var exerciseType = typeof meta.exerciseType === "string" ? meta.exerciseType.trim() : meta.exerciseType;
   if(item.type === "song" && meta.songId) return "performance_song";
   if(item.type === "practice"){
     if(meta.guidedSession != null) return "guided_session";
     if(meta.from || meta.to || meta.key) return "transition";
     if(meta.bpm != null) return "rhythm";
-    if(meta.exerciseType) return meta.exerciseType;
+    if(exerciseType) return exerciseType;
     if(meta.exerciseId) return "finger";
   }
   return item.type;
