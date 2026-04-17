@@ -239,6 +239,8 @@ function getPianoPracticePlanItemType(item){
 }
 
 function prettyPianoPracticePlanToken(value){
+  if(value == null) return "";
+  if(typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
   return String(value || "").replace(/_/g, " ").trim();
 }
 

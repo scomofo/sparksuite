@@ -659,6 +659,36 @@ test("piano plan and practice sections skip whitespace-only fallback meta labels
   assert.ok(practiceHtml.indexOf("island strum") >= 0);
 });
 
+test("piano plan and practice sections ignore object-shaped fallback meta labels", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "song", meta: { songTitle: { bad: true }, songId: "island_strum", instrument: { bad: true }, skill: "strum_pattern" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+  assert.ok(planHtml.indexOf("island strum") >= 0);
+  assert.ok(practiceHtml.indexOf("island strum") >= 0);
+  assert.strictEqual(planHtml.indexOf("[object Object]"), -1);
+  assert.strictEqual(practiceHtml.indexOf("[object Object]"), -1);
+});
+
 test("piano plan and practice sections ignore whitespace-only exercise types", function() {
   global.S = {
     practicePlanComplete: false,
