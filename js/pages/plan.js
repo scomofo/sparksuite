@@ -30,6 +30,7 @@ function planPage(){
       var value = item.meta[key];
       if (value == null) return false;
       if (typeof value === "string") return !!value.trim();
+      if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return false;
       return true;
     }));
     return !!(
@@ -206,6 +207,7 @@ function getPlanFocusLabel(plan){
       var value = item.meta[key];
       if (value == null) return false;
       if (typeof value === "string") return !!value.trim();
+      if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return false;
       return true;
     }));
     return !!(
