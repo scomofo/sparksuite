@@ -246,6 +246,30 @@ test("practicePage derives readable fallback labels and subtitles for sparse pla
   assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
+test("practicePage does not render start buttons for sparse plan items without ids", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    practicePlan: {
+      items: [
+        { type: "song", completed: false, meta: { songId: "island_strum" } },
+        { id: "practice_1", type: "practice", completed: false, meta: { exerciseId: "warmup_1" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = practicePage();
+  assert.strictEqual(html.indexOf("practiceStartItem', 'undefined'"), -1);
+  assert.ok(html.indexOf("practiceStartItem', 'practice_1'") >= 0);
+  assert.ok(html.indexOf(">Unavailable<") >= 0);
+});
+
 test("plan page infers richer display types from generic core-backed items", function() {
   global.SparkPracticeBridge = {
     toLegacyPlan: function(plan) { return plan._legacyPlan; }
@@ -387,6 +411,30 @@ test("planPage derives readable fallback labels for sparse plan items", function
   assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
+test("planPage does not render go buttons for sparse plan items without ids", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { type: "song", durationSec: 240, meta: { songId: "island_strum" } },
+        { id: "practice_1", type: "practice", durationSec: 120, meta: { exerciseId: "warmup_1" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.strictEqual(html.indexOf("launchPracticePlanItem('undefined')"), -1);
+  assert.ok(html.indexOf("launchPracticePlanItem('practice_1')") >= 0);
+  assert.ok(html.indexOf(">Unavailable<") >= 0);
+});
+
 test("practiceTab reads the active core-backed plan without calling ensurePracticePlan during render", function() {
   var ensureCalls = 0;
   global.ensurePracticePlan = function() {
@@ -425,6 +473,50 @@ test("practiceTab reads the active core-backed plan without calling ensurePracti
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
   assert.ok(html.indexOf("Quick warmup") >= 0);
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
+});
+
+test("practiceTab derives progress counts when cached plans omit completedItems and totalItems", function() {
+  var ensureCalls = 0;
+  global.ensurePracticePlan = function() {
+    ensureCalls++;
+    return null;
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlan: {
+      focus: "Song mastery",
+      items: [
+        { id: "song_1", type: "song", label: "Replay Island Strum", completed: true },
+        { id: "practice_1", type: "practice", label: "Quick warmup", completed: false }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = practiceTab();
+  assert.strictEqual(ensureCalls, 0);
+  assert.ok(html.indexOf("1/2") >= 0);
+  assert.strictEqual(html.indexOf("undefined/undefined"), -1);
 });
 
 test("practiceTab falls back to cached plan state when the practice bridge is unavailable", function() {

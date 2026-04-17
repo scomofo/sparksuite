@@ -157,7 +157,11 @@ function practicePlanSection(){
       h += '<div class="row"' + done + '>';
       h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
       if(!item.completed){
-        h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
+        if(item && item.id){
+          h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
+        }else{
+          h += '<span class="text-muted">Unavailable</span>';
+        }
       }else{
         h += '<span class="text-muted">Done</span>';
       }
