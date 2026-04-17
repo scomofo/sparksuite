@@ -323,6 +323,66 @@ test("generateRecommendations infers bass from thin active instrument ids before
   assert.strictEqual(capturedAppType, "bass");
 });
 
+test("generateRecommendations stores recommendation ownership from appId-only active instruments", function() {
+  var originalCollect = collectRecommendationCandidates;
+  var originalFilter = filterRecommendationCandidates;
+  var originalBalance = balanceRecommendationSet;
+  global.APP_NAME = "SparkSuite";
+  S.activeInstrument = null;
+  global.SparkInstruments.getActive = function() {
+    return {
+      appId: "ukespark"
+    };
+  };
+  collectRecommendationCandidates = function() {
+    return [];
+  };
+  filterRecommendationCandidates = function(candidates) {
+    return candidates;
+  };
+  balanceRecommendationSet = function(candidates) {
+    return candidates;
+  };
+
+  generateRecommendations();
+
+  collectRecommendationCandidates = originalCollect;
+  filterRecommendationCandidates = originalFilter;
+  balanceRecommendationSet = originalBalance;
+  assert.strictEqual(S.recommendationInstrumentId, "ukespark");
+});
+
+test("generateRecommendations infers ukulele from appId-only active instruments before app name defaults", function() {
+  var originalCollect = collectRecommendationCandidates;
+  var originalFilter = filterRecommendationCandidates;
+  var originalBalance = balanceRecommendationSet;
+  var capturedAppType = null;
+  global.APP_NAME = "SparkSuite";
+  S.activeInstrument = null;
+  global.SparkInstruments.getActive = function() {
+    return {
+      appId: "ukespark"
+    };
+  };
+  collectRecommendationCandidates = function(appType) {
+    capturedAppType = appType;
+    return [];
+  };
+  filterRecommendationCandidates = function(candidates) {
+    return candidates;
+  };
+  balanceRecommendationSet = function(candidates) {
+    return candidates;
+  };
+
+  generateRecommendations();
+
+  collectRecommendationCandidates = originalCollect;
+  filterRecommendationCandidates = originalFilter;
+  balanceRecommendationSet = originalBalance;
+  assert.strictEqual(capturedAppType, "ukulele");
+});
+
 test("curriculum recommendation can read completed lessons from sparkCore", function() {
   S.completedLessons = [];
   global.getCurriculumItem = function(kind, lessonId) {

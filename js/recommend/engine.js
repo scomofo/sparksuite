@@ -40,6 +40,14 @@
     return value;
   }
 
+  function getRecommendationActiveInstrumentId(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+      ? SparkInstruments.getActive()
+      : null;
+    if(active && (active.id || active.appId)) return active.id || active.appId;
+    return recommendationStateRead("activeInstrument", null);
+  }
+
   function generateRecommendations(appType){
     var candidates = collectRecommendationCandidates(appType || inferRecommendationAppType());
     candidates = filterRecommendationCandidates(candidates);
@@ -53,7 +61,7 @@
     var picked = balanceRecommendationSet(candidates, maxSuggestions);
     recommendationStateWrite("recommendations", picked);
     recommendationStateWrite("lastRecommendationRun", Date.now());
-    recommendationStateWrite("recommendationInstrumentId", recommendationStateRead("activeInstrument", null));
+    recommendationStateWrite("recommendationInstrumentId", getRecommendationActiveInstrumentId());
     return picked;
   }
 
@@ -81,6 +89,7 @@
     var activeHints = [
       active ? active.instrument : null,
       active ? active.id : null,
+      active ? active.appId : null,
       recommendationStateRead("activeInstrument", null),
       recommendationStateRead("recommendationInstrumentId", null)
     ];
