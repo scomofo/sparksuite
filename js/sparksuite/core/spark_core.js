@@ -3168,6 +3168,8 @@
       ? (this.instrumentManager.getActiveContext() || {})
       : {};
     var songs = Array.isArray(instrumentContext.songs) ? instrumentContext.songs : [];
+    var resolvedInstrumentType = sparkCoreResolveRuntimeInstrumentType(null, instrumentContext, this.runtimeState);
+    var resolvedInstrumentId = sparkCoreResolveRuntimeInstrumentId(null, instrumentContext, this.runtimeState);
     var aliasMap = {};
     var i;
 
@@ -3212,11 +3214,12 @@
 
     if (typeof getPerformanceChartLibrary !== "function") return null;
 
-    var instrumentId = instrumentContext.instrumentType || instrumentContext.instrumentId || instrumentContext.appId || null;
-    var chartLibrary = instrumentId
-      ? (getPerformanceChartLibrary({ instrument: instrumentId }) || [])
+    var chartLibrary = resolvedInstrumentType
+      ? (getPerformanceChartLibrary({ instrument: resolvedInstrumentType }) || [])
+      : resolvedInstrumentId
+        ? (getPerformanceChartLibrary({ instrument: resolvedInstrumentId }) || [])
       : (getPerformanceChartLibrary() || []);
-    if (!chartLibrary.length && instrumentId) {
+    if (!chartLibrary.length && (resolvedInstrumentType || resolvedInstrumentId)) {
       chartLibrary = getPerformanceChartLibrary({}) || [];
     }
     var chartAliasMap = {};
@@ -3324,9 +3327,12 @@
       return this.openPerformanceSongSelection(options);
     }
     if (typeof getPerformanceChartLibrary === "function") {
-      var instrumentId = this.runtimeState.activeInstrumentType || this.runtimeState.activeInstrumentId || null;
-      var chartLibrary = getPerformanceChartLibrary(instrumentId ? { instrument: instrumentId } : {}) || [];
-      if (!chartLibrary.length && instrumentId) {
+      var instrumentContext = this.instrumentManager && typeof this.instrumentManager.getActiveContext === "function"
+        ? (this.instrumentManager.getActiveContext() || null)
+        : null;
+      var instrumentType = sparkCoreResolveRuntimeInstrumentType(null, instrumentContext, this.runtimeState);
+      var chartLibrary = getPerformanceChartLibrary(instrumentType ? { instrument: instrumentType } : {}) || [];
+      if (!chartLibrary.length && instrumentType) {
         chartLibrary = getPerformanceChartLibrary({}) || [];
       }
       if (chartLibrary.length) {

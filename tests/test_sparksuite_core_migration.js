@@ -3450,6 +3450,50 @@ test("SparkCore prefers active instrument type over app id for daily performance
   }
 });
 
+test("SparkCore resolves daily performance challenges from active instrument ids", function() {
+  var core = createDefaultSparkCore();
+  var originalGetPerformanceChartLibrary = global.getPerformanceChartLibrary;
+  global.SparkInstruments = {
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+  global.getPerformanceChartLibrary = function(options) {
+    options = options || {};
+    if (options.instrument === "piano") {
+      return [{
+        id: "piano_daily_song",
+        title: "Keys Daily",
+        artist: "SparkSuite Piano",
+        instrument: "piano",
+        sourceType: "built_in"
+      }];
+    }
+    if (options.instrument === "pianospark") {
+      return [];
+    }
+    return [{
+      id: "guitar_daily_song",
+      title: "Guitar Daily",
+      artist: "SparkSuite Guitar",
+      instrument: "guitar",
+      sourceType: "built_in"
+    }];
+  };
+  core.updateRuntimeState({ activeInstrumentId: "pianospark", activeInstrumentType: null });
+  try {
+    var selection = core.openPerformanceDailyChallenge({
+      arrangementType: "block_chords",
+      difficultyId: "easy"
+    });
+
+    assert.strictEqual(selection.songId, "piano_daily_song");
+    assert.strictEqual(selection.songData.title, "Keys Daily");
+  } finally {
+    global.getPerformanceChartLibrary = originalGetPerformanceChartLibrary;
+  }
+});
+
 test("SparkCore startPracticeFromLesson uses the active instrument type for playable launches", function() {
   var core = createDefaultSparkCore();
   var originalGateway = window.SparkExecutionGateway;
