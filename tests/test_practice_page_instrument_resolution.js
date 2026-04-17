@@ -432,6 +432,23 @@ test("planPage derives a readable focus label when a cached plan omits focus", f
   assert.strictEqual(html.indexOf("<div class=\"muted\">No practice plan yet.</div>"), -1);
 });
 
+test("planPage does not render a completed banner when the plan is missing but the stale completion flag remains", function() {
+  global.S = {
+    practicePlanComplete: true,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(html.indexOf("Plan completed!"), -1);
+});
+
 test("planPage does not render go buttons for sparse plan items without ids", function() {
   global.S = {
     practicePlanComplete: false,
