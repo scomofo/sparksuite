@@ -4,12 +4,20 @@ function planPage(){
     return id || null;
   }
   function isRenderablePlanItem(item){
+    var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
+    var type = item && typeof item.type === "string" ? item.type.trim() : (item ? item.type : null);
+    var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && Object.keys(item.meta).some(function(key) {
+      var value = item.meta[key];
+      if (value == null) return false;
+      if (typeof value === "string") return !!value.trim();
+      return true;
+    }));
     return !!(
       item &&
       (getPlanItemId(item) ||
-       item.label ||
-       item.type ||
-       (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
+       label ||
+       type ||
+       metaHasValue)
     );
   }
   function hasRenderablePlanItems(plan){
@@ -156,12 +164,20 @@ function getPlanItemLabel(item){
 
 function getPlanFocusLabel(plan){
   if(!plan || !Array.isArray(plan.items) || !plan.items.some(function(item){
+    var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
+    var type = item && typeof item.type === "string" ? item.type.trim() : (item ? item.type : null);
+    var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && Object.keys(item.meta).some(function(key) {
+      var value = item.meta[key];
+      if (value == null) return false;
+      if (typeof value === "string") return !!value.trim();
+      return true;
+    }));
     return !!(
       item &&
       (item.id ||
-       item.label ||
-       item.type ||
-       (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
+       label ||
+       type ||
+       metaHasValue)
     );
   })) return "No practice plan yet.";
   var focus = typeof plan.focus === "string" ? plan.focus.trim() : plan.focus;

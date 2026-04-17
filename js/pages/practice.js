@@ -105,12 +105,20 @@ function getPracticeSummaryFocus(plan) {
 
 function isRenderablePracticeSummaryItem(item) {
   var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
+  var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
+  var type = item && typeof item.type === "string" ? item.type.trim() : (item ? item.type : null);
+  var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && Object.keys(item.meta).some(function(key) {
+    var value = item.meta[key];
+    if (value == null) return false;
+    if (typeof value === "string") return !!value.trim();
+    return true;
+  }));
   return !!(
     item &&
     (id ||
-     item.label ||
-     item.type ||
-     (item.meta && typeof item.meta === "object" && Object.keys(item.meta).length))
+     label ||
+     type ||
+     metaHasValue)
   );
 }
 
