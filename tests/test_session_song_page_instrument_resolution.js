@@ -213,4 +213,21 @@ test("songs surfaces ignore stale chart and community text tokens", function() {
   assert.ok(performHtml.indexOf(">NaN<") === -1);
 });
 
+test("songs import list ignores stale imported song text tokens", function() {
+  S.songsSubTab = "import";
+  S.importedSongs = [{
+    id: "import_song_1",
+    title: "undefined",
+    artist: "null",
+    bpm: 88,
+    chords: ["C", "G"]
+  }];
+
+  var html = songsTab();
+  assert.ok(html.indexOf("import song 1") >= 0);
+  assert.ok(html.indexOf("Unknown Artist") >= 0);
+  assert.ok(html.indexOf(">undefined<") === -1);
+  assert.ok(html.indexOf(">null<") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
