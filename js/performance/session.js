@@ -880,10 +880,11 @@ function finishPerformance() {
   }
   // Route through contract-based progress path (Phase 6 migration)
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var perfActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
     var perfSessionResult = SparkContracts.createSessionResult({
       mode: "song",
-      instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
-      instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+      instrumentId: perfActiveInstrument ? (perfActiveInstrument.id || perfActiveInstrument.appId || null) : null,
+      instrumentType: perfActiveInstrument ? (perfActiveInstrument.instrument || null) : null,
       accuracy: results ? results.accuracy / 100 : 0,
       duration: results ? (results.duration || 0) : 0,
       songId: performChartId || null,

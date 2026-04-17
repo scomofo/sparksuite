@@ -147,6 +147,12 @@ async function run() {
     assert.strictEqual(buildPerformanceRecommendationsForSong("focus_song")[0].type, "imported_technique_focus");
   });
 
+  await test("practice completion preserves thin active instrument app ids in session results", function() {
+    var practiceEngineSource = loadJS("js/practice/engine.js");
+    assert.ok(practiceEngineSource.indexOf('var practiceActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;') >= 0);
+    assert.ok(practiceEngineSource.indexOf('instrumentId: practiceActiveInstrument ? (practiceActiveInstrument.id || practiceActiveInstrument.appId || null) : null,') >= 0);
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

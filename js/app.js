@@ -1626,10 +1626,11 @@ function completeGuidedSessionRequest(options) {
   }
   // Route through contract-based progress path (Phase 6 migration)
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
     var guidedResult = SparkContracts.createSessionResult({
       mode: "guided",
-      instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
-      instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+      instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,
+      instrumentType: guidedActiveInstrument ? (guidedActiveInstrument.instrument || null) : null,
       duration: 300,
       accuracy: 0.75,
       completed: true

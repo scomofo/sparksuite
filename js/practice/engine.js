@@ -145,10 +145,11 @@
       });
       // Route through contract-based progress path
       if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+        var practiceActiveInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function" ? SparkInstruments.getActive() : null;
         var practiceResult = SparkContracts.createSessionResult({
           mode: "practice",
-          instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
-          instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+          instrumentId: practiceActiveInstrument ? (practiceActiveInstrument.id || practiceActiveInstrument.appId || null) : null,
+          instrumentType: practiceActiveInstrument ? (practiceActiveInstrument.instrument || null) : null,
           completed: true
         });
         SparkProgressOrchestrator.applySessionOutcome(practiceResult);
