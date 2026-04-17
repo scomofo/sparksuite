@@ -2624,7 +2624,7 @@
       return startPlayableRhythmHighwayPayload(payload, {
         source: "lesson_generator",
         label: lesson.label,
-        instrument: this.runtimeState.activeInstrumentId || "guitar"
+        instrument: this.runtimeState.activeInstrumentType || this.runtimeState.activeInstrumentId || "guitar"
       });
     }
     return false;
