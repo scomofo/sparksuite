@@ -75,10 +75,15 @@ function getPracticeSummaryItemDesc(item) {
 
 function getPracticeSummaryProgress(plan) {
   var items = plan && Array.isArray(plan.items) ? plan.items : [];
-  var totalItems = typeof plan.totalItems === "number" ? plan.totalItems : items.length;
-  var completedItems = typeof plan.completedItems === "number"
-    ? plan.completedItems
-    : items.filter(function(item) { return !!(item && item.completed); }).length;
+  var derivedTotalItems = items.length;
+  var rawTotalItems = plan && typeof plan.totalItems === "number" ? plan.totalItems : null;
+  var totalItems = rawTotalItems && rawTotalItems > 0 ? rawTotalItems : derivedTotalItems;
+  var derivedCompletedItems = items.filter(function(item) { return !!(item && item.completed); }).length;
+  var rawCompletedItems = plan && typeof plan.completedItems === "number" ? plan.completedItems : null;
+  var completedItems = rawCompletedItems != null ? rawCompletedItems : derivedCompletedItems;
+  if (completedItems < 0) completedItems = 0;
+  if (totalItems < 0) totalItems = 0;
+  if (totalItems > 0 && completedItems > totalItems) completedItems = totalItems;
   return {
     completedItems: completedItems,
     totalItems: totalItems
