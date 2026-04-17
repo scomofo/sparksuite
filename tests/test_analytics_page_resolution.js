@@ -34,9 +34,15 @@ console.log("\n--- Analytics Page Resolution ---");
 test("analyticsPage ignores sentinel recommendation labels and reasons", function() {
   global.buildAnalyticsSummary = function() {
     return {
-      weakestTransitions: [],
-      weakestSongs: [],
-      weakestPhrases: [],
+      weakestTransitions: [
+        { label: "undefined", avgMs: 180 }
+      ],
+      weakestSongs: [
+        { label: "null", accuracy: 42 }
+      ],
+      weakestPhrases: [
+        { label: "NaN", accuracy: 55 }
+      ],
       strongestSkills: [],
       recentImprovement: [],
       practiceConsistency: {},
@@ -49,9 +55,13 @@ test("analyticsPage ignores sentinel recommendation labels and reasons", functio
   global.eval(loadJS("js/pages/analytics.js"));
 
   var html = analyticsPage();
+  assert.ok(html.indexOf("Transition") >= 0);
+  assert.ok(html.indexOf("Song") >= 0);
+  assert.ok(html.indexOf("Phrase") >= 0);
   assert.ok(html.indexOf("Recommendation") >= 0);
   assert.strictEqual(html.indexOf("undefined"), -1);
   assert.strictEqual(html.indexOf("null"), -1);
+  assert.strictEqual(html.indexOf("NaN"), -1);
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");

@@ -41,7 +41,8 @@ function renderAnalyticsWeaknesses(summary){
     h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Transitions</div>';
     for(var i=0;i<summary.weakestTransitions.length;i++){
       var t = summary.weakestTransitions[i];
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(t.label)+' \u00b7 '+(t.avgMs||0)+' ms</div>';
+      var transitionLabel = prettyAnalyticsToken(t && t.label) || "Transition";
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(transitionLabel)+' \u00b7 '+(t.avgMs||0)+' ms</div>';
     }
   }
 
@@ -50,7 +51,8 @@ function renderAnalyticsWeaknesses(summary){
     h += '<div style="font-size:12px;color:var(--text-muted);margin:10px 0 6px">Songs</div>';
     for(var j=0;j<summary.weakestSongs.length;j++){
       var s = summary.weakestSongs[j];
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(s.label)+' \u00b7 '+(s.accuracy||0)+'%</div>';
+      var songLabel = prettyAnalyticsToken(s && s.label) || "Song";
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(songLabel)+' \u00b7 '+(s.accuracy||0)+'%</div>';
     }
   }
 
@@ -59,7 +61,8 @@ function renderAnalyticsWeaknesses(summary){
     h += '<div style="font-size:12px;color:var(--text-muted);margin:10px 0 6px">Phrases</div>';
     for(var k=0;k<summary.weakestPhrases.length;k++){
       var p = summary.weakestPhrases[k];
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(p.label)+' \u00b7 '+(p.accuracy||0)+'%</div>';
+      var phraseLabel = prettyAnalyticsToken(p && p.label) || "Phrase";
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(phraseLabel)+' \u00b7 '+(p.accuracy||0)+'%</div>';
     }
   }
 
