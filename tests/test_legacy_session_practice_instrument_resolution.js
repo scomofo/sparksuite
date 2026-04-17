@@ -141,4 +141,27 @@ test("legacy session engine preserves app-id-only ownership when processing resu
   assert.strictEqual(sparkEvents[0].payload.appId, "pianospark");
 });
 
+test("legacy session engine uses the result payload app id when no active instrument is available", function() {
+  global.SparkInstruments.getActive = function() {
+    return null;
+  };
+  global.S.chordProgress = {};
+  global.S.level = 1;
+  global.S.sessions = 0;
+  global.S.xp = 0;
+  global.S.earnedBadges = [];
+  global.logHistory = function() {};
+  global.checkBadges = function() {};
+
+  SparkSession.processResults({
+    type: "drill",
+    chordName: "C Major",
+    duration: 60,
+    instrumentId: "ukespark"
+  });
+
+  assert.strictEqual(sparkEvents.length, 1);
+  assert.strictEqual(sparkEvents[0].payload.appId, "ukespark");
+});
+
 if (process.exitCode) process.exit(process.exitCode);
