@@ -1,5 +1,9 @@
 /* PianoSpark - Games tab (drill, daily, quiz, ear, rhythm, runner) */
 
+var _pianoDailyTypes = [];
+var _pianoFingerExercises = [];
+var _pianoFingerBadges = [];
+
 function pianoGameTextToken(value) {
   var text;
   var lower;
@@ -24,9 +28,9 @@ function pianoFirstGameTextToken() {
 function pianoGamesTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
-  var DAILY_TYPES = D.DAILY_TYPES || [];
-  var FINGER_EXERCISES = D.FINGER_EXERCISES || [];
-  var FINGER_BADGES = D.FINGER_BADGES || [];
+  _pianoDailyTypes = D.DAILY_TYPES || [];
+  _pianoFingerExercises = D.FINGER_EXERCISES || [];
+  _pianoFingerBadges = D.FINGER_BADGES || [];
   var html = '';
   // Sub-tab selector
   var subtabs = [
@@ -99,6 +103,7 @@ function drillTab() {
 
 // ── Daily ──
 function dailyTab() {
+  var DAILY_TYPES = _pianoDailyTypes || [];
   var html = '<div class="card">';
   if (S.dailyActive && S.dailyType) {
     var dt = DAILY_TYPES.find(function(d) { return d.id === S.dailyType; });
@@ -115,10 +120,12 @@ function dailyTab() {
   } else {
     html += '<h2>Daily Challenges</h2><p>Push yourself with special missions!</p>';
     DAILY_TYPES.forEach(function(dt) {
+      var dailyName = pianoFirstGameTextToken(dt && dt.name, "Challenge");
+      var dailyDesc = pianoFirstGameTextToken(dt && dt.desc, "Practice mission");
       html += pianoClickableDiv("act('start_daily','" + dt.id + "')",
-        '<strong>' + dt.name + '</strong><br><span class="text-muted">' + dt.desc + '</span>', "daily-card");
+        '<strong>' + escHTML(dailyName) + '</strong><br><span class="text-muted">' + escHTML(dailyDesc) + '</span>', "daily-card");
     });
-    html += '<div class="text-muted">Completed: ' + S.dailiesDone + '</div>';
+    html += '<div class="text-muted">Completed: ' + ((typeof S.dailiesDone === "number" && isFinite(S.dailiesDone)) ? S.dailiesDone : 0) + '</div>';
   }
   html += '</div>';
   return html;
@@ -235,6 +242,8 @@ function runnerTab() {
 
 // ── Finger Exercises Tab ──
 function fingersTab() {
+  var FINGER_EXERCISES = _pianoFingerExercises || [];
+  var FINGER_BADGES = _pianoFingerBadges || [];
   var html = '<div class="card">';
 
   // 60-Second Chord Change Challenge
@@ -292,20 +301,24 @@ function fingersTab() {
     tierExercises.forEach(function(ex) {
       var stats = S.fingerStats[ex.id] || { completions: 0, lastDone: null };
       var doneToday = stats.lastDone && new Date(stats.lastDone).toDateString() === new Date().toDateString();
+      var exerciseName = pianoFirstGameTextToken(ex && ex.name, "Exercise");
+      var exerciseDesc = pianoFirstGameTextToken(ex && ex.desc, "Practice this movement.");
+      var exerciseGoal = pianoFirstGameTextToken(ex && ex.goal);
+      var exerciseFrequency = pianoFirstGameTextToken(ex && ex.frequency, "daily");
       html += '<div class="finger-exercise-card' + (doneToday ? ' done' : '') + '">';
       html += '<div class="finger-exercise-header">';
-      html += '<strong>' + escHTML(ex.name) + '</strong>';
+      html += '<strong>' + escHTML(exerciseName) + '</strong>';
       if (ex.offInstrument) html += ' <span class="level-tag">No keyboard</span>';
       if (doneToday) html += ' <span style="color:var(--success)">\u2705</span>';
       html += '</div>';
-      html += '<div class="text-muted" style="margin:4px 0">' + escHTML(ex.desc) + '</div>';
+      html += '<div class="text-muted" style="margin:4px 0">' + escHTML(exerciseDesc) + '</div>';
       html += '<div style="display:flex;gap:6px;align-items:center;margin-top:6px">';
-      html += '<span class="text-muted">' + Math.floor(ex.duration / 60) + ':' + (ex.duration % 60 < 10 ? '0' : '') + (ex.duration % 60) + ' \u2022 ' + escHTML(ex.frequency) + '</span>';
+      html += '<span class="text-muted">' + Math.floor(ex.duration / 60) + ':' + (ex.duration % 60 < 10 ? '0' : '') + (ex.duration % 60) + ' \u2022 ' + escHTML(exerciseFrequency) + '</span>';
       html += '<span class="text-muted">\u2022 ' + stats.completions + 'x done</span>';
       html += '<button class="btn btn-sm" onclick="act(\'complete_finger_exercise\',\'' + ex.id + '\')">' + (doneToday ? 'Again' : 'Done') + '</button>';
       html += '</div>';
-      if (ex.goal) {
-        html += '<div class="text-muted" style="font-style:italic;margin-top:4px">\u{1F3AF} ' + escHTML(ex.goal) + '</div>';
+      if (exerciseGoal) {
+        html += '<div class="text-muted" style="font-style:italic;margin-top:4px">\u{1F3AF} ' + escHTML(exerciseGoal) + '</div>';
       }
       html += '</div>';
     });
@@ -326,9 +339,12 @@ function fingersTab() {
   }
 
   // Injury prevention tip
-  var tipIdx = Math.floor(Date.now() / 86400000) % INJURY_TIPS.length;
+  var injuryTips = Array.isArray(typeof INJURY_TIPS !== "undefined" ? INJURY_TIPS : null) && INJURY_TIPS.length
+    ? INJURY_TIPS
+    : ["Relax your shoulders and stop if anything hurts."];
+  var tipIdx = Math.floor(Date.now() / 86400000) % injuryTips.length;
   html += '<div class="intention-card" style="margin-top:16px">';
-  html += '<span class="intention-icon">\u{26A0}</span> <strong>Injury Prevention:</strong> ' + escHTML(INJURY_TIPS[tipIdx]);
+  html += '<span class="intention-icon">\u{26A0}</span> <strong>Injury Prevention:</strong> ' + escHTML(injuryTips[tipIdx]);
   html += '</div>';
 
   // Finger badges
@@ -336,7 +352,7 @@ function fingersTab() {
   html += '<div class="badges-row">';
   FINGER_BADGES.forEach(function(b) {
     var earned = S.fingerBadges.indexOf(b.id) >= 0;
-    html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(b.desc) + '">' + b.icon + '</span>';
+    html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(pianoFirstGameTextToken(b && b.desc, "Badge")) + '">' + pianoFirstGameTextToken(b && b.icon, "\u{1F3C5}") + '</span>';
   });
   html += '</div>';
 

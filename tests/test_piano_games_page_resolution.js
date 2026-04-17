@@ -63,7 +63,19 @@ function resetEnvironment() {
     getActive: function() {
       return {
         getData: function() {
-          return { DAILY_TYPES: [], FINGER_EXERCISES: [], FINGER_BADGES: [] };
+          return {
+            DAILY_TYPES: [{ id: "daily", name: "undefined", desc: "null" }],
+            FINGER_EXERCISES: [{
+              id: "ex1",
+              tier: 1,
+              name: "undefined",
+              desc: "null",
+              goal: "NaN",
+              frequency: "undefined",
+              duration: 30
+            }],
+            FINGER_BADGES: [{ id: "badge1", icon: "null", desc: "undefined" }]
+          };
         }
       };
     }
@@ -104,6 +116,37 @@ test("runner and chord change views ignore stale target labels", function() {
   assert.ok(fingersHtml.indexOf(">undefined<") === -1);
   assert.ok(fingersHtml.indexOf(">null<") === -1);
   assert.ok(fingersHtml.indexOf("? ↔ ?") >= 0);
+});
+
+test("daily and finger exercise cards ignore stale cached labels", function() {
+  global.getAvailableExercises = function() {
+    return [{
+      id: "ex1",
+      tier: 1,
+      name: "undefined",
+      desc: "null",
+      goal: "NaN",
+      frequency: "undefined",
+      duration: 30
+    }];
+  };
+  pianoGamesTab();
+  var dailyHtml = dailyTab();
+  assert.ok(dailyHtml.indexOf("Challenge") >= 0);
+  assert.ok(dailyHtml.indexOf("Practice mission") >= 0);
+  assert.ok(dailyHtml.indexOf("Completed: 0") >= 0);
+  assert.ok(dailyHtml.indexOf("undefined") === -1);
+  assert.ok(dailyHtml.indexOf("null") === -1);
+
+  S.chordChangeActive = false;
+  var fingersHtml = fingersTab();
+  assert.ok(fingersHtml.indexOf("Exercise") >= 0);
+  assert.ok(fingersHtml.indexOf("Practice this movement.") >= 0);
+  assert.ok(fingersHtml.indexOf("daily") >= 0);
+  assert.ok(fingersHtml.indexOf("Injury Prevention:") >= 0);
+  assert.ok(fingersHtml.indexOf("undefined") === -1);
+  assert.ok(fingersHtml.indexOf("null") === -1);
+  assert.ok(fingersHtml.indexOf("NaN") === -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
