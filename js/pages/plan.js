@@ -31,13 +31,17 @@ function planPage(){
 
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
+    var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+    var actionHtml = item.completed
+      ? '<span class="text-muted">Done</span>'
+      : '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(item.id)+'\')" style="background:var(--accent);color:#fff">Go</button>';
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPlanDisplayType(item))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
-    h += '<div style="font-weight:700;font-size:14px">'+escHTML(item.label)+'</div>';
+    h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(item.label)+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
-    h += '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(item.id)+'\')" style="background:var(--accent);color:#fff">Go</button>';
+    h += actionHtml;
     h += '</div>';
     h += '</div>';
   }
