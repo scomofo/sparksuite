@@ -22,11 +22,15 @@ function getPracticePageInstrument() {
   return inst;
 }
 
+function getPracticePageInstrumentType(inst) {
+  return (inst && (inst.instrument || inst.instrumentType)) || "guitar";
+}
+
 function sv2HomeDashboard() {
   var inst = getPracticePageInstrument();
   if (!inst) return "";
   var D = inst.getData ? inst.getData() : {};
-  var instrumentType = inst.instrument || "guitar";
+  var instrumentType = getPracticePageInstrumentType(inst);
   var theme = typeof SparkTheme !== "undefined" ? SparkTheme.get(instrumentType) : null;
   if (!theme) return "";
 
@@ -88,7 +92,7 @@ function sv2HomeDashboard() {
     h += '<div class="sv2-inst-row sv2-anim-stagger-1">';
     for (var k = 0; k < otherInstruments.length; k++) {
       var oi = otherInstruments[k];
-      var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(oi.instrument) : "#888";
+      var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(getPracticePageInstrumentType(oi)) : "#888";
       h += '<div class="sv2-inst-row__item" onclick="act(\'switchInstrument\',\'' + oi.id + '\')">';
       h += '<div class="sv2-icon sv2-icon--sm" style="background:' + oiColor + '">' + (oi.icon || "\uD83C\uDFB5") + '</div>';
       h += '<div style="font-size:' + 'var(--text-micro)' + ';color:' + oiColor + ';font-weight:700;font-family:var(--font-body-v2)">' + escHTML(oi.name) + '</div>';
