@@ -22,6 +22,37 @@ function getToolsPageInstrument(){
   return inst;
 }
 
+function normalizeToolsTextToken(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function getToolsInstrumentName(inst) {
+  return normalizeToolsTextToken(
+    inst && (inst.name || inst.displayName || inst.instrumentName || inst.instrument)
+  );
+}
+
+function getToolsTuningLabel(strings) {
+  var notes = [];
+  var i;
+  var note;
+  if (!Array.isArray(strings) || !strings.length) {
+    return "Play a note to check your pitch.";
+  }
+  for (i = 0; i < strings.length; i++) {
+    note = normalizeToolsTextToken(strings[i] && strings[i].note);
+    if (note) notes.push(note);
+  }
+  return notes.length ? "Standard tuning: " + notes.join(" ") : "Play a note to check your pitch.";
+}
+
 // ===== TUNER TAB =====
 function getLegacyTunerRuntime(){
   var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
@@ -53,10 +84,13 @@ function getLegacyAudioInputRuntime(){
 function tunerTab(){
   var inst = getToolsPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
+  var instrumentName = getToolsInstrumentName(inst);
+  var tunerTitle = instrumentName ? instrumentName + " Tuner" : "Tuner";
+  var tuningLabel = getToolsTuningLabel(D.STRINGS);
   var runtime = getLegacyTunerRuntime();
-  var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; Guitar Tuner</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Standard tuning: E A D G B e</p>';
+  var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; ' + escHTML(tunerTitle) + '</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">' + escHTML(tuningLabel) + '</p>';
   h+='<div id="tuner-strings" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
-  for(var i=0;i<D.STRINGS.length;i++){
+  for(var i=0;i<(Array.isArray(D.STRINGS) ? D.STRINGS.length : 0);i++){
     var gs=D.STRINGS[i],mt=runtime.note===gs.note,inT=mt&&Math.abs(runtime.cents)<5,tC=inT?"#4ECDC4":mt&&Math.abs(runtime.cents)<15?"#FFE66D":"#FF6B6B";
     h+='<div style="background:'+(mt?tC+"22":"var(--chip-bg)")+';border:2px solid '+(mt?tC:"var(--border)")+';border-radius:12px;padding:8px 14px;text-align:center;min-width:44px"><div style="font-size:18px;font-weight:800;color:'+(mt?tC:"var(--text-muted)")+'">'+gs.note+'</div><div style="font-size:9px;color:var(--text-muted)">'+gs.freq+'Hz</div></div>';
   }
