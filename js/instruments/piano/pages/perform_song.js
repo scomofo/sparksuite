@@ -1,13 +1,42 @@
+function pianoPerformanceTextToken(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstPerformanceTextToken(){
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = pianoPerformanceTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function pianoPerformSongPage(){
   if(!S.performSongData) return '<div class="card">No song selected</div>';
 
   var sid = S.performSongId;
   var best = getPerformanceBest(sid, S.performArrangementType, S.performDifficulty);
   var mastery = getPerformanceMasteryLabel(best);
+  var songTitle = pianoFirstPerformanceTextToken(
+    S.performSongData.title,
+    S.performSongData.songTitle,
+    S.performSongData.id,
+    sid,
+    "Selected song"
+  );
+  var songArtist = pianoFirstPerformanceTextToken(S.performSongData.artist, "Unknown Artist");
 
   var h = '<div class="card mb16">';
-  h += '<h2>'+escHTML(S.performSongData.title)+'</h2>';
-  h += '<div class="muted">'+escHTML(S.performSongData.artist || "")+'</div>';
+  h += '<h2>'+escHTML(songTitle)+'</h2>';
+  h += '<div class="muted">'+escHTML(songArtist)+'</div>';
   h += '<div style="margin-top:8px">Mastery: <b>'+escHTML(mastery)+'</b></div>';
   if(best){
     h += '<div>Best Accuracy: '+Math.round(best.bestAccuracy||0)+'%</div>';
