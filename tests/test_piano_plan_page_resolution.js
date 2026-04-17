@@ -129,4 +129,26 @@ test("piano practice plan section reads the active core-backed plan without gene
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
 });
 
+test("pianoPlanPage stays read-only when no plan exists and shows an empty state", function() {
+  var ensureCalls = 0;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.ensurePracticePlan = function() {
+    ensureCalls++;
+    return {
+      focus: "Generated plan",
+      items: [{ id: "generated_1", label: "Generated Plan Row" }]
+    };
+  };
+  global.S = { practicePlanComplete: false, practicePlan: null };
+
+  var html = pianoPlanPage();
+  assert.strictEqual(ensureCalls, 0);
+  assert.ok(html.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

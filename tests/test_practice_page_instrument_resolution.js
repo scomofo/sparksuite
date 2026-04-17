@@ -204,6 +204,30 @@ test("plan page infers richer display types from generic core-backed items", fun
   assert.strictEqual(html.indexOf(">practice<"), -1);
 });
 
+test("planPage stays read-only when no plan exists and shows an empty state", function() {
+  var ensureCalls = 0;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.ensurePracticePlan = function() {
+    ensureCalls++;
+    return {
+      focus: "Generated plan",
+      items: [{ id: "generated_1", label: "Generated Plan Row" }]
+    };
+  };
+  global.S = { practicePlanComplete: false, practicePlan: null };
+  global.act = function() {};
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.strictEqual(ensureCalls, 0);
+  assert.ok(html.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
+});
+
 test("practiceTab reads the active core-backed plan without calling ensurePracticePlan during render", function() {
   var ensureCalls = 0;
   global.ensurePracticePlan = function() {
