@@ -25,6 +25,7 @@ function loadJS(file) {
 function resetState() {
   global.window = global;
   global.APP_NAME = "ChordSpark";
+  global.escHTML = function(value) { return String(value); };
   global.S = {
     completedLessons: ["bass_level_1", "bass_level_2", "bass_level_3"],
     mastery: { lessons: {} },
@@ -156,6 +157,22 @@ test("generateRecommendations prioritizes module-progress candidates ahead of ge
   assert.strictEqual(recommendations[0].source, "module_progress");
   assert.strictEqual(recommendations[0].meta.exerciseId, "bass_turnaround_01");
   assert.strictEqual(S.recommendations[0].source, "module_progress");
+});
+
+test("renderRecommendationModuleProgress ignores sentinel string focus tokens", function() {
+  var html = renderRecommendationModuleProgress({
+    source: "module_progress",
+    meta: {
+      recommendationFocus: "undefined",
+      progressSummary: {
+        weakestMetric: "timing",
+        timing: 0.48
+      }
+    }
+  });
+
+  assert.strictEqual(html.indexOf("Focus: undefined"), -1);
+  assert.ok(html.indexOf("Weakest: timing 48%") >= 0);
 });
 
 test("generateRecommendations infers thin active instruments through the registry", function() {

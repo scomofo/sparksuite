@@ -149,6 +149,24 @@ test("renderHomeRecommendationCard surfaces module-progress recommendation detai
   assert.ok(html.indexOf("Weakest: timing 48%") >= 0);
 });
 
+test("renderHomeRecommendationCard ignores sentinel focus strings in module-progress details", function() {
+  var html = renderHomeRecommendationCard([{
+    id: "module_bass_level_4",
+    title: "Bass: Walking Lines",
+    source: "module_progress",
+    meta: {
+      recommendationFocus: "undefined",
+      progressSummary: {
+        weakestMetric: "timing",
+        timing: 0.48
+      }
+    }
+  }]);
+
+  assert.strictEqual(html.indexOf("Focus: undefined"), -1);
+  assert.ok(html.indexOf("Weakest: timing 48%") >= 0);
+});
+
 test("renderHomeRecommendationCard surfaces focused imported-technique recommendation details", function() {
   var html = renderHomeRecommendationCard([{
     id: "imported_technique_song_x_tap",
@@ -163,6 +181,49 @@ test("renderHomeRecommendationCard surfaces focused imported-technique recommend
 
   assert.ok(html.indexOf("Technique: tap") >= 0);
   assert.ok(html.indexOf("Accuracy: 38%") >= 0);
+});
+
+test("renderHomeInsightCard ignores sentinel focused-technique text", function() {
+  var html = renderHomeInsightCard({
+    weakestSkills: [],
+    recommendationQuality: {
+      focusedTechnique: {
+        songId: "undefined",
+        techniqueLabel: "null",
+        accuracy: 40
+      }
+    }
+  });
+
+  assert.ok(html.indexOf("Focus: skill 40% in song") >= 0);
+  assert.strictEqual(html.indexOf("undefined"), -1);
+  assert.strictEqual(html.indexOf("null"), -1);
+});
+
+test("insightsDashboardPage ignores sentinel focused-technique text", function() {
+  S.personalInsights = {
+    weakestSkills: [],
+    strongestSkills: [],
+    masteryTrend: {},
+    practiceTrend: {},
+    recommendationQuality: {
+      totalAccepted: 0,
+      focusedTechnique: {
+        songId: "undefined",
+        techniqueLabel: "null",
+        accuracy: 40
+      }
+    },
+    careerTrend: {}
+  };
+  S.lastInsightRun = Date.now();
+  global.renderInsightLineChart = function() { return "<svg></svg>"; };
+
+  var html = insightsDashboardPage();
+
+  assert.ok(html.indexOf("skill is still at 40% in song") >= 0);
+  assert.strictEqual(html.indexOf("undefined"), -1);
+  assert.strictEqual(html.indexOf("null"), -1);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

@@ -1,3 +1,15 @@
+function prettyInsightUiToken(value){
+  var text;
+  var lower;
+  if(value == null) return "";
+  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
 function insightsDashboardPage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
@@ -59,9 +71,10 @@ function renderRecommendationInsightCard(pi){
   h += '<div><b>Recommendation Use</b></div>';
   var rq = (pi.recommendationQuality || {});
   h += '<div>Total accepted: '+(rq.totalAccepted || 0)+'</div>';
-  if(rq.focusedTechnique){
+  var focusedTechniqueLabel = prettyFocusedTechniqueInsight(rq.focusedTechnique);
+  if(focusedTechniqueLabel){
     h += '<div style="margin-top:8px;color:#8fd5c4"><b>Focused Technique</b></div>';
-    h += '<div>' + escHTML(prettyFocusedTechniqueInsight(rq.focusedTechnique)) + '</div>';
+    h += '<div>' + escHTML(focusedTechniqueLabel) + '</div>';
   }
   h += '</div>';
   return h;
@@ -69,8 +82,10 @@ function renderRecommendationInsightCard(pi){
 
 function prettyFocusedTechniqueInsight(insight){
   if(!insight) return "";
-  var songLabel = String(insight.songId || "song").replace(/_/g, " ");
-  return (insight.techniqueLabel || "skill") + " is still at " + (insight.accuracy || 0) + "% in " + songLabel;
+  var songLabel = prettyInsightUiToken(insight.songId) || "song";
+  var techniqueLabel = prettyInsightUiToken(insight.techniqueLabel) || "skill";
+  var accuracy = typeof insight.accuracy === "number" && isFinite(insight.accuracy) ? insight.accuracy : 0;
+  return techniqueLabel + " is still at " + accuracy + "% in " + songLabel;
 }
 
 function renderCareerInsightCard(pi){
