@@ -150,7 +150,7 @@ function practicePlanSection(){
         var item = plan.items[i];
         var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
         h += '<div class="row"' + done + '>';
-        h += '<span>' + escHTML(item.type) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
+        h += '<span>' + escHTML(item.label || item.type || "practice") + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
         if(!item.completed){
           h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
         }else{

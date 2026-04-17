@@ -99,6 +99,37 @@ test("homePage uses rehydrated tab renderers from the active instrument module",
   assert.ok(html.indexOf("Piano Practice") >= 0);
 });
 
+test("practicePage renders human plan labels from a core-backed daily practice plan", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.generateDailyPracticePlan = function() {};
+  global.SparkPracticeBridge = {
+    toLegacyPlan: function(plan) { return plan._legacyPlan; }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            items: [
+              { id: "song_1", type: "song", label: "Replay Island Strum", completed: false },
+              { id: "practice_1", type: "practice", label: "Quick warmup", completed: false }
+            ]
+          }
+        }
+      };
+    }
+  };
+
+  var html = practicePage();
+  assert.ok(html.indexOf("Replay Island Strum") >= 0);
+  assert.ok(html.indexOf("Quick warmup") >= 0);
+  assert.strictEqual(html.indexOf(">song<"), -1);
+  assert.strictEqual(html.indexOf(">practice<"), -1);
+});
+
 test("sv2HomeDashboard uses instrumentType when the rehydrated module does not expose instrument", function() {
   var themeRequests = [];
   SparkTheme.get = function(instrument) {
