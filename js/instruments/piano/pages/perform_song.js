@@ -53,9 +53,10 @@ function pianoPerformSongPage(){
 
   if(S.performArrangementType==="left_hand_patterns"){
     var pat = typeof getCurrentLHPattern==="function" ? getCurrentLHPattern() : null;
+    var patternName = pianoFirstPerformanceTextToken(pat && pat.name, "Unknown pattern");
     h += '<div class="card mb16">';
     h += '<div><b>LH Pattern</b></div>';
-    h += '<div class="muted">'+escHTML(pat ? pat.name : "Unknown pattern")+'</div>';
+    h += '<div class="muted">'+escHTML(patternName)+'</div>';
     h += '</div>';
   }
 

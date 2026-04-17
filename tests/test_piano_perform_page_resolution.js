@@ -82,4 +82,14 @@ test("piano performance results page ignores stale title and phrase text", funct
   assert.ok(html.indexOf(">Phrase 1<") >= 0);
 });
 
+test("piano perform song page ignores stale left hand pattern text", function() {
+  S.performArrangementType = "left_hand_patterns";
+  global.getCurrentLHPattern = function() {
+    return { name: "null" };
+  };
+  var html = pianoPerformSongPage();
+  assert.ok(html.indexOf("Unknown pattern") >= 0);
+  assert.ok(html.indexOf(">null<") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
