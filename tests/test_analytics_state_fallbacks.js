@@ -137,6 +137,24 @@ test("core analytics can record performances into plain global S", function() {
   assert.strictEqual(getAverageAccuracy(), 92);
 });
 
+test("analytics helpers fall back to global S when SparkState.getRoot returns null", function() {
+  global.SparkState = { getRoot: function() { return null; } };
+  global.getAverageAccuracy = function() { return 88; };
+  eval(loadJS("js/analytics/engine.js"));
+  eval(loadJS("js/analytics/reports.js"));
+  eval(loadJS("js/analytics/stats.js"));
+  eval(loadJS("js/analytics/trends.js"));
+  eval(loadJS("js/core/analytics.js"));
+
+  assert.strictEqual(buildAnalyticsSummary().practiceConsistency.sessions, 12);
+  assert.strictEqual(generatePracticeReport().level, 9);
+  recordPerformanceStats({ accuracy: 81, score: 900, songId: "song_beta", arrangementType: "block_chords" });
+  assert.strictEqual(Array.isArray(S.analytics.performanceHistory), true);
+  assert.strictEqual(getAveragePracticeMinutes(), 15);
+  recordPerformanceAnalytics({ accuracy: 92, songId: "song_gamma" });
+  assert.strictEqual(S.analytics.performances[S.analytics.performances.length - 1].songId, "song_gamma");
+});
+
 if (failed) {
   process.exitCode = 1;
 } else {

@@ -139,6 +139,21 @@ async function run() {
     assert.ok(loggedOutHtml.indexOf("draft@sparksuite.dev") >= 0);
   });
 
+  await test("cloud helpers fall back to global S when SparkState.getRoot returns null", async function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/cloud/auth.js"));
+    eval(loadJS("js/cloud/profile.js"));
+    eval(loadJS("js/cloud/storage.js"));
+    eval(loadJS("js/cloud/sync.js"));
+    eval(loadJS("js/cloud/ui.js"));
+
+    await loginSpark("next@sparksuite.dev", "pw");
+    assert.strictEqual(S.cloudAuth.email, "next@sparksuite.dev");
+    assert.ok(cloudSettingsPage().indexOf("Signed in as: next@sparksuite.dev") >= 0);
+    await syncSparkNow();
+    assert.strictEqual(S.cloudSync.lastSyncStatus, "ok");
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

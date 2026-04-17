@@ -124,6 +124,20 @@ async function run() {
     assert.ok(html.indexOf("Saved Profiles") >= 0);
   });
 
+  await test("midi helpers fall back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/midi/devices.js"));
+    eval(loadJS("js/midi/profiles.js"));
+    eval(loadJS("js/midi/ui.js"));
+
+    S.midiDevices = [{ id: "dev_1", name: "Keyboard" }];
+    S.activeMidiDeviceId = "dev_1";
+    createDefaultPianoProfile();
+    refreshMidiDevices();
+    assert.strictEqual(Array.isArray(S.midiDevices), true);
+    assert.ok(midiSettingsPage().indexOf("Profile") >= 0);
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

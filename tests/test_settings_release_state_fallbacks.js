@@ -116,6 +116,16 @@ async function run() {
   assert.strictEqual(getReleaseVersion(), "2.0.0");
   });
 
+  await test("settings and release helpers fall back to global S when SparkState.getRoot returns null", async function() {
+  global.SparkState = { getRoot: function() { return null; } };
+  eval(loadJS("js/settings/settings_state.js"));
+  eval(loadJS("js/release/info.js"));
+
+  initSettingsDefaults();
+  assert.strictEqual(S.settings.theme, "retro");
+  assert.strictEqual(getReleaseVersion(), "1.2.3");
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

@@ -91,6 +91,19 @@ async function run() {
     assert.strictEqual(getTimingScore(75), 0.75);
   });
 
+  await test("audio helpers fall back to global S when SparkState.getRoot returns null", function() {
+    global.SparkState = { getRoot: function() { return null; } };
+    eval(loadJS("js/audio/calibration.js"));
+    eval(loadJS("js/audio/latency.js"));
+    eval(loadJS("js/audio/timing.js"));
+
+    assert.ok(calibrationPage().indexOf("Detected Latency: 18 ms") >= 0);
+    S.lastClickTime = 900;
+    recordCalibrationHit(930);
+    assert.strictEqual(S.calibrationOffsets[S.calibrationOffsets.length - 1], 30);
+    assert.strictEqual(getTimingRating(30), "perfect");
+  });
+
   if (failed) {
     process.exitCode = 1;
   } else {

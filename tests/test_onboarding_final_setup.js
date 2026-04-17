@@ -130,4 +130,16 @@ test("final onboarding setup uses onboarding-aware generators and keeps follow-u
   assert.strictEqual(global.challengeInitCalls, 1);
 });
 
+test("onboarding generators fall back to global S when SparkState.getRoot returns null", function() {
+  global.SparkState = { getRoot: function() { return null; } };
+
+  var plan = generateInitialPracticePlanFromOnboarding();
+  var recommendations = generateInitialRecommendationsFromOnboarding();
+
+  assert.strictEqual(plan.instrumentId, "pianospark");
+  assert.strictEqual(global.generatedPlanActiveInstrument, "pianospark");
+  assert.strictEqual(global.generatedRecommendationActiveInstrument, "pianospark");
+  assert.strictEqual(Array.isArray(recommendations), true);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
