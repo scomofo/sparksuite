@@ -33,6 +33,10 @@ function resetState() {
   global.SparkInstrumentAdapter = {
     getInstrumentType: function() { return "guitar"; }
   };
+  global.SparkInstruments = {
+    getActive: function() { return null; },
+    getAll: function() { return []; }
+  };
 }
 
 resetState();
@@ -85,6 +89,27 @@ test("launchPracticeItem routes authored bass module exercises through explicit 
     exerciseFocus: "walking_bass",
     exerciseType: "bassline"
   });
+});
+
+test("launchGuidedSessionItem rehydrates a thin active piano shell before choosing the launch path", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  var launched = launchGuidedSessionItem({
+    meta: { guidedSession: 3 }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "tab", value: "practice" },
+    { name: "start_guided_session", value: 3 }
+  ]);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

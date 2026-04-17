@@ -142,10 +142,38 @@
 /* ChordSpark extension: guided session launcher */
 (function(){
 
+  function getPracticeLauncherInstrumentType(){
+    var inst;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
+      inst = SparkInstruments.getActive();
+      if (inst) {
+        if (inst.instrument) return inst.instrument;
+        candidate = inst.id || inst.appId || inst.instrumentId || null;
+        if (candidate && typeof SparkInstruments.getAll === "function") {
+          all = SparkInstruments.getAll() || [];
+          for (i = 0; i < all.length; i++) {
+            entry = all[i] || {};
+            if (entry.id === candidate || entry.appId === candidate) {
+              return entry.instrument || entry.instrumentType || null;
+            }
+          }
+        }
+      }
+    }
+    if (typeof SparkInstrumentAdapter !== "undefined" && SparkInstrumentAdapter.getInstrumentType) {
+      return SparkInstrumentAdapter.getInstrumentType();
+    }
+    return null;
+  }
+
   function launchGuidedSessionItem(item){
     if(typeof act!=="function") return false;
     var sessionNum = item && item.meta && item.meta.guidedSession || S.guidedSession || 1;
-    if(typeof SparkInstrumentAdapter!=="undefined" && SparkInstrumentAdapter.getInstrumentType && SparkInstrumentAdapter.getInstrumentType()==="piano"){
+    if(getPracticeLauncherInstrumentType()==="piano"){
       act("tab", TAB.PRACTICE);
       act("start_guided_session", sessionNum);
       return true;
