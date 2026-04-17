@@ -99,4 +99,35 @@ test("homePage uses rehydrated tab renderers from the active instrument module",
   assert.ok(html.indexOf("Piano Practice") >= 0);
 });
 
+test("sv2HomeDashboard uses instrumentType when the rehydrated module does not expose instrument", function() {
+  var themeRequests = [];
+  SparkTheme.get = function(instrument) {
+    themeRequests.push(instrument);
+    return { ok: true };
+  };
+  SparkInstruments.getAll = function() {
+    return [{
+      id: "pianospark",
+      appId: "pianospark",
+      instrumentType: "piano",
+      name: "Piano",
+      icon: "\uD83C\uDFB9",
+      tabs: [{ id: "practice", label: "Practice", icon: "\uD83C\uDFB9" }],
+      tabRenderers: {
+        practice: function() { return "<div>Piano Practice</div>"; }
+      },
+      getData: function() {
+        return {
+          LN: { 1: "First Keys" },
+          ALL_CHORDS: [{ name: "C" }]
+        };
+      }
+    }];
+  };
+
+  sv2HomeDashboard();
+
+  assert.strictEqual(themeRequests[0], "piano");
+});
+
 if (process.exitCode) process.exit(process.exitCode);
