@@ -26,6 +26,53 @@ function getPracticePageInstrumentType(inst) {
   return (inst && (inst.instrument || inst.instrumentType)) || "guitar";
 }
 
+function getPracticeSummaryItemType(item) {
+  var meta = item && item.meta ? item.meta : {};
+  var type = item && item.type ? item.type : null;
+  if (type === "song" && meta.songId) return "performance_song";
+  if (type === "practice") {
+    if (meta.guidedSession != null) return "guided_session";
+    if (meta.from || meta.to || meta.key) return "transition";
+    if (meta.bpm != null) return "rhythm";
+    if (meta.exerciseType) return meta.exerciseType;
+    if (meta.exerciseId) return "finger";
+  }
+  return type;
+}
+
+function prettyPracticeSummaryToken(value) {
+  return String(value || "").replace(/_/g, " ");
+}
+
+function getPracticeSummaryItemLabel(item) {
+  var meta = item && item.meta ? item.meta : {};
+  return item && item.label
+    ? item.label
+    : prettyPracticeSummaryToken(
+        meta.exerciseName ||
+        meta.songTitle ||
+        meta.songId ||
+        meta.exerciseFocus ||
+        meta.skill ||
+        meta.exerciseId ||
+        getPracticeSummaryItemType(item) ||
+        (item && item.type) ||
+        "practice"
+      );
+}
+
+function getPracticeSummaryItemDesc(item) {
+  var meta = item && item.meta ? item.meta : {};
+  var parts = [];
+  if (meta.instrument) parts.push(prettyPracticeSummaryToken(meta.instrument));
+  if (meta.exerciseFocus) parts.push(prettyPracticeSummaryToken(meta.exerciseFocus));
+  else if (meta.skill) parts.push(prettyPracticeSummaryToken(meta.skill));
+  if (getPracticeSummaryItemType(item)) parts.push(prettyPracticeSummaryToken(getPracticeSummaryItemType(item)));
+  return item && item.desc
+    ? item.desc
+    : (parts.join(" - ") || prettyPracticeSummaryToken(getPracticeSummaryItemType(item) || (item && item.type) || "practice"));
+}
+
 function sv2HomeDashboard() {
   var inst = getPracticePageInstrument();
   if (!inst) return "";
@@ -214,8 +261,8 @@ function practiceTab(){
       var item=plan.items[pi];
       h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
       h+='<span style="font-size:16px">'+(item.completed?"&#9989;":"&#9744;")+'</span>';
-      h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(item.label)+'</div>';
-      h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(item.desc)+'</div></div>';
+      h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
+      h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(getPracticeSummaryItemDesc(item))+'</div></div>';
       if(!item.completed){
         h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+item.id+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
       }
@@ -462,7 +509,7 @@ function practicePage(){
         ? '<span class="text-muted">Done</span>'
         : '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
       h += '<div class="row">';
-      h += '<span'+done+'>'+escHTML(item.label || item.type || "practice")+'</span>';
+      h += '<span'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
       h += actionHtml;
       h += '</div>';
     }

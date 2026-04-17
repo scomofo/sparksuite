@@ -155,7 +155,7 @@ function practicePlanSection(){
       var item = plan.items[i];
       var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       h += '<div class="row"' + done + '>';
-      h += '<span>' + escHTML(item.label || item.type || "practice") + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
+      h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
       if(!item.completed){
         h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
       }else{
@@ -183,4 +183,35 @@ function practicePlanSection(){
   }
 
   return h;
+}
+
+function getPianoPracticePlanItemType(item){
+  var meta = item && item.meta ? item.meta : {};
+  var type = item && item.type ? item.type : null;
+  if(type === "song" && meta.songId) return "performance_song";
+  if(type === "practice"){
+    if(meta.guidedSession != null) return "guided_session";
+    if(meta.from || meta.to || meta.key) return "transition";
+    if(meta.bpm != null) return "rhythm";
+    if(meta.exerciseType) return meta.exerciseType;
+    if(meta.exerciseId) return "finger";
+  }
+  return type;
+}
+
+function getPianoPracticePlanItemLabel(item){
+  var meta = item && item.meta ? item.meta : {};
+  return item && item.label
+    ? item.label
+    : String(
+        meta.exerciseName ||
+        meta.songTitle ||
+        meta.songId ||
+        meta.exerciseFocus ||
+        meta.skill ||
+        meta.exerciseId ||
+        getPianoPracticePlanItemType(item) ||
+        (item && item.type) ||
+        "practice"
+      ).replace(/_/g, " ");
 }

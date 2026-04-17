@@ -38,8 +38,8 @@ function pianoPlanPage(){
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPianoPlanDisplayType(item))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
-    h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(item.label)+'</div>';
-    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(String(getPianoPlanDisplayType(item) || item.type || "practice").replace(/_/g," "))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
+    h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPianoPlanItemLabel(item))+'</div>';
+    h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPianoPlanItemSubtitle(item))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
     h += actionHtml;
     h += '</div>';
@@ -72,6 +72,38 @@ function getPianoPlanDisplayType(item){
     if(meta.exerciseId) return "finger";
   }
   return item.type;
+}
+
+function formatPianoPlanItemSubtitle(item){
+  item = item || {};
+  var meta = item.meta || {};
+  var parts = [];
+  if(meta.instrument) parts.push(prettyPianoPlanToken(meta.instrument));
+  if(meta.exerciseFocus) parts.push(prettyPianoPlanToken(meta.exerciseFocus));
+  else if(meta.skill) parts.push(prettyPianoPlanToken(meta.skill));
+  if(getPianoPlanDisplayType(item)) parts.push(prettyPianoPlanToken(getPianoPlanDisplayType(item)));
+  return parts.join(" - ") || String(getPianoPlanDisplayType(item) || item.type || "practice");
+}
+
+function prettyPianoPlanToken(value){
+  return String(value || "").replace(/_/g, " ");
+}
+
+function getPianoPlanItemLabel(item){
+  var meta = item && item.meta ? item.meta : {};
+  return item && item.label
+    ? item.label
+    : prettyPianoPlanToken(
+        meta.exerciseName ||
+        meta.songTitle ||
+        meta.songId ||
+        meta.exerciseFocus ||
+        meta.skill ||
+        meta.exerciseId ||
+        getPianoPlanDisplayType(item) ||
+        (item && item.type) ||
+        "practice"
+      );
 }
 
 function planItemColor(type){

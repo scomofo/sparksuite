@@ -38,7 +38,7 @@ function planPage(){
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPlanDisplayType(item))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
     h += '<div>';
-    h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(item.label)+'</div>';
+    h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPlanItemLabel(item))+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(item.durationSec ? ' \u2022 '+Math.round(item.durationSec/60)+'m' : '')+'</div>';
     h += '</div>';
     h += actionHtml;
@@ -94,23 +94,28 @@ function formatPlanItemSubtitle(item){
   if(meta.exerciseFocus) parts.push(prettyPlanToken(meta.exerciseFocus));
   else if(meta.skill) parts.push(prettyPlanToken(meta.skill));
   if(getPlanDisplayType(item)) parts.push(prettyPlanToken(getPlanDisplayType(item)));
-  return parts.join(" • ") || String(getPlanDisplayType(item) || item.type || "practice");
+  return parts.join(" - ") || String(getPlanDisplayType(item) || item.type || "practice");
 }
 
 function prettyPlanToken(value){
   return String(value || "").replace(/_/g, " ");
 }
 
-// Override the legacy subtitle formatter with an ASCII-safe joiner.
-function formatPlanItemSubtitle(item){
-  item = item || {};
-  var meta = item.meta || {};
-  var parts = [];
-  if(meta.instrument) parts.push(prettyPlanToken(meta.instrument));
-  if(meta.exerciseFocus) parts.push(prettyPlanToken(meta.exerciseFocus));
-  else if(meta.skill) parts.push(prettyPlanToken(meta.skill));
-  if(getPlanDisplayType(item)) parts.push(prettyPlanToken(getPlanDisplayType(item)));
-  return parts.join(" - ") || String(getPlanDisplayType(item) || item.type || "practice");
+function getPlanItemLabel(item){
+  var meta = item && item.meta ? item.meta : {};
+  return item && item.label
+    ? item.label
+    : prettyPlanToken(
+        meta.exerciseName ||
+        meta.songTitle ||
+        meta.songId ||
+        meta.exerciseFocus ||
+        meta.skill ||
+        meta.exerciseId ||
+        getPlanDisplayType(item) ||
+        (item && item.type) ||
+        "practice"
+      );
 }
 
 function launchPracticePlanItem(itemId){
