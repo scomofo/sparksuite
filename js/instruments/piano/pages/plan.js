@@ -117,8 +117,9 @@ function prettyPianoPlanToken(value){
 
 function getPianoPlanItemLabel(item){
   var meta = item && item.meta ? item.meta : {};
-  return item && item.label
-    ? item.label
+  var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
+  return label
+    ? label
     : prettyPianoPlanToken(
         meta.exerciseName ||
         meta.songTitle ||

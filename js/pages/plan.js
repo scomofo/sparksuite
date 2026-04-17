@@ -129,8 +129,9 @@ function prettyPlanToken(value){
 
 function getPlanItemLabel(item){
   var meta = item && item.meta ? item.meta : {};
-  return item && item.label
-    ? item.label
+  var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
+  return label
+    ? label
     : prettyPlanToken(
         meta.exerciseName ||
         meta.songTitle ||

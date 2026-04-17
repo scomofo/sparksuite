@@ -46,8 +46,9 @@ function prettyPracticeSummaryToken(value) {
 
 function getPracticeSummaryItemLabel(item) {
   var meta = item && item.meta ? item.meta : {};
-  return item && item.label
-    ? item.label
+  var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
+  return label
+    ? label
     : prettyPracticeSummaryToken(
         meta.exerciseName ||
         meta.songTitle ||
@@ -68,8 +69,9 @@ function getPracticeSummaryItemDesc(item) {
   if (meta.exerciseFocus) parts.push(prettyPracticeSummaryToken(meta.exerciseFocus));
   else if (meta.skill) parts.push(prettyPracticeSummaryToken(meta.skill));
   if (getPracticeSummaryItemType(item)) parts.push(prettyPracticeSummaryToken(getPracticeSummaryItemType(item)));
-  return item && item.desc
-    ? item.desc
+  var desc = item && typeof item.desc === "string" ? item.desc.trim() : (item ? item.desc : null);
+  return desc
+    ? desc
     : (parts.join(" - ") || prettyPracticeSummaryToken(getPracticeSummaryItemType(item) || (item && item.type) || "practice"));
 }
 
