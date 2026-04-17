@@ -1763,6 +1763,40 @@ test("practice tab renders a loading card when instrument curriculum data is una
   assert.ok(html.indexOf("Loading practice dashboard") >= 0);
 });
 
+test("practice page rehydrates thin active instruments before reading curriculum data", function() {
+  window.sparkCore = null;
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{
+        id: "pianospark",
+        appId: "pianospark",
+        instrument: "piano",
+        tabs: ["practice", "stats"],
+        ui: {},
+        getData: function() {
+          return {
+            LC: { 1: "#fff" },
+            CHORDS: { 1: [{ name: "C" }] },
+            ALL_CHORDS: [{ name: "C" }],
+            SESSIONS: []
+          };
+        }
+      }];
+    }
+  };
+
+  eval(loadJS("js/pages/practice.js"));
+
+  var activeInstrument = resolvePracticeActiveInstrument();
+
+  assert.ok(activeInstrument);
+  assert.strictEqual(activeInstrument.id, "pianospark");
+  assert.strictEqual(typeof activeInstrument.getData, "function");
+});
+
 test("startPracticeItem launches the matching daily practice item", function() {
   window.sparkCore = null;
   global.escHTML = function(value) { return String(value); };

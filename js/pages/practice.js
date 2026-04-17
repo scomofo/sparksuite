@@ -147,8 +147,28 @@ function resolvePracticeDashboardInstrumentType(inst) {
   return candidate;
 }
 
+function resolvePracticeActiveInstrument() {
+  var inst = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+    ? SparkInstruments.getActive()
+    : null;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (!inst) return null;
+  if (inst.getData || inst.tabs || inst.tabRenderers || inst.ui) return inst;
+  candidate = inst.id || inst.appId || null;
+  if (!candidate || typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 function sv2HomeDashboard() {
-  var inst = SparkInstruments.getActive();
+  var inst = resolvePracticeActiveInstrument();
   if (!inst) return "";
   var D = inst.getData ? inst.getData() : {};
   var instrumentType = resolvePracticeDashboardInstrumentType(inst);
@@ -249,7 +269,7 @@ function homePage(){
   var homeState = getPracticeHomeSnapshot();
 
   // Build tab bar from active instrument's tabs array
-  var inst = SparkInstruments.getActive();
+  var inst = resolvePracticeActiveInstrument();
   var instTabs = inst && inst.tabs ? inst.tabs : [];
   var h='<div class="tabs" role="tablist">';
   for(var i=0;i<instTabs.length;i++){
@@ -291,8 +311,9 @@ function gamesTab(){ return '<div class="card"><div><b>Games</b></div><div class
 function toolsTab(){ return '<div class="card"><div><b>Tools</b></div><div class="muted">Tuner, metronome, and utilities.</div></div>'; }
 // ===== PRACTICE TAB =====
 function practiceTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolvePracticeActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   var player = getPracticePlayerSnapshot();
   var progress = getPracticeProgressSnapshot();
   var goal = getPracticeGoalSnapshot();

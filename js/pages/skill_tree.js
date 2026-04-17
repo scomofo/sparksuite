@@ -54,6 +54,20 @@ function resolveSkillTree(){
   var instrumentTree = null;
   if(typeof SparkInstruments!=="undefined" && SparkInstruments && typeof SparkInstruments.getActive==="function"){
     var activeInstrument = SparkInstruments.getActive();
+    var lookupId = activeInstrument && (activeInstrument.id || activeInstrument.appId) ? (activeInstrument.id || activeInstrument.appId) : null;
+    var allInstruments;
+    var i;
+    var entry;
+    if(activeInstrument && typeof activeInstrument.getSkillTree!=="function" && lookupId && typeof SparkInstruments.getAll==="function"){
+      allInstruments = SparkInstruments.getAll() || [];
+      for(i=0;i<allInstruments.length;i++){
+        entry = allInstruments[i] || {};
+        if(entry.id===lookupId || entry.appId===lookupId){
+          activeInstrument = entry;
+          break;
+        }
+      }
+    }
     if(activeInstrument && typeof activeInstrument.getSkillTree==="function"){
       instrumentTree = activeInstrument.getSkillTree();
     }

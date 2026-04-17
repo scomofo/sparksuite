@@ -181,6 +181,38 @@ async function run() {
     assert.ok(html.indexOf("Rhythm") >= 0);
   });
 
+  await test("skill tree page rehydrates thin active instruments before reading the tree", function() {
+    global.S.skillTreeFocus = "overview";
+    global.SparkInstruments = {
+      getActive: function() {
+        return { appId: "pianospark" };
+      },
+      getAll: function() {
+        return [{
+          id: "pianospark",
+          appId: "pianospark",
+          getSkillTree: function() {
+            return {
+              branches: [
+                { id: "overview", label: "Overview", nodes: [] },
+                { id: "rhythm", label: "Rhythm", nodes: [] }
+              ]
+            };
+          }
+        }];
+      }
+    };
+    global.renderSkillTreeBranch = function(branch) {
+      return '<div class="branch">' + branch.label + '</div>';
+    };
+    eval(loadJS("js/pages/skill_tree.js"));
+
+    var html = skillTreePage();
+
+    assert.ok(html.indexOf("Overview") >= 0);
+    assert.ok(html.indexOf("Rhythm") >= 0);
+  });
+
   await test("progress dashboard can render from plain global S", function() {
     global.sparkCore = {
       progressEngine: {
