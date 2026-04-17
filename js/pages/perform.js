@@ -111,6 +111,27 @@ function cancelCalibration() {
   render();
 }
 
+function normalizePerformPageTextToken(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function firstPerformPageTextToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = normalizePerformPageTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function getPerformancePracticePresetOptions() {
   var stemLabel = typeof getPerformancePracticePresetStemLabel === "function"
     ? getPerformancePracticePresetStemLabel()
@@ -138,7 +159,10 @@ function performPage() {
     ? runtimeState.transport.positionMs / 1000
     : S.performCurrentSec;
   var phrase = getPerformancePhraseForTime(chart, nowSec);
-  var phraseName = phrase ? phrase.name : "";
+  var phraseName = firstPerformPageTextToken(phrase ? phrase.name : "", "Phrase");
+  var chartTitle = firstPerformPageTextToken(chart.title, chart.songTitle, chart.id, "Performance chart");
+  var chartArtist = firstPerformPageTextToken(chart.artist, "Unknown Artist");
+  var performLastHitLabel = firstPerformPageTextToken(S.performLastHitLabel);
   var previewEvent = getNextPerformEvent(chart, nowSec);
   var techniquePreview = typeof getImportedTechniquePreview === "function"
     ? getImportedTechniquePreview(chart, nowSec, 3)
@@ -150,8 +174,8 @@ function performPage() {
   h += '<div class="perform-header">';
   h += '<button class="back-btn" onclick="act(\'stopPerform\')">&larr; Exit</button>';
   h += '<div class="perform-title">';
-  h += '<strong>' + escHTML(chart.title) + '</strong>';
-  h += '<span class="perform-artist">' + escHTML(chart.artist || "") + '</span>';
+  h += '<strong>' + escHTML(chartTitle) + '</strong>';
+  h += '<span class="perform-artist">' + escHTML(chartArtist) + '</span>';
   h += '</div>';
   h += '<div class="perform-phrase-name">' + escHTML(phraseName) + '</div>';
   h += '</div>';
@@ -170,8 +194,8 @@ function performPage() {
   h += '</div>';
 
   // Hit feedback
-  if (S.performLastHitLabel && Date.now() - S.performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
-    h += '<div class="perform-hit-feedback">' + escHTML(S.performLastHitLabel) + '</div>';
+  if (performLastHitLabel && Date.now() - S.performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
+    h += '<div class="perform-hit-feedback">' + escHTML(performLastHitLabel) + '</div>';
   }
 
   // Count-in overlay
@@ -328,11 +352,13 @@ function performDonePage() {
     ? runtimeState.performanceTargetTechnique
     : S.performTargetTechnique;
   if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  var resultTitle = firstPerformPageTextToken(r.title, r.songTitle, runtimeState && runtimeState.performanceChartId, S.performChartId, "Performance");
+  var resultArtist = firstPerformPageTextToken(r.artist, "Unknown Artist");
 
   var h = '<div class="perform-page text-center" style="padding-top:20px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Performance Complete!</h2>';
-  h += '<p style="color:var(--text-dim)">' + escHTML(r.title || "") + ' by ' + escHTML(r.artist || "") + '</p>';
+  h += '<p style="color:var(--text-dim)">' + escHTML(resultTitle) + ' by ' + escHTML(resultArtist) + '</p>';
 
   // Stars
   h += '<div style="font-size:32px;margin:12px 0">';
@@ -438,9 +464,11 @@ function performDonePage() {
     var songId=(r.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
     var nextRecs=buildPerformanceRecommendationsForSong(songId);
     if(nextRecs&&nextRecs.length){
+      var nextStepLabel = firstPerformPageTextToken(nextRecs[0].label, "Recommendation");
+      var nextStepReason = firstPerformPageTextToken(nextRecs[0].reason);
       h+='<div class="card" style="margin-top:12px;text-align:left"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Next Step</div>';
-      h+='<div style="font-size:13px;color:var(--text-primary)">'+escHTML(nextRecs[0].label)+'</div>';
-      h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(nextRecs[0].reason)+'</div></div>';
+      h+='<div style="font-size:13px;color:var(--text-primary)">'+escHTML(nextStepLabel)+'</div>';
+      h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(nextStepReason)+'</div></div>';
     }
   }
 
