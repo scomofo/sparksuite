@@ -271,7 +271,7 @@ function practiceTab(){
     ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
   if(!plan) plan = S.practicePlan;
-  if(plan&&plan.items&&plan.items.length){
+  if(plan && Array.isArray(plan.items) && plan.items.length){
     var planProgress = getPracticeSummaryProgress(plan);
     h+='<div class="card mb20" style="border:2px solid '+(planProgress.completedItems>=planProgress.totalItems?"#4ECDC4":"#45B7D1")+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';

@@ -148,7 +148,7 @@ function practicePlanSection(){
     ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
   if(!plan) plan = S.practicePlan;
-  if(plan && plan.items && plan.items.length){
+  if(plan && Array.isArray(plan.items) && plan.items.length){
     h += '<div class="card" style="margin-top:12px">';
     h += '<div><b>Today\'s Practice Plan</b></div>';
     for(var i=0;i<plan.items.length;i++){

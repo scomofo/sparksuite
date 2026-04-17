@@ -182,6 +182,32 @@ test("piano practice plan section shows an empty state when no plan exists", fun
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
 });
 
+test("piano practice plan section treats malformed cached plan shells without array items as empty state", function() {
+  global.S = {
+    practicePlan: {
+      focus: "Song mastery",
+      items: { length: 1, 0: { id: "bad_1", label: "Broken Row" } }
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = practicePlanSection();
+  assert.ok(html.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(html.indexOf("Broken Row"), -1);
+});
+
 test("piano practice plan section derives fallback labels for sparse plan items", function() {
   global.S = {
     practicePlan: {
