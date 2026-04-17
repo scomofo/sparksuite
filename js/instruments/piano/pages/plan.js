@@ -104,15 +104,19 @@ function formatPianoPlanItemSubtitle(item){
   item = item || {};
   var meta = item.meta || {};
   var parts = [];
-  if(meta.instrument) parts.push(prettyPianoPlanToken(meta.instrument));
-  if(meta.exerciseFocus) parts.push(prettyPianoPlanToken(meta.exerciseFocus));
-  else if(meta.skill) parts.push(prettyPianoPlanToken(meta.skill));
-  if(getPianoPlanDisplayType(item)) parts.push(prettyPianoPlanToken(getPianoPlanDisplayType(item)));
+  var instrument = prettyPianoPlanToken(meta.instrument);
+  var exerciseFocus = prettyPianoPlanToken(meta.exerciseFocus);
+  var skill = prettyPianoPlanToken(meta.skill);
+  var displayType = prettyPianoPlanToken(getPianoPlanDisplayType(item));
+  if(instrument) parts.push(instrument);
+  if(exerciseFocus) parts.push(exerciseFocus);
+  else if(skill) parts.push(skill);
+  if(displayType) parts.push(displayType);
   return parts.join(" - ") || String(getPianoPlanDisplayType(item) || item.type || "practice");
 }
 
 function prettyPianoPlanToken(value){
-  return String(value || "").replace(/_/g, " ");
+  return String(value || "").replace(/_/g, " ").trim();
 }
 
 function getPianoPlanItemLabel(item){

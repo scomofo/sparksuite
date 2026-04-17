@@ -116,15 +116,19 @@ function formatPlanItemSubtitle(item){
   item = item || {};
   var meta = item.meta || {};
   var parts = [];
-  if(meta.instrument) parts.push(prettyPlanToken(meta.instrument));
-  if(meta.exerciseFocus) parts.push(prettyPlanToken(meta.exerciseFocus));
-  else if(meta.skill) parts.push(prettyPlanToken(meta.skill));
-  if(getPlanDisplayType(item)) parts.push(prettyPlanToken(getPlanDisplayType(item)));
+  var instrument = prettyPlanToken(meta.instrument);
+  var exerciseFocus = prettyPlanToken(meta.exerciseFocus);
+  var skill = prettyPlanToken(meta.skill);
+  var displayType = prettyPlanToken(getPlanDisplayType(item));
+  if(instrument) parts.push(instrument);
+  if(exerciseFocus) parts.push(exerciseFocus);
+  else if(skill) parts.push(skill);
+  if(displayType) parts.push(displayType);
   return parts.join(" - ") || String(getPlanDisplayType(item) || item.type || "practice");
 }
 
 function prettyPlanToken(value){
-  return String(value || "").replace(/_/g, " ");
+  return String(value || "").replace(/_/g, " ").trim();
 }
 
 function getPlanItemLabel(item){

@@ -499,6 +499,27 @@ test("piano plan and practice sections ignore whitespace-only labels", function(
   assert.ok(practiceHtml.indexOf("island strum") >= 0);
 });
 
+test("pianoPlanPage ignores whitespace-only subtitle meta tokens", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: 240, meta: { songId: "island_strum", instrument: "   ", skill: "   " } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("performance song") >= 0);
+  assert.strictEqual(html.indexOf(" -  - "), -1);
+});
+
 test("pianoPlanPage derives a readable focus label when a cached plan omits focus", function() {
   global.S = {
     practicePlanComplete: false,
