@@ -32,6 +32,7 @@ function resetEnvironment() {
               title: "undefined",
               artist: "null",
               level: 2,
+              bpm: 100,
               chords: ["C"],
               progression: ["C"]
             }
@@ -89,6 +90,19 @@ test("piano stems screens ignore stale file and error text", function() {
   assert.ok(section.indexOf("undefined") === -1);
   assert.ok(section.indexOf("null") === -1);
   assert.ok(player.indexOf("null") === -1);
+});
+
+test("piano song library list ignores stale row labels and still filters safely", function() {
+  S.songIdx = null;
+  S.songFilter = "midnight";
+  S.songSort = "title";
+  S.songSortAsc = true;
+  pianoSongsTab();
+  var html = songLibrary();
+  assert.ok(html.indexOf("midnight_groove") >= 0);
+  assert.ok(html.indexOf("Unknown Artist") >= 0);
+  assert.ok(html.indexOf("undefined") === -1);
+  assert.ok(html.indexOf("null") === -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
