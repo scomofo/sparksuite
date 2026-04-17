@@ -226,20 +226,34 @@ function getPianoPracticePlanItemType(item){
   return type;
 }
 
+function prettyPianoPracticePlanToken(value){
+  return String(value || "").replace(/_/g, " ").trim();
+}
+
+function firstPrettyPianoPracticePlanToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = prettyPianoPracticePlanToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function getPianoPracticePlanItemLabel(item){
   var meta = item && item.meta ? item.meta : {};
   var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
   return label
     ? label
-    : String(
-        meta.exerciseName ||
-        meta.songTitle ||
-        meta.songId ||
-        meta.exerciseFocus ||
-        meta.skill ||
-        meta.exerciseId ||
-        getPianoPracticePlanItemType(item) ||
-        (item && item.type) ||
+    : firstPrettyPianoPracticePlanToken(
+        meta.exerciseName,
+        meta.songTitle,
+        meta.songId,
+        meta.exerciseFocus,
+        meta.skill,
+        meta.exerciseId,
+        getPianoPracticePlanItemType(item),
+        item && item.type,
         "practice"
-      ).replace(/_/g, " ");
+      );
 }

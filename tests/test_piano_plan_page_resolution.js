@@ -599,6 +599,35 @@ test("piano plan and practice sections ignore whitespace-only labels", function(
   assert.ok(practiceHtml.indexOf("island strum") >= 0);
 });
 
+test("piano plan and practice sections skip whitespace-only fallback meta labels", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "song", meta: { songTitle: "   ", songId: "island_strum", instrument: "ukulele" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.ok(planHtml.indexOf("island strum") >= 0);
+  assert.ok(practiceHtml.indexOf("island strum") >= 0);
+});
+
 test("pianoPlanPage ignores whitespace-only subtitle meta tokens", function() {
   global.S = {
     practicePlanComplete: false,

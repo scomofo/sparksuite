@@ -140,20 +140,30 @@ function prettyPianoPlanToken(value){
   return String(value || "").replace(/_/g, " ").trim();
 }
 
+function firstPrettyPianoPlanToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = prettyPianoPlanToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 function getPianoPlanItemLabel(item){
   var meta = item && item.meta ? item.meta : {};
   var label = item && typeof item.label === "string" ? item.label.trim() : (item ? item.label : null);
   return label
     ? label
-    : prettyPianoPlanToken(
-        meta.exerciseName ||
-        meta.songTitle ||
-        meta.songId ||
-        meta.exerciseFocus ||
-        meta.skill ||
-        meta.exerciseId ||
-        getPianoPlanDisplayType(item) ||
-        (item && item.type) ||
+    : firstPrettyPianoPlanToken(
+        meta.exerciseName,
+        meta.songTitle,
+        meta.songId,
+        meta.exerciseFocus,
+        meta.skill,
+        meta.exerciseId,
+        getPianoPlanDisplayType(item),
+        item && item.type,
         "practice"
       );
 }
