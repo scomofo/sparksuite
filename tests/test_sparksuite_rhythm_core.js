@@ -574,6 +574,42 @@ test("rhythm highway results render module-owned bass guidance when available", 
   assert.ok(html.indexOf("Next:") >= 0);
 });
 
+test("rhythm highway ignores stale cached labels and weak-area text", function() {
+  S.rhythmHighwayResult = null;
+  S.rhythmHighwaySnapshot = {
+    gameplay: { score: 100, maxCombo: 4, accuracy: 0.8 },
+    notes: [{ laneMask: 1, timeSec: 0.5, hit: false, label: "undefined" }],
+    songTimeSec: 0
+  };
+  S.rhythmHighwayHeldMask = 0;
+  S.rhythmHighwayLoop = { label: "null" };
+  S.rhythmHighwayLaunchContext = {
+    instrument: "guitar",
+    label: "undefined",
+    exerciseFocus: "null"
+  };
+
+  var activeHtml = rhythmHighwayPage();
+  assert.ok(activeHtml.indexOf("Focused Drill: current drill") >= 0);
+  assert.ok(activeHtml.indexOf("Looping current window") >= 0);
+  assert.ok(activeHtml.indexOf("undefined") === -1);
+  assert.ok(activeHtml.indexOf("null") === -1);
+
+  S.rhythmHighwayResult = {
+    gameplay: { score: 1200, accuracy: 0.74, maxCombo: 12 },
+    learning: {
+      weakAreas: ["undefined", "wrong_fret", "null"],
+      skills: [{ id: "undefined", delta: 2 }]
+    }
+  };
+
+  var resultHtml = rhythmHighwayPage();
+  assert.ok(resultHtml.indexOf("Focus: rhythm") >= 0);
+  assert.ok(resultHtml.indexOf("wrong fret") >= 0);
+  assert.ok(resultHtml.indexOf("undefined") === -1);
+  assert.ok(resultHtml.indexOf("null") === -1);
+});
+
 test("rhythm gameplay engine produces deterministic results for the same input stream", function() {
   var adapter = new SparkGuitarRhythmAdapter();
   var payload = adapter.createPayload({});

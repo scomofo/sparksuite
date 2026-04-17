@@ -32,6 +32,39 @@
     return candidate;
   }
 
+  function normalizeRhythmHighwayTextToken(value) {
+    var text;
+    var lower;
+    if (typeof value !== "string") return "";
+    text = value.trim();
+    if (!text) return "";
+    lower = text.toLowerCase();
+    if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+    return text;
+  }
+
+  function firstRhythmHighwayTextToken() {
+    var i;
+    var token;
+    for (i = 0; i < arguments.length; i++) {
+      token = normalizeRhythmHighwayTextToken(arguments[i]);
+      if (token) return token;
+    }
+    return "";
+  }
+
+  function formatRhythmWeakAreas(weakAreas) {
+    var out = [];
+    var i;
+    var token;
+    weakAreas = Array.isArray(weakAreas) ? weakAreas : [];
+    for (i = 0; i < weakAreas.length; i++) {
+      token = firstRhythmHighwayTextToken(String(weakAreas[i] || "").replace(/_/g, " "));
+      if (token) out.push(token);
+    }
+    return out.length ? out.join(", ") : "None";
+  }
+
   function createRhythmHighwayAdapter(instrumentType) {
     var type = normalizeRhythmInstrumentType(instrumentType);
     var moduleMap = {
@@ -93,7 +126,7 @@
     S.rhythmHighwayLoop = resolvedLoopSpec && activePayload !== payload ? resolvedLoopSpec : null;
     S.rhythmHighwayLaunchContext = {
       source: launchContext.source || "ad_hoc",
-      label: launchContext.label || payload.chartId || (payload.songChart.song && payload.songChart.song.title) || null,
+      label: firstRhythmHighwayTextToken(launchContext.label, payload.chartId, payload.songChart.song && payload.songChart.song.title) || null,
       instrument: instrumentType,
       exerciseId: launchContext.exerciseId || null,
       exerciseFocus: launchContext.exerciseFocus || null
@@ -186,7 +219,7 @@
     h += '<div><div style="font-size:24px;font-weight:900;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:10px;color:var(--text-muted)">Accuracy</div></div>';
     h += '</div>';
     if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.label) {
-      h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(S.rhythmHighwayLaunchContext.label) + '</div>';
+      h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLaunchContext.label, "current drill")) + '</div>';
     }
 
     h += '<div style="display:grid;grid-template-columns:repeat(' + laneCount + ',56px);gap:8px;justify-content:center;align-items:end;height:320px;margin:0 auto 16px;position:relative">';
@@ -198,7 +231,7 @@
         var note = snapshot.notes[i];
         if (!maskHasLane(note.laneMask, lane)) continue;
         var bottom = Math.max(86, Math.min(286, 86 + ((3 - (note.timeSec - snapshot.songTimeSec)) * 66)));
-        h += '<div style="position:absolute;left:8px;right:8px;bottom:' + bottom + 'px;height:18px;border-radius:8px;background:' + laneColor(lane) + ';opacity:' + (note.hit ? 0.35 : 0.95) + ';box-shadow:0 8px 18px rgba(0,0,0,.24)" title="' + escHTML(note.label || "") + '"></div>';
+        h += '<div style="position:absolute;left:8px;right:8px;bottom:' + bottom + 'px;height:18px;border-radius:8px;background:' + laneColor(lane) + ';opacity:' + (note.hit ? 0.35 : 0.95) + ';box-shadow:0 8px 18px rgba(0,0,0,.24)" title="' + escHTML(firstRhythmHighwayTextToken(note.label)) + '"></div>';
       }
       h += '</div>';
     }
@@ -216,7 +249,7 @@
     h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">Exit</button>';
     h += '</div>';
     if (S.rhythmHighwayLoop) {
-      h += '<div style="margin-top:10px;font-size:11px;color:#4ECDC4;font-weight:800">Looping ' + escHTML(S.rhythmHighwayLoop.label || "current window") + '</div>';
+      h += '<div style="margin-top:10px;font-size:11px;color:#4ECDC4;font-weight:800">Looping ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLoop.label, "current window")) + '</div>';
     }
     if (S.rhythmHighwayFeedback) {
       h += '<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">' + escHTML(S.rhythmHighwayFeedback) + '</div>';
@@ -237,7 +270,7 @@
       h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Assist Mode: <span style="color:var(--text-primary);font-weight:800">' + escHTML(activePreset.label) + "</span></div>";
     }
     if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.exerciseFocus) {
-      h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Focus: ' + escHTML(String(S.rhythmHighwayLaunchContext.exerciseFocus).replace(/_/g, " ")) + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Focus: ' + escHTML(firstRhythmHighwayTextToken(String(S.rhythmHighwayLaunchContext.exerciseFocus || "").replace(/_/g, " "), "rhythm")) + '</div>';
     }
     if (moduleGuidance) {
       h += '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(20,184,166,.12),rgba(20,184,166,.04));border:1px solid rgba(20,184,166,.28)">';
@@ -255,7 +288,7 @@
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Skills:</div>';
     h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML(formatSkills(learning.skills || [])) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin:8px 0 6px">Weak Areas:</div>';
-    h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML((learning.weakAreas || []).join(", ") || "None") + '</div></div>';
+    h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML(formatRhythmWeakAreas(learning.weakAreas || [])) + '</div></div>';
     h += '<div style="display:flex;gap:10px;justify-content:center">';
     h += '<button class="btn" onclick="act(\'restartRhythmHighway\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
     if (S.rhythmHighwayLoop) {
@@ -289,8 +322,13 @@
   function formatSkills(skills) {
     if (!skills.length) return "No skill deltas recorded yet.";
     var out = [];
-    for (var i = 0; i < skills.length; i++) out.push(skills[i].id + " +" + skills[i].delta);
-    return out.join(", ");
+    for (var i = 0; i < skills.length; i++) {
+      var skill = skills[i] || {};
+      var skillId = firstRhythmHighwayTextToken(String(skill.id || "").replace(/_/g, " "));
+      if (!skillId) continue;
+      out.push(skillId + " +" + skill.delta);
+    }
+    return out.length ? out.join(", ") : "No skill deltas recorded yet.";
   }
 
   function maskHasLane(mask, laneIndex) {
@@ -416,7 +454,7 @@
     return {
       startTick: startNote.tick,
       endTick: endNote.tick + (endNote.tickLength || 0) + trailingTicks,
-      label: (startNote.label || "practice window") + " loop"
+      label: firstRhythmHighwayTextToken(startNote.label, "practice window") + " loop"
     };
   }
 
