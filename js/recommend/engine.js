@@ -86,10 +86,19 @@
     ];
     var i;
     for(i = 0; i < activeHints.length; i++){
-      if(/piano/i.test(String(activeHints[i] || ""))) return "piano";
-      if(activeHints[i]) return "guitar";
+      var value = String(activeHints[i] || "");
+      if(/piano/i.test(value)) return "piano";
+      if(/ukulele|uke/i.test(value)) return "ukulele";
+      if(/bass/i.test(value)) return "bass";
+      if(/drum/i.test(value)) return "drums";
+      if(/guitar|chord/i.test(value)) return "guitar";
     }
-    return /piano/i.test(typeof APP_NAME !== "undefined" ? APP_NAME : "") ? "piano" : "guitar";
+    var appName = typeof APP_NAME !== "undefined" ? APP_NAME : "";
+    if(/piano/i.test(appName)) return "piano";
+    if(/ukulele|uke/i.test(appName)) return "ukulele";
+    if(/bass/i.test(appName)) return "bass";
+    if(/drum/i.test(appName)) return "drums";
+    return "guitar";
   }
 
   // Service wrapper for engine-first architecture

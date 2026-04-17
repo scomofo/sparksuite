@@ -291,6 +291,38 @@ test("generateRecommendations infers piano from the active instrument before app
   assert.strictEqual(capturedAppType, "piano");
 });
 
+test("generateRecommendations infers bass from thin active instrument ids before app name defaults", function() {
+  var originalCollect = collectRecommendationCandidates;
+  var originalFilter = filterRecommendationCandidates;
+  var originalBalance = balanceRecommendationSet;
+  var capturedAppType = null;
+  global.APP_NAME = "SparkSuite";
+  S.activeInstrument = "bassspark";
+  global.SparkInstruments.getActive = function() {
+    return {
+      id: "bassspark",
+      appId: "bassspark"
+    };
+  };
+  collectRecommendationCandidates = function(appType) {
+    capturedAppType = appType;
+    return [];
+  };
+  filterRecommendationCandidates = function(candidates) {
+    return candidates;
+  };
+  balanceRecommendationSet = function(candidates) {
+    return candidates;
+  };
+
+  generateRecommendations();
+
+  collectRecommendationCandidates = originalCollect;
+  filterRecommendationCandidates = originalFilter;
+  balanceRecommendationSet = originalBalance;
+  assert.strictEqual(capturedAppType, "bass");
+});
+
 test("curriculum recommendation can read completed lessons from sparkCore", function() {
   S.completedLessons = [];
   global.getCurriculumItem = function(kind, lessonId) {

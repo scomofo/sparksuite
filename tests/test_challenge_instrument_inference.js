@@ -87,6 +87,32 @@ test("challenge initialization seeds piano challenges in the shared app shell", 
   assert.strictEqual(global.saved, 1);
 });
 
+test("challenge initialization infers bass from thin active instrument ids before app defaults", function() {
+  var originalBuildDailyChallenges = buildDefaultDailyChallenges;
+  var originalBuildWeeklyChallenges = buildDefaultWeeklyChallenges;
+  var capturedAppType = null;
+  global.S.activeInstrument = "bassspark";
+  global.SparkInstruments.getActive = function() {
+    return {
+      id: "bassspark",
+      appId: "bassspark"
+    };
+  };
+  buildDefaultDailyChallenges = function(appType) {
+    capturedAppType = appType;
+    return originalBuildDailyChallenges(appType);
+  };
+  buildDefaultWeeklyChallenges = function(appType) {
+    return originalBuildWeeklyChallenges(appType);
+  };
+
+  initializeChallengesForCurrentCycle();
+
+  buildDefaultDailyChallenges = originalBuildDailyChallenges;
+  buildDefaultWeeklyChallenges = originalBuildWeeklyChallenges;
+  assert.strictEqual(capturedAppType, "bass");
+});
+
 test("challenge initialization falls back to global S when SparkState.getRoot returns null", function() {
   global.SparkState = { getRoot: function() { return null; } };
 
