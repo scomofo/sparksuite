@@ -6,7 +6,8 @@ var _pianoSongs = [];
 var _pianoCurriculum = [];
 
 function pianoSongsTab() {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
+  var D = inst && inst.getData ? inst.getData() : {};
   _pianoSongsData = D;
   _pianoSongs = D.SONGS || [];
   _pianoCurriculum = D.CURRICULUM || [];

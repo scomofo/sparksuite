@@ -1,6 +1,28 @@
 // js/instruments/bass/app.js — Bass instrument action handler
 (function() {
 
+  function getBassAppInstrument() {
+    var inst;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    inst = SparkInstruments.getActive();
+    if (!inst) return null;
+    if (typeof inst.getData === "function" || inst.ui) return inst;
+    candidate = inst.id || inst.appId || inst.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return inst;
+  }
+
   function queueSessionTick() {
     clearTimeout(T.session);
     if (typeof tickS === "function") T.session = setTimeout(tickS, 1000);
@@ -12,7 +34,8 @@
   }
 
   function bassAct(a, v) {
-    var D = SparkInstruments.getActive().getData();
+    var inst = getBassAppInstrument();
+    var D = inst && inst.getData ? inst.getData() : {};
 
     if (a === "quickStart") {
       var session = SparkSession.buildSession({ mode: "quickStart", level: S.level });

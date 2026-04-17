@@ -1,8 +1,31 @@
 // js/instruments/guitar/app.js — guitar-specific act() handler
 (function() {
 
+function getGuitarAppInstrument() {
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 function guitarAct(a, v) {
-  var D = SparkInstruments.getActive().getData();
+  var inst = getGuitarAppInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
 
   if (a === "quickStart") {
     var session;
