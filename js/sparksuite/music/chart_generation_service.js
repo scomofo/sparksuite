@@ -1,4 +1,22 @@
 (function() {
+  function resolveChartInstrumentType(instrument) {
+    var all;
+    var i;
+    var inst;
+    if (!instrument) return "guitar";
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+      return instrument;
+    }
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      inst = all[i] || {};
+      if (inst.id === instrument || inst.appId === instrument) {
+        return inst.instrument || instrument;
+      }
+    }
+    return instrument;
+  }
+
   /**
    * SparkChartGenerationService -- orchestrates the full chart pipeline:
    *   TrackAnalyzer -> ChordProgressionEngine -> ChartBuilder -> DifficultyScaler
@@ -23,7 +41,7 @@
     params = params || {};
     var trackId = params.trackId;
     var difficulty = params.difficulty || "easy";
-    var instrument = params.instrument || "guitar";
+    var instrument = resolveChartInstrumentType(params.instrument);
     var cacheKey = trackId + "_" + difficulty + "_" + instrument;
     var self = this;
 
@@ -87,7 +105,7 @@
   ChartGenerationService.prototype.cacheChart = function(trackId, chart, difficulty, instrument) {
     if (!trackId || !chart) return;
     var diff = difficulty || "easy";
-    var inst = instrument || "guitar";
+    var inst = resolveChartInstrumentType(instrument);
     var storageKey = "sparksuite_chart_" + trackId + "_" + diff + "_" + inst;
     try {
       var json = (chart && typeof chart.toJSON === "function") ? chart.toJSON() : chart;
