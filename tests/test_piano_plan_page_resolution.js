@@ -384,6 +384,27 @@ test("piano plan and practice sections do not render action buttons for whitespa
   assert.ok(practiceHtml.indexOf(">Unavailable<") >= 0);
 });
 
+test("pianoPlanPage treats whitespace-only item ids without other data as missing plans", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "   ",
+      items: [
+        { id: "   " }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("No practice plan yet.") >= 0);
+  assert.strictEqual(html.indexOf("No practice focus yet."), -1);
+});
+
 test("pianoPlanPage stays read-only when no plan exists and shows an empty state", function() {
   var ensureCalls = 0;
   global.sparkCore = {
@@ -526,6 +547,27 @@ test("pianoPlanPage derives readable fallback labels for sparse plan items", fun
   assert.ok(html.indexOf("island strum") >= 0);
   assert.ok(html.indexOf("left hand") >= 0);
   assert.strictEqual(html.indexOf("undefined"), -1);
+});
+
+test("pianoPlanPage ignores malformed duration values in cached plan items", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [
+        { id: "song_1", type: "song", label: "Replay Island Strum", durationSec: "oops", meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("Replay Island Strum") >= 0);
+  assert.strictEqual(html.indexOf("NaNm"), -1);
 });
 
 test("piano plan and practice sections ignore whitespace-only labels", function() {
