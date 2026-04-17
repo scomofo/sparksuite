@@ -137,7 +137,8 @@ function getPlanItemLabel(item){
 
 function getPlanFocusLabel(plan){
   if(!plan || !Array.isArray(plan.items) || !plan.items.some(function(item){ return !!item; })) return "No practice plan yet.";
-  return plan.focus ? plan.focus : "No practice focus yet.";
+  var focus = typeof plan.focus === "string" ? plan.focus.trim() : plan.focus;
+  return focus ? focus : "No practice focus yet.";
 }
 
 function launchPracticePlanItem(itemId){

@@ -479,6 +479,47 @@ test("planPage derives a readable focus label when a cached plan omits focus", f
   assert.strictEqual(html.indexOf("<div class=\"muted\">No practice plan yet.</div>"), -1);
 });
 
+test("planPage and practiceTab treat whitespace-only focus as missing focus", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "   ",
+      items: [
+        { id: "song_1", type: "song", completed: false, meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var planHtml = planPage();
+  var practiceHtml = practiceTab();
+
+  assert.ok(planHtml.indexOf("No practice focus yet.") >= 0);
+  assert.ok(practiceHtml.indexOf("Focus: No practice focus yet.") >= 0);
+});
+
 test("planPage does not render a completed banner when the plan is missing but the stale completion flag remains", function() {
   global.S = {
     practicePlanComplete: true,

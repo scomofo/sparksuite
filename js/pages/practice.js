@@ -93,7 +93,8 @@ function getPracticeSummaryProgress(plan) {
 }
 
 function getPracticeSummaryFocus(plan) {
-  return plan && plan.focus ? plan.focus : "No practice focus yet.";
+  var focus = plan && typeof plan.focus === "string" ? plan.focus.trim() : (plan ? plan.focus : null);
+  return focus ? focus : "No practice focus yet.";
 }
 
 function hasRenderablePracticeSummaryItems(plan) {
