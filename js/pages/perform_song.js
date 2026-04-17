@@ -1,5 +1,17 @@
 /* ===== ChordSpark: Performance Song Detail Page ===== */
 
+function prettyPerformSongToken(value) {
+  var text;
+  var lower;
+  if (value == null) return "";
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
@@ -10,14 +22,16 @@ function performSongPage() {
   var diff = performanceSongView.difficultyId || "normal";
   var speed = performanceSongView.speed;
   var targetTechnique = performanceSongView.targetTechnique;
+  var displayTitle = prettyPerformSongToken(song.title) || prettyPerformSongToken(performanceSongView.songId) || "Unknown Song";
+  var displayArtist = prettyPerformSongToken(song.artist);
 
   var h = '<div class="perform-page">';
 
   // Header
   h += '<div class="perform-header">';
   h += '<button class="back-btn" onclick="act(\'performSongBack\')">&larr; Back</button>';
-  h += '<div class="perform-title"><strong>' + escHTML(song.title) + '</strong>';
-  h += '<span class="perform-artist">' + escHTML(song.artist || "") + '</span></div>';
+  h += '<div class="perform-title"><strong>' + escHTML(displayTitle) + '</strong>';
+  h += '<span class="perform-artist">' + escHTML(displayArtist) + '</span></div>';
   h += '</div>';
 
   // Mastery + best stats
@@ -94,7 +108,7 @@ function performSongPage() {
   }
 
   // Audio import
-  var songId = (song.title || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  var songId = (displayTitle || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
   var audioData = S.songAudioData[songId];
 
   h += '<div class="card mb20">';
@@ -162,11 +176,12 @@ function getPerformanceSongView() {
 }
 
 function formatTechniqueLabel(key) {
+  var normalizedKey = prettyPerformSongToken(key);
   var labels = {
     open: "Open-note timing",
     tap: "Tap-note consistency",
     forced: "Forced-note transitions",
     specialPhrase: "Phrase section control"
   };
-  return labels[key] || String(key || "Technique");
+  return labels[normalizedKey] || (normalizedKey || "Technique");
 }

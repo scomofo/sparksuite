@@ -19,6 +19,18 @@ function analyticsPage(){
   return h;
 }
 
+function prettyAnalyticsToken(value){
+  var text;
+  var lower;
+  if(value == null) return "";
+  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
 function renderAnalyticsWeaknesses(summary){
   var h = '<div class="card mb16">';
   h += '<div class="mb8"><b>Weakest Skills</b></div>';
@@ -67,7 +79,9 @@ function renderAnalyticsStrengths(summary){
   }else{
     for(var i=0;i<summary.strongestSkills.length;i++){
       var s = summary.strongestSkills[i];
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(s.label)+': '+escHTML(String(s.value))+'</div>';
+      var label = prettyAnalyticsToken(s && s.label);
+      if(!label) continue;
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(label)+': '+escHTML(String(s.value))+'</div>';
     }
   }
   h += '</div>';
@@ -82,7 +96,9 @@ function renderAnalyticsImprovement(summary){
   }else{
     for(var i=0;i<summary.recentImprovement.length;i++){
       var r = summary.recentImprovement[i];
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(r.label)+': '+escHTML(String(r.value))+'</div>';
+      var label = prettyAnalyticsToken(r && r.label);
+      if(!label) continue;
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(label)+': '+escHTML(String(r.value))+'</div>';
     }
   }
   h += '</div>';
@@ -108,9 +124,11 @@ function renderAnalyticsRecommendations(summary){
   }else{
     for(var i=0;i<summary.recommendations.length;i++){
       var r = summary.recommendations[i];
+      var label = prettyAnalyticsToken(r && r.label) || "Recommendation";
+      var reason = prettyAnalyticsToken(r && r.reason);
       h += '<div style="padding:10px;border-radius:10px;background:var(--input-bg);margin-bottom:8px">';
-      h += '<div style="font-size:13px;font-weight:800">'+escHTML(r.label)+'</div>';
-      h += '<div style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">'+escHTML(r.reason||"")+'</div>';
+      h += '<div style="font-size:13px;font-weight:800">'+escHTML(label)+'</div>';
+      h += '<div style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">'+escHTML(reason)+'</div>';
       h += '<button class="btn" onclick="act(\'launchAnalyticsRecommendation\','+i+')">Start</button>';
       h += '</div>';
     }
