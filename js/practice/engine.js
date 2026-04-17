@@ -80,6 +80,7 @@
 
   function completePracticePlan(){
     if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
+      var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
       window.sparkCore.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         markPlanComplete: true
@@ -88,8 +89,8 @@
       if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
         var practiceResult = SparkContracts.createSessionResult({
           mode: "practice",
-          instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
-          instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+          instrumentId: activeInstrument ? (activeInstrument.id || activeInstrument.appId || null) : null,
+          instrumentType: activeInstrument ? activeInstrument.instrument : null,
           completed: true
         });
         SparkProgressOrchestrator.applySessionOutcome(practiceResult);
