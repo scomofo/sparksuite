@@ -5,8 +5,13 @@
     this.flow = input.flow || "generic";
     this.generatedDate = input.generatedDate || new Date().toISOString().slice(0, 10);
     this.instrumentId = input.instrumentId || null;
+    this.instrumentType = input.instrumentType || null;
     this.focus = input.focus || "Well-rounded practice";
+    this.lesson = input.lesson || null;
+    this.difficulty = input.difficulty || null;
     this.segments = Array.isArray(input.segments) ? input.segments : [];
+    this.exercises = Array.isArray(input.exercises) ? input.exercises : [];
+    this.rewards = Array.isArray(input.rewards) ? input.rewards : [];
     this.context = input.context || {};
   }
 

@@ -198,6 +198,20 @@ test("startSession returns a SessionPlan and syncs the legacy practice plan", fu
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "session_1");
 });
 
+test("daily practice plans preserve segment labels when projected back to legacy state", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  assert.ok(Array.isArray(plan.exercises));
+  assert.strictEqual(plan.segments[0].label, "Quick warmup");
+  assert.strictEqual(plan.segments[1].label, "Practice G to C");
+  assert.ok(S.practicePlan.items.every(function(item) {
+    return typeof item.label === "string" && item.label.length > 0;
+  }));
+  assert.strictEqual(S.practicePlan.items[0].label, "Quick warmup");
+  assert.strictEqual(S.practicePlan.items[1].label, "Practice G to C");
+});
+
 test("SparkCore exposes engine-owned runtime state for active session context", function() {
   var core = createDefaultSparkCore();
   var initialState = core.getRuntimeState();
