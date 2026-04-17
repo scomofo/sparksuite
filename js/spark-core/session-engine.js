@@ -1,5 +1,26 @@
 // js/spark-core/session-engine.js
 (function() {
+  function getLegacySessionActiveInstrument() {
+    var activeInstrument;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    activeInstrument = SparkInstruments.getActive();
+    if (!activeInstrument) return null;
+    if (typeof activeInstrument.getData === "function") return activeInstrument;
+    candidate = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return activeInstrument;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return activeInstrument;
+  }
 
   var SparkSession = {
 
@@ -16,21 +37,22 @@
         console.debug("[SparkSession] buildSession:", mode, "level:", level);
       }
 
+      var activeInstrument = getLegacySessionActiveInstrument();
       var D = opts.instrumentData || {};
       if (!opts.instrumentData) {
-        if (typeof SparkInstrumentAdapter !== "undefined") {
+        if (activeInstrument && typeof activeInstrument.getData === "function") {
+          D = activeInstrument.getData() || {};
+        } else if (typeof SparkInstrumentAdapter !== "undefined") {
           D = SparkInstrumentAdapter.getCurriculum() || {};
-        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-          D = SparkInstruments.getActive().getData();
         }
       }
 
       // Resolve instrument identity for contract
       var instrumentId = opts.instrumentId || null;
       var instrumentType = opts.instrumentType || null;
-      if (!instrumentId && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-        instrumentId = SparkInstruments.getActive().id || null;
-        instrumentType = SparkInstruments.getActive().instrument || null;
+      if (!instrumentId && activeInstrument) {
+        instrumentId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+        instrumentType = activeInstrument.instrument || null;
       }
 
       function wrapPlan(raw) {
