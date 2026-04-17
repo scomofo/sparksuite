@@ -268,8 +268,10 @@ test("SparkCore reuses daily practice plans when the active context only provide
 
 test("SparkCore and storage fall back to global S when SparkState.getRoot returns null", function() {
   var originalSparkState = global.SparkState;
+  var originalSparkRoot = global.__sparkState;
   global.S.playerXP = 55;
   global.S.activeSessionPlanId = "legacy_plan";
+  global.__sparkState = null;
   global.SparkState = { getRoot: function() { return null; } };
 
   var storage = new SparkSuiteStorage();
@@ -279,6 +281,7 @@ test("SparkCore and storage fall back to global S when SparkState.getRoot return
   assert.strictEqual(core.getPlayerXP(), 55);
 
   global.SparkState = originalSparkState;
+  global.__sparkState = originalSparkRoot;
 });
 
 test("SparkCore exposes completed lesson ids through a normalized accessor", function() {

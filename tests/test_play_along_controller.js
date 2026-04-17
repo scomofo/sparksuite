@@ -258,6 +258,17 @@ test("sparkPlayAlongLoadFile uses the active instrument type for generated chart
   });
 });
 
+test("play along state service falls back to plain global S when SparkState root is unavailable", function() {
+  global.__sparkState = null;
+  global.SparkState = { getRoot: function() { return null; } };
+
+  var service = new SparkPlayAlongStateService();
+  service.writeValue(["playAlongTest", "value"], 42);
+
+  assert.strictEqual(global.S.playAlongTest.value, 42);
+  assert.strictEqual(service.readValue(["playAlongTest", "value"], 0), 42);
+});
+
 test("sparkPlayAlongStartDrill relaunches current session into drill loop", async function() {
   sparkCore.lastSessionOutcome = {
     drills: [{ label: "Fix timing", startMs: 3200, endMs: 5200, speed: 0.75 }]

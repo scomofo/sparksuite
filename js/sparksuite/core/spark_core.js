@@ -7,6 +7,9 @@
     if (typeof globalThis !== "undefined" && globalThis.__sparkState) {
       return globalThis.__sparkState;
     }
+    if (typeof globalThis !== "undefined" && globalThis.S) {
+      return globalThis.S;
+    }
     return null;
   }
 
