@@ -125,6 +125,13 @@ function pianoPracticeTab() {
 
 /* Practice Plan section – shows stats, today's plan, and progression overview */
 function practicePlanSection(){
+  function isCompletedPlanItem(item){
+    var value = item ? item.completed : null;
+    return value === true ||
+      value === 1 ||
+      value === "1" ||
+      (typeof value === "string" && value.trim().toLowerCase() === "true");
+  }
   function getPlanItemId(item){
     var id = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
     return id || null;
@@ -177,10 +184,11 @@ function practicePlanSection(){
       if(!isRenderablePlanItem(item)) continue;
       var itemId = getPlanItemId(item);
       var target = item && typeof item.target === "string" ? item.target.trim() : null;
-      var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+      var isCompleted = isCompletedPlanItem(item);
+      var done = isCompleted ? ' style="opacity:0.5;text-decoration:line-through"' : '';
       h += '<div class="row"' + done + '>';
       h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (target ? ' (' + escHTML(target) + ')' : '') + '</span>';
-      if(!item.completed){
+      if(!isCompleted){
         if(itemId){
           h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+itemId+'\')">Start</button>';
         }else{

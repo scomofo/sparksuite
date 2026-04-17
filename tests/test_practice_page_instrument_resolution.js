@@ -222,6 +222,35 @@ test("practicePage does not render completed items as clickable start buttons", 
   assert.ok(html.indexOf(">Done<") >= 0);
 });
 
+test("practicePage and planPage ignore string false completion flags in cached items", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Song mastery",
+      items: [
+        { id: "song_1", type: "song", label: "Replay Island Strum", completed: "false", meta: { songId: "island_strum" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practicePage();
+  var planHtml = planPage();
+  assert.ok(practiceHtml.indexOf("practiceStartItem', 'song_1") >= 0);
+  assert.ok(planHtml.indexOf("launchPracticePlanItem('song_1')") >= 0);
+  assert.strictEqual(practiceHtml.indexOf(">Done<"), -1);
+  assert.strictEqual(planHtml.indexOf(">Done<"), -1);
+  assert.strictEqual(planHtml.indexOf("Plan completed!"), -1);
+});
+
 test("practicePage derives readable fallback labels and subtitles for sparse plan items", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };

@@ -101,7 +101,7 @@ function getPracticeSummaryProgress(plan) {
     ? plan.totalItems
     : null;
   var totalItems = rawTotalItems && rawTotalItems > 0 ? rawTotalItems : derivedTotalItems;
-  var derivedCompletedItems = items.filter(function(item) { return !!(item && item.completed); }).length;
+  var derivedCompletedItems = items.filter(isCompletedPracticeSummaryItem).length;
   var rawCompletedItems = !hasSparseItems && plan && typeof plan.completedItems === "number" && Number.isFinite(plan.completedItems)
     ? plan.completedItems
     : null;
@@ -118,6 +118,14 @@ function getPracticeSummaryProgress(plan) {
 function getPracticeSummaryFocus(plan) {
   var focus = plan && typeof plan.focus === "string" ? plan.focus.trim() : null;
   return focus ? focus : "No practice focus yet.";
+}
+
+function isCompletedPracticeSummaryItem(item) {
+  var value = item ? item.completed : null;
+  return value === true ||
+    value === 1 ||
+    value === "1" ||
+    (typeof value === "string" && value.trim().toLowerCase() === "true");
 }
 
 function isRenderablePracticeSummaryItem(item) {
@@ -332,10 +340,11 @@ function practiceTab(){
       var item=plan.items[pi];
       if(!isRenderablePracticeSummaryItem(item)) continue;
       h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
-      h+='<span style="font-size:16px">'+(item.completed?"&#9989;":"&#9744;")+'</span>';
-      h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
+      var isCompleted = isCompletedPracticeSummaryItem(item);
+      h+='<span style="font-size:16px">'+(isCompleted?"&#9989;":"&#9744;")+'</span>';
+      h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(isCompleted?"var(--text-muted)":"var(--text-primary)")+';'+(isCompleted?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
       h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(getPracticeSummaryItemDesc(item))+'</div></div>';
-      if(!item.completed){
+      if(!isCompleted){
         var itemId = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
         if(itemId){
           h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+itemId+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
@@ -588,8 +597,9 @@ function practicePage(){
       var item = plan.items[i];
       if(!isRenderablePracticeSummaryItem(item)) continue;
       var itemId = item && typeof item.id === "string" ? item.id.trim() : (item ? item.id : null);
-      var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
-      var actionHtml = item.completed
+      var isCompleted = isCompletedPracticeSummaryItem(item);
+      var done = isCompleted ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+      var actionHtml = isCompleted
         ? '<span class="text-muted">Done</span>'
         : (itemId
           ? '<button onclick="act(\'practiceStartItem\', \''+itemId+'\')">Start</button>'

@@ -1,4 +1,17 @@
 function planPage(){
+  function isCompletedPlanItem(item){
+    var value = item ? item.completed : null;
+    return value === true ||
+      value === 1 ||
+      value === "1" ||
+      (typeof value === "string" && value.trim().toLowerCase() === "true");
+  }
+  function isPlanCompleteFlag(value){
+    return value === true ||
+      value === 1 ||
+      value === "1" ||
+      (typeof value === "string" && value.trim().toLowerCase() === "true");
+  }
   function getPlanItemDurationMinutes(item){
     var raw = item ? item.durationSec : null;
     var durationSec = typeof raw === "number" ? raw : Number(raw);
@@ -45,11 +58,11 @@ function planPage(){
   if(!plan) plan = S.practicePlan;
   var renderableItems = getRenderablePlanItems(plan);
   var hasPlanItems = hasRenderablePlanItems(plan);
-  var planCompleted = (coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted)
+  var planCompleted = isPlanCompleteFlag(coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted)
     ? true
-    : !!S.practicePlanComplete;
+    : isPlanCompleteFlag(S.practicePlanComplete);
   if(!planCompleted && hasPlanItems){
-    planCompleted = renderableItems.every(function(item){ return !!item.completed; });
+    planCompleted = renderableItems.every(isCompletedPlanItem);
   }
   var h = '';
 
@@ -76,8 +89,9 @@ function planPage(){
     var itemId = getPlanItemId(item);
     var canLaunch = !!itemId;
     var durationMinutes = getPlanItemDurationMinutes(item);
-    var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
-    var actionHtml = item.completed
+    var isCompleted = isCompletedPlanItem(item);
+    var done = isCompleted ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+    var actionHtml = isCompleted
       ? '<span class="text-muted">Done</span>'
       : (canLaunch
         ? '<button class="btn btn-sm" onclick="launchPracticePlanItem(\''+escHTML(itemId)+'\')" style="background:var(--accent);color:#fff">Go</button>'
