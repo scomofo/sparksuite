@@ -133,5 +133,15 @@ test("perform preset labels follow the resolved active stem label", function() {
   assert.strictEqual(presets[3].label, "Solo Piano");
 });
 
+test("formatTechniqueFocusLabel ignores sentinel focus keys", function() {
+  resetEnv();
+  global.escHTML = function(value) { return String(value); };
+
+  global.eval(loadJS("js/pages/perform.js"));
+
+  assert.strictEqual(formatTechniqueFocusLabel("undefined"), "Technique");
+  assert.strictEqual(formatTechniqueFocusLabel(" null "), "Technique");
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

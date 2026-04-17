@@ -35,19 +35,38 @@ function startCalibration() {
 }
 
 function formatTechniqueFocusLabel(key) {
+  var normalizedKey;
   var labels = {
     open: "Open-note timing",
     tap: "Tap-note consistency",
     forced: "Forced-note transitions",
     specialPhrase: "Phrase section control"
   };
-  return labels[key] || String(key || "Technique");
+  if (typeof key === "string") {
+    normalizedKey = key.trim();
+    if (normalizedKey) {
+      normalizedKey = normalizedKey.toLowerCase();
+      if (normalizedKey === "undefined" || normalizedKey === "null" || normalizedKey === "nan") {
+        normalizedKey = "";
+      }
+    }
+  } else {
+    normalizedKey = "";
+  }
+  return labels[normalizedKey] || (normalizedKey ? normalizedKey : "Technique");
 }
 
 function eventMatchesTechniqueFocus(evt, key) {
   var flags = evt && evt.sourceFlags ? evt.sourceFlags : null;
-  if (!flags || !key) return false;
-  return !!flags[key];
+  var normalizedKey = typeof key === "string" ? key.trim() : "";
+  if (normalizedKey) {
+    normalizedKey = normalizedKey.toLowerCase();
+    if (normalizedKey === "undefined" || normalizedKey === "null" || normalizedKey === "nan") {
+      normalizedKey = "";
+    }
+  }
+  if (!flags || !normalizedKey) return false;
+  return !!flags[normalizedKey];
 }
 
 function recordCalibrationTap() {
