@@ -4,7 +4,7 @@
     if(typeof SparkState !== "undefined" && typeof SparkState.getRoot === "function"){
       return SparkState.getRoot();
     }
-    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || null) : null;
+    return typeof globalThis !== "undefined" ? (globalThis.__sparkState || globalThis.S || null) : null;
   }
 
   function midiDeviceRead(path, fallback){
@@ -41,7 +41,7 @@
   }
 
   function refreshMidiDevices(){
-    if(!navigator.requestMIDIAccess) return;
+    if(typeof navigator === "undefined" || !navigator || !navigator.requestMIDIAccess) return;
     navigator.requestMIDIAccess().then(function(access){
       var out = [];
       access.inputs.forEach(function(input){

@@ -1,0 +1,154 @@
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+
+var passed = 0;
+var failed = 0;
+
+function loadJS(file) {
+  return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+}
+
+function resetState() {
+  global.window = global;
+  global.S = {
+    editorObject: {
+      id: "chart_1",
+      title: "Demo Chart",
+      artist: "Spark",
+      bpm: 100,
+      events: [{ id: "evt_1", type: "chord", t: 1 }],
+      phrases: [{ id: "phrase_1", name: "Verse", startSec: 0, endSec: 4 }]
+    },
+    editorMode: "chart",
+    editorDirty: true,
+    editorGridDivision: "1/8",
+    editorPlayheadSec: 2,
+    editorSnapEnabled: true,
+    editorSelectedId: "evt_1",
+    performEditorChart: {
+      title: "Performance Chart",
+      bpm: 90,
+      events: [{ id: 1, laneLabel: "C", t: 1, dur: 1 }],
+      phrases: [{ id: 1, name: "Intro", startSec: 0, endSec: 4 }]
+    },
+    performEditorLibrary: [{ title: "Saved Chart", events: [] }],
+    performSongData: {
+      title: "River Run",
+      artist: "Spark Artist",
+      bpm: 92,
+      chords: ["C", "G"],
+      progression: ["C", "G", "Am", "F"]
+    },
+    performSongId: "river_run",
+    performArrangementType: "chords",
+    performDifficulty: "normal",
+    performSpeed: 1,
+    xp: 125,
+    level: 4,
+    streak: 3,
+    sessions: 9,
+    todayPracticeSeconds: 600,
+    dailyGoalMinutes: 15
+  };
+  global.__sparkState = null;
+  global.SparkState = undefined;
+  global.sparkCore = null;
+  global.escHTML = function(value) { return String(value); };
+  global.validateEditorObject = function() { return []; };
+  global.renderVisualTimeline = null;
+  global.renderEditorInspector = function() { return '<div class="card">Inspector</div>'; };
+  global.getPerformanceStats = function() {
+    return { mastery: "solid", runs: 2, bestScore: 900, bestAccuracy: 88, bestStars: 4 };
+  };
+  global.getMasteryColor = function() { return "#4ECDC4"; };
+  global.getMasteryIcon = function() { return "*"; };
+  global.buildPerformanceRecommendationsForSong = function() {
+    return [{ label: "Keep going", reason: "Strong recent run" }];
+  };
+}
+
+async function test(name, fn) {
+  try {
+    resetState();
+    await fn();
+    passed++;
+    console.log("  PASS: " + name);
+  } catch (err) {
+    failed++;
+    console.error("  FAIL: " + name);
+    console.error("    " + err.message);
+  }
+}
+
+console.log("\n--- Page State Fallbacks ---");
+
+async function run() {
+  await test("editor page can render from plain global S", function() {
+    eval(loadJS("js/pages/editor.js"));
+
+    var html = editorPage();
+
+    assert.ok(html.indexOf("Demo Chart") >= 0);
+    assert.ok(html.indexOf("Dirty:</b> Yes") >= 0);
+    assert.ok(html.indexOf("Events: 1") >= 0);
+  });
+
+  await test("performance editor page can render from plain global S", function() {
+    eval(loadJS("js/pages/performance_editor.js"));
+
+    var html = performanceEditorPage();
+
+    assert.ok(html.indexOf("Chart Editor") >= 0);
+    assert.ok(html.indexOf("Performance Chart") >= 0);
+    assert.ok(html.indexOf("Events (1)") >= 0);
+  });
+
+  await test("perform song page can render from plain global S", function() {
+    eval(loadJS("js/pages/perform_song.js"));
+
+    var html = performSongPage();
+
+    assert.ok(html.indexOf("River Run") >= 0);
+    assert.ok(html.indexOf("Start Performance") >= 0);
+    assert.ok(html.indexOf("Best Accuracy") >= 0);
+  });
+
+  await test("progress dashboard can render from plain global S", function() {
+    global.sparkCore = {
+      progressEngine: {
+        getSkillGraph: function() {
+          return {
+            timing: { mastery: 0.4, confidence: 0.9, attempts: 3, lastPracticed: Date.now() - 86400000 },
+            rhythm: { mastery: 0.8, confidence: 0.8, attempts: 5, lastPracticed: Date.now() }
+          };
+        },
+        getDecayedSkills: function() {
+          return [{ skillId: "timing", decay: 0.2 }];
+        },
+        getMasteryLevel: function(value) {
+          return value >= 0.75 ? "SOLID" : "LEARNING";
+        }
+      }
+    };
+    eval(loadJS("js/pages/progress_dashboard.js"));
+
+    var html = progressDashboardPage();
+
+    assert.ok(html.indexOf("Your Progress") >= 0);
+    assert.ok(html.indexOf("125") >= 0);
+    assert.ok(html.indexOf("Focus Areas") >= 0);
+    assert.ok(html.indexOf("Needs Review") >= 0);
+  });
+
+  if (failed) {
+    process.exitCode = 1;
+  } else {
+    console.log("\n" + passed + " passed, 0 failed");
+  }
+}
+
+run().catch(function(err) {
+  console.error(err && err.stack ? err.stack : err);
+  process.exit(1);
+});
