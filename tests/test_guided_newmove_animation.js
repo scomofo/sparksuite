@@ -91,4 +91,13 @@ test("shared guided new-move phase defaults to watch animation when phase is mis
   assert.ok(html.indexOf("guidedWatchPulse") >= 0);
 });
 
+test("shared guided page can read fallback state from global S without SparkState", function() {
+  delete global.SparkState;
+  global.__sparkState = null;
+  var html = guidedSessionPage();
+
+  assert.ok(html.indexOf("Session 3: Clean Changes") >= 0);
+  assert.ok(html.indexOf("guidedShadowFloat") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
