@@ -295,6 +295,11 @@ function practiceTab(){
       h+='</div>';
     }
     h+='</div>';
+  } else {
+    h+='<div class="card mb20">';
+    h+='<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
+    h+='<div style="font-size:12px;color:var(--text-dim)">No practice plan yet.</div>';
+    h+='</div>';
   }
 
   // Quick Start / Resume
