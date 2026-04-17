@@ -1797,6 +1797,45 @@ test("practice page rehydrates thin active instruments before reading curriculum
   assert.strictEqual(typeof activeInstrument.getData, "function");
 });
 
+test("practice custom set editor rehydrates thin active instruments before rendering chord chips", function() {
+  window.sparkCore = null;
+  global.clickableDiv = function() { return ""; };
+  S.editingSet = true;
+  S.customSetName = "Evening Set";
+  S.customSetChords = ["C"];
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{
+        id: "pianospark",
+        appId: "pianospark",
+        instrument: "piano",
+        tabs: ["practice", "stats"],
+        ui: {},
+        getData: function() {
+          return {
+            LC: { 1: "#fff" },
+            CHORDS: { 1: [{ name: "C", short: "C" }, { name: "G", short: "G" }] },
+            ALL_CHORDS: [{ name: "C" }, { name: "G" }],
+            SESSIONS: []
+          };
+        }
+      }];
+    }
+  };
+
+  eval(loadJS("js/pages/practice.js"));
+
+  var html = customSetsSection();
+
+  assert.ok(html.indexOf("My Practice Sets") >= 0);
+  assert.ok(html.indexOf("Evening Set") >= 0);
+  assert.ok(html.indexOf(">C<") >= 0);
+  assert.ok(html.indexOf(">G<") >= 0);
+});
+
 test("startPracticeItem launches the matching daily practice item", function() {
   window.sparkCore = null;
   global.escHTML = function(value) { return String(value); };

@@ -481,7 +481,8 @@ function practiceTab(){
 
 // ===== CUSTOM PRACTICE SETS =====
 function customSetsSection(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolvePracticeActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var customState = getPracticeCustomSetSnapshot();
   var player = getPracticePlayerSnapshot();
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';

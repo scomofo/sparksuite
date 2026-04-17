@@ -297,6 +297,63 @@ async function run() {
     assert.ok(html.indexOf("Spark Artist") >= 0);
   });
 
+  await test("games page rehydrates thin active instruments before rendering game tabs", function() {
+    global.SparkInstruments = {
+      getActive: function() {
+        return { appId: "pianospark" };
+      },
+      getAll: function() {
+        return [{
+          id: "pianospark",
+          appId: "pianospark",
+          getData: function() {
+            return { ALL_CHORDS: [] };
+          },
+          ui: { chord: function() { return "<svg></svg>"; } }
+        }];
+      }
+    };
+    eval(loadJS("js/pages/games.js"));
+
+    var html = runnerTab();
+
+    assert.ok(html.indexOf("Chord Runner") >= 0);
+    assert.ok(html.indexOf("Start!") >= 0);
+  });
+
+  await test("tools page rehydrates thin active instruments before rendering the guide", function() {
+    global.SparkInstruments = {
+      getActive: function() {
+        return { appId: "pianospark" };
+      },
+      getAll: function() {
+        return [{
+          id: "pianospark",
+          appId: "pianospark",
+          getData: function() {
+            return {
+              STRINGS: [
+                { note: "E", freq: 82.4 },
+                { note: "A", freq: 110.0 }
+              ],
+              CHORDS: {
+                1: [{ name: "E Major", short: "E" }]
+              },
+              ALL_CHORDS: [{ name: "E Major", short: "E" }]
+            };
+          },
+          ui: { chord: function() { return "<svg>Chord</svg>"; } }
+        }];
+      }
+    };
+    eval(loadJS("js/pages/tools.js"));
+
+    var html = guideTab();
+
+    assert.ok(html.indexOf("How to Read Chord Charts") >= 0);
+    assert.ok(html.indexOf("Example: E Major") >= 0);
+  });
+
   await test("progress dashboard can render from plain global S", function() {
     global.sparkCore = {
       progressEngine: {
