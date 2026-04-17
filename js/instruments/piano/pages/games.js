@@ -1,7 +1,8 @@
 /* PianoSpark - Games tab (drill, daily, quiz, ear, rhythm, runner) */
 
 function pianoGamesTab() {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
+  var D = inst && inst.getData ? inst.getData() : {};
   var DAILY_TYPES = D.DAILY_TYPES || [];
   var FINGER_EXERCISES = D.FINGER_EXERCISES || [];
   var FINGER_BADGES = D.FINGER_BADGES || [];

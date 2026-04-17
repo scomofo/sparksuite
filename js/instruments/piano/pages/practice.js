@@ -1,7 +1,8 @@
 /* PianoSpark - Practice tab (home page) */
 
 function pianoPracticeTab() {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
+  var D = inst && inst.getData ? inst.getData() : {};
   var CURRICULUM = D.CURRICULUM || [];
   var BADGES = D.BADGES || [];
   var html = '';

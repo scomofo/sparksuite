@@ -1,5 +1,27 @@
 /* PianoSpark - Shared page components */
 
+function getPianoPageInstrument() {
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 // ── Performance helpers ──
 function getPerformanceBest(songId, arrangementType, difficulty) {
   var key = (songId || "") + "_" + (arrangementType || "chords") + "_" + (difficulty || "normal");
@@ -75,14 +97,16 @@ function backBtnHTML(action) {
 
 // ── Level color helper ──
 function levelColor(lvl) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getPianoPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   return (D.LC && D.LC[lvl]) ? D.LC[lvl] : "#7c3aed";
 }
 
 // ── Chord type color tag ──
 function chordTypeTag(chord) {
   if (!chord) return "";
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getPianoPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var color = chord.color || (D.CHORD_COLORS && D.CHORD_COLORS[chord.type]) || "#888";
   return '<span class="song-chord-tag" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + escHTML(chord.short) + '</span>';
 }
