@@ -354,6 +354,94 @@ async function run() {
     assert.ok(html.indexOf("Example: E Major") >= 0);
   });
 
+  await test("dual page rehydrates thin active instruments before rendering both instrument views", function() {
+    global.PIANO_CHORDS = {
+      "G Major": { notes: ["G4", "B4", "D5"], fingers: [1, 3, 5], quality: "Major" }
+    };
+    global.GUITAR_ANCHOR = { activeChords: ["G Major"], targetString: 1, fret: 3, instruction: "Keep ring finger anchored." };
+    global.ChordEngine = {
+      get: function() { return ["G", "B", "D"]; },
+      intervals: { Major: [0, 4, 7] }
+    };
+    global.SparkInstruments = {
+      getActive: function() {
+        return { appId: "pianospark" };
+      },
+      getAll: function() {
+        return [{
+          id: "pianospark",
+          appId: "pianospark",
+          getData: function() {
+            return {
+              ALL_CHORDS: [{ name: "G Major", short: "G" }]
+            };
+          },
+          ui: {
+            chord: function() { return "<svg>Chord</svg>"; }
+          }
+        }];
+      }
+    };
+    eval(loadJS("js/pages/dual.js"));
+
+    var html = dualTab();
+
+    assert.ok(html.indexOf("Dual View") >= 0);
+    assert.ok(html.indexOf("Piano") >= 0);
+    assert.ok(html.indexOf("Guitar") >= 0);
+    assert.ok(html.indexOf("Sticky Anchor") >= 0);
+  });
+
+  await test("shared tuner updater rehydrates thin active instruments before touching string metadata", function() {
+    var stringsEl = {
+      children: [
+        { style: {}, firstChild: { style: {} } },
+        { style: {}, firstChild: { style: {} } }
+      ]
+    };
+    global.document = {
+      getElementById: function(id) {
+        if (id === "tuner-note-display") return { textContent: "", style: {} };
+        if (id === "tuner-freq-display") return { textContent: "", style: {} };
+        if (id === "tuner-needle") return { style: {} };
+        if (id === "tuner-status") return { innerHTML: "", style: {} };
+        if (id === "tuner-strings") return stringsEl;
+        return null;
+      }
+    };
+    global.S.tunerNote = "E";
+    global.S.tunerFreq = 82.4;
+    global.S.tunerCents = 2;
+    global.SparkInstruments = {
+      getActive: function() {
+        return { appId: "pianospark" };
+      },
+      getAll: function() {
+        return [{
+          id: "pianospark",
+          appId: "pianospark",
+          getData: function() {
+            return {
+              STRINGS: [
+                { note: "E", freq: 82.4 },
+                { note: "A", freq: 110.0 }
+              ]
+            };
+          }
+        }];
+      }
+    };
+    global.getCoachFeedback = function() { return []; };
+    global.getExpectedNotes = function() { return []; };
+    global.ringHTML = function() { return "<div>ring</div>"; };
+    eval(loadJS("js/pages/shared.js"));
+
+    updateTunerUI();
+
+    assert.strictEqual(stringsEl.children[0].style.borderColor, "#4ECDC4");
+    assert.strictEqual(stringsEl.children[0].firstChild.style.color, "#4ECDC4");
+  });
+
   await test("progress dashboard can render from plain global S", function() {
     global.sparkCore = {
       progressEngine: {

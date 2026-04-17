@@ -35,6 +35,25 @@ function getSharedRuntimeState(){
   return view && view.runtimeState ? view.runtimeState : null;
 }
 
+function resolveSharedActiveInstrument(){
+  if(typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function"){
+    return null;
+  }
+  var instrument = SparkInstruments.getActive();
+  if(!instrument) return null;
+  if(instrument.getData || instrument.ui || instrument.pages || instrument.tabs || instrument.tabRenderers){
+    return instrument;
+  }
+  var instrumentId = instrument.id || instrument.appId || null;
+  if(!instrumentId || typeof SparkInstruments.getAll !== "function") return instrument;
+  var instruments = SparkInstruments.getAll() || [];
+  for(var i = 0; i < instruments.length; i++){
+    if(!instruments[i]) continue;
+    if(instruments[i].id === instrumentId || instruments[i].appId === instrumentId) return instruments[i];
+  }
+  return instrument;
+}
+
 function getSharedTunerSnapshot(){
   var runtime = getSharedRuntimeState();
   return {
@@ -133,7 +152,8 @@ function updateChordCheckUI(){
 
 // Targeted tuner UI update (avoids full DOM rebuild at ~30fps)
 function updateTunerUI(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var activeInstrument = resolveSharedActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
   var tuner = getSharedTunerSnapshot();
   var noteEl=document.getElementById("tuner-note-display");
   var freqEl=document.getElementById("tuner-freq-display");

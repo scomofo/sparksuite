@@ -23,6 +23,25 @@ function dualStateRead(path, fallback){
   return cursor == null ? fallback : cursor;
 }
 
+function resolveDualActiveInstrument(){
+  if(typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function"){
+    return null;
+  }
+  var instrument = SparkInstruments.getActive();
+  if(!instrument) return null;
+  if(instrument.getData || instrument.ui || instrument.pages || instrument.tabs || instrument.tabRenderers){
+    return instrument;
+  }
+  var instrumentId = instrument.id || instrument.appId || null;
+  if(!instrumentId || typeof SparkInstruments.getAll !== "function") return instrument;
+  var instruments = SparkInstruments.getAll() || [];
+  for(var i = 0; i < instruments.length; i++){
+    if(!instruments[i]) continue;
+    if(instruments[i].id === instrumentId || instruments[i].appId === instrumentId) return instruments[i];
+  }
+  return instrument;
+}
+
 // Piano keyboard SVG renderer
 // Draws a 2-octave keyboard (C3-B4) with highlighted notes and finger numbers
 function dualPianoSVG(pianoChord,sz){
@@ -98,7 +117,8 @@ function dualPianoSVG(pianoChord,sz){
 
 // Guitar SVG with Sticky Anchor overlay
 function dualGuitarSVG(chord,sz,anchorOn){
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveDualActiveInstrument();
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   // Render the base guitar SVG
   var base=UI.chord(chord,sz,chord.name,false);
   if(!anchorOn)return base;
@@ -122,8 +142,9 @@ function dualGuitarSVG(chord,sz,anchorOn){
 
 // Main dual tab page
 function dualTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var activeInstrument = resolveDualActiveInstrument();
+  var D = activeInstrument && activeInstrument.getData ? activeInstrument.getData() : {};
+  var UI = activeInstrument && activeInstrument.ui ? activeInstrument.ui : {};
   var chordName=dualStateRead("dualChord","G Major")||"G Major";
   // Find the guitar chord object
   var guitarChord=null;
