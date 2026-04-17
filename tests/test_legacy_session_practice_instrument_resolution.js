@@ -14,6 +14,10 @@ function resetEnvironment() {
     createSessionPlan: function(plan) { return plan; }
   };
   global.SparkCurriculumService = undefined;
+  global.sparkEvents = [];
+  global._sparkEmit = function(type, payload) {
+    sparkEvents.push({ type: type, payload: payload });
+  };
   global.SparkInstruments = {
     getActive: function() {
       return { appId: "pianospark" };
@@ -114,6 +118,27 @@ test("legacy practice engine prefers the rehydrated active instrument over a sta
   assert.strictEqual(analysis.accuracy, 91);
   assert.strictEqual(analysis.source, "piano");
   assert.strictEqual(config.laneType, "keys");
+});
+
+test("legacy session engine preserves app-id-only ownership when processing results", function() {
+  global.S.chordProgress = { "C Major": 100, "F Major": 100 };
+  global.S.level = 1;
+  global.S.sessions = 0;
+  global.S.xp = 0;
+  global.S.earnedBadges = [];
+  global.logHistory = function() {};
+  global.checkBadges = function() {};
+
+  var outcome = SparkSession.processResults({
+    type: "session",
+    chordName: "C Major",
+    duration: 120
+  });
+
+  assert.strictEqual(outcome.leveledUp, true);
+  assert.strictEqual(global.S.level, 2);
+  assert.strictEqual(sparkEvents.length, 1);
+  assert.strictEqual(sparkEvents[0].payload.appId, "pianospark");
 });
 
 if (process.exitCode) process.exit(process.exitCode);

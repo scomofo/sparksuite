@@ -226,12 +226,13 @@
       }
 
       // --- Level-up: all chords at current level mastered ---
+      var activeInstrument = getLegacySessionActiveInstrument();
       var D = results.instrumentData || {};
       if (!results.instrumentData) {
-        if (typeof SparkInstrumentAdapter !== "undefined") {
+        if (activeInstrument && typeof activeInstrument.getData === "function") {
+          D = activeInstrument.getData() || {};
+        } else if (typeof SparkInstrumentAdapter !== "undefined") {
           D = SparkInstrumentAdapter.getCurriculum() || {};
-        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-          D = SparkInstruments.getActive().getData();
         }
       }
       var levelChords = (D.CHORDS && D.CHORDS[S.level]) || [];
@@ -258,8 +259,9 @@
 
       // --- Emit event ---
       if (typeof _sparkEmit === "function") {
+        var emitInstrumentId = activeInstrument ? (activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null) : null;
         _sparkEmit("practice_session_completed", {
-          appId:     "chordspark",
+          appId:     emitInstrumentId || results.instrumentId || "chordspark",
           type:      results.type || "session",
           xp:        xpEarned,
           chord:     chordName,
