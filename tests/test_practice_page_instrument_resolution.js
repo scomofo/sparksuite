@@ -168,6 +168,34 @@ test("practicePage does not generate a plan during render and shows an empty sta
   assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
 });
 
+test("practicePage falls back to cached plan state when the practice bridge is unavailable", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    practicePlan: {
+      items: [{ id: "cached_1", type: "practice", label: "Cached Warmup", completed: false }]
+    }
+  };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            items: [{ id: "core_1", type: "practice", label: "Core Warmup", completed: false }]
+          }
+        }
+      };
+    }
+  };
+
+  var html = practicePage();
+  assert.ok(html.indexOf("Cached Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+});
+
 test("plan page infers richer display types from generic core-backed items", function() {
   global.SparkPracticeBridge = {
     toLegacyPlan: function(plan) { return plan._legacyPlan; }
@@ -229,6 +257,36 @@ test("planPage stays read-only when no plan exists and shows an empty state", fu
   assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
 });
 
+test("planPage falls back to cached plan state when the practice bridge is unavailable", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: {
+      focus: "Cached focus",
+      items: [{ id: "cached_1", type: "practice", label: "Cached Warmup", durationSec: 120 }]
+    }
+  };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            focus: "Core focus",
+            items: [{ id: "core_1", type: "practice", label: "Core Warmup", durationSec: 120 }]
+          }
+        },
+        lastSessionOutcome: null
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("Cached Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+});
+
 test("practiceTab reads the active core-backed plan without calling ensurePracticePlan during render", function() {
   var ensureCalls = 0;
   global.ensurePracticePlan = function() {
@@ -267,6 +325,52 @@ test("practiceTab reads the active core-backed plan without calling ensurePracti
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
   assert.ok(html.indexOf("Quick warmup") >= 0);
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
+});
+
+test("practiceTab falls back to cached plan state when the practice bridge is unavailable", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    practicePlan: {
+      focus: "Cached focus",
+      completedItems: 0,
+      totalItems: 1,
+      items: [{ id: "cached_1", label: "Cached Warmup", desc: "cached", completed: false }]
+    }
+  };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            focus: "Core focus",
+            completedItems: 0,
+            totalItems: 1,
+            items: [{ id: "core_1", label: "Core Warmup", desc: "core", completed: false }]
+          }
+        }
+      };
+    }
+  };
+
+  var html = practiceTab();
+  assert.ok(html.indexOf("Cached Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Core Warmup"), -1);
 });
 
 test("sv2HomeDashboard uses instrumentType when the rehydrated module does not expose instrument", function() {
