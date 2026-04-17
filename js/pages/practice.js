@@ -457,9 +457,13 @@ function practicePage(){
   if(plan && Array.isArray(plan.items) && plan.items.length){
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
+      var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+      var actionHtml = item.completed
+        ? '<span class="text-muted">Done</span>'
+        : '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
       h += '<div class="row">';
-      h += '<span>'+escHTML(item.label || item.type || "practice")+'</span>';
-      h += '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
+      h += '<span'+done+'>'+escHTML(item.label || item.type || "practice")+'</span>';
+      h += actionHtml;
       h += '</div>';
     }
   } else {
