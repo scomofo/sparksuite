@@ -245,6 +245,17 @@ test("piano onboarding and tools ignore stale intention strings", function() {
   assert.ok(toolsHtml.indexOf('value="null"') === -1);
 });
 
+test("piano placement test ignores stale prompt text", function() {
+  resetEnvironment("pianospark");
+  global.S._placementIdx = 0;
+  global.PLACEMENT_TESTS = [{ prompt: "undefined" }];
+  global.eval(loadJS("js/instruments/piano/pages/onboarding.js"));
+
+  var html = placementTestPage();
+  assert.ok(html.indexOf("Try this chord or pattern.") >= 0);
+  assert.ok(html.indexOf("undefined") === -1);
+});
+
 test("piano tools stats ignore stale history labels", function() {
   resetEnvironment("pianospark");
   global.S._toolTab = "stats";
