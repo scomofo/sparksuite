@@ -21,6 +21,8 @@ function resetEnvironment() {
   global.STEM_NAMES = ["vocals"];
   global.STEM_COLORS = { vocals: "#fff" };
   global.STEM_ICONS = { vocals: "V" };
+  global.PLAY_STYLES = [{ name: "Block Chords", level: 1, desc: "Steady chords" }];
+  global.styleHTML = function() { return "<div>style</div>"; };
   global.pianoFormatTime = function(value) { return String(value || 0); };
   global.getPianoPageInstrument = function() {
     return {
@@ -146,6 +148,17 @@ test("piano stems player ignores malformed stem volume values", function() {
   var html = pianoStemsPlayerPage();
   assert.ok(html.indexOf('value="1"') >= 0 || html.indexOf('value="1.0"') >= 0);
   assert.ok(html.indexOf(">100%</span>") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
+test("piano styles tab ignores malformed BPM values", function() {
+  S._songTab = "styles";
+  S.styleIdx = 0;
+  S.bpm = "NaN";
+
+  var html = stylesTab();
+  assert.ok(html.indexOf("BPM: 90") >= 0);
+  assert.ok(html.indexOf('value="90"') >= 0);
   assert.ok(html.indexOf("NaN") === -1);
 });
 

@@ -84,6 +84,14 @@ function _formatSongsBpm(value, fallback){
   return String(Math.round(bpm));
 }
 
+function _normalizeSongsTempoInput(value, fallback){
+  var bpm = _normalizeSongsNumber(value, null);
+  if (bpm == null) return fallback;
+  bpm = Math.round(bpm);
+  bpm = Math.max(40, Math.min(200, bpm));
+  return bpm;
+}
+
 // ===== STRUM TAB =====
 function strumTab(){
   var inst = getSongsPageInstrument();
@@ -291,6 +299,7 @@ function communitySubmitForm(){
   var inst = getSongsPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
   var ss=S.submitSong;
+  var submitBpm = _normalizeSongsTempoInput(ss.bpm, 90);
   var submitTitle = _firstSongsTextToken(ss.title);
   var submitArtist = _firstSongsTextToken(ss.artist);
   var submitterName = _firstSongsTextToken(ss.submittedBy);
@@ -298,7 +307,7 @@ function communitySubmitForm(){
   h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(submitTitle)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
   h+='<input class="set-input mb12" type="text" placeholder="Artist" value="'+escHTML(submitArtist)+'" oninput="act(\'submitField\',\'artist:\'+this.value)" aria-label="Artist name"/>';
   h+='<input class="set-input mb12" type="text" placeholder="Your name (optional)" value="'+escHTML(submitterName)+'" oninput="act(\'submitField\',\'submittedBy:\'+this.value)" aria-label="Your name"/>';
-  h+='<div style="display:flex;gap:8px;margin-bottom:12px"><label style="font-size:12px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+ss.bpm+'" oninput="act(\'submitField\',\'bpm:\'+this.value)" aria-label="BPM" min="40" max="200"/></div>';
+  h+='<div style="display:flex;gap:8px;margin-bottom:12px"><label style="font-size:12px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+submitBpm+'" oninput="act(\'submitField\',\'bpm:\'+this.value)" aria-label="BPM" min="40" max="200"/></div>';
   h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Chords used:</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
   for(var i=0;i<D.ALL_CHORDS.length;i++){
@@ -338,11 +347,12 @@ function importSection(){
   if(S.importedSong){
     var importedFormTitle = _firstSongsTextToken(S.importedSong.title, S.importedSong.songTitle, S.importedSong.id);
     var importedFormArtist = _firstSongsTextToken(S.importedSong.artist);
+    var importedFormBpm = _normalizeSongsTempoInput(S.importedSong.bpm, 90);
     h+='<div class="card mb16">';
     h+='<h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#9989; Parsed Successfully</h4>';
     h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(importedFormTitle)+'" oninput="act(\'importTitle\',this.value)"/></div>';
     h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(importedFormArtist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
-    h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+S.importedSong.bpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
+    h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+importedFormBpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Chords found ('+S.importedSong.chords.length+'):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">';
     for(var i=0;i<S.importedSong.chords.length;i++){
