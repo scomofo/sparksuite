@@ -77,4 +77,18 @@ test("editorPage ignores malformed bpm values", function() {
   assert.ok(html.indexOf('type="number" value="NaN"') === -1);
 });
 
+test("editorPage ignores malformed timeline numbers", function() {
+  S.editorPlayheadSec = "NaN";
+  global.renderVisualTimeline = null;
+  global.buildTimelineGridLines = function() {
+    return [{ label: "Beat 1", t: "NaN" }];
+  };
+
+  var html = editorPage();
+
+  assert.ok(html.indexOf("Playhead: 0.00s") >= 0);
+  assert.ok(html.indexOf("Beat 1 (0.00s)") >= 0);
+  assert.ok(html.indexOf("NaNs") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
