@@ -172,8 +172,9 @@ function sessionPage(){
   }else{h+='<div style="text-align:center;color:var(--text-muted);font-size:12px">Enable mic to check your chord</div>';}
   h+='</div></div>';
   h+='<div class="card mb16" style="text-align:left"><h4 style="margin:0 0 6px;color:var(--text-primary);font-size:14px">&#128161; Tips</h4><p style="margin:0;font-size:13px;color:var(--text-label);line-height:1.5">Press firmly behind the fret. Strum each string to check for buzz. Keep your thumb relaxed!</p></div>';
-  if(S.practiceIntention){
-    h+='<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(S.practiceIntention)+', I open ChordSpark.&#8221;</div>';
+  var practiceIntention = _firstSessionSongTextToken(S.practiceIntention);
+  if(practiceIntention){
+    h+='<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(practiceIntention)+', I open ChordSpark.&#8221;</div>';
   }
   h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div></div>';
   return h;

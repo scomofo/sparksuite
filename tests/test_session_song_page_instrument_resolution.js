@@ -137,6 +137,12 @@ test("sessionPage rehydrates an app-id-only active instrument shell", function()
   assert.ok(html.indexOf("chord-svg") >= 0);
 });
 
+test("sessionPage ignores stale practice intention text", function() {
+  S.practiceIntention = "undefined";
+  var html = sessionPage();
+  assert.ok(html.indexOf("When I undefined") === -1);
+});
+
 test("songDetailPage and songDonePage ignore stale song copy tokens", function() {
   S.selectedSong = {
     id: "moonlight_sonata",
