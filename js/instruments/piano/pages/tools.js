@@ -50,6 +50,12 @@ function pianoToolsClampedNumber(value, min, max, fallback) {
   return num;
 }
 
+function pianoToolsHistoryTimestamp(value) {
+  var date = new Date(value);
+  if (isNaN(date.getTime())) return "Unknown time";
+  return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -142,8 +148,7 @@ function statsTab() {
   html += '<h3>Recent Activity</h3><div class="history-list">';
   var recent = S.history.slice(-10).reverse();
   recent.forEach(function(h) {
-    var d = new Date(h.ts || h.timestamp);
-    var time = d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    var time = pianoToolsHistoryTimestamp(h.ts || h.timestamp);
     var activityType = pianoFirstToolsHistoryTextToken(h.type, "Activity");
     var chordLabel = pianoFirstToolsHistoryTextToken(h.chord);
     var sessionLabel = pianoFirstToolsHistoryTextToken(h.session);
