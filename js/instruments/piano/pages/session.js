@@ -190,15 +190,18 @@ function renderNewMove(plan) {
       // Show transition tip if available
       var tipKey = S.lastReviewChords.length ? S.lastReviewChords[0] + "_" + plan.newMove.chord : null;
       var _tips = typeof PIANO_TRANSITION_TIPS !== "undefined" ? PIANO_TRANSITION_TIPS : TRANSITION_TIPS;
-      if (tipKey && _tips[tipKey]) {
-        html += '<div class="intention-card">\u{1F4A1} ' + escHTML(_tips[tipKey]) + '</div>';
+      var transitionTip = tipKey && _tips ? pianoFirstSessionTextToken(_tips[tipKey]) : "";
+      if (transitionTip) {
+        html += '<div class="intention-card">\u{1F4A1} ' + escHTML(transitionTip) + '</div>';
       }
       // Voice-Leading Path exercise integration (P-CHORD-4)
       var vlExercise = getSessionExercise(plan.num, "newMove");
       if (vlExercise) {
+        var newMoveExerciseName = pianoFirstSessionTextToken(vlExercise.name, "Finger Focus");
+        var newMoveExerciseDesc = pianoFirstSessionTextToken(vlExercise.desc, "Practice this motion slowly.");
         html += '<div class="finger-exercise-inline">';
-        html += '<h4>\u{270B} Finger Focus: ' + escHTML(vlExercise.name) + '</h4>';
-        html += '<div class="text-muted">' + escHTML(vlExercise.desc) + '</div>';
+        html += '<h4>\u{270B} Finger Focus: ' + escHTML(newMoveExerciseName) + '</h4>';
+        html += '<div class="text-muted">' + escHTML(newMoveExerciseDesc) + '</div>';
         html += '</div>';
       }
       html += '<button class="btn btn-accent" onclick="act(\'next_step\')">Done \u2192</button>';
@@ -264,9 +267,11 @@ function renderVictoryLap(plan) {
   // Shape Drop exercise integration (P-CHORD-1)
   var vlExercise = getSessionExercise(plan.num, "victoryLap");
   if (vlExercise) {
+    var victoryExerciseName = pianoFirstSessionTextToken(vlExercise.name, "Finger Check");
+    var victoryExerciseDesc = pianoFirstSessionTextToken(vlExercise.desc, "Lock it in with one more rep.");
     html += '<div class="finger-exercise-inline">';
-    html += '<h4>\u{270B} Finger Check: ' + escHTML(vlExercise.name) + '</h4>';
-    html += '<div class="text-muted">' + escHTML(vlExercise.desc) + '</div>';
+    html += '<h4>\u{270B} Finger Check: ' + escHTML(victoryExerciseName) + '</h4>';
+    html += '<div class="text-muted">' + escHTML(victoryExerciseDesc) + '</div>';
     html += '</div>';
   }
 
