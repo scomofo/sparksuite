@@ -1,20 +1,10 @@
 ﻿(function() {
   function getUkuleleLevelColors() {
-    return {
-      1: "#22c55e",
-      2: "#3b82f6",
-      3: "#f97316",
-      4: "#8b5cf6"
-    };
+    return window.SparkUkuleleLevelColors || {};
   }
 
   function getUkuleleLevelNames() {
-    return {
-      1: "First Strum",
-      2: "Starter Chords",
-      3: "Smooth Changes",
-      4: "Pattern Flow"
-    };
+    return window.SparkUkuleleLevelNames || {};
   }
 
   function getUkuleleLessonSkill(lessonId) {
@@ -91,11 +81,13 @@
 
     h += '<div class="card mb12"><div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Starter Chords</div>';
     h += '<div style="display:flex;gap:10px;flex-wrap:wrap">';
+    var levelColors = getUkuleleLevelColors();
+    var levelNames = getUkuleleLevelNames();
     for (var level in levelChords) {
       if (!Object.prototype.hasOwnProperty.call(levelChords, level)) continue;
       for (var j = 0; j < levelChords[level].length; j++) {
         h += '<div style="padding:8px;border:1px solid var(--border);border-radius:14px;background:var(--card-bg);min-width:130px;text-align:center">';
-        h += '<div style="font-size:12px;font-weight:800;color:' + getUkuleleLevelColors()[level] + ';margin-bottom:4px">Level ' + level + '</div>';
+        h += '<div style="font-size:12px;font-weight:800;color:' + (levelColors[level] || "var(--accent)") + ';margin-bottom:4px">' + escHTML(levelNames[level] || ("Level " + level)) + '</div>';
         h += renderUkuleleChordSVG(levelChords[level][j], 120, levelChords[level][j].name);
         h += '<div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(levelChords[level][j].name) + '</div>';
         h += '</div>';

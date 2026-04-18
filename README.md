@@ -1,117 +1,79 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/JavaScript-ES2024-f7df1e?style=for-the-badge&logo=javascript&logoColor=black" />
-  <img src="https://img.shields.io/badge/Electron-34-47848f?style=for-the-badge&logo=electron&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tauri-2.0-ffc131?style=for-the-badge&logo=tauri&logoColor=white" />
-  <img src="https://img.shields.io/badge/Capacitor-Mobile-119eff?style=for-the-badge&logo=capacitor&logoColor=white" />
-</p>
+# ChordSpark
 
-<h1 align="center">🎸 ChordSpark</h1>
+Guitar chord learning app with practice tracking, drill modes, games, and ear training.
 
-<p align="center">
-  <strong>Guitar chord learning app with practice tracking, drill modes, games, and ear training</strong>
-</p>
+Desktop, mobile, and web from one codebase.
 
-<p align="center">
-  <em>Desktop &bull; Mobile &bull; Web &mdash; one codebase, every platform</em>
-</p>
+## Features
 
----
+### Learn
+- Chord library with diagrams and audio
+- Guided lessons from beginner to advanced
+- Song library with real chord progressions
 
-## ✨ Features
+### Practice
+- Drill mode for rapid chord recognition
+- Timed sessions with streak tracking
+- Dual mode for side-by-side chord comparison
 
-<table>
-<tr>
-<td width="50%">
+### Play
+- Chord games and interactive challenges
+- Ear training for chord recognition by sound
+- Progress stats over time
 
-### 🎵 Learn
-- **Chord Library** &mdash; Full chord database with diagrams and audio
-- **Guided Lessons** &mdash; Beginner to advanced, step by step
-- **Song Library** &mdash; Play along with real chord progressions
+### Audio
+- Real guitar sample playback
+- Web Audio API support
+- Freesound-based extended sound library
 
-</td>
-<td width="50%">
-
-### 🏋️ Practice
-- **Drill Mode** &mdash; Rapid-fire chord recognition
-- **Timed Sessions** &mdash; Track practice with streaks
-- **Dual Mode** &mdash; Side-by-side chord comparison
-
-</td>
-</tr>
-<tr>
-<td>
-
-### 🎮 Play
-- **Chord Games** &mdash; Interactive challenges
-- **Ear Training** &mdash; Identify chords by sound
-- **Progress Stats** &mdash; Track accuracy over time
-
-</td>
-<td>
-
-### 🔊 Audio
-- **Real Guitar Samples** &mdash; WAV chord recordings
-- **Web Audio API** &mdash; Low-latency playback
-- **Freesound Integration** &mdash; Extended sound library
-
-</td>
-</tr>
-</table>
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 npm install
-npm start          # 🖥️ Electron desktop
-npm run tauri:dev  # ⚡ Tauri (lightweight)
+npm start
+npm run tauri:dev
 ```
 
-Or just open `index.html` in any browser.
+Or open `index.html` in a browser.
 
-## 🌐 Multi-Platform
+## Platforms
 
 | Platform | Command | Engine |
 |:---------|:--------|:-------|
-| 🖥️ **Windows / Mac / Linux** | `npm start` | Electron 34 |
-| ⚡ **Lightweight Native** | `npm run tauri:dev` | Tauri (Rust) |
-| 📱 **iOS / Android** | `npx cap run` | Capacitor |
-| 🌐 **Web Browser** | Open `index.html` | None needed |
+| Windows / Mac / Linux | `npm start` | Electron 34 |
+| Lightweight native desktop | `npm run tauri:dev` | Tauri |
+| iOS / Android | `npx cap run` | Capacitor |
+| Web browser | Open `index.html` | None |
 
-## 📁 Structure
+## Project Structure
 
-```
+```text
 chordspark/
-├── 🎵 guitar_chords/        Real WAV chord audio samples
-├── 📄 index.html             App entry point
-├── 🎨 styles.css             Styling
-├── js/
-│   ├── app.js                App coordinator
-│   ├── audio.js              Audio playback engine
-│   ├── data.js               Chord database
-│   ├── state.js              State management
-│   ├── ui.js                 UI rendering
-│   └── pages/
-│       ├── practice.js       Practice sessions
-│       ├── guided.js         Guided lessons
-│       ├── songs.js          Song library
-│       ├── games.js          Chord games
-│       ├── dual.js           Dual comparison
-│       ├── session.js        Session tracking
-│       └── tools.js          Tuner, metronome
-└── server/
-    └── server.js             Express dev server
+|-- guitar_chords/   Real WAV chord audio samples
+|-- index.html       App entry point
+|-- styles.css       Styling
+|-- js/
+|   |-- app.js       App coordinator
+|   |-- audio.js     Audio playback engine
+|   |-- data.js      Chord database
+|   |-- state.js     State management
+|   |-- ui.js        UI rendering
+|   `-- pages/
+|       |-- practice.js
+|       |-- guided.js
+|       |-- songs.js
+|       |-- games.js
+|       |-- dual.js
+|       |-- session.js
+|       `-- tools.js
+`-- server/
+    `-- server.js    Express dev server
 ```
 
-## 🎹 Sister App
+## Sister App
 
-PianoSpark shares content with ChordSpark &mdash; same lessons, same format, different instrument.
+PianoSpark shares content with ChordSpark: same lessons, same format, different instrument.
 
-**[PianoSpark &rarr;](https://github.com/scomofo/Pianospark)**
+**[PianoSpark](https://github.com/scomofo/Pianospark)**
 
----
-
-<p align="center">
-  <sub>Built by Scott Morley</sub>
-</p>
+Built by Scott Morley.

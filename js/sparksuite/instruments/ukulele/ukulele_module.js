@@ -149,7 +149,11 @@
     songs: "uke_island_pattern_01",
     fingerpicking: "uke_pick_arpeggio_01",
     melody: "uke_melody_lift_01",
-    performance: "uke_stage_flow_01"
+    performance: "uke_stage_flow_01",
+    barre_chords: "uke_stage_flow_01",
+    syncopation: "uke_stage_flow_01",
+    advanced_fingerpick: "uke_pick_arpeggio_01",
+    full_performance: "uke_stage_flow_01"
   };
   var UKULELE_RECOMMENDATION_HINTS = {
     down_strum: {
@@ -191,6 +195,26 @@
       priorityBoost: 8,
       reason: "Turn the current skill stack into a full confident playthrough.",
       focusTag: "performance"
+    },
+    barre_chords: {
+      priorityBoost: 9,
+      reason: "Build enough fretting strength to hold clean movable ukulele shapes.",
+      focusTag: "barre"
+    },
+    syncopation: {
+      priorityBoost: 10,
+      reason: "Push your strumming off the grid so the groove feels lighter and more musical.",
+      focusTag: "sync"
+    },
+    advanced_fingerpick: {
+      priorityBoost: 11,
+      reason: "Layer more independent picking motion into longer rolling patterns.",
+      focusTag: "advanced_pick"
+    },
+    full_performance: {
+      priorityBoost: 12,
+      reason: "Connect the full ukulele toolkit into one polished performance run.",
+      focusTag: "showcase"
     }
   };
 

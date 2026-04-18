@@ -1,4 +1,6 @@
 (function() {
+  var UKULELE_LEVEL_PALETTE = ["#22c55e", "#3b82f6", "#f97316", "#8b5cf6", "#ec4899", "#14b8a6"];
+
   window.SparkUkuleleLessons = [
     {
       id: "uke_01",
@@ -109,4 +111,29 @@
       desc: "Combine all techniques into a polished, stage-ready performance."
     }
   ];
+
+  window.SparkUkuleleLevelColors = buildUkuleleLevelColors(window.SparkUkuleleLessons);
+  window.SparkUkuleleLevelNames = buildUkuleleLevelNames(window.SparkUkuleleLessons);
+
+  function buildUkuleleLevelColors(lessons) {
+    var colors = {};
+    lessons = Array.isArray(lessons) ? lessons : [];
+    for (var i = 0; i < lessons.length; i++) {
+      if (lessons[i] && lessons[i].num != null) {
+        colors[lessons[i].num] = UKULELE_LEVEL_PALETTE[i % UKULELE_LEVEL_PALETTE.length];
+      }
+    }
+    return colors;
+  }
+
+  function buildUkuleleLevelNames(lessons) {
+    var names = {};
+    lessons = Array.isArray(lessons) ? lessons : [];
+    for (var i = 0; i < lessons.length; i++) {
+      if (lessons[i] && lessons[i].num != null) {
+        names[lessons[i].num] = lessons[i].title || ("Level " + lessons[i].num);
+      }
+    }
+    return names;
+  }
 })();

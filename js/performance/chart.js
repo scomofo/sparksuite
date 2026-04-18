@@ -48,7 +48,7 @@ function getPerformanceChartLibrary(options) {
   var charts = getPerformanceChartManifest();
   if (options.instrument) {
     charts = charts.filter(function(chart) {
-      return !chart.instrument || chart.instrument === options.instrument;
+      return chart && chart.instrument === options.instrument;
     });
   }
   return charts;
