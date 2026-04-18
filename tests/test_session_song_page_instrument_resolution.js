@@ -196,7 +196,7 @@ test("songs surfaces ignore stale chart and community text tokens", function() {
     id: "community_song_1",
     title: "undefined",
     artist: "null",
-    bpm: 96,
+    bpm: "NaN",
     votes: 3,
     chords: "[]"
   }];
@@ -207,7 +207,7 @@ test("songs surfaces ignore stale chart and community text tokens", function() {
       artist: "null",
       badge: " NaN ",
       description: "undefined",
-      bpm: 110
+      bpm: "NaN"
     }];
   };
 
@@ -219,8 +219,10 @@ test("songs surfaces ignore stale chart and community text tokens", function() {
   var performHtml = songsTab();
   assert.ok(performHtml.indexOf("chart 1") >= 0);
   assert.ok(performHtml.indexOf("Unknown Artist") >= 0);
+  assert.ok(performHtml.indexOf("-- BPM") >= 0);
   assert.ok(performHtml.indexOf(">undefined<") === -1);
   assert.ok(performHtml.indexOf(">NaN<") === -1);
+  assert.ok(performHtml.indexOf("NaN BPM") === -1);
 });
 
 test("songs import list ignores stale imported song text tokens", function() {

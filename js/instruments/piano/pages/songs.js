@@ -45,6 +45,13 @@ function pianoFormatSongPageBpm(value, fallback) {
   return String(Math.round(bpm));
 }
 
+function pianoFormatSongTempo(value, fallback) {
+  var bpm = pianoNormalizeSongPageNumber(value, null);
+  if (bpm == null) return fallback;
+  bpm = Math.max(40, Math.min(200, Math.round(bpm)));
+  return bpm;
+}
+
 function pianoSongListTitle(song) {
   return pianoFirstSongPageTextToken(song && song.title, song && song.id, "Song");
 }
@@ -96,6 +103,7 @@ function songLibrary() {
     var song = SONGS[S.songIdx];
     var songTitle = pianoFirstSongPageTextToken(song.title, song.id, "Song");
     var songArtist = pianoFirstSongPageTextToken(song.artist, "Unknown Artist");
+    var songTempo = pianoFormatSongTempo(S.bpm, 90);
     html += '<div class="song-detail">';
     html += '<h3>' + escHTML(songTitle) + '</h3>';
     html += '<div class="text-muted">' + escHTML(songArtist) + ' \u2022 Level ' + song.level + ' \u2022 ' + pianoFormatSongPageBpm(song.bpm, "--") + ' BPM</div>';
@@ -121,8 +129,8 @@ function songLibrary() {
     html += '<div class="song-controls">';
     html += '<button class="btn btn-accent" onclick="act(\'play_song\')">' + (S.songPlaying ? "\u23F8 Pause" : "\u25B6 Play Along") + '</button>';
     html += '<button class="btn" onclick="act(\'open_perform_song\',' + S.songIdx + ')" style="background:var(--accent);color:#fff">Performance</button>';
-    html += '<label style="font-size:0.85rem">Tempo: ' + S.bpm + ' BPM</label>';
-    html += '<input type="range" min="40" max="200" step="5" value="' + S.bpm + '" onchange="act(\'set_bpm\', this.value)" style="width:80px"/>';
+    html += '<label style="font-size:0.85rem">Tempo: ' + songTempo + ' BPM</label>';
+    html += '<input type="range" min="40" max="200" step="5" value="' + songTempo + '" onchange="act(\'set_bpm\', this.value)" style="width:80px"/>';
     html += '<button class="btn btn-secondary" onclick="act(\'song_back\')">\u2190 Back</button>';
     html += '</div></div>';
   } else {
