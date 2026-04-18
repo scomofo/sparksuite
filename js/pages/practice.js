@@ -66,6 +66,11 @@ function normalizePracticeSummaryItemId(value) {
   return text;
 }
 
+function normalizePracticePageNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function firstPrettyPracticeSummaryToken() {
   var i;
   var token;
@@ -548,7 +553,7 @@ function drillTab(){
   // Suggested drill from transition stats
   var hardest=getHardestTransition();
   if(hardest){
-    h+='<div class="card mt16"><h3 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#128161; Suggested Drill</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your hardest transition: <strong>'+hardest.from+'</strong> &#8594; <strong>'+hardest.to+'</strong> (avg '+hardest.avg.toFixed(1)+'s)</p><button class="btn" onclick="act(\'drillTransition\',\''+hardest.from+'|'+hardest.to+'\')" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#9889; Practice This</button></div>';
+    h+='<div class="card mt16"><h3 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#128161; Suggested Drill</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your hardest transition: <strong>'+hardest.from+'</strong> &#8594; <strong>'+hardest.to+'</strong> (avg '+normalizePracticePageNumber(hardest.avg, 0).toFixed(1)+'s)</p><button class="btn" onclick="act(\'drillTransition\',\''+hardest.from+'|'+hardest.to+'\')" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#9889; Practice This</button></div>';
   }
   h+='</div>';
   return h;
@@ -560,6 +565,7 @@ function getHardestTransition(){
   for(var k in ts){
     if(ts[k].attempts>=2){
       var avg=ts[k].avgTime;
+      avg = normalizePracticePageNumber(avg, 0);
       if(avg>worstAvg){
         worstAvg=avg;
         var parts=k.split("->");
