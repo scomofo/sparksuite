@@ -88,5 +88,31 @@ test("performSongPage ignores sentinel song text and technique labels", function
   assert.ok(html.indexOf("Technique") >= 0);
 });
 
+test("performSongPage ignores malformed song numbers and import progress", function() {
+  global.S.songAudioImporting = true;
+  global.S.songAudioProgress = "NaN";
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceSongData: {
+          title: "Song",
+          artist: "Artist",
+          bpm: "NaN",
+          chords: { broken: true },
+          progression: "broken"
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.ok(html.indexOf(">?<") >= 0);
+  assert.ok(html.indexOf(">0<") >= 0);
+  assert.ok(html.indexOf("Separating stems... 0%") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);
