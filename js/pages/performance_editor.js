@@ -21,6 +21,11 @@ function _firstPerformanceEditorTextToken() {
   return "";
 }
 
+function _normalizePerformanceEditorNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function performanceEditorPage() {
   var editorView = getPerformanceEditorView();
   var chart = editorView.chart || S.performEditorChart;
@@ -37,7 +42,12 @@ function performanceEditorPage() {
   var selectedPhraseName = editorView.selectedPhraseName;
   var selectedPhraseStart = editorView.selectedPhraseStart;
   var selectedPhraseEnd = editorView.selectedPhraseEnd;
-  var editorBpm = editorView.bpm != null ? editorView.bpm : (chart && chart.bpm ? chart.bpm : 90);
+  var editorBpm = _normalizePerformanceEditorNumber(
+    editorView.bpm != null ? editorView.bpm : (chart && chart.bpm != null ? chart.bpm : 90),
+    90
+  );
+  var displayPhraseStart = _normalizePerformanceEditorNumber(selectedPhraseStart != null ? selectedPhraseStart : 0, 0);
+  var displayPhraseEnd = _normalizePerformanceEditorNumber(selectedPhraseEnd != null ? selectedPhraseEnd : 0, 0);
   var editorEventCount = editorView.eventCount;
   var editorPhraseCount = editorView.phraseCount;
   var editorLibrary = editorView.library || S.performEditorLibrary || [];
@@ -109,9 +119,11 @@ function performanceEditorPage() {
         var p = chart.phrases[pi];
         var phraseSelected = selectedPhraseId === p.id;
         var phraseName = _firstPerformanceEditorTextToken(p.name, "Phrase " + (pi + 1));
+        var phraseStart = _normalizePerformanceEditorNumber(p.startSec, 0);
+        var phraseEnd = _normalizePerformanceEditorNumber(p.endSec, 0);
         h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:'+(phraseSelected?"#45B7D122":"transparent")+';border:1px solid '+(phraseSelected?"#45B7D1":"transparent")+'" onclick="act(\'editorSelectPhrase\','+p.id+')">';
         h += '<span style="font-weight:700;color:var(--text-primary)">' + escHTML(phraseName) + '</span>';
-        h += '<span style="color:var(--text-muted)">' + (p.startSec || 0).toFixed(1) + 's - ' + (p.endSec || 0).toFixed(1) + 's</span>';
+        h += '<span style="color:var(--text-muted)">' + phraseStart.toFixed(1) + 's - ' + phraseEnd.toFixed(1) + 's</span>';
         h += '</div>';
       }
       h += '</div>';
@@ -124,11 +136,11 @@ function performanceEditorPage() {
           + ' onchange="act(\'editorPhrase\',JSON.stringify({id:' + selectedPhraseId + ',prop:\'name\',val:this.value}))"'
           + ' style="width:120px"></div>';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">Start (s)</label>'
-          + '<input type="number" class="set-input" value="' + (selectedPhraseStart != null ? selectedPhraseStart : 0) + '"'
+          + '<input type="number" class="set-input" value="' + displayPhraseStart + '"'
           + ' onchange="act(\'editorPhrase\',JSON.stringify({id:' + selectedPhraseId + ',prop:\'startSec\',val:this.value}))"'
           + ' style="width:80px" step="0.25"></div>';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">End (s)</label>'
-          + '<input type="number" class="set-input" value="' + (selectedPhraseEnd != null ? selectedPhraseEnd : 0) + '"'
+          + '<input type="number" class="set-input" value="' + displayPhraseEnd + '"'
           + ' onchange="act(\'editorPhrase\',JSON.stringify({id:' + selectedPhraseId + ',prop:\'endSec\',val:this.value}))"'
           + ' style="width:80px" step="0.25"></div>';
         h += '</div>';
@@ -144,9 +156,11 @@ function performanceEditorPage() {
         var evt = chart.events[ei];
         var sel = selectedEventId === evt.id;
         var eventLabel = _firstPerformanceEditorTextToken(evt.laneLabel, evt.chord, evt.note, "?");
+        var listEventTime = _normalizePerformanceEditorNumber(evt.t, 0);
+        var listEventDuration = _normalizePerformanceEditorNumber(evt.dur, 0);
         h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px;margin:2px 0;border-radius:6px;background:' + (sel ? "#4ECDC422" : "transparent") + ';border:1px solid ' + (sel ? "#4ECDC4" : "transparent") + ';cursor:pointer" onclick="act(\'editorSelectEvent\',' + evt.id + ')">';
         h += '<div><span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(eventLabel) + '</span>';
-        h += ' <span style="font-size:11px;color:var(--text-muted)">' + (evt.t || 0).toFixed(2) + 's / ' + (evt.dur || 0).toFixed(2) + 's</span></div>';
+        h += ' <span style="font-size:11px;color:var(--text-muted)">' + listEventTime.toFixed(2) + 's / ' + listEventDuration.toFixed(2) + 's</span></div>';
         h += '<button class="btn btn-sm" onclick="event.stopPropagation();act(\'editorDeleteEvent\',' + evt.id + ')" style="color:#FF6B6B;background:none;padding:2px 6px">&times;</button>';
         h += '</div>';
       }
@@ -162,12 +176,16 @@ function performanceEditorPage() {
       if (selEvt) {
         var eid = selEvt.id;
         var selectedDisplayLabel = _firstPerformanceEditorTextToken(selectedEventLabel, selEvt.laneLabel, selEvt.chord, selEvt.note, "?");
+        var displayEventTime = _normalizePerformanceEditorNumber(selectedEventTime != null ? selectedEventTime : selEvt.t, 0);
+        var displayEventDuration = _normalizePerformanceEditorNumber(selectedEventDuration != null ? selectedEventDuration : selEvt.dur, 0);
+        var eventTimeValue = _normalizePerformanceEditorNumber(selEvt.t, 0);
+        var eventDurationValue = _normalizePerformanceEditorNumber(selEvt.dur, 0);
         h += '<div class="card mb20" style="border:2px solid #4ECDC4">';
         h += '<div style="font-size:12px;font-weight:700;color:#4ECDC4;margin-bottom:8px">Edit Event #' + eid + '</div>';
         h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Selected: '
           + escHTML(selectedDisplayLabel)
-          + ' @ ' + ((selectedEventTime != null ? selectedEventTime : selEvt.t || 0).toFixed(2))
-          + 's for ' + ((selectedEventDuration != null ? selectedEventDuration : selEvt.dur || 0).toFixed(2))
+          + ' @ ' + displayEventTime.toFixed(2)
+          + 's for ' + displayEventDuration.toFixed(2)
           + 's</div>';
         h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">Chord/Note</label>'
@@ -175,11 +193,11 @@ function performanceEditorPage() {
           + ' onchange="act(\'editorEvt\',JSON.stringify({id:' + eid + ',prop:\'label\',val:this.value}))"'
           + ' style="width:80px"></div>';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">Time (s)</label>'
-          + '<input type="number" class="set-input" value="' + (selEvt.t || 0) + '"'
+          + '<input type="number" class="set-input" value="' + eventTimeValue + '"'
           + ' onchange="act(\'editorEvt\',JSON.stringify({id:' + eid + ',prop:\'t\',val:this.value}))"'
           + ' style="width:70px" step="0.25"></div>';
         h += '<div><label style="font-size:10px;color:var(--text-muted)">Duration (s)</label>'
-          + '<input type="number" class="set-input" value="' + (selEvt.dur || 0) + '"'
+          + '<input type="number" class="set-input" value="' + eventDurationValue + '"'
           + ' onchange="act(\'editorEvt\',JSON.stringify({id:' + eid + ',prop:\'dur\',val:this.value}))"'
           + ' style="width:70px" step="0.25"></div>';
         h += '</div></div>';

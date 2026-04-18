@@ -68,4 +68,13 @@ test("editorPage ignores stale metadata and item labels", function() {
   assert.ok(html.indexOf(">C4<") >= 0);
 });
 
+test("editorPage ignores malformed bpm values", function() {
+  S.editorObject.bpm = "NaN";
+
+  var html = editorPage();
+
+  assert.ok(html.indexOf('type="number" value="80"') >= 0);
+  assert.ok(html.indexOf('type="number" value="NaN"') === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
