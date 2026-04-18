@@ -147,12 +147,28 @@ test("sessionPage ignores stale practice intention text", function() {
   assert.ok(html.indexOf("When I undefined") === -1);
 });
 
+test("sessionPage ignores malformed metronome and drill BPM values", function() {
+  S.metronomeBpm = "NaN";
+  S._metroBeat = "NaN";
+  S._metroBeats = "NaN";
+  S.drillAdaptiveBpm = "NaN";
+
+  var sessionHtml = sessionPage();
+  var drillHtml = drillPage();
+
+  assert.ok(sessionHtml.indexOf("80") >= 0);
+  assert.ok(drillHtml.indexOf('id="drill-adaptive-bpm"') >= 0);
+  assert.ok(drillHtml.indexOf(">0<") >= 0 || drillHtml.indexOf(">0</div>") >= 0);
+  assert.ok(sessionHtml.indexOf("NaN") === -1);
+  assert.ok(drillHtml.indexOf("NaN") === -1);
+});
+
 test("songDetailPage and songDonePage ignore stale song copy tokens", function() {
   S.selectedSong = {
     id: "moonlight_sonata",
     title: "undefined",
     artist: "null",
-    bpm: 72,
+    bpm: "NaN",
     chords: ["C", "G"],
     progression: ["C", "G"],
     pattern: ["D", "U"]
@@ -162,10 +178,25 @@ test("songDetailPage and songDonePage ignore stale song copy tokens", function()
   var doneHtml = songDonePage();
   assert.ok(detailHtml.indexOf("moonlight_sonata") >= 0);
   assert.ok(detailHtml.indexOf("Unknown Artist") >= 0);
+  assert.ok(detailHtml.indexOf("-- BPM") >= 0);
   assert.ok(detailHtml.indexOf(">undefined<") === -1);
   assert.ok(detailHtml.indexOf(">null<") === -1);
+  assert.ok(detailHtml.indexOf("NaN") === -1);
   assert.ok(doneHtml.indexOf("moonlight_sonata") >= 0);
   assert.ok(doneHtml.indexOf(">undefined<") === -1);
+});
+
+test("strumDetailPage ignores malformed BPM values", function() {
+  S.selectedStrum = {
+    name: "Groove",
+    desc: "Steady",
+    bpm: "NaN",
+    pattern: ["D", "U"]
+  };
+
+  var html = strumDetailPage();
+  assert.ok(html.indexOf("-- BPM") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
 });
 
 test("songsTab rehydrates an app-id-only active instrument shell", function() {
