@@ -252,6 +252,11 @@ test("piano onboarding and tools ignore stale intention strings", function() {
   assert.ok(toolsHtml.indexOf("Reverb: 0%") >= 0);
   assert.ok(toolsHtml.indexOf("A4 tuning: 440 Hz") >= 0);
   assert.ok(toolsHtml.indexOf("NaN") === -1);
+
+  global.S.practiceIntention = "undefined";
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  var practiceHtml = pianoPracticeTab();
+  assert.ok(practiceHtml.indexOf("When I undefined") === -1);
 });
 
 test("piano header ignores stale numeric badges", function() {

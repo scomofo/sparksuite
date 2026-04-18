@@ -23,10 +23,11 @@ function pianoPracticeTab() {
   var CURRICULUM = D.CURRICULUM || [];
   var BADGES = D.BADGES || [];
   var html = '';
+  var practiceIntention = pianoFirstPracticeCardTextToken(S.practiceIntention);
 
   // If-then intention reminder (stickiness #2)
-  if (S.practiceIntention && !S.focusMode) {
-    html += pianoIfThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
+  if (practiceIntention && !S.focusMode) {
+    html += pianoIfThenCard("When I " + practiceIntention + ", I will open PianoSpark.");
   }
 
   // Daily goal progress
