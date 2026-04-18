@@ -149,4 +149,15 @@ test("daily and finger exercise cards ignore stale cached labels", function() {
   assert.ok(fingersHtml.indexOf("NaN") === -1);
 });
 
+test("drill tab ignores stale transition tip text", function() {
+  S.drillActive = true;
+  S.drillChords = ["C", "G"];
+  S.drillIdx = 1;
+  S.drillTimer = 12;
+  global.PIANO_TRANSITION_TIPS = { "C_G": "undefined" };
+  var html = drillTab();
+  assert.ok(html.indexOf("undefined") === -1);
+  assert.ok(html.indexOf("💡") === -1 || html.indexOf("undefined") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

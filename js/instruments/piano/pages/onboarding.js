@@ -11,6 +11,23 @@ function pianoNormalizeIntentionInputValue(value) {
   return value;
 }
 
+function pianoOnboardingTextToken(value) {
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  var text = String(value).trim();
+  if (!text) return "";
+  var lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstOnboardingTextToken() {
+  for (var i = 0; i < arguments.length; i++) {
+    var text = pianoOnboardingTextToken(arguments[i]);
+    if (text) return text;
+  }
+  return "";
+}
+
 function pianoOnboardingPage() {
   var step = S.onboardingStep || 0;
   var safePracticeIntention = pianoNormalizeIntentionInputValue(S.practiceIntention);
@@ -101,11 +118,12 @@ function placementTestPage() {
   var testIdx = S._placementIdx || 0;
   if (testIdx >= PLACEMENT_TESTS.length) testIdx = PLACEMENT_TESTS.length - 1;
   var test = PLACEMENT_TESTS[testIdx];
+  var promptText = pianoFirstOnboardingTextToken(test && test.prompt, "Try this chord or pattern.");
 
   var html = '<div class="onboarding">';
   html += '<h2>Placement Test</h2>';
   html += '<p>Let\'s see what you already know. No pressure!</p>';
-  html += '<div class="placement-prompt">' + escHTML(test.prompt) + '</div>';
+  html += '<div class="placement-prompt">' + escHTML(promptText) + '</div>';
   html += '<div class="placement-btns">';
   html += '<button class="btn btn-accent" onclick="act(\'placement_pass\')">Yes, I can play that</button>';
   html += '<button class="btn btn-secondary" onclick="act(\'placement_fail\')">Not yet</button>';

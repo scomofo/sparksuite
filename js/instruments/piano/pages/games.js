@@ -86,8 +86,9 @@ function drillTab() {
       var prev = S.drillChords[S.drillIdx - 1];
       var tipKey = prev + "_" + c;
       var _tips = typeof PIANO_TRANSITION_TIPS !== "undefined" ? PIANO_TRANSITION_TIPS : TRANSITION_TIPS;
-      if (_tips[tipKey]) {
-        html += '<div class="intention-card" style="margin-top:8px">\u{1F4A1} ' + escHTML(_tips[tipKey]) + '</div>';
+      var drillTip = _tips ? pianoFirstGameTextToken(_tips[tipKey]) : "";
+      if (drillTip) {
+        html += '<div class="intention-card" style="margin-top:8px">\u{1F4A1} ' + escHTML(drillTip) + '</div>';
       }
     }
   } else {
