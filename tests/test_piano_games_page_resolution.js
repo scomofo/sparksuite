@@ -160,4 +160,14 @@ test("drill tab ignores stale transition tip text", function() {
   assert.ok(html.indexOf("💡") === -1 || html.indexOf("undefined") === -1);
 });
 
+test("rhythm tab ignores malformed BPM values", function() {
+  S._gameTab = "rhythm";
+  S.rhythmActive = false;
+  S.bpm = "NaN";
+  var html = rhythmTab();
+  assert.ok(html.indexOf("BPM: 90") >= 0);
+  assert.ok(html.indexOf('value="90"') >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

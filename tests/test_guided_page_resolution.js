@@ -95,4 +95,32 @@ test("guided song slice ignores stale cached copy", function() {
   assert.ok(html.indexOf("undefined") === -1);
 });
 
+test("guided pages ignore malformed cached BPM values", function() {
+  S.guidedPlan.bpm = "NaN";
+  S.guidedPlan.newMove = {
+    text: "Try it",
+    chord: "C",
+    strum: "D D U U"
+  };
+  S.guidedStep = "newMove";
+  S.newMovePhase = "try";
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: {
+        guidedStep: "newMove",
+        newMovePhase: "try"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  var html = guidedSessionPage();
+  assert.ok(html.indexOf("Level 1 &bull; 80 BPM") >= 0);
+  assert.ok(html.indexOf("at 80 BPM") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
