@@ -34,6 +34,11 @@ function pianoFirstSongPageTextToken() {
   return "";
 }
 
+function pianoNormalizeSongPageNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function pianoSongListTitle(song) {
   return pianoFirstSongPageTextToken(song && song.title, song && song.id, "Song");
 }
@@ -357,9 +362,10 @@ function pianoStemsPlayerPage() {
   html += '</div>';
 
   html += '<div class="card"><div style="display:flex;align-items:center;gap:12px">';
+  var stemVolume = Math.max(0, Math.min(1, pianoNormalizeSongPageNumber(S.stemVolume, 1)));
   html += '<span>\u{1F50A}</span>';
-  html += '<input type="range" min="0" max="1" step="0.05" value="' + S.stemVolume + '" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:var(--accent)"/>';
-  html += '<span class="text-muted" style="font-weight:700;min-width:36px">' + Math.round(S.stemVolume * 100) + '%</span>';
+  html += '<input type="range" min="0" max="1" step="0.05" value="' + stemVolume + '" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:var(--accent)"/>';
+  html += '<span class="text-muted" style="font-weight:700;min-width:36px">' + Math.round(stemVolume * 100) + '%</span>';
   html += '</div></div>';
 
   html += '</div>';

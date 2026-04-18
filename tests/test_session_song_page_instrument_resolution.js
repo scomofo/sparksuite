@@ -73,6 +73,10 @@ function resetEnvironment() {
   global.getMasteryColor = function() { return "#999"; };
   global.getMasteryIcon = function() { return ""; };
   global.clickableDiv = function() { return ""; };
+  global.STEM_NAMES = ["vocals"];
+  global.STEM_COLORS = { vocals: "#fff" };
+  global.STEM_ICONS = { vocals: "V" };
+  global.formatTime = function(value) { return String(value || 0); };
   global._prevChordKey = null;
   global.VOICINGS = {};
   global.STRUM_PATTERNS = [{ name: "Groove", desc: "Steady", level: 1, bpm: 72, pattern: ["D", "U"] }];
@@ -282,6 +286,18 @@ test("songs search inputs ignore stale sentinel strings", function() {
   S.communitySearch = "null";
   var communityHtml = songsTab();
   assert.ok(communityHtml.indexOf('value="null"') === -1);
+});
+
+test("stems player ignores malformed stem volume values", function() {
+  global.window.electron = {};
+  S.stemStatus = "ready";
+  S.stemVolume = "NaN";
+  S.stemFile = { fileName: "mix.wav" };
+
+  var html = stemsPage();
+  assert.ok(html.indexOf('value="1"') >= 0 || html.indexOf('value="1.0"') >= 0);
+  assert.ok(html.indexOf(">100%</span>") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
