@@ -38,6 +38,23 @@ function normalizeToolsNumber(value, fallback) {
   return isFinite(num) ? num : fallback;
 }
 
+function normalizeToolsCount(value, fallback) {
+  var num = normalizeToolsNumber(value, fallback);
+  if (!isFinite(num)) return fallback;
+  num = Math.round(num);
+  if (num < 0) return fallback;
+  return num;
+}
+
+function normalizeToolsPercent(value, fallback) {
+  var num = normalizeToolsNumber(value, fallback);
+  if (!isFinite(num)) return fallback;
+  num = Math.round(num);
+  if (num < 0) return 0;
+  if (num > 100) return 100;
+  return num;
+}
+
 function formatToolsHz(value, fallback) {
   var num = normalizeToolsNumber(value, null);
   if (num == null || num <= 0) return fallback;
@@ -101,7 +118,10 @@ function getLegacyAudioInputRuntime(){
     devices: Array.isArray(S.audioInputDevices) && S.audioInputDevices.length ? S.audioInputDevices : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
     inputId: typeof S.audioInputId === "string" ? S.audioInputId : (runtime ? (runtime.audioInputId || "") : ""),
     testingId: typeof S.audioTestingId === "string" ? S.audioTestingId : (runtime ? (runtime.audioTestingId || "") : ""),
-    testLevel: typeof S.audioTestLevel === "number" ? S.audioTestLevel : (runtime && typeof runtime.audioTestLevel === "number" ? runtime.audioTestLevel : 0)
+    testLevel: normalizeToolsPercent(
+      Object.prototype.hasOwnProperty.call(S, "audioTestLevel") ? S.audioTestLevel : (runtime ? runtime.audioTestLevel : null),
+      0
+    )
   };
 }
 
@@ -193,7 +213,7 @@ function statsTab(){
 
   h+='<div style="text-align:center;margin-bottom:12px"><button class="btn" onclick="act(\'openSkillTree\')" style="background:var(--accent);color:#fff">&#127795; Skill Tree</button></div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
-  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FF6B6B">'+S.xp+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Total XP</div></div>';
+  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FF6B6B">'+normalizeToolsCount(S.xp,0)+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Total XP</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+totalSessions+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Activities</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#45B7D1">'+dayCount+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Practice Days</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FFE66D">'+avgXP+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Avg XP/Day</div></div>';
@@ -319,6 +339,10 @@ function crossAppProgressCard(){
     var raw=localStorage.getItem("pianospark_jeeves_export");
     if(!raw)return '';
     var ps=JSON.parse(raw);
+    var pianoXp = normalizeToolsCount(ps && ps.xp, 0);
+    var pianoLevel = normalizeToolsCount(ps && ps.level, 1);
+    var pianoSessions = normalizeToolsCount(ps && ps.sessions, 0);
+    var pianoStreak = normalizeToolsCount(ps && ps.streak, 0);
     var inst = getToolsPageInstrument();
     var activeInstrumentName = getToolsInstrumentName(inst) || "Current";
     var activeInstrumentIcon = getToolsInstrumentIcon(inst);
@@ -328,21 +352,21 @@ function crossAppProgressCard(){
     h+='<div style="flex:1;background:var(--input-bg);border-radius:12px;padding:12px;text-align:center">';
     h+='<div style="font-size:20px;margin-bottom:4px">' + activeInstrumentIcon + '</div>';
     h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">' + escHTML(activeInstrumentName) + '</div>';
-    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+S.xp+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
-    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+S.level+'</div>';
+    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+normalizeToolsCount(S.xp,0)+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
+    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+normalizeToolsCount(S.level,1)+'</div>';
     h+='</div>';
     // Piano stats
     h+='<div style="flex:1;background:var(--input-bg);border-radius:12px;padding:12px;text-align:center">';
     h+='<div style="font-size:20px;margin-bottom:4px">&#127929;</div>';
     h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Piano</div>';
-    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+(ps.xp||0)+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
-    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+(ps.level||1)+'</div>';
+    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+pianoXp+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
+    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+pianoLevel+'</div>';
     h+='</div>';
     h+='</div>';
     // Combined stats
-    var totalXP=(S.xp||0)+(ps.xp||0);
-    var totalSessions=(S.sessions||0)+(ps.sessions||0);
-    var combinedStreak=Math.max(S.streak||0,ps.streak||0);
+    var totalXP=normalizeToolsCount(S.xp,0)+pianoXp;
+    var totalSessions=normalizeToolsCount(S.sessions,0)+pianoSessions;
+    var combinedStreak=Math.max(normalizeToolsCount(S.streak,0),pianoStreak);
     h+='<div style="display:flex;justify-content:space-around;text-align:center">';
     h+='<div><div style="font-size:20px;font-weight:900;color:#FFE66D">'+totalXP+'</div><div style="font-size:10px;color:var(--text-muted)">Combined XP</div></div>';
     h+='<div><div style="font-size:20px;font-weight:900;color:#4ECDC4">'+totalSessions+'</div><div style="font-size:10px;color:var(--text-muted)">Total Sessions</div></div>';
