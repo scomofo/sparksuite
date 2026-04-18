@@ -287,9 +287,7 @@ test("piano tools stats ignore stale history labels", function() {
   global.S.streak = { broken: true };
   global.S.level = "undefined";
   global.S.personalBests = { bpm: "null", streak: [] };
-  global.S.history = [
-    { type: "undefined", chord: "null", session: "NaN", ts: "not-a-date" }
-  ];
+  global.S.history = { broken: true };
   global.eval(loadJS("js/instruments/piano/pages/shared.js"));
   global.eval(loadJS("js/instruments/piano/ui.js"));
   global.eval(loadJS("js/instruments/piano/pages/tools.js"));
@@ -306,8 +304,8 @@ test("piano tools stats ignore stale history labels", function() {
   var html = pianoToolsTab();
   assert.ok(html.indexOf(">0<") >= 0);
   assert.ok(html.indexOf("0/8") >= 0);
-  assert.ok(html.indexOf("Activity") >= 0);
-  assert.ok(html.indexOf("Unknown time") >= 0);
+  assert.ok(html.indexOf("No activity yet") >= 0);
+  assert.ok(html.indexOf("Invalid Date") === -1);
   assert.ok(html.indexOf("Badge") >= 0);
   assert.ok(html.indexOf("Keep practicing") >= 0);
   assert.ok(html.indexOf("🏅") >= 0);

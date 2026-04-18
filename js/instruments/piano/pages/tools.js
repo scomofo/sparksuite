@@ -88,6 +88,7 @@ function statsTab() {
   var xp = pianoToolsDisplayCount(S.xp, 0);
   var streak = pianoToolsDisplayCount(S.streak, 0);
   var level = pianoToolsDisplayLevel(S.level);
+  var history = Array.isArray(S.history) ? S.history : [];
   var personalBestBpm = pianoToolsFiniteNumber(S.personalBests && S.personalBests.bpm);
   var personalBestStreak = pianoToolsFiniteNumber(S.personalBests && S.personalBests.streak);
   var fingerExercisesDone = pianoToolsFiniteNumber(S.fingerExercisesDone);
@@ -139,14 +140,14 @@ function statsTab() {
   for (var i = 29; i >= 0; i--) {
     var d = new Date(Date.now() - i * 86400000);
     var ds = d.toDateString();
-    var practiced = S.history.some(function(h) { return new Date(h.ts).toDateString() === ds; });
+    var practiced = history.some(function(h) { return new Date(h.ts).toDateString() === ds; });
     html += '<div class="cal-day ' + (practiced ? 'cal-active' : '') + '" title="' + ds + '"></div>';
   }
   html += '</div>';
 
   // Recent history
   html += '<h3>Recent Activity</h3><div class="history-list">';
-  var recent = S.history.slice(-10).reverse();
+  var recent = history.slice(-10).reverse();
   recent.forEach(function(h) {
     var time = pianoToolsHistoryTimestamp(h.ts || h.timestamp);
     var activityType = pianoFirstToolsHistoryTextToken(h.type, "Activity");
