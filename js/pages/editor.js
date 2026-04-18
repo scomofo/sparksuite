@@ -106,11 +106,12 @@ function renderEditorTimeline(obj){
   var range = typeof getEditorTimelineRange === "function" ? getEditorTimelineRange() : { startSec:0, endSec:16 };
   var bpm = typeof getEditorBpm === "function" ? getEditorBpm() : 80;
   var grid = typeof buildTimelineGridLines === "function" ? buildTimelineGridLines(range.startSec, range.endSec, bpm, S.editorGridDivision || "1/4") : [];
+  var playheadSec = normalizeEditorNumber(S.editorPlayheadSec, 0);
   var h = '';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(firstEditorTextToken(S.editorGridDivision, "1/4"))+'</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+playheadSec.toFixed(2)+'s \u00b7 Grid: '+escHTML(firstEditorTextToken(S.editorGridDivision, "1/4"))+'</div>';
   h += '<div style="padding:12px;border-radius:12px;background:var(--input-bg)">';
   for(var i=0;i<grid.length;i++){
-    h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+escHTML(grid[i].label)+' ('+grid[i].t.toFixed(2)+'s)</div>';
+    h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+escHTML(grid[i].label)+' ('+normalizeEditorNumber(grid[i].t, 0).toFixed(2)+'s)</div>';
   }
   h += '</div>';
   return h;
