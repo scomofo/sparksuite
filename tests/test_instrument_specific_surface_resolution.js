@@ -259,15 +259,32 @@ test("piano placement test ignores stale prompt text", function() {
 test("piano tools stats ignore stale history labels", function() {
   resetEnvironment("pianospark");
   global.S._toolTab = "stats";
+  global.S.xp = "NaN";
+  global.S.streak = { broken: true };
+  global.S.level = "undefined";
+  global.S.personalBests = { bpm: "null", streak: [] };
   global.S.history = [
     { type: "undefined", chord: "null", session: "NaN", ts: Date.now() }
   ];
   global.eval(loadJS("js/instruments/piano/pages/shared.js"));
   global.eval(loadJS("js/instruments/piano/ui.js"));
   global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+  global.getPianoPageInstrument = function() {
+    return {
+      getData: function() {
+        return {
+          BADGES: [{ id: "starter", label: "undefined", desc: "null", icon: "NaN" }]
+        };
+      }
+    };
+  };
 
   var html = pianoToolsTab();
+  assert.ok(html.indexOf(">0<") >= 0);
+  assert.ok(html.indexOf("0/8") >= 0);
   assert.ok(html.indexOf("Activity") >= 0);
+  assert.ok(html.indexOf("Badge") >= 0);
+  assert.ok(html.indexOf("Keep practicing") >= 0);
   assert.ok(html.indexOf("🏅") >= 0);
   assert.ok(html.indexOf("undefined") === -1);
   assert.ok(html.indexOf("null") === -1);

@@ -32,6 +32,16 @@ function pianoToolsFiniteNumber(value) {
   return typeof value === "number" && isFinite(value) ? value : null;
 }
 
+function pianoToolsDisplayCount(value, fallback) {
+  var num = pianoToolsFiniteNumber(value);
+  return num != null ? num : fallback;
+}
+
+function pianoToolsDisplayLevel(value) {
+  var num = pianoToolsFiniteNumber(value);
+  return num != null ? num : 0;
+}
+
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -61,28 +71,35 @@ function pianoToolsTab() {
 // ── Stats ──
 function statsTab() {
   var html = '<div class="card"><h2>Statistics</h2>';
+  var xp = pianoToolsDisplayCount(S.xp, 0);
+  var streak = pianoToolsDisplayCount(S.streak, 0);
+  var level = pianoToolsDisplayLevel(S.level);
+  var personalBestBpm = pianoToolsFiniteNumber(S.personalBests && S.personalBests.bpm);
+  var personalBestStreak = pianoToolsFiniteNumber(S.personalBests && S.personalBests.streak);
+  var fingerExercisesDone = pianoToolsFiniteNumber(S.fingerExercisesDone);
+  var fingerDaysLogged = pianoToolsFiniteNumber(S.fingerDaysLogged);
 
   // Overview
   html += '<div class="stats-grid">';
-  html += '<div class="stat-item"><div class="stat-val">' + S.xp + '</div><div class="stat-label">XP</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.streak + '</div><div class="stat-label">Streak</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + xp + '</div><div class="stat-label">XP</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + streak + '</div><div class="stat-label">Streak</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + (S.completedSessions ? S.completedSessions.length : 0) + '</div><div class="stat-label">Sessions</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.level + '/8</div><div class="stat-label">Level</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + level + '/8</div><div class="stat-label">Level</div></div>';
   html += '</div>';
 
   // Personal bests (stickiness #6 - never compare to others)
   html += '<h3>Personal Bests</h3>';
   html += '<div class="stats-grid">';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.personalBests.bpm || '-') + '</div><div class="stat-label">Best BPM</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.personalBests.streak || '-') + '</div><div class="stat-label">Best Streak</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (personalBestBpm != null ? personalBestBpm : '-') + '</div><div class="stat-label">Best BPM</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (personalBestStreak != null ? personalBestStreak : '-') + '</div><div class="stat-label">Best Streak</div></div>';
   html += '</div>';
 
   // Finger exercise stats
-  if (S.fingerExercisesDone > 0) {
+  if (fingerExercisesDone > 0) {
     html += '<h3>Finger Training</h3>';
     html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">';
-    html += '<div class="stat-item"><div class="stat-val">' + S.fingerExercisesDone + '</div><div class="stat-label">Exercises</div></div>';
-    html += '<div class="stat-item"><div class="stat-val">' + S.fingerDaysLogged + '</div><div class="stat-label">Days</div></div>';
+    html += '<div class="stat-item"><div class="stat-val">' + fingerExercisesDone + '</div><div class="stat-label">Exercises</div></div>';
+    html += '<div class="stat-item"><div class="stat-val">' + (fingerDaysLogged != null ? fingerDaysLogged : '-') + '</div><div class="stat-label">Days</div></div>';
     var chordBest = S.fingerStats._chordChangeBest || 0;
     html += '<div class="stat-item"><div class="stat-val">' + (chordBest || '-') + '</div><div class="stat-label">Best 60s</div></div>';
     html += '</div>';
@@ -135,10 +152,12 @@ function statsTab() {
   BADGES.forEach(function(b) {
     var earned = S.earned.indexOf(b.id) >= 0;
     var badgeIcon = pianoFirstToolsHistoryTextToken(b.icon, "🏅");
+    var badgeLabel = pianoFirstToolsHistoryTextToken(b.label, "Badge");
+    var badgeDesc = pianoFirstToolsHistoryTextToken(b.desc, "Keep practicing");
     html += '<div class="badge-card ' + (earned ? 'earned' : 'locked') + '">';
     html += '<span class="badge-icon">' + badgeIcon + '</span>';
-    html += '<span class="badge-label">' + b.label + '</span>';
-    html += '<span class="badge-desc text-muted">' + b.desc + '</span>';
+    html += '<span class="badge-label">' + badgeLabel + '</span>';
+    html += '<span class="badge-desc text-muted">' + badgeDesc + '</span>';
     html += '</div>';
   });
   html += '</div>';
