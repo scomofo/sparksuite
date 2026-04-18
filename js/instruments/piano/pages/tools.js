@@ -42,6 +42,14 @@ function pianoToolsDisplayLevel(value) {
   return num != null ? num : 0;
 }
 
+function pianoToolsClampedNumber(value, min, max, fallback) {
+  var num = pianoToolsFiniteNumber(value);
+  if (num == null) return fallback;
+  if (num < min) return min;
+  if (num > max) return max;
+  return num;
+}
+
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -169,12 +177,16 @@ function statsTab() {
 // ── Settings ──
 function settingsTab() {
   var html = '<div class="card"><h2>Settings</h2>';
+  var dailyGoal = pianoToolsClampedNumber(S.dailyGoal, 5, 60, 10);
+  var volumePct = pianoToolsClampedNumber(Math.round(pianoToolsClampedNumber(S.volume, 0, 1, 1) * 100), 0, 100, 100);
+  var reverbPct = pianoToolsClampedNumber(Math.round(pianoToolsClampedNumber(S.reverbAmount, 0, 1, 0) * 100), 0, 100, 0);
+  var a4Tuning = pianoToolsClampedNumber(S.a4Tuning, 432, 446, 440);
 
-  html += '<div class="setting-row"><label>Daily Goal: ' + S.dailyGoal + ' min</label>';
-  html += '<input type="range" min="5" max="60" step="5" value="' + S.dailyGoal + '" onchange="act(\'set_goal\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Daily Goal: ' + dailyGoal + ' min</label>';
+  html += '<input type="range" min="5" max="60" step="5" value="' + dailyGoal + '" onchange="act(\'set_goal\', this.value)"/></div>';
 
-  html += '<div class="setting-row"><label>Volume: ' + Math.round(S.volume * 100) + '%</label>';
-  html += '<input type="range" min="0" max="100" value="' + Math.round(S.volume * 100) + '" onchange="act(\'set_volume\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Volume: ' + volumePct + '%</label>';
+  html += '<input type="range" min="0" max="100" value="' + volumePct + '" onchange="act(\'set_volume\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Tone:</label>';
   html += '<select onchange="act(\'set_tone\', this.value)">';
@@ -217,8 +229,8 @@ function settingsTab() {
   // ── Audio ──
   html += '<h3 style="margin-top:20px">Audio</h3>';
 
-  html += '<div class="setting-row"><label>Reverb: ' + Math.round((S.reverbAmount || 0) * 100) + '%</label>';
-  html += '<input type="range" min="0" max="100" value="' + Math.round((S.reverbAmount || 0) * 100) + '" oninput="act(\'set_reverb\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Reverb: ' + reverbPct + '%</label>';
+  html += '<input type="range" min="0" max="100" value="' + reverbPct + '" oninput="act(\'set_reverb\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Metronome sound:</label>';
   html += '<select onchange="act(\'set_metronome_sound\', this.value)">';
@@ -227,8 +239,8 @@ function settingsTab() {
   });
   html += '</select></div>';
 
-  html += '<div class="setting-row"><label>A4 tuning: ' + (S.a4Tuning || 440) + ' Hz</label>';
-  html += '<input type="range" min="432" max="446" step="1" value="' + (S.a4Tuning || 440) + '" oninput="act(\'set_a4_tuning\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>A4 tuning: ' + a4Tuning + ' Hz</label>';
+  html += '<input type="range" min="432" max="446" step="1" value="' + a4Tuning + '" oninput="act(\'set_a4_tuning\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Chord detection:</label>';
   html += '<select onchange="act(\'set_pitch_detection\', this.value)">';
