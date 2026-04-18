@@ -132,6 +132,11 @@ function firstPerformPageTextToken() {
   return "";
 }
 
+function normalizePerformPageNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function getPerformancePracticePresetOptions() {
   var stemLabel = typeof getPerformancePracticePresetStemLabel === "function"
     ? getPerformancePracticePresetStemLabel()
@@ -243,12 +248,15 @@ function performPage() {
   // Debug overlay
   if (S.performDebug) {
     var debugPhrase = getPerformancePhraseForTime(chart, nowSec);
+    var debugTime = normalizePerformPageNumber(nowSec, 0);
+    var debugLoopStart = S.performLoop ? normalizePerformPageNumber(S.performLoop.startSec, 0) : 0;
+    var debugLoopEnd = S.performLoop ? normalizePerformPageNumber(S.performLoop.endSec, 0) : 0;
     h += '<div style="background:rgba(0,0,0,.85);color:#0f0;font-family:monospace;font-size:11px;padding:8px;border-radius:6px;margin:4px 12px">';
-    h += 'time: ' + nowSec.toFixed(2) + 's | phrase: ' + (debugPhrase ? debugPhrase.name : '-') + '<br>';
+    h += 'time: ' + debugTime.toFixed(2) + 's | phrase: ' + (debugPhrase ? debugPhrase.name : '-') + '<br>';
     h += 'speed: ' + S.performSpeed + ' | diff: ' + S.performDifficulty + '<br>';
     h += 'combo: ' + S.performCombo + '/' + S.performMaxCombo + ' | score: ' + S.performScore + '<br>';
     h += 'notes: [' + (S.performInputNotes || []).join(',') + ']<br>';
-    h += 'loop: ' + (S.performLoop ? S.performLoop.startSec.toFixed(1) + '-' + S.performLoop.endSec.toFixed(1) : 'off') + '<br>';
+    h += 'loop: ' + (S.performLoop ? debugLoopStart.toFixed(1) + '-' + debugLoopEnd.toFixed(1) : 'off') + '<br>';
     h += 'windows: P' + S.performWindowPerfectMs + '/G' + S.performWindowGoodMs + '/M' + S.performWindowMissMs;
     h += '</div>';
   }

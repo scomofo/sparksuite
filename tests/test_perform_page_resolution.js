@@ -130,4 +130,16 @@ test("perform pages ignore stale chart and result text tokens", function() {
   assert.ok(doneHtml.indexOf(">null<") === -1);
 });
 
+test("performPage ignores malformed debug timing values", function() {
+  S.performDebug = true;
+  S.performCurrentSec = "NaN";
+  S.performLoop = { phraseId: 2, startSec: "NaN", endSec: "NaN" };
+
+  var html = performPage();
+
+  assert.ok(html.indexOf("time: 0.00s") >= 0);
+  assert.ok(html.indexOf("loop: 0.0-0.0") >= 0);
+  assert.ok(html.indexOf("NaNs") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
