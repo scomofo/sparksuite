@@ -351,6 +351,23 @@ test("piano songs library ignores stale sentinel search text", function() {
   assert.ok(html.indexOf('matching “undefined”') === -1);
 });
 
+test("piano practice tab ignores malformed mastery percentages", function() {
+  resetEnvironment("pianospark");
+  global.getAverageMastery = function(kind) {
+    return kind === "rhythm" ? "NaN" : { broken: true };
+  };
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+  assert.ok(html.indexOf("Chords: 0%") >= 0);
+  assert.ok(html.indexOf("Rhythm: 0%") >= 0);
+  assert.ok(html.indexOf("Transitions: 0%") >= 0);
+  assert.ok(html.indexOf("Scales: 0%") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("guitarAct rehydrates an app-id-only active instrument shell", function() {
   resetEnvironment("chordspark");
   global.eval(loadJS("js/instruments/guitar/app.js"));
