@@ -254,6 +254,7 @@ test("songs forms ignore stale cached submit and import field values", function(
   assert.ok(submitHtml.indexOf('value="NaN"') === -1);
 
   S.songsSubTab = "import";
+  S.importText = "undefined";
   S.importedSong = {
     id: "import_song_2",
     title: "undefined",
@@ -266,6 +267,7 @@ test("songs forms ignore stale cached submit and import field values", function(
   var importHtml = songsTab();
   assert.ok(importHtml.indexOf('value="undefined"') === -1);
   assert.ok(importHtml.indexOf('value="null"') === -1);
+  assert.ok(importHtml.indexOf(">undefined</textarea>") === -1);
   assert.ok(importHtml.indexOf('value="import song 2"') >= 0);
 });
 
