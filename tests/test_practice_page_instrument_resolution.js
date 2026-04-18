@@ -108,6 +108,22 @@ test("sv2HomeDashboard rehydrates an app-id-only active instrument shell", funct
   assert.ok(html.indexOf("1/1 chords") >= 0);
 });
 
+test("sv2HomeDashboard and practiceTab ignore malformed goal metrics", function() {
+  global.S.todayPracticeSeconds = "NaN";
+  global.S.dailyGoalMinutes = { broken: true };
+  global.S.goalStreak = [];
+
+  var dashboardHtml = sv2HomeDashboard();
+  var practiceHtml = practiceTab();
+
+  assert.ok(dashboardHtml.indexOf("Daily Goal: 10 min") >= 0);
+  assert.ok(dashboardHtml.indexOf("0 / 10 min today") >= 0);
+  assert.ok(dashboardHtml.indexOf("NaN") === -1);
+  assert.ok(practiceHtml.indexOf("Daily Goal: 10 min") >= 0);
+  assert.ok(practiceHtml.indexOf("0/10 min today") >= 0);
+  assert.ok(practiceHtml.indexOf("NaN") === -1);
+});
+
 test("homePage uses rehydrated tab renderers from the active instrument module", function() {
   var html = homePage();
   assert.ok(html.indexOf("Piano Practice") >= 0);
