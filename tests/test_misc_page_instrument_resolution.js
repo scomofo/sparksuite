@@ -250,4 +250,25 @@ test("statsTab uses the active instrument label in the music journey card", func
   assert.ok(html.indexOf(">Guitar<") === -1);
 });
 
+test("statsTab ignores malformed shared history and transition metrics", function() {
+  S.history = { broken: true };
+  S.transitionStats = {
+    "C->G": {
+      attempts: "NaN",
+      avgTime: "NaN",
+      best: "NaN"
+    },
+    "G->Am": {
+      attempts: 3,
+      avgTime: "NaN",
+      best: "NaN"
+    }
+  };
+
+  var html = statsTab();
+  assert.ok(html.indexOf("Practice Stats") >= 0);
+  assert.ok(html.indexOf("NaNs") === -1);
+  assert.ok(html.indexOf("0.0s") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

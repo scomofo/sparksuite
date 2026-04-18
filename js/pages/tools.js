@@ -33,6 +33,11 @@ function normalizeToolsTextToken(value) {
   return text;
 }
 
+function normalizeToolsNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function getToolsInstrumentName(inst) {
   return normalizeToolsTextToken(
     inst && (inst.name || inst.displayName || inst.instrumentName || inst.instrument)
@@ -168,7 +173,7 @@ function statsTab(){
   var inst = getToolsPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats</h2></div>';
-  var hist=S.history||[];
+  var hist=Array.isArray(S.history) ? S.history : [];
 
   // Summary cards
   var totalXP=0,totalSessions=0,practiceDays={};
@@ -221,7 +226,7 @@ function statsTab(){
     var dt=new Date(today);dt.setDate(dt.getDate()-d);
     var ds=dt.toISOString().split("T")[0];
     var dayXP=0;
-    for(var i=0;i<hist.length;i++)if(hist[i].date===ds)dayXP+=hist[i].xp||0;
+    for(var i=0;i<hist.length;i++)if(hist[i].date===ds)dayXP+=normalizeToolsNumber(hist[i].xp,0);
     weekXP.push({day:dayNames[dt.getDay()],xp:dayXP,date:ds});
     if(dayXP>maxXP)maxXP=dayXP;
   }
@@ -238,9 +243,18 @@ function statsTab(){
   h+='</div></div>';
 
   // Transition difficulty
-  var ts=S.transitionStats;
+  var ts=(S.transitionStats && typeof S.transitionStats === "object") ? S.transitionStats : {};
   var transitions=[];
-  for(var k in ts)if(ts[k].attempts>=2)transitions.push({key:k,avg:ts[k].avgTime,best:ts[k].best,attempts:ts[k].attempts});
+  for(var k in ts){
+    var entry = ts[k] || {};
+    var attempts = normalizeToolsNumber(entry.attempts, 0);
+    if(attempts>=2)transitions.push({
+      key:k,
+      avg:normalizeToolsNumber(entry.avgTime, 0),
+      best:normalizeToolsNumber(entry.best, 0),
+      attempts:attempts
+    });
+  }
   transitions.sort(function(a,b){return b.avg-a.avg;});
   if(transitions.length>0){
     h+='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128260; Chord Transitions</h3>';
