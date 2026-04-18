@@ -12,6 +12,11 @@ function prettyPerformSongToken(value) {
   return text;
 }
 
+function normalizePerformSongNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
@@ -24,6 +29,9 @@ function performSongPage() {
   var targetTechnique = performanceSongView.targetTechnique;
   var displayTitle = prettyPerformSongToken(song.title) || prettyPerformSongToken(performanceSongView.songId) || "Unknown Song";
   var displayArtist = prettyPerformSongToken(song.artist);
+  var displayBpm = normalizePerformSongNumber(song.bpm, null);
+  var displayChordCount = Array.isArray(song.chords) ? song.chords.length : 0;
+  var displayBarCount = Array.isArray(song.progression) ? song.progression.length : 0;
 
   var h = '<div class="perform-page">';
 
@@ -57,9 +65,9 @@ function performSongPage() {
 
   // Song info
   h += '<div class="card mb20" style="display:flex;justify-content:space-around;text-align:center">';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (song.bpm || "?") + '</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (song.chords ? song.chords.length : 0) + '</div><div style="font-size:10px;color:var(--text-muted)">Chords</div></div>';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (song.progression ? song.progression.length : 0) + '</div><div style="font-size:10px;color:var(--text-muted)">Bars</div></div>';
+  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (displayBpm != null ? displayBpm : "?") + '</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
+  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + displayChordCount + '</div><div style="font-size:10px;color:var(--text-muted)">Chords</div></div>';
+  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + displayBarCount + '</div><div style="font-size:10px;color:var(--text-muted)">Bars</div></div>';
   h += '</div>';
 
   // Arrangement selector
@@ -132,9 +140,10 @@ function performSongPage() {
     h += '</div>';
     h += '<button class="btn btn-sm" onclick="act(\'removeSongAudio\',\'' + songId + '\')" style="background:var(--input-bg);color:var(--text-secondary)">Remove Audio</button>';
   } else if (S.songAudioImporting) {
+    var songAudioProgress = Math.max(0, Math.min(100, normalizePerformSongNumber(S.songAudioProgress, 0)));
     h += '<div style="margin-bottom:8px">';
-    h += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">Separating stems... ' + (S.songAudioProgress || 0) + '%</div>';
-    h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + (S.songAudioProgress || 0) + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
+    h += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">Separating stems... ' + songAudioProgress + '%</div>';
+    h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + songAudioProgress + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
     h += '</div>';
   } else {
     h += '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Import an MP3 to play along with the actual song during performance.</p>';

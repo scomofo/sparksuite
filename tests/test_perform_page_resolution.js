@@ -142,4 +142,17 @@ test("performPage ignores malformed debug timing values", function() {
   assert.ok(html.indexOf("NaNs") === -1);
 });
 
+test("performPage ignores malformed calibration and offset values", function() {
+  S.performMidiOffsetMs = "NaN";
+  S._calibrating = true;
+  S._calibCurrentBeat = "NaN";
+  S._calibTotalBeats = "NaN";
+
+  var html = performPage();
+
+  assert.ok(html.indexOf("offset:") === -1);
+  assert.ok(html.indexOf(">0/8<") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
