@@ -282,7 +282,7 @@ test("songs forms ignore stale cached submit and import field values", function(
     title: "undefined",
     artist: "null",
     submittedBy: "NaN",
-    bpm: 90,
+    bpm: "NaN",
     chords: [],
     progression: []
   };
@@ -298,7 +298,7 @@ test("songs forms ignore stale cached submit and import field values", function(
     id: "import_song_2",
     title: "undefined",
     artist: "null",
-    bpm: 88,
+    bpm: "NaN",
     chords: ["C", "G"],
     progression: ["C", "G"]
   };
@@ -308,6 +308,10 @@ test("songs forms ignore stale cached submit and import field values", function(
   assert.ok(importHtml.indexOf('value="null"') === -1);
   assert.ok(importHtml.indexOf(">undefined</textarea>") === -1);
   assert.ok(importHtml.indexOf('value="import song 2"') >= 0);
+  assert.ok(importHtml.indexOf('value="90"') >= 0);
+  assert.ok(submitHtml.indexOf('value="90"') >= 0);
+  assert.ok(importHtml.indexOf("NaN") === -1);
+  assert.ok(submitHtml.indexOf("NaN") === -1);
 });
 
 test("songs search inputs ignore stale sentinel strings", function() {

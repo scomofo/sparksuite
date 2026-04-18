@@ -228,6 +228,7 @@ function songLibrary() {
 // ── Playing Styles ──
 function stylesTab() {
   var html = '<div class="card"><h2>Playing Styles</h2>';
+  var styleTempo = pianoFormatSongTempo(S.bpm, 90);
   html += '<p>Learn different ways to play piano chords.</p>';
 
   PLAY_STYLES.forEach(function(ps, i) {
@@ -240,8 +241,8 @@ function stylesTab() {
       html += '<p class="text-muted" style="padding:0 14px">' + ps.desc + '</p>';
       html += styleHTML(ps);
       html += '<div class="style-controls">';
-      html += '<label>BPM: ' + S.bpm + '</label>';
-      html += '<input type="range" min="40" max="200" value="' + S.bpm + '" onchange="act(\'set_bpm\', this.value)"/>';
+      html += '<label>BPM: ' + styleTempo + '</label>';
+      html += '<input type="range" min="40" max="200" value="' + styleTempo + '" onchange="act(\'set_bpm\', this.value)"/>';
       html += '<button class="btn btn-accent" onclick="act(\'play_style\')">\u{1F50A} Demo</button>';
       html += '<button class="btn" onclick="act(\'start_metronome\')">Metro</button>';
       html += '<button class="btn btn-secondary" onclick="act(\'stop_metronome\')">Stop</button>';
