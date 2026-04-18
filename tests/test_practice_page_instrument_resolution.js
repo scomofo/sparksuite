@@ -127,6 +127,21 @@ test("sv2HomeDashboard and practiceTab ignore malformed goal metrics", function(
   assert.ok(practiceHtml.indexOf("NaN") === -1);
 });
 
+test("drillTab ignores malformed transition timing", function() {
+  global.S.transitionStats = {
+    "C->G": { attempts: 3, avgTime: "NaN" },
+    "Am->F": { attempts: 3, avgTime: 1.25 }
+  };
+  global.S.drillCount = 0;
+
+  var html = drillTab();
+
+  assert.ok(html.indexOf("Am") >= 0);
+  assert.ok(html.indexOf("F") >= 0);
+  assert.ok(html.indexOf("avg 1.3s") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("homePage uses rehydrated tab renderers from the active instrument module", function() {
   var html = homePage();
   assert.ok(html.indexOf("Piano Practice") >= 0);

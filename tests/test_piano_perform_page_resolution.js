@@ -92,4 +92,15 @@ test("piano perform song page ignores stale left hand pattern text", function() 
   assert.ok(html.indexOf(">null<") === -1);
 });
 
+test("piano perform song page ignores malformed import progress", function() {
+  S.songAudioImporting = true;
+  S.songAudioProgress = "NaN";
+
+  var html = pianoPerformSongPage();
+
+  assert.ok(html.indexOf("Separating stems... 0%") >= 0);
+  assert.ok(html.indexOf("width:0%") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

@@ -19,6 +19,11 @@ function pianoFirstPerformanceTextToken(){
   return "";
 }
 
+function pianoNormalizePerformanceNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function pianoPerformSongPage(){
   if(!S.performSongData) return '<div class="card">No song selected</div>';
 
@@ -81,8 +86,9 @@ function pianoPerformSongPage(){
     }
     h += '<button class="btn" onclick="act(\'removeSongAudio\',\'' + songId + '\')">Remove Audio</button>';
   } else if (S.songAudioImporting) {
-    h += '<div>Separating stems... ' + (S.songAudioProgress || 0) + '%</div>';
-    h += '<div style="background:var(--bg-input);border-radius:4px;height:6px;overflow:hidden;margin-top:4px"><div style="width:' + (S.songAudioProgress || 0) + '%;height:100%;background:var(--accent);transition:width .3s"></div></div>';
+    var pianoSongAudioProgress = Math.max(0, Math.min(100, pianoNormalizePerformanceNumber(S.songAudioProgress, 0)));
+    h += '<div>Separating stems... ' + pianoSongAudioProgress + '%</div>';
+    h += '<div style="background:var(--bg-input);border-radius:4px;height:6px;overflow:hidden;margin-top:4px"><div style="width:' + pianoSongAudioProgress + '%;height:100%;background:var(--accent);transition:width .3s"></div></div>';
   } else {
     h += '<div class="muted" style="font-size:12px;margin-bottom:6px">Import an MP3 to play along with the actual song.</div>';
     h += '<button class="btn btn-primary" onclick="act(\'importSongAudio\',\'' + songId + '\')">Import Song Audio</button>';
