@@ -38,6 +38,17 @@ function findInstrumentChordByName(D, chordName){
   return null;
 }
 
+function normalizeSessionNumber(value, fallback){
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
+function formatSessionBpm(value, fallback){
+  var bpm = normalizeSessionNumber(value, null);
+  if (bpm == null) return fallback;
+  return String(Math.round(bpm));
+}
+
 function getLegacySessionRuntime(D){
   var runtime = getSparkCoreRuntimeState();
   return {
@@ -74,9 +85,18 @@ function getSessionMetronomeRuntime(){
   var runtime = getSparkCoreRuntimeState();
   return {
     active: typeof S.metronomeOn === "boolean" ? S.metronomeOn : !!(runtime && runtime.metronomeActive),
-    bpm: typeof S.metronomeBpm === "number" ? S.metronomeBpm : (runtime && typeof runtime.metronomeBpm === "number" ? runtime.metronomeBpm : 80),
-    beat: typeof S._metroBeat === "number" ? S._metroBeat : (runtime && typeof runtime.metronomeBeat === "number" ? runtime.metronomeBeat : 0),
-    beatsPerBar: typeof S._metroBeats === "number" ? S._metroBeats : (runtime && typeof runtime.metronomeBeatsPerBar === "number" ? runtime.metronomeBeatsPerBar : 4)
+    bpm: normalizeSessionNumber(
+      typeof S.metronomeBpm === "number" ? S.metronomeBpm : (runtime ? runtime.metronomeBpm : null),
+      80
+    ),
+    beat: normalizeSessionNumber(
+      typeof S._metroBeat === "number" ? S._metroBeat : (runtime ? runtime.metronomeBeat : null),
+      0
+    ),
+    beatsPerBar: normalizeSessionNumber(
+      typeof S._metroBeats === "number" ? S._metroBeats : (runtime ? runtime.metronomeBeatsPerBar : null),
+      4
+    )
   };
 }
 
@@ -203,7 +223,7 @@ function drillPage(){
   h+='<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">Switch Drill &#9889;</h2>';
   h+='<div style="display:flex;justify-content:center;gap:20px;align-items:center;margin-bottom:12px"><span id="drill-timer-ring">'+ringHTML((1-drillTimer/60)*100,70,6,"#FF6B6B",'<div style="font-size:18px;font-weight:900;color:var(--text-primary)">'+drillTimer+'s</div>',"Drill timer")+'</span>';
   h+='<div><div id="drill-switch-count" style="font-size:32px;font-weight:900;color:#4ECDC4">'+S.drillSwitches+'</div><div style="font-size:11px;color:var(--text-muted)">switches</div></div>';
-  h+='<div style="text-align:center"><div id="drill-adaptive-bpm" style="font-size:18px;font-weight:900;color:#FFE66D">'+S.drillAdaptiveBpm+'</div><div style="font-size:11px;color:var(--text-muted)">target BPM</div></div></div>';
+  h+='<div style="text-align:center"><div id="drill-adaptive-bpm" style="font-size:18px;font-weight:900;color:#FFE66D">'+formatSessionBpm(S.drillAdaptiveBpm, "0")+'</div><div style="font-size:11px;color:var(--text-muted)">target BPM</div></div></div>';
   h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
   h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+D.LC[S.level]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+UI.chord(c,180,null,drillChanged)+'</div>';
   _prevChordKey=c.name;
@@ -277,10 +297,11 @@ function strumDetailPage(){
     ? (typeof S._strumBeat === "number" ? S._strumBeat : (runtime && typeof runtime.legacyStrumBeat === "number" ? runtime.legacyStrumBeat : -1))
     : -1;
   var curDir=curBeat>=0?sp.pattern[curBeat]:"x";
+  var strumBpm = formatSessionBpm(sp.bpm, "--");
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button>';
   h+='<h2 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:8px 0">'+sp.name+'</h2>';
   h+='<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">'+sp.desc+'</p>';
-  h+='<div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:20px">'+sp.bpm+' BPM</div>';
+  h+='<div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:20px">'+strumBpm+' BPM</div>';
   // Strum hand animation
   h+='<div class="flex-center mb12">'+strumHandSVG(curDir,strumActive)+'</div>';
   h+='<div class="card mb20" style="padding:24px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sp.pattern,curBeat)+'</div></div>';
@@ -309,11 +330,12 @@ function songDetailPage(){
   if(!sg)return '';
   var songTitle = _firstSessionSongTextToken(sg.title, sg.songTitle, sg.id, "Song");
   var songArtist = _firstSessionSongTextToken(sg.artist, "Unknown Artist");
+  var songBpm = formatSessionBpm(sg.bpm, "--");
   var songPlaying = songRuntime && typeof songRuntime.songPlaying === "boolean" ? songRuntime.songPlaying : S.songPlaying;
   var songBeat = songRuntime && typeof songRuntime.songBeat === "number" ? songRuntime.songBeat : S.songBeat;
   var patBeat=songPlaying?(songBeat%sg.pattern.length):-1;
   var curDir=patBeat>=0?sg.pattern[patBeat]:"x";
-  var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(songTitle)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(songArtist)+' &#8226; '+sg.bpm+' BPM</p>';
+  var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(songTitle)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(songArtist)+' &#8226; '+songBpm+' BPM</p>';
   h+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
   for(var i=0;i<sg.chords.length;i++)
     h+='<span style="background:var(--chip-bg);padding:4px 12px;border-radius:10px;font-size:13px;font-weight:700;color:var(--chip-color)">'+escHTML(sg.chords[i])+'</span>';
