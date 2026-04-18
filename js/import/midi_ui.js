@@ -35,6 +35,9 @@
     var h = '<div class="card">';
     h += '<div><b>MIDI Import</b></div>';
     h += '<input type="file" accept=".mid,.midi" onchange="act(\'importMidiFile\', this.files[0])" />';
+    if(typeof isDesktopBuild === "function" && isDesktopBuild() && typeof openImportFileDesktopAware === "function"){
+      h += ' <button onclick="importMidiDesktopAware()">Import from Desktop</button>';
+    }
     h += '</div>';
 
     if((runtimeTracks && runtimeTracks.length) || S.importedMidi){
@@ -78,7 +81,7 @@
   async function handleMidiImport(file){
     if(!file) return;
     var raw = await parseMidiFile(file);
-    var normalized = normalizeParsedMidi(raw, file.name);
+    var normalized = normalizeParsedMidi(raw, getMidiImportSourceName(file));
     S.importedMidi = normalized;
     S.importedMidiTracks = normalized.tracks || [];
     var appType = inferMidiImportAppType();
@@ -94,7 +97,27 @@
     render();
   }
 
+  async function importMidiDesktopAware(){
+    if(typeof openImportFileDesktopAware !== "function") return false;
+    var result = await openImportFileDesktopAware({
+      filters: [{ name: "MIDI", extensions: ["mid", "midi"] }]
+    });
+    if(!result || !result.ok) return false;
+    await handleMidiImport(result);
+    return true;
+  }
+
+  function getMidiImportSourceName(file){
+    if(file && file.name) return file.name;
+    if(file && file.path){
+      var parts = String(file.path).split(/[\\/]/);
+      return parts[parts.length - 1] || "import.mid";
+    }
+    return "import.mid";
+  }
+
   window.midiImportPage = midiImportPage;
   window.handleMidiImport = handleMidiImport;
+  window.importMidiDesktopAware = importMidiDesktopAware;
 
 })();

@@ -82,12 +82,12 @@ test("preload exposes sparkDesktop bridge", function() {
 test("sparkDesktop methods invoke expected IPC channels", function() {
   invocations.length = 0;
   exposures.sparkDesktop.saveJson({ hello: "world" });
-  exposures.sparkDesktop.openJson();
+  exposures.sparkDesktop.openJson({ filters: [{ name: "MIDI", extensions: ["mid"] }] });
   exposures.sparkDesktop.getAppInfo();
   exposures.sparkDesktop.checkForUpdates();
   assert.deepStrictEqual(invocations, [
     ["save-json", { hello: "world" }],
-    ["open-json"],
+    ["open-json", { filters: [{ name: "MIDI", extensions: ["mid"] }] }],
     ["get-app-info"],
     ["check-for-updates"]
   ]);
