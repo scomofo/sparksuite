@@ -226,6 +226,10 @@ test("piano practice tab ignores stale curriculum and custom set labels", functi
 test("piano onboarding and tools ignore stale intention strings", function() {
   resetEnvironment("pianospark");
   global.S.practiceIntention = "undefined";
+  global.S.dailyGoal = "NaN";
+  global.S.volume = { broken: true };
+  global.S.reverbAmount = "null";
+  global.S.a4Tuning = [];
   global.S.onboardingStep = 3;
   global.S._toolTab = "settings";
   global.eval(loadJS("js/instruments/piano/pages/shared.js"));
@@ -243,6 +247,11 @@ test("piano onboarding and tools ignore stale intention strings", function() {
 
   var toolsHtml = pianoToolsTab();
   assert.ok(toolsHtml.indexOf('value="null"') === -1);
+  assert.ok(toolsHtml.indexOf("Daily Goal: 10 min") >= 0);
+  assert.ok(toolsHtml.indexOf("Volume: 100%") >= 0);
+  assert.ok(toolsHtml.indexOf("Reverb: 0%") >= 0);
+  assert.ok(toolsHtml.indexOf("A4 tuning: 440 Hz") >= 0);
+  assert.ok(toolsHtml.indexOf("NaN") === -1);
 });
 
 test("piano header ignores stale numeric badges", function() {
