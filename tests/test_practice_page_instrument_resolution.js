@@ -112,15 +112,18 @@ test("sv2HomeDashboard and practiceTab ignore malformed goal metrics", function(
   global.S.todayPracticeSeconds = "NaN";
   global.S.dailyGoalMinutes = { broken: true };
   global.S.goalStreak = [];
+  global.S.goalReachedToday = "false";
 
   var dashboardHtml = sv2HomeDashboard();
   var practiceHtml = practiceTab();
 
   assert.ok(dashboardHtml.indexOf("Daily Goal: 10 min") >= 0);
   assert.ok(dashboardHtml.indexOf("0 / 10 min today") >= 0);
+  assert.ok(dashboardHtml.indexOf("Goal reached!") === -1);
   assert.ok(dashboardHtml.indexOf("NaN") === -1);
   assert.ok(practiceHtml.indexOf("Daily Goal: 10 min") >= 0);
   assert.ok(practiceHtml.indexOf("0/10 min today") >= 0);
+  assert.ok(practiceHtml.indexOf("Goal reached!") === -1);
   assert.ok(practiceHtml.indexOf("NaN") === -1);
 });
 
