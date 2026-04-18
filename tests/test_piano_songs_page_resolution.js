@@ -76,12 +76,15 @@ function test(name, fn) {
 console.log("\n--- Piano Songs Page Resolution ---");
 
 test("piano selected song view ignores stale title and artist text", function() {
+  S.bpm = "NaN";
   pianoSongsTab();
   var html = songLibrary();
   assert.ok(html.indexOf("midnight_groove") >= 0);
   assert.ok(html.indexOf("Unknown Artist") >= 0);
+  assert.ok(html.indexOf("Tempo: 90 BPM") >= 0);
   assert.ok(html.indexOf(">undefined<") === -1);
   assert.ok(html.indexOf(">null<") === -1);
+  assert.ok(html.indexOf("NaN") === -1);
 });
 
 test("piano stems screens ignore stale file and error text", function() {

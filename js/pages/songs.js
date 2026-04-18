@@ -529,7 +529,7 @@ function performSubTab(){
       +clickableDiv("act(\'openPerform\',\'"+chart.id+"\')")+'>';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
     h+='<div style="text-align:left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(chartTitle)+'</h4>'+badge+'</div>';
-    h+='<p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(chartArtist)+' &bull; '+escHTML(String(chart.bpm||"--"))+' BPM</p>';
+    h+='<p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(chartArtist)+' &bull; '+escHTML(_formatSongsBpm(chart.bpm, "--"))+' BPM</p>';
     if(chartDescription)h+='<p style="margin:4px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(chartDescription)+'</p>';
     h+='</div>';
     h+='<div style="font-size:24px">'+icon+'</div></div></div>';
