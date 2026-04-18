@@ -155,6 +155,33 @@ test("drillTab ignores malformed transition timing", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("practice surfaces ignore malformed legacy progress counters", function() {
+  global.S.sessions = "NaN";
+  global.S.level = "NaN";
+  global.S.chordProgress = { C: "NaN", G: 100 };
+  global.S.drillCount = "NaN";
+  global.S.quizCorrect = "NaN";
+  global.S.earTrainScore = "NaN";
+  global.S.earTrainTotal = "NaN";
+  global.S.earTrainStreak = "NaN";
+
+  var practiceHtml = practiceTab();
+  var drillHtml = drillTab();
+  var quizHtml = quizTab();
+  var earHtml = earTrainTab();
+
+  assert.ok(practiceHtml.indexOf(">0</div><div style=\"font-size:10px;color:var(--text-muted)\">Sessions</div>") >= 0);
+  assert.ok(practiceHtml.indexOf(">1</div><div style=\"font-size:10px;color:var(--text-muted)\">Mastered</div>") >= 0);
+  assert.ok(practiceHtml.indexOf("Lvl 1") >= 0);
+  assert.ok(drillHtml.indexOf("Completed: <strong>0</strong>") >= 0);
+  assert.ok(quizHtml.indexOf("Correct: <strong>0</strong>") >= 0);
+  assert.ok(earHtml.indexOf("Score: <strong>0</strong> correct all time") >= 0);
+  assert.ok(practiceHtml.indexOf("NaN") === -1);
+  assert.ok(drillHtml.indexOf("NaN") === -1);
+  assert.ok(quizHtml.indexOf("NaN") === -1);
+  assert.ok(earHtml.indexOf("NaN") === -1);
+});
+
 test("homePage uses rehydrated tab renderers from the active instrument module", function() {
   var html = homePage();
   assert.ok(html.indexOf("Piano Practice") >= 0);
