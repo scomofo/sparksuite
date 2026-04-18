@@ -203,6 +203,43 @@ test("tunerTab rehydrates an app-id-only active instrument shell", function() {
   assert.ok(html.indexOf("329.63Hz") >= 0);
 });
 
+test("tunerTab ignores malformed shared frequency values", function() {
+  S.tunerFreq = "NaN";
+  S.tunerCents = "NaN";
+  S.tunerActive = true;
+  SparkInstruments.getAll = function() {
+    return [{
+      id: "pianospark",
+      appId: "pianospark",
+      instrument: "piano",
+      name: "Piano",
+      ui: {
+        chord: function(chordObj) {
+          return "<div class=\"chord-svg\">" + (chordObj && chordObj.name || "") + "</div>";
+        }
+      },
+      getData: function() {
+        return {
+          STRINGS: [
+            { note: "E", freq: "NaN" }
+          ],
+          ALL_CHORDS: [
+            { name: "G Major", short: "G" }
+          ],
+          CHORDS: {
+            1: [{ name: "G Major", short: "G" }]
+          }
+        };
+      }
+    }];
+  };
+
+  var html = tunerTab();
+  assert.ok(html.indexOf("--Hz") >= 0);
+  assert.ok(html.indexOf("Play a note...") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("tunerTab and guideTab use instrument-neutral shared copy", function() {
   S.audioInputDevices = [{ id: "usb-1", name: "USB Interface" }];
   S.audioTestingId = "usb-1";
