@@ -254,6 +254,26 @@ test("tunerTab and guideTab use instrument-neutral shared copy", function() {
   assert.ok(guideHtml.indexOf("Tune your guitar with the built-in mic tuner") === -1);
 });
 
+test("tunerTab and statsTab ignore malformed shared counters", function() {
+  S.audioInputDevices = [{ id: "usb-1", name: "USB Interface" }];
+  S.audioTestingId = "usb-1";
+  S.audioTestLevel = "NaN";
+  S.xp = "NaN";
+  S.level = "NaN";
+  S.streak = "NaN";
+  localStorage.setItem("pianospark_jeeves_export", JSON.stringify({ xp: "NaN", level: "NaN", sessions: "NaN", streak: "NaN" }));
+
+  var tunerHtml = tunerTab();
+  var statsHtml = statsTab();
+
+  assert.ok(tunerHtml.indexOf("width:0%") >= 0);
+  assert.ok(tunerHtml.indexOf("NaN") === -1);
+  assert.ok(statsHtml.indexOf(">0</div><div style=\"font-size:11px;color:var(--text-muted);font-weight:600\">Total XP</div>") >= 0);
+  assert.ok(statsHtml.indexOf("Lvl 1") >= 0);
+  assert.ok(statsHtml.indexOf("Combined XP") >= 0);
+  assert.ok(statsHtml.indexOf("NaN") === -1);
+});
+
 test("updateTunerUI rehydrates an app-id-only active instrument shell", function() {
   var strings = [];
   var i;

@@ -95,6 +95,14 @@ function normalizePracticeGoalReached(value) {
   return value === true || value === 1 || value === "true" || value === "1";
 }
 
+function normalizePracticeDisplayCount(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  if (!isFinite(num)) return fallback;
+  num = Math.round(num);
+  if (num < 0) return fallback;
+  return num;
+}
+
 function getPracticeGoalMetrics() {
   var dailyGoalMinutes = normalizePracticeGoalNumber(S.dailyGoalMinutes, 10);
   var todayPracticeSeconds = normalizePracticeGoalNumber(S.todayPracticeSeconds, 0);
@@ -225,7 +233,10 @@ function sv2HomeDashboard() {
 
   var allInstruments = typeof SparkInstruments !== "undefined" ? SparkInstruments.getAll() : [];
   var levelNames = D.LN || {};
-  var levelName = levelNames[S.level] || ("Level " + S.level);
+  var currentLevel = normalizePracticeDisplayCount(S.level, 1);
+  var currentXp = normalizePracticeDisplayCount(S.xp, 0);
+  var currentStreak = normalizePracticeDisplayCount(S.streak, 0);
+  var levelName = levelNames[currentLevel] || ("Level " + currentLevel);
   var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
   var masteredCount = 0;
   if (D.ALL_CHORDS) {
@@ -247,10 +258,10 @@ function sv2HomeDashboard() {
   h += '<div class="sv2-icon sv2-icon--lg sv2-anim-glow">' + (inst.icon || "\uD83C\uDFB8") + '</div>';
   h += '<div class="sv2-home-hero__info">';
   h += '<h2 class="sv2-home-hero__name">' + escHTML(inst.name) + '</h2>';
-  h += '<div class="sv2-home-hero__level">' + escHTML(levelName) + ' &mdash; Level ' + S.level + '</div>';
+  h += '<div class="sv2-home-hero__level">' + escHTML(levelName) + ' &mdash; Level ' + currentLevel + '</div>';
   h += '<div class="sv2-home-hero__badges">';
-  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + S.xp + ' XP</span>';
-  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + S.streak + '</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + currentXp + ' XP</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + currentStreak + '</span>';
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + masteredCount + '/' + chordCount + ' chords</span>';
   h += '</div></div></div>';
 

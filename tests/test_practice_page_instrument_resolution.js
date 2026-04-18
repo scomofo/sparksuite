@@ -127,6 +127,19 @@ test("sv2HomeDashboard and practiceTab ignore malformed goal metrics", function(
   assert.ok(practiceHtml.indexOf("NaN") === -1);
 });
 
+test("sv2HomeDashboard ignores malformed hero counters", function() {
+  global.S.xp = "NaN";
+  global.S.streak = { broken: true };
+  global.S.level = "NaN";
+
+  var html = sv2HomeDashboard();
+
+  assert.ok(html.indexOf("0 XP") >= 0);
+  assert.ok(html.indexOf("🔥 0") >= 0 || html.indexOf("\uD83D\uDD25 0") >= 0);
+  assert.ok(html.indexOf("Level 1") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("drillTab ignores malformed transition timing", function() {
   global.S.transitionStats = {
     "C->G": { attempts: 3, avgTime: "NaN" },
