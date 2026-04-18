@@ -78,6 +78,12 @@ function _normalizeSongsNumber(value, fallback){
   return isFinite(num) ? num : fallback;
 }
 
+function _formatSongsBpm(value, fallback){
+  var bpm = _normalizeSongsNumber(value, null);
+  if (bpm == null) return fallback;
+  return String(Math.round(bpm));
+}
+
 // ===== STRUM TAB =====
 function strumTab(){
   var inst = getSongsPageInstrument();
@@ -211,7 +217,7 @@ function songsTab(){
     var songTitle = _firstSongsTextToken(s.title, s.songTitle, s.id, "Song");
     var songArtist = _firstSongsTextToken(s.artist, "Unknown Artist");
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(songTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+s.bpm+' BPM &bull; '+s.chords.length+' chords</div>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(songTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+_formatSongsBpm(s.bpm, "--")+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
       var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",S.performDifficulty);
       if(_ps.mastery!=="none"){
@@ -266,7 +272,7 @@ function communitySection(){
       var cs=S.communitySongs[i];
       var communityTitle = _firstSongsTextToken(cs.title, cs.songTitle, cs.id, "Community song");
       var communityArtist = _firstSongsTextToken(cs.artist, "Unknown Artist");
-      h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(communityTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(communityArtist)+' | '+escHTML(String(cs.bpm))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
+      h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(communityTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(communityArtist)+' | '+escHTML(_formatSongsBpm(cs.bpm, "--"))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
       var chords=[];try{chords=JSON.parse(cs.chords);}catch(e){console.error("ChordSpark: failed to parse community song chords",e);}
       if(chords.length){
         h+='<div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">';
@@ -367,7 +373,7 @@ function importSection(){
       var importedArtist = _firstSongsTextToken(sg.artist, "Unknown Artist");
       h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--input-bg);border-radius:12px">';
       h+='<div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+escHTML(importedTitle)+'</div>';
-      h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(importedArtist)+' | '+sg.chords.length+' chords | '+sg.bpm+' BPM</div></div>';
+      h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(importedArtist)+' | '+sg.chords.length+' chords | '+_formatSongsBpm(sg.bpm, "--")+' BPM</div></div>';
       h+='<div style="display:flex;gap:6px">';
       h+='<button onclick="act(\'playImport\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700">&#9654; Play</button>';
       h+='<button onclick="act(\'deleteImport\',\''+i+'\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid var(--border)">&#128465;</button>';

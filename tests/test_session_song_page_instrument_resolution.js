@@ -229,15 +229,17 @@ test("songs import list ignores stale imported song text tokens", function() {
     id: "import_song_1",
     title: "undefined",
     artist: "null",
-    bpm: 88,
+    bpm: "NaN",
     chords: ["C", "G"]
   }];
 
   var html = songsTab();
   assert.ok(html.indexOf("import song 1") >= 0);
   assert.ok(html.indexOf("Unknown Artist") >= 0);
+  assert.ok(html.indexOf("-- BPM") >= 0);
   assert.ok(html.indexOf(">undefined<") === -1);
   assert.ok(html.indexOf(">null<") === -1);
+  assert.ok(html.indexOf("NaN") === -1);
 });
 
 test("songs forms ignore stale cached submit and import field values", function() {
