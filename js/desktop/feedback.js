@@ -17,6 +17,9 @@
       feedback: S.feedbackDraft || {}
     };
     if(typeof isDesktopBuild === "function" && isDesktopBuild()){
+      if(!window.sparkDesktop || typeof window.sparkDesktop.saveJson !== "function"){
+        return false;
+      }
       return await window.sparkDesktop.saveJson(payload);
     }
     return false;
@@ -25,6 +28,9 @@
   async function loadReleaseNotes(){
     try{
       var res = await fetch("release/changelog.json");
+      if(!res.ok){
+        throw new Error("Release notes unavailable");
+      }
       S.releaseNotes = await res.json();
     }catch(e){
       S.releaseNotes = [];

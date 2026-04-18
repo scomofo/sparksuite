@@ -2,6 +2,14 @@
   var STEM_NAMES = ["vocals", "drums", "bass", "guitar", "other"];
   var STEM_FORMATS = ["wav", "mp3", "ogg"];
 
+  function probeStemPath(path, options) {
+    return fetch(path, options || {}).then(function(res) {
+      return !!(res && res.ok);
+    }).catch(function() {
+      return false;
+    });
+  }
+
   function StemLoader() { this._cache = {}; }
 
   StemLoader.prototype.loadFromDisk = function(trackId, ctx) {
@@ -44,8 +52,23 @@
   };
 
   StemLoader.prototype.hasStemsOnDisk = function(trackId) {
-    return fetch("data/stems/" + trackId + "/vocals.wav", { method: "HEAD" })
-      .then(function(res) { return res.ok; }).catch(function() { return false; });
+    var basePath = "data/stems/" + trackId + "/";
+
+    function tryStemName(nameIndex) {
+      if (nameIndex >= STEM_NAMES.length) return Promise.resolve(false);
+
+      function tryFormat(formatIndex) {
+        if (formatIndex >= STEM_FORMATS.length) return tryStemName(nameIndex + 1);
+        return probeStemPath(basePath + STEM_NAMES[nameIndex] + "." + STEM_FORMATS[formatIndex], { method: "HEAD" })
+          .then(function(found) {
+            return found ? true : tryFormat(formatIndex + 1);
+          });
+      }
+
+      return tryFormat(0);
+    }
+
+    return tryStemName(0);
   };
 
   StemLoader.prototype._findAndDecode = function(baseName, ctx) {

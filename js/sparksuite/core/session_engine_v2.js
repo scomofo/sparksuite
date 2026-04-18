@@ -9,8 +9,7 @@
     context = context || {};
 
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
-
-    var difficulty = this.psychologyEngine.getDifficulty(context.user || {});
+    var difficulty = getDifficulty(this.psychologyEngine, context.user || {});
 
     var practicePlan = this.practiceEngine.buildDailyPracticePlan({
       curriculum: curriculumContext,
@@ -25,6 +24,7 @@
       difficulty: difficulty,
       segments: practicePlan.segments,
       exercises: practicePlan.exercises,
+      lesson: curriculumContext ? (curriculumContext.nextLesson || null) : null,
       rewards: buildRewards(),
       context: {
         curriculum: curriculumContext
@@ -32,13 +32,24 @@
     });
   };
 
+  function getDifficulty(psychologyEngine, user) {
+    if (psychologyEngine && typeof psychologyEngine.getSessionDifficulty === "function") {
+      return psychologyEngine.getSessionDifficulty(user);
+    }
+    if (psychologyEngine && typeof psychologyEngine.getDifficulty === "function") {
+      return psychologyEngine.getDifficulty(user);
+    }
+    return "normal";
+  }
+
   function buildRewards() {
     return {
-      xp: 25,
+      xp: 40,
       unlocks: [],
       achievements: []
     };
   }
 
-  window.SparkSuiteSessionEngine = SessionEngine;
+  window.SparkSuiteSessionEngineV2 = SessionEngine;
+  window.SparkSuiteSessionEngine = window.SparkSuiteSessionEngine || SessionEngine;
 })();

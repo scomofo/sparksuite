@@ -9,7 +9,8 @@
   };
 
   function registerContent(type, items){
-    if(!SparkContent[type]) SparkContent[type] = {};
+    items = Array.isArray(items) ? items : [];
+    SparkContent[type] = {};
     for(var i=0;i<items.length;i++){
       SparkContent[type][items[i].id] = items[i];
     }
