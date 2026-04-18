@@ -109,6 +109,10 @@ function getPracticeGoalMetrics() {
   };
 }
 
+function normalizePracticeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
 function getPracticeSummaryItemLabel(item) {
   var meta = item && item.meta ? item.meta : {};
   var label = prettyPracticeSummaryToken(item ? item.label : null);
@@ -367,7 +371,8 @@ function practiceTab(){
   // Guided Session CTA
   var gs=D.SESSIONS[S.guidedSession-1];
   if(gs){
-    var gsDone=S.completedGuidedSessions?S.completedGuidedSessions.length:0;
+    var completedGuidedSessions = normalizePracticeArray(S.completedGuidedSessions);
+    var gsDone=completedGuidedSessions.length;
     h+='<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
     h+='<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
     h+='<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
@@ -471,9 +476,10 @@ function practiceTab(){
   h+=customSetsSection();
 
   // Badges
+  var earnedBadges = normalizePracticeArray(S.earnedBadges);
   h+='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127942; Badges</h3><div style="display:flex;flex-wrap:wrap;gap:8px">';
   for(var i=0;i<BADGES.length;i++){
-    var b=BADGES[i],e=S.earnedBadges.indexOf(b.id)!==-1;
+    var b=BADGES[i],e=earnedBadges.indexOf(b.id)!==-1;
     h+='<div style="width:56px;text-align:center;opacity:'+(e?1:0.3)+'" aria-label="Badge: '+b.label+(e?" (earned)":" (locked)")+'"><div style="font-size:24px;filter:'+(e?"none":"grayscale(1)")+'">'+b.icon+'</div><div style="font-size:8px;color:var(--text-label);font-weight:600">'+b.label+'</div></div>';
   }
   h+='</div></div>';
@@ -492,6 +498,8 @@ function practiceTab(){
 function customSetsSection(){
   var inst = getPracticePageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
+  var customSets = normalizePracticeArray(S.customSets);
+  var customSetChords = normalizePracticeArray(S.customSetChords);
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
   if(S.editingSet){
@@ -502,18 +510,18 @@ function customSetsSection(){
     for(var l=1;l<=S.level;l++){
       var cs=D.CHORDS[l]||[];
       for(var i=0;i<cs.length;i++){
-        var c=cs[i],sel=S.customSetChords.indexOf(c.name)!==-1;
+        var c=cs[i],sel=customSetChords.indexOf(c.name)!==-1;
         h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'toggleSetChord\',\'"+c.name+"\')")+'>'+c.short+'</span>';
       }
     }
     h+='</div>';
-    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(S.customSetChords.length<2||!S.customSetName.trim()?';opacity:0.5':'')+'">'+(S.editingSetIdx>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
+    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(customSetChords.length<2||!S.customSetName.trim()?';opacity:0.5':'')+'">'+(S.editingSetIdx>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
   } else {
-    if(S.customSets.length===0){
+    if(customSets.length===0){
       h+='<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Create custom chord groups to practice together.</p>';
     } else {
-      for(var i=0;i<S.customSets.length;i++){
-        var cs=S.customSets[i];
+      for(var i=0;i<customSets.length;i++){
+        var cs=customSets[i];
         h+='<div class="set-card mb12"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.name)+'</h4><div style="display:flex;gap:6px">';
         h+='<button onclick="act(\'drillCustomSet\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Start drill with '+escHTML(cs.name)+'">&#9889; Drill</button>';
         h+='<button onclick="act(\'editSet\',\''+i+'\')" style="background:var(--input-bg);color:var(--text-muted);padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Edit set">&#9998;</button>';
