@@ -32,6 +32,11 @@ function pianoNormalizeEditorItemId(value){
   return text;
 }
 
+function pianoNormalizeEditorNumber(value, fallback){
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function pianoEditorPage(){
   var obj = S.editorObject;
   var h = '';
@@ -109,8 +114,9 @@ function renderEditorObjectSummary(obj){
 /* Timeline toolbar (handoff 9) */
 function renderEditorTimelineToolbar(obj){
   var h = '<div class="card mb16">';
+  var playheadSec = pianoNormalizeEditorNumber(S.editorPlayheadSec, 0);
   h += '<div class="mb8"><b>Timeline</b></div>';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(pianoFirstEditorTextToken(S.editorGridDivision, "1/4"))+'</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+playheadSec.toFixed(2)+'s \u00b7 Grid: '+escHTML(pianoFirstEditorTextToken(S.editorGridDivision, "1/4"))+'</div>';
   h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
   h += '<button class="btn" onclick="act(\'editorPlayheadLeft\')">\u25C0</button>';
   h += '<button class="btn" onclick="act(\'editorPlayheadRight\')">\u25B6</button>';
@@ -159,10 +165,10 @@ function renderEditorItemsList(obj){
 
 function getEditorItemSummary(kind, item){
   if(kind==="event"){
-    return pianoFirstEditorTextToken(item.type, "event") + " @ " + (item.t || 0);
+    return pianoFirstEditorTextToken(item.type, "event") + " @ " + pianoNormalizeEditorNumber(item.t, 0);
   }
   if(kind==="phrase"){
-    return pianoFirstEditorTextToken(item.name, "phrase") + " \u00b7 " + (item.startSec || 0) + " \u2192 " + (item.endSec || 0);
+    return pianoFirstEditorTextToken(item.name, "phrase") + " \u00b7 " + pianoNormalizeEditorNumber(item.startSec, 0) + " \u2192 " + pianoNormalizeEditorNumber(item.endSec, 0);
   }
   if(kind==="step"){
     return pianoFirstEditorTextToken(item.chord, item.note, item.type, "step");
