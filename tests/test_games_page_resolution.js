@@ -85,4 +85,16 @@ test("runnerGamePage ignores stale target and obstacle labels", function() {
   assert.ok(html.indexOf(">null<") === -1);
 });
 
+test("games pages ignore malformed cached BPM values", function() {
+  S.rhythmBpm = "NaN";
+  S.progBpm = { bpm: 1 };
+  S.progChords = ["C"];
+  var rhythmHtml = rhythmTab();
+  var buildHtml = buildTab();
+  assert.ok(rhythmHtml.indexOf(">90</div><div style=\"font-size:10px;color:var(--text-muted)\">BPM</div>") >= 0);
+  assert.ok(rhythmHtml.indexOf("NaN") === -1);
+  assert.ok(buildHtml.indexOf(">80</div><div style=\"font-size:10px;color:var(--text-muted)\">BPM</div>") >= 0);
+  assert.ok(buildHtml.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

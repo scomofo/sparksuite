@@ -118,4 +118,11 @@ test("victory lap ignores stale finger check text", function() {
   assert.ok(html.indexOf(">null<") === -1);
 });
 
+test("piano session page ignores malformed BPM values", function() {
+  S.sessionPlan.bpm = "NaN";
+  var html = pianoSessionPage();
+  assert.ok(html.indexOf("Level 1 • 80 BPM") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

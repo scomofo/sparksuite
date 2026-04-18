@@ -25,6 +25,14 @@ function pianoFirstGameTextToken() {
   return "";
 }
 
+function pianoNormalizeGameBpm(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  numeric = Math.round(numeric);
+  if (numeric <= 0) return fallback;
+  return numeric;
+}
+
 function pianoGamesTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -195,6 +203,7 @@ function earTrainTab() {
 
 // ── Rhythm Game ──
 function rhythmTab() {
+  var rhythmBpm = pianoNormalizeGameBpm(S.bpm, 90);
   var html = '<div class="card"><h2>Rhythm Game</h2>';
   if (S.rhythmActive) {
     html += '<div class="rhythm-display">';
@@ -209,8 +218,8 @@ function rhythmTab() {
     html += '</div>';
   } else {
     html += '<p>Hit the beat in time with the music!</p>';
-    html += '<div class="setting-row"><label>BPM: ' + S.bpm + '</label>';
-    html += '<input type="range" min="60" max="180" value="' + S.bpm + '" onchange="act(\'set_bpm\', this.value)"/></div>';
+    html += '<div class="setting-row"><label>BPM: ' + rhythmBpm + '</label>';
+    html += '<input type="range" min="60" max="180" value="' + rhythmBpm + '" onchange="act(\'set_bpm\', this.value)"/></div>';
     html += '<button class="btn" onclick="act(\'start_rhythm\')">Start Game</button>';
   }
   html += '</div>';

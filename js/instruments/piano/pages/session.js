@@ -22,15 +22,25 @@ function pianoFirstSessionTextToken() {
   return "";
 }
 
+function pianoNormalizeSessionBpm(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  numeric = Math.round(numeric);
+  if (numeric <= 0) return fallback;
+  return numeric;
+}
+
 function pianoSessionPage() {
   var plan = S.sessionPlan;
+  var planBpm;
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
+  planBpm = pianoNormalizeSessionBpm(plan.bpm, 80);
 
   var html = '<div class="session-screen">';
 
   // Session header
   html += '<div class="session-title">Session ' + plan.num + ': ' + escHTML(pianoFirstSessionTextToken(plan.title, "Guided session")) + '</div>';
-  html += '<div class="session-subtitle">Level ' + plan.level + ' \u2022 ' + plan.bpm + ' BPM</div>';
+  html += '<div class="session-subtitle">Level ' + plan.level + ' \u2022 ' + planBpm + ' BPM</div>';
 
   // Step indicator
   html += sessionStepIndicator(S.sessionStep);

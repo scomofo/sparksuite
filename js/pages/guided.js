@@ -44,6 +44,14 @@ function firstGuidedTextToken() {
   return "";
 }
 
+function normalizeGuidedBpm(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  numeric = Math.round(numeric);
+  if (numeric <= 0) return fallback;
+  return numeric;
+}
+
 function guidedStepIndicator(step) {
   var steps = [
     {id:"spark",label:"Spark",icon:"&#10024;"},
@@ -93,13 +101,15 @@ function guidedSessionPage() {
   var guidedView = getGuidedSessionView();
   var plan = guidedView.plan;
   var guidedStep = guidedView.guidedStep;
+  var guidedBpm;
   if (!plan) return '<div class="card text-center"><p>No session loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
   var guidedTitle = firstGuidedTextToken(plan.title, plan.id, "Guided session");
+  guidedBpm = normalizeGuidedBpm(plan.bpm, 80);
 
   var h = '<div class="text-center">';
   h += '<button class="back-btn" onclick="if(confirm(\'End session early?\'))act(\'guidedStop\')">&#8592; Exit</button>';
   h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + plan.bpm + ' BPM</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
 
   h += guidedStepIndicator(guidedStep);
 
@@ -167,6 +177,7 @@ function _guidedNewMove(plan) {
   var UI = inst && inst.ui ? inst.ui : {};
   var guidedView = getGuidedSessionView();
   var newMoveText = firstGuidedTextToken(plan.newMove && plan.newMove.text, "Practice the new move slowly and cleanly.");
+  var guidedBpm = normalizeGuidedBpm(plan && plan.bpm, 80);
   if (!plan.newMove) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FF6B6B;font-weight:800">&#127919; New Move</h3>';
@@ -205,7 +216,7 @@ function _guidedNewMove(plan) {
         h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:8px">&#128264; Listen</button><br>';
       }
       if (plan.newMove.strum) {
-        h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Strum: <strong>' + escHTML(plan.newMove.strum) + '</strong> at ' + plan.bpm + ' BPM</div>';
+        h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Strum: <strong>' + escHTML(plan.newMove.strum) + '</strong> at ' + guidedBpm + ' BPM</div>';
       }
       h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">I Can Play It &#8594;</button>';
       break;

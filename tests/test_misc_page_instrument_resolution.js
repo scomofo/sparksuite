@@ -271,4 +271,22 @@ test("statsTab ignores malformed shared history and transition metrics", functio
   assert.ok(html.indexOf("0.0s") >= 0);
 });
 
+test("shared helpers ignore malformed drill and strum BPM values", function() {
+  __elements["drill-timer-ring"] = makeElement();
+  __elements["drill-switch-count"] = makeElement();
+  __elements["drill-adaptive-bpm"] = makeElement();
+  S.drillTimer = 25;
+  S.drillSwitches = 4;
+  S.drillAdaptiveBpm = "NaN";
+  global.STRUM_PATTERNS = [{ name: "Groove", desc: "Steady", bpm: "NaN", pattern: ["D", "U"] }];
+  S.sessions = 0;
+
+  assert.strictEqual(updateDrillTimerUI(), true);
+  assert.strictEqual(__elements["drill-adaptive-bpm"].textContent, "0");
+
+  var html = strumTrackCard();
+  assert.ok(html.indexOf("-- BPM") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

@@ -43,6 +43,14 @@ function _firstGamesTextToken(){
   return "";
 }
 
+function _normalizeGamesBpm(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  numeric = Math.round(numeric);
+  if (numeric <= 0) return fallback;
+  return numeric;
+}
+
 // ===== RHYTHM GAME TAB =====
 function getLegacyRhythmRuntime(){
   var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
@@ -62,13 +70,14 @@ function getLegacyRhythmRuntime(){
 
 function rhythmTab(){
   var runtime = getLegacyRhythmRuntime();
+  var rhythmBpm = _normalizeGamesBpm(S.rhythmBpm, 90);
   if(runtime.results)return rhythmResultsPage();
   if(runtime.active)return rhythmGamePage();
   var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Game &#129345;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Tap in time with the beat!</p>';
   h+='<div class="card"><div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
-  h+='<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px"><button onclick="act(\'rhythmBpm\',\''+(S.rhythmBpm-10)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">-</button>';
-  h+='<div style="text-align:center;min-width:60px"><div style="font-size:24px;font-weight:900;color:var(--text-primary)">'+S.rhythmBpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
-  h+='<button onclick="act(\'rhythmBpm\',\''+(S.rhythmBpm+10)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">+</button></div>';
+  h+='<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px"><button onclick="act(\'rhythmBpm\',\''+(rhythmBpm-10)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">-</button>';
+  h+='<div style="text-align:center;min-width:60px"><div style="font-size:24px;font-weight:900;color:var(--text-primary)">'+rhythmBpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
+  h+='<button onclick="act(\'rhythmBpm\',\''+(rhythmBpm+10)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">+</button></div>';
   h+='<button class="btn" onclick="act(\'startRhythm\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Start!</button>';
   h+='</div></div>';
   return h;
@@ -242,6 +251,7 @@ function buildTab(){
   var inst = getGamesPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
+  var progBpm = _normalizeGamesBpm(S.progBpm, 80);
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Progression Builder &#128295;</h2><p style="color:var(--text-dim);font-size:13px">Build and play chord progressions</p></div>';
 
   // Progression display
@@ -323,9 +333,9 @@ function buildTab(){
 
   // Controls
   h+='<div class="card"><div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">';
-  h+='<button onclick="act(\'progBpm\',\''+(S.progBpm-5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">-</button>';
-  h+='<div style="text-align:center;min-width:60px"><div style="font-size:20px;font-weight:900;color:var(--text-primary)">'+S.progBpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
-  h+='<button onclick="act(\'progBpm\',\''+(S.progBpm+5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">+</button></div>';
+  h+='<button onclick="act(\'progBpm\',\''+(progBpm-5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">-</button>';
+  h+='<div style="text-align:center;min-width:60px"><div style="font-size:20px;font-weight:900;color:var(--text-primary)">'+progBpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
+  h+='<button onclick="act(\'progBpm\',\''+(progBpm+5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">+</button></div>';
   var canPlay=S.progChords.length>=2;
   h+='<div style="display:flex;gap:10px;justify-content:center">';
   h+='<button class="btn" onclick="act(\'progPlay\')" style="background:'+(S.progPlaying?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(S.progPlaying?"var(--text-primary)":"#fff")+';opacity:'+(canPlay?1:0.5)+'">'+(S.progPlaying?"&#9632; Stop":"&#9654; Play")+'</button>';

@@ -36,6 +36,20 @@ function getLegacyChordDetectRuntime(){
   };
 }
 
+function normalizeSharedNumber(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  return numeric;
+}
+
+function formatSharedBpm(value, fallback) {
+  var bpm = normalizeSharedNumber(value, null);
+  if (bpm == null) return fallback;
+  bpm = Math.round(bpm);
+  if (bpm <= 0) return fallback;
+  return String(bpm);
+}
+
 // Build chord check inner HTML (shared by sessionPage and updateChordCheckUI)
 function _buildChordCheckInner(exp){
   var runtime=getLegacyChordDetectRuntime();
@@ -132,7 +146,7 @@ function updateDrillTimerUI(){
   if(!timerEl)return false;
   if(timerEl)timerEl.innerHTML=ringHTML((1-S.drillTimer/60)*100,70,6,"#FF6B6B",'<div style="font-size:18px;font-weight:900;color:var(--text-primary)">'+S.drillTimer+'s</div>',"Drill timer");
   if(switchEl)switchEl.textContent=S.drillSwitches;
-  if(bpmEl)bpmEl.textContent=S.drillAdaptiveBpm;
+  if(bpmEl)bpmEl.textContent=formatSharedBpm(S.drillAdaptiveBpm, "0");
   return true;
 }
 
@@ -241,7 +255,7 @@ function strumTrackCard(){
   h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
   h+='<div style="flex:1">';
   h+='<div style="font-size:14px;font-weight:700;color:#4ECDC4;margin-bottom:2px">'+sp.name+'</div>';
-  h+='<div style="font-size:12px;color:var(--text-muted)">'+sp.desc+' &bull; '+sp.bpm+' BPM</div>';
+  h+='<div style="font-size:12px;color:var(--text-muted)">'+sp.desc+' &bull; '+formatSharedBpm(sp.bpm, "--")+' BPM</div>';
   h+='</div>';
   h+='<button onclick="act(\'tab\',\'strum\')" style="padding:8px 14px;border-radius:12px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">Practice</button>';
   h+='</div>';
