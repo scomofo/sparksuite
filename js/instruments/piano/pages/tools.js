@@ -88,6 +88,7 @@ function statsTab() {
   var xp = pianoToolsDisplayCount(S.xp, 0);
   var streak = pianoToolsDisplayCount(S.streak, 0);
   var level = pianoToolsDisplayLevel(S.level);
+  var completedSessions = Array.isArray(S.completedSessions) ? S.completedSessions : [];
   var history = Array.isArray(S.history) ? S.history : [];
   var personalBestBpm = pianoToolsFiniteNumber(S.personalBests && S.personalBests.bpm);
   var personalBestStreak = pianoToolsFiniteNumber(S.personalBests && S.personalBests.streak);
@@ -98,7 +99,7 @@ function statsTab() {
   html += '<div class="stats-grid">';
   html += '<div class="stat-item"><div class="stat-val">' + xp + '</div><div class="stat-label">XP</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + streak + '</div><div class="stat-label">Streak</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.completedSessions ? S.completedSessions.length : 0) + '</div><div class="stat-label">Sessions</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + completedSessions.length + '</div><div class="stat-label">Sessions</div></div>';
   html += '<div class="stat-item"><div class="stat-val">' + level + '/8</div><div class="stat-label">Level</div></div>';
   html += '</div>';
 
