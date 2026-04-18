@@ -146,6 +146,8 @@ function tunerTab(){
         h+='<div style="padding:0 14px 10px">';
         h+='<div style="background:var(--prog-bg);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px"><div id="audio-test-meter" style="height:100%;width:'+audioRuntime.testLevel+'%;background:'+(audioRuntime.testLevel>10?"#4ECDC4":"var(--text-muted)")+';border-radius:6px;transition:width .1s"></div></div>';
         h+='<div id="audio-test-label" style="font-size:11px;font-weight:600;color:'+(audioRuntime.testLevel>10?"#4ECDC4":"var(--text-muted)")+'">'+( audioRuntime.testLevel>10?"Signal detected — strum to confirm":"Listening — strum your guitar...")+'</div>';
+        h = h.replace("Signal detected — strum to confirm", "Signal detected - play to confirm");
+        h = h.replace("Listening — strum your guitar...", "Listening - play your instrument...");
         h+='</div>';
       }
       h+='</div>';
@@ -373,7 +375,7 @@ function guideTab(){
     ["\uD83C\uDFB5","Songs","Play along with real songs using chord progressions"],
     ["\uD83E\uDD41","Rhythm","Tap-based rhythm game to improve your timing"],
     ["\uD83D\uDD27","Build","Create and play custom chord progressions"],
-    ["\uD83C\uDFA4","Tuner","Tune your guitar with the built-in mic tuner"],
+    ["\uD83C\uDFA4","Tuner","Tune your instrument with the built-in mic tuner"],
     ["\uD83D\uDCCA","Stats","Track your practice history and view analytics"]];
   for(var i=0;i<feats.length;i++)
     h+='<div style="display:flex;align-items:flex-start;gap:10px"><div style="font-size:18px;min-width:28px;text-align:center">'+feats[i][0]+'</div><div><div style="font-weight:700;color:var(--text-primary);font-size:13px">'+feats[i][1]+'</div><div style="font-size:12px;color:var(--text-dim)">'+feats[i][2]+'</div></div></div>';
