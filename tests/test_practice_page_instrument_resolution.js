@@ -332,6 +332,52 @@ test("customSetsSection ignores stale sentinel set names in the editor input", f
   assert.ok(html.indexOf('id="set-name-input"') >= 0);
 });
 
+test("practicePage and customSetsSection ignore malformed shared collections", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: { broken: true },
+    customSetChords: "broken",
+    earnedBadges: { broken: true },
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: { broken: true },
+    editingSet: false
+  };
+  global.getPracticePageInstrument = function() {
+    return {
+      getData: function() {
+        return {
+          LC: { 1: "#3366ff" },
+          LN: { 1: "First Keys" },
+          CURRICULUM: [{ num: 1, title: "First Keys", desc: "Foundations", icon: "\uD83C\uDFB9", tip: "" }],
+          CHORDS: { 1: [] },
+          SESSIONS: [{ num: 1, title: "Warmup", level: 1 }],
+          BADGES: [{ id: "starter", label: "Starter", icon: "\uD83C\uDFC5" }],
+          ALL_CHORDS: [{ name: "C" }]
+        };
+      },
+      ui: { chord: function() { return "<div>Chord</div>"; } }
+    };
+  };
+
+  var sectionHtml = customSetsSection();
+  var pageHtml = practicePage();
+  assert.ok(sectionHtml.indexOf("Create custom chord groups to practice together.") >= 0);
+  assert.ok(pageHtml.indexOf("Today's Practice Plan") >= 0);
+  assert.ok(pageHtml.indexOf("No practice plan yet.") >= 0);
+});
+
 test("practicePage derives readable fallback labels and subtitles for sparse plan items", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
