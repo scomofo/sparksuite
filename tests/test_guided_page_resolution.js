@@ -123,4 +123,24 @@ test("guided pages ignore malformed cached BPM values", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("guided done page ignores malformed completion counters", function() {
+  S.streak = "NaN";
+  S.completedGuidedSessions = { broken: true };
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: { guidedStep: "spark" },
+      lastSessionOutcome: { xpAwarded: "NaN" }
+    };
+  };
+  var html = guidedDonePage();
+  assert.ok(html.indexOf("+30") >= 0);
+  assert.ok(html.indexOf("&#128293;0") >= 0);
+  assert.ok(html.indexOf(">0/22<") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

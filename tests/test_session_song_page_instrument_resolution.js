@@ -163,6 +163,29 @@ test("sessionPage ignores malformed metronome and drill BPM values", function() 
   assert.ok(drillHtml.indexOf("NaN") === -1);
 });
 
+test("completePage ignores malformed XP and streak counters", function() {
+  S.xpToast = { amount: "NaN" };
+  S.streak = "NaN";
+  S.chordProgress = { C: "NaN" };
+
+  var html = completePage();
+  assert.ok(html.indexOf("+10") >= 0);
+  assert.ok(html.indexOf("&#128293;0") >= 0);
+  assert.ok(html.indexOf(">0%</div>") >= 0 || html.indexOf(">0%<") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
+test("quizPage ignores malformed cached score counters", function() {
+  S.quizScore = "NaN";
+  S.quizTotal = "NaN";
+  S.quizStreak = "NaN";
+
+  var html = quizPage();
+  assert.ok(html.indexOf(">0/0<") >= 0);
+  assert.ok(html.indexOf("&#128293;<span style=\"font-weight:700;color:#FF6B6B\">0</span>") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("songDetailPage and songDonePage ignore stale song copy tokens", function() {
   S.selectedSong = {
     id: "moonlight_sonata",

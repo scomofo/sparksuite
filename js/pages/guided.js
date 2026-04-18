@@ -52,6 +52,12 @@ function normalizeGuidedBpm(value, fallback) {
   return numeric;
 }
 
+function normalizeGuidedCount(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  return Math.round(numeric);
+}
+
 function guidedStepIndicator(step) {
   var steps = [
     {id:"spark",label:"Spark",icon:"&#10024;"},
@@ -291,15 +297,17 @@ function guidedDonePage() {
   var lastOutcome = coreView && coreView.lastSessionOutcome ? coreView.lastSessionOutcome : null;
   var title = plan ? firstGuidedTextToken(plan.title, plan.id, "Guided session") : "";
   var num = plan ? plan.num : 0;
-  var xpAwarded = lastOutcome && typeof lastOutcome.xpAwarded === "number" ? lastOutcome.xpAwarded : 30;
+  var xpAwarded = normalizeGuidedCount(lastOutcome && lastOutcome.xpAwarded, 30);
+  var streak = normalizeGuidedCount(S.streak, 0);
+  var completedSessions = Array.isArray(S.completedGuidedSessions) ? S.completedGuidedSessions.length : 0;
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127881;</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Session ' + num + ' Complete!</h2>';
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(title) + '</p>';
   h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + S.streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + (S.completedGuidedSessions ? S.completedGuidedSessions.length : 0) + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
   h += '</div></div>';
   h += '<div class="flex-col"><button class="btn" onclick="act(\'guidedStart\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';

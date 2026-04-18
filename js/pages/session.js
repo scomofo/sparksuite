@@ -204,8 +204,11 @@ function completePage(){
   var inst = getSessionPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
   var runtime = getLegacySessionRuntime(D);
-  var n=runtime.chord?runtime.chord.name:"",p=S.chordProgress[n]||0;
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+(S.xpToast&&S.xpToast.amount?S.xpToast.amount:10)+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+S.streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="flex-col"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
+  var n=runtime.chord?runtime.chord.name:"";
+  var p=normalizeSessionNumber(S.chordProgress[n], 0);
+  var xpAmount = normalizeSessionNumber(S.xpToast && S.xpToast.amount, 10);
+  var streak = normalizeSessionNumber(S.streak, 0);
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+xpAmount+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="flex-col"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
 }
 
 function drillPage(){
@@ -266,9 +269,9 @@ function quizPage(){
   var quizQuestion = S.quizQ || (runtime && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : null);
   var quizOptions = Array.isArray(S.quizOpts) && S.quizOpts.length ? S.quizOpts : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
   var quizAnswer = typeof S.quizAns === "string" ? S.quizAns : (runtime ? runtime.legacyQuizAnswer : null);
-  var quizScore = typeof S.quizScore === "number" ? S.quizScore : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
-  var quizTotal = typeof S.quizTotal === "number" ? S.quizTotal : (runtime && typeof runtime.legacyQuizTotal === "number" ? runtime.legacyQuizTotal : 0);
-  var quizStreak = typeof S.quizStreak === "number" ? S.quizStreak : (runtime && typeof runtime.legacyQuizStreak === "number" ? runtime.legacyQuizStreak : 0);
+  var quizScore = normalizeSessionNumber(S.quizScore, normalizeSessionNumber(runtime && runtime.legacyQuizScore, 0));
+  var quizTotal = normalizeSessionNumber(S.quizTotal, normalizeSessionNumber(runtime && runtime.legacyQuizTotal, 0));
+  var quizStreak = normalizeSessionNumber(S.quizStreak, normalizeSessionNumber(runtime && runtime.legacyQuizStreak, 0));
   if(!quizQuestion)return '';
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'quiz\')">&#8592; Back</button><div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+quizScore+'/'+quizTotal+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+quizStreak+'</span></div></div>';
   h+='<h2 style="font-size:28px;font-weight:900;color:var(--text-primary);margin:8px 0 4px">Which is...</h2><div style="font-size:36px;font-weight:900;color:#FF6B6B;margin-bottom:16px">'+quizQuestion.name+'?</div>';
