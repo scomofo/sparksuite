@@ -31,6 +31,11 @@ function prettyAnalyticsToken(value){
   return text;
 }
 
+function normalizeAnalyticsNumber(value, fallback){
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function renderAnalyticsWeaknesses(summary){
   var h = '<div class="card mb16">';
   h += '<div class="mb8"><b>Weakest Skills</b></div>';
@@ -42,7 +47,7 @@ function renderAnalyticsWeaknesses(summary){
     for(var i=0;i<summary.weakestTransitions.length;i++){
       var t = summary.weakestTransitions[i];
       var transitionLabel = prettyAnalyticsToken(t && t.label) || "Transition";
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(transitionLabel)+' \u00b7 '+(t.avgMs||0)+' ms</div>';
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(transitionLabel)+' \u00b7 '+normalizeAnalyticsNumber(t && t.avgMs, 0)+' ms</div>';
     }
   }
 
@@ -52,7 +57,7 @@ function renderAnalyticsWeaknesses(summary){
     for(var j=0;j<summary.weakestSongs.length;j++){
       var s = summary.weakestSongs[j];
       var songLabel = prettyAnalyticsToken(s && s.label) || "Song";
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(songLabel)+' \u00b7 '+(s.accuracy||0)+'%</div>';
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(songLabel)+' \u00b7 '+normalizeAnalyticsNumber(s && s.accuracy, 0)+'%</div>';
     }
   }
 
@@ -62,7 +67,7 @@ function renderAnalyticsWeaknesses(summary){
     for(var k=0;k<summary.weakestPhrases.length;k++){
       var p = summary.weakestPhrases[k];
       var phraseLabel = prettyAnalyticsToken(p && p.label) || "Phrase";
-      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(phraseLabel)+' \u00b7 '+(p.accuracy||0)+'%</div>';
+      h += '<div style="font-size:13px;margin-bottom:6px">'+escHTML(phraseLabel)+' \u00b7 '+normalizeAnalyticsNumber(p && p.accuracy, 0)+'%</div>';
     }
   }
 
@@ -112,9 +117,9 @@ function renderAnalyticsConsistency(summary){
   var c = summary.practiceConsistency || {};
   var h = '<div class="card mb16">';
   h += '<div class="mb8"><b>Practice Consistency</b></div>';
-  h += '<div style="font-size:13px;margin-bottom:6px">Streak: '+(c.streak||0)+'</div>';
-  h += '<div style="font-size:13px;margin-bottom:6px">Sessions: '+(c.sessions||0)+'</div>';
-  h += '<div style="font-size:13px;margin-bottom:6px">History Entries: '+(c.historyCount||0)+'</div>';
+  h += '<div style="font-size:13px;margin-bottom:6px">Streak: '+normalizeAnalyticsNumber(c.streak, 0)+'</div>';
+  h += '<div style="font-size:13px;margin-bottom:6px">Sessions: '+normalizeAnalyticsNumber(c.sessions, 0)+'</div>';
+  h += '<div style="font-size:13px;margin-bottom:6px">History Entries: '+normalizeAnalyticsNumber(c.historyCount, 0)+'</div>';
   h += '</div>';
   return h;
 }

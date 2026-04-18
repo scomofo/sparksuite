@@ -64,5 +64,39 @@ test("analyticsPage ignores sentinel recommendation labels and reasons", functio
   assert.strictEqual(html.indexOf("NaN"), -1);
 });
 
+test("analyticsPage ignores malformed numeric metrics", function() {
+  global.buildAnalyticsSummary = function() {
+    return {
+      weakestTransitions: [
+        { label: "Slow change", avgMs: "NaN" }
+      ],
+      weakestSongs: [
+        { label: "Song A", accuracy: "NaN" }
+      ],
+      weakestPhrases: [
+        { label: "Phrase A", accuracy: { broken: true } }
+      ],
+      strongestSkills: [],
+      recentImprovement: [],
+      practiceConsistency: {
+        streak: "NaN",
+        sessions: { broken: true },
+        historyCount: []
+      },
+      recommendations: []
+    };
+  };
+
+  global.eval(loadJS("js/pages/analytics.js"));
+
+  var html = analyticsPage();
+  assert.strictEqual(html.indexOf("NaN"), -1);
+  assert.ok(html.indexOf("0 ms") >= 0);
+  assert.ok(html.indexOf("0%") >= 0);
+  assert.ok(html.indexOf("Streak: 0") >= 0);
+  assert.ok(html.indexOf("Sessions: 0") >= 0);
+  assert.ok(html.indexOf("History Entries: 0") >= 0);
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);
