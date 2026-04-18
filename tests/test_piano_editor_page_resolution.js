@@ -84,4 +84,13 @@ test("pianoEditorPage ignores malformed playhead and item timing values", functi
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("pianoEditorPage ignores malformed BPM values", function() {
+  global.S.editorObject.bpm = "NaN";
+
+  var html = pianoEditorPage();
+
+  assert.ok(html.indexOf('type="number" value="80"') >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
