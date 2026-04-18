@@ -68,7 +68,7 @@ function pianoEditorPage(){
     h += '<input class="set-input mb8" value="'+escHTML(pianoFirstEditorTextToken(obj.artist))+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
   }
   if(obj.bpm !== undefined){
-    h += '<input class="set-input mb8" type="number" value="'+(obj.bpm || 80)+'" oninput="act(\'editorField\',\'bpm|\' + this.value)"/>';
+    h += '<input class="set-input mb8" type="number" value="'+pianoNormalizeEditorNumber(obj.bpm, 80)+'" oninput="act(\'editorField\',\'bpm|\' + this.value)"/>';
   }
   h += '</div>';
 
