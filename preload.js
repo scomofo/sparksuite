@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('electron', {
 
 contextBridge.exposeInMainWorld('sparkDesktop', {
   saveJson: function(payload) { return ipcRenderer.invoke('save-json', payload); },
-  openJson: function() { return ipcRenderer.invoke('open-json'); },
+  openJson: function(options) { return ipcRenderer.invoke('open-json', options || null); },
   getAppInfo: function() { return ipcRenderer.invoke('get-app-info'); },
   checkForUpdates: function() { return ipcRenderer.invoke('check-for-updates'); }
 });

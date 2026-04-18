@@ -12,10 +12,13 @@ function registerDialogs() {
     return { ok: true, path: result.filePath };
   });
 
-  ipcMain.handle('open-json', async () => {
+  ipcMain.handle('open-json', async (_, options) => {
+    options = options || {};
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
-      filters: [{ name: 'JSON', extensions: ['json', 'mid', 'midi'] }]
+      filters: Array.isArray(options.filters) && options.filters.length
+        ? options.filters
+        : [{ name: 'JSON', extensions: ['json', 'mid', 'midi'] }]
     });
     if (result.canceled || !result.filePaths.length) return { ok: false };
     const filePath = result.filePaths[0];
