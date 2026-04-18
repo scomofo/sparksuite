@@ -105,6 +105,35 @@ test("piano song library list ignores stale row labels and still filters safely"
   assert.ok(html.indexOf("null") === -1);
 });
 
+test("piano song library ignores malformed BPM values", function() {
+  S.songIdx = null;
+  global.getPianoPageInstrument = function() {
+    return {
+      getData: function() {
+        return {
+          SONGS: [
+            {
+              id: "midnight_groove",
+              title: "Moonlight",
+              artist: "Suite",
+              level: 2,
+              bpm: "NaN",
+              chords: ["C"],
+              progression: ["C"]
+            }
+          ],
+          CURRICULUM: [{ icon: "I" }, { icon: "II" }]
+        };
+      }
+    };
+  };
+
+  pianoSongsTab();
+  var html = songLibrary();
+  assert.ok(html.indexOf("-- BPM") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("piano stems player ignores malformed stem volume values", function() {
   global.window.electron = {};
   S.stemStatus = "ready";

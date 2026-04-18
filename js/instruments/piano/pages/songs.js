@@ -39,6 +39,12 @@ function pianoNormalizeSongPageNumber(value, fallback) {
   return isFinite(num) ? num : fallback;
 }
 
+function pianoFormatSongPageBpm(value, fallback) {
+  var bpm = pianoNormalizeSongPageNumber(value, null);
+  if (bpm == null) return fallback;
+  return String(Math.round(bpm));
+}
+
 function pianoSongListTitle(song) {
   return pianoFirstSongPageTextToken(song && song.title, song && song.id, "Song");
 }
@@ -92,7 +98,7 @@ function songLibrary() {
     var songArtist = pianoFirstSongPageTextToken(song.artist, "Unknown Artist");
     html += '<div class="song-detail">';
     html += '<h3>' + escHTML(songTitle) + '</h3>';
-    html += '<div class="text-muted">' + escHTML(songArtist) + ' \u2022 Level ' + song.level + '</div>';
+    html += '<div class="text-muted">' + escHTML(songArtist) + ' \u2022 Level ' + song.level + ' \u2022 ' + pianoFormatSongPageBpm(song.bpm, "--") + ' BPM</div>';
     html += '<div class="song-chords">';
     song.chords.forEach(function(ch) {
       var chord = findChord(ch);
@@ -182,7 +188,7 @@ function songLibrary() {
           var songArtist = pianoSongListArtist(s);
           html += pianoClickableDiv(
             locked ? '' : "act('select_song'," + idx + ")",
-            '<div class="song-row-inner"><span>' + (done ? "\u2705 " : "") + escHTML(songTitle) + '</span><span class="text-muted">' + escHTML(songArtist) + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
+            '<div class="song-row-inner"><span>' + (done ? "\u2705 " : "") + escHTML(songTitle) + '</span><span class="text-muted">' + escHTML(songArtist) + ' \u2022 ' + pianoFormatSongPageBpm(s.bpm, "--") + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
             "song-row" + (locked ? " locked" : "")
           );
         });
@@ -199,7 +205,7 @@ function songLibrary() {
         var songArtist = pianoSongListArtist(s);
         html += pianoClickableDiv(
           locked ? '' : "act('select_song'," + idx + ")",
-          '<div class="song-row-inner"><span style="' + (locked ? 'opacity:0.4' : '') + '">' + (done ? "\u2705 " : "") + escHTML(songTitle) + '</span><span class="text-muted">' + escHTML(songArtist) + ' \u2022 Lvl ' + s.level + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
+          '<div class="song-row-inner"><span style="' + (locked ? 'opacity:0.4' : '') + '">' + (done ? "\u2705 " : "") + escHTML(songTitle) + '</span><span class="text-muted">' + escHTML(songArtist) + ' \u2022 Lvl ' + s.level + ' \u2022 ' + pianoFormatSongPageBpm(s.bpm, "--") + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
           "song-row" + (locked ? " locked" : "")
         );
       });
