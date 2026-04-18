@@ -203,6 +203,20 @@ test("tunerTab rehydrates an app-id-only active instrument shell", function() {
   assert.ok(html.indexOf("329.63Hz") >= 0);
 });
 
+test("tunerTab and guideTab use instrument-neutral shared copy", function() {
+  S.audioInputDevices = [{ id: "usb-1", name: "USB Interface" }];
+  S.audioTestingId = "usb-1";
+  S.audioTestLevel = 12;
+
+  var tunerHtml = tunerTab();
+  var guideHtml = guideTab();
+
+  assert.ok(tunerHtml.indexOf("Signal detected - play to confirm") >= 0);
+  assert.ok(tunerHtml.indexOf("strum your guitar") === -1);
+  assert.ok(guideHtml.indexOf("Tune your instrument with the built-in mic tuner") >= 0);
+  assert.ok(guideHtml.indexOf("Tune your guitar with the built-in mic tuner") === -1);
+});
+
 test("updateTunerUI rehydrates an app-id-only active instrument shell", function() {
   var strings = [];
   var i;
