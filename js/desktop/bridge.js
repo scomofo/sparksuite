@@ -25,9 +25,9 @@
     return false;
   }
 
-  async function openImportFileDesktopAware() {
+  async function openImportFileDesktopAware(options) {
     if (!isDesktopBuild()) return false;
-    var result = await window.sparkDesktop.openJson();
+    var result = await window.sparkDesktop.openJson(options || null);
     if (!result || !result.ok) return false;
     return result;
   }

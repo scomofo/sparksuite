@@ -14,6 +14,7 @@ function test(name, fn) {
 var handlers = {};
 var openDialogResult = { canceled: true, filePaths: [] };
 var files = {};
+var openDialogOptions = null;
 
 var fakeElectron = {
   ipcMain: {
@@ -22,7 +23,8 @@ var fakeElectron = {
     }
   },
   dialog: {
-    showOpenDialog: function() {
+    showOpenDialog: function(options) {
+      openDialogOptions = options;
       return Promise.resolve(openDialogResult);
     },
     showSaveDialog: function() {
@@ -68,6 +70,20 @@ console.log("=== Desktop Dialog Tests ===");
 
 test("registerDialogs installs open-json handler", function() {
   assert.strictEqual(typeof handlers["open-json"], "function");
+});
+
+test("open-json forwards caller-provided filters to the dialog", async function() {
+  openDialogResult = {
+    canceled: true,
+    filePaths: []
+  };
+  openDialogOptions = null;
+
+  await handlers["open-json"](null, {
+    filters: [{ name: "MIDI", extensions: ["mid", "midi"] }]
+  });
+
+  assert.deepStrictEqual(openDialogOptions.filters, [{ name: "MIDI", extensions: ["mid", "midi"] }]);
 });
 
 test("open-json returns text payload for json files", async function() {
