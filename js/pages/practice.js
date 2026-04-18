@@ -86,10 +86,15 @@ function normalizePracticeGoalNumber(value, fallback) {
   return typeof value === "number" && isFinite(value) ? value : fallback;
 }
 
+function normalizePracticeGoalReached(value) {
+  return value === true || value === 1 || value === "true" || value === "1";
+}
+
 function getPracticeGoalMetrics() {
   var dailyGoalMinutes = normalizePracticeGoalNumber(S.dailyGoalMinutes, 10);
   var todayPracticeSeconds = normalizePracticeGoalNumber(S.todayPracticeSeconds, 0);
   var goalStreak = normalizePracticeGoalNumber(S.goalStreak, 0);
+  var goalReachedToday = normalizePracticeGoalReached(S.goalReachedToday);
   var goalMins = Math.floor(todayPracticeSeconds / 60);
   var goalPct = dailyGoalMinutes > 0
     ? Math.min(100, Math.round((todayPracticeSeconds / (dailyGoalMinutes * 60)) * 100))
@@ -98,6 +103,7 @@ function getPracticeGoalMetrics() {
     dailyGoalMinutes: dailyGoalMinutes,
     todayPracticeSeconds: todayPracticeSeconds,
     goalStreak: goalStreak,
+    goalReachedToday: goalReachedToday,
     goalMins: goalMins,
     goalPct: goalPct
   };
@@ -285,7 +291,7 @@ function sv2HomeDashboard() {
   h += '<div class="sv2-ring__label" style="font-size:10px">' + goalPct + '%</div>';
   h += '</div>';
   h += '<div style="flex:1">';
-  h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (S.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + goalMetrics.dailyGoalMinutes + " min") + '</div>';
+  h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (goalMetrics.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + goalMetrics.dailyGoalMinutes + " min") + '</div>';
   h += '<div style="font-size:var(--text-micro);color:var(--text-muted)">' + goalMins + ' / ' + goalMetrics.dailyGoalMinutes + ' min today' + (goalMetrics.goalStreak > 0 ? " &middot; \uD83D\uDD25 " + goalMetrics.goalStreak + " day streak" : "") + '</div>';
   h += '</div></div>';
 
@@ -346,7 +352,7 @@ function practiceTab(){
   var practiceGoalMetrics = getPracticeGoalMetrics();
   var goalPct=practiceGoalMetrics.goalPct;
   var goalMins=practiceGoalMetrics.goalMins;
-  var h='<div class="card mb12"><div style="display:flex;align-items:center;gap:12px"><div class="flex-center">'+ringHTML(goalPct,56,5,S.goalReachedToday?"#4ECDC4":"#FF6B6B",'<div style="font-size:12px;font-weight:900;color:var(--text-primary)">'+goalMins+'m</div>',"Daily goal progress")+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">'+(S.goalReachedToday?"&#9989; Goal reached!":"Daily Goal: "+practiceGoalMetrics.dailyGoalMinutes+" min")+'</div><div style="font-size:11px;color:var(--text-muted)">'+goalMins+'/'+practiceGoalMetrics.dailyGoalMinutes+' min today'+(practiceGoalMetrics.goalStreak>0?" | &#128293; "+practiceGoalMetrics.goalStreak+" day streak":"")+'</div></div><div style="display:flex;gap:4px">';
+  var h='<div class="card mb12"><div style="display:flex;align-items:center;gap:12px"><div class="flex-center">'+ringHTML(goalPct,56,5,practiceGoalMetrics.goalReachedToday?"#4ECDC4":"#FF6B6B",'<div style="font-size:12px;font-weight:900;color:var(--text-primary)">'+goalMins+'m</div>',"Daily goal progress")+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">'+(practiceGoalMetrics.goalReachedToday?"&#9989; Goal reached!":"Daily Goal: "+practiceGoalMetrics.dailyGoalMinutes+" min")+'</div><div style="font-size:11px;color:var(--text-muted)">'+goalMins+'/'+practiceGoalMetrics.dailyGoalMinutes+' min today'+(practiceGoalMetrics.goalStreak>0?" | &#128293; "+practiceGoalMetrics.goalStreak+" day streak":"")+'</div></div><div style="display:flex;gap:4px">';
   var goals=[5,10,15,20,30];
   for(var i=0;i<goals.length;i++){
     h+='<button onclick="act(\'setGoal\',\''+goals[i]+'\')" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
