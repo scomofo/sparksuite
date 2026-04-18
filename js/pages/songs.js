@@ -73,6 +73,11 @@ function _normalizeSongsInputValue(value){
   return value;
 }
 
+function _normalizeSongsNumber(value, fallback){
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 // ===== STRUM TAB =====
 function strumTab(){
   var inst = getSongsPageInstrument();
@@ -489,9 +494,10 @@ function stemsPage(){
   // Volume
   h+='<div class="card">';
   h+='<div style="display:flex;align-items:center;gap:12px">';
+  var stemVolume = Math.max(0, Math.min(1, _normalizeSongsNumber(S.stemVolume, 1)));
   h+='<span style="font-size:16px">&#128266;</span>';
-  h+='<input type="range" min="0" max="1" step="0.05" value="'+S.stemVolume+'" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:#4ECDC4"/>';
-  h+='<span style="font-size:12px;color:var(--text-muted);font-weight:700;min-width:36px">'+Math.round(S.stemVolume*100)+'%</span>';
+  h+='<input type="range" min="0" max="1" step="0.05" value="'+stemVolume+'" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:#4ECDC4"/>';
+  h+='<span style="font-size:12px;color:var(--text-muted);font-weight:700;min-width:36px">'+Math.round(stemVolume*100)+'%</span>';
   h+='</div></div>';
 
   h+='</div>';

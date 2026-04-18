@@ -105,4 +105,16 @@ test("piano song library list ignores stale row labels and still filters safely"
   assert.ok(html.indexOf("null") === -1);
 });
 
+test("piano stems player ignores malformed stem volume values", function() {
+  global.window.electron = {};
+  S.stemStatus = "ready";
+  S.stemVolume = "NaN";
+  S.stemFile = { fileName: "mix.wav" };
+
+  var html = pianoStemsPlayerPage();
+  assert.ok(html.indexOf('value="1"') >= 0 || html.indexOf('value="1.0"') >= 0);
+  assert.ok(html.indexOf(">100%</span>") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
