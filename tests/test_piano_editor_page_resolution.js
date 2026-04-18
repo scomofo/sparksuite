@@ -69,4 +69,19 @@ test("pianoEditorPage ignores stale metadata and item labels", function() {
   assert.ok(html.indexOf("Grid: 1/4") >= 0);
 });
 
+test("pianoEditorPage ignores malformed playhead and item timing values", function() {
+  global.S.editorPlayheadSec = "NaN";
+  global.S.editorObject.events[0].t = "NaN";
+  global.S.editorObject.phrases[0].startSec = "NaN";
+  global.S.editorObject.phrases[0].endSec = { broken: true };
+
+  var html = pianoEditorPage();
+
+  assert.ok(html.indexOf("Playhead: 0.00s") >= 0);
+  assert.ok(html.indexOf("event @ 0") >= 0);
+  assert.ok(html.indexOf("phrase") >= 0);
+  assert.ok(html.indexOf("0 → 0") >= 0 || html.indexOf("0 â†’ 0") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
