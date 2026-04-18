@@ -29,6 +29,7 @@ function pianoPerformSongPage(){
 
   var sid = S.performSongId;
   var best = getPerformanceBest(sid, S.performArrangementType, S.performDifficulty);
+  var bestAccuracy = best ? pianoNormalizePerformanceNumber(best.bestAccuracy, 0) : 0;
   var mastery = getPerformanceMasteryLabel(best);
   var songTitle = pianoFirstPerformanceTextToken(
     S.performSongData.title,
@@ -44,7 +45,7 @@ function pianoPerformSongPage(){
   h += '<div class="muted">'+escHTML(songArtist)+'</div>';
   h += '<div style="margin-top:8px">Mastery: <b>'+escHTML(mastery)+'</b></div>';
   if(best){
-    h += '<div>Best Accuracy: '+Math.round(best.bestAccuracy||0)+'%</div>';
+    h += '<div>Best Accuracy: '+Math.round(bestAccuracy)+'%</div>';
     h += '<div>Best Stars: '+(best.bestStars||0)+'</div>';
   }
   h += '</div>';
@@ -80,9 +81,10 @@ function pianoPerformSongPage(){
   h += '<div><b>Song Audio</b></div>';
 
   if (audioData && audioData.stemPaths) {
+    var pianoDetectedBpm = pianoNormalizePerformanceNumber(audioData.detectedBpm, null);
     h += '<div style="color:#5a9e6a;font-weight:600">Audio loaded</div>';
-    if (audioData.detectedBpm) {
-      h += '<div class="muted" style="font-size:12px">Detected BPM: ' + Math.round(audioData.detectedBpm) + '</div>';
+    if (pianoDetectedBpm != null) {
+      h += '<div class="muted" style="font-size:12px">Detected BPM: ' + Math.round(pianoDetectedBpm) + '</div>';
     }
     h += '<button class="btn" onclick="act(\'removeSongAudio\',\'' + songId + '\')">Remove Audio</button>';
   } else if (S.songAudioImporting) {

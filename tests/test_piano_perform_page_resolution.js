@@ -103,4 +103,20 @@ test("piano perform song page ignores malformed import progress", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("piano perform song page ignores malformed best accuracy and detected BPM", function() {
+  global.getPerformanceBest = function() {
+    return { bestAccuracy: "NaN", bestStars: 3 };
+  };
+  S.songAudioData.river_walk = {
+    stemPaths: { drums: "x" },
+    detectedBpm: "NaN"
+  };
+
+  var html = pianoPerformSongPage();
+
+  assert.ok(html.indexOf("Best Accuracy: 0%") >= 0);
+  assert.ok(html.indexOf("Detected BPM:") === -1);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

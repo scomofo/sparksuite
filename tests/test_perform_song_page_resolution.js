@@ -114,5 +114,33 @@ test("performSongPage ignores malformed song numbers and import progress", funct
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("performSongPage ignores malformed detected BPM values", function() {
+  global.S.songAudioData = {
+    song: {
+      stemPaths: { drums: "x" },
+      detectedBpm: "NaN"
+    }
+  };
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceSongData: {
+          title: "Song",
+          artist: "Artist",
+          bpm: "NaN",
+          chords: [],
+          progression: []
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.ok(html.indexOf("Detected BPM:") === -1);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

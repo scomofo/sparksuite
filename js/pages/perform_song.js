@@ -32,6 +32,11 @@ function performSongPage() {
   var displayBpm = normalizePerformSongNumber(song.bpm, null);
   var displayChordCount = Array.isArray(song.chords) ? song.chords.length : 0;
   var displayBarCount = Array.isArray(song.progression) ? song.progression.length : 0;
+  var normalizedSongId = (displayTitle || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  var audioData = S.songAudioData[normalizedSongId];
+  var detectedSongBpm = audioData && audioData.stemPaths
+    ? normalizePerformSongNumber(audioData.detectedBpm, null)
+    : null;
 
   var h = '<div class="perform-page">';
 
@@ -120,8 +125,7 @@ function performSongPage() {
   }
 
   // Audio import
-  var songId = (displayTitle || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  var audioData = S.songAudioData[songId];
+  var songId = normalizedSongId;
 
   h += '<div class="card mb20">';
   h += '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Song Audio</div>';
@@ -129,10 +133,10 @@ function performSongPage() {
   if (audioData && audioData.stemPaths) {
     h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
     h += '<span style="color:#4ECDC4;font-weight:700">&#9989; Audio loaded</span>';
-    if (audioData.detectedBpm) {
-      h += '<span style="font-size:11px;color:var(--text-muted)">Detected BPM: ' + Math.round(audioData.detectedBpm) + '</span>';
-      var authored = song.bpm || 100;
-      var diff = Math.abs(audioData.detectedBpm - authored) / authored;
+    if (detectedSongBpm != null) {
+      h += '<span style="font-size:11px;color:var(--text-muted)">Detected BPM: ' + Math.round(detectedSongBpm) + '</span>';
+      var authored = normalizePerformSongNumber(song.bpm, 100);
+      var diff = Math.abs(detectedSongBpm - authored) / authored;
       if (diff > 0.1) {
         h += '<span style="font-size:11px;color:#FF6B6B"> (authored: ' + authored + ' — sync may be imperfect)</span>';
       }
