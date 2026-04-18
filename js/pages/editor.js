@@ -22,6 +22,11 @@ function firstEditorTextToken(){
   return "";
 }
 
+function normalizeEditorNumber(value, fallback){
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function editorPage(){
   var obj = S.editorObject;
   var h = '';
@@ -53,7 +58,7 @@ function editorPage(){
     h += '<input class="set-input mb8" value="'+escHTML(firstEditorTextToken(obj.artist))+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
   }
   if(obj.bpm !== undefined){
-    h += '<input class="set-input mb8" type="number" value="'+(obj.bpm || 80)+'" oninput="act(\'editorField\',\'bpm|\' + this.value)"/>';
+    h += '<input class="set-input mb8" type="number" value="'+normalizeEditorNumber(obj.bpm, 80)+'" oninput="act(\'editorField\',\'bpm|\' + this.value)"/>';
   }
   h += '</div>';
 

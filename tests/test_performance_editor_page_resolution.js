@@ -121,4 +121,52 @@ test("performanceEditorPage ignores stale saved chart library text tokens", func
   assert.ok(html.indexOf(">undefined<") === -1);
 });
 
+test("performanceEditorPage ignores malformed numeric editor values", function() {
+  S.performEditorChart = {
+    id: "editor_chart_2",
+    title: "Chart",
+    bpm: "NaN",
+    events: [{
+      id: 9,
+      laneLabel: "C",
+      t: "NaN",
+      dur: "NaN"
+    }],
+    phrases: [{
+      id: 4,
+      name: "Phrase",
+      startSec: "NaN",
+      endSec: "NaN"
+    }]
+  };
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: S.performEditorChart,
+        library: [],
+        source: "existing",
+        dirty: false,
+        mode: "chords",
+        snap: "1/8",
+        bpm: "NaN",
+        selectedEventId: 9,
+        selectedEventTime: "NaN",
+        selectedEventDuration: "NaN",
+        selectedPhraseId: 4,
+        selectedPhraseStart: "NaN",
+        selectedPhraseEnd: "NaN"
+      };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: {} };
+    }
+  };
+
+  var html = performanceEditorPage();
+  assert.ok(html.indexOf('value="90"') >= 0);
+  assert.ok(html.indexOf('value="NaN"') === -1);
+  assert.ok(html.indexOf("0.0s - 0.0s") >= 0);
+  assert.ok(html.indexOf("0.00s / 0.00s") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
