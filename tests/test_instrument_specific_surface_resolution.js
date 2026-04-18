@@ -245,6 +245,21 @@ test("piano onboarding and tools ignore stale intention strings", function() {
   assert.ok(toolsHtml.indexOf('value="null"') === -1);
 });
 
+test("piano header ignores stale numeric badges", function() {
+  resetEnvironment("pianospark");
+  global.S.xp = "undefined";
+  global.S.currentSession = { broken: true };
+  global.S.streak = "NaN";
+  global.S.onboardingComplete = true;
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+
+  var html = pianoHeaderHTML();
+  assert.ok(html.indexOf("0 XP") >= 0);
+  assert.ok(html.indexOf("S0/50") >= 0);
+  assert.ok(html.indexOf("undefined") === -1);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("piano placement test ignores stale prompt text", function() {
   resetEnvironment("pianospark");
   global.S._placementIdx = 0;
