@@ -4,6 +4,8 @@ const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
+const { registerDialogs } = require('./desktop/dialogs');
+const { registerUpdater } = require('./desktop/updater');
 
 let mainWindow;
 let demucsProcess = null;
@@ -57,6 +59,18 @@ function createWindow() {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+}
+
+function registerDesktopBridgeHandlers() {
+  registerDialogs();
+  registerUpdater();
+  ipcMain.handle('get-app-info', async () => {
+    return {
+      version: app.getVersion(),
+      platform: process.platform,
+      name: app.getName()
+    };
   });
 }
 
@@ -267,7 +281,10 @@ ipcMain.handle('sparkgame:charter', async (event, mp3Path, instrument, difficult
 
 // ===== APP LIFECYCLE =====
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  registerDesktopBridgeHandlers();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (demucsProcess) {
