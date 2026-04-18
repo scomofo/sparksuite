@@ -90,4 +90,32 @@ test("legacy session page ignores stale chord labels", function() {
   assert.ok(html.indexOf(">Chord<") >= 0);
 });
 
+test("piano session page ignores stale finger focus and transition tip text", function() {
+  S.sessionStep = "newMove";
+  S.newMovePhase = "refine";
+  S.lastReviewChords = ["G"];
+  global.PIANO_TRANSITION_TIPS = { "G_C": "undefined" };
+  global.getSessionExercise = function() {
+    return { name: "null", desc: "NaN" };
+  };
+  var html = pianoSessionPage();
+  assert.ok(html.indexOf("Finger Focus: Finger Focus") >= 0);
+  assert.ok(html.indexOf("Practice this motion slowly.") >= 0);
+  assert.ok(html.indexOf(">undefined<") === -1);
+  assert.ok(html.indexOf(">null<") === -1);
+  assert.ok(html.indexOf(">NaN<") === -1);
+});
+
+test("victory lap ignores stale finger check text", function() {
+  S.sessionStep = "victoryLap";
+  global.getSessionExercise = function() {
+    return { name: "undefined", desc: "null" };
+  };
+  var html = pianoSessionPage();
+  assert.ok(html.indexOf("Finger Check: Finger Check") >= 0);
+  assert.ok(html.indexOf("Lock it in with one more rep.") >= 0);
+  assert.ok(html.indexOf(">undefined<") === -1);
+  assert.ok(html.indexOf(">null<") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
