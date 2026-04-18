@@ -468,8 +468,9 @@ function practiceTab(){
   h+='</div>';
   h+='<div class="flex-col">';
   var cs=D.CHORDS[S.selectedLevel]||[];
+  var currentLevel = normalizePracticeDisplayCount(S.level, 1);
   for(var i=0;i<cs.length;i++){
-    var c=cs[i],p=S.chordProgress[c.name]||0,lk=S.selectedLevel>S.level;
+    var c=cs[i],p=normalizePracticePageNumber(S.chordProgress[c.name], 0),lk=S.selectedLevel>currentLevel;
     var tier=getChordTier(c.name);
     var tierStyle=tier.tier!=="none"?";border-left:4px solid "+tier.color:"";
     h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+UI.chord(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+D.LC[S.selectedLevel]+','+D.LC[S.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
@@ -479,8 +480,9 @@ function practiceTab(){
   h+='</div>';
 
   // Progress summary
-  var mas=0;for(var k in S.chordProgress)if(S.chordProgress[k]>=100)mas++;
-  h+='<div class="card mt16"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+S.sessions+'</div><div style="font-size:10px;color:var(--text-muted)">Sessions</div></div><div><div style="font-size:24px;font-weight:900;color:#4ECDC4">'+mas+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div><div><div style="font-size:24px;font-weight:900;color:#45B7D1">Lvl '+S.level+'</div><div style="font-size:10px;color:var(--text-muted)">Current</div></div></div></div>';
+  var mas=0;for(var k in S.chordProgress)if(normalizePracticePageNumber(S.chordProgress[k], 0)>=100)mas++;
+  var sessionCount = normalizePracticeDisplayCount(S.sessions, 0);
+  h+='<div class="card mt16"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+sessionCount+'</div><div style="font-size:10px;color:var(--text-muted)">Sessions</div></div><div><div style="font-size:24px;font-weight:900;color:#4ECDC4">'+mas+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div><div><div style="font-size:24px;font-weight:900;color:#45B7D1">Lvl '+currentLevel+'</div><div style="font-size:10px;color:var(--text-muted)">Current</div></div></div></div>';
 
   // Strum track recommendation (S1-S7 progression from addendum)
   h+=strumTrackCard();
@@ -560,7 +562,8 @@ function customSetsSection(){
 
 // ===== DRILL TAB =====
 function drillTab(){
-  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+S.drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
+  var drillCount = normalizePracticeDisplayCount(S.drillCount, 0);
+  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
   // Suggested drill from transition stats
   var hardest=getHardestTransition();
   if(hardest){
@@ -600,9 +603,7 @@ function quizTab(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
-  var quizScore = typeof S.quizCorrect === "number"
-    ? S.quizCorrect
-    : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
+  var quizScore = normalizePracticeDisplayCount(S.quizCorrect, normalizePracticeDisplayCount(runtime && runtime.legacyQuizScore, 0));
   return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#129504;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Correct: <strong>'+quizScore+'</strong></p><button class="btn" onclick="act(\'startQuiz\')" style="background:linear-gradient(135deg,#45B7D1,#4ECDC4);color:#fff">Start Quiz</button></div></div>';
 }
 
@@ -616,9 +617,9 @@ function getLegacyEarTrainingRuntime(){
     question: typeof S.earTrainQ === "string" ? S.earTrainQ : (runtime ? runtime.legacyEarTrainQuestion : null),
     options: Array.isArray(S.earTrainOpts) && S.earTrainOpts.length ? S.earTrainOpts : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
     answer: typeof S.earTrainAns === "string" ? S.earTrainAns : (runtime ? runtime.legacyEarTrainAnswer : null),
-    score: typeof S.earTrainScore === "number" ? S.earTrainScore : (runtime && typeof runtime.legacyEarTrainScore === "number" ? runtime.legacyEarTrainScore : 0),
-    total: typeof S.earTrainTotal === "number" ? S.earTrainTotal : (runtime && typeof runtime.legacyEarTrainTotal === "number" ? runtime.legacyEarTrainTotal : 0),
-    streak: typeof S.earTrainStreak === "number" ? S.earTrainStreak : (runtime && typeof runtime.legacyEarTrainStreak === "number" ? runtime.legacyEarTrainStreak : 0)
+    score: normalizePracticeDisplayCount(S.earTrainScore, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainScore, 0)),
+    total: normalizePracticeDisplayCount(S.earTrainTotal, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainTotal, 0)),
+    streak: normalizePracticeDisplayCount(S.earTrainStreak, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainStreak, 0))
   };
 }
 
