@@ -38,6 +38,12 @@ function normalizeToolsNumber(value, fallback) {
   return isFinite(num) ? num : fallback;
 }
 
+function formatToolsHz(value, fallback) {
+  var num = normalizeToolsNumber(value, null);
+  if (num == null || num <= 0) return fallback;
+  return String(num);
+}
+
 function getToolsInstrumentName(inst) {
   return normalizeToolsTextToken(
     inst && (inst.name || inst.displayName || inst.instrumentName || inst.instrument)
@@ -80,8 +86,8 @@ function getLegacyTunerRuntime(){
   return {
     active: typeof S.tunerActive === "boolean" ? S.tunerActive : !!(runtime && runtime.tunerActive),
     note: Object.prototype.hasOwnProperty.call(S, "tunerNote") ? S.tunerNote : (runtime ? runtime.tunerNote : null),
-    freq: typeof S.tunerFreq === "number" ? S.tunerFreq : (runtime && typeof runtime.tunerFreq === "number" ? runtime.tunerFreq : 0),
-    cents: typeof S.tunerCents === "number" ? S.tunerCents : (runtime && typeof runtime.tunerCents === "number" ? runtime.tunerCents : 0),
+    freq: normalizeToolsNumber(Object.prototype.hasOwnProperty.call(S, "tunerFreq") ? S.tunerFreq : (runtime ? runtime.tunerFreq : null), 0),
+    cents: normalizeToolsNumber(Object.prototype.hasOwnProperty.call(S, "tunerCents") ? S.tunerCents : (runtime ? runtime.tunerCents : null), 0),
     error: typeof S.tunerErr === "string" ? S.tunerErr : (runtime ? runtime.tunerError : null)
   };
 }
@@ -110,12 +116,12 @@ function tunerTab(){
   h+='<div id="tuner-strings" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
   for(var i=0;i<(Array.isArray(D.STRINGS) ? D.STRINGS.length : 0);i++){
     var gs=D.STRINGS[i],mt=runtime.note===gs.note,inT=mt&&Math.abs(runtime.cents)<5,tC=inT?"#4ECDC4":mt&&Math.abs(runtime.cents)<15?"#FFE66D":"#FF6B6B";
-    h+='<div style="background:'+(mt?tC+"22":"var(--chip-bg)")+';border:2px solid '+(mt?tC:"var(--border)")+';border-radius:12px;padding:8px 14px;text-align:center;min-width:44px"><div style="font-size:18px;font-weight:800;color:'+(mt?tC:"var(--text-muted)")+'">'+gs.note+'</div><div style="font-size:9px;color:var(--text-muted)">'+gs.freq+'Hz</div></div>';
+    h+='<div style="background:'+(mt?tC+"22":"var(--chip-bg)")+';border:2px solid '+(mt?tC:"var(--border)")+';border-radius:12px;padding:8px 14px;text-align:center;min-width:44px"><div style="font-size:18px;font-weight:800;color:'+(mt?tC:"var(--text-muted)")+'">'+gs.note+'</div><div style="font-size:9px;color:var(--text-muted)">'+formatToolsHz(gs.freq, "--")+'Hz</div></div>';
   }
   h+='</div>';
   if(runtime.active){
     var inT=Math.abs(runtime.cents)<5,tC=inT?"#4ECDC4":Math.abs(runtime.cents)<15?"#FFE66D":"#FF6B6B";
-    h+='<div id="tuner-note-display" style="font-size:72px;font-weight:900;color:'+tC+';line-height:1">'+(runtime.note||"&#8212;")+'</div><div id="tuner-freq-display" style="font-size:16px;color:var(--text-muted);margin:4px 0 16px">'+(runtime.freq>0?runtime.freq+" Hz":"Play a note...")+'</div>';
+    h+='<div id="tuner-note-display" style="font-size:72px;font-weight:900;color:'+tC+';line-height:1">'+(runtime.note||"&#8212;")+'</div><div id="tuner-freq-display" style="font-size:16px;color:var(--text-muted);margin:4px 0 16px">'+(runtime.freq>0?formatToolsHz(runtime.freq, "--")+" Hz":"Play a note...")+'</div>';
     h+='<div style="position:relative;height:40px;background:var(--input-bg);border-radius:20px;margin:0 auto 16px;max-width:300px;overflow:hidden"><div style="position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--text-primary);z-index:2"></div><div id="tuner-needle" style="position:absolute;left:'+(50+runtime.cents/2)+'%;top:4px;bottom:4px;width:12px;border-radius:6px;background:'+tC+';transition:left .15s;transform:translateX(-50%);z-index:3"></div><div style="position:absolute;top:50%;left:16px;transform:translateY(-50%);font-size:11px;color:var(--text-muted)">&#9837; flat</div><div style="position:absolute;top:50%;right:16px;transform:translateY(-50%);font-size:11px;color:var(--text-muted)">sharp &#9839;</div></div>';
     h+='<div id="tuner-status" style="font-size:14px;font-weight:700;color:'+tC+';margin-bottom:16px">';
     if(!runtime.freq)h+="&#128266; Listening...";

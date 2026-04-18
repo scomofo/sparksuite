@@ -199,6 +199,14 @@ test("strumDetailPage ignores malformed BPM values", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("strumTab ignores malformed pattern BPM values", function() {
+  global.STRUM_PATTERNS = [{ name: "Groove", desc: "Steady", level: 1, bpm: "NaN", pattern: ["D", "U"] }];
+
+  var html = strumTab();
+  assert.ok(html.indexOf("-- BPM") >= 0);
+  assert.ok(html.indexOf("NaN") === -1);
+});
+
 test("songsTab rehydrates an app-id-only active instrument shell", function() {
   var html = songsTab();
   assert.ok(html.indexOf("Song Library") >= 0);
