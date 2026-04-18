@@ -17,6 +17,11 @@ function pianoFirstPracticeCardTextToken() {
   return "";
 }
 
+function pianoNormalizePracticeNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function pianoPracticeTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -237,12 +242,16 @@ function practicePlanSection(){
 
   // Progression mastery summary
   if(typeof getAverageMastery === "function"){
+    var chordsMastery = pianoNormalizePracticeNumber(getAverageMastery("chords"), 0);
+    var rhythmMastery = pianoNormalizePracticeNumber(getAverageMastery("rhythm"), 0);
+    var transitionsMastery = pianoNormalizePracticeNumber(getAverageMastery("transitions"), 0);
+    var scalesMastery = pianoNormalizePracticeNumber(getAverageMastery("scales"), 0);
     h += '<div class="card" style="margin-top:12px">';
     h += '<div><b>Mastery</b></div>';
-    h += '<div>Chords: '+Math.round(getAverageMastery("chords")*100)+'%</div>';
-    h += '<div>Rhythm: '+Math.round(getAverageMastery("rhythm")*100)+'%</div>';
-    h += '<div>Transitions: '+Math.round(getAverageMastery("transitions")*100)+'%</div>';
-    h += '<div>Scales: '+Math.round(getAverageMastery("scales")*100)+'%</div>';
+    h += '<div>Chords: '+Math.round(chordsMastery*100)+'%</div>';
+    h += '<div>Rhythm: '+Math.round(rhythmMastery*100)+'%</div>';
+    h += '<div>Transitions: '+Math.round(transitionsMastery*100)+'%</div>';
+    h += '<div>Scales: '+Math.round(scalesMastery*100)+'%</div>';
     h += '</div>';
   }
 
