@@ -51,6 +51,12 @@ function _normalizeGamesBpm(value, fallback) {
   return numeric;
 }
 
+function _normalizeGamesCount(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  return Math.round(numeric);
+}
+
 // ===== RHYTHM GAME TAB =====
 function getLegacyRhythmRuntime(){
   var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
@@ -60,10 +66,10 @@ function getLegacyRhythmRuntime(){
   return {
     active: typeof S.rhythmActive === "boolean" ? S.rhythmActive : !!(runtime && runtime.legacyRhythmActive),
     beats: Array.isArray(S.rhythmBeats) ? S.rhythmBeats : (runtime && Array.isArray(runtime.legacyRhythmBeats) ? runtime.legacyRhythmBeats : []),
-    score: typeof S.rhythmScore === "number" ? S.rhythmScore : (runtime && typeof runtime.legacyRhythmScore === "number" ? runtime.legacyRhythmScore : 0),
-    combo: typeof S.rhythmCombo === "number" ? S.rhythmCombo : (runtime && typeof runtime.legacyRhythmCombo === "number" ? runtime.legacyRhythmCombo : 0),
-    maxCombo: typeof S.rhythmMaxCombo === "number" ? S.rhythmMaxCombo : (runtime && typeof runtime.legacyRhythmMaxCombo === "number" ? runtime.legacyRhythmMaxCombo : 0),
-    startTimeMs: typeof S.rhythmStartTime === "number" ? S.rhythmStartTime : (runtime && typeof runtime.legacyRhythmStartTimeMs === "number" ? runtime.legacyRhythmStartTimeMs : 0),
+    score: _normalizeGamesCount(S.rhythmScore, _normalizeGamesCount(runtime && runtime.legacyRhythmScore, 0)),
+    combo: _normalizeGamesCount(S.rhythmCombo, _normalizeGamesCount(runtime && runtime.legacyRhythmCombo, 0)),
+    maxCombo: _normalizeGamesCount(S.rhythmMaxCombo, _normalizeGamesCount(runtime && runtime.legacyRhythmMaxCombo, 0)),
+    startTimeMs: _normalizeGamesCount(S.rhythmStartTime, _normalizeGamesCount(runtime && runtime.legacyRhythmStartTimeMs, 0)),
     results: S.rhythmResults || (runtime ? runtime.legacyRhythmResults : null)
   };
 }
@@ -111,13 +117,16 @@ function rhythmGamePage(){
 
 function rhythmResultsPage(){
   var runtime = getLegacyRhythmRuntime();
-  var r=runtime.results;
+  var r=runtime.results || {};
+  var rhythmScore = _normalizeGamesCount(r.score, 0);
+  var rhythmAccuracy = _normalizeGamesCount(r.accuracy, 0);
+  var rhythmMaxCombo = _normalizeGamesCount(r.maxCombo, 0);
   var h='<div class="text-center" style="padding-top:20px"><div style="font-size:56px;animation:bn .6s ease">&#129345;</div>';
   h+='<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Results!</h2>';
   h+='<div class="card mb16" style="margin-top:12px"><div style="display:flex;justify-content:space-around;text-align:center">';
-  h+='<div><div style="font-size:32px;font-weight:900;color:#FFE66D">'+r.score+'</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
-  h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+r.accuracy+'%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
-  h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+r.maxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
+  h+='<div><div style="font-size:32px;font-weight:900;color:#FFE66D">'+rhythmScore+'</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
+  h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+rhythmAccuracy+'%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
+  h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+rhythmMaxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
   h+='</div></div>';
   h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="S.rhythmResults=null;act(\'startRhythm\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
   h+='<button class="btn" onclick="S.rhythmResults=null;render()" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
@@ -142,11 +151,11 @@ function getLegacyRunnerRuntime(D){
   }
   return {
     active: typeof S.runnerActive === "boolean" ? S.runnerActive : !!(runtime && runtime.legacyRunnerActive),
-    score: typeof S.runnerScore === "number" ? S.runnerScore : (runtime && typeof runtime.legacyRunnerScore === "number" ? runtime.legacyRunnerScore : 0),
-    combo: typeof S.runnerCombo === "number" ? S.runnerCombo : (runtime && typeof runtime.legacyRunnerCombo === "number" ? runtime.legacyRunnerCombo : 0),
-    maxCombo: typeof S.runnerMaxCombo === "number" ? S.runnerMaxCombo : (runtime && typeof runtime.legacyRunnerMaxCombo === "number" ? runtime.legacyRunnerMaxCombo : 0),
-    lives: typeof S.runnerLives === "number" ? S.runnerLives : (runtime && typeof runtime.legacyRunnerLives === "number" ? runtime.legacyRunnerLives : 0),
-    distance: typeof S.runnerDistance === "number" ? S.runnerDistance : (runtime && typeof runtime.legacyRunnerDistance === "number" ? runtime.legacyRunnerDistance : 0),
+    score: _normalizeGamesCount(S.runnerScore, _normalizeGamesCount(runtime && runtime.legacyRunnerScore, 0)),
+    combo: _normalizeGamesCount(S.runnerCombo, _normalizeGamesCount(runtime && runtime.legacyRunnerCombo, 0)),
+    maxCombo: _normalizeGamesCount(S.runnerMaxCombo, _normalizeGamesCount(runtime && runtime.legacyRunnerMaxCombo, 0)),
+    lives: _normalizeGamesCount(S.runnerLives, _normalizeGamesCount(runtime && runtime.legacyRunnerLives, 0)),
+    distance: _normalizeGamesCount(S.runnerDistance, _normalizeGamesCount(runtime && runtime.legacyRunnerDistance, 0)),
     target: target,
     obstacles: Array.isArray(S.runnerObstacles) ? S.runnerObstacles : (runtime && Array.isArray(runtime.legacyRunnerObstacles) ? runtime.legacyRunnerObstacles : []),
     results: S.runnerResults || (runtime ? runtime.legacyRunnerResults : null)
@@ -162,7 +171,7 @@ function runnerTab(){
   var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Runner &#127918;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Strum the right chords as they scroll by!</p>';
   h+='<div class="card"><div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
   h+='<div style="margin-bottom:16px;font-size:13px;color:var(--text-secondary);line-height:1.5">Chord names scroll across the screen.<br><strong>Strum</strong> when the <strong>target chord</strong> reaches you.<br>Let wrong chords pass! 3 lives.</div>';
-  if(S.runnerHighScore>0)h+='<div style="margin-bottom:12px;font-size:15px;font-weight:800;color:#FFE66D">&#127942; High Score: '+S.runnerHighScore+'</div>';
+  if(_normalizeGamesCount(S.runnerHighScore, 0)>0)h+='<div style="margin-bottom:12px;font-size:15px;font-weight:800;color:#FFE66D">&#127942; High Score: '+_normalizeGamesCount(S.runnerHighScore, 0)+'</div>';
   h+='<button class="btn" onclick="act(\'startRunner\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:18px;padding:16px 40px">&#9654; Start!</button>';
   h+='</div></div>';
   return h;
@@ -230,15 +239,19 @@ function runnerResultsPage(){
   var inst = getGamesPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
   var runtime = getLegacyRunnerRuntime(D);
-  var r=runtime.results;
-  var isHigh=r.score>=S.runnerHighScore&&r.score>0;
+  var r=runtime.results || {};
+  var runnerScore = _normalizeGamesCount(r.score, 0);
+  var runnerMaxCombo = _normalizeGamesCount(r.maxCombo, 0);
+  var runnerDistance = _normalizeGamesCount(r.distance, 0);
+  var runnerHighScore = _normalizeGamesCount(S.runnerHighScore, 0);
+  var isHigh=runnerScore>=runnerHighScore&&runnerScore>0;
   var h='<div class="text-center" style="padding-top:20px"><div style="font-size:56px;animation:bn .6s ease">&#127918;</div>';
   h+='<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Game Over!</h2>';
   if(isHigh)h+='<div style="font-size:16px;font-weight:800;color:#FFE66D;margin:8px 0;animation:bn .8s ease">&#127942; New High Score!</div>';
   h+='<div class="card mb16" style="margin-top:12px"><div style="display:flex;justify-content:space-around;text-align:center">';
-  h+='<div><div style="font-size:32px;font-weight:900;color:#FFE66D">'+r.score+'</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
-  h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+r.maxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
-  h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+r.distance+'m</div><div style="font-size:11px;color:var(--text-muted)">Distance</div></div>';
+  h+='<div><div style="font-size:32px;font-weight:900;color:#FFE66D">'+runnerScore+'</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
+  h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+runnerMaxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
+  h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+runnerDistance+'m</div><div style="font-size:11px;color:var(--text-muted)">Distance</div></div>';
   h+='</div></div>';
   h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="S.runnerResults=null;act(\'startRunner\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
   h+='<button class="btn" onclick="S.runnerResults=null;render()" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';

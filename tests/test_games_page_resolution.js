@@ -97,4 +97,23 @@ test("games pages ignore malformed cached BPM values", function() {
   assert.ok(buildHtml.indexOf("NaN") === -1);
 });
 
+test("games pages ignore malformed cached score counters", function() {
+  S.rhythmResults = { score: "NaN", accuracy: "NaN", maxCombo: "NaN" };
+  S.runnerHighScore = "NaN";
+  S.runnerResults = { score: "NaN", maxCombo: "NaN", distance: "NaN" };
+
+  var rhythmHtml = rhythmTab();
+  var runnerHtml = runnerTab();
+  var resultsHtml = runnerResultsPage();
+
+  assert.ok(rhythmHtml.indexOf(">0</div><div style=\"font-size:11px;color:var(--text-muted)\">Score</div>") >= 0);
+  assert.ok(rhythmHtml.indexOf(">0%</div><div style=\"font-size:11px;color:var(--text-muted)\">Accuracy</div>") >= 0);
+  assert.ok(runnerHtml.indexOf("High Score") === -1);
+  assert.ok(resultsHtml.indexOf(">0</div><div style=\"font-size:11px;color:var(--text-muted)\">Score</div>") >= 0);
+  assert.ok(resultsHtml.indexOf(">0x</div><div style=\"font-size:11px;color:var(--text-muted)\">Max Combo</div>") >= 0);
+  assert.ok(resultsHtml.indexOf(">0m</div><div style=\"font-size:11px;color:var(--text-muted)\">Distance</div>") >= 0);
+  assert.ok(rhythmHtml.indexOf("NaN") === -1);
+  assert.ok(resultsHtml.indexOf("NaN") === -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
