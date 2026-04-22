@@ -212,6 +212,20 @@
 
       if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
         SparkProgressBridge.applyLegacySessionOutcome(sessionUpdate);
+      } else if (typeof SparkInstrumentProgress !== "undefined") {
+        // Engine-first path: route xp/streak/sessions through
+        // SparkProgress on the per-app profile, which mirrors the
+        // updated stats back into S.* for the dumb-renderer UI.
+        if (sessionUpdate.streak) {
+          SparkInstrumentProgress.updateStreak(sessionUpdate.streak.lastSessionDate);
+          S.lastSessionDate = sessionUpdate.streak.lastSessionDate;
+        }
+        if (sessionUpdate.sessionsDelta) {
+          for (var _si = 0; _si < sessionUpdate.sessionsDelta; _si++) {
+            SparkInstrumentProgress.completeSession("legacy_session");
+          }
+        }
+        if (sessionUpdate.xpDelta) SparkInstrumentProgress.addXp(sessionUpdate.xpDelta);
       } else {
         if (sessionUpdate.streak) {
           S.streak = (S.streak || 0) + sessionUpdate.streak.increment;
@@ -220,8 +234,12 @@
         S.sessions = (S.sessions || 0) + sessionUpdate.sessionsDelta;
         S.xp = (S.xp || 0) + sessionUpdate.xpDelta;
         if (chordName) {
-          if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
-          S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+          if (typeof SparkChordProgress !== "undefined") {
+            SparkChordProgress.add(chordName, sessionUpdate.chordProgress[chordName]);
+          } else {
+            if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
+            S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+          }
         }
       }
 
@@ -239,7 +257,10 @@
       if (levelChords.length > 0) {
         var allMastered = true;
         for (var i = 0; i < levelChords.length; i++) {
-          if ((S.chordProgress[levelChords[i].name] || 0) < 100) { allMastered = false; break; }
+          var chordPct = typeof SparkChordProgress !== "undefined"
+            ? SparkChordProgress.get(levelChords[i].name)
+            : (S.chordProgress && S.chordProgress[levelChords[i].name] || 0);
+          if (chordPct < 100) { allMastered = false; break; }
         }
         if (allMastered) {
           if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {

@@ -181,8 +181,7 @@ function guitarAct(a, v) {
     S.drillLastSwitchTime = now;
     if (elapsed < 15) {
       var key = fromChord + "->" + toChord;
-      if (!S.transitionStats[key]) S.transitionStats[key] = { attempts: 0, avgTime: 0, best: 999 };
-      var ts = S.transitionStats[key];
+      var ts = SparkTransitionStats.ensure(key, { attempts: 0, avgTime: 0, best: 999 });
       ts.avgTime = (ts.avgTime * ts.attempts + elapsed) / (ts.attempts + 1);
       ts.attempts++;
       if (elapsed < ts.best) ts.best = elapsed;
@@ -407,7 +406,7 @@ function guitarAct(a, v) {
         if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
         if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
         if (plan.newMove && plan.newMove.chord) {
-          S.chordProgress[plan.newMove.chord] = Math.min((S.chordProgress[plan.newMove.chord] || 0) + 25, 100);
+          SparkChordProgress.add(plan.newMove.chord, 25);
         }
         S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
       }
@@ -479,8 +478,7 @@ function guitarAct(a, v) {
           });
         }
         snd("complete"); if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ xpDelta: 10, toastAmount: 10 }); else { S.xp += 10; S.xpToast = { amount: 10, time: Date.now() }; }
-        if (typeof S.fingerStats !== "object" || S.fingerStats === null) S.fingerStats = {};
-        S.fingerStats[v] = (S.fingerStats[v] || 0) + 1;
+        SparkFingerStats.increment(v, 1);
         S.fingerExCount = (S.fingerExCount || 0) + 1;
         saveState();
       }

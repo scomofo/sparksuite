@@ -140,7 +140,7 @@ function clickableDiv(onclick,extra){
 
 // ===== CHORD MASTERY TIERS =====
 function getChordTier(chordName){
-  var p=S.chordProgress[chordName]||0;
+  var p=SparkChordProgress.get(chordName);
   if(p>=75)return{tier:"gold",label:"Gold",icon:"&#129351;",color:"#FFD700"};
   if(p>=50)return{tier:"silver",label:"Silver",icon:"&#129352;",color:"#C0C0C0"};
   if(p>=25)return{tier:"bronze",label:"Bronze",icon:"&#129353;",color:"#CD7F32"};

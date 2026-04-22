@@ -368,7 +368,8 @@ function loadState(){
     // Ensure arrays
     if(!Array.isArray(S.history))S.history=[];
     if(!Array.isArray(S.customSets))S.customSets=[];
-    if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
+    if(typeof SparkTransitionStats !== "undefined") SparkTransitionStats.ensureShape();
+    else if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
     if(!Array.isArray(S.importedSongs))S.importedSongs=[];
     // Ensure transient UI state has sane defaults
     if(!S.screen)S.screen=SCR.HOME;
@@ -383,8 +384,12 @@ function resetProgress(){
   try{localStorage.setItem(SAVE_KEY+"_backup",JSON.stringify(_undoBackup));}catch(e){console.error("ChordSpark: undo backup save failed",e);}
   // Clear state in memory (localStorage cleared only when undo timer expires)
   S.xp=0;S.streak=0;S.sessions=0;S.drillCount=0;S.dailyDone=0;S.quizCorrect=0;S.songsPlayed=0;
-  S.level=1;S.chordProgress={};S.earnedBadges=[];S.selectedLevel=1;S.lastSessionDate=null;
-  S.history=[];S.customSets=[];S.earTrainScore=0;S.transitionStats={};
+  S.level=1;S.earnedBadges=[];S.selectedLevel=1;S.lastSessionDate=null;
+  if(typeof SparkChordProgress !== "undefined") SparkChordProgress.reset({allInstruments:true});
+  else S.chordProgress={};
+  S.history=[];S.customSets=[];S.earTrainScore=0;
+  if(typeof SparkTransitionStats !== "undefined") SparkTransitionStats.reset({allInstruments:true});
+  else S.transitionStats={};
   S.dailyGoalMinutes=15;S.todayPracticeSeconds=0;S.lastPracticeDate=null;S.goalReachedToday=false;S.goalStreak=0;
   S.importedSongs=[];S.lastChordName="";
   // Show undo toast

@@ -116,7 +116,7 @@ function statsTab() {
     html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">';
     html += '<div class="stat-item"><div class="stat-val">' + fingerExercisesDone + '</div><div class="stat-label">Exercises</div></div>';
     html += '<div class="stat-item"><div class="stat-val">' + (fingerDaysLogged != null ? fingerDaysLogged : '-') + '</div><div class="stat-label">Days</div></div>';
-    var chordBest = S.fingerStats._chordChangeBest || 0;
+    var chordBest = (typeof SparkFingerStats !== "undefined" ? SparkFingerStats.get("_chordChangeBest") : (S.fingerStats && S.fingerStats._chordChangeBest)) || 0;
     html += '<div class="stat-item"><div class="stat-val">' + (chordBest || '-') + '</div><div class="stat-label">Best 60s</div></div>';
     html += '</div>';
   }

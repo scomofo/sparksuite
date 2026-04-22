@@ -31,7 +31,7 @@
 
       for(var j=0;j<level.chords.length;j++){
         var chordName = level.chords[j];
-        var prog = S.chordProgress && S.chordProgress[chordName] || 0;
+        var prog = SparkChordProgress.get(chordName);
 
         levelNode.children.push({
           id:"chord_" + chordName.replace(/\s+/g,"_"),
@@ -51,7 +51,7 @@
 
   function buildTransitionBranch(){
     var nodes = [];
-    var ts = S.transitionStats || {};
+    var ts = typeof SparkTransitionStats !== "undefined" ? SparkTransitionStats.all() : (S.transitionStats || {});
 
     for(var key in ts){
       var row = ts[key];
@@ -146,7 +146,7 @@
     if(!level || !Array.isArray(level.chords) || !level.chords.length) return 0;
     var sum = 0;
     for(var i=0;i<level.chords.length;i++){
-      sum += (S.chordProgress && S.chordProgress[level.chords[i]] || 0);
+      sum += SparkChordProgress.get(level.chords[i]);
     }
     return Math.round(sum / level.chords.length);
   }
