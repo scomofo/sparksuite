@@ -146,7 +146,7 @@ if (fs.existsSync(testPath)) {
         var searchFrom = mIdx + marker.length;
         var nextBlank = testCode.indexOf(NL + NL, searchFrom);
         if (nextBlank > 0) {
-          var insertLine = "safeEval(" + Q +  + Q + ");" + NL;
+          var insertLine = "safeEval(" + Q + regLine + Q + ");" + NL;
           testCode = testCode.slice(0, nextBlank) + NL + insertLine + testCode.slice(nextBlank);
           changed = true;
           console.log("  Added safeEval for " + inst.id + " register.js");
@@ -169,7 +169,7 @@ if (fs.existsSync(testPath)) {
             var ds = dIdx + dm.length;
             var dnb = testCode.indexOf(NL + NL, ds);
             if (dnb > 0) {
-              testCode = testCode.slice(0, dnb) + NL + "safeEval(" + Q +  + Q + ");" + testCode.slice(dnb);
+              testCode = testCode.slice(0, dnb) + NL + "safeEval(" + Q + dfPath + Q + ");" + testCode.slice(dnb);
               changed = true;
               console.log("  Added safeEval for " + dfPath);
             }
