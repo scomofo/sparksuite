@@ -36,11 +36,8 @@ function getLegacyChordDetectRuntime(){
   };
 }
 
-function normalizeSharedNumber(value, fallback) {
-  var numeric = Number(value);
-  if (!isFinite(numeric)) return fallback;
-  return numeric;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizeSharedNumber(value, fallback) { return SparkNormalize.number(value, fallback); }
 
 function formatSharedBpm(value, fallback) {
   var bpm = normalizeSharedNumber(value, null);

@@ -12,10 +12,8 @@ function prettyPerformSongToken(value) {
   return text;
 }
 
-function normalizePerformSongNumber(value, fallback) {
-  var num = typeof value === "number" ? value : Number(value);
-  return isFinite(num) ? num : fallback;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizePerformSongNumber(value, fallback) { return SparkNormalize.number(value, fallback); }
 
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();

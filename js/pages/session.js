@@ -38,10 +38,8 @@ function findInstrumentChordByName(D, chordName){
   return null;
 }
 
-function normalizeSessionNumber(value, fallback){
-  var num = typeof value === "number" ? value : Number(value);
-  return isFinite(num) ? num : fallback;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizeSessionNumber(value, fallback){ return SparkNormalize.number(value, fallback); }
 
 function formatSessionBpm(value, fallback){
   var bpm = normalizeSessionNumber(value, null);

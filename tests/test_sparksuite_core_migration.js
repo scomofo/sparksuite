@@ -133,6 +133,12 @@ function resetState() {
 
 resetState();
 
+// Shared utility helpers — pages/*.js wrappers delegate to SparkNormalize.
+// Loaded the same way as the page modules below (matches the test's
+// existing bootstrapping pattern).
+var _eval = eval;
+_eval(loadJS("js/utils/normalize.js"));
+
 eval(loadJS("js/sparksuite/domain/types.js"));
 eval(loadJS("js/sparksuite/domain/session_segment.js"));
 eval(loadJS("js/sparksuite/domain/session.js"));
