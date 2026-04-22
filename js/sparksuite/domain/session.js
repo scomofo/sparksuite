@@ -11,7 +11,7 @@
     this.difficulty = input.difficulty || null;
     this.segments = Array.isArray(input.segments) ? input.segments : [];
     this.exercises = Array.isArray(input.exercises) ? input.exercises : [];
-    this.rewards = Array.isArray(input.rewards) ? input.rewards : [];
+    this.rewards = input.rewards || { xp: 0, unlocks: [], achievements: [] };
     this.context = input.context || {};
   }
 
@@ -33,4 +33,18 @@
   };
 
   window.SessionPlan = SessionPlan;
+  window.SparkSessionV2 = {
+    getExercise: function(segment, session) {
+      if (!segment || !session || !Array.isArray(session.exercises)) return null;
+      var exerciseIds = Array.isArray(segment.exerciseIds) ? segment.exerciseIds : [];
+      for (var i = 0; i < exerciseIds.length; i++) {
+        for (var j = 0; j < session.exercises.length; j++) {
+          if (session.exercises[j] && session.exercises[j].id === exerciseIds[i]) {
+            return session.exercises[j];
+          }
+        }
+      }
+      return null;
+    }
+  };
 })();
