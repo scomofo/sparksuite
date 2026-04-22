@@ -574,10 +574,10 @@
     var levels = ["Beginner","Intermediate","Advanced"];
 
     var songs = opts.songs || [
-      { name:"Ember's Resonance", artist:"The Electric Collective", lvl:7, len:"4:20", status:"hot",  pct:"85%", statusClass:"success" },
-      { name:"Midnight Strum",    artist:"The Acoustic Soul",       lvl:3, len:"3:15", status:"new",  label:"New",      statusClass:"muted" },
-      { name:"Ivory Cascades",    artist:"Serene Melodies",         lvl:5, len:"5:45", status:"hot",  label:"Mastered", statusClass:"success" },
-      { name:"Deep Groove",       artist:"Bassline Dynasty",        lvl:9, len:"4:10", status:"dim",  label:"Try Again", statusClass:"warn" }
+      { name:"Ember's Resonance", artist:"The Electric Collective", lvl:7, len:"4:20", status:"hot",  pct:"85%",       statusClass:"success", instrument:"guitar" },
+      { name:"Midnight Strum",    artist:"The Acoustic Soul",       lvl:3, len:"3:15", status:"new",  label:"New",      statusClass:"muted",   instrument:"ukulele" },
+      { name:"Ivory Cascades",    artist:"Serene Melodies",         lvl:5, len:"5:45", status:"hot",  label:"Mastered", statusClass:"success", instrument:"piano"  },
+      { name:"Deep Groove",       artist:"Bassline Dynasty",        lvl:9, len:"4:10", status:"dim",  label:"Try Again", statusClass:"warn",    instrument:"bass"   }
     ];
 
     function lvlClass(n) {
@@ -606,7 +606,7 @@
         : '<div class="showroom-song-thumb-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
       var statusLabel = sg.label || (sg.pct || "");
       var statusClass = sg.statusClass || "muted";
-      songsHtml += '<div class="showroom-song-row" onclick="' + nav("song-details") + '">'
+      songsHtml += '<div class="showroom-song-row ' + escHtml(sg.instrument || '') + '" onclick="' + nav("song-details") + '">'
                 + '<div class="showroom-song-thumb">' + thumb + '</div>'
                 + '<div class="showroom-song-body">'
                   + '<h4 class="showroom-song-name">' + escHtml(sg.name) + '</h4>'
@@ -628,13 +628,13 @@
       { id:"profile", label:"Profile",  icon:"person",        onClick: nav("profile") }
     ];
 
-    return '<div class="showroom-root woodgrain-bg">'
+    return '<div class="showroom-root woodgrain-bg showroom-library-2026">'
          + '<header class="showroom-library-bar">'
            + '<h1 class="showroom-library-title">Song Library</h1>'
            + '<div class="showroom-library-actions">'
              + '<button class="showroom-iconbtn accent" aria-label="Search"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>'
-             + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
-               + '<span style="width:32px;height:32px;border-radius:50%;border:2px solid #ff7b3a;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;font-weight:800;font-size:13px">A</span>'
+             + '<button class="showroom-iconbtn showroom-library-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
+               + '<span class="showroom-library-avatar-fallback">A</span>'
              + '</button>'
            + '</div>'
          + '</header>'
