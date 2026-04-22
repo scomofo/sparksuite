@@ -13,8 +13,17 @@
       return { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c];
     });
   }
+  // Format a value as a single-quoted JS string literal safe to drop
+  // inside a double-quoted HTML attribute (onclick="..."). Using
+  // JSON.stringify here (which produces double quotes) would break the
+  // surrounding attribute — unescaped " inside " ends the value early,
+  // producing invalid HTML and a non-functional handler in some browsers.
+  function jsArg(s) {
+    return "'" + String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+  }
+
   function nav(view) {
-    return "SparkShowroomNavigate(" + JSON.stringify(view) + ")";
+    return "SparkShowroomNavigate(" + jsArg(view) + ")";
   }
   // Back arrow on sub-pages (Settings, Profile, etc.). Inside an instrument
   // this returns to the instrument's Practice page so users don't get dropped
@@ -118,7 +127,7 @@
   // Keeps the row-render code uniform across both kinds of toggles.
   function toggleOnClick(key) {
     if (key === "dark") return "act('toggleDark')";
-    return "SparkShowroomToggle(" + JSON.stringify(key) + ")";
+    return "SparkShowroomToggle(" + jsArg(key) + ")";
   }
 
   // ───────────────────────────────────────────────────────────────────────
@@ -513,12 +522,12 @@
     var chipsHtml = "";
     for (var c = 0; c < categories.length; c++) {
       var cat = categories[c];
-      chipsHtml += '<button class="showroom-chip' + (cat === category ? ' on' : '') + '" onclick="SparkShowroom.setLibraryCategory(' + JSON.stringify(cat) + ')">' + escHtml(cat) + '</button>';
+      chipsHtml += '<button class="showroom-chip' + (cat === category ? ' on' : '') + '" onclick="SparkShowroom.setLibraryCategory(' + jsArg(cat) + ')">' + escHtml(cat) + '</button>';
     }
     var levelsHtml = "";
     for (var l = 0; l < levels.length; l++) {
       var lv = levels[l];
-      levelsHtml += '<button class="showroom-level-chip' + (lv === level ? ' on' : '') + '" onclick="SparkShowroom.setLibraryLevel(' + JSON.stringify(lv) + ')">' + escHtml(lv) + '</button>';
+      levelsHtml += '<button class="showroom-level-chip' + (lv === level ? ' on' : '') + '" onclick="SparkShowroom.setLibraryLevel(' + jsArg(lv) + ')">' + escHtml(lv) + '</button>';
     }
 
     var songsHtml = "";
