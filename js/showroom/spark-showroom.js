@@ -63,13 +63,13 @@
         // user can pick their own chart instead of launching a wrong one.
         "performance":     function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
         // No legacy slots — render via launcherView while keeping instrument.
-        "profile":         function(){ S.screen = SCR_.PROFILE; },
+        "profile":         function(){ S._showroomOverride = "profile"; },
         "lesson":          function(){ S._showroomOverride = "lesson"; },
         // Explicit "switch instrument" action.
         "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
       };
       // Clear any prior override so the legacy slot routing wins again.
-      if (view !== "lesson") S._showroomOverride = null;
+      if (view !== "profile" && view !== "lesson") S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
       if (typeof saveState === "function") saveState();
@@ -260,7 +260,9 @@
     if (!mastered) mastered = 18;
     if (level < 12) level = 12;
     var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
-    if (!avatarSrc) avatarSrc = "https://lh3.googleusercontent.com/aida-public/AB6AXuAENXXtcpgrwEANQdf96WsuAbjMDNDNm0fMBdqvDk-6d_8ARg-AvoXLeJYxqIaJep95I058ucdqQQpS8XR1e8dyg4_brJ20wY8V3RMOKE1GUNLojQqgOdLThis-cL8WIdD59zaiLLEfCGlbVDXAT1YYbOFrONooNkwPOeXBLBVVCNqcZ2rCLpqRhgIBT2rR8ijGhTjgxpWVu-wjY9sE2qVOX7nlPPOdg7dVabdaniJZ_c55_5MJsUYWgHAvuwdi8QN_ZwBnYx_WUl8";
+    // No external-URL fallback — the app-wide CSP (`img-src 'self' data:`)
+    // blocks remote hosts. When avatarSrc is absent the renderer below
+    // falls through to the initial-letter bubble, which stays same-origin.
 
     // Per-instrument progress (read from registry + profile or stub)
     var insts = (typeof SparkInstruments !== "undefined" && SparkInstruments.getAll) ? SparkInstruments.getAll() : [];
