@@ -161,15 +161,18 @@ test('bass register exposes a dedicated songs tab renderer', function() {
 });
 
 test('shared guided completion preserves app ids for thin active instruments', function() {
-  var appSource = loadJS('js/app.js');
-  assert.ok(appSource.indexOf('var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;') >= 0);
-  assert.ok(appSource.indexOf('instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,') >= 0);
+  // The orchestrator-request helpers were extracted from js/app.js to
+  // js/orchestrator-requests.js — the literal lines now live there.
+  var orchestratorSource = loadJS('js/orchestrator-requests.js');
+  assert.ok(orchestratorSource.indexOf('var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;') >= 0);
+  assert.ok(orchestratorSource.indexOf('instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,') >= 0);
 });
 
 test('onboarding intention input ignores stale sentinel strings', function() {
-  var appSource = loadJS('js/app.js');
-  assert.ok(appSource.indexOf('var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);') >= 0);
-  assert.ok(appSource.indexOf('value="\'+escHTML(onboardingPracticeIntention)+\'"') >= 0);
+  // _renderOnboardingOverlay was extracted from js/app.js into js/render.js.
+  var renderSource = loadJS('js/render.js');
+  assert.ok(renderSource.indexOf('var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);') >= 0);
+  assert.ok(renderSource.indexOf('value="\'+escHTML(onboardingPracticeIntention)+\'"') >= 0);
 });
 
 // Summary
