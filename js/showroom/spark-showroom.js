@@ -1,0 +1,977 @@
+// js/showroom/spark-showroom.js
+// All Showroom-style screen modules (Settings, Profile, SongDetails,
+// PracticeMetro, SongLibrary, SessionSummary, Performance, Lesson, Path).
+// Each module exposes a `render(opts)` returning HTML and is dispatched
+// via SparkInstruments.openLauncherView('view').
+(function() {
+
+  // ─── Shared helpers ────────────────────────────────────────────────────
+  function escHtml(s) {
+    if (s == null) return "";
+    if (typeof escHTML === "function") return escHTML(String(s));
+    return String(s).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c];
+    });
+  }
+  function nav(view) {
+    return "SparkShowroomNavigate(" + JSON.stringify(view) + ")";
+  }
+  function backToHome() { return nav("home"); }
+
+  // Context-aware navigation. When an instrument is active, route via the
+  // legacy SCR/TAB system so each Showroom page becomes the actual page for
+  // its app area. When no instrument is active, fall back to the launcher's
+  // openLauncherView dispatcher.
+  window.SparkShowroomNavigate = function(view) {
+    var hasInst = typeof S !== "undefined" && S.activeInstrument;
+    var SCR_ = typeof SCR !== "undefined" ? SCR : null;
+    var TAB_ = typeof TAB !== "undefined" ? TAB : null;
+    if (hasInst && SCR_ && TAB_) {
+      var routes = {
+        // "home" universally means the instrument-showcase launcher.
+        "home":            function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; S.launcherView = "home"; },
+        "practice":        function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
+        "library":         function(){ S.screen = SCR_.HOME;       S.tab = TAB_.SONGS; },
+        "tuner":           function(){ S.screen = SCR_.HOME;       S.tab = TAB_.TUNER || "tuner"; },
+        "settings":        function(){ S.screen = SCR_.SETTINGS; },
+        "path":            function(){ S.screen = SCR_.SKILL_TREE; },
+        "learn":           function(){ S.screen = SCR_.SKILL_TREE; },
+        "song-details":    function(){ S.screen = SCR_.SONG; },
+        "session-summary": function(){ S.screen = SCR_.COMPLETE; },
+        // Performance gameplay stays in the legacy engine — sending the user
+        // to the practice home is the safe default. Override per call site.
+        "performance":     function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
+        // No legacy slots — render via launcherView while keeping instrument.
+        "profile":         function(){ S._showroomOverride = "profile"; },
+        "lesson":          function(){ S._showroomOverride = "lesson"; },
+        // Explicit "switch instrument" action.
+        "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
+      };
+      // Clear any prior override so the legacy slot routing wins again.
+      if (view !== "profile" && view !== "lesson") S._showroomOverride = null;
+      var fn = routes[view];
+      if (fn) fn();
+      if (typeof saveState === "function") saveState();
+      if (typeof render === "function") render();
+      return;
+    }
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments.openLauncherView) {
+      SparkInstruments.openLauncherView(view);
+    }
+  };
+
+  // Reusable bottom nav generator
+  function bottomNav(items, active) {
+    var inner = "";
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var isActive = it.id === active;
+      var onClick = it.onClick || nav(it.id);
+      inner += '<button class="showroom-navitem' + (isActive ? ' active' : '') + '"'
+            + ' onclick="' + onClick + '" aria-label="' + escHtml(it.label) + '"'
+            + (isActive ? ' aria-current="page"' : '') + '>'
+            + '<span class="material-symbols-outlined' + (isActive ? ' fill' : '') + '">' + it.icon + '</span>'
+            + '<span>' + escHtml(it.label) + '</span>'
+            + '</button>';
+    }
+    return '<nav class="showroom-bottomnav" role="navigation" aria-label="Primary">'
+         + '<div class="showroom-bottomnav-inner">' + inner + '</div></nav>';
+  }
+
+  // Load setting flags from localStorage with safe fallback
+  function loadFlags() {
+    try {
+      var raw = localStorage.getItem("spark.showroomFlags");
+      if (raw) return JSON.parse(raw) || {};
+    } catch (e) {}
+    return {};
+  }
+  function saveFlags(flags) {
+    try { localStorage.setItem("spark.showroomFlags", JSON.stringify(flags)); } catch (e) {}
+  }
+  function toggleFlag(key) {
+    var f = loadFlags();
+    f[key] = !f[key];
+    saveFlags(f);
+    if (typeof render === "function") render();
+  }
+  window.SparkShowroomToggle = toggleFlag;
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Settings
+  // ───────────────────────────────────────────────────────────────────────
+  function settingsRender() {
+    var flags = loadFlags();
+    var darkOn = flags.dark !== false; // default on
+    var reduceTransp = !!flags.reduceTransparency;
+    var pushOn = flags.pushNotifications !== false;
+    var emailOn = !!flags.emailUpdates;
+    var micPct = typeof flags.micSensitivity === "number" ? flags.micSensitivity : 85;
+    var latency = typeof flags.latencyMs === "number" ? flags.latencyMs : 12;
+
+    var sections = [
+      { title: "Account", rows: [
+        { icon: "person", label: "Profile Details", chevron: true, onClick: nav("profile") },
+        { icon: "workspace_premium", label: "Subscription Plan", chevron: true, badge: "Pro" }
+      ]},
+      { title: "Audio & Input", rows: [
+        { type: "slider", icon: "mic", label: "Microphone Sensitivity", value: micPct + "%", pct: micPct },
+        { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true }
+      ]},
+      { title: "Appearance", rows: [
+        { type: "toggle", icon: "dark_mode", label: "Dark Mode", on: darkOn, key: "dark" },
+        { type: "toggle", icon: "blur_on", label: "Reduce Transparency", on: reduceTransp, key: "reduceTransparency" }
+      ]},
+      { title: "Notifications", rows: [
+        { type: "toggle", icon: "notifications_active", label: "Push Notifications", on: pushOn, key: "pushNotifications" },
+        { type: "toggle", icon: "mail", label: "Email Updates", on: emailOn, key: "emailUpdates" }
+      ]}
+    ];
+
+    var html = "";
+    for (var s = 0; s < sections.length; s++) {
+      var sec = sections[s];
+      html += '<div><h2 class="showroom-cat-label">' + escHtml(sec.title) + '</h2>';
+      html += '<div class="showroom-list">';
+      for (var r = 0; r < sec.rows.length; r++) {
+        var row = sec.rows[r];
+        if (row.type === "slider") {
+          html += '<div class="showroom-slider-row">';
+          html += '<div class="showroom-slider-head"><div class="showroom-row-left">';
+          html += '<span class="material-symbols-outlined showroom-row-icon">' + row.icon + '</span>';
+          html += '<span class="showroom-row-label">' + escHtml(row.label) + '</span>';
+          html += '</div><span class="showroom-row-meta">' + escHtml(row.value) + '</span></div>';
+          html += '<div class="showroom-slider-track"><div class="showroom-slider-fill" style="width:' + row.pct + '%"></div></div>';
+          html += '</div>';
+        } else if (row.type === "toggle") {
+          html += '<div class="showroom-row no-action">';
+          html += '<div class="showroom-row-left">';
+          html += '<span class="material-symbols-outlined showroom-row-icon' + (row.on ? ' active' : '') + '">' + row.icon + '</span>';
+          html += '<span class="showroom-row-label">' + escHtml(row.label) + '</span>';
+          html += '</div>';
+          html += '<button class="showroom-toggle' + (row.on ? ' on' : '') + '" onclick="SparkShowroomToggle(' + JSON.stringify(row.key) + ')" aria-label="' + escHtml(row.label) + '" aria-pressed="' + row.on + '">';
+          html += '<span class="showroom-toggle-knob"></span></button>';
+          html += '</div>';
+        } else {
+          var click = row.onClick ? ' onclick="' + row.onClick + '"' : '';
+          html += '<div class="showroom-row"' + click + '>';
+          html += '<div class="showroom-row-left">';
+          html += '<span class="material-symbols-outlined showroom-row-icon">' + row.icon + '</span>';
+          html += '<span class="showroom-row-label">' + escHtml(row.label) + '</span>';
+          html += '</div><div class="showroom-row-right">';
+          if (row.badge) html += '<span class="showroom-pill-pro">' + escHtml(row.badge) + '</span>';
+          if (row.meta) html += '<span class="showroom-row-meta' + (row.metaWarn ? ' warn' : '') + '">' + escHtml(row.meta) + '</span>';
+          if (row.chevron) html += '<span class="material-symbols-outlined showroom-chev">chevron_right</span>';
+          html += '</div></div>';
+        }
+      }
+      html += '</div></div>';
+    }
+    html += '<div class="showroom-version"><span class="showroom-version-label">System Core</span><span class="showroom-version-num">v2.4.1</span></div>';
+
+    var navItems = [
+      { id:"flow",     label:"Flow",     icon:"waves",       onClick: nav("home") },
+      { id:"library",  label:"Library",  icon:"music_note",  onClick: nav("library") },
+      { id:"insights", label:"Insights", icon:"insights",    onClick: nav("home") },
+      { id:"settings", label:"Settings", icon:"settings" }
+    ];
+
+    return '<div class="showroom-root with-bg">'
+         + '<header class="showroom-appbar"><div class="showroom-appbar-left">'
+         + '<button class="showroom-iconbtn" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined">arrow_back</span></button>'
+         + '<h1 class="showroom-appbar-title">Settings</h1></div><div class="showroom-appbar-right"><div style="width:32px"></div></div></header>'
+         + '<div class="showroom-canvas">' + html + '</div>'
+         + bottomNav(navItems, "settings")
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Profile
+  // ───────────────────────────────────────────────────────────────────────
+  function profileRender() {
+    var profile = typeof SparkStorage !== "undefined" ? SparkStorage.load() : null;
+    var name = (profile && (profile.displayName || profile.name)) || "Alex Chen";
+    var tag = (profile && profile.title) || "Virtuoso";
+    var totalXp = 0, maxStreak = 0, mastered = 0, level = 1;
+    if (profile && profile.apps) {
+      for (var id in profile.apps) {
+        var st = (profile.apps[id] || {}).stats || {};
+        totalXp += st.xp || 0;
+        if ((st.streakDays || 0) > maxStreak) maxStreak = st.streakDays;
+        if ((st.level || 0) > level) level = st.level;
+        if (st.skills && typeof st.skills.mastered === "number") mastered += st.skills.mastered;
+      }
+    }
+    if (!totalXp) totalXp = 12450;
+    if (!maxStreak) maxStreak = 42;
+    if (!mastered) mastered = 18;
+    if (level < 12) level = 12;
+    var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
+
+    // Per-instrument progress (read from registry + profile or stub)
+    var insts = (typeof SparkInstruments !== "undefined" && SparkInstruments.getAll) ? SparkInstruments.getAll() : [];
+    var progressRows = [];
+    var fallback = [
+      { name:"Guitar", icon:"graphic_eq", color:"#FF2D55", pct:80 },
+      { name:"Piano",  icon:"piano",      color:"#0EA5E9", pct:30 },
+      { name:"Bass",   icon:"speaker",    color:"#7C3AED", pct:15 }
+    ];
+    if (!insts.length) progressRows = fallback;
+    else {
+      for (var i = 0; i < insts.length; i++) {
+        var inst = insts[i];
+        var type = inst.instrument || inst.id || "guitar";
+        var stats = profile && profile.apps && profile.apps[inst.id] ? profile.apps[inst.id].stats : {};
+        var pct = stats && typeof stats.progressPct === "number"
+          ? stats.progressPct
+          : (fallback.find ? (fallback.find(function(f){ return f.name.toLowerCase() === type; }) || {pct:0}).pct : 0);
+        var color = type === "piano" ? "#0EA5E9"
+                  : type === "bass" ? "#7C3AED"
+                  : type === "ukulele" ? "#14B8A6" : "#FF2D55";
+        var icon = type === "piano" ? "piano"
+                 : type === "bass" ? "speaker"
+                 : type === "ukulele" ? "music_note" : "graphic_eq";
+        progressRows.push({ name: inst.name || type, icon: icon, color: color, pct: pct });
+      }
+    }
+
+    var avatarHtml = avatarSrc
+      ? '<img src="' + escHtml(avatarSrc) + '" alt="">'
+      : '<div class="showroom-profile-avatar-fallback">' + escHtml(name.charAt(0).toUpperCase()) + '</div>';
+
+    var progHtml = "";
+    for (var p = 0; p < progressRows.length; p++) {
+      var pr = progressRows[p];
+      progHtml += '<div class="showroom-progress-row">'
+              + '<div class="showroom-progress-head">'
+              + '<div class="showroom-progress-name">'
+              + '<span class="material-symbols-outlined fill" style="color:' + pr.color + ';font-size:18px">' + pr.icon + '</span>'
+              + '<span>' + escHtml(pr.name) + '</span></div>'
+              + '<span class="showroom-progress-pct">' + pr.pct + '%</span></div>'
+              + '<div class="showroom-progress-track"><div class="showroom-progress-fill" style="width:' + pr.pct + '%;background:' + pr.color + ';box-shadow:0 0 10px ' + pr.color + '"></div></div>'
+              + '</div>';
+    }
+
+    var badges = [
+      { icon:"music_cast", color:"#FFE66D", label:"First Chord", state:"" },
+      { icon:"dark_mode",  color:"#7C3AED", label:"Night Owl",   state:"" },
+      { icon:"bolt",       color:"#ff7b3a", label:"7-Day Spark", state:"featured" },
+      { icon:"lock",       color:"#7A7060", label:"Rhythm King", state:"locked" }
+    ];
+    var badgesHtml = "";
+    for (var b = 0; b < badges.length; b++) {
+      var bd = badges[b];
+      badgesHtml += '<div class="showroom-badge ' + bd.state + '">'
+                  + '<div class="showroom-badge-circle" style="border-color:' + bd.color + '40;background:' + bd.color + '14">'
+                  + '<span class="material-symbols-outlined fill" style="color:' + bd.color + ';font-size:24px">' + bd.icon + '</span></div>'
+                  + '<span class="showroom-badge-label">' + escHtml(bd.label) + '</span></div>';
+    }
+
+    var navItems = [
+      { id:"home",     label:"Practice",    icon:"music_note", onClick: nav("home") },
+      { id:"journey",  label:"Journey",     icon:"explore",    onClick: nav("path") },
+      { id:"library",  label:"Leaderboard", icon:"military_tech", onClick: nav("library") },
+      { id:"profile",  label:"Profile",     icon:"person" }
+    ];
+
+    return '<div class="showroom-root with-bg">'
+         + '<header class="showroom-appbar">'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined">menu</span></button></div>'
+         + '<h1 class="showroom-appbar-title centered">Profile</h1>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined">settings</span></button></div>'
+         + '</header>'
+         + '<div class="showroom-canvas">'
+           + '<section class="showroom-profile-head">'
+             + '<div class="showroom-profile-avatar">' + avatarHtml
+               + '<span class="showroom-profile-lvl-badge">LVL ' + level + '</span></div>'
+             + '<div><h2 class="showroom-profile-name">' + escHtml(name) + '</h2>'
+             + '<p class="showroom-profile-tag">' + escHtml(tag) + '</p></div>'
+           + '</section>'
+           + '<section class="showroom-profile-stats">'
+             + '<div class="showroom-stat-big">'
+               + '<span class="material-symbols-outlined fill showroom-stat-big-icon">local_fire_department</span>'
+               + '<div class="showroom-stat-big-num">' + maxStreak + '</div>'
+               + '<div class="showroom-stat-big-label">Day Streak</div></div>'
+             + '<div class="showroom-stat-stack">'
+               + '<div class="showroom-stat-mini"><div class="showroom-stat-mini-icon yellow"><span class="material-symbols-outlined fill">star</span></div>'
+                 + '<div><div class="showroom-stat-mini-num">' + totalXp.toLocaleString() + '</div><div class="showroom-stat-mini-label">Total XP</div></div></div>'
+               + '<div class="showroom-stat-mini"><div class="showroom-stat-mini-icon cyan"><span class="material-symbols-outlined fill">music_note</span></div>'
+                 + '<div><div class="showroom-stat-mini-num">' + mastered + '</div><div class="showroom-stat-mini-label">Songs Mastered</div></div></div>'
+             + '</div>'
+           + '</section>'
+           + '<section><h3 style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;color:var(--text-primary);margin:0 0 16px">Instrument Progress</h3>'
+             + '<div class="showroom-progress-card">' + progHtml + '</div></section>'
+           + '<section><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+             + '<h3 style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;color:var(--text-primary);margin:0">Badges</h3>'
+             + '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;letter-spacing:.05em;color:#ffb596;text-transform:uppercase;cursor:pointer">View All</span></div>'
+             + '<div class="showroom-badges">' + badgesHtml + '</div></section>'
+         + '</div>'
+         + bottomNav(navItems, "profile")
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Song Details
+  // ───────────────────────────────────────────────────────────────────────
+  function songDetailsRender(opts) {
+    opts = opts || {};
+    var title = opts.title || "Ember's Resonance";
+    var artist = opts.artist || "The Spark Collective";
+    var key = opts.key || "G Maj";
+    var bpm = opts.bpm || 120;
+    var len = opts.length || "3:45";
+    var diff = typeof opts.difficulty === "number" ? opts.difficulty : 7;
+    var diffMax = opts.difficultyMax || 10;
+    var diffPct = Math.round((diff / diffMax) * 100);
+    var desc = opts.description || "Intermediate level. Focuses on rapid chord transitions and fingerpicking accuracy.";
+    var coverSrc = opts.cover;
+    var tags = opts.tags || ["Acoustic"];
+
+    var cover = coverSrc
+      ? '<img src="' + escHtml(coverSrc) + '" alt="' + escHtml(title) + '">'
+      : '<div class="showroom-song-cover-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
+
+    var tagsHtml = "";
+    for (var i = 0; i < tags.length; i++) {
+      tagsHtml += '<span class="showroom-song-tag"><span class="material-symbols-outlined">music_note</span>' + escHtml(tags[i]) + '</span>';
+    }
+
+    return '<div class="showroom-root with-bg">'
+         + '<header class="showroom-appbar">'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn framed" onclick="' + nav("library") + '" aria-label="Back"><span class="material-symbols-outlined">arrow_back</span></button></div>'
+         + '<h1 class="showroom-appbar-title centered">Song Details</h1>'
+         + '<div class="showroom-appbar-right"><div style="width:40px"></div></div>'
+         + '</header>'
+         + '<div class="showroom-canvas" style="padding-bottom:140px">'
+           + '<div class="showroom-song-hero">'
+             + '<div class="showroom-song-flare" aria-hidden="true"></div>'
+             + '<div class="showroom-song-cover">' + cover + '</div>'
+             + '<div class="showroom-song-titles">'
+               + '<h2 class="showroom-song-title">' + escHtml(title) + '</h2>'
+               + '<p class="showroom-song-artist">' + escHtml(artist) + '</p>'
+               + '<div class="showroom-song-tags">' + tagsHtml + '</div>'
+             + '</div>'
+           + '</div>'
+           + '<div class="showroom-meta-grid">'
+             + '<div class="showroom-meta-tile"><span class="material-symbols-outlined showroom-meta-icon">piano</span><span class="showroom-meta-label">Key</span><span class="showroom-meta-val">' + escHtml(key) + '</span></div>'
+             + '<div class="showroom-meta-tile"><span class="material-symbols-outlined showroom-meta-icon">speed</span><span class="showroom-meta-label">BPM</span><span class="showroom-meta-val bpm">' + bpm + '</span></div>'
+             + '<div class="showroom-meta-tile"><span class="material-symbols-outlined showroom-meta-icon">schedule</span><span class="showroom-meta-label">Length</span><span class="showroom-meta-val">' + escHtml(len) + '</span></div>'
+           + '</div>'
+           + '<div class="showroom-difficulty-card">'
+             + '<div class="showroom-difficulty-head">'
+               + '<h3 class="showroom-difficulty-title"><span class="material-symbols-outlined">local_fire_department</span>Difficulty</h3>'
+               + '<div class="showroom-difficulty-score">' + diff + '<small>/' + diffMax + '</small></div>'
+             + '</div>'
+             + '<div class="showroom-difficulty-bar"><div class="showroom-difficulty-fill" style="width:' + diffPct + '%"></div></div>'
+             + '<p class="showroom-difficulty-desc">' + escHtml(desc) + '</p>'
+           + '</div>'
+         + '</div>'
+         + '<div class="showroom-actionbar">'
+           + '<button class="showroom-action-cta" onclick="' + nav("performance") + '">'
+             + '<span class="material-symbols-outlined fill">play_circle</span>Start Performance</button>'
+         + '</div>'
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Practice Session (metronome + drills)
+  // ───────────────────────────────────────────────────────────────────────
+  function practiceMetroRender(opts) {
+    opts = opts || {};
+    var bpm = opts.bpm || 120;
+    var focus = opts.focus || { title: "Spider Walk Drills", xp: 150, pct: 60 };
+    var drills = opts.drills || [
+      { name:"C Major Scale",      sub:"Warmup • 5 mins",     icon:"music_note" },
+      { name:"Alternating Picking", sub:"Technique • 10 mins", icon:"speed" },
+      { name:"Basic Strumming",     sub:"Rhythm • 8 mins",     icon:"waves" }
+    ];
+    var todayMin = opts.todayMinutes || 45;
+    var focusScore = opts.focusScore || 92;
+
+    var drillHtml = "";
+    for (var i = 0; i < drills.length; i++) {
+      var d = drills[i];
+      drillHtml += '<div class="showroom-drill">'
+                + '<div class="showroom-drill-left">'
+                  + '<div class="showroom-drill-icon"><span class="material-symbols-outlined">' + d.icon + '</span></div>'
+                  + '<div><h4 class="showroom-drill-name">' + escHtml(d.name) + '</h4>'
+                  + '<span class="showroom-drill-meta">' + escHtml(d.sub) + '</span></div>'
+                + '</div>'
+                + '<button class="showroom-drill-cta" onclick="' + nav("lesson") + '">Start</button>'
+              + '</div>';
+    }
+
+    var navItems = [
+      { id:"home",     label:"Home",     icon:"home",         onClick: nav("home") },
+      { id:"practice", label:"Practice", icon:"music_note" },
+      { id:"insights", label:"Insights", icon:"query_stats",  onClick: nav("home") },
+      { id:"profile",  label:"Profile",  icon:"person",       onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root with-bg">'
+         + '<header class="showroom-appbar">'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined">arrow_back</span></button></div>'
+         + '<h1 class="showroom-appbar-title centered">Practice Session</h1>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn accent" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined">settings</span></button></div>'
+         + '</header>'
+         + '<div class="showroom-canvas">'
+           + '<section class="showroom-practice-head"><h2 class="showroom-practice-h">Daily Practice</h2><p class="showroom-practice-sub">Stay in the flow state.</p></section>'
+           + '<section class="showroom-focus-card">'
+             + '<div class="showroom-focus-glow" aria-hidden="true"></div>'
+             + '<div class="showroom-focus-head"><div>'
+               + '<span class="showroom-focus-eyebrow">Current Focus</span>'
+               + '<h3 class="showroom-focus-title">' + escHtml(focus.title) + '</h3></div>'
+               + '<div class="showroom-focus-pill"><span class="material-symbols-outlined fill">local_fire_department</span>+' + focus.xp + ' XP</div></div>'
+             + '<div class="showroom-focus-progress-row"><span>Progress</span><span class="pct">' + focus.pct + '%</span></div>'
+             + '<div class="showroom-focus-track"><div class="showroom-focus-fill" style="width:' + focus.pct + '%"></div></div>'
+           + '</section>'
+           + '<section class="showroom-metronome">'
+             + '<div class="showroom-metronome-label"><span class="material-symbols-outlined">graphic_eq</span><span>Metronome</span></div>'
+             + '<div class="showroom-metronome-bpm"><span class="showroom-metronome-num">' + bpm + '</span><span class="showroom-metronome-unit">BPM</span></div>'
+             + '<div class="showroom-metronome-controls">'
+               + '<button class="showroom-metro-btn" aria-label="Slower"><span class="material-symbols-outlined">remove</span></button>'
+               + '<button class="showroom-metro-play" aria-label="Play"><span class="material-symbols-outlined fill">play_arrow</span></button>'
+               + '<button class="showroom-metro-btn" aria-label="Faster"><span class="material-symbols-outlined">add</span></button>'
+             + '</div>'
+             + '<div class="showroom-metronome-pulse"><span class="showroom-pulse-dot active"></span><span class="showroom-pulse-dot"></span><span class="showroom-pulse-dot"></span><span class="showroom-pulse-dot"></span></div>'
+           + '</section>'
+           + '<div class="showroom-mini-bento">'
+             + '<div class="showroom-mini-tile"><span class="material-symbols-outlined showroom-mini-tile-bg">timer</span><span class="showroom-mini-label">Today\u2019s Time</span><div class="showroom-mini-row"><span class="showroom-mini-num peach">' + todayMin + '</span><span class="showroom-mini-unit">min</span></div></div>'
+             + '<div class="showroom-mini-tile"><span class="material-symbols-outlined showroom-mini-tile-bg">track_changes</span><span class="showroom-mini-label">Focus Score</span><div class="showroom-mini-row"><span class="showroom-mini-num cyan">' + focusScore + '</span><span class="showroom-mini-unit">/100</span></div></div>'
+           + '</div>'
+           + '<section><div class="showroom-section-h2"><h3>Quick Drills</h3><span class="link">View All</span></div>' + drillHtml + '</section>'
+         + '</div>'
+         + bottomNav(navItems, "practice")
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Song Library
+  // ───────────────────────────────────────────────────────────────────────
+  function songLibraryRender(opts) {
+    opts = opts || {};
+    var flags = loadFlags();
+    var category = flags.libraryCategory || "All";
+    var level = flags.libraryLevel || "Intermediate";
+    var categories = ["All","Guitar","Bass","Piano","Ukulele"];
+    var levels = ["Beginner","Intermediate","Advanced"];
+
+    var songs = opts.songs || [
+      { name:"Ember's Resonance", artist:"The Electric Collective", lvl:7, len:"4:20", status:"hot",  pct:"85%", statusClass:"success" },
+      { name:"Midnight Strum",    artist:"The Acoustic Soul",       lvl:3, len:"3:15", status:"new",  label:"New",      statusClass:"muted" },
+      { name:"Ivory Cascades",    artist:"Serene Melodies",         lvl:5, len:"5:45", status:"hot",  label:"Mastered", statusClass:"success" },
+      { name:"Deep Groove",       artist:"Bassline Dynasty",        lvl:9, len:"4:10", status:"dim",  label:"Try Again", statusClass:"warn" }
+    ];
+
+    function lvlClass(n) {
+      if (n <= 3) return "lvl-low";
+      if (n <= 5) return "lvl-mid";
+      if (n <= 7) return "lvl-high";
+      return "lvl-expert";
+    }
+
+    var chipsHtml = "";
+    for (var c = 0; c < categories.length; c++) {
+      var cat = categories[c];
+      chipsHtml += '<button class="showroom-chip' + (cat === category ? ' on' : '') + '" onclick="SparkShowroom.setLibraryCategory(' + JSON.stringify(cat) + ')">' + escHtml(cat) + '</button>';
+    }
+    var levelsHtml = "";
+    for (var l = 0; l < levels.length; l++) {
+      var lv = levels[l];
+      levelsHtml += '<button class="showroom-level-chip' + (lv === level ? ' on' : '') + '" onclick="SparkShowroom.setLibraryLevel(' + JSON.stringify(lv) + ')">' + escHtml(lv) + '</button>';
+    }
+
+    var songsHtml = "";
+    for (var s = 0; s < songs.length; s++) {
+      var sg = songs[s];
+      var thumb = sg.cover
+        ? '<img src="' + escHtml(sg.cover) + '" alt="">'
+        : '<div class="showroom-song-thumb-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
+      var statusLabel = sg.label || (sg.pct || "");
+      var statusClass = sg.statusClass || "muted";
+      songsHtml += '<div class="showroom-song-row" onclick="' + nav("song-details") + '">'
+                + '<div class="showroom-song-thumb">' + thumb + '</div>'
+                + '<div class="showroom-song-body">'
+                  + '<h4 class="showroom-song-name">' + escHtml(sg.name) + '</h4>'
+                  + '<p class="showroom-song-sub">' + escHtml(sg.artist) + '</p>'
+                  + '<div class="showroom-song-meta"><span class="showroom-lvl-pill ' + lvlClass(sg.lvl) + '">LVL ' + sg.lvl + '</span>'
+                  + '<span class="showroom-song-len">• ' + escHtml(sg.len) + '</span></div>'
+                + '</div>'
+                + '<div class="showroom-song-action">'
+                  + '<button class="showroom-song-play ' + (sg.status || "") + '" aria-label="Play"><span class="material-symbols-outlined fill">play_arrow</span></button>'
+                  + '<span class="showroom-song-status ' + statusClass + '">' + escHtml(statusLabel) + '</span>'
+                + '</div>'
+              + '</div>';
+    }
+
+    var navItems = [
+      { id:"home",    label:"Home",     icon:"home",          onClick: nav("home") },
+      { id:"library", label:"Library",  icon:"library_music" },
+      { id:"practice",label:"Practice", icon:"music_note",    onClick: nav("practice") },
+      { id:"profile", label:"Profile",  icon:"person",        onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root woodgrain-bg">'
+         + '<header class="showroom-library-bar">'
+           + '<h1 class="showroom-library-title">Song Library</h1>'
+           + '<div class="showroom-library-actions">'
+             + '<button class="showroom-iconbtn accent" aria-label="Search"><span class="material-symbols-outlined">search</span></button>'
+             + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
+               + '<span style="width:32px;height:32px;border-radius:50%;border:2px solid #ff7b3a;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;font-weight:800;font-size:13px">A</span>'
+             + '</button>'
+           + '</div>'
+         + '</header>'
+         + '<div class="showroom-canvas" style="padding-top:0">'
+           + '<div class="showroom-search"><span class="material-symbols-outlined">search</span><input type="search" placeholder="Search songs, artists..."></div>'
+           + '<div class="showroom-chiprow">' + chipsHtml + '</div>'
+           + '<div class="showroom-level-row">' + levelsHtml + '</div>'
+           + '<div class="showroom-trending-head"><h3>Trending Scores</h3><span class="link">View All</span></div>'
+           + songsHtml
+           + '<div class="showroom-daily">'
+             + '<div class="showroom-daily-head"><span class="showroom-daily-eyebrow">Daily Challenge</span><span class="showroom-daily-xp">XP +500</span></div>'
+             + '<h3 class="showroom-daily-title">Neon Horizon</h3>'
+             + '<p class="showroom-daily-sub">Cyberpunk Synth Ensemble</p>'
+             + '<div class="showroom-daily-foot">'
+               + '<div class="showroom-daily-players"><div class="showroom-daily-avstack"><span></span><span></span><span></span></div><span>1.2k playing now</span></div>'
+               + '<button class="showroom-daily-cta" onclick="' + nav("performance") + '">Join Session</button>'
+             + '</div>'
+           + '</div>'
+         + '</div>'
+         + bottomNav(navItems, "library")
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Session Summary
+  // ───────────────────────────────────────────────────────────────────────
+  function sessionSummaryRender(opts) {
+    opts = opts || {};
+    var xp = opts.xp || 450;
+    var accuracy = opts.accuracy || 98;
+    var streak = opts.streak || 125;
+    var lessonTitle = opts.lessonTitle || "Midnight Ember Jam";
+    var lessonMeta = opts.lessonMeta || "Level 12 • 4:20 Duration";
+    var subtitle = opts.subtitle || "You're finding your rhythm. Another great set finished.";
+    var coverSrc = opts.cover;
+
+    // Build accuracy ring
+    var radius = 40;
+    var circumference = 2 * Math.PI * radius;
+    var dashOffset = circumference * (1 - accuracy / 100);
+
+    var thumb = coverSrc
+      ? '<img src="' + escHtml(coverSrc) + '" alt="">'
+      : '<div class="showroom-summary-lesson-thumb-fb" aria-hidden="true">\uD83C\uDFB5</div>';
+
+    var navItems = [
+      { id:"practice", label:"Practice", icon:"music_note", onClick: nav("practice") },
+      { id:"journey",  label:"Journey",  icon:"explore",    onClick: nav("path") },
+      { id:"library",  label:"Library",  icon:"library_music", onClick: nav("library") },
+      { id:"profile",  label:"Profile",  icon:"person",     onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root with-bg">'
+         + '<div class="showroom-summary-glow-tr" aria-hidden="true"></div>'
+         + '<div class="showroom-summary-glow-bl" aria-hidden="true"></div>'
+         + '<header class="showroom-summary-bar">'
+           + '<button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Close"><span class="material-symbols-outlined">close</span></button>'
+           + '<span class="showroom-summary-title">Session Summary</span>'
+           + '<div style="width:40px"></div>'
+         + '</header>'
+         + '<div class="showroom-canvas" style="position:relative;z-index:1">'
+           + '<div class="showroom-summary-hero">'
+             + '<div class="showroom-summary-medal-wrap"><div class="showroom-summary-medal-glow" aria-hidden="true"></div><div class="showroom-summary-medal"><span class="material-symbols-outlined fill">workspace_premium</span></div></div>'
+             + '<h1 class="showroom-summary-h">Session Complete!</h1>'
+             + '<p class="showroom-summary-sub">' + escHtml(subtitle) + '</p>'
+           + '</div>'
+           + '<div class="showroom-summary-grid">'
+             + '<div class="showroom-summary-xp">'
+               + '<div class="showroom-summary-xp-flare" aria-hidden="true"></div>'
+               + '<div><span class="showroom-summary-xp-label">XP Earned</span>'
+                 + '<div class="showroom-summary-xp-row"><span class="showroom-summary-xp-num">+' + xp + '</span><span class="showroom-summary-xp-unit">XP</span></div></div>'
+               + '<div class="showroom-summary-xp-bolt"><span class="material-symbols-outlined fill">bolt</span></div>'
+             + '</div>'
+             + '<div class="showroom-summary-square">'
+               + '<svg class="showroom-summary-accuracy-svg" viewBox="0 0 100 100">'
+                 + '<circle cx="50" cy="50" r="40" fill="transparent" stroke="#40322c" stroke-width="8"/>'
+                 + '<circle cx="50" cy="50" r="40" fill="transparent" stroke="#4CD964" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + dashOffset.toFixed(1) + '" transform="rotate(-90 50 50)" style="filter:drop-shadow(0 0 8px rgba(76,217,100,.4))"/>'
+               + '</svg>'
+               + '<div class="showroom-summary-accuracy-overlay"><span class="showroom-summary-accuracy-num">' + accuracy + '%</span><span class="showroom-summary-accuracy-label">Accuracy</span></div>'
+             + '</div>'
+             + '<div class="showroom-summary-square">'
+               + '<div class="showroom-summary-fire-wrap"><span class="material-symbols-outlined fill showroom-summary-fire">local_fire_department</span><div class="showroom-summary-fire-glow" aria-hidden="true"></div></div>'
+               + '<span class="showroom-summary-streak-num">' + streak + '</span>'
+               + '<span class="showroom-summary-streak-label">Day Streak</span>'
+             + '</div>'
+             + '<div class="showroom-summary-lesson">'
+               + '<div class="showroom-summary-lesson-thumb">' + thumb + '</div>'
+               + '<div><span class="showroom-summary-lesson-eyebrow">Current Lesson</span>'
+                 + '<h3 class="showroom-summary-lesson-title">' + escHtml(lessonTitle) + '</h3>'
+                 + '<p class="showroom-summary-lesson-meta">' + escHtml(lessonMeta) + '</p></div>'
+             + '</div>'
+           + '</div>'
+           + '<div class="showroom-summary-actions">'
+             + '<button class="showroom-summary-cta" onclick="' + backToHome() + '">Continue</button>'
+             + '<button class="showroom-summary-cta ghost" onclick="' + nav("performance") + '">Replay Session</button>'
+           + '</div>'
+         + '</div>'
+         + bottomNav(navItems, "practice")
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Performance (rhythm highway gameplay — CSS perspective)
+  // ───────────────────────────────────────────────────────────────────────
+  function performanceRender(opts) {
+    opts = opts || {};
+    var score = opts.score || 42850;
+    var streak = opts.streak || 124;
+    var mult = opts.mult || 4;
+    var rank = opts.nextRank || "S+";
+    var feedback = opts.feedback || "PERFECT";
+    var combo = opts.combo || "COMBO BREAKER";
+    var pct = opts.progressPct || 65;
+    var title = opts.songTitle || "Midnight Ember Jam";
+    var meta = opts.songMeta || "Level 12 • Hard Mode";
+
+    // Sample notes: { lane: 0..3, top: "15%", color: "cyan|yellow|peach" }
+    var notes = opts.notes || [
+      { lane:0, top:"15%", color:"cyan" },
+      { lane:0, top:"65%", color:"cyan" },
+      { lane:1, top:"40%", color:"yellow" },
+      { lane:2, top:"25%", color:"peach" },
+      { lane:2, top:"85%", color:"peach" },
+      { lane:3, top:"55%", color:"cyan" }
+    ];
+    var lanePos = ["0%","25%","50%","75%"];
+    var notesHtml = "";
+    for (var i = 0; i < notes.length; i++) {
+      var n = notes[i];
+      notesHtml += '<div class="showroom-perf-gem ' + n.color + '" style="top:' + n.top + ';left:calc(' + lanePos[n.lane] + ' + 2.5%)"></div>';
+    }
+
+    var formattedScore = String(score).padStart(6, "0").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    return '<div class="showroom-perf-root">'
+         + '<header class="showroom-perf-bar">'
+           + '<div class="showroom-perf-bar-left">'
+             + '<button class="showroom-perf-pause" onclick="' + nav("session-summary") + '" aria-label="Pause"><span class="material-symbols-outlined">pause_circle</span></button>'
+             + '<span class="showroom-perf-score">' + formattedScore + '</span></div>'
+           + '<div class="showroom-perf-bar-right">'
+             + '<div class="showroom-perf-streak">Streak ' + streak + '</div>'
+             + '<div class="showroom-perf-mult">' + mult + 'x</div></div>'
+         + '</header>'
+         + '<main class="showroom-perf-canvas">'
+           + '<div class="showroom-perf-floating">'
+             + '<div class="showroom-perf-energy"><span class="material-symbols-outlined fill">electric_bolt</span><div class="showroom-perf-energy-track"><div class="showroom-perf-energy-fill" style="width:80%"></div></div></div>'
+             + '<div class="showroom-perf-rank"><span class="showroom-perf-rank-label">NEXT RANK</span><span class="showroom-perf-rank-val">' + escHtml(rank) + '</span></div>'
+           + '</div>'
+           + '<div class="showroom-perf-feedback"><h2>' + escHtml(feedback) + '</h2><p>' + escHtml(combo) + '</p></div>'
+           + '<div class="showroom-perf-highway-wrap">'
+             + '<div class="showroom-perf-highway">'
+               + '<div class="showroom-perf-lane-line"></div>'
+               + '<div class="showroom-perf-lane-line l2"></div>'
+               + '<div class="showroom-perf-lane-line l3"></div>'
+               + notesHtml
+               + '<div class="showroom-perf-receptors">'
+                 + '<div class="showroom-perf-receptor cyan active"><div class="showroom-perf-receptor-inner"></div></div>'
+                 + '<div class="showroom-perf-receptor yellow"><div class="showroom-perf-receptor-inner"></div></div>'
+                 + '<div class="showroom-perf-receptor clay"><div class="showroom-perf-receptor-inner"></div></div>'
+                 + '<div class="showroom-perf-receptor cyan"><div class="showroom-perf-receptor-inner"></div></div>'
+               + '</div>'
+               + '<div class="showroom-perf-hitbar"></div>'
+             + '</div>'
+           + '</div>'
+           + '<div class="showroom-perf-progress"><div class="showroom-perf-progress-fill" style="width:' + pct + '%"></div></div>'
+           + '<div class="showroom-perf-songinfo"><span class="showroom-perf-songtitle">' + escHtml(title) + '</span>'
+             + '<div class="showroom-perf-songmeta"><span class="showroom-perf-pulse"></span><span class="showroom-perf-songsub">' + escHtml(meta) + '</span></div></div>'
+         + '</main>'
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Lesson (chord-diagram practice setup)
+  // ───────────────────────────────────────────────────────────────────────
+  function lessonRender(opts) {
+    opts = opts || {};
+    var module = opts.module || "Module 01 • Guitar Basics";
+    var unit = opts.unit || "G Major Foundation";
+    var chordName = opts.chord || "G Major Chord";
+    var position = opts.position || "Open Position";
+    var strum = opts.strum || "All 6";
+    var type = opts.type || "Major";
+    var xp = opts.xp || 12;
+    var time = opts.time || "05:00";
+    // Default G Major fingering: positions on (string left%, fret top%)
+    var fingers = opts.fingers || [
+      { left: 0,    top: 55, num: 2 },
+      { left: 16.6, top: 35, num: 1 },
+      { left: 83.3, top: 55, num: 3 },
+      { left: 100,  top: 55, num: 4 }
+    ];
+
+    var fingersHtml = "";
+    for (var i = 0; i < fingers.length; i++) {
+      var f = fingers[i];
+      fingersHtml += '<div class="showroom-chord-finger" style="left:' + f.left + '%;top:' + f.top + '%">' + f.num + '</div>';
+    }
+
+    var navItems = [
+      { id:"learn",    label:"Learn",    icon:"school",     onClick: nav("path") },
+      { id:"practice", label:"Practice", icon:"music_note" },
+      { id:"library",  label:"Songs",    icon:"library_music", onClick: nav("library") },
+      { id:"profile",  label:"Profile",  icon:"person",     onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root with-bg">'
+         + '<header class="showroom-lesson-bar">'
+           + '<button class="showroom-iconbtn accent" onclick="' + nav("practice") + '" aria-label="Close"><span class="material-symbols-outlined">close</span></button>'
+           + '<h1 class="showroom-lesson-bar-title">Practice Session</h1>'
+           + '<button class="showroom-iconbtn accent" aria-label="Settings" onclick="' + nav("settings") + '"><span class="material-symbols-outlined">settings</span></button>'
+         + '</header>'
+         + '<div class="showroom-canvas" style="padding-bottom:200px">'
+           + '<section><span class="showroom-lesson-eyebrow">' + escHtml(module) + '</span>'
+             + '<h2 class="showroom-lesson-h">' + escHtml(unit) + '</h2>'
+             + '<div class="showroom-lesson-card">'
+               + '<div class="showroom-lesson-card-head"><div>'
+                 + '<h3 class="showroom-lesson-card-title">' + escHtml(chordName) + '</h3>'
+                 + '<p class="showroom-lesson-card-sub">' + escHtml(position) + '</p></div>'
+                 + '<span class="showroom-lesson-card-tag">G</span></div>'
+               + '<div class="showroom-chord">'
+                 + '<div class="showroom-chord-fret-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>'
+                 + '<div class="showroom-chord-opens"><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span></div>'
+                 + '<div class="showroom-chord-frets"><div class="nut"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div></div>'
+                 + '<div class="showroom-chord-strings"><span></span><span></span><span></span><span></span><span></span><span></span></div>'
+                 + '<div class="showroom-chord-fingers">' + fingersHtml + '</div>'
+               + '</div>'
+               + '<div class="showroom-chord-meta">'
+                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">Strum</p><p class="showroom-chord-meta-val success">' + escHtml(strum) + '</p></div>'
+                 + '<div class="showroom-chord-meta-divider"></div>'
+                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">Type</p><p class="showroom-chord-meta-val primary">' + escHtml(type) + '</p></div>'
+               + '</div>'
+             + '</div>'
+           + '</section>'
+           + '<section>'
+             + '<div class="showroom-tips-head"><span class="material-symbols-outlined">lightbulb</span><h3>Key Tips</h3></div>'
+             + '<div class="showroom-tips-grid">'
+               + '<div class="showroom-tip"><div class="showroom-tip-icon primary"><span class="material-symbols-outlined">thumb_up</span></div><p class="showroom-tip-title">Keep your thumb low</p><p class="showroom-tip-desc">Allows more reach across the neck.</p></div>'
+               + '<div class="showroom-tip"><div class="showroom-tip-icon secondary"><span class="material-symbols-outlined">ads_click</span></div><p class="showroom-tip-title">Press near the fret</p><p class="showroom-tip-desc">Reduces buzzing with less force.</p></div>'
+               + '<div class="showroom-tip wide"><div class="showroom-tip-img" aria-hidden="true">\uD83D\uDD90\uFE0F</div><div><p class="showroom-tip-title">Arch your fingers</p><p class="showroom-tip-desc">Ensure open strings ring out clearly without muting.</p></div></div>'
+             + '</div>'
+           + '</section>'
+           + '<section class="showroom-stats-pill">'
+             + '<div class="seg xp"><span class="material-symbols-outlined">bolt</span><span class="num">' + xp + '</span><span class="lbl">XP</span></div>'
+             + '<div class="seg timer"><span class="material-symbols-outlined">timer</span><span class="num">' + escHtml(time) + '</span></div>'
+           + '</section>'
+         + '</div>'
+         + '<div class="showroom-lesson-cta-wrap"><button class="showroom-lesson-cta" onclick="' + nav("performance") + '"><span class="material-symbols-outlined fill">play_arrow</span>Start Practice</button></div>'
+         + bottomNav(navItems, "practice")
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Learning Path
+  // ───────────────────────────────────────────────────────────────────────
+  function pathRender(opts) {
+    opts = opts || {};
+    var profile = typeof SparkStorage !== "undefined" ? SparkStorage.load() : null;
+    var streak = 42, dailyMin = 18, dailyGoal = 20, level = 12, accuracy = 85;
+    if (profile && profile.apps) {
+      var maxLvl = 0, maxStreak = 0;
+      for (var id in profile.apps) {
+        var st = (profile.apps[id] || {}).stats || {};
+        if ((st.level || 0) > maxLvl) maxLvl = st.level;
+        if ((st.streakDays || 0) > maxStreak) maxStreak = st.streakDays;
+      }
+      if (maxLvl) level = maxLvl;
+      if (maxStreak) streak = maxStreak;
+    }
+
+    var lessons = opts.lessons || [
+      { tier:"Beginner",     title:"Chord Basics",      desc:"Master the fundamental G and C major shapes.", time:"8 MIN",  icon:"music_note", instrument:"guitar",  unlocked:true,  cta:"Continue" },
+      { tier:"Intermediate", title:"Strumming Patterns",desc:"Unlock the \"Island Strum\" for versatile rhythms.", time:"12 MIN", icon:"waves",     instrument:"ukulele", unlocked:false, cta:"Locked" },
+      { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true }
+    ];
+
+    var goalPct = Math.min(100, Math.round((dailyMin / dailyGoal) * 100));
+    var ringR = 32;
+    var ringC = 2 * Math.PI * ringR;
+    var ringOffset = ringC * (1 - goalPct / 100);
+
+    var lessonsHtml = "";
+    for (var i = 0; i < lessons.length; i++) {
+      var ls = lessons[i];
+      lessonsHtml += '<div class="showroom-path-card ' + escHtml(ls.instrument) + '">'
+                  + '<div class="showroom-path-icon"><span class="material-symbols-outlined">' + ls.icon + '</span></div>'
+                  + '<span class="showroom-path-tier">' + escHtml(ls.tier) + '</span>'
+                  + '<div class="showroom-path-body">'
+                    + '<h4 class="showroom-path-title-text">' + escHtml(ls.title) + '</h4>'
+                    + '<p class="showroom-path-desc">' + escHtml(ls.desc) + '</p>'
+                  + '</div>';
+      if (ls.thumb) {
+        lessonsHtml += '<div style="grid-column:1/-1"><div class="showroom-path-thumb" style="margin:4px 0">\uD83C\uDFBC</div></div>';
+      }
+      lessonsHtml += '<div class="showroom-path-foot">'
+                  + '<span class="showroom-path-time"><span class="material-symbols-outlined">timer</span>' + escHtml(ls.time) + '</span>'
+                  + (ls.unlocked
+                      ? '<button class="showroom-path-cta" onclick="' + nav("lesson") + '">' + escHtml(ls.cta) + ' <span class="material-symbols-outlined fill">play_arrow</span></button>'
+                      : '<button class="showroom-path-cta locked" aria-disabled="true">' + escHtml(ls.cta) + ' <span class="material-symbols-outlined">lock</span></button>')
+                  + '</div>'
+                + '</div>';
+    }
+
+    var navItems = [
+      { id:"path",        label:"Path",        icon:"map" },
+      { id:"practice",    label:"Practice",    icon:"timer",       onClick: nav("practice") },
+      { id:"instruments", label:"Instruments", icon:"piano",       onClick: nav("home") },
+      { id:"profile",     label:"Profile",     icon:"person",      onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root with-bg">'
+         + '<header class="showroom-path-bar">'
+           + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
+             + '<span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">A</span>'
+           + '</button>'
+           + '<h1 class="showroom-path-title">Your Path</h1>'
+           + '<div class="showroom-path-streak">' + streak + ' \uD83D\uDD25</div>'
+         + '</header>'
+         + '<div class="showroom-canvas" style="padding-top:0">'
+           + '<div class="showroom-daily-goal">'
+             + '<div class="showroom-daily-goal-left">'
+               + '<span class="showroom-daily-goal-label">Daily Goal</span>'
+               + '<div class="showroom-daily-goal-row"><span class="showroom-daily-goal-num">' + dailyMin + '</span><span class="showroom-daily-goal-of">/ ' + dailyGoal + 'm</span></div>'
+               + '<div class="showroom-daily-goal-pills">'
+                 + '<span class="showroom-goal-pill lvl"><span class="material-symbols-outlined fill" style="font-size:14px">star</span>LEVEL ' + level + '</span>'
+                 + '<span class="showroom-goal-pill acc"><span class="material-symbols-outlined" style="font-size:14px">trending_up</span>' + accuracy + '% ACCURACY</span>'
+               + '</div>'
+             + '</div>'
+             + '<div class="showroom-goal-ring">'
+               + '<svg viewBox="0 0 80 80">'
+                 + '<circle cx="40" cy="40" r="' + ringR + '" fill="none" stroke="#3A3228" stroke-width="6"/>'
+                 + '<circle cx="40" cy="40" r="' + ringR + '" fill="none" stroke="#ff7b3a" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + ringC.toFixed(1) + '" stroke-dashoffset="' + ringOffset.toFixed(1) + '" style="filter:drop-shadow(0 0 8px rgba(255,123,58,.6))"/>'
+               + '</svg>'
+               + '<div class="bolt"><span class="material-symbols-outlined fill">bolt</span></div>'
+             + '</div>'
+           + '</div>'
+           + '<div class="showroom-path-section-head"><h3>Continue Learning</h3><span class="link">View All</span></div>'
+           + lessonsHtml
+         + '</div>'
+         + '<button class="showroom-path-fab" aria-label="Start practice" onclick="' + nav("practice") + '"><span class="material-symbols-outlined">timer</span></button>'
+         + bottomNav(navItems, "path")
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Tuner & Tools (SparkSuite Studio)
+  // ───────────────────────────────────────────────────────────────────────
+  function tunerRender(opts) {
+    opts = opts || {};
+    var note = opts.note || "E";
+    var freq = opts.frequency || 440.0;
+    var tuning = opts.tuning || "EADGBE";
+    var bpm = opts.bpm || 120;
+    var status = opts.status || "in-tune"; // in-tune | flat | sharp
+    var statusLabel = status === "flat" ? "FLAT"
+                    : status === "sharp" ? "SHARP"
+                    : "IN TUNE";
+    var statusIcon = status === "in-tune" ? "check_circle"
+                    : status === "flat" ? "south"
+                    : "north";
+
+    // Build clock-tick marks around the dial: 12 ticks, center one highlighted
+    var ticksHtml = "";
+    for (var i = 0; i < 12; i++) {
+      var rot = (i * 30);
+      var cls = "showroom-tuner-tick";
+      if (i === 0) cls += " center";
+      else if (i === 3 || i === 6 || i === 9) cls += " major";
+      ticksHtml += '<div class="' + cls + '" style="transform:translateX(-50%) rotate(' + rot + 'deg)"></div>';
+    }
+
+    var standardLetters = tuning.split("").join(" ");
+
+    var navItems = [
+      { id:"tuner",   label:"Tuner",   icon:"tune" },
+      { id:"path",    label:"Courses", icon:"school",     onClick: nav("path") },
+      { id:"tools",   label:"Tools",   icon:"build",      onClick: nav("tuner") },
+      { id:"profile", label:"Profile", icon:"person",     onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root with-bg">'
+         + '<header class="showroom-tuner-bar">'
+           + '<button class="showroom-iconbtn accent" aria-label="Menu" onclick="' + backToHome() + '"><span class="material-symbols-outlined">menu</span></button>'
+           + '<h1 class="showroom-tuner-brand">SparkSuite</h1>'
+           + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
+             + '<span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">A</span>'
+           + '</button>'
+         + '</header>'
+         + '<div class="showroom-canvas" style="padding-top:0;align-items:center">'
+           + '<div class="showroom-tuner-wrap">'
+             + '<div class="showroom-tuner-dial">' + ticksHtml
+               + '<div class="showroom-tuner-inner">'
+                 + '<div class="showroom-tuner-note">' + escHtml(note) + '</div>'
+                 + '<div class="showroom-tuner-status ' + status + '">'
+                   + '<span class="material-symbols-outlined fill">' + statusIcon + '</span>'
+                   + '<span>' + statusLabel + '</span>'
+                 + '</div>'
+               + '</div>'
+             + '</div>'
+             + '<div class="showroom-tuner-row">'
+               + '<div class="showroom-tuner-cell"><span class="showroom-tuner-cell-label">Frequency</span>'
+                 + '<div class="showroom-tuner-freq"><span class="showroom-tuner-freq-num">' + freq.toFixed(1) + '</span><span class="showroom-tuner-freq-unit">Hz</span></div></div>'
+               + '<button class="showroom-tuner-mic" aria-label="Toggle microphone"><span class="material-symbols-outlined fill">mic</span></button>'
+               + '<div class="showroom-tuner-cell right"><span class="showroom-tuner-cell-label">Standard</span>'
+                 + '<span class="showroom-tuner-tuning">' + escHtml(standardLetters) + '</span></div>'
+             + '</div>'
+           + '</div>'
+           + '<section class="showroom-tuner-metro" style="width:100%">'
+             + '<div class="showroom-tuner-metro-head"><h3 class="showroom-tuner-metro-h">Metronome</h3>'
+               + '<div class="showroom-tuner-metro-pulse"><span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>'
+             + '<div class="showroom-tuner-metro-bpm-row">'
+               + '<button class="showroom-tuner-bpm-btn" aria-label="Slower"><span class="material-symbols-outlined">remove</span></button>'
+               + '<span class="showroom-tuner-bpm-num">' + bpm + '</span>'
+               + '<button class="showroom-tuner-bpm-btn" aria-label="Faster"><span class="material-symbols-outlined">add</span></button>'
+             + '</div>'
+             + '<div class="showroom-tuner-bpm-unit">BPM</div>'
+             + '<div class="showroom-tuner-metro-actions">'
+               + '<button class="showroom-tuner-start"><span class="material-symbols-outlined fill">play_arrow</span>Start</button>'
+               + '<button class="showroom-tuner-tap"><span class="material-symbols-outlined">touch_app</span>Tap</button>'
+             + '</div>'
+           + '</section>'
+           + '<div style="width:100%">'
+             + '<div class="showroom-quicktools-head"><h3>Quick Tools</h3><span class="link">View All</span></div>'
+             + '<div class="showroom-quicktools">'
+               + '<button class="showroom-quicktool recorder"><div class="showroom-quicktool-icon"><span class="material-symbols-outlined fill">mic</span></div><span class="showroom-quicktool-label">Recorder</span></button>'
+               + '<button class="showroom-quicktool tonegen"><div class="showroom-quicktool-icon"><span class="material-symbols-outlined fill">graphic_eq</span></div><span class="showroom-quicktool-label">Tone Gen</span></button>'
+               + '<button class="showroom-quicktool chords" onclick="' + nav("library") + '"><div class="showroom-quicktool-icon"><span class="material-symbols-outlined fill">library_music</span></div><span class="showroom-quicktool-label">Chords</span></button>'
+             + '</div>'
+           + '</div>'
+         + '</div>'
+         + bottomNav(navItems, "tuner")
+         + '</div>';
+  }
+
+  // ─── Public API + setters ──────────────────────────────────────────────
+  var SparkShowroom = {
+    setLibraryCategory: function(cat) {
+      var f = loadFlags(); f.libraryCategory = cat; saveFlags(f);
+      if (typeof render === "function") render();
+    },
+    setLibraryLevel: function(lv) {
+      var f = loadFlags(); f.libraryLevel = lv; saveFlags(f);
+      if (typeof render === "function") render();
+    }
+  };
+
+  window.SparkSettings       = { render: settingsRender };
+  window.SparkProfile        = { render: profileRender };
+  window.SparkSongDetails    = { render: songDetailsRender };
+  window.SparkPracticeMetro  = { render: practiceMetroRender };
+  window.SparkSongLibrary    = { render: songLibraryRender };
+  window.SparkSessionSummary = { render: sessionSummaryRender };
+  window.SparkPerformance    = { render: performanceRender };
+  window.SparkLesson         = { render: lessonRender };
+  window.SparkPath           = { render: pathRender };
+  window.SparkTuner          = { render: tunerRender };
+  window.SparkShowroom       = SparkShowroom;
+})();
