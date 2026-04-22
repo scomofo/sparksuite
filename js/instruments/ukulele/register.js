@@ -163,7 +163,9 @@
     instrument: "ukulele",
     name: "Ukulele",
     icon: "&#127926;",
-    iconImage: "resources/ukulele.png",
+    // (Removed stale iconImage: "resources/ukulele.png" — file doesn't
+    // exist; the Showroom now falls back to an inline SVG silhouette via
+    // SparkShowroomSVG.card("ukulele") which uses the brand accent color.)
     tagline: "Island strums and 4-string flow",
     skin: { laneCount: 4, labels: ["G", "C", "E", "A"] },
     available: true,
