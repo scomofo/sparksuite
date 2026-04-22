@@ -86,8 +86,15 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBFALhKgw_ldcAfpEd0GVKGzIkxZtOm0cNxDsDY2sTYWsKY963aqvGIN8SMQFVtbXF3qc_jNSneYl7CKdQXWR2ijykqfMrm2iYbiQTMWlSR91r7cll43-HXZqbrxcYTmtJqD7ErBWJvqS_J9FAuySyOEJyMSCzV5nUqXj7oU0nUxoBBqCuQRJZlE2zbCJMbj2sXhMLRUTp0vrOtcwmkMRHfmqzp15Z__sB0xN1J1TzWLbc_qOv-NlysdqioFfBTh39Nqk6NaSUDcbE);
-  opacity: 0.15;
+  /* Inline SVG data URI — the app-wide CSP in index.html pins
+     `img-src 'self' data:` (same in src-tauri/tauri.conf.json), so any
+     remote URL here fails to load. Two crossed gradients approximate a
+     subtle woodgrain cast without shipping a binary asset. */
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 48px, rgba(255,123,58,.05) 48px, rgba(255,123,58,.05) 49px),
+    repeating-linear-gradient(90deg, transparent, transparent 220px, rgba(255,123,58,.03) 220px, rgba(255,123,58,.03) 221px),
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,123,58,.05), transparent 60%);
+  opacity: 0.8;
 }
 
 /* Top App Bar */
@@ -1793,6 +1800,11 @@
 .showroom-chord-meta-val{
   font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:15px;margin:4px 0 0;
+  /* Uppercase in CSS — callers pass raw text through escHtml() without
+     a post-escape .toUpperCase(). Keeping the transform here means
+     HTML entities (e.g. &amp;) stay in their canonical lowercase form
+     rather than becoming &AMP; when JS uppercases the escaped output. */
+  text-transform:uppercase;
 }
 .showroom-chord-meta-val.success{color:var(--success, #4CD964)}
 .showroom-chord-meta-val.primary{color:#ffb596}
@@ -1804,14 +1816,26 @@
   font-family:'Syne',sans-serif;font-weight:700;font-size:17px;
   color:var(--text-primary);margin:0;
 }
-.showroom-tips-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* Staggered tip grid: each item aligns to the top of its own row so the
+   grid naturally reflects asymmetric content heights without relying on
+   a hardcoded nth-child margin. The second column gets an intentional
+   top offset only when both columns are present, and that offset is
+   dropped in the single-column responsive layout below so the stagger
+   doesn't produce a stray top gap. */
+.showroom-tips-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  align-items:start;
+}
 .showroom-tip{
   background:var(--surface-container-low, #251914);border:1px solid rgba(255,255,255,.05);
   border-radius:12px;padding:16px;
   display:flex;flex-direction:column;gap:8px;
+  align-self:start;
 }
-.showroom-tip:nth-child(2) {
-  margin-top: 16px;
+@media (min-width:480px){
+  /* Offset the second grid cell to create the staggered look when a
+     two-column layout is in effect. */
+  .showroom-tips-grid > .showroom-tip:nth-child(2){margin-top:16px}
 }
 .showroom-tip.wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:16px}
 .showroom-tip-icon{
