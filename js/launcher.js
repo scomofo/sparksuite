@@ -138,6 +138,17 @@
     return h;
   }
 
+  function selectInstrument(appId) {
+    SparkInstruments.activate(appId);
+    if (typeof S !== "undefined") {
+      S.activeInstrument = appId;
+      if (typeof SCR !== "undefined") S.screen = SCR.HOME;
+      if (typeof TAB !== "undefined") S.tab = TAB.PRACTICE;
+    }
+    if (typeof saveState === "function") saveState();
+    if (typeof render === "function") render();
+  }
+
   function renderHero(featured, stats) {
     if (!featured) {
       return '' +
@@ -172,11 +183,7 @@
       bg = '<div class="showroom-hero-bg-fallback" aria-hidden="true">' + glyphFor(featured) + '</div>';
     }
 
-    var onClick = 'SparkInstruments.activate(\'' + safeEsc(featured.id) + '\');'
-      + 'S.activeInstrument=\'' + safeEsc(featured.id) + '\';'
-      + 'if(typeof SCR!=="undefined")S.screen=SCR.HOME;'
-      + 'if(typeof TAB!=="undefined")S.tab=TAB.PRACTICE;'
-      + 'saveState();render()';
+    var onClick = 'SparkInstruments.selectInstrument(\'' + safeEsc(featured.id) + '\')';
 
     return '' +
       '<section class="showroom-hero-wrap">' +
@@ -194,11 +201,7 @@
 
   function renderCard(inst) {
     var type = instrumentType(inst);
-    var onClick = 'SparkInstruments.activate(\'' + safeEsc(inst.id) + '\');'
-      + 'S.activeInstrument=\'' + safeEsc(inst.id) + '\';'
-      + 'if(typeof SCR!=="undefined")S.screen=SCR.HOME;'
-      + 'if(typeof TAB!=="undefined")S.tab=TAB.PRACTICE;'
-      + 'saveState();render()';
+    var onClick = 'SparkInstruments.selectInstrument(\'' + safeEsc(inst.id) + '\')';
     return '' +
       '<div class="showroom-card showroom-glass" data-instrument="' + safeEsc(type) + '"'
         + ' onclick="' + onClick + '"'
@@ -314,11 +317,7 @@
     if (available.length < 4) cards += renderLockedCard();
 
     var fabOnClick = featured
-      ? 'SparkInstruments.activate(\'' + safeEsc(featured.id) + '\');'
-        + 'S.activeInstrument=\'' + safeEsc(featured.id) + '\';'
-        + 'if(typeof SCR!=="undefined")S.screen=SCR.HOME;'
-        + 'if(typeof TAB!=="undefined")S.tab=TAB.PRACTICE;'
-        + 'saveState();render()'
+      ? 'SparkInstruments.selectInstrument(\'' + safeEsc(featured.id) + '\')'
       : '';
 
     return '' +
@@ -351,6 +350,8 @@
       _instruments.push(config);
     },
 
+    selectInstrument: selectInstrument,
+
     activate: function(appId) {
       for (var i = 0; i < _instruments.length; i++) {
         if (_instruments[i].id === appId) {
@@ -360,6 +361,25 @@
             S.launcherView = null;
           }
           if (_active.init) _active.init();
+          // Per CLAUDE.md engine-first rules: per-instrument XP/streak/level/
+          // session counts are owned by the SparkProfile.apps[appId].stats
+          // engine-layer struct. Sync those into the legacy S.* mirrors so
+          // the (dumb-renderer) header and other UI reflect this instrument's
+          // numbers, not whatever was last accumulated globally. Backfill
+          // first so existing (pre-migration) users don't see zeros.
+          if (typeof SparkInstrumentProgress !== "undefined") {
+            SparkInstrumentProgress.backfillFromLegacyIfEmpty();
+            SparkInstrumentProgress.syncFromActive();
+          }
+          // Rebuild the daily practice plan for the newly-active instrument.
+          // The sparkCore session cache + legacy S.practicePlan are both
+          // keyed by (date, instrumentType); activate() is the moment we
+          // know the instrument has changed, so drive the rebuild here
+          // rather than relying on the Practice page to notice.
+          if (typeof ensurePracticePlan === "function") {
+            try { ensurePracticePlan({ forceRebuild: true }); }
+            catch (err) { console.error("activate: ensurePracticePlan failed", err); }
+          }
           return;
         }
       }
@@ -411,22 +431,12 @@
     },
 
     renderLauncher: function() {
-      var view = (typeof S !== "undefined" && S.launcherView) ? S.launcherView : "home";
-      var registry = {
-        "settings":        typeof SparkSettings !== "undefined" ? SparkSettings : null,
-        "profile":         typeof SparkProfileScreen !== "undefined" ? SparkProfileScreen : null,
-        "song-details":    typeof SparkSongDetails !== "undefined" ? SparkSongDetails : null,
-        "practice":        typeof SparkPracticeMetro !== "undefined" ? SparkPracticeMetro : null,
-        "library":         typeof SparkSongLibrary !== "undefined" ? SparkSongLibrary : null,
-        "session-summary": typeof SparkSessionSummary !== "undefined" ? SparkSessionSummary : null,
-        "performance":     typeof SparkPerformance !== "undefined" ? SparkPerformance : null,
-        "lesson":          typeof SparkLesson !== "undefined" ? SparkLesson : null,
-        "path":            typeof SparkPath !== "undefined" ? SparkPath : null,
-        "learn":           typeof SparkPath !== "undefined" ? SparkPath : null,
-        "tuner":           typeof SparkTuner !== "undefined" ? SparkTuner : null
-      };
-      var mod = registry[view];
-      if (mod && mod.render) return mod.render();
+      // The launcher only renders its own home (instrument picker). The
+      // bottom-nav Library / Learn / Settings views previously dispatched
+      // to Showroom modules, which are design-reference mocks (see
+      // js/showroom/spark-showroom.js) — so those views fall through to
+      // home until they're either wired to real data or replaced with
+      // legacy-backed screens.
       return renderHome();
     }
   };

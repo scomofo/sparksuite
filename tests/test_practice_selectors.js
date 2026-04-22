@@ -227,11 +227,17 @@ test("buildPracticeCandidates includes the module-driven ukulele candidate", fun
 });
 
 test("buildPracticeCandidates includes imported-technique focus when imported chart weakness is present", function() {
+  // Bucket carries an explicit `instrument` stamp matching the active
+  // instrument (ukulele per the test fixture). Real buckets get this
+  // field at write time in js/performance/progression.js; the resolver
+  // no longer falls back to the active instrument on pure reads because
+  // that was the source of the "bass plan recommends ukulele" bug.
   S.performanceStats = {
     imported_song_imported_chart_normal: {
       songId: "imported_song",
       arrangement: "imported_chart",
       difficulty: "normal",
+      instrument: "ukulele",
       bestAccuracy: 81,
       runs: 4,
       importedTechniqueTotals: {

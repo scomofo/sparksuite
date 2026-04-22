@@ -1,12 +1,57 @@
 (function(){
 
+  // Keyword heuristic: songIds like "ukulele_island_package" or
+  // "bass_midnight_lock_package" have the instrument in the name.
+  // Whole-token match to avoid false positives like "bass" in "bassoon".
+  function keywordInstrumentFromKey(str) {
+    if (typeof str !== "string" || !str) return null;
+    var tokens = str.toLowerCase().split(/[^a-z0-9]+/);
+    var known = ["ukulele","bass","piano","drums","guitar"];
+    for (var i = 0; i < tokens.length; i++) {
+      if (known.indexOf(tokens[i]) >= 0) return tokens[i];
+    }
+    return null;
+  }
+
+  // Resolve the instrument a performance bucket "belongs to". Priority:
+  //   1. Authoritative chart manifest entry
+  //   2. Keyword heuristic on the songId
+  //   3. Explicit write-time fallback (active instrument) when caller opts in
+  //
+  // Deliberately does NOT fall back to SparkInstruments.getActive() on
+  // plain reads. Doing so mis-attributes every legacy/unstamped bucket to
+  // whoever is currently active — the exact bug that caused bass practice
+  // plans to recommend "Replay Ukulele Island" (a malformed key whose
+  // songId wasn't in the manifest, so the active-instrument fallback
+  // stamped it "bass"). Leave unknown-origin buckets null and let
+  // callers that filter by instrument drop them.
+  function deriveInstrumentForSong(songId, opts) {
+    opts = opts || {};
+    var meta = typeof getPerformanceChartMeta === "function" ? getPerformanceChartMeta(songId) : null;
+    if (meta && meta.instrument) return meta.instrument;
+    var hint = keywordInstrumentFromKey(songId);
+    if (hint) return hint;
+    if (opts.fallbackToActive) {
+      var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive
+        ? SparkInstruments.getActive()
+        : null;
+      return (active && (active.instrument || active.instrumentType)) || null;
+    }
+    return null;
+  }
+
   function getPerformanceStats(songId, arrangementType, difficulty) {
     var key = songId + "_" + (arrangementType || "chords") + "_" + (difficulty || "normal");
     if (!S.performanceStats[key]) {
+      // At create time, trust the active instrument as a last resort —
+      // the user is actively playing this chart, so whatever instrument
+      // is loaded is the right attribution when manifest/keyword don't
+      // decide.
       S.performanceStats[key] = {
         songId: songId,
         arrangement: arrangementType || "chords",
         difficulty: difficulty || "normal",
+        instrument: deriveInstrumentForSong(songId, { fallbackToActive: true }),
         bestScore: 0,
         bestAccuracy: 0,
         bestStars: 0,
@@ -17,9 +62,17 @@
         lastFocusedTechnique: null,
         focusedTechniqueRuns: {}
       };
+    } else if (!S.performanceStats[key].instrument) {
+      // Lazy read-time backfill — NO active-instrument fallback; leave
+      // it null if manifest/keyword can't identify it, so it'll get
+      // filtered out rather than mis-attributed.
+      var inferred = deriveInstrumentForSong(songId);
+      if (inferred) S.performanceStats[key].instrument = inferred;
     }
     return S.performanceStats[key];
   }
+
+  window.deriveInstrumentForPerformanceSong = deriveInstrumentForSong;
 
   function updatePerformanceStats(songId, arrangementType, difficulty, results) {
     var stats = getPerformanceStats(songId, arrangementType, difficulty);

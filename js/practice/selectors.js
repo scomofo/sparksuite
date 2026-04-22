@@ -22,7 +22,9 @@
 
   function getCompletedLessonIds(){
     var completed = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-    var mastery = S.mastery && S.mastery.lessons ? S.mastery.lessons : {};
+    var mastery = typeof SparkMastery !== "undefined"
+      ? SparkMastery.category("lessons")
+      : (S.mastery && S.mastery.lessons ? S.mastery.lessons : {});
     for(var lessonId in mastery){
       if(mastery[lessonId]) completed.push(lessonId);
     }
@@ -59,7 +61,10 @@
     var completedLessonIds = getCompletedLessonIds();
     var moduleState = {
       completedLessonIds: completedLessonIds,
-      mastery: S.mastery || {},
+      // Pass the per-instrument mastery branch in the OLD flat shape
+      // (chords/lessons/rhythm/…) — per-instrument module callbacks
+      // still expect that layout.
+      mastery: typeof SparkMastery !== "undefined" ? SparkMastery.all() : (S.mastery || {}),
       performanceStats: S.performanceStats || {},
       ukuleleSkillProgress: S.ukuleleSkillProgress || {},
       bassSkillProgress: S.bassSkillProgress || {}
@@ -110,7 +115,7 @@
   }
 
   function selectWeakTransitionCandidate(){
-    var ts = S.transitionStats || {};
+    var ts = typeof SparkTransitionStats !== "undefined" ? SparkTransitionStats.all() : (S.transitionStats || {});
     var best = null;
     for(var key in ts){
       var row = ts[key];
@@ -136,10 +141,10 @@
     return best;
   }
 
-  function selectWeakPerformanceCandidate(){
+  function selectWeakPerformanceCandidate(instrumentFilter){
     var perf = S.performanceStats || {};
     var weakest = null;
-    var buckets = normalizePerformanceBuckets(perf);
+    var buckets = normalizePerformanceBuckets(perf, instrumentFilter);
     for(var i=0;i<buckets.length;i++){
       var bucket = buckets[i];
       var acc = bucket.bestAccuracy != null ? bucket.bestAccuracy : bucket.avgAccuracy || 0;
@@ -193,9 +198,9 @@
     return weakest;
   }
 
-  function selectImportedTechniqueCandidate(){
+  function selectImportedTechniqueCandidate(instrumentFilter){
     var perf = S.performanceStats || {};
-    var buckets = normalizePerformanceBuckets(perf);
+    var buckets = normalizePerformanceBuckets(perf, instrumentFilter);
     var strongestNeed = null;
     for(var i=0;i<buckets.length;i++){
       var bucket = buckets[i];
@@ -243,7 +248,7 @@
   }
 
   function selectFingerCandidate(){
-    var stats = S.fingerStats || {};
+    var stats = typeof SparkFingerStats !== "undefined" ? SparkFingerStats.all() : (S.fingerStats || {});
     var weakest = null;
     for(var key in stats){
       var row = stats[key];
@@ -269,16 +274,24 @@
     return weakest;
   }
 
+  function resolveActiveInstrumentType(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive
+      ? SparkInstruments.getActive()
+      : null;
+    return (active && (active.instrument || active.instrumentType)) || null;
+  }
+
   function buildPracticeCandidates(){
+    var activeType = resolveActiveInstrumentType();
     var out = [];
     var fns = [
-      selectInstrumentModuleCandidate,
-      selectWarmupCandidate,
-      selectWeakTransitionCandidate,
-      selectImportedTechniqueCandidate,
-      selectWeakPerformanceCandidate,
-      selectRhythmCandidate,
-      selectFingerCandidate
+      function(){ return selectInstrumentModuleCandidate(); },
+      function(){ return selectWarmupCandidate(); },
+      function(){ return selectWeakTransitionCandidate(); },
+      function(){ return selectImportedTechniqueCandidate(activeType); },
+      function(){ return selectWeakPerformanceCandidate(activeType); },
+      function(){ return selectRhythmCandidate(); },
+      function(){ return selectFingerCandidate(); }
     ];
     for(var i=0;i<fns.length;i++){
       var item = fns[i]();
@@ -357,17 +370,52 @@
     };
   }
 
-  function normalizePerformanceBuckets(perf){
+  // Keyword heuristic: a songId/key that contains a known instrument
+  // token (e.g. "ukulele_island_package_ukulele_strum") is almost
+  // certainly that instrument's, even if the chart manifest doesn't know
+  // the id (some malformed double-stamped keys exist in legacy saves).
+  // Match whole-token only to avoid "bass"-in-"bassoon" style confusion.
+  function keywordInstrumentFromKey(str){
+    if(typeof str !== "string" || !str) return null;
+    var tokens = str.toLowerCase().split(/[^a-z0-9]+/);
+    var known = ["ukulele","bass","piano","drums","guitar"];
+    for(var i=0;i<tokens.length;i++){
+      if(known.indexOf(tokens[i]) >= 0) return tokens[i];
+    }
+    return null;
+  }
+
+  // READ-time instrument resolver for performance buckets. Intentionally
+  // does NOT fall back to the active instrument — doing so would mis-
+  // attribute every legacy unstamped bucket to whoever the user is now,
+  // which is the exact bug that caused bass plans to recommend "Replay
+  // Ukulele Island". Returns null for unknown-origin buckets so the
+  // filter drops them rather than faking an instrument.
+  function resolveBucketInstrument(row, songId, bucketKey){
+    if(row && row.instrument) return row.instrument;
+    if(typeof getPerformanceChartMeta === "function"){
+      var meta = getPerformanceChartMeta(songId);
+      if(meta && meta.instrument) return meta.instrument;
+    }
+    var hint = keywordInstrumentFromKey(songId) || keywordInstrumentFromKey(bucketKey);
+    if(hint) return hint;
+    return null;
+  }
+
+  function normalizePerformanceBuckets(perf, instrumentFilter){
     var buckets = [];
     for(var key in perf){
       var row = perf[key];
       if(!row) continue;
       if(row.songId || row.arrangement || row.difficulty){
+        var songIdFlat = row.songId || key;
+        var resolvedInst = resolveBucketInstrument(row, songIdFlat, key);
         buckets.push({
           key:key,
-          songId:row.songId || key,
+          songId:songIdFlat,
           arrangementType:row.arrangement || "chords",
           difficultyId:row.difficulty || "normal",
+          instrument:resolvedInst,
           bestAccuracy:row.bestAccuracy,
           avgAccuracy:row.avgAccuracy,
           runs:row.runs,
@@ -391,6 +439,7 @@
             songId:key,
             arrangementType:arrangementType,
             difficultyId:difficultyId,
+            instrument:resolveBucketInstrument(bucket, key, key),
             bestAccuracy:bucket.bestAccuracy,
             avgAccuracy:bucket.avgAccuracy,
             runs:bucket.runs,
@@ -403,6 +452,15 @@
           });
         }
       }
+    }
+    // When a filter is supplied, only return buckets whose instrument matches.
+    // Buckets with unknown instrument are excluded under a filter so we don't
+    // mis-attribute legacy data across instruments — the candidate will simply
+    // not surface until a run stamps a real instrument onto the bucket.
+    if(instrumentFilter){
+      buckets = buckets.filter(function(b){
+        return b.instrument && b.instrument === instrumentFilter;
+      });
     }
     return buckets;
   }

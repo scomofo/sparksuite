@@ -254,10 +254,21 @@
     if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
     var flow = input.flow || this.aiEngine.suggestNextFlow();
     var today = new Date().toISOString().slice(0, 10);
-    if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today) {
+    // The cached plan is also keyed by the active instrument — switching
+    // instruments invalidates yesterday's cache even on the same day, so a
+    // bass user doesn't see ukulele segments. When currentInstrumentType is
+    // null (e.g. tests without an InstrumentManager) the check is a no-op.
+    var currentInstrumentType = this.instrumentManager && typeof this.instrumentManager.getActiveContext === "function"
+      ? (this.instrumentManager.getActiveContext() || {}).instrumentType || null
+      : null;
+    var cacheInstrumentMatches = !currentInstrumentType
+      || !this.currentPlan
+      || !this.currentPlan.instrumentType
+      || this.currentPlan.instrumentType === currentInstrumentType;
+    if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today && cacheInstrumentMatches) {
       this.updateRuntimeState({
         activeFlow: this.currentPlan.flow,
-        activeInstrumentId: this.currentPlan.instrumentType || this.currentPlan.instrumentId || null,
+        activeInstrumentId: this.currentPlan.instrumentId || this.currentPlan.instrumentType || null,
         activeInstrumentType: this.runtimeState.activeInstrumentType,
         activePlanId: this.currentPlan.id,
         activeSegmentId: this.currentPlan.segments && this.currentPlan.segments.length ? this.currentPlan.segments[0].id : null,
@@ -359,7 +370,7 @@
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
-      activeInstrumentId: plan.instrumentType || plan.instrumentId || null,
+      activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
       activeInstrumentType: instrumentContext.instrumentType || null,
       activePlanId: plan.id,
       activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
@@ -430,7 +441,7 @@
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
-      activeInstrumentId: plan.instrumentType || plan.instrumentId || null,
+      activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
       activeInstrumentType: instrumentContext.instrumentType || null,
       activePlanId: plan.id,
       activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
@@ -1640,8 +1651,8 @@
     this.lastSessionOutcome = result;
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
-      activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
-        ? (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
+      activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
+        ? (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
         : this.runtimeState.activeInstrumentId,
       activeInstrumentType: this.runtimeState.activeInstrumentType,
       activePlanId: this.currentPlan ? this.currentPlan.id : this.runtimeState.activePlanId,

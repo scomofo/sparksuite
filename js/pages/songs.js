@@ -522,7 +522,11 @@ function stemsPage(){
 
 function performSubTab(){
   var h='<div class="card mb20" style="text-align:center;padding:24px">';
-  var charts = typeof getPerformanceChartLibrary === "function" ? getPerformanceChartLibrary() : [];
+  var activeInst = getSongsPageInstrument();
+  var activeType = (activeInst && (activeInst.instrument || activeInst.instrumentType)) || null;
+  var charts = typeof getPerformanceChartLibrary === "function"
+    ? (activeType ? getPerformanceChartLibrary({ instrument: activeType }) : getPerformanceChartLibrary())
+    : [];
   h+='<div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
   h+='<h3 style="font-size:18px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Performance Mode</h3>';
   h+='<p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Play along with a scrolling chord highway. MIDI guitar or mic input.</p>';
