@@ -16,7 +16,12 @@
   function nav(view) {
     return "SparkShowroomNavigate(" + JSON.stringify(view) + ")";
   }
-  function backToHome() { return nav("home"); }
+  // Back arrow on sub-pages (Settings, Profile, etc.). Inside an instrument
+  // this returns to the instrument's Practice page so users don't get dropped
+  // out of instrument context. Outside, it goes to the launcher showcase.
+  // The bottom-nav "Home" tab still uses nav("home") which intentionally
+  // returns to the launcher.
+  function backToHome() { return nav("back"); }
 
   // Context-aware navigation. When an instrument is active, route via the
   // legacy SCR/TAB system so each Showroom page becomes the actual page for
@@ -30,6 +35,9 @@
       var routes = {
         // "home" universally means the instrument-showcase launcher.
         "home":            function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; S.launcherView = "home"; },
+        // "back" — return to instrument Practice from a sub-page without
+        // dropping the user out of the instrument context.
+        "back":            function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
         "practice":        function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
         "library":         function(){ S.screen = SCR_.HOME;       S.tab = TAB_.SONGS; },
         "tuner":           function(){ S.screen = SCR_.HOME;       S.tab = TAB_.TUNER || "tuner"; },
@@ -56,7 +64,8 @@
       return;
     }
     if (typeof SparkInstruments !== "undefined" && SparkInstruments.openLauncherView) {
-      SparkInstruments.openLauncherView(view);
+      // Outside an instrument, "back" means return to the launcher showcase.
+      SparkInstruments.openLauncherView(view === "back" ? "home" : view);
     }
   };
 
