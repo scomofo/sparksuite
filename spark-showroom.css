@@ -74,6 +74,29 @@
 }
 .showroom-ember-glow{box-shadow:0 0 20px rgba(255,123,58,.3),0 0 40px rgba(255,123,58,.1)}
 
+.showroom-ember-glow-card {
+  box-shadow: 0 0 30px -10px rgba(255, 123, 58, 0.25);
+}
+.showroom-ember-glow-button {
+  box-shadow: 0 0 40px -5px rgba(255, 123, 58, 0.6);
+}
+
+.showroom-woodgrain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Inline SVG data URI — the app-wide CSP in index.html pins
+     `img-src 'self' data:` (same in src-tauri/tauri.conf.json), so any
+     remote URL here fails to load. Two crossed gradients approximate a
+     subtle woodgrain cast without shipping a binary asset. */
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 48px, rgba(255,123,58,.05) 48px, rgba(255,123,58,.05) 49px),
+    repeating-linear-gradient(90deg, transparent, transparent 220px, rgba(255,123,58,.03) 220px, rgba(255,123,58,.03) 221px),
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,123,58,.05), transparent 60%);
+  opacity: 0.8;
+}
+
 /* Top App Bar */
 .showroom-topbar{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
@@ -1690,6 +1713,18 @@
 .showroom-lesson-card-head{
   display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;
 }
+
+.showroom-blur-blob {
+  position: absolute;
+  top: -16px;
+  left: -16px;
+  width: 96px;
+  height: 96px;
+  background: rgba(255, 123, 58, 0.1);
+  filter: blur(40px);
+  border-radius: 50%;
+  pointer-events: none;
+}
 .showroom-lesson-card-title{
   font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;color:var(--text-primary);margin:0;
@@ -1697,15 +1732,21 @@
 .showroom-lesson-card-sub{
   font-size:13px;color:var(--text-dim);font-weight:500;margin:0;
 }
+.showroom-lesson-card-badge {
+  background: var(--surface-container, #291d18);
+  border-radius: 8px;
+  padding: 4px 8px;
+  border: 1px solid rgba(167, 139, 128, 0.3);
+}
 .showroom-lesson-card-tag{
   font-family:'JetBrains Mono',monospace;
-  font-weight:900;font-size:24px;color:#ff7b3a;
+  font-weight:900;font-size:18px;color:#ff7b3a;
 }
 
 /* Chord diagram */
 .showroom-chord{
   position:relative;width:240px;height:260px;margin:16px auto;
-  background:rgba(20,12,7,.5);
+  background:rgba(37,25,20,0.5);
   border:1px solid rgba(255,255,255,.05);border-radius:12px;
   padding:24px 32px 16px;
 }
@@ -1742,7 +1783,7 @@
   display:flex;align-items:center;justify-content:center;
   font-size:10px;font-weight:700;
   border:2px solid rgba(255,255,255,.2);
-  box-shadow:0 0 15px rgba(255,123,58,.8);
+  box-shadow: 0 0 15px rgba(255, 123, 58, 0.8);
   transform:translate(-50%,-50%);z-index:2;
 }
 
@@ -1759,8 +1800,13 @@
 .showroom-chord-meta-val{
   font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:15px;margin:4px 0 0;
+  /* Uppercase in CSS — callers pass raw text through escHtml() without
+     a post-escape .toUpperCase(). Keeping the transform here means
+     HTML entities (e.g. &amp;) stay in their canonical lowercase form
+     rather than becoming &AMP; when JS uppercases the escaped output. */
+  text-transform:uppercase;
 }
-.showroom-chord-meta-val.success{color:#4CD964}
+.showroom-chord-meta-val.success{color:var(--success, #4CD964)}
 .showroom-chord-meta-val.primary{color:#ffb596}
 
 /* Key tips */
@@ -1770,13 +1816,28 @@
   font-family:'Syne',sans-serif;font-weight:700;font-size:17px;
   color:var(--text-primary);margin:0;
 }
-.showroom-tips-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.showroom-tip{
-  background:#251914;border:1px solid rgba(255,255,255,.05);
-  border-radius:12px;padding:14px;
-  display:flex;flex-direction:column;gap:8px;
+/* Staggered tip grid: each item aligns to the top of its own row so the
+   grid naturally reflects asymmetric content heights without relying on
+   a hardcoded nth-child margin. The second column gets an intentional
+   top offset only when both columns are present, and that offset is
+   dropped in the single-column responsive layout below so the stagger
+   doesn't produce a stray top gap. */
+.showroom-tips-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  align-items:start;
 }
-.showroom-tip.wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:14px}
+.showroom-tip{
+  background:var(--surface-container-low, #251914);border:1px solid rgba(255,255,255,.05);
+  border-radius:12px;padding:16px;
+  display:flex;flex-direction:column;gap:8px;
+  align-self:start;
+}
+@media (min-width:480px){
+  /* Offset the second grid cell to create the staggered look when a
+     two-column layout is in effect. */
+  .showroom-tips-grid > .showroom-tip:nth-child(2){margin-top:16px}
+}
+.showroom-tip.wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:16px}
 .showroom-tip-icon{
   width:32px;height:32px;border-radius:50%;flex:none;
   display:flex;align-items:center;justify-content:center;
@@ -1801,23 +1862,23 @@
 }
 
 /* Stats pill */
-.showroom-stats-pill{
+.showroom-stats-bar{
   margin-top:16px;
   background:rgba(37,33,25,.5);border:1px solid rgba(255,255,255,.05);
-  border-radius:9999px;padding:10px 24px;
+  border-radius:9999px;padding:12px 20px;
   display:flex;justify-content:space-between;align-items:center;
 }
-.showroom-stats-pill .seg{display:flex;align-items:center;gap:8px}
-.showroom-stats-pill .seg .num{
+.showroom-stats-bar .seg{display:flex;align-items:center;gap:8px}
+.showroom-stats-bar .seg .num{
   font-family:'JetBrains Mono',monospace;
   font-weight:900;font-size:20px;color:var(--text-primary);
 }
-.showroom-stats-pill .seg .lbl{
+.showroom-stats-bar .seg .lbl{
   font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.3px;
 }
-.showroom-stats-pill .seg.xp .material-symbols-outlined{color:#FFE66D}
-.showroom-stats-pill .seg.timer .material-symbols-outlined{color:#FF6B6B}
+.showroom-stats-bar .seg.xp .material-symbols-outlined{color:#FFE66D}
+.showroom-stats-bar .seg.timer .material-symbols-outlined{color:#FF6B6B}
 
 /* Lesson CTA */
 .showroom-lesson-cta-wrap{
@@ -1832,7 +1893,6 @@
   font-family:'Syne',sans-serif;
   font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.15em;
   display:flex;align-items:center;justify-content:center;gap:8px;
-  box-shadow:0 0 20px rgba(255,123,58,.4),0 8px 24px rgba(0,0,0,.4);
   transition:transform .15s,filter .15s;
 }
 .showroom-lesson-cta:hover{filter:brightness(1.05)}
