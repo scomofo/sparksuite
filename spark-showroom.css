@@ -4183,3 +4183,210 @@
   transition:transform .18s ease;
 }
 .showroom-lesson-2026 .showroom-lesson-cta:active{ transform:scale(.95); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Song Library Screen (Stitch 2026-04)
+   Warm Ember token pass on the existing songLibraryRender layout.
+   Ported from docs/design/stitch-2026-04/song_library/code.html.
+   Scoped under .showroom-library-2026; cascade handles override.
+   ═══════════════════════════════════════════════════════════════════ */
+.showroom-library-2026 .showroom-library-bar{
+  background:rgba(18,16,14,0.9);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,123,58,0.1);
+}
+.showroom-library-2026 .showroom-library-title{
+  font-family:'Syne', var(--font-display, sans-serif);
+  font-weight:800; font-size:20px;
+  letter-spacing:-.01em;
+  color:var(--accent-deep);
+}
+.showroom-library-avatar-btn{
+  width:32px; height:32px;
+  padding:0;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+}
+.showroom-library-avatar-fallback{
+  width:32px; height:32px;
+  border-radius:50%;
+  border:2px solid var(--primary-container, var(--accent-deep));
+  display:inline-flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--accent-deep), var(--brand-clay, #C07040));
+  color:#fff;
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:800; font-size:13px;
+}
+.showroom-library-2026 .showroom-search{
+  background:var(--surface-container-low, #251914);
+  border:1px solid var(--border-light, #3A3228);
+  border-radius:12px;
+}
+.showroom-library-2026 .showroom-search .material-symbols-outlined{
+  color:rgba(255,123,58,0.5);
+}
+.showroom-library-2026 .showroom-search input:focus ~ .material-symbols-outlined,
+.showroom-library-2026 .showroom-search:focus-within .material-symbols-outlined{
+  color:var(--primary-container, var(--accent-deep));
+}
+.showroom-library-2026 .showroom-chiprow .showroom-chip{
+  border-radius:9999px;
+  padding:8px 20px;
+  font-family:'Syne', var(--font-display, sans-serif);
+  font-size:11px;
+  letter-spacing:.03em;
+  font-weight:700;
+  background:var(--surface-container, #291d18);
+  border:1px solid var(--border-light, #3A3228);
+  color:var(--text-secondary);
+}
+.showroom-library-2026 .showroom-chiprow .showroom-chip.on{
+  background:var(--primary-container, var(--accent-deep));
+  color:var(--on-primary-container, #642300);
+  border-color:transparent;
+}
+.showroom-library-2026 .showroom-level-row .showroom-level-chip{
+  background:#251914;
+  color:var(--text-muted);
+  border:1px solid rgba(255,255,255,0.05);
+  padding:6px 12px;
+  border-radius:8px;
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:700; font-size:10px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.showroom-library-2026 .showroom-level-row .showroom-level-chip.on{
+  color:var(--accent-deep);
+  border-color:rgba(255,123,58,0.2);
+}
+.showroom-library-2026 .showroom-song-row{
+  background:rgba(30,27,23,0.6);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;
+  padding:16px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  transition:transform .12s ease;
+}
+.showroom-library-2026 .showroom-song-row:active{ transform:scale(.98); }
+.showroom-library-2026 .showroom-song-thumb{
+  position:relative;
+  width:56px; height:56px;
+  border-radius:8px;
+  overflow:hidden;
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+.showroom-library-2026 .showroom-song-row.guitar  .showroom-song-thumb{ background:linear-gradient(135deg, rgba(255,45,85,0.35),  rgba(18,16,14,0.7)); }
+.showroom-library-2026 .showroom-song-row.piano   .showroom-song-thumb{ background:linear-gradient(135deg, rgba(14,165,233,0.35), rgba(18,16,14,0.7)); }
+.showroom-library-2026 .showroom-song-row.bass    .showroom-song-thumb{ background:linear-gradient(135deg, rgba(124,58,237,0.35), rgba(18,16,14,0.7)); }
+.showroom-library-2026 .showroom-song-row.ukulele .showroom-song-thumb{ background:linear-gradient(135deg, rgba(20,184,166,0.35), rgba(18,16,14,0.7)); }
+.showroom-library-2026 .showroom-song-thumb-fallback{
+  font-size:26px;
+  line-height:1;
+  filter:drop-shadow(0 0 6px rgba(0,0,0,0.6));
+}
+.showroom-library-2026 .showroom-song-name{
+  font-family:'Outfit', 'Plus Jakarta Sans', var(--font-body);
+  font-weight:700; font-size:15px;
+  color:var(--on-surface);
+  margin:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.showroom-library-2026 .showroom-song-sub{
+  font-family:'Outfit', 'Plus Jakarta Sans', var(--font-body);
+  font-size:12px; font-weight:400;
+  color:var(--text-muted);
+  margin:0;
+}
+.showroom-library-2026 .showroom-lvl-pill{
+  font-family:'JetBrains Mono', var(--font-mono, monospace);
+  font-size:10px; font-weight:700;
+  padding:2px 6px;
+  border-radius:4px;
+}
+.showroom-library-2026 .showroom-song-row.guitar  .showroom-lvl-pill{ background:rgba(255,45,85,0.1);  color:var(--guitar-neon,  #FF2D55); }
+.showroom-library-2026 .showroom-song-row.piano   .showroom-lvl-pill{ background:rgba(14,165,233,0.1); color:var(--piano-midnight, #0EA5E9); }
+.showroom-library-2026 .showroom-song-row.bass    .showroom-lvl-pill{ background:rgba(124,58,237,0.1); color:var(--bass-violet,  #7C3AED); }
+.showroom-library-2026 .showroom-song-row.ukulele .showroom-lvl-pill{ background:rgba(20,184,166,0.1); color:var(--ukulele-teal, #14B8A6); }
+.showroom-library-2026 .showroom-song-play{
+  width:40px; height:40px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  border:none;
+  cursor:pointer;
+  transition:transform .12s ease;
+}
+.showroom-library-2026 .showroom-song-play.hot{
+  background:var(--primary-container, var(--accent-deep));
+  color:var(--on-primary-container, #642300);
+  box-shadow:0 0 20px rgba(255,123,58,0.3);
+}
+.showroom-library-2026 .showroom-song-play.new,
+.showroom-library-2026 .showroom-song-play.dim{
+  background:var(--surface-container-high, #342722);
+  color:var(--text-secondary);
+  border:1px solid rgba(255,255,255,0.05);
+}
+.showroom-library-2026 .showroom-song-play:active{ transform:scale(.9); }
+.showroom-library-2026 .showroom-song-status{
+  font-family:'JetBrains Mono', var(--font-mono, monospace);
+  font-size:10px; font-weight:900;
+}
+.showroom-library-2026 .showroom-song-status.success{ color:var(--success); }
+.showroom-library-2026 .showroom-song-status.warn{ color:var(--danger); }
+.showroom-library-2026 .showroom-song-status.muted{ color:var(--text-muted); }
+.showroom-library-2026 .showroom-daily{
+  position:relative;
+  overflow:hidden;
+  background:rgba(30,27,23,0.6);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.08);
+  border-left:4px solid var(--accent-deep);
+  border-radius:12px;
+  padding:24px;
+}
+.showroom-library-2026 .showroom-daily-eyebrow{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-size:10px; font-weight:700;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  color:var(--accent-deep);
+}
+.showroom-library-2026 .showroom-daily-title{
+  font-family:'Syne', var(--font-display, sans-serif);
+  font-weight:700; font-size:17px;
+  color:var(--on-surface);
+  margin:4px 0 0;
+}
+.showroom-library-2026 .showroom-daily-sub{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-size:12px; font-weight:600;
+  color:var(--text-secondary);
+  margin:2px 0 0;
+}
+.showroom-library-2026 .showroom-daily-xp{
+  font-family:'JetBrains Mono', var(--font-mono, monospace);
+  font-size:18px; font-weight:900;
+  color:var(--primary, #ffb596);
+}
+.showroom-library-2026 .showroom-daily-cta{
+  background:var(--primary-container, var(--accent-deep));
+  color:var(--on-primary-container, #642300);
+  border:none;
+  border-radius:9999px;
+  padding:8px 16px;
+  font-family:'Syne', var(--font-display, sans-serif);
+  font-weight:700; font-size:10px;
+  letter-spacing:.03em;
+  text-transform:uppercase;
+  box-shadow:0 0 20px rgba(255,123,58,0.3);
+  cursor:pointer;
+}
