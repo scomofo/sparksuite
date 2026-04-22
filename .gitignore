@@ -14,3 +14,4 @@ resources/*
 nul
 nul
 *.zip
+.stitch-import/
