@@ -20,6 +20,7 @@ var SCR={
   INSIGHTS:"insights",
   CHALLENGES:"challenges",
   HOME_DASH:"homeDash",
+  PROFILE:"profile",
   SETTINGS:"settings",
   ONBOARDING:"onboarding",
   LAUNCHER:"launcher"

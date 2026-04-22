@@ -63,13 +63,13 @@
         // user can pick their own chart instead of launching a wrong one.
         "performance":     function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
         // No legacy slots — render via launcherView while keeping instrument.
-        "profile":         function(){ S._showroomOverride = "profile"; },
+        "profile":         function(){ S.screen = SCR_.PROFILE; },
         "lesson":          function(){ S._showroomOverride = "lesson"; },
         // Explicit "switch instrument" action.
         "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
       };
       // Clear any prior override so the legacy slot routing wins again.
-      if (view !== "profile" && view !== "lesson") S._showroomOverride = null;
+      if (view !== "lesson") S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
       if (typeof saveState === "function") saveState();
@@ -260,6 +260,7 @@
     if (!mastered) mastered = 18;
     if (level < 12) level = 12;
     var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
+    if (!avatarSrc) avatarSrc = "https://lh3.googleusercontent.com/aida-public/AB6AXuAENXXtcpgrwEANQdf96WsuAbjMDNDNm0fMBdqvDk-6d_8ARg-AvoXLeJYxqIaJep95I058ucdqQQpS8XR1e8dyg4_brJ20wY8V3RMOKE1GUNLojQqgOdLThis-cL8WIdD59zaiLLEfCGlbVDXAT1YYbOFrONooNkwPOeXBLBVVCNqcZ2rCLpqRhgIBT2rR8ijGhTjgxpWVu-wjY9sE2qVOX7nlPPOdg7dVabdaniJZ_c55_5MJsUYWgHAvuwdi8QN_ZwBnYx_WUl8";
 
     // Per-instrument progress (read from registry + profile or stub)
     var insts = (typeof SparkInstruments !== "undefined" && SparkInstruments.getAll) ? SparkInstruments.getAll() : [];
@@ -323,15 +324,15 @@
     var navItems = [
       { id:"home",     label:"Practice",    icon:"music_note", onClick: nav("home") },
       { id:"journey",  label:"Journey",     icon:"explore",    onClick: nav("path") },
-      { id:"library",  label:"Leaderboard", icon:"military_tech", onClick: nav("library") },
+      { id:"leaderboard", label:"Leaderboard", icon:"military_tech", onClick: nav("library") },
       { id:"profile",  label:"Profile",     icon:"person" }
     ];
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar">'
-         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button></div>'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + nav("home") + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button></div>'
          + '<h1 class="showroom-appbar-title centered">Profile</h1>'
-         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" style="color:var(--text-muted)" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
          + '</header>'
          + '<div class="showroom-canvas">'
            + '<section class="showroom-profile-head">'
