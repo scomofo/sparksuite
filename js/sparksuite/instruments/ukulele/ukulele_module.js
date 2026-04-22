@@ -149,7 +149,14 @@
     songs: "uke_island_pattern_01",
     fingerpicking: "uke_pick_arpeggio_01",
     melody: "uke_melody_lift_01",
-    performance: "uke_stage_flow_01"
+    performance: "uke_stage_flow_01",
+    // Skills introduced for lessons uke_09..uke_12. Reuse the closest
+    // existing chart so these lessons get a real exercise instead of
+    // falling back to the default uke_open_strums_01.
+    barre_chords:        "uke_switch_flow_01",      // chord-shape switching practice
+    syncopation:         "uke_island_pattern_01",   // off-beat strum patterns
+    advanced_fingerpick: "uke_pick_arpeggio_01",    // arpeggio variants
+    full_performance:    "uke_stage_flow_01"        // capstone playthrough
   };
   var UKULELE_RECOMMENDATION_HINTS = {
     down_strum: {
@@ -190,6 +197,29 @@
     performance: {
       priorityBoost: 8,
       reason: "Turn the current skill stack into a full confident playthrough.",
+      focusTag: "performance"
+    },
+    // Lessons uke_09..uke_12 — give each new skill a focused recommendation
+    // string and a sensible priority boost ordering rather than falling
+    // back to the generic default.
+    barre_chords: {
+      priorityBoost: 5,
+      reason: "Master the barre shapes so chord vocabulary opens up across the neck.",
+      focusTag: "barre"
+    },
+    syncopation: {
+      priorityBoost: 5,
+      reason: "Add off-beat accents and reggae chops to make rhythms come alive.",
+      focusTag: "syncopation"
+    },
+    advanced_fingerpick: {
+      priorityBoost: 7,
+      reason: "Layer Travis-style and rolling arpeggio patterns on top of fingerpicking.",
+      focusTag: "fingerpicking"
+    },
+    full_performance: {
+      priorityBoost: 9,
+      reason: "Bring everything together for a confident solo showcase.",
       focusTag: "performance"
     }
   };
