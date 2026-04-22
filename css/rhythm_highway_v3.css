@@ -281,7 +281,11 @@
     height: 6px;
     background: var(--perform-coral);
     border-radius: 50%;
-    animation: pulse 1s infinite;
+    /* Scoped animation name — a bare `pulse` would override the global
+       @keyframes pulse in styles.css used by the metronome .metro-dot,
+       unintentionally changing metronome animation timing outside the
+       Rhythm Highway screen. */
+    animation: rh-v3-pulse 1s infinite;
 }
 
 .difficulty-label {
@@ -341,7 +345,12 @@
     50% { transform: translateY(-10px); }
 }
 
-@keyframes pulse {
+/* Namespaced to `rh-v3-pulse` so it doesn't clobber styles.css:205's
+   @keyframes pulse (used by .metro-dot.active). CSS @keyframes are
+   global-scope regardless of which stylesheet declares them, so the
+   last-loaded declaration wins — and rhythm_highway_v3.css is loaded
+   app-wide via index.html. */
+@keyframes rh-v3-pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.5; transform: scale(1.2); }
 }

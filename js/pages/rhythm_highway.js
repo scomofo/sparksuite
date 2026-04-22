@@ -206,7 +206,13 @@
     var combo = gameplay.combo || 0;
     var multiplier = gameplay.multiplier || 1;
     var score = String(gameplay.score || 0).padStart(6, "0");
-    var progress = snapshot.durationSec > 0 ? (snapshot.songTimeSec / snapshot.durationSec) * 100 : 0;
+    // Clamp progress to [0, 100] — songTimeSec can go negative during the
+    // calibration lead-in (click track before bar 1) and can exceed
+    // durationSec during the song tail, either of which would over- or
+    // under-fill the progress bar if fed directly to CSS width.
+    var progress = snapshot.durationSec > 0
+      ? Math.min(100, Math.max(0, (snapshot.songTimeSec / snapshot.durationSec) * 100))
+      : 0;
 
     var h = '<div class="rhythm-highway-v3">';
 
@@ -309,7 +315,7 @@
     h += '<div style="position:fixed;inset:0;z-index:40;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;padding:24px">';
     h += '<div style="display:grid;grid-template-columns:repeat(' + laneCount + ',1fr);gap:12px;pointer-events:auto">';
     for (var bi = 0; bi < laneCount; bi++) {
-      h += '<button onclick="act(\'rhythmHighwayLane\',' + bi + ')" style="height:64px;border:2px solid rgba(255,255,255,0.1);border-radius:16px;background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.4);font-weight:900">' + labels[bi] + '</button>';
+      h += '<button onclick="act(\'rhythmHighwayLane\',' + bi + ')" style="height:64px;border:2px solid rgba(255,255,255,0.1);border-radius:16px;background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.4);font-weight:900">' + escHTML(labels[bi]) + '</button>';
     }
     h += '</div>';
     h += '<div style="display:flex;gap:12px;margin-top:12px;pointer-events:auto">';
