@@ -652,9 +652,16 @@
                  + '<span class="material-symbols-outlined fill">bolt</span></div>'
              + '</div>'
              + '<div class="showroom-summary-card-square accuracy">'
+               // Explicit track / progress classes so CSS can target each
+               // circle without relying on `:nth-child(2)` — that selector
+               // is fragile to SVG structural changes (e.g. adding a
+               // background ring or border circle). Stroke colors are
+               // applied in CSS via the design-system tokens
+               // (--showroom-surface-highest for the track,
+               // --showroom-success for the progress arc).
                + '<svg class="showroom-summary-accuracy-ring" viewBox="0 0 100 100">'
-                 + '<circle cx="50" cy="50" r="40" fill="transparent" stroke="#40322c" stroke-width="8"/>'
-                 + '<circle cx="50" cy="50" r="40" fill="transparent" stroke="#4CD964" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + dashOffset.toFixed(1) + '" transform="rotate(-90 50 50)"/>'
+                 + '<circle class="showroom-summary-accuracy-ring-track" cx="50" cy="50" r="40" fill="transparent" stroke-width="8"/>'
+                 + '<circle class="showroom-summary-accuracy-ring-progress" cx="50" cy="50" r="40" fill="transparent" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + dashOffset.toFixed(1) + '" transform="rotate(-90 50 50)"/>'
                + '</svg>'
                + '<div class="showroom-summary-accuracy-inner"><span class="showroom-summary-stat-num">' + accuracy + '%</span><span class="showroom-summary-label-muted tiny">Accuracy</span></div>'
              + '</div>'
