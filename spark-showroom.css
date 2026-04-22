@@ -2585,3 +2585,139 @@
   transition: transform 0.1s;
 }
 .showroom-module-cta:active { transform: scale(0.98); }
+
+/* ═════════════════════════════════════════════════════════════════════
+   Onboarding — Welcome to the Spark Collective
+   Ported from docs/design/stitch-2026-04/onboarding_welcome/.
+   ═════════════════════════════════════════════════════════════════════ */
+.showroom-root.with-woodgrain{
+  /* CSP note: the Stitch source pointed at an external Unsplash URL.
+     Replaced with an inline repeating-linear-gradient for the same
+     subtle warm-grain effect on a same-origin asset. */
+  background:
+    radial-gradient(ellipse 120% 60% at 20% -10%, rgba(255,96,48,.05), transparent 60%),
+    radial-gradient(ellipse 80% 80% at 80% 110%, rgba(232,168,122,.05), transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 48px, rgba(255,123,58,.02) 48px, rgba(255,123,58,.02) 49px),
+    linear-gradient(to bottom, var(--bg), var(--bg-subtle));
+  background-attachment:fixed;
+}
+.showroom-onboarding-welcome{
+  min-height:100vh;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:var(--showroom-pad);
+  position:relative; overflow:hidden;
+}
+.showroom-onboarding-glow{
+  position:absolute; pointer-events:none;
+  border-radius:50%;
+  filter:blur(100px);
+}
+.showroom-onboarding-glow-tl{
+  top:-10%; left:-10%; width:50vw; height:50vw;
+  background:rgba(255,96,48,.1);
+}
+.showroom-onboarding-glow-br{
+  bottom:-10%; right:-10%; width:60vw; height:60vw;
+  background:rgba(232,168,122,.1);
+  filter:blur(120px);
+}
+.showroom-onboarding-main{
+  width:100%; max-width:var(--showroom-max);
+  margin:0 auto;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center;
+  position:relative; z-index:1;
+  gap:48px;
+}
+.showroom-onboarding-logo-wrap{
+  position:relative;
+  display:flex; align-items:center; justify-content:center;
+}
+.showroom-onboarding-logo-halo{
+  position:absolute; inset:0;
+  background:rgba(255,96,48,.2);
+  border-radius:50%;
+  filter:blur(24px);
+  transform:scale(1.5);
+}
+.showroom-onboarding-logo-badge{
+  width:96px; height:96px;
+  border-radius:50%;
+  background:var(--card-bg);
+  border:1px solid var(--border-light);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 8px 32px rgba(255,96,48,.2);
+  position:relative; z-index:1;
+}
+.showroom-onboarding-logo-icon{
+  color:var(--accent-deep);
+  font-size:48px;
+}
+.showroom-onboarding-copy{
+  display:flex; flex-direction:column;
+  gap:16px;
+  padding:0 16px;
+}
+.showroom-onboarding-title{
+  font-family:'Syne', var(--font-body);
+  font-weight:900; font-size:28px; line-height:1.1;
+  letter-spacing:-.02em;
+  margin:0;
+  background:linear-gradient(135deg, var(--accent-deep) 0%, var(--brand-peach) 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+  filter:drop-shadow(0 0 12px rgba(255,123,58,.3));
+}
+.showroom-onboarding-subtitle{
+  font-family:'Syne', var(--font-body);
+  font-weight:800; font-size:20px; line-height:1.2;
+  letter-spacing:-.01em;
+  color:var(--on-surface);
+  margin:0;
+}
+.showroom-onboarding-body{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-size:13px; line-height:1.5; font-weight:400;
+  color:var(--text-secondary);
+  max-width:280px; margin:0 auto;
+}
+.showroom-onboarding-cta-wrap{
+  width:100%;
+  padding:32px 24px 0;
+  display:flex; flex-direction:column;
+  align-items:center; gap:16px;
+}
+.showroom-onboarding-cta{
+  width:100%; max-width:320px;
+  height:56px; border:none;
+  border-radius:16px;
+  background:linear-gradient(to right, var(--accent-deep), var(--brand-peach));
+  color:#fff;
+  font-family:'Syne', var(--font-body);
+  font-weight:700; font-size:12px;
+  letter-spacing:.1em; text-transform:uppercase;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  cursor:pointer;
+  box-shadow:0 0 20px rgba(255,96,48,.4), inset 0 2px 4px rgba(255,255,255,.2);
+  transition:transform .15s ease;
+}
+.showroom-onboarding-cta:active{ transform:scale(.95); }
+.showroom-onboarding-cta .material-symbols-outlined{ font-size:18px; }
+.showroom-onboarding-signin{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-size:11px; font-weight:700;
+  letter-spacing:.3px;
+  color:var(--text-muted);
+  margin:0;
+}
+.showroom-onboarding-signin-link{
+  background:none; border:none; padding:0;
+  font:inherit; color:var(--brand-peach);
+  text-decoration:underline;
+  text-decoration-color:rgba(232,168,122,.3);
+  text-underline-offset:4px;
+  cursor:pointer;
+}
+.showroom-onboarding-signin-link:hover{ color:var(--accent-deep); }
