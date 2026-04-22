@@ -116,7 +116,8 @@
         if (S.lastPractice === undefined) S.lastPractice = null;
         if (S.personalBests === undefined) S.personalBests = { streak: 0 };
         if (S.earned === undefined) S.earned = [];
-        if (S.transitionStats === undefined) S.transitionStats = {};
+        if (typeof SparkTransitionStats !== "undefined") SparkTransitionStats.ensureShape();
+        else if (S.transitionStats === undefined) S.transitionStats = {};
         if (S.drillChord === undefined) S.drillChord = null;
         if (S.drillTimer === undefined) S.drillTimer = 0;
         if (S.drillCount === undefined) S.drillCount = 0;
@@ -124,7 +125,8 @@
         if (S.onboardingStep === undefined) S.onboardingStep = 0;
         if (S.chordProg === undefined) S.chordProg = {};
         if (S.fingerBadges === undefined) S.fingerBadges = [];
-        if (S.fingerStats === undefined) S.fingerStats = {};
+        if (typeof SparkFingerStats !== "undefined") SparkFingerStats.ensureShape();
+        else if (S.fingerStats === undefined) S.fingerStats = {};
         if (S.songIdx === undefined) S.songIdx = null;
         if (S.styleIdx === undefined) S.styleIdx = 0;
         if (S.bpm === undefined) S.bpm = 72;

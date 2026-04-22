@@ -112,10 +112,13 @@
       }
       if (typeof S !== "undefined") {
         if (S.completedGuidedSessions === undefined) S.completedGuidedSessions = [];
-        if (S.chordProgress === undefined) S.chordProgress = {};
+        if (typeof SparkChordProgress !== "undefined") SparkChordProgress.ensureShape();
+        else if (S.chordProgress === undefined) S.chordProgress = {};
         if (S.customSets === undefined) S.customSets = [];
-        if (S.transitionStats === undefined) S.transitionStats = {};
-        if (S.fingerStats === undefined) S.fingerStats = {};
+        if (typeof SparkTransitionStats !== "undefined") SparkTransitionStats.ensureShape();
+        else if (S.transitionStats === undefined) S.transitionStats = {};
+        if (typeof SparkFingerStats !== "undefined") SparkFingerStats.ensureShape();
+        else if (S.fingerStats === undefined) S.fingerStats = {};
         if (S.drillAdaptiveBpm === undefined) S.drillAdaptiveBpm = 60;
         if (S.drillConsecutiveFast === undefined) S.drillConsecutiveFast = 0;
         if (S.drillConsecutiveSlow === undefined) S.drillConsecutiveSlow = 0;
@@ -137,7 +140,9 @@
         var skills = CapoHelpers.CAPO_SKILLS;
         for (var i = 0; i < skills.length; i++) {
           var sk = skills[i];
-          var mastery = S.mastery && S.mastery.capo ? (S.mastery.capo[sk.id] || 0) : 0;
+          var mastery = typeof SparkMastery !== "undefined"
+            ? (SparkMastery.get("capo", sk.id) || 0)
+            : (S.mastery && S.mastery.capo ? (S.mastery.capo[sk.id] || 0) : 0);
           capoNodes.push({
             id: sk.id, branch: "capo", label: sk.name,
             status: mastery > 0 ? (mastery >= 90 ? "mastered" : "developing") : "available",

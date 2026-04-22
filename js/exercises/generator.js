@@ -51,7 +51,7 @@ function generateChordExercise(options){
 // ── Transition ──
 
 function generateTransitionExercise(options){
-  var ts = S.transitionStats || {};
+  var ts = typeof SparkTransitionStats !== "undefined" ? SparkTransitionStats.all() : (S.transitionStats || {});
   var weakest = null;
   var worstScore = 999;
 

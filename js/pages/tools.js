@@ -240,7 +240,7 @@ function statsTab(){
   h+='</div></div>';
 
   // Transition difficulty
-  var ts=(S.transitionStats && typeof S.transitionStats === "object") ? S.transitionStats : {};
+  var ts=typeof SparkTransitionStats !== "undefined" ? SparkTransitionStats.all() : ((S.transitionStats && typeof S.transitionStats === "object") ? S.transitionStats : {});
   var transitions=[];
   for(var k in ts){
     var entry = ts[k] || {};

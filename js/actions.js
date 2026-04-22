@@ -832,7 +832,8 @@ window.act=function(a,v){
           if(!Array.isArray(S.history))S.history=[];
           if(!Array.isArray(S.customSets))S.customSets=[];
           if(!Array.isArray(S.importedSongs))S.importedSongs=[];
-          if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
+          if(typeof SparkTransitionStats !== "undefined") SparkTransitionStats.ensureShape();
+          else if(typeof S.transitionStats!=="object"||S.transitionStats===null)S.transitionStats={};
           saveState();
           S.importMsg={ok:true,text:"Progress imported successfully!"};
         }catch(err){

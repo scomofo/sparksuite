@@ -206,7 +206,7 @@ function fingerExerciseCard(){
     h+='<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:8px 0 4px">'+t.icon+' Tier '+t.num+': '+t.label+'</div>';
     for(var ei=0;ei<exs.length;ei++){
       var ex=exs[ei];
-      var done=(S.fingerStats&&S.fingerStats[ex.id])||0;
+      var done=(typeof SparkFingerStats !== "undefined" ? SparkFingerStats.get(ex.id) : (S.fingerStats && S.fingerStats[ex.id]))||0;
       if(!done&&runtime&&runtime.legacyFingerExerciseId===ex.id&&typeof runtime.legacyFingerExerciseCount==="number"){
         done=runtime.legacyFingerExerciseCount;
       }

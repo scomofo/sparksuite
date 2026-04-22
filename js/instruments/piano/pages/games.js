@@ -292,7 +292,7 @@ function fingersTab() {
   });
   html += '</div>';
   // Personal best
-  var bestCount = S.fingerStats._chordChangeBest || 0;
+  var bestCount = (typeof SparkFingerStats !== "undefined" ? SparkFingerStats.get("_chordChangeBest") : (S.fingerStats && S.fingerStats._chordChangeBest)) || 0;
   if (bestCount > 0) {
     html += '<div class="text-muted">Personal best: ' + bestCount + ' changes</div>';
   }
@@ -309,7 +309,7 @@ function fingersTab() {
     html += '<h3>' + tierIcons[tier] + ' Tier ' + tier + ': ' + tierNames[tier] + '</h3>';
 
     tierExercises.forEach(function(ex) {
-      var stats = S.fingerStats[ex.id] || { completions: 0, lastDone: null };
+      var stats = (typeof SparkFingerStats !== "undefined" ? SparkFingerStats.get(ex.id) : (S.fingerStats && S.fingerStats[ex.id])) || { completions: 0, lastDone: null };
       var doneToday = stats.lastDone && new Date(stats.lastDone).toDateString() === new Date().toDateString();
       var exerciseName = pianoFirstGameTextToken(ex && ex.name, "Exercise");
       var exerciseDesc = pianoFirstGameTextToken(ex && ex.desc, "Practice this movement.");

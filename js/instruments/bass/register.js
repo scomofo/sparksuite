@@ -131,8 +131,10 @@
       }
       if (typeof S !== "undefined") {
         if (S.completedGuidedSessions === undefined) S.completedGuidedSessions = [];
-        if (S.chordProgress === undefined) S.chordProgress = {};
-        if (S.transitionStats === undefined) S.transitionStats = {};
+        if (typeof SparkChordProgress !== "undefined") SparkChordProgress.ensureShape();
+        else if (S.chordProgress === undefined) S.chordProgress = {};
+        if (typeof SparkTransitionStats !== "undefined") SparkTransitionStats.ensureShape();
+        else if (S.transitionStats === undefined) S.transitionStats = {};
         if (S.drillAdaptiveBpm === undefined) S.drillAdaptiveBpm = 60;
         if (S.drillConsecutiveFast === undefined) S.drillConsecutiveFast = 0;
         if (S.drillConsecutiveSlow === undefined) S.drillConsecutiveSlow = 0;

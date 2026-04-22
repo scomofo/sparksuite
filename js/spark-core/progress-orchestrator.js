@@ -49,7 +49,9 @@
       if (event.chordName && typeof updateMastery === "function") {
         var acc = event.accuracy || 0.75;
         updateMastery("chords", event.chordName, acc * 100);
-        result.masteryUpdates[event.chordName] = S.mastery && S.mastery.chords ? S.mastery.chords[event.chordName] : 0;
+        result.masteryUpdates[event.chordName] = typeof SparkMastery !== "undefined"
+          ? (SparkMastery.get("chords", event.chordName) || 0)
+          : (S.mastery && S.mastery.chords ? S.mastery.chords[event.chordName] : 0);
       }
       if (event.type === "song" && event.songId && typeof updateMastery === "function") {
         updateMastery("songs", event.songId, (event.accuracy || 0) * 100);

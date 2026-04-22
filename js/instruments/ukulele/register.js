@@ -44,10 +44,11 @@
     var lessons = window.SparkUkuleleLessons || [];
     if (!lessons.length) return null;
     var completed = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-    if (S.mastery && S.mastery.lessons) {
-      for (var lessonId in S.mastery.lessons) {
-        if (S.mastery.lessons[lessonId]) completed.push(lessonId);
-      }
+    var lessonMap = typeof SparkMastery !== "undefined"
+      ? SparkMastery.category("lessons")
+      : (S.mastery && S.mastery.lessons ? S.mastery.lessons : {});
+    for (var lessonId in lessonMap) {
+      if (lessonMap[lessonId]) completed.push(lessonId);
     }
     if (typeof getNextLessonFromCurriculum === "function") {
       var nextLessonId = getNextLessonFromCurriculum(lessons[0].id, completed);
@@ -152,7 +153,10 @@
     }).length : 0;
     var h = '<div class="card mb12"><div style="font-size:18px;font-weight:900;color:var(--text-primary)">Ukulele Progress</div>';
     h += '<div style="font-size:13px;color:var(--text-muted);margin-top:8px">Lessons completed: ' + lessonCount + '</div>';
-    h += '<div style="font-size:13px;color:var(--text-muted)">Rhythm skills tracked: ' + Object.keys((S.mastery && S.mastery.rhythm) || {}).length + '</div>';
+    var rhythmMap = typeof SparkMastery !== "undefined"
+      ? SparkMastery.category("rhythm")
+      : ((S.mastery && S.mastery.rhythm) || {});
+    h += '<div style="font-size:13px;color:var(--text-muted)">Rhythm skills tracked: ' + Object.keys(rhythmMap).length + '</div>';
     h += '</div>';
     return h;
   }
@@ -257,9 +261,14 @@
       }
       if (typeof S !== "undefined") {
         if (S.completedLessons === undefined) S.completedLessons = [];
-        if (!S.mastery) S.mastery = {};
-        if (!S.mastery.lessons) S.mastery.lessons = {};
-        if (!S.mastery.rhythm) S.mastery.rhythm = {};
+        if (typeof SparkMastery !== "undefined") {
+          SparkMastery.category("lessons");
+          SparkMastery.category("rhythm");
+        } else {
+          if (!S.mastery) S.mastery = {};
+          if (!S.mastery.lessons) S.mastery.lessons = {};
+          if (!S.mastery.rhythm) S.mastery.rhythm = {};
+        }
       }
     },
 

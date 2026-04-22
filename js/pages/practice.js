@@ -235,7 +235,7 @@ function sv2HomeDashboard() {
   var masteredCount = 0;
   if (D.ALL_CHORDS) {
     for (var i = 0; i < D.ALL_CHORDS.length; i++) {
-      if ((S.chordProgress[D.ALL_CHORDS[i].name] || 0) >= 100) masteredCount++;
+      if (SparkChordProgress.get(D.ALL_CHORDS[i].name) >= 100) masteredCount++;
     }
   }
 
@@ -464,7 +464,7 @@ function practiceTab(){
   var cs=D.CHORDS[S.selectedLevel]||[];
   var currentLevel = normalizePracticeDisplayCount(S.level, 1);
   for(var i=0;i<cs.length;i++){
-    var c=cs[i],p=normalizePracticePageNumber(S.chordProgress[c.name], 0),lk=S.selectedLevel>currentLevel;
+    var c=cs[i],p=normalizePracticePageNumber(SparkChordProgress.get(c.name), 0),lk=S.selectedLevel>currentLevel;
     var tier=getChordTier(c.name);
     var tierStyle=tier.tier!=="none"?";border-left:4px solid "+tier.color:"";
     h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+UI.chord(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+D.LC[S.selectedLevel]+','+D.LC[S.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
@@ -474,7 +474,7 @@ function practiceTab(){
   h+='</div>';
 
   // Progress summary
-  var mas=0;for(var k in S.chordProgress)if(normalizePracticePageNumber(S.chordProgress[k], 0)>=100)mas++;
+  var mas=SparkChordProgress.masteredCount();
   var sessionCount = normalizePracticeDisplayCount(S.sessions, 0);
   h+='<div class="card mt16"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+sessionCount+'</div><div style="font-size:10px;color:var(--text-muted)">Sessions</div></div><div><div style="font-size:24px;font-weight:900;color:#4ECDC4">'+mas+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div><div><div style="font-size:24px;font-weight:900;color:#45B7D1">Lvl '+currentLevel+'</div><div style="font-size:10px;color:var(--text-muted)">Current</div></div></div></div>';
 
@@ -568,10 +568,10 @@ function drillTab(){
 }
 
 function getHardestTransition(){
-  var ts=S.transitionStats;
+  var ts=typeof SparkTransitionStats !== "undefined" ? SparkTransitionStats.all() : (S.transitionStats || {});
   var worst=null,worstAvg=0;
   for(var k in ts){
-    if(ts[k].attempts>=2){
+    if(ts[k] && ts[k].attempts>=2){
       var avg=ts[k].avgTime;
       avg = normalizePracticePageNumber(avg, 0);
       if(avg>worstAvg){

@@ -11,9 +11,9 @@
 
   function getWeakTransitions() {
     var weak = [];
-    if (!S.transitionStats) return weak;
-    for (var key in S.transitionStats) {
-      var st = S.transitionStats[key];
+    var transitions = typeof SparkTransitionStats !== "undefined" ? SparkTransitionStats.all() : (S.transitionStats || {});
+    for (var key in transitions) {
+      var st = transitions[key];
       if (typeof st === "object" && st.attempts > 0 && st.success / st.attempts < 0.7) {
         var parts = splitTransitionKey(key);
         if (parts.length === 2) weak.push({ from: parts[0].trim(), to: parts[1].trim(), rate: st.success / st.attempts });
@@ -25,8 +25,11 @@
 
   function getWeakChords() {
     var weak = [];
-    for (var chord in (S.chordProgress || {})) {
-      var pct = S.chordProgress[chord] || 0;
+    var progress = typeof SparkChordProgress !== "undefined" ? SparkChordProgress.all() : (S.chordProgress || {});
+    for (var chord in progress) {
+      if (!Object.prototype.hasOwnProperty.call(progress, chord)) continue;
+      var pct = progress[chord] || 0;
+      if (typeof pct !== "number") continue;
       if (pct < 70) weak.push({ chord: chord, mastery: pct });
     }
     weak.sort(function(a, b) { return a.mastery - b.mastery; });
