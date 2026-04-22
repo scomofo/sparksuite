@@ -64,17 +64,56 @@
     return new Date().toISOString().split("T")[0];
   }
 
-  function getAllPerformanceSongIds(){
-    if(typeof SONGS==="undefined"||!Array.isArray(SONGS))return[];
+  function currentActiveInstrumentType(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive
+      ? SparkInstruments.getActive()
+      : null;
+    return (active && (active.instrument || active.instrumentType)) || null;
+  }
+
+  function activeInstrumentSongs(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive
+      ? SparkInstruments.getActive()
+      : null;
+    if(active && typeof active.getSongs === "function"){
+      var songs = active.getSongs();
+      if(Array.isArray(songs)) return songs;
+    }
+    if(active && typeof active.getData === "function"){
+      var data = active.getData();
+      if(data && Array.isArray(data.SONGS)) return data.SONGS;
+    }
+    return null;
+  }
+
+  function bucketInstrument(stats, songId){
+    if(stats && stats.instrument) return stats.instrument;
+    if(typeof deriveInstrumentForPerformanceSong === "function"){
+      return deriveInstrumentForPerformanceSong(songId) || null;
+    }
+    return null;
+  }
+
+  function getAllPerformanceSongIds(opts){
+    opts = opts || {};
+    // Prefer the active instrument's own song list when available — falls back
+    // to the legacy global SONGS array for callers that pre-date the launcher.
+    var source = activeInstrumentSongs();
+    if(!source){
+      if(typeof SONGS==="undefined"||!Array.isArray(SONGS))return[];
+      source = SONGS;
+    }
     var ids=[];
-    for(var i=0;i<SONGS.length;i++){
-      if(SONGS[i].progression&&SONGS[i].progression.length>0)
-        ids.push((SONGS[i].title||"song").toLowerCase().replace(/[^a-z0-9]+/g,"_"));
+    for(var i=0;i<source.length;i++){
+      if(source[i].progression&&source[i].progression.length>0)
+        ids.push((source[i].title||"song").toLowerCase().replace(/[^a-z0-9]+/g,"_"));
     }
     return ids;
   }
 
-  function buildPerformanceRecommendationsForSong(songId){
+  function buildPerformanceRecommendationsForSong(songId, opts){
+    opts = opts || {};
+    var instrumentFilter = opts.instrument || null;
     var recs=[];
     if(!S.performanceStats)return recs;
     // Check all keys that start with this songId
@@ -82,6 +121,10 @@
       if(key.indexOf(songId)!==0)continue;
       var st=S.performanceStats[key];
       if(!st||!st.runs)continue;
+      if(instrumentFilter){
+        var inst = bucketInstrument(st, st.songId || songId);
+        if(!inst || inst !== instrumentFilter) continue;
+      }
       var techniqueRec=getImportedTechniqueRecommendation(songId,st);
       if(techniqueRec)recs.push(techniqueRec);
       if(st.bestAccuracy<70){
@@ -95,20 +138,25 @@
     return recs.sort(function(a,b){return b.priority-a.priority;});
   }
 
-  function buildGlobalPerformanceRecommendations(){
+  function buildGlobalPerformanceRecommendations(opts){
+    opts = opts || {};
+    var instrumentFilter = opts.instrument || null;
     var recs=[];
     var ids=getAllPerformanceSongIds();
     for(var i=0;i<ids.length;i++){
-      recs=recs.concat(buildPerformanceRecommendationsForSong(ids[i]));
+      recs=recs.concat(buildPerformanceRecommendationsForSong(ids[i], { instrument: instrumentFilter }));
     }
     // Suggest rhythm for mastered chord songs
     for(var key in(S.performanceStats||{})){
       var st=S.performanceStats[key];
-      if(st&&st.arrangement==="chords"&&st.mastery==="mastered"){
-        var rhythmKey=key.replace("_chords_","_rhythm_chords_");
-        if(!S.performanceStats[rhythmKey]){
-          recs.push({type:"try_rhythm",priority:85,songId:st.songId,arrangementType:"rhythm_chords",difficultyId:"easy",label:"Try rhythm arrangement",reason:"Chord mode mastered"});
-        }
+      if(!(st&&st.arrangement==="chords"&&st.mastery==="mastered")) continue;
+      if(instrumentFilter){
+        var inst = bucketInstrument(st, st.songId || key);
+        if(!inst || inst !== instrumentFilter) continue;
+      }
+      var rhythmKey=key.replace("_chords_","_rhythm_chords_");
+      if(!S.performanceStats[rhythmKey]){
+        recs.push({type:"try_rhythm",priority:85,songId:st.songId,arrangementType:"rhythm_chords",difficultyId:"easy",label:"Try rhythm arrangement",reason:"Chord mode mastered"});
       }
     }
     return recs.sort(function(a,b){return b.priority-a.priority;}).slice(0,8);
@@ -116,17 +164,27 @@
 
   function choosePerformanceDailyChallenge(){
     var today=getTodayPerfDateKey();
-    if(S.performanceDailyChallenge&&S.performanceDailyChallenge.date===today){
+    var instrumentType = currentActiveInstrumentType();
+    // Cache is keyed by date AND active instrument — switching instruments
+    // forces a fresh challenge so a bass player doesn't get a ukulele
+    // challenge when they reopen the app today. Pre-namespace challenges
+    // (no .instrument field) are honored when no instrument is active.
+    var cachedMatches = S.performanceDailyChallenge
+      && S.performanceDailyChallenge.date === today
+      && (!instrumentType || S.performanceDailyChallenge.instrument === instrumentType);
+    if(cachedMatches){
       syncPerformanceDailyStateWithCore(S.performanceDailyChallenge, S.performanceDailyComplete);
       return S.performanceDailyChallenge;
     }
-    var recs=buildGlobalPerformanceRecommendations();
+    var recs=buildGlobalPerformanceRecommendations({ instrument: instrumentType });
+    var idSuffix = instrumentType ? ("_" + instrumentType) : "";
     var challenge;
     if(recs.length){
       var top=recs[0];
       challenge={
-        id:"perf_"+today,
+        id:"perf_"+today+idSuffix,
         date:today,
+        instrument:instrumentType,
         type:top.type,
         songId:top.songId,
         arrangementType:top.arrangementType||"chords",
@@ -139,7 +197,7 @@
         reason:top.reason
       };
     }else{
-      challenge={id:"perf_"+today,date:today,type:"full_run",songId:null,arrangementType:"chords",difficultyId:"easy",phraseId:null,target:{accuracy:75,stars:2},label:"Complete a performance run today",xp:25,reason:"Build consistency"};
+      challenge={id:"perf_"+today+idSuffix,date:today,instrument:instrumentType,type:"full_run",songId:null,arrangementType:"chords",difficultyId:"easy",phraseId:null,target:{accuracy:75,stars:2},label:"Complete a performance run today",xp:25,reason:"Build consistency"};
     }
     S.performanceDailyChallenge=challenge;
     S.performanceDailyComplete=false;

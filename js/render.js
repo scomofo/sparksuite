@@ -133,37 +133,13 @@ function _renderInner(){
     return;
   }
 
-  // Showroom gate — when an instrument IS active, route Showroom-replaced
-  // app areas (Settings, Songs/Library, Practice, Tuner, Skill Tree/Path,
-  // Song Details, Session Summary) into the Warm Ember screens. Falls through
-  // to the legacy renderer for anything not in the map.
-  var _showroomMod = (function(){
-    var ov = S._showroomOverride;
-    if (ov === "profile" && typeof SparkProfileScreen !== "undefined") return SparkProfileScreen;
-    if (ov === "lesson"  && typeof SparkLesson  !== "undefined") return SparkLesson;
-    var sc = S.screen;
-    var tb = S.tab;
-    if (sc === SCR.SETTINGS    && typeof SparkSettings       !== "undefined") return SparkSettings;
-    if (sc === SCR.SONG        && typeof SparkSongDetails    !== "undefined") return SparkSongDetails;
-    if ((sc === SCR.SKILL_TREE || sc === SCR.PLAN || sc === SCR.CURRICULUM)
-                                && typeof SparkPath          !== "undefined") return SparkPath;
-    if ((sc === SCR.COMPLETE   || sc === SCR.SONG_DONE   || sc === SCR.PERFORM_DONE
-      || sc === SCR.GUIDED_DONE || sc === SCR.DRILL_DONE)
-                                && typeof SparkSessionSummary !== "undefined") return SparkSessionSummary;
-    if (sc === SCR.HOME) {
-      if (tb === TAB.PRACTICE && typeof SparkPracticeMetro !== "undefined") return SparkPracticeMetro;
-      if (tb === TAB.SONGS    && typeof SparkSongLibrary   !== "undefined") return SparkSongLibrary;
-      if (tb === TAB.TUNER    && typeof SparkTuner         !== "undefined") return SparkTuner;
-    }
-    return null;
-  })();
-  if (_showroomMod && _showroomMod.render) {
-    document.getElementById("header").style.display = "none";
-    // Prepend overlays so toasts/badges/confetti/break-reminder render on top
-    // of the Showroom screen, matching legacy behavior.
-    _writeAppHtml(_renderOverlays() + _showroomMod.render());
-    return;
-  }
+  // NOTE: the Showroom modules in js/showroom/spark-showroom.js
+  // (SparkPracticeMetro, SparkSongLibrary, SparkSessionSummary,
+  // SparkSettings, SparkSongDetails, SparkPath, SparkTuner) are
+  // design-reference mocks — they render hardcoded content and ignore the
+  // active instrument. They MUST NOT be routed onto the live render path.
+  // If you want to revive them as real screens, first wire each renderer
+  // to SparkInstruments.getActive() + SparkStorage.load().
 
   document.getElementById("header").style.display = "";
   var backBtn = document.getElementById("launcher-back");
