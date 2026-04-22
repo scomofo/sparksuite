@@ -9,6 +9,7 @@
       misses: 0,
       total: 0,
       specialPhraseHits: 0,
+      energy: 80,
       weakReasons: {},
       laneErrors: {},
       skillHits: {}
@@ -21,6 +22,8 @@
     var note = resolution.note;
     if (!note) {
       this.state.misses++;
+      this.state.combo = 0;
+      this.state.energy = Math.max(0, this.state.energy - 10);
       bump(this.state.weakReasons, resolution.reason || "miss");
       return { scoreDelta: 0, multiplier: this.getMultiplier(), special: false };
     }
@@ -28,6 +31,7 @@
     if (judgement === "miss") {
       this.state.combo = 0;
       this.state.misses++;
+      this.state.energy = Math.max(0, this.state.energy - 10);
       bump(this.state.weakReasons, resolution.reason || "miss");
       bump(this.state.laneErrors, maskLabel(note.laneMask));
       return { scoreDelta: 0, multiplier: this.getMultiplier(), special: false };
@@ -35,6 +39,7 @@
 
     this.state.hits++;
     this.state.combo++;
+    this.state.energy = Math.min(100, this.state.energy + 2);
     if (this.state.combo > this.state.maxCombo) this.state.maxCombo = this.state.combo;
     if (note.skillId) bump(this.state.skillHits, note.skillId);
 
@@ -55,7 +60,10 @@
     return {
       gameplay: {
         score: this.state.score,
+        combo: this.state.combo,
         maxCombo: this.state.maxCombo,
+        multiplier: this.getMultiplier(),
+        energy: this.state.energy,
         accuracy: Number(accuracy.toFixed(2)),
         starPowerUses: 0,
         specialPhraseHits: this.state.specialPhraseHits

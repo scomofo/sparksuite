@@ -200,62 +200,145 @@
     var labels = getRhythmHighwayLaneLabels();
     var laneCount = labels.length;
     var activePreset = getCurrentAssistPreset();
-    var h = '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Highway</h2>';
-    h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">Hold frets 1-5 and strum on time. Audio clock drives the run; this page only renders snapshots.</p>';
-    h += '<div style="margin-bottom:14px">';
-    h += '<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:6px">Assist Mode</div>';
-    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">';
-    for (var pi = 0; pi < ASSIST_PRESETS.length; pi++) {
-      var preset = ASSIST_PRESETS[pi];
-      var presetActive = activePreset && activePreset.id === preset.id;
-      h += '<button class="btn" onclick="act(\'rhythmHighwayPreset\',\'' + preset.id + '\')" style="min-width:112px;background:' + (presetActive ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (presetActive ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + preset.label + '</button>';
-    }
+    var gameplay = snapshot.gameplay || {};
+    var accuracy = Math.round((gameplay.accuracy || 0) * 100);
+    var energy = Math.round(gameplay.energy || 0);
+    var combo = gameplay.combo || 0;
+    var multiplier = gameplay.multiplier || 1;
+    var score = String(gameplay.score || 0).padStart(6, "0");
+    var progress = snapshot.durationSec > 0 ? (snapshot.songTimeSec / snapshot.durationSec) * 100 : 0;
+
+    var h = '<div class="rhythm-highway-v3">';
+
+    // Header
+    h += '<header class="v3-header">';
+    h += '<div class="v3-score-container">';
+    h += '<span class="v3-score-value">' + score + '</span>';
     h += '</div>';
-    h += '<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">' + escHTML(activePreset ? activePreset.hint : "Switching assist mode restarts the run.") + '</div>';
+    h += '<div style="display:flex;align-items:center;gap:12px">';
+    if (combo > 0) h += '<div class="v3-streak-badge">STREAK ' + combo + '</div>';
+    h += '<div class="v3-multiplier">' + multiplier + 'x</div>';
     h += '</div>';
-    h += '<div style="display:flex;justify-content:center;gap:18px;margin-bottom:12px">';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#FFE66D">' + snapshot.gameplay.score + '</div><div style="font-size:10px;color:var(--text-muted)">Score</div></div>';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div style="font-size:10px;color:var(--text-muted)">Max Combo</div></div>';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:10px;color:var(--text-muted)">Accuracy</div></div>';
-    h += '</div>';
-    if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.label) {
-      h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLaunchContext.label, "current drill")) + '</div>';
+    h += '</header>';
+
+    // Feedback
+    if (S.rhythmHighwayFeedback) {
+      var isPerfect = S.rhythmHighwayFeedback.toUpperCase() === "PERFECT";
+      h += '<div class="v3-feedback-container">';
+      h += '<h2 class="feedback-perfect" style="color:' + (isPerfect ? "var(--perform-yellow)" : "var(--perform-cyan)") + '">' + escHTML(S.rhythmHighwayFeedback.toUpperCase()) + '</h2>';
+      if (isPerfect && combo > 10) h += '<p class="feedback-combo-breaker">COMBO KEEPER</p>';
+      h += '</div>';
     }
 
-    h += '<div style="display:grid;grid-template-columns:repeat(' + laneCount + ',56px);gap:8px;justify-content:center;align-items:end;height:320px;margin:0 auto 16px;position:relative">';
-    for (var lane = 0; lane < laneCount; lane++) {
-      h += '<div style="position:relative;height:320px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border)">';
-      h += '<div style="position:absolute;left:6px;right:6px;bottom:72px;height:4px;background:#FFE66D;border-radius:999px"></div>';
-      h += '<div style="position:absolute;left:0;right:0;bottom:12px;font-size:12px;font-weight:900;color:' + laneColor(lane) + '">' + labels[lane] + '</div>';
-      for (var i = 0; i < snapshot.notes.length; i++) {
-        var note = snapshot.notes[i];
-        if (!maskHasLane(note.laneMask, lane)) continue;
-        var bottom = Math.max(86, Math.min(286, 86 + ((3 - (note.timeSec - snapshot.songTimeSec)) * 66)));
-        h += '<div style="position:absolute;left:8px;right:8px;bottom:' + bottom + 'px;height:18px;border-radius:8px;background:' + laneColor(lane) + ';opacity:' + (note.hit ? 0.35 : 0.95) + ';box-shadow:0 8px 18px rgba(0,0,0,.24)" title="' + escHTML(firstRhythmHighwayTextToken(note.label)) + '"></div>';
+    // 3D Highway
+    h += '<main class="highway-perspective">';
+    h += '<div class="grid-bg"></div>';
+    h += '<div class="scanline"></div>';
+
+    h += '<div class="highway-lane-container">';
+    // Dividers
+    for (var d = 1; d < laneCount; d++) {
+      h += '<div class="highway-lane-divider" style="left:' + (d * (100/laneCount)) + '%"></div>';
+    }
+
+    // Notes
+    for (var i = 0; i < snapshot.notes.length; i++) {
+      var note = snapshot.notes[i];
+      if (note.hit) continue;
+      // Projection: 0-100% of the lane height based on time remaining (up to 2 seconds ahead)
+      var timeUntil = note.timeSec - snapshot.songTimeSec;
+      if (timeUntil < -0.2 || timeUntil > 2.0) continue;
+
+      // Notes move from horizon (0%) to receptors (100%)
+      var topPercent = (1.0 - (timeUntil / 2.0)) * 100;
+      var laneWidth = 100 / laneCount;
+
+      for (var l = 0; l < laneCount; l++) {
+        if (maskHasLane(note.laneMask, l)) {
+          h += '<div style="position:absolute;top:' + topPercent + '%;left:' + (l * laneWidth) + '%;width:' + laneWidth + '%">';
+          h += '<div class="gem-3d ' + gemClass(l) + '"></div>';
+          h += '</div>';
+        }
       }
+    }
+
+    // Receptors
+    h += '<div class="v3-receptors">';
+    for (var r = 0; r < laneCount; r++) {
+      var isHeld = maskHasLane(S.rhythmHighwayHeldMask, r);
+      h += '<div class="receptor ' + (isHeld ? activeReceptorClass(r) : "") + '">';
+      h += '<div class="receptor-inner"></div>';
       h += '</div>';
     }
     h += '</div>';
 
-    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
-    for (var fi = 0; fi < laneCount; fi++) {
-      var active = maskHasLane(S.rhythmHighwayHeldMask, fi);
-      h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + labels[fi] + '</button>';
-    }
+    // Hit Bar
+    h += '<div class="hit-glow-bar"></div>';
+    h += '</div>'; // end lane container
+    h += '</main>';
+
+    // Energy & Rank (Floating)
+    h += '<div class="v3-energy-panel">';
+    h += '<span class="material-symbols-outlined" style="color:var(--perform-coral);font-variation-settings:\'FILL\' 1">electric_bolt</span>';
+    h += '<div class="energy-bar-bg"><div class="energy-bar-fill" style="width:' + energy + '%"></div></div>';
     h += '</div>';
-    h += '<div style="display:flex;justify-content:center;gap:10px">';
-    h += '<button class="btn" onclick="act(\'rhythmHighwayStrum\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:18px;padding:14px 28px">Strum</button>';
-    h += '<button class="btn" onclick="act(\'' + (S.rhythmHighwayLoop ? "rhythmHighwayClearLoop" : "rhythmHighwayLoopWindow") + '\')" style="background:' + (S.rhythmHighwayLoop ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (S.rhythmHighwayLoop ? "#fff" : "var(--text-secondary)") + '">' + (S.rhythmHighwayLoop ? "Clear Loop" : "Loop Window") + '</button>';
-    h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">Exit</button>';
+
+    h += '<div class="v3-rank-panel">';
+    h += '<span class="rank-label">RANK</span>';
+    h += '<span class="rank-value">' + calculateRank(accuracy) + '</span>';
     h += '</div>';
+
+    // Footer
+    h += '<footer class="v3-footer">';
+    h += '<div class="v3-progress-container"><div class="v3-progress-fill" style="width:' + progress + '%"></div></div>';
+
+    var drillLabel = firstRhythmHighwayTextToken(S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.label, "current drill");
+    h += '<span class="song-title">Focused Drill: ' + escHTML(drillLabel) + '</span>';
+
     if (S.rhythmHighwayLoop) {
-      h += '<div style="margin-top:10px;font-size:11px;color:#4ECDC4;font-weight:800">Looping ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLoop.label, "current window")) + '</div>';
+      h += '<div style="font-size:11px;color:var(--perform-cyan);font-weight:800">Looping ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLoop.label, "current window")) + '</div>';
     }
-    if (S.rhythmHighwayFeedback) {
-      h += '<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">' + escHTML(S.rhythmHighwayFeedback) + '</div>';
+
+    h += '<div class="difficulty-tag">';
+    h += '<span class="status-dot"></span>';
+    h += '<span class="difficulty-label">' + escHTML(activePreset.label) + ' Mode</span>';
+    h += '</div>';
+    h += '</footer>';
+
+    // Interaction Overlays (Hidden but functional)
+    h += '<div style="position:fixed;inset:0;z-index:40;pointer-events:none;display:flex;flex-direction:column;justify-content:flex-end;padding:24px">';
+    h += '<div style="display:grid;grid-template-columns:repeat(' + laneCount + ',1fr);gap:12px;pointer-events:auto">';
+    for (var bi = 0; bi < laneCount; bi++) {
+      h += '<button onclick="act(\'rhythmHighwayLane\',' + bi + ')" style="height:64px;border:2px solid rgba(255,255,255,0.1);border-radius:16px;background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.4);font-weight:900">' + labels[bi] + '</button>';
     }
     h += '</div>';
+    h += '<div style="display:flex;gap:12px;margin-top:12px;pointer-events:auto">';
+    h += '<button class="btn" onclick="act(\'rhythmHighwayStrum\')" style="flex:2;background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-weight:900;height:56px">STRUM</button>';
+    h += '<button class="btn" onclick="act(\'back\')" style="flex:1;background:rgba(255,255,255,0.1);color:#fff;font-weight:700">EXIT</button>';
+    h += '</div>';
+    h += '</div>';
+
+    h += '</div>'; // end v3 container
     return h;
+  }
+
+  function gemClass(lane) {
+    var classes = ["gem-cyan", "gem-yellow", "gem-peach", "gem-cyan", "gem-yellow"];
+    return classes[lane % 5];
+  }
+
+  function activeReceptorClass(lane) {
+    var classes = ["active-cyan", "active-yellow", "active-peach", "active-cyan", "active-yellow"];
+    return classes[lane % 5];
+  }
+
+  function calculateRank(acc) {
+    if (acc >= 98) return "S+";
+    if (acc >= 95) return "S";
+    if (acc >= 90) return "A";
+    if (acc >= 80) return "B";
+    if (acc >= 70) return "C";
+    return "D";
   }
 
   function rhythmHighwayResultsPage() {
@@ -516,7 +599,7 @@
   }
 
   function laneColor(index) {
-    return ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316"][index] || "#999";
+    return ["#4ECDC4", "#FFE66D", "#FF8A5C", "#4ECDC4", "#FFE66D"][index] || "#999";
   }
 
   window.startRhythmHighwaySegment = startRhythmHighwaySegment;

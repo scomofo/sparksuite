@@ -157,15 +157,17 @@ function _renderInner(){
     }
     return null;
   })();
-  if (_showroomMod && _showroomMod.render) {
+  if ((_showroomMod && _showroomMod.render) || S.screen === SCR.RHYTHM_HIGHWAY) {
     document.getElementById("header").style.display = "none";
-    // Prepend overlays so toasts/badges/confetti/break-reminder render on top
-    // of the Showroom screen, matching legacy behavior.
-    _writeAppHtml(_renderOverlays() + _showroomMod.render());
-    return;
+    if (_showroomMod && _showroomMod.render) {
+      // Prepend overlays so toasts/badges/confetti/break-reminder render on top
+      // of the Showroom screen, matching legacy behavior.
+      _writeAppHtml(_renderOverlays() + _showroomMod.render());
+      return;
+    }
+  } else {
+    document.getElementById("header").style.display = "";
   }
-
-  document.getElementById("header").style.display = "";
   var backBtn = document.getElementById("launcher-back");
   if (backBtn) backBtn.style.display = "";
   var logoText = document.querySelector(".logo-text");

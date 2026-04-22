@@ -70,6 +70,7 @@
     var summary = this.scoringEngine.toSummary();
     this.lastSnapshot = {
       songTimeSec: songTimeSec,
+      durationSec: this.songEndSec,
       notes: upcoming,
       gameplay: summary.gameplay,
       finished: this.completed
