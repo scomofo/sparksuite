@@ -357,6 +357,13 @@
         if(T.chordChange){clearInterval(T.chordChange);T.chordChange=null;}
       }
       if(typeof stopMetronome==="function")try{stopMetronome();}catch(e){}
+      // Clear Showroom dispatch state too so a stale override (e.g. user was
+      // on Profile when they deactivated via the legacy header back button)
+      // doesn't follow into the next instrument's session.
+      if (typeof S !== "undefined") {
+        S._showroomOverride = null;
+        S.launcherView = null;
+      }
       _active = null;
     },
 
