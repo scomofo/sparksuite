@@ -155,11 +155,16 @@
         } else if (row.type === "toggle") {
           html += '<div class="showroom-row no-action">';
           html += '<div class="showroom-row-left">';
-          html += '<span class="material-symbols-outlined showroom-row-icon' + (row.on ? ' active' : '') + '">' + row.icon + '</span>';
+          // Decorative icon — the row label below is the announced text.
+          html += '<span class="material-symbols-outlined showroom-row-icon' + (row.on ? ' active' : '') + '" aria-hidden="true">' + row.icon + '</span>';
           html += '<span class="showroom-row-label">' + escHtml(row.label) + '</span>';
           html += '</div>';
-          html += '<button class="showroom-toggle' + (row.on ? ' on' : '') + '" onclick="SparkShowroomToggle(' + JSON.stringify(row.key) + ')" aria-label="' + escHtml(row.label) + '" aria-pressed="' + row.on + '">';
-          html += '<span class="showroom-toggle-knob"></span></button>';
+          // role="switch" + aria-checked is the canonical ARIA pattern for an
+          // on/off control; aria-pressed is for buttons that toggle a state
+          // distinct from their primary action. Screen readers announce
+          // role=switch as "switch, on/off" which matches the visual.
+          html += '<button class="showroom-toggle' + (row.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + row.on + '" onclick="SparkShowroomToggle(' + JSON.stringify(row.key) + ')" aria-label="' + escHtml(row.label) + '">';
+          html += '<span class="showroom-toggle-knob" aria-hidden="true"></span></button>';
           html += '</div>';
         } else {
           var click = row.onClick ? ' onclick="' + row.onClick + '"' : '';
@@ -187,7 +192,7 @@
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar"><div class="showroom-appbar-left">'
-         + '<button class="showroom-iconbtn" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined">arrow_back</span></button>'
+         + '<button class="showroom-iconbtn" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></button>'
          + '<h1 class="showroom-appbar-title">Settings</h1></div><div class="showroom-appbar-right"><div style="width:32px"></div></div></header>'
          + '<div class="showroom-canvas">' + html + '</div>'
          + bottomNav(navItems, "settings")
@@ -285,9 +290,9 @@
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar">'
-         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined">menu</span></button></div>'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button></div>'
          + '<h1 class="showroom-appbar-title centered">Profile</h1>'
-         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined">settings</span></button></div>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
          + '</header>'
          + '<div class="showroom-canvas">'
            + '<section class="showroom-profile-head">'
@@ -347,7 +352,7 @@
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar">'
-         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn framed" onclick="' + nav("library") + '" aria-label="Back"><span class="material-symbols-outlined">arrow_back</span></button></div>'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn framed" onclick="' + nav("library") + '" aria-label="Back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></button></div>'
          + '<h1 class="showroom-appbar-title centered">Song Details</h1>'
          + '<div class="showroom-appbar-right"><div style="width:40px"></div></div>'
          + '</header>'
@@ -419,9 +424,9 @@
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar">'
-         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined">arrow_back</span></button></div>'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></button></div>'
          + '<h1 class="showroom-appbar-title centered">Practice Session</h1>'
-         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn accent" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined">settings</span></button></div>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn accent" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
          + '</header>'
          + '<div class="showroom-canvas">'
            + '<section class="showroom-practice-head"><h2 class="showroom-practice-h">Daily Practice</h2><p class="showroom-practice-sub">Stay in the flow state.</p></section>'
@@ -438,9 +443,9 @@
              + '<div class="showroom-metronome-label"><span class="material-symbols-outlined">graphic_eq</span><span>Metronome</span></div>'
              + '<div class="showroom-metronome-bpm"><span class="showroom-metronome-num">' + bpm + '</span><span class="showroom-metronome-unit">BPM</span></div>'
              + '<div class="showroom-metronome-controls">'
-               + '<button class="showroom-metro-btn" aria-label="Slower"><span class="material-symbols-outlined">remove</span></button>'
-               + '<button class="showroom-metro-play" aria-label="Play"><span class="material-symbols-outlined fill">play_arrow</span></button>'
-               + '<button class="showroom-metro-btn" aria-label="Faster"><span class="material-symbols-outlined">add</span></button>'
+               + '<button class="showroom-metro-btn" aria-label="Slower"><span class="material-symbols-outlined" aria-hidden="true">remove</span></button>'
+               + '<button class="showroom-metro-play" aria-label="Play"><span class="material-symbols-outlined fill" aria-hidden="true">play_arrow</span></button>'
+               + '<button class="showroom-metro-btn" aria-label="Faster"><span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
              + '</div>'
              + '<div class="showroom-metronome-pulse"><span class="showroom-pulse-dot active"></span><span class="showroom-pulse-dot"></span><span class="showroom-pulse-dot"></span><span class="showroom-pulse-dot"></span></div>'
            + '</section>'
@@ -507,7 +512,7 @@
                   + '<span class="showroom-song-len">• ' + escHtml(sg.len) + '</span></div>'
                 + '</div>'
                 + '<div class="showroom-song-action">'
-                  + '<button class="showroom-song-play ' + (sg.status || "") + '" aria-label="Play"><span class="material-symbols-outlined fill">play_arrow</span></button>'
+                  + '<button class="showroom-song-play ' + (sg.status || "") + '" aria-label="Play"><span class="material-symbols-outlined fill" aria-hidden="true">play_arrow</span></button>'
                   + '<span class="showroom-song-status ' + statusClass + '">' + escHtml(statusLabel) + '</span>'
                 + '</div>'
               + '</div>';
@@ -524,7 +529,7 @@
          + '<header class="showroom-library-bar">'
            + '<h1 class="showroom-library-title">Song Library</h1>'
            + '<div class="showroom-library-actions">'
-             + '<button class="showroom-iconbtn accent" aria-label="Search"><span class="material-symbols-outlined">search</span></button>'
+             + '<button class="showroom-iconbtn accent" aria-label="Search"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>'
              + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
                + '<span style="width:32px;height:32px;border-radius:50%;border:2px solid #ff7b3a;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;font-weight:800;font-size:13px">A</span>'
              + '</button>'
@@ -583,7 +588,7 @@
          + '<div class="showroom-summary-glow-tr" aria-hidden="true"></div>'
          + '<div class="showroom-summary-glow-bl" aria-hidden="true"></div>'
          + '<header class="showroom-summary-bar">'
-           + '<button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Close"><span class="material-symbols-outlined">close</span></button>'
+           + '<button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Close"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>'
            + '<span class="showroom-summary-title">Session Summary</span>'
            + '<div style="width:40px"></div>'
          + '</header>'
@@ -664,7 +669,7 @@
     return '<div class="showroom-perf-root">'
          + '<header class="showroom-perf-bar">'
            + '<div class="showroom-perf-bar-left">'
-             + '<button class="showroom-perf-pause" onclick="' + nav("session-summary") + '" aria-label="Pause"><span class="material-symbols-outlined">pause_circle</span></button>'
+             + '<button class="showroom-perf-pause" onclick="' + nav("session-summary") + '" aria-label="Pause"><span class="material-symbols-outlined" aria-hidden="true">pause_circle</span></button>'
              + '<span class="showroom-perf-score">' + formattedScore + '</span></div>'
            + '<div class="showroom-perf-bar-right">'
              + '<div class="showroom-perf-streak">Streak ' + streak + '</div>'
@@ -725,6 +730,24 @@
       fingersHtml += '<div class="showroom-chord-finger" style="left:' + f.left + '%;top:' + f.top + '%">' + f.num + '</div>';
     }
 
+    // Build a screen-reader-friendly description of the chord diagram. The
+    // diagram is a complex visual composed of nested divs (no <img>), so we
+    // expose it as role="img" and synthesize an aria-label from the chord
+    // name, position, and finger placements.
+    //
+    // String index math: a 6-string layout has 5 intervals between the
+    // outer strings, so adjacent strings sit at 0, 20, 40, 60, 80, 100.
+    // Divide by 20 (NOT 100/6 ≈ 16.66) to map a left% into the 0..5
+    // string index, then clamp to [0, 5] so a left=100 with rounding
+    // error can't announce "string 7" on a 6-string instrument.
+    var chordAriaLabel = chordName + ", " + position + ", finger positions: " +
+      fingers.map(function(f){
+        var stringIdx = Math.round(f.left / 20);
+        if (stringIdx < 0) stringIdx = 0;
+        if (stringIdx > 5) stringIdx = 5;
+        return "finger " + f.num + " on string " + (stringIdx + 1);
+      }).join(", ");
+
     var navItems = [
       { id:"learn",    label:"Learn",    icon:"school",     onClick: nav("path") },
       { id:"practice", label:"Practice", icon:"music_note" },
@@ -734,9 +757,9 @@
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-lesson-bar">'
-           + '<button class="showroom-iconbtn accent" onclick="' + nav("practice") + '" aria-label="Close"><span class="material-symbols-outlined">close</span></button>'
+           + '<button class="showroom-iconbtn accent" onclick="' + nav("practice") + '" aria-label="Close"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>'
            + '<h1 class="showroom-lesson-bar-title">Practice Session</h1>'
-           + '<button class="showroom-iconbtn accent" aria-label="Settings" onclick="' + nav("settings") + '"><span class="material-symbols-outlined">settings</span></button>'
+           + '<button class="showroom-iconbtn accent" aria-label="Settings" onclick="' + nav("settings") + '"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button>'
          + '</header>'
          + '<div class="showroom-canvas" style="padding-bottom:200px">'
            + '<section><span class="showroom-lesson-eyebrow">' + escHtml(module) + '</span>'
@@ -746,12 +769,12 @@
                  + '<h3 class="showroom-lesson-card-title">' + escHtml(chordName) + '</h3>'
                  + '<p class="showroom-lesson-card-sub">' + escHtml(position) + '</p></div>'
                  + '<span class="showroom-lesson-card-tag">G</span></div>'
-               + '<div class="showroom-chord">'
-                 + '<div class="showroom-chord-fret-labels"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>'
-                 + '<div class="showroom-chord-opens"><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span></div>'
-                 + '<div class="showroom-chord-frets"><div class="nut"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div></div>'
-                 + '<div class="showroom-chord-strings"><span></span><span></span><span></span><span></span><span></span><span></span></div>'
-                 + '<div class="showroom-chord-fingers">' + fingersHtml + '</div>'
+               + '<div class="showroom-chord" role="img" aria-label="' + escHtml(chordAriaLabel) + '">'
+                 + '<div class="showroom-chord-fret-labels" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>'
+                 + '<div class="showroom-chord-opens" aria-hidden="true"><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span></div>'
+                 + '<div class="showroom-chord-frets" aria-hidden="true"><div class="nut"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div></div>'
+                 + '<div class="showroom-chord-strings" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>'
+                 + '<div class="showroom-chord-fingers" aria-hidden="true">' + fingersHtml + '</div>'
                + '</div>'
                + '<div class="showroom-chord-meta">'
                  + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">Strum</p><p class="showroom-chord-meta-val success">' + escHtml(strum) + '</p></div>'
@@ -865,7 +888,7 @@
            + '<div class="showroom-path-section-head"><h3>Continue Learning</h3><span class="link">View All</span></div>'
            + lessonsHtml
          + '</div>'
-         + '<button class="showroom-path-fab" aria-label="Start practice" onclick="' + nav("practice") + '"><span class="material-symbols-outlined">timer</span></button>'
+         + '<button class="showroom-path-fab" aria-label="Start practice" onclick="' + nav("practice") + '"><span class="material-symbols-outlined" aria-hidden="true">timer</span></button>'
          + bottomNav(navItems, "path")
          + '</div>';
   }
@@ -908,7 +931,7 @@
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-tuner-bar">'
-           + '<button class="showroom-iconbtn accent" aria-label="Menu" onclick="' + backToHome() + '"><span class="material-symbols-outlined">menu</span></button>'
+           + '<button class="showroom-iconbtn accent" aria-label="Menu" onclick="' + backToHome() + '"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
            + '<h1 class="showroom-tuner-brand">SparkSuite</h1>'
            + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
              + '<span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">A</span>'
@@ -928,7 +951,7 @@
              + '<div class="showroom-tuner-row">'
                + '<div class="showroom-tuner-cell"><span class="showroom-tuner-cell-label">Frequency</span>'
                  + '<div class="showroom-tuner-freq"><span class="showroom-tuner-freq-num">' + freq.toFixed(1) + '</span><span class="showroom-tuner-freq-unit">Hz</span></div></div>'
-               + '<button class="showroom-tuner-mic" aria-label="Toggle microphone"><span class="material-symbols-outlined fill">mic</span></button>'
+               + '<button class="showroom-tuner-mic" aria-label="Toggle microphone"><span class="material-symbols-outlined fill" aria-hidden="true">mic</span></button>'
                + '<div class="showroom-tuner-cell right"><span class="showroom-tuner-cell-label">Standard</span>'
                  + '<span class="showroom-tuner-tuning">' + escHtml(standardLetters) + '</span></div>'
              + '</div>'
@@ -937,9 +960,9 @@
              + '<div class="showroom-tuner-metro-head"><h3 class="showroom-tuner-metro-h">Metronome</h3>'
                + '<div class="showroom-tuner-metro-pulse"><span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>'
              + '<div class="showroom-tuner-metro-bpm-row">'
-               + '<button class="showroom-tuner-bpm-btn" aria-label="Slower"><span class="material-symbols-outlined">remove</span></button>'
+               + '<button class="showroom-tuner-bpm-btn" aria-label="Slower"><span class="material-symbols-outlined" aria-hidden="true">remove</span></button>'
                + '<span class="showroom-tuner-bpm-num">' + bpm + '</span>'
-               + '<button class="showroom-tuner-bpm-btn" aria-label="Faster"><span class="material-symbols-outlined">add</span></button>'
+               + '<button class="showroom-tuner-bpm-btn" aria-label="Faster"><span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
              + '</div>'
              + '<div class="showroom-tuner-bpm-unit">BPM</div>'
              + '<div class="showroom-tuner-metro-actions">'
