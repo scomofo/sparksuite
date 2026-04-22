@@ -262,7 +262,10 @@
         var emitInstrumentId = activeInstrument ? (activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null) : null;
         var resultInstrumentId = results.instrumentId || results.appId || results.instrumentAppId || null;
         _sparkEmit("practice_session_completed", {
-          appId:     emitInstrumentId || resultInstrumentId || null,
+          // Preserve legacy "chordspark" fallback so downstream event consumers
+          // that expect a non-null appId don't break when no active instrument
+          // can be resolved.
+          appId:     emitInstrumentId || resultInstrumentId || "chordspark",
           type:      results.type || "session",
           xp:        xpEarned,
           chord:     chordName,
