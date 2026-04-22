@@ -1,10 +1,14 @@
 ﻿(function() {
+  // Level metadata covering all 12 lessons (uke_01 .. uke_12). LC/LN must
+  // have an entry for every lesson `num` returned by getCurriculumMap()
+  // — see tests/test_curriculum_guardrails.js#LC/LN cover all curriculum
+  // levels. Levels 5-12 inherit colors from the base 4-color palette
+  // (mod 4) so the chord-card swatches still cycle visually.
   function getUkuleleLevelColors() {
     return {
-      1: "#22c55e",
-      2: "#3b82f6",
-      3: "#f97316",
-      4: "#8b5cf6"
+      1: "#22c55e",  2: "#3b82f6",  3: "#f97316",  4: "#8b5cf6",
+      5: "#22c55e",  6: "#3b82f6",  7: "#f97316",  8: "#8b5cf6",
+      9: "#22c55e", 10: "#3b82f6", 11: "#f97316", 12: "#8b5cf6"
     };
   }
 
@@ -13,7 +17,15 @@
       1: "First Strum",
       2: "Starter Chords",
       3: "Smooth Changes",
-      4: "Pattern Flow"
+      4: "Pattern Flow",
+      5: "Reading Tabs",
+      6: "Basic Fingerpicking",
+      7: "Single-Note Melody",
+      8: "Full Performance",
+      9: "Barre Basics",
+      10: "Syncopated Strum",
+      11: "Fingerpick Patterns",
+      12: "Solo Showcase"
     };
   }
 
