@@ -3743,13 +3743,78 @@ function _writeAppHtml(html){
   var el = document.getElementById("app");
   if (el) el.innerHTML = html;
 }
+
+// Build the suite-wide overlay HTML (confetti, XP/badge/break/undo toasts,
+// shortcut overlay). Returns a string and fires the SparkConfetti side
+// effect when applicable. Used by both the legacy in-instrument renderer
+// and the Showroom dispatch so overlays appear on every page.
+function _renderOverlays(){
+  var h = "";
+  if (S.showConfetti) {
+    if (typeof SparkConfetti !== "undefined") {
+      if (!S._confettiFired) {
+        S._confettiFired = true;
+        SparkConfetti.burst();
+        setTimeout(function() { S._confettiFired = false; }, 2600);
+      }
+    } else {
+      var cols = ["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
+      h += '<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
+      for (var i = 0; i < 40; i++)
+        h += '<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
+      h += '</div>';
+    }
+  }
+  if (S.newBadge)
+    h += '<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:16px 32px;box-shadow:0 8px 30px rgba(255,138,92,.4);animation:sD .5s ease;text-align:center"><div style="font-size:32px">'+S.newBadge.icon+'</div><div style="font-weight:800;font-size:16px;color:#333">'+S.newBadge.label+'</div><div style="font-size:12px;color:#555">'+S.newBadge.desc+'</div></div>';
+  if (S.showUndoToast)
+    h += '<div class="undo-toast"><span>Progress reset.</span><button onclick="act(\'undoReset\')">Undo</button><span class="countdown">'+S.undoTimer+'</span></div>';
+  if (S.xpToast && Date.now() - S.xpToast.time < 1500) {
+    if (S.xpToast.jackpot)
+      h += '<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:12px 28px;box-shadow:0 6px 24px rgba(255,138,92,.6);animation:sD .3s ease;font-weight:900;color:#fff;font-size:20px;text-align:center">&#127873; JACKPOT! +'+S.xpToast.amount+' XP!</div>';
+    else
+      h += '<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#4ECDC4,#45B7D1);border-radius:16px;padding:8px 20px;box-shadow:0 4px 15px rgba(78,205,196,.4);animation:sD .3s ease;font-weight:800;color:#fff;font-size:16px">+'+S.xpToast.amount+' XP!</div>';
+  }
+  if (S.microToast && Date.now() - S.microToast.time < 2000)
+    h += '<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:16px;padding:10px 24px;box-shadow:0 4px 15px rgba(255,138,92,.4);animation:sD .3s ease;text-align:center"><span style="font-size:20px;margin-right:6px">'+S.microToast.icon+'</span><span style="font-weight:800;color:#333;font-size:15px">'+S.microToast.msg+'</span></div>';
+  var _contMin = (Date.now() - S.sessionStartTime) / 60000;
+  if (S.sessionStartTime > 0 && _contMin >= 20 && !S.breakDismissed)
+    h += '<div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#45B7D1,#4ECDC4);border-radius:16px;padding:12px 24px;box-shadow:0 4px 20px rgba(69,183,209,.4);animation:sD .5s ease;text-align:center;max-width:320px"><div style="font-size:20px;margin-bottom:4px">&#9749;</div><div style="font-weight:800;color:#fff;font-size:14px">Nice focus! Take a quick break?</div><div style="font-size:11px;color:rgba(255,255,255,.8);margin:4px 0">You\'ve been practicing for '+Math.floor(_contMin)+' min straight</div><button onclick="act(\'dismissBreak\')" style="margin-top:6px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:6px 16px;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Got it!</button></div>';
+  if (S.showShortcuts) h += shortcutOverlay();
+  return h;
+}
+
+// First-launch onboarding overlay. Returns a string (empty when not needed).
+// Rendered on top of the launcher; previously this lived inside _renderInner
+// after the launcher gate, which made it unreachable (the gate returned
+// early on `!S.activeInstrument`, the same condition this needs).
+function _renderOnboardingOverlay(){
+  if (S.onboardingDone || S.activeInstrument) return "";
+  var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);
+  var h = "";
+  h += '<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
+  h += '<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
+  h += '<h1 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Welcome to SparkSuite!</h1>';
+  h += '<p style="color:var(--text-dim);font-size:14px;margin:0 0 24px;max-width:300px">People who set a specific practice trigger are 2-3x more likely to follow through. Set yours now.</p>';
+  h += '<div class="card" style="width:100%;max-width:340px;text-align:left;margin-bottom:20px">';
+  h += '<p style="font-size:13px;font-weight:700;color:var(--text-primary);margin:0 0 8px">Complete this sentence:</p>';
+  h += '<p style="font-size:14px;color:var(--text-muted);margin:0 0 8px">&#8220;Every day, when I&nbsp;&hellip;</p>';
+  h += '<input type="text" id="intention-input" class="set-input" placeholder="finish dinner, make coffee..." value="'+escHTML(onboardingPracticeIntention)+'" oninput="act(\'setIntention\',this.value)" style="margin-bottom:8px" aria-label="Practice trigger"/>';
+  h += '<p style="font-size:14px;color:var(--text-muted);margin:0">&#8230;&nbsp;I will open SparkSuite.&#8221;</p>';
+  h += '</div>';
+  h += '<button class="btn" onclick="act(\'completeOnboarding\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:14px 40px;font-size:17px;font-weight:800">Let\'s Go!</button>';
+  h += '<button onclick="act(\'completeOnboarding\')" style="margin-top:14px;background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer">Skip for now</button>';
+  h += '</div>';
+  return h;
+}
 function _renderInner(){
   var app=document.getElementById("app");
 
-  // Launcher gate — if no instrument active, show clean launcher
+  // Launcher gate — if no instrument active, show clean launcher.
+  // Onboarding overlay rides on top so first-launch users see it.
   if (!S.activeInstrument) {
     document.getElementById("header").style.display = "none";
-    _writeAppHtml(SparkInstruments.renderLauncher());
+    _writeAppHtml(_renderOnboardingOverlay() + SparkInstruments.renderLauncher());
     return;
   }
 
@@ -3779,7 +3844,9 @@ function _renderInner(){
   })();
   if (_showroomMod && _showroomMod.render) {
     document.getElementById("header").style.display = "none";
-    _writeAppHtml(_showroomMod.render());
+    // Prepend overlays so toasts/badges/confetti/break-reminder render on top
+    // of the Showroom screen, matching legacy behavior.
+    _writeAppHtml(_renderOverlays() + _showroomMod.render());
     return;
   }
 
@@ -3801,61 +3868,10 @@ function _renderInner(){
   document.getElementById("snd-btn").textContent=S.soundOn?"\uD83D\uDD0A":"\uD83D\uDD07";
   document.getElementById("snd-btn").style.opacity=S.soundOn?1:0.4;
   document.getElementById("dark-btn").textContent=S.darkMode?"\uD83C\uDF19":"\u2600\uFE0F";
-  var h="";
-  if(S.showConfetti){
-    // Use SparkConfetti if available (v2), else fall back to inline confetti
-    if (typeof SparkConfetti !== "undefined") {
-      if (!S._confettiFired) {
-        S._confettiFired = true;
-        SparkConfetti.burst();
-        setTimeout(function() { S._confettiFired = false; }, 2600);
-      }
-    } else {
-      var cols=["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
-      h+='<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
-      for(var i=0;i<40;i++)
-        h+='<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
-      h+='</div>';
-    }
-  }
-  if(S.newBadge)
-    h+='<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:16px 32px;box-shadow:0 8px 30px rgba(255,138,92,.4);animation:sD .5s ease;text-align:center"><div style="font-size:32px">'+S.newBadge.icon+'</div><div style="font-weight:800;font-size:16px;color:#333">'+S.newBadge.label+'</div><div style="font-size:12px;color:#555">'+S.newBadge.desc+'</div></div>';
-  if(S.showUndoToast)
-    h+='<div class="undo-toast"><span>Progress reset.</span><button onclick="act(\'undoReset\')">Undo</button><span class="countdown">'+S.undoTimer+'</span></div>';
-  // XP toast (jackpot gets special fire styling)
-  if(S.xpToast&&Date.now()-S.xpToast.time<1500){
-    if(S.xpToast.jackpot)
-      h+='<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:12px 28px;box-shadow:0 6px 24px rgba(255,138,92,.6);animation:sD .3s ease;font-weight:900;color:#fff;font-size:20px;text-align:center">&#127873; JACKPOT! +'+S.xpToast.amount+' XP!</div>';
-    else
-      h+='<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#4ECDC4,#45B7D1);border-radius:16px;padding:8px 20px;box-shadow:0 4px 15px rgba(78,205,196,.4);animation:sD .3s ease;font-weight:800;color:#fff;font-size:16px">+'+S.xpToast.amount+' XP!</div>';
-  }
-  // Micro-achievement toast
-  if(S.microToast&&Date.now()-S.microToast.time<2000)
-    h+='<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:16px;padding:10px 24px;box-shadow:0 4px 15px rgba(255,138,92,.4);animation:sD .3s ease;text-align:center"><span style="font-size:20px;margin-right:6px">'+S.microToast.icon+'</span><span style="font-weight:800;color:#333;font-size:15px">'+S.microToast.msg+'</span></div>';
-  // Break reminder
-  var _contMin=(Date.now()-S.sessionStartTime)/60000;
-  if(S.sessionStartTime>0&&_contMin>=20&&!S.breakDismissed)
-    h+='<div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#45B7D1,#4ECDC4);border-radius:16px;padding:12px 24px;box-shadow:0 4px 20px rgba(69,183,209,.4);animation:sD .5s ease;text-align:center;max-width:320px"><div style="font-size:20px;margin-bottom:4px">&#9749;</div><div style="font-weight:800;color:#fff;font-size:14px">Nice focus! Take a quick break?</div><div style="font-size:11px;color:rgba(255,255,255,.8);margin:4px 0">You\'ve been practicing for '+Math.floor(_contMin)+' min straight</div><button onclick="act(\'dismissBreak\')" style="margin-top:6px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:6px 16px;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Got it!</button></div>';
-  // Shortcut overlay
-  if(S.showShortcuts)h+=shortcutOverlay();
+  var h = _renderOverlays();
 
-  // Onboarding overlay — shown once on first launch
-  if(!S.onboardingDone && !S.activeInstrument){
-    var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);
-    h+='<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
-    h+='<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
-    h+='<h1 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Welcome to SparkSuite!</h1>';
-    h+='<p style="color:var(--text-dim);font-size:14px;margin:0 0 24px;max-width:300px">People who set a specific practice trigger are 2-3x more likely to follow through. Set yours now.</p>';
-    h+='<div class="card" style="width:100%;max-width:340px;text-align:left;margin-bottom:20px">';
-    h+='<p style="font-size:13px;font-weight:700;color:var(--text-primary);margin:0 0 8px">Complete this sentence:</p>';
-    h+='<p style="font-size:14px;color:var(--text-muted);margin:0 0 8px">&#8220;Every day, when I&nbsp;&hellip;</p>';
-    h+='<input type="text" id="intention-input" class="set-input" placeholder="finish dinner, make coffee..." value="'+escHTML(onboardingPracticeIntention)+'" oninput="act(\'setIntention\',this.value)" style="margin-bottom:8px" aria-label="Practice trigger"/>';
-    h+='<p style="font-size:14px;color:var(--text-muted);margin:0">&#8230;&nbsp;I will open SparkSuite.&#8221;</p>';
-    h+='</div>';
-    h+='<button class="btn" onclick="act(\'completeOnboarding\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:14px 40px;font-size:17px;font-weight:800">Let\'s Go!</button>';
-    h+='<button onclick="act(\'completeOnboarding\')" style="margin-top:14px;background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer">Skip for now</button>';
-    h+='</div>';
-  }
+  // (Onboarding overlay was previously here but is unreachable from this
+  // path — see _renderOnboardingOverlay(), now invoked from the launcher gate.)
 
   var screenKey=S.screen+S.tab;
   var content="";
