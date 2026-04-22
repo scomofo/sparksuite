@@ -734,9 +734,17 @@
     // diagram is a complex visual composed of nested divs (no <img>), so we
     // expose it as role="img" and synthesize an aria-label from the chord
     // name, position, and finger placements.
+    //
+    // String index math: a 6-string layout has 5 intervals between the
+    // outer strings, so adjacent strings sit at 0, 20, 40, 60, 80, 100.
+    // Divide by 20 (NOT 100/6 ≈ 16.66) to map a left% into the 0..5
+    // string index, then clamp to [0, 5] so a left=100 with rounding
+    // error can't announce "string 7" on a 6-string instrument.
     var chordAriaLabel = chordName + ", " + position + ", finger positions: " +
       fingers.map(function(f){
-        var stringIdx = Math.round(f.left / 16.66);
+        var stringIdx = Math.round(f.left / 20);
+        if (stringIdx < 0) stringIdx = 0;
+        if (stringIdx > 5) stringIdx = 5;
         return "finger " + f.num + " on string " + (stringIdx + 1);
       }).join(", ");
 
