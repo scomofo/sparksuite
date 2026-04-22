@@ -178,9 +178,12 @@
     instrument: "ukulele",
     name: "Ukulele",
     icon: "&#127926;",
-    // (Removed stale iconImage: "resources/ukulele.png" — file doesn't
-    // exist; the Showroom now falls back to an inline SVG silhouette via
-    // SparkShowroomSVG.card("ukulele") which uses the brand accent color.)
+    // Showroom asset slots — see resources/instruments/README.md for the schema.
+    // When the file doesn't exist, the launcher's <img onerror> falls through
+    // to the inline SVG silhouette in js/showroom/spark-showroom-svgs.js, so
+    // these references never render as a broken-image icon.
+    iconImage: "resources/instruments/ukulele/card.png",
+    heroImage: "resources/instruments/ukulele/hero.jpg",
     tagline: "Island strums and 4-string flow",
     skin: { laneCount: 4, labels: ["G", "C", "E", "A"] },
     available: true,
