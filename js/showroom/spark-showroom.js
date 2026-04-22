@@ -51,8 +51,9 @@
         "library":         function(){ S.screen = SCR_.HOME;       S.tab = TAB_.SONGS; },
         "tuner":           function(){ S.screen = SCR_.HOME;       S.tab = TAB_.TUNER || "tuner"; },
         "settings":        function(){ S.screen = SCR_.SETTINGS; },
-        "path":            function(){ S.screen = SCR_.SKILL_TREE; },
-        "learn":           function(){ S.screen = SCR_.SKILL_TREE; },
+        "path":            function(){ S._showroomOverride = "curriculum"; },
+        "learn":           function(){ S._showroomOverride = "curriculum"; },
+        "curriculum":      function(){ S._showroomOverride = "curriculum"; },
         "song-details":    function(){ S.screen = SCR_.SONG; },
         "session-summary": function(){ S.screen = SCR_.COMPLETE; },
         // Performance gameplay stays in the legacy engine. Call sites that
@@ -69,7 +70,7 @@
         "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
       };
       // Clear any prior override so the legacy slot routing wins again.
-      if (view !== "profile" && view !== "lesson") S._showroomOverride = null;
+      if (view !== "profile" && view !== "lesson" && view !== "curriculum") S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
       if (typeof saveState === "function") saveState();
@@ -1084,5 +1085,139 @@
   window.SparkLesson         = { render: lessonRender };
   window.SparkPath           = { render: pathRender };
   window.SparkTuner          = { render: tunerRender };
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Curriculum Dashboard (Ember Studio)
+  // ───────────────────────────────────────────────────────────────────────
+  function curriculumDashboardRender(opts) {
+    opts = opts || {};
+    var courseTitle = opts.courseTitle || "Guitar Fundamentals";
+    var level = opts.level || 12;
+    var progress = opts.progress || 65;
+    var nextXp = opts.nextXp || 250;
+    var nextBadge = opts.nextBadge || "Silver Badge";
+
+    // Progress ring math
+    var radius = 40;
+    var circumference = 2 * Math.PI * radius;
+    var dashOffset = circumference * (1 - progress / 100);
+
+    var modules = opts.modules || [
+      {
+        id: "mod1",
+        title: "Module 1: Getting Started",
+        status: "COMPLETED",
+        statusClass: "completed",
+        lessons: [
+          { name: "Anatomy of the Guitar", completed: true },
+          { name: "Holding & Tuning", completed: true }
+        ]
+      },
+      {
+        id: "mod2",
+        title: "Module 2: First Chords",
+        status: "RESUME",
+        statusClass: "active",
+        lessons: [
+          { name: "The E Minor & A Minor", active: true },
+          { name: "Basic Strumming Patterns", locked: true }
+        ],
+        cta: "Start Next Lesson"
+      },
+      {
+        id: "mod3",
+        title: "Module 3: Major Scales",
+        status: "LOCKED",
+        statusClass: "locked",
+        lessons: [
+          { name: "The C Major Scale", locked: true },
+          { name: "Intervals 101", locked: true }
+        ]
+      }
+    ];
+
+    var timelineHtml = "";
+    for (var i = 0; i < modules.length; i++) {
+      var mod = modules[i];
+      var markerIcon = mod.statusClass === "completed" ? "check" :
+                       mod.statusClass === "active" ? "auto_awesome" : "lock";
+      var markerFill = mod.statusClass === "active" ? " fill" : "";
+
+      var lessonsHtml = "";
+      for (var j = 0; j < mod.lessons.length; j++) {
+        var les = mod.lessons[j];
+        var lesStatusHtml = les.completed ? '<span class="material-symbols-outlined showroom-lesson-check">check_circle</span>' :
+                            les.active ? '<span class="showroom-lesson-badge">NOW</span>' :
+                            '<span class="material-symbols-outlined showroom-lesson-lock">lock_open</span>';
+
+        lessonsHtml += '<div class="showroom-lesson-item' + (les.active ? ' active' : '') + '">'
+                    + '<div class="showroom-lesson-info">'
+                    + '<span class="material-symbols-outlined showroom-lesson-icon">' + (les.locked ? 'music_note' : 'play_circle') + '</span>'
+                    + '<span class="showroom-lesson-name">' + escHtml(les.name) + '</span>'
+                    + '</div>'
+                    + lesStatusHtml
+                    + '</div>';
+      }
+
+      var ctaHtml = mod.cta ? '<button class="showroom-module-cta" onclick="' + nav("lesson") + '">' + escHtml(mod.cta) + '</button>' : '';
+
+      timelineHtml += '<div class="showroom-timeline-item">'
+                   + '<div class="showroom-timeline-marker ' + mod.statusClass + '">'
+                   + '<span class="material-symbols-outlined' + markerFill + '" style="font-size:16px">' + markerIcon + '</span>'
+                   + '</div>'
+                   + '<div class="showroom-module-card ' + mod.statusClass + '">'
+                   + '<div class="showroom-module-head">'
+                   + '<h3 class="showroom-module-title">' + escHtml(mod.title) + '</h3>'
+                   + '<span class="showroom-module-status ' + mod.statusClass + '">' + escHtml(mod.status) + '</span>'
+                   + '</div>'
+                   + '<div class="showroom-lesson-list">' + lessonsHtml + '</div>'
+                   + ctaHtml
+                   + '</div>'
+                   + '</div>';
+    }
+
+    var navItems = [
+      { id:"tuner",    label:"Tuner",   icon:"tune",       onClick: nav("tuner") },
+      { id:"curriculum",label:"Courses", icon:"school" },
+      { id:"tools",    label:"Tools",   icon:"construction",onClick: nav("tuner") },
+      { id:"profile",  label:"Profile", icon:"person",     onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root with-bg">'
+         + '<div class="showroom-woodgrain-overlay"></div>'
+         + '<header class="showroom-appbar">'
+         + '<div class="showroom-appbar-left">'
+         + '<button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
+         + '<h1 class="showroom-appbar-title">Ember Studio</h1></div>'
+         + '<div class="showroom-appbar-right"><div class="showroom-avatar" onclick="' + nav("profile") + '"><div class="showroom-avatar-inner">A</div></div></div>'
+         + '</header>'
+         + '<main class="showroom-canvas">'
+         + '<section class="showroom-course-hero">'
+         + '<div class="showroom-course-hero-flare" aria-hidden="true"></div>'
+         + '<div class="showroom-course-hero-head"><div>'
+         + '<span class="showroom-course-hero-eyebrow">CURRENT COURSE</span>'
+         + '<h2 class="showroom-course-hero-title">' + escHtml(courseTitle) + '</h2></div>'
+         + '<div class="showroom-course-hero-badge"><span class="material-symbols-outlined fill" style="font-size:14px">workspace_premium</span>Lvl ' + level + '</div></div>'
+         + '<div class="showroom-course-hero-stats">'
+         + '<div class="showroom-course-hero-ring">'
+         + '<svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg)">'
+         + '<circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,.05)" stroke-width="8"/>'
+         + '<circle cx="50" cy="50" r="40" fill="transparent" stroke="#ff7b3a" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + dashOffset.toFixed(1) + '" style="filter:drop-shadow(0 0 8px rgba(255,123,58,.5))"/>'
+         + '</svg>'
+         + '<div class="showroom-course-hero-ring-label"><span class="showroom-course-hero-ring-num">' + progress + '%</span><span class="showroom-course-hero-ring-unit">DONE</span></div></div>'
+         + '<div class="showroom-course-hero-progress">'
+         + '<div class="showroom-course-hero-xp-row"><span class="material-symbols-outlined fill showroom-course-hero-xp-icon" style="font-size:14px">bolt</span>Next: ' + nextXp + ' XP to ' + escHtml(nextBadge) + '</div>'
+         + '<div class="showroom-course-hero-bar"><div class="showroom-course-hero-fill" style="width:75%"></div></div></div></div>'
+         + '</section>'
+         + '<section class="showroom-timeline">'
+         + '<div class="showroom-timeline-line"></div>'
+         + timelineHtml
+         + '</section>'
+         + '</main>'
+         + bottomNav(navItems, "curriculum")
+         + '</div>';
+  }
+
+  window.SparkCurriculumDashboard = { render: curriculumDashboardRender };
   window.SparkShowroom       = SparkShowroom;
 })();
