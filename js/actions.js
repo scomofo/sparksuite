@@ -1204,6 +1204,23 @@ window.act=function(a,v){
   // === Performance Mode ===
   if(a==="openPerform"){startPerformance(v);return;}
   if(a==="startPerform"){startPerformance(v);return;}
+  // Showroom "Start Performance" / "Replay Session" CTA. Picks the best
+  // available chart in priority order so each call site launches the
+  // thing the user is actually looking at:
+  //   1. v (explicit chart id/object — future-proofing)
+  //   2. S.performChart (the just-played chart, for Replay Session)
+  //   3. S.selectedSong (the imported song backing SCR.SONG)
+  // Falls back to the practice home if none of those are set, matching
+  // the pre-wiring nav("performance") behavior.
+  if(a==="showroomStartPerf"){
+    if(v&&typeof startPerformance==="function"){startPerformance(v);return;}
+    if(S.performChart&&typeof startPerformance==="function"){startPerformance(S.performChart);return;}
+    if(S.selectedSong&&typeof buildPerformanceChartFromSong==="function"){
+      var _ssChart=buildPerformanceChartFromSong(S.selectedSong,"imported");
+      if(_ssChart){startPerformance(_ssChart);return;}
+    }
+    S.screen=SCR.HOME;S.tab=TAB.PRACTICE;render();return;
+  }
   if(a==="performSong"){
     var songIdx=parseInt(v);
     if(!isNaN(songIdx)&&SONGS[songIdx]){
