@@ -330,37 +330,44 @@
       { id:"profile",  label:"Profile",     icon:"person" }
     ];
 
-    return '<div class="showroom-root with-bg">'
-         + '<header class="showroom-appbar">'
+    // Stitch 2026-04 "Profile" redesign — glass cards, inset-carved
+    // progress tracks, ember-glow featured badge, centered "Profile"
+    // accent-colored title, warm radial wash behind the canvas.
+    return '<div class="showroom-root with-bg showroom-profile-ember">'
+         + '<div class="showroom-profile-ember-wash" aria-hidden="true"></div>'
+         + '<header class="showroom-appbar showroom-profile-ember-appbar">'
          + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + nav("home") + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button></div>'
-         + '<h1 class="showroom-appbar-title centered">Profile</h1>'
-         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" style="color:var(--text-muted)" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
+         + '<h1 class="showroom-appbar-title centered showroom-profile-ember-title">Profile</h1>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn showroom-profile-ember-settings" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
          + '</header>'
-         + '<div class="showroom-canvas">'
-           + '<section class="showroom-profile-head">'
-             + '<div class="showroom-profile-avatar">' + avatarHtml
-               + '<span class="showroom-profile-lvl-badge">LVL ' + level + '</span></div>'
-             + '<div><h2 class="showroom-profile-name">' + escHtml(name) + '</h2>'
-             + '<p class="showroom-profile-tag">' + escHtml(tag) + '</p></div>'
+         + '<div class="showroom-canvas showroom-profile-ember-canvas">'
+           + '<section class="showroom-profile-head showroom-profile-ember-head">'
+             + '<div class="showroom-profile-avatar showroom-profile-ember-avatar">' + avatarHtml
+               + '<span class="showroom-profile-lvl-badge showroom-profile-ember-lvl">LVL ' + level + '</span></div>'
+             + '<div class="showroom-profile-ember-identity">'
+               + '<h2 class="showroom-profile-name showroom-profile-ember-name">' + escHtml(name) + '</h2>'
+               + '<p class="showroom-profile-tag showroom-profile-ember-tag">' + escHtml(tag) + '</p></div>'
            + '</section>'
-           + '<section class="showroom-profile-stats">'
-             + '<div class="showroom-stat-big">'
-               + '<span class="material-symbols-outlined fill showroom-stat-big-icon">local_fire_department</span>'
-               + '<div class="showroom-stat-big-num">' + maxStreak + '</div>'
-               + '<div class="showroom-stat-big-label">Day Streak</div></div>'
+           + '<section class="showroom-profile-stats showroom-profile-ember-stats">'
+             + '<div class="showroom-stat-big showroom-profile-ember-stat-big glass-card">'
+               + '<span class="material-symbols-outlined fill showroom-stat-big-icon showroom-profile-ember-streak-icon">local_fire_department</span>'
+               + '<div class="showroom-stat-big-num showroom-profile-ember-stat-num">' + maxStreak + '</div>'
+               + '<div class="showroom-stat-big-label showroom-profile-ember-stat-label">Day Streak</div></div>'
              + '<div class="showroom-stat-stack">'
-               + '<div class="showroom-stat-mini"><div class="showroom-stat-mini-icon yellow"><span class="material-symbols-outlined fill">star</span></div>'
-                 + '<div><div class="showroom-stat-mini-num">' + totalXp.toLocaleString() + '</div><div class="showroom-stat-mini-label">Total XP</div></div></div>'
-               + '<div class="showroom-stat-mini"><div class="showroom-stat-mini-icon cyan"><span class="material-symbols-outlined fill">music_note</span></div>'
-                 + '<div><div class="showroom-stat-mini-num">' + mastered + '</div><div class="showroom-stat-mini-label">Songs Mastered</div></div></div>'
+               + '<div class="showroom-stat-mini showroom-profile-ember-stat-mini glass-card"><div class="showroom-stat-mini-icon yellow showroom-profile-ember-mini-icon"><span class="material-symbols-outlined fill">star</span></div>'
+                 + '<div><div class="showroom-stat-mini-num showroom-profile-ember-mini-num">' + totalXp.toLocaleString() + '</div><div class="showroom-stat-mini-label showroom-profile-ember-mini-label">Total XP</div></div></div>'
+               + '<div class="showroom-stat-mini showroom-profile-ember-stat-mini glass-card"><div class="showroom-stat-mini-icon cyan showroom-profile-ember-mini-icon"><span class="material-symbols-outlined fill">music_note</span></div>'
+                 + '<div><div class="showroom-stat-mini-num showroom-profile-ember-mini-num">' + mastered + '</div><div class="showroom-stat-mini-label showroom-profile-ember-mini-label">Songs Mastered</div></div></div>'
              + '</div>'
            + '</section>'
-           + '<section><h3 style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;color:var(--text-primary);margin:0 0 16px">Instrument Progress</h3>'
-             + '<div class="showroom-progress-card">' + progHtml + '</div></section>'
-           + '<section><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
-             + '<h3 style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;color:var(--text-primary);margin:0">Badges</h3>'
-             + '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;letter-spacing:.05em;color:#ffb596;text-transform:uppercase;cursor:pointer">View All</span></div>'
-             + '<div class="showroom-badges">' + badgesHtml + '</div></section>'
+           + '<section class="showroom-profile-ember-section">'
+             + '<h3 class="showroom-profile-ember-heading">Instrument Progress</h3>'
+             + '<div class="showroom-progress-card showroom-profile-ember-progress-card glass-card">' + progHtml + '</div></section>'
+           + '<section class="showroom-profile-ember-section">'
+             + '<div class="showroom-profile-ember-section-head">'
+               + '<h3 class="showroom-profile-ember-heading">Badges</h3>'
+               + '<button type="button" class="showroom-profile-ember-viewall" onclick="' + nav("path") + '">View All</button></div>'
+             + '<div class="showroom-badges showroom-profile-ember-badges">' + badgesHtml + '</div></section>'
          + '</div>'
          + bottomNav(navItems, "profile")
          + '</div>';
@@ -567,10 +574,10 @@
     var levels = ["Beginner","Intermediate","Advanced"];
 
     var songs = opts.songs || [
-      { name:"Ember's Resonance", artist:"The Electric Collective", lvl:7, len:"4:20", status:"hot",  pct:"85%", statusClass:"success" },
-      { name:"Midnight Strum",    artist:"The Acoustic Soul",       lvl:3, len:"3:15", status:"new",  label:"New",      statusClass:"muted" },
-      { name:"Ivory Cascades",    artist:"Serene Melodies",         lvl:5, len:"5:45", status:"hot",  label:"Mastered", statusClass:"success" },
-      { name:"Deep Groove",       artist:"Bassline Dynasty",        lvl:9, len:"4:10", status:"dim",  label:"Try Again", statusClass:"warn" }
+      { name:"Ember's Resonance", artist:"The Electric Collective", lvl:7, len:"4:20", status:"hot",  pct:"85%",       statusClass:"success", instrument:"guitar" },
+      { name:"Midnight Strum",    artist:"The Acoustic Soul",       lvl:3, len:"3:15", status:"new",  label:"New",      statusClass:"muted",   instrument:"ukulele" },
+      { name:"Ivory Cascades",    artist:"Serene Melodies",         lvl:5, len:"5:45", status:"hot",  label:"Mastered", statusClass:"success", instrument:"piano"  },
+      { name:"Deep Groove",       artist:"Bassline Dynasty",        lvl:9, len:"4:10", status:"dim",  label:"Try Again", statusClass:"warn",    instrument:"bass"   }
     ];
 
     function lvlClass(n) {
@@ -599,7 +606,7 @@
         : '<div class="showroom-song-thumb-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
       var statusLabel = sg.label || (sg.pct || "");
       var statusClass = sg.statusClass || "muted";
-      songsHtml += '<div class="showroom-song-row" onclick="' + nav("song-details") + '">'
+      songsHtml += '<div class="showroom-song-row ' + escHtml(sg.instrument || '') + '" onclick="' + nav("song-details") + '">'
                 + '<div class="showroom-song-thumb">' + thumb + '</div>'
                 + '<div class="showroom-song-body">'
                   + '<h4 class="showroom-song-name">' + escHtml(sg.name) + '</h4>'
@@ -621,13 +628,13 @@
       { id:"profile", label:"Profile",  icon:"person",        onClick: nav("profile") }
     ];
 
-    return '<div class="showroom-root woodgrain-bg">'
+    return '<div class="showroom-root woodgrain-bg showroom-library-2026">'
          + '<header class="showroom-library-bar">'
            + '<h1 class="showroom-library-title">Song Library</h1>'
            + '<div class="showroom-library-actions">'
              + '<button class="showroom-iconbtn accent" aria-label="Search"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>'
-             + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
-               + '<span style="width:32px;height:32px;border-radius:50%;border:2px solid #ff7b3a;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;font-weight:800;font-size:13px">A</span>'
+             + '<button class="showroom-iconbtn showroom-library-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
+               + '<span class="showroom-library-avatar-fallback">A</span>'
              + '</button>'
            + '</div>'
          + '</header>'
@@ -680,51 +687,82 @@
       { id:"profile",  label:"Profile",  icon:"person",     onClick: nav("profile") }
     ];
 
-    return '<div class="showroom-root with-bg">'
+    // CSP note: Stitch source uses an external album-art URL for the
+    // lesson thumbnail; we swap it for a gradient placeholder carrying a
+    // Material music_note glyph (img-src 'self' data:). If the caller
+    // supplies a local/data-URI `cover`, that image is used instead.
+    var lessonThumb = coverSrc
+      ? '<img class="showroom-summary-lesson-thumb-img" src="' + escHtml(coverSrc) + '" alt="">'
+      : '<div class="showroom-summary-lesson-thumb-fb" aria-hidden="true"><span class="material-symbols-outlined fill">music_note</span></div>';
+
+    return '<div class="showroom-root with-bg showroom-summary-root">'
          + '<div class="showroom-summary-glow-tr" aria-hidden="true"></div>'
          + '<div class="showroom-summary-glow-bl" aria-hidden="true"></div>'
          + '<header class="showroom-summary-bar">'
-           + '<button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Close"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>'
+           + '<button class="showroom-summary-close" onclick="' + backToHome() + '" aria-label="Close">'
+             + '<span class="material-symbols-outlined" aria-hidden="true">close</span>'
+           + '</button>'
            + '<span class="showroom-summary-title">Session Summary</span>'
-           + '<div style="width:40px"></div>'
+           + '<span class="showroom-summary-spacer" aria-hidden="true"></span>'
          + '</header>'
-         + '<div class="showroom-canvas" style="position:relative;z-index:1">'
-           + '<div class="showroom-summary-hero">'
-             + '<div class="showroom-summary-medal-wrap"><div class="showroom-summary-medal-glow" aria-hidden="true"></div><div class="showroom-summary-medal"><span class="material-symbols-outlined fill">workspace_premium</span></div></div>'
+         + '<main class="showroom-canvas showroom-summary-main">'
+           + '<section class="showroom-summary-hero">'
+             + '<div class="showroom-summary-medal-wrap">'
+               + '<div class="showroom-summary-medal-glow" aria-hidden="true"></div>'
+               + '<div class="showroom-summary-medal">'
+                 + '<span class="material-symbols-outlined fill">workspace_premium</span>'
+               + '</div>'
+             + '</div>'
              + '<h1 class="showroom-summary-h">Session Complete!</h1>'
              + '<p class="showroom-summary-sub">' + escHtml(subtitle) + '</p>'
-           + '</div>'
-           + '<div class="showroom-summary-grid">'
+           + '</section>'
+           + '<section class="showroom-summary-grid">'
              + '<div class="showroom-summary-xp">'
                + '<div class="showroom-summary-xp-flare" aria-hidden="true"></div>'
-               + '<div><span class="showroom-summary-xp-label">XP Earned</span>'
-                 + '<div class="showroom-summary-xp-row"><span class="showroom-summary-xp-num">+' + xp + '</span><span class="showroom-summary-xp-unit">XP</span></div></div>'
-               + '<div class="showroom-summary-xp-bolt"><span class="material-symbols-outlined fill">bolt</span></div>'
+               + '<div class="showroom-summary-xp-copy">'
+                 + '<span class="showroom-summary-xp-label">XP Earned</span>'
+                 + '<div class="showroom-summary-xp-row">'
+                   + '<span class="showroom-summary-xp-num">+' + xp + '</span>'
+                   + '<span class="showroom-summary-xp-unit">XP</span>'
+                 + '</div>'
+               + '</div>'
+               + '<div class="showroom-summary-xp-bolt">'
+                 + '<span class="material-symbols-outlined fill">bolt</span>'
+               + '</div>'
              + '</div>'
-             + '<div class="showroom-summary-square">'
-               + '<svg class="showroom-summary-accuracy-svg" viewBox="0 0 100 100">'
-                 + '<circle cx="50" cy="50" r="40" fill="transparent" stroke="#40322c" stroke-width="8"/>'
-                 + '<circle cx="50" cy="50" r="40" fill="transparent" stroke="#4CD964" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + dashOffset.toFixed(1) + '" transform="rotate(-90 50 50)" style="filter:drop-shadow(0 0 8px rgba(76,217,100,.4))"/>'
+             + '<div class="showroom-summary-square showroom-summary-accuracy">'
+               + '<svg class="showroom-summary-accuracy-svg" viewBox="0 0 100 100" aria-hidden="true">'
+                 + '<circle class="showroom-summary-accuracy-track" cx="50" cy="50" r="40" fill="transparent" stroke-width="8"/>'
+                 + '<circle class="showroom-summary-accuracy-bar" cx="50" cy="50" r="40" fill="transparent" stroke-width="8" stroke-linecap="round"'
+                 + ' stroke-dasharray="' + circumference.toFixed(1) + '" stroke-dashoffset="' + dashOffset.toFixed(1) + '" transform="rotate(-90 50 50)"/>'
                + '</svg>'
-               + '<div class="showroom-summary-accuracy-overlay"><span class="showroom-summary-accuracy-num">' + accuracy + '%</span><span class="showroom-summary-accuracy-label">Accuracy</span></div>'
+               + '<div class="showroom-summary-accuracy-overlay">'
+                 + '<span class="showroom-summary-accuracy-num">' + accuracy + '%</span>'
+                 + '<span class="showroom-summary-accuracy-label">Accuracy</span>'
+               + '</div>'
              + '</div>'
-             + '<div class="showroom-summary-square">'
-               + '<div class="showroom-summary-fire-wrap"><span class="material-symbols-outlined fill showroom-summary-fire">local_fire_department</span><div class="showroom-summary-fire-glow" aria-hidden="true"></div></div>'
+             + '<div class="showroom-summary-square showroom-summary-streak">'
+               + '<div class="showroom-summary-fire-wrap">'
+                 + '<div class="showroom-summary-fire-glow" aria-hidden="true"></div>'
+                 + '<span class="material-symbols-outlined fill showroom-summary-fire">local_fire_department</span>'
+               + '</div>'
                + '<span class="showroom-summary-streak-num">' + streak + '</span>'
                + '<span class="showroom-summary-streak-label">Day Streak</span>'
              + '</div>'
              + '<div class="showroom-summary-lesson">'
-               + '<div class="showroom-summary-lesson-thumb">' + thumb + '</div>'
-               + '<div><span class="showroom-summary-lesson-eyebrow">Current Lesson</span>'
+               + '<div class="showroom-summary-lesson-thumb">' + lessonThumb + '</div>'
+               + '<div class="showroom-summary-lesson-copy">'
+                 + '<span class="showroom-summary-lesson-eyebrow">Current Lesson</span>'
                  + '<h3 class="showroom-summary-lesson-title">' + escHtml(lessonTitle) + '</h3>'
-                 + '<p class="showroom-summary-lesson-meta">' + escHtml(lessonMeta) + '</p></div>'
+                 + '<p class="showroom-summary-lesson-meta">' + escHtml(lessonMeta) + '</p>'
+               + '</div>'
              + '</div>'
-           + '</div>'
-           + '<div class="showroom-summary-actions">'
+           + '</section>'
+           + '<section class="showroom-summary-actions">'
              + '<button class="showroom-summary-cta" onclick="' + backToHome() + '">Continue</button>'
              + '<button class="showroom-summary-cta ghost" onclick="act(\'showroomStartPerf\')">Replay Session</button>'
-           + '</div>'
-         + '</div>'
+           + '</section>'
+         + '</main>'
          + bottomNav(navItems, "practice")
          + '</div>';
   }
@@ -746,56 +784,82 @@
 
     // Sample notes: { lane: 0..3, top: "15%", color: "cyan|yellow|peach" }
     var notes = opts.notes || [
-      { lane:0, top:"15%", color:"cyan" },
-      { lane:0, top:"65%", color:"cyan" },
-      { lane:1, top:"40%", color:"yellow" },
-      { lane:2, top:"25%", color:"peach" },
-      { lane:2, top:"85%", color:"peach" },
-      { lane:3, top:"55%", color:"cyan" }
+      { lane:0, top:"10%", color:"cyan" },
+      { lane:0, top:"60%", color:"cyan" },
+      { lane:1, top:"35%", color:"yellow" },
+      { lane:2, top:"15%", color:"peach" },
+      { lane:2, top:"80%", color:"peach" },
+      { lane:3, top:"45%", color:"cyan" }
     ];
-    var lanePos = ["0%","25%","50%","75%"];
+    var lanePos = ["2%","27%","52%","77%"];
     var notesHtml = "";
     for (var i = 0; i < notes.length; i++) {
       var n = notes[i];
-      notesHtml += '<div class="showroom-perf-gem ' + n.color + '" style="top:' + n.top + ';left:calc(' + lanePos[n.lane] + ' + 2.5%)"></div>';
+      notesHtml += '<div class="showroom-perf2-note ' + n.color + '" style="top:' + n.top + ';left:' + lanePos[n.lane] + '"></div>';
     }
 
     var formattedScore = String(score).padStart(6, "0").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-    return '<div class="showroom-perf-root">'
-         + '<header class="showroom-perf-bar">'
-           + '<div class="showroom-perf-bar-left">'
-             + '<button class="showroom-perf-pause" onclick="' + nav("session-summary") + '" aria-label="Pause"><span class="material-symbols-outlined" aria-hidden="true">pause_circle</span></button>'
-             + '<span class="showroom-perf-score">' + formattedScore + '</span></div>'
-           + '<div class="showroom-perf-bar-right">'
-             + '<div class="showroom-perf-streak">Streak ' + streak + '</div>'
-             + '<div class="showroom-perf-mult">' + mult + 'x</div></div>'
-         + '</header>'
-         + '<main class="showroom-perf-canvas">'
-           + '<div class="showroom-perf-floating">'
-             + '<div class="showroom-perf-energy"><span class="material-symbols-outlined fill">electric_bolt</span><div class="showroom-perf-energy-track"><div class="showroom-perf-energy-fill" style="width:80%"></div></div></div>'
-             + '<div class="showroom-perf-rank"><span class="showroom-perf-rank-label">NEXT RANK</span><span class="showroom-perf-rank-val">' + escHtml(rank) + '</span></div>'
+    // Warm Ember rebuild of the Stitch 2026-04 performance_mode screen.
+    // Structure: fixed top bar (score / streak / multiplier) → main canvas
+    // with perspective rhythm highway (4 lanes) → floating HUD (energy +
+    // next rank) → progress bar → song info → dashed tap-pad grid replacing
+    // the bottom nav. Keeps the existing .showroom-perf-* classes intact
+    // for backwards compatibility, and layers new .showroom-perf2-* rules
+    // that cascade-override the look to match the 2026-04 export.
+    // No external URLs — all effects are CSS/inline gradients (CSP safe).
+    return '<div class="showroom-perf-root showroom-perf2">'
+         + '<header class="showroom-perf2-bar">'
+           + '<div class="showroom-perf2-bar-left">'
+             + '<button class="showroom-perf2-pause" onclick="' + nav("session-summary") + '" aria-label="Pause"><span class="material-symbols-outlined" aria-hidden="true">pause_circle</span></button>'
+             + '<span class="showroom-perf2-score">' + formattedScore + '</span>'
            + '</div>'
-           + '<div class="showroom-perf-feedback"><h2>' + escHtml(feedback) + '</h2><p>' + escHtml(combo) + '</p></div>'
-           + '<div class="showroom-perf-highway-wrap">'
-             + '<div class="showroom-perf-highway">'
-               + '<div class="showroom-perf-lane-line"></div>'
-               + '<div class="showroom-perf-lane-line l2"></div>'
-               + '<div class="showroom-perf-lane-line l3"></div>'
-               + notesHtml
-               + '<div class="showroom-perf-receptors">'
-                 + '<div class="showroom-perf-receptor cyan active"><div class="showroom-perf-receptor-inner"></div></div>'
-                 + '<div class="showroom-perf-receptor yellow"><div class="showroom-perf-receptor-inner"></div></div>'
-                 + '<div class="showroom-perf-receptor clay"><div class="showroom-perf-receptor-inner"></div></div>'
-                 + '<div class="showroom-perf-receptor cyan"><div class="showroom-perf-receptor-inner"></div></div>'
-               + '</div>'
-               + '<div class="showroom-perf-hitbar"></div>'
+           + '<div class="showroom-perf2-bar-right">'
+             + '<div class="showroom-perf2-streak">Streak ' + streak + '</div>'
+             + '<div class="showroom-perf2-mult">' + mult + 'x</div>'
+           + '</div>'
+         + '</header>'
+         + '<main class="showroom-perf2-canvas">'
+           + '<div class="showroom-perf2-vignette" aria-hidden="true"></div>'
+           + '<div class="showroom-perf2-floating">'
+             + '<div class="showroom-perf2-energy">'
+               + '<span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:\'FILL\' 1">electric_bolt</span>'
+               + '<div class="showroom-perf2-energy-track"><div class="showroom-perf2-energy-fill" style="width:80%"></div></div>'
+             + '</div>'
+             + '<div class="showroom-perf2-rank">'
+               + '<span class="showroom-perf2-rank-label">NEXT RANK</span>'
+               + '<span class="showroom-perf2-rank-val">' + escHtml(rank) + '</span>'
              + '</div>'
            + '</div>'
-           + '<div class="showroom-perf-progress"><div class="showroom-perf-progress-fill" style="width:' + pct + '%"></div></div>'
-           + '<div class="showroom-perf-songinfo"><span class="showroom-perf-songtitle">' + escHtml(title) + '</span>'
-             + '<div class="showroom-perf-songmeta"><span class="showroom-perf-pulse"></span><span class="showroom-perf-songsub">' + escHtml(meta) + '</span></div></div>'
+           + '<div class="showroom-perf2-feedback">'
+             + '<h2>' + escHtml(feedback) + '</h2>'
+             + '<p>' + escHtml(combo) + '</p>'
+           + '</div>'
+           + '<div class="showroom-perf2-highway-wrap">'
+             + '<div class="showroom-perf2-highway">'
+               + '<div class="showroom-perf2-lane-line l1"></div>'
+               + '<div class="showroom-perf2-lane-line l2"></div>'
+               + '<div class="showroom-perf2-lane-line l3"></div>'
+               + notesHtml
+               + '<div class="showroom-perf2-hitbar"></div>'
+               + '<div class="showroom-perf2-pad-surface"></div>'
+             + '</div>'
+           + '</div>'
+           + '<div class="showroom-perf2-progress"><div class="showroom-perf2-progress-fill" style="width:' + pct + '%"></div></div>'
+           + '<div class="showroom-perf2-songinfo">'
+             + '<span class="showroom-perf2-songtitle">' + escHtml(title) + '</span>'
+             + '<span class="showroom-perf2-songmeta">' + escHtml(meta) + '</span>'
+           + '</div>'
          + '</main>'
+         // Tap-pad grid replaces the standard bottomNav() on this screen.
+         // Four dashed lane-colored tap targets (cyan/yellow/peach/cyan)
+         // visualize the interaction regions for the falling notes above.
+         + '<div class="showroom-perf2-tappads" role="group" aria-label="Lane tap pads">'
+           + '<button class="showroom-perf2-tappad cyan" onclick="act(\'showroomPerfTap\',\'0\')" aria-label="Lane 1 tap"><span class="material-symbols-outlined" aria-hidden="true">touch_app</span></button>'
+           + '<button class="showroom-perf2-tappad yellow" onclick="act(\'showroomPerfTap\',\'1\')" aria-label="Lane 2 tap"><span class="material-symbols-outlined" aria-hidden="true">touch_app</span></button>'
+           + '<button class="showroom-perf2-tappad peach" onclick="act(\'showroomPerfTap\',\'2\')" aria-label="Lane 3 tap"><span class="material-symbols-outlined" aria-hidden="true">touch_app</span></button>'
+           + '<button class="showroom-perf2-tappad cyan" onclick="act(\'showroomPerfTap\',\'3\')" aria-label="Lane 4 tap"><span class="material-symbols-outlined" aria-hidden="true">touch_app</span></button>'
+         + '</div>'
          + '</div>';
   }
 
@@ -852,7 +916,7 @@
       { id:"profile",  label:"Profile",  icon:"person",     onClick: nav("profile") }
     ];
 
-    return '<div class="showroom-root with-bg">'
+    return '<div class="showroom-root with-bg showroom-lesson-2026">'
          + '<div class="showroom-woodgrain-overlay"></div>'
          + '<header class="showroom-lesson-bar">'
            + '<button class="showroom-iconbtn accent" onclick="' + nav("practice") + '" aria-label="Close"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>'
@@ -929,7 +993,7 @@
     var lessons = opts.lessons || [
       { tier:"Beginner",     title:"Chord Basics",      desc:"Master the fundamental G and C major shapes.", time:"8 MIN",  icon:"music_note", instrument:"guitar",  unlocked:true,  cta:"Continue" },
       { tier:"Intermediate", title:"Strumming Patterns",desc:"Unlock the \"Island Strum\" for versatile rhythms.", time:"12 MIN", icon:"waves",     instrument:"ukulele", unlocked:false, cta:"Locked" },
-      { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true, thumbSrc:"https://lh3.googleusercontent.com/aida-public/AB6AXuA0Hh82rrHEyzzq2Vgf9VvjmHqhR1dK53Rr0Gd0e_JNdItqAjn6ZMk0s1y_O8MgvAZLnYirETpAWeh79dcwysMizIqcSeXVZlly32bsiF2BFKFId8P2pHIsPtSXjrwNvlsnZf_Ce3LWemEJooQjN0YrlLXkBB68y2WiZnF9wc_AZPHWwyo-w8ZZ_-k2CTXYr5_ztOP2qq87L2r00p9AA8h9ZBwkh5u62EL31APi3lR1Jg8idVqhQiKq0Ob35xQ-k4Y_EAqtJ3qD5nk" }
+      { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true }
     ];
 
     var goalPct = Math.min(100, Math.round((dailyMin / dailyGoal) * 100));
@@ -978,9 +1042,9 @@
     var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
     var avatarHtml = avatarSrc
       ? '<img src="' + escHtml(avatarSrc) + '" alt="Profile" style="width:100%;height:100%;object-fit:cover">'
-      : '<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;font-weight:800;font-size:14px">' + (profile && profile.displayName ? profile.displayName.charAt(0).toUpperCase() : 'A') + '</span>';
+      : '<span class="showroom-path-avatar-fallback">' + (profile && profile.displayName ? profile.displayName.charAt(0).toUpperCase() : 'A') + '</span>';
 
-    return '<div class="showroom-root with-bg">'
+    return '<div class="showroom-root with-bg showroom-path-2026">'
          + '<header class="showroom-path-bar">'
            // Semantic button — the previous <div onclick> was not focusable
            // by keyboard and exposed no button role to assistive tech.
@@ -988,12 +1052,12 @@
            // (circular avatar with accent border) identical to the previous
            // div while restoring keyboard/Tab + Enter/Space activation and
            // screen-reader semantics.
-           + '<button type="button" aria-label="Profile" style="width:32px;height:32px;border-radius:50%;overflow:hidden;border:1px solid rgba(255,123,58,0.3);cursor:pointer;padding:0;background:transparent" onclick="' + nav("profile") + '">'
+           + '<button type="button" class="showroom-path-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
              + avatarHtml
            + '</button>'
            + '<h1 class="showroom-path-title">Your Path</h1>'
-           + '<div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.05);padding:4px 12px;border-radius:9999px">'
-             + '<span style="color:#ff7b3a;font-weight:900;font-size:14px">' + streak + ' \uD83D\uDD25</span>'
+           + '<div class="showroom-path-streak">'
+             + '<span class="showroom-path-streak-num">' + streak + '\uD83D\uDD25</span>'
            + '</div>'
          + '</header>'
          + '<div class="showroom-canvas" style="padding-top:0">'
@@ -1059,12 +1123,12 @@
       { id:"profile", label:"Profile", icon:"person",     onClick: nav("profile") }
     ];
 
-    return '<div class="showroom-root with-bg">'
+    return '<div class="showroom-root with-bg showroom-tuner-2026">'
          + '<header class="showroom-tuner-bar">'
            + '<button class="showroom-iconbtn accent" aria-label="Menu" onclick="' + backToHome() + '"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
            + '<h1 class="showroom-tuner-brand">SparkSuite</h1>'
-           + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
-             + '<span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">A</span>'
+           + '<button class="showroom-iconbtn showroom-tuner-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
+             + '<span class="showroom-tuner-avatar-fallback">A</span>'
            + '</button>'
          + '</header>'
          + '<div class="showroom-canvas" style="padding-top:0;align-items:center">'
@@ -1141,6 +1205,49 @@
   window.SparkLesson         = { render: lessonRender };
   window.SparkPath           = { render: pathRender };
   window.SparkTuner          = { render: tunerRender };
+
+  // ───────────────────────────────────────────────────────────────────────
+  // Onboarding — "Welcome to the Spark Collective"
+  // Ported from docs/design/stitch-2026-04/onboarding_welcome/.
+  // ───────────────────────────────────────────────────────────────────────
+  function onboardingWelcomeRender(opts) {
+    opts = opts || {};
+    var title = opts.title || "SparkSuite";
+    var subtitle = opts.subtitle || "Welcome to the Spark Collective";
+    var body = opts.body || "Step into a world where your musical flow state is nurtured. Discover your rhythm, track your journey, and let the music guide you.";
+    var ctaLabel = opts.ctaLabel || "Begin Your Journey";
+    var ctaAction = opts.ctaAction || "act('completeOnboarding')";
+    var signInLabel = opts.signInLabel || "Already have an account?";
+    var signInAction = opts.signInAction || "act('completeOnboarding')";
+
+    return '<div class="showroom-root with-woodgrain showroom-onboarding-welcome">'
+         + '<div class="showroom-onboarding-glow showroom-onboarding-glow-tl" aria-hidden="true"></div>'
+         + '<div class="showroom-onboarding-glow showroom-onboarding-glow-br" aria-hidden="true"></div>'
+         + '<main class="showroom-onboarding-main">'
+           + '<div class="showroom-onboarding-logo-wrap">'
+             + '<div class="showroom-onboarding-logo-halo" aria-hidden="true"></div>'
+             + '<div class="showroom-onboarding-logo-badge">'
+               + '<span class="material-symbols-outlined fill showroom-onboarding-logo-icon">auto_awesome</span>'
+             + '</div>'
+           + '</div>'
+           + '<div class="showroom-onboarding-copy">'
+             + '<h1 class="showroom-onboarding-title">' + escHtml(title) + '</h1>'
+             + '<h2 class="showroom-onboarding-subtitle">' + escHtml(subtitle) + '</h2>'
+             + '<p class="showroom-onboarding-body">' + escHtml(body) + '</p>'
+           + '</div>'
+           + '<div class="showroom-onboarding-cta-wrap">'
+             + '<button type="button" class="showroom-onboarding-cta" onclick="' + ctaAction + '">'
+               + escHtml(ctaLabel.toUpperCase())
+               + '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>'
+             + '</button>'
+             + '<p class="showroom-onboarding-signin">'
+               + escHtml(signInLabel) + ' '
+               + '<button type="button" class="showroom-onboarding-signin-link" onclick="' + signInAction + '">Sign In</button>'
+             + '</p>'
+           + '</div>'
+         + '</main>'
+         + '</div>';
+  }
 
   // ───────────────────────────────────────────────────────────────────────
   // Curriculum Dashboard (Ember Studio)
@@ -1274,6 +1381,187 @@
          + '</div>';
   }
 
+  // ───────────────────────────────────────────────────────────────────────
+  // Course Syllabus — Stitch 2026-04 design reference
+  // Ported from docs/design/stitch-2026-04/course_syllabus/. This is a
+  // NEW showroom renderer (no existing dispatch). Scope: Showroom design
+  // reference only — NO routing changes, NO render.js dispatch, NO new
+  // screen constants. The renderer is exported as SparkCourseSyllabus and
+  // stands ready for future wiring.
+  // ───────────────────────────────────────────────────────────────────────
+  function courseSyllabusRender(opts) {
+    opts = opts || {};
+    var courseName  = opts.courseName  || "Guitar Fundamentals";
+    var level       = (opts.level != null) ? opts.level : 12;
+    var progressPct = (opts.progressPct != null) ? opts.progressPct : 65;
+    var nextXpGoal  = opts.nextXpGoal  || "250 XP to Silver Badge";
+    var ctaLabel    = opts.ctaLabel    || "Start Next Lesson";
+    var ctaAction   = opts.ctaAction   || "act('startLesson')";
+    var userInitial = (opts.userInitial || "A").charAt(0).toUpperCase();
+
+    var modules = opts.modules || [
+      {
+        title: "Module 1: Getting Started",
+        status: "COMPLETED",
+        state: "completed",
+        lessons: [
+          { name: "Anatomy of the Guitar", state: "done" },
+          { name: "Holding & Tuning",      state: "done" }
+        ]
+      },
+      {
+        title: "Module 2: First Chords",
+        status: "RESUME",
+        state: "active",
+        lessons: [
+          { name: "The E Minor & A Minor",     state: "now" },
+          { name: "Basic Strumming Patterns",  state: "unlocked" }
+        ],
+        showCta: true
+      },
+      {
+        title: "Module 3: Major Scales",
+        status: "LOCKED",
+        state: "locked",
+        lessons: [
+          { name: "The C Major Scale", state: "locked" },
+          { name: "Intervals 101",     state: "locked" }
+        ]
+      }
+    ];
+
+    // Progress ring math — r=40, stroke-dasharray = 2πr
+    var ringR = 40;
+    var ringC = 2 * Math.PI * ringR;
+    var ringOffset = ringC * (1 - Math.max(0, Math.min(100, progressPct)) / 100);
+
+    function markerIconFor(state) {
+      if (state === "completed") return "check";
+      if (state === "active")    return "auto_awesome";
+      return "lock";
+    }
+    function lessonIconFor(state) {
+      if (state === "locked") return "music_note";
+      return "play_circle";
+    }
+    function lessonTailFor(state) {
+      if (state === "done") {
+        return '<span class="material-symbols-outlined showroom-syllabus-lesson-done" aria-hidden="true">check_circle</span>';
+      }
+      if (state === "now") {
+        return '<span class="showroom-syllabus-lesson-now">NOW</span>';
+      }
+      if (state === "unlocked") {
+        return '<span class="material-symbols-outlined showroom-syllabus-lesson-unlocked" aria-hidden="true">lock_open</span>';
+      }
+      return "";
+    }
+
+    var timelineHtml = "";
+    for (var i = 0; i < modules.length; i++) {
+      var mod = modules[i];
+      var state = mod.state || "locked";
+      var markerFill = (state === "active") ? " fill" : "";
+
+      var lessonsHtml = "";
+      for (var j = 0; j < mod.lessons.length; j++) {
+        var les = mod.lessons[j];
+        lessonsHtml += '<div class="showroom-syllabus-lesson ' + les.state + '">'
+                    +   '<div class="showroom-syllabus-lesson-main">'
+                    +     '<span class="material-symbols-outlined showroom-syllabus-lesson-icon" aria-hidden="true">' + lessonIconFor(les.state) + '</span>'
+                    +     '<span class="showroom-syllabus-lesson-name">' + escHtml(les.name) + '</span>'
+                    +   '</div>'
+                    +   lessonTailFor(les.state)
+                    + '</div>';
+      }
+
+      var ctaHtml = mod.showCta
+        ? '<button type="button" class="showroom-syllabus-cta" onclick="' + (opts.ctaAction || "act('showroomStartLesson')") + '">'
+          + escHtml(ctaLabel)
+          + '</button>'
+        : '';
+
+      timelineHtml += '<div class="showroom-syllabus-module ' + state + '">'
+                   +   '<div class="showroom-syllabus-dot ' + state + '" aria-hidden="true">'
+                   +     '<span class="material-symbols-outlined' + markerFill + '">' + markerIconFor(state) + '</span>'
+                   +   '</div>'
+                   +   '<div class="showroom-syllabus-card ' + state + '">'
+                   +     '<div class="showroom-syllabus-card-head">'
+                   +       '<h3 class="showroom-syllabus-card-title">' + escHtml(mod.title) + '</h3>'
+                   +       '<span class="showroom-syllabus-card-status ' + state + '">' + escHtml(mod.status) + '</span>'
+                   +     '</div>'
+                   +     '<div class="showroom-syllabus-lessons">' + lessonsHtml + '</div>'
+                   +     ctaHtml
+                   +   '</div>'
+                   + '</div>';
+    }
+
+    var navItems = [
+      { id: "tuner",      label: "Tuner",   icon: "tune",         onClick: nav("tuner") },
+      { id: "curriculum", label: "Courses", icon: "school" },
+      { id: "tools",      label: "Tools",   icon: "construction", onClick: nav("tuner") },
+      { id: "profile",    label: "Profile", icon: "person",       onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root with-woodgrain showroom-syllabus">'
+         +   '<header class="showroom-syllabus-appbar">'
+         +     '<div class="showroom-syllabus-appbar-left">'
+         +       '<button type="button" class="showroom-syllabus-iconbtn" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
+         +       '<h1 class="showroom-syllabus-appbar-title">Ember Studio</h1>'
+         +     '</div>'
+         // CSP note: Stitch source used an external avatar image URL. Replaced
+         // with an initial-letter bubble so the Showroom stays same-origin.
+         +     '<div class="showroom-syllabus-avatar" onclick="' + nav("profile") + '" aria-label="Profile">'
+         +       '<span>' + escHtml(userInitial) + '</span>'
+         +     '</div>'
+         +   '</header>'
+         +   '<main class="showroom-syllabus-main">'
+         +     '<section class="showroom-syllabus-hero">'
+         +       '<div class="showroom-syllabus-hero-flare" aria-hidden="true"></div>'
+         +       '<div class="showroom-syllabus-hero-head">'
+         +         '<div>'
+         +           '<span class="showroom-syllabus-eyebrow">CURRENT COURSE</span>'
+         +           '<h2 class="showroom-syllabus-course-title">' + escHtml(courseName) + '</h2>'
+         +         '</div>'
+         +         '<div class="showroom-syllabus-level-pill">'
+         +           '<span class="material-symbols-outlined fill" aria-hidden="true" style="font-size:14px">workspace_premium</span>'
+         +           '<span>Lvl ' + escHtml(String(level)) + '</span>'
+         +         '</div>'
+         +       '</div>'
+         +       '<div class="showroom-syllabus-hero-stats">'
+         +         '<div class="showroom-syllabus-ring">'
+         +           '<svg viewBox="0 0 100 100" aria-hidden="true">'
+         +             '<circle class="showroom-syllabus-ring-track" cx="50" cy="50" r="' + ringR + '" fill="transparent" stroke-width="8"></circle>'
+         +             '<circle class="showroom-syllabus-ring-fill"  cx="50" cy="50" r="' + ringR + '" fill="transparent" stroke-width="8"'
+         +               ' stroke-linecap="round"'
+         +               ' stroke-dasharray="' + ringC.toFixed(2) + '"'
+         +               ' stroke-dashoffset="' + ringOffset.toFixed(2) + '"></circle>'
+         +           '</svg>'
+         +           '<div class="showroom-syllabus-ring-label">'
+         +             '<span class="showroom-syllabus-ring-num">' + escHtml(String(progressPct)) + '%</span>'
+         +             '<span class="showroom-syllabus-ring-unit">DONE</span>'
+         +           '</div>'
+         +         '</div>'
+         +         '<div class="showroom-syllabus-xp">'
+         +           '<div class="showroom-syllabus-xp-row">'
+         +             '<span class="material-symbols-outlined fill" aria-hidden="true" style="font-size:14px">bolt</span>'
+         +             '<span>Next: ' + escHtml(nextXpGoal) + '</span>'
+         +           '</div>'
+         +           '<div class="showroom-syllabus-xp-bar"><div class="showroom-syllabus-xp-fill" style="width:' + Math.max(0, Math.min(100, progressPct)) + '%"></div></div>'
+         +         '</div>'
+         +       '</div>'
+         +     '</section>'
+         +     '<section class="showroom-syllabus-timeline">'
+         +       '<div class="showroom-syllabus-timeline-line" aria-hidden="true"></div>'
+         +       timelineHtml
+         +     '</section>'
+         +   '</main>'
+         +   bottomNav(navItems, "curriculum")
+         + '</div>';
+  }
+
   window.SparkCurriculumDashboard = { render: curriculumDashboardRender };
+  window.SparkOnboardingWelcome   = { render: onboardingWelcomeRender };
+  window.SparkCourseSyllabus      = { render: courseSyllabusRender };
   window.SparkShowroom       = SparkShowroom;
 })();

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=Syne:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;700;800&amp;family=Outfit:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>body {
+    background-color: #12100E;
+    color: #EDE6DA;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    -webkit-font-smoothing: antialiased
+    }
+.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+.glow-ember {
+    box-shadow: 0 0 15px rgba(255, 123, 58, 0.3), 0 0 30px rgba(255, 123, 58, 0.1)
+    }
+.glass-card {
+    background: rgba(30, 27, 23, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05)
+    }
+.woodgrain-overlay {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuCGXBwFQMLXh6INj-oxD3Sl3gu-tMpw4zixwBBhTq5Vp-xGGFw8B1GgB9W_o0llGc3fICVMjol8-CjYWYBGq_xz5VXDDBqgl2DbYqxG7VfrbceEP3B2tWYmmnEuSw8jpLVw9Is69Qop2uFyQOAH6f25QD3nEqdZ4mjNaY2Rpt90BlzUvu_4mfjlMkdICN8XT2Ud0ig23JBD5vJuGnrdKz6Z7rDke6xRMLZHVQveC3VYEDk4iTiH39t-EEUC-5ajrz1c3QjgoH_lSjA);
+    opacity: 0.03;
+    pointer-events: none
+    }
+.timeline-line {
+    background: linear-gradient(to bottom, #ff7b3a 0%, #584239 100%)
+    }</style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "border": "#2E2820",
+                      "tertiary": "#51d6f8",
+                      "outline-variant": "#584239",
+                      "primary-fixed": "#ffdbcd",
+                      "inverse-primary": "#a33e00",
+                      "secondary-container": "#753814",
+                      "brand-peach": "#E8A87A",
+                      "brand-clay": "#C07040",
+                      "surface-variant": "#40322c",
+                      "warning": "#C89040",
+                      "background": "#1c110c",
+                      "on-primary": "#581e00",
+                      "surface": "#1c110c",
+                      "danger": "#C45040",
+                      "card-bg": "#1E1B17",
+                      "text-secondary": "#C8BFB0",
+                      "raised-bg": "#252119",
+                      "error": "#ffb4ab",
+                      "text-primary": "#EDE6DA",
+                      "on-secondary": "#552000",
+                      "primary-fixed-dim": "#ffb596",
+                      "accent-deep": "#FF6030",
+                      "text-muted": "#7A7060",
+                      "secondary": "#ffb691",
+                      "on-background": "#f5ded5",
+                      "primary": "#ffb596",
+                      "on-surface-variant": "#dfc0b4",
+                      "bg": "#12100E",
+                      "on-tertiary": "#003641",
+                      "primary-container": "#ff7b3a",
+                      "bg-subtle": "#1A1714",
+                      "tertiary-container": "#00b0d1",
+                      "on-surface": "#f5ded5",
+                      "text-dim": "#9A8E7E",
+                      "surface-container": "#291d18",
+                      "success": "#4CD964"
+              },
+              "borderRadius": {
+                      "lg": "0.5rem",
+                      "xl": "0.75rem"
+              },
+              "spacing": {
+                      "sp-2": "8px",
+                      "sp-4": "16px",
+                      "sp-5": "24px",
+                      "container-padding": "14px",
+                      "card-padding": "18px",
+                      "app-max-width": "480px"
+              },
+              "fontFamily": {
+                      "display-hero": ["Syne"],
+                      "heading-md": ["Syne"],
+                      "body-md": ["Outfit"],
+                      "body-sm": ["Outfit"],
+                      "label": ["plusJakartaSans"],
+                      "stat-lg": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "display-hero": ["28px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                      "heading-md": ["18px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "800"}],
+                      "stat-lg": ["32px", {"lineHeight": "1", "fontWeight": "900"}],
+                      "body-md": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "body-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.3px", "fontWeight": "600"}],
+                      "label": ["11px", {"lineHeight": "1", "letterSpacing": "0.3px", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-bg min-h-screen pb-32">
+<div class="woodgrain-overlay fixed inset-0 z-0"></div>
+<!-- Top App Bar (Shared Component Strategy) -->
+<header class="bg-[#12100E]/80 backdrop-blur-xl border-b border-white/10 fixed top-0 z-50 flex justify-between items-center px-4 h-16 w-full max-w-[480px] left-1/2 -translate-x-1/2 shadow-lg shadow-orange-900/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-orange-500">menu</span>
+<h1 class="font-['Plus_Jakarta_Sans'] tracking-tight text-xl font-bold text-orange-500 drop-shadow-[0_0_8px_rgba(255,123,58,0.4)]">Ember Studio</h1>
+</div>
+<div class="w-8 h-8 rounded-full border border-orange-500/30 overflow-hidden">
+<img alt="User avatar" class="w-full h-full object-cover" data-alt="minimalist 3d character avatar with warm lighting and soft features on a dark brown background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAd02GBcBwLkdM--yRZ-qIGbPlbz_9r4LMRWOc4uk1mks3-NH5-rCaWSbP0TtSb48PuV8aL6zyWFqdKclYgf05AZ-0VXC-1GGztBpX1u9OuDSCUlTd3GwNIQUHLWyvzF0o_5Nb9rgvdXLsGrEgCshGOSWtKO-rl5AnCAKUhNqCNHuJ0lUWoTIFIw_0RZC-Q3QE4-PLQFf2CztELYl7g1_noammrkUxGxdKxTzXT2HnjhbYpna-c2N-RHmjs5s5XGLKR-gjZLpwS8FE"/>
+</div>
+</header>
+<main class="relative z-10 max-w-[480px] mx-auto pt-20 px-container-padding">
+<!-- Course Hero Section -->
+<section class="mt-6 mb-8 relative">
+<div class="glass-card rounded-2xl p-sp-5 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
+<div class="flex justify-between items-start mb-6">
+<div>
+<span class="font-label text-orange-500 uppercase tracking-widest mb-1 block">CURRENT COURSE</span>
+<h2 class="font-display-hero text-display-hero text-text-primary">Guitar Fundamentals</h2>
+</div>
+<div class="bg-success/10 px-3 py-1 rounded-full border border-success/20 flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-success" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="font-label text-success">Lvl 12</span>
+</div>
+</div>
+<div class="flex items-end gap-6">
+<div class="relative w-24 h-24">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<circle class="text-white/5" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-orange-500 drop-shadow-[0_0_8px_rgba(255,123,58,0.5)]" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="87.9" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-stat-lg text-2xl text-text-primary">65%</span>
+<span class="text-[8px] font-label text-text-muted">DONE</span>
+</div>
+</div>
+<div class="flex-1 pb-2">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-orange-500 text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-body-sm text-text-secondary">Next: 250 XP to Silver Badge</span>
+</div>
+<div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-orange-600 to-orange-400 w-3/4 rounded-full glow-ember"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Syllabus Timeline -->
+<section class="relative pl-8">
+<!-- Continuous Line -->
+<div class="absolute left-3 top-0 bottom-0 w-[2px] timeline-line opacity-30"></div>
+<!-- Module 1: Completed -->
+<div class="mb-10 relative">
+<div class="absolute -left-8 top-4 w-6 h-6 rounded-full bg-success flex items-center justify-center z-20 shadow-[0_0_10px_rgba(76,217,100,0.4)]">
+<span class="material-symbols-outlined text-white text-[16px] font-bold">check</span>
+</div>
+<div class="glass-card rounded-xl p-sp-4 border-l-4 border-success/40">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-heading-md text-heading-md text-text-primary">Module 1: Getting Started</h3>
+<span class="font-label text-success">COMPLETED</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-muted">play_circle</span>
+<span class="font-body-md text-text-secondary">Anatomy of the Guitar</span>
+</div>
+<span class="material-symbols-outlined text-success text-sm">check_circle</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-muted">play_circle</span>
+<span class="font-body-md text-text-secondary">Holding &amp; Tuning</span>
+</div>
+<span class="material-symbols-outlined text-success text-sm">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Module 2: Active -->
+<div class="mb-10 relative">
+<div class="absolute -left-9 top-2 w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center z-20 glow-ember animate-pulse">
+<span class="material-symbols-outlined text-white text-[20px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="glass-card rounded-xl p-sp-4 border-l-4 border-orange-500 shadow-xl shadow-orange-900/10">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-heading-md text-heading-md text-orange-400">Module 2: First Chords</h3>
+<span class="font-label text-orange-500 animate-pulse">RESUME</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 bg-orange-500/10 rounded-lg border border-orange-500/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-orange-400">play_circle</span>
+<span class="font-body-md text-text-primary">The E Minor &amp; A Minor</span>
+</div>
+<span class="font-label text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded">NOW</span>
+</div>
+<div class="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 opacity-80">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-muted">play_circle</span>
+<span class="font-body-md text-text-secondary">Basic Strumming Patterns</span>
+</div>
+<span class="material-symbols-outlined text-text-muted text-sm">lock_open</span>
+</div>
+</div>
+<button class="mt-4 w-full py-3 bg-gradient-to-r from-orange-600 to-brand-clay rounded-xl font-display-md text-white shadow-lg active:scale-95 transition-transform">
+                        Start Next Lesson
+                    </button>
+</div>
+</div>
+<!-- Module 3: Locked -->
+<div class="mb-10 relative">
+<div class="absolute -left-8 top-4 w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center z-20 border border-white/10">
+<span class="material-symbols-outlined text-text-muted text-[16px]">lock</span>
+</div>
+<div class="glass-card rounded-xl p-sp-4 opacity-50 grayscale-[0.5]">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-heading-md text-heading-md text-text-muted">Module 3: Major Scales</h3>
+<span class="font-label text-text-muted">LOCKED</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-muted">music_note</span>
+<span class="font-body-md text-text-muted">The C Major Scale</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-zinc-900/50 rounded-lg border border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-muted">music_note</span>
+<span class="font-body-md text-text-muted">Intervals 101</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar (Shared Component Strategy) -->
+<nav class="bg-[#12100E]/90 backdrop-blur-lg border-t border-white/5 fixed bottom-0 w-full max-w-[480px] left-1/2 -translate-x-1/2 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.5)] flex justify-around items-center h-20 px-2 pb-safe z-50">
+<a class="flex flex-col items-center justify-center text-stone-500 opacity-70 transition-all hover:text-orange-300" href="#">
+<span class="material-symbols-outlined">tune</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-medium uppercase tracking-widest mt-1">Tuner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-orange-500 drop-shadow-[0_0_5px_rgba(255,123,58,0.6)] bg-orange-500/10 rounded-xl px-3 py-1 transition-all" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-medium uppercase tracking-widest mt-1">Courses</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 opacity-70 transition-all hover:text-orange-300" href="#">
+<span class="material-symbols-outlined">construction</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-medium uppercase tracking-widest mt-1">Tools</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 opacity-70 transition-all hover:text-orange-300" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-medium uppercase tracking-widest mt-1">Profile</span>
+</a>
+</nav>
+</body></html>
