@@ -23,16 +23,8 @@ function getGuidedPageInstrument() {
   return inst;
 }
 
-function normalizeGuidedTextToken(value) {
-  var text;
-  var lower;
-  if (typeof value !== "string") return "";
-  text = value.trim();
-  if (!text) return "";
-  lower = text.toLowerCase();
-  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
-  return text;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizeGuidedTextToken(value) { return SparkNormalize.textToken(value); }
 
 function firstGuidedTextToken() {
   var i;
@@ -44,19 +36,9 @@ function firstGuidedTextToken() {
   return "";
 }
 
-function normalizeGuidedBpm(value, fallback) {
-  var numeric = Number(value);
-  if (!isFinite(numeric)) return fallback;
-  numeric = Math.round(numeric);
-  if (numeric <= 0) return fallback;
-  return numeric;
-}
-
-function normalizeGuidedCount(value, fallback) {
-  var numeric = Number(value);
-  if (!isFinite(numeric)) return fallback;
-  return Math.round(numeric);
-}
+// Wrappers — see js/utils/normalize.js for canonical implementations.
+function normalizeGuidedBpm(value, fallback) { return SparkNormalize.positiveInt(value, fallback); }
+function normalizeGuidedCount(value, fallback) { return SparkNormalize.integer(value, fallback); }
 
 function guidedStepIndicator(step) {
   var steps = [

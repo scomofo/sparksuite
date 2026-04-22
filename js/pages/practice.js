@@ -66,10 +66,8 @@ function normalizePracticeSummaryItemId(value) {
   return text;
 }
 
-function normalizePracticePageNumber(value, fallback) {
-  var num = typeof value === "number" ? value : Number(value);
-  return isFinite(num) ? num : fallback;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizePracticePageNumber(value, fallback) { return SparkNormalize.number(value, fallback); }
 
 function firstPrettyPracticeSummaryToken() {
   var i;
@@ -87,21 +85,17 @@ function normalizePracticeTextInputValue(value) {
   return value;
 }
 
-function normalizePracticeGoalNumber(value, fallback) {
-  return typeof value === "number" && isFinite(value) ? value : fallback;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+// Uses strictNumber: practice goal values must come from a typed source,
+// not be coerced from strings (avoids silently masking type bugs).
+function normalizePracticeGoalNumber(value, fallback) { return SparkNormalize.strictNumber(value, fallback); }
 
 function normalizePracticeGoalReached(value) {
   return value === true || value === 1 || value === "true" || value === "1";
 }
 
-function normalizePracticeDisplayCount(value, fallback) {
-  var num = typeof value === "number" ? value : Number(value);
-  if (!isFinite(num)) return fallback;
-  num = Math.round(num);
-  if (num < 0) return fallback;
-  return num;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizePracticeDisplayCount(value, fallback) { return SparkNormalize.count(value, fallback); }
 
 function getPracticeGoalMetrics() {
   var dailyGoalMinutes = normalizePracticeGoalNumber(S.dailyGoalMinutes, 10);

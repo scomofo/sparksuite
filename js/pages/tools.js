@@ -22,44 +22,12 @@ function getToolsPageInstrument(){
   return inst;
 }
 
-function normalizeToolsTextToken(value) {
-  var text;
-  var lower;
-  if (typeof value !== "string") return "";
-  text = value.trim();
-  if (!text) return "";
-  lower = text.toLowerCase();
-  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
-  return text;
-}
-
-function normalizeToolsNumber(value, fallback) {
-  var num = typeof value === "number" ? value : Number(value);
-  return isFinite(num) ? num : fallback;
-}
-
-function normalizeToolsCount(value, fallback) {
-  var num = normalizeToolsNumber(value, fallback);
-  if (!isFinite(num)) return fallback;
-  num = Math.round(num);
-  if (num < 0) return fallback;
-  return num;
-}
-
-function normalizeToolsPercent(value, fallback) {
-  var num = normalizeToolsNumber(value, fallback);
-  if (!isFinite(num)) return fallback;
-  num = Math.round(num);
-  if (num < 0) return 0;
-  if (num > 100) return 100;
-  return num;
-}
-
-function formatToolsHz(value, fallback) {
-  var num = normalizeToolsNumber(value, null);
-  if (num == null || num <= 0) return fallback;
-  return String(num);
-}
+// Wrappers — see js/utils/normalize.js for canonical implementations.
+function normalizeToolsTextToken(value) { return SparkNormalize.textToken(value); }
+function normalizeToolsNumber(value, fallback) { return SparkNormalize.number(value, fallback); }
+function normalizeToolsCount(value, fallback) { return SparkNormalize.count(value, fallback); }
+function normalizeToolsPercent(value, fallback) { return SparkNormalize.percent(value, fallback); }
+function formatToolsHz(value, fallback) { return SparkNormalize.formatHz(value, fallback); }
 
 function getToolsInstrumentName(inst) {
   return normalizeToolsTextToken(

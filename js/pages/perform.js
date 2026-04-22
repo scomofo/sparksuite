@@ -111,16 +111,8 @@ function cancelCalibration() {
   render();
 }
 
-function normalizePerformPageTextToken(value) {
-  var text;
-  var lower;
-  if (typeof value !== "string") return "";
-  text = value.trim();
-  if (!text) return "";
-  lower = text.toLowerCase();
-  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
-  return text;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizePerformPageTextToken(value) { return SparkNormalize.textToken(value); }
 
 function firstPerformPageTextToken() {
   var i;
@@ -132,10 +124,8 @@ function firstPerformPageTextToken() {
   return "";
 }
 
-function normalizePerformPageNumber(value, fallback) {
-  var num = typeof value === "number" ? value : Number(value);
-  return isFinite(num) ? num : fallback;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizePerformPageNumber(value, fallback) { return SparkNormalize.number(value, fallback); }
 
 function getPerformancePracticePresetOptions() {
   var stemLabel = typeof getPerformancePracticePresetStemLabel === "function"
