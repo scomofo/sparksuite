@@ -4390,3 +4390,279 @@
   box-shadow:0 0 20px rgba(255,123,58,0.3);
   cursor:pointer;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tuner & Tools Screen (Stitch 2026-04)
+   Warm Ember token pass on the existing tunerRender layout.
+   Ported from docs/design/stitch-2026-04/tuner_tools/code.html.
+   Scoped under .showroom-tuner-2026; cascade handles override.
+   ═══════════════════════════════════════════════════════════════════ */
+.showroom-tuner-2026 .showroom-tuner-bar{
+  background:rgba(18,16,14,0.8);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 4px 20px rgba(255,123,58,0.1);
+}
+.showroom-tuner-2026 .showroom-tuner-brand{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:800; font-size:20px;
+  letter-spacing:-.01em;
+  color:var(--accent-deep);
+  text-shadow:0 0 8px rgba(255,123,58,0.4);
+}
+.showroom-tuner-avatar-btn{
+  width:32px; height:32px;
+  padding:0;
+  border:1px solid rgba(255,123,58,0.3);
+  border-radius:50%;
+  background:transparent;
+  cursor:pointer;
+  overflow:hidden;
+}
+.showroom-tuner-avatar-fallback{
+  width:32px; height:32px;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--accent-deep), var(--brand-clay, #C07040));
+  color:#fff;
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:800; font-size:14px;
+}
+.showroom-tuner-2026 .showroom-tuner-dial{
+  position:relative;
+  width:256px; height:256px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(8px);
+  box-shadow:0 12px 32px rgba(0,0,0,0.4);
+  margin:0 auto;
+  display:flex; align-items:center; justify-content:center;
+}
+.showroom-tuner-2026 .showroom-tuner-tick{
+  position:absolute;
+  top:10px; left:50%;
+  width:4px; height:12px;
+  background:rgba(255,255,255,0.2);
+  transform-origin:center 118px;
+}
+.showroom-tuner-2026 .showroom-tuner-tick.center{
+  width:6px; height:16px;
+  background:var(--accent-deep);
+  border-radius:9999px;
+  box-shadow:0 0 20px rgba(255,123,58,0.4), 0 0 40px rgba(255,123,58,0.2);
+}
+.showroom-tuner-2026 .showroom-tuner-inner{
+  position:absolute;
+  inset:48px;
+  border-radius:50%;
+  background:var(--bg);
+  border:1px solid rgba(255,255,255,0.05);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.6);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px;
+}
+.showroom-tuner-2026 .showroom-tuner-note{
+  font-family:'Syne', var(--font-display, sans-serif);
+  font-weight:900; font-size:64px;
+  color:var(--accent-deep);
+  line-height:1;
+  text-shadow:0 0 12px rgba(255,123,58,0.6);
+}
+.showroom-tuner-2026 .showroom-tuner-status{
+  display:inline-flex; align-items:center; gap:4px;
+  margin-top:-4px;
+}
+.showroom-tuner-2026 .showroom-tuner-status.in-tune{ color:var(--success); }
+.showroom-tuner-2026 .showroom-tuner-status.in-tune .material-symbols-outlined{ color:var(--success); font-size:18px; }
+.showroom-tuner-2026 .showroom-tuner-status.flat{ color:var(--perform-coral, #FF6B6B); }
+.showroom-tuner-2026 .showroom-tuner-status.sharp{ color:var(--perform-cyan, #4ECDC4); }
+.showroom-tuner-2026 .showroom-tuner-status span:last-child{
+  font-family:'JetBrains Mono', var(--font-mono, monospace);
+  font-size:12px; font-weight:600;
+  letter-spacing:.03em;
+  color:var(--text-secondary);
+}
+.showroom-tuner-2026 .showroom-tuner-row{
+  display:flex; justify-content:space-between; align-items:center;
+  width:100%;
+  padding:0 16px;
+  margin-top:24px;
+}
+.showroom-tuner-2026 .showroom-tuner-cell-label{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:700; font-size:11px;
+  letter-spacing:.3px;
+  text-transform:uppercase;
+  color:var(--text-muted);
+}
+.showroom-tuner-2026 .showroom-tuner-freq-num{
+  font-family:'JetBrains Mono', var(--font-mono, monospace);
+  font-weight:700; font-size:17px;
+  color:var(--on-surface);
+}
+.showroom-tuner-2026 .showroom-tuner-freq-unit{
+  font-size:12px;
+  color:var(--text-muted);
+  margin-left:4px;
+}
+.showroom-tuner-2026 .showroom-tuner-tuning{
+  font-family:'JetBrains Mono', var(--font-mono, monospace);
+  font-weight:700; font-size:17px;
+  color:var(--on-surface);
+  letter-spacing:.05em;
+}
+.showroom-tuner-2026 .showroom-tuner-mic{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  padding:12px;
+  border-radius:12px;
+  cursor:pointer;
+  color:var(--accent-deep);
+  transition:background .15s ease;
+}
+.showroom-tuner-2026 .showroom-tuner-mic:hover{ background:rgba(255,255,255,0.1); }
+.showroom-tuner-2026 .showroom-tuner-metro{
+  background:rgba(30,27,23,0.4);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.25);
+}
+.showroom-tuner-2026 .showroom-tuner-metro-h{
+  font-family:'Syne', var(--font-display, sans-serif);
+  font-weight:800; font-size:20px;
+  color:var(--on-surface);
+  margin:0;
+}
+.showroom-tuner-2026 .showroom-tuner-metro-pulse{
+  display:flex; gap:8px;
+}
+.showroom-tuner-2026 .showroom-tuner-metro-pulse .dot{
+  width:12px; height:12px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.1);
+}
+.showroom-tuner-2026 .showroom-tuner-metro-pulse .dot.active{
+  background:var(--accent-deep);
+  box-shadow:0 0 20px rgba(255,123,58,0.4);
+}
+.showroom-tuner-2026 .showroom-tuner-bpm-num{
+  font-family:'JetBrains Mono', var(--font-mono, monospace);
+  font-weight:900; font-size:48px;
+  color:var(--accent-deep);
+  text-shadow:0 0 10px rgba(255,123,58,0.3);
+}
+.showroom-tuner-2026 .showroom-tuner-bpm-btn{
+  width:48px; height:48px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,0.1);
+  background:transparent;
+  color:var(--on-surface);
+  cursor:pointer;
+  transition:background .15s ease, transform .15s ease;
+}
+.showroom-tuner-2026 .showroom-tuner-bpm-btn:hover{ background:rgba(255,255,255,0.05); }
+.showroom-tuner-2026 .showroom-tuner-bpm-btn:active{ transform:scale(.9); }
+.showroom-tuner-2026 .showroom-tuner-bpm-unit{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:700; font-size:11px;
+  letter-spacing:.3px;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  text-align:center;
+  margin:-8px 0 16px;
+}
+.showroom-tuner-2026 .showroom-tuner-metro-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.showroom-tuner-2026 .showroom-tuner-start,
+.showroom-tuner-2026 .showroom-tuner-tap{
+  padding:12px;
+  border-radius:12px;
+  font-family:'Syne', var(--font-display, sans-serif);
+  font-weight:700; font-size:12px;
+  letter-spacing:.03em;
+  display:flex; align-items:center; justify-content:center;
+  gap:8px;
+  cursor:pointer;
+  transition:transform .12s ease, filter .12s ease;
+}
+.showroom-tuner-2026 .showroom-tuner-start{
+  background:var(--primary-container, var(--accent-deep));
+  color:var(--on-primary-container, #642300);
+  border:none;
+  box-shadow:0 4px 12px rgba(0,0,0,0.25);
+}
+.showroom-tuner-2026 .showroom-tuner-start:hover{ filter:brightness(1.1); }
+.showroom-tuner-2026 .showroom-tuner-start:active{ transform:scale(.95); }
+.showroom-tuner-2026 .showroom-tuner-tap{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  color:var(--on-surface);
+}
+.showroom-tuner-2026 .showroom-tuner-tap:hover{ background:rgba(255,255,255,0.1); }
+.showroom-tuner-2026 .showroom-tuner-tap:active{ transform:scale(.95); }
+.showroom-tuner-2026 .showroom-quicktools-head h3{
+  font-family:'Syne', var(--font-display, sans-serif);
+  font-weight:800; font-size:20px;
+  color:var(--on-surface);
+  margin:0;
+}
+.showroom-tuner-2026 .showroom-quicktools-head .link{
+  color:var(--accent-deep);
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-size:12px; font-weight:700;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+}
+.showroom-tuner-2026 .showroom-quicktools{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:12px;
+}
+.showroom-tuner-2026 .showroom-quicktool{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:16px;
+  background:rgba(30,27,23,0.6);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:16px;
+  cursor:pointer;
+  transition:background .15s ease, transform .15s ease;
+}
+.showroom-tuner-2026 .showroom-quicktool:hover{ background:rgba(255,255,255,0.05); }
+.showroom-tuner-2026 .showroom-quicktool:active{ transform:scale(.95); }
+.showroom-tuner-2026 .showroom-quicktool-icon{
+  width:48px; height:48px;
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:8px;
+  transition:background .15s ease;
+}
+.showroom-tuner-2026 .showroom-quicktool.recorder .showroom-quicktool-icon{
+  background:rgba(196,80,64,0.1);
+  border:1px solid rgba(196,80,64,0.2);
+  color:var(--danger);
+}
+.showroom-tuner-2026 .showroom-quicktool.recorder:hover .showroom-quicktool-icon{ background:rgba(196,80,64,0.2); }
+.showroom-tuner-2026 .showroom-quicktool.tonegen .showroom-quicktool-icon{
+  background:rgba(81,214,248,0.1);
+  border:1px solid rgba(81,214,248,0.2);
+  color:var(--tertiary, #51d6f8);
+}
+.showroom-tuner-2026 .showroom-quicktool.tonegen:hover .showroom-quicktool-icon{ background:rgba(81,214,248,0.2); }
+.showroom-tuner-2026 .showroom-quicktool.chords .showroom-quicktool-icon{
+  background:rgba(200,144,64,0.1);
+  border:1px solid rgba(200,144,64,0.2);
+  color:var(--warning, #C89040);
+}
+.showroom-tuner-2026 .showroom-quicktool.chords:hover .showroom-quicktool-icon{ background:rgba(200,144,64,0.2); }
+.showroom-tuner-2026 .showroom-quicktool-label{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:700; font-size:10px;
+  letter-spacing:.3px;
+  text-transform:uppercase;
+  color:var(--text-secondary);
+}

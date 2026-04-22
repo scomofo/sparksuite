@@ -1123,12 +1123,12 @@
       { id:"profile", label:"Profile", icon:"person",     onClick: nav("profile") }
     ];
 
-    return '<div class="showroom-root with-bg">'
+    return '<div class="showroom-root with-bg showroom-tuner-2026">'
          + '<header class="showroom-tuner-bar">'
            + '<button class="showroom-iconbtn accent" aria-label="Menu" onclick="' + backToHome() + '"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
            + '<h1 class="showroom-tuner-brand">SparkSuite</h1>'
-           + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
-             + '<span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">A</span>'
+           + '<button class="showroom-iconbtn showroom-tuner-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
+             + '<span class="showroom-tuner-avatar-fallback">A</span>'
            + '</button>'
          + '</header>'
          + '<div class="showroom-canvas" style="padding-top:0;align-items:center">'
