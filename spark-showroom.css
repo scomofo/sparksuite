@@ -22,10 +22,88 @@
   --ember-glow: rgba(255,123,58,.2);
   --showroom-max:480px;
   --showroom-pad:14px;
+
+  /* Warm Ember — brand accents (extends --accent in styles.css) */
   --brand-clay: #C07040;
   --brand-peach: #E8A87A;
+  --accent-light: #FFAA6A;
   --accent-deep: #FF6030;
-  --surface-container-lowest: #160c07;
+
+  /* Material-style surface hierarchy — Warm Ember palette.
+     Used by the 2026-04 Stitch screens. The base app uses flat --bg /
+     --card-bg from styles.css; these layers give the Showroom screens
+     a richer surface-depth vocabulary (container-low for sunken card
+     bodies, container-highest for track-style inputs, etc.). */
+  --surface:                    #1c110c;
+  --surface-dim:                #1c110c;
+  --surface-bright:             #443630;
+  --surface-container-lowest:   #160c07;
+  --surface-container-low:      #251914;
+  --surface-container:          #291d18;
+  --surface-container-high:     #342722;
+  --surface-container-highest:  #40322c;
+  --surface-variant:            #40322c;
+  --surface-tint:               #ffb596;
+  --on-surface:                 #f5ded5;
+  --on-surface-variant:         #dfc0b4;
+  --inverse-surface:            #f5ded5;
+  --inverse-on-surface:         #3b2d28;
+  --background:                 #1c110c;
+  --on-background:              #f5ded5;
+
+  /* Outline */
+  --outline:         #a78b80;
+  --outline-variant: #584239;
+
+  /* Primary scale */
+  --primary:                     #ffb596;
+  --on-primary:                  #581e00;
+  --primary-container:           #ff7b3a;
+  --on-primary-container:        #642300;
+  --inverse-primary:             #a33e00;
+  --primary-fixed:               #ffdbcd;
+  --primary-fixed-dim:           #ffb596;
+  --on-primary-fixed:            #360f00;
+  --on-primary-fixed-variant:    #7c2e00;
+
+  /* Secondary scale */
+  --secondary:                   #ffb691;
+  --on-secondary:                #552000;
+  --secondary-container:         #753814;
+  --on-secondary-container:      #faa477;
+  --secondary-fixed:             #ffdbcb;
+  --secondary-fixed-dim:         #ffb691;
+  --on-secondary-fixed:          #341100;
+  --on-secondary-fixed-variant:  #723612;
+
+  /* Tertiary (cyan) scale */
+  --tertiary:                    #51d6f8;
+  --on-tertiary:                 #003641;
+  --tertiary-container:          #00b0d1;
+  --on-tertiary-container:       #003e4b;
+  --tertiary-fixed:              #b0ecff;
+  --tertiary-fixed-dim:          #51d6f8;
+  --on-tertiary-fixed:           #001f27;
+  --on-tertiary-fixed-variant:   #004e5e;
+
+  /* Error scale */
+  --error:              #ffb4ab;
+  --on-error:           #690005;
+  --error-container:    #93000a;
+  --on-error-container: #ffdad6;
+
+  /* Per-instrument identity — referenced by launcher card dots,
+     rhythm-highway skins, and the Stitch screen backgrounds. */
+  --guitar-neon:     #FF2D55;
+  --bass-violet:     #7C3AED;
+  --piano-midnight:  #0EA5E9;
+  --ukulele-teal:    #14B8A6;
+
+  /* Performance-mode palette — isolated from the rest of the app on
+     purpose; signals "you are inside the rhythm game." */
+  --perform-cyan:    #4ECDC4;
+  --perform-coral:   #FF6B6B;
+  --perform-yellow:  #FFE66D;
 }
 
 .showroom-root{
