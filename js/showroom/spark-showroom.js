@@ -872,26 +872,35 @@
     var lessons = opts.lessons || [
       { tier:"Beginner",     title:"Chord Basics",      desc:"Master the fundamental G and C major shapes.", time:"8 MIN",  icon:"music_note", instrument:"guitar",  unlocked:true,  cta:"Continue" },
       { tier:"Intermediate", title:"Strumming Patterns",desc:"Unlock the \"Island Strum\" for versatile rhythms.", time:"12 MIN", icon:"waves",     instrument:"ukulele", unlocked:false, cta:"Locked" },
-      { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true }
+      { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true, thumbSrc:"https://lh3.googleusercontent.com/aida-public/AB6AXuA0Hh82rrHEyzzq2Vgf9VvjmHqhR1dK53Rr0Gd0e_JNdItqAjn6ZMk0s1y_O8MgvAZLnYirETpAWeh79dcwysMizIqcSeXVZlly32bsiF2BFKFId8P2pHIsPtSXjrwNvlsnZf_Ce3LWemEJooQjN0YrlLXkBB68y2WiZnF9wc_AZPHWwyo-w8ZZ_-k2CTXYr5_ztOP2qq87L2r00p9AA8h9ZBwkh5u62EL31APi3lR1Jg8idVqhQiKq0Ob35xQ-k4Y_EAqtJ3qD5nk" }
     ];
 
     var goalPct = Math.min(100, Math.round((dailyMin / dailyGoal) * 100));
-    var ringR = 32;
+    var ringR = 34;
     var ringC = 2 * Math.PI * ringR;
     var ringOffset = ringC * (1 - goalPct / 100);
 
     var lessonsHtml = "";
     for (var i = 0; i < lessons.length; i++) {
       var ls = lessons[i];
-      lessonsHtml += '<div class="showroom-path-card ' + escHtml(ls.instrument) + '">'
-                  + '<div class="showroom-path-icon"><span class="material-symbols-outlined">' + ls.icon + '</span></div>'
-                  + '<span class="showroom-path-tier">' + escHtml(ls.tier) + '</span>'
+      var isStaggered = (i % 2 === 1);
+      lessonsHtml += '<div class="showroom-path-card ' + escHtml(ls.instrument) + (isStaggered ? ' stagger-right' : '') + '">'
+                  + '<div style="display:flex;justify-content:space-between;align-items:flex-start;grid-column:1/-1">'
+                    + '<div class="showroom-path-icon"><span class="material-symbols-outlined">' + ls.icon + '</span></div>'
+                    + '<span class="showroom-path-tier">' + escHtml(ls.tier) + '</span>'
+                  + '</div>'
                   + '<div class="showroom-path-body">'
                     + '<h4 class="showroom-path-title-text">' + escHtml(ls.title) + '</h4>'
                     + '<p class="showroom-path-desc">' + escHtml(ls.desc) + '</p>'
                   + '</div>';
       if (ls.thumb) {
-        lessonsHtml += '<div style="grid-column:1/-1"><div class="showroom-path-thumb" style="margin:4px 0">\uD83C\uDFBC</div></div>';
+        // When thumbSrc is set, render the <img> with an onerror fallback
+        // that swaps in the emoji glyph — this way the tile still renders
+        // offline or when the remote host is blocked by CSP / network.
+        // Otherwise fall straight through to the emoji so the tile never
+        // leaves the user staring at a broken-image icon.
+        var thumbInner = ls.thumbSrc ? '<img src="' + escHtml(ls.thumbSrc) + '" alt="" onerror="this.onerror=null;this.outerHTML=\'\\uD83C\\uDFBC\'">' : '\uD83C\uDFBC';
+        lessonsHtml += '<div class="showroom-path-thumb">' + thumbInner + '</div>';
       }
       lessonsHtml += '<div class="showroom-path-foot">'
                   + '<span class="showroom-path-time"><span class="material-symbols-outlined">timer</span>' + escHtml(ls.time) + '</span>'
@@ -909,36 +918,50 @@
       { id:"profile",     label:"Profile",     icon:"person",      onClick: nav("profile") }
     ];
 
+    var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
+    var avatarHtml = avatarSrc
+      ? '<img src="' + escHtml(avatarSrc) + '" alt="Profile" style="width:100%;height:100%;object-fit:cover">'
+      : '<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;font-weight:800;font-size:14px">' + (profile && profile.displayName ? profile.displayName.charAt(0).toUpperCase() : 'A') + '</span>';
+
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-path-bar">'
-           + '<button class="showroom-iconbtn" aria-label="Profile" onclick="' + nav("profile") + '">'
-             + '<span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">A</span>'
+           // Semantic button — the previous <div onclick> was not focusable
+           // by keyboard and exposed no button role to assistive tech.
+           // Transparent background + `padding:0` keeps the visual treatment
+           // (circular avatar with accent border) identical to the previous
+           // div while restoring keyboard/Tab + Enter/Space activation and
+           // screen-reader semantics.
+           + '<button type="button" aria-label="Profile" style="width:32px;height:32px;border-radius:50%;overflow:hidden;border:1px solid rgba(255,123,58,0.3);cursor:pointer;padding:0;background:transparent" onclick="' + nav("profile") + '">'
+             + avatarHtml
            + '</button>'
            + '<h1 class="showroom-path-title">Your Path</h1>'
-           + '<div class="showroom-path-streak">' + streak + ' \uD83D\uDD25</div>'
+           + '<div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.05);padding:4px 12px;border-radius:9999px">'
+             + '<span style="color:#ff7b3a;font-weight:900;font-size:14px">' + streak + ' \uD83D\uDD25</span>'
+           + '</div>'
          + '</header>'
          + '<div class="showroom-canvas" style="padding-top:0">'
            + '<div class="showroom-daily-goal">'
+             + '<div style="position:absolute;top:-40px;right:-40px;width:128px;height:128px;background:rgba(255,123,58,0.1);border-radius:50%;filter:blur(32px)"></div>'
              + '<div class="showroom-daily-goal-left">'
-               + '<span class="showroom-daily-goal-label">Daily Goal</span>'
+               + '<span class="showroom-daily-goal-label">DAILY GOAL</span>'
                + '<div class="showroom-daily-goal-row"><span class="showroom-daily-goal-num">' + dailyMin + '</span><span class="showroom-daily-goal-of">/ ' + dailyGoal + 'm</span></div>'
                + '<div class="showroom-daily-goal-pills">'
-                 + '<span class="showroom-goal-pill lvl"><span class="material-symbols-outlined fill" style="font-size:14px">star</span>LEVEL ' + level + '</span>'
-                 + '<span class="showroom-goal-pill acc"><span class="material-symbols-outlined" style="font-size:14px">trending_up</span>' + accuracy + '% ACCURACY</span>'
+                 + '<div class="showroom-goal-pill lvl"><span class="material-symbols-outlined fill" style="font-size:16px">star</span>LEVEL ' + level + '</div>'
+                 + '<div class="showroom-goal-pill acc"><span class="material-symbols-outlined" style="font-size:16px">trending_up</span>' + accuracy + '% ACCURACY</div>'
                + '</div>'
              + '</div>'
              + '<div class="showroom-goal-ring">'
-               + '<svg viewBox="0 0 80 80">'
-                 + '<circle cx="40" cy="40" r="' + ringR + '" fill="none" stroke="#3A3228" stroke-width="6"/>'
-                 + '<circle cx="40" cy="40" r="' + ringR + '" fill="none" stroke="#ff7b3a" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + ringC.toFixed(1) + '" stroke-dashoffset="' + ringOffset.toFixed(1) + '" style="filter:drop-shadow(0 0 8px rgba(255,123,58,.6))"/>'
+               + '<svg viewBox="0 0 80 80" style="width:100%;height:100%;transform:rotate(-90deg)">'
+                 + '<circle cx="40" cy="40" r="' + ringR + '" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6"/>'
+                 + '<circle cx="40" cy="40" r="' + ringR + '" fill="none" stroke="#ff7b3a" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + ringC.toFixed(1) + '" stroke-dashoffset="' + ringOffset.toFixed(1) + '" style="filter:drop-shadow(0 0 6px rgba(255,123,58,0.6))"/>'
                + '</svg>'
                + '<div class="bolt"><span class="material-symbols-outlined fill">bolt</span></div>'
              + '</div>'
            + '</div>'
-           + '<div class="showroom-path-section-head"><h3>Continue Learning</h3><span class="link">View All</span></div>'
-           + lessonsHtml
+           + '<div class="showroom-path-section-head"><h3>Continue Learning</h3><span class="link">VIEW ALL</span></div>'
+           + '<div style="display:flex;flex-direction:column;gap:8px">' + lessonsHtml + '</div>'
          + '</div>'
-         + '<button class="showroom-path-fab" aria-label="Start practice" onclick="' + nav("practice") + '"><span class="material-symbols-outlined" aria-hidden="true">timer</span></button>'
+         + '<button class="showroom-path-fab" aria-label="Start practice" onclick="' + nav("practice") + '"><span class="material-symbols-outlined" aria-hidden="true" style="font-size:28px">timer</span></button>'
          + bottomNav(navItems, "path")
          + '</div>';
   }
