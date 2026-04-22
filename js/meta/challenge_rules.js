@@ -1,5 +1,28 @@
 (function(){
 
+  function inferChallengeInstrumentFromName(name) {
+    var value = String(name || "").toLowerCase();
+    if (value.indexOf("piano") >= 0) return "piano";
+    if (value.indexOf("ukulele") >= 0 || value.indexOf("uke") >= 0) return "ukulele";
+    if (value.indexOf("bass") >= 0) return "bass";
+    if (value.indexOf("drum") >= 0) return "drums";
+    return "guitar";
+  }
+
+  function rehydrateChallengeInstrument(active) {
+    if (!active) return null;
+    var key = active.id || active.appId || active.instrumentId || active.instrument || null;
+    if (!key || typeof SparkInstruments === "undefined" || typeof SparkInstruments.getAll !== "function") {
+      return active;
+    }
+    var entries = SparkInstruments.getAll() || [];
+    for (var i = 0; i < entries.length; i++) {
+      var entry = entries[i] || {};
+      if (entry.id === key || entry.appId === key || entry.instrument === key) return entry;
+    }
+    return active;
+  }
+
   function buildDefaultDailyChallenges(appType){
     appType = appType || inferChallengeAppType();
     return [
@@ -83,7 +106,13 @@
   }
 
   function inferChallengeAppType(){
-    return /piano/i.test(typeof APP_NAME !== "undefined" ? APP_NAME : "") ? "piano" : "guitar";
+    if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
+      var active = rehydrateChallengeInstrument(SparkInstruments.getActive());
+      if (active && (active.instrument || active.instrumentType)) {
+        return active.instrument || active.instrumentType;
+      }
+    }
+    return inferChallengeInstrumentFromName(typeof APP_NAME !== "undefined" ? APP_NAME : "");
   }
 
   window.buildDefaultDailyChallenges = buildDefaultDailyChallenges;

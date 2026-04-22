@@ -25,13 +25,22 @@ function loadJS(file) {
 function resetState() {
   global.window = global;
   global.S = { guidedSession: 1 };
-  global.TAB = { PRACTICE: "practice" };
+  global.TAB = { PRACTICE: "practice", SONGS: "songs" };
   global._acts = [];
   global.act = function(name, value) {
     global._acts.push({ name: name, value: value });
   };
+  global._openPerformanceSongSelectionCalls = [];
+  global.openPerformanceSongSelectionRequest = function(options) {
+    global._openPerformanceSongSelectionCalls.push(options || {});
+    return { opened: true };
+  };
   global.SparkInstrumentAdapter = {
     getInstrumentType: function() { return "guitar"; }
+  };
+  global.SparkInstruments = {
+    getActive: function() { return null; },
+    getAll: function() { return []; }
   };
 }
 
@@ -85,6 +94,101 @@ test("launchPracticeItem routes authored bass module exercises through explicit 
     exerciseFocus: "walking_bass",
     exerciseType: "bassline"
   });
+});
+
+test("launchGuidedSessionItem rehydrates a thin active piano shell before choosing the launch path", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
+    }
+  };
+
+  var launched = launchGuidedSessionItem({
+    meta: { guidedSession: 3 }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "tab", value: "practice" },
+    { name: "start_guided_session", value: 3 }
+  ]);
+});
+
+test("launchPracticeItem infers performance song launches from generic core song segments", function() {
+  var launched = launchPracticeItem({
+    id: "performance_song_river_walk",
+    type: "song",
+    meta: {
+      songId: "river_walk",
+      arrangementType: "chords",
+      difficultyId: "normal"
+    }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "planStartPerformanceSong", value: "river_walk|chords|normal" }
+  ]);
+});
+
+test("launchPracticeItem infers guided launches from generic core practice segments", function() {
+  var launched = launchPracticeItem({
+    id: "guided_session_2",
+    type: "practice",
+    meta: {
+      guidedSession: 2
+    }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "guidedStart", value: 2 }
+  ]);
+});
+
+test("launchPracticeItem routes chord practice items into a specific chord session", function() {
+  var launched = launchPracticeItem({
+    id: "chord_g",
+    type: "chord_practice",
+    chord: "G"
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "startSession", value: "G" }
+  ]);
+});
+
+test("launchPracticeItem routes explore items into the performance song browser", function() {
+  var launched = launchPracticeItem({
+    id: "explore_1",
+    type: "explore"
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._openPerformanceSongSelectionCalls, [{}]);
+  assert.deepStrictEqual(global._acts, []);
+});
+
+test("launchPracticeItem falls back to the songs tab when the performance browser request is unavailable", function() {
+  global.openPerformanceSongSelectionRequest = function(options) {
+    global._openPerformanceSongSelectionCalls.push(options || {});
+    return null;
+  };
+
+  var launched = launchPracticeItem({
+    id: "explore_legacy",
+    type: "explore"
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._openPerformanceSongSelectionCalls, [{}]);
+  assert.deepStrictEqual(global._acts, [
+    { name: "tab", value: "songs" }
+  ]);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

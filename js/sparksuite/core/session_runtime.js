@@ -106,18 +106,41 @@
 
   // --- Internal launchers (delegate to existing functions) ---
 
+  function _normalizeInstrumentType(instrument) {
+    var all;
+    var i;
+    var entry;
+    if (!instrument) return null;
+    if (instrument === "guitar" || instrument === "bass" || instrument === "piano" || instrument === "ukulele" || instrument === "drums") {
+      return instrument;
+    }
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+      all = SparkInstruments.getAll() || [];
+      for (i = 0; i < all.length; i++) {
+        entry = all[i] || {};
+        if (entry.id === instrument || entry.appId === instrument || entry.instrumentId === instrument) {
+          return entry.instrument || entry.instrumentType || instrument;
+        }
+      }
+    }
+    return instrument;
+  }
+
   function _launchPractice(segment, exercise) {
     var payload = null;
+    var core = exercise && exercise.data && exercise.data.core ? exercise.data.core : {};
     if (exercise && exercise.data && exercise.data.gameplay && exercise.data.gameplay.payload) {
       payload = exercise.data.gameplay.payload;
     }
 
     // Try playable rhythm highway for practice drills
     if (payload && typeof startPlayableRhythmHighwayPayload === "function") {
+      var instrument = _normalizeInstrumentType(core.instrument || (payload && payload.adapterType)) || "guitar";
       return startPlayableRhythmHighwayPayload(payload, {
         source: "session_runtime",
         label: (exercise && exercise.data && exercise.data.core && exercise.data.core.skill) || "Practice",
-        segmentId: segment.id
+        segmentId: segment.id,
+        instrument: instrument
       });
     }
 

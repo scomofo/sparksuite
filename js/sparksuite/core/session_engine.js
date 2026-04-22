@@ -5,8 +5,28 @@
     var exId = raw.id || _nid();
     var segType = (typeof SparkSessionSegmentTypes !== "undefined" && SparkSessionSegmentTypes.normalize)
       ? SparkSessionSegmentTypes.normalize(raw.type) : (raw.type || "practice");
+    var segment = (typeof SparkSessionSegment !== "undefined" && SparkSessionSegment.create)
+      ? SparkSessionSegment.create({
+        id: raw.id || ("seg_" + exId),
+        type: segType,
+        label: raw.label,
+        desc: raw.desc || raw.description || "",
+        durationSec: raw.durationSec || 60,
+        completed: !!raw.completed,
+        meta: raw.meta || {}
+      })
+      : {
+        id: raw.id || ("seg_" + exId),
+        type: segType,
+        label: raw.label || segType,
+        desc: raw.desc || raw.description || "",
+        durationSec: raw.durationSec || 60,
+        completed: !!raw.completed,
+        meta: raw.meta || {}
+      };
+    segment.exerciseIds = [exId];
     return {
-      segment: { id: raw.id || ("seg_" + exId), type: segType, exerciseIds: [exId] },
+      segment: segment,
       exercise: { id: exId, type: segType, difficulty: raw.difficulty || "normal",
         data: { core: { skill: (raw.meta && raw.meta.skill) || null, chords: (raw.meta && raw.meta.chords) || (raw.meta && raw.meta.chordNames) || (raw.meta && raw.meta.chordName ? [raw.meta.chordName] : null), pattern: (raw.meta && raw.meta.pattern) || null, instrument: (raw.meta && raw.meta.instrument) || null, durationSec: raw.durationSec || 60, sessionNum: (raw.meta && raw.meta.guidedSession) || null, songId: (raw.meta && raw.meta.songId) || null, arrangementType: (raw.meta && raw.meta.arrangementType) || null, difficultyId: (raw.meta && raw.meta.difficultyId) || null, mode: (raw.meta && raw.meta.mode) || null },
           gameplay: { payload: (raw.meta && raw.meta.gameplayPayload) || null, preset: (raw.meta && raw.meta.enginePreset) || null, chartId: (raw.meta && raw.meta.chartId) || null } } }
@@ -253,8 +273,8 @@
     context = context || {};
     var trackId = context.trackId;
     var difficulty = context.difficulty || "easy";
-    var instrument = context.instrument || "guitar";
     var instrumentContext = context.instrumentContext || {};
+    var instrument = context.instrument || instrumentContext.instrumentType || "guitar";
 
     if (!trackId) return Promise.resolve(this.buildEmptySession("spotify_play_along", context));
 

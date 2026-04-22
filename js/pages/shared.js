@@ -1,5 +1,27 @@
 // ===== ChordSpark: Shared rendering helpers =====
 
+function getSharedPageInstrument(){
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 function getLegacyChordDetectRuntime(){
   var runtime = null;
   if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
@@ -12,6 +34,20 @@ function getLegacyChordDetectRuntime(){
     match: typeof S.chordMatch === "number" ? S.chordMatch : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
     error: S.chordDetectErr || (runtime && runtime.chordDetectError) || ""
   };
+}
+
+function normalizeSharedNumber(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  return numeric;
+}
+
+function formatSharedBpm(value, fallback) {
+  var bpm = normalizeSharedNumber(value, null);
+  if (bpm == null) return fallback;
+  bpm = Math.round(bpm);
+  if (bpm <= 0) return fallback;
+  return String(bpm);
 }
 
 // Build chord check inner HTML (shared by sessionPage and updateChordCheckUI)
@@ -58,7 +94,8 @@ function updateChordCheckUI(){
 
 // Targeted tuner UI update (avoids full DOM rebuild at ~30fps)
 function updateTunerUI(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getSharedPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var noteEl=document.getElementById("tuner-note-display");
   var freqEl=document.getElementById("tuner-freq-display");
   var needleEl=document.getElementById("tuner-needle");
@@ -109,7 +146,7 @@ function updateDrillTimerUI(){
   if(!timerEl)return false;
   if(timerEl)timerEl.innerHTML=ringHTML((1-S.drillTimer/60)*100,70,6,"#FF6B6B",'<div style="font-size:18px;font-weight:900;color:var(--text-primary)">'+S.drillTimer+'s</div>',"Drill timer");
   if(switchEl)switchEl.textContent=S.drillSwitches;
-  if(bpmEl)bpmEl.textContent=S.drillAdaptiveBpm;
+  if(bpmEl)bpmEl.textContent=formatSharedBpm(S.drillAdaptiveBpm, "0");
   return true;
 }
 
@@ -161,7 +198,7 @@ function fingerExerciseCard(){
 
   // Exercise list by tier
   var tiers=[
-    {num:1,label:"Off-Instrument",icon:"&#128400;",note:"No guitar needed \u2014 do anywhere!"},
+    {num:1,label:"Off-Instrument",icon:"&#128400;",note:"No instrument needed \u2014 do anywhere!"},
     {num:2,label:"On-Instrument",icon:"&#127928;",note:"Single-string warm-ups"},
     {num:3,label:"Chord-Specific",icon:"&#9889;",note:"Transition speed builders"}
   ];
@@ -183,7 +220,7 @@ function fingerExerciseCard(){
       if(done>0)h+=' <span style="font-size:10px;color:#4ECDC4">&#9989; '+done+'x</span>';
       h+='</div>';
       h+='<div style="font-size:11px;color:var(--text-muted)">'+m+':'+(s<10?'0':'')+s+' &bull; '+escHTML(ex.frequency);
-      if(ex.offInstrument)h+=' &bull; <span style="color:#FFE66D">no guitar</span>';
+      if(ex.offInstrument)h+=' &bull; <span style="color:#FFE66D">no instrument</span>';
       h+='</div></div>';
       h+='<button onclick="act(\'startFingerEx\',\''+ex.id+'\')" style="padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Go</button>';
       h+='</div>';
@@ -218,7 +255,7 @@ function strumTrackCard(){
   h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
   h+='<div style="flex:1">';
   h+='<div style="font-size:14px;font-weight:700;color:#4ECDC4;margin-bottom:2px">'+sp.name+'</div>';
-  h+='<div style="font-size:12px;color:var(--text-muted)">'+sp.desc+' &bull; '+sp.bpm+' BPM</div>';
+  h+='<div style="font-size:12px;color:var(--text-muted)">'+sp.desc+' &bull; '+formatSharedBpm(sp.bpm, "--")+' BPM</div>';
   h+='</div>';
   h+='<button onclick="act(\'tab\',\'strum\')" style="padding:8px 14px;border-radius:12px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">Practice</button>';
   h+='</div>';

@@ -7,6 +7,14 @@ function test(name, fn) {
 
 global.window = {};
 global.SparkEventLogger = { log: function() {} };
+global.SparkInstruments = {
+  getAll: function() {
+    return [
+      { id: "pianospark", appId: "pianospark", instrument: "piano" },
+      { id: "ukespark", appId: "ukespark", instrument: "ukulele" }
+    ];
+  }
+};
 
 require("../js/sparksuite/core/execution_gateway.js");
 var GW = window.SparkExecutionGateway;
@@ -51,6 +59,26 @@ test("runDirectExercise calls startPerformance for songs", function() {
   GW.runDirectExercise("chart_id", { source: "retry" });
   assert.ok(called, "should call startPerformance");
   delete global.startPerformance;
+});
+
+test("runDirectExercise normalizes app-id instruments for practice payload launches", function() {
+  var captured = null;
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+    return true;
+  };
+
+  var launched = GW.runDirectExercise({
+    type: "practice",
+    gameplayPayload: { adapterType: "pianospark" },
+    instrument: "pianospark"
+  }, { source: "test" });
+
+  assert.strictEqual(launched, true);
+  assert.ok(captured);
+  assert.strictEqual(captured.options.instrument, "piano");
+
+  delete global.startPlayableRhythmHighwayPayload;
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");

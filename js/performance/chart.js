@@ -25,6 +25,21 @@ var PERFORMANCE_CHART_LIBRARY_FALLBACK = [
   }
 ];
 
+function normalizePerformanceInstrument(instrument) {
+  var candidate = instrument || null;
+  if (!candidate) return null;
+  if (window.SparkInstruments && typeof SparkInstruments.getAll === "function") {
+    var all = SparkInstruments.getAll() || [];
+    for (var i = 0; i < all.length; i++) {
+      var entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) {
+        return entry.instrument || entry.instrumentType || candidate;
+      }
+    }
+  }
+  return candidate;
+}
+
 function loadPerformanceChart(chartId) {
   return fetch("data/performance_charts/" + chartId + ".json")
     .then(function(r) {
@@ -47,8 +62,9 @@ function getPerformanceChartLibrary(options) {
   options = options || {};
   var charts = getPerformanceChartManifest();
   if (options.instrument) {
+    var requestedInstrument = normalizePerformanceInstrument(options.instrument);
     charts = charts.filter(function(chart) {
-      return !chart.instrument || chart.instrument === options.instrument;
+      return !chart.instrument || chart.instrument === requestedInstrument;
     });
   }
   return charts;
@@ -89,10 +105,12 @@ function importPerformanceChartPackage(chartDefinition) {
 }
 
 function getPerformanceImportAdapter(chartDefinition) {
+  var adapterType = normalizePerformanceInstrument(chartDefinition && chartDefinition.adapterType);
+  var instrumentType = normalizePerformanceInstrument(chartDefinition && chartDefinition.instrument);
   if (chartDefinition && chartDefinition.adapter && typeof chartDefinition.adapter.getLaneCount === "function") {
     return chartDefinition.adapter;
   }
-  if (chartDefinition && (chartDefinition.adapterType === "bass" || chartDefinition.instrument === "bass")) {
+  if (chartDefinition && (adapterType === "bass" || instrumentType === "bass")) {
     if (typeof SparkBassRhythmAdapter === "function") return new SparkBassRhythmAdapter();
     if (window.SparkBassModule && typeof window.SparkBassModule.getRhythmAdapter === "function") {
       return window.SparkBassModule.getRhythmAdapter();
@@ -101,7 +119,7 @@ function getPerformanceImportAdapter(chartDefinition) {
       getLaneCount: function() { return 4; }
     };
   }
-  if (chartDefinition && (chartDefinition.adapterType === "ukulele" || chartDefinition.instrument === "ukulele")) {
+  if (chartDefinition && (adapterType === "ukulele" || instrumentType === "ukulele")) {
     if (typeof SparkUkuleleRhythmAdapter === "function") return new SparkUkuleleRhythmAdapter();
     if (window.SparkUkuleleModule && typeof window.SparkUkuleleModule.getRhythmAdapter === "function") {
       return window.SparkUkuleleModule.getRhythmAdapter();

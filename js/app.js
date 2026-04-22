@@ -1,4 +1,15 @@
 // ===== TIMERS =====
+function normalizeAppTextInputValue(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return value;
+}
+
 function tickS(){
   if(S.timerActive&&S.timer>0){
     S.timer--;
@@ -71,6 +82,7 @@ function tickD(){
   } else if(S.screen===SCR.DRILL&&S.drillTimer<=0){
     clearTimeout(T.drill);snd("complete");
     var detail=S.drillChords.map(function(c){return c.name;}).join(" / ");
+    var activityInstrument = getActiveInstrumentIdentityForActivity();
     if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function"){
       window.sparkCore.completeLegacyPracticeDrill({
         durationSec: 60,
@@ -83,13 +95,13 @@ function tickD(){
         toastAmount:20,
         incrementFields:{drillCount:1},
         history:{type:"drill",detail:detail,xp:20},
-        emit:{type:"practice_session_completed",payload:{ appId: "chordspark", type: "drill", xp: 20, detail: detail }},
+        emit:{type:"practice_session_completed",payload:{ appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail }},
         checkBadges:true
       });
     }else{
       S.drillCount++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:20,toastAmount:20});else{S.xp+=20;S.xpToast={amount:20,time:Date.now()};}
       logHistory("drill",detail,20);
-      _sparkEmit("practice_session_completed", { appId: "chordspark", type: "drill", xp: 20, detail: detail });
+      _sparkEmit("practice_session_completed", { appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail });
       checkBadges();saveState();
     }
     // Route through contract-based progress path (Phase 6 migration)
@@ -763,6 +775,40 @@ function getInstrumentModuleForLaunch(instrumentId) {
   return instrumentId ? (map[instrumentId] || null) : null;
 }
 
+function getActiveInstrumentIdentityForActivity() {
+  var active;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
+    active = SparkInstruments.getActive();
+    if (active) {
+      if (!active.instrument && !active.instrumentType) {
+        candidate = active.id || active.appId || active.instrumentId || null;
+        if (candidate && typeof SparkInstruments.getAll === "function") {
+          all = SparkInstruments.getAll() || [];
+          for (i = 0; i < all.length; i++) {
+            entry = all[i] || {};
+            if (entry.id === candidate || entry.appId === candidate) {
+              active = entry;
+              break;
+            }
+          }
+        }
+      }
+      return {
+        appId: active.id || active.appId || active.instrumentId || "chordspark",
+        instrumentType: active.instrument || active.instrumentType || null
+      };
+    }
+  }
+  return {
+    appId: "chordspark",
+    instrumentType: null
+  };
+}
+
 function buildModuleExerciseRhythmPayload(options) {
   options = options || {};
   var module = getInstrumentModuleForLaunch(options.instrument);
@@ -1402,10 +1448,11 @@ function completeGuidedSessionRequest(options) {
   }
   // Route through contract-based progress path (Phase 6 migration)
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
     var guidedResult = SparkContracts.createSessionResult({
       mode: "guided",
-      instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
-      instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+      instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,
+      instrumentType: guidedActiveInstrument ? guidedActiveInstrument.instrument : null,
       duration: 300,
       accuracy: 0.75,
       completed: true
@@ -1725,18 +1772,19 @@ window.act=function(a,v){
       S.songPlaying=false;clearInterval(T.song);
     }
     snd("complete");
+    var songActivityInstrument = getActiveInstrumentIdentityForActivity();
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:40,
         incrementFields:{songsPlayed:1},
         history:{type:"song",detail:S.selectedSong?S.selectedSong.title:"Song",xp:40},
-        emit:{type:"lesson_completed",payload:{ appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 }},
+        emit:{type:"lesson_completed",payload:{ appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 }},
         checkBadges:true
       });
     }else{
       S.songsPlayed++;if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:40});else S.xp+=40;
       logHistory("song",S.selectedSong?S.selectedSong.title:"Song",40);
-      _sparkEmit("lesson_completed", { appId: "chordspark", lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
+      _sparkEmit("lesson_completed", { appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
       checkBadges();saveState();
     }
     completeSongSessionRequest({
@@ -3691,13 +3739,47 @@ function render(){
     document.getElementById("app").innerHTML='<div class="card" style="margin:20px;text-align:center"><h2>Something went wrong</h2><p style="color:var(--text-muted);margin:8px 0">'+escHTML(String(e.message||e))+'</p><button class="btn" onclick="location.reload()" style="background:#FF6B6B;color:#fff;margin-top:12px">Reload</button></div>';
   }
 }
+function _writeAppHtml(html){
+  var el = document.getElementById("app");
+  if (el) el.innerHTML = html;
+}
 function _renderInner(){
   var app=document.getElementById("app");
 
   // Launcher gate — if no instrument active, show clean launcher
   if (!S.activeInstrument) {
     document.getElementById("header").style.display = "none";
-    app.innerHTML = SparkInstruments.renderLauncher();
+    _writeAppHtml(SparkInstruments.renderLauncher());
+    return;
+  }
+
+  // Showroom gate — when an instrument IS active, route Showroom-replaced
+  // app areas (Settings, Songs/Library, Practice, Tuner, Skill Tree/Path,
+  // Song Details, Session Summary) into the Warm Ember screens. Falls through
+  // to the legacy renderer for anything not in the map.
+  var _showroomMod = (function(){
+    var ov = S._showroomOverride;
+    if (ov === "profile" && typeof SparkProfile !== "undefined") return SparkProfile;
+    if (ov === "lesson"  && typeof SparkLesson  !== "undefined") return SparkLesson;
+    var sc = S.screen;
+    var tb = S.tab;
+    if (sc === SCR.SETTINGS    && typeof SparkSettings       !== "undefined") return SparkSettings;
+    if (sc === SCR.SONG        && typeof SparkSongDetails    !== "undefined") return SparkSongDetails;
+    if ((sc === SCR.SKILL_TREE || sc === SCR.PLAN || sc === SCR.CURRICULUM)
+                                && typeof SparkPath          !== "undefined") return SparkPath;
+    if ((sc === SCR.COMPLETE   || sc === SCR.SONG_DONE   || sc === SCR.PERFORM_DONE
+      || sc === SCR.GUIDED_DONE || sc === SCR.DRILL_DONE)
+                                && typeof SparkSessionSummary !== "undefined") return SparkSessionSummary;
+    if (sc === SCR.HOME) {
+      if (tb === TAB.PRACTICE && typeof SparkPracticeMetro !== "undefined") return SparkPracticeMetro;
+      if (tb === TAB.SONGS    && typeof SparkSongLibrary   !== "undefined") return SparkSongLibrary;
+      if (tb === TAB.TUNER    && typeof SparkTuner         !== "undefined") return SparkTuner;
+    }
+    return null;
+  })();
+  if (_showroomMod && _showroomMod.render) {
+    document.getElementById("header").style.display = "none";
+    _writeAppHtml(_showroomMod.render());
     return;
   }
 
@@ -3759,6 +3841,7 @@ function _renderInner(){
 
   // Onboarding overlay — shown once on first launch
   if(!S.onboardingDone && !S.activeInstrument){
+    var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);
     h+='<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
     h+='<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
     h+='<h1 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Welcome to SparkSuite!</h1>';
@@ -3766,7 +3849,7 @@ function _renderInner(){
     h+='<div class="card" style="width:100%;max-width:340px;text-align:left;margin-bottom:20px">';
     h+='<p style="font-size:13px;font-weight:700;color:var(--text-primary);margin:0 0 8px">Complete this sentence:</p>';
     h+='<p style="font-size:14px;color:var(--text-muted);margin:0 0 8px">&#8220;Every day, when I&nbsp;&hellip;</p>';
-    h+='<input type="text" id="intention-input" class="set-input" placeholder="finish dinner, make coffee..." value="'+escHTML(S.practiceIntention)+'" oninput="act(\'setIntention\',this.value)" style="margin-bottom:8px" aria-label="Practice trigger"/>';
+    h+='<input type="text" id="intention-input" class="set-input" placeholder="finish dinner, make coffee..." value="'+escHTML(onboardingPracticeIntention)+'" oninput="act(\'setIntention\',this.value)" style="margin-bottom:8px" aria-label="Practice trigger"/>';
     h+='<p style="font-size:14px;color:var(--text-muted);margin:0">&#8230;&nbsp;I will open SparkSuite.&#8221;</p>';
     h+='</div>';
     h+='<button class="btn" onclick="act(\'completeOnboarding\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:14px 40px;font-size:17px;font-weight:800">Let\'s Go!</button>';

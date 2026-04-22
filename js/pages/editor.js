@@ -1,6 +1,32 @@
 /* ===== Shared Editor Page ===== */
 /* Handoffs 6-9: editor shell with items list, inspector, timeline, visual timeline */
 
+function normalizeEditorTextToken(value){
+  var text;
+  var lower;
+  if(typeof value !== "string") return "";
+  text = value.trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function firstEditorTextToken(){
+  var i;
+  var token;
+  for(i = 0; i < arguments.length; i++){
+    token = normalizeEditorTextToken(arguments[i]);
+    if(token) return token;
+  }
+  return "";
+}
+
+function normalizeEditorNumber(value, fallback){
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function editorPage(){
   var obj = S.editorObject;
   var h = '';
@@ -20,19 +46,19 @@ function editorPage(){
   var errors = validateEditorObject ? validateEditorObject(obj) : [];
 
   h += '<div class="card mb16">';
-  h += '<div><b>Mode:</b> '+escHTML(S.editorMode || "chart")+'</div>';
-  h += '<div><b>ID:</b> '+escHTML(obj.id || "")+'</div>';
+  h += '<div><b>Mode:</b> '+escHTML(firstEditorTextToken(S.editorMode, "chart"))+'</div>';
+  h += '<div><b>ID:</b> '+escHTML(firstEditorTextToken(obj.id))+'</div>';
   h += '<div><b>Dirty:</b> '+(S.editorDirty ? 'Yes' : 'No')+'</div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
   h += '<div class="mb8"><b>Metadata</b></div>';
-  h += '<input class="set-input mb8" value="'+escHTML(obj.title || "")+'" oninput="act(\'editorField\',\'title|\' + this.value)"/>';
+  h += '<input class="set-input mb8" value="'+escHTML(firstEditorTextToken(obj.title, obj.id))+'" oninput="act(\'editorField\',\'title|\' + this.value)"/>';
   if(obj.artist !== undefined){
-    h += '<input class="set-input mb8" value="'+escHTML(obj.artist || "")+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
+    h += '<input class="set-input mb8" value="'+escHTML(firstEditorTextToken(obj.artist))+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
   }
   if(obj.bpm !== undefined){
-    h += '<input class="set-input mb8" type="number" value="'+(obj.bpm || 80)+'" oninput="act(\'editorField\',\'bpm|\' + this.value)"/>';
+    h += '<input class="set-input mb8" type="number" value="'+normalizeEditorNumber(obj.bpm, 80)+'" oninput="act(\'editorField\',\'bpm|\' + this.value)"/>';
   }
   h += '</div>';
 
@@ -80,11 +106,12 @@ function renderEditorTimeline(obj){
   var range = typeof getEditorTimelineRange === "function" ? getEditorTimelineRange() : { startSec:0, endSec:16 };
   var bpm = typeof getEditorBpm === "function" ? getEditorBpm() : 80;
   var grid = typeof buildTimelineGridLines === "function" ? buildTimelineGridLines(range.startSec, range.endSec, bpm, S.editorGridDivision || "1/4") : [];
+  var playheadSec = normalizeEditorNumber(S.editorPlayheadSec, 0);
   var h = '';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+(S.editorPlayheadSec||0).toFixed(2)+'s \u00b7 Grid: '+escHTML(S.editorGridDivision||"1/4")+'</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+playheadSec.toFixed(2)+'s \u00b7 Grid: '+escHTML(firstEditorTextToken(S.editorGridDivision, "1/4"))+'</div>';
   h += '<div style="padding:12px;border-radius:12px;background:var(--input-bg)">';
   for(var i=0;i<grid.length;i++){
-    h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+escHTML(grid[i].label)+' ('+grid[i].t.toFixed(2)+'s)</div>';
+    h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">'+escHTML(grid[i].label)+' ('+normalizeEditorNumber(grid[i].t, 0).toFixed(2)+'s)</div>';
   }
   h += '</div>';
   return h;
@@ -128,9 +155,11 @@ function renderEditorItemsList(obj){
     for(var e=0;e<entries.length;e++){
       var entry = entries[e];
       var item = entry.item;
-      var selected = String(S.editorSelectedId)===String(item.id);
-      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'" onclick="act(\'editorSelect\',\''+item.id+'\')">';
-      h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(String(item.id))+'</div>';
+      var rawItemId = firstEditorTextToken(item && item.id);
+      var selected = rawItemId ? String(S.editorSelectedId)===rawItemId : false;
+      var itemId = firstEditorTextToken(rawItemId, entry.kind);
+      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+(rawItemId?';cursor:pointer':'')+'"'+(rawItemId?' onclick="act(\'editorSelect\',\''+rawItemId+'\')"':'')+'>';
+      h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(itemId)+'</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(getEditorItemSummary(entry.kind, item))+'</div>';
       h += '</div>';
     }
@@ -141,13 +170,13 @@ function renderEditorItemsList(obj){
 
 function getEditorItemSummary(kind, item){
   if(kind==="event"){
-    return (item.type || "event") + " @ " + (item.t || 0);
+    return firstEditorTextToken(item.type, "event") + " @ " + (item.t || 0);
   }
   if(kind==="phrase"){
-    return (item.name || "phrase") + " \u00b7 " + (item.startSec || 0) + " \u2192 " + (item.endSec || 0);
+    return firstEditorTextToken(item.name, "phrase") + " \u00b7 " + (item.startSec || 0) + " \u2192 " + (item.endSec || 0);
   }
   if(kind==="step"){
-    return item.chord || item.note || item.type || "step";
+    return firstEditorTextToken(item.chord, item.note, item.type, "step");
   }
   return kind;
 }
