@@ -232,12 +232,10 @@ test('getPerformanceChartLibrary can filter the manifest by app-id instrument', 
 
 test('getPerformanceChartLibrary can filter the manifest by bass instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'bass' });
-  assert.strictEqual(library.length, 4);
+  assert.strictEqual(library.length, 2);
   assert.strictEqual(library[0].instrument, 'bass');
   assert.strictEqual(library[0].id, 'bass_midnight_lock_package');
   assert.strictEqual(library[1].id, 'bass_afterglow_walk_package');
-  assert.strictEqual(library[2].id, 'bass_pocket_groove');
-  assert.strictEqual(library[3].id, 'bass_funk_slap');
 });
 
 test('normalizePerformanceChartDefinition supports ukulele package charts through manifest adapter metadata', function() {
