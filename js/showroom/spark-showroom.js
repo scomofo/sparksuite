@@ -13,8 +13,17 @@
       return { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c];
     });
   }
+  // Format a value as a single-quoted JS string literal safe to drop
+  // inside a double-quoted HTML attribute (onclick="..."). Using
+  // JSON.stringify here (which produces double quotes) would break the
+  // surrounding attribute — unescaped " inside " ends the value early,
+  // producing invalid HTML and a non-functional handler in some browsers.
+  function jsArg(s) {
+    return "'" + String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
+  }
+
   function nav(view) {
-    return "SparkShowroomNavigate(" + JSON.stringify(view) + ")";
+    return "SparkShowroomNavigate(" + jsArg(view) + ")";
   }
   // Back arrow on sub-pages (Settings, Profile, etc.). Inside an instrument
   // this returns to the instrument's Practice page so users don't get dropped
@@ -98,6 +107,12 @@
   function saveFlags(flags) {
     try { localStorage.setItem("spark.showroomFlags", JSON.stringify(flags)); } catch (e) {}
   }
+  // Showroom-only flag toggle. Used by settings rows that don't have a
+  // canonical S.* / act() handler yet (Reduce Transparency, Push
+  // Notifications, Email Updates). Toggles that DO have canonical state
+  // — like Dark Mode — should call act("toggleDark") instead so the
+  // legacy header, body.light class, and saveState() all stay in sync
+  // (CLAUDE.md: "UI as dumb renderer of session state").
   function toggleFlag(key) {
     var f = loadFlags();
     f[key] = !f[key];
@@ -106,12 +121,26 @@
   }
   window.SparkShowroomToggle = toggleFlag;
 
+  // Build the inline onclick string for a settings toggle. Routes to the
+  // canonical act() handler when one exists for the given key; otherwise
+  // falls back to the showroom-only flag store via SparkShowroomToggle.
+  // Keeps the row-render code uniform across both kinds of toggles.
+  function toggleOnClick(key) {
+    if (key === "dark") return "act('toggleDark')";
+    return "SparkShowroomToggle(" + jsArg(key) + ")";
+  }
+
   // ───────────────────────────────────────────────────────────────────────
   // Settings
   // ───────────────────────────────────────────────────────────────────────
   function settingsRender() {
     var flags = loadFlags();
-    var darkOn = flags.dark !== false; // default on
+    // Dark Mode reads from the canonical S.darkMode (set by act("toggleDark"))
+    // — NOT from the showroom flag store — so the toggle reflects the actual
+    // theme even after a legacy header change.
+    var darkOn = (typeof S !== "undefined" && typeof S.darkMode === "boolean")
+      ? S.darkMode
+      : (flags.dark !== false); // fallback for tests / launcher-only contexts
     var reduceTransp = !!flags.reduceTransparency;
     var pushOn = flags.pushNotifications !== false;
     var emailOn = !!flags.emailUpdates;
@@ -128,6 +157,9 @@
         { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true }
       ]},
       { title: "Appearance", rows: [
+        // Dark Mode is wired to the canonical act("toggleDark") handler so
+        // flipping it here also updates the legacy header, body.light
+        // class, and persisted S.darkMode state.
         { type: "toggle", icon: "dark_mode", label: "Dark Mode", on: darkOn, key: "dark" },
         { type: "toggle", icon: "blur_on", label: "Reduce Transparency", on: reduceTransp, key: "reduceTransparency" }
       ]},
@@ -163,7 +195,10 @@
           // on/off control; aria-pressed is for buttons that toggle a state
           // distinct from their primary action. Screen readers announce
           // role=switch as "switch, on/off" which matches the visual.
-          html += '<button class="showroom-toggle' + (row.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + row.on + '" onclick="SparkShowroomToggle(' + JSON.stringify(row.key) + ')" aria-label="' + escHtml(row.label) + '">';
+          // toggleOnClick(key) routes Dark Mode through the canonical
+          // act("toggleDark") handler and other toggles through the
+          // showroom-only flag store.
+          html += '<button class="showroom-toggle' + (row.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + row.on + '" onclick="' + toggleOnClick(row.key) + '" aria-label="' + escHtml(row.label) + '">';
           html += '<span class="showroom-toggle-knob" aria-hidden="true"></span></button>';
           html += '</div>';
         } else {
@@ -487,12 +522,12 @@
     var chipsHtml = "";
     for (var c = 0; c < categories.length; c++) {
       var cat = categories[c];
-      chipsHtml += '<button class="showroom-chip' + (cat === category ? ' on' : '') + '" onclick="SparkShowroom.setLibraryCategory(' + JSON.stringify(cat) + ')">' + escHtml(cat) + '</button>';
+      chipsHtml += '<button class="showroom-chip' + (cat === category ? ' on' : '') + '" onclick="SparkShowroom.setLibraryCategory(' + jsArg(cat) + ')">' + escHtml(cat) + '</button>';
     }
     var levelsHtml = "";
     for (var l = 0; l < levels.length; l++) {
       var lv = levels[l];
-      levelsHtml += '<button class="showroom-level-chip' + (lv === level ? ' on' : '') + '" onclick="SparkShowroom.setLibraryLevel(' + JSON.stringify(lv) + ')">' + escHtml(lv) + '</button>';
+      levelsHtml += '<button class="showroom-level-chip' + (lv === level ? ' on' : '') + '" onclick="SparkShowroom.setLibraryLevel(' + jsArg(lv) + ')">' + escHtml(lv) + '</button>';
     }
 
     var songsHtml = "";
