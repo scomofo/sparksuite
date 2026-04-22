@@ -1143,6 +1143,49 @@
   window.SparkTuner          = { render: tunerRender };
 
   // ───────────────────────────────────────────────────────────────────────
+  // Onboarding — "Welcome to the Spark Collective"
+  // Ported from docs/design/stitch-2026-04/onboarding_welcome/.
+  // ───────────────────────────────────────────────────────────────────────
+  function onboardingWelcomeRender(opts) {
+    opts = opts || {};
+    var title = opts.title || "SparkSuite";
+    var subtitle = opts.subtitle || "Welcome to the Spark Collective";
+    var body = opts.body || "Step into a world where your musical flow state is nurtured. Discover your rhythm, track your journey, and let the music guide you.";
+    var ctaLabel = opts.ctaLabel || "Begin Your Journey";
+    var ctaAction = opts.ctaAction || "act('completeOnboarding')";
+    var signInLabel = opts.signInLabel || "Already have an account?";
+    var signInAction = opts.signInAction || "act('completeOnboarding')";
+
+    return '<div class="showroom-root with-woodgrain showroom-onboarding-welcome">'
+         + '<div class="showroom-onboarding-glow showroom-onboarding-glow-tl" aria-hidden="true"></div>'
+         + '<div class="showroom-onboarding-glow showroom-onboarding-glow-br" aria-hidden="true"></div>'
+         + '<main class="showroom-onboarding-main">'
+           + '<div class="showroom-onboarding-logo-wrap">'
+             + '<div class="showroom-onboarding-logo-halo" aria-hidden="true"></div>'
+             + '<div class="showroom-onboarding-logo-badge">'
+               + '<span class="material-symbols-outlined fill showroom-onboarding-logo-icon">auto_awesome</span>'
+             + '</div>'
+           + '</div>'
+           + '<div class="showroom-onboarding-copy">'
+             + '<h1 class="showroom-onboarding-title">' + escHtml(title) + '</h1>'
+             + '<h2 class="showroom-onboarding-subtitle">' + escHtml(subtitle) + '</h2>'
+             + '<p class="showroom-onboarding-body">' + escHtml(body) + '</p>'
+           + '</div>'
+           + '<div class="showroom-onboarding-cta-wrap">'
+             + '<button type="button" class="showroom-onboarding-cta" onclick="' + ctaAction + '">'
+               + escHtml(ctaLabel.toUpperCase())
+               + '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>'
+             + '</button>'
+             + '<p class="showroom-onboarding-signin">'
+               + escHtml(signInLabel) + ' '
+               + '<button type="button" class="showroom-onboarding-signin-link" onclick="' + signInAction + '">Sign In</button>'
+             + '</p>'
+           + '</div>'
+         + '</main>'
+         + '</div>';
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
   // Curriculum Dashboard (Ember Studio)
   // ───────────────────────────────────────────────────────────────────────
   function curriculumDashboardRender(opts) {
@@ -1275,5 +1318,6 @@
   }
 
   window.SparkCurriculumDashboard = { render: curriculumDashboardRender };
+  window.SparkOnboardingWelcome   = { render: onboardingWelcomeRender };
   window.SparkShowroom       = SparkShowroom;
 })();
