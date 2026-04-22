@@ -1,7 +1,5 @@
-function normalizePerformCalibrationNumber(value, fallback){
-  var num = typeof value === "number" ? value : Number(value);
-  return isFinite(num) ? num : fallback;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizePerformCalibrationNumber(value, fallback){ return SparkNormalize.number(value, fallback); }
 
 function normalizePerformCalibrationSource(value){
   var text;

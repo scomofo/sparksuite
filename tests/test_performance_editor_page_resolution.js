@@ -6,6 +6,14 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+// Load shared SparkNormalize helper used by page modules below.
+// js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
+// the window alias first (resetEnv() also sets it but runs per-test).
+global.window = global.window || global;
+var _testEval = eval;
+_testEval(loadJS("js/utils/normalize.js"));
+
+
 function resetEnvironment() {
   global.window = global;
   global.S = {
