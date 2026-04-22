@@ -1381,7 +1381,187 @@
          + '</div>';
   }
 
+  // ───────────────────────────────────────────────────────────────────────
+  // Course Syllabus — Stitch 2026-04 design reference
+  // Ported from docs/design/stitch-2026-04/course_syllabus/. This is a
+  // NEW showroom renderer (no existing dispatch). Scope: Showroom design
+  // reference only — NO routing changes, NO render.js dispatch, NO new
+  // screen constants. The renderer is exported as SparkCourseSyllabus and
+  // stands ready for future wiring.
+  // ───────────────────────────────────────────────────────────────────────
+  function courseSyllabusRender(opts) {
+    opts = opts || {};
+    var courseName  = opts.courseName  || "Guitar Fundamentals";
+    var level       = (opts.level != null) ? opts.level : 12;
+    var progressPct = (opts.progressPct != null) ? opts.progressPct : 65;
+    var nextXpGoal  = opts.nextXpGoal  || "250 XP to Silver Badge";
+    var ctaLabel    = opts.ctaLabel    || "Start Next Lesson";
+    var ctaAction   = opts.ctaAction   || "act('startLesson')";
+    var userInitial = (opts.userInitial || "A").charAt(0).toUpperCase();
+
+    var modules = opts.modules || [
+      {
+        title: "Module 1: Getting Started",
+        status: "COMPLETED",
+        state: "completed",
+        lessons: [
+          { name: "Anatomy of the Guitar", state: "done" },
+          { name: "Holding & Tuning",      state: "done" }
+        ]
+      },
+      {
+        title: "Module 2: First Chords",
+        status: "RESUME",
+        state: "active",
+        lessons: [
+          { name: "The E Minor & A Minor",     state: "now" },
+          { name: "Basic Strumming Patterns",  state: "unlocked" }
+        ],
+        showCta: true
+      },
+      {
+        title: "Module 3: Major Scales",
+        status: "LOCKED",
+        state: "locked",
+        lessons: [
+          { name: "The C Major Scale", state: "locked" },
+          { name: "Intervals 101",     state: "locked" }
+        ]
+      }
+    ];
+
+    // Progress ring math — r=40, stroke-dasharray = 2πr
+    var ringR = 40;
+    var ringC = 2 * Math.PI * ringR;
+    var ringOffset = ringC * (1 - Math.max(0, Math.min(100, progressPct)) / 100);
+
+    function markerIconFor(state) {
+      if (state === "completed") return "check";
+      if (state === "active")    return "auto_awesome";
+      return "lock";
+    }
+    function lessonIconFor(state) {
+      if (state === "locked") return "music_note";
+      return "play_circle";
+    }
+    function lessonTailFor(state) {
+      if (state === "done") {
+        return '<span class="material-symbols-outlined showroom-syllabus-lesson-done" aria-hidden="true">check_circle</span>';
+      }
+      if (state === "now") {
+        return '<span class="showroom-syllabus-lesson-now">NOW</span>';
+      }
+      if (state === "unlocked") {
+        return '<span class="material-symbols-outlined showroom-syllabus-lesson-unlocked" aria-hidden="true">lock_open</span>';
+      }
+      return "";
+    }
+
+    var timelineHtml = "";
+    for (var i = 0; i < modules.length; i++) {
+      var mod = modules[i];
+      var state = mod.state || "locked";
+      var markerFill = (state === "active") ? " fill" : "";
+
+      var lessonsHtml = "";
+      for (var j = 0; j < mod.lessons.length; j++) {
+        var les = mod.lessons[j];
+        lessonsHtml += '<div class="showroom-syllabus-lesson ' + les.state + '">'
+                    +   '<div class="showroom-syllabus-lesson-main">'
+                    +     '<span class="material-symbols-outlined showroom-syllabus-lesson-icon" aria-hidden="true">' + lessonIconFor(les.state) + '</span>'
+                    +     '<span class="showroom-syllabus-lesson-name">' + escHtml(les.name) + '</span>'
+                    +   '</div>'
+                    +   lessonTailFor(les.state)
+                    + '</div>';
+      }
+
+      var ctaHtml = mod.showCta
+        ? '<button type="button" class="showroom-syllabus-cta" onclick="' + (opts.ctaAction || "act('showroomStartLesson')") + '">'
+          + escHtml(ctaLabel)
+          + '</button>'
+        : '';
+
+      timelineHtml += '<div class="showroom-syllabus-module ' + state + '">'
+                   +   '<div class="showroom-syllabus-dot ' + state + '" aria-hidden="true">'
+                   +     '<span class="material-symbols-outlined' + markerFill + '">' + markerIconFor(state) + '</span>'
+                   +   '</div>'
+                   +   '<div class="showroom-syllabus-card ' + state + '">'
+                   +     '<div class="showroom-syllabus-card-head">'
+                   +       '<h3 class="showroom-syllabus-card-title">' + escHtml(mod.title) + '</h3>'
+                   +       '<span class="showroom-syllabus-card-status ' + state + '">' + escHtml(mod.status) + '</span>'
+                   +     '</div>'
+                   +     '<div class="showroom-syllabus-lessons">' + lessonsHtml + '</div>'
+                   +     ctaHtml
+                   +   '</div>'
+                   + '</div>';
+    }
+
+    var navItems = [
+      { id: "tuner",      label: "Tuner",   icon: "tune",         onClick: nav("tuner") },
+      { id: "curriculum", label: "Courses", icon: "school" },
+      { id: "tools",      label: "Tools",   icon: "construction", onClick: nav("tuner") },
+      { id: "profile",    label: "Profile", icon: "person",       onClick: nav("profile") }
+    ];
+
+    return '<div class="showroom-root with-woodgrain showroom-syllabus">'
+         +   '<header class="showroom-syllabus-appbar">'
+         +     '<div class="showroom-syllabus-appbar-left">'
+         +       '<button type="button" class="showroom-syllabus-iconbtn" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
+         +       '<h1 class="showroom-syllabus-appbar-title">Ember Studio</h1>'
+         +     '</div>'
+         // CSP note: Stitch source used an external avatar image URL. Replaced
+         // with an initial-letter bubble so the Showroom stays same-origin.
+         +     '<div class="showroom-syllabus-avatar" onclick="' + nav("profile") + '" aria-label="Profile">'
+         +       '<span>' + escHtml(userInitial) + '</span>'
+         +     '</div>'
+         +   '</header>'
+         +   '<main class="showroom-syllabus-main">'
+         +     '<section class="showroom-syllabus-hero">'
+         +       '<div class="showroom-syllabus-hero-flare" aria-hidden="true"></div>'
+         +       '<div class="showroom-syllabus-hero-head">'
+         +         '<div>'
+         +           '<span class="showroom-syllabus-eyebrow">CURRENT COURSE</span>'
+         +           '<h2 class="showroom-syllabus-course-title">' + escHtml(courseName) + '</h2>'
+         +         '</div>'
+         +         '<div class="showroom-syllabus-level-pill">'
+         +           '<span class="material-symbols-outlined fill" aria-hidden="true" style="font-size:14px">workspace_premium</span>'
+         +           '<span>Lvl ' + escHtml(String(level)) + '</span>'
+         +         '</div>'
+         +       '</div>'
+         +       '<div class="showroom-syllabus-hero-stats">'
+         +         '<div class="showroom-syllabus-ring">'
+         +           '<svg viewBox="0 0 100 100" aria-hidden="true">'
+         +             '<circle class="showroom-syllabus-ring-track" cx="50" cy="50" r="' + ringR + '" fill="transparent" stroke-width="8"></circle>'
+         +             '<circle class="showroom-syllabus-ring-fill"  cx="50" cy="50" r="' + ringR + '" fill="transparent" stroke-width="8"'
+         +               ' stroke-linecap="round"'
+         +               ' stroke-dasharray="' + ringC.toFixed(2) + '"'
+         +               ' stroke-dashoffset="' + ringOffset.toFixed(2) + '"></circle>'
+         +           '</svg>'
+         +           '<div class="showroom-syllabus-ring-label">'
+         +             '<span class="showroom-syllabus-ring-num">' + escHtml(String(progressPct)) + '%</span>'
+         +             '<span class="showroom-syllabus-ring-unit">DONE</span>'
+         +           '</div>'
+         +         '</div>'
+         +         '<div class="showroom-syllabus-xp">'
+         +           '<div class="showroom-syllabus-xp-row">'
+         +             '<span class="material-symbols-outlined fill" aria-hidden="true" style="font-size:14px">bolt</span>'
+         +             '<span>Next: ' + escHtml(nextXpGoal) + '</span>'
+         +           '</div>'
+         +           '<div class="showroom-syllabus-xp-bar"><div class="showroom-syllabus-xp-fill" style="width:' + Math.max(0, Math.min(100, progressPct)) + '%"></div></div>'
+         +         '</div>'
+         +       '</div>'
+         +     '</section>'
+         +     '<section class="showroom-syllabus-timeline">'
+         +       '<div class="showroom-syllabus-timeline-line" aria-hidden="true"></div>'
+         +       timelineHtml
+         +     '</section>'
+         +   '</main>'
+         +   bottomNav(navItems, "curriculum")
+         + '</div>';
+  }
+
   window.SparkCurriculumDashboard = { render: curriculumDashboardRender };
   window.SparkOnboardingWelcome   = { render: onboardingWelcomeRender };
+  window.SparkCourseSyllabus      = { render: courseSyllabusRender };
   window.SparkShowroom       = SparkShowroom;
 })();
