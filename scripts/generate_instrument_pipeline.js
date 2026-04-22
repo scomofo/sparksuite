@@ -8,6 +8,7 @@ function q(s) { return Q + s + Q; }
 var args = process.argv.slice(2);
 if (!args.length) { console.log("Usage: node scripts/generate_instrument_pipeline.js <name> [--type T] [--strings N] [--id ID] [--levels N] [--dry-run]"); process.exit(0); }
 
+if (args[0] === "--help" || args[0] === "-h") { console.log("Usage: node scripts/generate_instrument_pipeline_final.js <name> [--type T] [--strings N] [--id ID] [--levels N] [--dry-run] [--apply]"); process.exit(0); }
 var name = args[0].toLowerCase();
 var Name = name.charAt(0).toUpperCase() + name.slice(1);
 function ga(f,d) { var i=args.indexOf(f); return (i>=0&&args[i+1])?args[i+1]:d; }
@@ -123,3 +124,15 @@ wf(rd + "app.js", ap);
 
 console.log("");
 console.log("Done. Next: add data, update index.html, run tests.");
+
+// ── Auto-apply integration if --apply flag is set ──
+if (args.indexOf("--apply") >= 0 && !dryRun) {
+  console.log("");
+  console.log("Running auto-integration...");
+  var cp = require("child_process");
+  try {
+    cp.execSync("node scripts/apply_generated_instrument_final.js", { stdio: "inherit" });
+  } catch (e) {
+    console.log("Integration completed with issues (see above).");
+  }
+}
