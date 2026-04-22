@@ -821,9 +821,9 @@
                  + '<div class="showroom-chord-fingers" aria-hidden="true">' + fingersHtml + '</div>'
                + '</div>'
                + '<div class="showroom-chord-meta">'
-                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">STRUM</p><p class="showroom-chord-meta-val success">' + escHtml(strum).toUpperCase() + '</p></div>'
+                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">STRUM</p><p class="showroom-chord-meta-val success">' + escHtml(strum) + '</p></div>'
                  + '<div class="showroom-chord-meta-divider"></div>'
-                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">TYPE</p><p class="showroom-chord-meta-val primary">' + escHtml(type).toUpperCase() + '</p></div>'
+                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">TYPE</p><p class="showroom-chord-meta-val primary">' + escHtml(type) + '</p></div>'
                + '</div>'
              + '</div>'
            + '</section>'
@@ -832,7 +832,13 @@
              + '<div class="showroom-tips-grid">'
                + '<div class="showroom-tip"><div class="showroom-tip-icon primary"><span class="material-symbols-outlined">thumb_up</span></div><p class="showroom-tip-title">Keep your thumb low</p><p class="showroom-tip-desc">Allows more reach across the neck.</p></div>'
                + '<div class="showroom-tip"><div class="showroom-tip-icon secondary"><span class="material-symbols-outlined">ads_click</span></div><p class="showroom-tip-title">Press near the fret</p><p class="showroom-tip-desc">Reduces buzzing with less force.</p></div>'
-               + '<div class="showroom-tip wide"><div class="showroom-tip-img"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuChQHK6E7hAQS5qLhoBqJJ_LUJq7E2uTvtAoAMETNqpwHDjTam1PvK39NGRQVueWB9weNUMQymf1LDzlgC9mf_6J48DkRSNj-tMGW1vu8zXC_VSLP7DBuUVrA5WMQ8-U7PFW281Qx1be4cXYTu_3uApKn5JGAhcHT0m5lmu0I7K10DjuOLCQ_YyxfRJ4eojl72VY6XVJ1SH4EEknUlc9-RnJ_Xo1LoaMX3wZxjxECwEpLyjoWALT6aW9VQ1cUIffXXQeUpYth59By4" alt="Hand position" style="width:100%;height:100%;object-fit:cover"></div><div><p class="showroom-tip-title">Arch your fingers</p><p class="showroom-tip-desc">Ensure open strings ring out clearly without muting.</p></div></div>'
+               // Wide-tip artwork used to be a remote lh3.googleusercontent.com
+               // image, which is blocked by the app-wide CSP (img-src 'self' data:
+               // in index.html + src-tauri/tauri.conf.json). Revert to the local
+               // emoji glyph so the tile renders on every surface, online or off.
+               // When real artwork ships, point `.showroom-tip-img` at a
+               // resources/ path served from 'self', not a remote host.
+               + '<div class="showroom-tip wide"><div class="showroom-tip-img" aria-hidden="true">🖐️</div><div><p class="showroom-tip-title">Arch your fingers</p><p class="showroom-tip-desc">Ensure open strings ring out clearly without muting.</p></div></div>'
              + '</div>'
            + '</section>'
            + '<section class="showroom-stats-bar">'
