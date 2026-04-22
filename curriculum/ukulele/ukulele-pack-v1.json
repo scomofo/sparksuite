@@ -1,0 +1,74 @@
+{
+  "version": "v1",
+  "phases": [
+    {
+      "name": "mechanics",
+      "exercises": ["island_loop", "sunset_switches"]
+    },
+    {
+      "name": "rhythm",
+      "songs": ["riptide", "im_yours", "hey_soul_sister"]
+    },
+    {
+      "name": "musicality",
+      "songs": ["count_on_me", "lava", "stand_by_me"]
+    },
+    {
+      "name": "expression",
+      "songs": ["cant_help_falling_in_love", "over_the_rainbow"]
+    }
+  ],
+  "songs": {
+    "riptide": {
+      "chords": ["Am", "G", "C"],
+      "difficulty": 2,
+      "loop": true
+    },
+    "im_yours": {
+      "chords": ["C", "G", "Am", "F"],
+      "difficulty": 2
+    },
+    "hey_soul_sister": {
+      "chords": ["C", "G", "Am", "F"],
+      "difficulty": 2
+    },
+    "stand_by_me": {
+      "chords": ["C", "Am", "F", "G"],
+      "difficulty": 2
+    },
+    "lava": {
+      "chords": ["C", "G", "Am", "F"],
+      "difficulty": 1
+    },
+    "count_on_me": {
+      "chords": ["C", "G", "Am", "F"],
+      "difficulty": 2
+    },
+    "cant_help_falling_in_love": {
+      "chords": ["C", "Em", "Am", "F", "G"],
+      "difficulty": 3
+    },
+    "over_the_rainbow": {
+      "chords": ["C", "Em", "F", "G", "Am"],
+      "difficulty": 3
+    }
+  },
+  "exercises": {
+    "island_loop": {
+      "chords": ["C", "G", "Am", "F"],
+      "type": "strum"
+    },
+    "sunset_switches": {
+      "chords": ["C", "F", "Am", "G"],
+      "type": "transition"
+    },
+    "palm_arpeggio": {
+      "pattern": ["G", "C", "E", "A"],
+      "type": "fingerstyle"
+    },
+    "moonlit_picking": {
+      "type": "fingerstyle",
+      "pattern_tab": "A|--0-----2-----3-----2--|"
+    }
+  }
+}

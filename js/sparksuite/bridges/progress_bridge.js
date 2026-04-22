@@ -14,6 +14,7 @@
     S.practicePlanDate = legacyPlan ? legacyPlan.generatedDate : null;
     S.practicePlanFocus = legacyPlan ? legacyPlan.focus : "";
     S.practicePlanComplete = legacyPlan ? legacyPlan.completedItems >= legacyPlan.totalItems : false;
+    S.practicePlanInstrument = plan && plan.instrumentType ? plan.instrumentType : (plan && plan.instrumentId ? plan.instrumentId : null);
     return legacyPlan;
   }
 
@@ -98,21 +99,36 @@
         }
       }
 
-      if (!S.chordProgress || typeof S.chordProgress !== "object") S.chordProgress = {};
       var chordProgress = patch.guided.chordProgress || {};
-      for (var chordName in chordProgress) {
-        S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + chordProgress[chordName], 100);
+      if (typeof SparkChordProgress !== "undefined") {
+        for (var chordName in chordProgress) {
+          if (!Object.prototype.hasOwnProperty.call(chordProgress, chordName)) continue;
+          SparkChordProgress.add(chordName, chordProgress[chordName]);
+        }
+      } else {
+        if (!S.chordProgress || typeof S.chordProgress !== "object") S.chordProgress = {};
+        for (var cn in chordProgress) {
+          S.chordProgress[cn] = Math.min((S.chordProgress[cn] || 0) + chordProgress[cn], 100);
+        }
       }
 
       if (patch.guided.nextGuidedSession != null) S.guidedSession = patch.guided.nextGuidedSession;
     }
 
     if (patch.mastery && patch.mastery.rhythm) {
-      if (!S.mastery || typeof S.mastery !== "object") S.mastery = {};
-      if (!S.mastery.rhythm || typeof S.mastery.rhythm !== "object") S.mastery.rhythm = {};
-      for (var skillId in patch.mastery.rhythm) {
-        var prev = S.mastery.rhythm[skillId] || 0;
-        S.mastery.rhythm[skillId] = Math.max(0, Math.min(100, prev + patch.mastery.rhythm[skillId]));
+      if (typeof SparkMastery !== "undefined") {
+        for (var skillId in patch.mastery.rhythm) {
+          if (!Object.prototype.hasOwnProperty.call(patch.mastery.rhythm, skillId)) continue;
+          var prev = SparkMastery.get("rhythm", skillId) || 0;
+          SparkMastery.set("rhythm", skillId, Math.max(0, Math.min(100, prev + patch.mastery.rhythm[skillId])));
+        }
+      } else {
+        if (!S.mastery || typeof S.mastery !== "object") S.mastery = {};
+        if (!S.mastery.rhythm || typeof S.mastery.rhythm !== "object") S.mastery.rhythm = {};
+        for (var sid in patch.mastery.rhythm) {
+          var prevLegacy = S.mastery.rhythm[sid] || 0;
+          S.mastery.rhythm[sid] = Math.max(0, Math.min(100, prevLegacy + patch.mastery.rhythm[sid]));
+        }
       }
     }
 
@@ -164,7 +180,13 @@
   function applyLegacyReward(reward) {
     reward = reward || {};
     var xpDelta = reward.xpDelta || 0;
-    if (xpDelta) S.xp = (S.xp || 0) + xpDelta;
+    if (xpDelta) {
+      if (typeof SparkInstrumentProgress !== "undefined") {
+        SparkInstrumentProgress.addXp(xpDelta);
+      } else {
+        S.xp = (S.xp || 0) + xpDelta;
+      }
+    }
     if (reward.toastAmount) {
       S.xpToast = {
         amount: reward.toastAmount,
@@ -212,11 +234,23 @@
     update = update || {};
 
     if (update.streak) {
-      if (update.streak.increment) S.streak = (S.streak || 0) + update.streak.increment;
+      if (typeof SparkInstrumentProgress !== "undefined" && update.streak.increment) {
+        SparkInstrumentProgress.updateStreak(update.streak.lastSessionDate);
+      } else if (update.streak.increment) {
+        S.streak = (S.streak || 0) + update.streak.increment;
+      }
       if (update.streak.lastSessionDate) S.lastSessionDate = update.streak.lastSessionDate;
     }
 
-    if (update.sessionsDelta) S.sessions = (S.sessions || 0) + update.sessionsDelta;
+    if (update.sessionsDelta) {
+      if (typeof SparkInstrumentProgress !== "undefined") {
+        for (var _bs = 0; _bs < update.sessionsDelta; _bs++) {
+          SparkInstrumentProgress.completeSession("legacy_session");
+        }
+      } else {
+        S.sessions = (S.sessions || 0) + update.sessionsDelta;
+      }
+    }
 
     if (typeof update.xpDelta === "number" || update.toastAmount || update.jackpot) {
       applyLegacyReward({
@@ -227,13 +261,26 @@
     }
 
     if (update.chordProgress) {
-      if (!S.chordProgress || typeof S.chordProgress !== "object") S.chordProgress = {};
-      for (var chordName in update.chordProgress) {
-        S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + update.chordProgress[chordName], 100);
+      if (typeof SparkChordProgress !== "undefined") {
+        for (var cpName in update.chordProgress) {
+          if (!Object.prototype.hasOwnProperty.call(update.chordProgress, cpName)) continue;
+          SparkChordProgress.add(cpName, update.chordProgress[cpName]);
+        }
+      } else {
+        if (!S.chordProgress || typeof S.chordProgress !== "object") S.chordProgress = {};
+        for (var chordName in update.chordProgress) {
+          S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + update.chordProgress[chordName], 100);
+        }
       }
     }
 
-    if (typeof update.level === "number") S.level = update.level;
+    if (typeof update.level === "number") {
+      if (typeof SparkInstrumentProgress !== "undefined") {
+        SparkInstrumentProgress.setLevel(update.level);
+      } else {
+        S.level = update.level;
+      }
+    }
 
     return {
       streak: update.streak || null,

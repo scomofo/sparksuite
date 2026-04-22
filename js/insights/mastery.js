@@ -14,9 +14,13 @@
 
   function flattenMasteryBuckets(){
     var out = [];
-    var mastery = S.mastery || {};
+    // Prefer the active instrument's mastery branch (old-shape object).
+    var mastery = typeof SparkMastery !== "undefined"
+      ? SparkMastery.all()
+      : (S.mastery || {});
     for(var bucket in mastery){
       var items = mastery[bucket] || {};
+      if(typeof items !== "object") continue;
       for(var id in items){
         out.push({
           bucket: bucket,

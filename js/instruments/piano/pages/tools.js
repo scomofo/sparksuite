@@ -1,5 +1,61 @@
 /* PianoSpark - Tools tab (stats, settings, guide) */
 
+function pianoNormalizeToolsTextInputValue(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return value;
+}
+
+function pianoToolsHistoryTextToken(value) {
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  var text = String(value).trim();
+  if (!text) return "";
+  var lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstToolsHistoryTextToken() {
+  for (var i = 0; i < arguments.length; i++) {
+    var text = pianoToolsHistoryTextToken(arguments[i]);
+    if (text) return text;
+  }
+  return "";
+}
+
+function pianoToolsFiniteNumber(value) {
+  return typeof value === "number" && isFinite(value) ? value : null;
+}
+
+function pianoToolsDisplayCount(value, fallback) {
+  var num = pianoToolsFiniteNumber(value);
+  return num != null ? num : fallback;
+}
+
+function pianoToolsDisplayLevel(value) {
+  var num = pianoToolsFiniteNumber(value);
+  return num != null ? num : 0;
+}
+
+function pianoToolsClampedNumber(value, min, max, fallback) {
+  var num = pianoToolsFiniteNumber(value);
+  if (num == null) return fallback;
+  if (num < min) return min;
+  if (num > max) return max;
+  return num;
+}
+
+function pianoToolsHistoryTimestamp(value) {
+  var date = new Date(value);
+  if (isNaN(date.getTime())) return "Unknown time";
+  return date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 function pianoToolsTab() {
   var html = '';
   var subtabs = [
@@ -29,29 +85,38 @@ function pianoToolsTab() {
 // ── Stats ──
 function statsTab() {
   var html = '<div class="card"><h2>Statistics</h2>';
+  var xp = pianoToolsDisplayCount(S.xp, 0);
+  var streak = pianoToolsDisplayCount(S.streak, 0);
+  var level = pianoToolsDisplayLevel(S.level);
+  var completedSessions = Array.isArray(S.completedSessions) ? S.completedSessions : [];
+  var history = Array.isArray(S.history) ? S.history : [];
+  var personalBestBpm = pianoToolsFiniteNumber(S.personalBests && S.personalBests.bpm);
+  var personalBestStreak = pianoToolsFiniteNumber(S.personalBests && S.personalBests.streak);
+  var fingerExercisesDone = pianoToolsFiniteNumber(S.fingerExercisesDone);
+  var fingerDaysLogged = pianoToolsFiniteNumber(S.fingerDaysLogged);
 
   // Overview
   html += '<div class="stats-grid">';
-  html += '<div class="stat-item"><div class="stat-val">' + S.xp + '</div><div class="stat-label">XP</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.streak + '</div><div class="stat-label">Streak</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.completedSessions ? S.completedSessions.length : 0) + '</div><div class="stat-label">Sessions</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + S.level + '/8</div><div class="stat-label">Level</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + xp + '</div><div class="stat-label">XP</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + streak + '</div><div class="stat-label">Streak</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + completedSessions.length + '</div><div class="stat-label">Sessions</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + level + '/8</div><div class="stat-label">Level</div></div>';
   html += '</div>';
 
   // Personal bests (stickiness #6 - never compare to others)
   html += '<h3>Personal Bests</h3>';
   html += '<div class="stats-grid">';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.personalBests.bpm || '-') + '</div><div class="stat-label">Best BPM</div></div>';
-  html += '<div class="stat-item"><div class="stat-val">' + (S.personalBests.streak || '-') + '</div><div class="stat-label">Best Streak</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (personalBestBpm != null ? personalBestBpm : '-') + '</div><div class="stat-label">Best BPM</div></div>';
+  html += '<div class="stat-item"><div class="stat-val">' + (personalBestStreak != null ? personalBestStreak : '-') + '</div><div class="stat-label">Best Streak</div></div>';
   html += '</div>';
 
   // Finger exercise stats
-  if (S.fingerExercisesDone > 0) {
+  if (fingerExercisesDone > 0) {
     html += '<h3>Finger Training</h3>';
     html += '<div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">';
-    html += '<div class="stat-item"><div class="stat-val">' + S.fingerExercisesDone + '</div><div class="stat-label">Exercises</div></div>';
-    html += '<div class="stat-item"><div class="stat-val">' + S.fingerDaysLogged + '</div><div class="stat-label">Days</div></div>';
-    var chordBest = S.fingerStats._chordChangeBest || 0;
+    html += '<div class="stat-item"><div class="stat-val">' + fingerExercisesDone + '</div><div class="stat-label">Exercises</div></div>';
+    html += '<div class="stat-item"><div class="stat-val">' + (fingerDaysLogged != null ? fingerDaysLogged : '-') + '</div><div class="stat-label">Days</div></div>';
+    var chordBest = (typeof SparkFingerStats !== "undefined" ? SparkFingerStats.get("_chordChangeBest") : (S.fingerStats && S.fingerStats._chordChangeBest)) || 0;
     html += '<div class="stat-item"><div class="stat-val">' + (chordBest || '-') + '</div><div class="stat-label">Best 60s</div></div>';
     html += '</div>';
   }
@@ -76,32 +141,38 @@ function statsTab() {
   for (var i = 29; i >= 0; i--) {
     var d = new Date(Date.now() - i * 86400000);
     var ds = d.toDateString();
-    var practiced = S.history.some(function(h) { return new Date(h.ts).toDateString() === ds; });
+    var practiced = history.some(function(h) { return new Date(h.ts).toDateString() === ds; });
     html += '<div class="cal-day ' + (practiced ? 'cal-active' : '') + '" title="' + ds + '"></div>';
   }
   html += '</div>';
 
   // Recent history
   html += '<h3>Recent Activity</h3><div class="history-list">';
-  var recent = S.history.slice(-10).reverse();
+  var recent = history.slice(-10).reverse();
   recent.forEach(function(h) {
-    var d = new Date(h.ts || h.timestamp);
-    var time = d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    html += '<div class="history-row"><span>' + h.type + (h.chord ? ": " + h.chord : "") + (h.session ? " (S" + h.session + ")" : "") + '</span><span class="text-muted">' + time + '</span></div>';
+    var time = pianoToolsHistoryTimestamp(h.ts || h.timestamp);
+    var activityType = pianoFirstToolsHistoryTextToken(h.type, "Activity");
+    var chordLabel = pianoFirstToolsHistoryTextToken(h.chord);
+    var sessionLabel = pianoFirstToolsHistoryTextToken(h.session);
+    html += '<div class="history-row"><span>' + activityType + (chordLabel ? ": " + chordLabel : "") + (sessionLabel ? " (S" + sessionLabel + ")" : "") + '</span><span class="text-muted">' + time + '</span></div>';
   });
   if (!recent.length) html += '<div class="text-muted">No activity yet</div>';
   html += '</div>';
 
   // Badges
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
+  var D = inst && inst.getData ? inst.getData() : {};
   var BADGES = D.BADGES || [];
   html += '<h3>Badges</h3><div class="badges-grid">';
   BADGES.forEach(function(b) {
     var earned = S.earned.indexOf(b.id) >= 0;
+    var badgeIcon = pianoFirstToolsHistoryTextToken(b.icon, "🏅");
+    var badgeLabel = pianoFirstToolsHistoryTextToken(b.label, "Badge");
+    var badgeDesc = pianoFirstToolsHistoryTextToken(b.desc, "Keep practicing");
     html += '<div class="badge-card ' + (earned ? 'earned' : 'locked') + '">';
-    html += '<span class="badge-icon">' + b.icon + '</span>';
-    html += '<span class="badge-label">' + b.label + '</span>';
-    html += '<span class="badge-desc text-muted">' + b.desc + '</span>';
+    html += '<span class="badge-icon">' + badgeIcon + '</span>';
+    html += '<span class="badge-label">' + badgeLabel + '</span>';
+    html += '<span class="badge-desc text-muted">' + badgeDesc + '</span>';
     html += '</div>';
   });
   html += '</div>';
@@ -113,12 +184,16 @@ function statsTab() {
 // ── Settings ──
 function settingsTab() {
   var html = '<div class="card"><h2>Settings</h2>';
+  var dailyGoal = pianoToolsClampedNumber(S.dailyGoal, 5, 60, 10);
+  var volumePct = pianoToolsClampedNumber(Math.round(pianoToolsClampedNumber(S.volume, 0, 1, 1) * 100), 0, 100, 100);
+  var reverbPct = pianoToolsClampedNumber(Math.round(pianoToolsClampedNumber(S.reverbAmount, 0, 1, 0) * 100), 0, 100, 0);
+  var a4Tuning = pianoToolsClampedNumber(S.a4Tuning, 432, 446, 440);
 
-  html += '<div class="setting-row"><label>Daily Goal: ' + S.dailyGoal + ' min</label>';
-  html += '<input type="range" min="5" max="60" step="5" value="' + S.dailyGoal + '" onchange="act(\'set_goal\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Daily Goal: ' + dailyGoal + ' min</label>';
+  html += '<input type="range" min="5" max="60" step="5" value="' + dailyGoal + '" onchange="act(\'set_goal\', this.value)"/></div>';
 
-  html += '<div class="setting-row"><label>Volume: ' + Math.round(S.volume * 100) + '%</label>';
-  html += '<input type="range" min="0" max="100" value="' + Math.round(S.volume * 100) + '" onchange="act(\'set_volume\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Volume: ' + volumePct + '%</label>';
+  html += '<input type="range" min="0" max="100" value="' + volumePct + '" onchange="act(\'set_volume\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Tone:</label>';
   html += '<select onchange="act(\'set_tone\', this.value)">';
@@ -138,7 +213,7 @@ function settingsTab() {
   html += '<button class="btn btn-sm ' + (S.focusMode ? 'btn-accent' : 'btn-secondary') + '" onclick="act(\'toggle_focus\')">' + (S.focusMode ? 'ON' : 'OFF') + '</button></div>';
 
   html += '<div class="setting-row"><label>Practice Intention:</label></div>';
-  html += '<input class="intention-input" type="text" placeholder="When I [event], I will open PianoSpark" value="' + escHTML(S.practiceIntention) + '" onchange="act(\'set_intention\',this.value)" style="width:100%" />';
+  html += '<input class="intention-input" type="text" placeholder="When I [event], I will open PianoSpark" value="' + escHTML(pianoNormalizeToolsTextInputValue(S.practiceIntention)) + '" onchange="act(\'set_intention\',this.value)" style="width:100%" />';
 
   // ── MIDI ──
   html += '<h3 style="margin-top:20px">MIDI Input</h3>';
@@ -161,8 +236,8 @@ function settingsTab() {
   // ── Audio ──
   html += '<h3 style="margin-top:20px">Audio</h3>';
 
-  html += '<div class="setting-row"><label>Reverb: ' + Math.round((S.reverbAmount || 0) * 100) + '%</label>';
-  html += '<input type="range" min="0" max="100" value="' + Math.round((S.reverbAmount || 0) * 100) + '" oninput="act(\'set_reverb\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>Reverb: ' + reverbPct + '%</label>';
+  html += '<input type="range" min="0" max="100" value="' + reverbPct + '" oninput="act(\'set_reverb\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Metronome sound:</label>';
   html += '<select onchange="act(\'set_metronome_sound\', this.value)">';
@@ -171,8 +246,8 @@ function settingsTab() {
   });
   html += '</select></div>';
 
-  html += '<div class="setting-row"><label>A4 tuning: ' + (S.a4Tuning || 440) + ' Hz</label>';
-  html += '<input type="range" min="432" max="446" step="1" value="' + (S.a4Tuning || 440) + '" oninput="act(\'set_a4_tuning\', this.value)"/></div>';
+  html += '<div class="setting-row"><label>A4 tuning: ' + a4Tuning + ' Hz</label>';
+  html += '<input type="range" min="432" max="446" step="1" value="' + a4Tuning + '" oninput="act(\'set_a4_tuning\', this.value)"/></div>';
 
   html += '<div class="setting-row"><label>Chord detection:</label>';
   html += '<select onchange="act(\'set_pitch_detection\', this.value)">';
@@ -221,14 +296,20 @@ function clipsTab() {
     clips.slice().reverse().forEach(function(clip, ri) {
       var idx = clips.length - 1 - ri;
       var d = new Date(clip.ts);
-      var time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      var time = isNaN(d.getTime()) ? "Unknown time" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      var duration = pianoToolsFiniteNumber(clip.duration);
+      var clipUrl = pianoFirstToolsHistoryTextToken(clip.url);
       html += '<div class="clip-row">';
       html += '<div class="clip-info">';
       html += '<span class="clip-time">' + time + '</span>';
-      html += '<span class="clip-dur text-muted">' + clip.duration + 's</span>';
+      html += '<span class="clip-dur text-muted">' + (duration != null ? duration + 's' : '-') + '</span>';
       html += '</div>';
       html += '<div class="clip-actions">';
-      html += '<button class="btn btn-sm btn-secondary" onclick="act(\'play_clip\',\'' + clip.url + '\')">\u25B6 Play</button>';
+      if (clipUrl) {
+        html += '<button class="btn btn-sm btn-secondary" onclick="act(\'play_clip\',\'' + clipUrl + '\')">\u25B6 Play</button>';
+      } else {
+        html += '<button class="btn btn-sm btn-secondary" disabled>Unavailable</button>';
+      }
       html += '<button class="btn btn-sm btn-danger" onclick="act(\'delete_clip\',\'' + idx + '\')">Delete</button>';
       html += '</div>';
       html += '</div>';

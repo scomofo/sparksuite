@@ -430,6 +430,121 @@ test("rhythm highway can launch directly from an authored bass module payload", 
   assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["E", "A", "D", "G"]);
 });
 
+test("rhythm highway normalizes app-id instruments for adapter, clock, and loop payloads", function() {
+  global.SparkInstruments = {
+    getAll: function() {
+      return [
+        { id: "ukespark", appId: "ukespark", instrument: "ukulele" }
+      ];
+    }
+  };
+
+  var capturedClockInstrument = null;
+  var capturedAdapter = null;
+  var OriginalTimingEngine = global.SparkTimingEngine;
+  var OriginalGameplayEngine = global.SparkRhythmGameplayEngine;
+
+  global.SparkTimingEngine = function() {};
+  SparkTimingEngine.prototype.createClock = function(instrument) {
+    capturedClockInstrument = instrument;
+    return { getSongTime: function() { return 0; }, close: function() {} };
+  };
+  SparkTimingEngine.prototype.tickToSeconds = function(tempoMap, tick) {
+    return tempoMap && typeof tempoMap.tickToSeconds === "function" ? tempoMap.tickToSeconds(tick) : 0;
+  };
+
+  global.SparkRhythmGameplayEngine = function(options) {
+    capturedAdapter = options.adapter;
+    this.update = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+    this.getSnapshot = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+  };
+
+  try {
+    var payload = new SparkUkuleleRhythmAdapter().createPayload({});
+    payload.adapterType = "ukespark";
+    payload.laneLabels = null;
+
+    var started = startRhythmHighwayPayload(payload, "spark_balanced", {
+      source: "module_exercise",
+      instrument: "ukespark"
+    });
+    var loopSpec = _createRhythmHighwayLoopSpec(payload, { songTimeSec: 0 });
+    var loopPayload = _buildRhythmHighwayLoopPayload(payload, loopSpec);
+
+    assert.strictEqual(started, true);
+    assert.strictEqual(capturedClockInstrument, "ukulele");
+    assert.ok(capturedAdapter instanceof SparkUkuleleRhythmAdapter);
+    assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "ukulele");
+    assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["G", "C", "E", "A"]);
+    assert.strictEqual(loopPayload.adapterType, "ukulele");
+  } finally {
+    global.SparkTimingEngine = OriginalTimingEngine;
+    global.SparkRhythmGameplayEngine = OriginalGameplayEngine;
+    delete global.SparkInstruments;
+  }
+});
+
+test("rhythm highway falls back to the thin active instrument when payloads omit adapter types", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return { appId: "ukespark" };
+    },
+    getAll: function() {
+      return [
+        { id: "ukespark", appId: "ukespark", instrument: "ukulele" }
+      ];
+    }
+  };
+
+  var capturedClockInstrument = null;
+  var capturedAdapter = null;
+  var OriginalTimingEngine = global.SparkTimingEngine;
+  var OriginalGameplayEngine = global.SparkRhythmGameplayEngine;
+
+  global.SparkTimingEngine = function() {};
+  SparkTimingEngine.prototype.createClock = function(instrument) {
+    capturedClockInstrument = instrument;
+    return { getSongTime: function() { return 0; }, close: function() {} };
+  };
+  SparkTimingEngine.prototype.tickToSeconds = function(tempoMap, tick) {
+    return tempoMap && typeof tempoMap.tickToSeconds === "function" ? tempoMap.tickToSeconds(tick) : 0;
+  };
+
+  global.SparkRhythmGameplayEngine = function(options) {
+    capturedAdapter = options.adapter;
+    this.update = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+    this.getSnapshot = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+  };
+
+  try {
+    var payload = new SparkUkuleleRhythmAdapter().createPayload({});
+    delete payload.adapterType;
+    payload.laneLabels = null;
+
+    var started = startRhythmHighwayPayload(payload, "spark_balanced", {
+      source: "module_exercise"
+    });
+
+    assert.strictEqual(started, true);
+    assert.strictEqual(capturedClockInstrument, "ukulele");
+    assert.ok(capturedAdapter instanceof SparkUkuleleRhythmAdapter);
+    assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "ukulele");
+    assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["G", "C", "E", "A"]);
+  } finally {
+    global.SparkTimingEngine = OriginalTimingEngine;
+    global.SparkRhythmGameplayEngine = OriginalGameplayEngine;
+    delete global.SparkInstruments;
+  }
+});
+
 test("bass module can provide rhythm guidance for focused authored drills", function() {
   var guidance = SparkBassModule.getRhythmGuidance("walking_bass", {
     gameplay: { accuracy: 71 / 100 },
@@ -457,6 +572,42 @@ test("rhythm highway results render module-owned bass guidance when available", 
   assert.ok(html.indexOf("Slap Technique") >= 0);
   assert.ok(html.indexOf("thumb") >= 0 || html.indexOf("slap") >= 0);
   assert.ok(html.indexOf("Next:") >= 0);
+});
+
+test("rhythm highway ignores stale cached labels and weak-area text", function() {
+  S.rhythmHighwayResult = null;
+  S.rhythmHighwaySnapshot = {
+    gameplay: { score: 100, maxCombo: 4, accuracy: 0.8 },
+    notes: [{ laneMask: 1, timeSec: 0.5, hit: false, label: "undefined" }],
+    songTimeSec: 0
+  };
+  S.rhythmHighwayHeldMask = 0;
+  S.rhythmHighwayLoop = { label: "null" };
+  S.rhythmHighwayLaunchContext = {
+    instrument: "guitar",
+    label: "undefined",
+    exerciseFocus: "null"
+  };
+
+  var activeHtml = rhythmHighwayPage();
+  assert.ok(activeHtml.indexOf("Focused Drill: current drill") >= 0);
+  assert.ok(activeHtml.indexOf("Looping current window") >= 0);
+  assert.ok(activeHtml.indexOf("undefined") === -1);
+  assert.ok(activeHtml.indexOf("null") === -1);
+
+  S.rhythmHighwayResult = {
+    gameplay: { score: 1200, accuracy: 0.74, maxCombo: 12 },
+    learning: {
+      weakAreas: ["undefined", "wrong_fret", "null"],
+      skills: [{ id: "undefined", delta: 2 }]
+    }
+  };
+
+  var resultHtml = rhythmHighwayPage();
+  assert.ok(resultHtml.indexOf("Focus: rhythm") >= 0);
+  assert.ok(resultHtml.indexOf("wrong fret") >= 0);
+  assert.ok(resultHtml.indexOf("undefined") === -1);
+  assert.ok(resultHtml.indexOf("null") === -1);
 });
 
 test("rhythm gameplay engine produces deterministic results for the same input stream", function() {

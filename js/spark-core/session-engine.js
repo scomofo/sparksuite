@@ -1,5 +1,26 @@
 // js/spark-core/session-engine.js
 (function() {
+  function getLegacySessionActiveInstrument() {
+    var activeInstrument;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    activeInstrument = SparkInstruments.getActive();
+    if (!activeInstrument) return null;
+    if (typeof activeInstrument.getData === "function") return activeInstrument;
+    candidate = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return activeInstrument;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return activeInstrument;
+  }
 
   var SparkSession = {
 
@@ -16,21 +37,22 @@
         console.debug("[SparkSession] buildSession:", mode, "level:", level);
       }
 
+      var activeInstrument = getLegacySessionActiveInstrument();
       var D = opts.instrumentData || {};
       if (!opts.instrumentData) {
-        if (typeof SparkInstrumentAdapter !== "undefined") {
+        if (activeInstrument && typeof activeInstrument.getData === "function") {
+          D = activeInstrument.getData() || {};
+        } else if (typeof SparkInstrumentAdapter !== "undefined") {
           D = SparkInstrumentAdapter.getCurriculum() || {};
-        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-          D = SparkInstruments.getActive().getData();
         }
       }
 
       // Resolve instrument identity for contract
       var instrumentId = opts.instrumentId || null;
       var instrumentType = opts.instrumentType || null;
-      if (!instrumentId && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-        instrumentId = SparkInstruments.getActive().id || null;
-        instrumentType = SparkInstruments.getActive().instrument || null;
+      if (!instrumentId && activeInstrument) {
+        instrumentId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+        instrumentType = activeInstrument.instrument || null;
       }
 
       function wrapPlan(raw) {
@@ -190,6 +212,20 @@
 
       if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
         SparkProgressBridge.applyLegacySessionOutcome(sessionUpdate);
+      } else if (typeof SparkInstrumentProgress !== "undefined") {
+        // Engine-first path: route xp/streak/sessions through
+        // SparkProgress on the per-app profile, which mirrors the
+        // updated stats back into S.* for the dumb-renderer UI.
+        if (sessionUpdate.streak) {
+          SparkInstrumentProgress.updateStreak(sessionUpdate.streak.lastSessionDate);
+          S.lastSessionDate = sessionUpdate.streak.lastSessionDate;
+        }
+        if (sessionUpdate.sessionsDelta) {
+          for (var _si = 0; _si < sessionUpdate.sessionsDelta; _si++) {
+            SparkInstrumentProgress.completeSession("legacy_session");
+          }
+        }
+        if (sessionUpdate.xpDelta) SparkInstrumentProgress.addXp(sessionUpdate.xpDelta);
       } else {
         if (sessionUpdate.streak) {
           S.streak = (S.streak || 0) + sessionUpdate.streak.increment;
@@ -198,25 +234,33 @@
         S.sessions = (S.sessions || 0) + sessionUpdate.sessionsDelta;
         S.xp = (S.xp || 0) + sessionUpdate.xpDelta;
         if (chordName) {
-          if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
-          S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+          if (typeof SparkChordProgress !== "undefined") {
+            SparkChordProgress.add(chordName, sessionUpdate.chordProgress[chordName]);
+          } else {
+            if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
+            S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+          }
         }
       }
 
       // --- Level-up: all chords at current level mastered ---
+      var activeInstrument = getLegacySessionActiveInstrument();
       var D = results.instrumentData || {};
       if (!results.instrumentData) {
-        if (typeof SparkInstrumentAdapter !== "undefined") {
+        if (activeInstrument && typeof activeInstrument.getData === "function") {
+          D = activeInstrument.getData() || {};
+        } else if (typeof SparkInstrumentAdapter !== "undefined") {
           D = SparkInstrumentAdapter.getCurriculum() || {};
-        } else if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive()) {
-          D = SparkInstruments.getActive().getData();
         }
       }
       var levelChords = (D.CHORDS && D.CHORDS[S.level]) || [];
       if (levelChords.length > 0) {
         var allMastered = true;
         for (var i = 0; i < levelChords.length; i++) {
-          if ((S.chordProgress[levelChords[i].name] || 0) < 100) { allMastered = false; break; }
+          var chordPct = typeof SparkChordProgress !== "undefined"
+            ? SparkChordProgress.get(levelChords[i].name)
+            : (S.chordProgress && S.chordProgress[levelChords[i].name] || 0);
+          if (chordPct < 100) { allMastered = false; break; }
         }
         if (allMastered) {
           if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
@@ -236,8 +280,13 @@
 
       // --- Emit event ---
       if (typeof _sparkEmit === "function") {
+        var emitInstrumentId = activeInstrument ? (activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null) : null;
+        var resultInstrumentId = results.instrumentId || results.appId || results.instrumentAppId || null;
         _sparkEmit("practice_session_completed", {
-          appId:     "chordspark",
+          // Preserve legacy "chordspark" fallback so downstream event consumers
+          // that expect a non-null appId don't break when no active instrument
+          // can be resolved.
+          appId:     emitInstrumentId || resultInstrumentId || "chordspark",
           type:      results.type || "session",
           xp:        xpEarned,
           chord:     chordName,

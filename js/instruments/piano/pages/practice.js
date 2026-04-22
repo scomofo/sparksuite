@@ -1,14 +1,38 @@
 /* PianoSpark - Practice tab (home page) */
 
+function pianoPracticeCardTextToken(value) {
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  var text = String(value).trim();
+  if (!text) return "";
+  var lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstPracticeCardTextToken() {
+  for (var i = 0; i < arguments.length; i++) {
+    var text = pianoPracticeCardTextToken(arguments[i]);
+    if (text) return text;
+  }
+  return "";
+}
+
+function pianoNormalizePracticeNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function pianoPracticeTab() {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
+  var D = inst && inst.getData ? inst.getData() : {};
   var CURRICULUM = D.CURRICULUM || [];
   var BADGES = D.BADGES || [];
   var html = '';
+  var practiceIntention = pianoFirstPracticeCardTextToken(S.practiceIntention);
 
   // If-then intention reminder (stickiness #2)
-  if (S.practiceIntention && !S.focusMode) {
-    html += pianoIfThenCard("When I " + S.practiceIntention + ", I will open PianoSpark.");
+  if (practiceIntention && !S.focusMode) {
+    html += pianoIfThenCard("When I " + practiceIntention + ", I will open PianoSpark.");
   }
 
   // Daily goal progress
@@ -29,10 +53,12 @@ function pianoPracticeTab() {
   // Quick start / Resume session card
   var plan = getCurrentSessionPlan();
   if (plan) {
+    var sessionTitle = pianoFirstPracticeCardTextToken(plan.title, "Guided session");
+    var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[plan.level - 1] && CURRICULUM[plan.level - 1].title, "Level");
     html += pianoClickableDiv(
       "act('start_guided_session')",
-      '<h3>Session ' + plan.num + ': ' + escHTML(plan.title) + '</h3>' +
-      '<p>Level ' + plan.level + ' \u2022 ' + escHTML(CURRICULUM[plan.level - 1].title) + '</p>',
+      '<h3>Session ' + plan.num + ': ' + escHTML(sessionTitle) + '</h3>' +
+      '<p>Level ' + plan.level + ' \u2022 ' + escHTML(levelTitle) + '</p>',
       "quick-start"
     );
   }
@@ -58,11 +84,14 @@ function pianoPracticeTab() {
     if (CURRICULUM[j].num === viewLvlNum) { viewedLvl = CURRICULUM[j]; break; }
   }
   if (!viewedLvl) viewedLvl = getCurrentLevel();
+  var viewedLevelTitle = pianoFirstPracticeCardTextToken(viewedLvl && viewedLvl.title, "Level");
+  var viewedLevelDesc = pianoFirstPracticeCardTextToken(viewedLvl && viewedLvl.desc, "Keep going.");
+  var viewedLevelTip = pianoFirstPracticeCardTextToken(viewedLvl && viewedLvl.tip);
   html += '<div class="card">';
-  html += '<h3 style="color:' + levelColor(viewedLvl.num) + '">' + viewedLvl.icon + ' Level ' + viewedLvl.num + ': ' + escHTML(viewedLvl.title) + '</h3>';
-  html += '<p>' + escHTML(viewedLvl.desc) + '</p>';
-  if (viewedLvl.tip) {
-    html += '<div class="text-muted" style="margin-bottom:12px">\u{1F4A1} ' + escHTML(viewedLvl.tip) + '</div>';
+  html += '<h3 style="color:' + levelColor(viewedLvl.num) + '">' + viewedLvl.icon + ' Level ' + viewedLvl.num + ': ' + escHTML(viewedLevelTitle) + '</h3>';
+  html += '<p>' + escHTML(viewedLevelDesc) + '</p>';
+  if (viewedLevelTip) {
+    html += '<div class="text-muted" style="margin-bottom:12px">\u{1F4A1} ' + escHTML(viewedLevelTip) + '</div>';
   }
 
   // Chord cards for the viewed level (or all unlocked when viewing current level)
@@ -90,8 +119,9 @@ function pianoPracticeTab() {
   html += '<div class="custom-sets"><h4>Custom Practice Sets</h4>';
   if (S.customSets.length) {
     S.customSets.forEach(function(set, i) {
+      var setName = pianoFirstPracticeCardTextToken(set && set.name, "Custom Set");
       html += '<div class="custom-set-row">';
-      html += '<button class="btn btn-sm" onclick="act(\'drill_custom\',' + i + ')">' + escHTML(set.name) + ' (' + set.chords.length + ')</button>';
+      html += '<button class="btn btn-sm" onclick="act(\'drill_custom\',' + i + ')">' + escHTML(setName) + ' (' + set.chords.length + ')</button>';
       html += '<button class="btn btn-sm btn-danger" onclick="act(\'del_custom\',' + i + ')">\u2715</button>';
       html += '</div>';
     });
@@ -109,7 +139,7 @@ function pianoPracticeTab() {
     html += '<div class="badges-row">';
     BADGES.forEach(function(b) {
       var earned = S.earned.indexOf(b.id) >= 0;
-      html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(b.desc) + '">' + b.icon + '</span>';
+      html += '<span class="badge ' + (earned ? 'earned' : 'locked') + '" title="' + escHTML(pianoFirstPracticeCardTextToken(b.desc, "Badge")) + '">' + pianoFirstPracticeCardTextToken(b.icon, "\u{1F3C5}") + '</span>';
     });
     html += '</div>';
   }
@@ -124,6 +154,38 @@ function pianoPracticeTab() {
 
 /* Practice Plan section – shows stats, today's plan, and progression overview */
 function practicePlanSection(){
+  function isCompletedPlanItem(item){
+    var value = item ? item.completed : null;
+    return value === true ||
+      value === 1 ||
+      value === "1" ||
+      (typeof value === "string" && value.trim().toLowerCase() === "true");
+  }
+  function getPlanItemId(item){
+    var id = item && typeof item.id === "string" ? item.id.trim() : null;
+    var lower = id ? id.toLowerCase() : "";
+    if(!id || lower === "undefined" || lower === "null" || lower === "nan") return null;
+    return id;
+  }
+  function isRenderablePlanItem(item){
+    var label = prettyPianoPracticePlanToken(item ? item.label : null);
+    var type = prettyPianoPracticePlanToken(item ? item.type : null);
+    var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && !Array.isArray(item.meta) && Object.keys(item.meta).some(function(key) {
+      var value = item.meta[key];
+      if (value == null) return false;
+      if (typeof value === "string") return !!prettyPianoPracticePlanToken(value);
+      if (typeof value === "number" || typeof value === "boolean") return false;
+      if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return false;
+      return true;
+    }));
+    return !!(
+      item &&
+      (getPlanItemId(item) ||
+       label ||
+       type ||
+       metaHasValue)
+    );
+  }
   var h = '';
 
   // Practice stats card
@@ -139,38 +201,116 @@ function practicePlanSection(){
   }
 
   // Today's brain-generated practice plan
-  if(typeof generateDailyPracticePlan === "function"){
-    if(!S.practicePlan) generateDailyPracticePlan();
-    var plan = S.practicePlan;
-    if(plan && plan.items && plan.items.length){
-      h += '<div class="card" style="margin-top:12px">';
-      h += '<div><b>Today\'s Practice Plan</b></div>';
-      for(var i=0;i<plan.items.length;i++){
-        var item = plan.items[i];
-        var done = item.completed ? ' style="opacity:0.5;text-decoration:line-through"' : '';
-        h += '<div class="row"' + done + '>';
-        h += '<span>' + escHTML(item.type) + (item.target ? ' (' + escHTML(item.target) + ')' : '') + '</span>';
-        if(!item.completed){
-          h += '<button class="btn btn-sm" onclick="act(\'practiceStartItem\', \''+item.id+'\')">Start</button>';
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
+  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
+    : S.practicePlan;
+  if(!plan) plan = S.practicePlan;
+  if(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePlanItem)){
+    h += '<div class="card" style="margin-top:12px">';
+    h += '<div><b>Today\'s Practice Plan</b></div>';
+    for(var i=0;i<plan.items.length;i++){
+      var item = plan.items[i];
+      if(!isRenderablePlanItem(item)) continue;
+      var itemId = getPlanItemId(item);
+      var target = item && typeof item.target === "string" ? item.target.trim() : null;
+      var isCompleted = isCompletedPlanItem(item);
+      var done = isCompleted ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+      h += '<div class="row"' + done + '>';
+      h += '<span>' + escHTML(getPianoPracticePlanItemLabel(item)) + (target ? ' (' + escHTML(target) + ')' : '') + '</span>';
+      if(!isCompleted){
+        if(itemId){
+          h += '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))">Start</button>';
         }else{
-          h += '<span class="text-muted">Done</span>';
+          h += '<span class="text-muted">Unavailable</span>';
         }
-        h += '</div>';
+      }else{
+        h += '<span class="text-muted">Done</span>';
       }
       h += '</div>';
     }
+    h += '</div>';
+  } else {
+    h += '<div class="card" style="margin-top:12px">';
+    h += '<div><b>Today\'s Practice Plan</b></div>';
+    h += '<div class="text-muted">No practice plan yet.</div>';
+    h += '</div>';
   }
 
   // Progression mastery summary
   if(typeof getAverageMastery === "function"){
+    var chordsMastery = pianoNormalizePracticeNumber(getAverageMastery("chords"), 0);
+    var rhythmMastery = pianoNormalizePracticeNumber(getAverageMastery("rhythm"), 0);
+    var transitionsMastery = pianoNormalizePracticeNumber(getAverageMastery("transitions"), 0);
+    var scalesMastery = pianoNormalizePracticeNumber(getAverageMastery("scales"), 0);
     h += '<div class="card" style="margin-top:12px">';
     h += '<div><b>Mastery</b></div>';
-    h += '<div>Chords: '+Math.round(getAverageMastery("chords")*100)+'%</div>';
-    h += '<div>Rhythm: '+Math.round(getAverageMastery("rhythm")*100)+'%</div>';
-    h += '<div>Transitions: '+Math.round(getAverageMastery("transitions")*100)+'%</div>';
-    h += '<div>Scales: '+Math.round(getAverageMastery("scales")*100)+'%</div>';
+    h += '<div>Chords: '+Math.round(chordsMastery*100)+'%</div>';
+    h += '<div>Rhythm: '+Math.round(rhythmMastery*100)+'%</div>';
+    h += '<div>Transitions: '+Math.round(transitionsMastery*100)+'%</div>';
+    h += '<div>Scales: '+Math.round(scalesMastery*100)+'%</div>';
     h += '</div>';
   }
 
   return h;
+}
+
+function getPianoPracticePlanItemType(item){
+  var meta = item && item.meta ? item.meta : {};
+  var type = item && item.type ? item.type : null;
+  var exerciseType = meta && typeof meta.exerciseType === "string"
+    ? meta.exerciseType.trim()
+    : meta.exerciseType;
+  if(type === "song" && meta.songId) return "performance_song";
+  if(type === "practice"){
+    if(meta.guidedSession != null) return "guided_session";
+    if(meta.from || meta.to || meta.key) return "transition";
+    if(meta.bpm != null) return "rhythm";
+    if(exerciseType) return exerciseType;
+    if(meta.exerciseId) return "finger";
+  }
+  return type;
+}
+
+function prettyPianoPracticePlanToken(value){
+  var text;
+  var lower;
+  if(value == null) return "";
+  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function firstPrettyPianoPracticePlanToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = prettyPianoPracticePlanToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
+function getPianoPracticePlanItemLabel(item){
+  var meta = item && item.meta ? item.meta : {};
+  var label = prettyPianoPracticePlanToken(item ? item.label : null);
+  return label
+    ? label
+    : firstPrettyPianoPracticePlanToken(
+        meta.exerciseName,
+        meta.songTitle,
+        meta.songId,
+        meta.exerciseFocus,
+        meta.skill,
+        meta.exerciseId,
+        getPianoPracticePlanItemType(item),
+        item && item.type,
+        "practice"
+      );
 }

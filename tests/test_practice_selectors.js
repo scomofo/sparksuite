@@ -34,6 +34,52 @@ function resetState() {
     guidedSession: 1,
     ukuleleSkillProgress: {}
   };
+  var ukuleleModule = {
+    id: "ukespark",
+    appId: "ukespark",
+    name: "Ukulele",
+    instrument: "ukulele",
+    getCurriculumMap: function() {
+      return [
+        { id: "uke_01", title: "First Strum", skill: "down_strum" },
+        { id: "uke_02", title: "Starter Chords", skill: "basic_chords" },
+        { id: "uke_03", title: "Smooth Changes", skill: "chord_switching" },
+        { id: "uke_04", title: "Pattern Flow", skill: "strumming_patterns" },
+        { id: "uke_05", title: "Play a Song", skill: "songs" },
+        { id: "uke_06", title: "Fingerpicked Motion", skill: "fingerpicking" },
+        { id: "uke_07", title: "Melody Notes", skill: "melody" },
+        { id: "uke_08", title: "Campfire Performance", skill: "performance" }
+      ];
+    },
+    getExercises: function(skill) {
+      var map = {
+        down_strum: [{ id: "uke_down_strum_01", type: "strum" }],
+        basic_chords: [{ id: "uke_basic_chords_c", type: "chord" }],
+        chord_switching: [{ id: "uke_switch_c_am", type: "transition" }],
+        strumming_patterns: [{ id: "uke_pattern_island", type: "strum_pattern" }],
+        songs: [{ id: "uke_song_loop_01", type: "song_loop" }],
+        fingerpicking: [{ id: "uke_pick_01", type: "fingerpick" }],
+        melody: [{ id: "uke_melody_01", type: "melody_line" }],
+        performance: [{ id: "uke_perform_01", type: "performance_run" }]
+      };
+      return map[skill] || [];
+    },
+    getPracticeRecommendation: function(lesson, exercise, state) {
+      var hints = {
+        down_strum: { reason: "Lock in steady down-strums before adding movement.", focusTag: "groove", priorityBoost: 0 },
+        fingerpicking: { reason: "Develop independent finger motion with a steady arpeggio pulse.", focusTag: "fingerpicking", priorityBoost: 6 }
+      };
+      var hint = hints[lesson.skill] || { reason: "Continue ukulele progression.", focusTag: "ukulele", priorityBoost: 0 };
+      var completedCount = Array.isArray(state.completedLessonIds) ? state.completedLessonIds.length : 0;
+      var progressEntry = state.ukuleleSkillProgress && lesson.skill ? state.ukuleleSkillProgress[lesson.skill] : null;
+      return {
+        reason: progressEntry ? ("Ukulele timing is at " + Math.round((progressEntry.timing || 0) * 100) + "%, so " + hint.reason.toLowerCase()) : hint.reason,
+        focusTag: hint.focusTag,
+        priorityBoost: hint.priorityBoost + Math.min(4, Math.floor(completedCount / 2)),
+        progressSummary: progressEntry ? { skill: lesson.skill, weakestMetric: "timing", timing: progressEntry.timing } : null
+      };
+    }
+  };
   global.getNextLessonFromCurriculum = function(rootLessonId, completedLessonIds) {
     completedLessonIds = completedLessonIds || [];
     var order = ["uke_01", "uke_02", "uke_03", "uke_04", "uke_05", "uke_06", "uke_07", "uke_08"];
@@ -45,50 +91,10 @@ function resetState() {
   };
   global.SparkInstruments = {
     getActive: function() {
-      return {
-        name: "Ukulele",
-        instrument: "ukulele",
-        getCurriculumMap: function() {
-          return [
-            { id: "uke_01", title: "First Strum", skill: "down_strum" },
-            { id: "uke_02", title: "Starter Chords", skill: "basic_chords" },
-            { id: "uke_03", title: "Smooth Changes", skill: "chord_switching" },
-            { id: "uke_04", title: "Pattern Flow", skill: "strumming_patterns" },
-            { id: "uke_05", title: "Play a Song", skill: "songs" },
-            { id: "uke_06", title: "Fingerpicked Motion", skill: "fingerpicking" },
-            { id: "uke_07", title: "Melody Notes", skill: "melody" },
-            { id: "uke_08", title: "Campfire Performance", skill: "performance" }
-          ];
-        },
-        getExercises: function(skill) {
-          var map = {
-            down_strum: [{ id: "uke_down_strum_01", type: "strum" }],
-            basic_chords: [{ id: "uke_basic_chords_c", type: "chord" }],
-            chord_switching: [{ id: "uke_switch_c_am", type: "transition" }],
-            strumming_patterns: [{ id: "uke_pattern_island", type: "strum_pattern" }],
-            songs: [{ id: "uke_song_loop_01", type: "song_loop" }],
-            fingerpicking: [{ id: "uke_pick_01", type: "fingerpick" }],
-            melody: [{ id: "uke_melody_01", type: "melody_line" }],
-            performance: [{ id: "uke_perform_01", type: "performance_run" }]
-          };
-          return map[skill] || [];
-        },
-        getPracticeRecommendation: function(lesson, exercise, state) {
-          var hints = {
-            down_strum: { reason: "Lock in steady down-strums before adding movement.", focusTag: "groove", priorityBoost: 0 },
-            fingerpicking: { reason: "Develop independent finger motion with a steady arpeggio pulse.", focusTag: "fingerpicking", priorityBoost: 6 }
-          };
-          var hint = hints[lesson.skill] || { reason: "Continue ukulele progression.", focusTag: "ukulele", priorityBoost: 0 };
-          var completedCount = Array.isArray(state.completedLessonIds) ? state.completedLessonIds.length : 0;
-          var progressEntry = state.ukuleleSkillProgress && lesson.skill ? state.ukuleleSkillProgress[lesson.skill] : null;
-          return {
-            reason: progressEntry ? ("Ukulele timing is at " + Math.round((progressEntry.timing || 0) * 100) + "%, so " + hint.reason.toLowerCase()) : hint.reason,
-            focusTag: hint.focusTag,
-            priorityBoost: hint.priorityBoost + Math.min(4, Math.floor(completedCount / 2)),
-            progressSummary: progressEntry ? { skill: lesson.skill, weakestMetric: "timing", timing: progressEntry.timing } : null
-          };
-        }
-      };
+      return ukuleleModule;
+    },
+    getAll: function() {
+      return [ukuleleModule];
     }
   };
 }
@@ -201,6 +207,18 @@ test("selectInstrumentModuleCandidate returns the next ukulele lesson focus", fu
   assert.ok(candidate.reason.indexOf("down-strums") >= 0);
 });
 
+test("selectInstrumentModuleCandidate rehydrates an app-id-only active instrument shell", function() {
+  SparkInstruments.getActive = function() {
+    return { appId: "ukespark" };
+  };
+
+  var candidate = selectInstrumentModuleCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.lessonId, "uke_01");
+  assert.strictEqual(candidate.meta.instrument, "ukulele");
+});
+
 test("buildPracticeCandidates includes the module-driven ukulele candidate", function() {
   var candidates = buildPracticeCandidates();
 
@@ -209,11 +227,17 @@ test("buildPracticeCandidates includes the module-driven ukulele candidate", fun
 });
 
 test("buildPracticeCandidates includes imported-technique focus when imported chart weakness is present", function() {
+  // Bucket carries an explicit `instrument` stamp matching the active
+  // instrument (ukulele per the test fixture). Real buckets get this
+  // field at write time in js/performance/progression.js; the resolver
+  // no longer falls back to the active instrument on pure reads because
+  // that was the source of the "bass plan recommends ukulele" bug.
   S.performanceStats = {
     imported_song_imported_chart_normal: {
       songId: "imported_song",
       arrangement: "imported_chart",
       difficulty: "normal",
+      instrument: "ukulele",
       bestAccuracy: 81,
       runs: 4,
       importedTechniqueTotals: {

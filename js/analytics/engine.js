@@ -23,7 +23,7 @@
   }
 
   function getWeakTransitions(){
-    var ts = S.transitionStats || {};
+    var ts = typeof SparkTransitionStats !== "undefined" ? SparkTransitionStats.all() : (S.transitionStats || {});
     var arr = [];
     for(var key in ts){
       var row = ts[key];

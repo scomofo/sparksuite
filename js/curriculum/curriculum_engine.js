@@ -1,5 +1,27 @@
 (function(){
 
+  function getActiveCurriculumInstrument() {
+    var inst;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    inst = SparkInstruments.getActive();
+    if (!inst) return null;
+    if (typeof inst.getCurriculumMap === "function") return inst;
+    candidate = inst.id || inst.appId || inst.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return inst;
+  }
+
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
     var curriculum = getCurriculumItem("curriculums", curriculumId);
     if(!curriculum) return null;
@@ -26,7 +48,9 @@
     var rules = lesson.unlockRules;
 
     if(rules.lessonsCompleted && Array.isArray(rules.lessonsCompleted)){
-      var completedLessons = (S.mastery && S.mastery.lessons) || {};
+      var completedLessons = typeof SparkMastery !== "undefined"
+        ? SparkMastery.category("lessons")
+        : ((S.mastery && S.mastery.lessons) || {});
       for(var i=0;i<rules.lessonsCompleted.length;i++){
         if(!completedLessons[rules.lessonsCompleted[i]]) return false;
       }
@@ -37,7 +61,9 @@
     }
 
     if(rules.mastery && rules.mastery.chords){
-      var chordMastery = (S.mastery && S.mastery.chords) || {};
+      var chordMastery = typeof SparkMastery !== "undefined"
+        ? SparkMastery.category("chords")
+        : ((S.mastery && S.mastery.chords) || {});
       for(var j=0;j<rules.mastery.chords.length;j++){
         if(!chordMastery[rules.mastery.chords[j]]) return false;
       }
@@ -73,7 +99,10 @@
       var lessonMastery = {};
 
       // Read mastery data from global state or userContext
-      if (typeof S !== "undefined" && S.mastery) {
+      if (typeof SparkMastery !== "undefined") {
+        chordMastery = SparkMastery.category("chords");
+        lessonMastery = SparkMastery.category("lessons");
+      } else if (typeof S !== "undefined" && S.mastery) {
         chordMastery = S.mastery.chords || {};
         lessonMastery = S.mastery.lessons || {};
       }
@@ -81,7 +110,9 @@
       if (userContext.lessonMastery) lessonMastery = userContext.lessonMastery;
 
       // Find chords below mastery threshold (below 75 = needs review)
-      var chordProgress = (typeof S !== "undefined" && S.chordProgress) ? S.chordProgress : {};
+      var chordProgress = typeof SparkChordProgress !== "undefined"
+        ? SparkChordProgress.all()
+        : ((typeof S !== "undefined" && S.chordProgress) || {});
       for (var chordName in chordProgress) {
         if (!Object.prototype.hasOwnProperty.call(chordProgress, chordName)) continue;
         var progress = chordProgress[chordName];
@@ -122,11 +153,12 @@
       var completedLessons = [];
       if (typeof S !== "undefined") {
         completedLessons = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-        if (S.mastery && S.mastery.lessons) {
-          for (var lessonId in S.mastery.lessons) {
-            if (S.mastery.lessons[lessonId] && completedLessons.indexOf(lessonId) === -1) {
-              completedLessons.push(lessonId);
-            }
+        var lessonMasteryMap = typeof SparkMastery !== "undefined"
+          ? SparkMastery.category("lessons")
+          : ((S.mastery && S.mastery.lessons) || {});
+        for (var lessonId in lessonMasteryMap) {
+          if (lessonMasteryMap[lessonId] && completedLessons.indexOf(lessonId) === -1) {
+            completedLessons.push(lessonId);
           }
         }
       }
@@ -134,7 +166,7 @@
       // Try to find next lesson from active instrument's curriculum map
       // currMap is an array of lesson/level objects (not a curriculum root ID),
       // so iterate directly for the first incomplete lesson.
-      var inst = typeof SparkInstruments !== "undefined" ? SparkInstruments.getActive() : null;
+      var inst = getActiveCurriculumInstrument();
       if (inst) {
         var currMap = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
         for (var ci = 0; ci < currMap.length; ci++) {

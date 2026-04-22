@@ -1,3 +1,26 @@
+function prettyHomeCardToken(value){
+  var text;
+  var lower;
+  if(value == null) return "";
+  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function buildHomeCardEntryLabel(primary, fallback) {
+  return prettyHomeCardToken(primary) || prettyHomeCardToken(fallback);
+}
+
+function buildHomeWeakSkillLabel(entry) {
+  var bucket = prettyHomeCardToken(entry && entry.bucket);
+  var id = prettyHomeCardToken(entry && entry.id);
+  if (bucket && id) return bucket + ": " + id;
+  return bucket || id || "";
+}
+
 function renderHomeProfileCard(data){
   var h = '<div class="card">';
   h += '<div><b>Profile</b></div>';
@@ -16,7 +39,9 @@ function renderHomePracticeCard(data){
     h += '<div>No plan yet.</div>';
   }
   for(var i=0;i<plan.length;i++){
-    h += '<div>'+escHTML(plan[i].title || plan[i].id)+'</div>';
+    var itemLabel = buildHomeCardEntryLabel(plan[i] && plan[i].title, plan[i] && plan[i].id);
+    if(!itemLabel) continue;
+    h += '<div>'+escHTML(itemLabel)+'</div>';
   }
   h += '<button onclick="act(\'openPracticePlan\')">Open Plan</button>';
   h += '</div>';
@@ -28,7 +53,10 @@ function renderHomeRecommendationCard(arr){
   h += '<div><b>Recommended Next</b></div>';
   for(var i=0;i<arr.length;i++){
     if(!arr[i]) continue;
-    h += '<div>'+escHTML(arr[i].title || '')+'</div>';
+    var title = buildHomeCardEntryLabel(arr[i].title, arr[i].id);
+    if(title){
+      h += '<div>'+escHTML(title)+'</div>';
+    }
     h += renderHomeRecommendationDetail(arr[i]);
   }
   h += '<button onclick="act(\'openRecommendations\')">View</button>';
@@ -40,19 +68,21 @@ function renderHomeRecommendationDetail(item){
   if(!item) return "";
   if(item.source === "module_progress" && item.meta){
     var parts = [];
-    if(item.meta.recommendationFocus){
-      parts.push("Focus: " + item.meta.recommendationFocus.replace(/_/g, " "));
+    var focus = prettyHomeCardToken(item.meta.recommendationFocus);
+    if(focus){
+      parts.push("Focus: " + focus);
     }
     var summary = item.meta.progressSummary;
-    if(summary && summary.weakestMetric && typeof summary[summary.weakestMetric] === "number"){
-      parts.push("Weakest: " + summary.weakestMetric.replace(/_/g, " ") + " " + Math.round(summary[summary.weakestMetric] * 100) + "%");
+    var weakestMetric = prettyHomeCardToken(summary && summary.weakestMetric);
+    if(summary && weakestMetric && typeof summary[summary.weakestMetric] === "number"){
+      parts.push("Weakest: " + weakestMetric + " " + Math.round(summary[summary.weakestMetric] * 100) + "%");
     }
     if(parts.length){
       return '<div style="font-size:12px;color:#8fd5c4">' + escHTML(parts.join(" | ")) + '</div>';
     }
   }
   if(item.type === "performance_technique" && item.meta){
-    var technique = item.meta.techniqueKey ? String(item.meta.techniqueKey).replace(/_/g, " ") : "technique";
+    var technique = prettyHomeCardToken(item.meta.techniqueKey) || "technique";
     var accuracy = typeof item.meta.techniqueAccuracy === "number" ? item.meta.techniqueAccuracy + "%" : null;
     var bits = ["Technique: " + technique];
     if(accuracy) bits.push("Accuracy: " + accuracy);
@@ -103,13 +133,15 @@ function renderHomeInsightCard(data){
   var h = '<div class="card">';
   h += '<div><b>Insights</b></div>';
   var focused = data && data.recommendationQuality ? data.recommendationQuality.focusedTechnique : null;
-  if(focused){
-    h += '<div>Focus: '+escHTML(buildHomeFocusedTechniqueLabel(focused))+'</div>';
+  var focusedLabel = buildHomeFocusedTechniqueLabel(focused);
+  if(focusedLabel){
+    h += '<div>Focus: '+escHTML(focusedLabel)+'</div>';
   }
   var ws = (data && data.weakestSkills) || [];
-  if(ws.length){
-    h += '<div>Weakest: '+escHTML(ws[0].bucket+': '+ws[0].id)+'</div>';
-  }else if(!focused){
+  var weakestLabel = ws.length ? buildHomeWeakSkillLabel(ws[0]) : "";
+  if(weakestLabel){
+    h += '<div>Weakest: '+escHTML(weakestLabel)+'</div>';
+  }else if(!focusedLabel){
     h += '<div>Practice more to see insights.</div>';
   }
   h += '<button onclick="act(\'openInsights\')">View</button>';
@@ -119,8 +151,10 @@ function renderHomeInsightCard(data){
 
 function buildHomeFocusedTechniqueLabel(focused){
   if(!focused) return "";
-  var songLabel = String(focused.songId || "song").replace(/_/g, " ");
-  return focused.techniqueLabel + " " + focused.accuracy + "% in " + songLabel;
+  var songLabel = prettyHomeCardToken(focused.songId) || "song";
+  var techniqueLabel = prettyHomeCardToken(focused.techniqueLabel) || "skill";
+  var accuracy = typeof focused.accuracy === "number" && isFinite(focused.accuracy) ? focused.accuracy : 0;
+  return techniqueLabel + " " + accuracy + "% in " + songLabel;
 }
 
 function renderHomeEventCard(data){

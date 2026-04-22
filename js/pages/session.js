@@ -1,5 +1,27 @@
 // ===== ChordSpark: Active session/screen pages =====
 
+function getSessionPageInstrument(){
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 function getSparkCoreRuntimeState(){
   if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
   var view = window.sparkCore.getActiveSessionView();
@@ -14,6 +36,15 @@ function findInstrumentChordByName(D, chordName){
     if (chord.name === chordName || chord.short === chordName) return chord;
   }
   return null;
+}
+
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizeSessionNumber(value, fallback){ return SparkNormalize.number(value, fallback); }
+
+function formatSessionBpm(value, fallback){
+  var bpm = normalizeSessionNumber(value, null);
+  if (bpm == null) return fallback;
+  return String(Math.round(bpm));
 }
 
 function getLegacySessionRuntime(D){
@@ -52,9 +83,18 @@ function getSessionMetronomeRuntime(){
   var runtime = getSparkCoreRuntimeState();
   return {
     active: typeof S.metronomeOn === "boolean" ? S.metronomeOn : !!(runtime && runtime.metronomeActive),
-    bpm: typeof S.metronomeBpm === "number" ? S.metronomeBpm : (runtime && typeof runtime.metronomeBpm === "number" ? runtime.metronomeBpm : 80),
-    beat: typeof S._metroBeat === "number" ? S._metroBeat : (runtime && typeof runtime.metronomeBeat === "number" ? runtime.metronomeBeat : 0),
-    beatsPerBar: typeof S._metroBeats === "number" ? S._metroBeats : (runtime && typeof runtime.metronomeBeatsPerBar === "number" ? runtime.metronomeBeatsPerBar : 4)
+    bpm: normalizeSessionNumber(
+      typeof S.metronomeBpm === "number" ? S.metronomeBpm : (runtime ? runtime.metronomeBpm : null),
+      80
+    ),
+    beat: normalizeSessionNumber(
+      typeof S._metroBeat === "number" ? S._metroBeat : (runtime ? runtime.metronomeBeat : null),
+      0
+    ),
+    beatsPerBar: normalizeSessionNumber(
+      typeof S._metroBeats === "number" ? S._metroBeats : (runtime ? runtime.metronomeBeatsPerBar : null),
+      4
+    )
   };
 }
 
@@ -69,10 +109,32 @@ function getSessionChordDetectRuntime(){
   };
 }
 
+function _normalizeSessionSongTextToken(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function _firstSessionSongTextToken(){
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = _normalizeSessionSongTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
 // ===== SESSION PAGES =====
 function sessionPage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getSessionPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var runtime = getLegacySessionRuntime(D);
   var c = runtime.chord;
   if(!c)return '';
@@ -128,23 +190,29 @@ function sessionPage(){
   }else{h+='<div style="text-align:center;color:var(--text-muted);font-size:12px">Enable mic to check your chord</div>';}
   h+='</div></div>';
   h+='<div class="card mb16" style="text-align:left"><h4 style="margin:0 0 6px;color:var(--text-primary);font-size:14px">&#128161; Tips</h4><p style="margin:0;font-size:13px;color:var(--text-label);line-height:1.5">Press firmly behind the fret. Strum each string to check for buzz. Keep your thumb relaxed!</p></div>';
-  if(S.practiceIntention){
-    h+='<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(S.practiceIntention)+', I open ChordSpark.&#8221;</div>';
+  var practiceIntention = _firstSessionSongTextToken(S.practiceIntention);
+  if(practiceIntention){
+    h+='<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(practiceIntention)+', I open ChordSpark.&#8221;</div>';
   }
   h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div></div>';
   return h;
 }
 
 function completePage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getSessionPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var runtime = getLegacySessionRuntime(D);
-  var n=runtime.chord?runtime.chord.name:"",p=S.chordProgress[n]||0;
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+(S.xpToast&&S.xpToast.amount?S.xpToast.amount:10)+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+S.streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="flex-col"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
+  var n=runtime.chord?runtime.chord.name:"";
+  var p=normalizeSessionNumber(SparkChordProgress.get(n), 0);
+  var xpAmount = normalizeSessionNumber(S.xpToast && S.xpToast.amount, 10);
+  var streak = normalizeSessionNumber(S.streak, 0);
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+xpAmount+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="flex-col"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
 }
 
 function drillPage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getSessionPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var runtime = getLegacyDrillRuntime(D);
   if(runtime.chords.length<2)return '';
   var drillIdx = typeof S.drillIdx === "number" ? S.drillIdx : 0;
@@ -156,7 +224,7 @@ function drillPage(){
   h+='<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">Switch Drill &#9889;</h2>';
   h+='<div style="display:flex;justify-content:center;gap:20px;align-items:center;margin-bottom:12px"><span id="drill-timer-ring">'+ringHTML((1-drillTimer/60)*100,70,6,"#FF6B6B",'<div style="font-size:18px;font-weight:900;color:var(--text-primary)">'+drillTimer+'s</div>',"Drill timer")+'</span>';
   h+='<div><div id="drill-switch-count" style="font-size:32px;font-weight:900;color:#4ECDC4">'+S.drillSwitches+'</div><div style="font-size:11px;color:var(--text-muted)">switches</div></div>';
-  h+='<div style="text-align:center"><div id="drill-adaptive-bpm" style="font-size:18px;font-weight:900;color:#FFE66D">'+S.drillAdaptiveBpm+'</div><div style="font-size:11px;color:var(--text-muted)">target BPM</div></div></div>';
+  h+='<div style="text-align:center"><div id="drill-adaptive-bpm" style="font-size:18px;font-weight:900;color:#FFE66D">'+formatSessionBpm(S.drillAdaptiveBpm, "0")+'</div><div style="font-size:11px;color:var(--text-muted)">target BPM</div></div></div>';
   h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
   h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+D.LC[S.level]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+UI.chord(c,180,null,drillChanged)+'</div>';
   _prevChordKey=c.name;
@@ -189,7 +257,8 @@ function dailyPage(){
 }
 
 function quizPage(){
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getSessionPageInstrument();
+  var UI = inst && inst.ui ? inst.ui : {};
   var runtime = null;
   if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
     var view = window.sparkCore.getActiveSessionView();
@@ -198,9 +267,9 @@ function quizPage(){
   var quizQuestion = S.quizQ || (runtime && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : null);
   var quizOptions = Array.isArray(S.quizOpts) && S.quizOpts.length ? S.quizOpts : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
   var quizAnswer = typeof S.quizAns === "string" ? S.quizAns : (runtime ? runtime.legacyQuizAnswer : null);
-  var quizScore = typeof S.quizScore === "number" ? S.quizScore : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
-  var quizTotal = typeof S.quizTotal === "number" ? S.quizTotal : (runtime && typeof runtime.legacyQuizTotal === "number" ? runtime.legacyQuizTotal : 0);
-  var quizStreak = typeof S.quizStreak === "number" ? S.quizStreak : (runtime && typeof runtime.legacyQuizStreak === "number" ? runtime.legacyQuizStreak : 0);
+  var quizScore = normalizeSessionNumber(S.quizScore, normalizeSessionNumber(runtime && runtime.legacyQuizScore, 0));
+  var quizTotal = normalizeSessionNumber(S.quizTotal, normalizeSessionNumber(runtime && runtime.legacyQuizTotal, 0));
+  var quizStreak = normalizeSessionNumber(S.quizStreak, normalizeSessionNumber(runtime && runtime.legacyQuizStreak, 0));
   if(!quizQuestion)return '';
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'quiz\')">&#8592; Back</button><div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+quizScore+'/'+quizTotal+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+quizStreak+'</span></div></div>';
   h+='<h2 style="font-size:28px;font-weight:900;color:var(--text-primary);margin:8px 0 4px">Which is...</h2><div style="font-size:36px;font-weight:900;color:#FF6B6B;margin-bottom:16px">'+quizQuestion.name+'?</div>';
@@ -229,10 +298,11 @@ function strumDetailPage(){
     ? (typeof S._strumBeat === "number" ? S._strumBeat : (runtime && typeof runtime.legacyStrumBeat === "number" ? runtime.legacyStrumBeat : -1))
     : -1;
   var curDir=curBeat>=0?sp.pattern[curBeat]:"x";
+  var strumBpm = formatSessionBpm(sp.bpm, "--");
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button>';
   h+='<h2 style="font-size:24px;font-weight:900;color:var(--text-primary);margin:8px 0">'+sp.name+'</h2>';
   h+='<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">'+sp.desc+'</p>';
-  h+='<div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:20px">'+sp.bpm+' BPM</div>';
+  h+='<div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:20px">'+strumBpm+' BPM</div>';
   // Strum hand animation
   h+='<div class="flex-center mb12">'+strumHandSVG(curDir,strumActive)+'</div>';
   h+='<div class="card mb20" style="padding:24px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sp.pattern,curBeat)+'</div></div>';
@@ -250,19 +320,23 @@ function strumDetailPage(){
 }
 
 function songDetailPage(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getSessionPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
   var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var sg = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : S.selectedSong;
   if(!sg)return '';
+  var songTitle = _firstSessionSongTextToken(sg.title, sg.songTitle, sg.id, "Song");
+  var songArtist = _firstSessionSongTextToken(sg.artist, "Unknown Artist");
+  var songBpm = formatSessionBpm(sg.bpm, "--");
   var songPlaying = songRuntime && typeof songRuntime.songPlaying === "boolean" ? songRuntime.songPlaying : S.songPlaying;
   var songBeat = songRuntime && typeof songRuntime.songBeat === "number" ? songRuntime.songBeat : S.songBeat;
   var patBeat=songPlaying?(songBeat%sg.pattern.length):-1;
   var curDir=patBeat>=0?sg.pattern[patBeat]:"x";
-  var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(sg.title)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(sg.artist)+' &#8226; '+sg.bpm+' BPM</p>';
+  var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(songTitle)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(songArtist)+' &#8226; '+songBpm+' BPM</p>';
   h+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
   for(var i=0;i<sg.chords.length;i++)
     h+='<span style="background:var(--chip-bg);padding:4px 12px;border-radius:10px;font-size:13px;font-weight:700;color:var(--chip-color)">'+escHTML(sg.chords[i])+'</span>';
@@ -301,6 +375,16 @@ function songDonePage(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var t=songRuntime && songRuntime.songSessionData ? escHTML(songRuntime.songSessionData.title || "") : (S.selectedSong?escHTML(S.selectedSong.title):"");
+  var runtimeSong = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : null;
+  var selectedSong = S.selectedSong || null;
+  var t = escHTML(_firstSessionSongTextToken(
+    runtimeSong && runtimeSong.title,
+    runtimeSong && runtimeSong.songTitle,
+    runtimeSong && runtimeSong.id,
+    selectedSong && selectedSong.title,
+    selectedSong && selectedSong.songTitle,
+    selectedSong && selectedSong.id,
+    "this song"
+  ));
   return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#127925;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Song Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px">You played <strong>'+t+'</strong></p><div class="card mb20"><div style="font-size:28px;font-weight:900;color:#FFE66D">+40 XP</div></div><button class="btn" onclick="act(\'songDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div>';
 }

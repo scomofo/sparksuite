@@ -77,11 +77,11 @@
       items.push({
         id: segments[i].id,
         type: segments[i].type,
-        label: segments[i].label || segments[i].type || "Practice item",
-        desc: segments[i].desc || "",
-        durationSec: segments[i].durationSec || 0,
+        label: segments[i].label,
+        desc: segments[i].desc,
+        durationSec: segments[i].durationSec,
         completed: !!segments[i].completed,
-        meta: clone(segments[i].meta || {})
+        meta: segments[i].meta != null ? clone(segments[i].meta) : undefined
       });
     }
 

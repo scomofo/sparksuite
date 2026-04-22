@@ -1,6 +1,44 @@
 // ===== ChordSpark: Guided Session Pages =====
 // Mirrors PianoSpark's 5-phase session flow: Spark → Review → NewMove → SongSlice → VictoryLap
 // NewMove uses Watch→Shadow→Try→Refine (stickiness technique #3)
+function getGuidedPageInstrument() {
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizeGuidedTextToken(value) { return SparkNormalize.textToken(value); }
+
+function firstGuidedTextToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = normalizeGuidedTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
+// Wrappers — see js/utils/normalize.js for canonical implementations.
+function normalizeGuidedBpm(value, fallback) { return SparkNormalize.positiveInt(value, fallback); }
+function normalizeGuidedCount(value, fallback) { return SparkNormalize.integer(value, fallback); }
 
 function guidedStepIndicator(step) {
   var steps = [
@@ -51,12 +89,15 @@ function guidedSessionPage() {
   var guidedView = getGuidedSessionView();
   var plan = guidedView.plan;
   var guidedStep = guidedView.guidedStep;
+  var guidedBpm;
   if (!plan) return '<div class="card text-center"><p>No session loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  var guidedTitle = firstGuidedTextToken(plan.title, plan.id, "Guided session");
+  guidedBpm = normalizeGuidedBpm(plan.bpm, 80);
 
   var h = '<div class="text-center">';
   h += '<button class="back-btn" onclick="if(confirm(\'End session early?\'))act(\'guidedStop\')">&#8592; Exit</button>';
-  h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(plan.title) + '</h2>';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + plan.bpm + ' BPM</div>';
+  h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
 
   h += guidedStepIndicator(guidedStep);
 
@@ -75,9 +116,10 @@ function guidedSessionPage() {
 }
 
 function _guidedSpark(plan) {
+  var sparkText = firstGuidedTextToken(plan.spark && plan.spark.text, "Let's get started.");
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#10024; Spark</h3>';
-  h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(plan.spark.text) + '</p>';
+  h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(sparkText) + '</p>';
   if (plan.ifThen) {
     h += '<div style="background:var(--input-bg);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;' + escHTML(plan.ifThen) + '&#8221;</div>';
   }
@@ -87,8 +129,10 @@ function _guidedSpark(plan) {
 }
 
 function _guidedReview(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getGuidedPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
+  var reviewText = firstGuidedTextToken(plan.review && plan.review.text, "Take a quick review pass.");
   if (!plan.review) {
     return '<div class="card mb16"><h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>' +
       '<p style="color:var(--text-muted)">No review for this session \u2014 it\'s your first!</p>' +
@@ -96,7 +140,7 @@ function _guidedReview(plan) {
   }
   var h = '<div class="card mb16" style="border-left:4px solid #4ECDC4">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>';
-  h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(plan.review.text) + '</p>';
+  h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(reviewText) + '</p>';
   // Show review chord diagrams
   if (plan.review.chords) {
     h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">';
@@ -116,9 +160,12 @@ function _guidedReview(plan) {
 }
 
 function _guidedNewMove(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getGuidedPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var guidedView = getGuidedSessionView();
+  var newMoveText = firstGuidedTextToken(plan.newMove && plan.newMove.text, "Practice the new move slowly and cleanly.");
+  var guidedBpm = normalizeGuidedBpm(plan && plan.bpm, 80);
   if (!plan.newMove) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FF6B6B;font-weight:800">&#127919; New Move</h3>';
@@ -151,13 +198,13 @@ function _guidedNewMove(plan) {
       break;
 
     case "try":
-      h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(plan.newMove.text) + '</p>';
+      h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(newMoveText) + '</p>';
       if (ch) {
         h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 180) + '</div>';
         h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:8px">&#128264; Listen</button><br>';
       }
       if (plan.newMove.strum) {
-        h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Strum: <strong>' + escHTML(plan.newMove.strum) + '</strong> at ' + plan.bpm + ' BPM</div>';
+        h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Strum: <strong>' + escHTML(plan.newMove.strum) + '</strong> at ' + guidedBpm + ' BPM</div>';
       }
       h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">I Can Play It &#8594;</button>';
       break;
@@ -183,12 +230,14 @@ function _guidedNewMove(plan) {
 }
 
 function _guidedSongSlice(plan) {
+  var songSliceText = firstGuidedTextToken(plan.songSlice && plan.songSlice.text, "Play this short song slice with steady timing.");
+  var songSliceTitle = firstGuidedTextToken(plan.songSlice && plan.songSlice.song);
   if (!plan.songSlice) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #45B7D1">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#45B7D1;font-weight:800">&#127925; Song Slice</h3>';
-  h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(plan.songSlice.text) + '</p>';
-  if (plan.songSlice.song) {
-    h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:12px">&#127926; ' + escHTML(plan.songSlice.song) + '</div>';
+  h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(songSliceText) + '</p>';
+  if (songSliceTitle) {
+    h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:12px">&#127926; ' + escHTML(songSliceTitle) + '</div>';
   }
   h += '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">';
   h += '<button class="btn" onclick="act(\'toggleMetro\')" style="padding:8px 16px;font-size:13px;background:' + (S.metronomeOn ? '#FFE66D' : '#4ECDC4') + ';color:' + (S.metronomeOn ? '#333' : '#fff') + '">' + (S.metronomeOn ? '&#9632; Metro' : '&#9654; Metro') + '</button>';
@@ -199,12 +248,14 @@ function _guidedSongSlice(plan) {
 }
 
 function _guidedVictoryLap(plan) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getGuidedPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
+  var victoryText = firstGuidedTextToken(plan.victoryLap && plan.victoryLap.text, "Give it one confident final pass.");
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D;background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#127942; Victory Lap!</h3>';
-  h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(plan.victoryLap.text) + '</p>';
+  h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(victoryText) + '</p>';
   // Show the session's main chord
   var ch = null;
   if (plan.newMove) {
@@ -226,17 +277,19 @@ function guidedDonePage() {
     ? window.sparkCore.getActiveSessionView()
     : null;
   var lastOutcome = coreView && coreView.lastSessionOutcome ? coreView.lastSessionOutcome : null;
-  var title = plan ? plan.title : "";
+  var title = plan ? firstGuidedTextToken(plan.title, plan.id, "Guided session") : "";
   var num = plan ? plan.num : 0;
-  var xpAwarded = lastOutcome && typeof lastOutcome.xpAwarded === "number" ? lastOutcome.xpAwarded : 30;
+  var xpAwarded = normalizeGuidedCount(lastOutcome && lastOutcome.xpAwarded, 30);
+  var streak = normalizeGuidedCount(S.streak, 0);
+  var completedSessions = Array.isArray(S.completedGuidedSessions) ? S.completedGuidedSessions.length : 0;
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127881;</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Session ' + num + ' Complete!</h2>';
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(title) + '</p>';
   h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + S.streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + (S.completedGuidedSessions ? S.completedGuidedSessions.length : 0) + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
   h += '</div></div>';
   h += '<div class="flex-col"><button class="btn" onclick="act(\'guidedStart\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';

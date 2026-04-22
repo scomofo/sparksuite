@@ -362,6 +362,7 @@ function _updatePerformDisplay() {
   // Initialize canvas highway on first frame
   var canvas = document.getElementById("spark-highway-canvas");
   if (canvas) {
+    if (typeof ensureSparkHighway === "function") ensureSparkHighway(canvas, S.performChart);
     if (S.performChart) { feedChartToHighway(S.performChart); }
     feedChartToHighway(S.performChart);
     updateSparkHighway(S.performCurrentSec, S.performCombo);
@@ -461,43 +462,91 @@ function _updatePerformanceAccuracy(chart) {
   S.performAccuracy = scored > 0 ? Math.round((hits / scored) * 100) : 0;
 }
 
+function resolvePerformanceInstrumentEntry(candidate) {
+  if (!candidate) return null;
+  var key = null;
+  if (typeof candidate === "string") {
+    key = candidate;
+    candidate = { id: key, appId: key, instrument: key };
+  } else {
+    key = candidate.id || candidate.appId || candidate.instrumentId || candidate.instrument || null;
+  }
+  if (typeof SparkInstruments === "undefined" || typeof SparkInstruments.getAll !== "function" || !key) {
+    return candidate;
+  }
+  var entries = SparkInstruments.getAll() || [];
+  for (var i = 0; i < entries.length; i++) {
+    var entry = entries[i] || {};
+    if (entry.id === key || entry.appId === key || entry.instrument === key) return entry;
+  }
+  return candidate;
+}
+
+function resolvePerformanceStemTarget() {
+  var activeInstrument = typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function"
+    ? resolvePerformanceInstrumentEntry(SparkInstruments.getActive())
+    : null;
+  var chartInstrument = S.performChart
+    ? resolvePerformanceInstrumentEntry(S.performChart.instrument || S.performChart.instrumentType || S.performChart.adapterType || null)
+    : null;
+  var instrumentType = activeInstrument && activeInstrument.instrument
+    ? activeInstrument.instrument
+    : (chartInstrument && chartInstrument.instrument ? chartInstrument.instrument : null);
+  var stemPreset = activeInstrument && activeInstrument.stemMutePreset
+    ? activeInstrument.stemMutePreset
+    : (chartInstrument && chartInstrument.stemMutePreset ? chartInstrument.stemMutePreset : null);
+  var defaultStemByInstrument = {
+    guitar: "guitar",
+    ukulele: "guitar",
+    bass: "bass",
+    piano: "piano",
+    drums: "drums"
+  };
+  var preferredStem = defaultStemByInstrument[instrumentType] || "guitar";
+  if (stemPreset && Object.prototype.hasOwnProperty.call(stemPreset, preferredStem)) return preferredStem;
+  if (stemPreset) {
+    for (var stemName in stemPreset) {
+      if (Object.prototype.hasOwnProperty.call(stemPreset, stemName) && stemPreset[stemName] === false) {
+        return stemName;
+      }
+    }
+  }
+  return preferredStem;
+}
+
+function getPerformancePracticePresetStemLabel() {
+  var stem = resolvePerformanceStemTarget();
+  var labels = {
+    guitar: "Guitar",
+    bass: "Bass",
+    piano: "Piano",
+    drums: "Drums",
+    vocals: "Vocals",
+    other: "Other"
+  };
+  return labels[stem] || "Instrument";
+}
+
 function applyPerformanceStemPreset(preset) {
   S.performPracticePreset = preset;
   if (typeof setStemMuted !== "function") return;
+  var targetStem = resolvePerformanceStemTarget();
+  var stems = ["guitar", "vocals", "drums", "bass", "piano", "other"];
+  if (stems.indexOf(targetStem) === -1) stems.push(targetStem);
   if (typeof setStemVolume === "function") setStemVolume(0.8);
   switch (preset) {
     case "full_mix":
-      setStemMuted("guitar", false);
-      setStemMuted("vocals", false);
-      setStemMuted("drums", false);
-      setStemMuted("bass", false);
-      setStemMuted("piano", false);
-      setStemMuted("other", false);
+      for (var i = 0; i < stems.length; i++) setStemMuted(stems[i], false);
       break;
     case "no_guitar":
-      setStemMuted("guitar", true);
-      setStemMuted("vocals", false);
-      setStemMuted("drums", false);
-      setStemMuted("bass", false);
-      setStemMuted("piano", false);
-      setStemMuted("other", false);
+      for (var j = 0; j < stems.length; j++) setStemMuted(stems[j], stems[j] === targetStem);
       break;
     case "guitar_quiet":
-      setStemMuted("guitar", false);
-      setStemMuted("vocals", false);
-      setStemMuted("drums", false);
-      setStemMuted("bass", false);
-      setStemMuted("piano", false);
-      setStemMuted("other", false);
+      for (var k = 0; k < stems.length; k++) setStemMuted(stems[k], false);
       if (typeof setStemVolume === "function") setStemVolume(0.3);
       break;
     case "guitar_solo":
-      setStemMuted("guitar", false);
-      setStemMuted("vocals", true);
-      setStemMuted("drums", true);
-      setStemMuted("bass", true);
-      setStemMuted("piano", true);
-      setStemMuted("other", true);
+      for (var m = 0; m < stems.length; m++) setStemMuted(stems[m], stems[m] !== targetStem);
       break;
   }
 }
@@ -550,10 +599,22 @@ function finishPerformance() {
   }
   // Route through contract-based progress path (Phase 6 migration)
   if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+    if (activeInstrument && !activeInstrument.instrument && typeof SparkInstruments.getAll === "function") {
+      var activeId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+      var allInstruments = SparkInstruments.getAll() || [];
+      for (var i = 0; i < allInstruments.length; i++) {
+        var entry = allInstruments[i] || {};
+        if (entry.id === activeId || entry.appId === activeId) {
+          activeInstrument = entry;
+          break;
+        }
+      }
+    }
     var perfSessionResult = SparkContracts.createSessionResult({
       mode: "song",
-      instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
-      instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+      instrumentId: activeInstrument ? (activeInstrument.id || activeInstrument.appId || null) : null,
+      instrumentType: activeInstrument ? activeInstrument.instrument : null,
       accuracy: S.performResults ? S.performResults.accuracy / 100 : 0,
       duration: S.performResults ? (S.performResults.duration || 0) : 0,
       songId: S.performChartId || null,

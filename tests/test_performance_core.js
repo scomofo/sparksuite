@@ -34,6 +34,15 @@ global.BADGES = [
   { id: 'perf_daily', label: 'Daily Performer', icon: 'C' }
 ];
 global.saveState = function() {};
+global.SparkInstruments = {
+  getAll: function() {
+    return [
+      { id: 'ukespark', appId: 'ukespark', instrument: 'ukulele' },
+      { id: 'bassspark', appId: 'bassspark', instrument: 'bass' },
+      { id: 'chordspark', appId: 'chordspark', instrument: 'guitar' }
+    ];
+  }
+};
 
 function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
@@ -213,6 +222,14 @@ test('getPerformanceChartLibrary can filter the manifest by instrument', functio
   assert.strictEqual(library[2].instrument, 'ukulele');
 });
 
+test('getPerformanceChartLibrary can filter the manifest by app-id instrument', function() {
+  var library = getPerformanceChartLibrary({ instrument: 'ukespark' });
+  assert.strictEqual(library.length, 3);
+  assert.strictEqual(library[0].instrument, 'ukulele');
+  assert.strictEqual(library[1].instrument, 'ukulele');
+  assert.strictEqual(library[2].instrument, 'ukulele');
+});
+
 test('getPerformanceChartLibrary can filter the manifest by bass instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'bass' });
   assert.strictEqual(library.length, 2);
@@ -254,6 +271,15 @@ test('normalizePerformanceChartDefinition supports ukulele package charts throug
   assert.strictEqual(performanceChart.title, 'Island Loop');
   assert.strictEqual(performanceChart.events.length, 2);
   assert.strictEqual(performanceChart.arrangementType, 'imported_chart');
+});
+
+test('getPerformanceImportAdapter resolves app-id ukulele metadata through the registry', function() {
+  var adapter = getPerformanceImportAdapter({
+    adapterType: 'ukespark',
+    instrument: 'ukespark'
+  });
+
+  assert.ok(adapter instanceof SparkUkuleleRhythmAdapter);
 });
 
 test('normalizePerformanceChartDefinition supports the second ukulele package chart', function() {
@@ -367,6 +393,16 @@ test('normalizePerformanceChartDefinition supports bass package charts through m
   assert.strictEqual(performanceChart.id, 'bass_midnight_lock_package');
   assert.strictEqual(performanceChart.title, 'Midnight Lock');
   assert.strictEqual(performanceChart.events.length, 4);
+});
+
+test('getPerformanceImportAdapter resolves app-id bass metadata through the registry', function() {
+  var adapter = getPerformanceImportAdapter({
+    adapterType: 'bassspark',
+    instrument: 'bassspark'
+  });
+
+  assert.strictEqual(typeof adapter.getLaneCount, 'function');
+  assert.strictEqual(adapter.getLaneCount(), 4);
 });
 
 test('normalizePerformanceChartDefinition supports the second bass walking package chart', function() {

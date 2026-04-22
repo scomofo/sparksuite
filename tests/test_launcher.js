@@ -160,6 +160,21 @@ test('bass register exposes a dedicated songs tab renderer', function() {
   assert.ok(html.indexOf('Midnight Lock') >= 0);
 });
 
+test('shared guided completion preserves app ids for thin active instruments', function() {
+  // The orchestrator-request helpers were extracted from js/app.js to
+  // js/orchestrator-requests.js — the literal lines now live there.
+  var orchestratorSource = loadJS('js/orchestrator-requests.js');
+  assert.ok(orchestratorSource.indexOf('var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;') >= 0);
+  assert.ok(orchestratorSource.indexOf('instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,') >= 0);
+});
+
+test('onboarding intention input ignores stale sentinel strings', function() {
+  // _renderOnboardingOverlay was extracted from js/app.js into js/render.js.
+  var renderSource = loadJS('js/render.js');
+  assert.ok(renderSource.indexOf('var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);') >= 0);
+  assert.ok(renderSource.indexOf('value="\'+escHTML(onboardingPracticeIntention)+\'"') >= 0);
+});
+
 // Summary
 console.log('\n' + '='.repeat(40));
 console.log('Results: ' + passed + ' passed, ' + failed + ' failed');

@@ -1,0 +1,35 @@
+{
+  "version": "v1-timing",
+  "songs": {
+    "riptide": {
+      "bpm": 102,
+      "timeSignature": 4,
+      "timeline": [
+        { "bar": 1, "beat": 1, "chord": "Am" },
+        { "bar": 2, "beat": 1, "chord": "G" },
+        { "bar": 3, "beat": 1, "chord": "C" },
+        { "bar": 4, "beat": 1, "chord": "C" }
+      ]
+    },
+    "im_yours": {
+      "bpm": 150,
+      "timeSignature": 4,
+      "timeline": [
+        { "bar": 1, "beat": 1, "chord": "C" },
+        { "bar": 2, "beat": 1, "chord": "G" },
+        { "bar": 3, "beat": 1, "chord": "Am" },
+        { "bar": 4, "beat": 1, "chord": "F" }
+      ]
+    },
+    "stand_by_me": {
+      "bpm": 116,
+      "timeSignature": 4,
+      "timeline": [
+        { "bar": 1, "beat": 1, "chord": "C" },
+        { "bar": 2, "beat": 1, "chord": "Am" },
+        { "bar": 3, "beat": 1, "chord": "F" },
+        { "bar": 4, "beat": 1, "chord": "G" }
+      ]
+    }
+  }
+}

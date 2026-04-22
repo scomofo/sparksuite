@@ -8,7 +8,8 @@
   };
 
   function registerCurriculum(type, items){
-    if(!SparkCurriculum[type]) SparkCurriculum[type] = {};
+    items = Array.isArray(items) ? items : [];
+    SparkCurriculum[type] = {};
     for(var i=0;i<items.length;i++){
       SparkCurriculum[type][items[i].id] = items[i];
     }

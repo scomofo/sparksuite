@@ -73,7 +73,6 @@
   }
 
   function getNextPracticeItem(){
-    if(!S.practicePlan) generateDailyPracticePlan();
     if(!S.practicePlan || !S.practicePlan.items) return null;
     for(var i=0;i<S.practicePlan.items.length;i++){
       if(!S.practicePlan.items[i].completed){
@@ -117,20 +116,32 @@
   // Weekly plan generator
   function generateWeeklyPracticePlan(){
     if(typeof buildPracticePlan === "function" && buildPracticePlan !== generateDailyPracticePlan){
+      var previousPlan = S.practicePlan || null;
+      var previousPlanDate = S.practicePlanDate || null;
+      var previousPlanComplete = !!S.practicePlanComplete;
       var sharedDays = [];
       for(var d=0; d<7; d++){
         sharedDays.push(buildPracticePlan());
       }
+      S.practicePlan = previousPlan;
+      S.practicePlanDate = previousPlanDate;
+      S.practicePlanComplete = previousPlanComplete;
       S.weeklyPracticePlan = {
         weekStart: new Date().toISOString().slice(0,10),
         days: sharedDays
       };
       return S.weeklyPracticePlan;
     }
+    var previousLegacyPlan = S.practicePlan || null;
+    var previousLegacyPlanDate = S.practicePlanDate || null;
+    var previousLegacyPlanComplete = !!S.practicePlanComplete;
     var days = [];
     for(var i=0;i<7;i++){
       days.push(generateDailyPracticePlan());
     }
+    S.practicePlan = previousLegacyPlan;
+    S.practicePlanDate = previousLegacyPlanDate;
+    S.practicePlanComplete = previousLegacyPlanComplete;
     S.weeklyPracticePlan = {
       weekStart: new Date().toISOString().slice(0,10),
       days: days
