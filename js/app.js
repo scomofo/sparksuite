@@ -3739,13 +3739,47 @@ function render(){
     document.getElementById("app").innerHTML='<div class="card" style="margin:20px;text-align:center"><h2>Something went wrong</h2><p style="color:var(--text-muted);margin:8px 0">'+escHTML(String(e.message||e))+'</p><button class="btn" onclick="location.reload()" style="background:#FF6B6B;color:#fff;margin-top:12px">Reload</button></div>';
   }
 }
+function _writeAppHtml(html){
+  var el = document.getElementById("app");
+  if (el) el.innerHTML = html;
+}
 function _renderInner(){
   var app=document.getElementById("app");
 
   // Launcher gate — if no instrument active, show clean launcher
   if (!S.activeInstrument) {
     document.getElementById("header").style.display = "none";
-    app.innerHTML = SparkInstruments.renderLauncher();
+    _writeAppHtml(SparkInstruments.renderLauncher());
+    return;
+  }
+
+  // Showroom gate — when an instrument IS active, route Showroom-replaced
+  // app areas (Settings, Songs/Library, Practice, Tuner, Skill Tree/Path,
+  // Song Details, Session Summary) into the Warm Ember screens. Falls through
+  // to the legacy renderer for anything not in the map.
+  var _showroomMod = (function(){
+    var ov = S._showroomOverride;
+    if (ov === "profile" && typeof SparkProfile !== "undefined") return SparkProfile;
+    if (ov === "lesson"  && typeof SparkLesson  !== "undefined") return SparkLesson;
+    var sc = S.screen;
+    var tb = S.tab;
+    if (sc === SCR.SETTINGS    && typeof SparkSettings       !== "undefined") return SparkSettings;
+    if (sc === SCR.SONG        && typeof SparkSongDetails    !== "undefined") return SparkSongDetails;
+    if ((sc === SCR.SKILL_TREE || sc === SCR.PLAN || sc === SCR.CURRICULUM)
+                                && typeof SparkPath          !== "undefined") return SparkPath;
+    if ((sc === SCR.COMPLETE   || sc === SCR.SONG_DONE   || sc === SCR.PERFORM_DONE
+      || sc === SCR.GUIDED_DONE || sc === SCR.DRILL_DONE)
+                                && typeof SparkSessionSummary !== "undefined") return SparkSessionSummary;
+    if (sc === SCR.HOME) {
+      if (tb === TAB.PRACTICE && typeof SparkPracticeMetro !== "undefined") return SparkPracticeMetro;
+      if (tb === TAB.SONGS    && typeof SparkSongLibrary   !== "undefined") return SparkSongLibrary;
+      if (tb === TAB.TUNER    && typeof SparkTuner         !== "undefined") return SparkTuner;
+    }
+    return null;
+  })();
+  if (_showroomMod && _showroomMod.render) {
+    document.getElementById("header").style.display = "none";
+    _writeAppHtml(_showroomMod.render());
     return;
   }
 
