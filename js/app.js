@@ -3759,22 +3759,28 @@ function _renderOverlays(){
   // we avoid four repeated Date.now() calls per render tick.
   var now = Date.now();
   if (S.showConfetti) {
-    // Both branches need the _confettiFired guard — without it, the inline
-    // fallback regenerates 40 random divs every render() call (which fires
-    // on every timer tick), causing visible flicker and CPU burn.
+    // Generate the burst exactly once per S.showConfetti cycle. The inline
+    // fallback HTML must persist across re-renders for the duration of the
+    // animation (timer ticks fire render() every second), so we cache it on
+    // S._confettiHtml and re-append it on every render until the timeout
+    // clears both flags. SparkConfetti.burst() injects its own DOM, so its
+    // cached html is "" — only the guard is needed.
     if (!S._confettiFired) {
       S._confettiFired = true;
       if (typeof SparkConfetti !== "undefined") {
         SparkConfetti.burst();
+        S._confettiHtml = "";
       } else {
         var cols = ["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
-        h += '<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
+        var ch = '<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
         for (var i = 0; i < 40; i++)
-          h += '<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
-        h += '</div>';
+          ch += '<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
+        ch += '</div>';
+        S._confettiHtml = ch;
       }
-      setTimeout(function() { S._confettiFired = false; }, 2600);
+      setTimeout(function() { S._confettiFired = false; S._confettiHtml = ""; }, 2600);
     }
+    if (S._confettiHtml) h += S._confettiHtml;
   }
   if (S.newBadge)
     h += '<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:16px 32px;box-shadow:0 8px 30px rgba(255,138,92,.4);animation:sD .5s ease;text-align:center"><div style="font-size:32px">'+S.newBadge.icon+'</div><div style="font-weight:800;font-size:16px;color:#333">'+S.newBadge.label+'</div><div style="font-size:12px;color:#555">'+S.newBadge.desc+'</div></div>';
