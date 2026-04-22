@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Syne:wght@700;800;900&amp;family=JetBrains+Mono:wght@700;900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glow-cyan { box-shadow: 0 0 15px rgba(78, 205, 196, 0.6); }
+        .glow-yellow { box-shadow: 0 0 15px rgba(255, 230, 109, 0.6); }
+        .glow-peach { box-shadow: 0 0 15px rgba(255, 138, 92, 0.6); }
+        .glow-coral { box-shadow: 0 0 20px rgba(255, 107, 107, 0.4); }
+        .highway-perspective {
+            perspective: 800px;
+        }
+        .highway-lane {
+            transform: rotateX(25deg);
+            transform-origin: top;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "border": "#2E2820",
+                      "on-secondary-fixed": "#341100",
+                      "primary-container": "#ff7b3a",
+                      "error-container": "#93000a",
+                      "secondary-container": "#753814",
+                      "inverse-surface": "#f5ded5",
+                      "tertiary-fixed": "#b0ecff",
+                      "success": "#4CD964",
+                      "ukulele-teal": "#14B8A6",
+                      "surface-container": "#291d18",
+                      "primary": "#ffb596",
+                      "on-surface": "#f5ded5",
+                      "on-primary": "#581e00",
+                      "tertiary-container": "#00b0d1",
+                      "text-muted": "#7A7060",
+                      "accent-deep": "#FF6030",
+                      "secondary": "#ffb691",
+                      "danger": "#C45040",
+                      "primary-fixed-dim": "#ffb596",
+                      "bg": "#0A0A12",
+                      "on-primary-container": "#642300",
+                      "on-error-container": "#ffdad6",
+                      "text-dim": "#9A8E7E",
+                      "text-secondary": "#C8BFB0",
+                      "piano-midnight": "#0EA5E9",
+                      "card-bg": "#1E1B17",
+                      "on-tertiary-fixed-variant": "#004e5e",
+                      "on-secondary-fixed-variant": "#723612",
+                      "guitar-neon": "#FF2D55",
+                      "perform-cyan": "#4ECDC4",
+                      "perform-coral": "#FF6B6B",
+                      "surface-container-highest": "#40322c",
+                      "surface-container-lowest": "#160c07",
+                      "text-primary": "#EDE6DA",
+                      "on-primary-fixed": "#360f00",
+                      "on-tertiary-container": "#003e4b",
+                      "on-tertiary-fixed": "#001f27",
+                      "border-light": "#3A3228",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#ffb691",
+                      "bass-violet": "#7C3AED",
+                      "surface-container-high": "#342722",
+                      "surface-bright": "#443630",
+                      "raised-bg": "#252119",
+                      "warning": "#C89040",
+                      "error": "#ffb4ab",
+                      "surface-variant": "#40322c",
+                      "on-surface-variant": "#dfc0b4",
+                      "on-background": "#f5ded5",
+                      "on-secondary": "#552000",
+                      "surface-container-low": "#251914",
+                      "brand-peach": "#E8A87A",
+                      "on-tertiary": "#003641",
+                      "on-primary-fixed-variant": "#7c2e00",
+                      "surface-tint": "#ffb596",
+                      "background": "#1c110c",
+                      "secondary-fixed": "#ffdbcb",
+                      "outline": "#a78b80",
+                      "tertiary": "#51d6f8",
+                      "primary-fixed": "#ffdbcd",
+                      "inverse-primary": "#a33e00",
+                      "on-secondary-container": "#faa477",
+                      "inverse-on-surface": "#3b2d28",
+                      "bg-subtle": "#1A1714",
+                      "perform-yellow": "#FFE66D",
+                      "surface": "#1c110c",
+                      "outline-variant": "#584239",
+                      "brand-clay": "#C07040",
+                      "accent-light": "#FFAA6A",
+                      "tertiary-fixed-dim": "#51d6f8",
+                      "surface-dim": "#1c110c"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sp-1": "4px",
+                      "base": "4px",
+                      "sp-5": "24px",
+                      "sp-4": "16px",
+                      "sp-8": "48px",
+                      "sp-6": "32px",
+                      "sp-2": "8px",
+                      "app-max-width": "480px",
+                      "sp-3": "12px",
+                      "card-padding": "18px",
+                      "container-padding": "14px"
+              },
+              "fontFamily": {
+                      "body-sm": ["Plus Jakarta Sans"],
+                      "label": ["Plus Jakarta Sans"],
+                      "display-hero": ["Syne"],
+                      "display-lg": ["Syne"],
+                      "body-md": ["Plus Jakarta Sans"],
+                      "heading-md": ["Plus Jakarta Sans"],
+                      "display-md": ["Syne"],
+                      "heading-sm": ["Plus Jakarta Sans"],
+                      "button": ["Syne"],
+                      "stat-lg": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "body-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.3px", "fontWeight": "600"}],
+                      "label": ["11px", {"lineHeight": "1", "letterSpacing": "0.3px", "fontWeight": "700"}],
+                      "display-hero": ["28px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                      "display-lg": ["20px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "800"}],
+                      "body-md": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "heading-md": ["18px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "800"}],
+                      "display-md": ["17px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                      "heading-sm": ["15px", {"lineHeight": "1.3", "fontWeight": "800"}],
+                      "button": ["12px", {"lineHeight": "1", "letterSpacing": "0.03em", "fontWeight": "700"}],
+                      "stat-lg": ["32px", {"lineHeight": "1", "fontWeight": "900"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#0A0A12] text-text-primary min-h-screen flex flex-col items-center overflow-hidden font-body-md">
+<!-- Performance Top Bar -->
+<header class="bg-[#12100E]/80 backdrop-blur-md border-b border-[#FF7B3A]/10 shadow-[0_4px_20px_rgba(255,123,58,0.15)] flex justify-between items-center w-full px-4 h-16 max-w-[480px] mx-auto z-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[#FF7B3A]" data-icon="pause_circle">pause_circle</span>
+<span class="font-stat-lg text-stat-lg text-[#FF7B3A] tracking-tighter">042,850</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-button text-button shadow-[0_0_15px_rgba(255,123,58,0.4)]">
+                STREAK 124
+            </div>
+<div class="text-[#FF7B3A] font-['Plus_Jakarta_Sans'] font-bold tracking-tighter text-xl">4x</div>
+</div>
+</header>
+<!-- Main Game Canvas -->
+<main class="flex-1 w-full max-w-[480px] relative flex flex-col justify-end items-center pb-12 bg-gradient-to-b from-[#0A0A12] via-[#0A0A12] to-[#12100E]">
+<!-- Background Vignette/Ambience -->
+<div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_transparent_0%,_#0A0A12_100%)] opacity-80"></div>
+<!-- Instrumental Feedback Area -->
+<div class="absolute top-1/4 left-1/2 -translate-x-1/2 text-center pointer-events-none">
+<h2 class="font-display-hero text-perform-yellow text-display-hero drop-shadow-[0_0_10px_rgba(255,230,109,0.8)] animate-pulse">PERFECT</h2>
+<p class="font-label text-label text-text-dim tracking-widest mt-1">EXCELLENT FLOW</p>
+</div>
+<!-- Rhythm Highway -->
+<div class="highway-perspective w-full h-[574px] relative flex justify-center px-8">
+<div class="highway-lane w-full h-full bg-[#1A1714] border-x border-border/40 relative overflow-hidden rounded-t-xl shadow-inner">
+<!-- Lane Dividers -->
+<div class="absolute inset-y-0 left-1/4 w-[1px] bg-border/20"></div>
+<div class="absolute inset-y-0 left-2/4 w-[1px] bg-border/20"></div>
+<div class="absolute inset-y-0 left-3/4 w-[1px] bg-border/20"></div>
+<!-- Falling Notes (Static representation of a frame) -->
+<!-- Lane 1 (Cyan) -->
+<div class="absolute top-[10%] left-[2%] w-[21%] h-12 bg-perform-cyan rounded-lg glow-cyan border-t border-white/40"></div>
+<div class="absolute top-[60%] left-[2%] w-[21%] h-12 bg-perform-cyan rounded-lg glow-cyan border-t border-white/40"></div>
+<!-- Lane 2 (Yellow) -->
+<div class="absolute top-[35%] left-[27%] w-[21%] h-12 bg-perform-yellow rounded-lg glow-yellow border-t border-white/40"></div>
+<!-- Lane 3 (Peach) -->
+<div class="absolute top-[15%] left-[52%] w-[21%] h-12 bg-[#FF8A5C] rounded-lg glow-peach border-t border-white/40"></div>
+<div class="absolute top-[80%] left-[52%] w-[21%] h-12 bg-[#FF8A5C] rounded-lg glow-peach border-t border-white/40"></div>
+<!-- Lane 4 (Cyan) -->
+<div class="absolute top-[45%] left-[77%] w-[21%] h-12 bg-perform-cyan rounded-lg glow-cyan border-t border-white/40"></div>
+<!-- Hit Zone Line -->
+<div class="absolute bottom-[20px] inset-x-0 h-1 bg-perform-coral glow-coral z-10"></div>
+<!-- Interaction Pad Surface -->
+<div class="absolute bottom-0 inset-x-0 h-[130px] bg-gradient-to-t from-[#FF6B6B]/20 to-transparent"></div>
+</div>
+</div>
+<!-- Progress Indicator -->
+<div class="w-[80%] h-1.5 bg-surface-container-highest rounded-full overflow-hidden mt-8 mb-4 border border-white/5">
+<div class="w-[65%] h-full bg-gradient-to-r from-perform-coral to-perform-yellow shadow-[0_0_8px_rgba(255,107,107,0.8)]"></div>
+</div>
+<!-- Song Info Footer (Internal Game View) -->
+<div class="flex flex-col items-center gap-1">
+<span class="font-heading-sm text-heading-sm text-text-primary tracking-tight">Midnight Ember Jam</span>
+<span class="font-label text-label text-text-dim">Level 12 • Hard Mode</span>
+</div>
+</main>
+<!-- Floating UI: Song Progress/Health -->
+<div class="fixed top-24 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-6 pointer-events-none flex justify-between items-start">
+<div class="flex flex-col gap-2">
+<!-- Health Bar / Energy -->
+<div class="flex items-center gap-2 bg-[#12100E]/60 backdrop-blur-sm p-2 rounded-xl border border-white/5">
+<span class="material-symbols-outlined text-perform-coral" data-icon="electric_bolt" style="font-variation-settings: 'FILL' 1;">electric_bolt</span>
+<div class="w-24 h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="w-4/5 h-full bg-perform-coral glow-coral"></div>
+</div>
+</div>
+</div>
+<div class="bg-[#12100E]/60 backdrop-blur-sm p-3 rounded-xl border border-white/5 flex flex-col items-end">
+<span class="font-label text-label text-text-dim">NEXT RANK</span>
+<span class="font-stat-lg text-[18px] text-perform-yellow">S+</span>
+</div>
+</div>
+<!-- Gameplay Overlay Controls (Hidden/Suppressed Nav) -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-6 flex justify-between items-center z-50">
+<!-- Visualizing the tap regions -->
+<div class="grid grid-cols-4 w-full gap-4 opacity-30">
+<div class="h-16 border-2 border-dashed border-perform-cyan rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-perform-cyan" data-icon="touch_app">touch_app</span>
+</div>
+<div class="h-16 border-2 border-dashed border-perform-yellow rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-perform-yellow" data-icon="touch_app">touch_app</span>
+</div>
+<div class="h-16 border-2 border-dashed border-[#FF8A5C] rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-[#FF8A5C]" data-icon="touch_app">touch_app</span>
+</div>
+<div class="h-16 border-2 border-dashed border-perform-cyan rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-perform-cyan" data-icon="touch_app">touch_app</span>
+</div>
+</div>
+</div>
+</body></html>

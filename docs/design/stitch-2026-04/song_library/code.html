@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Syne:wght@700;800;900&amp;family=JetBrains+Mono:wght@900&amp;family=Outfit:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #12100E;
+            background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            color: #EDE6DA;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-card {
+            background: rgba(30, 27, 23, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+        .ember-glow {
+            box-shadow: 0 0 20px rgba(255, 123, 58, 0.3);
+        }
+        .radial-ember {
+            background: radial-gradient(circle at 50% 0%, rgba(255, 123, 58, 0.15) 0%, rgba(18, 16, 14, 0) 70%);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#b0ecff",
+                    "on-secondary-fixed": "#341100",
+                    "inverse-surface": "#f5ded5",
+                    "secondary-fixed": "#ffdbcb",
+                    "inverse-primary": "#a33e00",
+                    "perform-cyan": "#4ECDC4",
+                    "on-tertiary-fixed-variant": "#004e5e",
+                    "surface-container-highest": "#40322c",
+                    "error": "#ffb4ab",
+                    "surface-container": "#291d18",
+                    "perform-yellow": "#FFE66D",
+                    "perform-coral": "#FF6B6B",
+                    "border": "#2E2820",
+                    "guitar-neon": "#FF2D55",
+                    "brand-clay": "#C07040",
+                    "on-secondary-container": "#faa477",
+                    "brand-peach": "#E8A87A",
+                    "secondary": "#ffb691",
+                    "on-secondary": "#552000",
+                    "primary": "#ffb596",
+                    "outline": "#a78b80",
+                    "accent-light": "#FFAA6A",
+                    "bg-subtle": "#1A1714",
+                    "primary-fixed-dim": "#ffb596",
+                    "on-primary-fixed-variant": "#7c2e00",
+                    "surface-container-high": "#342722",
+                    "piano-midnight": "#0EA5E9",
+                    "card-bg": "#1E1B17",
+                    "bg": "#12100E",
+                    "text-dim": "#9A8E7E",
+                    "accent-deep": "#FF6030",
+                    "tertiary-container": "#00b0d1",
+                    "primary-fixed": "#ffdbcd",
+                    "on-error": "#690005",
+                    "surface-variant": "#40322c",
+                    "on-tertiary-container": "#003e4b",
+                    "on-surface-variant": "#dfc0b4",
+                    "on-secondary-fixed-variant": "#723612",
+                    "on-primary-container": "#642300",
+                    "surface-tint": "#ffb596",
+                    "text-primary": "#EDE6DA",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-fixed": "#360f00",
+                    "warning": "#C89040",
+                    "surface-bright": "#443630",
+                    "surface-container-low": "#251914",
+                    "bass-violet": "#7C3AED",
+                    "text-muted": "#7A7060",
+                    "surface": "#1c110c",
+                    "danger": "#C45040",
+                    "surface-dim": "#1c110c",
+                    "secondary-fixed-dim": "#ffb691",
+                    "ukulele-teal": "#14B8A6",
+                    "secondary-container": "#753814",
+                    "tertiary": "#51d6f8",
+                    "success": "#4CD964",
+                    "on-primary": "#581e00",
+                    "raised-bg": "#252119",
+                    "primary-container": "#ff7b3a",
+                    "on-tertiary-fixed": "#001f27",
+                    "text-secondary": "#C8BFB0",
+                    "error-container": "#93000a",
+                    "on-surface": "#f5ded5",
+                    "background": "#1c110c",
+                    "outline-variant": "#584239",
+                    "on-tertiary": "#003641",
+                    "tertiary-fixed-dim": "#51d6f8",
+                    "border-light": "#3A3228",
+                    "on-background": "#f5ded5",
+                    "inverse-on-surface": "#3b2d28",
+                    "surface-container-lowest": "#160c07"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "4px",
+                    "sp-8": "48px",
+                    "sp-2": "8px",
+                    "app-max-width": "480px",
+                    "sp-1": "4px",
+                    "sp-6": "32px",
+                    "sp-3": "12px",
+                    "container-padding": "14px",
+                    "sp-4": "16px",
+                    "card-padding": "18px",
+                    "sp-5": "24px"
+            },
+            "fontFamily": {
+                    "heading-sm": ["Plus Jakarta Sans"],
+                    "display-md": ["Syne"],
+                    "display-lg": ["Syne"],
+                    "button": ["Syne"],
+                    "body-sm": ["Plus Jakarta Sans"],
+                    "display-hero": ["Syne"],
+                    "body-md": ["Plus Jakarta Sans"],
+                    "heading-md": ["Plus Jakarta Sans"],
+                    "stat-lg": ["JetBrains Mono"],
+                    "label": ["Plus Jakarta Sans"],
+                    "outfit-bold": ["Outfit", "sans-serif"],
+                    "outfit-regular": ["Outfit", "sans-serif"]
+            },
+            "fontSize": {
+                    "heading-sm": ["15px", {"lineHeight": "1.3", "fontWeight": "800"}],
+                    "display-md": ["17px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "display-lg": ["20px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "800"}],
+                    "button": ["12px", {"lineHeight": "1", "letterSpacing": "0.03em", "fontWeight": "700"}],
+                    "body-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.3px", "fontWeight": "600"}],
+                    "display-hero": ["28px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                    "body-md": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "heading-md": ["18px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "800"}],
+                    "stat-lg": ["32px", {"lineHeight": "1", "fontWeight": "900"}],
+                    "label": ["11px", {"lineHeight": "1", "letterSpacing": "0.3px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="radial-ember min-h-screen pb-24">
+<!-- Top Navigation Anchor -->
+<header class="fixed top-0 w-full z-50 bg-[#12100E]/90 backdrop-blur-lg border-b border-[#FF7B3A]/10">
+<div class="flex justify-between items-center px-4 h-16 max-w-[480px] mx-auto">
+<h1 class="text-[#FF7B3A] font-display-lg font-extrabold tracking-tighter">Song Library</h1>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-stone-400">search</span>
+<div class="w-8 h-8 rounded-full border border-primary-container overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="close-up portrait of a woman with vibrant hair and creative studio lighting with a warm orange glow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAP7trcURDtNs-QjT5paMfXwhxh1cX5vLv67rOTt0SPZXUOAdmLuQDa6tPa67BKcSXxRfaf5F1k3i5kltX9LMfVAoi__obFD9JtzUgF4Dt0-7yXzz_8yHkxvIxTnD0tHzKQunpQ_7azKQLSHhwc6YR1O9N8q2jsuiYwyVBGE_Hkx9dz7usrdIkOZ2StrkjbwIDNIJkt4G7FUS6RgSovko_x-9aCTM0gOscJXkpVmjIKMl663meY7-CxZs91-i5pI_EA84JW-jUfvs"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-20 px-4 max-w-[480px] mx-auto space-y-6">
+<!-- Search & Filter Area -->
+<div class="space-y-4">
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-[#FF7B3A]/50 group-focus-within:text-[#FF7B3A]">search</span>
+</div>
+<input class="w-full bg-surface-container-low border-border-light rounded-xl py-3 pl-12 pr-4 text-text-primary placeholder:text-text-muted focus:ring-1 focus:ring-primary-container focus:border-primary-container transition-all" placeholder="Search songs, artists..." type="text"/>
+</div>
+<!-- Instrument Pills -->
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+<button class="px-5 py-2 rounded-full bg-primary-container text-on-primary-container text-label font-button whitespace-nowrap active:scale-95 duration-200">All</button>
+<button class="px-5 py-2 rounded-full bg-surface-container border border-border-light text-text-secondary text-label font-button whitespace-nowrap hover:bg-stone-800 transition-colors">Guitar</button>
+<button class="px-5 py-2 rounded-full bg-surface-container border border-border-light text-text-secondary text-label font-button whitespace-nowrap hover:bg-stone-800 transition-colors">Bass</button>
+<button class="px-5 py-2 rounded-full bg-surface-container border border-border-light text-text-secondary text-label font-button whitespace-nowrap hover:bg-stone-800 transition-colors">Piano</button>
+<button class="px-5 py-2 rounded-full bg-surface-container border border-border-light text-text-secondary text-label font-button whitespace-nowrap hover:bg-stone-800 transition-colors">Ukulele</button>
+</div>
+<!-- Difficulty Pills -->
+<div class="flex gap-2">
+<button class="px-3 py-1.5 rounded-lg bg-[#251914] text-text-muted text-[10px] font-bold uppercase tracking-wider border border-white/5">Beginner</button>
+<button class="px-3 py-1.5 rounded-lg bg-[#251914] text-[#FF7B3A] text-[10px] font-bold uppercase tracking-wider border border-[#FF7B3A]/20">Intermediate</button>
+<button class="px-3 py-1.5 rounded-lg bg-[#251914] text-text-muted text-[10px] font-bold uppercase tracking-wider border border-white/5">Advanced</button>
+</div>
+</div>
+<!-- Song Library Section -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<h2 class="font-display-md text-text-primary text-heading-md">Trending Scores</h2>
+<span class="text-label text-[#FF7B3A]">View All</span>
+</div>
+<!-- Song List -->
+<div class="space-y-3">
+<!-- Song Card 1 -->
+<div class="glass-card rounded-xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
+<div class="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Album Art" class="w-full h-full object-cover" data-alt="abstract artistic music album cover with vibrant neon streaks of pink and purple against a dark stage background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaf-Q4nqQlEr2LEkjCVXfn8THU_XCmrGmR27KTG380avVa_Ty0biOR-5Nsg3kgArrzHaI1ueb5CBoLpr7rptnrsI-bnFzopefltXfuFDq2G8ImbIROVhH1Z7javBKdSuWFpS2Lxzrk1RzkdvayeCNVXfp8j44GVzMnT2roCswBSzVWagdHcg8O_-IUfrZ2XlYrewSj-eiI_HeyIzP4OrSG3Thw50CZHGj_NZxuc2itIsob3xjQ43okop8NT4nUjMgqjNFC7ptyxoo"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-lg">music_note</span>
+</div>
+</div>
+<div class="flex-grow min-w-0">
+<h3 class="font-outfit-bold text-text-primary text-[15px] truncate">Ember's Resonance</h3>
+<p class="font-outfit-regular text-text-muted text-body-sm truncate">The Electric Collective</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded bg-guitar-neon/10 text-guitar-neon text-[10px] font-stat-lg">LVL 7</span>
+<span class="text-[10px] text-text-muted font-label">• 4:20</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center ember-glow active:scale-90 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+<span class="text-[10px] font-stat-lg text-success">85%</span>
+</div>
+</div>
+<!-- Song Card 2 -->
+<div class="glass-card rounded-xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
+<div class="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Album Art" class="w-full h-full object-cover" data-alt="close-up of a vintage microphone in a moody jazz club with soft bokeh lights and warm golden tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAG_KJhXb8UfxUMh13nodqxJ8VJV2q39p8chQ0D1V_aqkvdD7j7phW2YK4TkPtlBlHmQZ7XesskyZah_CUaAExu0zkCAuY9UVli8K5yYICb0Apza9R9z63UM48I9DMA42qV2MhPzrS0HpEDytzIJoL6DvtdE0CsjXML_nbtrfgStC3OJdnIbnSz2hD7NdahO5W9h84S-LSPUqB9UAs2R2CnbdeEuqaLOXZogDbf3VKmUfqQp0xyp0F-ywYNUJr19ZAKHZCXGBpQVg0"/>
+</div>
+<div class="flex-grow min-w-0">
+<h3 class="font-outfit-bold text-text-primary text-[15px] truncate">Midnight Strum</h3>
+<p class="font-outfit-regular text-text-muted text-body-sm truncate">The Acoustic Soul</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded bg-ukulele-teal/10 text-ukulele-teal text-[10px] font-stat-lg">LVL 3</span>
+<span class="text-[10px] text-text-muted font-label">• 3:15</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<div class="w-10 h-10 rounded-full bg-stone-800 text-text-secondary flex items-center justify-center active:scale-90 transition-all border border-white/5">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+<span class="text-[10px] font-stat-lg text-text-muted">New</span>
+</div>
+</div>
+<!-- Song Card 3 -->
+<div class="glass-card rounded-xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
+<div class="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Album Art" class="w-full h-full object-cover" data-alt="dramatic lighting on piano keys with a dark moody atmosphere and subtle reflections of warm light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgiMbpHqNQpZuY5oClAXTm4KcUwVR7MJcW2kE_jbmwTNnD9XZ7iXiNckkdyV4Y9LbGRvfYO_yzsKtisKvhH4c3YsR4ayJ5GgGjZ0-xK9TtHvixHorPKLMTJuz_kYgGq5H0XyJKgZMFJfpIVI-APVXah_xzs4O2YJLbqwmcwAYPuB1M8_9ZSS0sExWbqfUJMD_k6uvJPW8rDIIsOvITaBdWNYUl6AgkLw4ZfMoEqBsAnhyWQ-DTR3wjDRf1iQMncQ28AQVOBqgnkj4"/>
+</div>
+<div class="flex-grow min-w-0">
+<h3 class="font-outfit-bold text-text-primary text-[15px] truncate">Ivory Cascades</h3>
+<p class="font-outfit-regular text-text-muted text-body-sm truncate">Serene Melodies</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded bg-piano-midnight/10 text-piano-midnight text-[10px] font-stat-lg">LVL 5</span>
+<span class="text-[10px] text-text-muted font-label">• 5:45</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center ember-glow active:scale-90 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+<span class="text-[10px] font-stat-lg text-success">Mastered</span>
+</div>
+</div>
+<!-- Song Card 4 -->
+<div class="glass-card rounded-xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
+<div class="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
+<img alt="Album Art" class="w-full h-full object-cover" data-alt="heavy bass guitar strings in sharp focus with dramatic warm studio lighting and dark shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxZVL12CqujtbtFMb7f3rRmaIXeemMPr9wgnrQpIy1plQjauCd6YxdtMExeqg8IaVr16YNND7CRcP_yiSmuelrnQV9tH9kVHhVJD9jp61TwQRSt8K2kt_Z1Z9ch_Q-XLkV3h52JXnRKrn5ZLjZqoVRvkJHDOJZaCdk3FPcPyT8LIrvx6yiwr809FsevZPY3pembdSgakC9Pg2IU23YqkA-miMxa0TvnbJcMneRz81y1W0HjRXMSOKyp8mZenoX7lndXexYN0nkvf4"/>
+</div>
+<div class="flex-grow min-w-0">
+<h3 class="font-outfit-bold text-text-primary text-[15px] truncate">Deep Groove</h3>
+<p class="font-outfit-regular text-text-muted text-body-sm truncate">Bassline Dynasty</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="px-1.5 py-0.5 rounded bg-bass-violet/10 text-bass-violet text-[10px] font-stat-lg">LVL 9</span>
+<span class="text-[10px] text-text-muted font-label">• 4:10</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<div class="w-10 h-10 rounded-full bg-stone-800 text-text-secondary flex items-center justify-center active:scale-90 transition-all border border-white/5">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+<span class="text-[10px] font-stat-lg text-danger">Try Again</span>
+</div>
+</div>
+<!-- Song Card 5 (Asymmetric Highlight) -->
+<div class="relative overflow-hidden glass-card rounded-xl p-6 border-l-4 border-[#FF7B3A]">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<span class="text-[10px] font-bold text-[#FF7B3A] tracking-widest uppercase">Daily Challenge</span>
+<h3 class="font-display-md text-display-md text-text-primary">Neon Horizon</h3>
+<p class="text-body-sm text-text-secondary">Cyberpunk Synth Ensemble</p>
+</div>
+<span class="font-stat-lg text-primary text-xl">XP +500</span>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border border-bg bg-stone-700"></div>
+<div class="w-6 h-6 rounded-full border border-bg bg-stone-600"></div>
+<div class="w-6 h-6 rounded-full border border-bg bg-stone-500"></div>
+<span class="pl-4 text-[10px] text-text-muted">1.2k playing now</span>
+</div>
+<button class="px-4 py-2 bg-primary-container text-on-primary-container rounded-full font-button text-[10px] ember-glow">JOIN SESSION</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 w-full z-50 bg-[#12100E]/95 backdrop-blur-xl border-t border-[#FF7B3A]/10">
+<div class="flex justify-around items-center h-20 pb-safe px-4 max-w-[480px] mx-auto">
+<a class="flex flex-col items-center justify-center text-stone-500 opacity-70 hover:opacity-100 transition-opacity active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#FF7B3A] drop-shadow-[0_0_8px_rgba(255,123,58,0.5)] active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">library_music</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-medium">Library</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 opacity-70 hover:opacity-100 transition-opacity active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">exercise</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-medium">Practice</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 opacity-70 hover:opacity-100 transition-opacity active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-medium">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>
