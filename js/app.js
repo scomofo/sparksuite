@@ -7,7 +7,8 @@ function normalizeAppTextInputValue(value){
   if (!text) return "";
   lower = text.toLowerCase();
   if (lower === "undefined" || lower === "null" || lower === "nan") return "";
-  return value;
+  // Return the trimmed text (matches the `text.trim()` validation above).
+  return text;
 }
 
 function tickS(){
