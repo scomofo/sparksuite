@@ -1035,7 +1035,13 @@
   };
 
   window.SparkSettings       = { render: settingsRender };
-  window.SparkProfile        = { render: profileRender };
+  // NOTE: this is the Showroom profile *screen* module. The canonical
+  // SparkProfile data model (createEmpty/migrate/ensureApp, registered by
+  // js/spark-core/profile-schema.js) is a separate global. Naming this one
+  // SparkProfile clobbered the data model — scripts load in source order
+  // and spark-showroom.js comes after profile-schema.js, so storage.js
+  // and the per-instrument register.js calls would fail at activate time.
+  window.SparkProfileScreen  = { render: profileRender };
   window.SparkSongDetails    = { render: songDetailsRender };
   window.SparkPracticeMetro  = { render: practiceMetroRender };
   window.SparkSongLibrary    = { render: songLibraryRender };

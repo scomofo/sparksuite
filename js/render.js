@@ -139,7 +139,7 @@ function _renderInner(){
   // to the legacy renderer for anything not in the map.
   var _showroomMod = (function(){
     var ov = S._showroomOverride;
-    if (ov === "profile" && typeof SparkProfile !== "undefined") return SparkProfile;
+    if (ov === "profile" && typeof SparkProfileScreen !== "undefined") return SparkProfileScreen;
     if (ov === "lesson"  && typeof SparkLesson  !== "undefined") return SparkLesson;
     var sc = S.screen;
     var tb = S.tab;
