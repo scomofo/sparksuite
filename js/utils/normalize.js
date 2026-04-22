@@ -12,8 +12,14 @@
 
   // Coerce to a finite number; otherwise return fallback. Accepts numbers
   // and number-shaped strings ("12", "3.14"). Rejects NaN, Infinity, null,
-  // undefined, objects.
+  // undefined, objects, booleans, arrays, and the empty string.
+  //
+  // Defensive type rejection (null / "" / boolean / array) is needed because
+  // Number(null) === 0, Number("") === 0, Number(false) === 0, Number(true)
+  // === 1, Number([]) === 0 — all silently bypass the isFinite check below
+  // and produce 0 when the caller wanted fallback.
   function num(value, fallback) {
+    if (value === null || value === "" || typeof value === "boolean" || Array.isArray(value)) return fallback;
     var n = typeof value === "number" ? value : Number(value);
     return isFinite(n) ? n : fallback;
   }
@@ -26,9 +32,12 @@
   }
 
   // Round to integer. No min/max. Returns fallback on non-number.
+  // Uses `typeof n !== "number"` (not isFinite) so a `null` fallback survives
+  // — isFinite(null) is true, which would otherwise let Math.round(null)===0
+  // leak through and clobber the intended null.
   function integer(value, fallback) {
     var n = num(value, fallback);
-    if (!isFinite(n)) return fallback;
+    if (typeof n !== "number") return fallback;
     return Math.round(n);
   }
 
@@ -36,7 +45,7 @@
   // Use for tally / count fields (Today's Time minutes, badges earned).
   function count(value, fallback) {
     var n = num(value, fallback);
-    if (!isFinite(n)) return fallback;
+    if (typeof n !== "number") return fallback;
     n = Math.round(n);
     if (n < 0) return fallback;
     return n;
@@ -45,7 +54,7 @@
   // Integer clamped to [0, 100]. Use for progress / percent fills.
   function percent(value, fallback) {
     var n = num(value, fallback);
-    if (!isFinite(n)) return fallback;
+    if (typeof n !== "number") return fallback;
     n = Math.round(n);
     if (n < 0) return 0;
     if (n > 100) return 100;
@@ -56,7 +65,7 @@
   // Use for BPM and other "must be > 0 to be meaningful" fields.
   function positiveInt(value, fallback) {
     var n = num(value, fallback);
-    if (!isFinite(n)) return fallback;
+    if (typeof n !== "number") return fallback;
     n = Math.round(n);
     if (n <= 0) return fallback;
     return n;
