@@ -31,6 +31,11 @@
     instrument: "bass",
     name: "Bass",
     icon: "\uD83C\uDFB8",
+    // Showroom asset slots — see resources/instruments/README.md for the schema.
+    // When the file doesn't exist, the launcher's <img onerror> falls through to
+    // the inline SVG silhouette so the reference never renders as a broken icon.
+    iconImage: "resources/instruments/bass/card.png",
+    heroImage: "resources/instruments/bass/hero.jpg",
     skin: typeof SparkHighway !== "undefined" ? SparkHighway.GUITAR_SKIN : null,
     available: true,
     capabilities: {
