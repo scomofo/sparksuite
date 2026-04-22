@@ -120,6 +120,11 @@
     var h = '<div class="showroom-card-thumb">';
     if (img) {
       h += '<img src="' + safeEsc(img) + '" alt="' + safeEsc(inst.name || "Instrument") + '">';
+    } else if (typeof SparkShowroomSVG !== "undefined") {
+      // Inline SVG silhouette in the per-instrument accent color — looks
+      // intentional vs. the previous emoji+gradient fallback. Override by
+      // setting `iconImage` on the SparkInstruments.register() call.
+      h += '<div class="showroom-card-thumb-svg" aria-hidden="true">' + SparkShowroomSVG.card(type) + '</div>';
     } else {
       h += '<div class="showroom-card-thumb-fallback" aria-hidden="true">' + glyphFor(inst) + '</div>';
     }
@@ -150,9 +155,15 @@
     var badge = isMastered(appStats) ? "Mastered" : "Featured";
     var img = featured.heroImage || featured.iconImage;
 
-    var bg = img
-      ? '<img class="showroom-hero-bg-img" src="' + safeEsc(img) + '" alt="">'
-      : '<div class="showroom-hero-bg-fallback" aria-hidden="true">' + glyphFor(featured) + '</div>';
+    var instType = instrumentType(featured);
+    var bg;
+    if (img) {
+      bg = '<img class="showroom-hero-bg-img" src="' + safeEsc(img) + '" alt="">';
+    } else if (typeof SparkShowroomSVG !== "undefined") {
+      bg = '<div class="showroom-hero-bg-svg" aria-hidden="true">' + SparkShowroomSVG.hero(instType) + '</div>';
+    } else {
+      bg = '<div class="showroom-hero-bg-fallback" aria-hidden="true">' + glyphFor(featured) + '</div>';
+    }
 
     var onClick = 'SparkInstruments.activate(\'' + safeEsc(featured.id) + '\');'
       + 'S.activeInstrument=\'' + safeEsc(featured.id) + '\';'
