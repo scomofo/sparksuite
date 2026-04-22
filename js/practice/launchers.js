@@ -1,20 +1,39 @@
 (function(){
 
+  function getEffectivePracticeItemType(item){
+    var meta = item && item.meta ? item.meta : {};
+    var type = item && item.type ? item.type : null;
+
+    if (type === "song" && meta.songId) return "performance_song";
+    if (type === "practice") {
+      if (meta.guidedSession != null) return "guided_session";
+      if (meta.from || meta.to || meta.key) return "transition";
+      if (meta.bpm != null) return "rhythm";
+      if (meta.exerciseId && meta.instrument && meta.exerciseType) return meta.exerciseType;
+      if (meta.exerciseId) return "finger";
+    }
+
+    return type;
+  }
+
   function launchPracticeItem(item){
     if(!item) return false;
-    if(item.type==="warmup") return launchWarmupItem(item);
-    if(item.type==="transition") return launchTransitionItem(item);
-    if(item.type==="rhythm_highway") return launchRhythmHighwayItem(item);
+    var type = getEffectivePracticeItemType(item);
+    if(type==="warmup") return launchWarmupItem(item);
+    if(type==="chord_practice") return launchChordPracticeItem(item);
+    if(type==="transition") return launchTransitionItem(item);
+    if(type==="explore") return launchExploreItem(item);
+    if(type==="rhythm_highway") return launchRhythmHighwayItem(item);
     if(isModuleExerciseItem(item)) return launchModuleExerciseItem(item);
-    if(item.type==="performance_song") return launchPerformanceSongItem(item);
-    if(item.type==="performance_phrase") return launchPerformancePhraseItem(item);
-    if(item.type==="performance_technique") return launchPerformanceTechniqueItem(item);
-    if(item.type==="rhythm") return launchRhythmItem(item);
-    if(item.type==="finger") return launchFingerItem(item);
-    if(item.type==="guided_session" && typeof launchGuidedSessionItem==="function"){
+    if(type==="performance_song") return launchPerformanceSongItem(item);
+    if(type==="performance_phrase") return launchPerformancePhraseItem(item);
+    if(type==="performance_technique") return launchPerformanceTechniqueItem(item);
+    if(type==="rhythm") return launchRhythmItem(item);
+    if(type==="finger") return launchFingerItem(item);
+    if(type==="guided_session" && typeof launchGuidedSessionItem==="function"){
       return launchGuidedSessionItem(item);
     }
-    if(item.type==="left_hand_pattern" && typeof launchLeftHandItem==="function"){
+    if(type==="left_hand_pattern" && typeof launchLeftHandItem==="function"){
       return launchLeftHandItem(item);
     }
     console.warn("Spark: no launcher for item type", item.type);
@@ -43,6 +62,16 @@
       return true;
     }
     return false;
+  }
+
+  function launchChordPracticeItem(item){
+    if(typeof act!=="function") return false;
+    var chordName = item && item.chord
+      ? item.chord
+      : (item && item.meta && item.meta.chordName ? item.meta.chordName : "");
+    if(!chordName) return launchWarmupItem(item);
+    act("startSession", chordName);
+    return true;
   }
 
   function launchPerformanceSongItem(item){
@@ -78,6 +107,19 @@
     var bpm = item && item.meta && item.meta.bpm ? item.meta.bpm : 90;
     if(typeof act==="function"){
       act("planStartRhythm", String(bpm));
+      return true;
+    }
+    return false;
+  }
+
+  function launchExploreItem(item){
+    var requestResult;
+    if(typeof openPerformanceSongSelectionRequest==="function"){
+      requestResult = openPerformanceSongSelectionRequest({});
+      if(requestResult != null) return true;
+    }
+    if(typeof act==="function"){
+      act("tab", TAB && TAB.SONGS ? TAB.SONGS : "songs");
       return true;
     }
     return false;
@@ -127,12 +169,14 @@
 
   window.launchPracticeItem = launchPracticeItem;
   window.launchWarmupItem = launchWarmupItem;
+  window.launchChordPracticeItem = launchChordPracticeItem;
   window.launchTransitionItem = launchTransitionItem;
   window.launchPerformanceSongItem = launchPerformanceSongItem;
   window.launchPerformancePhraseItem = launchPerformancePhraseItem;
   window.launchPerformanceTechniqueItem = launchPerformanceTechniqueItem;
   window.launchRhythmItem = launchRhythmItem;
   window.launchRhythmHighwayItem = launchRhythmHighwayItem;
+  window.launchExploreItem = launchExploreItem;
   window.launchFingerItem = launchFingerItem;
   window.launchModuleExerciseItem = launchModuleExerciseItem;
   window.launchPracticePlanItem = launchPracticeItem;
@@ -142,10 +186,38 @@
 /* ChordSpark extension: guided session launcher */
 (function(){
 
+  function getPracticeLauncherInstrumentType(){
+    var inst;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
+      inst = SparkInstruments.getActive();
+      if (inst) {
+        if (inst.instrument) return inst.instrument;
+        candidate = inst.id || inst.appId || inst.instrumentId || null;
+        if (candidate && typeof SparkInstruments.getAll === "function") {
+          all = SparkInstruments.getAll() || [];
+          for (i = 0; i < all.length; i++) {
+            entry = all[i] || {};
+            if (entry.id === candidate || entry.appId === candidate) {
+              return entry.instrument || entry.instrumentType || null;
+            }
+          }
+        }
+      }
+    }
+    if (typeof SparkInstrumentAdapter !== "undefined" && SparkInstrumentAdapter.getInstrumentType) {
+      return SparkInstrumentAdapter.getInstrumentType();
+    }
+    return null;
+  }
+
   function launchGuidedSessionItem(item){
     if(typeof act!=="function") return false;
     var sessionNum = item && item.meta && item.meta.guidedSession || S.guidedSession || 1;
-    if(typeof SparkInstrumentAdapter!=="undefined" && SparkInstrumentAdapter.getInstrumentType && SparkInstrumentAdapter.getInstrumentType()==="piano"){
+    if(getPracticeLauncherInstrumentType()==="piano"){
       act("tab", TAB.PRACTICE);
       act("start_guided_session", sessionNum);
       return true;

@@ -1,5 +1,26 @@
 (function() {
 
+  function normalizeSkillDashboardTextToken(value) {
+    var text;
+    var lower;
+    if (typeof value !== "string") return "";
+    text = value.trim();
+    if (!text) return "";
+    lower = text.toLowerCase();
+    if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+    return text;
+  }
+
+  function firstSkillDashboardTextToken() {
+    var i;
+    var token;
+    for (i = 0; i < arguments.length; i++) {
+      token = normalizeSkillDashboardTextToken(arguments[i]);
+      if (token) return token;
+    }
+    return "";
+  }
+
   function skillDashboardPage() {
     var sg = S.skillGraph;
     if (!sg) return '<div class="text-center"><p>No skill data yet. Play some sessions first!</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
@@ -11,7 +32,6 @@
     h += '<div style="width:60px"></div>';
     h += '</div>';
 
-    // Current skill levels
     var skills = [
       { key: "timing", label: "Timing", color: "#4ECDC4" },
       { key: "rhythm", label: "Rhythm", color: "#FFE66D" },
@@ -32,7 +52,6 @@
     }
     h += '</div>';
 
-    // Lane accuracy
     h += '<div class="card mb16">';
     h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Lane Accuracy</div>';
     var laneColors = ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316", "#a855f7"];
@@ -46,7 +65,6 @@
     }
     h += '</div></div>';
 
-    // Trend charts (canvas-based)
     if (sg.history && sg.history.length >= 2) {
       h += '<div class="card mb16">';
       h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Trends (Last ' + sg.history.length + ' Sessions)</div>';
@@ -58,26 +76,26 @@
       h += '</div>';
     }
 
-    // Weakest skill recommendation
     if (typeof SparkSkillTracker !== "undefined") {
       var weakest = SparkSkillTracker.getWeakestSkill(sg);
       var weakLane = SparkSkillTracker.getWeakestLane(sg);
+      var weakLaneIndex = typeof weakLane === "number" && isFinite(weakLane) && weakLane >= 0 ? Math.floor(weakLane) : 0;
       h += '<div class="card mb16" style="background:linear-gradient(180deg,rgba(255,138,92,.1),rgba(255,138,92,.04));border:1px solid rgba(255,138,92,.22)">';
       h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:6px">Focus Area</div>';
       var focusLabel = weakest === "timing" ? "Timing" : weakest === "rhythm" ? "Rhythm" : "Chord Accuracy";
       h += '<div style="font-size:12px;color:var(--text-secondary)">Weakest skill: <strong style="color:var(--text-primary)">' + escHTML(focusLabel) + '</strong> (' + Math.round((sg[weakest] || 0) * 100) + '%)</div>';
-      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Weakest lane: <strong style="color:var(--text-primary)">Lane ' + (weakLane + 1) + '</strong> (' + Math.round((sg.laneAccuracy[weakLane] || 0) * 100) + '%)</div>';
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Weakest lane: <strong style="color:var(--text-primary)">Lane ' + (weakLaneIndex + 1) + '</strong> (' + Math.round((sg.laneAccuracy[weakLaneIndex] || 0) * 100) + '%)</div>';
       h += '</div>';
     }
 
-    // Unlocked content
     if (typeof SparkMasteryEngine !== "undefined" && sg) {
       var unlocks = SparkMasteryEngine.getUnlocks(sg);
       if (unlocks.length > 0) {
         h += '<div class="card mb16">';
         h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:8px">Unlocked</div>';
         for (var ui = 0; ui < unlocks.length; ui++) {
-          h += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span style="color:#4ECDC4">✓</span><span style="color:var(--text-secondary)">' + escHTML(unlocks[ui].label) + '</span></div>';
+          var unlockLabel = firstSkillDashboardTextToken(unlocks[ui].label, unlocks[ui].id, "Unlock");
+          h += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span style="color:#4ECDC4">&#10003;</span><span style="color:var(--text-secondary)">' + escHTML(unlockLabel) + '</span></div>';
         }
         h += '</div>';
       }
@@ -87,7 +105,6 @@
     return h;
   }
 
-  // Draw trend line on canvas after render
   function drawSkillCharts() {
     var sg = S.skillGraph;
     if (!sg || !sg.history || sg.history.length < 2) return;
@@ -110,7 +127,6 @@
         data.push(sg.history[j].skills[skills[i].key] || 0);
       }
 
-      // Draw line
       ctx.strokeStyle = skills[i].color;
       ctx.lineWidth = 2;
       ctx.lineJoin = "round";
@@ -122,7 +138,6 @@
       }
       ctx.stroke();
 
-      // Draw dots
       ctx.fillStyle = skills[i].color;
       for (var d = 0; d < data.length; d++) {
         var dx = (d / (data.length - 1)) * (w - 20) + 10;

@@ -35,19 +35,38 @@ function startCalibration() {
 }
 
 function formatTechniqueFocusLabel(key) {
+  var normalizedKey;
   var labels = {
     open: "Open-note timing",
     tap: "Tap-note consistency",
     forced: "Forced-note transitions",
     specialPhrase: "Phrase section control"
   };
-  return labels[key] || String(key || "Technique");
+  if (typeof key === "string") {
+    normalizedKey = key.trim();
+    if (normalizedKey) {
+      normalizedKey = normalizedKey.toLowerCase();
+      if (normalizedKey === "undefined" || normalizedKey === "null" || normalizedKey === "nan") {
+        normalizedKey = "";
+      }
+    }
+  } else {
+    normalizedKey = "";
+  }
+  return labels[normalizedKey] || (normalizedKey ? normalizedKey : "Technique");
 }
 
 function eventMatchesTechniqueFocus(evt, key) {
   var flags = evt && evt.sourceFlags ? evt.sourceFlags : null;
-  if (!flags || !key) return false;
-  return !!flags[key];
+  var normalizedKey = typeof key === "string" ? key.trim() : "";
+  if (normalizedKey) {
+    normalizedKey = normalizedKey.toLowerCase();
+    if (normalizedKey === "undefined" || normalizedKey === "null" || normalizedKey === "nan") {
+      normalizedKey = "";
+    }
+  }
+  if (!flags || !normalizedKey) return false;
+  return !!flags[normalizedKey];
 }
 
 function recordCalibrationTap() {
@@ -92,6 +111,44 @@ function cancelCalibration() {
   render();
 }
 
+function normalizePerformPageTextToken(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function firstPerformPageTextToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = normalizePerformPageTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
+function normalizePerformPageNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
+function getPerformancePracticePresetOptions() {
+  var stemLabel = typeof getPerformancePracticePresetStemLabel === "function"
+    ? getPerformancePracticePresetStemLabel()
+    : "Guitar";
+  return [
+    { id: "full_mix", label: "Full" },
+    { id: "no_guitar", label: "No " + stemLabel },
+    { id: "guitar_quiet", label: "Quiet " + stemLabel },
+    { id: "guitar_solo", label: "Solo " + stemLabel }
+  ];
+}
+
 function performPage() {
   var chart = S.performChart;
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
@@ -107,7 +164,10 @@ function performPage() {
     ? runtimeState.transport.positionMs / 1000
     : S.performCurrentSec;
   var phrase = getPerformancePhraseForTime(chart, nowSec);
-  var phraseName = phrase ? phrase.name : "";
+  var phraseName = firstPerformPageTextToken(phrase ? phrase.name : "", "Phrase");
+  var chartTitle = firstPerformPageTextToken(chart.title, chart.songTitle, chart.id, "Performance chart");
+  var chartArtist = firstPerformPageTextToken(chart.artist, "Unknown Artist");
+  var performLastHitLabel = firstPerformPageTextToken(S.performLastHitLabel);
   var previewEvent = getNextPerformEvent(chart, nowSec);
   var techniquePreview = typeof getImportedTechniquePreview === "function"
     ? getImportedTechniquePreview(chart, nowSec, 3)
@@ -119,8 +179,8 @@ function performPage() {
   h += '<div class="perform-header">';
   h += '<button class="back-btn" onclick="act(\'stopPerform\')">&larr; Exit</button>';
   h += '<div class="perform-title">';
-  h += '<strong>' + escHTML(chart.title) + '</strong>';
-  h += '<span class="perform-artist">' + escHTML(chart.artist || "") + '</span>';
+  h += '<strong>' + escHTML(chartTitle) + '</strong>';
+  h += '<span class="perform-artist">' + escHTML(chartArtist) + '</span>';
   h += '</div>';
   h += '<div class="perform-phrase-name">' + escHTML(phraseName) + '</div>';
   h += '</div>';
@@ -139,8 +199,8 @@ function performPage() {
   h += '</div>';
 
   // Hit feedback
-  if (S.performLastHitLabel && Date.now() - S.performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
-    h += '<div class="perform-hit-feedback">' + escHTML(S.performLastHitLabel) + '</div>';
+  if (performLastHitLabel && Date.now() - S.performLastHitTime < ((typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.ui.hitBadgeMs : 800)) {
+    h += '<div class="perform-hit-feedback">' + escHTML(performLastHitLabel) + '</div>';
   }
 
   // Count-in overlay
@@ -156,8 +216,9 @@ function performPage() {
   if (techniquePreview.length) {
     h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:6px 12px 0">';
     for (var ti = 0; ti < techniquePreview.length; ti++) {
+      var previewLabel = firstPerformPageTextToken(techniquePreview[ti].label, "Technique");
       h += '<span style="background:' + techniquePreview[ti].color + ';color:#fff;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.02em">'
-        + escHTML(techniquePreview[ti].label) + '</span>';
+        + escHTML(previewLabel) + '</span>';
     }
     h += '</div>';
   }
@@ -187,12 +248,15 @@ function performPage() {
   // Debug overlay
   if (S.performDebug) {
     var debugPhrase = getPerformancePhraseForTime(chart, nowSec);
+    var debugTime = normalizePerformPageNumber(nowSec, 0);
+    var debugLoopStart = S.performLoop ? normalizePerformPageNumber(S.performLoop.startSec, 0) : 0;
+    var debugLoopEnd = S.performLoop ? normalizePerformPageNumber(S.performLoop.endSec, 0) : 0;
     h += '<div style="background:rgba(0,0,0,.85);color:#0f0;font-family:monospace;font-size:11px;padding:8px;border-radius:6px;margin:4px 12px">';
-    h += 'time: ' + nowSec.toFixed(2) + 's | phrase: ' + (debugPhrase ? debugPhrase.name : '-') + '<br>';
+    h += 'time: ' + debugTime.toFixed(2) + 's | phrase: ' + (debugPhrase ? debugPhrase.name : '-') + '<br>';
     h += 'speed: ' + S.performSpeed + ' | diff: ' + S.performDifficulty + '<br>';
     h += 'combo: ' + S.performCombo + '/' + S.performMaxCombo + ' | score: ' + S.performScore + '<br>';
     h += 'notes: [' + (S.performInputNotes || []).join(',') + ']<br>';
-    h += 'loop: ' + (S.performLoop ? S.performLoop.startSec.toFixed(1) + '-' + S.performLoop.endSec.toFixed(1) : 'off') + '<br>';
+    h += 'loop: ' + (S.performLoop ? debugLoopStart.toFixed(1) + '-' + debugLoopEnd.toFixed(1) : 'off') + '<br>';
     h += 'windows: P' + S.performWindowPerfectMs + '/G' + S.performWindowGoodMs + '/M' + S.performWindowMissMs;
     h += '</div>';
   }
@@ -200,12 +264,14 @@ function performPage() {
   // Loop practice banner
   if (S.performLoop) {
     var loopPhrase = null;
+    var loopPhraseName;
     if (chart && chart.phrases) {
       for (var li = 0; li < chart.phrases.length; li++) {
         if (chart.phrases[li].id === S.performLoop.phraseId) { loopPhrase = chart.phrases[li]; break; }
       }
     }
-    h += '<div style="text-align:center;padding:4px 12px;background:#FFE66D22;border-radius:8px;margin:4px 12px"><span style="font-size:11px;font-weight:700;color:#FFE66D">&#128257; Looping: ' + escHTML(loopPhrase ? loopPhrase.name : 'Phrase') + '</span></div>';
+    loopPhraseName = firstPerformPageTextToken(loopPhrase ? loopPhrase.name : "", "Phrase");
+    h += '<div style="text-align:center;padding:4px 12px;background:#FFE66D22;border-radius:8px;margin:4px 12px"><span style="font-size:11px;font-weight:700;color:#FFE66D">&#128257; Looping: ' + escHTML(loopPhraseName) + '</span></div>';
   }
 
   // Controls
@@ -246,12 +312,7 @@ function performPage() {
 
   // Practice presets
   h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Mix</span>';
-  var presets = [
-    { id: "full_mix", label: "Full" },
-    { id: "no_guitar", label: "No Guitar" },
-    { id: "guitar_quiet", label: "Quiet Guitar" },
-    { id: "guitar_solo", label: "Solo Guitar" }
-  ];
+  var presets = getPerformancePracticePresetOptions();
   var performPracticePreset = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : S.performPracticePreset;
   for (var pr = 0; pr < presets.length; pr++) {
     h += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
@@ -270,7 +331,10 @@ function performPage() {
 
   // Calibration
   h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performCalibrate\')" style="background:var(--input-bg);color:var(--text-secondary)">&#9201; Calibrate</button>';
-  var curOffset = S.performMode === "midi" ? S.performMidiOffsetMs : S.performAudioOffsetMs;
+  var curOffset = normalizePerformPageNumber(
+    S.performMode === "midi" ? S.performMidiOffsetMs : S.performAudioOffsetMs,
+    0
+  );
   if (curOffset !== 0) {
     h += '<span style="font-size:10px;color:var(--text-muted);margin-left:4px">offset: ' + curOffset + 'ms</span>';
   }
@@ -279,9 +343,11 @@ function performPage() {
 
   // Calibration section
   if (S._calibrating) {
+    var calibCurrentBeat = normalizePerformPageNumber(S._calibCurrentBeat, 0);
+    var calibTotalBeats = normalizePerformPageNumber(S._calibTotalBeats, 8);
     h += '<div class="card" style="margin:8px 12px;text-align:center">';
     h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Calibrating...</div>';
-    h += '<div style="font-size:48px;font-weight:900;color:#FFE66D;animation:bn .3s ease">' + (S._calibCurrentBeat || 0) + '/' + (S._calibTotalBeats || 8) + '</div>';
+    h += '<div style="font-size:48px;font-weight:900;color:#FFE66D;animation:bn .3s ease">' + calibCurrentBeat + '/' + calibTotalBeats + '</div>';
     h += '<p style="font-size:12px;color:var(--text-muted)">Tap spacebar or click when you hear the beat</p>';
     h += '<button class="btn" onclick="recordCalibrationTap()" style="background:#4ECDC4;color:#fff;padding:16px 32px;font-size:16px">TAP</button>';
     h += ' <button class="btn btn-sm" onclick="cancelCalibration()" style="margin-left:8px">Cancel</button>';
@@ -302,11 +368,13 @@ function performDonePage() {
     ? runtimeState.performanceTargetTechnique
     : S.performTargetTechnique;
   if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  var resultTitle = firstPerformPageTextToken(r.title, r.songTitle, runtimeState && runtimeState.performanceChartId, S.performChartId, "Performance");
+  var resultArtist = firstPerformPageTextToken(r.artist, "Unknown Artist");
 
   var h = '<div class="perform-page text-center" style="padding-top:20px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Performance Complete!</h2>';
-  h += '<p style="color:var(--text-dim)">' + escHTML(r.title || "") + ' by ' + escHTML(r.artist || "") + '</p>';
+  h += '<p style="color:var(--text-dim)">' + escHTML(resultTitle) + ' by ' + escHTML(resultArtist) + '</p>';
 
   // Stars
   h += '<div style="font-size:32px;margin:12px 0">';
@@ -340,7 +408,8 @@ function performDonePage() {
   // Unlock celebrations
   if (r.unlocks && r.unlocks.length > 0) {
     for (var ui = 0; ui < r.unlocks.length; ui++) {
-      h += '<div style="background:linear-gradient(135deg,#FFE66D22,#FF8A5C22);border:1px solid #FFE66D44;border-radius:12px;padding:8px 16px;margin-bottom:8px;text-align:center"><span style="font-weight:800;color:#FFE66D">' + escHTML(r.unlocks[ui].label) + '</span> <span style="font-size:12px;color:var(--text-muted)">+' + r.unlocks[ui].xp + ' XP</span></div>';
+      var unlockLabel = firstPerformPageTextToken(r.unlocks[ui].label, "Unlock");
+      h += '<div style="background:linear-gradient(135deg,#FFE66D22,#FF8A5C22);border:1px solid #FFE66D44;border-radius:12px;padding:8px 16px;margin-bottom:8px;text-align:center"><span style="font-weight:800;color:#FFE66D">' + escHTML(unlockLabel) + '</span> <span style="font-size:12px;color:var(--text-muted)">+' + r.unlocks[ui].xp + ' XP</span></div>';
     }
   }
 
@@ -357,8 +426,9 @@ function performDonePage() {
     for (var pi = 0; pi < r.phraseStats.length; pi++) {
       var ps = r.phraseStats[pi];
       var pct = ps.total > 0 ? Math.round(ps.scoreSum / ps.total * 100) : 0;
+      var phraseLabel = firstPerformPageTextToken(ps.name, "Phrase " + (pi + 1));
       h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
-      h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(ps.name || "Phrase " + (pi + 1)) + '</span>';
+      h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(phraseLabel) + '</span>';
       h += '<span style="font-size:12px;color:var(--text-muted)">' + ps.perfects + 'P / ' + ps.goods + 'G / ' + ps.oks + 'O / ' + ps.misses + 'M &mdash; ' + pct + '%</span>';
       h += '</div>';
     }
@@ -390,8 +460,8 @@ function performDonePage() {
       if (bAvg < worstAvg) worstIdx = bi;
     }
     h += '<div style="display:flex;gap:10px;margin-bottom:16px">';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Best Phrase</div><div style="font-size:14px;font-weight:800;color:#4ECDC4">' + escHTML(r.phraseStats[bestIdx].name) + '</div></div>';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Weakest Phrase</div><div style="font-size:14px;font-weight:800;color:#FF6B6B">' + escHTML(r.phraseStats[worstIdx].name) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Best Phrase</div><div style="font-size:14px;font-weight:800;color:#4ECDC4">' + escHTML(firstPerformPageTextToken(r.phraseStats[bestIdx].name, "Phrase " + (bestIdx + 1))) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Weakest Phrase</div><div style="font-size:14px;font-weight:800;color:#FF6B6B">' + escHTML(firstPerformPageTextToken(r.phraseStats[worstIdx].name, "Phrase " + (worstIdx + 1))) + '</div></div>';
     h += '</div>';
   }
 
@@ -412,9 +482,11 @@ function performDonePage() {
     var songId=(r.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
     var nextRecs=buildPerformanceRecommendationsForSong(songId);
     if(nextRecs&&nextRecs.length){
+      var nextStepLabel = firstPerformPageTextToken(nextRecs[0].label, "Recommendation");
+      var nextStepReason = firstPerformPageTextToken(nextRecs[0].reason);
       h+='<div class="card" style="margin-top:12px;text-align:left"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Next Step</div>';
-      h+='<div style="font-size:13px;color:var(--text-primary)">'+escHTML(nextRecs[0].label)+'</div>';
-      h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(nextRecs[0].reason)+'</div></div>';
+      h+='<div style="font-size:13px;color:var(--text-primary)">'+escHTML(nextStepLabel)+'</div>';
+      h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(nextStepReason)+'</div></div>';
     }
   }
 
@@ -448,8 +520,9 @@ function renderImportedTechniqueSummaryRows(summary) {
   for (var i = 0; i < order.length; i++) {
     var row = summary[order[i]];
     if (!row || !row.total) continue;
+    var rowLabel = firstPerformPageTextToken(row.label, formatTechniqueFocusLabel(order[i]), "Technique");
     h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
-    h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(row.label) + '</span>';
+    h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(rowLabel) + '</span>';
     h += '<span style="font-size:12px;color:var(--text-muted)">' + row.hits + '/' + row.total + ' hit &mdash; ' + row.accuracy + '%</span>';
     h += '</div>';
   }

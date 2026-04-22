@@ -1,5 +1,99 @@
 // ===== ChordSpark: Tool and info tabs =====
 
+function getToolsPageInstrument(){
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
+function normalizeToolsTextToken(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function normalizeToolsNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
+function normalizeToolsCount(value, fallback) {
+  var num = normalizeToolsNumber(value, fallback);
+  if (!isFinite(num)) return fallback;
+  num = Math.round(num);
+  if (num < 0) return fallback;
+  return num;
+}
+
+function normalizeToolsPercent(value, fallback) {
+  var num = normalizeToolsNumber(value, fallback);
+  if (!isFinite(num)) return fallback;
+  num = Math.round(num);
+  if (num < 0) return 0;
+  if (num > 100) return 100;
+  return num;
+}
+
+function formatToolsHz(value, fallback) {
+  var num = normalizeToolsNumber(value, null);
+  if (num == null || num <= 0) return fallback;
+  return String(num);
+}
+
+function getToolsInstrumentName(inst) {
+  return normalizeToolsTextToken(
+    inst && (inst.name || inst.displayName || inst.instrumentName || inst.instrument)
+  );
+}
+
+function getToolsInstrumentType(inst) {
+  return normalizeToolsTextToken(
+    inst && (inst.instrumentType || inst.instrument || inst.type)
+  ).toLowerCase();
+}
+
+function getToolsInstrumentIcon(inst) {
+  var type = getToolsInstrumentType(inst);
+  if (type === "piano") return "&#127929;";
+  if (type === "drums") return "&#129345;";
+  return "&#127930;";
+}
+
+function getToolsTuningLabel(strings) {
+  var notes = [];
+  var i;
+  var note;
+  if (!Array.isArray(strings) || !strings.length) {
+    return "Play a note to check your pitch.";
+  }
+  for (i = 0; i < strings.length; i++) {
+    note = normalizeToolsTextToken(strings[i] && strings[i].note);
+    if (note) notes.push(note);
+  }
+  return notes.length ? "Standard tuning: " + notes.join(" ") : "Play a note to check your pitch.";
+}
+
 // ===== TUNER TAB =====
 function getLegacyTunerRuntime(){
   var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
@@ -9,8 +103,8 @@ function getLegacyTunerRuntime(){
   return {
     active: typeof S.tunerActive === "boolean" ? S.tunerActive : !!(runtime && runtime.tunerActive),
     note: Object.prototype.hasOwnProperty.call(S, "tunerNote") ? S.tunerNote : (runtime ? runtime.tunerNote : null),
-    freq: typeof S.tunerFreq === "number" ? S.tunerFreq : (runtime && typeof runtime.tunerFreq === "number" ? runtime.tunerFreq : 0),
-    cents: typeof S.tunerCents === "number" ? S.tunerCents : (runtime && typeof runtime.tunerCents === "number" ? runtime.tunerCents : 0),
+    freq: normalizeToolsNumber(Object.prototype.hasOwnProperty.call(S, "tunerFreq") ? S.tunerFreq : (runtime ? runtime.tunerFreq : null), 0),
+    cents: normalizeToolsNumber(Object.prototype.hasOwnProperty.call(S, "tunerCents") ? S.tunerCents : (runtime ? runtime.tunerCents : null), 0),
     error: typeof S.tunerErr === "string" ? S.tunerErr : (runtime ? runtime.tunerError : null)
   };
 }
@@ -24,23 +118,30 @@ function getLegacyAudioInputRuntime(){
     devices: Array.isArray(S.audioInputDevices) && S.audioInputDevices.length ? S.audioInputDevices : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
     inputId: typeof S.audioInputId === "string" ? S.audioInputId : (runtime ? (runtime.audioInputId || "") : ""),
     testingId: typeof S.audioTestingId === "string" ? S.audioTestingId : (runtime ? (runtime.audioTestingId || "") : ""),
-    testLevel: typeof S.audioTestLevel === "number" ? S.audioTestLevel : (runtime && typeof runtime.audioTestLevel === "number" ? runtime.audioTestLevel : 0)
+    testLevel: normalizeToolsPercent(
+      Object.prototype.hasOwnProperty.call(S, "audioTestLevel") ? S.audioTestLevel : (runtime ? runtime.audioTestLevel : null),
+      0
+    )
   };
 }
 
 function tunerTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getToolsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var instrumentName = getToolsInstrumentName(inst);
+  var tunerTitle = instrumentName ? instrumentName + " Tuner" : "Tuner";
+  var tuningLabel = getToolsTuningLabel(D.STRINGS);
   var runtime = getLegacyTunerRuntime();
-  var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; Guitar Tuner</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Standard tuning: E A D G B e</p>';
+  var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; ' + escHTML(tunerTitle) + '</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">' + escHTML(tuningLabel) + '</p>';
   h+='<div id="tuner-strings" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">';
-  for(var i=0;i<D.STRINGS.length;i++){
+  for(var i=0;i<(Array.isArray(D.STRINGS) ? D.STRINGS.length : 0);i++){
     var gs=D.STRINGS[i],mt=runtime.note===gs.note,inT=mt&&Math.abs(runtime.cents)<5,tC=inT?"#4ECDC4":mt&&Math.abs(runtime.cents)<15?"#FFE66D":"#FF6B6B";
-    h+='<div style="background:'+(mt?tC+"22":"var(--chip-bg)")+';border:2px solid '+(mt?tC:"var(--border)")+';border-radius:12px;padding:8px 14px;text-align:center;min-width:44px"><div style="font-size:18px;font-weight:800;color:'+(mt?tC:"var(--text-muted)")+'">'+gs.note+'</div><div style="font-size:9px;color:var(--text-muted)">'+gs.freq+'Hz</div></div>';
+    h+='<div style="background:'+(mt?tC+"22":"var(--chip-bg)")+';border:2px solid '+(mt?tC:"var(--border)")+';border-radius:12px;padding:8px 14px;text-align:center;min-width:44px"><div style="font-size:18px;font-weight:800;color:'+(mt?tC:"var(--text-muted)")+'">'+gs.note+'</div><div style="font-size:9px;color:var(--text-muted)">'+formatToolsHz(gs.freq, "--")+'Hz</div></div>';
   }
   h+='</div>';
   if(runtime.active){
     var inT=Math.abs(runtime.cents)<5,tC=inT?"#4ECDC4":Math.abs(runtime.cents)<15?"#FFE66D":"#FF6B6B";
-    h+='<div id="tuner-note-display" style="font-size:72px;font-weight:900;color:'+tC+';line-height:1">'+(runtime.note||"&#8212;")+'</div><div id="tuner-freq-display" style="font-size:16px;color:var(--text-muted);margin:4px 0 16px">'+(runtime.freq>0?runtime.freq+" Hz":"Play a note...")+'</div>';
+    h+='<div id="tuner-note-display" style="font-size:72px;font-weight:900;color:'+tC+';line-height:1">'+(runtime.note||"&#8212;")+'</div><div id="tuner-freq-display" style="font-size:16px;color:var(--text-muted);margin:4px 0 16px">'+(runtime.freq>0?formatToolsHz(runtime.freq, "--")+" Hz":"Play a note...")+'</div>';
     h+='<div style="position:relative;height:40px;background:var(--input-bg);border-radius:20px;margin:0 auto 16px;max-width:300px;overflow:hidden"><div style="position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--text-primary);z-index:2"></div><div id="tuner-needle" style="position:absolute;left:'+(50+runtime.cents/2)+'%;top:4px;bottom:4px;width:12px;border-radius:6px;background:'+tC+';transition:left .15s;transform:translateX(-50%);z-index:3"></div><div style="position:absolute;top:50%;left:16px;transform:translateY(-50%);font-size:11px;color:var(--text-muted)">&#9837; flat</div><div style="position:absolute;top:50%;right:16px;transform:translateY(-50%);font-size:11px;color:var(--text-muted)">sharp &#9839;</div></div>';
     h+='<div id="tuner-status" style="font-size:14px;font-weight:700;color:'+tC+';margin-bottom:16px">';
     if(!runtime.freq)h+="&#128266; Listening...";
@@ -57,7 +158,7 @@ function tunerTab(){
   // Audio Input Device
   var audioRuntime = getLegacyAudioInputRuntime();
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127911; Audio Input</h3>';
-  h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Select your audio input device for the Tuner and Chord Check. Use this to pick your USB guitar cable instead of the default microphone.</p>';
+  h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Select your audio input device for the Tuner and Chord Check. Use this to pick your USB instrument cable or audio interface instead of the default microphone.</p>';
   h+='<button onclick="act(\'refreshAudioInputs\')" class="btn" style="margin-bottom:12px;padding:8px 16px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;border:none;border-radius:10px">&#128260; Refresh Devices</button>';
   if(audioRuntime.devices.length>0){
     h+='<div style="display:flex;flex-direction:column;gap:8px">';
@@ -76,6 +177,8 @@ function tunerTab(){
         h+='<div style="padding:0 14px 10px">';
         h+='<div style="background:var(--prog-bg);border-radius:6px;height:8px;overflow:hidden;margin-bottom:6px"><div id="audio-test-meter" style="height:100%;width:'+audioRuntime.testLevel+'%;background:'+(audioRuntime.testLevel>10?"#4ECDC4":"var(--text-muted)")+';border-radius:6px;transition:width .1s"></div></div>';
         h+='<div id="audio-test-label" style="font-size:11px;font-weight:600;color:'+(audioRuntime.testLevel>10?"#4ECDC4":"var(--text-muted)")+'">'+( audioRuntime.testLevel>10?"Signal detected — strum to confirm":"Listening — strum your guitar...")+'</div>';
+        h = h.replace("Signal detected — strum to confirm", "Signal detected - play to confirm");
+        h = h.replace("Listening — strum your guitar...", "Listening - play your instrument...");
         h+='</div>';
       }
       h+='</div>';
@@ -93,9 +196,10 @@ function tunerTab(){
 
 // ===== STATS TAB =====
 function statsTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getToolsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats</h2></div>';
-  var hist=S.history||[];
+  var hist=Array.isArray(S.history) ? S.history : [];
 
   // Summary cards
   var totalXP=0,totalSessions=0,practiceDays={};
@@ -109,7 +213,7 @@ function statsTab(){
 
   h+='<div style="text-align:center;margin-bottom:12px"><button class="btn" onclick="act(\'openSkillTree\')" style="background:var(--accent);color:#fff">&#127795; Skill Tree</button></div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
-  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FF6B6B">'+S.xp+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Total XP</div></div>';
+  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FF6B6B">'+normalizeToolsCount(S.xp,0)+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Total XP</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+totalSessions+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Activities</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#45B7D1">'+dayCount+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Practice Days</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FFE66D">'+avgXP+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Avg XP/Day</div></div>';
@@ -148,7 +252,7 @@ function statsTab(){
     var dt=new Date(today);dt.setDate(dt.getDate()-d);
     var ds=dt.toISOString().split("T")[0];
     var dayXP=0;
-    for(var i=0;i<hist.length;i++)if(hist[i].date===ds)dayXP+=hist[i].xp||0;
+    for(var i=0;i<hist.length;i++)if(hist[i].date===ds)dayXP+=normalizeToolsNumber(hist[i].xp,0);
     weekXP.push({day:dayNames[dt.getDay()],xp:dayXP,date:ds});
     if(dayXP>maxXP)maxXP=dayXP;
   }
@@ -165,9 +269,18 @@ function statsTab(){
   h+='</div></div>';
 
   // Transition difficulty
-  var ts=S.transitionStats;
+  var ts=(S.transitionStats && typeof S.transitionStats === "object") ? S.transitionStats : {};
   var transitions=[];
-  for(var k in ts)if(ts[k].attempts>=2)transitions.push({key:k,avg:ts[k].avgTime,best:ts[k].best,attempts:ts[k].attempts});
+  for(var k in ts){
+    var entry = ts[k] || {};
+    var attempts = normalizeToolsNumber(entry.attempts, 0);
+    if(attempts>=2)transitions.push({
+      key:k,
+      avg:normalizeToolsNumber(entry.avgTime, 0),
+      best:normalizeToolsNumber(entry.best, 0),
+      attempts:attempts
+    });
+  }
   transitions.sort(function(a,b){return b.avg-a.avg;});
   if(transitions.length>0){
     h+='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128260; Chord Transitions</h3>';
@@ -226,27 +339,34 @@ function crossAppProgressCard(){
     var raw=localStorage.getItem("pianospark_jeeves_export");
     if(!raw)return '';
     var ps=JSON.parse(raw);
+    var pianoXp = normalizeToolsCount(ps && ps.xp, 0);
+    var pianoLevel = normalizeToolsCount(ps && ps.level, 1);
+    var pianoSessions = normalizeToolsCount(ps && ps.sessions, 0);
+    var pianoStreak = normalizeToolsCount(ps && ps.streak, 0);
+    var inst = getToolsPageInstrument();
+    var activeInstrumentName = getToolsInstrumentName(inst) || "Current";
+    var activeInstrumentIcon = getToolsInstrumentIcon(inst);
     h+='<div class="card mb16" style="border:1px solid #45B7D1"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:#45B7D1">&#127929; My Music Journey</h3>';
     h+='<div style="display:flex;gap:12px;margin-bottom:12px">';
-    // Guitar stats
+    // Active instrument stats
     h+='<div style="flex:1;background:var(--input-bg);border-radius:12px;padding:12px;text-align:center">';
-    h+='<div style="font-size:20px;margin-bottom:4px">&#127930;</div>';
-    h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Guitar</div>';
-    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+S.xp+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
-    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+S.level+'</div>';
+    h+='<div style="font-size:20px;margin-bottom:4px">' + activeInstrumentIcon + '</div>';
+    h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">' + escHTML(activeInstrumentName) + '</div>';
+    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+normalizeToolsCount(S.xp,0)+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
+    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+normalizeToolsCount(S.level,1)+'</div>';
     h+='</div>';
     // Piano stats
     h+='<div style="flex:1;background:var(--input-bg);border-radius:12px;padding:12px;text-align:center">';
     h+='<div style="font-size:20px;margin-bottom:4px">&#127929;</div>';
     h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Piano</div>';
-    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+(ps.xp||0)+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
-    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+(ps.level||1)+'</div>';
+    h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+pianoXp+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
+    h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+pianoLevel+'</div>';
     h+='</div>';
     h+='</div>';
     // Combined stats
-    var totalXP=(S.xp||0)+(ps.xp||0);
-    var totalSessions=(S.sessions||0)+(ps.sessions||0);
-    var combinedStreak=Math.max(S.streak||0,ps.streak||0);
+    var totalXP=normalizeToolsCount(S.xp,0)+pianoXp;
+    var totalSessions=normalizeToolsCount(S.sessions,0)+pianoSessions;
+    var combinedStreak=Math.max(normalizeToolsCount(S.streak,0),pianoStreak);
     h+='<div style="display:flex;justify-content:space-around;text-align:center">';
     h+='<div><div style="font-size:20px;font-weight:900;color:#FFE66D">'+totalXP+'</div><div style="font-size:10px;color:var(--text-muted)">Combined XP</div></div>';
     h+='<div><div style="font-size:20px;font-weight:900;color:#4ECDC4">'+totalSessions+'</div><div style="font-size:10px;color:var(--text-muted)">Total Sessions</div></div>';
@@ -258,8 +378,9 @@ function crossAppProgressCard(){
 
 // ===== GUIDE TAB =====
 function guideTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getToolsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128214; How to Read Chord Charts</h2></div>';
   h+='<div class="card mb16"><div class="flex-center mb12">'+UI.chord(D.CHORDS[1][0],200)+'</div><div style="text-align:center;font-size:13px;color:var(--text-dim);font-weight:600">Example: E Major</div></div>';
   h+='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127912; Chart Legend</h3>';
@@ -298,7 +419,7 @@ function guideTab(){
     ["\uD83C\uDFB5","Songs","Play along with real songs using chord progressions"],
     ["\uD83E\uDD41","Rhythm","Tap-based rhythm game to improve your timing"],
     ["\uD83D\uDD27","Build","Create and play custom chord progressions"],
-    ["\uD83C\uDFA4","Tuner","Tune your guitar with the built-in mic tuner"],
+    ["\uD83C\uDFA4","Tuner","Tune your instrument with the built-in mic tuner"],
     ["\uD83D\uDCCA","Stats","Track your practice history and view analytics"]];
   for(var i=0;i<feats.length;i++)
     h+='<div style="display:flex;align-items:flex-start;gap:10px"><div style="font-size:18px;min-width:28px;text-align:center">'+feats[i][0]+'</div><div><div style="font-weight:700;color:var(--text-primary);font-size:13px">'+feats[i][1]+'</div><div style="font-size:12px;color:var(--text-dim)">'+feats[i][2]+'</div></div></div>';

@@ -1,16 +1,242 @@
 // ===== ChordSpark: Home page and practice-related tabs =====
 
+function getPracticePageInstrument() {
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui || inst.tabs || inst.tabRenderers) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
+function getPracticePageInstrumentType(inst) {
+  return (inst && (inst.instrument || inst.instrumentType)) || "guitar";
+}
+
+function getPracticeSummaryItemType(item) {
+  var meta = item && item.meta ? item.meta : {};
+  var type = item && item.type ? item.type : null;
+  var exerciseType = meta && typeof meta.exerciseType === "string"
+    ? meta.exerciseType.trim()
+    : meta.exerciseType;
+  if (type === "song" && meta.songId) return "performance_song";
+  if (type === "practice") {
+    if (meta.guidedSession != null) return "guided_session";
+    if (meta.from || meta.to || meta.key) return "transition";
+    if (meta.bpm != null) return "rhythm";
+    if (exerciseType) return exerciseType;
+    if (meta.exerciseId) return "finger";
+  }
+  return type;
+}
+
+function prettyPracticeSummaryToken(value) {
+  var text;
+  var lower;
+  if (value == null) return "";
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function normalizePracticeSummaryItemId(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return null;
+  text = value.trim();
+  if (!text) return null;
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return null;
+  return text;
+}
+
+function normalizePracticePageNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
+function firstPrettyPracticeSummaryToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = prettyPracticeSummaryToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
+function normalizePracticeTextInputValue(value) {
+  if (typeof value !== "string") return "";
+  if (!prettyPracticeSummaryToken(value)) return "";
+  return value;
+}
+
+function normalizePracticeGoalNumber(value, fallback) {
+  return typeof value === "number" && isFinite(value) ? value : fallback;
+}
+
+function normalizePracticeGoalReached(value) {
+  return value === true || value === 1 || value === "true" || value === "1";
+}
+
+function normalizePracticeDisplayCount(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  if (!isFinite(num)) return fallback;
+  num = Math.round(num);
+  if (num < 0) return fallback;
+  return num;
+}
+
+function getPracticeGoalMetrics() {
+  var dailyGoalMinutes = normalizePracticeGoalNumber(S.dailyGoalMinutes, 10);
+  var todayPracticeSeconds = normalizePracticeGoalNumber(S.todayPracticeSeconds, 0);
+  var goalStreak = normalizePracticeGoalNumber(S.goalStreak, 0);
+  var goalReachedToday = normalizePracticeGoalReached(S.goalReachedToday);
+  var goalMins = Math.floor(todayPracticeSeconds / 60);
+  var goalPct = dailyGoalMinutes > 0
+    ? Math.min(100, Math.round((todayPracticeSeconds / (dailyGoalMinutes * 60)) * 100))
+    : 0;
+  return {
+    dailyGoalMinutes: dailyGoalMinutes,
+    todayPracticeSeconds: todayPracticeSeconds,
+    goalStreak: goalStreak,
+    goalReachedToday: goalReachedToday,
+    goalMins: goalMins,
+    goalPct: goalPct
+  };
+}
+
+function normalizePracticeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function getPracticeSummaryItemLabel(item) {
+  var meta = item && item.meta ? item.meta : {};
+  var label = prettyPracticeSummaryToken(item ? item.label : null);
+  return label
+    ? label
+    : firstPrettyPracticeSummaryToken(
+        meta.exerciseName,
+        meta.songTitle,
+        meta.songId,
+        meta.exerciseFocus,
+        meta.skill,
+        meta.exerciseId,
+        getPracticeSummaryItemType(item),
+        item && item.type,
+        "practice"
+      );
+}
+
+function getPracticeSummaryItemDesc(item) {
+  var meta = item && item.meta ? item.meta : {};
+  var parts = [];
+  var instrument = prettyPracticeSummaryToken(meta.instrument);
+  var exerciseFocus = prettyPracticeSummaryToken(meta.exerciseFocus);
+  var skill = prettyPracticeSummaryToken(meta.skill);
+  var itemType = prettyPracticeSummaryToken(getPracticeSummaryItemType(item));
+  if (instrument) parts.push(instrument);
+  if (exerciseFocus) parts.push(exerciseFocus);
+  else if (skill) parts.push(skill);
+  if (itemType) parts.push(itemType);
+  var desc = prettyPracticeSummaryToken(item ? item.desc : null);
+  return desc
+    ? desc
+    : (parts.join(" - ") || firstPrettyPracticeSummaryToken(getPracticeSummaryItemType(item), item && item.type, "practice"));
+}
+
+function getPracticeSummaryProgress(plan) {
+  var rawItems = plan && Array.isArray(plan.items) ? plan.items : [];
+  var items = rawItems.filter(isRenderablePracticeSummaryItem);
+  var hasSparseItems = rawItems.length !== items.length;
+  var derivedTotalItems = items.length;
+  var rawTotalItems = !hasSparseItems && plan && typeof plan.totalItems === "number" && Number.isInteger(plan.totalItems)
+    ? plan.totalItems
+    : null;
+  var totalItems = rawTotalItems && rawTotalItems > 0 ? rawTotalItems : derivedTotalItems;
+  var derivedCompletedItems = items.filter(isCompletedPracticeSummaryItem).length;
+  var rawCompletedItems = !hasSparseItems && plan && typeof plan.completedItems === "number" && Number.isInteger(plan.completedItems)
+    ? plan.completedItems
+    : null;
+  var completedItems = rawCompletedItems != null ? rawCompletedItems : derivedCompletedItems;
+  if (completedItems < 0) completedItems = 0;
+  if (totalItems < 0) totalItems = 0;
+  if (totalItems > 0 && completedItems > totalItems) completedItems = totalItems;
+  return {
+    completedItems: completedItems,
+    totalItems: totalItems
+  };
+}
+
+function getPracticeSummaryFocus(plan) {
+  var focus = prettyPracticeSummaryToken(plan ? plan.focus : null);
+  return focus ? focus : "No practice focus yet.";
+}
+
+function isCompletedPracticeSummaryItem(item) {
+  var value = item ? item.completed : null;
+  return value === true ||
+    value === 1 ||
+    value === "1" ||
+    (typeof value === "string" && value.trim().toLowerCase() === "true");
+}
+
+function isRenderablePracticeSummaryItem(item) {
+  var id = normalizePracticeSummaryItemId(item ? item.id : null);
+  var label = prettyPracticeSummaryToken(item ? item.label : null);
+  var type = prettyPracticeSummaryToken(item ? item.type : null);
+  var metaHasValue = !!(item && item.meta && typeof item.meta === "object" && !Array.isArray(item.meta) && Object.keys(item.meta).some(function(key) {
+    var value = item.meta[key];
+    if (value == null) return false;
+    if (typeof value === "string") return !!prettyPracticeSummaryToken(value);
+    if (typeof value === "number") return false;
+    if (typeof value === "boolean") return false;
+    if (typeof value === "object" || typeof value === "function" || typeof value === "symbol") return false;
+    return true;
+  }));
+  return !!(
+    item &&
+    (id ||
+     label ||
+     type ||
+     metaHasValue)
+  );
+}
+
+function hasRenderablePracticeSummaryItems(plan) {
+  return !!(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePracticeSummaryItem));
+}
+
 function sv2HomeDashboard() {
-  var inst = SparkInstruments.getActive();
+  var inst = getPracticePageInstrument();
   if (!inst) return "";
   var D = inst.getData ? inst.getData() : {};
-  var instrumentType = inst.instrument || "guitar";
+  var instrumentType = getPracticePageInstrumentType(inst);
   var theme = typeof SparkTheme !== "undefined" ? SparkTheme.get(instrumentType) : null;
   if (!theme) return "";
 
   var allInstruments = typeof SparkInstruments !== "undefined" ? SparkInstruments.getAll() : [];
   var levelNames = D.LN || {};
-  var levelName = levelNames[S.level] || ("Level " + S.level);
+  var currentLevel = normalizePracticeDisplayCount(S.level, 1);
+  var currentXp = normalizePracticeDisplayCount(S.xp, 0);
+  var currentStreak = normalizePracticeDisplayCount(S.streak, 0);
+  var levelName = levelNames[currentLevel] || ("Level " + currentLevel);
   var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
   var masteredCount = 0;
   if (D.ALL_CHORDS) {
@@ -20,8 +246,9 @@ function sv2HomeDashboard() {
   }
 
   // Daily goal
-  var goalPct = Math.min(100, Math.round((S.todayPracticeSeconds / (S.dailyGoalMinutes * 60)) * 100));
-  var goalMins = Math.floor(S.todayPracticeSeconds / 60);
+  var goalMetrics = getPracticeGoalMetrics();
+  var goalPct = goalMetrics.goalPct;
+  var goalMins = goalMetrics.goalMins;
 
   var h = '';
 
@@ -31,10 +258,10 @@ function sv2HomeDashboard() {
   h += '<div class="sv2-icon sv2-icon--lg sv2-anim-glow">' + (inst.icon || "\uD83C\uDFB8") + '</div>';
   h += '<div class="sv2-home-hero__info">';
   h += '<h2 class="sv2-home-hero__name">' + escHTML(inst.name) + '</h2>';
-  h += '<div class="sv2-home-hero__level">' + escHTML(levelName) + ' &mdash; Level ' + S.level + '</div>';
+  h += '<div class="sv2-home-hero__level">' + escHTML(levelName) + ' &mdash; Level ' + currentLevel + '</div>';
   h += '<div class="sv2-home-hero__badges">';
-  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + S.xp + ' XP</span>';
-  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + S.streak + '</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + currentXp + ' XP</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + currentStreak + '</span>';
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + masteredCount + '/' + chordCount + ' chords</span>';
   h += '</div></div></div>';
 
@@ -66,7 +293,7 @@ function sv2HomeDashboard() {
     h += '<div class="sv2-inst-row sv2-anim-stagger-1">';
     for (var k = 0; k < otherInstruments.length; k++) {
       var oi = otherInstruments[k];
-      var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(oi.instrument) : "#888";
+      var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(getPracticePageInstrumentType(oi)) : "#888";
       h += '<div class="sv2-inst-row__item" onclick="act(\'switchInstrument\',\'' + oi.id + '\')">';
       h += '<div class="sv2-icon sv2-icon--sm" style="background:' + oiColor + '">' + (oi.icon || "\uD83C\uDFB5") + '</div>';
       h += '<div style="font-size:' + 'var(--text-micro)' + ';color:' + oiColor + ';font-weight:700;font-family:var(--font-body-v2)">' + escHTML(oi.name) + '</div>';
@@ -84,8 +311,8 @@ function sv2HomeDashboard() {
   h += '<div class="sv2-ring__label" style="font-size:10px">' + goalPct + '%</div>';
   h += '</div>';
   h += '<div style="flex:1">';
-  h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (S.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + S.dailyGoalMinutes + " min") + '</div>';
-  h += '<div style="font-size:var(--text-micro);color:var(--text-muted)">' + goalMins + ' / ' + S.dailyGoalMinutes + ' min today' + (S.goalStreak > 0 ? " &middot; \uD83D\uDD25 " + S.goalStreak + " day streak" : "") + '</div>';
+  h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (goalMetrics.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + goalMetrics.dailyGoalMinutes + " min") + '</div>';
+  h += '<div style="font-size:var(--text-micro);color:var(--text-muted)">' + goalMins + ' / ' + goalMetrics.dailyGoalMinutes + ' min today' + (goalMetrics.goalStreak > 0 ? " &middot; \uD83D\uDD25 " + goalMetrics.goalStreak + " day streak" : "") + '</div>';
   h += '</div></div>';
 
   return h;
@@ -96,7 +323,7 @@ function homePage(){
   var v2Home = typeof sv2HomeDashboard === "function" && document.body.classList.contains("sv2") ? sv2HomeDashboard() : "";
 
   // Build tab bar from active instrument's tabs array
-  var inst = SparkInstruments.getActive();
+  var inst = getPracticePageInstrument();
   var instTabs = inst && inst.tabs ? inst.tabs : [];
   var h='<div class="tabs" role="tablist">';
   for(var i=0;i<instTabs.length;i++){
@@ -138,15 +365,17 @@ function gamesTab(){ return '<div class="card"><div><b>Games</b></div><div class
 function toolsTab(){ return '<div class="card"><div><b>Tools</b></div><div class="muted">Tuner, metronome, and utilities.</div></div>'; }
 // ===== PRACTICE TAB =====
 function practiceTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getPracticePageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   // Daily goal progress at top
-  var goalPct=Math.min(100,Math.round((S.todayPracticeSeconds/(S.dailyGoalMinutes*60))*100));
-  var goalMins=Math.floor(S.todayPracticeSeconds/60);
-  var h='<div class="card mb12"><div style="display:flex;align-items:center;gap:12px"><div class="flex-center">'+ringHTML(goalPct,56,5,S.goalReachedToday?"#4ECDC4":"#FF6B6B",'<div style="font-size:12px;font-weight:900;color:var(--text-primary)">'+goalMins+'m</div>',"Daily goal progress")+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">'+(S.goalReachedToday?"&#9989; Goal reached!":"Daily Goal: "+S.dailyGoalMinutes+" min")+'</div><div style="font-size:11px;color:var(--text-muted)">'+goalMins+'/'+S.dailyGoalMinutes+' min today'+(S.goalStreak>0?" | &#128293; "+S.goalStreak+" day streak":"")+'</div></div><div style="display:flex;gap:4px">';
+  var practiceGoalMetrics = getPracticeGoalMetrics();
+  var goalPct=practiceGoalMetrics.goalPct;
+  var goalMins=practiceGoalMetrics.goalMins;
+  var h='<div class="card mb12"><div style="display:flex;align-items:center;gap:12px"><div class="flex-center">'+ringHTML(goalPct,56,5,practiceGoalMetrics.goalReachedToday?"#4ECDC4":"#FF6B6B",'<div style="font-size:12px;font-weight:900;color:var(--text-primary)">'+goalMins+'m</div>',"Daily goal progress")+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">'+(practiceGoalMetrics.goalReachedToday?"&#9989; Goal reached!":"Daily Goal: "+practiceGoalMetrics.dailyGoalMinutes+" min")+'</div><div style="font-size:11px;color:var(--text-muted)">'+goalMins+'/'+practiceGoalMetrics.dailyGoalMinutes+' min today'+(practiceGoalMetrics.goalStreak>0?" | &#128293; "+practiceGoalMetrics.goalStreak+" day streak":"")+'</div></div><div style="display:flex;gap:4px">';
   var goals=[5,10,15,20,30];
   for(var i=0;i<goals.length;i++){
-    h+='<button onclick="act(\'setGoal\',\''+goals[i]+'\')" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(S.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(S.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
+    h+='<button onclick="act(\'setGoal\',\''+goals[i]+'\')" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
   }
   h+='</div></div></div>';
 
@@ -158,7 +387,8 @@ function practiceTab(){
   // Guided Session CTA
   var gs=D.SESSIONS[S.guidedSession-1];
   if(gs){
-    var gsDone=S.completedGuidedSessions?S.completedGuidedSessions.length:0;
+    var completedGuidedSessions = normalizePracticeArray(S.completedGuidedSessions);
+    var gsDone=completedGuidedSessions.length;
     h+='<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
     h+='<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
     h+='<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
@@ -168,28 +398,46 @@ function practiceTab(){
   }
 
   // Adaptive Practice Plan
-  if(typeof ensurePracticePlan==="function"){
-    var plan=ensurePracticePlan();
-    if(plan&&plan.items&&plan.items.length){
-      h+='<div class="card mb20" style="border:2px solid '+(plan.completedItems>=plan.totalItems?"#4ECDC4":"#45B7D1")+'">';
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-      h+='<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
-      h+='<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+plan.completedItems+'/'+plan.totalItems+'</span>';
-      h+='</div>';
-      h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(plan.focus)+'</div>';
-      for(var pi=0;pi<plan.items.length;pi++){
-        var item=plan.items[pi];
-        h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
-        h+='<span style="font-size:16px">'+(item.completed?"&#9989;":"&#9744;")+'</span>';
-        h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(item.completed?"var(--text-muted)":"var(--text-primary)")+';'+(item.completed?"text-decoration:line-through":"")+'">'+escHTML(item.label)+'</div>';
-        h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(item.desc)+'</div></div>';
-        if(!item.completed){
-          h+='<button class="btn btn-sm" onclick="act(\'completePlanItem\',\''+item.id+'\')" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
+  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
+    : S.practicePlan;
+  if(!plan) plan = S.practicePlan;
+  if(hasRenderablePracticeSummaryItems(plan)){
+    var planProgress = getPracticeSummaryProgress(plan);
+    h+='<div class="card mb20" style="border:2px solid '+(planProgress.completedItems>=planProgress.totalItems?"#4ECDC4":"#45B7D1")+'">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    h+='<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
+    h+='<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+planProgress.completedItems+'/'+planProgress.totalItems+'</span>';
+    h+='</div>';
+    h+='<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(getPracticeSummaryFocus(plan))+'</div>';
+    for(var pi=0;pi<plan.items.length;pi++){
+      var item=plan.items[pi];
+      if(!isRenderablePracticeSummaryItem(item)) continue;
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
+      var isCompleted = isCompletedPracticeSummaryItem(item);
+      h+='<span style="font-size:16px">'+(isCompleted?"&#9989;":"&#9744;")+'</span>';
+      h+='<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(isCompleted?"var(--text-muted)":"var(--text-primary)")+';'+(isCompleted?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
+      h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(getPracticeSummaryItemDesc(item))+'</div></div>';
+      if(!isCompleted){
+        var itemId = normalizePracticeSummaryItemId(item ? item.id : null);
+        if(itemId){
+          h+='<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'completePlanItem\', this.getAttribute(\'data-item-id\'))" style="background:#4ECDC4;color:#fff;font-size:11px;padding:4px 8px">Done</button>';
+        }else{
+          h+='<span class="text-muted">Unavailable</span>';
         }
-        h+='</div>';
       }
       h+='</div>';
     }
+    h+='</div>';
+  } else {
+    h+='<div class="card mb20">';
+    h+='<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
+    h+='<div style="font-size:12px;color:var(--text-dim)">No practice plan yet.</div>';
+    h+='</div>';
   }
 
   // Quick Start / Resume
@@ -220,8 +468,9 @@ function practiceTab(){
   h+='</div>';
   h+='<div class="flex-col">';
   var cs=D.CHORDS[S.selectedLevel]||[];
+  var currentLevel = normalizePracticeDisplayCount(S.level, 1);
   for(var i=0;i<cs.length;i++){
-    var c=cs[i],p=S.chordProgress[c.name]||0,lk=S.selectedLevel>S.level;
+    var c=cs[i],p=normalizePracticePageNumber(S.chordProgress[c.name], 0),lk=S.selectedLevel>currentLevel;
     var tier=getChordTier(c.name);
     var tierStyle=tier.tier!=="none"?";border-left:4px solid "+tier.color:"";
     h+='<div class="card chord-card" style="opacity:'+(lk?0.5:1)+tierStyle+'"'+(lk?'':clickableDiv("act(\'startSession\',\'"+c.name+"\')"))+'>'+UI.chord(c,90)+'<div style="flex:1"><h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text-primary)">'+c.name+tierBadgeHTML(c.name)+'</h3><div class="prog-bar"><div class="prog-fill" style="width:'+p+'%;background:linear-gradient(90deg,'+D.LC[S.selectedLevel]+','+D.LC[S.selectedLevel]+'88)"></div></div><div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+(p>=100?"&#9989; Mastered":p>0?p+"%":"Not started")+'</div></div>';
@@ -231,8 +480,9 @@ function practiceTab(){
   h+='</div>';
 
   // Progress summary
-  var mas=0;for(var k in S.chordProgress)if(S.chordProgress[k]>=100)mas++;
-  h+='<div class="card mt16"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+S.sessions+'</div><div style="font-size:10px;color:var(--text-muted)">Sessions</div></div><div><div style="font-size:24px;font-weight:900;color:#4ECDC4">'+mas+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div><div><div style="font-size:24px;font-weight:900;color:#45B7D1">Lvl '+S.level+'</div><div style="font-size:10px;color:var(--text-muted)">Current</div></div></div></div>';
+  var mas=0;for(var k in S.chordProgress)if(normalizePracticePageNumber(S.chordProgress[k], 0)>=100)mas++;
+  var sessionCount = normalizePracticeDisplayCount(S.sessions, 0);
+  h+='<div class="card mt16"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+sessionCount+'</div><div style="font-size:10px;color:var(--text-muted)">Sessions</div></div><div><div style="font-size:24px;font-weight:900;color:#4ECDC4">'+mas+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div><div><div style="font-size:24px;font-weight:900;color:#45B7D1">Lvl '+currentLevel+'</div><div style="font-size:10px;color:var(--text-muted)">Current</div></div></div></div>';
 
   // Strum track recommendation (S1-S7 progression from addendum)
   h+=strumTrackCard();
@@ -244,9 +494,10 @@ function practiceTab(){
   h+=customSetsSection();
 
   // Badges
+  var earnedBadges = normalizePracticeArray(S.earnedBadges);
   h+='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127942; Badges</h3><div style="display:flex;flex-wrap:wrap;gap:8px">';
   for(var i=0;i<BADGES.length;i++){
-    var b=BADGES[i],e=S.earnedBadges.indexOf(b.id)!==-1;
+    var b=BADGES[i],e=earnedBadges.indexOf(b.id)!==-1;
     h+='<div style="width:56px;text-align:center;opacity:'+(e?1:0.3)+'" aria-label="Badge: '+b.label+(e?" (earned)":" (locked)")+'"><div style="font-size:24px;filter:'+(e?"none":"grayscale(1)")+'">'+b.icon+'</div><div style="font-size:8px;color:var(--text-label);font-weight:600">'+b.label+'</div></div>';
   }
   h+='</div></div>';
@@ -263,28 +514,32 @@ function practiceTab(){
 
 // ===== CUSTOM PRACTICE SETS =====
 function customSetsSection(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getPracticePageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var customSets = normalizePracticeArray(S.customSets);
+  var customSetChords = normalizePracticeArray(S.customSetChords);
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
   if(S.editingSet){
-    h+='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(S.customSetName)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
+    var customSetNameValue = normalizePracticeTextInputValue(S.customSetName);
+    h+='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(customSetNameValue)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
     h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Select chords (min 2):</div>';
     h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
     for(var l=1;l<=S.level;l++){
       var cs=D.CHORDS[l]||[];
       for(var i=0;i<cs.length;i++){
-        var c=cs[i],sel=S.customSetChords.indexOf(c.name)!==-1;
+        var c=cs[i],sel=customSetChords.indexOf(c.name)!==-1;
         h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'toggleSetChord\',\'"+c.name+"\')")+'>'+c.short+'</span>';
       }
     }
     h+='</div>';
-    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(S.customSetChords.length<2||!S.customSetName.trim()?';opacity:0.5':'')+'">'+(S.editingSetIdx>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
+    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(customSetChords.length<2||!S.customSetName.trim()?';opacity:0.5':'')+'">'+(S.editingSetIdx>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
   } else {
-    if(S.customSets.length===0){
+    if(customSets.length===0){
       h+='<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Create custom chord groups to practice together.</p>';
     } else {
-      for(var i=0;i<S.customSets.length;i++){
-        var cs=S.customSets[i];
+      for(var i=0;i<customSets.length;i++){
+        var cs=customSets[i];
         h+='<div class="set-card mb12"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.name)+'</h4><div style="display:flex;gap:6px">';
         h+='<button onclick="act(\'drillCustomSet\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Start drill with '+escHTML(cs.name)+'">&#9889; Drill</button>';
         h+='<button onclick="act(\'editSet\',\''+i+'\')" style="background:var(--input-bg);color:var(--text-muted);padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Edit set">&#9998;</button>';
@@ -307,11 +562,12 @@ function customSetsSection(){
 
 // ===== DRILL TAB =====
 function drillTab(){
-  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+S.drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
+  var drillCount = normalizePracticeDisplayCount(S.drillCount, 0);
+  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
   // Suggested drill from transition stats
   var hardest=getHardestTransition();
   if(hardest){
-    h+='<div class="card mt16"><h3 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#128161; Suggested Drill</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your hardest transition: <strong>'+hardest.from+'</strong> &#8594; <strong>'+hardest.to+'</strong> (avg '+hardest.avg.toFixed(1)+'s)</p><button class="btn" onclick="act(\'drillTransition\',\''+hardest.from+'|'+hardest.to+'\')" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#9889; Practice This</button></div>';
+    h+='<div class="card mt16"><h3 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#128161; Suggested Drill</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your hardest transition: <strong>'+hardest.from+'</strong> &#8594; <strong>'+hardest.to+'</strong> (avg '+normalizePracticePageNumber(hardest.avg, 0).toFixed(1)+'s)</p><button class="btn" onclick="act(\'drillTransition\',\''+hardest.from+'|'+hardest.to+'\')" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#9889; Practice This</button></div>';
   }
   h+='</div>';
   return h;
@@ -323,6 +579,7 @@ function getHardestTransition(){
   for(var k in ts){
     if(ts[k].attempts>=2){
       var avg=ts[k].avgTime;
+      avg = normalizePracticePageNumber(avg, 0);
       if(avg>worstAvg){
         worstAvg=avg;
         var parts=k.split("->");
@@ -346,9 +603,7 @@ function quizTab(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
-  var quizScore = typeof S.quizCorrect === "number"
-    ? S.quizCorrect
-    : (runtime && typeof runtime.legacyQuizScore === "number" ? runtime.legacyQuizScore : 0);
+  var quizScore = normalizePracticeDisplayCount(S.quizCorrect, normalizePracticeDisplayCount(runtime && runtime.legacyQuizScore, 0));
   return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#129504;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Correct: <strong>'+quizScore+'</strong></p><button class="btn" onclick="act(\'startQuiz\')" style="background:linear-gradient(135deg,#45B7D1,#4ECDC4);color:#fff">Start Quiz</button></div></div>';
 }
 
@@ -362,9 +617,9 @@ function getLegacyEarTrainingRuntime(){
     question: typeof S.earTrainQ === "string" ? S.earTrainQ : (runtime ? runtime.legacyEarTrainQuestion : null),
     options: Array.isArray(S.earTrainOpts) && S.earTrainOpts.length ? S.earTrainOpts : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
     answer: typeof S.earTrainAns === "string" ? S.earTrainAns : (runtime ? runtime.legacyEarTrainAnswer : null),
-    score: typeof S.earTrainScore === "number" ? S.earTrainScore : (runtime && typeof runtime.legacyEarTrainScore === "number" ? runtime.legacyEarTrainScore : 0),
-    total: typeof S.earTrainTotal === "number" ? S.earTrainTotal : (runtime && typeof runtime.legacyEarTrainTotal === "number" ? runtime.legacyEarTrainTotal : 0),
-    streak: typeof S.earTrainStreak === "number" ? S.earTrainStreak : (runtime && typeof runtime.legacyEarTrainStreak === "number" ? runtime.legacyEarTrainStreak : 0)
+    score: normalizePracticeDisplayCount(S.earTrainScore, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainScore, 0)),
+    total: normalizePracticeDisplayCount(S.earTrainTotal, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainTotal, 0)),
+    streak: normalizePracticeDisplayCount(S.earTrainStreak, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainStreak, 0))
   };
 }
 
@@ -404,12 +659,13 @@ function practicePage(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
-  if(!S.practicePlan && !(coreView && coreView.plan && coreView.plan.flow === "daily_practice")) generateDailyPracticePlan();
+  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
 
   var stats = getPracticeStats();
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? SparkPracticeBridge.toLegacyPlan(coreView.plan)
+    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
     : S.practicePlan;
+  if(!plan) plan = S.practicePlan;
 
   var h = '<div class="card mb16">';
   h += '<div><b>Practice Stats</b></div>';
@@ -420,12 +676,25 @@ function practicePage(){
 
   h += '<div class="card mb16">';
   h += '<div><b>Today\'s Practice Plan</b></div>';
-  for(var i=0;i<plan.items.length;i++){
-    var item = plan.items[i];
-    h += '<div class="row">';
-    h += '<span>'+escHTML(item.type)+'</span>';
-    h += '<button onclick="act(\'practiceStartItem\', \''+item.id+'\')">'+(item.completed?'Done':'Start')+'</button>';
-    h += '</div>';
+  if(hasRenderablePracticeSummaryItems(plan)){
+    for(var i=0;i<plan.items.length;i++){
+      var item = plan.items[i];
+      if(!isRenderablePracticeSummaryItem(item)) continue;
+      var itemId = normalizePracticeSummaryItemId(item ? item.id : null);
+      var isCompleted = isCompletedPracticeSummaryItem(item);
+      var done = isCompleted ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+      var actionHtml = isCompleted
+        ? '<span class="text-muted">Done</span>'
+        : (itemId
+          ? '<button data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))">Start</button>'
+          : '<span class="text-muted">Unavailable</span>');
+      h += '<div class="row">';
+      h += '<span'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
+      h += actionHtml;
+      h += '</div>';
+    }
+  } else {
+    h += '<div class="muted">No practice plan yet.</div>';
   }
   h += '</div>';
 
@@ -436,15 +705,17 @@ function startPracticeItem(id){
   var plan = null;
   if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
     var view = window.sparkCore.getActiveSessionView();
-    if(view && view.plan && view.plan.flow === "daily_practice"){
+    if(view && view.plan && view.plan.flow === "daily_practice" && window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
       plan = SparkPracticeBridge.toLegacyPlan(view.plan);
     }
   }
   if(!plan) plan = S.practicePlan;
-  if(!plan) return;
+  if(!plan || !Array.isArray(plan.items)) return;
   for(var i=0;i<plan.items.length;i++){
-    if(plan.items[i].id === id){
-      launchPracticeItem(plan.items[i]);
+    var item = plan.items[i];
+    var candidateId = normalizePracticeSummaryItemId(item ? item.id : null);
+    if(item && candidateId === id){
+      launchPracticeItem(item);
       return;
     }
   }

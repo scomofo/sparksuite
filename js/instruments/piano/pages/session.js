@@ -1,15 +1,46 @@
 /* PianoSpark - Guided session flow */
 /* Heart of the overhaul: Spark > Review > New Move > Song Slice > Victory Lap */
 
+function pianoSessionTextToken(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstSessionTextToken() {
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = pianoSessionTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
+function pianoNormalizeSessionBpm(value, fallback) {
+  var numeric = Number(value);
+  if (!isFinite(numeric)) return fallback;
+  numeric = Math.round(numeric);
+  if (numeric <= 0) return fallback;
+  return numeric;
+}
+
 function pianoSessionPage() {
   var plan = S.sessionPlan;
+  var planBpm;
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
+  planBpm = pianoNormalizeSessionBpm(plan.bpm, 80);
 
   var html = '<div class="session-screen">';
 
   // Session header
-  html += '<div class="session-title">Session ' + plan.num + ': ' + escHTML(plan.title) + '</div>';
-  html += '<div class="session-subtitle">Level ' + plan.level + ' \u2022 ' + plan.bpm + ' BPM</div>';
+  html += '<div class="session-title">Session ' + plan.num + ': ' + escHTML(pianoFirstSessionTextToken(plan.title, "Guided session")) + '</div>';
+  html += '<div class="session-subtitle">Level ' + plan.level + ' \u2022 ' + planBpm + ' BPM</div>';
 
   // Step indicator
   html += sessionStepIndicator(S.sessionStep);
@@ -61,7 +92,7 @@ function renderSpark(plan) {
     if (warmUp) {
       html += '<div class="session-step-card" style="border:1px solid var(--warning);border-left:4px solid var(--warning)">';
       html += '<h4>\u{270B} Quick Warm-Up (30s)</h4>';
-      html += '<div class="session-text">' + escHTML(warmUp.name) + ': ' + escHTML(warmUp.desc) + '</div>';
+      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(warmUp.name, "Warm-up")) + ': ' + escHTML(pianoFirstSessionTextToken(warmUp.desc)) + '</div>';
       if (warmUp.offInstrument) {
         html += '<div class="text-muted">No keyboard needed \u2014 do this on any flat surface!</div>';
       }
@@ -73,7 +104,7 @@ function renderSpark(plan) {
 
   html += '<div class="session-step-card spark-card">';
   html += '<h3>\u{2728} Spark</h3>';
-  html += '<div class="session-text">' + escHTML(plan.spark.text) + '</div>';
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.spark.text, "Get started.")) + '</div>';
   html += '<button class="btn btn-accent" onclick="act(\'next_step\')">Next \u2192</button>';
   html += '</div>';
   return html;
@@ -88,7 +119,7 @@ function renderReview(plan) {
 
   var html = '<div class="session-step-card review-card">';
   html += '<h3>\u{1F504} Review</h3>';
-  html += '<div class="session-text">' + escHTML(plan.review.text) + '</div>';
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.review.text, "Review your last move.")) + '</div>';
 
   // Show interleaved review chords (stickiness #8)
   if (plan.review.chords && plan.review.chords.length) {
@@ -141,7 +172,7 @@ function renderNewMove(plan) {
       break;
 
     case "try":
-      html += '<div class="session-text">' + escHTML(plan.newMove.text) + '</div>';
+      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.newMove.text, "Try the new move.")) + '</div>';
       if (chord) {
         html += pianoSVG(chord);
         html += '<button class="btn btn-sm" onclick="act(\'play_chord\',\'' + chord.short + '\')">\u{1F50A} Play</button>';
@@ -169,22 +200,25 @@ function renderNewMove(plan) {
       // Show transition tip if available
       var tipKey = S.lastReviewChords.length ? S.lastReviewChords[0] + "_" + plan.newMove.chord : null;
       var _tips = typeof PIANO_TRANSITION_TIPS !== "undefined" ? PIANO_TRANSITION_TIPS : TRANSITION_TIPS;
-      if (tipKey && _tips[tipKey]) {
-        html += '<div class="intention-card">\u{1F4A1} ' + escHTML(_tips[tipKey]) + '</div>';
+      var transitionTip = tipKey && _tips ? pianoFirstSessionTextToken(_tips[tipKey]) : "";
+      if (transitionTip) {
+        html += '<div class="intention-card">\u{1F4A1} ' + escHTML(transitionTip) + '</div>';
       }
       // Voice-Leading Path exercise integration (P-CHORD-4)
       var vlExercise = getSessionExercise(plan.num, "newMove");
       if (vlExercise) {
+        var newMoveExerciseName = pianoFirstSessionTextToken(vlExercise.name, "Finger Focus");
+        var newMoveExerciseDesc = pianoFirstSessionTextToken(vlExercise.desc, "Practice this motion slowly.");
         html += '<div class="finger-exercise-inline">';
-        html += '<h4>\u{270B} Finger Focus: ' + escHTML(vlExercise.name) + '</h4>';
-        html += '<div class="text-muted">' + escHTML(vlExercise.desc) + '</div>';
+        html += '<h4>\u{270B} Finger Focus: ' + escHTML(newMoveExerciseName) + '</h4>';
+        html += '<div class="text-muted">' + escHTML(newMoveExerciseDesc) + '</div>';
         html += '</div>';
       }
       html += '<button class="btn btn-accent" onclick="act(\'next_step\')">Done \u2192</button>';
       break;
 
     default:
-      html += '<div class="session-text">' + escHTML(plan.newMove.text) + '</div>';
+      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.newMove.text, "Try the new move.")) + '</div>';
       if (chord) html += pianoSVG(chord);
       html += '<button class="btn btn-accent" onclick="act(\'next_step\')">Next \u2192</button>';
   }
@@ -198,11 +232,11 @@ function renderSongSlice(plan) {
 
   var html = '<div class="session-step-card songslice-card">';
   html += '<h3>\u{1F3B5} Song Slice</h3>';
-  html += '<div class="session-text">' + escHTML(plan.songSlice.text) + '</div>';
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.songSlice.text, "Play a short song slice.")) + '</div>';
 
   // Show the song name
   if (plan.songSlice.song) {
-    html += '<div style="font-weight:700;margin:8px 0">\u{1F3B6} ' + escHTML(plan.songSlice.song) + '</div>';
+    html += '<div style="font-weight:700;margin:8px 0">\u{1F3B6} ' + escHTML(pianoFirstSessionTextToken(plan.songSlice.song, "Song slice")) + '</div>';
   }
 
   // BPM display
@@ -214,7 +248,7 @@ function renderSongSlice(plan) {
     if (lvlObj && lvlObj.lhPattern) {
       html += lhPatternViz(lvlObj.lhPattern, S.adaptiveBpm);
     }
-    html += '<div class="text-muted">LH: ' + escHTML(plan.lh) + '</div>';
+    html += '<div class="text-muted">LH: ' + escHTML(pianoFirstSessionTextToken(plan.lh, "Pattern")) + '</div>';
   }
 
   html += '<div class="session-btns">';
@@ -232,7 +266,7 @@ function renderVictoryLap(plan) {
 
   var html = '<div class="session-step-card victorylap-card">';
   html += '<h3>\u{1F3C6} Victory Lap</h3>';
-  html += '<div class="session-text">' + escHTML(plan.victoryLap.text) + '</div>';
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.victoryLap.text, "Lock it in.")) + '</div>';
 
   var chord = findChord(plan.newMove ? plan.newMove.chord : "C");
   if (chord) {
@@ -243,9 +277,11 @@ function renderVictoryLap(plan) {
   // Shape Drop exercise integration (P-CHORD-1)
   var vlExercise = getSessionExercise(plan.num, "victoryLap");
   if (vlExercise) {
+    var victoryExerciseName = pianoFirstSessionTextToken(vlExercise.name, "Finger Check");
+    var victoryExerciseDesc = pianoFirstSessionTextToken(vlExercise.desc, "Lock it in with one more rep.");
     html += '<div class="finger-exercise-inline">';
-    html += '<h4>\u{270B} Finger Check: ' + escHTML(vlExercise.name) + '</h4>';
-    html += '<div class="text-muted">' + escHTML(vlExercise.desc) + '</div>';
+    html += '<h4>\u{270B} Finger Check: ' + escHTML(victoryExerciseName) + '</h4>';
+    html += '<div class="text-muted">' + escHTML(victoryExerciseDesc) + '</div>';
     html += '</div>';
   }
 
@@ -258,7 +294,7 @@ function renderVictoryLap(plan) {
 function legacySessionHTML() {
   var c = findChord(S.chord);
   var html = '<div class="session-active card">';
-  html += '<h2>' + (c ? escHTML(c.name) : escHTML(S.chord)) + '</h2>';
+  html += '<h2>' + (c ? escHTML(c.name) : escHTML(pianoFirstSessionTextToken(S.chord, "Chord"))) + '</h2>';
   html += '<div class="timer-display">' + pianoFormatTime(S.timer) + '</div>';
   if (c) html += pianoSVG(c);
   html += '<div class="session-btns">';

@@ -1,3 +1,20 @@
+function pianoPerformLiveTextToken(value){
+  if (value == null) return "";
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  var text = String(value).trim();
+  if (!text) return "";
+  var lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+function pianoFirstPerformLiveTextToken(){
+  for (var i = 0; i < arguments.length; i++) {
+    var text = pianoPerformLiveTextToken(arguments[i]);
+    if (text) return text;
+  }
+  return "";
+}
+
 function pianoPerformPage(){
   try{ return _pianoPerformPageInner(); }catch(e){
     console.error("Piano perform render error:",e);
@@ -7,10 +24,13 @@ function pianoPerformPage(){
 function _pianoPerformPageInner(){
   var chart = S.performChart;
   var phrase = chart ? getPerformancePhraseForTime(chart, S.performCurrentSec) : null;
+  var chartTitle = pianoFirstPerformLiveTextToken(chart && chart.title, chart && chart.songTitle, chart && chart.id, "Performance");
+  var chartArtist = pianoFirstPerformLiveTextToken(chart && chart.artist, "Unknown Artist");
+  var phraseName = pianoFirstPerformLiveTextToken(phrase && phrase.name, "Phrase");
   var h = '<div class="card mb16">';
-  h += '<h2>'+escHTML(chart ? chart.title : "Performance")+'</h2>';
-  h += '<div class="muted">'+escHTML(chart ? chart.artist : "")+'</div>';
-  h += '<div style="margin-top:8px" id="perf-phrase">Phrase: '+escHTML(phrase ? phrase.name : "-")+'</div>';
+  h += '<h2>'+escHTML(chartTitle)+'</h2>';
+  h += '<div class="muted">'+escHTML(chartArtist)+'</div>';
+  h += '<div style="margin-top:8px" id="perf-phrase">Phrase: '+escHTML(phraseName)+'</div>';
   h += '<div id="perf-stats">Score: '+S.performScore+' · Combo: '+S.performCombo+' · Accuracy: '+S.performAccuracy+'%</div>';
   h += '<div id="perf-midi" style="font-size:12px;color:var(--text-muted)">Held MIDI: '+(S.performInputMidi||[]).join(", ")+'</div>';
   h += '</div>';
@@ -43,7 +63,7 @@ function updatePerformanceDOM(){
   var ph = document.getElementById('perf-phrase');
   if(ph){
     var phrase = getPerformancePhraseForTime(chart, S.performCurrentSec);
-    ph.textContent = 'Phrase: '+(phrase ? phrase.name : '-');
+    ph.textContent = 'Phrase: '+pianoFirstPerformLiveTextToken(phrase && phrase.name, 'Phrase');
   }
   var mi = document.getElementById('perf-midi');
   if(mi) mi.textContent = 'Held MIDI: '+(S.performInputMidi||[]).join(', ');
@@ -54,10 +74,11 @@ function pianoPerformDonePage(){
   var r = S.performResults || {};
   var best = getPerformanceBest(r.songId, r.arrangementType || "block_chords", r.difficultyId || "normal");
   var mastery = getPerformanceMasteryLabel(best);
+  var resultTitle = pianoFirstPerformLiveTextToken(r.title, r.songTitle, r.songId, "Song");
 
   var h = '<div class="card mb16">';
   h += '<h2>Performance Complete</h2>';
-  h += '<div class="muted">'+escHTML(r.title || "")+'</div>';
+  h += '<div class="muted">'+escHTML(resultTitle)+'</div>';
   h += '<div>Score: '+(r.score||0)+'</div>';
   h += '<div>Accuracy: '+(r.accuracy||0)+'%</div>';
   h += '<div>Stars: '+(r.stars||0)+'</div>';

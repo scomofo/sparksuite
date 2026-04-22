@@ -121,6 +121,8 @@ eval(loadJS("js/practice/adaptive.js"));
 eval(loadJS("js/practice/plan.js"));
 var legacyGenerateDailyPracticePlan = generateDailyPracticePlan;
 var legacyCompletePracticeItem = completePracticeItem;
+var legacyGetNextPracticeItem = getNextPracticeItem;
+var legacyGenerateWeeklyPracticePlan = generateWeeklyPracticePlan;
 eval(loadJS("js/practice/engine.js"));
 
 console.log("\n--- SparkSuite Legacy Cleanup ---");
@@ -169,6 +171,36 @@ test("legacy daily practice generator defers to shared ensurePracticePlan when a
   assert.strictEqual(sparkCoreCalls.length, 1);
   assert.strictEqual(sparkCoreCalls[0].fn, "startSession");
   assert.strictEqual(sparkCoreCalls[0].payload.flow, "daily_practice");
+});
+
+test("legacy getNextPracticeItem stays read-only when no daily plan exists", function() {
+  S.practicePlan = null;
+
+  var next = legacyGetNextPracticeItem();
+
+  assert.strictEqual(next, null);
+  assert.strictEqual(sparkCoreCalls.length, 0);
+});
+
+test("legacy weekly practice generation preserves the current daily plan snapshot", function() {
+  S.practicePlan = {
+    date: "2026-04-17",
+    items: [{ id: "existing_daily", completed: false }]
+  };
+  S.practicePlanDate = "2026-04-17";
+  S.practicePlanComplete = true;
+
+  var weekly = legacyGenerateWeeklyPracticePlan();
+
+  assert.ok(weekly);
+  assert.strictEqual(Array.isArray(weekly.days), true);
+  assert.strictEqual(weekly.days.length, 7);
+  assert.deepStrictEqual(S.practicePlan, {
+    date: "2026-04-17",
+    items: [{ id: "existing_daily", completed: false }]
+  });
+  assert.strictEqual(S.practicePlanDate, "2026-04-17");
+  assert.strictEqual(S.practicePlanComplete, true);
 });
 
 test("performance practice generator defers to shared ensurePracticePlan when available", function() {

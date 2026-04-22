@@ -1,4 +1,16 @@
 (function() {
+  function normalizeInstrumentType(instrument) {
+    var candidate = instrument || "guitar";
+    if (!window.SparkInstruments || typeof SparkInstruments.getAll !== "function") return candidate;
+    var instruments = SparkInstruments.getAll() || [];
+    for (var i = 0; i < instruments.length; i++) {
+      var entry = instruments[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) {
+        return entry.instrument || candidate;
+      }
+    }
+    return candidate;
+  }
   /**
    * SparkChartGenerationService — orchestrates the full chart pipeline:
    *   TrackAnalyzer → ChordProgressionEngine → ChartBuilder → DifficultyScaler
@@ -23,7 +35,7 @@
     params = params || {};
     var trackId = params.trackId;
     var difficulty = params.difficulty || "easy";
-    var instrument = params.instrument || "guitar";
+    var instrument = normalizeInstrumentType(params.instrument);
     var cacheKey = trackId + "_" + difficulty + "_" + instrument;
     var self = this;
 

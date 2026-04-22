@@ -320,8 +320,9 @@
     if (plan && !plan.exercises) {
       // Legacy V1 plan — normalize it
       plan.exercises = (plan.segments || []).map(function(seg, i) {
+        var exerciseId = seg.id || ("ex_" + i);
         return {
-          id: seg.id || ("ex_" + i),
+          id: exerciseId,
           type: _normalizeSegType(seg.type),
           difficulty: seg.difficulty || "normal",
           data: {
@@ -341,7 +342,17 @@
         };
       });
       plan.segments = (plan.segments || []).map(function(seg, i) {
-        return { id: seg.id || ("seg_" + i), type: _normalizeSegType(seg.type), exerciseIds: [seg.id || ("ex_" + i)] };
+        var exerciseId = seg.id || ("ex_" + i);
+        return {
+          id: seg.id || ("seg_" + i),
+          type: _normalizeSegType(seg.type),
+          label: seg.label || seg.type || "practice",
+          desc: seg.desc || seg.description || "",
+          durationSec: seg.durationSec || 60,
+          completed: !!seg.completed,
+          meta: seg.meta || {},
+          exerciseIds: [exerciseId]
+        };
       });
     }
     this.currentPlan = plan;
@@ -2624,7 +2635,7 @@
       return startPlayableRhythmHighwayPayload(payload, {
         source: "lesson_generator",
         label: lesson.label,
-        instrument: this.runtimeState.activeInstrumentId || "guitar"
+        instrument: this.runtimeState.activeInstrumentType || this.runtimeState.activeInstrumentId || "guitar"
       });
     }
     return false;
