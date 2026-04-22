@@ -47,7 +47,7 @@
         // "back" — return to instrument Practice from a sub-page without
         // dropping the user out of the instrument context.
         "back":            function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
-        "practice":        function(){ S._showroomOverride = "practice"; },
+        "practice":        function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
         "library":         function(){ S.screen = SCR_.HOME;       S.tab = TAB_.SONGS; },
         "tuner":           function(){ S.screen = SCR_.HOME;       S.tab = TAB_.TUNER || "tuner"; },
         "settings":        function(){ S.screen = SCR_.SETTINGS; },
@@ -69,7 +69,7 @@
         "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
       };
       // Clear any prior override so the legacy slot routing wins again.
-      if (view !== "profile" && view !== "lesson" && view !== "practice") S._showroomOverride = null;
+      if (view !== "profile" && view !== "lesson") S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
       if (typeof saveState === "function") saveState();
