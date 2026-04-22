@@ -133,26 +133,6 @@ function _renderInner(){
     return;
   }
 
-  // High-fidelity Showroom override layer. If an override is active (profile,
-  // lesson, curriculum), hide the legacy header and dispatch to the Showroom
-  // renderer. These modules (js/showroom/spark-showroom.js) are currently
-  // design-reference mocks; real screens use the _sharedPages registry below.
-  if (S._showroomOverride) {
-    document.getElementById("header").style.display = "none";
-    var showroomHtml = "";
-    if (S._showroomOverride === "profile" && typeof SparkProfileScreen !== "undefined") {
-      showroomHtml = SparkProfileScreen.render();
-    } else if (S._showroomOverride === "lesson" && typeof SparkLesson !== "undefined") {
-      showroomHtml = SparkLesson.render();
-    } else if (S._showroomOverride === "curriculum" && typeof SparkCurriculumDashboard !== "undefined") {
-      showroomHtml = SparkCurriculumDashboard.render();
-    }
-    if (showroomHtml) {
-      _writeAppHtml(_renderOverlays() + showroomHtml);
-      return;
-    }
-  }
-
   // NOTE: the Showroom modules in js/showroom/spark-showroom.js
   // (SparkPracticeMetro, SparkSongLibrary, SparkSessionSummary,
   // SparkSettings, SparkSongDetails, SparkPath, SparkTuner) are
