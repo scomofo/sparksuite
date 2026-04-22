@@ -916,7 +916,7 @@
       { id:"profile",  label:"Profile",  icon:"person",     onClick: nav("profile") }
     ];
 
-    return '<div class="showroom-root with-bg">'
+    return '<div class="showroom-root with-bg showroom-lesson-2026">'
          + '<div class="showroom-woodgrain-overlay"></div>'
          + '<header class="showroom-lesson-bar">'
            + '<button class="showroom-iconbtn accent" onclick="' + nav("practice") + '" aria-label="Close"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>'
