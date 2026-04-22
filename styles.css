@@ -921,6 +921,24 @@ body.sv2 .tabs {
   font-size:64px;
   background:linear-gradient(135deg,#291d18,#1a1714);
 }
+/* Inline-SVG silhouette fallback (preferred over the emoji form above —
+   used when an instrument has no iconImage set). */
+.showroom-card-thumb-svg{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#1a0f08,#100805);
+}
+.showroom-card-thumb-svg svg{
+  width:88%;height:88%;
+}
+.showroom-hero-bg-svg{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#2a1810,#0a0605);
+}
+.showroom-hero-bg-svg svg{
+  width:100%;height:100%;
+}
 .showroom-card-dot{
   position:absolute;bottom:8px;right:8px;
   width:8px;height:8px;border-radius:50%;
