@@ -55,8 +55,12 @@
         "learn":           function(){ S.screen = SCR_.SKILL_TREE; },
         "song-details":    function(){ S.screen = SCR_.SONG; },
         "session-summary": function(){ S.screen = SCR_.COMPLETE; },
-        // Performance gameplay stays in the legacy engine — sending the user
-        // to the practice home is the safe default. Override per call site.
+        // Performance gameplay stays in the legacy engine. Call sites that
+        // have real chart context (Song Details, Replay Session) use
+        // act("showroomStartPerf") directly; this nav("performance") is the
+        // safe fallback for CTAs that don't yet have a canonical binding
+        // (Library Daily, Lesson) — they land on the practice home so the
+        // user can pick their own chart instead of launching a wrong one.
         "performance":     function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
         // No legacy slots — render via launcherView while keeping instrument.
         "profile":         function(){ S._showroomOverride = "profile"; },
@@ -416,7 +420,7 @@
            + '</div>'
          + '</div>'
          + '<div class="showroom-actionbar">'
-           + '<button class="showroom-action-cta" onclick="' + nav("performance") + '">'
+           + '<button class="showroom-action-cta" onclick="act(\'showroomStartPerf\')">'
              + '<span class="material-symbols-outlined fill">play_circle</span>Start Performance</button>'
          + '</div>'
          + '</div>';
@@ -661,7 +665,7 @@
            + '</div>'
            + '<div class="showroom-summary-actions">'
              + '<button class="showroom-summary-cta" onclick="' + backToHome() + '">Continue</button>'
-             + '<button class="showroom-summary-cta ghost" onclick="' + nav("performance") + '">Replay Session</button>'
+             + '<button class="showroom-summary-cta ghost" onclick="act(\'showroomStartPerf\')">Replay Session</button>'
            + '</div>'
          + '</div>'
          + bottomNav(navItems, "practice")

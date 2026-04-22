@@ -150,7 +150,7 @@
   // Set onerror to null after the swap so a failing data: URI (very
   // unlikely) can't loop forever.
   function svgDataUri(svg) {
-    return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
   }
   function onCardImgError(imgEl, type) {
     if (!imgEl) return;
