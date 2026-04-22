@@ -3859,3 +3859,101 @@
   transition:transform .12s ease;
 }
 .showroom-syllabus-cta:active{ transform:scale(.96); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Learning Path Screen (Stitch 2026-04)
+   Warm Ember token pass on the existing pathRender layout.
+   Ported from docs/design/stitch-2026-04/learning_path/code.html.
+   Layered on top of the legacy .showroom-path-* baseline via cascade.
+   ═══════════════════════════════════════════════════════════════════ */
+.showroom-path-2026 .showroom-path-bar{
+  background:rgba(18,16,14,0.8);
+  border-bottom:1px solid rgba(255,123,58,0.1);
+  box-shadow:0 4px 20px rgba(255,123,58,0.1);
+}
+.showroom-path-avatar-btn{
+  width:32px; height:32px;
+  border-radius:50%;
+  overflow:hidden;
+  border:1px solid rgba(255,123,58,0.3);
+  padding:0;
+  background:transparent;
+  cursor:pointer;
+  transition:transform .15s ease, border-color .15s ease;
+}
+.showroom-path-avatar-btn:hover{ border-color:var(--accent-deep); }
+.showroom-path-avatar-btn:active{ transform:scale(.95); }
+.showroom-path-avatar-fallback{
+  width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg, var(--accent-deep), var(--brand-clay, #C07040));
+  color:#fff;
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:800; font-size:14px;
+}
+.showroom-path-streak{
+  display:flex; align-items:center; gap:4px;
+  background:rgba(255,255,255,0.05);
+  padding:4px 12px;
+  border-radius:9999px;
+}
+.showroom-path-streak-num{
+  color:var(--accent-deep);
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:900; font-size:14px;
+  letter-spacing:-.01em;
+}
+.showroom-path-2026 .showroom-daily-goal{
+  background:rgba(30,27,23,0.6);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:12px;
+  position:relative;
+  overflow:hidden;
+}
+.showroom-path-2026 .showroom-path-card{
+  background:rgba(30,27,23,0.6);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  transition:transform .18s ease;
+}
+.showroom-path-2026 .showroom-path-card:hover{ transform:scale(1.02); }
+.showroom-path-2026 .showroom-path-card.guitar{ border-left:4px solid var(--guitar-neon, #FF2D55); }
+.showroom-path-2026 .showroom-path-card.piano{  border-left:4px solid var(--piano-midnight, #0EA5E9); }
+.showroom-path-2026 .showroom-path-card.bass{   border-left:4px solid var(--bass-violet, #7C3AED); }
+.showroom-path-2026 .showroom-path-card.ukulele{ border-left:4px solid var(--ukulele-teal, #14B8A6); }
+.showroom-path-2026 .showroom-path-cta{
+  background:var(--primary-container, var(--accent-deep));
+  color:var(--on-primary-container, #642300);
+  box-shadow:0 0 20px 2px rgba(255,123,58,0.15);
+  transition:transform .12s ease, filter .12s ease;
+}
+.showroom-path-2026 .showroom-path-cta:active{ transform:scale(.95); }
+.showroom-path-2026 .showroom-path-cta.locked{
+  background:rgba(255,255,255,0.05);
+  color:var(--on-surface);
+  border:1px solid rgba(255,255,255,0.1);
+  box-shadow:none;
+}
+.showroom-path-2026 .showroom-path-thumb{
+  background:linear-gradient(135deg, rgba(14,165,233,0.2), rgba(18,16,14,0.6));
+  border:1px solid rgba(255,255,255,0.05);
+  display:flex; align-items:center; justify-content:center;
+  filter:grayscale(.4);
+  opacity:.85;
+}
+.showroom-path-2026 .showroom-path-thumb::before{
+  content:"music_note";
+  font-family:'Material Symbols Outlined';
+  font-size:28px;
+  color:var(--piano-midnight, #0EA5E9);
+  opacity:.6;
+}
+.showroom-path-2026 .showroom-path-fab{
+  background:var(--primary-container, var(--accent-deep));
+  color:var(--on-primary-container, #642300);
+  box-shadow:0 0 40px 2px rgba(255,123,58,0.25), 0 6px 18px rgba(0,0,0,0.35);
+}
+.showroom-path-2026 .showroom-path-fab:active{ transform:scale(.9); }

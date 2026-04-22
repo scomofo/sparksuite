@@ -993,7 +993,7 @@
     var lessons = opts.lessons || [
       { tier:"Beginner",     title:"Chord Basics",      desc:"Master the fundamental G and C major shapes.", time:"8 MIN",  icon:"music_note", instrument:"guitar",  unlocked:true,  cta:"Continue" },
       { tier:"Intermediate", title:"Strumming Patterns",desc:"Unlock the \"Island Strum\" for versatile rhythms.", time:"12 MIN", icon:"waves",     instrument:"ukulele", unlocked:false, cta:"Locked" },
-      { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true, thumbSrc:"https://lh3.googleusercontent.com/aida-public/AB6AXuA0Hh82rrHEyzzq2Vgf9VvjmHqhR1dK53Rr0Gd0e_JNdItqAjn6ZMk0s1y_O8MgvAZLnYirETpAWeh79dcwysMizIqcSeXVZlly32bsiF2BFKFId8P2pHIsPtSXjrwNvlsnZf_Ce3LWemEJooQjN0YrlLXkBB68y2WiZnF9wc_AZPHWwyo-w8ZZ_-k2CTXYr5_ztOP2qq87L2r00p9AA8h9ZBwkh5u62EL31APi3lR1Jg8idVqhQiKq0Ob35xQ-k4Y_EAqtJ3qD5nk" }
+      { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true }
     ];
 
     var goalPct = Math.min(100, Math.round((dailyMin / dailyGoal) * 100));
@@ -1042,9 +1042,9 @@
     var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
     var avatarHtml = avatarSrc
       ? '<img src="' + escHtml(avatarSrc) + '" alt="Profile" style="width:100%;height:100%;object-fit:cover">'
-      : '<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff7b3a,#c07040);color:#fff;font-weight:800;font-size:14px">' + (profile && profile.displayName ? profile.displayName.charAt(0).toUpperCase() : 'A') + '</span>';
+      : '<span class="showroom-path-avatar-fallback">' + (profile && profile.displayName ? profile.displayName.charAt(0).toUpperCase() : 'A') + '</span>';
 
-    return '<div class="showroom-root with-bg">'
+    return '<div class="showroom-root with-bg showroom-path-2026">'
          + '<header class="showroom-path-bar">'
            // Semantic button — the previous <div onclick> was not focusable
            // by keyboard and exposed no button role to assistive tech.
@@ -1052,12 +1052,12 @@
            // (circular avatar with accent border) identical to the previous
            // div while restoring keyboard/Tab + Enter/Space activation and
            // screen-reader semantics.
-           + '<button type="button" aria-label="Profile" style="width:32px;height:32px;border-radius:50%;overflow:hidden;border:1px solid rgba(255,123,58,0.3);cursor:pointer;padding:0;background:transparent" onclick="' + nav("profile") + '">'
+           + '<button type="button" class="showroom-path-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
              + avatarHtml
            + '</button>'
            + '<h1 class="showroom-path-title">Your Path</h1>'
-           + '<div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.05);padding:4px 12px;border-radius:9999px">'
-             + '<span style="color:#ff7b3a;font-weight:900;font-size:14px">' + streak + ' \uD83D\uDD25</span>'
+           + '<div class="showroom-path-streak">'
+             + '<span class="showroom-path-streak-num">' + streak + '\uD83D\uDD25</span>'
            + '</div>'
          + '</header>'
          + '<div class="showroom-canvas" style="padding-top:0">'
