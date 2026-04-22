@@ -784,56 +784,82 @@
 
     // Sample notes: { lane: 0..3, top: "15%", color: "cyan|yellow|peach" }
     var notes = opts.notes || [
-      { lane:0, top:"15%", color:"cyan" },
-      { lane:0, top:"65%", color:"cyan" },
-      { lane:1, top:"40%", color:"yellow" },
-      { lane:2, top:"25%", color:"peach" },
-      { lane:2, top:"85%", color:"peach" },
-      { lane:3, top:"55%", color:"cyan" }
+      { lane:0, top:"10%", color:"cyan" },
+      { lane:0, top:"60%", color:"cyan" },
+      { lane:1, top:"35%", color:"yellow" },
+      { lane:2, top:"15%", color:"peach" },
+      { lane:2, top:"80%", color:"peach" },
+      { lane:3, top:"45%", color:"cyan" }
     ];
-    var lanePos = ["0%","25%","50%","75%"];
+    var lanePos = ["2%","27%","52%","77%"];
     var notesHtml = "";
     for (var i = 0; i < notes.length; i++) {
       var n = notes[i];
-      notesHtml += '<div class="showroom-perf-gem ' + n.color + '" style="top:' + n.top + ';left:calc(' + lanePos[n.lane] + ' + 2.5%)"></div>';
+      notesHtml += '<div class="showroom-perf2-note ' + n.color + '" style="top:' + n.top + ';left:' + lanePos[n.lane] + '"></div>';
     }
 
     var formattedScore = String(score).padStart(6, "0").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-    return '<div class="showroom-perf-root">'
-         + '<header class="showroom-perf-bar">'
-           + '<div class="showroom-perf-bar-left">'
-             + '<button class="showroom-perf-pause" onclick="' + nav("session-summary") + '" aria-label="Pause"><span class="material-symbols-outlined" aria-hidden="true">pause_circle</span></button>'
-             + '<span class="showroom-perf-score">' + formattedScore + '</span></div>'
-           + '<div class="showroom-perf-bar-right">'
-             + '<div class="showroom-perf-streak">Streak ' + streak + '</div>'
-             + '<div class="showroom-perf-mult">' + mult + 'x</div></div>'
-         + '</header>'
-         + '<main class="showroom-perf-canvas">'
-           + '<div class="showroom-perf-floating">'
-             + '<div class="showroom-perf-energy"><span class="material-symbols-outlined fill">electric_bolt</span><div class="showroom-perf-energy-track"><div class="showroom-perf-energy-fill" style="width:80%"></div></div></div>'
-             + '<div class="showroom-perf-rank"><span class="showroom-perf-rank-label">NEXT RANK</span><span class="showroom-perf-rank-val">' + escHtml(rank) + '</span></div>'
+    // Warm Ember rebuild of the Stitch 2026-04 performance_mode screen.
+    // Structure: fixed top bar (score / streak / multiplier) → main canvas
+    // with perspective rhythm highway (4 lanes) → floating HUD (energy +
+    // next rank) → progress bar → song info → dashed tap-pad grid replacing
+    // the bottom nav. Keeps the existing .showroom-perf-* classes intact
+    // for backwards compatibility, and layers new .showroom-perf2-* rules
+    // that cascade-override the look to match the 2026-04 export.
+    // No external URLs — all effects are CSS/inline gradients (CSP safe).
+    return '<div class="showroom-perf-root showroom-perf2">'
+         + '<header class="showroom-perf2-bar">'
+           + '<div class="showroom-perf2-bar-left">'
+             + '<button class="showroom-perf2-pause" onclick="' + nav("session-summary") + '" aria-label="Pause"><span class="material-symbols-outlined" aria-hidden="true">pause_circle</span></button>'
+             + '<span class="showroom-perf2-score">' + formattedScore + '</span>'
            + '</div>'
-           + '<div class="showroom-perf-feedback"><h2>' + escHtml(feedback) + '</h2><p>' + escHtml(combo) + '</p></div>'
-           + '<div class="showroom-perf-highway-wrap">'
-             + '<div class="showroom-perf-highway">'
-               + '<div class="showroom-perf-lane-line"></div>'
-               + '<div class="showroom-perf-lane-line l2"></div>'
-               + '<div class="showroom-perf-lane-line l3"></div>'
-               + notesHtml
-               + '<div class="showroom-perf-receptors">'
-                 + '<div class="showroom-perf-receptor cyan active"><div class="showroom-perf-receptor-inner"></div></div>'
-                 + '<div class="showroom-perf-receptor yellow"><div class="showroom-perf-receptor-inner"></div></div>'
-                 + '<div class="showroom-perf-receptor clay"><div class="showroom-perf-receptor-inner"></div></div>'
-                 + '<div class="showroom-perf-receptor cyan"><div class="showroom-perf-receptor-inner"></div></div>'
-               + '</div>'
-               + '<div class="showroom-perf-hitbar"></div>'
+           + '<div class="showroom-perf2-bar-right">'
+             + '<div class="showroom-perf2-streak">Streak ' + streak + '</div>'
+             + '<div class="showroom-perf2-mult">' + mult + 'x</div>'
+           + '</div>'
+         + '</header>'
+         + '<main class="showroom-perf2-canvas">'
+           + '<div class="showroom-perf2-vignette" aria-hidden="true"></div>'
+           + '<div class="showroom-perf2-floating">'
+             + '<div class="showroom-perf2-energy">'
+               + '<span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:\'FILL\' 1">electric_bolt</span>'
+               + '<div class="showroom-perf2-energy-track"><div class="showroom-perf2-energy-fill" style="width:80%"></div></div>'
+             + '</div>'
+             + '<div class="showroom-perf2-rank">'
+               + '<span class="showroom-perf2-rank-label">NEXT RANK</span>'
+               + '<span class="showroom-perf2-rank-val">' + escHtml(rank) + '</span>'
              + '</div>'
            + '</div>'
-           + '<div class="showroom-perf-progress"><div class="showroom-perf-progress-fill" style="width:' + pct + '%"></div></div>'
-           + '<div class="showroom-perf-songinfo"><span class="showroom-perf-songtitle">' + escHtml(title) + '</span>'
-             + '<div class="showroom-perf-songmeta"><span class="showroom-perf-pulse"></span><span class="showroom-perf-songsub">' + escHtml(meta) + '</span></div></div>'
+           + '<div class="showroom-perf2-feedback">'
+             + '<h2>' + escHtml(feedback) + '</h2>'
+             + '<p>' + escHtml(combo) + '</p>'
+           + '</div>'
+           + '<div class="showroom-perf2-highway-wrap">'
+             + '<div class="showroom-perf2-highway">'
+               + '<div class="showroom-perf2-lane-line l1"></div>'
+               + '<div class="showroom-perf2-lane-line l2"></div>'
+               + '<div class="showroom-perf2-lane-line l3"></div>'
+               + notesHtml
+               + '<div class="showroom-perf2-hitbar"></div>'
+               + '<div class="showroom-perf2-pad-surface"></div>'
+             + '</div>'
+           + '</div>'
+           + '<div class="showroom-perf2-progress"><div class="showroom-perf2-progress-fill" style="width:' + pct + '%"></div></div>'
+           + '<div class="showroom-perf2-songinfo">'
+             + '<span class="showroom-perf2-songtitle">' + escHtml(title) + '</span>'
+             + '<span class="showroom-perf2-songmeta">' + escHtml(meta) + '</span>'
+           + '</div>'
          + '</main>'
+         // Tap-pad grid replaces the standard bottomNav() on this screen.
+         // Four dashed lane-colored tap targets (cyan/yellow/peach/cyan)
+         // visualize the interaction regions for the falling notes above.
+         + '<div class="showroom-perf2-tappads" role="group" aria-label="Lane tap pads">'
+           + '<button class="showroom-perf2-tappad cyan" onclick="act(\'showroomPerfTap\',\'0\')" aria-label="Lane 1 tap"><span class="material-symbols-outlined" aria-hidden="true">touch_app</span></button>'
+           + '<button class="showroom-perf2-tappad yellow" onclick="act(\'showroomPerfTap\',\'1\')" aria-label="Lane 2 tap"><span class="material-symbols-outlined" aria-hidden="true">touch_app</span></button>'
+           + '<button class="showroom-perf2-tappad peach" onclick="act(\'showroomPerfTap\',\'2\')" aria-label="Lane 3 tap"><span class="material-symbols-outlined" aria-hidden="true">touch_app</span></button>'
+           + '<button class="showroom-perf2-tappad cyan" onclick="act(\'showroomPerfTap\',\'3\')" aria-label="Lane 4 tap"><span class="material-symbols-outlined" aria-hidden="true">touch_app</span></button>'
+         + '</div>'
          + '</div>';
   }
 

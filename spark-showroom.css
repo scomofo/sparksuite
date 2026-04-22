@@ -3301,3 +3301,246 @@
   background:rgba(255,255,255,.05);
   filter:none;
 }
+   Performance Mode Screen (Stitch 2026-04)
+   Ported from docs/design/stitch-2026-04/performance_mode/.
+   Layered on top of the original .showroom-perf-* rules via cascade
+   (new class prefix .showroom-perf2-*); orphaned legacy rules that
+   don't match the new markup are intentionally left in place.
+   All visuals are vector / CSS tokens — no external URLs (CSP safe).
+   ═════════════════════════════════════════════════════════════════════ */
+.showroom-perf-root.showroom-perf2{
+  background:var(--bg);
+  width:100%; max-width:var(--showroom-max); min-height:100vh;
+  margin:0 auto; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center;
+  color:var(--on-surface);
+  font-family:'Plus Jakarta Sans', var(--font-body);
+}
+.showroom-perf2-bar{
+  position:fixed; top:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:var(--showroom-max); height:64px; z-index:50;
+  background:rgba(18,16,14,.8);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,123,58,.12);
+  box-shadow:0 4px 20px rgba(255,123,58,.15);
+  display:flex; justify-content:space-between; align-items:center;
+  padding:0 16px;
+}
+.showroom-perf2-bar-left{ display:flex; align-items:center; gap:8px; }
+.showroom-perf2-pause{
+  background:transparent; border:none; padding:4px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--primary-container);
+}
+.showroom-perf2-pause .material-symbols-outlined{ font-size:24px; }
+.showroom-perf2-score{
+  font-family:'JetBrains Mono', monospace;
+  font-weight:900; font-size:32px; letter-spacing:-.04em;
+  color:var(--primary-container);
+}
+.showroom-perf2-bar-right{ display:flex; align-items:center; gap:12px; }
+.showroom-perf2-streak{
+  background:var(--primary-container);
+  color:#642300;
+  padding:4px 12px; border-radius:9999px;
+  font-family:'Syne', sans-serif;
+  font-weight:700; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+  box-shadow:0 0 15px rgba(255,123,58,.4);
+}
+.showroom-perf2-mult{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:700; font-size:20px; letter-spacing:-.02em;
+  color:var(--primary-container);
+}
+
+.showroom-perf2-canvas{
+  flex:1; width:100%; max-width:var(--showroom-max);
+  position:relative;
+  display:flex; flex-direction:column; justify-content:flex-end; align-items:center;
+  padding:64px 0 48px;
+  background:linear-gradient(to bottom, var(--bg) 0%, var(--bg) 60%, var(--bg-subtle) 100%);
+  min-height:640px;
+}
+.showroom-perf2-vignette{
+  position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(circle at center, transparent 0%, var(--bg) 100%);
+  opacity:.8;
+}
+.showroom-perf2-floating{
+  position:absolute; top:80px; left:0; right:0; z-index:10;
+  padding:0 24px;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  pointer-events:none;
+}
+.showroom-perf2-energy{
+  display:flex; align-items:center; gap:8px;
+  padding:8px; border-radius:12px;
+  background:rgba(18,16,14,.6);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  border:1px solid var(--border-light);
+}
+.showroom-perf2-energy .material-symbols-outlined{
+  color:var(--perform-coral); font-size:20px;
+}
+.showroom-perf2-energy-track{
+  width:96px; height:8px; border-radius:9999px;
+  background:var(--card-bg); overflow:hidden;
+}
+.showroom-perf2-energy-fill{
+  height:100%;
+  background:var(--perform-coral);
+  box-shadow:0 0 20px rgba(255,107,107,.6);
+}
+.showroom-perf2-rank{
+  display:flex; flex-direction:column; align-items:flex-end;
+  padding:12px; border-radius:12px;
+  background:rgba(18,16,14,.6);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  border:1px solid var(--border-light);
+}
+.showroom-perf2-rank-label{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-size:11px; font-weight:700; letter-spacing:.3px;
+  color:var(--text-muted);
+}
+.showroom-perf2-rank-val{
+  font-family:'JetBrains Mono', monospace;
+  font-weight:900; font-size:18px;
+  color:var(--perform-yellow);
+  filter:drop-shadow(0 0 8px rgba(255,230,109,.5));
+}
+
+.showroom-perf2-feedback{
+  position:absolute; top:25%; left:0; right:0;
+  text-align:center; pointer-events:none; z-index:10;
+}
+.showroom-perf2-feedback h2{
+  font-family:'Syne', sans-serif;
+  font-weight:900; font-size:28px; letter-spacing:-.02em;
+  color:var(--perform-yellow); margin:0;
+  filter:drop-shadow(0 0 10px rgba(255,230,109,.8));
+  animation:showroom-perf2-pulse 1.2s ease-in-out infinite;
+}
+.showroom-perf2-feedback p{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-size:11px; font-weight:700; letter-spacing:.3em;
+  color:var(--text-muted);
+  margin:4px 0 0;
+}
+@keyframes showroom-perf2-pulse{
+  0%,100%{ opacity:1; }
+  50%{ opacity:.7; }
+}
+
+/* Rhythm highway — CSS perspective + rotateX, per-Stitch export. */
+.showroom-perf2-highway-wrap{
+  perspective:800px;
+  width:100%; height:574px;
+  position:relative;
+  display:flex; justify-content:center;
+  padding:0 32px;
+}
+.showroom-perf2-highway{
+  width:100%; height:100%; position:relative;
+  transform:rotateX(25deg);
+  transform-origin:top;
+  background:var(--bg-subtle);
+  border-left:1px solid rgba(58,50,40,.4);
+  border-right:1px solid rgba(58,50,40,.4);
+  border-radius:12px 12px 0 0;
+  overflow:hidden;
+  box-shadow:inset 0 0 40px rgba(0,0,0,.35);
+}
+.showroom-perf2-lane-line{
+  position:absolute; top:0; bottom:0; width:1px;
+  background:rgba(58,50,40,.5);
+}
+.showroom-perf2-lane-line.l1{ left:25%; }
+.showroom-perf2-lane-line.l2{ left:50%; }
+.showroom-perf2-lane-line.l3{ left:75%; }
+
+/* Falling notes — one accent glow per lane. */
+.showroom-perf2-note{
+  position:absolute;
+  width:21%; height:48px;
+  border-radius:8px;
+  border-top:1px solid rgba(255,255,255,.4);
+}
+.showroom-perf2-note.cyan{
+  background:var(--perform-cyan);
+  box-shadow:0 0 15px rgba(78,205,196,.6);
+}
+.showroom-perf2-note.yellow{
+  background:var(--perform-yellow);
+  box-shadow:0 0 15px rgba(255,230,109,.6);
+}
+.showroom-perf2-note.peach{
+  background:var(--brand-peach);
+  box-shadow:0 0 15px rgba(232,168,122,.6);
+}
+
+.showroom-perf2-hitbar{
+  position:absolute; bottom:20px; left:0; right:0; height:4px;
+  background:var(--perform-coral); z-index:10;
+  box-shadow:0 0 20px rgba(255,107,107,.6);
+}
+.showroom-perf2-pad-surface{
+  position:absolute; bottom:0; left:0; right:0; height:130px;
+  background:linear-gradient(to top, rgba(255,107,107,.2), transparent);
+  pointer-events:none;
+}
+
+.showroom-perf2-progress{
+  width:80%; height:6px; border-radius:9999px;
+  background:var(--card-bg);
+  border:1px solid var(--border-light);
+  overflow:hidden; margin:32px 0 16px;
+}
+.showroom-perf2-progress-fill{
+  height:100%;
+  background:linear-gradient(to right, var(--perform-coral), var(--perform-yellow));
+  box-shadow:0 0 8px rgba(255,107,107,.8);
+  transition:width .3s ease;
+}
+
+.showroom-perf2-songinfo{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding-bottom:16px;
+}
+.showroom-perf2-songtitle{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-weight:800; font-size:15px; letter-spacing:-.01em;
+  color:var(--on-surface);
+}
+.showroom-perf2-songmeta{
+  font-family:'Plus Jakarta Sans', var(--font-body);
+  font-size:11px; font-weight:700; letter-spacing:.3px;
+  color:var(--text-muted);
+}
+
+/* Tap-pad grid — replaces bottomNav() on this screen. Four dashed
+   lane-colored buttons aligned under the 4-lane highway. */
+.showroom-perf2-tappads{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  width:100%; max-width:var(--showroom-max); z-index:50;
+  padding:0 24px;
+  display:grid; grid-template-columns:repeat(4,1fr); gap:16px;
+  opacity:.4;
+}
+.showroom-perf2-tappad{
+  height:64px; border-radius:12px;
+  border:2px dashed currentColor;
+  background:transparent;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition:opacity .15s ease, transform .15s ease;
+}
+.showroom-perf2-tappad:hover{ opacity:1; }
+.showroom-perf2-tappad:active{ transform:scale(.96); }
+.showroom-perf2-tappad .material-symbols-outlined{ font-size:28px; }
+.showroom-perf2-tappad.cyan{ color:var(--perform-cyan); }
+.showroom-perf2-tappad.yellow{ color:var(--perform-yellow); }
+.showroom-perf2-tappad.peach{ color:var(--brand-peach); }
