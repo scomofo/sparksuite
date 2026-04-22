@@ -114,7 +114,7 @@
       +     '</radialGradient>'
       +   '</defs>'
       +   '<rect width="100" height="100" fill="url(#' + gradId + ')"/>'
-      +   '<g fill="' + color + '" stroke="' + color + '" stroke-linejoin="round" stroke-linecap="round">'
+      +   '<g fill="#EDE6DA" stroke="#EDE6DA" stroke-linejoin="round" stroke-linecap="round">'
       +     shapeFor(type)
       +   '</g>'
       + '</svg>';
@@ -136,7 +136,7 @@
       +     '</radialGradient>'
       +   '</defs>'
       +   '<rect width="160" height="100" fill="url(#' + gradId + ')"/>'
-      +   '<g transform="translate(30 0)" fill="' + color + '" stroke="' + color + '" stroke-linejoin="round" stroke-linecap="round">'
+      +   '<g transform="translate(30 0)" fill="#EDE6DA" stroke="#EDE6DA" stroke-linejoin="round" stroke-linecap="round">'
       +     shapeFor(type)
       +   '</g>'
       + '</svg>';
