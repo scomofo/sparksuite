@@ -414,7 +414,7 @@
       var view = (typeof S !== "undefined" && S.launcherView) ? S.launcherView : "home";
       var registry = {
         "settings":        typeof SparkSettings !== "undefined" ? SparkSettings : null,
-        "profile":         typeof SparkProfile !== "undefined" ? SparkProfile : null,
+        "profile":         typeof SparkProfileScreen !== "undefined" ? SparkProfileScreen : null,
         "song-details":    typeof SparkSongDetails !== "undefined" ? SparkSongDetails : null,
         "practice":        typeof SparkPracticeMetro !== "undefined" ? SparkPracticeMetro : null,
         "library":         typeof SparkSongLibrary !== "undefined" ? SparkSongLibrary : null,
