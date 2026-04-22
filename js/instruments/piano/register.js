@@ -5,6 +5,11 @@
     instrument: "piano",
     name: "Piano",
     icon: "\uD83C\uDFB9",
+    // Showroom asset slots — see resources/instruments/README.md for the schema.
+    // When the file doesn't exist, the launcher's <img onerror> falls through to
+    // the inline SVG silhouette so the reference never renders as a broken icon.
+    iconImage: "resources/instruments/piano/card.png",
+    heroImage: "resources/instruments/piano/hero.jpg",
     skin: typeof SparkHighway !== "undefined" ? SparkHighway.PIANO_SKIN : null,
     available: true,
     capabilities: {

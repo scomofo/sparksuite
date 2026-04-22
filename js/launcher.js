@@ -119,7 +119,11 @@
     var img = inst && inst.iconImage;
     var h = '<div class="showroom-card-thumb">';
     if (img) {
-      h += '<img src="' + safeEsc(img) + '" alt="' + safeEsc(inst.name || "Instrument") + '">';
+      // onerror swaps the src to an SVG silhouette data-URI when the file
+      // 404s — keeps the layout intact and avoids a broken-image icon
+      // until the user drops a real PNG into resources/instruments/<id>/.
+      h += '<img src="' + safeEsc(img) + '" alt="' + safeEsc(inst.name || "Instrument") + '"'
+         + ' onerror="if(window.SparkShowroomSVG)SparkShowroomSVG.onCardImgError(this,\'' + safeEsc(type) + '\')">';
     } else if (typeof SparkShowroomSVG !== "undefined") {
       // Inline SVG silhouette in the per-instrument accent color — looks
       // intentional vs. the previous emoji+gradient fallback. Override by
@@ -158,7 +162,10 @@
     var instType = instrumentType(featured);
     var bg;
     if (img) {
-      bg = '<img class="showroom-hero-bg-img" src="' + safeEsc(img) + '" alt="">';
+      // onerror falls through to an SVG silhouette data-URI on 404 —
+      // see renderCardThumb for the rationale.
+      bg = '<img class="showroom-hero-bg-img" src="' + safeEsc(img) + '" alt=""'
+         + ' onerror="if(window.SparkShowroomSVG)SparkShowroomSVG.onHeroImgError(this,\'' + safeEsc(instType) + '\')">';
     } else if (typeof SparkShowroomSVG !== "undefined") {
       bg = '<div class="showroom-hero-bg-svg" aria-hidden="true">' + SparkShowroomSVG.hero(instType) + '</div>';
     } else {
