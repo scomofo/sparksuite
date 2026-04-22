@@ -756,11 +756,12 @@
     var xp = opts.xp || 12;
     var time = opts.time || "05:00";
     // Default G Major fingering: positions on (string left%, fret top%)
+    // Aligned to 6-string justify-between grid: 0, 20, 40, 60, 80, 100
     var fingers = opts.fingers || [
-      { left: 0,    top: 55, num: 2 },
-      { left: 16.6, top: 35, num: 1 },
-      { left: 83.3, top: 55, num: 3 },
-      { left: 100,  top: 55, num: 4 }
+      { left: 0,   top: 55, num: 2 },
+      { left: 20,  top: 35, num: 1 },
+      { left: 80,  top: 55, num: 3 },
+      { left: 100, top: 55, num: 4 }
     ];
 
     var fingersHtml = "";
@@ -795,19 +796,23 @@
     ];
 
     return '<div class="showroom-root with-bg">'
+         + '<div class="showroom-woodgrain-overlay"></div>'
          + '<header class="showroom-lesson-bar">'
            + '<button class="showroom-iconbtn accent" onclick="' + nav("practice") + '" aria-label="Close"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>'
            + '<h1 class="showroom-lesson-bar-title">Practice Session</h1>'
            + '<button class="showroom-iconbtn accent" aria-label="Settings" onclick="' + nav("settings") + '"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button>'
          + '</header>'
          + '<div class="showroom-canvas" style="padding-bottom:200px">'
-           + '<section><span class="showroom-lesson-eyebrow">' + escHtml(module) + '</span>'
+           + '<section class="showroom-title-section"><span class="showroom-lesson-eyebrow">' + escHtml(module) + '</span>'
              + '<h2 class="showroom-lesson-h">' + escHtml(unit) + '</h2>'
-             + '<div class="showroom-lesson-card">'
+           + '</section>'
+           + '<section class="showroom-chord-section" style="position:relative">'
+             + '<div class="showroom-blur-blob"></div>'
+             + '<div class="showroom-lesson-card showroom-ember-glow-card">'
                + '<div class="showroom-lesson-card-head"><div>'
                  + '<h3 class="showroom-lesson-card-title">' + escHtml(chordName) + '</h3>'
                  + '<p class="showroom-lesson-card-sub">' + escHtml(position) + '</p></div>'
-                 + '<span class="showroom-lesson-card-tag">G</span></div>'
+                 + '<div class="showroom-lesson-card-badge"><span class="showroom-lesson-card-tag">G</span></div></div>'
                + '<div class="showroom-chord" role="img" aria-label="' + escHtml(chordAriaLabel) + '">'
                  + '<div class="showroom-chord-fret-labels" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>'
                  + '<div class="showroom-chord-opens" aria-hidden="true"><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span></div>'
@@ -816,26 +821,32 @@
                  + '<div class="showroom-chord-fingers" aria-hidden="true">' + fingersHtml + '</div>'
                + '</div>'
                + '<div class="showroom-chord-meta">'
-                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">Strum</p><p class="showroom-chord-meta-val success">' + escHtml(strum) + '</p></div>'
+                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">STRUM</p><p class="showroom-chord-meta-val success">' + escHtml(strum) + '</p></div>'
                  + '<div class="showroom-chord-meta-divider"></div>'
-                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">Type</p><p class="showroom-chord-meta-val primary">' + escHtml(type) + '</p></div>'
+                 + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">TYPE</p><p class="showroom-chord-meta-val primary">' + escHtml(type) + '</p></div>'
                + '</div>'
              + '</div>'
            + '</section>'
-           + '<section>'
+           + '<section class="showroom-tips-section">'
              + '<div class="showroom-tips-head"><span class="material-symbols-outlined">lightbulb</span><h3>Key Tips</h3></div>'
              + '<div class="showroom-tips-grid">'
                + '<div class="showroom-tip"><div class="showroom-tip-icon primary"><span class="material-symbols-outlined">thumb_up</span></div><p class="showroom-tip-title">Keep your thumb low</p><p class="showroom-tip-desc">Allows more reach across the neck.</p></div>'
                + '<div class="showroom-tip"><div class="showroom-tip-icon secondary"><span class="material-symbols-outlined">ads_click</span></div><p class="showroom-tip-title">Press near the fret</p><p class="showroom-tip-desc">Reduces buzzing with less force.</p></div>'
-               + '<div class="showroom-tip wide"><div class="showroom-tip-img" aria-hidden="true">\uD83D\uDD90\uFE0F</div><div><p class="showroom-tip-title">Arch your fingers</p><p class="showroom-tip-desc">Ensure open strings ring out clearly without muting.</p></div></div>'
+               // Wide-tip artwork used to be a remote lh3.googleusercontent.com
+               // image, which is blocked by the app-wide CSP (img-src 'self' data:
+               // in index.html + src-tauri/tauri.conf.json). Revert to the local
+               // emoji glyph so the tile renders on every surface, online or off.
+               // When real artwork ships, point `.showroom-tip-img` at a
+               // resources/ path served from 'self', not a remote host.
+               + '<div class="showroom-tip wide"><div class="showroom-tip-img" aria-hidden="true">🖐️</div><div><p class="showroom-tip-title">Arch your fingers</p><p class="showroom-tip-desc">Ensure open strings ring out clearly without muting.</p></div></div>'
              + '</div>'
            + '</section>'
-           + '<section class="showroom-stats-pill">'
-             + '<div class="seg xp"><span class="material-symbols-outlined">bolt</span><span class="num">' + xp + '</span><span class="lbl">XP</span></div>'
-             + '<div class="seg timer"><span class="material-symbols-outlined">timer</span><span class="num">' + escHtml(time) + '</span></div>'
+           + '<section class="showroom-stats-bar">'
+             + '<div class="seg xp"><span class="material-symbols-outlined fill">bolt</span><span class="num">' + xp + '</span><span class="lbl">XP</span></div>'
+             + '<div class="seg timer"><span class="material-symbols-outlined fill">timer</span><span class="num">' + escHtml(time) + '</span></div>'
            + '</section>'
          + '</div>'
-         + '<div class="showroom-lesson-cta-wrap"><button class="showroom-lesson-cta" onclick="' + nav("performance") + '"><span class="material-symbols-outlined fill">play_arrow</span>Start Practice</button></div>'
+         + '<div class="showroom-lesson-cta-wrap"><button class="showroom-lesson-cta showroom-ember-glow-button" onclick="' + nav("performance") + '"><span class="material-symbols-outlined fill">play_arrow</span>START PRACTICE</button></div>'
          + bottomNav(navItems, "practice")
          + '</div>';
   }
