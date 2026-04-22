@@ -1237,7 +1237,7 @@
            + '</div>'
            + '<div class="showroom-onboarding-cta-wrap">'
              + '<button type="button" class="showroom-onboarding-cta" onclick="' + ctaAction + '">'
-               + escHtml(ctaLabel.toUpperCase())
+               + escHtml(String(ctaLabel).toUpperCase())
                + '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>'
              + '</button>'
              + '<p class="showroom-onboarding-signin">'
@@ -1255,9 +1255,9 @@
   function curriculumDashboardRender(opts) {
     opts = opts || {};
     var courseTitle = opts.courseTitle || "Guitar Fundamentals";
-    var level = opts.level || 12;
-    var progress = opts.progress || 65;
-    var nextXp = opts.nextXp || 250;
+    var level = opts.level != null ? opts.level : 12;
+    var progress = opts.progress != null ? opts.progress : 65;
+    var nextXp = opts.nextXp != null ? opts.nextXp : 250;
     var nextBadge = opts.nextBadge || "Silver Badge";
 
     // Progress ring math
@@ -1370,7 +1370,7 @@
          + '<div class="showroom-course-hero-ring-label"><span class="showroom-course-hero-ring-num">' + progress + '%</span><span class="showroom-course-hero-ring-unit">DONE</span></div></div>'
          + '<div class="showroom-course-hero-progress">'
          + '<div class="showroom-course-hero-xp-row"><span class="material-symbols-outlined fill showroom-course-hero-xp-icon" style="font-size:14px">bolt</span>Next: ' + nextXp + ' XP to ' + escHtml(nextBadge) + '</div>'
-         + '<div class="showroom-course-hero-bar"><div class="showroom-course-hero-fill" style="width:75%"></div></div></div></div>'
+         + '<div class="showroom-course-hero-bar"><div class="showroom-course-hero-fill" style="width:' + progress + '%"></div></div></div></div>'
          + '</section>'
          + '<section class="showroom-timeline">'
          + '<div class="showroom-timeline-line"></div>'
