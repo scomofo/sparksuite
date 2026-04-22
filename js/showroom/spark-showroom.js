@@ -260,6 +260,9 @@
     if (!mastered) mastered = 18;
     if (level < 12) level = 12;
     var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
+    // No external-URL fallback — the app-wide CSP (`img-src 'self' data:`)
+    // blocks remote hosts. When avatarSrc is absent the renderer below
+    // falls through to the initial-letter bubble, which stays same-origin.
 
     // Per-instrument progress (read from registry + profile or stub)
     var insts = (typeof SparkInstruments !== "undefined" && SparkInstruments.getAll) ? SparkInstruments.getAll() : [];
@@ -323,15 +326,15 @@
     var navItems = [
       { id:"home",     label:"Practice",    icon:"music_note", onClick: nav("home") },
       { id:"journey",  label:"Journey",     icon:"explore",    onClick: nav("path") },
-      { id:"library",  label:"Leaderboard", icon:"military_tech", onClick: nav("library") },
+      { id:"leaderboard", label:"Leaderboard", icon:"military_tech", onClick: nav("library") },
       { id:"profile",  label:"Profile",     icon:"person" }
     ];
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar">'
-         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button></div>'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + nav("home") + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button></div>'
          + '<h1 class="showroom-appbar-title centered">Profile</h1>'
-         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" style="color:var(--text-muted)" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
          + '</header>'
          + '<div class="showroom-canvas">'
            + '<section class="showroom-profile-head">'
