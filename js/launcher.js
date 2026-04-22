@@ -272,7 +272,7 @@
         '<div class="showroom-topbar-inner">' +
           '<div class="showroom-topbar-left">' +
             renderAvatar(profile) +
-            '<span class="showroom-brand">Showroom</span>' +
+            '<span class="showroom-brand">SparkSuite</span>' +
           '</div>' +
           '<div class="showroom-xp-pill" role="status" aria-label="Total experience points">' +
             '<span class="material-symbols-outlined fill">workspace_premium</span>' +
