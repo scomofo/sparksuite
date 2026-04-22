@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Syne:wght@700;800;900&amp;family=JetBrains+Mono:wght@900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "outline-variant": "#584239",
+                "surface-container": "#291d18",
+                "on-secondary": "#552000",
+                "on-error-container": "#ffdad6",
+                "on-primary-container": "#642300",
+                "on-tertiary-fixed": "#001f27",
+                "on-tertiary-fixed-variant": "#004e5e",
+                "secondary": "#ffb691",
+                "primary": "#ffb596",
+                "perform-yellow": "#FFE66D",
+                "error": "#ffb4ab",
+                "warning": "#C89040",
+                "on-secondary-fixed": "#341100",
+                "on-secondary-fixed-variant": "#723612",
+                "on-error": "#690005",
+                "card-bg": "#1E1B17",
+                "inverse-surface": "#f5ded5",
+                "on-secondary-container": "#faa477",
+                "primary-container": "#ff7b3a",
+                "text-secondary": "#C8BFB0",
+                "on-primary": "#581e00",
+                "perform-coral": "#FF6B6B",
+                "on-tertiary": "#003641",
+                "accent-deep": "#FF6030",
+                "background": "#1c110c",
+                "bass-violet": "#7C3AED",
+                "text-dim": "#9A8E7E",
+                "surface-variant": "#40322c",
+                "on-primary-fixed": "#360f00",
+                "on-primary-fixed-variant": "#7c2e00",
+                "surface-container-lowest": "#160c07",
+                "secondary-fixed": "#ffdbcb",
+                "text-muted": "#7A7060",
+                "surface-container-highest": "#40322c",
+                "danger": "#C45040",
+                "outline": "#a78b80",
+                "inverse-primary": "#a33e00",
+                "tertiary": "#51d6f8",
+                "raised-bg": "#252119",
+                "success": "#4CD964",
+                "perform-cyan": "#4ECDC4",
+                "on-surface": "#f5ded5",
+                "primary-fixed-dim": "#ffb596",
+                "on-tertiary-container": "#003e4b",
+                "secondary-container": "#753814",
+                "on-surface-variant": "#dfc0b4",
+                "bg": "#12100E",
+                "brand-clay": "#C07040",
+                "accent-light": "#FFAA6A",
+                "surface-dim": "#1c110c",
+                "inverse-on-surface": "#3b2d28",
+                "piano-midnight": "#0EA5E9",
+                "surface-container-low": "#251914",
+                "guitar-neon": "#FF2D55",
+                "tertiary-container": "#00b0d1",
+                "border-light": "#3A3228",
+                "secondary-fixed-dim": "#ffb691",
+                "tertiary-fixed": "#b0ecff",
+                "surface-tint": "#ffb596",
+                "surface": "#1c110c",
+                "ukulele-teal": "#14B8A6",
+                "primary-fixed": "#ffdbcd",
+                "on-background": "#f5ded5",
+                "border": "#2E2820",
+                "tertiary-fixed-dim": "#51d6f8",
+                "error-container": "#93000a",
+                "bg-subtle": "#1A1714",
+                "text-primary": "#EDE6DA",
+                "surface-bright": "#443630",
+                "brand-peach": "#E8A87A"
+            },
+            "fontFamily": {
+                "label": ["Plus Jakarta Sans"],
+                "body-sm": ["Plus Jakarta Sans"],
+                "body-md": ["Plus Jakarta Sans"],
+                "stat-lg": ["JetBrains Mono"],
+                "heading-md": ["Plus Jakarta Sans"],
+                "display-md": ["Syne"],
+                "button": ["Syne"],
+                "display-hero": ["Syne"],
+                "display-lg": ["Syne"],
+                "heading-sm": ["Plus Jakarta Sans"]
+            }
+          }
+        }
+      }
+    </script>
+<style>.woodgrain-overlay {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBFALhKgw_ldcAfpEd0GVKGzIkxZtOm0cNxDsDY2sTYWsKY963aqvGIN8SMQFVtbXF3qc_jNSneYl7CKdQXWR2ijykqfMrm2iYbiQTMWlSR91r7cll43-HXZqbrxcYTmtJqD7ErBWJvqS_J9FAuySyOEJyMSCzV5nUqXj7oU0nUxoBBqCuQRJZlE2zbCJMbj2sXhMLRUTp0vrOtcwmkMRHfmqzp15Z__sB0xN1J1TzWLbc_qOv-NlysdqioFfBTh39Nqk6NaSUDcbE);
+    opacity: 0.15;
+    pointer-events: none
+    }
+.ember-glow-card {
+    box-shadow: 0 0 30px -10px rgba(255, 123, 58, 0.25)
+    }
+.ember-glow-button {
+    box-shadow: 0 0 40px -5px rgba(255, 123, 58, 0.6)
+    }
+.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-bg text-text-primary min-h-screen font-body-md overflow-x-hidden selection:bg-primary-container selection:text-white">
+<!-- Woodgrain Texture -->
+<div class="fixed inset-0 woodgrain-overlay z-0"></div>
+<div class="relative z-10 max-w-[480px] mx-auto min-h-screen flex flex-col pb-24">
+<!-- TopAppBar -->
+<header class="bg-[#12100E]/80 backdrop-blur-md text-[#FF7B3A] font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-lg docked full-width top-0 border-b border-[#FF7B3A]/10 backdrop-blur-xl border-b border-white/5 shadow-[0_4px_20px_rgba(18,16,14,0.5)] flex justify-between items-center w-full px-4 h-16 sticky z-50">
+<button class="material-symbols-outlined active:scale-95 duration-200 p-2 rounded-full hover:bg-white/5 transition-colors" data-icon="close">close</button>
+<h1 class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-lg">Practice Session</h1>
+<button class="material-symbols-outlined active:scale-95 duration-200 p-2 rounded-full hover:bg-white/5 transition-colors" data-icon="settings">settings</button>
+</header>
+<main class="flex-1 px-container-padding pt-sp-6 space-y-sp-8">
+<!-- Title Section -->
+<section class="space-y-sp-1">
+<span class="font-label text-label text-primary-container uppercase tracking-[0.15em]">Module 01 • Guitar Basics</span>
+<h2 class="font-display-hero text-display-hero leading-tight text-text-primary">G Major Foundation</h2>
+</section>
+<!-- Chord Diagram Card -->
+<section class="relative">
+<div class="absolute -top-4 -left-4 w-24 h-24 bg-primary-container/10 blur-[40px] rounded-full"></div>
+<div class="bg-card-bg border border-white/10 rounded-xl p-card-padding ember-glow-card relative overflow-hidden">
+<div class="flex justify-between items-start mb-sp-4">
+<div>
+<p class="font-heading-sm text-heading-sm text-text-primary">G Major Chord</p>
+<p class="font-body-sm text-body-sm text-text-muted">Open Position</p>
+</div>
+<div class="bg-surface-container rounded-lg px-sp-2 py-sp-1 border border-outline-variant/30">
+<span class="font-stat-lg text-[18px] text-primary">G</span>
+</div>
+</div>
+<!-- Fretboard Visualization -->
+<div class="flex justify-center py-sp-4">
+<div class="w-full aspect-[4/5] bg-surface-container-low rounded-lg p-sp-4 border border-white/5 relative">
+<!-- Fret Lines -->
+<div class="absolute inset-x-0 top-1/4 border-t border-outline-variant/40"></div>
+<div class="absolute inset-x-0 top-2/4 border-t border-outline-variant/40"></div>
+<div class="absolute inset-x-0 top-3/4 border-t border-outline-variant/40"></div>
+<!-- Strings -->
+<div class="flex justify-between h-full px-sp-2">
+<div class="w-[2px] bg-outline-variant/60 h-full"></div>
+<div class="w-[1.5px] bg-outline-variant/60 h-full"></div>
+<div class="w-[1px] bg-outline-variant/60 h-full"></div>
+<div class="w-[1px] bg-outline-variant/60 h-full"></div>
+<div class="w-[1.5px] bg-outline-variant/60 h-full"></div>
+<div class="w-[2px] bg-outline-variant/60 h-full"></div>
+</div>
+<!-- Finger Positions (Ember Dots) -->
+<div class="absolute top-[12.5%] left-[6%] w-4 h-4 bg-primary-container rounded-full shadow-[0_0_12px_rgba(255,123,58,0.8)] border-2 border-white/20 flex items-center justify-center text-[8px] font-bold text-white">2</div>
+<div class="absolute top-[37.5%] left-[24%] w-4 h-4 bg-primary-container rounded-full shadow-[0_0_12px_rgba(255,123,58,0.8)] border-2 border-white/20 flex items-center justify-center text-[8px] font-bold text-white">1</div>
+<div class="absolute top-[62.5%] right-[6%] w-4 h-4 bg-primary-container rounded-full shadow-[0_0_12px_rgba(255,123,58,0.8)] border-2 border-white/20 flex items-center justify-center text-[8px] font-bold text-white">3</div>
+<div class="absolute top-[87.5%] right-[6%] w-4 h-4 bg-primary-container rounded-full shadow-[0_0_12px_rgba(255,123,58,0.8)] border-2 border-white/20 flex items-center justify-center text-[8px] font-bold text-white">4</div>
+</div>
+</div>
+<div class="mt-sp-4 flex justify-around">
+<div class="text-center">
+<p class="font-label text-label text-text-dim">STRUM</p>
+<p class="font-heading-sm text-heading-sm text-success">ALL 6</p>
+</div>
+<div class="w-[1px] bg-white/10 h-8"></div>
+<div class="text-center">
+<p class="font-label text-label text-text-dim">TYPE</p>
+<p class="font-heading-sm text-heading-sm text-primary">MAJOR</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Key Tips (Asymmetric Layout) -->
+<section class="space-y-sp-4">
+<div class="flex items-center gap-sp-2">
+<span class="material-symbols-outlined text-primary-container" data-icon="lightbulb">lightbulb</span>
+<h3 class="font-display-md text-display-md">Key Tips</h3>
+</div>
+<div class="grid grid-cols-2 gap-sp-3">
+<div class="bg-surface-container-low p-sp-4 rounded-xl border border-white/5 space-y-sp-2">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="thumb_up">thumb_up</span>
+</div>
+<p class="font-heading-sm text-[13px] leading-tight">Keep your thumb low</p>
+<p class="font-body-sm text-text-muted text-[11px]">Allows more reach across the neck.</p>
+</div>
+<div class="bg-surface-container-low p-sp-4 rounded-xl border border-white/5 space-y-sp-2 mt-sp-4">
+<div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="ads_click">ads_click</span>
+</div>
+<p class="font-heading-sm text-[13px] leading-tight">Press near the fret</p>
+<p class="font-body-sm text-text-muted text-[11px]">Reduces buzzing with less force.</p>
+</div>
+<div class="col-span-2 bg-surface-container-low p-sp-4 rounded-xl border border-white/5 flex items-center gap-sp-4">
+<div class="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-white/10">
+<img alt="Hand position" class="w-full h-full object-cover" data-alt="Close-up of a guitarist's hand correctly fretting a G major chord on an acoustic guitar with warm lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChQHK6E7hAQS5qLhoBqJJ_LUJq7E2uTvtAoAMETNqpwHDjTam1PvK39NGRQVueWB9weNUMQymf1LDzlgC9mf_6J48DkRSNj-tMGW1vu8zXC_VSLP7DBuUVrA5WMQ8-U7PFW281Qx1be4cXYTu_3uApKn5JGAhcHT0m5lmu0I7K10DjuOLCQ_YyxfRJ4eojl72VY6XVJ1SH4EEknUlc9-RnJ_Xo1LoaMX3wZxjxECwEpLyjoWALT6aW9VQ1cUIffXXQeUpYth59By4"/>
+</div>
+<div>
+<p class="font-heading-sm text-[13px]">Arch your fingers</p>
+<p class="font-body-sm text-text-muted text-[11px]">Ensure open strings ring out clearly without muting.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Bar -->
+<section class="flex justify-between items-center bg-raised-bg/50 border border-white/5 rounded-full px-sp-5 py-sp-3">
+<div class="flex items-center gap-sp-2">
+<span class="material-symbols-outlined text-perform-yellow" data-icon="bolt">bolt</span>
+<span class="font-stat-lg text-[20px]">12</span>
+<span class="font-label text-text-dim">XP</span>
+</div>
+<div class="flex items-center gap-sp-2">
+<span class="material-symbols-outlined text-perform-coral" data-icon="timer">timer</span>
+<span class="font-stat-lg text-[20px]">05:00</span>
+</div>
+</section>
+</main>
+<!-- CTA Action Area -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-container-padding z-40">
+<button class="w-full h-16 bg-gradient-to-r from-primary-container to-accent-deep text-white font-button text-[16px] rounded-xl ember-glow-button active:scale-95 transition-all duration-200 flex items-center justify-center gap-sp-2 uppercase tracking-widest shadow-lg">
+<span class="material-symbols-outlined" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                START PRACTICE
+            </button>
+</div>
+<!-- BottomNavBar -->
+<nav class="bg-[#12100E]/90 backdrop-blur-lg fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 flex justify-around items-center h-20 pb-safe rounded-t-xl border-t border-white/10 shadow-[0_-8px_24px_rgba(0,0,0,0.4)]">
+<div class="flex flex-col items-center justify-center text-orange-100/30 hover:text-orange-200/80 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]" data-icon="school">school</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-semibold uppercase tracking-wider mt-1">Learn</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#FF7B3A] drop-shadow-[0_0_8px_rgba(255,123,58,0.6)] active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]" data-icon="music_note">music_note</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-semibold uppercase tracking-wider mt-1">Practice</span>
+</div>
+<div class="flex flex-col items-center justify-center text-orange-100/30 hover:text-orange-200/80 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]" data-icon="library_music">library_music</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-semibold uppercase tracking-wider mt-1">Songs</span>
+</div>
+<div class="flex flex-col items-center justify-center text-orange-100/30 hover:text-orange-200/80 active:scale-90 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]" data-icon="person">person</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[10px] font-semibold uppercase tracking-wider mt-1">Profile</span>
+</div>
+</nav>
+</div>
+</body></html>
