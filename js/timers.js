@@ -434,8 +434,13 @@ function fetchCommunity(){
   var url=COMMUNITY_URL+"/api/songs";
   if(S.communitySearch)url+="?q="+encodeURIComponent(S.communitySearch)+"&sort="+S.communitySort;
   else url+="?sort="+S.communitySort;
-  fetch(url).then(function(r){return r.json();}).then(function(data){
-    S.communitySongs=data;S.communityLoading=false;render();
+  // Reject non-2xx responses so a JSON error body doesn't get assigned to
+  // S.communitySongs (which subsequent UI code expects to be an array).
+  fetch(url).then(function(r){
+    if(!r.ok) return Promise.reject(new Error("HTTP "+r.status));
+    return r.json();
+  }).then(function(data){
+    S.communitySongs=Array.isArray(data)?data:[];S.communityLoading=false;render();
   }).catch(function(){
     S.communityError="Could not connect to community server";S.communityLoading=false;render();
   });
@@ -514,7 +519,10 @@ var _prevChordKey="";
 // ===== CLEANUP =====
 function stopAllTimers(){
   clearTimeout(T.session);clearTimeout(T.drill);clearTimeout(T.daily);clearInterval(T.fingerEx);
-  clearInterval(T.strum);clearInterval(T.song);clearInterval(T.metro);clearInterval(T.prog);
+  // T.metro is set via setTimeout (not setInterval) — clearTimeout is the
+  // matching API. clearInterval happens to work in most browsers because
+  // they share an ID pool, but using the wrong API is technically incorrect.
+  clearInterval(T.strum);clearInterval(T.song);clearTimeout(T.metro);clearInterval(T.prog);
   if(S.metronomeOn){stopMetronome();S.metronomeOn=false;}
   if(S.chordDetectOn)stopChordDetect();
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
