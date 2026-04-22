@@ -146,7 +146,10 @@ if (fs.existsSync(testPath)) {
         var searchFrom = mIdx + marker.length;
         var nextBlank = testCode.indexOf(NL + NL, searchFrom);
         if (nextBlank > 0) {
-          var insertLine = "safeEval(" + Q + regLine + Q + ");" + NL;
+          // No trailing NL on insertLine — the surrounding NL + NL at
+          // nextBlank already provides the line break, so an extra NL
+          // produces 4 consecutive newlines in the generated test file.
+          var insertLine = "safeEval(" + Q + regLine + Q + ");";
           testCode = testCode.slice(0, nextBlank) + NL + insertLine + testCode.slice(nextBlank);
           changed = true;
           console.log("  Added safeEval for " + inst.id + " register.js");
