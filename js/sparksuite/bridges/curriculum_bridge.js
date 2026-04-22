@@ -7,10 +7,11 @@
     if (curriculumMap[0] && curriculumMap[0].id && typeof getNextLessonFromCurriculum === "function") {
       var completed = [];
       if (Array.isArray(S.completedLessons)) completed = completed.concat(S.completedLessons);
-      if (S.mastery && S.mastery.lessons) {
-        for (var lessonId in S.mastery.lessons) {
-          if (S.mastery.lessons[lessonId]) completed.push(lessonId);
-        }
+      var lessonMap = typeof SparkMastery !== "undefined"
+        ? SparkMastery.category("lessons")
+        : (S.mastery && S.mastery.lessons ? S.mastery.lessons : {});
+      for (var lessonId in lessonMap) {
+        if (lessonMap[lessonId]) completed.push(lessonId);
       }
 
       var nextLessonId = getNextLessonFromCurriculum(curriculumMap[0].id, completed);

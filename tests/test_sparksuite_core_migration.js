@@ -85,6 +85,10 @@ function resetState() {
       { id: "transition_1", type: "transition", label: "Practice G to C", reason: "Weak transition", meta: { key: "G|C", from: "G", to: "C" } }
     ];
   };
+  global.SparkInstruments = {
+    getActive: function() { return null; },
+    getAll: function() { return []; }
+  };
   global.SparkInstrumentAdapter = {
     getAppId: function() { return "chordspark"; },
     getInstrumentType: function() { return "guitar"; },
@@ -128,6 +132,12 @@ function resetState() {
 }
 
 resetState();
+
+// Shared utility helpers — pages/*.js wrappers delegate to SparkNormalize.
+// Loaded the same way as the page modules below (matches the test's
+// existing bootstrapping pattern).
+var _eval = eval;
+_eval(loadJS("js/utils/normalize.js"));
 
 eval(loadJS("js/sparksuite/domain/types.js"));
 eval(loadJS("js/sparksuite/domain/session_segment.js"));
@@ -194,6 +204,20 @@ test("startSession returns a SessionPlan and syncs the legacy practice plan", fu
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "session_1");
 });
 
+test("daily practice plans preserve segment labels when projected back to legacy state", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  assert.ok(Array.isArray(plan.exercises));
+  assert.strictEqual(plan.segments[0].label, "Quick warmup");
+  assert.strictEqual(plan.segments[1].label, "Practice G to C");
+  assert.ok(S.practicePlan.items.every(function(item) {
+    return typeof item.label === "string" && item.label.length > 0;
+  }));
+  assert.strictEqual(S.practicePlan.items[0].label, "Quick warmup");
+  assert.strictEqual(S.practicePlan.items[1].label, "Practice G to C");
+});
+
 test("SparkCore exposes engine-owned runtime state for active session context", function() {
   var core = createDefaultSparkCore();
   var initialState = core.getRuntimeState();
@@ -216,6 +240,34 @@ test("SparkCore exposes engine-owned runtime state for active session context", 
   assert.strictEqual(view.plan, plan);
   assert.strictEqual(view.runtimeState, runtimeState);
   assert.strictEqual(view.lastSessionOutcome, null);
+});
+
+test("startPracticeFromLesson prefers the active instrument type over the app id for rhythm launches", function() {
+  var core = createDefaultSparkCore();
+  var captured = null;
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+    return true;
+  };
+
+  core.updateRuntimeState({
+    activeInstrumentId: "pianospark",
+    activeInstrumentType: "piano"
+  });
+
+  var launched = core.startPracticeFromLesson({
+    type: "timing",
+    tempo: 90,
+    label: "Timing Drill"
+  });
+
+  assert.strictEqual(launched, true);
+  assert.ok(captured);
+  assert.strictEqual(captured.options.source, "lesson_generator");
+  assert.strictEqual(captured.options.label, "Timing Drill");
+  assert.strictEqual(captured.options.instrument, "piano");
+
+  delete global.startPlayableRhythmHighwayPayload;
 });
 
 test("SparkCore runtime state tracks manual patches and completion summaries", function() {
@@ -1282,7 +1334,7 @@ test("finger exercise card can fall back to SparkCore finger exercise runtime st
   window.sparkCore = core;
   global.escHTML = function(value) { return String(value); };
   global.FINGER_EXERCISES = [
-    { id: "spider_walk", name: "Spider Walk", desc: "Walk each finger in order.", duration: 90, frequency: "Daily", tier: 1, goal: "Clean finger independence" }
+    { id: "spider_walk", name: "Spider Walk", desc: "Walk each finger in order.", duration: 90, frequency: "Daily", tier: 1, goal: "Clean finger independence", offInstrument: true }
   ];
   S.fingerExActive = undefined;
   S.fingerExId = undefined;
@@ -1311,6 +1363,8 @@ test("finger exercise card can fall back to SparkCore finger exercise runtime st
   });
   cardHtml = fingerExerciseCard();
   assert.ok(cardHtml.indexOf("3x") >= 0);
+  assert.ok(cardHtml.indexOf("no guitar") === -1);
+  assert.ok(cardHtml.indexOf("no instrument") >= 0);
 });
 
 test("strum page can fall back to SparkCore strum runtime state", function() {
@@ -3003,6 +3057,52 @@ test("createDefaultSparkCore registers piano as a first-class instrument adapter
   assert.strictEqual(S.performSongData.title, "River Walk");
   assert.strictEqual(S.performArrangementType, "melody");
   assert.strictEqual(S.performDifficulty, "pro");
+});
+
+test("createDefaultSparkCore prefers the rehydrated active instrument over a stale singleton adapter", function() {
+  var pianoSongs = [
+    { title: "Midnight Train", artist: "Piano Suite" },
+    { title: "River Walk", artist: "Piano Suite" }
+  ];
+  var pianoSessions = [
+    { num: 1, title: "Piano Spark 1", spark: { text: "Start" }, newMove: { chord: "C" } },
+    { num: 2, title: "Piano Spark 2", spark: { text: "Continue" }, newMove: { chord: "G" } }
+  ];
+  var pianoInstrument = {
+    id: "pianospark",
+    appId: "pianospark",
+    instrument: "piano",
+    getCurriculumMap: function() { return [{ num: 1, title: "White Keys Only" }]; },
+    getSongs: function() { return pianoSongs; },
+    getData: function() { return { SESSIONS: pianoSessions }; }
+  };
+
+  SparkInstruments = {
+    getActive: function() {
+      return { appId: "pianospark" };
+    },
+    getAll: function() {
+      return [pianoInstrument];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return [{ num: 1, title: "Stale Guitar Lesson" }]; },
+    getCurriculum: function() { return { SESSIONS: [{ num: 1, title: "Stale Guitar Session" }] }; },
+    getSongs: function() { return [{ title: "Stale Guitar Song", artist: "Spark Suite" }]; }
+  };
+
+  var core = createDefaultSparkCore();
+  var context = core.instrumentManager.getActiveContext();
+
+  assert.strictEqual(context.appId, "pianospark");
+  assert.strictEqual(context.instrumentType, "piano");
+  assert.strictEqual(context.adapter.getType(), "piano");
+  assert.strictEqual(context.curriculumMap[0].title, "White Keys Only");
+  assert.strictEqual(context.sessions[0].title, "Piano Spark 1");
+  assert.strictEqual(context.songs[1].title, "River Walk");
 });
 
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {

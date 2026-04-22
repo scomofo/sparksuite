@@ -1,0 +1,180 @@
+var assert = require("assert");
+var fs = require("fs");
+var path = require("path");
+
+function loadJS(file) {
+  return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+}
+
+// Load shared SparkNormalize helper used by page modules below.
+// js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
+// the window alias first (resetEnv() also sets it but runs per-test).
+global.window = global.window || global;
+var _testEval = eval;
+_testEval(loadJS("js/utils/normalize.js"));
+
+
+function resetEnvironment() {
+  global.window = global;
+  global.S = {
+    performEditorChart: null,
+    performEditorLibrary: []
+  };
+  global.escHTML = function(value) { return String(value); };
+  global.act = function() {};
+}
+
+function test(name, fn) {
+  try {
+    resetEnvironment();
+    global.eval(loadJS("js/pages/performance_editor.js"));
+    fn();
+    console.log("  PASS: " + name);
+  } catch (err) {
+    console.error("  FAIL: " + name);
+    console.error("    " + err.message);
+    process.exitCode = 1;
+  }
+}
+
+console.log("\n--- Performance Editor Page Resolution ---");
+
+test("performanceEditorPage ignores stale active chart and event text tokens", function() {
+  S.performEditorLibrary = [{
+    id: "saved_chart_1",
+    title: "undefined",
+    arrangementType: "null",
+    events: [{ id: 1 }]
+  }];
+  S.performEditorChart = {
+    id: "editor_chart_1",
+    title: "undefined",
+    bpm: 120,
+    events: [{
+      id: 7,
+      laneLabel: "undefined",
+      chord: "null",
+      note: "NaN",
+      t: 1,
+      dur: 0.5
+    }],
+    phrases: [{
+      id: 3,
+      name: "undefined",
+      startSec: 0,
+      endSec: 4
+    }]
+  };
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: S.performEditorChart,
+        library: S.performEditorLibrary,
+        title: "undefined",
+        source: "null",
+        dirty: false,
+        mode: "chords",
+        snap: "1/8",
+        selectedEventId: 7,
+        selectedEventLabel: "undefined",
+        selectedEventTime: 1,
+        selectedEventDuration: 0.5,
+        selectedPhraseId: 3,
+        selectedPhraseName: "null"
+      };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: {} };
+    }
+  };
+
+  var html = performanceEditorPage();
+  assert.ok(html.indexOf("Untitled") >= 0);
+  assert.ok(html.indexOf("blank") >= 0);
+  assert.ok(html.indexOf(">undefined<") === -1);
+  assert.ok(html.indexOf(">null<") === -1);
+  assert.ok(html.indexOf(">NaN<") === -1);
+  assert.ok(html.indexOf('value="editor_chart_1"') >= 0);
+  assert.ok(html.indexOf(">Phrase 1<") >= 0);
+  assert.ok(html.indexOf(">?<") >= 0);
+});
+
+test("performanceEditorPage ignores stale saved chart library text tokens", function() {
+  S.performEditorChart = null;
+  S.performEditorLibrary = [{
+    id: "saved_chart_1",
+    title: "undefined",
+    arrangementType: "null",
+    events: [{ id: 1 }]
+  }];
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: null,
+        library: S.performEditorLibrary,
+        source: "null",
+        dirty: false,
+        mode: "chords",
+        snap: "1/8"
+      };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: {} };
+    }
+  };
+
+  var html = performanceEditorPage();
+  assert.ok(html.indexOf("saved_chart_1") >= 0);
+  assert.ok(html.indexOf(">null<") === -1);
+  assert.ok(html.indexOf(">undefined<") === -1);
+});
+
+test("performanceEditorPage ignores malformed numeric editor values", function() {
+  S.performEditorChart = {
+    id: "editor_chart_2",
+    title: "Chart",
+    bpm: "NaN",
+    events: [{
+      id: 9,
+      laneLabel: "C",
+      t: "NaN",
+      dur: "NaN"
+    }],
+    phrases: [{
+      id: 4,
+      name: "Phrase",
+      startSec: "NaN",
+      endSec: "NaN"
+    }]
+  };
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: S.performEditorChart,
+        library: [],
+        source: "existing",
+        dirty: false,
+        mode: "chords",
+        snap: "1/8",
+        bpm: "NaN",
+        selectedEventId: 9,
+        selectedEventTime: "NaN",
+        selectedEventDuration: "NaN",
+        selectedPhraseId: 4,
+        selectedPhraseStart: "NaN",
+        selectedPhraseEnd: "NaN"
+      };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: {} };
+    }
+  };
+
+  var html = performanceEditorPage();
+  assert.ok(html.indexOf('value="90"') >= 0);
+  assert.ok(html.indexOf('value="NaN"') === -1);
+  assert.ok(html.indexOf("0.0s - 0.0s") >= 0);
+  assert.ok(html.indexOf("0.00s / 0.00s") >= 0);
+});
+
+if (process.exitCode) process.exit(process.exitCode);

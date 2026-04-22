@@ -1,5 +1,17 @@
 /* ===== ChordSpark: Performance Stats Page ===== */
 
+function prettyPerformanceStatsToken(value){
+  var text;
+  var lower;
+  if(value == null) return "";
+  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if(!text) return "";
+  lower = text.toLowerCase();
+  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
 function performanceStatsPage(){
   var statsView = getPerformanceStatsView();
   var focus = statsView.focus;
@@ -33,9 +45,12 @@ function performanceStatsPage(){
     for(var i=0;i<recent.length;i++){
       var r=recent[i];
       var mColor=typeof getMasteryColor==="function"?getMasteryColor(r.mastery):"var(--text-muted)";
+      var songLabel = prettyPerformanceStatsToken(r.songId) || "song";
+      var arrangementLabel = prettyPerformanceStatsToken(r.arrangement) || "chords";
+      var difficultyLabel = prettyPerformanceStatsToken(r.difficulty) || "normal";
       h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">';
-      h+='<div><span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(r.songId)+'</span>';
-      h+=' <span style="font-size:11px;color:var(--text-muted)">'+escHTML(r.arrangement||"chords")+' / '+escHTML(r.difficulty||"normal")+'</span></div>';
+      h+='<div><span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(songLabel)+'</span>';
+      h+=' <span style="font-size:11px;color:var(--text-muted)">'+escHTML(arrangementLabel)+' / '+escHTML(difficultyLabel)+'</span></div>';
       h+='<div style="text-align:right"><span style="font-size:12px;font-weight:700;color:'+mColor+'">'+r.bestAccuracy+'%</span>';
       h+=' <span style="font-size:11px;color:var(--text-muted)">'+r.bestStars+'&#11088;</span></div>';
       h+='</div>';
@@ -49,8 +64,9 @@ function performanceStatsPage(){
     h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Top Scores</h3>';
     for(var t=0;t<top.length;t++){
       var ts=top[t];
+      var topSongLabel = prettyPerformanceStatsToken(ts.songId) || "song";
       h+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">';
-      h+='<span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(ts.songId)+'</span>';
+      h+='<span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(topSongLabel)+'</span>';
       h+='<span style="font-size:13px;font-weight:800;color:#FFE66D">'+ts.bestScore+' pts</span>';
       h+='</div>';
     }
@@ -63,8 +79,9 @@ function performanceStatsPage(){
     h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Needs Work</h3>';
     for(var w=0;w<weak.length;w++){
       var ws=weak[w];
+      var weakSongLabel = prettyPerformanceStatsToken(ws.songId) || "song";
       h+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">';
-      h+='<span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(ws.songId)+'</span>';
+      h+='<span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(weakSongLabel)+'</span>';
       h+='<span style="font-size:13px;font-weight:700;color:#FF6B6B">'+ws.bestAccuracy+'%</span>';
       h+='</div>';
     }
@@ -76,7 +93,9 @@ function performanceStatsPage(){
     h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Daily Challenges ('+S.performanceDailyHistory.length+' completed)</h3>';
     var dh=S.performanceDailyHistory.slice(-5).reverse();
     for(var di=0;di<dh.length;di++){
-      h+='<div style="font-size:12px;color:var(--text-muted);padding:3px 0">'+escHTML(dh[di].date)+' &mdash; '+escHTML(dh[di].type)+' +'+dh[di].xp+'XP</div>';
+      var dateLabel = prettyPerformanceStatsToken(dh[di].date) || "unknown date";
+      var typeLabel = prettyPerformanceStatsToken(dh[di].type) || "challenge";
+      h+='<div style="font-size:12px;color:var(--text-muted);padding:3px 0">'+escHTML(dateLabel)+' &mdash; '+escHTML(typeLabel)+' +'+dh[di].xp+'XP</div>';
     }
     h+='</div>';
   }
@@ -90,9 +109,9 @@ function getPerformanceStatsView(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var focus = prettyPerformanceStatsToken(runtimeState && runtimeState.performanceStatsFocus);
+  var allowedFocuses = { overview: true, recent: true, top: true, weak: true, daily: true };
   return {
-    focus: runtimeState && runtimeState.performanceStatsFocus
-      ? runtimeState.performanceStatsFocus
-      : "overview"
+    focus: allowedFocuses[focus] ? focus : "overview"
   };
 }

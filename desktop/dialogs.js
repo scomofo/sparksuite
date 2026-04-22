@@ -1,5 +1,6 @@
 const { ipcMain, dialog } = require('electron');
 const fs = require('fs');
+const path = require('path');
 
 function registerDialogs() {
   ipcMain.handle('save-json', async (_, payload) => {
@@ -11,18 +12,27 @@ function registerDialogs() {
     return { ok: true, path: result.filePath };
   });
 
-  ipcMain.handle('open-json', async () => {
+  ipcMain.handle('open-json', async (_, options) => {
+    options = options || {};
     const result = await dialog.showOpenDialog({
       properties: ['openFile'],
-      filters: [{ name: 'JSON', extensions: ['json', 'mid', 'midi'] }]
+      filters: Array.isArray(options.filters) && options.filters.length
+        ? options.filters
+        : [{ name: 'JSON', extensions: ['json', 'mid', 'midi'] }]
     });
     if (result.canceled || !result.filePaths.length) return { ok: false };
     const filePath = result.filePaths[0];
     const buffer = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const isBinary = ext === '.mid' || ext === '.midi';
     return {
       ok: true,
       path: filePath,
-      text: buffer.toString('utf-8')
+      name: path.basename(filePath),
+      extension: ext ? ext.slice(1) : '',
+      isBinary: isBinary,
+      text: isBinary ? null : buffer.toString('utf-8'),
+      base64: isBinary ? buffer.toString('base64') : null
     };
   });
 }

@@ -1,17 +1,37 @@
 (function(){
 
+  function currentInstrumentType(){
+    var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive
+      ? SparkInstruments.getActive()
+      : null;
+    return (active && (active.instrument || active.instrumentType)) || null;
+  }
+
   function ensurePracticePlan(opts){
     opts = opts || {};
+    var today = new Date().toISOString().slice(0,10);
+    var currentInstrument = currentInstrumentType();
+    // The cached plan is keyed by both date AND instrument — switching
+    // instruments forces a rebuild so a bass user doesn't see yesterday's
+    // ukulele items. If either drifts, fall through to buildPracticePlan().
+    var cacheValid = S.practicePlan
+      && S.practicePlanDate === today
+      && (!currentInstrument || S.practicePlanInstrument === currentInstrument);
+
     if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+      var forceRebuild = !!opts.forceRebuild || !cacheValid;
       var plan = window.sparkCore.startSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-        forceRebuild: !!opts.forceRebuild
+        forceRebuild: forceRebuild
       });
+      if(plan){
+        S.practicePlanInstrument = currentInstrument;
+        if(typeof saveState === "function") saveState();
+      }
       return plan ? plan.toLegacyPracticePlan() : null;
     }
 
-    var today = new Date().toISOString().slice(0,10);
-    if(S.practicePlan && S.practicePlanDate===today) return S.practicePlan;
+    if(cacheValid) return S.practicePlan;
     return buildPracticePlan();
   }
 
@@ -62,6 +82,7 @@
 
     S.practicePlan = plan;
     S.practicePlanDate = today;
+    S.practicePlanInstrument = currentInstrumentType();
     S.practicePlanComplete = false;
     S.practicePlanFocus = focus;
     saveState();
@@ -80,6 +101,18 @@
 
   function completePracticePlan(){
     if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
+      var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+      if (activeInstrument && !activeInstrument.instrument && typeof SparkInstruments.getAll === "function") {
+        var activeId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+        var allInstruments = SparkInstruments.getAll() || [];
+        for (var i = 0; i < allInstruments.length; i++) {
+          var entry = allInstruments[i] || {};
+          if (entry.id === activeId || entry.appId === activeId) {
+            activeInstrument = entry;
+            break;
+          }
+        }
+      }
       window.sparkCore.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         markPlanComplete: true
@@ -88,8 +121,8 @@
       if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
         var practiceResult = SparkContracts.createSessionResult({
           mode: "practice",
-          instrumentId: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().id : null,
-          instrumentType: typeof SparkInstruments !== "undefined" && SparkInstruments.getActive() ? SparkInstruments.getActive().instrument : null,
+          instrumentId: activeInstrument ? (activeInstrument.id || activeInstrument.appId || null) : null,
+          instrumentType: activeInstrument ? activeInstrument.instrument : null,
           completed: true
         });
         SparkProgressOrchestrator.applySessionOutcome(practiceResult);

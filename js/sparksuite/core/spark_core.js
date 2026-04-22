@@ -13,6 +13,11 @@
     this.lastSessionOutcome = null;
     this.performanceEditorDocument = null;
     this.performanceEditorLibrary = [];
+    this.spotifyClient = null;
+    this.trackAnalyzer = null;
+    this.chartService = null;
+    this.playbackEngine = null;
+    this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
   }
 
@@ -78,6 +83,10 @@
       legacyRunnerScore: 0,
       legacyRunnerCombo: 0,
       legacyRunnerMaxCombo: 0,
+      spotifyConnected: false,
+      spotifyTrackId: null,
+      spotifyPlaying: false,
+      spotifyDifficulty: "easy",
       legacyRunnerLives: 0,
       legacyRunnerDistance: 0,
       legacyRunnerObstacles: [],
@@ -223,21 +232,43 @@
     return this.runtimeState;
   };
 
+
+  function _normalizeSegType(type) {
+    if (!type) return "practice";
+    if (type === "rhythm_highway" || type === "rhythm" || type === "finger" || type === "warmup" || type === "transition" || type === "guided_session") return "practice";
+    if (type === "performance_song" || type === "performance_phrase") return "song";
+    if (type === "challenge") return "challenge";
+    return "practice";
+  }
   SparkCore.prototype.deriveRuntimeScreen = function(flow) {
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return "guided_session";
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return "performance_song";
     if (flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return "daily_practice";
+    if (flow === "legacy_practice_session") return "session";
+    if (flow === "legacy_practice_drill") return "drill";
     return flow || null;
   };
 
   SparkCore.prototype.startSession = function(input) {
     input = input || {};
+    if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
     var flow = input.flow || this.aiEngine.suggestNextFlow();
     var today = new Date().toISOString().slice(0, 10);
-    if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today) {
+    // The cached plan is also keyed by the active instrument — switching
+    // instruments invalidates yesterday's cache even on the same day, so a
+    // bass user doesn't see ukulele segments. When currentInstrumentType is
+    // null (e.g. tests without an InstrumentManager) the check is a no-op.
+    var currentInstrumentType = this.instrumentManager && typeof this.instrumentManager.getActiveContext === "function"
+      ? (this.instrumentManager.getActiveContext() || {}).instrumentType || null
+      : null;
+    var cacheInstrumentMatches = !currentInstrumentType
+      || !this.currentPlan
+      || !this.currentPlan.instrumentType
+      || this.currentPlan.instrumentType === currentInstrumentType;
+    if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today && cacheInstrumentMatches) {
       this.updateRuntimeState({
         activeFlow: this.currentPlan.flow,
-        activeInstrumentId: this.currentPlan.instrumentType || this.currentPlan.instrumentId || null,
+        activeInstrumentId: this.currentPlan.instrumentId || this.currentPlan.instrumentType || null,
         activeInstrumentType: this.runtimeState.activeInstrumentType,
         activePlanId: this.currentPlan.id,
         activeSegmentId: this.currentPlan.segments && this.currentPlan.segments.length ? this.currentPlan.segments[0].id : null,
@@ -296,11 +327,50 @@
       arrangementType: input.arrangementType,
       difficultyId: input.difficultyId
     });
+    // Validate session plan contract
+    if (plan && !plan.exercises) {
+      // Legacy V1 plan — normalize it
+      plan.exercises = (plan.segments || []).map(function(seg, i) {
+        var exerciseId = seg.id || ("ex_" + i);
+        return {
+          id: exerciseId,
+          type: _normalizeSegType(seg.type),
+          difficulty: seg.difficulty || "normal",
+          data: {
+            core: {
+              skill: (seg.meta && seg.meta.skill) || null,
+              chords: (seg.meta && seg.meta.chords) || null,
+              pattern: (seg.meta && seg.meta.pattern) || null,
+              instrument: (seg.meta && seg.meta.instrument) || null,
+              durationSec: seg.durationSec || 60
+            },
+            gameplay: {
+              payload: (seg.meta && seg.meta.gameplayPayload) || null,
+              preset: (seg.meta && seg.meta.enginePreset) || null,
+              chartId: (seg.meta && seg.meta.chartId) || null
+            }
+          }
+        };
+      });
+      plan.segments = (plan.segments || []).map(function(seg, i) {
+        var exerciseId = seg.id || ("ex_" + i);
+        return {
+          id: seg.id || ("seg_" + i),
+          type: _normalizeSegType(seg.type),
+          label: seg.label || seg.type || "practice",
+          desc: seg.desc || seg.description || "",
+          durationSec: seg.durationSec || 60,
+          completed: !!seg.completed,
+          meta: seg.meta || {},
+          exerciseIds: [exerciseId]
+        };
+      });
+    }
     this.currentPlan = plan;
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
-      activeInstrumentId: plan.instrumentType || plan.instrumentId || null,
+      activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
       activeInstrumentType: instrumentContext.instrumentType || null,
       activePlanId: plan.id,
       activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
@@ -347,6 +417,44 @@
       transport: { status: "ready", positionMs: 0 }
     });
     SparkProgressBridge.syncPlanToState(plan);
+    return plan;
+  };
+
+  SparkCore.prototype.startLegacyPracticeSession = function(input) {
+    input = input || {};
+    var instrumentContext = this.instrumentManager.getActiveContext();
+    var plan = input.mode === "drill"
+      ? this.sessionEngine.buildLegacyPracticeDrill({
+        instrumentContext: instrumentContext,
+        level: input.level,
+        chordNames: input.chordNames
+      })
+      : this.sessionEngine.buildLegacyPracticeSession({
+        instrumentContext: instrumentContext,
+        level: input.level,
+        mode: input.mode,
+        chordName: input.chordName
+      });
+    var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
+
+    this.currentPlan = plan;
+    this.storage.setCurrentPlanId(plan.id);
+    this.updateRuntimeState({
+      activeFlow: plan.flow,
+      activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
+      activeInstrumentType: instrumentContext.instrumentType || null,
+      activePlanId: plan.id,
+      activeSegmentId: plan.segments && plan.segments.length ? plan.segments[0].id : null,
+      activeScreen: this.deriveRuntimeScreen(plan.flow),
+      activeTab: "practice",
+      legacyPracticeMode: legacy.mode || null,
+      legacyPracticeChordName: Object.prototype.hasOwnProperty.call(legacy, "chordName") ? legacy.chordName : null,
+      legacyPracticeTimerActive: false,
+      legacyPracticeDurationSec: legacy.durationSec || null,
+      legacyPracticeRemainingSec: legacy.durationSec || null,
+      legacyDrillChordNames: this.cloneValue(legacy.chordNames || null),
+      transport: { status: "ready", positionMs: 0 }
+    });
     return plan;
   };
 
@@ -1543,8 +1651,8 @@
     this.lastSessionOutcome = result;
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
-      activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
-        ? (this.currentPlan.instrumentType || this.currentPlan.instrumentId)
+      activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
+        ? (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
         : this.runtimeState.activeInstrumentId,
       activeInstrumentType: this.runtimeState.activeInstrumentType,
       activePlanId: this.currentPlan ? this.currentPlan.id : this.runtimeState.activePlanId,
@@ -2520,6 +2628,28 @@
     }
 
     return this.updateRuntimeState(next);
+  };
+
+  SparkCore.prototype.startPracticeFromLesson = function(lesson) {
+    if (!lesson) return false;
+    var payload = {
+      chartId: lesson.type + "_drill",
+      chart: {
+        chartId: lesson.type,
+        tempo: lesson.tempo,
+        lanes: [],
+        notes: []
+      },
+      mode: "practice"
+    };
+    if (typeof startPlayableRhythmHighwayPayload === "function") {
+      return startPlayableRhythmHighwayPayload(payload, {
+        source: "lesson_generator",
+        label: lesson.label,
+        instrument: this.runtimeState.activeInstrumentType || this.runtimeState.activeInstrumentId || "guitar"
+      });
+    }
+    return false;
   };
 
   function createDefaultSparkCore() {

@@ -3,13 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://lh3.googleusercontent.com; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com">
 <title>SparkSuite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800;900&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap">
 <link rel="stylesheet" href="styles.css">
+<!-- Warm Ember Showroom design system (extracted from styles.css) -->
+<link rel="stylesheet" href="spark-showroom.css">
 <link rel="stylesheet" href="spark-visual.css">
 <link rel="stylesheet" href="spark-visual-v2.css">
 </head>
@@ -64,6 +67,10 @@
 <script src="js/performance-core/index.js"></script>
 <!-- Launcher -->
 <script src="js/launcher.js"></script>
+<!-- Showroom screen modules (Settings, Profile, Song Details, Practice, Library, Session Summary, Performance, Lesson, Path, Tuner) -->
+<!-- Inline SVG instrument silhouettes used as fallbacks when iconImage isn't set -->
+<script src="js/showroom/spark-showroom-svgs.js"></script>
+<script src="js/showroom/spark-showroom.js"></script>
 <script src="js/ui/stringed_chord_svg.js"></script>
 <script src="js/ui/theme.js"></script>
 <script src="js/ui/confetti.js"></script>
@@ -92,6 +99,13 @@
 <script src="js/state.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/ui.js"></script>
+<!-- Shared utility helpers (used by pages/*.js below) -->
+<script src="js/utils/normalize.js"></script>
+<script src="js/utils/chord_progress.js"></script>
+<script src="js/utils/transition_stats.js"></script>
+<script src="js/utils/finger_stats.js"></script>
+<script src="js/utils/mastery.js"></script>
+<script src="js/utils/instrument_progress.js"></script>
 <script src="js/pages/shared.js"></script>
 <script src="js/pages/practice.js"></script>
 <script src="js/pages/session.js"></script>
@@ -317,6 +331,12 @@
 <script src="js/onboarding/engine.js"></script>
 <script src="js/onboarding/actions.js"></script>
 <script src="js/onboarding/ui.js"></script>
+<!-- Suite-level orchestration extracted from js/app.js -->
+<script src="js/timers.js"></script>
+<script src="js/orchestrator-requests.js"></script>
+<script src="js/render.js"></script>
+<script src="js/actions.js"></script>
+<script src="js/shortcuts.js"></script>
 <script src="js/app.js"></script>
 <!-- Piano page renderers — loaded with unique names to avoid clobbering shared pages -->
 <script src="js/instruments/piano/pages/shared.js"></script>

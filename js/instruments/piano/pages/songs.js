@@ -5,8 +5,64 @@ var _pianoSongsData = {};
 var _pianoSongs = [];
 var _pianoCurriculum = [];
 
+function pianoNormalizeSongTextInput(value) {
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return value;
+}
+
+function pianoSongPageTextToken(value) {
+  if (value == null) return "";
+  if (typeof value !== "string" && typeof value !== "number") return "";
+  var text = String(value).trim();
+  if (!text) return "";
+  var lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstSongPageTextToken() {
+  for (var i = 0; i < arguments.length; i++) {
+    var text = pianoSongPageTextToken(arguments[i]);
+    if (text) return text;
+  }
+  return "";
+}
+
+function pianoNormalizeSongPageNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
+function pianoFormatSongPageBpm(value, fallback) {
+  var bpm = pianoNormalizeSongPageNumber(value, null);
+  if (bpm == null) return fallback;
+  return String(Math.round(bpm));
+}
+
+function pianoFormatSongTempo(value, fallback) {
+  var bpm = pianoNormalizeSongPageNumber(value, null);
+  if (bpm == null) return fallback;
+  bpm = Math.max(40, Math.min(200, Math.round(bpm)));
+  return bpm;
+}
+
+function pianoSongListTitle(song) {
+  return pianoFirstSongPageTextToken(song && song.title, song && song.id, "Song");
+}
+
+function pianoSongListArtist(song) {
+  return pianoFirstSongPageTextToken(song && song.artist, "Unknown Artist");
+}
+
 function pianoSongsTab() {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
+  var D = inst && inst.getData ? inst.getData() : {};
   _pianoSongsData = D;
   _pianoSongs = D.SONGS || [];
   _pianoCurriculum = D.CURRICULUM || [];
@@ -45,9 +101,12 @@ function songLibrary() {
 
   if (S.songIdx !== null && SONGS[S.songIdx]) {
     var song = SONGS[S.songIdx];
+    var songTitle = pianoFirstSongPageTextToken(song.title, song.id, "Song");
+    var songArtist = pianoFirstSongPageTextToken(song.artist, "Unknown Artist");
+    var songTempo = pianoFormatSongTempo(S.bpm, 90);
     html += '<div class="song-detail">';
-    html += '<h3>' + escHTML(song.title) + '</h3>';
-    html += '<div class="text-muted">' + escHTML(song.artist) + ' \u2022 Level ' + song.level + '</div>';
+    html += '<h3>' + escHTML(songTitle) + '</h3>';
+    html += '<div class="text-muted">' + escHTML(songArtist) + ' \u2022 Level ' + song.level + ' \u2022 ' + pianoFormatSongPageBpm(song.bpm, "--") + ' BPM</div>';
     html += '<div class="song-chords">';
     song.chords.forEach(function(ch) {
       var chord = findChord(ch);
@@ -70,13 +129,14 @@ function songLibrary() {
     html += '<div class="song-controls">';
     html += '<button class="btn btn-accent" onclick="act(\'play_song\')">' + (S.songPlaying ? "\u23F8 Pause" : "\u25B6 Play Along") + '</button>';
     html += '<button class="btn" onclick="act(\'open_perform_song\',' + S.songIdx + ')" style="background:var(--accent);color:#fff">Performance</button>';
-    html += '<label style="font-size:0.85rem">Tempo: ' + S.bpm + ' BPM</label>';
-    html += '<input type="range" min="40" max="200" step="5" value="' + S.bpm + '" onchange="act(\'set_bpm\', this.value)" style="width:80px"/>';
+    html += '<label style="font-size:0.85rem">Tempo: ' + songTempo + ' BPM</label>';
+    html += '<input type="range" min="40" max="200" step="5" value="' + songTempo + '" onchange="act(\'set_bpm\', this.value)" style="width:80px"/>';
     html += '<button class="btn btn-secondary" onclick="act(\'song_back\')">\u2190 Back</button>';
     html += '</div></div>';
   } else {
     // Search filter
-    html += '<input class="intention-input" type="text" placeholder="Search by title, artist, or chord..." value="' + escHTML(S.songFilter) + '" oninput="act(\'song_filter\',this.value)" style="width:100%;margin-bottom:10px"/>';
+    var safeSongFilter = pianoNormalizeSongTextInput(S.songFilter);
+    html += '<input class="intention-input" type="text" placeholder="Search by title, artist, or chord..." value="' + escHTML(safeSongFilter) + '" oninput="act(\'song_filter\',this.value)" style="width:100%;margin-bottom:10px"/>';
 
     // Sort controls
     var sorts = [["level","Level"],["title","Title"],["artist","Artist"],["bpm","BPM"],["chords","Chords"]];
@@ -93,12 +153,12 @@ function songLibrary() {
     for (var i = 0; i < SONGS.length; i++) {
       filtered.push({ song: SONGS[i], origIdx: i });
     }
-    if (S.songFilter) {
-      var q = S.songFilter.toLowerCase();
+    if (safeSongFilter) {
+      var q = safeSongFilter.toLowerCase();
       filtered = filtered.filter(function(item) {
         var s = item.song;
-        return s.title.toLowerCase().indexOf(q) !== -1 ||
-               s.artist.toLowerCase().indexOf(q) !== -1 ||
+        return pianoSongListTitle(s).toLowerCase().indexOf(q) !== -1 ||
+               pianoSongListArtist(s).toLowerCase().indexOf(q) !== -1 ||
                s.chords.join(" ").toLowerCase().indexOf(q) !== -1;
       });
     }
@@ -107,8 +167,8 @@ function songLibrary() {
     var sortKey = S.songSort || "level", asc = S.songSortAsc;
     filtered.sort(function(a, b) {
       var va, vb;
-      if (sortKey === "title") { va = a.song.title.toLowerCase(); vb = b.song.title.toLowerCase(); }
-      else if (sortKey === "artist") { va = a.song.artist.toLowerCase(); vb = b.song.artist.toLowerCase(); }
+      if (sortKey === "title") { va = pianoSongListTitle(a.song).toLowerCase(); vb = pianoSongListTitle(b.song).toLowerCase(); }
+      else if (sortKey === "artist") { va = pianoSongListArtist(a.song).toLowerCase(); vb = pianoSongListArtist(b.song).toLowerCase(); }
       else if (sortKey === "bpm") { va = a.song.bpm; vb = b.song.bpm; }
       else if (sortKey === "chords") { va = a.song.chords.length; vb = b.song.chords.length; }
       else { va = a.song.level; vb = b.song.level; }
@@ -118,9 +178,9 @@ function songLibrary() {
     });
 
     // Count
-    html += '<div class="text-muted" style="font-size:0.75rem;margin-bottom:8px">' + filtered.length + ' song' + (filtered.length === 1 ? '' : 's') + (S.songFilter ? ' matching \u201C' + escHTML(S.songFilter) + '\u201D' : '') + '</div>';
+    html += '<div class="text-muted" style="font-size:0.75rem;margin-bottom:8px">' + filtered.length + ' song' + (filtered.length === 1 ? '' : 's') + (safeSongFilter ? ' matching \u201C' + escHTML(safeSongFilter) + '\u201D' : '') + '</div>';
 
-    if (S.songSort === "level" && !S.songFilter) {
+    if (S.songSort === "level" && !safeSongFilter) {
       // Grouped by level (original view, respecting sort direction)
       var levels = asc ? [1,2,3,4,5,6,7,8] : [8,7,6,5,4,3,2,1];
       levels.forEach(function(l) {
@@ -132,9 +192,11 @@ function songLibrary() {
         lvlSongs.forEach(function(item) {
           var s = item.song, idx = item.origIdx;
           var done = S.songsDone && S.songsDone.indexOf(s.title) >= 0;
+          var songTitle = pianoSongListTitle(s);
+          var songArtist = pianoSongListArtist(s);
           html += pianoClickableDiv(
             locked ? '' : "act('select_song'," + idx + ")",
-            '<div class="song-row-inner"><span>' + (done ? "\u2705 " : "") + escHTML(s.title) + '</span><span class="text-muted">' + escHTML(s.artist) + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
+            '<div class="song-row-inner"><span>' + (done ? "\u2705 " : "") + escHTML(songTitle) + '</span><span class="text-muted">' + escHTML(songArtist) + ' \u2022 ' + pianoFormatSongPageBpm(s.bpm, "--") + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
             "song-row" + (locked ? " locked" : "")
           );
         });
@@ -147,9 +209,11 @@ function songLibrary() {
         var s = item.song, idx = item.origIdx;
         var locked = s.level > S.level + 1;
         var done = S.songsDone && S.songsDone.indexOf(s.title) >= 0;
+        var songTitle = pianoSongListTitle(s);
+        var songArtist = pianoSongListArtist(s);
         html += pianoClickableDiv(
           locked ? '' : "act('select_song'," + idx + ")",
-          '<div class="song-row-inner"><span style="' + (locked ? 'opacity:0.4' : '') + '">' + (done ? "\u2705 " : "") + escHTML(s.title) + '</span><span class="text-muted">' + escHTML(s.artist) + ' \u2022 Lvl ' + s.level + ' \u2022 ' + s.bpm + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
+          '<div class="song-row-inner"><span style="' + (locked ? 'opacity:0.4' : '') + '">' + (done ? "\u2705 " : "") + escHTML(songTitle) + '</span><span class="text-muted">' + escHTML(songArtist) + ' \u2022 Lvl ' + s.level + ' \u2022 ' + pianoFormatSongPageBpm(s.bpm, "--") + ' BPM \u2022 ' + s.chords.length + ' chords</span></div>',
           "song-row" + (locked ? " locked" : "")
         );
       });
@@ -164,6 +228,7 @@ function songLibrary() {
 // ── Playing Styles ──
 function stylesTab() {
   var html = '<div class="card"><h2>Playing Styles</h2>';
+  var styleTempo = pianoFormatSongTempo(S.bpm, 90);
   html += '<p>Learn different ways to play piano chords.</p>';
 
   PLAY_STYLES.forEach(function(ps, i) {
@@ -176,8 +241,8 @@ function stylesTab() {
       html += '<p class="text-muted" style="padding:0 14px">' + ps.desc + '</p>';
       html += styleHTML(ps);
       html += '<div class="style-controls">';
-      html += '<label>BPM: ' + S.bpm + '</label>';
-      html += '<input type="range" min="40" max="200" value="' + S.bpm + '" onchange="act(\'set_bpm\', this.value)"/>';
+      html += '<label>BPM: ' + styleTempo + '</label>';
+      html += '<input type="range" min="40" max="200" value="' + styleTempo + '" onchange="act(\'set_bpm\', this.value)"/>';
       html += '<button class="btn btn-accent" onclick="act(\'play_style\')">\u{1F50A} Demo</button>';
       html += '<button class="btn" onclick="act(\'start_metronome\')">Metro</button>';
       html += '<button class="btn btn-secondary" onclick="act(\'stop_metronome\')">Stop</button>';
@@ -225,6 +290,8 @@ function _isStemSolo(name) {
 }
 
 function stemsSection() {
+  var stemFileName = pianoFirstSongPageTextToken(S.stemFile && S.stemFile.fileName);
+  var stemError = pianoFirstSongPageTextToken(S.stemError);
   var html = '<div class="card" style="text-align:center">';
   html += '<div style="font-size:32px;margin-bottom:8px">\u{1F3A7}</div>';
   html += '<h3>Stem Separator</h3>';
@@ -241,15 +308,15 @@ function stemsSection() {
   }
   html += '</div>';
 
-  if (S.stemError) {
-    html += '<div class="card" style="border:1px solid var(--danger)"><p style="color:var(--danger)">' + escHTML(S.stemError) + '</p></div>';
+  if (stemError) {
+    html += '<div class="card" style="border:1px solid var(--danger)"><p style="color:var(--danger)">' + escHTML(stemError) + '</p></div>';
   }
 
   if (S.stemStatus === "separating") {
     html += '<div class="card">';
     html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
     html += '<div class="spinner"></div>';
-    html += '<div><strong>Separating stems...</strong><br><span class="text-muted">' + (S.stemFile ? escHTML(S.stemFile.fileName) : "") + '</span></div></div>';
+    html += '<div><strong>Separating stems...</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div></div>';
     html += '<div class="prog-bar" style="margin-bottom:8px"><div class="prog-fill" style="width:' + S.stemProgress + '%;background:var(--accent)"></div></div>';
     html += '<div style="display:flex;justify-content:space-between;align-items:center">';
     html += '<span class="text-muted" style="font-size:0.8rem">This may take 5-10 minutes</span>';
@@ -261,7 +328,7 @@ function stemsSection() {
     html += '<div class="card" style="border:1px solid var(--accent)">';
     html += '<div style="display:flex;align-items:center;gap:12px">';
     html += '<span style="font-size:28px">\u2705</span>';
-    html += '<div style="flex:1"><strong>Stems Ready!</strong><br><span class="text-muted">' + (S.stemFile ? escHTML(S.stemFile.fileName) : "") + '</span></div>';
+    html += '<div style="flex:1"><strong>Stems Ready!</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div>';
     html += '<button class="btn btn-accent" onclick="act(\'stemOpen\')">\u{1F3A7} Open Player</button>';
     html += '</div></div>';
   }
@@ -276,10 +343,11 @@ function stemsSection() {
 }
 
 function pianoStemsPlayerPage() {
+  var stemFileName = pianoFirstSongPageTextToken(S.stemFile && S.stemFile.fileName);
   var html = '<div style="padding:8px 0">';
   html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
   html += '<button class="btn btn-sm" onclick="act(\'stemBack\')">\u2190</button>';
-  html += '<div style="flex:1"><strong>\u{1F3A7} Stem Player</strong><br><span class="text-muted">' + (S.stemFile ? escHTML(S.stemFile.fileName) : "") + '</span></div></div>';
+  html += '<div style="flex:1"><strong>\u{1F3A7} Stem Player</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div></div>';
 
   html += '<div class="card">';
   html += '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px">';
@@ -309,9 +377,10 @@ function pianoStemsPlayerPage() {
   html += '</div>';
 
   html += '<div class="card"><div style="display:flex;align-items:center;gap:12px">';
+  var stemVolume = Math.max(0, Math.min(1, pianoNormalizeSongPageNumber(S.stemVolume, 1)));
   html += '<span>\u{1F50A}</span>';
-  html += '<input type="range" min="0" max="1" step="0.05" value="' + S.stemVolume + '" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:var(--accent)"/>';
-  html += '<span class="text-muted" style="font-weight:700;min-width:36px">' + Math.round(S.stemVolume * 100) + '%</span>';
+  html += '<input type="range" min="0" max="1" step="0.05" value="' + stemVolume + '" oninput="act(\'stemVolume\',this.value)" style="flex:1;accent-color:var(--accent)"/>';
+  html += '<span class="text-muted" style="font-weight:700;min-width:36px">' + Math.round(stemVolume * 100) + '%</span>';
   html += '</div></div>';
 
   html += '</div>';

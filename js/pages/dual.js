@@ -1,5 +1,27 @@
 // ===== ChordSpark: Dual Instrument View (Piano + Guitar) =====
 
+function getDualPageInstrument(){
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 // Piano keyboard SVG renderer
 // Draws a 2-octave keyboard (C3-B4) with highlighted notes and finger numbers
 function dualPianoSVG(pianoChord,sz){
@@ -75,7 +97,8 @@ function dualPianoSVG(pianoChord,sz){
 
 // Guitar SVG with Sticky Anchor overlay
 function dualGuitarSVG(chord,sz,anchorOn){
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getDualPageInstrument();
+  var UI = inst && inst.ui ? inst.ui : {};
   // Render the base guitar SVG
   var base=UI.chord(chord,sz,chord.name,false);
   if(!anchorOn)return base;
@@ -99,8 +122,9 @@ function dualGuitarSVG(chord,sz,anchorOn){
 
 // Main dual tab page
 function dualTab(){
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
-  var UI = SparkInstruments.getActive() ? SparkInstruments.getActive().ui : {};
+  var inst = getDualPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var UI = inst && inst.ui ? inst.ui : {};
   var chordName=S.dualChord||"G Major";
   // Find the guitar chord object
   var guitarChord=null;

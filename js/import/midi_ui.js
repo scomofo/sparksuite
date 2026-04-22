@@ -1,5 +1,24 @@
 (function(){
 
+  function inferMidiImportAppType() {
+    if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
+      var active = SparkInstruments.getActive();
+      var candidate = active ? (active.instrument || active.instrumentType || active.id || active.appId || null) : null;
+      if (candidate && typeof SparkInstruments.getAll === "function") {
+        var entries = SparkInstruments.getAll() || [];
+        for (var i = 0; i < entries.length; i++) {
+          var entry = entries[i] || {};
+          if (entry.id === candidate || entry.appId === candidate) {
+            candidate = entry.instrument || entry.instrumentType || candidate;
+            break;
+          }
+        }
+      }
+      if (candidate) return candidate;
+    }
+    return "guitar";
+  }
+
   function midiImportPage(){
     var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
       ? window.sparkCore.getRuntimeState()
@@ -16,6 +35,9 @@
     var h = '<div class="card">';
     h += '<div><b>MIDI Import</b></div>';
     h += '<input type="file" accept=".mid,.midi" onchange="act(\'importMidiFile\', this.files[0])" />';
+    if(typeof isDesktopBuild === "function" && isDesktopBuild() && typeof openImportFileDesktopAware === "function"){
+      h += ' <button onclick="importMidiDesktopAware()">Import from Desktop</button>';
+    }
     h += '</div>';
 
     if((runtimeTracks && runtimeTracks.length) || S.importedMidi){
@@ -59,10 +81,10 @@
   async function handleMidiImport(file){
     if(!file) return;
     var raw = await parseMidiFile(file);
-    var normalized = normalizeParsedMidi(raw, file.name);
+    var normalized = normalizeParsedMidi(raw, getMidiImportSourceName(file));
     S.importedMidi = normalized;
     S.importedMidiTracks = normalized.tracks || [];
-    var appType = "guitar"; // ChordSpark default
+    var appType = inferMidiImportAppType();
     S.importedMidiAssignments = autoAssignMidiTracks(normalized, appType);
     if(typeof syncMidiImportStateRequest === "function"){
       syncMidiImportStateRequest({
@@ -75,7 +97,27 @@
     render();
   }
 
+  async function importMidiDesktopAware(){
+    if(typeof openImportFileDesktopAware !== "function") return false;
+    var result = await openImportFileDesktopAware({
+      filters: [{ name: "MIDI", extensions: ["mid", "midi"] }]
+    });
+    if(!result || !result.ok) return false;
+    await handleMidiImport(result);
+    return true;
+  }
+
+  function getMidiImportSourceName(file){
+    if(file && file.name) return file.name;
+    if(file && file.path){
+      var parts = String(file.path).split(/[\\/]/);
+      return parts[parts.length - 1] || "import.mid";
+    }
+    return "import.mid";
+  }
+
   window.midiImportPage = midiImportPage;
   window.handleMidiImport = handleMidiImport;
+  window.importMidiDesktopAware = importMidiDesktopAware;
 
 })();

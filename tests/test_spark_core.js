@@ -277,6 +277,28 @@ test('normalizeChordSparkContent converts GUITAR_SESSIONS shape', function() {
   assert.ok(content.units[0].lessons.length > 0);
 });
 
+test('normalizeChordSparkContent preserves non-guitar ownership when appId is provided', function() {
+  var raw = [{ num: 1, title: 'Island Session', level: 1, bpm: 60,
+    spark: { chord: 'C Major', desc: 'test' },
+    newMove: { chord: 'F Major', desc: 'test' }
+  }];
+  var content = SparkContentNormalizer.fromChordSparkSessions(raw, 'ukespark');
+  assert.strictEqual(content.appId, 'ukespark');
+  assert.strictEqual(content.instrument, 'ukulele');
+  assert.ok(content.units[0].lessons[0].instrumentData.ukulele);
+});
+
+test('normalizePianoSparkContent can re-stamp ownership for app-id-compatible callers', function() {
+  var raw = [{ num: 2, title: 'Bass Session', level: 2, bpm: 70,
+    spark: { chord: 'E', desc: 'test' },
+    newMove: { chord: 'A', desc: 'test' }
+  }];
+  var content = SparkContentNormalizer.fromPianoSparkSessions(raw, 'bassspark');
+  assert.strictEqual(content.appId, 'bassspark');
+  assert.strictEqual(content.instrument, 'bass');
+  assert.ok(content.units[0].lessons[0].instrumentData.bass);
+});
+
 test('getLessonById finds lesson', function() {
   var content = {
     units: [{ id: 'u1', lessons: [{ id: 'L1', title: 'Test' }] }]

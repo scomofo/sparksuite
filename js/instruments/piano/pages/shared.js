@@ -1,5 +1,27 @@
 /* PianoSpark - Shared page components */
 
+function getPianoPageInstrument() {
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 // ── Performance helpers ──
 function getPerformanceBest(songId, arrangementType, difficulty) {
   var key = (songId || "") + "_" + (arrangementType || "chords") + "_" + (difficulty || "normal");
@@ -16,16 +38,23 @@ function getPerformanceMasteryLabel(best) {
   return "Beginner";
 }
 
+function pianoHeaderFiniteNumber(value) {
+  return typeof value === "number" && isFinite(value) ? value : null;
+}
+
 // ── Header ──
 function pianoHeaderHTML() {
+  var xp = pianoHeaderFiniteNumber(S.xp);
+  var currentSession = pianoHeaderFiniteNumber(S.currentSession);
+  var streak = pianoHeaderFiniteNumber(S.streak);
   var html = '<header class="app-header" role="banner">';
   html += '<h1 class="logo">PianoSpark</h1>';
   html += '<div class="header-actions">';
-  html += '<span class="xp-badge" aria-label="XP" aria-live="polite">' + S.xp + ' XP</span>';
+  html += '<span class="xp-badge" aria-label="XP" aria-live="polite">' + (xp != null ? xp : 0) + ' XP</span>';
   if (S.onboardingComplete) {
-    html += '<span class="session-badge">S' + S.currentSession + '/50</span>';
+    html += '<span class="session-badge">S' + (currentSession != null ? currentSession : 0) + '/50</span>';
   }
-  html += '<span class="streak-badge" aria-label="Streak" aria-live="polite">' + (S.streak > 0 ? "\u{1F525}" + S.streak : "") + '</span>';
+  html += '<span class="streak-badge" aria-label="Streak" aria-live="polite">' + (streak > 0 ? "\u{1F525}" + streak : "") + '</span>';
   html += '<button class="icon-btn" onclick="act(\'toggle_dark\')" title="Toggle dark mode" aria-label="Toggle dark mode">' + (S.darkMode ? "\u{2600}" : "\u{1F319}") + '</button>';
   html += '</div></header>';
   return html;
@@ -75,14 +104,16 @@ function backBtnHTML(action) {
 
 // ── Level color helper ──
 function levelColor(lvl) {
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getPianoPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   return (D.LC && D.LC[lvl]) ? D.LC[lvl] : "#7c3aed";
 }
 
 // ── Chord type color tag ──
 function chordTypeTag(chord) {
   if (!chord) return "";
-  var D = SparkInstruments.getActive() ? SparkInstruments.getActive().getData() : {};
+  var inst = getPianoPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
   var color = chord.color || (D.CHORD_COLORS && D.CHORD_COLORS[chord.type]) || "#888";
   return '<span class="song-chord-tag" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44">' + escHTML(chord.short) + '</span>';
 }

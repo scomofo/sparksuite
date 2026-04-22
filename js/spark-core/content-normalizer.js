@@ -1,8 +1,42 @@
 // js/spark-core/content-normalizer.js
 (function() {
 
+  function resolveNormalizedContentInstrument(appId, fallbackInstrument) {
+    var resolvedAppId = appId || null;
+    var instrument = fallbackInstrument || "guitar";
+    if (resolvedAppId === "pianospark") instrument = "piano";
+    else if (resolvedAppId === "ukespark") instrument = "ukulele";
+    else if (resolvedAppId === "bassspark") instrument = "bass";
+    else if (resolvedAppId === "drumspark") instrument = "drums";
+    else if (resolvedAppId === "chordspark") instrument = "guitar";
+    return {
+      appId: resolvedAppId || (instrument === "piano" ? "pianospark" : "chordspark"),
+      instrument: instrument
+    };
+  }
+
+  function buildLegacySessionInstrumentData(instrument, session) {
+    var payload = {
+      chords: session.newMove ? [session.newMove.chord] : [],
+      diagrams: [],
+      audioKeys: []
+    };
+    var data = {};
+    if (instrument === "piano") {
+      data.piano = {
+        voicings: session.newMove ? [session.newMove.voicing || session.newMove.chord] : [],
+        keys: [],
+        audioKeys: []
+      };
+      return data;
+    }
+    data[instrument] = payload;
+    return data;
+  }
+
   var SparkContentNormalizer = {
     fromChordSparkSessions: function(sessions, appId) {
+      var normalized = resolveNormalizedContentInstrument(appId, "guitar");
       var units = [];
       for (var i = 0; i < sessions.length; i++) {
         var s = sessions[i];
@@ -17,27 +51,22 @@
             objectives: [s.spark ? s.spark.desc : "", s.newMove ? s.newMove.desc : ""],
             skills: ["recognition", "switching"],
             difficulty: s.level || 1,
-            instrumentData: {
-              guitar: {
-                chords: s.newMove ? [s.newMove.chord] : [],
-                diagrams: [],
-                audioKeys: []
-              }
-            },
+            instrumentData: buildLegacySessionInstrumentData(normalized.instrument, s),
             rewards: { xp: 30, unlockIds: [] }
           }]
         });
       }
       return {
         schemaVersion: 1,
-        appId: appId || "chordspark",
-        instrument: "guitar",
-        title: "ChordSpark Guided Sessions",
+        appId: normalized.appId,
+        instrument: normalized.instrument,
+        title: normalized.instrument === "piano" ? "PianoSpark Guided Sessions" : "ChordSpark Guided Sessions",
         units: units
       };
     },
 
     fromPianoSparkSessions: function(sessions, appId) {
+      var normalized = resolveNormalizedContentInstrument(appId, "piano");
       var units = [];
       for (var i = 0; i < sessions.length; i++) {
         var s = sessions[i];
@@ -52,22 +81,16 @@
             objectives: [s.spark ? s.spark.desc : "", s.newMove ? s.newMove.desc : ""],
             skills: ["recognition", "switching"],
             difficulty: s.level || 1,
-            instrumentData: {
-              piano: {
-                voicings: s.newMove ? [s.newMove.voicing || s.newMove.chord] : [],
-                keys: [],
-                audioKeys: []
-              }
-            },
+            instrumentData: buildLegacySessionInstrumentData(normalized.instrument, s),
             rewards: { xp: 30, unlockIds: [] }
           }]
         });
       }
       return {
         schemaVersion: 1,
-        appId: appId || "pianospark",
-        instrument: "piano",
-        title: "PianoSpark Guided Sessions",
+        appId: normalized.appId,
+        instrument: normalized.instrument,
+        title: normalized.instrument === "piano" ? "PianoSpark Guided Sessions" : "ChordSpark Guided Sessions",
         units: units
       };
     },

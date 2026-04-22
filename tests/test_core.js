@@ -54,7 +54,13 @@ global.snd = function() {};
 global.saveState = function() {};
 global.render = function() {};
 
+// Load chord-progress helper before ui.js (getChordTier now goes through it).
+var _chordProgressSource = loadJS('js/utils/chord_progress.js');
+// eslint-disable-next-line no-eval
+eval(_chordProgressSource);
+
 // Load ui.js (escHTML, checkBadges, shuffle, etc.)
+// eslint-disable-next-line no-eval
 eval(loadJS('js/ui.js'));
 
 // ===== Tests: escHTML =====

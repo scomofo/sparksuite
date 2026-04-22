@@ -1,8 +1,31 @@
 // js/instruments/guitar/app.js — guitar-specific act() handler
 (function() {
 
+function getGuitarAppInstrument() {
+  var inst;
+  var candidate;
+  var all;
+  var i;
+  var entry;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+    return null;
+  }
+  inst = SparkInstruments.getActive();
+  if (!inst) return null;
+  if (typeof inst.getData === "function" || inst.ui) return inst;
+  candidate = inst.id || inst.appId || inst.instrumentId || null;
+  if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate) return entry;
+  }
+  return inst;
+}
+
 function guitarAct(a, v) {
-  var D = SparkInstruments.getActive().getData();
+  var inst = getGuitarAppInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
 
   if (a === "quickStart") {
     var session;
@@ -158,8 +181,7 @@ function guitarAct(a, v) {
     S.drillLastSwitchTime = now;
     if (elapsed < 15) {
       var key = fromChord + "->" + toChord;
-      if (!S.transitionStats[key]) S.transitionStats[key] = { attempts: 0, avgTime: 0, best: 999 };
-      var ts = S.transitionStats[key];
+      var ts = SparkTransitionStats.ensure(key, { attempts: 0, avgTime: 0, best: 999 });
       ts.avgTime = (ts.avgTime * ts.attempts + elapsed) / (ts.attempts + 1);
       ts.attempts++;
       if (elapsed < ts.best) ts.best = elapsed;
@@ -236,6 +258,8 @@ function guitarAct(a, v) {
       var nextQuizScore = S.quizScore + (ok ? 1 : 0);
       var nextQuizTotal = S.quizTotal + 1;
       var nextQuizStreak = ok ? (S.quizStreak + 1) : 0;
+      var activityInstrument = getGuitarAppInstrument();
+      var activityAppId = activityInstrument ? (activityInstrument.id || activityInstrument.appId || activityInstrument.instrumentId || "chordspark") : "chordspark";
       if (window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
         window.sparkCore.syncLegacyQuizRuntimeState({
           question: S.quizQ,
@@ -247,7 +271,7 @@ function guitarAct(a, v) {
         });
       }
       S.quizAns = ch.name;
-      if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: "chordspark", skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
+      if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
       else { snd("wrong"); S.quizStreak = 0; }
       S.quizTotal++; render(); setTimeout(genQ, 1200);
     }
@@ -382,7 +406,7 @@ function guitarAct(a, v) {
         if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
         if (S.completedGuidedSessions.indexOf(plan.num) < 0) S.completedGuidedSessions.push(plan.num);
         if (plan.newMove && plan.newMove.chord) {
-          S.chordProgress[plan.newMove.chord] = Math.min((S.chordProgress[plan.newMove.chord] || 0) + 25, 100);
+          SparkChordProgress.add(plan.newMove.chord, 25);
         }
         S.guidedSession = Math.min(D.SESSIONS.length, plan.num + 1);
       }
@@ -454,8 +478,7 @@ function guitarAct(a, v) {
           });
         }
         snd("complete"); if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ xpDelta: 10, toastAmount: 10 }); else { S.xp += 10; S.xpToast = { amount: 10, time: Date.now() }; }
-        if (typeof S.fingerStats !== "object" || S.fingerStats === null) S.fingerStats = {};
-        S.fingerStats[v] = (S.fingerStats[v] || 0) + 1;
+        SparkFingerStats.increment(v, 1);
         S.fingerExCount = (S.fingerExCount || 0) + 1;
         saveState();
       }

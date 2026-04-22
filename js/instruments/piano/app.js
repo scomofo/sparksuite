@@ -134,10 +134,12 @@ function levelForSession(sessionNum) {
 }
 
 function addXP(n) {
-  if (typeof S !== "undefined") {
+  if (typeof SparkInstrumentProgress !== "undefined") {
+    SparkInstrumentProgress.addXp(n);
+  } else if (typeof S !== "undefined") {
     S.xp = (S.xp || 0) + n;
-    if (typeof saveState === "function") saveState();
   }
+  if (typeof saveState === "function") saveState();
 }
 
 function addHistory(type, detail) {
@@ -155,12 +157,8 @@ function addHistory(type, detail) {
 
 function recordTransition(fromChord, toChord, wasClean, timeMs) {
   if (typeof S === "undefined") return;
-  if (!S.transitionStats) S.transitionStats = {};
   var key = fromChord + "_" + toChord;
-  if (!S.transitionStats[key]) {
-    S.transitionStats[key] = { attempts: 0, clean: 0, avgMs: 0 };
-  }
-  var stat = S.transitionStats[key];
+  var stat = SparkTransitionStats.ensure(key, { attempts: 0, clean: 0, avgMs: 0 });
   stat.attempts++;
   if (wasClean) stat.clean++;
   stat.avgMs = Math.round((stat.avgMs * (stat.attempts - 1) + timeMs) / stat.attempts);
@@ -762,10 +760,7 @@ function syncPianoGuidedCompletionFromCore(result, plan) {
 
 // ── Finger exercise helpers ──
 function completeFingerExercise(exerciseId) {
-  if (!S.fingerStats[exerciseId]) {
-    S.fingerStats[exerciseId] = { completions: 0, lastDone: null, bestTrillSpeed: 0 };
-  }
-  var stats = S.fingerStats[exerciseId];
+  var stats = SparkFingerStats.ensure(exerciseId, { completions: 0, lastDone: null, bestTrillSpeed: 0 });
   stats.completions++;
   var today = new Date().toDateString();
   var wasNewDay = !stats.lastDone || new Date(stats.lastDone).toDateString() !== today;
@@ -775,10 +770,12 @@ function completeFingerExercise(exerciseId) {
   // Track days — skip exerciseId since its lastDone was just updated
   if (wasNewDay) {
     var anyDoneToday = false;
-    for (var id in S.fingerStats) {
+    var pianoFingerStats = SparkFingerStats.all();
+    for (var id in pianoFingerStats) {
       if (id.charAt(0) === '_') continue;
       if (id === exerciseId) continue;
-      if (S.fingerStats[id].lastDone && new Date(S.fingerStats[id].lastDone).toDateString() === today) {
+      if (pianoFingerStats[id] && pianoFingerStats[id].lastDone
+        && new Date(pianoFingerStats[id].lastDone).toDateString() === today) {
         anyDoneToday = true; break;
       }
     }
@@ -806,18 +803,18 @@ function finishChordChange() {
   S.chordChangeActive = false;
 
   // Record result
-  if (!S.fingerStats._chordChangeBest) S.fingerStats._chordChangeBest = 0;
-  if (S.chordChangeCount > S.fingerStats._chordChangeBest) {
-    S.fingerStats._chordChangeBest = S.chordChangeCount;
+  var bestSoFar = SparkFingerStats.get("_chordChangeBest") || 0;
+  if (S.chordChangeCount > bestSoFar) {
+    SparkFingerStats.set("_chordChangeBest", S.chordChangeCount);
     showToast("New personal best: " + S.chordChangeCount + " changes!");
   }
 
   // Record pair-specific best
   if (S.chordChangePair.length === 2) {
     var pairKey = "_cc_" + S.chordChangePair[0] + "_" + S.chordChangePair[1];
-    if (!S.fingerStats[pairKey]) S.fingerStats[pairKey] = { best: 0 };
-    if (S.chordChangeCount > S.fingerStats[pairKey].best) {
-      S.fingerStats[pairKey].best = S.chordChangeCount;
+    var pairRec = SparkFingerStats.ensure(pairKey, { best: 0 });
+    if (S.chordChangeCount > pairRec.best) {
+      pairRec.best = S.chordChangeCount;
     }
   }
 
@@ -845,25 +842,26 @@ function checkFingerBadges() {
   // Spider Fingers: all Tier 2 exercises completed at least once
   var tier2 = getExercisesByTier(2);
   var allTier2Done = tier2.length > 0 && tier2.every(function(ex) {
-    return S.fingerStats[ex.id] && S.fingerStats[ex.id].completions > 0;
+    var rec = SparkFingerStats.get(ex.id);
+    return rec && rec.completions > 0;
   });
   check("spider_fingers", allTier2Done);
 
   // 30 Club / 60 Club
-  var best = S.fingerStats._chordChangeBest || 0;
+  var best = SparkFingerStats.get("_chordChangeBest") || 0;
   check("thirty_club", best >= 30);
   check("sixty_club", best >= 60);
 
   // Pinky Power: trill exercise done 5+ times
-  var trillStats = S.fingerStats["P-ADV-3"];
+  var trillStats = SparkFingerStats.get("P-ADV-3");
   check("pinky_power", trillStats && trillStats.completions >= 5);
 
   // Cortot Master: Independence Gauntlet done 3+ times
-  var gauntletStats = S.fingerStats["P-ADV-4"];
+  var gauntletStats = SparkFingerStats.get("P-ADV-4");
   check("cortot_master", gauntletStats && gauntletStats.completions >= 3);
 
   // Thumb Ninja: thumb under exercise done 5+ times
-  var thumbStats = S.fingerStats["P-ADV-2"];
+  var thumbStats = SparkFingerStats.get("P-ADV-2");
   check("thumb_ninja", thumbStats && thumbStats.completions >= 5);
 
   if (newBadges.length) {

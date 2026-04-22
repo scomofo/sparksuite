@@ -288,7 +288,13 @@
       return window.SparkProgressBridge.applyLegacyReward(reward);
     }
     reward = reward || {};
-    if (reward.xpDelta) S.xp = (S.xp || 0) + reward.xpDelta;
+    if (reward.xpDelta) {
+      if (typeof SparkInstrumentProgress !== "undefined") {
+        SparkInstrumentProgress.addXp(reward.xpDelta);
+      } else {
+        S.xp = (S.xp || 0) + reward.xpDelta;
+      }
+    }
     if (reward.toastAmount) {
       S.xpToast = {
         amount: reward.toastAmount,

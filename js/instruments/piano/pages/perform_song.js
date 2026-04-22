@@ -1,16 +1,51 @@
+function pianoPerformanceTextToken(value){
+  var text;
+  var lower;
+  if (typeof value !== "string") return "";
+  text = value.replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+function pianoFirstPerformanceTextToken(){
+  var i;
+  var token;
+  for (i = 0; i < arguments.length; i++) {
+    token = pianoPerformanceTextToken(arguments[i]);
+    if (token) return token;
+  }
+  return "";
+}
+
+function pianoNormalizePerformanceNumber(value, fallback) {
+  var num = typeof value === "number" ? value : Number(value);
+  return isFinite(num) ? num : fallback;
+}
+
 function pianoPerformSongPage(){
   if(!S.performSongData) return '<div class="card">No song selected</div>';
 
   var sid = S.performSongId;
   var best = getPerformanceBest(sid, S.performArrangementType, S.performDifficulty);
+  var bestAccuracy = best ? pianoNormalizePerformanceNumber(best.bestAccuracy, 0) : 0;
   var mastery = getPerformanceMasteryLabel(best);
+  var songTitle = pianoFirstPerformanceTextToken(
+    S.performSongData.title,
+    S.performSongData.songTitle,
+    S.performSongData.id,
+    sid,
+    "Selected song"
+  );
+  var songArtist = pianoFirstPerformanceTextToken(S.performSongData.artist, "Unknown Artist");
 
   var h = '<div class="card mb16">';
-  h += '<h2>'+escHTML(S.performSongData.title)+'</h2>';
-  h += '<div class="muted">'+escHTML(S.performSongData.artist || "")+'</div>';
+  h += '<h2>'+escHTML(songTitle)+'</h2>';
+  h += '<div class="muted">'+escHTML(songArtist)+'</div>';
   h += '<div style="margin-top:8px">Mastery: <b>'+escHTML(mastery)+'</b></div>';
   if(best){
-    h += '<div>Best Accuracy: '+Math.round(best.bestAccuracy||0)+'%</div>';
+    h += '<div>Best Accuracy: '+Math.round(bestAccuracy)+'%</div>';
     h += '<div>Best Stars: '+(best.bestStars||0)+'</div>';
   }
   h += '</div>';
@@ -24,9 +59,10 @@ function pianoPerformSongPage(){
 
   if(S.performArrangementType==="left_hand_patterns"){
     var pat = typeof getCurrentLHPattern==="function" ? getCurrentLHPattern() : null;
+    var patternName = pianoFirstPerformanceTextToken(pat && pat.name, "Unknown pattern");
     h += '<div class="card mb16">';
     h += '<div><b>LH Pattern</b></div>';
-    h += '<div class="muted">'+escHTML(pat ? pat.name : "Unknown pattern")+'</div>';
+    h += '<div class="muted">'+escHTML(patternName)+'</div>';
     h += '</div>';
   }
 
@@ -45,14 +81,16 @@ function pianoPerformSongPage(){
   h += '<div><b>Song Audio</b></div>';
 
   if (audioData && audioData.stemPaths) {
+    var pianoDetectedBpm = pianoNormalizePerformanceNumber(audioData.detectedBpm, null);
     h += '<div style="color:#5a9e6a;font-weight:600">Audio loaded</div>';
-    if (audioData.detectedBpm) {
-      h += '<div class="muted" style="font-size:12px">Detected BPM: ' + Math.round(audioData.detectedBpm) + '</div>';
+    if (pianoDetectedBpm != null) {
+      h += '<div class="muted" style="font-size:12px">Detected BPM: ' + Math.round(pianoDetectedBpm) + '</div>';
     }
     h += '<button class="btn" onclick="act(\'removeSongAudio\',\'' + songId + '\')">Remove Audio</button>';
   } else if (S.songAudioImporting) {
-    h += '<div>Separating stems... ' + (S.songAudioProgress || 0) + '%</div>';
-    h += '<div style="background:var(--bg-input);border-radius:4px;height:6px;overflow:hidden;margin-top:4px"><div style="width:' + (S.songAudioProgress || 0) + '%;height:100%;background:var(--accent);transition:width .3s"></div></div>';
+    var pianoSongAudioProgress = Math.max(0, Math.min(100, pianoNormalizePerformanceNumber(S.songAudioProgress, 0)));
+    h += '<div>Separating stems... ' + pianoSongAudioProgress + '%</div>';
+    h += '<div style="background:var(--bg-input);border-radius:4px;height:6px;overflow:hidden;margin-top:4px"><div style="width:' + pianoSongAudioProgress + '%;height:100%;background:var(--accent);transition:width .3s"></div></div>';
   } else {
     h += '<div class="muted" style="font-size:12px;margin-bottom:6px">Import an MP3 to play along with the actual song.</div>';
     h += '<button class="btn btn-primary" onclick="act(\'importSongAudio\',\'' + songId + '\')">Import Song Audio</button>';

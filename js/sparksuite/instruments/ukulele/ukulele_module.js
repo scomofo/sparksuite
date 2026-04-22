@@ -141,6 +141,37 @@
     }
   };
 
+  // Clone an existing chart, override the skillId on every note (and the
+  // chart id/title), and register the result in UKULELE_RHYTHM_LIBRARY.
+  // Used to give new skills (barre_chords, syncopation,
+  // advanced_fingerpick, full_performance) dedicated charts so the
+  // rhythm engine accrues mastery to the right skill ID — reusing the
+  // existing chart wholesale would let the user "play barre_chords"
+  // but accumulate mastery in chord_switching instead.
+  function cloneChartWithSkill(srcId, newId, newTitle, newSkillId) {
+    var src = UKULELE_RHYTHM_LIBRARY[srcId];
+    if (!src) return;
+    var clone = {
+      id: newId,
+      title: newTitle,
+      bpm: src.bpm,
+      enginePreset: src.enginePreset,
+      totalBeats: src.totalBeats,
+      notes: src.notes.map(function(n) {
+        var copy = {};
+        for (var k in n) if (Object.prototype.hasOwnProperty.call(n, k)) copy[k] = n[k];
+        copy.skillId = newSkillId;
+        return copy;
+      }),
+      phrases: src.phrases.slice()
+    };
+    UKULELE_RHYTHM_LIBRARY[newId] = clone;
+  }
+  cloneChartWithSkill("uke_switch_flow_01",    "uke_barre_basics_01",        "Barre Basics 01",        "barre_chords");
+  cloneChartWithSkill("uke_island_pattern_01", "uke_syncopation_01",         "Syncopation 01",         "syncopation");
+  cloneChartWithSkill("uke_pick_arpeggio_01",  "uke_advanced_fingerpick_01", "Advanced Fingerpick 01", "advanced_fingerpick");
+  cloneChartWithSkill("uke_stage_flow_01",     "uke_full_performance_01",    "Full Performance 01",    "full_performance");
+
   var UKULELE_SKILL_CHART_MAP = {
     down_strum: "uke_open_strums_01",
     basic_chords: "uke_open_strums_01",
@@ -149,7 +180,15 @@
     songs: "uke_island_pattern_01",
     fingerpicking: "uke_pick_arpeggio_01",
     melody: "uke_melody_lift_01",
-    performance: "uke_stage_flow_01"
+    performance: "uke_stage_flow_01",
+    // Skills introduced for lessons uke_09..uke_12. Each points at a
+    // dedicated chart cloned just above so mastery tracking attributes
+    // play time to the correct new skill (not to the source chart's
+    // original skillId).
+    barre_chords:        "uke_barre_basics_01",
+    syncopation:         "uke_syncopation_01",
+    advanced_fingerpick: "uke_advanced_fingerpick_01",
+    full_performance:    "uke_full_performance_01"
   };
   var UKULELE_RECOMMENDATION_HINTS = {
     down_strum: {
@@ -190,6 +229,30 @@
     performance: {
       priorityBoost: 8,
       reason: "Turn the current skill stack into a full confident playthrough.",
+      focusTag: "performance"
+    },
+    // Lessons uke_09..uke_12 — give each new skill a focused recommendation
+    // string and a monotonically-increasing priority boost (9→12) so the
+    // recommendation engine pushes forward through the curriculum
+    // instead of looping back to older skills with lower boosts.
+    barre_chords: {
+      priorityBoost: 9,
+      reason: "Master the barre shapes so chord vocabulary opens up across the neck.",
+      focusTag: "barre"
+    },
+    syncopation: {
+      priorityBoost: 10,
+      reason: "Add off-beat accents and reggae chops to make rhythms come alive.",
+      focusTag: "syncopation"
+    },
+    advanced_fingerpick: {
+      priorityBoost: 11,
+      reason: "Layer Travis-style and rolling arpeggio patterns on top of fingerpicking.",
+      focusTag: "fingerpicking"
+    },
+    full_performance: {
+      priorityBoost: 12,
+      reason: "Bring everything together for a confident solo showcase.",
       focusTag: "performance"
     }
   };

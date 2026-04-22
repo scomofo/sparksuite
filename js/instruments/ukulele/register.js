@@ -1,19 +1,34 @@
 ﻿(function() {
+  // Level metadata covering all 12 lessons (uke_01 .. uke_12). LC/LN must
+  // have an entry for every lesson `num` returned by getCurriculumMap()
+  // — see tests/test_curriculum_guardrails.js#LC/LN cover all curriculum
+  // levels. Levels 5-12 inherit colors from the base 4-color palette
+  // (mod 4) so the chord-card swatches still cycle visually.
   function getUkuleleLevelColors() {
     return {
-      1: "#22c55e",
-      2: "#3b82f6",
-      3: "#f97316",
-      4: "#8b5cf6"
+      1: "#22c55e",  2: "#3b82f6",  3: "#f97316",  4: "#8b5cf6",
+      5: "#22c55e",  6: "#3b82f6",  7: "#f97316",  8: "#8b5cf6",
+      9: "#22c55e", 10: "#3b82f6", 11: "#f97316", 12: "#8b5cf6"
     };
   }
 
+  // Level names mirror the lesson `title` field for the same num in
+  // js/sparksuite/instruments/ukulele/ukulele_lessons.js — keep these in
+  // sync so the UI doesn't show conflicting labels for the same level.
   function getUkuleleLevelNames() {
     return {
       1: "First Strum",
       2: "Starter Chords",
       3: "Smooth Changes",
-      4: "Pattern Flow"
+      4: "Pattern Flow",
+      5: "Play a Song",
+      6: "Fingerpicked Motion",
+      7: "Melody Notes",
+      8: "Campfire Performance",
+      9: "Barre Basics",
+      10: "Syncopated Strum",
+      11: "Fingerpick Patterns",
+      12: "Performance Ready"
     };
   }
 
@@ -29,10 +44,11 @@
     var lessons = window.SparkUkuleleLessons || [];
     if (!lessons.length) return null;
     var completed = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-    if (S.mastery && S.mastery.lessons) {
-      for (var lessonId in S.mastery.lessons) {
-        if (S.mastery.lessons[lessonId]) completed.push(lessonId);
-      }
+    var lessonMap = typeof SparkMastery !== "undefined"
+      ? SparkMastery.category("lessons")
+      : (S.mastery && S.mastery.lessons ? S.mastery.lessons : {});
+    for (var lessonId in lessonMap) {
+      if (lessonMap[lessonId]) completed.push(lessonId);
     }
     if (typeof getNextLessonFromCurriculum === "function") {
       var nextLessonId = getNextLessonFromCurriculum(lessons[0].id, completed);
@@ -137,7 +153,10 @@
     }).length : 0;
     var h = '<div class="card mb12"><div style="font-size:18px;font-weight:900;color:var(--text-primary)">Ukulele Progress</div>';
     h += '<div style="font-size:13px;color:var(--text-muted);margin-top:8px">Lessons completed: ' + lessonCount + '</div>';
-    h += '<div style="font-size:13px;color:var(--text-muted)">Rhythm skills tracked: ' + Object.keys((S.mastery && S.mastery.rhythm) || {}).length + '</div>';
+    var rhythmMap = typeof SparkMastery !== "undefined"
+      ? SparkMastery.category("rhythm")
+      : ((S.mastery && S.mastery.rhythm) || {});
+    h += '<div style="font-size:13px;color:var(--text-muted)">Rhythm skills tracked: ' + Object.keys(rhythmMap).length + '</div>';
     h += '</div>';
     return h;
   }
@@ -163,7 +182,12 @@
     instrument: "ukulele",
     name: "Ukulele",
     icon: "&#127926;",
-    iconImage: "resources/ukulele.png",
+    // Showroom asset slots — see resources/instruments/README.md for the schema.
+    // When the file doesn't exist, the launcher's <img onerror> falls through
+    // to the inline SVG silhouette in js/showroom/spark-showroom-svgs.js, so
+    // these references never render as a broken-image icon.
+    iconImage: "resources/instruments/ukulele/card.png",
+    heroImage: "resources/instruments/ukulele/hero.jpg",
     tagline: "Island strums and 4-string flow",
     skin: { laneCount: 4, labels: ["G", "C", "E", "A"] },
     available: true,
@@ -237,9 +261,14 @@
       }
       if (typeof S !== "undefined") {
         if (S.completedLessons === undefined) S.completedLessons = [];
-        if (!S.mastery) S.mastery = {};
-        if (!S.mastery.lessons) S.mastery.lessons = {};
-        if (!S.mastery.rhythm) S.mastery.rhythm = {};
+        if (typeof SparkMastery !== "undefined") {
+          SparkMastery.category("lessons");
+          SparkMastery.category("rhythm");
+        } else {
+          if (!S.mastery) S.mastery = {};
+          if (!S.mastery.lessons) S.mastery.lessons = {};
+          if (!S.mastery.rhythm) S.mastery.rhythm = {};
+        }
       }
     },
 

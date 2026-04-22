@@ -3,6 +3,17 @@
 
 (function(){
 
+  function normalizeEditorInspectorTextValue(value){
+    var text;
+    var lower;
+    if (typeof value !== "string") return "";
+    text = value.trim();
+    if (!text) return "";
+    lower = text.toLowerCase();
+    if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+    return value;
+  }
+
   function getSelectedEditorItem(){
     var obj = S.editorObject;
     if(!obj || S.editorSelectedId==null) return null;
@@ -58,25 +69,25 @@
     var h = '';
     h += '<input class="set-input mb8" type="number" step="0.05" value="'+(item.t||0)+'" oninput="act(\'editorItemField\',\'t|\' + this.value)"/>';
     h += '<input class="set-input mb8" type="number" step="0.05" value="'+(item.dur||0)+'" oninput="act(\'editorItemField\',\'dur|\' + this.value)"/>';
-    h += '<input class="set-input mb8" value="'+escHTML(item.type || "")+'" oninput="act(\'editorItemField\',\'type|\' + this.value)"/>';
+    h += '<input class="set-input mb8" value="'+escHTML(normalizeEditorInspectorTextValue(item.type))+'" oninput="act(\'editorItemField\',\'type|\' + this.value)"/>';
     if(item.performance && item.performance.laneLabel !== undefined){
-      h += '<input class="set-input mb8" value="'+escHTML(item.performance.laneLabel || "")+'" oninput="act(\'editorItemField\',\'performance.laneLabel|\' + this.value)"/>';
+      h += '<input class="set-input mb8" value="'+escHTML(normalizeEditorInspectorTextValue(item.performance.laneLabel))+'" oninput="act(\'editorItemField\',\'performance.laneLabel|\' + this.value)"/>';
     }
     if(item.target && item.target.chordShort !== undefined){
-      h += '<input class="set-input mb8" value="'+escHTML(item.target.chordShort || "")+'" oninput="act(\'editorItemField\',\'target.chordShort|\' + this.value)"/>';
+      h += '<input class="set-input mb8" value="'+escHTML(normalizeEditorInspectorTextValue(item.target.chordShort))+'" oninput="act(\'editorItemField\',\'target.chordShort|\' + this.value)"/>';
     }
     if(item.target && item.target.midi !== undefined && !Array.isArray(item.target.midi)){
       h += '<input class="set-input mb8" type="number" value="'+(item.target.midi || 60)+'" oninput="act(\'editorItemField\',\'target.midi|\' + this.value)"/>';
     }
     if(item.target && item.target.note !== undefined){
-      h += '<input class="set-input mb8" value="'+escHTML(item.target.note || "")+'" oninput="act(\'editorItemField\',\'target.note|\' + this.value)"/>';
+      h += '<input class="set-input mb8" value="'+escHTML(normalizeEditorInspectorTextValue(item.target.note))+'" oninput="act(\'editorItemField\',\'target.note|\' + this.value)"/>';
     }
     return h;
   }
 
   function renderPhraseInspector(item){
     var h = '';
-    h += '<input class="set-input mb8" value="'+escHTML(item.name || "")+'" oninput="act(\'editorItemField\',\'name|\' + this.value)"/>';
+    h += '<input class="set-input mb8" value="'+escHTML(normalizeEditorInspectorTextValue(item.name))+'" oninput="act(\'editorItemField\',\'name|\' + this.value)"/>';
     h += '<input class="set-input mb8" type="number" step="0.05" value="'+(item.startSec||0)+'" oninput="act(\'editorItemField\',\'startSec|\' + this.value)"/>';
     h += '<input class="set-input mb8" type="number" step="0.05" value="'+(item.endSec||0)+'" oninput="act(\'editorItemField\',\'endSec|\' + this.value)"/>';
     return h;
@@ -85,13 +96,13 @@
   function renderStepInspector(item){
     var h = '';
     if(item.chord !== undefined){
-      h += '<input class="set-input mb8" value="'+escHTML(item.chord || "")+'" oninput="act(\'editorItemField\',\'chord|\' + this.value)"/>';
+      h += '<input class="set-input mb8" value="'+escHTML(normalizeEditorInspectorTextValue(item.chord))+'" oninput="act(\'editorItemField\',\'chord|\' + this.value)"/>';
     }
     if(item.dur !== undefined){
       h += '<input class="set-input mb8" type="number" step="0.05" value="'+(item.dur||0)+'" oninput="act(\'editorItemField\',\'dur|\' + this.value)"/>';
     }
     if(item.note !== undefined){
-      h += '<input class="set-input mb8" value="'+escHTML(item.note || "")+'" oninput="act(\'editorItemField\',\'note|\' + this.value)"/>';
+      h += '<input class="set-input mb8" value="'+escHTML(normalizeEditorInspectorTextValue(item.note))+'" oninput="act(\'editorItemField\',\'note|\' + this.value)"/>';
     }
     return h;
   }

@@ -4,6 +4,8 @@ const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
+const { registerDialogs } = require('./desktop/dialogs');
+const { registerUpdater } = require('./desktop/updater');
 
 let mainWindow;
 let demucsProcess = null;
@@ -50,13 +52,25 @@ function createWindow() {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
+        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
       }
     });
   });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+}
+
+function registerDesktopBridgeHandlers() {
+  registerDialogs();
+  registerUpdater();
+  ipcMain.handle('get-app-info', async () => {
+    return {
+      version: app.getVersion(),
+      platform: process.platform,
+      name: app.getName()
+    };
   });
 }
 
@@ -267,7 +281,10 @@ ipcMain.handle('sparkgame:charter', async (event, mp3Path, instrument, difficult
 
 // ===== APP LIFECYCLE =====
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  registerDesktopBridgeHandlers();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (demucsProcess) {

@@ -1,9 +1,17 @@
 node_modules/
 dist/
 www/
-resources/
+# Ignore all `resources/` contents (vendored binaries: demucs.exe, GGML
+# model, etc.) — but exempt the per-instrument design-asset directory
+# used by the Showroom. Use `resources/*` (not `resources/`) so git
+# can re-include the exempt path; ignoring the directory itself blocks
+# any nested re-includes.
+resources/*
+!resources/instruments/
+!resources/instruments/**
 .freesound_token.json
 .claude/
 nul
 nul
 *.zip
+.stitch-import/

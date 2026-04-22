@@ -4,6 +4,28 @@
 // curriculum data, type, and session structure.
 
 window.SparkInstrumentAdapter = (function () {
+  function getActiveInstrument() {
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    return SparkInstruments.getActive();
+  }
+
+  function resolveRegisteredInstrument(inst) {
+    var candidate = inst ? (inst.id || inst.appId || inst.instrumentId || null) : null;
+    var all;
+    var i;
+    var entry;
+    if (!candidate || typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+      return inst || null;
+    }
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return inst || null;
+  }
 
   // -----------------------------------------------------------------------
   // 1. getCurriculum()
@@ -12,9 +34,9 @@ window.SparkInstrumentAdapter = (function () {
   //           levelNames, curriculum } or null if no active instrument.
   // -----------------------------------------------------------------------
   function getCurriculum() {
-    var inst = SparkInstruments.getActive();
+    var inst = resolveRegisteredInstrument(getActiveInstrument());
     if (!inst) return null;
-    return inst.getData();
+    return inst.getData ? inst.getData() : null;
   }
 
   // -----------------------------------------------------------------------
@@ -22,7 +44,7 @@ window.SparkInstrumentAdapter = (function () {
   // Returns the instrument type string ("guitar", "piano", "bass") or null.
   // -----------------------------------------------------------------------
   function getInstrumentType() {
-    var inst = SparkInstruments.getActive();
+    var inst = resolveRegisteredInstrument(getActiveInstrument());
     if (!inst) return null;
     return inst.instrument || null;
   }
@@ -32,9 +54,9 @@ window.SparkInstrumentAdapter = (function () {
   // Returns the app id string ("chordspark", "pianospark") or null.
   // -----------------------------------------------------------------------
   function getAppId() {
-    var inst = SparkInstruments.getActive();
+    var inst = resolveRegisteredInstrument(getActiveInstrument());
     if (!inst) return null;
-    return inst.id || null;
+    return inst.id || inst.appId || inst.instrumentId || null;
   }
 
   // -----------------------------------------------------------------------
@@ -50,7 +72,7 @@ window.SparkInstrumentAdapter = (function () {
   // InstrumentModule interface proxies
   // -----------------------------------------------------------------------
   function _proxy(method) {
-    var inst = SparkInstruments.getActive();
+    var inst = resolveRegisteredInstrument(getActiveInstrument());
     return inst && inst[method] ? inst[method].apply(inst, Array.prototype.slice.call(arguments, 1)) : null;
   }
 

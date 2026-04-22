@@ -1,5 +1,20 @@
 /* ===== ChordSpark: Performance Song Detail Page ===== */
 
+function prettyPerformSongToken(value) {
+  var text;
+  var lower;
+  if (value == null) return "";
+  if (typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  text = String(value || "").replace(/_/g, " ").trim();
+  if (!text) return "";
+  lower = text.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+  return text;
+}
+
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizePerformSongNumber(value, fallback) { return SparkNormalize.number(value, fallback); }
+
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
@@ -10,14 +25,24 @@ function performSongPage() {
   var diff = performanceSongView.difficultyId || "normal";
   var speed = performanceSongView.speed;
   var targetTechnique = performanceSongView.targetTechnique;
+  var displayTitle = prettyPerformSongToken(song.title) || prettyPerformSongToken(performanceSongView.songId) || "Unknown Song";
+  var displayArtist = prettyPerformSongToken(song.artist);
+  var displayBpm = normalizePerformSongNumber(song.bpm, null);
+  var displayChordCount = Array.isArray(song.chords) ? song.chords.length : 0;
+  var displayBarCount = Array.isArray(song.progression) ? song.progression.length : 0;
+  var normalizedSongId = (displayTitle || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  var audioData = S.songAudioData[normalizedSongId];
+  var detectedSongBpm = audioData && audioData.stemPaths
+    ? normalizePerformSongNumber(audioData.detectedBpm, null)
+    : null;
 
   var h = '<div class="perform-page">';
 
   // Header
   h += '<div class="perform-header">';
   h += '<button class="back-btn" onclick="act(\'performSongBack\')">&larr; Back</button>';
-  h += '<div class="perform-title"><strong>' + escHTML(song.title) + '</strong>';
-  h += '<span class="perform-artist">' + escHTML(song.artist || "") + '</span></div>';
+  h += '<div class="perform-title"><strong>' + escHTML(displayTitle) + '</strong>';
+  h += '<span class="perform-artist">' + escHTML(displayArtist) + '</span></div>';
   h += '</div>';
 
   // Mastery + best stats
@@ -43,9 +68,9 @@ function performSongPage() {
 
   // Song info
   h += '<div class="card mb20" style="display:flex;justify-content:space-around;text-align:center">';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (song.bpm || "?") + '</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (song.chords ? song.chords.length : 0) + '</div><div style="font-size:10px;color:var(--text-muted)">Chords</div></div>';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (song.progression ? song.progression.length : 0) + '</div><div style="font-size:10px;color:var(--text-muted)">Bars</div></div>';
+  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (displayBpm != null ? displayBpm : "?") + '</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
+  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + displayChordCount + '</div><div style="font-size:10px;color:var(--text-muted)">Chords</div></div>';
+  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + displayBarCount + '</div><div style="font-size:10px;color:var(--text-muted)">Bars</div></div>';
   h += '</div>';
 
   // Arrangement selector
@@ -80,8 +105,12 @@ function performSongPage() {
     if(recs&&recs.length){
       h+='<div class="card mb20"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Recommended</div>';
       for(var ri=0;ri<Math.min(3,recs.length);ri++){
-        h+='<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">'+escHTML(recs[ri].label)+'</div>';
-        h+='<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">'+escHTML(recs[ri].reason)+'</div>';
+        var recLabel = prettyPerformSongToken(recs[ri] && recs[ri].label) || "Recommendation";
+        var recReason = prettyPerformSongToken(recs[ri] && recs[ri].reason);
+        h+='<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">'+escHTML(recLabel)+'</div>';
+        if (recReason) {
+          h+='<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">'+escHTML(recReason)+'</div>';
+        }
       }
       h+='</div>';
     }
@@ -94,8 +123,7 @@ function performSongPage() {
   }
 
   // Audio import
-  var songId = (song.title || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  var audioData = S.songAudioData[songId];
+  var songId = normalizedSongId;
 
   h += '<div class="card mb20">';
   h += '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">Song Audio</div>';
@@ -103,10 +131,10 @@ function performSongPage() {
   if (audioData && audioData.stemPaths) {
     h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
     h += '<span style="color:#4ECDC4;font-weight:700">&#9989; Audio loaded</span>';
-    if (audioData.detectedBpm) {
-      h += '<span style="font-size:11px;color:var(--text-muted)">Detected BPM: ' + Math.round(audioData.detectedBpm) + '</span>';
-      var authored = song.bpm || 100;
-      var diff = Math.abs(audioData.detectedBpm - authored) / authored;
+    if (detectedSongBpm != null) {
+      h += '<span style="font-size:11px;color:var(--text-muted)">Detected BPM: ' + Math.round(detectedSongBpm) + '</span>';
+      var authored = normalizePerformSongNumber(song.bpm, 100);
+      var diff = Math.abs(detectedSongBpm - authored) / authored;
       if (diff > 0.1) {
         h += '<span style="font-size:11px;color:#FF6B6B"> (authored: ' + authored + ' — sync may be imperfect)</span>';
       }
@@ -114,9 +142,10 @@ function performSongPage() {
     h += '</div>';
     h += '<button class="btn btn-sm" onclick="act(\'removeSongAudio\',\'' + songId + '\')" style="background:var(--input-bg);color:var(--text-secondary)">Remove Audio</button>';
   } else if (S.songAudioImporting) {
+    var songAudioProgress = Math.max(0, Math.min(100, normalizePerformSongNumber(S.songAudioProgress, 0)));
     h += '<div style="margin-bottom:8px">';
-    h += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">Separating stems... ' + (S.songAudioProgress || 0) + '%</div>';
-    h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + (S.songAudioProgress || 0) + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
+    h += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px">Separating stems... ' + songAudioProgress + '%</div>';
+    h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + songAudioProgress + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
     h += '</div>';
   } else {
     h += '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Import an MP3 to play along with the actual song during performance.</p>';
@@ -162,11 +191,12 @@ function getPerformanceSongView() {
 }
 
 function formatTechniqueLabel(key) {
+  var normalizedKey = prettyPerformSongToken(key);
   var labels = {
     open: "Open-note timing",
     tap: "Tap-note consistency",
     forced: "Forced-note transitions",
     specialPhrase: "Phrase section control"
   };
-  return labels[key] || String(key || "Technique");
+  return labels[normalizedKey] || (normalizedKey || "Technique");
 }
