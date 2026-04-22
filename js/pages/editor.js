@@ -1,16 +1,8 @@
 /* ===== Shared Editor Page ===== */
 /* Handoffs 6-9: editor shell with items list, inspector, timeline, visual timeline */
 
-function normalizeEditorTextToken(value){
-  var text;
-  var lower;
-  if(typeof value !== "string") return "";
-  text = value.trim();
-  if(!text) return "";
-  lower = text.toLowerCase();
-  if(lower === "undefined" || lower === "null" || lower === "nan") return "";
-  return text;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizeEditorTextToken(value){ return SparkNormalize.textToken(value); }
 
 function firstEditorTextToken(){
   var i;
@@ -22,10 +14,8 @@ function firstEditorTextToken(){
   return "";
 }
 
-function normalizeEditorNumber(value, fallback){
-  var num = typeof value === "number" ? value : Number(value);
-  return isFinite(num) ? num : fallback;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizeEditorNumber(value, fallback){ return SparkNormalize.number(value, fallback); }
 
 function editorPage(){
   var obj = S.editorObject;

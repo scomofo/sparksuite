@@ -31,10 +31,8 @@ function prettyAnalyticsToken(value){
   return text;
 }
 
-function normalizeAnalyticsNumber(value, fallback){
-  var num = typeof value === "number" ? value : Number(value);
-  return isFinite(num) ? num : fallback;
-}
+// Wrapper — see js/utils/normalize.js for the canonical implementation.
+function normalizeAnalyticsNumber(value, fallback){ return SparkNormalize.number(value, fallback); }
 
 function renderAnalyticsWeaknesses(summary){
   var h = '<div class="card mb16">';
