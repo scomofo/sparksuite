@@ -384,7 +384,7 @@
     var tags = opts.tags || ["Acoustic"];
 
     var cover = coverSrc
-      ? '<img src="' + escHtml(coverSrc) + '" alt="' + escHtml(title) + '">'
+      ? '<img src="' + escHtml(coverSrc) + '" alt="' + escHtml(title) + '" style="width:100%;height:100%;object-fit:cover">'
       : '<div class="showroom-song-cover-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
 
     var tagsHtml = "";
@@ -409,9 +409,9 @@
              + '</div>'
            + '</div>'
            + '<div class="showroom-meta-grid">'
-             + '<div class="showroom-meta-tile"><span class="material-symbols-outlined showroom-meta-icon">piano</span><span class="showroom-meta-label">Key</span><span class="showroom-meta-val">' + escHtml(key) + '</span></div>'
-             + '<div class="showroom-meta-tile"><span class="material-symbols-outlined showroom-meta-icon">speed</span><span class="showroom-meta-label">BPM</span><span class="showroom-meta-val bpm">' + bpm + '</span></div>'
-             + '<div class="showroom-meta-tile"><span class="material-symbols-outlined showroom-meta-icon">schedule</span><span class="showroom-meta-label">Length</span><span class="showroom-meta-val">' + escHtml(len) + '</span></div>'
+             + '<div class="showroom-meta-tile"><div class="showroom-meta-tile-overlay"></div><span class="material-symbols-outlined showroom-meta-icon">piano</span><span class="showroom-meta-label">Key</span><span class="showroom-meta-val">' + escHtml(key) + '</span></div>'
+             + '<div class="showroom-meta-tile"><div class="showroom-meta-tile-overlay"></div><span class="material-symbols-outlined showroom-meta-icon">speed</span><span class="showroom-meta-label">BPM</span><span class="showroom-meta-val bpm">' + bpm + '</span></div>'
+             + '<div class="showroom-meta-tile"><div class="showroom-meta-tile-overlay"></div><span class="material-symbols-outlined showroom-meta-icon">schedule</span><span class="showroom-meta-label">Length</span><span class="showroom-meta-val">' + escHtml(len) + '</span></div>'
            + '</div>'
            + '<div class="showroom-difficulty-card">'
              + '<div class="showroom-difficulty-head">'
@@ -424,7 +424,8 @@
          + '</div>'
          + '<div class="showroom-actionbar">'
            + '<button class="showroom-action-cta" onclick="act(\'showroomStartPerf\')">'
-             + '<span class="material-symbols-outlined fill">play_circle</span>Start Performance</button>'
+             + '<div class="showroom-shimmer-overlay"></div>'
+             + '<span class="material-symbols-outlined fill">play_circle</span>START PERFORMANCE</button>'
          + '</div>'
          + '</div>';
   }
