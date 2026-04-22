@@ -167,9 +167,10 @@ test('shared guided completion preserves app ids for thin active instruments', f
 });
 
 test('onboarding intention input ignores stale sentinel strings', function() {
-  var appSource = loadJS('js/app.js');
-  assert.ok(appSource.indexOf('var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);') >= 0);
-  assert.ok(appSource.indexOf('value="\'+escHTML(onboardingPracticeIntention)+\'"') >= 0);
+  // _renderOnboardingOverlay was extracted from js/app.js into js/render.js.
+  var renderSource = loadJS('js/render.js');
+  assert.ok(renderSource.indexOf('var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);') >= 0);
+  assert.ok(renderSource.indexOf('value="\'+escHTML(onboardingPracticeIntention)+\'"') >= 0);
 });
 
 // Summary
