@@ -196,7 +196,6 @@ function _renderInner(){
   _sharedPages[SCR.INSIGHTS] = typeof insightsDashboardPage === "function" ? insightsDashboardPage : null;
   _sharedPages[SCR.CHALLENGES] = typeof challengeHubPage === "function" ? challengeHubPage : null;
   _sharedPages[SCR.HOME_DASH] = typeof homeDashboardPage === "function" ? homeDashboardPage : null;
-  _sharedPages[SCR.PROFILE] = (typeof SparkProfileScreen !== "undefined" && SparkProfileScreen.render) || null;
   _sharedPages[SCR.SETTINGS] = typeof settingsPage === "function" ? settingsPage : null;
   _sharedPages[SCR.ONBOARDING] = typeof onboardingPage === "function" ? onboardingPage : null;
   _sharedPages[SCR.MIDI_SETTINGS] = typeof midiSettingsPage === "function" ? midiSettingsPage : null;

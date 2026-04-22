@@ -104,10 +104,7 @@
 
   function renderAvatar(profile) {
     var src = profile && (profile.avatarImage || profile.avatarUrl);
-    // High-fidelity default avatar from design reference
-    if (!src) src = "https://lh3.googleusercontent.com/aida-public/AB6AXuAENXXtcpgrwEANQdf96WsuAbjMDNDNm0fMBdqvDk-6d_8ARg-AvoXLeJYxqIaJep95I058ucdqQQpS8XR1e8dyg4_brJ20wY8V3RMOKE1GUNLojQqgOdLThis-cL8WIdD59zaiLLEfCGlbVDXAT1YYbOFrONooNkwPOeXBLBVVCNqcZ2rCLpqRhgIBT2rR8ijGhTjgxpWVu-wjY9sE2qVOX7nlPPOdg7dVabdaniJZ_c55_5MJsUYWgHAvuwdi8QN_ZwBnYx_WUl8";
-
-    var h = '<div class="showroom-avatar" role="button" tabindex="0" aria-label="Profile" onclick="SparkInstruments.openLauncherView(\'profile\')">';
+    var h = '<div class="showroom-avatar" role="button" tabindex="0" aria-label="Profile">';
     if (src) {
       h += '<img src="' + safeEsc(src) + '" alt="Profile avatar">';
     } else {
@@ -434,13 +431,12 @@
     },
 
     renderLauncher: function() {
-      // Dispatch to specific launcher views if set; otherwise default to home (instrument picker).
-      var view = (typeof S !== "undefined" && S.launcherView) || "home";
-      if (view === "settings" && typeof SparkSettings !== "undefined") return SparkSettings.render();
-      if (view === "profile" && typeof SparkProfileScreen !== "undefined") return SparkProfileScreen.render();
-      if (view === "library" && typeof SparkSongLibrary !== "undefined") return SparkSongLibrary.render();
-      if (view === "learn" && typeof SparkPath !== "undefined") return SparkPath.render();
-
+      // The launcher only renders its own home (instrument picker). The
+      // bottom-nav Library / Learn / Settings views previously dispatched
+      // to Showroom modules, which are design-reference mocks (see
+      // js/showroom/spark-showroom.js) — so those views fall through to
+      // home until they're either wired to real data or replaced with
+      // legacy-backed screens.
       return renderHome();
     }
   };
