@@ -142,9 +142,32 @@
       + '</svg>';
   }
 
+  // onerror handler for <img iconImage>/<img heroImage>. When the file
+  // 404s (e.g. the user hasn't dropped a real PNG into
+  // resources/instruments/<id>/ yet), swap the <img>'s src to a data URI
+  // of the inline SVG silhouette so the user never sees a broken-image
+  // icon. The img element stays in place, so layout doesn't shift.
+  // Set onerror to null after the swap so a failing data: URI (very
+  // unlikely) can't loop forever.
+  function svgDataUri(svg) {
+    return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  }
+  function onCardImgError(imgEl, type) {
+    if (!imgEl) return;
+    imgEl.onerror = null;
+    imgEl.src = svgDataUri(cardSvg(type));
+  }
+  function onHeroImgError(imgEl, type) {
+    if (!imgEl) return;
+    imgEl.onerror = null;
+    imgEl.src = svgDataUri(heroSvg(type));
+  }
+
   window.SparkShowroomSVG = {
     card: cardSvg,
     hero: heroSvg,
-    accent: accentFor
+    accent: accentFor,
+    onCardImgError: onCardImgError,
+    onHeroImgError: onHeroImgError
   };
 })();
