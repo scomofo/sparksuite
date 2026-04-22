@@ -12,20 +12,23 @@
     };
   }
 
+  // Level names mirror the lesson `title` field for the same num in
+  // js/sparksuite/instruments/ukulele/ukulele_lessons.js — keep these in
+  // sync so the UI doesn't show conflicting labels for the same level.
   function getUkuleleLevelNames() {
     return {
       1: "First Strum",
       2: "Starter Chords",
       3: "Smooth Changes",
       4: "Pattern Flow",
-      5: "Reading Tabs",
-      6: "Basic Fingerpicking",
-      7: "Single-Note Melody",
-      8: "Full Performance",
+      5: "Play a Song",
+      6: "Fingerpicked Motion",
+      7: "Melody Notes",
+      8: "Campfire Performance",
       9: "Barre Basics",
       10: "Syncopated Strum",
       11: "Fingerpick Patterns",
-      12: "Solo Showcase"
+      12: "Performance Ready"
     };
   }
 
