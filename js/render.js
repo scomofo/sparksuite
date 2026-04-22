@@ -161,6 +161,23 @@ function _renderInner(){
   document.getElementById("dark-btn").textContent=S.darkMode?"\uD83C\uDF19":"\u2600\uFE0F";
   var h = _renderOverlays();
 
+  // Showroom override renderer (Settings, Profile, Practice, Lesson).
+  // These screens provides their own app bars and nav, so we hide the
+  // legacy header and route directly to the Showroom module.
+  if (S._showroomOverride) {
+    document.getElementById("header").style.display = "none";
+    var showroomContent = "";
+    if (S._showroomOverride === "settings") showroomContent = SparkSettings.render();
+    else if (S._showroomOverride === "profile") showroomContent = SparkProfileScreen.render();
+    else if (S._showroomOverride === "practice") showroomContent = SparkPracticeMetro.render();
+    else if (S._showroomOverride === "lesson") showroomContent = SparkLesson.render();
+
+    if (showroomContent) {
+      _writeAppHtml(h + showroomContent);
+      return;
+    }
+  }
+
   // (Onboarding overlay was previously here but is unreachable from this
   // path — see _renderOnboardingOverlay(), now invoked from the launcher gate.)
 

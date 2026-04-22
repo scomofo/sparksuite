@@ -47,7 +47,7 @@
         // "back" — return to instrument Practice from a sub-page without
         // dropping the user out of the instrument context.
         "back":            function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
-        "practice":        function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
+        "practice":        function(){ S._showroomOverride = "practice"; },
         "library":         function(){ S.screen = SCR_.HOME;       S.tab = TAB_.SONGS; },
         "tuner":           function(){ S.screen = SCR_.HOME;       S.tab = TAB_.TUNER || "tuner"; },
         "settings":        function(){ S.screen = SCR_.SETTINGS; },
@@ -69,7 +69,7 @@
         "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
       };
       // Clear any prior override so the legacy slot routing wins again.
-      if (view !== "profile" && view !== "lesson") S._showroomOverride = null;
+      if (view !== "profile" && view !== "lesson" && view !== "practice") S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
       if (typeof saveState === "function") saveState();
@@ -431,26 +431,70 @@
   // ───────────────────────────────────────────────────────────────────────
   function practiceMetroRender(opts) {
     opts = opts || {};
-    var bpm = opts.bpm || 120;
-    var focus = opts.focus || { title: "Spider Walk Drills", xp: 150, pct: 60 };
-    var drills = opts.drills || [
-      { name:"C Major Scale",      sub:"Warmup • 5 mins",     icon:"music_note" },
-      { name:"Alternating Picking", sub:"Technique • 10 mins", icon:"speed" },
-      { name:"Basic Strumming",     sub:"Rhythm • 8 mins",     icon:"waves" }
-    ];
-    var todayMin = opts.todayMinutes || 45;
+    var bpm = (typeof S !== "undefined" && S.metronomeBpm) || opts.bpm || 120;
+    var metroOn = (typeof S !== "undefined" && S.metronomeOn);
+    var todayMin = (typeof S !== "undefined") ? Math.floor(S.todayPracticeSeconds / 60) : (opts.todayMinutes || 45);
     var focusScore = opts.focusScore || 92;
 
+    // Resolve practice plan
+    var plan = null;
+    if (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
+      var view = window.sparkCore.getActiveSessionView();
+      if (view && view.plan && view.plan.flow === "daily_practice" && window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function") {
+        plan = SparkPracticeBridge.toLegacyPlan(view.plan);
+      }
+    }
+    if (!plan && typeof S !== "undefined") plan = S.practicePlan;
+
+    var focusTitle = "No practice focus yet.";
+    var focusPct = 0;
+    var focusXp = 0;
+    var drillItems = [];
+
+    if (plan && typeof getPracticeSummaryFocus === "function") {
+      focusTitle = getPracticeSummaryFocus(plan);
+      var progress = (typeof getPracticeSummaryProgress === "function") ? getPracticeSummaryProgress(plan) : { completedItems: 0, totalItems: 1 };
+      focusPct = progress.totalItems > 0 ? Math.round((progress.completedItems / progress.totalItems) * 100) : 0;
+      focusXp = 150; // Standard XP for daily focus
+
+      if (Array.isArray(plan.items)) {
+        for (var pi = 0; pi < plan.items.length; pi++) {
+          var item = plan.items[pi];
+          if (typeof isRenderablePracticeSummaryItem === "function" && !isRenderablePracticeSummaryItem(item)) continue;
+          drillItems.push({
+            id: (typeof normalizePracticeSummaryItemId === "function") ? normalizePracticeSummaryItemId(item.id) : item.id,
+            name: (typeof getPracticeSummaryItemLabel === "function") ? getPracticeSummaryItemLabel(item) : (item.label || "Drill"),
+            sub: (typeof getPracticeSummaryItemDesc === "function") ? getPracticeSummaryItemDesc(item) : (item.desc || "Technique"),
+            icon: item.meta && item.meta.bpm != null ? "speed" : (item.type === "song" ? "music_note" : "waves"),
+            completed: (typeof isCompletedPracticeSummaryItem === "function") ? isCompletedPracticeSummaryItem(item) : !!item.completed
+          });
+        }
+      }
+    } else {
+      // Fallback/Placeholder
+      focusTitle = opts.focus ? opts.focus.title : "Spider Walk Drills";
+      focusPct = opts.focus ? opts.focus.pct : 60;
+      focusXp = opts.focus ? opts.focus.xp : 150;
+      drillItems = opts.drills || [
+        { name:"C Major Scale",      sub:"Warmup • 5 mins",     icon:"music_note" },
+        { name:"Alternating Picking", sub:"Technique • 10 mins", icon:"speed" },
+        { name:"Basic Strumming",     sub:"Rhythm • 8 mins",     icon:"waves" }
+      ];
+    }
+
     var drillHtml = "";
-    for (var i = 0; i < drills.length; i++) {
-      var d = drills[i];
-      drillHtml += '<div class="showroom-drill">'
+    for (var i = 0; i < drillItems.length; i++) {
+      var d = drillItems[i];
+      var isDone = d.completed;
+      drillHtml += '<div class="showroom-drill group">'
                 + '<div class="showroom-drill-left">'
-                  + '<div class="showroom-drill-icon"><span class="material-symbols-outlined">' + d.icon + '</span></div>'
+                  + '<div class="showroom-drill-icon showroom-inset-carved"><span class="material-symbols-outlined">' + d.icon + '</span></div>'
                   + '<div><h4 class="showroom-drill-name">' + escHtml(d.name) + '</h4>'
                   + '<span class="showroom-drill-meta">' + escHtml(d.sub) + '</span></div>'
                 + '</div>'
-                + '<button class="showroom-drill-cta" onclick="' + nav("lesson") + '">Start</button>'
+                + (isDone
+                    ? '<span class="showroom-drill-meta" style="color:var(--success)">Done</span>'
+                    : '<button class="showroom-drill-cta" onclick="' + nav("lesson") + '">Start</button>')
               + '</div>';
     }
 
@@ -463,37 +507,46 @@
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar">'
-         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></button></div>'
-         + '<h1 class="showroom-appbar-title centered">Practice Session</h1>'
-         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn accent" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></button></div>'
+         + '<h1 class="showroom-appbar-title" style="font-family:\'Plus Jakarta Sans\';font-weight:700">Practice Session</h1>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
          + '</header>'
-         + '<div class="showroom-canvas">'
-           + '<section class="showroom-practice-head"><h2 class="showroom-practice-h">Daily Practice</h2><p class="showroom-practice-sub">Stay in the flow state.</p></section>'
-           + '<section class="showroom-focus-card">'
-             + '<div class="showroom-focus-glow" aria-hidden="true"></div>'
-             + '<div class="showroom-focus-head"><div>'
-               + '<span class="showroom-focus-eyebrow">Current Focus</span>'
-               + '<h3 class="showroom-focus-title">' + escHtml(focus.title) + '</h3></div>'
-               + '<div class="showroom-focus-pill"><span class="material-symbols-outlined fill">local_fire_department</span>+' + focus.xp + ' XP</div></div>'
-             + '<div class="showroom-focus-progress-row"><span>Progress</span><span class="pct">' + focus.pct + '%</span></div>'
-             + '<div class="showroom-focus-track"><div class="showroom-focus-fill" style="width:' + focus.pct + '%"></div></div>'
+         + '<main class="showroom-canvas" style="padding-top:80px">'
+           + '<section><h2 class="showroom-practice-h" style="font-family:\'Syne\';font-weight:900;font-size:28px">Daily Practice</h2><p class="showroom-practice-sub">Stay in the flow state.</p></section>'
+           + '<section class="showroom-glass-card showroom-focus-card" style="padding:18px;border-radius:12px;position:relative;overflow:hidden">'
+             + '<div class="showroom-focus-glow" style="position:absolute;-right:40px;-top:40px;width:128px;height:128px;background:rgba(255,123,58,0.2);border-radius:50%;filter:blur(32px)"></div>'
+             + '<div class="showroom-focus-head" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">'
+               + '<div><span class="showroom-focus-eyebrow">Current Focus</span><h3 class="showroom-focus-title">' + escHtml(focusTitle) + '</h3></div>'
+               + '<div class="showroom-focus-pill" style="background:var(--raised-bg);padding:4px 12px;border-radius:9999px;display:flex;align-items:center;gap:4px;border:1px solid var(--border-light)">'
+                 + '<span class="material-symbols-outlined" style="font-size:14px;color:var(--accent-light);font-variation-settings:\'FILL\' 1">local_fire_department</span>'
+                 + '<span style="font-family:\'JetBrains Mono\';font-size:12px;font-weight:900">+' + focusXp + ' XP</span></div></div>'
+             + '<div class="showroom-focus-progress-row" style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:8px">'
+               + '<span>Progress</span><span class="pct" style="font-family:\'JetBrains Mono\';font-weight:900">' + focusPct + '%</span></div>'
+             + '<div class="showroom-focus-track"><div class="showroom-focus-fill" style="width:' + focusPct + '%"></div></div>'
            + '</section>'
-           + '<section class="showroom-metronome">'
-             + '<div class="showroom-metronome-label"><span class="material-symbols-outlined">graphic_eq</span><span>Metronome</span></div>'
-             + '<div class="showroom-metronome-bpm"><span class="showroom-metronome-num">' + bpm + '</span><span class="showroom-metronome-unit">BPM</span></div>'
-             + '<div class="showroom-metronome-controls">'
-               + '<button class="showroom-metro-btn" aria-label="Slower"><span class="material-symbols-outlined" aria-hidden="true">remove</span></button>'
-               + '<button class="showroom-metro-play" aria-label="Play"><span class="material-symbols-outlined fill" aria-hidden="true">play_arrow</span></button>'
-               + '<button class="showroom-metro-btn" aria-label="Faster"><span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
-             + '</div>'
-             + '<div class="showroom-metronome-pulse"><span class="showroom-pulse-dot active"></span><span class="showroom-pulse-dot"></span><span class="showroom-pulse-dot"></span><span class="showroom-pulse-dot"></span></div>'
+           + '<section class="showroom-metronome" style="background:var(--card-bg);border-radius:12px;padding:18px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;box-shadow:0 4px 20px rgba(0,0,0,0.2)">'
+             + '<div class="showroom-metronome-label" style="position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase">'
+               + '<span class="material-symbols-outlined" style="font-size:18px">graphic_eq</span><span>Metronome</span></div>'
+             + '<div class="showroom-metronome-bpm" style="margin-top:24px;margin-bottom:16px;display:flex;align-items:baseline;gap:8px">'
+               + '<span class="showroom-metronome-num">' + bpm + '</span><span class="showroom-metronome-unit">BPM</span></div>'
+             + '<div class="showroom-metronome-controls" style="display:flex;align-items:center;gap:24px;justify-content:center;width:100%">'
+               + '<button class="showroom-metro-btn" onclick="act(\'metroBpm\',\'' + (bpm - 5) + '\')" aria-label="Slower"><span class="material-symbols-outlined" aria-hidden="true">remove</span></button>'
+               + '<button class="showroom-metro-play showroom-ember-glow" onclick="act(\'toggleMetro\')" aria-label="' + (metroOn ? 'Stop' : 'Play') + '">'
+                 + '<span class="material-symbols-outlined" style="font-size:32px;font-variation-settings:\'FILL\' 1" aria-hidden="true">' + (metroOn ? 'pause' : 'play_arrow') + '</span></button>'
+               + '<button class="showroom-metro-btn" onclick="act(\'metroBpm\',\'' + (bpm + 5) + '\')" aria-label="Faster"><span class="material-symbols-outlined" aria-hidden="true">add</span></button></div>'
+             + '<div class="showroom-metronome-pulse" style="margin-top:20px;display:flex;gap:8px">'
+               + '<div class="showroom-pulse-dot' + (metroOn ? ' active' : '') + '"></div><div class="showroom-pulse-dot"></div><div class="showroom-pulse-dot"></div><div class="showroom-pulse-dot"></div></div>'
            + '</section>'
-           + '<div class="showroom-mini-bento">'
-             + '<div class="showroom-mini-tile"><span class="material-symbols-outlined showroom-mini-tile-bg">timer</span><span class="showroom-mini-label">Today\u2019s Time</span><div class="showroom-mini-row"><span class="showroom-mini-num peach">' + todayMin + '</span><span class="showroom-mini-unit">min</span></div></div>'
-             + '<div class="showroom-mini-tile"><span class="material-symbols-outlined showroom-mini-tile-bg">track_changes</span><span class="showroom-mini-label">Focus Score</span><div class="showroom-mini-row"><span class="showroom-mini-num cyan">' + focusScore + '</span><span class="showroom-mini-unit">/100</span></div></div>'
+           + '<div class="showroom-mini-bento" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+             + '<div class="showroom-mini-tile"><span class="material-symbols-outlined showroom-mini-tile-bg">timer</span><span class="showroom-mini-label">Today\u2019s Time</span>'
+               + '<div class="showroom-mini-row"><span class="showroom-mini-num" style="color:var(--primary-fixed)">' + todayMin + '</span><span class="showroom-mini-unit">min</span></div></div>'
+             + '<div class="showroom-mini-tile"><span class="material-symbols-outlined showroom-mini-tile-bg">track_changes</span><span class="showroom-mini-label">Focus Score</span>'
+               + '<div class="showroom-mini-row"><span class="showroom-mini-num" style="color:var(--perform-cyan)">' + focusScore + '</span><span class="showroom-mini-unit">/100</span></div></div>'
            + '</div>'
-           + '<section><div class="showroom-section-h2"><h3>Quick Drills</h3><span class="link">View All</span></div>' + drillHtml + '</section>'
-         + '</div>'
+           + '<section><div class="showroom-section-h2" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px">'
+             + '<h3 style="font-family:\'Syne\';font-weight:800;font-size:15px">Quick Drills</h3><span class="link" style="font-size:11px;font-weight:700;color:var(--text-secondary);cursor:pointer">View All</span></div>'
+             + '<div style="display:flex;flex-direction:column;gap:8px">' + drillHtml + '</div></section>'
+         + '</main>'
          + bottomNav(navItems, "practice")
          + '</div>';
   }
