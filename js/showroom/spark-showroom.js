@@ -883,7 +883,12 @@
                     + '<p class="showroom-path-desc">' + escHtml(ls.desc) + '</p>'
                   + '</div>';
       if (ls.thumb) {
-        var thumbInner = ls.thumbSrc ? '<img src="' + escHtml(ls.thumbSrc) + '" alt="">' : '\uD83C\uDFBC';
+        // When thumbSrc is set, render the <img> with an onerror fallback
+        // that swaps in the emoji glyph — this way the tile still renders
+        // offline or when the remote host is blocked by CSP / network.
+        // Otherwise fall straight through to the emoji so the tile never
+        // leaves the user staring at a broken-image icon.
+        var thumbInner = ls.thumbSrc ? '<img src="' + escHtml(ls.thumbSrc) + '" alt="" onerror="this.onerror=null;this.outerHTML=\'\\uD83C\\uDFBC\'">' : '\uD83C\uDFBC';
         lessonsHtml += '<div class="showroom-path-thumb">' + thumbInner + '</div>';
       }
       lessonsHtml += '<div class="showroom-path-foot">'
@@ -909,9 +914,15 @@
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-path-bar">'
-           + '<div style="width:32px;height:32px;border-radius:50%;overflow:hidden;border:1px solid rgba(255,123,58,0.3);cursor:pointer" onclick="' + nav("profile") + '">'
+           // Semantic button — the previous <div onclick> was not focusable
+           // by keyboard and exposed no button role to assistive tech.
+           // Transparent background + `padding:0` keeps the visual treatment
+           // (circular avatar with accent border) identical to the previous
+           // div while restoring keyboard/Tab + Enter/Space activation and
+           // screen-reader semantics.
+           + '<button type="button" aria-label="Profile" style="width:32px;height:32px;border-radius:50%;overflow:hidden;border:1px solid rgba(255,123,58,0.3);cursor:pointer;padding:0;background:transparent" onclick="' + nav("profile") + '">'
              + avatarHtml
-           + '</div>'
+           + '</button>'
            + '<h1 class="showroom-path-title">Your Path</h1>'
            + '<div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.05);padding:4px 12px;border-radius:9999px">'
              + '<span style="color:#ff7b3a;font-weight:900;font-size:14px">' + streak + ' \uD83D\uDD25</span>'
