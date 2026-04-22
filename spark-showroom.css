@@ -22,9 +22,9 @@
   min-height:100vh;
   margin:0 auto;
   padding-bottom:96px;
-  font-family:'Plus Jakarta Sans','Outfit','Segoe UI',system-ui,sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   color:var(--text-primary);
-  background:#12100E;
+  background:var(--bg);
 }
 .showroom-root *,.showroom-root *::before,.showroom-root *::after{box-sizing:border-box}
 
@@ -92,7 +92,7 @@
 }
 .showroom-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .showroom-brand{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:900;font-style:italic;
   font-size:20px;letter-spacing:-.02em;
   color:#ff7b3a;
@@ -120,7 +120,7 @@
 .showroom-hero-bg{position:absolute;inset:0;z-index:0;overflow:hidden}
 .showroom-hero-bg::after{
   content:"";position:absolute;inset:0;
-  background:linear-gradient(to top,#12100E 0%,transparent 60%);
+  background:linear-gradient(to top,var(--bg) 0%,transparent 60%);
 }
 .showroom-hero-bg-img{
   width:100%;height:100%;object-fit:cover;opacity:.6;
@@ -147,7 +147,7 @@
   margin-bottom:8px;
 }
 .showroom-hero-title{
-  font-family:'Syne','Plus Jakarta Sans',sans-serif;
+  font-family:'Syne','Plus Jakarta Sans',var(--font-body);
   font-weight:900;font-size:28px;line-height:1.1;letter-spacing:-.02em;
   color:#fff;margin:0 0 4px;
 }
@@ -159,7 +159,7 @@
   width:100%;padding:14px 16px;
   background:#ff7b3a;color:#fff;
   border:none;border-radius:12px;
-  font-family:'Syne','Plus Jakarta Sans',sans-serif;
+  font-family:'Syne','Plus Jakarta Sans',var(--font-body);
   font-weight:700;font-size:12px;
   text-transform:uppercase;letter-spacing:.15em;
   cursor:pointer;
@@ -176,7 +176,7 @@
   margin-bottom:16px;
 }
 .showroom-section-title{
-  font-family:'Syne','Plus Jakarta Sans',sans-serif;
+  font-family:'Syne','Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:20px;line-height:1.2;letter-spacing:-.01em;
   color:var(--text-primary);margin:0;
 }
@@ -245,7 +245,7 @@
 }
 .showroom-card-text{text-align:center}
 .showroom-card-name{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:15px;line-height:1.3;
   color:#fff;margin:0;
 }
@@ -337,7 +337,7 @@
 .showroom-bottomnav{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
   width:100%;max-width:var(--showroom-max);z-index:50;
-  background:#12100E;
+  background:var(--bg);
   border-top:1px solid rgba(255,123,58,.15);
   border-top-left-radius:16px;border-top-right-radius:16px;
   box-shadow:0 -4px 24px rgba(255,123,58,.15);
@@ -351,7 +351,7 @@
   gap:2px;cursor:pointer;
   color:#6a6050;
   background:none;border:none;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:500;
   transition:color .2s;
 }
@@ -376,14 +376,14 @@
 .showroom-root.with-bg{
   background:
     radial-gradient(circle at 50% 0%, rgba(255,123,58,.05) 0%, transparent 70%),
-    linear-gradient(to bottom, #12100E, #1A1714);
+    linear-gradient(to bottom, var(--bg), #1A1714);
   background-attachment:fixed;
 }
 
 /* Generic top app bar with back/title/action */
 .showroom-appbar{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:50;height:64px;
+  width:100%;max-width:var(--showroom-max);z-index:50;height:64px;
   background:rgba(18,16,14,.8);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
@@ -407,7 +407,7 @@
   background:#252119;border:1px solid #3A3228;color:var(--text-primary);
 }
 .showroom-appbar-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;letter-spacing:-.01em;
   color:#ff7b3a;margin:0;
 }
@@ -422,7 +422,7 @@
 
 /* Section labels (Account / Audio & Input / Appearance...) */
 .showroom-cat-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;
   text-transform:uppercase;letter-spacing:.1em;
   color:var(--text-muted);margin:0 0 12px 8px;
@@ -540,7 +540,7 @@
 .showroom-profile-avatar > img,
 .showroom-profile-avatar > .showroom-profile-avatar-fallback{
   width:100%;height:100%;object-fit:cover;border-radius:50%;
-  border:2px solid #12100E;
+  border:2px solid var(--bg);
   background:#291d18;
 }
 .showroom-profile-avatar-fallback{
@@ -553,7 +553,7 @@
   background:#ff7b3a;color:#642300;
   font-size:11px;font-weight:800;letter-spacing:.5px;
   padding:4px 8px;border-radius:9999px;
-  border:1px solid #12100E;
+  border:1px solid var(--bg);
   box-shadow:0 2px 8px rgba(0,0,0,.4);
 }
 .showroom-profile-name{
@@ -606,7 +606,7 @@
 .showroom-stat-mini-icon.yellow{color:#FFE66D}
 .showroom-stat-mini-icon.cyan{color:#4ECDC4}
 .showroom-stat-mini-num{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;line-height:1.3;
   color:var(--text-primary);
 }
@@ -630,7 +630,7 @@
 }
 .showroom-progress-name{
   display:flex;align-items:center;gap:8px;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:15px;
   color:var(--text-primary);
 }
@@ -714,7 +714,7 @@
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));
 }
 .showroom-song-artist{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;
   color:#ff7b3a;margin:0;
 }
@@ -747,7 +747,7 @@
   color:var(--text-muted);text-transform:uppercase;position:relative;
 }
 .showroom-meta-val{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:15px;color:var(--text-primary);position:relative;
 }
 .showroom-meta-val.bpm{
@@ -762,7 +762,7 @@
 }
 .showroom-difficulty-head{display:flex;justify-content:space-between;align-items:center}
 .showroom-difficulty-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;color:var(--text-primary);
   display:flex;align-items:center;gap:8px;margin:0;
 }
@@ -795,9 +795,9 @@
 /* Fixed bottom action bar (used by song details) */
 .showroom-actionbar{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:40;
+  width:100%;max-width:var(--showroom-max);z-index:40;
   padding:14px;
-  background:linear-gradient(to top,#12100E 0%,rgba(18,16,14,.9) 60%,transparent);
+  background:linear-gradient(to top,var(--bg) 0%,rgba(18,16,14,.9) 60%,transparent);
 }
 .showroom-action-cta{
   width:100%;height:60px;border-radius:12px;
@@ -847,12 +847,12 @@
 }
 .showroom-focus-pill .material-symbols-outlined{font-size:14px;color:#FFAA6A}
 .showroom-focus-eyebrow{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.1em;
   color:#ff7b3a;text-transform:uppercase;margin-bottom:4px;display:block;
 }
 .showroom-focus-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;color:var(--text-primary);
   margin:0;
 }
@@ -884,7 +884,7 @@
   position:absolute;top:16px;left:16px;
   display:flex;align-items:center;gap:8px;
   color:var(--text-muted);
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.1em;
   text-transform:uppercase;
 }
@@ -898,7 +898,7 @@
   color:var(--text-primary);
 }
 .showroom-metronome-unit{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:12px;color:var(--text-muted);font-weight:600;
   text-transform:uppercase;letter-spacing:.15em;
 }
@@ -967,7 +967,7 @@
   margin-bottom:12px;
 }
 .showroom-section-h2 h3{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:15px;color:var(--text-primary);margin:0;
 }
 .showroom-section-h2 .link{
@@ -1012,12 +1012,12 @@
     repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(40,20,10,.35) 6px, rgba(40,20,10,.35) 7px),
     repeating-linear-gradient(0deg, transparent, transparent 36px, rgba(80,40,20,.18) 36px, rgba(80,40,20,.18) 37px),
     radial-gradient(ellipse 90% 60% at 50% 30%, rgba(80,40,20,.4), transparent 70%),
-    linear-gradient(180deg,#1a0e08,#12100E);
+    linear-gradient(180deg,#1a0e08,var(--bg));
 }
 
 .showroom-library-bar{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:50;height:64px;
+  width:100%;max-width:var(--showroom-max);z-index:50;height:64px;
   background:rgba(18,16,14,.85);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
@@ -1025,7 +1025,7 @@
   padding:0 16px;
 }
 .showroom-library-title{
-  font-family:'Syne','Plus Jakarta Sans',sans-serif;
+  font-family:'Syne','Plus Jakarta Sans',var(--font-body);
   font-weight:900;font-style:italic;font-size:24px;letter-spacing:-.02em;
   color:#ff7b3a;margin:0;
 }
@@ -1041,8 +1041,10 @@
 }
 .showroom-search .material-symbols-outlined{color:#ff7b3a;font-size:24px}
 .showroom-search input{
-  flex:1;background:transparent;border:none;outline:none;
-  color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;
+  flex:1;background:transparent;border:none;
+  /* No outline:none here — let the global *:focus-visible style in
+     styles.css render the keyboard focus ring (a11y). */
+  color:var(--text-primary);font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:15px;font-weight:500;
 }
 .showroom-search input::placeholder{color:var(--text-muted)}
@@ -1057,7 +1059,7 @@
   flex:none;
   padding:8px 16px;border-radius:9999px;
   background:transparent;color:var(--text-secondary);
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:700;font-size:13px;
   border:1px solid rgba(255,255,255,.08);
   cursor:pointer;
@@ -1079,7 +1081,7 @@
   padding:8px 14px;border-radius:8px;
   background:transparent;border:1px solid rgba(255,255,255,.05);
   color:var(--text-muted);
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
   cursor:pointer;transition:color .15s,border-color .15s;
 }
@@ -1124,13 +1126,13 @@
 .showroom-song-thumb-fallback{
   width:100%;height:100%;
   background:radial-gradient(circle at 35% 35%, rgba(255,123,58,.5), transparent 60%),
-             linear-gradient(135deg,#291d18,#12100E);
+             linear-gradient(135deg,#291d18,var(--bg));
   display:flex;align-items:center;justify-content:center;
   font-size:24px;color:rgba(255,255,255,.5);
 }
 .showroom-song-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .showroom-song-name{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:700;font-size:17px;line-height:1.2;
   color:var(--text-primary);margin:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -1142,7 +1144,7 @@
 .showroom-song-meta{display:flex;align-items:center;gap:6px;margin-top:2px}
 .showroom-lvl-pill{
   display:inline-block;padding:2px 8px;border-radius:4px;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:10px;font-weight:800;letter-spacing:.05em;
   text-transform:uppercase;
 }
@@ -1173,7 +1175,7 @@
 }
 .showroom-song-play.dim{opacity:.7}
 .showroom-song-status{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;
 }
 .showroom-song-status.success{color:#4CD964}
@@ -1190,7 +1192,7 @@
 }
 .showroom-daily-head{display:flex;justify-content:space-between;align-items:center}
 .showroom-daily-eyebrow{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
   color:#ff7b3a;
 }
@@ -1210,7 +1212,7 @@
 .showroom-daily-avstack{display:flex}
 .showroom-daily-avstack span{
   width:24px;height:24px;border-radius:50%;
-  background:#3A3228;border:2px solid #12100E;
+  background:#3A3228;border:2px solid var(--bg);
   margin-left:-8px;
 }
 .showroom-daily-avstack span:first-child{margin-left:0}
@@ -1218,7 +1220,7 @@
   background:#ff7b3a;color:#1a0f08;
   border:none;border-radius:9999px;
   padding:10px 22px;cursor:pointer;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:13px;letter-spacing:.05em;
   box-shadow:0 0 16px rgba(255,123,58,.5);
   transition:transform .15s;
@@ -1230,7 +1232,7 @@
 /* ───── Session Summary ───── */
 .showroom-summary-bar{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:50;height:64px;
+  width:100%;max-width:var(--showroom-max);z-index:50;height:64px;
   background:rgba(20,12,8,.8);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
@@ -1240,7 +1242,7 @@
   box-shadow:0 4px 20px rgba(80,30,10,.2);
 }
 .showroom-summary-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;color:var(--text-primary);
   letter-spacing:-.01em;
 }
@@ -1285,7 +1287,7 @@
   color:#ffb596;margin:0 0 8px;
 }
 .showroom-summary-sub{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:13px;color:var(--text-dim);
   padding:0 48px;line-height:1.5;margin:0;
 }
@@ -1306,7 +1308,7 @@
   background:rgba(255,123,58,.1);filter:blur(48px);
 }
 .showroom-summary-xp-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.1em;
   color:var(--text-muted);text-transform:uppercase;
   display:block;margin-bottom:4px;position:relative;
@@ -1317,7 +1319,7 @@
   font-weight:900;font-size:24px;color:#ffb596;
 }
 .showroom-summary-xp-unit{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;color:#ff7b3a;
   margin-left:4px;
 }
@@ -1350,7 +1352,7 @@
   font-weight:900;font-size:22px;color:var(--text-primary);
 }
 .showroom-summary-accuracy-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:9px;font-weight:700;letter-spacing:.1em;
   color:var(--text-muted);text-transform:uppercase;
 }
@@ -1365,7 +1367,7 @@
   font-weight:900;font-size:24px;color:var(--text-primary);
 }
 .showroom-summary-streak-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.1em;
   color:var(--text-muted);text-transform:uppercase;margin-top:2px;
 }
@@ -1394,16 +1396,16 @@
   color:rgba(255,255,255,.6);font-size:24px;
 }
 .showroom-summary-lesson-eyebrow{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:800;letter-spacing:.1em;
   color:#FFAA6A;text-transform:uppercase;display:block;margin-bottom:2px;
 }
 .showroom-summary-lesson-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;color:var(--text-primary);margin:0;
 }
 .showroom-summary-lesson-meta{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:12px;color:var(--text-dim);font-weight:600;margin:0;
 }
 
@@ -1428,14 +1430,14 @@
 /* ───── Performance (Rhythm Highway gameplay) ───── */
 .showroom-perf-root{
   background:#050508;color:var(--text-primary);
-  width:100%;max-width:480px;min-height:100vh;
+  width:100%;max-width:var(--showroom-max);min-height:100vh;
   margin:0 auto;display:flex;flex-direction:column;align-items:center;
   overflow:hidden;position:relative;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
 }
 .showroom-perf-bar{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:50;height:64px;
+  width:100%;max-width:var(--showroom-max);z-index:50;height:64px;
   background:rgba(18,16,14,.8);
   backdrop-filter:blur(12px);
   -webkit-backdrop-filter:blur(12px);
@@ -1464,12 +1466,12 @@
   box-shadow:0 0 15px rgba(255,123,58,.4);
 }
 .showroom-perf-mult{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:700;font-size:20px;color:#FF7B3A;letter-spacing:-.02em;
 }
 
 .showroom-perf-canvas{
-  flex:1;width:100%;max-width:480px;
+  flex:1;width:100%;max-width:var(--showroom-max);
   position:relative;display:flex;flex-direction:column;
   justify-content:flex-end;align-items:center;
   padding-top:64px;padding-bottom:32px;
@@ -1508,7 +1510,7 @@
   border:1px solid rgba(255,255,255,.1);
 }
 .showroom-perf-rank-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.3px;
   color:var(--text-dim);
 }
@@ -1530,7 +1532,7 @@
   animation:perf-bounce 0.9s ease-in-out infinite;
 }
 .showroom-perf-feedback p{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.3em;
   color:#4ECDC4;margin:8px 0 0;opacity:.8;
 }
@@ -1622,7 +1624,7 @@
 
 .showroom-perf-songinfo{display:flex;flex-direction:column;align-items:center;gap:4px}
 .showroom-perf-songtitle{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:15px;color:var(--text-primary);
   letter-spacing:-.01em;
 }
@@ -1635,14 +1637,14 @@
   0%,100%{opacity:1}50%{opacity:.4}
 }
 .showroom-perf-songsub{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.3px;color:var(--text-dim);
 }
 
 /* ───── Lesson (chord-diagram practice setup) ───── */
 .showroom-lesson-bar{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:50;height:64px;
+  width:100%;max-width:var(--showroom-max);z-index:50;height:64px;
   background:rgba(18,16,14,.85);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
@@ -1650,7 +1652,7 @@
   padding:0 16px;
 }
 .showroom-lesson-bar-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:700;font-size:18px;color:#ff7b3a;
   letter-spacing:-.01em;
 }
@@ -1677,7 +1679,7 @@
   display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;
 }
 .showroom-lesson-card-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;color:var(--text-primary);margin:0;
 }
 .showroom-lesson-card-sub{
@@ -1738,12 +1740,12 @@
 .showroom-chord-meta-cell{text-align:center}
 .showroom-chord-meta-divider{width:1px;background:rgba(255,255,255,.1)}
 .showroom-chord-meta-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.1em;
   color:var(--text-dim);text-transform:uppercase;margin:0;
 }
 .showroom-chord-meta-val{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:15px;margin:4px 0 0;
 }
 .showroom-chord-meta-val.success{color:#4CD964}
@@ -1777,12 +1779,12 @@
   display:flex;align-items:center;justify-content:center;font-size:24px;
 }
 .showroom-tip-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:13px;line-height:1.2;
   color:var(--text-primary);margin:0;
 }
 .showroom-tip-desc{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;color:var(--text-muted);font-weight:600;margin:0;
 }
 
@@ -1799,7 +1801,7 @@
   font-weight:900;font-size:20px;color:var(--text-primary);
 }
 .showroom-stats-pill .seg .lbl{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;color:var(--text-dim);letter-spacing:.3px;
 }
 .showroom-stats-pill .seg.xp .material-symbols-outlined{color:#FFE66D}
@@ -1808,7 +1810,7 @@
 /* Lesson CTA */
 .showroom-lesson-cta-wrap{
   position:fixed;bottom:96px;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:40;
+  width:100%;max-width:var(--showroom-max);z-index:40;
   padding:0 14px;
 }
 .showroom-lesson-cta{
@@ -1827,7 +1829,7 @@
 /* ───── Learning Path ───── */
 .showroom-path-bar{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:50;height:64px;
+  width:100%;max-width:var(--showroom-max);z-index:50;height:64px;
   background:rgba(18,16,14,.85);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
@@ -1835,7 +1837,7 @@
   padding:0 16px;
 }
 .showroom-path-title{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:700;font-size:18px;color:#ff7b3a;
 }
 .showroom-path-streak{
@@ -1854,13 +1856,13 @@
 }
 .showroom-daily-goal-left{flex:1}
 .showroom-daily-goal-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:700;letter-spacing:.15em;
   color:var(--text-dim);text-transform:uppercase;display:block;margin-bottom:8px;
 }
 .showroom-daily-goal-row{display:flex;align-items:baseline;gap:4px;margin-bottom:14px}
 .showroom-daily-goal-num{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:900;font-size:32px;color:var(--text-primary);
   line-height:1;
 }
@@ -1870,7 +1872,7 @@
   display:inline-flex;align-items:center;gap:6px;
   padding:6px 12px;border-radius:9999px;
   border:1px solid;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:800;letter-spacing:.05em;
 }
 .showroom-goal-pill.lvl{
@@ -1929,7 +1931,7 @@
 .showroom-path-icon .material-symbols-outlined{font-size:24px}
 .showroom-path-tier{
   justify-self:end;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:10px;font-weight:800;letter-spacing:.15em;
   color:var(--text-muted);text-transform:uppercase;
   background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
@@ -1937,12 +1939,12 @@
 }
 .showroom-path-body{grid-column:1/-1;display:flex;flex-direction:column;gap:4px}
 .showroom-path-title-text{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;color:var(--text-primary);margin:0;
   letter-spacing:-.01em;
 }
 .showroom-path-desc{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:13px;color:var(--text-dim);font-weight:500;margin:0;line-height:1.4;
 }
 .showroom-path-foot{
@@ -1951,7 +1953,7 @@
 }
 .showroom-path-time{
   display:inline-flex;align-items:center;gap:6px;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:13px;font-weight:700;color:var(--text-muted);
 }
 .showroom-path-time .material-symbols-outlined{font-size:18px}
@@ -1996,7 +1998,7 @@
 /* ───── Tuner & Tools ───── */
 .showroom-tuner-bar{
   position:fixed;top:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:480px;z-index:50;height:64px;
+  width:100%;max-width:var(--showroom-max);z-index:50;height:64px;
   background:rgba(18,16,14,.85);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
@@ -2004,7 +2006,7 @@
   padding:0 16px;
 }
 .showroom-tuner-brand{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:700;font-size:18px;color:#ff7b3a;
   letter-spacing:-.01em;
 }
@@ -2056,7 +2058,7 @@
 }
 .showroom-tuner-status{
   display:inline-flex;align-items:center;gap:6px;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:13px;letter-spacing:.15em;
   color:var(--text-primary);
 }
@@ -2075,7 +2077,7 @@
 .showroom-tuner-cell{display:flex;flex-direction:column;gap:4px}
 .showroom-tuner-cell.right{text-align:right;align-items:flex-end}
 .showroom-tuner-cell-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:800;letter-spacing:.15em;
   color:var(--text-dim);text-transform:uppercase;
 }
@@ -2087,7 +2089,7 @@
   font-weight:900;font-size:24px;color:var(--text-primary);
 }
 .showroom-tuner-freq-unit{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:13px;color:var(--text-muted);font-weight:600;
 }
 .showroom-tuner-mic{
@@ -2101,7 +2103,7 @@
 .showroom-tuner-mic:hover{filter:brightness(1.2)}
 .showroom-tuner-mic:active{transform:scale(.92)}
 .showroom-tuner-tuning{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:800;font-size:18px;color:var(--text-primary);
   letter-spacing:.25em;
 }
@@ -2147,7 +2149,7 @@
 }
 .showroom-tuner-bpm-unit{
   text-align:center;
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-weight:700;font-size:13px;letter-spacing:.2em;
   color:var(--text-muted);text-transform:uppercase;
 }
@@ -2212,7 +2214,7 @@
 .showroom-quicktool.tonegen  .showroom-quicktool-icon{background:rgba(78,205,196,.1);border-color:rgba(78,205,196,.3);color:#4ECDC4}
 .showroom-quicktool.chords   .showroom-quicktool-icon{background:rgba(232,168,122,.1);border-color:rgba(232,168,122,.3);color:#E8A87A}
 .showroom-quicktool-label{
-  font-family:'Plus Jakarta Sans',sans-serif;
+  font-family:'Plus Jakarta Sans',var(--font-body);
   font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;
   color:var(--text-secondary);
 }
