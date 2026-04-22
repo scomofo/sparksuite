@@ -100,11 +100,13 @@ function getLegacyTunerRuntime(){
     ? window.sparkCore.getActiveSessionView()
     : null;
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  // Use `!== undefined` rather than hasOwnProperty: assigning `undefined`
+  // creates the property on S, but the runtime value should still take over.
   return {
     active: typeof S.tunerActive === "boolean" ? S.tunerActive : !!(runtime && runtime.tunerActive),
-    note: Object.prototype.hasOwnProperty.call(S, "tunerNote") ? S.tunerNote : (runtime ? runtime.tunerNote : null),
-    freq: normalizeToolsNumber(Object.prototype.hasOwnProperty.call(S, "tunerFreq") ? S.tunerFreq : (runtime ? runtime.tunerFreq : null), 0),
-    cents: normalizeToolsNumber(Object.prototype.hasOwnProperty.call(S, "tunerCents") ? S.tunerCents : (runtime ? runtime.tunerCents : null), 0),
+    note: S.tunerNote !== undefined ? S.tunerNote : (runtime ? runtime.tunerNote : null),
+    freq: normalizeToolsNumber(S.tunerFreq !== undefined ? S.tunerFreq : (runtime ? runtime.tunerFreq : null), 0),
+    cents: normalizeToolsNumber(S.tunerCents !== undefined ? S.tunerCents : (runtime ? runtime.tunerCents : null), 0),
     error: typeof S.tunerErr === "string" ? S.tunerErr : (runtime ? runtime.tunerError : null)
   };
 }
@@ -119,7 +121,7 @@ function getLegacyAudioInputRuntime(){
     inputId: typeof S.audioInputId === "string" ? S.audioInputId : (runtime ? (runtime.audioInputId || "") : ""),
     testingId: typeof S.audioTestingId === "string" ? S.audioTestingId : (runtime ? (runtime.audioTestingId || "") : ""),
     testLevel: normalizeToolsPercent(
-      Object.prototype.hasOwnProperty.call(S, "audioTestLevel") ? S.audioTestLevel : (runtime ? runtime.audioTestLevel : null),
+      S.audioTestLevel !== undefined ? S.audioTestLevel : (runtime ? runtime.audioTestLevel : null),
       0
     )
   };
