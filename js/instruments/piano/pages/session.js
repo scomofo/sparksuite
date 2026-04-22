@@ -71,9 +71,12 @@ function pianoSessionPage() {
       html += '<div class="card"><p>Session complete!</p></div>';
   }
 
-  // Bottom controls
+  // Bottom controls — suppressed on the final victoryLap step, where the
+  // primary CTA is "Session Complete!" and offering Pause/End Session next
+  // to it is nonsensical (nothing to pause; ending isn't "early" anymore
+  // when the session has reached its last step).
   html += '<div class="session-btns">';
-  if (S.sessionStep) {
+  if (S.sessionStep && S.sessionStep !== "victoryLap") {
     html += '<button class="btn" onclick="act(\'pause\')">' + (S.paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
     html += '<button class="btn btn-secondary" onclick="if(confirm(\'End session early?\'))act(\'stop_session\')">End Session</button>';
   }
