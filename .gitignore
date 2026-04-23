@@ -15,3 +15,8 @@ nul
 nul
 *.zip
 .stitch-import/
+
+# Environment and tool-state files
+.env.local
+.env
+.superpowers/
