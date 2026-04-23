@@ -21,6 +21,17 @@ window.act=function(a,v){
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
   if(a==="practiceStartItem"&&typeof startPracticeItem==="function"){startPracticeItem(v);return;}
+  // Return to the launcher (instrument picker) from anywhere inside an
+  // instrument. activeInstrument persists to localStorage, so without a
+  // dedicated back-out path the launcher is effectively one-way once a
+  // user picks. deactivate() + render() brings them back to the picker.
+  if(a==="switchInstrumentBack"){
+    if(typeof SparkInstruments!=="undefined"&&SparkInstruments.deactivate){SparkInstruments.deactivate();}
+    S.activeInstrument=null;
+    if(typeof saveState==="function")saveState();
+    render();
+    return;
+  }
   // Switch instrument from v2 dashboard
   if(a==="switchInstrument" && v){
     SparkInstruments.activate(v);

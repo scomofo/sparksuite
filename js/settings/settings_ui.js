@@ -2,6 +2,19 @@ function settingsPage(){
   var h = '<div class="card mb16">';
   h += '<div><b>Settings</b></div>';
   h += '</div>';
+  // Switch Instrument — clears S.activeInstrument via SparkInstruments.deactivate()
+  // so the launcher (instrument picker) reappears on the next render.
+  // Without this, activeInstrument persists to localStorage forever after
+  // the first pick and there's no in-app way to change instrument.
+  var activeName = "";
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
+    var _ai = SparkInstruments.getActive();
+    if (_ai && _ai.name) activeName = " (currently " + escHTML(_ai.name) + ")";
+  }
+  h += '<div class="card mb16"><div><b>Instrument</b></div>';
+  h += '<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">Return to the launcher to pick a different instrument' + activeName + '.</div>';
+  h += '<div style="margin-top:8px"><button onclick="act(\'switchInstrumentBack\')">\u21A9 Switch Instrument</button></div>';
+  h += '</div>';
   var cats = typeof getSettingsCategories === "function" ? getSettingsCategories() : [];
   for(var i=0;i<cats.length;i++){
     h += renderSettingsCategory(cats[i]);
