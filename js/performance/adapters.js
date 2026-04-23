@@ -86,6 +86,7 @@
       pattern: song.pattern || ["D","D","U","U","D","U"],
       leadNotes: song.leadNotes || null,
       midi: song.midi || null,
+      audio: song.audio || null,
       instrument: song.instrument || song.instrumentType || song.adapterType || getActivePerformanceInstrumentType(),
       source: "builtin"
     };
@@ -101,6 +102,7 @@
       chords: song.chords || [],
       progression: song.progression || [],
       pattern: song.pattern || ["D","D","U","U","D","U"],
+      audio: song.audio || null,
       instrument: song.instrument || song.instrumentType || song.adapterType || getActivePerformanceInstrumentType(),
       source: "imported"
     };
@@ -141,7 +143,7 @@
       arrangementType: arrangementType,
       instrument: perfSong.instrument || "guitar",
       adapterType: perfSong.instrument || "guitar",
-      audio: perfSong.midi ? { type: "midi", src: perfSong.midi } : { type: "silent" },
+      audio: perfSong.audio || (perfSong.midi ? { type: "midi", src: perfSong.midi } : { type: "silent" }),
       events: arrangement.events,
       phrases: phrases
     };

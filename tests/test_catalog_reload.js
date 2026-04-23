@@ -157,7 +157,7 @@ test("registerContent replaces stale entries for a type", function() {
 
 test("registerContent builds canonical song families", function() {
   registerContent("songs", [
-    { id: "stand_by_me", title: "Stand By Me", artist: "Ben E. King" },
+    { id: "stand_by_me", title: "Stand By Me", artist: "Ben E. King", midi: "content/songs/midi/stand_by_me.mid" },
     { id: "la_bamba", title: "La Bamba", artist: "Ritchie Valens", familyId: "la_bamba" }
   ]);
 
@@ -167,6 +167,8 @@ test("registerContent builds canonical song families", function() {
   assert.strictEqual(standByMeFamily.canonicalSongId, "stand_by_me");
   assert.strictEqual(standByMeFamily.songs[0], "stand_by_me");
   assert.strictEqual(getSongFamilyVariants("stand_by_me").length, 1);
+  assert.strictEqual(getContent("songs", "stand_by_me").audio.type, "midi");
+  assert.strictEqual(getContent("songs", "stand_by_me").audio.src, "content/songs/midi/stand_by_me.mid");
 });
 
 test("loadAllContent treats each manifest section as authoritative", async function() {
