@@ -43,6 +43,14 @@ global.SparkInstruments = {
     ];
   }
 };
+global.SparkContent = {
+  songs: {
+    stand_by_me: { id: 'stand_by_me', title: 'Stand By Me', artist: 'Ben E. King', chartId: 'stand_by_me_chords' },
+    let_it_be: { id: 'let_it_be', title: 'Let It Be', artist: 'The Beatles', chartId: 'let_it_be_chords' },
+    wonderful_tonight: { id: 'wonderful_tonight', title: 'Wonderful Tonight', artist: 'Eric Clapton', chartId: 'wonderful_tonight_chords' },
+    hotel_california: { id: 'hotel_california', title: 'Hotel California', artist: 'Eagles', chartId: 'hotel_california_chords' }
+  }
+};
 
 function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
@@ -216,22 +224,48 @@ test('getPerformanceChartLibrary includes package-backed entries for the perform
   assert.strictEqual(getPerformanceChartMeta('demo_progression').sourceType, 'built_in');
 });
 
+test('getPerformanceChartLibrary synthesizes catalog-backed chart entries that are not hand-authored in the manifest', function() {
+  var library = getPerformanceChartLibrary({ instrument: 'guitar' });
+  assert.ok(library.some(function(chart) { return chart.id === 'wonderful_tonight_chords'; }));
+  assert.ok(library.some(function(chart) { return chart.id === 'hotel_california_chords'; }));
+  assert.strictEqual(getPerformanceChartMeta('wonderful_tonight_chords').songId, 'wonderful_tonight');
+});
+
 test('getPerformanceChartLibrary can filter the manifest by instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'ukulele' });
-  assert.strictEqual(library.length, 4);
+  assert.strictEqual(library.length, 7);
   assert.strictEqual(library[0].id, 'stand_by_me_ukulele_chords');
   assert.strictEqual(library[1].instrument, 'ukulele');
   assert.strictEqual(library[2].instrument, 'ukulele');
   assert.strictEqual(library[3].instrument, 'ukulele');
+  assert.strictEqual(library[4].id, 'uke_fingerpick_flow_package');
+  assert.strictEqual(library[5].id, 'uke_performance_medley_package');
+  assert.strictEqual(library[6].id, 'uke_reggae_chop_package');
 });
 
 test('getPerformanceChartLibrary can filter the manifest by app-id instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'ukespark' });
-  assert.strictEqual(library.length, 4);
+  assert.strictEqual(library.length, 7);
   assert.strictEqual(library[0].id, 'stand_by_me_ukulele_chords');
   assert.strictEqual(library[1].instrument, 'ukulele');
   assert.strictEqual(library[2].instrument, 'ukulele');
   assert.strictEqual(library[3].instrument, 'ukulele');
+  assert.strictEqual(library[4].id, 'uke_fingerpick_flow_package');
+  assert.strictEqual(library[5].id, 'uke_performance_medley_package');
+  assert.strictEqual(library[6].id, 'uke_reggae_chop_package');
+});
+
+test('getPerformanceChartLibrary can filter the manifest by piano instrument', function() {
+  var library = getPerformanceChartLibrary({ instrument: 'piano' });
+  assert.strictEqual(library.length, 8);
+  assert.strictEqual(library[0].id, 'stand_by_me_piano_chords');
+  assert.strictEqual(library[1].id, 'la_bamba_piano_chords');
+  assert.strictEqual(library[2].id, 'let_it_be_piano_chords');
+  assert.strictEqual(library[3].id, 'knockin_on_heavens_door_piano_chords');
+  assert.strictEqual(library[4].id, 'piano_ballad_flow');
+  assert.strictEqual(library[5].id, 'piano_gentle_walk');
+  assert.strictEqual(library[6].id, 'piano_groove_drive');
+  assert.strictEqual(library[7].id, 'piano_soul_voicings');
 });
 
 test('getPerformanceChartLibrary can filter the manifest by bass instrument', function() {
@@ -287,6 +321,13 @@ test('getPerformanceChartLibrary exposes authored instrument-specific variants',
   assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'let_it_be_piano_chords'; }));
   assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'la_bamba_piano_chords'; }));
   assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'knockin_on_heavens_door_piano_chords'; }));
+  assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'piano_ballad_flow'; }));
+  assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'piano_gentle_walk'; }));
+  assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'piano_groove_drive'; }));
+  assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'piano_soul_voicings'; }));
+  assert.ok(ukuleleLibrary.some(function(chart) { return chart.id === 'uke_fingerpick_flow_package'; }));
+  assert.ok(ukuleleLibrary.some(function(chart) { return chart.id === 'uke_performance_medley_package'; }));
+  assert.ok(ukuleleLibrary.some(function(chart) { return chart.id === 'uke_reggae_chop_package'; }));
   assert.ok(!ukuleleLibrary.some(function(chart) { return chart.id === 'let_it_be_chords'; }));
   assert.ok(!pianoLibrary.some(function(chart) { return chart.id === 'let_it_be_chords'; }));
   assert.ok(!bassLibrary.some(function(chart) { return chart.id === 'let_it_be_chords'; }));
@@ -344,6 +385,10 @@ test('resolvePerformanceChartVariantId returns the matching authored chart for a
   assert.strictEqual(
     resolvePerformanceChartVariantId('sweet_child_o_mine', { instrument: 'bass', arrangementType: 'chords' }),
     'sweet_child_o_mine_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('wonderful_tonight', { instrument: 'guitar', arrangementType: 'chords' }),
+    'wonderful_tonight_chords'
   );
 });
 

@@ -52,10 +52,52 @@ function loadPerformanceChart(chartId) {
 }
 
 function getPerformanceChartManifest() {
-  if (window.PERFORMANCE_CHART_MANIFEST && Array.isArray(window.PERFORMANCE_CHART_MANIFEST.charts)) {
-    return window.PERFORMANCE_CHART_MANIFEST.charts.slice();
+  var charts = window.PERFORMANCE_CHART_MANIFEST && Array.isArray(window.PERFORMANCE_CHART_MANIFEST.charts)
+    ? window.PERFORMANCE_CHART_MANIFEST.charts.slice()
+    : PERFORMANCE_CHART_LIBRARY_FALLBACK.slice();
+  return charts.concat(buildPerformanceCatalogChartEntries(charts));
+}
+
+function buildPerformanceCatalogChartEntries(existingCharts) {
+  var songs;
+  var seen;
+  var entries = [];
+  var key;
+  var song;
+  var chartId;
+  var songId;
+
+  if (typeof window === "undefined" || !window.SparkContent || !window.SparkContent.songs) return entries;
+
+  songs = window.SparkContent.songs;
+  seen = {};
+  (existingCharts || []).forEach(function(chart) {
+    if (chart && chart.id) seen[chart.id] = true;
+  });
+
+  for (key in songs) {
+    if (!Object.prototype.hasOwnProperty.call(songs, key)) continue;
+    song = songs[key] || {};
+    chartId = song.chartId;
+    if (!chartId || seen[chartId]) continue;
+    songId = song.id || key;
+    entries.push({
+      id: chartId,
+      title: song.title || songId,
+      artist: song.artist || "SparkSuite",
+      bpm: typeof song.bpm === "number" && song.bpm > 0 ? song.bpm : 100,
+      description: "Built-in chart exposed from the song catalog.",
+      sourceType: "built_in",
+      accentColor: "#45B7D1",
+      badge: "Song",
+      instrument: song.instrument || song.instrumentType || song.adapterType || "guitar",
+      songId: songId,
+      arrangementType: "chords"
+    });
+    seen[chartId] = true;
   }
-  return PERFORMANCE_CHART_LIBRARY_FALLBACK.slice();
+
+  return entries;
 }
 
 function chartSupportsPerformanceInstrument(chart, requestedInstrument) {
