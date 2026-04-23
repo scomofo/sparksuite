@@ -159,6 +159,22 @@ function _renderInner(){
     }
   }
 
+  // Legacy-screen → Warm Ember upgrade. When the engine drives the user to
+  // one of these screens (post-session complete, etc.) and the Showroom
+  // renderer has been made data-aware, render the Warm Ember version
+  // instead of the bare legacy page. When the Showroom module isn't
+  // loaded the code falls through to the legacy pipeline below.
+  if (typeof S !== "undefined" && typeof SCR !== "undefined") {
+    var _legacyToShowroom = {};
+    _legacyToShowroom[SCR.COMPLETE] = typeof SparkSessionSummary !== "undefined" && SparkSessionSummary.render;
+    var _legacyFn = _legacyToShowroom[S.screen];
+    if (typeof _legacyFn === "function") {
+      document.getElementById("header").style.display = "none";
+      _writeAppHtml(_legacyFn());
+      return;
+    }
+  }
+
   document.getElementById("header").style.display = "";
   var backBtn = document.getElementById("launcher-back");
   if (backBtn) backBtn.style.display = "";

@@ -755,11 +755,37 @@
   // ───────────────────────────────────────────────────────────────────────
   function sessionSummaryRender(opts) {
     opts = opts || {};
-    var xp = opts.xp || 450;
-    var accuracy = opts.accuracy || 98;
-    var streak = opts.streak || 125;
-    var lessonTitle = opts.lessonTitle || "Midnight Ember Jam";
-    var lessonMeta = opts.lessonMeta || "Level 12 • 4:20 Duration";
+    // Pull real totals from the legacy state layer when the caller didn't
+    // hand us overrides. xp / streak come straight off S. Accuracy defaults
+    // to the last recorded session accuracy if we have one; otherwise a
+    // neutral 100% while the run is still warm. The "last completed"
+    // lesson is inferred from S.guidedSession / completedGuidedSessions
+    // so the thumbnail copy matches what the user just finished.
+    var liveXp = (typeof S !== "undefined" && typeof S.xp === "number") ? S.xp : null;
+    var liveStreak = (typeof S !== "undefined" && typeof S.streak === "number") ? S.streak : null;
+    var liveAccuracy = null;
+    if (typeof S !== "undefined") {
+      if (typeof S.lastSessionAccuracy === "number") liveAccuracy = Math.round(S.lastSessionAccuracy);
+      else if (typeof S.sessionAccuracy === "number") liveAccuracy = Math.round(S.sessionAccuracy);
+    }
+    var xp = opts.xp != null ? opts.xp : (liveXp != null ? liveXp : 450);
+    var accuracy = opts.accuracy != null ? opts.accuracy : (liveAccuracy != null ? liveAccuracy : 98);
+    var streak = opts.streak != null ? opts.streak : (liveStreak != null ? liveStreak : 125);
+
+    // Look up the most-recently-completed lesson so the thumbnail copy
+    // describes what the user actually just finished.
+    var lastDone = null;
+    if (typeof S !== "undefined" && Array.isArray(S.completedGuidedSessions) && S.completedGuidedSessions.length) {
+      var lastNum = S.completedGuidedSessions[S.completedGuidedSessions.length - 1];
+      lastDone = findActiveLesson(String(lastNum));
+    } else if (typeof S !== "undefined" && typeof S.guidedSession === "number") {
+      // Mid-session: show the current lesson while it's still in-flight.
+      lastDone = findActiveLesson(String(S.guidedSession));
+    }
+    var lessonTitle = opts.lessonTitle || (lastDone ? lastDone.title : "Midnight Ember Jam");
+    var lessonMeta = opts.lessonMeta || (lastDone
+      ? ("Level " + (lastDone.level || 1) + " • " + (lastDone.bpm || 80) + " BPM")
+      : "Level 12 • 4:20 Duration");
     var subtitle = opts.subtitle || "You're finding your rhythm. Another great set finished.";
     var coverSrc = opts.cover;
 
