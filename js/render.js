@@ -147,9 +147,12 @@ function _renderInner(){
   // override is active (same treatment as the launcher gate above).
   if (typeof S !== "undefined" && S._showroomOverride) {
     var _showroomRoute = {
-      "lesson":  typeof SparkLesson          !== "undefined" && SparkLesson.render,
-      "path":    typeof SparkPath            !== "undefined" && SparkPath.render,
-      "profile": typeof SparkProfileScreen   !== "undefined" && SparkProfileScreen.render
+      "lesson":          typeof SparkLesson          !== "undefined" && SparkLesson.render,
+      "path":            typeof SparkPath            !== "undefined" && SparkPath.render,
+      "profile":         typeof SparkProfileScreen   !== "undefined" && SparkProfileScreen.render,
+      "library":         typeof SparkSongLibrary     !== "undefined" && SparkSongLibrary.render,
+      "tuner":           typeof SparkTuner           !== "undefined" && SparkTuner.render,
+      "session-summary": typeof SparkSessionSummary  !== "undefined" && SparkSessionSummary.render
     };
     var _overrideFn = _showroomRoute[S._showroomOverride];
     if (typeof _overrideFn === "function") {

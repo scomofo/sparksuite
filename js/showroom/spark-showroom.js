@@ -127,8 +127,14 @@
         // dropping the user out of the instrument context.
         "back":            function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
         "practice":        function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
-        "library":         function(){ S.screen = SCR_.HOME;       S.tab = TAB_.SONGS; },
-        "tuner":           function(){ S.screen = SCR_.HOME;       S.tab = TAB_.TUNER || "tuner"; },
+        // "library" / "tuner" → Warm Ember Song Library / Tuner when the
+        // Showroom renderers are present (they're on the render.js allow
+        // list). If the module isn't loaded, render.js falls through to
+        // the legacy pipeline that would have fired from the legacy slots
+        // below — so we set BOTH the override and the legacy slot so
+        // users never land on a blank screen.
+        "library":         function(){ S._showroomOverride = "library"; S.screen = SCR_.HOME; S.tab = TAB_.SONGS; },
+        "tuner":           function(){ S._showroomOverride = "tuner";   S.screen = SCR_.HOME; S.tab = TAB_.TUNER || "tuner"; },
         "settings":        function(){ S.screen = SCR_.SETTINGS; },
         // "path" / "learn" route to the Warm Ember Learning Path screen
         // (SparkPath.render) which reads the active instrument's real
@@ -138,7 +144,11 @@
         "path":            function(){ S._showroomOverride = "path"; },
         "learn":           function(){ S._showroomOverride = "path"; },
         "song-details":    function(){ S.screen = SCR_.SONG; },
-        "session-summary": function(){ S.screen = SCR_.COMPLETE; },
+        // session-summary → Warm Ember summary when available, else legacy
+        // completePage via SCR_.COMPLETE. Setting both means the override
+        // wins when SparkSessionSummary is loaded and the legacy slot
+        // handles everything else.
+        "session-summary": function(){ S._showroomOverride = "session-summary"; S.screen = SCR_.COMPLETE; },
         // Performance gameplay stays in the legacy engine. Call sites that
         // have real chart context (Song Details, Replay Session) use
         // act("showroomStartPerf") directly; this nav("performance") is the
@@ -153,9 +163,9 @@
         "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
       };
       // Clear any prior override so the legacy slot routing wins again —
-      // but keep it for routes whose handlers set an override themselves
-      // (profile, lesson, path, learn).
-      if (view !== "profile" && view !== "lesson" && view !== "path" && view !== "learn") S._showroomOverride = null;
+      // but keep it for routes whose handlers set an override themselves.
+      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "library":1, "tuner":1, "session-summary":1 };
+      if (!_overrideRoutes[view]) S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
       if (typeof saveState === "function") saveState();
@@ -665,7 +675,38 @@
     var categories = ["All","Guitar","Bass","Piano","Ukulele"];
     var levels = ["Beginner","Intermediate","Advanced"];
 
-    var songs = opts.songs || [
+    // Build the song list from the active instrument's real SONGS data.
+    // The caller can still override for preview/harness use via opts.songs.
+    var realSongs = null;
+    if (!opts.songs && typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
+      var _libInst = SparkInstruments.getActive();
+      var _instType = _libInst && (_libInst.instrument || _libInst.instrumentType || _libInst.id) || "guitar";
+      var _instData = _libInst && typeof _libInst.getData === "function" ? _libInst.getData() : null;
+      var _rawSongs = (_instData && Array.isArray(_instData.SONGS)) ? _instData.SONGS : [];
+      if (_rawSongs.length) {
+        // Length estimate: 48 beats / bpm gives a reasonable approximation
+        // of a short practice song in minutes when the record doesn't carry
+        // an explicit duration field.
+        var _formatLen = function(bpm) {
+          var minutes = bpm ? Math.max(1, Math.round(240 / bpm)) : 3;
+          return minutes + ":00";
+        };
+        realSongs = _rawSongs.map(function(s) {
+          var lvl = typeof s.level === "number" ? s.level : (typeof s.difficulty === "number" ? s.difficulty : 1);
+          return {
+            name: s.title || "Untitled",
+            artist: s.artist || "",
+            lvl: lvl,
+            len: _formatLen(s.bpm),
+            status: "",
+            label: (Array.isArray(s.chords) ? s.chords.slice(0, 4).join(" • ") : ""),
+            statusClass: "muted",
+            instrument: _instType
+          };
+        });
+      }
+    }
+    var songs = opts.songs || realSongs || [
       { name:"Ember's Resonance", artist:"The Electric Collective", lvl:7, len:"4:20", status:"hot",  pct:"85%",       statusClass:"success", instrument:"guitar" },
       { name:"Midnight Strum",    artist:"The Acoustic Soul",       lvl:3, len:"3:15", status:"new",  label:"New",      statusClass:"muted",   instrument:"ukulele" },
       { name:"Ivory Cascades",    artist:"Serene Melodies",         lvl:5, len:"5:45", status:"hot",  label:"Mastered", statusClass:"success", instrument:"piano"  },
@@ -1358,11 +1399,29 @@
   // ───────────────────────────────────────────────────────────────────────
   function tunerRender(opts) {
     opts = opts || {};
-    var note = opts.note || "E";
-    var freq = opts.frequency || 440.0;
-    var tuning = opts.tuning || "EADGBE";
+    // Pull the live tuner runtime when the caller didn't supply overrides,
+    // so the dial reflects the actual detected note / cents / in-tune state
+    // from the legacy tuner (js/pages/tools.js::getLegacyTunerRuntime).
+    var liveRuntime = (typeof getLegacyTunerRuntime === "function") ? getLegacyTunerRuntime() : null;
+    // Default tuning from the active instrument's STRINGS (e.g. EADGBE for
+    // guitar, EADG for bass, GCEA for ukulele) instead of hardcoded EADGBE.
+    var defaultTuning = "EADGBE";
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
+      var _ti = SparkInstruments.getActive();
+      var _td = _ti && typeof _ti.getData === "function" ? _ti.getData() : null;
+      if (_td && Array.isArray(_td.STRINGS) && _td.STRINGS.length) {
+        defaultTuning = _td.STRINGS.map(function(s){ return s.note; }).join("");
+      }
+    }
+    var note = opts.note || (liveRuntime && liveRuntime.note) || "E";
+    var freq = opts.frequency != null ? opts.frequency : 440.0;
+    var tuning = opts.tuning || defaultTuning;
     var bpm = opts.bpm || 120;
-    var status = opts.status || "in-tune"; // in-tune | flat | sharp
+    // Status derived from cents: within ±5 is in-tune, flat/sharp past that.
+    var cents = liveRuntime && typeof liveRuntime.cents === "number" ? liveRuntime.cents : 0;
+    var derivedStatus = "in-tune";
+    if (liveRuntime && liveRuntime.active && Math.abs(cents) >= 5) derivedStatus = cents < 0 ? "flat" : "sharp";
+    var status = opts.status || derivedStatus;
     var statusLabel = status === "flat" ? "FLAT"
                     : status === "sharp" ? "SHARP"
                     : "IN TUNE";
