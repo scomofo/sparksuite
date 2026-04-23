@@ -21,45 +21,4 @@ window.act=function(a,v){
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;
   if(window.runSparkActionFamilies && window.runSparkActionFamilies(a, v)) return;
-  // Return to the launcher (instrument picker) from anywhere inside an
-  // instrument. activeInstrument persists to localStorage, so without a
-  // dedicated back-out path the launcher is effectively one-way once a
-  // user picks. deactivate() + render() brings them back to the picker.
-  if(a==="switchInstrumentBack"){
-    if(typeof SparkInstruments!=="undefined"&&SparkInstruments.deactivate){SparkInstruments.deactivate();}
-    S.activeInstrument=null;
-    if(typeof saveState==="function")saveState();
-    render();
-    return;
-  }
-  // Switch instrument from v2 dashboard
-  if(a==="switchInstrument" && v){
-    SparkInstruments.activate(v);
-    S.activeInstrument = v;
-    S.screen = SCR.HOME;
-    S.tab = TAB.PRACTICE;
-    saveState();
-    render();
-    return;
-  }
-  if(a==="tab"){
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields:{tab:v,screen:SCR.HOME,earTrainQ:null,earTrainAns:null,selectedVoicing:0}
-      });
-    }else{
-      S.tab=v;S.screen=SCR.HOME;
-      S.earTrainQ=null;S.earTrainAns=null;S.selectedVoicing=0;
-    }
-    if(window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function"){
-      window.sparkCore.updateRuntimeState({
-        activeScreen: "home",
-        activeTab: v || null,
-        transport: { status: "idle", positionMs: 0 }
-      });
-    }
-    stopAllTimers();
-    if(v===TAB.SONGS&&S.songsSubTab==="community")fetchCommunity();
-    render();return;
-  }
 };
