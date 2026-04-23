@@ -154,6 +154,12 @@
     var sections = [
       { title: "Account", rows: [
         { icon: "person", label: "Profile Details", chevron: true, onClick: nav("profile") },
+        // "Switch Instrument" clears S.activeInstrument via the shared
+        // "instruments" dispatcher case, returning the user to the launcher
+        // (instrument picker). Without this row there was no in-app path back
+        // to the picker once an instrument was chosen — the activeInstrument
+        // field is persisted to localStorage.
+        { icon: "swap_horiz", label: "Switch Instrument", chevron: true, onClick: nav("instruments") },
         { icon: "workspace_premium", label: "Subscription Plan", chevron: true, badge: "Pro" }
       ]},
       { title: "Audio & Input", rows: [
