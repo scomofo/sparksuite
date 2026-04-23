@@ -133,13 +133,31 @@ function _renderInner(){
     return;
   }
 
-  // NOTE: the Showroom modules in js/showroom/spark-showroom.js
-  // (SparkPracticeMetro, SparkSongLibrary, SparkSessionSummary,
-  // SparkSettings, SparkSongDetails, SparkPath, SparkTuner) are
-  // design-reference mocks — they render hardcoded content and ignore the
-  // active instrument. They MUST NOT be routed onto the live render path.
-  // If you want to revive them as real screens, first wire each renderer
-  // to SparkInstruments.getActive() + SparkStorage.load().
+  // Showroom override — render a Warm Ember screen when its corresponding
+  // nav("<view>") route set S._showroomOverride. The allow-list below only
+  // covers renderers that have been wired to real instrument / profile /
+  // storage data; the remaining Showroom modules (SparkSongDetails,
+  // SparkSongLibrary, SparkSessionSummary, SparkPerformance,
+  // SparkCourseSyllabus, SparkCurriculumDashboard, SparkOnboardingWelcome,
+  // SparkPracticeMetro, SparkSettings, SparkTuner) are still hardcoded
+  // design-reference mocks — they stay out of this map until ported.
+  //
+  // The Warm Ember screens are full-viewport surfaces that carry their own
+  // header/bottom-nav, so the legacy top header must be hidden while an
+  // override is active (same treatment as the launcher gate above).
+  if (typeof S !== "undefined" && S._showroomOverride) {
+    var _showroomRoute = {
+      "lesson":  typeof SparkLesson          !== "undefined" && SparkLesson.render,
+      "path":    typeof SparkPath            !== "undefined" && SparkPath.render,
+      "profile": typeof SparkProfileScreen   !== "undefined" && SparkProfileScreen.render
+    };
+    var _overrideFn = _showroomRoute[S._showroomOverride];
+    if (typeof _overrideFn === "function") {
+      document.getElementById("header").style.display = "none";
+      _writeAppHtml(_overrideFn());
+      return;
+    }
+  }
 
   document.getElementById("header").style.display = "";
   var backBtn = document.getElementById("launcher-back");
