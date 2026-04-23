@@ -64,7 +64,7 @@ global.SparkInstruments = {
 };
 global.SparkContent = {
   songs: {
-    stand_by_me: { id: 'stand_by_me', title: 'Stand By Me', artist: 'Ben E. King', chartId: 'stand_by_me_chords' },
+    stand_by_me: { id: 'stand_by_me', title: 'Stand By Me', artist: 'Ben E. King', chartId: 'stand_by_me_chords', midi: 'content/songs/midi/stand_by_me.mid', audio: { type: 'midi', src: 'content/songs/midi/stand_by_me.mid', label: 'Built-in MIDI Backing' } },
     let_it_be: { id: 'let_it_be', title: 'Let It Be', artist: 'The Beatles', chartId: 'let_it_be_chords' },
     wonderful_tonight: { id: 'wonderful_tonight', title: 'Wonderful Tonight', artist: 'Eric Clapton', chartId: 'wonderful_tonight_chords' },
     hotel_california: { id: 'hotel_california', title: 'Hotel California', artist: 'Eagles', chartId: 'hotel_california_chords' },
@@ -468,6 +468,29 @@ test('buildPerformanceChartFromSong carries the active instrument into generated
 
   assert.strictEqual(chart.instrument, 'ukulele');
   assert.strictEqual(chart.adapterType, 'ukulele');
+});
+
+test('applyCanonicalPerformanceChartAudio injects built-in backing from the canonical song catalog', function() {
+  var chart = applyCanonicalPerformanceChartAudio({ id: 'stand_by_me_chords', audio: { type: 'silent' } }, 'stand_by_me');
+  assert.strictEqual(chart.audio.type, 'midi');
+  assert.strictEqual(chart.audio.src, 'content/songs/midi/stand_by_me.mid');
+});
+
+test('getCanonicalPerformanceSongAudio can return a convention-resolved local backing track from cache', function() {
+  var cache = getPerformanceSongAudioAssetCache();
+  var originalAudio = SparkContent.songs.stand_by_me.audio;
+  var originalMidi = SparkContent.songs.stand_by_me.midi;
+  SparkContent.songs.stand_by_me.audio = null;
+  SparkContent.songs.stand_by_me.midi = null;
+  cache.stand_by_me = {
+    status: 'resolved',
+    audio: { type: 'audio', src: 'content/songs/audio/stand_by_me.mp3', label: 'Built-in Backing Track' },
+    promise: null
+  };
+  assert.strictEqual(getCanonicalPerformanceSongAudio('stand_by_me').src, 'content/songs/audio/stand_by_me.mp3');
+  SparkContent.songs.stand_by_me.audio = originalAudio;
+  SparkContent.songs.stand_by_me.midi = originalMidi;
+  delete cache.stand_by_me;
 });
 
 test('derivePerformanceLaneIndex maps bass note names onto bass-string lanes', function() {

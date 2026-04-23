@@ -30,6 +30,19 @@
     if (!normalized.highwaySource) {
       normalized.highwaySource = normalized.chartId ? "chart" : "";
     }
+    if (!normalized.audio && normalized.midi) {
+      normalized.audio = {
+        type: "midi",
+        src: normalized.midi,
+        label: "Built-in MIDI Backing"
+      };
+    } else if (normalized.audio && typeof normalized.audio === "string") {
+      normalized.audio = {
+        type: "audio",
+        src: normalized.audio,
+        label: "Built-in Backing Track"
+      };
+    }
     return normalized;
   }
 

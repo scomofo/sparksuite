@@ -24,6 +24,7 @@ var PERFORMANCE_CHART_LIBRARY_FALLBACK = [
     instrument: "guitar"
   }
 ];
+var PERFORMANCE_AUDIO_EXTENSION_CANDIDATES = [".mp3", ".wav", ".ogg", ".m4a"];
 
 function normalizePerformanceInstrument(instrument) {
   var candidate = instrument || null;
@@ -40,6 +41,110 @@ function normalizePerformanceInstrument(instrument) {
   return candidate;
 }
 
+function getCanonicalPerformanceSongEntry(songId) {
+  if (!songId || typeof window === "undefined" || !window.SparkContent || !window.SparkContent.songs) return null;
+  return window.SparkContent.songs[songId] || null;
+}
+
+function buildConventionalPerformanceSongAudioCandidates(songId) {
+  var candidates = [];
+  var i;
+  if (!songId) return candidates;
+  for (i = 0; i < PERFORMANCE_AUDIO_EXTENSION_CANDIDATES.length; i++) {
+    candidates.push({
+      type: "audio",
+      src: "content/songs/audio/" + songId + PERFORMANCE_AUDIO_EXTENSION_CANDIDATES[i],
+      label: "Built-in Backing Track",
+      source: "convention"
+    });
+  }
+  return candidates;
+}
+
+function getPerformanceSongAudioAssetCache() {
+  if (typeof window === "undefined") return {};
+  if (!window.__performanceSongAudioAssetCache) window.__performanceSongAudioAssetCache = {};
+  return window.__performanceSongAudioAssetCache;
+}
+
+function getCanonicalPerformanceSongAudio(songId) {
+  var song = getCanonicalPerformanceSongEntry(songId);
+  var cacheEntry;
+  if (!song) return null;
+  if (song.audio && song.audio.src) return song.audio;
+  if (song.midi) {
+    return {
+      type: "midi",
+      src: song.midi,
+      label: "Built-in MIDI Backing"
+    };
+  }
+  cacheEntry = getPerformanceSongAudioAssetCache()[songId];
+  if (cacheEntry && cacheEntry.status === "resolved" && cacheEntry.audio) return cacheEntry.audio;
+  return null;
+}
+
+function resolvePerformanceSongAudioAsset(songId, options) {
+  var song = getCanonicalPerformanceSongEntry(songId);
+  var cache = getPerformanceSongAudioAssetCache();
+  var candidates;
+  var probeIndex = 0;
+  options = options || {};
+  if (!songId || !song) return Promise.resolve(null);
+  if (song.audio && song.audio.src) return Promise.resolve(song.audio);
+  if (song.midi) {
+    return Promise.resolve({
+      type: "midi",
+      src: song.midi,
+      label: "Built-in MIDI Backing"
+    });
+  }
+  if (!options.forceRefresh && cache[songId]) {
+    if (cache[songId].status === "resolved") return Promise.resolve(cache[songId].audio);
+    if (cache[songId].status === "missing") return Promise.resolve(null);
+    if (cache[songId].promise) return cache[songId].promise;
+  }
+  candidates = buildConventionalPerformanceSongAudioCandidates(songId);
+  cache[songId] = { status: "probing", audio: null, promise: null };
+  cache[songId].promise = new Promise(function(resolve) {
+    function finalize(audio) {
+      cache[songId] = {
+        status: audio ? "resolved" : "missing",
+        audio: audio || null,
+        promise: null
+      };
+      resolve(audio || null);
+    }
+    function probeNext() {
+      var candidate = candidates[probeIndex++];
+      if (!candidate || typeof fetch !== "function") {
+        finalize(null);
+        return;
+      }
+      fetch(candidate.src, { method: "HEAD", cache: "no-store" }).then(function(response) {
+        if (response && response.ok) {
+          finalize(candidate);
+          return;
+        }
+        probeNext();
+      }).catch(function() {
+        probeNext();
+      });
+    }
+    probeNext();
+  });
+  return cache[songId].promise;
+}
+
+function applyCanonicalPerformanceChartAudio(chart, songId) {
+  var audio;
+  if (!chart || !songId) return chart;
+  if (chart.audio && chart.audio.type && chart.audio.type !== "silent" && chart.audio.src) return chart;
+  audio = getCanonicalPerformanceSongAudio(songId);
+  if (audio) chart.audio = audio;
+  return chart;
+}
+
 function loadPerformanceChart(chartId) {
   var meta = getPerformanceChartMeta(chartId);
   if (meta && meta.sourceType === "generated_catalog") {
@@ -51,7 +156,7 @@ function loadPerformanceChart(chartId) {
       return r.json();
     })
     .then(function(chartDefinition) {
-      return normalizePerformanceChartDefinition(chartDefinition);
+      return applyCanonicalPerformanceChartAudio(normalizePerformanceChartDefinition(chartDefinition), meta && meta.songId);
     });
 }
 
@@ -107,7 +212,8 @@ function buildPerformanceCatalogChartEntries(existingCharts) {
         instrument: song.defaultInstrument || song.instrument || song.instrumentType || song.adapterType || "guitar",
         songId: songId,
         familyId: song.familyId || songId,
-        arrangementType: song.arrangementType || "chords"
+        arrangementType: song.arrangementType || "chords",
+        audio: getCanonicalPerformanceSongAudio(songId)
       });
       seen[chartId] = true;
       continue;
@@ -127,7 +233,8 @@ function buildPerformanceCatalogChartEntries(existingCharts) {
         instrument: song.defaultInstrument,
         songId: songId,
         familyId: song.familyId || songId,
-        arrangementType: song.arrangementType || "chords"
+        arrangementType: song.arrangementType || "chords",
+        audio: getCanonicalPerformanceSongAudio(songId)
       });
       seen[chartId] = true;
     }
@@ -187,6 +294,7 @@ function loadGeneratedCatalogPerformanceChart(meta) {
   chart.adapterType = meta.instrument || chart.adapterType;
   chart.songId = meta.songId || chart.songId;
   chart.familyId = meta.familyId || chart.familyId || meta.songId || "";
+  applyCanonicalPerformanceChartAudio(chart, chart.songId || meta.songId);
   return Promise.resolve(chart);
 }
 
@@ -633,3 +741,5 @@ window.normalizePerformanceChartDefinition = normalizePerformanceChartDefinition
 window.getPerformanceImportAdapter = getPerformanceImportAdapter;
 window.convertSparkSongChartToPerformanceChart = convertSparkSongChartToPerformanceChart;
 window.resolvePerformanceChartVariantId = resolvePerformanceChartVariantId;
+window.getCanonicalPerformanceSongAudio = getCanonicalPerformanceSongAudio;
+window.resolvePerformanceSongAudioAsset = resolvePerformanceSongAudioAsset;

@@ -15,6 +15,31 @@ function prettyPerformSongToken(value) {
 // Wrapper — see js/utils/normalize.js for the canonical implementation.
 function normalizePerformSongNumber(value, fallback) { return SparkNormalize.number(value, fallback); }
 
+function getCanonicalPerformSongAudio(songId) {
+  if (!songId) return null;
+  if (typeof getContent === "function") {
+    var canonicalSong = getContent("songs", songId);
+    if (canonicalSong && canonicalSong.audio && canonicalSong.audio.src) return canonicalSong.audio;
+    if (canonicalSong && canonicalSong.midi) {
+      return { type: "midi", src: canonicalSong.midi, label: "Built-in MIDI Backing" };
+    }
+  }
+  return null;
+}
+
+function ensureCanonicalPerformSongAudio(songId) {
+  if (!songId || typeof resolvePerformanceSongAudioAsset !== "function") return;
+  if (!window.__performSongAudioProbeState) window.__performSongAudioProbeState = {};
+  if (window.__performSongAudioProbeState[songId]) return;
+  window.__performSongAudioProbeState[songId] = "pending";
+  resolvePerformanceSongAudioAsset(songId).then(function() {
+    window.__performSongAudioProbeState[songId] = "done";
+    if (typeof render === "function") render();
+  }).catch(function() {
+    window.__performSongAudioProbeState[songId] = "done";
+  });
+}
+
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
@@ -34,6 +59,8 @@ function performSongPage() {
     ? resolvePerformanceSongId(song, displayTitle || "song")
     : (displayTitle || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
   var audioData = S.songAudioData[normalizedSongId];
+  ensureCanonicalPerformSongAudio(normalizedSongId);
+  var canonicalAudio = getCanonicalPerformSongAudio(normalizedSongId);
   var detectedSongBpm = audioData && audioData.stemPaths
     ? normalizePerformSongNumber(audioData.detectedBpm, null)
     : null;
@@ -143,6 +170,13 @@ function performSongPage() {
     }
     h += '</div>';
     h += '<button class="btn btn-sm" onclick="act(\'removeSongAudio\',\'' + songId + '\')" style="background:var(--input-bg);color:var(--text-secondary)">Remove Audio</button>';
+  } else if (canonicalAudio && canonicalAudio.src) {
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    h += '<span style="color:#4ECDC4;font-weight:700">&#9989; Built-in backing ready</span>';
+    h += '<span style="font-size:11px;color:var(--text-muted)">' + escHTML(canonicalAudio.label || (canonicalAudio.type === "midi" ? "Built-in MIDI Backing" : "Built-in Backing Track")) + '</span>';
+    h += '</div>';
+    h += '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">This song includes a curated local backing track and will auto-play during performance. You can still import your own audio if you want stems instead.</p>';
+    h += '<button class="btn btn-sm" onclick="act(\'importSongAudio\',\'' + songId + '\')" style="background:var(--input-bg);color:var(--text-secondary)">Import Richer Audio / Stems</button>';
   } else if (S.songAudioImporting) {
     var songAudioProgress = Math.max(0, Math.min(100, normalizePerformSongNumber(S.songAudioProgress, 0)));
     h += '<div style="margin-bottom:8px">';
@@ -150,7 +184,7 @@ function performSongPage() {
     h += '<div style="background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden"><div style="width:' + songAudioProgress + '%;height:100%;background:#4ECDC4;transition:width .3s"></div></div>';
     h += '</div>';
   } else {
-    h += '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Import an MP3 to play along with the actual song during performance.</p>';
+    h += '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Drop a file like <code>content/songs/audio/' + escHTML(songId) + '.mp3</code> to make it a built-in backing track, or import an MP3 for per-song stems.</p>';
     h += '<button class="btn" onclick="act(\'importSongAudio\',\'' + songId + '\')" style="background:linear-gradient(135deg,#45B7D1,#4ECDC4);color:#fff">&#127925; Import Song Audio</button>';
   }
   h += '</div>';

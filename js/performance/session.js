@@ -2,6 +2,66 @@
 
 var _performRAF = null;
 var _performStopping = false;
+var _performDirectAudio = null;
+
+function cleanupPerformanceDirectAudio() {
+  if (!_performDirectAudio) return;
+  try { _performDirectAudio.pause(); } catch (e) {}
+  try { _performDirectAudio.currentTime = 0; } catch (e2) {}
+  _performDirectAudio = null;
+}
+
+function loadPerformanceDirectAudio(src) {
+  return new Promise(function(resolve, reject) {
+    var audio;
+    var onReady;
+    var onError;
+    if (!src) {
+      resolve(null);
+      return;
+    }
+    cleanupPerformanceDirectAudio();
+    audio = new Audio(src);
+    audio.preload = "auto";
+    audio.crossOrigin = "anonymous";
+    onReady = function() {
+      audio.removeEventListener("canplaythrough", onReady);
+      audio.removeEventListener("error", onError);
+      _performDirectAudio = audio;
+      resolve(audio);
+    };
+    onError = function() {
+      audio.removeEventListener("canplaythrough", onReady);
+      audio.removeEventListener("error", onError);
+      reject(new Error("Audio backing load failed"));
+    };
+    audio.addEventListener("canplaythrough", onReady);
+    audio.addEventListener("error", onError);
+    audio.load();
+  });
+}
+
+function playPerformanceDirectAudio(fromSec, speed) {
+  if (!_performDirectAudio) return;
+  try {
+    _performDirectAudio.playbackRate = speed || 1;
+    _performDirectAudio.currentTime = Math.max(0, fromSec || 0);
+  } catch (e) {}
+  _performDirectAudio.play().catch(function(){});
+}
+
+function pausePerformanceDirectAudio() {
+  if (!_performDirectAudio) return;
+  try { _performDirectAudio.pause(); } catch (e) {}
+}
+
+function seekPerformanceDirectAudio(sec, speed) {
+  if (!_performDirectAudio) return;
+  try {
+    _performDirectAudio.playbackRate = speed || 1;
+    _performDirectAudio.currentTime = Math.max(0, sec || 0);
+  } catch (e) {}
+}
 
 function resolvePerformanceSessionInstrumentCandidate(candidate) {
   var active;
@@ -238,12 +298,23 @@ function startPerformance(chartIdOrChart, opts) {
       }
     }
 
+    var chartSongAudio = chart.songId && typeof resolvePerformanceSongAudioAsset === "function"
+      ? resolvePerformanceSongAudioAsset(chart.songId)
+      : Promise.resolve(null);
     // Load MIDI backing track if chart specifies one
-    var hasMidiBacking = chart.audio && chart.audio.type === "midi" && chart.audio.src;
-    var midiReady = hasMidiBacking
-      ? (typeof loadMidiBacking === "function" ? loadMidiBacking(chart.audio.src) : Promise.resolve())
+    Promise.all([chartSongAudio]).then(function(results){
+    var resolvedSongAudio = results && results[0] ? results[0] : null;
+    var backingAudio = resolvedSongAudio || chart.audio || { type: "silent" };
+    var hasDirectAudio = !hasStemAudio && backingAudio && backingAudio.type === "audio" && backingAudio.src;
+    var hasMidiBacking = !hasStemAudio && !hasDirectAudio && backingAudio && backingAudio.type === "midi" && backingAudio.src;
+    var audioReady = hasDirectAudio
+      ? (typeof loadPerformanceDirectAudio === "function" ? loadPerformanceDirectAudio(backingAudio.src) : Promise.resolve())
       : Promise.resolve();
-    midiReady.then(function(){
+    var midiReady = hasMidiBacking
+      ? (typeof loadMidiBacking === "function" ? loadMidiBacking(backingAudio.src) : Promise.resolve())
+      : Promise.resolve();
+    Promise.all([audioReady, midiReady]).then(function(readyResults){
+    var directAudio = readyResults && readyResults[0] ? readyResults[0] : _performDirectAudio;
     if (S.performCountIn) {
       startPerformanceCountIn(chart, S.performSpeed, function() {
         PerformanceTransport.start(0, S.performSpeed);
@@ -251,6 +322,10 @@ function startPerformance(chartIdOrChart, opts) {
           playStems();
           var firstStem = typeof getFirstStemAudio === "function" ? getFirstStemAudio() : null;
           if (firstStem) PerformanceTransport.setAudioSource(firstStem);
+        }
+        if (hasDirectAudio && directAudio) {
+          playPerformanceDirectAudio(0, S.performSpeed);
+          PerformanceTransport.setAudioSource(directAudio);
         }
         if (hasMidiBacking && typeof playMidiBacking === "function") playMidiBacking(0, S.performSpeed);
         render();
@@ -263,11 +338,16 @@ function startPerformance(chartIdOrChart, opts) {
         var firstStem = typeof getFirstStemAudio === "function" ? getFirstStemAudio() : null;
         if (firstStem) PerformanceTransport.setAudioSource(firstStem);
       }
+      if (hasDirectAudio && directAudio) {
+        playPerformanceDirectAudio(0, S.performSpeed);
+        PerformanceTransport.setAudioSource(directAudio);
+      }
       if (hasMidiBacking && typeof playMidiBacking === "function") playMidiBacking(0, S.performSpeed);
       render();
       _performRAF = requestAnimationFrame(updatePerformanceFrame);
     }
-    }).catch(function(e){ console.warn("MIDI backing load failed:", e); });
+    }).catch(function(e){ console.warn("Performance backing load failed:", e); });
+    }).catch(function(e){ console.warn("Song audio resolve failed:", e); });
   }).catch(function(err) {
     console.error("ChordSpark: Failed to start performance:", err);
     if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
@@ -294,6 +374,7 @@ window.applyPerformanceChartInstrumentContext = applyPerformanceChartInstrumentC
 function stopPerformance() {
   destroySparkHighway();
   if (typeof cleanupStems === "function") cleanupStems();
+  cleanupPerformanceDirectAudio();
   if (typeof stopMidiBacking === "function") stopMidiBacking();
   PerformanceTransport.stop();
   _performStopping = true;
@@ -330,6 +411,7 @@ function resetPerformanceEvents(chart, rangeStartSec, rangeEndSec) {
 function pausePerformance() {
   PerformanceTransport.pause();
   if (typeof pauseStems === "function") pauseStems();
+  pausePerformanceDirectAudio();
   if (typeof pauseMidiBacking === "function") pauseMidiBacking();
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("pause");
@@ -356,6 +438,7 @@ function resumePerformance() {
     window.sparkCore.syncPerformanceRuntimeState("resume");
   }
   if (typeof playStems === "function") playStems();
+  if (_performDirectAudio) playPerformanceDirectAudio(S.performCurrentSec, S.performSpeed);
   if (typeof playMidiBacking === "function" && S.performChart && S.performChart.audio && S.performChart.audio.type === "midi") {
     playMidiBacking(S.performCurrentSec, S.performSpeed);
   }
@@ -374,6 +457,7 @@ function seekPerformance(sec) {
     window.sparkCore.syncPerformanceRuntimeState("seek", { sec: sec });
   }
   if (typeof seekStems === "function") seekStems(sec);
+  seekPerformanceDirectAudio(sec, S.performSpeed);
   if (typeof seekMidiBacking === "function") seekMidiBacking(sec, S.performSpeed);
   render();
 }
