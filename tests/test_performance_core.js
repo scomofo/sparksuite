@@ -236,7 +236,7 @@ test('getPerformanceChartLibrary can filter the manifest by app-id instrument', 
 
 test('getPerformanceChartLibrary can filter the manifest by bass instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'bass' });
-  assert.strictEqual(library.length, 14);
+  assert.strictEqual(library.length, 19);
   assert.strictEqual(library[0].id, 'stand_by_me_bass_chords');
   assert.strictEqual(library[1].id, 'with_or_without_you_bass_chords');
   assert.strictEqual(library[2].id, 'zombie_bass_chords');
@@ -248,9 +248,14 @@ test('getPerformanceChartLibrary can filter the manifest by bass instrument', fu
   assert.strictEqual(library[8].id, 'seven_nation_army_bass_chords');
   assert.strictEqual(library[9].id, 'longview_bass_chords');
   assert.strictEqual(library[10].id, 'under_pressure_bass_chords');
-  assert.strictEqual(library[11].id, 'pumped_up_kicks_bass_chords');
-  assert.strictEqual(library[12].id, 'bass_midnight_lock_package');
-  assert.strictEqual(library[13].id, 'bass_afterglow_walk_package');
+  assert.strictEqual(library[11].id, 'sunshine_of_your_love_bass_chords');
+  assert.strictEqual(library[12].id, 'come_as_you_are_bass_chords');
+  assert.strictEqual(library[13].id, 'hysteria_bass_chords');
+  assert.strictEqual(library[14].id, 'money_bass_chords');
+  assert.strictEqual(library[15].id, 'sweet_child_o_mine_bass_chords');
+  assert.strictEqual(library[16].id, 'pumped_up_kicks_bass_chords');
+  assert.strictEqual(library[17].id, 'bass_midnight_lock_package');
+  assert.strictEqual(library[18].id, 'bass_afterglow_walk_package');
 });
 
 test('getPerformanceChartLibrary exposes authored instrument-specific variants', function() {
@@ -272,6 +277,11 @@ test('getPerformanceChartLibrary exposes authored instrument-specific variants',
   assert.ok(bassLibrary.some(function(chart) { return chart.id === 'seven_nation_army_bass_chords'; }));
   assert.ok(bassLibrary.some(function(chart) { return chart.id === 'longview_bass_chords'; }));
   assert.ok(bassLibrary.some(function(chart) { return chart.id === 'under_pressure_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'sunshine_of_your_love_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'come_as_you_are_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'hysteria_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'money_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'sweet_child_o_mine_bass_chords'; }));
   assert.ok(bassLibrary.some(function(chart) { return chart.id === 'pumped_up_kicks_bass_chords'; }));
   assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'stand_by_me_piano_chords'; }));
   assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'let_it_be_piano_chords'; }));
@@ -314,6 +324,26 @@ test('resolvePerformanceChartVariantId returns the matching authored chart for a
   assert.strictEqual(
     resolvePerformanceChartVariantId('under_pressure', { instrument: 'bass', arrangementType: 'chords' }),
     'under_pressure_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('sunshine_of_your_love', { instrument: 'bass', arrangementType: 'chords' }),
+    'sunshine_of_your_love_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('come_as_you_are', { instrument: 'bass', arrangementType: 'chords' }),
+    'come_as_you_are_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('hysteria', { instrument: 'bass', arrangementType: 'chords' }),
+    'hysteria_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('money', { instrument: 'bass', arrangementType: 'chords' }),
+    'money_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('sweet_child_o_mine', { instrument: 'bass', arrangementType: 'chords' }),
+    'sweet_child_o_mine_bass_chords'
   );
 });
 
