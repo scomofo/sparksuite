@@ -182,7 +182,15 @@ function statsTab(){
   var dayCount=Object.keys(practiceDays).length;
   var avgXP=dayCount>0?Math.round(totalXP/dayCount):0;
 
-  h+='<div style="text-align:center;margin-bottom:12px"><button class="btn" onclick="act(\'openSkillTree\')" style="background:var(--accent);color:#fff">&#127795; Skill Tree</button></div>';
+  // Skill Tree → Warm Ember Learning Path when available (real instrument
+  // lessons + progression), else fall through to the legacy skillTreePage
+  // via the existing openSkillTree action. The typeof guard keeps this
+  // page working on builds / test surfaces where SparkShowroomNavigate
+  // isn't loaded.
+  var _skillBtnClick = (typeof window !== "undefined" && typeof window.SparkShowroomNavigate === "function" && typeof window.SparkPath !== "undefined")
+    ? "SparkShowroomNavigate('path')"
+    : "act('openSkillTree')";
+  h+='<div style="text-align:center;margin-bottom:12px"><button class="btn" onclick="'+_skillBtnClick+'" style="background:var(--accent);color:#fff">&#127795; Learning Path</button></div>';
   h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FF6B6B">'+normalizeToolsCount(S.xp,0)+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Total XP</div></div>';
   h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+totalSessions+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Activities</div></div>';

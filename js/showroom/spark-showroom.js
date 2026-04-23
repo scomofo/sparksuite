@@ -130,8 +130,13 @@
         "library":         function(){ S.screen = SCR_.HOME;       S.tab = TAB_.SONGS; },
         "tuner":           function(){ S.screen = SCR_.HOME;       S.tab = TAB_.TUNER || "tuner"; },
         "settings":        function(){ S.screen = SCR_.SETTINGS; },
-        "path":            function(){ S.screen = SCR_.SKILL_TREE; },
-        "learn":           function(){ S.screen = SCR_.SKILL_TREE; },
+        // "path" / "learn" route to the Warm Ember Learning Path screen
+        // (SparkPath.render) which reads the active instrument's real
+        // lesson list + progression. The render.js allow-list guards this;
+        // if SparkPath is absent or fails we fall through to the legacy
+        // SCR_.SKILL_TREE which the allow-list auto-unwinds.
+        "path":            function(){ S._showroomOverride = "path"; },
+        "learn":           function(){ S._showroomOverride = "path"; },
         "song-details":    function(){ S.screen = SCR_.SONG; },
         "session-summary": function(){ S.screen = SCR_.COMPLETE; },
         // Performance gameplay stays in the legacy engine. Call sites that
@@ -147,8 +152,10 @@
         // Explicit "switch instrument" action.
         "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
       };
-      // Clear any prior override so the legacy slot routing wins again.
-      if (view !== "profile" && view !== "lesson") S._showroomOverride = null;
+      // Clear any prior override so the legacy slot routing wins again —
+      // but keep it for routes whose handlers set an override themselves
+      // (profile, lesson, path, learn).
+      if (view !== "profile" && view !== "lesson" && view !== "path" && view !== "learn") S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
       if (typeof saveState === "function") saveState();
