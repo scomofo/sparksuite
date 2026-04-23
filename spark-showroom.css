@@ -110,7 +110,7 @@
   position:relative;
   width:100%;
   max-width:var(--showroom-max);
-  min-height:100vh;
+  min-height:100dvh;
   margin:0 auto;
   padding-bottom:96px;
   font-family:'Plus Jakarta Sans',var(--font-body);
@@ -1562,7 +1562,7 @@
 /* ───── Performance (Rhythm Highway gameplay) ───── */
 .showroom-perf-root{
   background:#050508;color:var(--text-primary);
-  width:100%;max-width:var(--showroom-max);min-height:100vh;
+  width:100%;max-width:var(--showroom-max);min-height:100dvh;
   margin:0 auto;display:flex;flex-direction:column;align-items:center;
   overflow:hidden;position:relative;
   font-family:'Plus Jakarta Sans',var(--font-body);
@@ -2602,7 +2602,7 @@
   background-attachment:fixed;
 }
 .showroom-onboarding-welcome{
-  min-height:100vh;
+  min-height:100dvh;
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
   padding:var(--showroom-pad);
@@ -3310,7 +3310,7 @@
    ═════════════════════════════════════════════════════════════════════ */
 .showroom-perf-root.showroom-perf2{
   background:var(--bg);
-  width:100%; max-width:var(--showroom-max); min-height:100vh;
+  width:100%; max-width:var(--showroom-max); min-height:100dvh;
   margin:0 auto; position:relative; overflow:hidden;
   display:flex; flex-direction:column; align-items:center;
   color:var(--on-surface);
@@ -3552,7 +3552,7 @@
    replaces it with an initial-letter bubble so all assets stay same-origin.
    ═════════════════════════════════════════════════════════════════════ */
 .showroom-root.showroom-syllabus{
-  min-height:100vh;
+  min-height:100dvh;
   padding-bottom:120px;
   position:relative;
   background:

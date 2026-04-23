@@ -517,7 +517,7 @@
          + '<div class="showroom-actionbar">'
            + '<button class="showroom-action-cta" onclick="act(\'showroomStartPerf\')">'
              + '<div class="showroom-shimmer-overlay"></div>'
-             + '<span class="material-symbols-outlined fill">play_circle</span>START PERFORMANCE</button>'
+             + '<span class="material-symbols-outlined fill">play_circle</span>Start Performance</button>'
          + '</div>'
          + '</div>';
   }
@@ -1412,6 +1412,11 @@
     var ctaAction = opts.ctaAction || "act('completeOnboarding')";
     var signInLabel = opts.signInLabel || "Already have an account?";
     var signInAction = opts.signInAction || "act('completeOnboarding')";
+    // Escape " in action strings so a caller passing e.g. act("x") doesn't
+    // prematurely close the onclick attribute. Single quotes inside the JS
+    // call stay intact; this is the minimum-safe encoding for an attribute
+    // value whose content is still expected to execute as JavaScript.
+    function _attrSafeJs(s) { return String(s).replace(/"/g, "&quot;"); }
 
     return '<div class="showroom-root with-woodgrain showroom-onboarding-welcome">'
          + '<div class="showroom-onboarding-glow showroom-onboarding-glow-tl" aria-hidden="true"></div>'
@@ -1429,13 +1434,13 @@
              + '<p class="showroom-onboarding-body">' + escHtml(body) + '</p>'
            + '</div>'
            + '<div class="showroom-onboarding-cta-wrap">'
-             + '<button type="button" class="showroom-onboarding-cta" onclick="' + ctaAction + '">'
+             + '<button type="button" class="showroom-onboarding-cta" onclick="' + _attrSafeJs(ctaAction) + '">'
                + escHtml(String(ctaLabel).toUpperCase())
                + '<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>'
              + '</button>'
              + '<p class="showroom-onboarding-signin">'
                + escHtml(signInLabel) + ' '
-               + '<button type="button" class="showroom-onboarding-signin-link" onclick="' + signInAction + '">Sign In</button>'
+               + '<button type="button" class="showroom-onboarding-signin-link" onclick="' + _attrSafeJs(signInAction) + '">Sign In</button>'
              + '</p>'
            + '</div>'
          + '</main>'
@@ -1504,7 +1509,9 @@
         var les = mod.lessons[j];
         var lesStatusHtml = les.completed ? '<span class="material-symbols-outlined showroom-lesson-check">check_circle</span>' :
                             les.active ? '<span class="showroom-lesson-badge">NOW</span>' :
-                            '<span class="material-symbols-outlined showroom-lesson-lock">lock_open</span>';
+                            // Locked lessons render a closed-lock glyph so the state reads
+                            // correctly alongside the module-marker logic that uses "lock".
+                            '<span class="material-symbols-outlined showroom-lesson-lock">lock</span>';
 
         lessonsHtml += '<div class="showroom-lesson-item' + (les.active ? ' active' : '') + '">'
                     + '<div class="showroom-lesson-info">'
