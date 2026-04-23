@@ -279,7 +279,7 @@ function prettyPianoPracticePlanToken(value){
   var text;
   var lower;
   if(value == null) return "";
-  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if(typeof value !== "string" && typeof value !== "number") return "";
   text = String(value || "").replace(/_/g, " ").trim();
   if(!text) return "";
   lower = text.toLowerCase();
