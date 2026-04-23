@@ -138,6 +138,12 @@
         // dropping the user out of the instrument context.
         "back":            function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
         "practice":        function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
+        // Opt-in preview of the Warm Ember practice-session screen
+        // (SparkPracticeMetro). Kept separate from "practice" so the
+        // legacy practice tab (with full drill launchers + plan controls)
+        // stays the default. Entry is explicit: callers invoke
+        // nav("practice-metro") to try the Warm Ember version.
+        "practice-metro":  function(){ S._showroomOverride = "practice-metro"; S.screen = SCR_.HOME; S.tab = TAB_.PRACTICE; },
         // "library" / "tuner" → Warm Ember Song Library / Tuner when the
         // Showroom renderers are present (they're on the render.js allow
         // list). If the module isn't loaded, render.js falls through to
@@ -178,7 +184,7 @@
       };
       // Clear any prior override so the legacy slot routing wins again —
       // but keep it for routes whose handlers set an override themselves.
-      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "library":1, "tuner":1, "session-summary":1, "song-details":1 };
+      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "library":1, "tuner":1, "session-summary":1, "song-details":1, "practice-metro":1 };
       if (!_overrideRoutes[view]) S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
@@ -640,6 +646,12 @@
     for (var i = 0; i < drillItems.length; i++) {
       var d = drillItems[i];
       var isDone = d.completed;
+      // Start button routes through launchPracticePlanItem(id) — the
+      // canonical entry point that dispatches to the right planStart*
+      // action based on item type (warmup / transition / song / rhythm /
+      // technique / moduleExercise). Same contract the legacy practice
+      // page uses via data-item-id.
+      var canLaunch = !!d.id && typeof window !== "undefined" && typeof window.launchPracticePlanItem === "function";
       drillHtml += '<div class="showroom-drill group">'
                 + '<div class="showroom-drill-left">'
                   + '<div class="showroom-drill-icon showroom-inset-carved"><span class="material-symbols-outlined">' + d.icon + '</span></div>'
@@ -648,7 +660,9 @@
                 + '</div>'
                 + (isDone
                     ? '<span class="showroom-drill-meta" style="color:var(--success)">Done</span>'
-                    : '<button class="showroom-drill-cta" onclick="' + nav("lesson") + '">Start</button>')
+                    : (canLaunch
+                        ? '<button class="showroom-drill-cta" data-item-id="' + escHtml(String(d.id)) + '" onclick="launchPracticePlanItem(this.getAttribute(\'data-item-id\'))">Start</button>'
+                        : '<button class="showroom-drill-cta" onclick="' + nav("lesson") + '">Start</button>'))
               + '</div>';
     }
 
