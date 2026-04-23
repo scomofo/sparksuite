@@ -145,7 +145,7 @@ test("launchPracticeItem infers guided launches from generic core practice segme
 
   assert.strictEqual(launched, true);
   assert.deepStrictEqual(global._acts, [
-    { name: "guidedStart", value: 2 }
+    { name: "start_guided_session", value: 2 }
   ]);
 });
 
