@@ -1,9 +1,83 @@
 (function(){
 
+  function sanitizePerformanceSongId(value) {
+    if (value == null) return "";
+    return String(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function normalizePerformanceSongText(value) {
+    if (value == null) return "";
+    return String(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function findCanonicalPerformanceSongId(song) {
+    var songs;
+    var key;
+    var entry;
+    var targetTitle;
+    var targetArtist;
+    if (!song || typeof window === "undefined" || !window.SparkContent || !window.SparkContent.songs) return "";
+    songs = window.SparkContent.songs;
+    if (song.id && songs[song.id]) return sanitizePerformanceSongId(song.id);
+    if (song.songId && songs[song.songId]) return sanitizePerformanceSongId(song.songId);
+    targetTitle = normalizePerformanceSongText(song.title);
+    targetArtist = normalizePerformanceSongText(song.artist);
+    if (!targetTitle) return "";
+    for (key in songs) {
+      if (!Object.prototype.hasOwnProperty.call(songs, key)) continue;
+      entry = songs[key] || {};
+      if (normalizePerformanceSongText(entry.title) !== targetTitle) continue;
+      if (targetArtist && normalizePerformanceSongText(entry.artist) !== targetArtist) continue;
+      return sanitizePerformanceSongId(entry.id || key);
+    }
+    return "";
+  }
+
+  function resolvePerformanceSongId(song, fallbackTitle) {
+    var explicitId;
+    explicitId = sanitizePerformanceSongId(
+      (song && (song.id || song.songId || song.contentSongId || song.performanceSongId)) ||
+      fallbackTitle ||
+      (song && song.title) ||
+      "song"
+    );
+    return findCanonicalPerformanceSongId(song) || explicitId || "song";
+  }
+
+  function getActivePerformanceInstrumentType() {
+    var active;
+    var all;
+    var i;
+    var entry;
+    var candidate;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return "guitar";
+    }
+    active = SparkInstruments.getActive();
+    if (!active) return "guitar";
+    if (active.instrument || active.instrumentType) return active.instrument || active.instrumentType;
+    candidate = active.id || active.appId || active.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return "guitar";
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) {
+        return entry.instrument || entry.instrumentType || "guitar";
+      }
+    }
+    return "guitar";
+  }
+
   function buildPerformanceSongFromBuiltin(song) {
     if (!song) return null;
     return {
-      id: (song.title || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+      id: resolvePerformanceSongId(song, song && song.title),
       title: song.title,
       artist: song.artist || "Unknown",
       bpm: song.bpm || 100,
@@ -12,6 +86,7 @@
       pattern: song.pattern || ["D","D","U","U","D","U"],
       leadNotes: song.leadNotes || null,
       midi: song.midi || null,
+      instrument: song.instrument || song.instrumentType || song.adapterType || getActivePerformanceInstrumentType(),
       source: "builtin"
     };
   }
@@ -19,13 +94,14 @@
   function buildPerformanceSongFromImported(song) {
     if (!song) return null;
     return {
-      id: (song.title || "imported").toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+      id: resolvePerformanceSongId(song, song && song.title),
       title: song.title,
       artist: song.artist || "Imported",
       bpm: song.bpm || 100,
       chords: song.chords || [],
       progression: song.progression || [],
       pattern: song.pattern || ["D","D","U","U","D","U"],
+      instrument: song.instrument || song.instrumentType || song.adapterType || getActivePerformanceInstrumentType(),
       source: "imported"
     };
   }
@@ -63,12 +139,16 @@
       beatsPerBar: 4,
       offsetSec: 0,
       arrangementType: arrangementType,
+      instrument: perfSong.instrument || "guitar",
+      adapterType: perfSong.instrument || "guitar",
       audio: perfSong.midi ? { type: "midi", src: perfSong.midi } : { type: "silent" },
       events: arrangement.events,
       phrases: phrases
     };
   }
 
+  window.getActivePerformanceInstrumentType = getActivePerformanceInstrumentType;
+  window.resolvePerformanceSongId = resolvePerformanceSongId;
   window.buildPerformanceSongFromBuiltin = buildPerformanceSongFromBuiltin;
   window.buildPerformanceSongFromImported = buildPerformanceSongFromImported;
   window.buildPerformanceChartFromSong = buildPerformanceChartFromSong;

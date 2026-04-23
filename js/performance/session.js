@@ -3,6 +3,76 @@
 var _performRAF = null;
 var _performStopping = false;
 
+function resolvePerformanceSessionInstrumentCandidate(candidate) {
+  var active;
+  var all;
+  var i;
+  var entry;
+  if (!candidate && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
+    active = SparkInstruments.getActive();
+    candidate = active ? (active.instrument || active.instrumentType || active.id || active.appId || null) : null;
+  }
+  if (!candidate) return null;
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+    return candidate;
+  }
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (entry.id === candidate || entry.appId === candidate || entry.instrument === candidate) {
+      return entry.instrument || entry.instrumentType || candidate;
+    }
+  }
+  return candidate;
+}
+
+function resolvePerformanceChartSupportedInstruments(chart, chartId) {
+  var meta = typeof getPerformanceChartMeta === "function" ? getPerformanceChartMeta(chartId) : null;
+  var supported = chart && Array.isArray(chart.supportedInstruments) ? chart.supportedInstruments.slice() : null;
+  if (!supported && meta && Array.isArray(meta.supportedInstruments)) supported = meta.supportedInstruments.slice();
+  if (!supported || !supported.length) return [];
+  return supported.map(function(instrument) {
+    return resolvePerformanceSessionInstrumentCandidate(instrument);
+  }).filter(function(instrument, index, list) {
+    return !!instrument && list.indexOf(instrument) === index;
+  });
+}
+
+function resolvePerformanceStartInstrument(chart, chartId, opts) {
+  opts = opts || {};
+  var requested = resolvePerformanceSessionInstrumentCandidate(opts.instrument || null);
+  var active = resolvePerformanceSessionInstrumentCandidate(null);
+  var meta = typeof getPerformanceChartMeta === "function" ? getPerformanceChartMeta(chartId) : null;
+  var explicit = resolvePerformanceSessionInstrumentCandidate(
+    (chart && (chart.instrument || chart.instrumentType || chart.adapterType)) ||
+    (meta && (meta.instrument || meta.instrumentType || meta.adapterType)) ||
+    null
+  );
+  var supported = resolvePerformanceChartSupportedInstruments(chart, chartId);
+  if (requested && supported.length && supported.indexOf(requested) >= 0) return requested;
+  if (active && supported.length && supported.indexOf(active) >= 0) return active;
+  if (requested && !explicit) return requested;
+  if (active && !explicit) return active;
+  return explicit || requested || active || "guitar";
+}
+
+function applyPerformanceChartInstrumentContext(chart, chartId, opts) {
+  var resolvedInstrument;
+  var supported;
+  var explicitInstrument;
+  if (!chart) return chart;
+  resolvedInstrument = resolvePerformanceStartInstrument(chart, chartId, opts);
+  supported = resolvePerformanceChartSupportedInstruments(chart, chartId);
+  explicitInstrument = chart.instrument || chart.instrumentType || chart.adapterType || null;
+  chart.supportedInstruments = supported.length ? supported.slice() : (Array.isArray(chart.supportedInstruments) ? chart.supportedInstruments.slice() : []);
+  if (!explicitInstrument || (supported.length && supported.indexOf(resolvedInstrument) >= 0)) {
+    chart.instrument = resolvedInstrument;
+    chart.instrumentType = resolvedInstrument;
+    chart.adapterType = resolvedInstrument;
+  }
+  return chart;
+}
+
 function startPerformanceCountIn(chart, speed, onDone) {
   var bpm = chart.bpm || 90;
   var beatSec = (60 / bpm) / (speed || 1);
@@ -90,10 +160,12 @@ function startPerformance(chartIdOrChart, opts) {
   }
 
   chartPromise.then(function(chart) {
+    var chartId = typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated");
+    chart = applyPerformanceChartInstrumentContext(chart, chartId, opts);
     if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
       SparkPerformanceBridge.syncPerformanceRuntimeState("start", {
         chart: chart,
-        chartId: typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated"),
+        chartId: chartId,
         phraseStats: createEmptyPhraseStats(chart),
         mode: opts.mode || S.performMode,
         difficulty: opts.difficulty || S.performDifficulty,
@@ -103,7 +175,7 @@ function startPerformance(chartIdOrChart, opts) {
       });
     } else {
       S.performChart = chart;
-      S.performChartId = typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated");
+      S.performChartId = chartId;
       S.performPlaying = true;
       S.performPaused = false;
       S.performCurrentSec = 0;
@@ -127,7 +199,7 @@ function startPerformance(chartIdOrChart, opts) {
     }
     if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
       window.sparkCore.syncPerformanceRuntimeState("start", {
-        chartId: typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated"),
+        chartId: chartId,
         difficulty: opts.difficulty || S.performDifficulty,
         arrangementType: chart.arrangementType || S.performArrangementType,
         speed: opts.speed || S.performSpeed,
@@ -152,7 +224,9 @@ function startPerformance(chartIdOrChart, opts) {
     applyPerformanceStemPreset(S.performPracticePreset);
 
     // Load stems if song has imported audio
-    var songId = (S.performSongData && S.performSongData.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    var songId = typeof resolvePerformanceSongId === "function"
+      ? resolvePerformanceSongId(S.performSongData, S.performSongData && S.performSongData.title)
+      : (S.performSongData && S.performSongData.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
     var audioData = S.songAudioData[songId];
     var hasStemAudio = audioData && audioData.stemUrls && Object.keys(audioData.stemUrls).length > 0;
 
@@ -213,6 +287,9 @@ function startPerformance(chartIdOrChart, opts) {
     render();
   });
 }
+
+window.resolvePerformanceStartInstrument = resolvePerformanceStartInstrument;
+window.applyPerformanceChartInstrumentContext = applyPerformanceChartInstrumentContext;
 
 function stopPerformance() {
   destroySparkHighway();

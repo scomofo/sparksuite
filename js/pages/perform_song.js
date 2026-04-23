@@ -30,7 +30,9 @@ function performSongPage() {
   var displayBpm = normalizePerformSongNumber(song.bpm, null);
   var displayChordCount = Array.isArray(song.chords) ? song.chords.length : 0;
   var displayBarCount = Array.isArray(song.progression) ? song.progression.length : 0;
-  var normalizedSongId = (displayTitle || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  var normalizedSongId = typeof resolvePerformanceSongId === "function"
+    ? resolvePerformanceSongId(song, displayTitle || "song")
+    : (displayTitle || "song").toLowerCase().replace(/[^a-z0-9]+/g, "_");
   var audioData = S.songAudioData[normalizedSongId];
   var detectedSongBpm = audioData && audioData.stemPaths
     ? normalizePerformSongNumber(audioData.detectedBpm, null)

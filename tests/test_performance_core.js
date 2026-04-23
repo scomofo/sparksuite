@@ -66,6 +66,8 @@ eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_exercises.js'));
 eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_progression.js'));
 eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_module.js'));
 eval(loadJS('js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js'));
+eval(loadJS('js/performance/arrangements.js'));
+eval(loadJS('js/performance/adapters.js'));
 eval(loadJS('js/performance/chart_manifest.js'));
 eval(loadJS('js/performance/chart.js'));
 eval(loadJS('js/performance/scoring.js'));
@@ -216,26 +218,121 @@ test('getPerformanceChartLibrary includes package-backed entries for the perform
 
 test('getPerformanceChartLibrary can filter the manifest by instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'ukulele' });
-  assert.strictEqual(library.length, 3);
-  assert.strictEqual(library[0].instrument, 'ukulele');
+  assert.strictEqual(library.length, 4);
+  assert.strictEqual(library[0].id, 'stand_by_me_ukulele_chords');
   assert.strictEqual(library[1].instrument, 'ukulele');
   assert.strictEqual(library[2].instrument, 'ukulele');
+  assert.strictEqual(library[3].instrument, 'ukulele');
 });
 
 test('getPerformanceChartLibrary can filter the manifest by app-id instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'ukespark' });
-  assert.strictEqual(library.length, 3);
-  assert.strictEqual(library[0].instrument, 'ukulele');
+  assert.strictEqual(library.length, 4);
+  assert.strictEqual(library[0].id, 'stand_by_me_ukulele_chords');
   assert.strictEqual(library[1].instrument, 'ukulele');
   assert.strictEqual(library[2].instrument, 'ukulele');
+  assert.strictEqual(library[3].instrument, 'ukulele');
 });
 
 test('getPerformanceChartLibrary can filter the manifest by bass instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'bass' });
-  assert.strictEqual(library.length, 2);
-  assert.strictEqual(library[0].instrument, 'bass');
-  assert.strictEqual(library[0].id, 'bass_midnight_lock_package');
-  assert.strictEqual(library[1].id, 'bass_afterglow_walk_package');
+  assert.strictEqual(library.length, 14);
+  assert.strictEqual(library[0].id, 'stand_by_me_bass_chords');
+  assert.strictEqual(library[1].id, 'with_or_without_you_bass_chords');
+  assert.strictEqual(library[2].id, 'zombie_bass_chords');
+  assert.strictEqual(library[3].id, 'smells_like_teen_spirit_bass_chords');
+  assert.strictEqual(library[4].id, 'billie_jean_bass_chords');
+  assert.strictEqual(library[5].id, 'come_together_bass_chords');
+  assert.strictEqual(library[6].id, 'feel_good_inc_bass_chords');
+  assert.strictEqual(library[7].id, 'another_one_bites_the_dust_bass_chords');
+  assert.strictEqual(library[8].id, 'seven_nation_army_bass_chords');
+  assert.strictEqual(library[9].id, 'longview_bass_chords');
+  assert.strictEqual(library[10].id, 'under_pressure_bass_chords');
+  assert.strictEqual(library[11].id, 'pumped_up_kicks_bass_chords');
+  assert.strictEqual(library[12].id, 'bass_midnight_lock_package');
+  assert.strictEqual(library[13].id, 'bass_afterglow_walk_package');
+});
+
+test('getPerformanceChartLibrary exposes authored instrument-specific variants', function() {
+  var guitarLibrary = getPerformanceChartLibrary({ instrument: 'guitar' });
+  var ukuleleLibrary = getPerformanceChartLibrary({ instrument: 'ukulele' });
+  var bassLibrary = getPerformanceChartLibrary({ instrument: 'bass' });
+  var pianoLibrary = getPerformanceChartLibrary({ instrument: 'piano' });
+  assert.ok(guitarLibrary.some(function(chart) { return chart.id === 'stand_by_me_chords'; }));
+  assert.ok(ukuleleLibrary.some(function(chart) { return chart.id === 'stand_by_me_ukulele_chords'; }));
+  assert.ok(!bassLibrary.some(function(chart) { return chart.id === 'stand_by_me_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'stand_by_me_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'with_or_without_you_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'zombie_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'smells_like_teen_spirit_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'billie_jean_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'come_together_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'feel_good_inc_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'another_one_bites_the_dust_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'seven_nation_army_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'longview_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'under_pressure_bass_chords'; }));
+  assert.ok(bassLibrary.some(function(chart) { return chart.id === 'pumped_up_kicks_bass_chords'; }));
+  assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'stand_by_me_piano_chords'; }));
+  assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'let_it_be_piano_chords'; }));
+  assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'la_bamba_piano_chords'; }));
+  assert.ok(pianoLibrary.some(function(chart) { return chart.id === 'knockin_on_heavens_door_piano_chords'; }));
+  assert.ok(!ukuleleLibrary.some(function(chart) { return chart.id === 'let_it_be_chords'; }));
+  assert.ok(!pianoLibrary.some(function(chart) { return chart.id === 'let_it_be_chords'; }));
+  assert.ok(!bassLibrary.some(function(chart) { return chart.id === 'let_it_be_chords'; }));
+});
+
+test('resolvePerformanceChartVariantId returns the matching authored chart for an instrument', function() {
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('let_it_be', { instrument: 'piano', arrangementType: 'chords' }),
+    'let_it_be_piano_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('stand_by_me', { instrument: 'ukulele', arrangementType: 'chords' }),
+    'stand_by_me_ukulele_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('stand_by_me', { instrument: 'guitar', arrangementType: 'chords' }),
+    'stand_by_me_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('stand_by_me', { instrument: 'bass', arrangementType: 'chords' }),
+    'stand_by_me_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('with_or_without_you', { instrument: 'bass', arrangementType: 'chords' }),
+    'with_or_without_you_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('billie_jean', { instrument: 'bass', arrangementType: 'chords' }),
+    'billie_jean_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('come_together', { instrument: 'bass', arrangementType: 'chords' }),
+    'come_together_bass_chords'
+  );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('under_pressure', { instrument: 'bass', arrangementType: 'chords' }),
+    'under_pressure_bass_chords'
+  );
+});
+
+test('buildPerformanceChartFromSong carries the active instrument into generated charts', function() {
+  var originalGetActive = SparkInstruments.getActive;
+  SparkInstruments.getActive = function() {
+    return { id: 'ukespark', appId: 'ukespark' };
+  };
+  var chart = buildPerformanceChartFromSong({
+    title: 'Generated Shared Song',
+    artist: 'Tester',
+    bpm: 90,
+    progression: ['C', 'G', 'Am', 'F'],
+    midi: 'content/songs/midi/test.mid'
+  }, 'builtin', 'chords');
+  SparkInstruments.getActive = originalGetActive;
+
+  assert.strictEqual(chart.instrument, 'ukulele');
+  assert.strictEqual(chart.adapterType, 'ukulele');
 });
 
 test('normalizePerformanceChartDefinition supports ukulele package charts through manifest adapter metadata', function() {

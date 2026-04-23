@@ -106,7 +106,9 @@
     var ids=[];
     for(var i=0;i<source.length;i++){
       if(source[i].progression&&source[i].progression.length>0)
-        ids.push((source[i].title||"song").toLowerCase().replace(/[^a-z0-9]+/g,"_"));
+        ids.push(typeof resolvePerformanceSongId === "function"
+          ? resolvePerformanceSongId(source[i], source[i].title || "song")
+          : (source[i].title||"song").toLowerCase().replace(/[^a-z0-9]+/g,"_"));
     }
     return ids;
   }

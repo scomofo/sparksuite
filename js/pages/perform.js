@@ -469,7 +469,9 @@ function performDonePage() {
     h += '<div style="font-size:13px;color:var(--text-primary)">' + escHTML("Stay on " + formatTechniqueFocusLabel(targetTechnique)) + '</div>';
     h += '<div style="font-size:11px;color:var(--text-dim)">' + escHTML("You hit " + focusedTechniqueRow.hits + " of " + focusedTechniqueRow.total + " focused notes. Retry this same target to lock it in.") + '</div></div>';
   } else if(typeof buildPerformanceRecommendationsForSong==="function"&&r.title){
-    var songId=(r.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
+    var songId = typeof resolvePerformanceSongId === "function"
+      ? resolvePerformanceSongId(r, r.title)
+      : (r.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
     var nextRecs=buildPerformanceRecommendationsForSong(songId);
     if(nextRecs&&nextRecs.length){
       var nextStepLabel = firstPerformPageTextToken(nextRecs[0].label, "Recommendation");

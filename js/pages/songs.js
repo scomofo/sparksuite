@@ -130,6 +130,207 @@ function _renderSongsLibraryHeader(){
   return '<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Song Library &#127925;</h2></div>';
 }
 
+function _getSpotifyPlaylistPanelState(){
+  var runtime = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
+    ? window.sparkCore.getRuntimeState()
+    : null;
+  return {
+    connected: !!(runtime && runtime.spotifyPlaylistConnected),
+    playlists: runtime && Array.isArray(runtime.spotifyPlaylistPlaylists) ? runtime.spotifyPlaylistPlaylists : [],
+    lastSyncAt: runtime && runtime.spotifyPlaylistLastSyncAt ? runtime.spotifyPlaylistLastSyncAt : null,
+    lastResult: runtime && runtime.spotifyPlaylistLastResult ? runtime.spotifyPlaylistLastResult : null,
+    unresolvedTracks: runtime && Array.isArray(runtime.spotifyPlaylistUnresolvedTracks) ? runtime.spotifyPlaylistUnresolvedTracks : [],
+    syncStatus: runtime && runtime.spotifyPlaylistSyncStatus ? runtime.spotifyPlaylistSyncStatus : "idle",
+    error: runtime && runtime.spotifyPlaylistError ? runtime.spotifyPlaylistError : null
+  };
+}
+
+function _getSpotifyPlaylistCurriculumKey(inst){
+  var instrumentType = (inst && (inst.instrument || inst.instrumentType)) || "guitar";
+  return instrumentType + "_core";
+}
+
+function _getSpotifyPlaylistName(inst){
+  return "SparkSuite - " + ((inst && inst.name) ? inst.name : "Curriculum");
+}
+
+function _getCanonicalSpotifySongMeta(song){
+  var contentSongs = typeof window !== "undefined" && window.SparkContent && window.SparkContent.songs
+    ? window.SparkContent.songs
+    : null;
+  var key;
+  var entry;
+  if(!contentSongs || !song) return null;
+  if(song.id && contentSongs[song.id]) return contentSongs[song.id];
+  for(key in contentSongs){
+    if(!Object.prototype.hasOwnProperty.call(contentSongs, key)) continue;
+    entry = contentSongs[key];
+    if(!entry) continue;
+    if(entry.title === song.title && entry.artist === song.artist) return entry;
+  }
+  return null;
+}
+
+function _getSpotifyCurriculumTracks(songList){
+  var songs = Array.isArray(songList) ? songList : [];
+  var tracks = [];
+  var i;
+  var canonical;
+  for(i=0;i<songs.length;i++){
+    if(!songs[i] || !songs[i].title) continue;
+    canonical = _getCanonicalSpotifySongMeta(songs[i]);
+    tracks.push({
+      id: songs[i].id || (canonical && canonical.id) || "",
+      title: songs[i].title,
+      artist: songs[i].artist || "",
+      uri: songs[i].spotifyTrackUri || (canonical && canonical.spotifyTrackUri) || ""
+    });
+  }
+  return tracks;
+}
+
+function _findSpotifyLinkedPlaylist(playlists, curriculumKey){
+  var i;
+  for(i=0;i<playlists.length;i++){
+    if(playlists[i] && playlists[i].curriculum_key === curriculumKey) return playlists[i];
+  }
+  return null;
+}
+
+function _notifySpotifyPlaylist(message){
+  if(typeof showToast === "function") showToast(message);
+  else if(typeof alert === "function") alert(message);
+}
+
+function _ensureSpotifyPlaylistPanelState(){
+  if(!window.sparkCore || typeof window.sparkCore.syncSpotifyPlaylistStatus !== "function") return;
+  if(window.__spotifyPlaylistPanelLoading) return;
+  if(window.__spotifyPlaylistPanelLoaded) return;
+  window.__spotifyPlaylistPanelLoading = true;
+  window.sparkCore.syncSpotifyPlaylistStatus().catch(function() {
+    return null;
+  }).then(function() {
+    window.__spotifyPlaylistPanelLoading = false;
+    window.__spotifyPlaylistPanelLoaded = true;
+    if(window.location && window.location.search && window.location.search.indexOf("spotify=") !== -1 && window.history && window.history.replaceState){
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    if(typeof render === "function") render();
+  });
+}
+
+function sparkSpotifyPlaylistConnect(){
+  if(!window.sparkCore || typeof window.sparkCore.connectSpotifyPlaylist !== "function") return;
+  window.sparkCore.connectSpotifyPlaylist({ returnTo: window.location.href });
+}
+
+function sparkSpotifyPlaylistCreate(){
+  var inst = getSongsPageInstrument();
+  var curriculumKey = _getSpotifyPlaylistCurriculumKey(inst);
+  if(!window.sparkCore || typeof window.sparkCore.createSpotifyCurriculumPlaylist !== "function") return;
+  window.sparkCore.createSpotifyCurriculumPlaylist({
+    curriculumKey: curriculumKey,
+    name: _getSpotifyPlaylistName(inst),
+    description: "SparkSuite curriculum playlist for " + ((inst && inst.name) ? inst.name : "this instrument"),
+    public: false,
+    syncMode: "append_missing"
+  }).then(function() {
+    _notifySpotifyPlaylist("Spotify playlist created.");
+    if(typeof render === "function") render();
+  }).catch(function(err) {
+    _notifySpotifyPlaylist("Spotify playlist create failed: " + (err.message || err));
+  });
+}
+
+function sparkSpotifyPlaylistSync(){
+  var inst = getSongsPageInstrument();
+  var D = inst && inst.getData ? inst.getData() : {};
+  var curriculumKey = _getSpotifyPlaylistCurriculumKey(inst);
+  var tracks = _getSpotifyCurriculumTracks(D.SONGS);
+  if(!window.sparkCore || typeof window.sparkCore.syncSpotifyCurriculumPlaylist !== "function") return;
+  window.sparkCore.syncSpotifyCurriculumPlaylist({
+    curriculumKey: curriculumKey,
+    name: _getSpotifyPlaylistName(inst),
+    description: "SparkSuite curriculum playlist for " + ((inst && inst.name) ? inst.name : "this instrument"),
+    public: false,
+    syncMode: "append_missing",
+    createIfMissing: true,
+    tracks: tracks
+  }).then(function(result) {
+    var note = "Spotify playlist synced.";
+    if(result && typeof result.addedCount === "number") note += " Added " + result.addedCount + ".";
+    if(result && typeof result.unresolvedCount === "number" && result.unresolvedCount > 0) note += " Unmatched " + result.unresolvedCount + ".";
+    _notifySpotifyPlaylist(note);
+    if(typeof render === "function") render();
+  }).catch(function(err) {
+    _notifySpotifyPlaylist("Spotify playlist sync failed: " + (err.message || err));
+  });
+}
+
+function _renderSpotifyPlaylistPanel(inst, songList){
+  var state = _getSpotifyPlaylistPanelState();
+  var curriculumKey = _getSpotifyPlaylistCurriculumKey(inst);
+  var linkedPlaylist = _findSpotifyLinkedPlaylist(state.playlists, curriculumKey);
+  var tracks = _getSpotifyCurriculumTracks(songList);
+  var exactMappedCount = tracks.filter(function(track){ return !!track.uri; }).length;
+  var unresolvedTracks = state.unresolvedTracks || [];
+  var unresolvedPreview = unresolvedTracks.slice(0, 6);
+  var i;
+  var unresolvedLabel;
+  var syncBusy = state.syncStatus === "syncing";
+  var h = '<div class="card mb16" style="border:2px solid #1DB95422">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">';
+  h += '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">Spotify Curriculum Playlist</h3>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">';
+  h += state.connected ? 'Connected' : 'Not connected';
+  if(linkedPlaylist && linkedPlaylist.playlist_name) h += ' | ' + escHTML(linkedPlaylist.playlist_name);
+  h += '</div></div>';
+  h += '<div style="font-size:28px;color:#1DB954">&#9835;</div></div>';
+  h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Sync the current instrument song library into a private Spotify playlist. Track matching currently uses song title and artist.</div>';
+  h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Exact `spotifyTrackUri` metadata is used when available, with Spotify search as a fallback.</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">' + tracks.length + ' curriculum songs available for sync';
+  h += ' | ' + exactMappedCount + ' exact Spotify matches';
+  if(state.lastSyncAt) h += ' | Last sync ' + escHTML(String(state.lastSyncAt));
+  h += '</div>';
+  if(state.error){
+    h += '<div class="card mb12" style="padding:10px;border:1px solid #FF6B6B"><div style="font-size:12px;color:#FF6B6B">'+escHTML(state.error)+'</div></div>';
+  }
+  if(state.lastResult && typeof state.lastResult.addedCount === "number"){
+    h += '<div class="card mb12" style="padding:10px;background:#1DB95410;border:1px solid #1DB95433">';
+    h += '<div style="font-size:12px;color:var(--text-primary);font-weight:800;margin-bottom:4px">Last sync summary</div>';
+    h += '<div style="font-size:12px;color:var(--text-muted)">';
+    h += 'Resolved ' + escHTML(String(state.lastResult.resolvedCount || 0));
+    h += ' | Added ' + escHTML(String(state.lastResult.addedCount || 0));
+    h += ' | Skipped ' + escHTML(String(state.lastResult.skippedCount || 0));
+    if(typeof state.lastResult.unresolvedCount === "number"){
+      h += ' | Unmatched ' + escHTML(String(state.lastResult.unresolvedCount));
+    }
+    h += '</div></div>';
+  }
+  if(unresolvedTracks.length){
+    unresolvedLabel = unresolvedTracks.length === 1 ? '1 song still needs an exact Spotify match.' : (String(unresolvedTracks.length) + ' songs still need exact Spotify matches.');
+    h += '<div class="card mb12" style="padding:10px;border:1px solid #FFB84D;background:#FFB84D10">';
+    h += '<div style="font-size:12px;color:var(--text-primary);font-weight:800;margin-bottom:4px">Needs catalog cleanup</div>';
+    h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">' + escHTML(unresolvedLabel) + '</div>';
+    for(i=0;i<unresolvedPreview.length;i++){
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">';
+      h += '&bull; ' + escHTML(unresolvedPreview[i].title || unresolvedPreview[i].id || 'Unknown Song');
+      if(unresolvedPreview[i].artist) h += ' <span style="color:var(--text-muted)">by ' + escHTML(unresolvedPreview[i].artist) + '</span>';
+      h += '</div>';
+    }
+    if(unresolvedTracks.length > unresolvedPreview.length){
+      h += '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">+' + escHTML(String(unresolvedTracks.length - unresolvedPreview.length)) + ' more unmatched songs</div>';
+    }
+    h += '</div>';
+  }
+  h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  h += '<button class="btn btn-sm" onclick="sparkSpotifyPlaylistConnect()" style="background:#1DB954;color:#fff"'+(syncBusy?' disabled':'')+'>'+(state.connected?'Reconnect Spotify':'Connect Spotify')+'</button>';
+  h += '<button class="btn btn-sm" onclick="sparkSpotifyPlaylistCreate()" style="background:var(--input-bg);color:var(--text-secondary)"'+((!state.connected||syncBusy)?' disabled':'')+'>Create Playlist</button>';
+  h += '<button class="btn btn-sm" onclick="sparkSpotifyPlaylistSync()" style="background:linear-gradient(135deg,#1DB954,#1ed760);color:#fff"'+((!state.connected||syncBusy)?' disabled':'')+'>'+(syncBusy?'Syncing...':'Sync Playlist')+'</button>';
+  h += '</div></div>';
+  return h;
+}
+
 function _renderPerformanceDailyCard(performanceDailyChallenge, performanceDailyComplete){
   var performanceDailyLabel;
   var performanceDailyReason;
@@ -220,7 +421,10 @@ function _renderSongsList(filtered, D, safeSongFilter){
     h += '<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(songTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+_formatSongsBpm(s.bpm, "--")+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
-      var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",S.performDifficulty);
+      var _songStatsId = typeof resolvePerformanceSongId === "function"
+        ? resolvePerformanceSongId(s, songTitle)
+        : s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_");
+      var _ps=getPerformanceStats(_songStatsId+"_perf","chords",S.performDifficulty);
       if(_ps.mastery!=="none"){
         h += '<div style="font-size:11px;font-weight:700;color:'+getMasteryColor(_ps.mastery)+'">'+getMasteryIcon(_ps.mastery)+' '+_ps.mastery+'</div>';
       }
@@ -519,6 +723,7 @@ function songsTab(){
   var performanceDailyComplete = browserState.performanceDailyComplete;
   var searchAndSort;
   var filtered;
+  _ensureSpotifyPlaylistPanelState();
   var h=_renderSongsLibraryHeader();
   h += _renderSongsSubTabs(songsSubTab);
 
@@ -527,6 +732,7 @@ function songsTab(){
   if(songsSubTab==="stems") return h+stemsSection();
   if(songsSubTab==="perform") return h+performSubTab();
 
+  h += _renderSpotifyPlaylistPanel(inst, D.SONGS);
   h += _renderPerformanceDailyCard(performanceDailyChallenge, performanceDailyComplete);
   searchAndSort = _renderSongsSearchAndSort(songFilter, songSort, songSortAsc);
   filtered = _getFilteredSongs(D.SONGS, songFilter, songSort, songSortAsc);

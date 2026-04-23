@@ -29,7 +29,9 @@
         return true;
       }
       for (var psi = 0; psi < SONGS.length; psi++) {
-        var planSongId = (SONGS[psi].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+        var planSongId = typeof resolvePerformanceSongId === "function"
+          ? resolvePerformanceSongId(SONGS[psi], SONGS[psi] && SONGS[psi].title)
+          : (SONGS[psi].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
         if (planSongId === songId) {
           S.performSongData = SONGS[psi];
           S.performSongId = songId;

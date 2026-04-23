@@ -387,6 +387,9 @@
   }
 
   function toSongId(song) {
+    if (typeof resolvePerformanceSongId === "function") {
+      return resolvePerformanceSongId(song, song && song.title);
+    }
     return String(song && song.title || "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")

@@ -1,0 +1,274 @@
+{
+  "id": "smells_like_teen_spirit_chords",
+  "title": "Smells Like Teen Spirit",
+  "artist": "Nirvana",
+  "bpm": 117,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "audio": {
+    "type": "midi",
+    "src": "content/songs/midi/smells_like_teen_spirit.mid"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 16.41
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 16.41,
+      "endSec": 32.821
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 32.821,
+      "endSec": 49.231
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "F5",
+      "notes": ["F", "C"],
+      "laneLabel": "F5",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 2.051,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Bb5",
+      "notes": ["Bb", "F"],
+      "laneLabel": "Bb5",
+      "strum": "up"
+    },
+    {
+      "id": 3,
+      "t": 4.103,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Ab5",
+      "notes": ["Ab", "Eb"],
+      "laneLabel": "Ab5",
+      "strum": "down"
+    },
+    {
+      "id": 4,
+      "t": 6.154,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Db5",
+      "notes": ["Db", "Ab"],
+      "laneLabel": "Db5",
+      "strum": "up"
+    },
+    {
+      "id": 5,
+      "t": 8.205,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "F5",
+      "notes": ["F", "C"],
+      "laneLabel": "F5",
+      "strum": "down"
+    },
+    {
+      "id": 6,
+      "t": 10.256,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Bb5",
+      "notes": ["Bb", "F"],
+      "laneLabel": "Bb5",
+      "strum": "up"
+    },
+    {
+      "id": 7,
+      "t": 12.308,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Ab5",
+      "notes": ["Ab", "Eb"],
+      "laneLabel": "Ab5",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 14.359,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Db5",
+      "notes": ["Db", "Ab"],
+      "laneLabel": "Db5",
+      "strum": "up"
+    },
+    {
+      "id": 9,
+      "t": 16.41,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "F5",
+      "notes": ["F", "C"],
+      "laneLabel": "F5",
+      "strum": "down"
+    },
+    {
+      "id": 10,
+      "t": 18.462,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Bb5",
+      "notes": ["Bb", "F"],
+      "laneLabel": "Bb5",
+      "strum": "up"
+    },
+    {
+      "id": 11,
+      "t": 20.513,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Ab5",
+      "notes": ["Ab", "Eb"],
+      "laneLabel": "Ab5",
+      "strum": "down"
+    },
+    {
+      "id": 12,
+      "t": 22.564,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Db5",
+      "notes": ["Db", "Ab"],
+      "laneLabel": "Db5",
+      "strum": "up"
+    },
+    {
+      "id": 13,
+      "t": 24.615,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "F5",
+      "notes": ["F", "C"],
+      "laneLabel": "F5",
+      "strum": "down"
+    },
+    {
+      "id": 14,
+      "t": 26.667,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Bb5",
+      "notes": ["Bb", "F"],
+      "laneLabel": "Bb5",
+      "strum": "up"
+    },
+    {
+      "id": 15,
+      "t": 28.718,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Ab5",
+      "notes": ["Ab", "Eb"],
+      "laneLabel": "Ab5",
+      "strum": "down"
+    },
+    {
+      "id": 16,
+      "t": 30.769,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Db5",
+      "notes": ["Db", "Ab"],
+      "laneLabel": "Db5",
+      "strum": "up"
+    },
+    {
+      "id": 17,
+      "t": 32.821,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "F5",
+      "notes": ["F", "C"],
+      "laneLabel": "F5",
+      "strum": "down"
+    },
+    {
+      "id": 18,
+      "t": 34.872,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Bb5",
+      "notes": ["Bb", "F"],
+      "laneLabel": "Bb5",
+      "strum": "up"
+    },
+    {
+      "id": 19,
+      "t": 36.923,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Ab5",
+      "notes": ["Ab", "Eb"],
+      "laneLabel": "Ab5",
+      "strum": "down"
+    },
+    {
+      "id": 20,
+      "t": 38.974,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Db5",
+      "notes": ["Db", "Ab"],
+      "laneLabel": "Db5",
+      "strum": "up"
+    },
+    {
+      "id": 21,
+      "t": 41.026,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "F5",
+      "notes": ["F", "C"],
+      "laneLabel": "F5",
+      "strum": "down"
+    },
+    {
+      "id": 22,
+      "t": 43.077,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Bb5",
+      "notes": ["Bb", "F"],
+      "laneLabel": "Bb5",
+      "strum": "up"
+    },
+    {
+      "id": 23,
+      "t": 45.128,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Ab5",
+      "notes": ["Ab", "Eb"],
+      "laneLabel": "Ab5",
+      "strum": "down"
+    },
+    {
+      "id": 24,
+      "t": 47.179,
+      "dur": 2.051,
+      "type": "chord",
+      "chord": "Db5",
+      "notes": ["Db", "Ab"],
+      "laneLabel": "Db5",
+      "strum": "up"
+    }
+  ]
+}
