@@ -117,6 +117,17 @@
       // across unrelated navigations.
       S._showroomLessonId = null;
     }
+    // Song-detail deep-link: nav("song-details", <id-or-title>) pins the
+    // song so songDetailsRender can look it up on the active instrument.
+    // Clearing the pin on unrelated routes mirrors the lesson-pin pattern
+    // above.
+    if (view === "song-details") {
+      if (param !== undefined && param !== null && param !== "") {
+        if (typeof S !== "undefined") S._showroomSongId = String(param);
+      }
+    } else if (typeof S !== "undefined" && S._showroomSongId && view !== "library" && view !== "settings" && view !== "profile") {
+      S._showroomSongId = null;
+    }
     var SCR_ = typeof SCR !== "undefined" ? SCR : null;
     var TAB_ = typeof TAB !== "undefined" ? TAB : null;
     if (hasInst && SCR_ && TAB_) {
@@ -143,7 +154,10 @@
         // SCR_.SKILL_TREE which the allow-list auto-unwinds.
         "path":            function(){ S._showroomOverride = "path"; },
         "learn":           function(){ S._showroomOverride = "path"; },
-        "song-details":    function(){ S.screen = SCR_.SONG; },
+        // song-details → Warm Ember details view (reads S._showroomSongId
+        // pinned by the nav() 2-arg form above). Also sets the legacy slot
+        // as a safety net if the Showroom module isn't loaded.
+        "song-details":    function(){ S._showroomOverride = "song-details"; S.screen = SCR_.SONG; },
         // session-summary → Warm Ember summary when available, else legacy
         // completePage via SCR_.COMPLETE. Setting both means the override
         // wins when SparkSessionSummary is loaded and the legacy slot
@@ -164,7 +178,7 @@
       };
       // Clear any prior override so the legacy slot routing wins again —
       // but keep it for routes whose handlers set an override themselves.
-      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "library":1, "tuner":1, "session-summary":1 };
+      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "library":1, "tuner":1, "session-summary":1, "song-details":1 };
       if (!_overrideRoutes[view]) S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
@@ -480,15 +494,42 @@
   // ───────────────────────────────────────────────────────────────────────
   function songDetailsRender(opts) {
     opts = opts || {};
-    var title = opts.title || "Ember's Resonance";
-    var artist = opts.artist || "The Spark Collective";
-    var key = opts.key || "G Maj";
-    var bpm = opts.bpm || 120;
-    var len = opts.length || "3:45";
-    var diff = typeof opts.difficulty === "number" ? opts.difficulty : 7;
+    // Look up the pinned song (nav("song-details", <id>)) on the active
+    // instrument. Falls back to the first song in the library, then to
+    // the sample "Ember's Resonance" copy if we have no songs at all.
+    var pinned = null;
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
+      var _sdInst = SparkInstruments.getActive();
+      var _sdData = _sdInst && typeof _sdInst.getData === "function" ? _sdInst.getData() : null;
+      var _sdSongs = (_sdData && Array.isArray(_sdData.SONGS)) ? _sdData.SONGS : [];
+      var _pinId = typeof S !== "undefined" && S._showroomSongId ? String(S._showroomSongId) : null;
+      if (_pinId && _sdSongs.length) {
+        for (var _i = 0; _i < _sdSongs.length; _i++) {
+          var _c = _sdSongs[_i];
+          if (_c && (_c.id === _pinId || _c.title === _pinId)) { pinned = _c; break; }
+        }
+      }
+      if (!pinned && _sdSongs.length) pinned = _sdSongs[0];
+    }
+    var title = opts.title || (pinned && pinned.title) || "Ember's Resonance";
+    var artist = opts.artist || (pinned && pinned.artist) || "The Spark Collective";
+    // "Key" isn't on the standard SONGS record — derive from first chord.
+    var keyFromSong = (pinned && Array.isArray(pinned.chords) && pinned.chords.length) ? pinned.chords[0] : null;
+    var key = opts.key || keyFromSong || "G Maj";
+    var bpm = opts.bpm || (pinned && pinned.bpm) || 120;
+    // Length estimate uses the same 240/bpm heuristic as the library list.
+    var lenFromBpm = pinned && pinned.bpm ? Math.max(1, Math.round(240 / pinned.bpm)) + ":00" : null;
+    var len = opts.length || lenFromBpm || "3:45";
+    var pinnedDiff = pinned && (typeof pinned.difficulty === "number" ? pinned.difficulty : (typeof pinned.level === "number" ? pinned.level : null));
+    var diff = typeof opts.difficulty === "number" ? opts.difficulty : (pinnedDiff != null ? pinnedDiff : 7);
     var diffMax = opts.difficultyMax || 10;
     var diffPct = Math.round((diff / diffMax) * 100);
-    var desc = opts.description || "Intermediate level. Focuses on rapid chord transitions and fingerpicking accuracy.";
+    // Description: use the song's chord progression if no explicit one
+    // is supplied by the caller.
+    var progDesc = (pinned && Array.isArray(pinned.chords) && pinned.chords.length)
+      ? "Chords: " + pinned.chords.slice(0, 8).join(" • ")
+      : null;
+    var desc = opts.description || progDesc || "Intermediate level. Focuses on rapid chord transitions and fingerpicking accuracy.";
     var coverSrc = opts.cover;
     var tags = opts.tags || ["Acoustic"];
 
@@ -694,6 +735,7 @@
         realSongs = _rawSongs.map(function(s) {
           var lvl = typeof s.level === "number" ? s.level : (typeof s.difficulty === "number" ? s.difficulty : 1);
           return {
+            id: s.id || s.title,
             name: s.title || "Untitled",
             artist: s.artist || "",
             lvl: lvl,
@@ -739,7 +781,7 @@
         : '<div class="showroom-song-thumb-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
       var statusLabel = sg.label || (sg.pct || "");
       var statusClass = sg.statusClass || "muted";
-      songsHtml += '<div class="showroom-song-row ' + escHtml(sg.instrument || '') + '" onclick="' + nav("song-details") + '">'
+      songsHtml += '<div class="showroom-song-row ' + escHtml(sg.instrument || '') + '" onclick="' + nav("song-details", sg.id || sg.name) + '">'
                 + '<div class="showroom-song-thumb">' + thumb + '</div>'
                 + '<div class="showroom-song-body">'
                   + '<h4 class="showroom-song-name">' + escHtml(sg.name) + '</h4>'

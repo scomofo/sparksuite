@@ -152,6 +152,7 @@ function _renderInner(){
       "profile":         typeof SparkProfileScreen   !== "undefined" && SparkProfileScreen.render,
       "library":         typeof SparkSongLibrary     !== "undefined" && SparkSongLibrary.render,
       "tuner":           typeof SparkTuner           !== "undefined" && SparkTuner.render,
+      "song-details":    typeof SparkSongDetails     !== "undefined" && SparkSongDetails.render,
       "session-summary": typeof SparkSessionSummary  !== "undefined" && SparkSessionSummary.render
     };
     var _overrideFn = _showroomRoute[S._showroomOverride];
