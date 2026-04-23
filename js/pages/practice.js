@@ -251,32 +251,13 @@ function hasRenderablePracticeSummaryItems(plan) {
   return !!(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePracticeSummaryItem));
 }
 
-function sv2HomeDashboard() {
-  var inst = getPracticePageInstrument();
-  if (!inst) return "";
-  var D = inst.getData ? inst.getData() : {};
-  var instrumentType = getPracticePageInstrumentType(inst);
-  var theme = typeof SparkTheme !== "undefined" ? SparkTheme.get(instrumentType) : null;
-  if (!theme) return "";
-
-  var allInstruments = typeof SparkInstruments !== "undefined" ? SparkInstruments.getAll() : [];
-  var levelNames = D.LN || {};
-  var currentLevel = normalizePracticeDisplayCount(S.level, 1);
-  var currentXp = normalizePracticeDisplayCount(S.xp, 0);
-  var currentStreak = normalizePracticeDisplayCount(S.streak, 0);
-  var levelName = levelNames[currentLevel] || ("Level " + currentLevel);
-  var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
-  var masteredCount = getPracticeMasteredChordCount(D.ALL_CHORDS);
-
-  // Daily goal
-  var goalMetrics = getPracticeGoalMetrics();
-  var goalPct = goalMetrics.goalPct;
-  var goalMins = goalMetrics.goalMins;
-
-  var h = '';
-
-  // Hero card
-  h += '<div class="sv2-home-hero sv2-anim-hero">';
+function renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, masteredCount, chordCount) {
+  var instTabs = inst.tabs || [];
+  var hasSongs = false;
+  var hasDrill = false;
+  var ti;
+  var tabId;
+  var h = '<div class="sv2-home-hero sv2-anim-hero">';
   h += '<div class="sv2-home-hero__header">';
   h += '<div class="sv2-icon sv2-icon--lg sv2-anim-glow">' + (inst.icon || "\uD83C\uDFB8") + '</div>';
   h += '<div class="sv2-home-hero__info">';
@@ -287,13 +268,8 @@ function sv2HomeDashboard() {
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + currentStreak + '</span>';
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + masteredCount + '/' + chordCount + ' chords</span>';
   h += '</div></div></div>';
-
-  // Action buttons inside hero
-  // Build action buttons based on available tabs
-  var instTabs = inst.tabs || [];
-  var hasSongs = false, hasDrill = false;
-  for (var ti = 0; ti < instTabs.length; ti++) {
-    var tabId = typeof instTabs[ti] === "string" ? instTabs[ti] : instTabs[ti].id;
+  for (ti = 0; ti < instTabs.length; ti++) {
+    tabId = typeof instTabs[ti] === "string" ? instTabs[ti] : instTabs[ti].id;
     if (tabId === "songs") hasSongs = true;
     if (tabId === "drill") hasDrill = true;
   }
@@ -304,31 +280,40 @@ function sv2HomeDashboard() {
   if (!hasSongs && !hasDrill) h += '<button class="sv2-btn sv2-btn--ghost" onclick="act(\'tab\',\'stats\')">&#128202; Stats</button>';
   h += '</div>';
   h += '</div>';
+  return h;
+}
 
-  // Inactive instruments row
+function renderSv2InstrumentRow(activeInstrumentId, allInstruments) {
   var otherInstruments = [];
-  for (var j = 0; j < allInstruments.length; j++) {
-    if (allInstruments[j].id !== inst.id && allInstruments[j].available !== false) {
+  var j;
+  var h = "";
+  for (j = 0; j < allInstruments.length; j++) {
+    if (allInstruments[j].id !== activeInstrumentId && allInstruments[j].available !== false) {
       otherInstruments.push(allInstruments[j]);
     }
   }
-  if (otherInstruments.length > 0) {
-    h += '<div class="sv2-inst-row sv2-anim-stagger-1">';
-    for (var k = 0; k < otherInstruments.length; k++) {
-      var oi = otherInstruments[k];
-      var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(getPracticePageInstrumentType(oi)) : "#888";
-      h += '<div class="sv2-inst-row__item" onclick="act(\'switchInstrument\',\'' + oi.id + '\')">';
-      h += '<div class="sv2-icon sv2-icon--sm" style="background:' + oiColor + '">' + (oi.icon || "\uD83C\uDFB5") + '</div>';
-      h += '<div style="font-size:' + 'var(--text-micro)' + ';color:' + oiColor + ';font-weight:700;font-family:var(--font-body-v2)">' + escHTML(oi.name) + '</div>';
-      h += '</div>';
-    }
+  if (!otherInstruments.length) return h;
+  h += '<div class="sv2-inst-row sv2-anim-stagger-1">';
+  for (j = 0; j < otherInstruments.length; j++) {
+    var oi = otherInstruments[j];
+    var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(getPracticePageInstrumentType(oi)) : "#888";
+    h += '<div class="sv2-inst-row__item" onclick="act(\'switchInstrument\',\'' + oi.id + '\')">';
+    h += '<div class="sv2-icon sv2-icon--sm" style="background:' + oiColor + '">' + (oi.icon || "\uD83C\uDFB5") + '</div>';
+    h += '<div style="font-size:' + 'var(--text-micro)' + ';color:' + oiColor + ';font-weight:700;font-family:var(--font-body-v2)">' + escHTML(oi.name) + '</div>';
     h += '</div>';
   }
+  h += '</div>';
+  return h;
+}
 
-  // Daily goal
-  h += '<div class="sv2-daily-goal sv2-anim-stagger-2">';
+function renderSv2DailyGoal(goalMetrics) {
+  var goalPct = goalMetrics.goalPct;
+  var goalMins = goalMetrics.goalMins;
+  var ringR = 16;
+  var ringC = 2 * Math.PI * ringR;
+  var ringOff = ringC - (goalPct / 100) * ringC;
+  var h = '<div class="sv2-daily-goal sv2-anim-stagger-2">';
   h += '<div class="sv2-ring" style="width:40px;height:40px">';
-  var ringR = 16, ringC = 2 * Math.PI * ringR, ringOff = ringC - (goalPct / 100) * ringC;
   h += '<svg width="40" height="40" style="transform:rotate(-90deg)"><circle cx="20" cy="20" r="' + ringR + '" fill="none" stroke="var(--border)" stroke-width="4"/>';
   h += '<circle cx="20" cy="20" r="' + ringR + '" fill="none" stroke="var(--inst-primary)" stroke-width="4" stroke-dasharray="' + ringC + '" stroke-dashoffset="' + ringOff + '" stroke-linecap="round" style="transition:stroke-dashoffset 0.8s ease"/></svg>';
   h += '<div class="sv2-ring__label" style="font-size:10px">' + goalPct + '%</div>';
@@ -337,30 +322,25 @@ function sv2HomeDashboard() {
   h += '<div style="font-size:var(--text-caption);font-weight:700;color:var(--text-primary);font-family:var(--font-body-v2)">' + (goalMetrics.goalReachedToday ? "\u2705 Goal reached!" : "Daily Goal: " + goalMetrics.dailyGoalMinutes + " min") + '</div>';
   h += '<div style="font-size:var(--text-micro);color:var(--text-muted)">' + goalMins + ' / ' + goalMetrics.dailyGoalMinutes + ' min today' + (goalMetrics.goalStreak > 0 ? " &middot; \uD83D\uDD25 " + goalMetrics.goalStreak + " day streak" : "") + '</div>';
   h += '</div></div>';
-
   return h;
 }
 
-function homePage(){
-  // V2 Dashboard
-  var v2Home = typeof sv2HomeDashboard === "function" && document.body.classList.contains("sv2") ? sv2HomeDashboard() : "";
-
-  // Build tab bar from active instrument's tabs array
-  var inst = getPracticePageInstrument();
-  var instTabs = inst && inst.tabs ? inst.tabs : [];
-  var h='<div class="tabs" role="tablist">';
-  for(var i=0;i<instTabs.length;i++){
-    var t=instTabs[i];
+function renderHomeTabBar(instTabs) {
+  var h = '<div class="tabs" role="tablist">';
+  var i;
+  for (i = 0; i < instTabs.length; i++) {
+    var t = instTabs[i];
     var tid = typeof t === "string" ? t : t.id;
     var ticon = typeof t === "object" && t.icon ? t.icon : "";
-    var tlabel = typeof t === "object" && t.label ? t.label : tid.charAt(0).toUpperCase()+tid.slice(1);
-    h+='<button class="tab'+(S.tab===tid?" active":"")+'" onclick="act(\'tab\',\''+tid+'\')" role="tab" aria-selected="'+(S.tab===tid)+'" aria-label="'+tlabel+' tab"><span class="tab-icon">'+ticon+'</span><span class="tab-label">'+tlabel+'</span></button>';
+    var tlabel = typeof t === "object" && t.label ? t.label : tid.charAt(0).toUpperCase() + tid.slice(1);
+    h += '<button class="tab' + (S.tab === tid ? " active" : "") + '" onclick="act(\'tab\',\'' + tid + '\')" role="tab" aria-selected="' + (S.tab === tid) + '" aria-label="' + tlabel + ' tab"><span class="tab-icon">' + ticon + '</span><span class="tab-label">' + tlabel + '</span></button>';
   }
-  h+='</div>';
+  h += '</div>';
+  return h;
+}
 
-  // Route to tab content — check instrument-specific renderer first, then shared
-  var _tabRenderers = (inst && inst.tabRenderers) ? inst.tabRenderers : {};
-  var _sharedTabRenderers = {
+function getSharedHomeTabRenderers() {
+  return {
     practice: typeof practiceTab === "function" ? practiceTab : null,
     drill: typeof drillTab === "function" ? drillTab : null,
     daily: typeof dailyTab === "function" ? dailyTab : null,
@@ -378,7 +358,51 @@ function homePage(){
     games: typeof gamesTab === "function" ? gamesTab : null,
     tools: typeof toolsTab === "function" ? toolsTab : null
   };
-  var _renderer = _tabRenderers[S.tab] || _sharedTabRenderers[S.tab] || null;
+}
+
+function resolveHomeTabRenderer(inst, tabId) {
+  var instrumentRenderers = inst && inst.tabRenderers ? inst.tabRenderers : {};
+  var sharedRenderers = getSharedHomeTabRenderers();
+  return instrumentRenderers[tabId] || sharedRenderers[tabId] || null;
+}
+
+function sv2HomeDashboard() {
+  var inst = getPracticePageInstrument();
+  if (!inst) return "";
+  var D = inst.getData ? inst.getData() : {};
+  var instrumentType = getPracticePageInstrumentType(inst);
+  var theme = typeof SparkTheme !== "undefined" ? SparkTheme.get(instrumentType) : null;
+  if (!theme) return "";
+
+  var allInstruments = typeof SparkInstruments !== "undefined" ? SparkInstruments.getAll() : [];
+  var levelNames = D.LN || {};
+  var currentLevel = normalizePracticeDisplayCount(S.level, 1);
+  var currentXp = normalizePracticeDisplayCount(S.xp, 0);
+  var currentStreak = normalizePracticeDisplayCount(S.streak, 0);
+  var levelName = levelNames[currentLevel] || ("Level " + currentLevel);
+  var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
+  var masteredCount = getPracticeMasteredChordCount(D.ALL_CHORDS);
+
+  var goalMetrics = getPracticeGoalMetrics();
+  var h = '';
+  h += renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, masteredCount, chordCount);
+  h += renderSv2InstrumentRow(inst.id, allInstruments);
+  h += renderSv2DailyGoal(goalMetrics);
+
+  return h;
+}
+
+function homePage(){
+  // V2 Dashboard
+  var v2Home = typeof sv2HomeDashboard === "function" && document.body.classList.contains("sv2") ? sv2HomeDashboard() : "";
+
+  // Build tab bar from active instrument's tabs array
+  var inst = getPracticePageInstrument();
+  var instTabs = inst && inst.tabs ? inst.tabs : [];
+  var h = renderHomeTabBar(instTabs);
+
+  // Route to tab content — check instrument-specific renderer first, then shared
+  var _renderer = resolveHomeTabRenderer(inst, S.tab);
   if (_renderer) h += _renderer();
   return v2Home + h;
 }
@@ -537,6 +561,120 @@ function renderPracticeProgressAndLibrary(currentLevel) {
   if(S.importMsg) h += '<div style="text-align:center;margin-top:8px;font-size:12px;color:'+(S.importMsg.ok?"#4ECDC4":"#FF6B6B")+'">'+S.importMsg.text+'</div>';
   return h;
 }
+
+function renderCustomSetEditor(D, customSetChords) {
+  var customSetNameValue = normalizePracticeTextInputValue(S.customSetName);
+  var h='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(customSetNameValue)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
+  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Select chords (min 2):</div>';
+  h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
+  for(var l=1;l<=S.level;l++){
+    var cs=D.CHORDS[l]||[];
+    for(var i=0;i<cs.length;i++){
+      var c=cs[i],sel=customSetChords.indexOf(c.name)!==-1;
+      h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'toggleSetChord\',\'"+c.name+"\')")+'>'+c.short+'</span>';
+    }
+  }
+  h+='</div>';
+  h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(customSetChords.length<2||!S.customSetName.trim()?';opacity:0.5':'')+'">'+(S.editingSetIdx>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
+  return h;
+}
+
+function renderCustomSetList(customSets) {
+  var h='';
+  if(customSets.length===0){
+    h+='<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Create custom chord groups to practice together.</p>';
+  } else {
+    for(var i=0;i<customSets.length;i++){
+      var cs=customSets[i];
+      h+='<div class="set-card mb12"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.name)+'</h4><div style="display:flex;gap:6px">';
+      h+='<button onclick="act(\'drillCustomSet\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Start drill with '+escHTML(cs.name)+'">&#9889; Drill</button>';
+      h+='<button onclick="act(\'editSet\',\''+i+'\')" style="background:var(--input-bg);color:var(--text-muted);padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Edit set">&#9998;</button>';
+      h+='<button onclick="act(\'deleteSet\',\''+i+'\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Delete set">&#128465;</button>';
+      h+='</div></div>';
+      h+='<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      for(var j=0;j<cs.chords.length;j++){
+        h+='<span style="background:var(--chip-bg);padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--chip-color)">'+escHTML(cs.chords[j])+'</span>';
+      }
+      h+='</div></div>';
+    }
+  }
+  h+='<button class="btn" onclick="act(\'newSet\')" style="width:100%;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">+ Create Practice Set</button>';
+  return h;
+}
+
+function renderDrillOverviewCard(drillCount) {
+  return '<div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
+}
+
+function renderSuggestedDrillCard(hardest) {
+  if(!hardest) return '';
+  return '<div class="card mt16"><h3 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#128161; Suggested Drill</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your hardest transition: <strong>'+hardest.from+'</strong> &#8594; <strong>'+hardest.to+'</strong> (avg '+normalizePracticePageNumber(hardest.avg, 0).toFixed(1)+'s)</p><button class="btn" onclick="act(\'drillTransition\',\''+hardest.from+'|'+hardest.to+'\')" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#9889; Practice This</button></div>';
+}
+
+function renderDailyChallengeCard(dc) {
+  return '<div class="card"><div style="font-size:48px;margin-bottom:8px">'+dc.icon+'</div><h3 style="margin:0 0 6px;font-size:18px;font-weight:800;color:var(--text-primary)">'+dc.title+'</h3><p style="color:var(--text-label);font-size:14px;margin-bottom:8px">'+dc.desc+'</p><div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:16px">+'+dc.xp+' XP</div><br><button class="btn" onclick="act(\'startDaily\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">Accept Challenge</button></div>';
+}
+
+function renderQuizOverviewCard(quizScore) {
+  return '<div class="card"><div style="font-size:48px;margin-bottom:12px">&#129504;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Correct: <strong>'+quizScore+'</strong></p><button class="btn" onclick="act(\'startQuiz\')" style="background:linear-gradient(135deg,#45B7D1,#4ECDC4);color:#fff">Start Quiz</button></div>';
+}
+
+function renderEarTrainOverviewCard(runtime) {
+  return '<div class="card"><div style="font-size:48px;margin-bottom:12px">&#127911;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Score: <strong>'+runtime.score+'</strong> correct all time</p><button class="btn" onclick="act(\'startEarTrain\')" style="background:linear-gradient(135deg,#FF6B6B,#4ECDC4);color:#fff">&#127911; Start Listening</button></div>';
+}
+
+function renderEarTrainScoreHeader(runtime) {
+  return '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+runtime.score+'/'+runtime.total+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+runtime.streak+'</span></div></div>';
+}
+
+function renderEarTrainOptions(runtime) {
+  var h='<div style="display:flex;flex-direction:column;gap:8px;max-width:300px;margin:0 auto">';
+  for(var i=0;i<runtime.options.length;i++){
+    var opt=runtime.options[i];
+    var isA=runtime.answer!==null;
+    var isC=opt===runtime.question;
+    var isP=runtime.answer===opt;
+    var bg=isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--input-bg)")):"var(--card-bg)";
+    var clr=isA?(isC||isP?"#fff":"var(--text-muted)"):"var(--text-primary)";
+    h+='<button class="btn" onclick="act(\'answerEarTrain\',\''+opt+'\')" style="width:100%;padding:14px;font-size:16px;font-weight:700;background:'+bg+';color:'+clr+';border:2px solid '+(isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--border)")):"var(--border)")+'">'+opt+'</button>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function renderPracticeStatsCard(stats) {
+  return '<div class="card mb16"><div><b>Practice Stats</b></div><div>Streak: '+stats.streak+' days</div><div>Today: '+stats.todayMinutes+' min</div><div>Total: '+stats.totalMinutes+' min</div></div>';
+}
+
+function renderPracticePlanRows(plan) {
+  var h='<div class="card mb16"><div><b>Today\'s Practice Plan</b></div>';
+  if(hasRenderablePracticeSummaryItems(plan)){
+    for(var i=0;i<plan.items.length;i++){
+      var item = plan.items[i];
+      var itemId;
+      var isCompleted;
+      var done;
+      var actionHtml;
+      if(!isRenderablePracticeSummaryItem(item)) continue;
+      itemId = normalizePracticeSummaryItemId(item ? item.id : null);
+      isCompleted = isCompletedPracticeSummaryItem(item);
+      done = isCompleted ? ' style="opacity:0.5;text-decoration:line-through"' : '';
+      actionHtml = isCompleted
+        ? '<span class="text-muted">Done</span>'
+        : (itemId
+          ? '<button data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))">Start</button>'
+          : '<span class="text-muted">Unavailable</span>');
+      h += '<div class="row">';
+      h += '<span'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
+      h += actionHtml;
+      h += '</div>';
+    }
+  } else {
+    h += '<div class="muted">No practice plan yet.</div>';
+  }
+  h += '</div>';
+  return h;
+}
 // ===== PRACTICE TAB =====
 function practiceTab(){
   var inst = getPracticePageInstrument();
@@ -575,38 +713,9 @@ function customSetsSection(){
   var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
 
   if(S.editingSet){
-    var customSetNameValue = normalizePracticeTextInputValue(S.customSetName);
-    h+='<input class="set-input mb12" id="set-name-input" type="text" placeholder="Set name..." value="'+escHTML(customSetNameValue)+'" oninput="act(\'setName\',this.value)" aria-label="Practice set name"/>';
-    h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Select chords (min 2):</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
-    for(var l=1;l<=S.level;l++){
-      var cs=D.CHORDS[l]||[];
-      for(var i=0;i<cs.length;i++){
-        var c=cs[i],sel=customSetChords.indexOf(c.name)!==-1;
-        h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'toggleSetChord\',\'"+c.name+"\')")+'>'+c.short+'</span>';
-      }
-    }
-    h+='</div>';
-    h+='<div style="display:flex;gap:8px"><button class="btn" onclick="act(\'saveSet\')" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff'+(customSetChords.length<2||!S.customSetName.trim()?';opacity:0.5':'')+'">'+(S.editingSetIdx>=0?"Update":"Save")+'</button><button class="btn" onclick="act(\'cancelSet\')" style="flex:1;padding:10px;font-size:14px;background:var(--input-bg);color:var(--text-primary)">Cancel</button></div>';
+    h+=renderCustomSetEditor(D, customSetChords);
   } else {
-    if(customSets.length===0){
-      h+='<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Create custom chord groups to practice together.</p>';
-    } else {
-      for(var i=0;i<customSets.length;i++){
-        var cs=customSets[i];
-        h+='<div class="set-card mb12"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.name)+'</h4><div style="display:flex;gap:6px">';
-        h+='<button onclick="act(\'drillCustomSet\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Start drill with '+escHTML(cs.name)+'">&#9889; Drill</button>';
-        h+='<button onclick="act(\'editSet\',\''+i+'\')" style="background:var(--input-bg);color:var(--text-muted);padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Edit set">&#9998;</button>';
-        h+='<button onclick="act(\'deleteSet\',\''+i+'\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Delete set">&#128465;</button>';
-        h+='</div></div>';
-        h+='<div style="display:flex;flex-wrap:wrap;gap:4px">';
-        for(var j=0;j<cs.chords.length;j++){
-          h+='<span style="background:var(--chip-bg);padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--chip-color)">'+escHTML(cs.chords[j])+'</span>';
-        }
-        h+='</div></div>';
-      }
-    }
-    h+='<button class="btn" onclick="act(\'newSet\')" style="width:100%;padding:10px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">+ Create Practice Set</button>';
+    h+=renderCustomSetList(customSets);
   }
   h+='</div>';
   return h;
@@ -617,12 +726,11 @@ function customSetsSection(){
 // ===== DRILL TAB =====
 function drillTab(){
   var drillCount = normalizePracticeDisplayCount(S.drillCount, 0);
-  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127947;&#65039;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Completed: <strong>'+drillCount+'</strong></p><button class="btn" onclick="act(\'startDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Start Drill</button></div>';
+  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Switching &#9889;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">60 seconds - switch fast!</p>';
+  h+=renderDrillOverviewCard(drillCount);
   // Suggested drill from transition stats
   var hardest=getHardestTransition();
-  if(hardest){
-    h+='<div class="card mt16"><h3 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#128161; Suggested Drill</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your hardest transition: <strong>'+hardest.from+'</strong> &#8594; <strong>'+hardest.to+'</strong> (avg '+normalizePracticePageNumber(hardest.avg, 0).toFixed(1)+'s)</p><button class="btn" onclick="act(\'drillTransition\',\''+hardest.from+'|'+hardest.to+'\')" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#9889; Practice This</button></div>';
-  }
+  h+=renderSuggestedDrillCard(hardest);
   h+='</div>';
   return h;
 }
@@ -648,7 +756,7 @@ function getHardestTransition(){
 function dailyTab(){
   if(!S.dailyChallenge)return '';
   var dc=S.dailyChallenge;
-  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Daily Challenge &#127941;</h2><div class="card"><div style="font-size:48px;margin-bottom:8px">'+dc.icon+'</div><h3 style="margin:0 0 6px;font-size:18px;font-weight:800;color:var(--text-primary)">'+dc.title+'</h3><p style="color:var(--text-label);font-size:14px;margin-bottom:8px">'+dc.desc+'</p><div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:16px">+'+dc.xp+' XP</div><br><button class="btn" onclick="act(\'startDaily\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">Accept Challenge</button></div></div>';
+  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Daily Challenge &#127941;</h2>'+renderDailyChallengeCard(dc)+'</div>';
 }
 
 // ===== QUIZ TAB =====
@@ -658,7 +766,7 @@ function quizTab(){
     : null;
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   var quizScore = normalizePracticeDisplayCount(S.quizCorrect, normalizePracticeDisplayCount(runtime && runtime.legacyQuizScore, 0));
-  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#129504;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">Correct: <strong>'+quizScore+'</strong></p><button class="btn" onclick="act(\'startQuiz\')" style="background:linear-gradient(135deg,#45B7D1,#4ECDC4);color:#fff">Start Quiz</button></div></div>';
+  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p>'+renderQuizOverviewCard(quizScore)+'</div>';
 }
 
 // ===== EAR TRAINING TAB =====
@@ -680,26 +788,16 @@ function getLegacyEarTrainingRuntime(){
 function earTrainTab(){
   var runtime = getLegacyEarTrainingRuntime();
   if(runtime.question)return earTrainPage();
-  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Ear Training &#128066;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Listen to a chord, then identify it!</p><div class="card"><div style="font-size:48px;margin-bottom:12px">&#127911;</div><p style="color:var(--text-muted);font-size:13px;margin-bottom:8px">Score: <strong>'+runtime.score+'</strong> correct all time</p><button class="btn" onclick="act(\'startEarTrain\')" style="background:linear-gradient(135deg,#FF6B6B,#4ECDC4);color:#fff">&#127911; Start Listening</button></div></div>';
+  return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Ear Training &#128066;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Listen to a chord, then identify it!</p>'+renderEarTrainOverviewCard(runtime)+'</div>';
 }
 
 function earTrainPage(){
   var runtime = getLegacyEarTrainingRuntime();
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'ear\')">&#8592; Back</button>';
-  h+='<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px"><div style="background:#4ECDC422;padding:6px 14px;border-radius:14px"><span style="font-weight:700;color:#4ECDC4">'+runtime.score+'/'+runtime.total+'</span></div><div style="background:#FF6B6B22;padding:6px 14px;border-radius:14px">&#128293;<span style="font-weight:700;color:#FF6B6B">'+runtime.streak+'</span></div></div>';
+  h+=renderEarTrainScoreHeader(runtime);
   h+='<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">What chord is this?</h2>';
   h+='<button class="btn mb16" onclick="act(\'replayEarTrain\')" style="padding:10px 20px;font-size:14px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#128264; Replay</button>';
-  h+='<div style="display:flex;flex-direction:column;gap:8px;max-width:300px;margin:0 auto">';
-  for(var i=0;i<runtime.options.length;i++){
-    var opt=runtime.options[i];
-    var isA=runtime.answer!==null;
-    var isC=opt===runtime.question;
-    var isP=runtime.answer===opt;
-    var bg=isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--input-bg)")):"var(--card-bg)";
-    var clr=isA?(isC||isP?"#fff":"var(--text-muted)"):"var(--text-primary)";
-    h+='<button class="btn" onclick="act(\'answerEarTrain\',\''+opt+'\')" style="width:100%;padding:14px;font-size:16px;font-weight:700;background:'+bg+';color:'+clr+';border:2px solid '+(isA?(isC?"#4ECDC4":(isP?"#FF6B6B":"var(--border)")):"var(--border)")+'">'+opt+'</button>';
-  }
-  h+='</div>';
+  h+=renderEarTrainOptions(runtime);
   if(runtime.answer){
     var ok=runtime.answer===runtime.question;
     h+='<div style="margin-top:16px;font-size:20px;font-weight:800;color:'+(ok?"#4ECDC4":"#FF6B6B")+';animation:bn .4s ease">'+(ok?"&#9989; Correct! +15 XP":"&#10060; It was "+runtime.question)+'</div>';
@@ -712,39 +810,7 @@ function earTrainPage(){
 function practicePage(){
   var stats = getPracticeStats();
   var plan = resolvePracticeSummaryPlan();
-
-  var h = '<div class="card mb16">';
-  h += '<div><b>Practice Stats</b></div>';
-  h += '<div>Streak: '+stats.streak+' days</div>';
-  h += '<div>Today: '+stats.todayMinutes+' min</div>';
-  h += '<div>Total: '+stats.totalMinutes+' min</div>';
-  h += '</div>';
-
-  h += '<div class="card mb16">';
-  h += '<div><b>Today\'s Practice Plan</b></div>';
-  if(hasRenderablePracticeSummaryItems(plan)){
-    for(var i=0;i<plan.items.length;i++){
-      var item = plan.items[i];
-      if(!isRenderablePracticeSummaryItem(item)) continue;
-      var itemId = normalizePracticeSummaryItemId(item ? item.id : null);
-      var isCompleted = isCompletedPracticeSummaryItem(item);
-      var done = isCompleted ? ' style="opacity:0.5;text-decoration:line-through"' : '';
-      var actionHtml = isCompleted
-        ? '<span class="text-muted">Done</span>'
-        : (itemId
-          ? '<button data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))">Start</button>'
-          : '<span class="text-muted">Unavailable</span>');
-      h += '<div class="row">';
-      h += '<span'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
-      h += actionHtml;
-      h += '</div>';
-    }
-  } else {
-    h += '<div class="muted">No practice plan yet.</div>';
-  }
-  h += '</div>';
-
-  return h;
+  return renderPracticeStatsCard(stats) + renderPracticePlanRows(plan);
 }
 
 function startPracticeItem(id){
