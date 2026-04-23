@@ -471,7 +471,9 @@ function maybeScorePendingEvents(nowSec) {
   var snapshot = PerformanceInput.getSnapshot(nowSec);
   S.performInputSource = PerformanceInput.activeMode;
   S.performInputNotes = snapshot.pitchClasses.slice();
-  var offsetMs = S.performMode === "midi" ? (S.performMidiOffsetMs || 0) : (S.performAudioOffsetMs || 0);
+  var offsetMs = S.performMode === "midi"
+    ? (S.performMidiOffsetMs || 0)
+    : (typeof getStoredPerformanceMicOffsetMs === "function" ? getStoredPerformanceMicOffsetMs() : (S.performMicOffsetMs || 0));
   var targetTechnique = S.performTargetTechnique || null;
 
   for (var i = 0; i < chart.events.length; i++) {

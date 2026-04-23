@@ -98,7 +98,7 @@ function finishCalibration() {
   if (S.performMode === "midi") {
     S.performMidiOffsetMs = avg;
   } else {
-    S.performAudioOffsetMs = avg;
+    S.performMicOffsetMs = avg;
   }
   S.performCalibrated = true;
   saveState();
@@ -137,6 +137,11 @@ function getPerformancePracticePresetOptions() {
     { id: "guitar_quiet", label: "Quiet " + stemLabel },
     { id: "guitar_solo", label: "Solo " + stemLabel }
   ];
+}
+
+function getPerformPageMicOffsetMs() {
+  if (typeof S.performMicOffsetMs === "number" && isFinite(S.performMicOffsetMs)) return S.performMicOffsetMs;
+  return 0;
 }
 
 function performPage() {
@@ -322,7 +327,7 @@ function performPage() {
   // Calibration
   h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performCalibrate\')" style="background:var(--input-bg);color:var(--text-secondary)">&#9201; Calibrate</button>';
   var curOffset = normalizePerformPageNumber(
-    S.performMode === "midi" ? S.performMidiOffsetMs : S.performAudioOffsetMs,
+      S.performMode === "midi" ? S.performMidiOffsetMs : getPerformPageMicOffsetMs(),
     0
   );
   if (curOffset !== 0) {
