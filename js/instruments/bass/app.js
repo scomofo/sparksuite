@@ -156,6 +156,10 @@
       return bassAct("startDrill");
     }
 
+    if (a === "guidedStart") {
+      a = "start_guided_session";
+    }
+
     if (a === "start_guided_session") {
       var sessionNum = parseInt(v, 10);
       if (typeof window.openGuidedSessionRequest === "function") {
