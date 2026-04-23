@@ -470,6 +470,83 @@
         instrument: "ukulele"
       },
       {
+        id: "uke_fingerpick_flow_package",
+        title: "Fingerpick Flow",
+        artist: "SparkSuite Ukulele",
+        bpm: 76,
+        description: "Ukulele package-backed fingerstyle chart with alternating-thumb flow and melody accents.",
+        sourceType: "imported_package",
+        accentColor: "#14b8a6",
+        badge: "Ukulele",
+        instrument: "ukulele"
+      },
+      {
+        id: "uke_performance_medley_package",
+        title: "Performance Medley",
+        artist: "SparkSuite Ukulele",
+        bpm: 82,
+        description: "Ukulele package-backed medley chart for broader stage-style transitions.",
+        sourceType: "imported_package",
+        accentColor: "#0d9488",
+        badge: "Ukulele",
+        instrument: "ukulele"
+      },
+      {
+        id: "uke_reggae_chop_package",
+        title: "Reggae Chop",
+        artist: "SparkSuite Ukulele",
+        bpm: 80,
+        description: "Ukulele package-backed offbeat chop chart for syncopated groove practice.",
+        sourceType: "imported_package",
+        accentColor: "#059669",
+        badge: "Ukulele",
+        instrument: "ukulele"
+      },
+      {
+        id: "piano_ballad_flow",
+        title: "Ballad Flow",
+        artist: "SparkSuite Piano",
+        bpm: 72,
+        description: "Piano built-in chart with slower left-hand roots and expressive triad changes.",
+        sourceType: "built_in",
+        accentColor: "#3b82f6",
+        badge: "Piano",
+        instrument: "piano"
+      },
+      {
+        id: "piano_gentle_walk",
+        title: "Gentle Walk",
+        artist: "SparkSuite Piano",
+        bpm: 78,
+        description: "Piano built-in chart with light rhythmic handoffs and walking root motion.",
+        sourceType: "built_in",
+        accentColor: "#2563eb",
+        badge: "Piano",
+        instrument: "piano"
+      },
+      {
+        id: "piano_groove_drive",
+        title: "Groove Drive",
+        artist: "SparkSuite Piano",
+        bpm: 96,
+        description: "Piano built-in chart with tighter rhythmic comping and pulse control.",
+        sourceType: "built_in",
+        accentColor: "#1d4ed8",
+        badge: "Piano",
+        instrument: "piano"
+      },
+      {
+        id: "piano_soul_voicings",
+        title: "Soul Voicings",
+        artist: "SparkSuite Piano",
+        bpm: 84,
+        description: "Piano built-in chart focused on soulful chord voicings and smooth transitions.",
+        sourceType: "built_in",
+        accentColor: "#1e40af",
+        badge: "Piano",
+        instrument: "piano"
+      },
+      {
         id: "bass_midnight_lock_package",
         title: "Midnight Lock",
         artist: "SparkSuite Bass",
