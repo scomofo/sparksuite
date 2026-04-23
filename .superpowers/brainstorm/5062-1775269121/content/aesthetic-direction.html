@@ -1,0 +1,59 @@
+<h2>SparkSuite Visual Refresh: Aesthetic Direction</h2>
+<p class="subtitle">The current design is warm and functional but feels generic. Which direction should the refresh take?</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="height:200px;background:linear-gradient(135deg,#0a0a0f,#1a1a2e);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,120,50,0.06) 39px,rgba(255,120,50,0.06) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,120,50,0.06) 39px,rgba(255,120,50,0.06) 40px)"></div>
+      <div style="font-size:42px;font-weight:900;font-family:monospace;color:#ff7b3a;letter-spacing:-2px;text-shadow:0 0 40px rgba(255,120,50,0.5)">SPARK</div>
+      <div style="position:absolute;bottom:12px;left:16px;font-size:11px;color:rgba(255,255,255,0.3);font-family:monospace;letter-spacing:3px">STUDIO GRADE</div>
+    </div>
+    <div class="card-body">
+      <h3>A: Dark Studio</h3>
+      <p>Pro music studio aesthetic. Deep blacks, neon accent glows, monospace details, subtle grid textures. Feels like a DAW or professional recording environment. Serious, focused, premium.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="height:200px;background:linear-gradient(160deg,#fef3e2,#fde8d0,#f9d4b0);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;opacity:0.15;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%2228%22 fill=%22none%22 stroke=%22%23c4956a%22 stroke-width=%220.5%22/></svg>') repeat"></div>
+      <div style="font-size:38px;font-weight:800;color:#8b4513;font-family:Georgia,serif;letter-spacing:2px">Spark<span style="color:#d4763a">Suite</span></div>
+      <div style="position:absolute;bottom:14px;font-size:10px;color:#a07850;font-family:Georgia,serif;letter-spacing:4px;text-transform:uppercase">Learn at your own tempo</div>
+    </div>
+    <div class="card-body">
+      <h3>B: Warm Acoustic</h3>
+      <p>Organic, warm tones inspired by wood grain and acoustic instruments. Cream backgrounds, brown/amber palette, serif typography, soft textures. Feels handcrafted, inviting, intimate — like a cozy practice room.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="height:200px;background:linear-gradient(135deg,#0f0f23,#1a1a3e,#0f0f23);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(120,80,255,0.15),transparent 70%),radial-gradient(ellipse at 70% 50%,rgba(255,100,80,0.1),transparent 60%)"></div>
+      <div style="font-size:40px;font-weight:900;background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#9b59b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:system-ui">SparkSuite</div>
+      <div style="position:absolute;top:20px;right:20px;width:60px;height:60px;border-radius:50%;border:2px solid rgba(255,200,60,0.3);display:flex;align-items:center;justify-content:center"><div style="width:30px;height:30px;border-radius:50%;background:conic-gradient(#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#ff6b6b);animation:spin 4s linear infinite"></div></div>
+    </div>
+    <div class="card-body">
+      <h3>C: Vibrant Playground</h3>
+      <p>Bold colors, playful energy, gamified feel. Each instrument gets its own color identity. Gradient accents, rounded shapes, bouncy animations. Feels like Duolingo meets Spotify — fun, rewarding, energetic. Great for motivation.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="d" onclick="toggleSelect(this)">
+    <div class="card-image" style="height:200px;background:#111;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,rgba(255,123,58,0.03) 50%,transparent 100%)"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="font-size:48px;font-weight:200;color:#e8e0d4;font-family:system-ui;letter-spacing:8px">SPARK</div>
+        <div style="width:120px;height:1px;background:linear-gradient(90deg,transparent,#ff7b3a,transparent)"></div>
+        <div style="font-size:10px;color:#666;letter-spacing:6px;font-family:system-ui">SUITE</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>D: Refined Minimal</h3>
+      <p>Stripped back, elegant, confident. Lots of negative space, thin lines, ultralight type weights, single accent color. Content-focused with no visual noise. Feels like a luxury product — Apple Music meets Headspace. Quiet authority.</p>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
