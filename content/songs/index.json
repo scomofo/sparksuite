@@ -220,6 +220,7 @@
     "id": "come_together",
     "title": "Come Together",
     "artist": "The Beatles",
+    "chartId": "come_together_bass_chords",
     "midi": "content/songs/midi/come_together.mid"
   },
   {
@@ -227,6 +228,7 @@
     "title": "With or Without You",
     "artist": "U2",
     "spotifyTrackUri": "spotify:track:6ADSaE87h8Y3lccZlBJdXH",
+    "chartId": "with_or_without_you_chords",
     "midi": "content/songs/midi/with_or_without_you.mid"
   },
   {
@@ -234,12 +236,14 @@
     "title": "Billie Jean",
     "artist": "Michael Jackson",
     "spotifyTrackUri": "spotify:track:7J1uxwnxfQLu4APicE5Rnj",
+    "chartId": "billie_jean_bass_chords",
     "midi": "content/songs/midi/billie_jean.mid"
   },
   {
     "id": "sunshine_of_your_love",
     "title": "Sunshine of Your Love",
     "artist": "Cream",
+    "chartId": "sunshine_of_your_love_bass_chords",
     "midi": "content/songs/midi/sunshine_of_your_love.mid"
   },
   {
@@ -247,6 +251,7 @@
     "title": "Another One Bites the Dust",
     "artist": "Queen",
     "spotifyTrackUri": "spotify:track:2k1yPYf9WGA4LiqcLVwtzn",
+    "chartId": "another_one_bites_the_dust_bass_chords",
     "midi": "content/songs/midi/another_one_bites_the_dust.mid"
   },
   {
@@ -254,18 +259,21 @@
     "title": "Seven Nation Army",
     "artist": "The White Stripes",
     "spotifyTrackUri": "spotify:track:3dPQuX8Gs42Y7b454ybpMR",
+    "chartId": "seven_nation_army_bass_chords",
     "midi": "content/songs/midi/seven_nation_army.mid"
   },
   {
     "id": "under_pressure",
     "title": "Under Pressure",
     "artist": "Queen & David Bowie",
+    "chartId": "under_pressure_bass_chords",
     "midi": "content/songs/midi/under_pressure.mid"
   },
   {
     "id": "longview",
     "title": "Longview",
     "artist": "Green Day",
+    "chartId": "longview_bass_chords",
     "midi": "content/songs/midi/longview.mid"
   },
   {
@@ -273,12 +281,14 @@
     "title": "Zombie",
     "artist": "The Cranberries",
     "spotifyTrackUri": "spotify:track:2IZZqH4K02UIYg5EohpNHF",
+    "chartId": "zombie_chords",
     "midi": "content/songs/midi/zombie.mid"
   },
   {
     "id": "pumped_up_kicks",
     "title": "Pumped Up Kicks",
     "artist": "Foster the People",
+    "chartId": "pumped_up_kicks_chords",
     "midi": "content/songs/midi/pumped_up_kicks.mid"
   },
   {
@@ -286,6 +296,7 @@
     "title": "Feel Good Inc",
     "artist": "Gorillaz",
     "spotifyTrackUri": "spotify:track:0d28khcov6AiegSCpG5TuT",
+    "chartId": "feel_good_inc_bass_chords",
     "midi": "content/songs/midi/feel_good_inc.mid"
   },
   {
@@ -293,6 +304,7 @@
     "title": "Higher Ground",
     "artist": "Stevie Wonder",
     "spotifyTrackUri": "spotify:track:0dMd4rilfd6gPbXaLpNYhu",
+    "chartId": "higher_ground_bass_chords",
     "midi": "content/songs/midi/higher_ground.mid"
   },
   {
@@ -300,12 +312,14 @@
     "title": "Come As You Are",
     "artist": "Nirvana",
     "spotifyTrackUri": "spotify:track:4P5KoWXOxwuobLmHXLMobV",
+    "chartId": "come_as_you_are_bass_chords",
     "midi": "content/songs/midi/come_as_you_are.mid"
   },
   {
     "id": "hysteria",
     "title": "Hysteria",
     "artist": "Muse",
+    "chartId": "hysteria_bass_chords",
     "midi": "content/songs/midi/hysteria.mid"
   },
   {
@@ -313,6 +327,7 @@
     "title": "Money",
     "artist": "Pink Floyd",
     "spotifyTrackUri": "spotify:track:0vFOzaXqZHahrZp6enQwQb",
+    "chartId": "money_bass_chords",
     "midi": "content/songs/midi/money.mid"
   },
   {
@@ -320,12 +335,14 @@
     "title": "Smells Like Teen Spirit",
     "artist": "Nirvana",
     "spotifyTrackUri": "spotify:track:27ewqhDTQmJPj1qGbA8Rmv",
+    "chartId": "smells_like_teen_spirit_chords",
     "midi": "content/songs/midi/smells_like_teen_spirit.mid"
   },
   {
     "id": "sweet_child_o_mine",
     "title": "Sweet Child O' Mine",
     "artist": "Guns N' Roses",
+    "chartId": "sweet_child_o_mine_bass_chords",
     "midi": "content/songs/midi/sweet_child_o_mine.mid"
   }
 ]

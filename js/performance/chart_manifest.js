@@ -294,6 +294,19 @@
         arrangementType: "chords"
       },
       {
+        id: "higher_ground_bass_chords",
+        title: "Higher Ground",
+        artist: "Stevie Wonder",
+        bpm: 103,
+        description: "Bass-specific chart built around the syncopated clav-driven funk riff translated to low end.",
+        sourceType: "built_in",
+        accentColor: "#15803d",
+        badge: "Bass",
+        instrument: "bass",
+        songId: "higher_ground",
+        arrangementType: "chords"
+      },
+      {
         id: "another_one_bites_the_dust_bass_chords",
         title: "Another One Bites the Dust",
         artist: "Queen",
