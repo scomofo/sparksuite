@@ -3,6 +3,7 @@
     "id": "wonderful_tonight",
     "title": "Wonderful Tonight",
     "artist": "Eric Clapton",
+    "spotifyTrackUri": "spotify:track:6zC0mpGYwbNTpk9SKwh08f",
     "chartId": "wonderful_tonight_chords",
     "midi": "content/songs/midi/wonderful_tonight.mid"
   },
@@ -10,6 +11,7 @@
     "id": "knockin_on_heavens_door",
     "title": "Knockin' on Heaven's Door",
     "artist": "Bob Dylan",
+    "spotifyTrackUri": "spotify:track:0DIl8igaw4Zo9smXH9IEuL",
     "chartId": "knockin_on_heavens_door_chords",
     "midi": "content/songs/midi/knockin_on_heavens_door.mid"
   },
@@ -17,6 +19,7 @@
     "id": "three_little_birds",
     "title": "Three Little Birds",
     "artist": "Bob Marley",
+    "spotifyTrackUri": "spotify:track:4VkU4kB67NwGidDHQNsvlM",
     "chartId": "three_little_birds_chords",
     "midi": "content/songs/midi/three_little_birds.mid"
   },
@@ -24,6 +27,7 @@
     "id": "la_bamba",
     "title": "La Bamba",
     "artist": "Ritchie Valens",
+    "spotifyTrackUri": "spotify:track:4JOfxW1YJhYgC6npqhccNe",
     "chartId": "la_bamba_chords",
     "midi": "content/songs/midi/la_bamba.mid"
   },
@@ -31,6 +35,7 @@
     "id": "hotel_california",
     "title": "Hotel California",
     "artist": "Eagles",
+    "spotifyTrackUri": "spotify:track:4GkOfUKUqDDgoeiov8Uqyi",
     "chartId": "hotel_california_chords",
     "midi": "content/songs/midi/hotel_california.mid"
   },
@@ -38,6 +43,7 @@
     "id": "have_you_ever_seen_the_rain",
     "title": "Have You Ever Seen the Rain",
     "artist": "CCR",
+    "spotifyTrackUri": "spotify:track:0yDVco6hLy1o9NklCle3jT",
     "chartId": "have_you_ever_seen_the_rain_chords",
     "midi": "content/songs/midi/have_you_ever_seen_the_rain.mid"
   },
@@ -45,6 +51,7 @@
     "id": "brown_eyed_girl",
     "title": "Brown Eyed Girl",
     "artist": "Van Morrison",
+    "spotifyTrackUri": "spotify:track:7oR7NOHGNoZzOvPHSkiMIW",
     "chartId": "brown_eyed_girl_chords",
     "midi": "content/songs/midi/brown_eyed_girl.mid"
   },
@@ -52,6 +59,7 @@
     "id": "bad_moon_rising",
     "title": "Bad Moon Rising",
     "artist": "CCR",
+    "spotifyTrackUri": "spotify:track:2bMlSOpa1WVMQZT9zWYUZc",
     "chartId": "bad_moon_rising_chords",
     "midi": "content/songs/midi/bad_moon_rising.mid"
   },
@@ -73,6 +81,7 @@
     "id": "stand_by_me",
     "title": "Stand By Me",
     "artist": "Ben E. King",
+    "spotifyTrackUri": "spotify:track:2XqTTDg835sjCyyFEvhYyr",
     "chartId": "stand_by_me_chords",
     "midi": "content/songs/midi/stand_by_me.mid"
   },
@@ -80,6 +89,7 @@
     "id": "love_me_do",
     "title": "Love Me Do",
     "artist": "The Beatles",
+    "spotifyTrackUri": "spotify:track:3VbGCXWRiouAq8VyMYN2MI",
     "chartId": "love_me_do_chords",
     "midi": "content/songs/midi/love_me_do.mid"
   },
@@ -87,6 +97,7 @@
     "id": "wish_you_were_here",
     "title": "Wish You Were Here",
     "artist": "Pink Floyd",
+    "spotifyTrackUri": "spotify:track:6iMjntVYkchLBJcqsiSNYZ",
     "chartId": "wish_you_were_here_chords",
     "midi": "content/songs/midi/wish_you_were_here.mid"
   },
@@ -94,6 +105,7 @@
     "id": "let_it_be",
     "title": "Let It Be",
     "artist": "The Beatles",
+    "spotifyTrackUri": "spotify:track:2IEWy03b7dy4JlccWSTWjA",
     "chartId": "let_it_be_chords",
     "midi": "content/songs/midi/let_it_be.mid"
   },
@@ -122,6 +134,7 @@
     "id": "tears_in_heaven",
     "title": "Tears in Heaven",
     "artist": "Eric Clapton",
+    "spotifyTrackUri": "spotify:track:4AG8RrvbjtDNdR6v4zfCv3",
     "chartId": "tears_in_heaven_chords",
     "midi": "content/songs/midi/tears_in_heaven.mid"
   },
@@ -129,6 +142,7 @@
     "id": "creep",
     "title": "Creep",
     "artist": "Radiohead",
+    "spotifyTrackUri": "spotify:track:3HfB5hBU0dmBt8T0iCmH42",
     "chartId": "creep_chords",
     "midi": "content/songs/midi/creep.mid"
   },
@@ -212,12 +226,14 @@
     "id": "with_or_without_you",
     "title": "With or Without You",
     "artist": "U2",
+    "spotifyTrackUri": "spotify:track:6ADSaE87h8Y3lccZlBJdXH",
     "midi": "content/songs/midi/with_or_without_you.mid"
   },
   {
     "id": "billie_jean",
     "title": "Billie Jean",
     "artist": "Michael Jackson",
+    "spotifyTrackUri": "spotify:track:7J1uxwnxfQLu4APicE5Rnj",
     "midi": "content/songs/midi/billie_jean.mid"
   },
   {
@@ -230,12 +246,14 @@
     "id": "another_one_bites_the_dust",
     "title": "Another One Bites the Dust",
     "artist": "Queen",
+    "spotifyTrackUri": "spotify:track:2k1yPYf9WGA4LiqcLVwtzn",
     "midi": "content/songs/midi/another_one_bites_the_dust.mid"
   },
   {
     "id": "seven_nation_army",
     "title": "Seven Nation Army",
     "artist": "The White Stripes",
+    "spotifyTrackUri": "spotify:track:3dPQuX8Gs42Y7b454ybpMR",
     "midi": "content/songs/midi/seven_nation_army.mid"
   },
   {
@@ -254,6 +272,7 @@
     "id": "zombie",
     "title": "Zombie",
     "artist": "The Cranberries",
+    "spotifyTrackUri": "spotify:track:2IZZqH4K02UIYg5EohpNHF",
     "midi": "content/songs/midi/zombie.mid"
   },
   {
@@ -266,18 +285,21 @@
     "id": "feel_good_inc",
     "title": "Feel Good Inc",
     "artist": "Gorillaz",
+    "spotifyTrackUri": "spotify:track:0d28khcov6AiegSCpG5TuT",
     "midi": "content/songs/midi/feel_good_inc.mid"
   },
   {
     "id": "higher_ground",
     "title": "Higher Ground",
     "artist": "Stevie Wonder",
+    "spotifyTrackUri": "spotify:track:0dMd4rilfd6gPbXaLpNYhu",
     "midi": "content/songs/midi/higher_ground.mid"
   },
   {
     "id": "come_as_you_are",
     "title": "Come As You Are",
     "artist": "Nirvana",
+    "spotifyTrackUri": "spotify:track:4P5KoWXOxwuobLmHXLMobV",
     "midi": "content/songs/midi/come_as_you_are.mid"
   },
   {
@@ -290,12 +312,14 @@
     "id": "money",
     "title": "Money",
     "artist": "Pink Floyd",
+    "spotifyTrackUri": "spotify:track:0vFOzaXqZHahrZp6enQwQb",
     "midi": "content/songs/midi/money.mid"
   },
   {
     "id": "smells_like_teen_spirit",
     "title": "Smells Like Teen Spirit",
     "artist": "Nirvana",
+    "spotifyTrackUri": "spotify:track:27ewqhDTQmJPj1qGbA8Rmv",
     "midi": "content/songs/midi/smells_like_teen_spirit.mid"
   },
   {

@@ -71,7 +71,9 @@
     if (a === "openPerformSong") {
       var selectedSongIdx = parseInt(v, 10);
       if (!isNaN(selectedSongIdx) && SONGS[selectedSongIdx]) {
-        var selectedSongId = (SONGS[selectedSongIdx].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+        var selectedSongId = typeof resolvePerformanceSongId === "function"
+          ? resolvePerformanceSongId(SONGS[selectedSongIdx], SONGS[selectedSongIdx].title)
+          : (SONGS[selectedSongIdx].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
         setLegacyFields({ performTargetTechnique: null });
         if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
           openPerformanceSongSelectionRequest({
@@ -330,7 +332,9 @@
       }
       if (challenge.songId) {
         for (var di = 0; di < SONGS.length; di++) {
-          var dsid = (SONGS[di].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+          var dsid = typeof resolvePerformanceSongId === "function"
+            ? resolvePerformanceSongId(SONGS[di], SONGS[di].title)
+            : (SONGS[di].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
           if (dsid === challenge.songId) {
             openPerformanceDailyChallengeRequest({
               songId: challenge.songId,
@@ -396,12 +400,24 @@
       var targetTechnique = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceTargetTechnique")
         ? coreView.runtimeState.performanceTargetTechnique
         : S.performTargetTechnique;
+      var selectedSongId = selectedSong && typeof resolvePerformanceSongId === "function"
+        ? resolvePerformanceSongId(selectedSong, selectedSongTitle || (selectedSong && selectedSong.title))
+        : (selectedSongTitle || (selectedSong && selectedSong.title) || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+      var activeInstrumentType = typeof getActivePerformanceInstrumentType === "function"
+        ? getActivePerformanceInstrumentType()
+        : ((selectedSong && (selectedSong.instrument || selectedSong.instrumentType || selectedSong.adapterType)) || "guitar");
+      var explicitVariantChartId = typeof resolvePerformanceChartVariantId === "function"
+        ? resolvePerformanceChartVariantId(selectedSongId, {
+          instrument: activeInstrumentType,
+          arrangementType: arrangementType
+        })
+        : null;
       if (selectedSong) {
-        var performanceChart = buildPerformanceChartFromSong(selectedSong, "builtin", arrangementType);
-        if (performanceChart) {
+        var performanceChart = explicitVariantChartId ? null : buildPerformanceChartFromSong(selectedSong, "builtin", arrangementType);
+        if (explicitVariantChartId || performanceChart) {
           var startRequest = startSelectedPerformanceSongRequest({
             chart: performanceChart,
-            chartId: performanceChart.id || null,
+            chartId: explicitVariantChartId || (performanceChart && performanceChart.id) || null,
             songIndex: selectedSongIndex,
             songTitle: selectedSongTitle,
             difficulty: difficultyId,
@@ -412,11 +428,12 @@
             mode: S.performMode,
             countIn: !!S.performCountIn
           });
-          startPerformance(performanceChart, {
+          startPerformance(explicitVariantChartId || performanceChart, {
             difficulty: startRequest.difficulty,
             speed: startRequest.speed,
             preset: startRequest.preset,
-            mode: startRequest.mode
+            mode: startRequest.mode,
+            instrument: activeInstrumentType
           });
         }
       }

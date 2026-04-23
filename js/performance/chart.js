@@ -58,13 +58,32 @@ function getPerformanceChartManifest() {
   return PERFORMANCE_CHART_LIBRARY_FALLBACK.slice();
 }
 
+function chartSupportsPerformanceInstrument(chart, requestedInstrument) {
+  var normalizedRequested;
+  var normalizedChartInstrument;
+  var supported;
+  var i;
+  if (!requestedInstrument) return true;
+  normalizedRequested = normalizePerformanceInstrument(requestedInstrument);
+  supported = Array.isArray(chart && chart.supportedInstruments) ? chart.supportedInstruments : null;
+  if (supported && supported.length) {
+    for (i = 0; i < supported.length; i++) {
+      if (normalizePerformanceInstrument(supported[i]) === normalizedRequested) return true;
+    }
+    return false;
+  }
+  normalizedChartInstrument = normalizePerformanceInstrument(chart && (chart.instrument || chart.instrumentType || chart.adapterType || null));
+  if (!normalizedChartInstrument) return true;
+  return normalizedChartInstrument === normalizedRequested;
+}
+
 function getPerformanceChartLibrary(options) {
   options = options || {};
   var charts = getPerformanceChartManifest();
   if (options.instrument) {
     var requestedInstrument = normalizePerformanceInstrument(options.instrument);
     charts = charts.filter(function(chart) {
-      return !chart.instrument || chart.instrument === requestedInstrument;
+      return chartSupportsPerformanceInstrument(chart, requestedInstrument);
     });
   }
   return charts;
@@ -76,6 +95,28 @@ function getPerformanceChartMeta(chartId) {
     if (library[i].id === chartId) return library[i];
   }
   return null;
+}
+
+function resolvePerformanceChartVariantId(songId, options) {
+  options = options || {};
+  var arrangementType = options.arrangementType || "chords";
+  var requestedInstrument = normalizePerformanceInstrument(options.instrument || null);
+  var library = getPerformanceChartManifest();
+  var fallbackId = null;
+  var i;
+  var chart;
+  for (i = 0; i < library.length; i++) {
+    chart = library[i] || {};
+    if (chart.songId !== songId) continue;
+    if ((chart.arrangementType || "chords") !== arrangementType) continue;
+    if (!requestedInstrument) return chart.id;
+    if (!chartSupportsPerformanceInstrument(chart, requestedInstrument)) continue;
+    if (normalizePerformanceInstrument(chart.instrument || chart.instrumentType || chart.adapterType || null) === requestedInstrument) {
+      return chart.id;
+    }
+    if (!fallbackId) fallbackId = chart.id;
+  }
+  return fallbackId;
 }
 
 function normalizePerformanceChartDefinition(chartDefinition) {
@@ -452,3 +493,11 @@ function dedupePerformancePitchClasses(notes) {
 }
 
 window.getPerformanceChartManifest = getPerformanceChartManifest;
+window.chartSupportsPerformanceInstrument = chartSupportsPerformanceInstrument;
+window.getPerformanceChartMeta = getPerformanceChartMeta;
+window.getPerformanceChartLibrary = getPerformanceChartLibrary;
+window.loadPerformanceChart = loadPerformanceChart;
+window.normalizePerformanceChartDefinition = normalizePerformanceChartDefinition;
+window.getPerformanceImportAdapter = getPerformanceImportAdapter;
+window.convertSparkSongChartToPerformanceChart = convertSparkSongChartToPerformanceChart;
+window.resolvePerformanceChartVariantId = resolvePerformanceChartVariantId;
