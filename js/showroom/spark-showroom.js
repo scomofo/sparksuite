@@ -1069,12 +1069,24 @@
            + '<section class="showroom-title-section"><span class="showroom-lesson-eyebrow">' + escHtml(module) + '</span>'
              + '<h2 class="showroom-lesson-h">' + escHtml(unit) + '</h2>'
            + '</section>'
+           // Spark prompt — the lesson's hook/intro copy shown before the
+           // chord/exercise card. Only renders when the active lesson has
+           // a spark.text value (legacy SESSIONS records without one are
+           // silently skipped). Sample-opts renders never have a sparkText
+           // and so never show this section.
+           + (sparkText
+              ? ('<section class="showroom-lesson-spark" style="margin:0 4px 16px;padding:14px;border-radius:14px;background:rgba(255,123,58,0.08);border:1px solid rgba(255,123,58,0.25)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="material-symbols-outlined fill" style="color:#ff7b3a;font-size:20px">auto_awesome</span><strong style="font-size:13px;color:#ff7b3a;letter-spacing:0.4px;text-transform:uppercase">Spark</strong></div>'
+                 + '<p style="margin:0;font-size:14px;line-height:1.55;color:var(--text-secondary,#ccc)">' + escHtml(sparkText) + '</p></section>')
+              : '')
            + '<section class="showroom-chord-section" style="position:relative">'
              + '<div class="showroom-blur-blob"></div>'
              + '<div class="showroom-lesson-card showroom-ember-glow-card">'
                + '<div class="showroom-lesson-card-head"><div>'
                  + '<h3 class="showroom-lesson-card-title">' + escHtml(chordName) + '</h3>'
-                 + '<p class="showroom-lesson-card-sub">' + escHtml(showChordDiagram ? position : (lessonDesc || position)) + '</p></div>'
+                 // Prefer the real lesson description when we have one —
+                 // otherwise fall back to the position hint used by the
+                 // sample-opts G-major render.
+                 + '<p class="showroom-lesson-card-sub">' + escHtml(lessonDesc || position) + '</p></div>'
                  + '<div class="showroom-lesson-card-badge"><span class="showroom-lesson-card-tag">' + escHtml(String(lessonNum || "G")) + '</span></div></div>'
                + (chordVisualHtml
                   ? '<div class="showroom-lesson-chord-visual" style="display:flex;justify-content:center;padding:12px 0">' + chordVisualHtml + '</div>'
@@ -1086,9 +1098,11 @@
                        + '<div class="showroom-chord-strings" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>'
                        + '<div class="showroom-chord-fingers" aria-hidden="true">' + fingersHtml + '</div>'
                      + '</div>')
-                    : (sparkText
-                       ? '<div class="showroom-lesson-card-body" style="padding:12px 8px;font-size:14px;line-height:1.5;color:var(--text-secondary,#ccc)">' + escHtml(sparkText) + '</div>'
-                       : ''))
+                    // No chord visual and not a guitar lesson with the
+                    // hand-drawn fallback — render an empty spacer so the
+                    // card still has some height. Spark text now renders
+                    // in its own dedicated section above the card.
+                    : '<div style="min-height:80px" aria-hidden="true"></div>')
                + '<div class="showroom-chord-meta">'
                  + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">STRUM</p><p class="showroom-chord-meta-val success">' + escHtml(strum) + '</p></div>'
                  + '<div class="showroom-chord-meta-divider"></div>'
