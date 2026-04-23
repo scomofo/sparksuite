@@ -92,6 +92,151 @@ function _normalizeSongsTempoInput(value, fallback){
   return bpm;
 }
 
+function _resolveSongsRuntimeState(){
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  return coreView && coreView.runtimeState ? coreView.runtimeState : null;
+}
+
+function _getSongsBrowserState(){
+  var songBrowserState = _resolveSongsRuntimeState();
+  return {
+    songsSubTab: songBrowserState && songBrowserState.songsSubTab ? songBrowserState.songsSubTab : S.songsSubTab,
+    songFilter: songBrowserState && typeof songBrowserState.songFilter === "string" ? songBrowserState.songFilter : S.songFilter,
+    songSort: songBrowserState && songBrowserState.songSort ? songBrowserState.songSort : S.songSort,
+    songSortAsc: songBrowserState && typeof songBrowserState.songSortAsc === "boolean" ? songBrowserState.songSortAsc : S.songSortAsc,
+    performanceDailyChallenge: songBrowserState && songBrowserState.performanceDailyChallenge
+      ? songBrowserState.performanceDailyChallenge
+      : S.performanceDailyChallenge,
+    performanceDailyComplete: songBrowserState && typeof songBrowserState.performanceDailyComplete === "boolean"
+      ? songBrowserState.performanceDailyComplete
+      : S.performanceDailyComplete
+  };
+}
+
+function _renderSongsSubTabs(songsSubTab){
+  var h = '<div class="community-tabs">';
+  h += '<button class="community-tab'+(songsSubTab==="builtin"?" active":"")+'" onclick="act(\'songsSubTab\',\'builtin\')">&#127925; Built-in</button>';
+  h += '<button class="community-tab'+(songsSubTab==="community"?" active":"")+'" onclick="act(\'songsSubTab\',\'community\')">&#127760; Community</button>';
+  h += '<button class="community-tab'+(songsSubTab==="import"?" active":"")+'" onclick="act(\'songsSubTab\',\'import\')">&#128196; Import</button>';
+  h += '<button class="community-tab'+(songsSubTab==="stems"?" active":"")+'" onclick="act(\'songsSubTab\',\'stems\')">&#127911; Stems</button>';
+  h += '<button class="songs-subtab'+(songsSubTab==="perform"?" active":"")+'"'+clickableDiv("act(\'songsSubTab\',\'perform\')")+'>&#127918; Perform</button>';
+  h += '</div>';
+  return h;
+}
+
+function _renderPerformanceDailyCard(performanceDailyChallenge, performanceDailyComplete){
+  var performanceDailyLabel;
+  var performanceDailyReason;
+  var dailyTechniqueLabel;
+  var h = "";
+  if(!performanceDailyChallenge) return h;
+  performanceDailyLabel = _firstSongsTextToken(
+    performanceDailyChallenge.label,
+    performanceDailyChallenge.songTitle,
+    performanceDailyChallenge.songId,
+    "Performance challenge"
+  );
+  performanceDailyReason = _firstSongsTextToken(performanceDailyChallenge.reason);
+  dailyTechniqueLabel = performanceDailyChallenge.techniqueKey ? _formatPerformanceTechniqueLabel(performanceDailyChallenge.techniqueKey) : "";
+  h += '<div class="card mb20" style="border:2px solid '+(performanceDailyComplete?"#4ECDC4":"#FFE66D")+'">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
+  h += '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+(performanceDailyComplete?'&#9989;':'&#127919;')+' Performance Daily</h3>';
+  h += '<p style="margin:3px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(performanceDailyLabel)+'</p>';
+  if(dailyTechniqueLabel){
+    h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">';
+    h += '<span style="background:#FF6B6B22;color:#FF6B6B;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">Focus: '+escHTML(dailyTechniqueLabel)+'</span>';
+    if(performanceDailyChallenge.target&&performanceDailyChallenge.target.accuracy){
+      h += '<span style="background:var(--chip-bg);color:var(--chip-color);padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800">Target '+escHTML(String(performanceDailyChallenge.target.accuracy))+'%</span>';
+    }
+    h += '</div>';
+  }
+  if(performanceDailyReason){
+    h += '<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(performanceDailyReason)+'</p>';
+  }
+  h += '<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">+'+performanceDailyChallenge.xp+' XP</p></div>';
+  if(!performanceDailyComplete){
+    h += '<button class="btn" onclick="act(\'openPerformanceDaily\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;font-weight:800">Go</button>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+function _renderSongsSearchAndSort(songFilter, songSort, songSortAsc){
+  var safeSongFilter = _normalizeSongsInputValue(songFilter);
+  var sorts=[["level","Level"],["title","Title"],["artist","Artist"],["bpm","BPM"],["chords","Chords"]];
+  var h = '<div style="margin-bottom:12px"><input class="set-input" type="text" placeholder="Search by title, artist, or chord..." value="'+escHTML(safeSongFilter)+'" oninput="act(\'songFilter\',this.value)" aria-label="Filter songs"/></div>';
+  h += '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
+  for(var si=0;si<sorts.length;si++){
+    var sk=sorts[si][0],sl=sorts[si][1],active=songSort===sk;
+    var arrow=active?(songSortAsc?" &#9650;":" &#9660;"):"";
+    h += '<button onclick="act(\'songSort\',\''+sk+'\')" style="padding:5px 12px;border-radius:10px;font-size:11px;font-weight:700;background:'+(active?"#4ECDC4":"var(--input-bg)")+';color:'+(active?"#fff":"var(--text-muted)")+';border:1px solid '+(active?"#4ECDC4":"var(--border)")+'">'+sl+arrow+'</button>';
+  }
+  h += '</div>';
+  return {
+    html: h,
+    safeSongFilter: safeSongFilter
+  };
+}
+
+function _getFilteredSongs(songList, songFilter, songSort, songSortAsc){
+  var filtered = songList.slice();
+  var sortKey = songSort || "level";
+  var asc = songSortAsc;
+  if(songFilter){
+    var q = songFilter.toLowerCase();
+    filtered = filtered.filter(function(s){
+      return s.title.toLowerCase().indexOf(q)!==-1||
+             s.artist.toLowerCase().indexOf(q)!==-1||
+             s.chords.join(" ").toLowerCase().indexOf(q)!==-1;
+    });
+  }
+  filtered.sort(function(a,b){
+    var va,vb;
+    if(sortKey==="title"){va=a.title.toLowerCase();vb=b.title.toLowerCase();}
+    else if(sortKey==="artist"){va=a.artist.toLowerCase();vb=b.artist.toLowerCase();}
+    else if(sortKey==="bpm"){va=a.bpm;vb=b.bpm;}
+    else if(sortKey==="chords"){va=a.chords.length;vb=b.chords.length;}
+    else{va=a.level;vb=b.level;}
+    if(va<vb)return asc?-1:1;
+    if(va>vb)return asc?1:-1;
+    return 0;
+  });
+  return filtered;
+}
+
+function _renderSongsList(filtered, D, safeSongFilter){
+  var h = '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(safeSongFilter?" matching &ldquo;"+escHTML(safeSongFilter)+"&rdquo;":"")+'</div>';
+  h += '<div class="flex-col">';
+  for(var i=0;i<filtered.length;i++){
+    var s=filtered[i],lk=s.level>S.level;
+    var songTitle = _firstSongsTextToken(s.title, s.songTitle, s.id, "Song");
+    var songArtist = _firstSongsTextToken(s.artist, "Unknown Artist");
+    h += '<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(songTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+_formatSongsBpm(s.bpm, "--")+' BPM &bull; '+s.chords.length+' chords</div>';
+    if(typeof getPerformanceStats==="function"){
+      var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",S.performDifficulty);
+      if(_ps.mastery!=="none"){
+        h += '<div style="font-size:11px;font-weight:700;color:'+getMasteryColor(_ps.mastery)+'">'+getMasteryIcon(_ps.mastery)+' '+_ps.mastery+'</div>';
+      }
+    }
+    h += '</div></div>';
+    h += '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">';
+    for(var j=0;j<s.chords.length;j++) {
+      h += '<span style="background:var(--chip-bg);padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--chip-color)">'+escHTML(s.chords[j])+'</span>';
+    }
+    h += '</div>';
+    if(s.progression&&s.progression.length>0&&!lk){
+      h += '<div style="margin-top:6px"><button class="btn btn-sm" onclick="event.stopPropagation();act(\'openPerformSong\','+D.SONGS.indexOf(s)+')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:11px;padding:4px 10px">&#127918; Perform</button></div>';
+    }
+    h += '</div>';
+  }
+  if(filtered.length===0) h += '<div class="card text-center"><p style="color:var(--text-muted);font-size:13px">No songs match your search.</p></div>';
+  h += '</div>';
+  return h;
+}
+
 // ===== STRUM TAB =====
 function strumTab(){
   var inst = getSongsPageInstrument();
@@ -116,143 +261,34 @@ function strumTab(){
 function songsTab(){
   var inst = getSongsPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  var songBrowserState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var songsSubTab = songBrowserState && songBrowserState.songsSubTab ? songBrowserState.songsSubTab : S.songsSubTab;
-  var songFilter = songBrowserState && typeof songBrowserState.songFilter === "string" ? songBrowserState.songFilter : S.songFilter;
-  var songSort = songBrowserState && songBrowserState.songSort ? songBrowserState.songSort : S.songSort;
-  var songSortAsc = songBrowserState && typeof songBrowserState.songSortAsc === "boolean" ? songBrowserState.songSortAsc : S.songSortAsc;
-  var performanceDailyChallenge = songBrowserState && songBrowserState.performanceDailyChallenge
-    ? songBrowserState.performanceDailyChallenge
-    : S.performanceDailyChallenge;
-  var performanceDailyComplete = songBrowserState && typeof songBrowserState.performanceDailyComplete === "boolean"
-    ? songBrowserState.performanceDailyComplete
-    : S.performanceDailyComplete;
+  var browserState = _getSongsBrowserState();
+  var songsSubTab = browserState.songsSubTab;
+  var songFilter = browserState.songFilter;
+  var songSort = browserState.songSort;
+  var songSortAsc = browserState.songSortAsc;
+  var performanceDailyChallenge = browserState.performanceDailyChallenge;
+  var performanceDailyComplete = browserState.performanceDailyComplete;
+  var searchAndSort;
+  var filtered;
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Song Library &#127925;</h2></div>';
-  // Sub-tabs: Built-in | Community
-  h+='<div class="community-tabs">';
-  h+='<button class="community-tab'+(songsSubTab==="builtin"?" active":"")+'" onclick="act(\'songsSubTab\',\'builtin\')">&#127925; Built-in</button>';
-  h+='<button class="community-tab'+(songsSubTab==="community"?" active":"")+'" onclick="act(\'songsSubTab\',\'community\')">&#127760; Community</button>';
-  h+='<button class="community-tab'+(songsSubTab==="import"?" active":"")+'" onclick="act(\'songsSubTab\',\'import\')">&#128196; Import</button>';
-  h+='<button class="community-tab'+(songsSubTab==="stems"?" active":"")+'" onclick="act(\'songsSubTab\',\'stems\')">&#127911; Stems</button>';
-  h+='<button class="songs-subtab'+(songsSubTab==="perform"?" active":"")+'"'+clickableDiv("act(\'songsSubTab\',\'perform\')")+'>&#127918; Perform</button>';
-  h+='</div>';
+  h += _renderSongsSubTabs(songsSubTab);
 
   if(songsSubTab==="community") return h+communitySection();
   if(songsSubTab==="import") return h+importSection();
   if(songsSubTab==="stems") return h+stemsSection();
   if(songsSubTab==="perform") return h+performSubTab();
 
-  // Performance Daily Challenge card
-  if(performanceDailyChallenge){
-    var performanceDailyLabel = _firstSongsTextToken(
-      performanceDailyChallenge.label,
-      performanceDailyChallenge.songTitle,
-      performanceDailyChallenge.songId,
-      "Performance challenge"
-    );
-    var performanceDailyReason = _firstSongsTextToken(performanceDailyChallenge.reason);
-    var dailyTechniqueLabel=performanceDailyChallenge.techniqueKey?_formatPerformanceTechniqueLabel(performanceDailyChallenge.techniqueKey):"";
-    h+='<div class="card mb20" style="border:2px solid '+(performanceDailyComplete?"#4ECDC4":"#FFE66D")+'">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
-    h+='<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+(performanceDailyComplete?'&#9989;':'&#127919;')+' Performance Daily</h3>';
-    h+='<p style="margin:3px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(performanceDailyLabel)+'</p>';
-    if(dailyTechniqueLabel){
-      h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">';
-      h+='<span style="background:#FF6B6B22;color:#FF6B6B;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">Focus: '+escHTML(dailyTechniqueLabel)+'</span>';
-      if(performanceDailyChallenge.target&&performanceDailyChallenge.target.accuracy){
-        h+='<span style="background:var(--chip-bg);color:var(--chip-color);padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800">Target '+escHTML(String(performanceDailyChallenge.target.accuracy))+'%</span>';
-      }
-      h+='</div>';
-    }
-    if(performanceDailyReason){
-      h+='<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(performanceDailyReason)+'</p>';
-    }
-    h+='<p style="margin:6px 0 0;font-size:11px;color:var(--text-dim)">+'+performanceDailyChallenge.xp+' XP</p></div>';
-    if(!performanceDailyComplete){
-      h+='<button class="btn" onclick="act(\'openPerformanceDaily\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;font-weight:800">Go</button>';
-    }
-    h+='</div></div>';
-  }
-
-  // Search filter
-  var safeSongFilter = _normalizeSongsInputValue(songFilter);
-  h+='<div style="margin-bottom:12px"><input class="set-input" type="text" placeholder="Search by title, artist, or chord..." value="'+escHTML(safeSongFilter)+'" oninput="act(\'songFilter\',this.value)" aria-label="Filter songs"/></div>';
-
-  // Sort controls
-  var sorts=[["level","Level"],["title","Title"],["artist","Artist"],["bpm","BPM"],["chords","Chords"]];
-  h+='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
-  for(var si=0;si<sorts.length;si++){
-    var sk=sorts[si][0],sl=sorts[si][1],active=songSort===sk;
-    var arrow=active?(songSortAsc?" &#9650;":" &#9660;"):"";
-    h+='<button onclick="act(\'songSort\',\''+sk+'\')" style="padding:5px 12px;border-radius:10px;font-size:11px;font-weight:700;background:'+(active?"#4ECDC4":"var(--input-bg)")+';color:'+(active?"#fff":"var(--text-muted)")+';border:1px solid '+(active?"#4ECDC4":"var(--border)")+'">'+sl+arrow+'</button>';
-  }
-  h+='</div>';
-
-  // Filter songs
-  var filtered=D.SONGS.slice();
-  if(songFilter){
-    var q=songFilter.toLowerCase();
-    filtered=filtered.filter(function(s){
-      return s.title.toLowerCase().indexOf(q)!==-1||
-             s.artist.toLowerCase().indexOf(q)!==-1||
-             s.chords.join(" ").toLowerCase().indexOf(q)!==-1;
-    });
-  }
-
-  // Sort songs
-  var sortKey=songSort||"level",asc=songSortAsc;
-  filtered.sort(function(a,b){
-    var va,vb;
-    if(sortKey==="title"){va=a.title.toLowerCase();vb=b.title.toLowerCase();}
-    else if(sortKey==="artist"){va=a.artist.toLowerCase();vb=b.artist.toLowerCase();}
-    else if(sortKey==="bpm"){va=a.bpm;vb=b.bpm;}
-    else if(sortKey==="chords"){va=a.chords.length;vb=b.chords.length;}
-    else{va=a.level;vb=b.level;}
-    if(va<vb)return asc?-1:1;
-    if(va>vb)return asc?1:-1;
-    return 0;
-  });
-
-  // Count
-  h+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(safeSongFilter?" matching &ldquo;"+escHTML(safeSongFilter)+"&rdquo;":"")+'</div>';
-
-  h+='<div class="flex-col">';
-  for(var i=0;i<filtered.length;i++){
-    var s=filtered[i],lk=s.level>S.level;
-    var songTitle = _firstSongsTextToken(s.title, s.songTitle, s.id, "Song");
-    var songArtist = _firstSongsTextToken(s.artist, "Unknown Artist");
-    h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(songTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+_formatSongsBpm(s.bpm, "--")+' BPM &bull; '+s.chords.length+' chords</div>';
-    if(typeof getPerformanceStats==="function"){
-      var _ps=getPerformanceStats(s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_")+"_perf","chords",S.performDifficulty);
-      if(_ps.mastery!=="none"){
-        h+='<div style="font-size:11px;font-weight:700;color:'+getMasteryColor(_ps.mastery)+'">'+getMasteryIcon(_ps.mastery)+' '+_ps.mastery+'</div>';
-      }
-    }
-    h+='</div></div>';
-    h+='<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">';
-    for(var j=0;j<s.chords.length;j++)
-      h+='<span style="background:var(--chip-bg);padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--chip-color)">'+escHTML(s.chords[j])+'</span>';
-    h+='</div>';
-    if(s.progression&&s.progression.length>0&&!lk){
-      h+='<div style="margin-top:6px"><button class="btn btn-sm" onclick="event.stopPropagation();act(\'openPerformSong\','+D.SONGS.indexOf(s)+')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:11px;padding:4px 10px">&#127918; Perform</button></div>';
-    }
-    h+='</div>';
-  }
-  if(filtered.length===0)h+='<div class="card text-center"><p style="color:var(--text-muted);font-size:13px">No songs match your search.</p></div>';
-  h+='</div>';
+  h += _renderPerformanceDailyCard(performanceDailyChallenge, performanceDailyComplete);
+  searchAndSort = _renderSongsSearchAndSort(songFilter, songSort, songSortAsc);
+  filtered = _getFilteredSongs(D.SONGS, songFilter, songSort, songSortAsc);
+  h += searchAndSort.html;
+  h += _renderSongsList(filtered, D, searchAndSort.safeSongFilter);
   return h;
 }
 
 // ===== COMMUNITY SECTION =====
 function communitySection(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  var songBrowserState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var songBrowserState = _resolveSongsRuntimeState();
   var communityTab = songBrowserState && songBrowserState.communityTab ? songBrowserState.communityTab : S.communityTab;
   var communitySearch = songBrowserState && typeof songBrowserState.communitySearch === "string" ? songBrowserState.communitySearch : S.communitySearch;
   var communitySort = songBrowserState && songBrowserState.communitySort ? songBrowserState.communitySort : S.communitySort;
