@@ -2,6 +2,141 @@
 
 var _sparkHighway = null;
 
+function performancePitchClassToSemitone(name) {
+  var map = {
+    C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5,
+    "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11
+  };
+  return Object.prototype.hasOwnProperty.call(map, name) ? map[name] : null;
+}
+
+function performanceNoteNameToMidi(noteName) {
+  var match;
+  var pitchClass;
+  var octave;
+  var semitone;
+  if (typeof noteName !== "string") return null;
+  match = /^([A-G](?:#|b)?)(-?\d+)$/.exec(noteName.trim());
+  if (!match) return null;
+  pitchClass = match[1];
+  octave = parseInt(match[2], 10);
+  semitone = performancePitchClassToSemitone(pitchClass);
+  if (semitone == null || !isFinite(octave)) return null;
+  return (octave + 1) * 12 + semitone;
+}
+
+function deriveBassLaneIndexFromMidi(midi) {
+  if (!isFinite(midi)) return 0;
+  if (midi >= 43) return 3; // G string and above
+  if (midi >= 38) return 2; // D string range
+  if (midi >= 33) return 1; // A string range
+  return 0; // E string range
+}
+
+function clampPerformanceLaneIndex(lane, laneCount) {
+  lane = Math.round(Number(lane) || 0);
+  if (lane < 0) return 0;
+  if (lane >= laneCount) return laneCount - 1;
+  return lane;
+}
+
+function resolvePerformanceLaneCount(chart) {
+  var skin = resolvePerformanceHighwaySkin(chart);
+  return (skin && skin.laneCount) || 6;
+}
+
+function distributePerformanceValuesAcrossLanes(values, laneCount) {
+  var lanes = [];
+  var used = {};
+  var i;
+  var lane;
+  if (!values.length || laneCount <= 0) return lanes;
+  if (values.length === 1) {
+    lanes.push(((values[0] % laneCount) + laneCount) % laneCount);
+    return lanes;
+  }
+  for (i = 0; i < values.length; i++) {
+    lane = Math.round((i * (laneCount - 1)) / Math.max(values.length - 1, 1));
+    lane = clampPerformanceLaneIndex(lane, laneCount);
+    while (used[lane] && lane < laneCount - 1) lane += 1;
+    while (used[lane] && lane > 0) lane -= 1;
+    if (!used[lane]) {
+      used[lane] = true;
+      lanes.push(lane);
+    }
+  }
+  return lanes;
+}
+
+function derivePianoLaneIndexFromMidi(chart, midi) {
+  var skin = resolvePerformanceHighwaySkin(chart) || {};
+  var laneCount = resolvePerformanceLaneCount(chart);
+  var centerNote = isFinite(skin.centerNote) ? skin.centerNote : 60;
+  var lowestNote = centerNote - Math.floor(laneCount / 2);
+  return clampPerformanceLaneIndex(midi - lowestNote, laneCount);
+}
+
+function collectPerformancePitchValues(notes) {
+  var values = [];
+  var i;
+  var midi;
+  var semitone;
+  var name;
+  var match;
+  for (i = 0; i < notes.length; i++) {
+    name = notes[i];
+    midi = performanceNoteNameToMidi(name);
+    if (midi != null) {
+      values.push(midi);
+      continue;
+    }
+    if (typeof name !== "string") continue;
+    match = /^([A-G](?:#|b)?)/.exec(name.trim());
+    if (!match) continue;
+    semitone = performancePitchClassToSemitone(match[1]);
+    if (semitone != null) values.push(semitone);
+  }
+  return values.sort(function(a, b) { return a - b; });
+}
+
+function derivePerformanceLaneMask(chart, evt) {
+  var instrument = resolvePerformanceHighwayInstrument(chart);
+  var laneCount = resolvePerformanceLaneCount(chart);
+  var notes = evt && Array.isArray(evt.notes) ? evt.notes : [];
+  var values;
+  var lanes;
+  var mask = 0;
+  var i;
+  if (evt && typeof evt.laneMask === "number" && evt.laneMask > 0) return evt.laneMask;
+  if (evt && typeof evt.lane === "number" && isFinite(evt.lane)) {
+    return 1 << clampPerformanceLaneIndex(evt.lane, laneCount);
+  }
+  if (!notes.length) return 0;
+  values = collectPerformancePitchValues(notes);
+  if (!values.length) return 0;
+  if (instrument === "bass") {
+    for (i = 0; i < values.length; i++) {
+      mask |= (1 << deriveBassLaneIndexFromMidi(values[i]));
+    }
+    return mask;
+  }
+  if (instrument === "piano") {
+    for (i = 0; i < values.length; i++) {
+      mask |= (1 << derivePianoLaneIndexFromMidi(chart, values[i]));
+    }
+    return mask;
+  }
+  lanes = distributePerformanceValuesAcrossLanes(values, laneCount);
+  for (i = 0; i < lanes.length; i++) mask |= (1 << lanes[i]);
+  return mask;
+}
+
+function derivePerformanceLaneIndex(chart, evt) {
+  var laneMask = derivePerformanceLaneMask(chart, evt);
+  if (laneMask > 0) return getPrimaryLaneIndex(laneMask);
+  return null;
+}
+
 function resolvePerformanceHighwayInstrument(chart) {
   var instrument = chart && chart.instrument ? chart.instrument : null;
   if (!instrument && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function") {
@@ -23,7 +158,17 @@ function resolvePerformanceHighwayInstrument(chart) {
 
 function resolvePerformanceHighwaySkin(chart) {
   var instrument = resolvePerformanceHighwayInstrument(chart);
+  var all;
+  var i;
+  var entry;
   if (instrument === "piano" && SparkHighway.PIANO_SKIN) return SparkHighway.PIANO_SKIN;
+  if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if ((entry.instrument || entry.instrumentType) === instrument && entry.skin) return entry.skin;
+    }
+  }
   // Fall through to the active instrument's registered skin (bass, ukulele, ...)
   // before the guitar default, so non-guitar instruments render their own lane
   // count / colors instead of being forced into a 6-lane guitar highway.
@@ -49,9 +194,14 @@ function destroySparkHighway() {
 function feedChartToHighway(chart) {
   if (!_sparkHighway || !chart) return;
   var events = chart.events || [];
+  var derivedLaneMask;
   for (var i = 0; i < events.length; i++) {
+    derivedLaneMask = derivePerformanceLaneMask(chart, events[i]);
+    if ((!events[i].laneMask || events[i].laneMask <= 0) && derivedLaneMask > 0) {
+      events[i].laneMask = derivedLaneMask;
+    }
     if (events[i].lane === undefined && events[i].laneMask) {
-      for (var b = 0; b < 8; b++) { if (events[i].laneMask & (1 << b)) { events[i].lane = b; break; } }
+      events[i].lane = getPrimaryLaneIndex(events[i].laneMask);
     }
   }
   _sparkHighway.setChart(events, chart.phrases || []);
@@ -195,7 +345,7 @@ function getImportedTechniqueTokenLeft(evt, index) {
 }
 
 function getPrimaryLaneIndex(laneMask) {
-  for (var i = 0; i < 5; i++) {
+  for (var i = 0; i < 31; i++) {
     if (laneMask & (1 << i)) return i;
   }
   return 2;

@@ -155,6 +155,20 @@ test("registerContent replaces stale entries for a type", function() {
   assert.strictEqual(getContent("songs", "song_b").title, "Song B");
 });
 
+test("registerContent builds canonical song families", function() {
+  registerContent("songs", [
+    { id: "stand_by_me", title: "Stand By Me", artist: "Ben E. King" },
+    { id: "la_bamba", title: "La Bamba", artist: "Ritchie Valens", familyId: "la_bamba" }
+  ]);
+
+  var standByMeFamily = getSongFamily("stand_by_me");
+  assert.ok(standByMeFamily);
+  assert.strictEqual(standByMeFamily.id, "stand_by_me");
+  assert.strictEqual(standByMeFamily.canonicalSongId, "stand_by_me");
+  assert.strictEqual(standByMeFamily.songs[0], "stand_by_me");
+  assert.strictEqual(getSongFamilyVariants("stand_by_me").length, 1);
+});
+
 test("loadAllContent treats each manifest section as authoritative", async function() {
   sparkCore.events = [];
   await loadAllContent("/content-manifest-a.json");

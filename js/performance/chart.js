@@ -41,6 +41,10 @@ function normalizePerformanceInstrument(instrument) {
 }
 
 function loadPerformanceChart(chartId) {
+  var meta = getPerformanceChartMeta(chartId);
+  if (meta && meta.sourceType === "generated_catalog") {
+    return loadGeneratedCatalogPerformanceChart(meta);
+  }
   return fetch("data/performance_charts/" + chartId + ".json")
     .then(function(r) {
       if (!r.ok) throw new Error("Chart not found: " + chartId);
@@ -56,6 +60,16 @@ function getPerformanceChartManifest() {
     ? window.PERFORMANCE_CHART_MANIFEST.charts.slice()
     : PERFORMANCE_CHART_LIBRARY_FALLBACK.slice();
   return charts.concat(buildPerformanceCatalogChartEntries(charts));
+}
+
+function getGeneratedCatalogChartId(song) {
+  var songId = song && (song.id || song.songId) ? (song.id || song.songId) : "song";
+  var instrument = normalizePerformanceInstrument(
+    (song && (song.defaultInstrument || song.instrument || song.instrumentType || song.adapterType)) ||
+    "guitar"
+  ) || "guitar";
+  var arrangementType = song && song.arrangementType ? song.arrangementType : "chords";
+  return songId + "__generated__" + instrument + "__" + arrangementType;
 }
 
 function buildPerformanceCatalogChartEntries(existingCharts) {
@@ -79,25 +93,101 @@ function buildPerformanceCatalogChartEntries(existingCharts) {
     if (!Object.prototype.hasOwnProperty.call(songs, key)) continue;
     song = songs[key] || {};
     chartId = song.chartId;
-    if (!chartId || seen[chartId]) continue;
     songId = song.id || key;
-    entries.push({
-      id: chartId,
-      title: song.title || songId,
-      artist: song.artist || "SparkSuite",
-      bpm: typeof song.bpm === "number" && song.bpm > 0 ? song.bpm : 100,
-      description: "Built-in chart exposed from the song catalog.",
-      sourceType: "built_in",
-      accentColor: "#45B7D1",
-      badge: "Song",
-      instrument: song.instrument || song.instrumentType || song.adapterType || "guitar",
-      songId: songId,
-      arrangementType: "chords"
-    });
-    seen[chartId] = true;
+    if (chartId && !seen[chartId]) {
+      entries.push({
+        id: chartId,
+        title: song.title || songId,
+        artist: song.artist || "SparkSuite",
+        bpm: typeof song.bpm === "number" && song.bpm > 0 ? song.bpm : 100,
+        description: "Built-in chart exposed from the song catalog.",
+        sourceType: "built_in",
+        accentColor: "#45B7D1",
+        badge: "Song",
+        instrument: song.defaultInstrument || song.instrument || song.instrumentType || song.adapterType || "guitar",
+        songId: songId,
+        familyId: song.familyId || songId,
+        arrangementType: song.arrangementType || "chords"
+      });
+      seen[chartId] = true;
+      continue;
+    }
+    if (song.highwaySource === "generated" && song.defaultInstrument) {
+      chartId = getGeneratedCatalogChartId(song);
+      if (seen[chartId]) continue;
+      entries.push({
+        id: chartId,
+        title: song.title || songId,
+        artist: song.artist || "SparkSuite",
+        bpm: typeof song.bpm === "number" && song.bpm > 0 ? song.bpm : 100,
+        description: "Generated chart exposed from the canonical song catalog.",
+        sourceType: "generated_catalog",
+        accentColor: "#8b5cf6",
+        badge: "Generated",
+        instrument: song.defaultInstrument,
+        songId: songId,
+        familyId: song.familyId || songId,
+        arrangementType: song.arrangementType || "chords"
+      });
+      seen[chartId] = true;
+    }
   }
 
   return entries;
+}
+
+function findGeneratedCatalogSong(meta) {
+  var requestedInstrument = normalizePerformanceInstrument(meta && meta.instrument);
+  var all;
+  var i;
+  var entry;
+  var data;
+  var songs;
+  var j;
+  var song;
+  var candidateId;
+
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+    return null;
+  }
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (requestedInstrument && normalizePerformanceInstrument(entry.instrument || entry.instrumentType || entry.id || entry.appId || "") !== requestedInstrument) {
+      continue;
+    }
+    if (typeof entry.getData !== "function") continue;
+    data = entry.getData() || {};
+    songs = Array.isArray(data.SONGS) ? data.SONGS : [];
+    for (j = 0; j < songs.length; j++) {
+      song = songs[j] || {};
+      candidateId = typeof resolvePerformanceSongId === "function"
+        ? resolvePerformanceSongId(song, song.title)
+        : ((song.id || song.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_"));
+      if (candidateId === meta.songId) return song;
+    }
+  }
+  return null;
+}
+
+function loadGeneratedCatalogPerformanceChart(meta) {
+  var song = findGeneratedCatalogSong(meta);
+  var chart;
+  if (!song || typeof buildPerformanceChartFromSong !== "function") {
+    return Promise.reject(new Error("Generated catalog chart source not found: " + meta.id));
+  }
+  chart = buildPerformanceChartFromSong(song, "builtin", meta.arrangementType || "chords");
+  if (!chart) {
+    return Promise.reject(new Error("Generated catalog chart could not be built: " + meta.id));
+  }
+  chart.id = meta.id;
+  chart.title = meta.title || chart.title;
+  chart.artist = meta.artist || chart.artist;
+  chart.instrument = meta.instrument || chart.instrument;
+  chart.adapterType = meta.instrument || chart.adapterType;
+  chart.songId = meta.songId || chart.songId;
+  chart.familyId = meta.familyId || chart.familyId || meta.songId || "";
+  return Promise.resolve(chart);
 }
 
 function chartSupportsPerformanceInstrument(chart, requestedInstrument) {

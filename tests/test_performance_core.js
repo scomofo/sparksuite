@@ -37,9 +37,28 @@ global.saveState = function() {};
 global.SparkInstruments = {
   getAll: function() {
     return [
-      { id: 'ukespark', appId: 'ukespark', instrument: 'ukulele' },
-      { id: 'bassspark', appId: 'bassspark', instrument: 'bass' },
-      { id: 'chordspark', appId: 'chordspark', instrument: 'guitar' }
+      {
+        id: 'pianospark',
+        appId: 'pianospark',
+        instrument: 'piano',
+        getData: function() {
+          return {
+            SONGS: [
+              {
+                id: 'all_of_me',
+                title: 'All of Me',
+                artist: 'John Legend',
+                progression: ['Em', 'C', 'G', 'D'],
+                bpm: 63,
+                instrument: 'piano'
+              }
+            ]
+          };
+        }
+      },
+      { id: 'ukespark', appId: 'ukespark', instrument: 'ukulele', skin: { laneCount: 4 } },
+      { id: 'bassspark', appId: 'bassspark', instrument: 'bass', skin: { laneCount: 4 } },
+      { id: 'chordspark', appId: 'chordspark', instrument: 'guitar', skin: { laneCount: 6 } }
     ];
   }
 };
@@ -48,8 +67,29 @@ global.SparkContent = {
     stand_by_me: { id: 'stand_by_me', title: 'Stand By Me', artist: 'Ben E. King', chartId: 'stand_by_me_chords' },
     let_it_be: { id: 'let_it_be', title: 'Let It Be', artist: 'The Beatles', chartId: 'let_it_be_chords' },
     wonderful_tonight: { id: 'wonderful_tonight', title: 'Wonderful Tonight', artist: 'Eric Clapton', chartId: 'wonderful_tonight_chords' },
-    hotel_california: { id: 'hotel_california', title: 'Hotel California', artist: 'Eagles', chartId: 'hotel_california_chords' }
+    hotel_california: { id: 'hotel_california', title: 'Hotel California', artist: 'Eagles', chartId: 'hotel_california_chords' },
+    all_of_me: {
+      id: 'all_of_me',
+      title: 'All of Me',
+      artist: 'John Legend',
+      familyId: 'all_of_me',
+      defaultInstrument: 'piano',
+      highwaySource: 'generated',
+      arrangementType: 'chords'
+    }
   }
+};
+global.SparkHighway = function() {};
+global.SparkHighway.prototype.init = function() { return Promise.resolve(); };
+global.SparkHighway.prototype.destroy = function() {};
+global.SparkHighway.prototype.setChart = function() {};
+global.SparkHighway.GUITAR_SKIN = { laneCount: 6 };
+global.SparkHighway.PIANO_SKIN = { laneCount: 24, centerNote: 60 };
+global.CHORDS = {
+  Em: { rootPosition: { notes: ['E4', 'G4', 'B4'] } },
+  C: { rootPosition: { notes: ['C4', 'E4', 'G4'] } },
+  G: { rootPosition: { notes: ['G3', 'B3', 'D4'] } },
+  D: { rootPosition: { notes: ['D4', 'F#4', 'A4'] } }
 };
 
 function loadJS(file) {
@@ -257,15 +297,15 @@ test('getPerformanceChartLibrary can filter the manifest by app-id instrument', 
 
 test('getPerformanceChartLibrary can filter the manifest by piano instrument', function() {
   var library = getPerformanceChartLibrary({ instrument: 'piano' });
-  assert.strictEqual(library.length, 8);
   assert.strictEqual(library[0].id, 'stand_by_me_piano_chords');
   assert.strictEqual(library[1].id, 'la_bamba_piano_chords');
   assert.strictEqual(library[2].id, 'let_it_be_piano_chords');
   assert.strictEqual(library[3].id, 'knockin_on_heavens_door_piano_chords');
-  assert.strictEqual(library[4].id, 'piano_ballad_flow');
-  assert.strictEqual(library[5].id, 'piano_gentle_walk');
-  assert.strictEqual(library[6].id, 'piano_groove_drive');
-  assert.strictEqual(library[7].id, 'piano_soul_voicings');
+  assert.ok(library.some(function(chart) { return chart.id === 'all_of_me__generated__piano__chords'; }));
+  assert.ok(library.some(function(chart) { return chart.id === 'piano_ballad_flow'; }));
+  assert.ok(library.some(function(chart) { return chart.id === 'piano_gentle_walk'; }));
+  assert.ok(library.some(function(chart) { return chart.id === 'piano_groove_drive'; }));
+  assert.ok(library.some(function(chart) { return chart.id === 'piano_soul_voicings'; }));
 });
 
 test('getPerformanceChartLibrary can filter the manifest by bass instrument', function() {
@@ -396,6 +436,20 @@ test('resolvePerformanceChartVariantId returns the matching authored chart for a
     resolvePerformanceChartVariantId('wonderful_tonight', { instrument: 'guitar', arrangementType: 'chords' }),
     'wonderful_tonight_chords'
   );
+  assert.strictEqual(
+    resolvePerformanceChartVariantId('all_of_me', { instrument: 'piano', arrangementType: 'chords' }),
+    'all_of_me__generated__piano__chords'
+  );
+});
+
+test('loadPerformanceChart can build generated catalog variants from instrument song data', function() {
+  return loadPerformanceChart('all_of_me__generated__piano__chords').then(function(chart) {
+    assert.strictEqual(chart.id, 'all_of_me__generated__piano__chords');
+    assert.strictEqual(chart.instrument, 'piano');
+    assert.strictEqual(chart.songId, 'all_of_me');
+    assert.ok(chart.events.length > 0);
+    assert.deepStrictEqual(chart.events[0].notes, ['E4', 'G4', 'B4']);
+  });
 });
 
 test('buildPerformanceChartFromSong carries the active instrument into generated charts', function() {
@@ -414,6 +468,36 @@ test('buildPerformanceChartFromSong carries the active instrument into generated
 
   assert.strictEqual(chart.instrument, 'ukulele');
   assert.strictEqual(chart.adapterType, 'ukulele');
+});
+
+test('derivePerformanceLaneIndex maps bass note names onto bass-string lanes', function() {
+  assert.strictEqual(derivePerformanceLaneIndex({ instrument: 'bass' }, { notes: ['F#1'] }), 0);
+  assert.strictEqual(derivePerformanceLaneIndex({ instrument: 'bass' }, { notes: ['B1'] }), 1);
+  assert.strictEqual(derivePerformanceLaneIndex({ instrument: 'bass' }, { notes: ['D2'] }), 2);
+  assert.strictEqual(derivePerformanceLaneIndex({ instrument: 'bass' }, { notes: ['G2'] }), 3);
+});
+
+test('derivePerformanceLaneMask spreads guitar chord tones across multiple lanes', function() {
+  var mask = derivePerformanceLaneMask({ instrument: 'guitar' }, { notes: ['A', 'C#', 'E'] });
+  assert.strictEqual(mask, 41);
+  assert.strictEqual(getPrimaryLaneIndex(mask), 0);
+});
+
+test('derivePerformanceLaneMask spreads ukulele chord tones across multiple lanes', function() {
+  var mask = derivePerformanceLaneMask({ instrument: 'ukulele' }, { notes: ['A4', 'C#5', 'E5'] });
+  assert.strictEqual(mask, 13);
+  assert.strictEqual(getPrimaryLaneIndex(mask), 0);
+});
+
+test('derivePerformanceLaneMask maps piano notes onto keyboard lanes around center note', function() {
+  var mask = derivePerformanceLaneMask({ instrument: 'piano' }, { notes: ['A3', 'C#4', 'E4'] });
+  assert.strictEqual(mask, (1 << 9) | (1 << 13) | (1 << 16));
+  assert.strictEqual(getPrimaryLaneIndex(mask), 9);
+});
+
+test('getPrimaryLaneIndex handles lane masks above the first five bits', function() {
+  assert.strictEqual(getPrimaryLaneIndex(1 << 9), 9);
+  assert.strictEqual(getPrimaryLaneIndex(1 << 23), 23);
 });
 
 test('normalizePerformanceChartDefinition supports ukulele package charts through manifest adapter metadata', function() {
