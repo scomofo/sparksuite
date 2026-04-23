@@ -228,15 +228,6 @@
       chord: function(chordObj, size, label, animate) {
         return renderUkuleleChordSVG(chordObj, size, label, animate);
       },
-      header: function() {
-        return typeof headerHTML === "function" ? headerHTML() : "";
-      },
-      tabNav: function() {
-        return typeof tabNavHTML === "function" ? tabNavHTML() : "";
-      },
-      ring: function(pct, size, color) {
-        return typeof ringHTML === "function" ? ringHTML(pct, size, 5, color) : "";
-      },
       watchAnimation: function(container, chordObj, options) {
         if (typeof WatchCommon === "undefined" || !chordObj) return null;
         var normalized = typeof normalizeUkuleleChord === "function" ? normalizeUkuleleChord(chordObj) : chordObj;

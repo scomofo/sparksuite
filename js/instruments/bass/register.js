@@ -95,15 +95,6 @@
         }
         return typeof bassSVG === "function" ? bassSVG(chordObj, size, label, animate) : "";
       },
-      header: function() {
-        return typeof headerHTML === "function" ? headerHTML() : "";
-      },
-      tabNav: function() {
-        return typeof tabNavHTML === "function" ? tabNavHTML() : "";
-      },
-      ring: function(pct, size, color) {
-        return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
-      },
       watchAnimation: function(container, chordObj, options) {
         if (typeof WatchCommon === "undefined" || !chordObj) return null;
         var chart = {
