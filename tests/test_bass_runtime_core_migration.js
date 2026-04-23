@@ -140,7 +140,7 @@ eval(loadJS("js/instruments/bass/app.js"));
 console.log("\n--- Bass Runtime Core Migration ---");
 
 test("guidedStart delegates to shared guided session helper", function() {
-  bassAct("guidedStart", "2");
+  bassAct("start_guided_session", "2");
 
   assert.strictEqual(sparkCoreCalls.length, 1);
   assert.strictEqual(sparkCoreCalls[0].fn, "openGuidedSession");
