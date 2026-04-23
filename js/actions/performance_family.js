@@ -19,6 +19,57 @@
     }
   }
 
+  function resolveLegacyPerformanceSongId(song) {
+    return typeof resolvePerformanceSongId === "function"
+      ? resolvePerformanceSongId(song, song && song.title)
+      : ((song && song.title) || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  }
+
+  function getLegacyPerformanceMicOffsetMs() {
+    if (typeof S.performMicOffsetMs === "number" && isFinite(S.performMicOffsetMs)) return S.performMicOffsetMs;
+    return 0;
+  }
+
+  function preparePerformanceSongSelection(songIndex, options) {
+    var song;
+    var songId;
+    var arrangementType;
+    var difficultyId;
+    var openScreen;
+    options = options || {};
+    if (isNaN(songIndex) || !SONGS[songIndex]) return false;
+    song = SONGS[songIndex];
+    songId = resolveLegacyPerformanceSongId(song);
+    arrangementType = options.arrangementType || S.performArrangementType || "chords";
+    difficultyId = options.difficultyId || S.performDifficulty || "normal";
+    openScreen = Object.prototype.hasOwnProperty.call(options, "openScreen") ? !!options.openScreen : true;
+
+    setLegacyFields({
+      performSongData: song,
+      performSongId: songId,
+      performTargetTechnique: Object.prototype.hasOwnProperty.call(options, "targetTechnique") ? options.targetTechnique : null,
+      performArrangementType: arrangementType,
+      performDifficulty: difficultyId
+    });
+
+    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+      openPerformanceSongSelectionRequest({
+        songIndex: songIndex,
+        songId: songId,
+        songTitle: song.title || null,
+        targetTechnique: Object.prototype.hasOwnProperty.call(options, "targetTechnique") ? options.targetTechnique : null,
+        arrangementType: arrangementType,
+        difficultyId: difficultyId
+      });
+    }
+
+    if (openScreen) {
+      setLegacyFields({ screen: SCR.PERFORM_SONG });
+      render();
+    }
+    return true;
+  }
+
   function handlePerformanceAction(a, v) {
     if (a === "openPerform" || a === "startPerform") {
       startPerformance(v);
@@ -49,49 +100,36 @@
 
     if (a === "performSong") {
       var songIdx = parseInt(v, 10);
-      if (!isNaN(songIdx) && SONGS[songIdx]) {
-        var chart = buildPerformanceChartFromSong(SONGS[songIdx], "builtin");
-        if (chart) startPerformance(chart);
+      if (preparePerformanceSongSelection(songIdx, {
+        arrangementType: S.performArrangementType || "chords",
+        difficultyId: S.performDifficulty || "normal",
+        openScreen: false
+      })) {
+        return handlePerformanceAction("performStartFromSong");
       }
       return true;
     }
 
     if (a === "performSongRhythm") {
       var rhythmSongIdx = parseInt(v, 10);
-      if (!isNaN(rhythmSongIdx) && SONGS[rhythmSongIdx]) {
-        var rhythmChart = buildPerformanceChartFromSong(SONGS[rhythmSongIdx], "builtin", "rhythm_chords");
-        if (rhythmChart) {
-          setLegacyFields({ performArrangementType: "rhythm_chords" });
-          startPerformance(rhythmChart);
-        }
+      if (preparePerformanceSongSelection(rhythmSongIdx, {
+        arrangementType: "rhythm_chords",
+        difficultyId: S.performDifficulty || "normal",
+        openScreen: false
+      })) {
+        return handlePerformanceAction("performStartFromSong");
       }
       return true;
     }
 
     if (a === "openPerformSong") {
       var selectedSongIdx = parseInt(v, 10);
-      if (!isNaN(selectedSongIdx) && SONGS[selectedSongIdx]) {
-        var selectedSongId = typeof resolvePerformanceSongId === "function"
-          ? resolvePerformanceSongId(SONGS[selectedSongIdx], SONGS[selectedSongIdx].title)
-          : (SONGS[selectedSongIdx].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
-        setLegacyFields({ performTargetTechnique: null });
-        if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-          openPerformanceSongSelectionRequest({
-            songIndex: selectedSongIdx,
-            songId: selectedSongId,
-            songTitle: SONGS[selectedSongIdx].title || null,
-            targetTechnique: null,
-            arrangementType: S.performArrangementType || "chords",
-            difficultyId: S.performDifficulty || "normal"
-          });
-        } else {
-          S.performSongData = SONGS[selectedSongIdx];
-          S.performSongId = selectedSongId;
-          S.performTargetTechnique = null;
-        }
-        setLegacyFields({ screen: SCR.PERFORM_SONG });
-        render();
-      }
+      preparePerformanceSongSelection(selectedSongIdx, {
+        arrangementType: S.performArrangementType || "chords",
+        difficultyId: S.performDifficulty || "normal",
+        targetTechnique: null,
+        openScreen: true
+      });
       return true;
     }
 
@@ -153,7 +191,7 @@
         appliedOffsetMs: appliedOffset,
         globalOffsetMs: S.performTimingOffsetMs || 0,
         midiOffsetMs: S.performMidiOffsetMs || 0,
-        micOffsetMs: S.performMicOffsetMs || 0
+        micOffsetMs: getLegacyPerformanceMicOffsetMs()
       });
       render();
       return true;
@@ -163,12 +201,15 @@
       var resetSource = typeof getPerformanceCalibrationView === "function" ? getPerformanceCalibrationView().source : (S.performCalibrationSource || "midi");
       var resetPatch = { performCalibrationHits: [] };
       if (resetSource === "midi") resetPatch.performMidiOffsetMs = 0;
-      if (resetSource === "mic") resetPatch.performMicOffsetMs = 0;
+      if (resetSource === "mic") {
+        resetPatch.performMicOffsetMs = 0;
+        resetPatch.performAudioOffsetMs = 0;
+      }
       applyPerformanceCalibrationRequest("calibration_reset", {
         source: resetSource,
         globalOffsetMs: S.performTimingOffsetMs || 0,
         midiOffsetMs: resetSource === "midi" ? 0 : (S.performMidiOffsetMs || 0),
-        micOffsetMs: resetSource === "mic" ? 0 : (S.performMicOffsetMs || 0)
+        micOffsetMs: resetSource === "mic" ? 0 : getLegacyPerformanceMicOffsetMs()
       });
       setLegacyFields(resetPatch, false);
       saveState();

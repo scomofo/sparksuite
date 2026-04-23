@@ -1,9 +1,14 @@
 (function(){
 
+  function getStoredPerformanceMicOffsetMs() {
+    if (typeof S.performMicOffsetMs === "number" && isFinite(S.performMicOffsetMs)) return S.performMicOffsetMs;
+    return 0;
+  }
+
   function getActivePerformanceOffsetMs(mode){
     var globalOffset = S.performTimingOffsetMs || 0;
     if(mode==="midi") return globalOffset + (S.performMidiOffsetMs || 0);
-    if(mode==="mic") return globalOffset + (S.performMicOffsetMs || 0);
+    if(mode==="mic") return globalOffset + getStoredPerformanceMicOffsetMs();
     return globalOffset;
   }
 
@@ -86,6 +91,7 @@
   function getCalibrationBeatIntervalMs(){ return _perfCalBeatIntervalMs; }
 
   window.getActivePerformanceOffsetMs = getActivePerformanceOffsetMs;
+  window.getStoredPerformanceMicOffsetMs = getStoredPerformanceMicOffsetMs;
   window.beginPerformanceCalibration = beginPerformanceCalibration;
   window.stopPerformanceCalibration = stopPerformanceCalibration;
   window.recordCalibrationHit = recordCalibrationHit;

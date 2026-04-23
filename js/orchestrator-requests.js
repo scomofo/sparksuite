@@ -149,7 +149,9 @@ function applyPerformanceCalibrationRequest(action, options) {
       appliedOffsetMs: Object.prototype.hasOwnProperty.call(options, "appliedOffsetMs") ? options.appliedOffsetMs : null,
       globalOffsetMs: Object.prototype.hasOwnProperty.call(options, "globalOffsetMs") ? options.globalOffsetMs : (S.performTimingOffsetMs || 0),
       midiOffsetMs: Object.prototype.hasOwnProperty.call(options, "midiOffsetMs") ? options.midiOffsetMs : (S.performMidiOffsetMs || 0),
-      micOffsetMs: Object.prototype.hasOwnProperty.call(options, "micOffsetMs") ? options.micOffsetMs : (S.performMicOffsetMs || 0)
+      micOffsetMs: Object.prototype.hasOwnProperty.call(options, "micOffsetMs")
+        ? options.micOffsetMs
+        : ((typeof S.performMicOffsetMs === "number" && isFinite(S.performMicOffsetMs)) ? S.performMicOffsetMs : 0)
     });
   }
   return options;

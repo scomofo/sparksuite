@@ -50,7 +50,7 @@ function performSongPage() {
   // Mastery + best stats
   h += '<div class="card mb20" style="text-align:center">';
   if (typeof getPerformanceStats === "function") {
-    var pStats = getPerformanceStats(sid + "_" + arrType, arrType, diff);
+    var pStats = getPerformanceStats(sid, arrType, diff);
     if (pStats.mastery !== "none") {
       h += '<div style="margin-bottom:8px"><span style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + ';padding:6px 16px;border-radius:12px;font-size:14px;font-weight:800">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
     }
@@ -183,9 +183,15 @@ function getPerformanceSongView() {
       ? performanceSong.songData
       : (runtimeState && runtimeState.performanceSongData ? runtimeState.performanceSongData : S.performSongData),
     songId: performanceSong && performanceSong.songId ? performanceSong.songId : S.performSongId,
-    arrangementType: runtimeState && runtimeState.performanceArrangementType ? runtimeState.performanceArrangementType : S.performArrangementType,
-    difficultyId: runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty,
-    speed: runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed,
+    arrangementType: runtimeState && runtimeState.performanceArrangementType
+      ? runtimeState.performanceArrangementType
+      : (performanceSong && performanceSong.arrangementType ? performanceSong.arrangementType : S.performArrangementType),
+    difficultyId: runtimeState && runtimeState.performanceDifficultyId
+      ? runtimeState.performanceDifficultyId
+      : (performanceSong && performanceSong.difficultyId ? performanceSong.difficultyId : S.performDifficulty),
+    speed: runtimeState && runtimeState.performanceSpeed
+      ? runtimeState.performanceSpeed
+      : (performanceSong && performanceSong.speed ? performanceSong.speed : S.performSpeed),
     targetTechnique: runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
       ? runtimeState.performanceTargetTechnique
       : S.performTargetTechnique
