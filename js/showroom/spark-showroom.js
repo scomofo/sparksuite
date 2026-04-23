@@ -22,8 +22,13 @@
     return "'" + String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'";
   }
 
-  function nav(view) {
-    return "SparkShowroomNavigate(" + jsArg(view) + ")";
+  // Second-arg form is used to pass a route parameter (e.g. a lesson number)
+  // to the dispatcher so deep links like nav("lesson", 3) can land on a
+  // specific record rather than the default lesson view.
+  function nav(view, param) {
+    return param !== undefined && param !== null
+      ? "SparkShowroomNavigate(" + jsArg(view) + "," + jsArg(param) + ")"
+      : "SparkShowroomNavigate(" + jsArg(view) + ")";
   }
   // Back arrow on sub-pages (Settings, Profile, etc.). Inside an instrument
   // this returns to the instrument's Practice page so users don't get dropped
@@ -32,12 +37,86 @@
   // returns to the launcher.
   function backToHome() { return nav("back"); }
 
+  // ───────────────────────────────────────────────────────────────────────
+  // Lesson data helpers — normalize across instruments so pathRender and
+  // lessonRender can work off a single shape. Ukulele exposes its richer
+  // lesson list via SparkUkuleleLessons; guitar/piano/bass expose SESSIONS
+  // on getData(). Both share num/title/level/bpm; ukulele adds a string id
+  // and skill metadata, so we surface both id and num in the normalized
+  // record.
+  function getActiveInstrumentLessons() {
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments.getActive) return [];
+    var inst = SparkInstruments.getActive();
+    if (!inst) return [];
+    var raw = [];
+    var instrumentType = inst.instrument || inst.instrumentType || inst.id || inst.appId || null;
+    if (instrumentType === "ukulele" && typeof window.SparkUkuleleLessons !== "undefined") {
+      raw = window.SparkUkuleleLessons;
+    } else if (typeof inst.getData === "function") {
+      var data = inst.getData() || {};
+      raw = data.SESSIONS || [];
+    }
+    if (!Array.isArray(raw)) return [];
+    var completed = (typeof S !== "undefined" && Array.isArray(S.completedGuidedSessions))
+      ? S.completedGuidedSessions : [];
+    var currentNum = (typeof S !== "undefined" && typeof S.guidedSession === "number")
+      ? S.guidedSession : 1;
+    return raw.map(function(L, i) {
+      var num = typeof L.num === "number" ? L.num : (i + 1);
+      var id = L.id || String(num);
+      return {
+        id: id,
+        num: num,
+        title: L.title || ("Lesson " + num),
+        level: L.level || 1,
+        bpm: L.bpm || 80,
+        desc: L.desc || (L.spark && L.spark.text) || "",
+        chord: (L.newMove && L.newMove.chord) || null,
+        skill: L.skill || null,
+        completed: completed.indexOf(num) >= 0,
+        active: num === currentNum,
+        raw: L
+      };
+    });
+  }
+
+  // Find a specific lesson by id (ukulele's string id) or num (everything).
+  function findActiveLesson(lessonId) {
+    var lessons = getActiveInstrumentLessons();
+    if (!lessons.length) return null;
+    if (lessonId !== undefined && lessonId !== null && lessonId !== "") {
+      var target = String(lessonId);
+      for (var i = 0; i < lessons.length; i++) {
+        if (lessons[i].id === target || String(lessons[i].num) === target) return lessons[i];
+      }
+    }
+    // Default: the active (next-up) lesson, or the first one.
+    for (var j = 0; j < lessons.length; j++) {
+      if (lessons[j].active) return lessons[j];
+    }
+    return lessons[0];
+  }
+
   // Context-aware navigation. When an instrument is active, route via the
   // legacy SCR/TAB system so each Showroom page becomes the actual page for
   // its app area. When no instrument is active, fall back to the launcher's
   // openLauncherView dispatcher.
-  window.SparkShowroomNavigate = function(view) {
+  window.SparkShowroomNavigate = function(view, param) {
     var hasInst = typeof S !== "undefined" && S.activeInstrument;
+    // nav("lesson", <num>) selects a specific lesson — stash the id so
+    // lessonRender can look it up on the active instrument. An explicit
+    // null (or missing param) clears the pin so the "continue" path lands
+    // on the user's next unfinished lesson instead of whatever they last
+    // opened.
+    if (view === "lesson") {
+      if (param !== undefined && param !== null && param !== "") {
+        if (typeof S !== "undefined") S._showroomLessonId = String(param);
+      }
+    } else if (typeof S !== "undefined" && S._showroomLessonId && view !== "settings" && view !== "profile") {
+      // Leaving the lesson context — drop the pin so it doesn't stick
+      // across unrelated navigations.
+      S._showroomLessonId = null;
+    }
     var SCR_ = typeof SCR !== "undefined" ? SCR : null;
     var TAB_ = typeof TAB !== "undefined" ? TAB : null;
     if (hasInst && SCR_ && TAB_) {
@@ -874,14 +953,52 @@
   // ───────────────────────────────────────────────────────────────────────
   function lessonRender(opts) {
     opts = opts || {};
-    var module = opts.module || "Module 01 • Guitar Basics";
-    var unit = opts.unit || "G Major Foundation";
-    var chordName = opts.chord || "G Major Chord";
+    // Look up the lesson pinned by nav("lesson", <id>). When nothing is
+    // pinned we fall back to the active (next-up) lesson so the screen still
+    // renders something useful. When a real lesson is found, its fields
+    // override the sample opts passed by any caller.
+    var pinnedId = (typeof S !== "undefined" && S._showroomLessonId) ? S._showroomLessonId : opts.lessonId;
+    var activeLesson = findActiveLesson(pinnedId);
+    var allLessons = getActiveInstrumentLessons();
+    // Locate prev/next neighbours — only expose a neighbour if it's either
+    // completed or active (never point at a still-locked future lesson).
+    var currentIdx = -1;
+    if (activeLesson) {
+      for (var ni = 0; ni < allLessons.length; ni++) {
+        if (allLessons[ni].id === activeLesson.id) { currentIdx = ni; break; }
+      }
+    }
+    var prevLesson = currentIdx > 0 ? allLessons[currentIdx - 1] : null;
+    var nextLesson = null;
+    for (var nj = currentIdx + 1; nj < allLessons.length; nj++) {
+      var cand = allLessons[nj];
+      if (cand.completed || cand.active) { nextLesson = cand; break; }
+    }
+
+    var lessonNum = activeLesson ? activeLesson.num : null;
+    var lessonLevel = activeLesson ? activeLesson.level : 1;
+    var module = opts.module || (activeLesson
+      ? "Lesson " + lessonNum + " • Level " + lessonLevel
+      : "Module 01 • Guitar Basics");
+    var unit = opts.unit || (activeLesson ? activeLesson.title : "G Major Foundation");
+    var chordName = opts.chord || (activeLesson && activeLesson.chord) || "G Major Chord";
     var position = opts.position || "Open Position";
     var strum = opts.strum || "All 6";
     var type = opts.type || "Major";
     var xp = opts.xp || 12;
     var time = opts.time || "05:00";
+    var lessonDesc = (activeLesson && activeLesson.desc) || "";
+    var rawLesson = activeLesson ? activeLesson.raw : null;
+    var sparkText = (rawLesson && rawLesson.spark && rawLesson.spark.text) || "";
+    var newMoveText = (rawLesson && rawLesson.newMove && rawLesson.newMove.text) || "";
+    var songSliceText = (rawLesson && rawLesson.songSlice && rawLesson.songSlice.text) || "";
+
+    var instrumentType = (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive && SparkInstruments.getActive()) || null;
+    instrumentType = (instrumentType && (instrumentType.instrument || instrumentType.instrumentType || instrumentType.id)) || "guitar";
+    // The chord diagram is hand-drawn for 6-string guitar only; hide it for
+    // other instruments rather than render a mismatched layout. A proper
+    // piano/uke/bass visual can be added later.
+    var showChordDiagram = instrumentType === "guitar";
     // Default G Major fingering: positions on (string left%, fret top%)
     // Aligned to 6-string justify-between grid: 0, 20, 40, 60, 80, 100
     var fingers = opts.fingers || [
@@ -938,15 +1055,19 @@
              + '<div class="showroom-lesson-card showroom-ember-glow-card">'
                + '<div class="showroom-lesson-card-head"><div>'
                  + '<h3 class="showroom-lesson-card-title">' + escHtml(chordName) + '</h3>'
-                 + '<p class="showroom-lesson-card-sub">' + escHtml(position) + '</p></div>'
-                 + '<div class="showroom-lesson-card-badge"><span class="showroom-lesson-card-tag">G</span></div></div>'
-               + '<div class="showroom-chord" role="img" aria-label="' + escHtml(chordAriaLabel) + '">'
-                 + '<div class="showroom-chord-fret-labels" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>'
-                 + '<div class="showroom-chord-opens" aria-hidden="true"><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span></div>'
-                 + '<div class="showroom-chord-frets" aria-hidden="true"><div class="nut"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div></div>'
-                 + '<div class="showroom-chord-strings" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>'
-                 + '<div class="showroom-chord-fingers" aria-hidden="true">' + fingersHtml + '</div>'
-               + '</div>'
+                 + '<p class="showroom-lesson-card-sub">' + escHtml(showChordDiagram ? position : (lessonDesc || position)) + '</p></div>'
+                 + '<div class="showroom-lesson-card-badge"><span class="showroom-lesson-card-tag">' + escHtml(String(lessonNum || "G")) + '</span></div></div>'
+               + (showChordDiagram
+                  ? ('<div class="showroom-chord" role="img" aria-label="' + escHtml(chordAriaLabel) + '">'
+                       + '<div class="showroom-chord-fret-labels" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>'
+                       + '<div class="showroom-chord-opens" aria-hidden="true"><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span><span>O</span></div>'
+                       + '<div class="showroom-chord-frets" aria-hidden="true"><div class="nut"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div><div class="fret"></div></div>'
+                       + '<div class="showroom-chord-strings" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>'
+                       + '<div class="showroom-chord-fingers" aria-hidden="true">' + fingersHtml + '</div>'
+                     + '</div>')
+                  : (sparkText
+                     ? '<div class="showroom-lesson-card-body" style="padding:12px 8px;font-size:14px;line-height:1.5;color:var(--text-secondary,#ccc)">' + escHtml(sparkText) + '</div>'
+                     : ''))
                + '<div class="showroom-chord-meta">'
                  + '<div class="showroom-chord-meta-cell"><p class="showroom-chord-meta-label">STRUM</p><p class="showroom-chord-meta-val success">' + escHtml(strum) + '</p></div>'
                  + '<div class="showroom-chord-meta-divider"></div>'
@@ -954,6 +1075,31 @@
                + '</div>'
              + '</div>'
            + '</section>'
+           // Prev / Next lesson nav — only surfaces when a real lesson is
+           // loaded. Locked future lessons aren't offered via "Next" (see
+           // nextLesson derivation above); past / completed ones are always
+           // reachable via Prev so the user can revisit any earlier step.
+           + (activeLesson
+              ? ('<section class="showroom-lesson-nav" style="display:flex;gap:8px;justify-content:space-between;margin:12px 0;padding:0 4px">'
+                 + (prevLesson
+                    ? '<button class="showroom-path-cta" style="flex:1;max-width:48%" onclick="' + nav("lesson", prevLesson.id) + '"><span class="material-symbols-outlined">chevron_left</span> ' + escHtml(prevLesson.title) + '</button>'
+                    : '<span style="flex:1;max-width:48%"></span>')
+                 + (nextLesson
+                    ? '<button class="showroom-path-cta" style="flex:1;max-width:48%;justify-content:flex-end" onclick="' + nav("lesson", nextLesson.id) + '">' + escHtml(nextLesson.title) + ' <span class="material-symbols-outlined">chevron_right</span></button>'
+                    : '<span style="flex:1;max-width:48%"></span>')
+                 + '</section>')
+              : '')
+           // Additional lesson context — surface the instructor prompts that
+           // exist on every real lesson record so the user can prep before
+           // they hit "Start Practice".
+           + (newMoveText
+              ? ('<section class="showroom-tips-section" style="margin-top:8px"><div class="showroom-tips-head"><span class="material-symbols-outlined">flag</span><h3>New move</h3></div>'
+                 + '<p style="font-size:13px;line-height:1.5;color:var(--text-secondary,#ccc);margin:0 4px">' + escHtml(newMoveText) + '</p></section>')
+              : '')
+           + (songSliceText
+              ? ('<section class="showroom-tips-section" style="margin-top:8px"><div class="showroom-tips-head"><span class="material-symbols-outlined">music_note</span><h3>Song slice</h3></div>'
+                 + '<p style="font-size:13px;line-height:1.5;color:var(--text-secondary,#ccc);margin:0 4px">' + escHtml(songSliceText) + '</p></section>')
+              : '')
            + '<section class="showroom-tips-section">'
              + '<div class="showroom-tips-head"><span class="material-symbols-outlined">lightbulb</span><h3>Key Tips</h3></div>'
              + '<div class="showroom-tips-grid">'
@@ -996,11 +1142,52 @@
       if (maxStreak) streak = maxStreak;
     }
 
-    var lessons = opts.lessons || [
-      { tier:"Beginner",     title:"Chord Basics",      desc:"Master the fundamental G and C major shapes.", time:"8 MIN",  icon:"music_note", instrument:"guitar",  unlocked:true,  cta:"Continue" },
-      { tier:"Intermediate", title:"Strumming Patterns",desc:"Unlock the \"Island Strum\" for versatile rhythms.", time:"12 MIN", icon:"waves",     instrument:"ukulele", unlocked:false, cta:"Locked" },
-      { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true }
-    ];
+    // Build lesson list from the active instrument's real data. Completed
+    // sessions (S.completedGuidedSessions) stay unlocked and clickable so
+    // users can revisit any past lesson; the next-up lesson (S.guidedSession)
+    // is the "active" one; everything beyond the current pointer is locked
+    // until progression advances.
+    var realLessons = getActiveInstrumentLessons();
+    var instrumentType = (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive && SparkInstruments.getActive()) || null;
+    instrumentType = (instrumentType && (instrumentType.instrument || instrumentType.instrumentType || instrumentType.id)) || "guitar";
+    var lessons;
+    if (realLessons.length) {
+      // Map level → tier label. Most instrument packs number lessons 1..N
+      // across levels 1..4; tier copy comes from level number so the UI
+      // still reads like a progression without hand-written metadata.
+      var tierFor = function(lvl) {
+        return lvl <= 1 ? "Beginner" : lvl === 2 ? "Starter" : lvl === 3 ? "Intermediate" : lvl === 4 ? "Advanced" : "Milestone";
+      };
+      var iconFor = function(ls) {
+        if (ls.chord) return "music_note";
+        if (/strum|rhythm/i.test(ls.skill || "")) return "waves";
+        if (/finger|pick/i.test(ls.skill || "")) return "touch_app";
+        return "school";
+      };
+      lessons = realLessons.map(function(L) {
+        var timeLabel = (L.bpm ? (Math.max(5, Math.round(240 / L.bpm))) : 8) + " MIN";
+        var unlocked = L.completed || L.active;
+        var cta = L.completed ? "Review" : L.active ? "Continue" : "Locked";
+        return {
+          lessonId: L.id,
+          tier: tierFor(L.level),
+          title: L.title,
+          desc: L.desc,
+          time: timeLabel,
+          icon: iconFor(L),
+          instrument: instrumentType,
+          unlocked: unlocked,
+          completed: L.completed,
+          cta: cta
+        };
+      });
+    } else {
+      lessons = opts.lessons || [
+        { tier:"Beginner",     title:"Chord Basics",      desc:"Master the fundamental G and C major shapes.", time:"8 MIN",  icon:"music_note", instrument:"guitar",  unlocked:true,  cta:"Continue" },
+        { tier:"Intermediate", title:"Strumming Patterns",desc:"Unlock the \"Island Strum\" for versatile rhythms.", time:"12 MIN", icon:"waves",     instrument:"ukulele", unlocked:false, cta:"Locked" },
+        { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true }
+      ];
+    }
 
     var goalPct = Math.min(100, Math.round((dailyMin / dailyGoal) * 100));
     var ringR = 34;
@@ -1032,7 +1219,7 @@
       lessonsHtml += '<div class="showroom-path-foot">'
                   + '<span class="showroom-path-time"><span class="material-symbols-outlined">timer</span>' + escHtml(ls.time) + '</span>'
                   + (ls.unlocked
-                      ? '<button class="showroom-path-cta" onclick="' + nav("lesson") + '">' + escHtml(ls.cta) + ' <span class="material-symbols-outlined fill">play_arrow</span></button>'
+                      ? '<button class="showroom-path-cta" onclick="' + nav("lesson", ls.lessonId) + '">' + escHtml(ls.cta) + ' <span class="material-symbols-outlined fill">' + (ls.completed ? "replay" : "play_arrow") + '</span></button>'
                       : '<button class="showroom-path-cta locked" aria-disabled="true">' + escHtml(ls.cta) + ' <span class="material-symbols-outlined">lock</span></button>')
                   + '</div>'
                 + '</div>';
