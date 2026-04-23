@@ -55,15 +55,6 @@
       chord: function(chordObj, size, label, animate) {
         return typeof pianoSVG === "function" ? pianoSVG(chordObj, { width: size, animate: animate }) : "";
       },
-      header: function() {
-        return typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : (typeof headerHTML === "function" ? headerHTML() : "");
-      },
-      tabNav: function() {
-        return typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : (typeof tabNavHTML === "function" ? tabNavHTML() : "");
-      },
-      ring: function(pct, size, color) {
-        return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
-      },
       watchAnimation: function(container, chordObj, options) {
         if (typeof PianoWatch === "undefined" || !chordObj) return null;
         options = options || {};
