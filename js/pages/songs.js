@@ -158,10 +158,12 @@ function _getCanonicalSpotifySongMeta(song){
   var contentSongs = typeof window !== "undefined" && window.SparkContent && window.SparkContent.songs
     ? window.SparkContent.songs
     : null;
+  var family = typeof getSongFamily === "function" && song && song.id ? getSongFamily(song.id) : null;
   var key;
   var entry;
   if(!contentSongs || !song) return null;
   if(song.id && contentSongs[song.id]) return contentSongs[song.id];
+  if(family && family.canonicalSongId && contentSongs[family.canonicalSongId]) return contentSongs[family.canonicalSongId];
   for(key in contentSongs){
     if(!Object.prototype.hasOwnProperty.call(contentSongs, key)) continue;
     entry = contentSongs[key];
