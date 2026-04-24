@@ -120,6 +120,13 @@ test('renderLauncher wires hero and launcher utility actions', function() {
   assert.ok(html.indexOf("SparkInstruments.openLauncherView('instruments')") >= 0);
 });
 
+test('piano songs build helper stays namespaced so shared build tab is not shadowed', function() {
+  var source = loadJS('js/instruments/piano/pages/songs.js');
+  assert.ok(source.indexOf('case "build":   html += pianoBuildTab(); break;') >= 0);
+  assert.ok(source.indexOf('function pianoBuildTab() {') >= 0);
+  assert.strictEqual(source.indexOf('function buildTab() {'), -1);
+});
+
 test('piano bootstrap preserves existing pages while adding deferred registrations', function() {
   SparkInstruments.register({
     id: 'pianospark', instrument: 'piano', name: 'PianoSpark', icon: 'P',
