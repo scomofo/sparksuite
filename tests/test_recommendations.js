@@ -44,6 +44,12 @@ function resetState() {
       }
     }
   };
+  global.recordRecommendationUse = function(recommendation) {
+    S.recommendationHistory.push(recommendation && recommendation.id ? recommendation.id : recommendation);
+  };
+  global.launchPracticeItem = function() {
+    return true;
+  };
   global.saveState = function() {};
   global.getAverageMastery = function() { return 1; };
   global.getTopWeakSpots = function() { return null; };
@@ -326,6 +332,59 @@ test("recommendationsPage renders module-progress focus and weakest metric detai
 
   assert.ok(html.indexOf("Focus: walking") >= 0);
   assert.ok(html.indexOf("Weakest: timing 48%") >= 0);
+});
+
+test("recommendation UI can resolve sparkCore from the global binding", function() {
+  var launched = null;
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardRecommendations: [{
+            id: "rec_core",
+            type: "bassline",
+            title: "Core Recommendation",
+            source: "module_progress",
+            reasons: ["Keep the groove steady."],
+            meta: {
+              recommendationFocus: "walking",
+              progressSummary: {
+                weakestMetric: "timing",
+                timing: 0.48
+              }
+            }
+          }]
+        }
+      };
+    },
+    launchDashboardRecommendation: function(id) {
+      return {
+        recommendation: {
+          id: id,
+          type: "bassline",
+          title: "Core Recommendation",
+          source: "module_progress",
+          meta: {}
+        }
+      };
+    }
+  };
+  global.launchPracticeItem = function(item) {
+    launched = item;
+    return true;
+  };
+
+  var html = recommendationsPage();
+  launchRecommendationById("rec_core");
+
+  assert.ok(html.indexOf("Core Recommendation") >= 0);
+  assert.ok(html.indexOf("Focus: walking") >= 0);
+  assert.ok(launched);
+  assert.strictEqual(launched.id, "rec_core");
+  assert.strictEqual(S.recommendationHistory.length, 1);
+  assert.strictEqual(S.recommendationHistory[0].id, "rec_core");
+  assert.strictEqual(S.recommendationHistory[0].type, "bassline");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);
