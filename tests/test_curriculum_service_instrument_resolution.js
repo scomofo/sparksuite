@@ -130,4 +130,24 @@ test("SparkCurriculumBridge.getNextLesson respects curriculum v2 completion stat
   assert.strictEqual(nextLessonId, "gtr-d02");
 });
 
+test("SparkCurriculumService.isLessonUnlocked respects curriculum v2 prerequisites", function() {
+  var originalGetActive = SparkInstruments.getActive;
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      instrument: "guitar",
+      getCurriculumMap: function() { return []; },
+      getCurriculumMapV2: function() {
+        return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+      }
+    };
+  };
+
+  assert.strictEqual(SparkCurriculumService.isLessonUnlocked("gtr-d02"), false);
+  S.curriculumV2CompletedSessions.guitar = ["gtr-d01"];
+  assert.strictEqual(SparkCurriculumService.isLessonUnlocked("gtr-d02"), true);
+
+  SparkInstruments.getActive = originalGetActive;
+});
+
 if (process.exitCode) process.exit(process.exitCode);

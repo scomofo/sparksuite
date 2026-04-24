@@ -70,6 +70,27 @@
     return null;
   }
 
+  function isFlatLessonUnlocked(lesson, inst) {
+    var curriculumMap;
+    var completedLessons;
+    var lessonIds = {};
+    var i;
+    var prerequisites;
+    if (!lesson) return true;
+    curriculumMap = getInstrumentCurriculumMap(inst);
+    completedLessons = getCompletedCurriculumLessonIds(inst);
+    for (i = 0; i < curriculumMap.length; i++) {
+      if (curriculumMap[i] && curriculumMap[i].id) lessonIds[curriculumMap[i].id] = true;
+    }
+    prerequisites = Array.isArray(lesson.prerequisites) ? lesson.prerequisites : [];
+    for (i = 0; i < prerequisites.length; i++) {
+      if (lessonIds[prerequisites[i]] && completedLessons.indexOf(prerequisites[i]) === -1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
     var curriculum = getCurriculumItem("curriculums", curriculumId);
     if(!curriculum) return null;
@@ -91,8 +112,15 @@
   }
 
   function checkLessonUnlockRules(lessonId){
-    var lesson = getCurriculumItem("lessons", lessonId);
-    if(!lesson || !lesson.unlockRules) return true; // no rules = unlocked
+    var lesson = typeof getCurriculumItem === "function" ? getCurriculumItem("lessons", lessonId) : null;
+    var activeInstrument;
+    if(!lesson){
+      activeInstrument = getActiveCurriculumInstrument();
+      lesson = getCurriculumLessonById(lessonId, activeInstrument);
+      if (!lesson) return true;
+      return isFlatLessonUnlocked(lesson, activeInstrument);
+    }
+    if(!lesson.unlockRules) return true; // no rules = unlocked
     var rules = lesson.unlockRules;
 
     if(rules.lessonsCompleted && Array.isArray(rules.lessonsCompleted)){
