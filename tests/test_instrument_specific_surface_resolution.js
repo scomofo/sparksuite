@@ -480,9 +480,36 @@ test("practice curriculum v2 card shows track progress instead of duplicating th
   assert.ok(html.indexOf("4 blocks • 10 min shell") >= 0);
   assert.ok(html.indexOf("Unlock Path") >= 0);
   assert.ok(html.indexOf("Unlock path: ready now") >= 0);
+  assert.ok(html.indexOf("Fresh start") >= 0);
+  assert.ok(html.indexOf("Day 1 is ready when you are.") >= 0);
   assert.ok(html.indexOf("After that: Day 2 - How guitars get tuned") >= 0);
   assert.ok(html.indexOf("Song focus:") === -1);
   assert.ok(html.indexOf("New element:") === -1);
+});
+
+test("practice curriculum v2 surfaces react to canonical completion state", function() {
+  resetEnvironment("chordspark");
+  global.S.curriculumV2CompletedSessions = {
+    guitar: ["gtr-d01"]
+  };
+  global.sparkCore = undefined;
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var guidedHtml = renderPracticeGuidedSessionCard({});
+  var trackHtml = renderPracticeCurriculumV2Card({
+    instrument: "guitar"
+  });
+  assert.ok(guidedHtml.indexOf("Guided Session 2") >= 0);
+  assert.ok(guidedHtml.indexOf("How guitars get tuned") >= 0);
+  assert.ok(guidedHtml.indexOf("1/30 done") >= 0);
+  assert.ok(trackHtml.indexOf("1 of 30 sessions completed") >= 0);
+  assert.ok(trackHtml.indexOf("Day 2: How guitars get tuned") >= 0);
+  assert.ok(trackHtml.indexOf("Unlock path: Day 1 already banked") >= 0);
+  assert.ok(trackHtml.indexOf("New move day") >= 0);
+  assert.ok(trackHtml.indexOf("You've banked 1 sessions. Day 2 is next.") >= 0);
 });
 
 test("shared session helpers can resolve sparkCore from the global binding", function() {

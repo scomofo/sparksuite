@@ -450,7 +450,7 @@ function renderPracticeGuidedSessionCard(D) {
   var h = "";
   if(!gs) return h;
   completedGuidedSessions = normalizePracticeArray(S.completedGuidedSessions);
-  gsDone = completedGuidedSessions.length;
+  gsDone = normalizePracticeDisplayCount(gs.completedCount, completedGuidedSessions.length);
   totalSessions = normalizePracticeDisplayCount(gs.totalSessions, Array.isArray(D.SESSIONS) ? D.SESSIONS.length : 0);
   if (gs.blockCount > 0) shellBits.push(gs.blockCount + " blocks");
   if (gs.targetDurationMin > 0) shellBits.push(gs.targetDurationMin + " min shell");
@@ -511,6 +511,7 @@ function getPracticeGuidedSessionSummary(D) {
       targetDurationMin: getPracticeGuidedSessionDurationMin(sessions[guidedIndex], 0),
       focusSong: sessions[guidedIndex].focus_song || "",
       newElement: getPracticeGuidedPrimaryNewElement(sessions[guidedIndex].new_elements),
+      completedCount: normalizePracticeArray(S.completedGuidedSessions).length,
       totalSessions: sessions.length
     };
   }
@@ -531,6 +532,7 @@ function getPracticeGuidedSessionSummary(D) {
       targetDurationMin: getPracticeGuidedSessionDurationMin(guidedPlan, guidedContext && guidedContext.guidedShellDurationSec),
       focusSong: guidedPlan.focus_song || "",
       newElement: getPracticeGuidedPrimaryNewElement(guidedPlan.new_elements),
+      completedCount: normalizePracticeDisplayCount(guidedContext && guidedContext.completedGuidedSessions, 0),
       totalSessions: guidedContext.totalGuidedSessions || 0
     };
   }
@@ -547,11 +549,37 @@ function getPracticeGuidedSessionSummary(D) {
         targetDurationMin: getPracticeGuidedSessionDurationMin(nextSession, 0),
         focusSong: nextSession.focus_song || "",
         newElement: getPracticeGuidedPrimaryNewElement(nextSession.new_elements),
+        completedCount: summary.completedCount || 0,
         totalSessions: summary.sessionCount || 0
       };
     }
   }
   return null;
+}
+
+function isPracticeCurriculumReviewSession(session) {
+  var title = session && typeof session.title === "string" ? session.title.toLowerCase() : "";
+  var focusSong = session && typeof session.focus_song === "string" ? session.focus_song.toLowerCase() : "";
+  return title.indexOf("review") >= 0 || focusSong === "user picks";
+}
+
+function getPracticeTrackCadenceLabel(summary, nextSession, followupSession) {
+  if (!nextSession) return "Track complete";
+  if (isPracticeCurriculumReviewSession(nextSession)) return "Review day now";
+  if (followupSession && isPracticeCurriculumReviewSession(followupSession)) return "Review day after this session";
+  if (summary.completedCount <= 0) return "Fresh start";
+  if (summary.completedCount >= Math.max(0, summary.sessionCount - 2)) return "Showcase runway";
+  return "New move day";
+}
+
+function getPracticeTrackMomentumCopy(summary, nextSession, followupSession) {
+  if (!nextSession) return "Every Phase 1 session is already in the bank.";
+  if (summary.completedCount <= 0) return "Day 1 is ready when you are.";
+  if (isPracticeCurriculumReviewSession(nextSession)) return "You have enough in the bank to slow down and consolidate.";
+  if (followupSession && isPracticeCurriculumReviewSession(followupSession)) {
+    return "One more push and then you get a review day.";
+  }
+  return "You've banked " + summary.completedCount + " sessions. Day " + (nextSession.day || "?") + " is next.";
 }
 
 function renderPracticePlanSummaryCard(plan) {
@@ -790,6 +818,8 @@ function renderPracticeCurriculumV2Card(inst) {
   var upcomingLabel;
   var shellLabel;
   var unlockLabel;
+  var cadenceLabel;
+  var momentumCopy;
   var h;
   if (!service || typeof service.getTrackSummary !== "function") return "";
   summary = service.getTrackSummary(instrumentType);
@@ -822,8 +852,10 @@ function renderPracticeCurriculumV2Card(inst) {
     ? ((Array.isArray(nextSession.blocks) ? nextSession.blocks.length : 4) + " blocks • " + getPracticeGuidedSessionDurationMin(nextSession, 0) + " min shell")
     : "4 blocks • 10 min shell";
   unlockLabel = nextSession && Array.isArray(nextSession.prerequisites) && nextSession.prerequisites.length
-    ? ("Unlock path: after Day " + normalizePracticeDisplayCount((nextSession.day || 1) - 1, 0))
+    ? ("Unlock path: Day " + normalizePracticeDisplayCount((nextSession.day || 1) - 1, 0) + " already banked")
     : "Unlock path: ready now";
+  cadenceLabel = getPracticeTrackCadenceLabel(summary, nextSession, followupSession);
+  momentumCopy = getPracticeTrackMomentumCopy(summary, nextSession, followupSession);
   h = '<div class="card mb12">';
   h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">';
   h += '<div>';
@@ -840,6 +872,10 @@ function renderPracticeCurriculumV2Card(inst) {
   h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Up Next</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(nextLabel) + '</div></div>';
   h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Track Rhythm</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(shellLabel) + '</div></div>';
   h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Unlock Path</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(unlockLabel) + '</div></div>';
+  h += '</div>';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px">';
+  h += '<div style="font-size:12px;font-weight:800;color:var(--text-primary)">' + escHTML(cadenceLabel) + '</div>';
+  h += '<div style="font-size:12px;color:var(--text-secondary);text-align:right">' + escHTML(momentumCopy) + '</div>';
   h += '</div>';
   h += '<div style="margin-top:10px;font-size:12px;color:var(--text-secondary)">' + escHTML(upcomingLabel) + '</div>';
   h += '</div>';
