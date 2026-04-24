@@ -170,6 +170,11 @@
       return true;
     }
 
+    if (a === "rhythmResultsReplay") {
+      S.rhythmResults = null;
+      return handleToolsAction("startRhythm");
+    }
+
     if (a === "rhythmResultsBack") {
       S.rhythmResults = null;
       render();
@@ -613,6 +618,11 @@
       render();
       _runnerAnim = requestAnimationFrame(runnerTick);
       return true;
+    }
+
+    if (a === "runnerResultsReplay") {
+      S.runnerResults = null;
+      return handleToolsAction("startRunner");
     }
 
     if (a === "runnerResultsBack") {
