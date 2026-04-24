@@ -55,6 +55,7 @@ function resetEnv() {
       };
     }
   };
+  global.SparkCurriculumV2 = null;
 }
 
 function test(name, fn) {
@@ -149,6 +150,28 @@ test("guided done page ignores malformed completion counters", function() {
   assert.ok(html.indexOf("&#128293;0") >= 0);
   assert.ok(html.indexOf(">0/22<") >= 0);
   assert.ok(html.indexOf("NaN") === -1);
+});
+
+test("guided done page falls back to curriculum v2 session totals", function() {
+  S.completedGuidedSessions = ["gtr-d01", "gtr-d02", "gtr-d03"];
+  SparkInstruments.getActive = function() {
+    return {
+      instrumentType: "guitar",
+      id: "guitar",
+      appId: "guitar",
+      getData: function() { return { ALL_CHORDS: [] }; },
+      ui: { chord: function() { return "<div>chord</div>"; } }
+    };
+  };
+  SparkCurriculumV2 = {
+    getTrackSummary: function(instrument) {
+      assert.strictEqual(instrument, "guitar");
+      return { sessionCount: 30 };
+    }
+  };
+  var html = guidedDonePage();
+  assert.ok(html.indexOf(">3/30<") >= 0);
+  assert.ok(html.indexOf("/22<") === -1);
 });
 
 test("guided exit routes through a confirmation action", function() {
