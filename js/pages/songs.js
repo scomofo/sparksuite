@@ -92,9 +92,14 @@ function _normalizeSongsTempoInput(value, fallback){
   return bpm;
 }
 
+function _getSongsCore(){
+  return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+}
+
 function _resolveSongsRuntimeState(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
+  var core = _getSongsCore();
+  var coreView = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
     : null;
   return coreView && coreView.runtimeState ? coreView.runtimeState : null;
 }
@@ -131,8 +136,9 @@ function _renderSongsLibraryHeader(){
 }
 
 function _getSpotifyPlaylistPanelState(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-    ? window.sparkCore.getRuntimeState()
+  var core = _getSongsCore();
+  var runtime = core && typeof core.getRuntimeState === "function"
+    ? core.getRuntimeState()
     : null;
   return {
     connected: !!(runtime && runtime.spotifyPlaylistConnected),
@@ -205,11 +211,12 @@ function _notifySpotifyPlaylist(message){
 }
 
 function _ensureSpotifyPlaylistPanelState(){
-  if(!window.sparkCore || typeof window.sparkCore.syncSpotifyPlaylistStatus !== "function") return;
+  var core = _getSongsCore();
+  if(!core || typeof core.syncSpotifyPlaylistStatus !== "function") return;
   if(window.__spotifyPlaylistPanelLoading) return;
   if(window.__spotifyPlaylistPanelLoaded) return;
   window.__spotifyPlaylistPanelLoading = true;
-  window.sparkCore.syncSpotifyPlaylistStatus().catch(function() {
+  core.syncSpotifyPlaylistStatus().catch(function() {
     return null;
   }).then(function() {
     window.__spotifyPlaylistPanelLoading = false;
@@ -222,15 +229,17 @@ function _ensureSpotifyPlaylistPanelState(){
 }
 
 function sparkSpotifyPlaylistConnect(){
-  if(!window.sparkCore || typeof window.sparkCore.connectSpotifyPlaylist !== "function") return;
-  window.sparkCore.connectSpotifyPlaylist({ returnTo: window.location.href });
+  var core = _getSongsCore();
+  if(!core || typeof core.connectSpotifyPlaylist !== "function") return;
+  core.connectSpotifyPlaylist({ returnTo: window.location.href });
 }
 
 function sparkSpotifyPlaylistCreate(){
   var inst = getSongsPageInstrument();
   var curriculumKey = _getSpotifyPlaylistCurriculumKey(inst);
-  if(!window.sparkCore || typeof window.sparkCore.createSpotifyCurriculumPlaylist !== "function") return;
-  window.sparkCore.createSpotifyCurriculumPlaylist({
+  var core = _getSongsCore();
+  if(!core || typeof core.createSpotifyCurriculumPlaylist !== "function") return;
+  core.createSpotifyCurriculumPlaylist({
     curriculumKey: curriculumKey,
     name: _getSpotifyPlaylistName(inst),
     description: "SparkSuite curriculum playlist for " + ((inst && inst.name) ? inst.name : "this instrument"),
@@ -249,8 +258,9 @@ function sparkSpotifyPlaylistSync(){
   var D = inst && inst.getData ? inst.getData() : {};
   var curriculumKey = _getSpotifyPlaylistCurriculumKey(inst);
   var tracks = _getSpotifyCurriculumTracks(D.SONGS);
-  if(!window.sparkCore || typeof window.sparkCore.syncSpotifyCurriculumPlaylist !== "function") return;
-  window.sparkCore.syncSpotifyCurriculumPlaylist({
+  var core = _getSongsCore();
+  if(!core || typeof core.syncSpotifyCurriculumPlaylist !== "function") return;
+  core.syncSpotifyCurriculumPlaylist({
     curriculumKey: curriculumKey,
     name: _getSpotifyPlaylistName(inst),
     description: "SparkSuite curriculum playlist for " + ((inst && inst.name) ? inst.name : "this instrument"),
@@ -836,9 +846,11 @@ function stemsSection(){
 
 // ===== STEM PLAYER PAGE =====
 function stemsPage(){
+  var view = null;
   var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
+  var core = _getSongsCore();
+  if (core && typeof core.getActiveSessionView === "function") {
+    view = core.getActiveSessionView();
     runtime = view && view.runtimeState ? view.runtimeState : null;
   }
   var stemPlaying = typeof S.stemPlaying === "boolean" ? S.stemPlaying : !!(runtime && runtime.stemPlaying);
