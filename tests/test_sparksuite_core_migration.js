@@ -2762,6 +2762,55 @@ test("SparkCore can build and apply calibration requests from runtime state", fu
   assert.strictEqual(core.getRuntimeState().transport.status, "idle");
 });
 
+test("orchestrator requests can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  var syncedCalibration = null;
+  global.sparkCore = {
+    openPerformanceEditor: function(chart, options) {
+      return {
+        type: "editor",
+        chart: chart,
+        options: options
+      };
+    },
+    syncPerformanceRuntimeState: function(action, payload) {
+      syncedCalibration = {
+        action: action,
+        payload: payload
+      };
+      return syncedCalibration;
+    },
+    startSession: function(options) {
+      return {
+        type: "session",
+        options: options
+      };
+    }
+  };
+  global.eval(loadJS("js/orchestrator-requests.js"));
+
+  var editorRequest = openPerformanceEditorRequest({ id: "chart_1" }, { source: "blank" });
+  var calibrationRequest = applyPerformanceCalibrationRequest("calibration_apply", {
+    source: "mic",
+    globalOffsetMs: 14,
+    midiOffsetMs: -3,
+    micOffsetMs: 9
+  });
+  var practicePlanRequest = openPracticePlanScreenRequest({ forceRebuild: true });
+
+  assert.strictEqual(editorRequest.type, "editor");
+  assert.strictEqual(editorRequest.chart.id, "chart_1");
+  assert.strictEqual(editorRequest.options.source, "blank");
+  assert.strictEqual(calibrationRequest.source, "mic");
+  assert.ok(syncedCalibration);
+  assert.strictEqual(syncedCalibration.action, "calibration_apply");
+  assert.strictEqual(syncedCalibration.payload.source, "mic");
+  assert.strictEqual(syncedCalibration.payload.globalOffsetMs, 14);
+  assert.strictEqual(practicePlanRequest.type, "session");
+  assert.strictEqual(practicePlanRequest.options.flow, SparkSessionTypes.FLOW_DAILY_PRACTICE);
+  assert.strictEqual(practicePlanRequest.options.forceRebuild, true);
+});
+
 test("SparkCore can build performance completion requests from runtime state", function() {
   var core = createDefaultSparkCore();
   core.syncPerformanceRuntimeState("select_song", {
