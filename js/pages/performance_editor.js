@@ -26,6 +26,20 @@ function _normalizePerformanceEditorNumber(value, fallback) {
   return isFinite(num) ? num : fallback;
 }
 
+function getPerformanceEditorCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
+function getPerformanceEditorDocumentView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getPerformanceEditorDocumentView === "function"
+    ? core.getPerformanceEditorDocumentView()
+    : null;
+}
+
 function performanceEditorPage() {
   var editorView = getPerformanceEditorView();
   var chart = editorView.chart || S.performEditorChart;
@@ -216,12 +230,8 @@ function performanceEditorPage() {
 }
 
 function getPerformanceEditorView() {
-  var documentView = window.sparkCore && typeof window.sparkCore.getPerformanceEditorDocumentView === "function"
-    ? window.sparkCore.getPerformanceEditorDocumentView()
-    : null;
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var documentView = getPerformanceEditorDocumentView();
+  var coreView = getPerformanceEditorCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   return {
     chart: documentView && documentView.chart
