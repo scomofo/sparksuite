@@ -1986,6 +1986,66 @@ test("practiceTab shows an empty-state practice plan card when no plan exists", 
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
 });
 
+test("practiceTab pivots the plan area into guided resume mode when a guided session is active", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: "Em",
+    guidedSession: 2,
+    completedGuidedSessions: ["gtr-d01"],
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              target_duration_min: 10,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1,
+            guidedShellDurationSec: 600
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+
+  var html = practiceTab();
+  assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.ok(html.indexOf("Guided Session Flow") >= 0);
+  assert.ok(html.indexOf("Your live guided shell is the plan right now.") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.strictEqual(html.indexOf("No practice plan yet."), -1);
+});
+
 test("practiceTab falls back to cached plan state when the practice bridge is unavailable", function() {
   global.S = {
     level: 1,
