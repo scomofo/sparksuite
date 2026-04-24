@@ -192,6 +192,12 @@
       return true;
     }
 
+    if (a === "showroomOpenSignIn") {
+      showMicroToast("Sign in is coming soon.", "&#128274;");
+      render();
+      return true;
+    }
+
     if (a === "toggleChordDetect") {
       if (S.chordDetectOn) stopChordDetect();
       else startChordDetect();
