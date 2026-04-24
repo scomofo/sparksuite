@@ -313,6 +313,7 @@ test("guided confirmation action delegates to guidedStop only after confirm", fu
 test("guided actions can resolve sparkCore from the global binding", function() {
   var handled;
   var syncCalls = [];
+  var advanceCalls = [];
   var startCalls = [];
   global.window = {
     registerSparkActionFamily: function(name, handler) {
@@ -333,6 +334,16 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   };
   global.render = function() {};
   global.sparkCore = {
+    advanceGuidedSession: function(payload) {
+      advanceCalls.push(payload);
+      return {
+        runtimeState: {
+          guidedActivityId: "gtr-d01-drill",
+          guidedActivityKind: "review",
+          guidedBlockType: "drill"
+        }
+      };
+    },
     syncGuidedRuntimeState: function(payload) {
       syncCalls.push(payload);
       return {
@@ -365,9 +376,22 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   handled = global.runSparkActionFamilies("guidedNext");
   assert.strictEqual(handled, true);
   assert.strictEqual(S.guidedStep, "review");
-  assert.deepStrictEqual(syncCalls, [{
-    guidedStep: "review",
+  assert.deepStrictEqual(advanceCalls, [{
     guidedNewMovePhase: null
+  }]);
+  assert.deepStrictEqual(syncCalls, []);
+  assert.strictEqual(S.guidedActivityId, "gtr-d01-drill");
+  assert.strictEqual(S.guidedActivityKind, "review");
+  assert.strictEqual(S.guidedBlockType, "drill");
+
+  delete global.sparkCore.advanceGuidedSession;
+  handled = global.runSparkActionFamilies("guidedNext");
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.guidedStep, "newMove");
+  assert.strictEqual(S.newMovePhase, "watch");
+  assert.deepStrictEqual(syncCalls, [{
+    guidedStep: "newMove",
+    guidedNewMovePhase: "watch"
   }]);
   assert.strictEqual(S.guidedActivityId, "gtr-d01-drill");
   assert.strictEqual(S.guidedActivityKind, "review");

@@ -4121,6 +4121,64 @@ test("guided sessions normalize curriculum v2 plans into the legacy guided flow 
   assert.strictEqual(guidedState.guidedBlockType, null);
 });
 
+test("advanceGuidedSession completes V2 blocks only when the step leaves them", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 1 });
+  var state = core.getRuntimeState();
+
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_warm_engine");
+  assert.strictEqual(plan.segments[0].completed, false);
+  assert.strictEqual(plan.segments[1].completed, false);
+
+  state = core.advanceGuidedSession({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "review");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_drill");
+  assert.strictEqual(plan.segments[0].completed, true);
+  assert.strictEqual(plan.segments[1].completed, false);
+
+  state = core.advanceGuidedSession({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "newMove");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_drill");
+  assert.strictEqual(plan.segments[1].completed, false);
+
+  state = core.advanceGuidedSession({ guidedNewMovePhase: null }).runtimeState;
+  assert.strictEqual(state.guidedStep, "songSlice");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_song");
+  assert.strictEqual(plan.segments[1].completed, true);
+
+  state = core.advanceGuidedSession({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "victoryLap");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(plan.segments[2].completed, true);
+});
+
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
   SparkInstrumentAdapter = {
     getAppId: function() { return "bassspark"; },

@@ -495,7 +495,11 @@
       if (idx < steps.length - 1) {
         S.guidedStep = steps[idx + 1];
         if (S.guidedStep === "newMove") S.newMovePhase = "watch";
-        if (guidedCore && typeof guidedCore.syncGuidedRuntimeState === "function") {
+        if (guidedCore && typeof guidedCore.advanceGuidedSession === "function") {
+          mirrorGuidedRuntimeFields((guidedCore.advanceGuidedSession({
+            guidedNewMovePhase: S.newMovePhase || null
+          }) || {}).runtimeState || null);
+        } else if (guidedCore && typeof guidedCore.syncGuidedRuntimeState === "function") {
           mirrorGuidedRuntimeFields(guidedCore.syncGuidedRuntimeState({
             guidedStep: S.guidedStep,
             guidedNewMovePhase: S.newMovePhase || null
