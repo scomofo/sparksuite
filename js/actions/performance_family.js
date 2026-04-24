@@ -667,6 +667,16 @@
       return true;
     }
 
+    if (a === "performCalibrationTap") {
+      if (typeof recordCalibrationTap === "function") recordCalibrationTap();
+      return true;
+    }
+
+    if (a === "performCalibrationCancel") {
+      if (typeof cancelCalibration === "function") cancelCalibration();
+      return true;
+    }
+
     if (a === "performRetry") {
       var retryRequest = getPerformanceRetryRequest({
         chartId: S.performChartId
