@@ -340,6 +340,9 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('nav("leaderboard")') >= 0);
   assert.ok(showroomSource.indexOf('nav("tools")') >= 0);
   assert.ok(showroomSource.indexOf('nav("insights")') >= 0);
+  assert.ok(showroomSource.indexOf('label:"Practice",    icon:"music_note", onClick: nav("practice")') >= 0);
+  assert.ok(showroomSource.indexOf('label:"Practice", icon:"music_note", onClick: nav("practice")') >= 0);
+  assert.ok(showroomSource.indexOf('label:"Instruments", icon:"piano",       onClick: nav("instruments")') >= 0);
   assert.ok(showroomSource.indexOf("act(\\'showroomStartPerf\\'" ) >= 0 || showroomSource.indexOf("act('showroomStartPerf'") >= 0);
   assert.ok(showroomSource.indexOf("sampleInstrumentMap") >= 0);
   assert.ok(showroomSource.indexOf('window.SparkLeaderboard') >= 0);
