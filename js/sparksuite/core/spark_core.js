@@ -1813,6 +1813,7 @@
       if (segments[i] && segments[i].id === segmentId) {
         if (!segments[i].meta || typeof segments[i].meta !== "object") segments[i].meta = {};
         segments[i].meta.guidedExtensionSec = Math.max(0, Math.round(segments[i].meta.guidedExtensionSec || 0)) + extensionSec;
+        segments[i].meta.guidedExtensionCount = Math.max(0, Math.round(segments[i].meta.guidedExtensionCount || 0)) + 1;
         segments[i].durationSec = Math.max(0, Math.round(segments[i].durationSec || 0)) + extensionSec;
         break;
       }
@@ -1820,6 +1821,7 @@
 
     context = this.currentPlan.context || {};
     context.guidedShellExtensionSec = Math.max(0, Math.round(context.guidedShellExtensionSec || 0)) + extensionSec;
+    context.guidedShellExtensionCount = Math.max(0, Math.round(context.guidedShellExtensionCount || 0)) + 1;
     context.guidedShellDurationSec = Math.max(0, Math.round(context.guidedShellDurationSec || 0)) + extensionSec;
     guidedPlan = context.guidedPlan || null;
     blockActivities = guidedPlan && guidedPlan.blockActivities ? guidedPlan.blockActivities : null;
