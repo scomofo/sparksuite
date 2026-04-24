@@ -194,6 +194,42 @@ function renderGuidedActivityMeta(activity, fallbackFocusSong) {
     '</div>';
 }
 
+function getGuidedActivityCopy(activity, key) {
+  if (!activity || !activity.copy) return "";
+  return firstGuidedTextToken(activity.copy[key]);
+}
+
+function buildGuidedPhasePrompt(activity, phase) {
+  var kind = firstGuidedTextToken(activity && activity.kind);
+  if (phase === "watch") {
+    return firstGuidedTextToken(
+      getGuidedActivityCopy(activity, "setup"),
+      kind === "tuning" ? "Watch the target pitch move before you play along." : "",
+      "Observe the chord shape and finger placement. Don't play yet."
+    );
+  }
+  if (phase === "shadow") {
+    return firstGuidedTextToken(
+      getGuidedActivityCopy(activity, "retry"),
+      kind === "tuning" ? "Shadow the tuning move first, then make the sound." : "",
+      "Tap where each finger goes on the diagram below."
+    );
+  }
+  if (phase === "try") {
+    return firstGuidedTextToken(
+      getGuidedActivityCopy(activity, "setup"),
+      "Practice the new move slowly and cleanly."
+    );
+  }
+  if (phase === "refine") {
+    return firstGuidedTextToken(
+      getGuidedActivityCopy(activity, "success"),
+      "Focus on clean transitions and consistent finger placement."
+    );
+  }
+  return "";
+}
+
 function _guidedSpark(plan) {
   var sparkText = firstGuidedTextToken(plan.spark && plan.spark.text, "Let's get started.");
   var sparkActivity = getGuidedStepActivity(plan, "spark");
@@ -272,7 +308,7 @@ function _guidedNewMove(plan) {
     case "watch":
       h += '<div style="background:#FF6B6B11;border-radius:12px;padding:12px;margin-bottom:12px">';
       h += '<div style="font-size:14px;font-weight:800;color:#FF6B6B;margin-bottom:6px">&#128064; Watch \u2014 Hands Off!</div>';
-      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Observe the chord shape and finger placement. Don\'t play yet.</p>';
+      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">' + escHTML(buildGuidedPhasePrompt(newMoveActivity, "watch")) + '</p>';
       h += '</div>';
       if (ch && UI.watchAnimation) {
         h += '<div id="watch-phase-container"></div>';
@@ -290,7 +326,7 @@ function _guidedNewMove(plan) {
     case "shadow":
       h += '<div style="background:#45B7D111;border-radius:12px;padding:12px;margin-bottom:12px">';
       h += '<div style="font-size:14px;font-weight:800;color:#45B7D1;margin-bottom:6px">&#129306; Shadow \u2014 Place the Fingers</div>';
-      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Tap where each finger goes on the diagram below.</p>';
+      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">' + escHTML(buildGuidedPhasePrompt(newMoveActivity, "shadow")) + '</p>';
       h += '</div>';
       if (ch && UI.shadowQuiz) {
         h += '<div id="shadow-phase-container"></div>';
@@ -306,7 +342,7 @@ function _guidedNewMove(plan) {
       break;
 
     case "try":
-      h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(newMoveText) + '</p>';
+      h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(firstGuidedTextToken(buildGuidedPhasePrompt(newMoveActivity, "try"), newMoveText)) + '</p>';
       if (ch) {
         h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 180) + '</div>';
         h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:8px">&#128264; Listen</button><br>';
@@ -320,7 +356,7 @@ function _guidedNewMove(plan) {
     case "refine":
       h += '<div style="background:#A78BFA11;border-radius:12px;padding:12px;margin-bottom:12px">';
       h += '<div style="font-size:14px;font-weight:800;color:#A78BFA;margin-bottom:6px">&#128161; Refine</div>';
-      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">Focus on clean transitions and consistent finger placement.</p>';
+      h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">' + escHTML(buildGuidedPhasePrompt(newMoveActivity, "refine")) + '</p>';
       h += '</div>';
       if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 160) + '</div>';
       // Transition tip

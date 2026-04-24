@@ -92,7 +92,17 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
     focus_song: "\"Horse\" intro, open strings only",
     blockActivities: {
       warm_engine: { duration_sec: 90, block_type: "warm_engine", focus_song: "\"Horse\" intro, open strings only" },
-      drill: { duration_sec: 180, block_type: "drill", focus_song: "\"Horse\" intro, open strings only" },
+      drill: {
+        duration_sec: 180,
+        block_type: "drill",
+        kind: "review",
+        focus_song: "\"Horse\" intro, open strings only",
+        copy: {
+          setup: "Use the drill block copy here.",
+          success: "Nice. Drill cleaned up.",
+          retry: "Let's loop that."
+        }
+      },
       song: { duration_sec: 240, block_type: "song", focus_song: "\"Horse\" intro, open strings only" }
     },
     spark: { text: "First sound in 2 minutes. warm engine block." },
@@ -121,6 +131,35 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
   assert.ok(newMoveHtml.indexOf("drill block") >= 0);
   assert.ok(newMoveHtml.indexOf(">3 min<") >= 0);
   assert.ok(newMoveHtml.indexOf(">drill<") >= 0);
+  assert.ok(newMoveHtml.indexOf("Use the drill block copy here.") >= 0);
+
+  S.newMovePhase = "watch";
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: { guidedStep: "newMove", guidedNewMovePhase: "watch" },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  var watchHtml = guidedSessionPage();
+  assert.ok(watchHtml.indexOf("Use the drill block copy here.") >= 0);
+
+  S.newMovePhase = "refine";
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: { guidedStep: "newMove", guidedNewMovePhase: "refine" },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  var refineHtml = guidedSessionPage();
+  assert.ok(refineHtml.indexOf("Nice. Drill cleaned up.") >= 0);
 
   S.guidedStep = "songSlice";
   sparkCore.getActiveSessionView = function() {
