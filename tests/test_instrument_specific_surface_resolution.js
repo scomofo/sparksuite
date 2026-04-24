@@ -462,6 +462,29 @@ test("practice guided session card can resolve sparkCore from the global binding
   assert.ok(html.indexOf("Start 10-Min Session") >= 0);
 });
 
+test("practice curriculum v2 card shows track progress instead of duplicating the launcher hook", function() {
+  resetEnvironment("chordspark");
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeCurriculumV2Card({
+    instrument: "guitar"
+  });
+  assert.ok(html.indexOf("Phase 1 Track") >= 0);
+  assert.ok(html.indexOf("0 of 30 sessions completed") >= 0);
+  assert.ok(html.indexOf("Up Next") >= 0);
+  assert.ok(html.indexOf("Day 1: First sound in 2 minutes") >= 0);
+  assert.ok(html.indexOf("Track Rhythm") >= 0);
+  assert.ok(html.indexOf("4 blocks • 10 min shell") >= 0);
+  assert.ok(html.indexOf("Unlock Path") >= 0);
+  assert.ok(html.indexOf("Unlock path: ready now") >= 0);
+  assert.ok(html.indexOf("After that: Day 2 - How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("Song focus:") === -1);
+  assert.ok(html.indexOf("New element:") === -1);
+});
+
 test("shared session helpers can resolve sparkCore from the global binding", function() {
   resetEnvironment("chordspark");
   global.window = {};

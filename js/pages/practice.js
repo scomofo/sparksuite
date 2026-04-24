@@ -781,33 +781,67 @@ function renderPracticeCurriculumV2Card(inst) {
   var instrumentType = getPracticePageInstrumentType(inst);
   var service = window.SparkCurriculumV2;
   var summary;
+  var track;
   var nextSession;
+  var followupSession;
+  var completedPct;
+  var progressLabel;
+  var nextLabel;
+  var upcomingLabel;
+  var shellLabel;
+  var unlockLabel;
   var h;
   if (!service || typeof service.getTrackSummary !== "function") return "";
   summary = service.getTrackSummary(instrumentType);
   if (!summary) return "";
+  track = typeof service.getTrack === "function" ? service.getTrack(instrumentType) : null;
   nextSession = summary.nextSession;
+  followupSession = null;
+  if (track && Array.isArray(track.sessions) && nextSession) {
+    var nextIndex;
+    for (nextIndex = 0; nextIndex < track.sessions.length; nextIndex++) {
+      if (track.sessions[nextIndex] && track.sessions[nextIndex].id === nextSession.id) {
+        followupSession = track.sessions[nextIndex + 1] || null;
+        break;
+      }
+    }
+  }
+  completedPct = summary.sessionCount > 0
+    ? Math.max(0, Math.min(100, Math.round((summary.completedCount / summary.sessionCount) * 100)))
+    : 0;
+  progressLabel = summary.sessionCount > 0
+    ? (summary.completedCount + " of " + summary.sessionCount + " sessions completed")
+    : "Track ready";
+  nextLabel = nextSession
+    ? ("Day " + (nextSession.day || "?") + ": " + (nextSession.title || nextSession.id || "Next session"))
+    : "Track complete";
+  upcomingLabel = followupSession
+    ? ("After that: Day " + (followupSession.day || "?") + " - " + (followupSession.title || followupSession.id || "Coming up"))
+    : "After that: More free play and review";
+  shellLabel = nextSession
+    ? ((Array.isArray(nextSession.blocks) ? nextSession.blocks.length : 4) + " blocks • " + getPracticeGuidedSessionDurationMin(nextSession, 0) + " min shell")
+    : "4 blocks • 10 min shell";
+  unlockLabel = nextSession && Array.isArray(nextSession.prerequisites) && nextSession.prerequisites.length
+    ? ("Unlock path: after Day " + normalizePracticeDisplayCount((nextSession.day || 1) - 1, 0))
+    : "Unlock path: ready now";
   h = '<div class="card mb12">';
   h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">';
   h += '<div>';
   h += '<div style="font-size:12px;font-weight:800;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase">Phase 1 Track</div>';
   h += '<div style="font-size:18px;font-weight:900;color:var(--text-primary)">' + escHTML(summary.title || "30-Day Track") + '</div>';
-  h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(String(summary.completedCount)) + ' of ' + escHTML(String(summary.sessionCount)) + ' sessions completed</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(progressLabel) + '</div>';
   h += '</div>';
   h += '<div style="padding:8px 10px;border-radius:999px;background:var(--chip-bg);color:var(--chip-color);font-size:12px;font-weight:800">Curriculum V2</div>';
   h += '</div>';
-  if (nextSession) {
-    h += '<div style="margin-top:12px;padding:12px;border-radius:16px;background:var(--input-bg)">';
-    h += '<div style="font-size:12px;font-weight:800;color:var(--text-muted)">Next Session</div>';
-    h += '<div style="font-size:16px;font-weight:900;color:var(--text-primary);margin-top:4px">Day ' + escHTML(String(nextSession.day)) + ': ' + escHTML(nextSession.title || nextSession.id) + '</div>';
-    if (nextSession.focus_song) {
-      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">Song focus: ' + escHTML(nextSession.focus_song) + '</div>';
-    }
-    if (Array.isArray(nextSession.new_elements) && nextSession.new_elements.length) {
-      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">New element: ' + escHTML(nextSession.new_elements[0]) + '</div>';
-    }
-    h += '</div>';
-  }
+  h += '<div style="margin-top:12px;height:10px;border-radius:999px;background:var(--input-bg);overflow:hidden">';
+  h += '<div style="height:100%;width:' + escHTML(String(completedPct)) + '%;background:linear-gradient(90deg,#4ECDC4,#45B7D1)"></div>';
+  h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px">';
+  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Up Next</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(nextLabel) + '</div></div>';
+  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Track Rhythm</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(shellLabel) + '</div></div>';
+  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Unlock Path</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(unlockLabel) + '</div></div>';
+  h += '</div>';
+  h += '<div style="margin-top:10px;font-size:12px;color:var(--text-secondary)">' + escHTML(upcomingLabel) + '</div>';
   h += '</div>';
   return h;
 }
