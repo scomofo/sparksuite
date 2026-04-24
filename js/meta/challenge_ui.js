@@ -9,12 +9,16 @@ function challengeHubPage(){
   return h;
 }
 
+function getChallengeUiCoreView(){
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  if(!core || typeof core.getActiveSessionView !== "function") return null;
+  return core.getActiveSessionView();
+}
+
 function renderActiveChallengesCard(){
   var h = '<div class="card mb16">';
   h += '<div><b>Active Challenges</b></div>';
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getChallengeUiCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var arr = runtimeState && runtimeState.dashboardChallenges ? runtimeState.dashboardChallenges : (S.activeChallenges || []);
   if(!arr.length){
