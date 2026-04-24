@@ -244,15 +244,39 @@ test("piano practice tab ignores stale curriculum and custom set labels", functi
 
 test("piano practice quick start resumes an active guided shell when the session matches", function() {
   resetEnvironment("pianospark");
+  global.getCurrentSessionPlan = function() {
+    return {
+      num: 1,
+      title: "Warmup",
+      level: 1
+    };
+  };
   global.sparkCore = {
     getActiveSessionView: function() {
       return {
         plan: {
           flow: "guided_session",
-          context: { guidedSession: 1 }
+          context: {
+            guidedSession: 1,
+            guidedShellDurationSec: 600,
+            guidedPlan: {
+              num: 1,
+              title: "First sound in 2 minutes",
+              level: 1,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ],
+              focus_song: "Horse With No Name",
+              new_elements: ["open-string strum"]
+            }
+          }
         },
         runtimeState: {
-          activeScreen: "guided_session"
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
         }
       };
     }
@@ -264,6 +288,45 @@ test("piano practice quick start resumes an active guided shell when the session
   var html = pianoPracticeTab();
   assert.ok(html.indexOf('onclick="act(\'resume_guided_session\')"') >= 0);
   assert.strictEqual(html.indexOf('onclick="act(\'start_guided_session\')"'), -1);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("4 blocks") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: Horse With No Name") >= 0);
+  assert.ok(html.indexOf("New move: open-string strum") >= 0);
+});
+
+test("piano practice quick start shows V2 shell details for a fresh guided session", function() {
+  resetEnvironment("pianospark");
+  global.getCurrentSessionPlan = function() {
+    return {
+      num: 1,
+      title: "First sound in 2 minutes",
+      level: 1,
+      blocks: [
+        { type: "warm_engine", duration_sec: 90 },
+        { type: "drill", duration_sec: 180 },
+        { type: "song", duration_sec: 240 },
+        { type: "cooldown", duration_sec: 90 }
+      ],
+      focus_song: "Horse With No Name",
+      new_elements: ["open-string strum"]
+    };
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+  assert.ok(html.indexOf('onclick="act(\'start_guided_session\')"') >= 0);
+  assert.ok(html.indexOf("4 blocks") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: Horse With No Name") >= 0);
+  assert.ok(html.indexOf("New move: open-string strum") >= 0);
 });
 
 test("piano onboarding and tools ignore stale intention strings", function() {

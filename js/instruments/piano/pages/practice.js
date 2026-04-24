@@ -45,6 +45,56 @@ function pianoGetActiveGuidedSessionNum() {
   return null;
 }
 
+function pianoSessionStepRuntimeLabel(step, phase) {
+  if (step === "victoryLap") return "In progress - Cooldown block";
+  if (step === "songSlice") return "In progress - Song block";
+  if (step === "review") return "In progress - Review pass";
+  if (step === "newMove") {
+    if (pianoFirstPracticeCardTextToken(phase)) return "In progress - " + pianoFirstPracticeCardTextToken(phase);
+    return "In progress - Drill block";
+  }
+  return "In progress - Warm engine";
+}
+
+function pianoGetGuidedSessionDurationMin(session, fallbackSec) {
+  var totalSec = pianoNormalizePracticeNumber(fallbackSec, 0);
+  var blocks = session && Array.isArray(session.blocks) ? session.blocks : [];
+  var i;
+  if (session && session.target_duration_min) return pianoNormalizePracticeNumber(session.target_duration_min, 0);
+  if (!totalSec && blocks.length) {
+    for (i = 0; i < blocks.length; i++) {
+      totalSec += pianoNormalizePracticeNumber(blocks[i] && blocks[i].duration_sec, 0);
+    }
+  }
+  return totalSec > 0 ? Math.max(1, Math.round(totalSec / 60)) : 0;
+}
+
+function pianoGetGuidedPrimaryNewElement(session) {
+  var elements = session && Array.isArray(session.new_elements) ? session.new_elements : [];
+  return pianoFirstPracticeCardTextToken(elements[0]);
+}
+
+function pianoGetQuickStartGuidedSummary(plan) {
+  var activeView = pianoGetActiveGuidedSessionView();
+  var activeContext = activeView && activeView.plan && activeView.plan.context ? activeView.plan.context : null;
+  var activePlan = activeContext && activeContext.guidedPlan ? activeContext.guidedPlan : null;
+  var activeSessionNum = pianoGetActiveGuidedSessionNum();
+  var sessionNum = pianoNormalizePracticeNumber(plan && plan.num, null);
+  var useActivePlan = !!(activePlan && activeSessionNum != null && sessionNum != null && activeSessionNum === sessionNum);
+  var sourcePlan = useActivePlan ? activePlan : plan;
+  var runtimeState = useActivePlan && activeView && activeView.runtimeState ? activeView.runtimeState : null;
+  return {
+    title: pianoFirstPracticeCardTextToken(sourcePlan && sourcePlan.title, "Guided session"),
+    level: pianoNormalizePracticeNumber(sourcePlan && sourcePlan.level, pianoNormalizePracticeNumber(plan && plan.level, 1)),
+    blockCount: sourcePlan && Array.isArray(sourcePlan.blocks) ? sourcePlan.blocks.length : 0,
+    targetDurationMin: pianoGetGuidedSessionDurationMin(sourcePlan, activeContext && activeContext.guidedShellDurationSec),
+    focusSong: pianoFirstPracticeCardTextToken(sourcePlan && sourcePlan.focus_song),
+    newElement: pianoGetGuidedPrimaryNewElement(sourcePlan),
+    isActive: !!useActivePlan,
+    statusLabel: runtimeState ? pianoSessionStepRuntimeLabel(runtimeState.guidedStep || "spark", runtimeState.guidedNewMovePhase || null) : ""
+  };
+}
+
 function pianoPracticeTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -76,13 +126,23 @@ function pianoPracticeTab() {
   // Quick start / Resume session card
   var plan = getCurrentSessionPlan();
   if (plan) {
-    var sessionTitle = pianoFirstPracticeCardTextToken(plan.title, "Guided session");
-    var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[plan.level - 1] && CURRICULUM[plan.level - 1].title, "Level");
-    var shouldResumeGuided = pianoGetActiveGuidedSessionNum() === pianoNormalizePracticeNumber(plan.num, null);
+    var guidedSummary = pianoGetQuickStartGuidedSummary(plan);
+    var sessionTitle = guidedSummary.title;
+    var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[guidedSummary.level - 1] && CURRICULUM[guidedSummary.level - 1].title, "Level");
+    var shouldResumeGuided = guidedSummary.isActive;
+    var shellBits = [];
+    var guidedMetaHtml = "";
+    if (guidedSummary.statusLabel) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">' + escHTML(guidedSummary.statusLabel) + '</div>';
+    if (guidedSummary.blockCount > 0) shellBits.push(guidedSummary.blockCount + " blocks");
+    if (guidedSummary.targetDurationMin > 0) shellBits.push(guidedSummary.targetDurationMin + " min shell");
+    if (shellBits.length) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">' + escHTML(shellBits.join(" • ")) + '</div>';
+    if (guidedSummary.focusSong) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">Song hook: ' + escHTML(guidedSummary.focusSong) + '</div>';
+    if (guidedSummary.newElement) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">New move: ' + escHTML(guidedSummary.newElement) + '</div>';
     html += pianoClickableDiv(
       "act('" + (shouldResumeGuided ? "resume_guided_session" : "start_guided_session") + "')",
       '<h3>Session ' + plan.num + ': ' + escHTML(sessionTitle) + '</h3>' +
-      '<p>Level ' + plan.level + ' \u2022 ' + escHTML(levelTitle) + '</p>',
+      '<p>Level ' + guidedSummary.level + ' \u2022 ' + escHTML(levelTitle) + '</p>' +
+      guidedMetaHtml,
       "quick-start"
     );
   }
