@@ -533,6 +533,16 @@
     var diff = typeof opts.difficulty === "number" ? opts.difficulty : (pinnedDiff != null ? pinnedDiff : 7);
     var diffMax = opts.difficultyMax || 10;
     var diffPct = Math.round((diff / diffMax) * 100);
+    var inferredInstrument = opts.instrument || (pinned && pinned.instrument) || null;
+    if (!inferredInstrument) {
+      var sampleInstrumentMap = {
+        "Ember's Resonance": "guitar",
+        "Midnight Strum": "ukulele",
+        "Ivory Cascades": "piano",
+        "Deep Groove": "bass"
+      };
+      inferredInstrument = sampleInstrumentMap[title] || null;
+    }
     // Description: use the song's chord progression if no explicit one
     // is supplied by the caller.
     var progDesc = (pinned && Array.isArray(pinned.chords) && pinned.chords.length)
@@ -582,7 +592,7 @@
            + '</div>'
          + '</div>'
          + '<div class="showroom-actionbar">'
-           + '<button class="showroom-action-cta" onclick="act(\'showroomStartPerf\')">'
+           + '<button class="showroom-action-cta" onclick="act(\'showroomStartPerf\'' + (inferredInstrument ? ',' + jsArg(inferredInstrument) : '') + ')">'
              + '<div class="showroom-shimmer-overlay"></div>'
              + '<span class="material-symbols-outlined fill">play_circle</span>Start Performance</button>'
          + '</div>'
