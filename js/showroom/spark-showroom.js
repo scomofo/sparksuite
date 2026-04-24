@@ -334,7 +334,8 @@
           html += '</div>';
         } else {
           var click = row.onClick ? ' onclick="' + row.onClick + '"' : '';
-          html += '<div class="showroom-row"' + click + '>';
+          var keyboard = row.onClick ? ' role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + row.onClick + '}"' : '';
+          html += '<div class="showroom-row"' + click + keyboard + '>';
           html += '<div class="showroom-row-left">';
           html += '<span class="material-symbols-outlined showroom-row-icon">' + row.icon + '</span>';
           html += '<span class="showroom-row-label">' + escHtml(row.label) + '</span>';
