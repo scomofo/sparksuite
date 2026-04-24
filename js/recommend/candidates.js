@@ -24,7 +24,37 @@
     var map = inst && typeof inst.getCurriculumMap==="function" ? (inst.getCurriculumMap() || []) : [];
     if(Array.isArray(map) && map.length) return map;
     map = inst && typeof inst.getCurriculumMapV2==="function" ? (inst.getCurriculumMapV2() || []) : [];
+    if(Array.isArray(map) && map.length) return map;
+    var instrumentType = getRecommendationInstrumentType(inst);
+    if(
+      instrumentType &&
+      typeof SparkCurriculumV2LegacyAdapter!=="undefined" &&
+      SparkCurriculumV2LegacyAdapter &&
+      typeof SparkCurriculumV2LegacyAdapter.toLegacyLessons==="function"
+    ){
+      map = SparkCurriculumV2LegacyAdapter.toLegacyLessons(instrumentType) || [];
+      if(Array.isArray(map) && map.length) return map;
+    }
     return Array.isArray(map) ? map : [];
+  }
+
+  function getRecommendationInstrumentType(inst){
+    var candidate = inst && (inst.instrument || inst.instrumentType) ? (inst.instrument || inst.instrumentType) : null;
+    if(candidate) return candidate;
+    if(inst && (inst.id || inst.appId || inst.instrumentId)){
+      candidate = inst.id || inst.appId || inst.instrumentId;
+      if(candidate==="chordspark") return "guitar";
+      if(candidate==="pianospark") return "piano";
+      if(candidate==="bassspark") return "bass";
+      if(candidate==="ukespark") return "ukulele";
+    }
+    return null;
+  }
+
+  function getRecommendationCurriculumId(appType){
+    if(appType==="piano") return "curriculum_pianospark_main";
+    if(appType==="guitar") return "curriculum_chordspark_main";
+    return null;
   }
 
   function getCompletedLessons(){
@@ -74,9 +104,7 @@
     var out = [];
     var inst = getActiveRecommendationInstrument();
     var curriculumMap = getRecommendationCurriculumMap(inst);
-    var curriculumId = appType === "piano"
-      ? "curriculum_pianospark_main"
-      : "curriculum_chordspark_main";
+    var curriculumId = getRecommendationCurriculumId(appType);
     var completedLessons = getCompletedLessons();
     var nextLessonId = null;
     var lesson = null;
@@ -89,7 +117,7 @@
           break;
         }
       }
-    } else {
+    } else if(curriculumId) {
       nextLessonId = typeof getNextLessonFromCurriculum === "function"
         ? getNextLessonFromCurriculum(curriculumId, completedLessons)
         : null;
