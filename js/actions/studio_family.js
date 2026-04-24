@@ -85,6 +85,14 @@
       return true;
     }
 
+    if (a === "openLearningPath") {
+      if (typeof window !== "undefined" && typeof window.SparkShowroomNavigate === "function" && typeof window.SparkPath !== "undefined") {
+        window.SparkShowroomNavigate("path");
+        return true;
+      }
+      return handleStudioAction("openSkillTree", v);
+    }
+
     if (a === "planStartWarmup") {
       S.screen = SCR.HOME;
       S.tab = TAB.PRACTICE;

@@ -336,6 +336,14 @@ test("statsTab ignores malformed shared history and transition metrics", functio
   assert.ok(html.indexOf("0.0s") >= 0);
 });
 
+test("tools page routes learning path through a studio action", function() {
+  var toolsSource = loadJS("js/pages/tools.js");
+  var studioSource = loadJS("js/actions/studio_family.js");
+  assert.ok(toolsSource.indexOf('onclick="act(\\\'openLearningPath\\\')"') >= 0);
+  assert.ok(studioSource.indexOf('if (a === "openLearningPath") {') >= 0);
+  assert.ok(studioSource.indexOf('window.SparkShowroomNavigate("path");') >= 0);
+});
+
 test("shared helpers ignore malformed drill and strum BPM values", function() {
   __elements["drill-timer-ring"] = makeElement();
   __elements["drill-switch-count"] = makeElement();

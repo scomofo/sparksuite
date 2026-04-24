@@ -116,5 +116,11 @@ test("practice action family wires practiceStartItem to the runtime launcher", f
   assert.deepStrictEqual(global.startPracticeItemCalls, ["focus_01"]);
 });
 
+test("showroom practice drills route start buttons through practiceStartItem", function() {
+  var showroomSource = loadJS("js/showroom/spark-showroom.js");
+  assert.ok(showroomSource.indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
+  assert.strictEqual(showroomSource.indexOf("launchPracticePlanItem(this.getAttribute("), -1);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);
