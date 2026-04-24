@@ -435,11 +435,42 @@
       '</div>';
   }
 
+  function renderInstrumentsView() {
+    var profile = typeof SparkStorage !== "undefined" ? SparkStorage.load() : null;
+    var cards = '';
+    var available = [];
+    for (var i = 0; i < _instruments.length; i++) {
+      if (_instruments[i].available !== false) available.push(_instruments[i]);
+    }
+    for (var j = 0; j < available.length; j++) cards += renderCard(available[j]);
+    if (available.length === 0 && deferredAssetsPending()) {
+      cards += '<div class="showroom-card locked" aria-disabled="true"><div class="showroom-card-text"><h4 class="showroom-card-name">Loading instruments</h4><p class="showroom-card-sub">Finishing startup in the background</p></div></div>';
+    } else if (available.length < 4) {
+      cards += renderLockedCard();
+    }
+
+    return '' +
+      '<div class="showroom-root">' +
+        '<div class="showroom-woodgrain" aria-hidden="true"></div>' +
+        renderTopbar(profile, sumSuiteStats(profile).totalXp) +
+        '<div class="showroom-content">' +
+          '<section class="showroom-section">' +
+            '<div class="showroom-section-head">' +
+              '<h3 class="showroom-section-title">All Instruments</h3>' +
+            '</div>' +
+            '<p class="showroom-card-sub" style="margin:0 0 16px">Jump into any instrument in your collection.</p>' +
+            '<div class="showroom-grid">' + cards + '</div>' +
+          '</section>' +
+        '</div>' +
+        renderBottomNav("home") +
+      '</div>';
+  }
+
   function renderLauncherView(view) {
     var route = {
       home: typeof renderHome === "function" ? renderHome : null,
       back: typeof renderHome === "function" ? renderHome : null,
-      instruments: typeof renderHome === "function" ? renderHome : null,
+      instruments: typeof renderInstrumentsView === "function" ? renderInstrumentsView : null,
       profile: typeof SparkProfileScreen !== "undefined" && SparkProfileScreen && typeof SparkProfileScreen.render === "function"
         ? SparkProfileScreen.render
         : null,
