@@ -156,6 +156,25 @@ function getGuidedDeepFocusLabel(extensionCount) {
   return "Deep Focus Stretch x" + count;
 }
 
+function getGuidedShellElapsedLabel(shellSummary, elapsedMinutes, shellMinutes) {
+  var extensionCount = normalizeGuidedCount(shellSummary && shellSummary.extensionCount, 0);
+  if (extensionCount >= 2) {
+    return (elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min in focus stretch";
+  }
+  return (elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min through session";
+}
+
+function getGuidedShellRemainingLabel(shellSummary) {
+  var extensionCount = normalizeGuidedCount(shellSummary && shellSummary.extensionCount, 0);
+  var remainingSec = normalizeGuidedCount(shellSummary && shellSummary.remainingSec, 0);
+  if (extensionCount >= 2) {
+    if (remainingSec > 0) return "Focus stretch is open. About " + formatGuidedDurationLabel(remainingSec) + " available if you want it.";
+    return "Focus stretch is open. Wrap whenever it feels complete.";
+  }
+  if (remainingSec > 0) return formatGuidedDurationLabel(remainingSec) + " left";
+  return "Done";
+}
+
 function renderGuidedActiveBlockBadge(blockType, shellSummary) {
   var theme = getGuidedBlockTheme(blockType);
   var extensionCount = shellSummary ? normalizeGuidedCount(shellSummary.extensionCount, 0) : 0;
@@ -562,9 +581,7 @@ function renderGuidedShellSummary(shellSummary) {
     ? Math.max(1, Math.round(shellSummary.elapsedSec / 60))
     : 0;
   progressPercent = Math.max(0, Math.min(100, Math.round((shellSummary.completionRatio || 0) * 100)));
-  remainingLabel = shellSummary.remainingSec > 0
-    ? formatGuidedDurationLabel(shellSummary.remainingSec) + " left"
-    : "Done";
+  remainingLabel = getGuidedShellRemainingLabel(shellSummary);
   extensionLabel = shellSummary.extensionSec > 0
     ? "+" + Math.max(1, Math.round(shellSummary.extensionSec / 60)) + " min extra focus time"
     : "";
@@ -593,7 +610,7 @@ function renderGuidedShellSummary(shellSummary) {
       '<div style="height:100%;width:' + progressPercent + '%;background:' + progressFill + ';border-radius:999px"></div>' +
     '</div>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(detail.join(" • ")) + '</div>' +
-    '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML((elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min through session") + '</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML(getGuidedShellElapsedLabel(shellSummary, elapsedMinutes, shellMinutes)) + '</div>' +
     '<div style="font-size:11px;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionLabel || " ") + '</div>' +
     '<div style="font-size:11px;font-weight:800;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionThemeLabel || " ") + '</div>' +
     '<div style="font-size:11px;font-weight:800;color:#6E56B3;margin-top:2px;min-height:14px">' + escHTML(focusStretchLabel || " ") + '</div>' +
