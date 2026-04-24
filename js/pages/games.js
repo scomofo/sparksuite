@@ -276,7 +276,7 @@ function buildTab(){
       var cn=S.progChords[i];
       var ch=null;for(var j=0;j<D.ALL_CHORDS.length;j++)if(D.ALL_CHORDS[j].name===cn)ch=D.ALL_CHORDS[j];
       var short=ch?ch.short:cn;
-      h+='<div class="prog-block'+(S.progPlaying&&S.progBeat===i?" active":"")+'"><div class="del-btn" onclick="act(\'progRemove\',\''+i+'\')">&times;</div>';
+      h+='<div class="prog-block'+(S.progPlaying&&S.progBeat===i?" active":"")+'"><button class="del-btn" onclick="act(\'progRemove\',\''+i+'\')" aria-label="Remove chord '+escHTML(String(short))+'">&times;</button>';
       h+='<div class="chord-label">'+short+'</div>';
       h+='<div class="move-btns">';
       if(i>0)h+='<button onclick="act(\'progMove\',\''+i+':left\')">&#8592;</button>';

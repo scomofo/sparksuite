@@ -124,4 +124,9 @@ test("games pages ignore malformed cached score counters", function() {
   assert.ok(resultsHtml.indexOf("NaN") === -1);
 });
 
+test("progression builder uses a real remove button", function() {
+  var source = loadJS("js/pages/games.js");
+  assert.ok(source.indexOf('<button class="del-btn" onclick="act(\\\'progRemove\\\',') >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
