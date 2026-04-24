@@ -735,6 +735,7 @@ test("guided done page falls back to curriculum v2 session totals", function() {
   };
   var html = guidedDonePage();
   assert.ok(html.indexOf(">3/30<") >= 0);
+  assert.ok(html.indexOf("act('start_guided_session',3)") >= 0);
   assert.ok(html.indexOf("/22<") === -1);
 });
 
@@ -777,6 +778,7 @@ test("guided done page acknowledges deep focus landings", function() {
   assert.ok(html.indexOf(">In Bank<") >= 0);
   assert.ok(html.indexOf("background:linear-gradient(135deg,#6E56B308,#F6F3FF)") >= 0);
   assert.ok(html.indexOf("Start Next Session Gently") >= 0);
+  assert.ok(html.indexOf("act('start_guided_session',4)") >= 0);
   assert.ok(html.indexOf("Land at Home") >= 0);
   assert.ok(html.indexOf("Ready now is great. Later is great too.") >= 0);
   assert.ok(html.indexOf("background:linear-gradient(135deg,#A78BFA,#FFB86B);color:#2F2347") >= 0);

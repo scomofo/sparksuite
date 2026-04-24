@@ -1298,6 +1298,7 @@ function guidedDonePage() {
   var streak = normalizeGuidedCount(S.streak, 0);
   var completedSessions = Array.isArray(S.completedGuidedSessions) ? S.completedGuidedSessions.length : 0;
   var totalSessions = getGuidedSessionTotalCount();
+  var nextSessionNum = getGuidedDoneNextSessionNum(num, totalSessions);
   var statLabels = getGuidedDoneStatLabels(extensionCount);
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="' + getGuidedDoneCelebrationStyle(extensionCount) + '">' + getGuidedDoneCelebrationIcon(extensionCount) + '</div>';
@@ -1323,13 +1324,21 @@ function guidedDonePage() {
     h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDonePauseCopy(extensionCount)) + '</div>';
     h += '</div>';
   }
-  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="' + getGuidedDoneNextActionStyle(extensionCount) + '">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
+  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\',' + escHTML(String(nextSessionNum)) + ')" style="' + getGuidedDoneNextActionStyle(extensionCount) + '">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="' + getGuidedDoneHomeStyle(extensionCount) + '">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
   if (extensionCount >= 2) {
     h += '<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">' + escHTML(getGuidedDoneActionHint(extensionCount)) + '</div>';
   }
   h += '</div>';
   return h;
+}
+
+function getGuidedDoneNextSessionNum(currentSessionNum, totalSessions) {
+  var current = normalizeGuidedCount(currentSessionNum, 0);
+  var total = normalizeGuidedCount(totalSessions, 0);
+  if (current <= 0) return 1;
+  if (total > 0 && current < total) return current + 1;
+  return current;
 }
 
 function getGuidedSessionView() {
