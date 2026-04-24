@@ -508,6 +508,7 @@ test("practice guided session card shows resume state for an active guided runti
 
 test("practice curriculum v2 card shows track progress instead of duplicating the launcher hook", function() {
   resetEnvironment("chordspark");
+  global.sparkCore = undefined;
   global.eval(loadJS("js/utils/normalize.js"));
   global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
   global.eval(loadJS("js/curriculum/curriculum_v2.js"));
@@ -529,6 +530,57 @@ test("practice curriculum v2 card shows track progress instead of duplicating th
   assert.ok(html.indexOf("After that: Day 2 - How guitars get tuned") >= 0);
   assert.ok(html.indexOf("Song focus:") === -1);
   assert.ok(html.indexOf("New element:") === -1);
+});
+
+test("practice curriculum v2 card shows live guided runtime context when a session is already active", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              level: 1,
+              target_duration_min: 10,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1,
+            guidedShellDurationSec: 600
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "newMove",
+          guidedNewMovePhase: "shadow"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeCurriculumV2Card({
+    instrument: "guitar"
+  });
+  assert.ok(html.indexOf("Live now: Day 2: How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("Track Rhythm") >= 0);
+  assert.ok(html.indexOf("shadow • 4 blocks • 10 min shell") >= 0);
+  assert.ok(html.indexOf("Unlock path: Day 2 in motion") >= 0);
+  assert.ok(html.indexOf("Session in motion") >= 0);
+  assert.ok(html.indexOf("In progress - shadow. Resume when you're ready.") >= 0);
+  assert.ok(html.indexOf("After this: Day 3 - The D chord") >= 0);
 });
 
 test("practice curriculum v2 surfaces react to canonical completion state", function() {

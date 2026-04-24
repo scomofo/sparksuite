@@ -503,6 +503,32 @@ function getPracticeGuidedRuntimeLabel(summary) {
   return "In progress - Warm engine";
 }
 
+function getPracticeActiveGuidedSummary() {
+  var coreView = getPracticeCoreView();
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var guidedContext = coreView && coreView.plan && coreView.plan.context ? coreView.plan.context : null;
+  var guidedPlan = coreView
+    && coreView.plan
+    && coreView.plan.flow === "guided_session"
+    && guidedContext
+    ? guidedContext.guidedPlan || null
+    : null;
+  if (!guidedPlan || !runtimeState || runtimeState.activeScreen !== "guided_session") return null;
+  return {
+    num: guidedPlan.num || guidedPlan.day || 1,
+    title: guidedPlan.title || guidedPlan.id || "Guided Session",
+    blockCount: Array.isArray(guidedPlan.blocks) ? guidedPlan.blocks.length : 0,
+    targetDurationMin: getPracticeGuidedSessionDurationMin(guidedPlan, guidedContext && guidedContext.guidedShellDurationSec),
+    guidedStep: runtimeState.guidedStep || "spark",
+    guidedNewMovePhase: runtimeState.guidedNewMovePhase || null,
+    statusLabel: getPracticeGuidedRuntimeLabel({
+      isActive: true,
+      guidedStep: runtimeState.guidedStep || "spark",
+      guidedNewMovePhase: runtimeState.guidedNewMovePhase || null
+    })
+  };
+}
+
 function getPracticeGuidedSessionDurationMin(session, fallbackSec) {
   var totalSec = normalizePracticeDisplayCount(fallbackSec, 0);
   var blocks = session && Array.isArray(session.blocks) ? session.blocks : [];
@@ -610,6 +636,21 @@ function getPracticeTrackMomentumCopy(summary, nextSession, followupSession) {
     return "One more push and then you get a review day.";
   }
   return "You've banked " + summary.completedCount + " sessions. Day " + (nextSession.day || "?") + " is next.";
+}
+
+function getPracticeTrackSessionByDay(track, dayNumber) {
+  var sessions = track && Array.isArray(track.sessions) ? track.sessions : [];
+  var normalizedDay = normalizePracticeDisplayCount(dayNumber, 0);
+  var i;
+  for (i = 0; i < sessions.length; i++) {
+    if (normalizePracticeDisplayCount(sessions[i] && (sessions[i].day || sessions[i].num), 0) === normalizedDay) {
+      return {
+        index: i,
+        session: sessions[i]
+      };
+    }
+  }
+  return null;
 }
 
 function renderPracticePlanSummaryCard(plan) {
@@ -842,6 +883,8 @@ function renderPracticeCurriculumV2Card(inst) {
   var track;
   var nextSession;
   var followupSession;
+  var activeGuided;
+  var sessionLookup;
   var completedPct;
   var progressLabel;
   var nextLabel;
@@ -856,15 +899,13 @@ function renderPracticeCurriculumV2Card(inst) {
   if (!summary) return "";
   track = typeof service.getTrack === "function" ? service.getTrack(instrumentType) : null;
   nextSession = summary.nextSession;
+  activeGuided = getPracticeActiveGuidedSummary();
   followupSession = null;
-  if (track && Array.isArray(track.sessions) && nextSession) {
-    var nextIndex;
-    for (nextIndex = 0; nextIndex < track.sessions.length; nextIndex++) {
-      if (track.sessions[nextIndex] && track.sessions[nextIndex].id === nextSession.id) {
-        followupSession = track.sessions[nextIndex + 1] || null;
-        break;
-      }
-    }
+  if (track && Array.isArray(track.sessions)) {
+    sessionLookup = activeGuided
+      ? getPracticeTrackSessionByDay(track, activeGuided.num)
+      : getPracticeTrackSessionByDay(track, nextSession && (nextSession.day || nextSession.num));
+    followupSession = sessionLookup ? (track.sessions[sessionLookup.index + 1] || null) : null;
   }
   completedPct = summary.sessionCount > 0
     ? Math.max(0, Math.min(100, Math.round((summary.completedCount / summary.sessionCount) * 100)))
@@ -872,20 +913,30 @@ function renderPracticeCurriculumV2Card(inst) {
   progressLabel = summary.sessionCount > 0
     ? (summary.completedCount + " of " + summary.sessionCount + " sessions completed")
     : "Track ready";
-  nextLabel = nextSession
-    ? ("Day " + (nextSession.day || "?") + ": " + (nextSession.title || nextSession.id || "Next session"))
-    : "Track complete";
+  nextLabel = activeGuided
+    ? ("Live now: Day " + activeGuided.num + ": " + activeGuided.title)
+    : (nextSession
+      ? ("Day " + (nextSession.day || "?") + ": " + (nextSession.title || nextSession.id || "Next session"))
+      : "Track complete");
   upcomingLabel = followupSession
-    ? ("After that: Day " + (followupSession.day || "?") + " - " + (followupSession.title || followupSession.id || "Coming up"))
+    ? ((activeGuided ? "After this: Day " : "After that: Day ") + (followupSession.day || "?") + " - " + (followupSession.title || followupSession.id || "Coming up"))
     : "After that: More free play and review";
-  shellLabel = nextSession
-    ? ((Array.isArray(nextSession.blocks) ? nextSession.blocks.length : 4) + " blocks • " + getPracticeGuidedSessionDurationMin(nextSession, 0) + " min shell")
-    : "4 blocks • 10 min shell";
-  unlockLabel = nextSession && Array.isArray(nextSession.prerequisites) && nextSession.prerequisites.length
-    ? ("Unlock path: Day " + normalizePracticeDisplayCount((nextSession.day || 1) - 1, 0) + " already banked")
-    : "Unlock path: ready now";
-  cadenceLabel = getPracticeTrackCadenceLabel(summary, nextSession, followupSession);
-  momentumCopy = getPracticeTrackMomentumCopy(summary, nextSession, followupSession);
+  shellLabel = activeGuided
+    ? (activeGuided.statusLabel.replace("In progress - ", "") + " • " + normalizePracticeDisplayCount(activeGuided.blockCount, 4) + " blocks • " + normalizePracticeDisplayCount(activeGuided.targetDurationMin, 10) + " min shell")
+    : (nextSession
+      ? ((Array.isArray(nextSession.blocks) ? nextSession.blocks.length : 4) + " blocks • " + getPracticeGuidedSessionDurationMin(nextSession, 0) + " min shell")
+      : "4 blocks • 10 min shell");
+  unlockLabel = activeGuided
+    ? ("Unlock path: Day " + activeGuided.num + " in motion")
+    : (nextSession && Array.isArray(nextSession.prerequisites) && nextSession.prerequisites.length
+      ? ("Unlock path: Day " + normalizePracticeDisplayCount((nextSession.day || 1) - 1, 0) + " already banked")
+      : "Unlock path: ready now");
+  cadenceLabel = activeGuided
+    ? "Session in motion"
+    : getPracticeTrackCadenceLabel(summary, nextSession, followupSession);
+  momentumCopy = activeGuided
+    ? (activeGuided.statusLabel + ". Resume when you're ready.")
+    : getPracticeTrackMomentumCopy(summary, nextSession, followupSession);
   h = '<div class="card mb12">';
   h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">';
   h += '<div>';
