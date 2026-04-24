@@ -3148,6 +3148,47 @@ test("createDefaultSparkCore keeps curriculum v2 maps from thin active instrumen
   assert.strictEqual(plan.lesson.id, "gtr-d01");
 });
 
+test("guided sessions normalize curriculum v2 plans into the legacy guided flow shape", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 1 });
+  var guidedPlan = plan.context.guidedPlan;
+
+  assert.strictEqual(guidedPlan.id, "gtr-d01");
+  assert.strictEqual(guidedPlan.num, 1);
+  assert.ok(guidedPlan.spark && guidedPlan.spark.text.indexOf("First sound in 2 minutes") >= 0);
+  assert.strictEqual(guidedPlan.review, null);
+  assert.ok(guidedPlan.newMove && guidedPlan.newMove.text.indexOf("open string strum") >= 0);
+  assert.ok(guidedPlan.songSlice && guidedPlan.songSlice.song.indexOf("\"Horse\" intro") >= 0);
+  assert.ok(guidedPlan.victoryLap && guidedPlan.victoryLap.text.length > 0);
+});
+
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
   SparkInstrumentAdapter = {
     getAppId: function() { return "bassspark"; },
