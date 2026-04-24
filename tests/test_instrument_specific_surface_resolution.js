@@ -490,6 +490,58 @@ test("shared session helpers can resolve sparkCore from the global binding", fun
   assert.ok(fingerHtml.indexOf("Completed 2x") >= 0);
 });
 
+test("songs surfaces can resolve sparkCore from the global binding", function() {
+  resetEnvironment("chordspark");
+  var connectedReturnTo = null;
+  global.window = {
+    location: { href: "https://sparksuite.local/app?songs=1" }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          stemPlaying: true,
+          stemCurrentTime: 12,
+          stemDuration: 48
+        }
+      };
+    },
+    getRuntimeState: function() {
+      return {
+        spotifyPlaylistConnected: true,
+        spotifyPlaylistPlaylists: [{
+          curriculum_key: "guitar_core",
+          playlist_name: "SparkSuite - Guitar"
+        }],
+        spotifyPlaylistLastSyncAt: "2026-04-22T20:00:00.000Z",
+        spotifyPlaylistLastResult: { addedCount: 2, resolvedCount: 3 },
+        spotifyPlaylistUnresolvedTracks: [{ title: "Missing Song", artist: "Unknown" }],
+        spotifyPlaylistSyncStatus: "idle",
+        spotifyPlaylistError: null
+      };
+    },
+    connectSpotifyPlaylist: function(options) {
+      connectedReturnTo = options && options.returnTo;
+    }
+  };
+  global.STEM_NAMES = ["vocals"];
+  global.STEM_COLORS = { vocals: "#4ECDC4" };
+  global.STEM_ICONS = { vocals: "V" };
+  global.formatTime = function(value) { return "0:" + String(value); };
+  global.eval(loadJS("js/pages/songs.js"));
+
+  var spotifyState = _getSpotifyPlaylistPanelState();
+  var stemsHtml = stemsPage();
+  sparkSpotifyPlaylistConnect();
+
+  assert.strictEqual(spotifyState.connected, true);
+  assert.strictEqual(spotifyState.playlists.length, 1);
+  assert.strictEqual(spotifyState.unresolvedTracks.length, 1);
+  assert.ok(stemsHtml.indexOf("0:12 / 0:48") >= 0);
+  assert.ok(stemsHtml.indexOf("Pause") >= 0);
+  assert.strictEqual(connectedReturnTo, "https://sparksuite.local/app?songs=1");
+});
+
 test("piano app confirms reset before dispatching reset", function() {
   resetEnvironment("pianospark");
   var resetCalls = 0;
