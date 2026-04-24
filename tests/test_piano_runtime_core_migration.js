@@ -645,6 +645,17 @@ test("piano cloud actions mirror into shared cloud workflow helper", function() 
   assert.strictEqual(cloudWorkflowCalls[1].action, "pull_start");
 });
 
+test("piano cloud conflict action forwards to shared resolver", function() {
+  var strategies = [];
+  global.resolveCloudConflict = function(strategy) {
+    strategies.push(strategy);
+  };
+
+  pianoAct("cloudResolveConflict", "newest");
+
+  assert.deepStrictEqual(strategies, ["newest"]);
+});
+
 test("piano midi import actions mirror into shared midi import sync helper", function() {
   S.importedMidi = {
     sourceName: "lesson.mid",

@@ -81,6 +81,11 @@
       return true;
     }
 
+    if (a === "cloudResolveConflict") {
+      if (typeof resolveCloudConflict === "function") resolveCloudConflict(v);
+      return true;
+    }
+
     if (a === "cloudLogout") {
       if (typeof logoutSpark === "function") logoutSpark();
       applyCloudWorkflowRequest("logout");
