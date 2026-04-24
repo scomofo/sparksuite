@@ -437,20 +437,71 @@ function renderPracticeGoalCard(practiceGoalMetrics) {
 }
 
 function renderPracticeGuidedSessionCard(D) {
-  var gs = D.SESSIONS[S.guidedSession-1];
+  var gs = getPracticeGuidedSessionSummary(D);
   var completedGuidedSessions;
   var gsDone;
+  var totalSessions;
   var h = "";
   if(!gs) return h;
   completedGuidedSessions = normalizePracticeArray(S.completedGuidedSessions);
   gsDone = completedGuidedSessions.length;
+  totalSessions = normalizePracticeDisplayCount(gs.totalSessions, Array.isArray(D.SESSIONS) ? D.SESSIONS.length : 0);
   h += '<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
   h += '<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
   h += '<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
-  h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+D.SESSIONS.length+' done</div>';
+  h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+totalSessions+' done</div>';
   h += '<button onclick="act(\'start_guided_session\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Start Session &#9654;</button>';
   h += '</div>';
   return h;
+}
+
+function getPracticeGuidedSessionSummary(D) {
+  var guidedIndex = Math.max(0, normalizePracticeDisplayCount(S.guidedSession, 1) - 1);
+  var sessions = D && Array.isArray(D.SESSIONS) ? D.SESSIONS : [];
+  var coreView;
+  var guidedPlan;
+  var instrumentType;
+  var summary;
+  var nextSession;
+  if (sessions[guidedIndex]) {
+    return {
+      num: sessions[guidedIndex].num || (guidedIndex + 1),
+      title: sessions[guidedIndex].title || "Guided Session",
+      level: sessions[guidedIndex].level || 1,
+      totalSessions: sessions.length
+    };
+  }
+  coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  guidedPlan = coreView
+    && coreView.plan
+    && coreView.plan.flow === "guided_session"
+    && coreView.plan.context
+    ? coreView.plan.context.guidedPlan || null
+    : null;
+  if (guidedPlan) {
+    return {
+      num: guidedPlan.num || guidedPlan.day || (guidedIndex + 1),
+      title: guidedPlan.title || guidedPlan.id || "Guided Session",
+      level: guidedPlan.level || 1,
+      totalSessions: coreView.plan.context.totalGuidedSessions || 0
+    };
+  }
+  instrumentType = getPracticePageInstrumentType(getPracticePageInstrument());
+  if (window.SparkCurriculumV2 && typeof SparkCurriculumV2.getTrackSummary === "function") {
+    summary = SparkCurriculumV2.getTrackSummary(instrumentType);
+    nextSession = summary && summary.nextSession ? summary.nextSession : null;
+    if (nextSession) {
+      return {
+        num: nextSession.day || guidedIndex + 1,
+        title: nextSession.title || nextSession.id || "Guided Session",
+        level: nextSession.level || 1,
+        totalSessions: summary.sessionCount || 0
+      };
+    }
+  }
+  return null;
 }
 
 function renderPracticePlanSummaryCard(plan) {

@@ -404,6 +404,19 @@ test("bassAct rehydrates an app-id-only active instrument shell", function() {
   assert.strictEqual(S.screen, SCR.GUIDED);
 });
 
+test("practice guided session card falls back to curriculum v2 when legacy sessions are absent", function() {
+  resetEnvironment("chordspark");
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeGuidedSessionCard({});
+  assert.ok(html.indexOf("Guided Session 1") >= 0);
+  assert.ok(html.indexOf("First sound in 2 minutes") >= 0);
+  assert.ok(html.indexOf("0/30 done") >= 0);
+});
+
 test("piano app confirms reset before dispatching reset", function() {
   resetEnvironment("pianospark");
   var resetCalls = 0;
