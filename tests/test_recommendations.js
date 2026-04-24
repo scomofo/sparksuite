@@ -28,6 +28,7 @@ function resetState() {
   global.escHTML = function(value) { return String(value); };
   global.S = {
     completedLessons: ["bass_level_1", "bass_level_2", "bass_level_3"],
+    curriculumV2CompletedSessions: {},
     mastery: { lessons: {} },
     performanceStats: {},
     practiceHistory: [],
@@ -116,15 +117,16 @@ function resetState() {
       ];
     }
   };
+
+  global.eval(loadJS("js/practice/selectors.js"));
+  global.eval(loadJS("js/recommend/candidates.js"));
+  global.eval(loadJS("js/recommend/rules.js"));
+  global.eval(loadJS("js/recommend/scoring.js"));
+  global.eval(loadJS("js/recommend/engine.js"));
+  global.eval(loadJS("js/recommend/ui.js"));
 }
 
 resetState();
-eval(loadJS("js/practice/selectors.js"));
-eval(loadJS("js/recommend/candidates.js"));
-eval(loadJS("js/recommend/rules.js"));
-eval(loadJS("js/recommend/scoring.js"));
-eval(loadJS("js/recommend/engine.js"));
-eval(loadJS("js/recommend/ui.js"));
 
 console.log("\n--- Recommendations ---");
 
@@ -214,6 +216,26 @@ test("generateRecommendations falls back to APP_NAME for non-guitar app shells",
 
   generateRecommendations();
   assert.strictEqual(requestedType, "bass");
+});
+
+test("collectRecommendationCandidates uses instrument curriculum maps when registry lessons are unavailable", function() {
+  global.getNextLessonFromCurriculum = function() { return null; };
+  global.getCurriculumItem = function() { return null; };
+  S.completedLessons = [];
+  S.curriculumV2CompletedSessions.bass = ["bass_level_1", "bass_level_2"];
+
+  var candidates = collectRecommendationCandidates("bass");
+  var curriculumCandidate = null;
+  for (var i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "curriculum") {
+      curriculumCandidate = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(curriculumCandidate);
+  assert.strictEqual(curriculumCandidate.id, "bass_level_3");
+  assert.strictEqual(curriculumCandidate.meta.lessonId, "bass_level_3");
 });
 
 test("module-progress scoring increases when the weakest metric is lower", function() {
