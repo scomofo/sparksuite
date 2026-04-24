@@ -57,11 +57,16 @@ function _normalizeGamesCount(value, fallback) {
   return Math.round(numeric);
 }
 
+function getGamesCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 // ===== RHYTHM GAME TAB =====
 function getLegacyRhythmRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getGamesCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   return {
     active: typeof S.rhythmActive === "boolean" ? S.rhythmActive : !!(runtime && runtime.legacyRhythmActive),
@@ -136,9 +141,7 @@ function rhythmResultsPage(){
 
 // ===== CHORD RUNNER TAB =====
 function getLegacyRunnerRuntime(D){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getGamesCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   var target = S.runnerTarget || null;
   if(!target && runtime && runtime.legacyRunnerTargetName && D && Array.isArray(D.ALL_CHORDS)){
