@@ -105,12 +105,21 @@ function getGuidedExtensionLabel(extensionCount) {
   return "Extended Focus x" + count;
 }
 
-function renderGuidedActiveBlockBadge(blockType) {
+function getGuidedFocusStretchLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count <= 0) return "";
+  return "Focus Stretch x" + count;
+}
+
+function renderGuidedActiveBlockBadge(blockType, shellSummary) {
   var theme = getGuidedBlockTheme(blockType);
+  var extensionCount = shellSummary ? normalizeGuidedCount(shellSummary.extensionCount, 0) : 0;
+  var focusStretchLabel = blockType === "cooldown" ? getGuidedFocusStretchLabel(extensionCount) : "";
+  var badgeLabel = focusStretchLabel || (theme && theme.label ? theme.label : "");
   if (!theme || !theme.label) return "";
   return '<div style="display:flex;justify-content:center;margin:0 0 12px">' +
     '<span style="padding:7px 12px;border-radius:999px;background:' + theme.background + ';color:' + theme.textColor + ';font-size:12px;font-weight:900;letter-spacing:.02em">' +
-      escHTML(theme.label) +
+      escHTML(badgeLabel) +
     '</span>' +
     '</div>';
 }
@@ -468,6 +477,7 @@ function renderGuidedShellSummary(shellSummary) {
   var remainingLabel;
   var extensionLabel;
   var extensionThemeLabel;
+  var focusStretchLabel;
   var detail = [];
   var progressPercent;
   if (!shellSummary || !shellSummary.totalBlocks) return "";
@@ -488,6 +498,7 @@ function renderGuidedShellSummary(shellSummary) {
     ? "+" + Math.max(1, Math.round(shellSummary.extensionSec / 60)) + " min extra focus time"
     : "";
   extensionThemeLabel = getGuidedExtensionLabel(shellSummary.extensionCount);
+  focusStretchLabel = getGuidedFocusStretchLabel(shellSummary.extensionCount);
   if (shellSummary.activeBlockLabel) detail.push(shellSummary.activeBlockLabel);
   if (blockMinutes > 0) detail.push(blockMinutes + " min block");
   if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
@@ -501,6 +512,7 @@ function renderGuidedShellSummary(shellSummary) {
     '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML((elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min through session") + '</div>' +
     '<div style="font-size:11px;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionLabel || " ") + '</div>' +
     '<div style="font-size:11px;font-weight:800;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionThemeLabel || " ") + '</div>' +
+    '<div style="font-size:11px;font-weight:800;color:#6E56B3;margin-top:2px;min-height:14px">' + escHTML(focusStretchLabel || " ") + '</div>' +
     '<div style="font-size:11px;color:#FF8A5C;margin-top:2px">' + escHTML(remainingLabel) + '</div>' +
     '</div>';
 }
@@ -556,7 +568,7 @@ function guidedSessionPage() {
   h += '<button class="back-btn" onclick="act(\'guidedConfirmStop\')">&#8592; Exit</button>';
   h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
-  h += renderGuidedActiveBlockBadge(guidedView.activeBlockType);
+  h += renderGuidedActiveBlockBadge(guidedView.activeBlockType, guidedView.shellSummary);
 
   h += renderGuidedShellSummary(guidedView.shellSummary);
   h += guidedStepIndicator(guidedStep);
