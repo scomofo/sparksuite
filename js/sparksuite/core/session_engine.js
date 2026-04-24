@@ -216,6 +216,9 @@
 
     var sessionIndex = Math.max(0, Math.min(sessions.length - 1, sessionNum - 1));
     var guidedPlan = sessions.length ? clone(sessions[sessionIndex]) : null;
+    if (guidedPlan && !guidedPlan.instrument && instrumentContext.instrumentType) {
+      guidedPlan.instrument = instrumentContext.instrumentType;
+    }
     guidedPlan = normalizeGuidedPlan(guidedPlan);
     if (guidedPlan && guidedPlan.num != null) sessionNum = guidedPlan.num;
 
@@ -402,6 +405,12 @@
   }
 
   function normalizeGuidedPlan(plan) {
+    var instrumentType;
+    var blockActivities;
+    var warmActivity;
+    var drillActivity;
+    var songActivity;
+    var cooldownActivity;
     var newElement;
     var focusSong;
     var chordName;
@@ -410,6 +419,12 @@
     if (plan.spark || plan.review || plan.newMove || plan.songSlice || plan.victoryLap) return plan;
     if (!Array.isArray(plan.blocks) || !plan.blocks.length) return plan;
 
+    instrumentType = plan.instrument || plan.instrumentType || null;
+    blockActivities = resolveGuidedBlockActivities(instrumentType, plan);
+    warmActivity = blockActivities.warm_engine;
+    drillActivity = blockActivities.drill;
+    songActivity = blockActivities.song;
+    cooldownActivity = blockActivities.cooldown;
     newElement = Array.isArray(plan.new_elements) && plan.new_elements.length
       ? plan.new_elements[0]
       : (plan.skill || "");
@@ -427,34 +442,67 @@
       level: plan.level || 1,
       bpm: normalizeGuidedTempo(plan.blocks),
       spark: {
-        text: plan.title
-          ? (plan.title + ". Start with a quick, playable warm-up.")
-          : "Start with a quick, playable warm-up."
+        text: firstGuidedActivityText(warmActivity && warmActivity.copy && warmActivity.copy.setup,
+          plan.title ? (plan.title + ". Start with a quick, playable warm-up.") : "",
+          "Start with a quick, playable warm-up.")
       },
       review: plan.day > 1 ? {
-        text: "Take a quick review pass before the new move."
+        text: firstGuidedActivityText(warmActivity && warmActivity.copy && warmActivity.copy.success,
+          "Take a quick review pass before the new move.")
       } : null,
       newMove: {
-        text: buildNewMoveText(newElement, plan.title),
+        text: firstGuidedActivityText(drillActivity && drillActivity.copy && drillActivity.copy.setup,
+          buildNewMoveText(newElement, plan.title)),
         chord: chordName,
         strum: null
       },
       songSlice: {
-        text: focusSong
-          ? ("Play the " + focusSong + " slice with relaxed timing.")
-          : "Play this short song slice with steady timing.",
+        text: firstGuidedActivityText(songActivity && songActivity.copy && songActivity.copy.setup,
+          focusSong ? ("Play the " + focusSong + " slice with relaxed timing.") : "",
+          "Play this short song slice with steady timing."),
         song: focusSong || null
       },
       victoryLap: {
-        text: completionPrompt || buildVictoryLapText(plan.title)
+        text: completionPrompt || firstGuidedActivityText(cooldownActivity && cooldownActivity.copy && cooldownActivity.copy.setup,
+          buildVictoryLapText(plan.title))
       },
       source: plan.source || null,
       blocks: clone(plan.blocks),
+      blockActivities: clone(blockActivities),
       new_elements: clone(plan.new_elements || (plan.skill ? [plan.skill] : [])),
       prerequisites: clone(plan.prerequisites || []),
       completion_criteria: clone(plan.completion_criteria || plan.completion || null),
       focus_song: focusSong || null
     };
+  }
+
+  function resolveGuidedBlockActivities(instrumentType, plan) {
+    var resolved = {
+      warm_engine: null,
+      drill: null,
+      song: null,
+      cooldown: null
+    };
+    var activities;
+    var i;
+    var block;
+    if (!instrumentType || typeof SparkCurriculumV2 === "undefined" || !SparkCurriculumV2) return resolved;
+    activities = typeof SparkCurriculumV2.getSessionActivities === "function"
+      ? SparkCurriculumV2.getSessionActivities(instrumentType, plan.id)
+      : [];
+    for (i = 0; i < activities.length; i++) {
+      if (activities[i] && activities[i].block_type && resolved[activities[i].block_type] == null) {
+        resolved[activities[i].block_type] = clone(activities[i]);
+      }
+    }
+    if (!Array.isArray(plan.blocks)) return resolved;
+    for (i = 0; i < plan.blocks.length; i++) {
+      block = plan.blocks[i];
+      if (block && block.type && resolved[block.type] == null && typeof SparkCurriculumV2.getActivity === "function") {
+        resolved[block.type] = clone(SparkCurriculumV2.getActivity(instrumentType, block.activity_id));
+      }
+    }
+    return resolved;
   }
 
   function normalizeGuidedTempo(blocks) {
@@ -476,6 +524,16 @@
   function buildVictoryLapText(title) {
     if (title) return "Finish with one confident pass through " + title + ".";
     return "Finish with one confident pass.";
+  }
+
+  function firstGuidedActivityText() {
+    var i;
+    var token;
+    for (i = 0; i < arguments.length; i++) {
+      token = humanizeGuidedToken(arguments[i]);
+      if (token) return token;
+    }
+    return "";
   }
 
   function humanizeGuidedToken(value) {

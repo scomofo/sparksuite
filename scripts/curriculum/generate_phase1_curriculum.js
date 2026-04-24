@@ -323,13 +323,20 @@ const catalog = {
 };
 
 const runtimeTracks = [];
+const runtimeActivityBundles = [];
 
 tracks.forEach((track) => {
+  const activities = buildActivities(track);
   runtimeTracks.push({
     instrument: track.instrument,
     title: track.title,
     session_count: track.sessions.length,
     sessions: track.sessions
+  });
+  runtimeActivityBundles.push({
+    instrument: track.instrument,
+    activity_count: track.sessions.length * BLOCKS.length,
+    activities
   });
   writeJson(`tracks/${track.instrument}-30day.json`, {
     version: catalog.version,
@@ -347,7 +354,7 @@ tracks.forEach((track) => {
     version: catalog.version,
     instrument: track.instrument,
     activity_count: track.sessions.length * BLOCKS.length,
-    activities: buildActivities(track)
+    activities
   });
 });
 
@@ -356,7 +363,8 @@ writeJs(path.join("js", "curriculum", "curriculum_v2_data.generated.js"), "Spark
   version: catalog.version,
   format: catalog.format,
   principles: catalog.principles,
-  tracks: runtimeTracks
+  tracks: runtimeTracks,
+  activity_bundles: runtimeActivityBundles
 });
 
 console.log(`Generated SparkSuite Phase 1 curriculum data in ${OUT_DIR}`);

@@ -82,6 +82,36 @@ test("guided pages ignore stale plan titles", function() {
   assert.ok(doneHtml.indexOf(">undefined<") === -1);
 });
 
+test("guided page prefers block-aware curriculum v2 copy when present", function() {
+  S.guidedPlan = {
+    id: "gtr-d01",
+    num: 1,
+    title: "First sound in 2 minutes",
+    level: 1,
+    bpm: 80,
+    spark: { text: "First sound in 2 minutes. warm engine block." },
+    newMove: { text: "First sound in 2 minutes. drill block.", chord: "C" },
+    songSlice: { text: "First sound in 2 minutes. song block.", song: "\"Horse\" intro, open strings only" }
+  };
+  var sparkHtml = guidedSessionPage();
+  assert.ok(sparkHtml.indexOf("warm engine block") >= 0);
+
+  S.guidedStep = "newMove";
+  S.newMovePhase = "try";
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: { guidedStep: "newMove", guidedNewMovePhase: "try" },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  var newMoveHtml = guidedSessionPage();
+  assert.ok(newMoveHtml.indexOf("drill block") >= 0);
+});
+
 test("guided song slice ignores stale cached copy", function() {
   S.guidedPlan.songSlice = {
     text: "undefined",
