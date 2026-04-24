@@ -446,18 +446,51 @@ function renderPracticeGuidedSessionCard(D) {
   var completedGuidedSessions;
   var gsDone;
   var totalSessions;
+  var shellBits = [];
   var h = "";
   if(!gs) return h;
   completedGuidedSessions = normalizePracticeArray(S.completedGuidedSessions);
   gsDone = completedGuidedSessions.length;
   totalSessions = normalizePracticeDisplayCount(gs.totalSessions, Array.isArray(D.SESSIONS) ? D.SESSIONS.length : 0);
+  if (gs.blockCount > 0) shellBits.push(gs.blockCount + " blocks");
+  if (gs.targetDurationMin > 0) shellBits.push(gs.targetDurationMin + " min shell");
   h += '<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
   h += '<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
   h += '<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
   h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+totalSessions+' done</div>';
-  h += '<button onclick="act(\'start_guided_session\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Start Session &#9654;</button>';
+  if (shellBits.length) {
+    h += '<div style="font-size:12px;font-weight:800;color:#fff;margin:-2px 0 8px">' + escHTML(shellBits.join(' • ')) + '</div>';
+  }
+  if (gs.focusSong) {
+    h += '<div style="font-size:12px;color:rgba(255,255,255,.92);margin:0 0 6px">Song hook: ' + escHTML(gs.focusSong) + '</div>';
+  }
+  if (gs.newElement) {
+    h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 10px">New move: ' + escHTML(gs.newElement) + '</div>';
+  }
+  h += '<button onclick="act(\'start_guided_session\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">' + escHTML(gs.targetDurationMin > 0 ? ('Start ' + gs.targetDurationMin + '-Min Session') : 'Start Session') + ' &#9654;</button>';
   h += '</div>';
   return h;
+}
+
+function getPracticeGuidedPrimaryNewElement(newElements) {
+  return Array.isArray(newElements) && newElements.length && typeof newElements[0] === "string"
+    ? newElements[0]
+    : "";
+}
+
+function getPracticeGuidedSessionDurationMin(session, fallbackSec) {
+  var totalSec = normalizePracticeDisplayCount(fallbackSec, 0);
+  var blocks = session && Array.isArray(session.blocks) ? session.blocks : [];
+  var i;
+  if (session && session.target_duration_min) {
+    return normalizePracticeDisplayCount(session.target_duration_min, 0);
+  }
+  if (!totalSec && blocks.length) {
+    for (i = 0; i < blocks.length; i++) {
+      totalSec += normalizePracticeDisplayCount(blocks[i] && blocks[i].duration_sec, 0);
+    }
+  }
+  return totalSec > 0 ? Math.max(1, Math.round(totalSec / 60)) : 0;
 }
 
 function getPracticeGuidedSessionSummary(D) {
@@ -465,6 +498,7 @@ function getPracticeGuidedSessionSummary(D) {
   var sessions = D && Array.isArray(D.SESSIONS) ? D.SESSIONS : [];
   var coreView;
   var guidedPlan;
+  var guidedContext;
   var instrumentType;
   var summary;
   var nextSession;
@@ -473,22 +507,31 @@ function getPracticeGuidedSessionSummary(D) {
       num: sessions[guidedIndex].num || (guidedIndex + 1),
       title: sessions[guidedIndex].title || "Guided Session",
       level: sessions[guidedIndex].level || 1,
+      blockCount: Array.isArray(sessions[guidedIndex].blocks) ? sessions[guidedIndex].blocks.length : 0,
+      targetDurationMin: getPracticeGuidedSessionDurationMin(sessions[guidedIndex], 0),
+      focusSong: sessions[guidedIndex].focus_song || "",
+      newElement: getPracticeGuidedPrimaryNewElement(sessions[guidedIndex].new_elements),
       totalSessions: sessions.length
     };
   }
   coreView = getPracticeCoreView();
+  guidedContext = coreView && coreView.plan && coreView.plan.context ? coreView.plan.context : null;
   guidedPlan = coreView
     && coreView.plan
     && coreView.plan.flow === "guided_session"
-    && coreView.plan.context
-    ? coreView.plan.context.guidedPlan || null
+    && guidedContext
+    ? guidedContext.guidedPlan || null
     : null;
   if (guidedPlan) {
     return {
       num: guidedPlan.num || guidedPlan.day || (guidedIndex + 1),
       title: guidedPlan.title || guidedPlan.id || "Guided Session",
       level: guidedPlan.level || 1,
-      totalSessions: coreView.plan.context.totalGuidedSessions || 0
+      blockCount: Array.isArray(guidedPlan.blocks) ? guidedPlan.blocks.length : 0,
+      targetDurationMin: getPracticeGuidedSessionDurationMin(guidedPlan, guidedContext && guidedContext.guidedShellDurationSec),
+      focusSong: guidedPlan.focus_song || "",
+      newElement: getPracticeGuidedPrimaryNewElement(guidedPlan.new_elements),
+      totalSessions: guidedContext.totalGuidedSessions || 0
     };
   }
   instrumentType = getPracticePageInstrumentType(getPracticePageInstrument());
@@ -500,6 +543,10 @@ function getPracticeGuidedSessionSummary(D) {
         num: nextSession.day || guidedIndex + 1,
         title: nextSession.title || nextSession.id || "Guided Session",
         level: nextSession.level || 1,
+        blockCount: Array.isArray(nextSession.blocks) ? nextSession.blocks.length : 0,
+        targetDurationMin: getPracticeGuidedSessionDurationMin(nextSession, 0),
+        focusSong: nextSession.focus_song || "",
+        newElement: getPracticeGuidedPrimaryNewElement(nextSession.new_elements),
         totalSessions: summary.sessionCount || 0
       };
     }
