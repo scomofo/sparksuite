@@ -98,7 +98,7 @@ function guidedSessionPage() {
   guidedBpm = normalizeGuidedBpm(plan.bpm, 80);
 
   var h = '<div class="text-center">';
-  h += '<button class="back-btn" onclick="if(confirm(\'End session early?\'))act(\'guidedStop\')">&#8592; Exit</button>';
+  h += '<button class="back-btn" onclick="act(\'guidedConfirmStop\')">&#8592; Exit</button>';
   h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
 

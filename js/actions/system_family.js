@@ -513,6 +513,13 @@
       return true;
     }
 
+    if (a === "guidedConfirmStop") {
+      if (typeof confirm !== "function" || confirm("End session early?")) {
+        act("guidedStop");
+      }
+      return true;
+    }
+
     if (a === "guidedStop") {
       clearTimeout(T.session);
       clearTimeout(T.drill);
