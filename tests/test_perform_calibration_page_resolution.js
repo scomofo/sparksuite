@@ -69,6 +69,45 @@ test("performCalibrationPage ignores malformed cached calibration state", functi
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("performCalibrationPage can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.S.performCalibrationSource = "undefined";
+  global.S.performCalibrationMode = false;
+  global.S.performTimingOffsetMs = "NaN";
+  global.S.performMidiOffsetMs = "NaN";
+  global.S.performMicOffsetMs = "NaN";
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          performanceCalibrationSource: "mic",
+          performanceCalibrationMode: true,
+          performanceTimingOffsetMs: 24,
+          performanceMidiOffsetMs: 12,
+          performanceMicOffsetMs: 36
+        }
+      };
+    }
+  };
+  global.computeCalibrationOffsetMs = function() { return 18; };
+  global.getCalibrationBeatIndex = function() { return 3; };
+
+  global.eval(loadJS("js/pages/perform_calibration.js"));
+
+  var html = performCalibrationPage();
+  var view = getPerformanceCalibrationView();
+  assert.strictEqual(view.source, "mic");
+  assert.strictEqual(view.mode, true);
+  assert.strictEqual(view.globalOffsetMs, 24);
+  assert.strictEqual(view.midiOffsetMs, 12);
+  assert.strictEqual(view.micOffsetMs, 36);
+  assert.ok(html.indexOf("Global Offset: 24 ms") >= 0);
+  assert.ok(html.indexOf("MIDI Offset: 12 ms") >= 0);
+  assert.ok(html.indexOf("Mic Offset: 36 ms") >= 0);
+  assert.ok(html.indexOf(">3</div>") >= 0);
+  assert.ok(html.indexOf("Suggested Offset: 18 ms") >= 0);
+});
+
 test("perform page calibration controls route through actions", function() {
   var source = loadJS("js/pages/perform.js");
   assert.ok(source.indexOf('onclick="act(\\\'performCalibrationTap\\\')"') >= 0);
