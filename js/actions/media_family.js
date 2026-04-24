@@ -1,4 +1,8 @@
 (function() {
+  function getMediaCore() {
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
   function setLegacyFields(setFields, clearIntervals, save) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
       SparkProgressBridge.applyLegacyActivityRuntime({
@@ -26,8 +30,9 @@
         if (STRUM_PATTERNS[i].name === v) sp = STRUM_PATTERNS[i];
       }
       if (sp && sp.level <= S.level) {
-        if (window.sparkCore && typeof window.sparkCore.openLegacyStrumPattern === "function") {
-          window.sparkCore.openLegacyStrumPattern({ pattern: sp });
+        var core = getMediaCore();
+        if (core && typeof core.openLegacyStrumPattern === "function") {
+          core.openLegacyStrumPattern({ pattern: sp });
         }
         setLegacyFields({
           selectedStrum: sp,
@@ -43,8 +48,9 @@
     if (a === "toggleStrum") {
       snd("click");
       var nextStrumActive = !S.strumActive;
-      if (window.sparkCore && typeof window.sparkCore.syncLegacyStrumRuntimeState === "function") {
-        window.sparkCore.syncLegacyStrumRuntimeState({
+      var core = getMediaCore();
+      if (core && typeof core.syncLegacyStrumRuntimeState === "function") {
+        core.syncLegacyStrumRuntimeState({
           pattern: S.selectedStrum,
           active: nextStrumActive,
           beat: nextStrumActive ? 0 : -1
@@ -62,8 +68,8 @@
         render();
         T.strum = setInterval(function() {
           S._strumBeat = (S._strumBeat + 1) % p.length;
-          if (window.sparkCore && typeof window.sparkCore.syncLegacyStrumRuntimeState === "function") {
-            window.sparkCore.syncLegacyStrumRuntimeState({
+          if (core && typeof core.syncLegacyStrumRuntimeState === "function") {
+            core.syncLegacyStrumRuntimeState({
               pattern: S.selectedStrum,
               active: true,
               beat: S._strumBeat

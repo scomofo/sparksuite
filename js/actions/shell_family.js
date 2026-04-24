@@ -1,4 +1,8 @@
 (function() {
+  function getShellCore() {
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
   function setLegacyFields(setFields, save) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
       SparkProgressBridge.applyLegacyActivityRuntime({ setFields: setFields, save: save });
@@ -71,8 +75,9 @@
         earTrainAns: null,
         selectedVoicing: 0
       });
-      if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-        window.sparkCore.updateRuntimeState({
+      var core = getShellCore();
+      if (core && typeof core.updateRuntimeState === "function") {
+        core.updateRuntimeState({
           activeScreen: "home",
           activeTab: v || null,
           transport: { status: "idle", positionMs: 0 }
