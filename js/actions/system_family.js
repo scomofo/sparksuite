@@ -55,6 +55,18 @@
       view.runtimeState.activeScreen === "guided_session");
   }
 
+  function getActiveGuidedSessionNumber() {
+    var core = getSparkCoreHandle();
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    var context = view && view.plan && view.plan.context ? view.plan.context : null;
+    if (!view || !view.plan || view.plan.flow !== "guided_session") return null;
+    if (context && context.guidedSession != null) return parseInt(context.guidedSession, 10) || null;
+    if (view.plan.lesson && view.plan.lesson.num != null) return parseInt(view.plan.lesson.num, 10) || null;
+    return null;
+  }
+
   function mirrorGuidedRuntimeFields(runtimeState) {
     if (!runtimeState) return;
     S.guidedActivityId = runtimeState.guidedActivityId || null;
@@ -710,10 +722,20 @@
     if (a === "start_guided_session") {
       var _gsNum = parseInt(v, 10) || S.guidedSession || 1;
       var guidedStartCore = getSparkCoreHandle();
+      var activeGuidedSessionNum = getActiveGuidedSessionNumber();
+      var requestedGuidedSessionNum = parseInt(v, 10);
+      if (guidedStartCore && isGuidedSessionActive() && (!requestedGuidedSessionNum || requestedGuidedSessionNum === activeGuidedSessionNum)) {
+        mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
+        S.guidedSession = activeGuidedSessionNum || S.guidedSession || _gsNum;
+        S.screen = SCR.GUIDED;
+        render();
+        return true;
+      }
       if (guidedStartCore && typeof guidedStartCore.startSession === "function") {
         var _gsPlan = guidedStartCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
         if (_gsPlan && _gsPlan.context && _gsPlan.context.guidedPlan) {
           mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
+          S.guidedSession = _gsPlan.context.guidedSession || _gsNum;
           S.screen = SCR.GUIDED;
           render();
           return true;
