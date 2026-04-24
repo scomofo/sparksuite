@@ -30,6 +30,60 @@ function pianoNormalizeSessionBpm(value, fallback) {
   return numeric;
 }
 
+function pianoSessionStepBlockType(step) {
+  if (step === "spark") return "warm_engine";
+  if (step === "review" || step === "newMove") return "drill";
+  if (step === "songSlice") return "song";
+  if (step === "victoryLap") return "cooldown";
+  return null;
+}
+
+function pianoSessionStepActivity(plan, step) {
+  var blockType = pianoSessionStepBlockType(step);
+  return plan && plan.blockActivities && blockType ? plan.blockActivities[blockType] || null : null;
+}
+
+function pianoSessionStepBlock(plan, step) {
+  var blockType = pianoSessionStepBlockType(step);
+  var i;
+  var block;
+  if (!plan || !Array.isArray(plan.blocks) || !blockType) return null;
+  for (i = 0; i < plan.blocks.length; i++) {
+    block = plan.blocks[i];
+    if (block && block.type === blockType) return block;
+  }
+  return null;
+}
+
+function pianoFormatSessionBlockDuration(durationSec) {
+  var numeric = Number(durationSec);
+  var minutes;
+  if (!isFinite(numeric) || numeric <= 0) return "";
+  minutes = Math.round(numeric / 60);
+  if (!minutes) return "";
+  return minutes + " min block";
+}
+
+function pianoRenderSessionBlockMeta(plan, step) {
+  var activity = pianoSessionStepActivity(plan, step);
+  var block = pianoSessionStepBlock(plan, step);
+  var bits = [];
+  var kind = activity && activity.kind ? pianoSessionTextToken(activity.kind) : "";
+  var duration = pianoFormatSessionBlockDuration(block && block.duration_sec);
+  var songFocus = step === "songSlice"
+    ? pianoFirstSessionTextToken(
+        activity && activity.copy && activity.copy.success,
+        plan && plan.songSlice && plan.songSlice.song,
+        plan && plan.focus_song
+      )
+    : "";
+  if (kind) bits.push(kind);
+  if (duration) bits.push(duration);
+  if (songFocus) bits.push(songFocus);
+  if (!bits.length) return "";
+  return '<div class="text-muted" style="margin:6px 0 10px;font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase">' + escHTML(bits.join(' • ')) + '</div>';
+}
+
 function pianoSessionPage() {
   var plan = S.sessionPlan;
   var planBpm;
@@ -107,7 +161,12 @@ function renderSpark(plan) {
 
   html += '<div class="session-step-card spark-card">';
   html += '<h3>\u{2728} Spark</h3>';
-  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.spark.text, "Get started.")) + '</div>';
+  html += pianoRenderSessionBlockMeta(plan, "spark");
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+    pianoSessionStepActivity(plan, "spark") && pianoSessionStepActivity(plan, "spark").copy && pianoSessionStepActivity(plan, "spark").copy.setup,
+    plan.spark.text,
+    "Get started."
+  )) + '</div>';
   html += '<button class="btn btn-accent" onclick="act(\'next_step\')">Next \u2192</button>';
   html += '</div>';
   return html;
@@ -122,7 +181,12 @@ function renderReview(plan) {
 
   var html = '<div class="session-step-card review-card">';
   html += '<h3>\u{1F504} Review</h3>';
-  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.review.text, "Review your last move.")) + '</div>';
+  html += pianoRenderSessionBlockMeta(plan, "review");
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+    pianoSessionStepActivity(plan, "review") && pianoSessionStepActivity(plan, "review").copy && pianoSessionStepActivity(plan, "review").copy.success,
+    plan.review.text,
+    "Review your last move."
+  )) + '</div>';
 
   // Show interleaved review chords (stickiness #8)
   if (plan.review.chords && plan.review.chords.length) {
@@ -153,6 +217,7 @@ function renderNewMove(plan) {
 
   var html = '<div class="session-step-card newmove-card">';
   html += '<h3>\u{1F3AF} New Move</h3>';
+  html += pianoRenderSessionBlockMeta(plan, "newMove");
 
   // Phase indicator (Watch/Shadow/Try/Refine)
   html += newMovePhaseIndicator(S.newMovePhase);
@@ -204,7 +269,11 @@ function renderNewMove(plan) {
       break;
 
     case "try":
-      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.newMove.text, "Try the new move.")) + '</div>';
+      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+        pianoSessionStepActivity(plan, "newMove") && pianoSessionStepActivity(plan, "newMove").copy && pianoSessionStepActivity(plan, "newMove").copy.setup,
+        plan.newMove.text,
+        "Try the new move."
+      )) + '</div>';
       if (chord) {
         html += pianoSVG(chord);
         html += '<button class="btn btn-sm" onclick="act(\'play_chord\',\'' + chord.short + '\')">\u{1F50A} Play</button>';
@@ -250,7 +319,11 @@ function renderNewMove(plan) {
       break;
 
     default:
-      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.newMove.text, "Try the new move.")) + '</div>';
+      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+        pianoSessionStepActivity(plan, "newMove") && pianoSessionStepActivity(plan, "newMove").copy && pianoSessionStepActivity(plan, "newMove").copy.setup,
+        plan.newMove.text,
+        "Try the new move."
+      )) + '</div>';
       if (chord) html += pianoSVG(chord);
       html += '<button class="btn btn-accent" onclick="act(\'next_step\')">Next \u2192</button>';
   }
@@ -264,7 +337,12 @@ function renderSongSlice(plan) {
 
   var html = '<div class="session-step-card songslice-card">';
   html += '<h3>\u{1F3B5} Song Slice</h3>';
-  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.songSlice.text, "Play a short song slice.")) + '</div>';
+  html += pianoRenderSessionBlockMeta(plan, "songSlice");
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+    pianoSessionStepActivity(plan, "songSlice") && pianoSessionStepActivity(plan, "songSlice").copy && pianoSessionStepActivity(plan, "songSlice").copy.setup,
+    plan.songSlice.text,
+    "Play a short song slice."
+  )) + '</div>';
 
   // Show the song name
   if (plan.songSlice.song) {
@@ -298,7 +376,12 @@ function renderVictoryLap(plan) {
 
   var html = '<div class="session-step-card victorylap-card">';
   html += '<h3>\u{1F3C6} Victory Lap</h3>';
-  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.victoryLap.text, "Lock it in.")) + '</div>';
+  html += pianoRenderSessionBlockMeta(plan, "victoryLap");
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+    pianoSessionStepActivity(plan, "victoryLap") && pianoSessionStepActivity(plan, "victoryLap").copy && pianoSessionStepActivity(plan, "victoryLap").copy.setup,
+    plan.victoryLap.text,
+    "Lock it in."
+  )) + '</div>';
 
   var chord = findChord(plan.newMove ? plan.newMove.chord : "C");
   if (chord) {
