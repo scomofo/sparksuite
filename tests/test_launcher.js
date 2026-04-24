@@ -198,6 +198,7 @@ test('renderLauncher respects launcherView showroom routes', function() {
   global.SparkLesson = { render: function() { return '<div>Lesson View</div>'; } };
   global.SparkPath = { render: function() { return '<div>Learn View</div>'; } };
   global.insightsDashboardPage = function() { return '<div>Insights View</div>'; };
+  global.performCalibrationPage = function() { return '<div>Calibration View</div>'; };
   global.SparkCurriculumDashboard = { render: function() { return '<div>Curriculum View</div>'; } };
   global.SparkCourseSyllabus = { render: function() { return '<div>Syllabus View</div>'; } };
   global.SparkOnboardingWelcome = { render: function() { return '<div>Onboarding View</div>'; } };
@@ -238,6 +239,9 @@ test('renderLauncher respects launcherView showroom routes', function() {
 
   S.launcherView = 'lesson';
   assert.ok(SparkInstruments.renderLauncher().indexOf('Lesson View') >= 0);
+
+  S.launcherView = 'calibration';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Calibration View') >= 0);
 
   S.launcherView = 'insights';
   assert.ok(SparkInstruments.renderLauncher().indexOf('Insights View') >= 0);
@@ -369,6 +373,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('"syllabus":        function(){ S._showroomOverride = "syllabus"; }') >= 0);
   assert.ok(showroomSource.indexOf(' : "act(\\\'showroomStartPerf\\\')"') >= 0 || showroomSource.indexOf(' : "act(\'showroomStartPerf\')"') >= 0);
   assert.ok(showroomSource.indexOf('var signInAction = opts.signInAction || "act(\\\'showroomOpenSignIn\\\')"') >= 0 || showroomSource.indexOf('var signInAction = opts.signInAction || "act(\'showroomOpenSignIn\')"') >= 0);
+  assert.ok(showroomSource.indexOf("SparkInstruments.openLauncherView('calibration')") >= 0);
   assert.ok(showroomSource.indexOf('<button type="button" class="showroom-avatar" onclick="') >= 0);
   assert.ok(showroomSource.indexOf('<button type="button" class="showroom-syllabus-avatar" onclick="') >= 0);
   assert.ok(showroomSource.indexOf("act(\\'showroomStartPerf\\'" ) >= 0 || showroomSource.indexOf("act('showroomStartPerf'") >= 0);
@@ -388,6 +393,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(launcherSource.indexOf('leaderboard: typeof SparkLeaderboard') >= 0);
   assert.ok(launcherSource.indexOf('insights: typeof insightsDashboardPage') >= 0);
   assert.ok(launcherSource.indexOf('tools: typeof SparkTuner') >= 0);
+  assert.ok(launcherSource.indexOf('calibration: typeof performCalibrationPage === "function"') >= 0);
   assert.ok(launcherSource.indexOf('instruments: typeof renderInstrumentsView === "function" ? renderInstrumentsView : null') >= 0);
   assert.ok(launcherSource.indexOf('S._showroomOverride = null;') >= 0);
   assert.ok(launcherSource.indexOf('_active = null;') >= 0);

@@ -285,7 +285,7 @@
       ]},
       { title: "Audio & Input", rows: [
         { type: "slider", icon: "mic", label: "Microphone Sensitivity", value: micPct + "%", pct: micPct },
-        { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true, onClick: "if(S&&S.activeInstrument){act('openPerformCalibration')}else{SparkInstruments.openLauncherView('tuner')}" }
+        { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true, onClick: "if(S&&S.activeInstrument){act('openPerformCalibration')}else{SparkInstruments.openLauncherView('calibration')}" }
       ]},
       { title: "Appearance", rows: [
         // Dark Mode is wired to the canonical act("toggleDark") handler so

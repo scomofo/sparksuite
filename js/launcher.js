@@ -513,6 +513,9 @@
       performance: typeof SparkPerformance !== "undefined" && SparkPerformance && typeof SparkPerformance.render === "function"
         ? SparkPerformance.render
         : null,
+      calibration: typeof performCalibrationPage === "function"
+        ? performCalibrationPage
+        : null,
       curriculum: typeof SparkCurriculumDashboard !== "undefined" && SparkCurriculumDashboard && typeof SparkCurriculumDashboard.render === "function"
         ? SparkCurriculumDashboard.render
         : null,
