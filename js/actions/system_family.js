@@ -551,6 +551,16 @@
       return true;
     }
 
+    if (a === "guidedComplete") {
+      var guidedCompleteCore = getSparkCoreHandle();
+      if (guidedCompleteCore && typeof guidedCompleteCore.completeGuidedSession === "function") {
+        mirrorGuidedRuntimeFields(guidedCompleteCore.completeGuidedSession({}) || null);
+      }
+      S.screen = SCR.GUIDED_DONE || "guided_done";
+      render();
+      return true;
+    }
+
     if (a === "refreshAudioInputs") {
       refreshAudioInputs();
       return true;

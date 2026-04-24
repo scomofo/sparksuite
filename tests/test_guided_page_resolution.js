@@ -314,6 +314,7 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   var handled;
   var syncCalls = [];
   var advanceCalls = [];
+  var completeCalls = [];
   var startCalls = [];
   global.window = {
     registerSparkActionFamily: function(name, handler) {
@@ -362,6 +363,14 @@ test("guided actions can resolve sparkCore from the global binding", function() 
         }
       };
     },
+    completeGuidedSession: function(payload) {
+      completeCalls.push(payload);
+      return {
+        guidedActivityId: null,
+        guidedActivityKind: null,
+        guidedBlockType: null
+      };
+    },
     getRuntimeState: function() {
       return {
         guidedActivityId: "gtr-d01-warm_engine",
@@ -407,6 +416,14 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   assert.strictEqual(S.guidedActivityId, "gtr-d01-warm_engine");
   assert.strictEqual(S.guidedActivityKind, "warm_engine_play");
   assert.strictEqual(S.guidedBlockType, "warm_engine");
+
+  handled = global.runSparkActionFamilies("guidedComplete");
+  assert.strictEqual(handled, true);
+  assert.deepStrictEqual(completeCalls, [{}]);
+  assert.strictEqual(S.screen, "guided_done");
+  assert.strictEqual(S.guidedActivityId, null);
+  assert.strictEqual(S.guidedActivityKind, null);
+  assert.strictEqual(S.guidedBlockType, null);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

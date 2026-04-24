@@ -1694,8 +1694,12 @@
 
   SparkCore.prototype.completeGuidedSession = function(options) {
     options = options || {};
+    var activeSegmentId = Object.prototype.hasOwnProperty.call(options, "itemId")
+      ? options.itemId
+      : (this.runtimeState.activeSegmentId || this.resolveGuidedRuntimeSegmentId(this.runtimeState.guidedStep, this.currentPlan));
     var result = this.completeSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      itemId: activeSegmentId || undefined,
       markPlanComplete: true
     });
     this.applyGuidedNavigationRequest("guided_done");

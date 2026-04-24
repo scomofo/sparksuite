@@ -2262,8 +2262,13 @@ test("SparkCore can open and complete guided sessions through explicit helpers",
   assert.strictEqual(core.getRuntimeState().activeScreen, "guided_session");
   assert.strictEqual(core.getRuntimeState().guidedStep, "spark");
 
+  core.syncGuidedRuntimeState({
+    guidedStep: "victoryLap"
+  });
   var result = core.completeGuidedSession();
   assert.strictEqual(result.planCompleted, true);
+  assert.strictEqual(result.completedItems, plan.segments.length);
+  assert.strictEqual(plan.segments[plan.segments.length - 1].completed, true);
   assert.strictEqual(core.getRuntimeState().activeScreen, "guided_done");
   assert.strictEqual(core.getRuntimeState().transport.status, "completed");
 });
