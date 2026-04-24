@@ -808,12 +808,12 @@
     var chipsHtml = "";
     for (var c = 0; c < categories.length; c++) {
       var cat = categories[c];
-      chipsHtml += '<button class="showroom-chip' + (cat === category ? ' on' : '') + '" onclick="SparkShowroom.setLibraryCategory(' + jsArg(cat) + ')">' + escHtml(cat) + '</button>';
+      chipsHtml += '<button class="showroom-chip' + (cat === category ? ' on' : '') + '" onclick="act(\'showroomLibraryCategory\',' + jsArg(cat) + ')">' + escHtml(cat) + '</button>';
     }
     var levelsHtml = "";
     for (var l = 0; l < levels.length; l++) {
       var lv = levels[l];
-      levelsHtml += '<button class="showroom-level-chip' + (lv === level ? ' on' : '') + '" onclick="SparkShowroom.setLibraryLevel(' + jsArg(lv) + ')">' + escHtml(lv) + '</button>';
+      levelsHtml += '<button class="showroom-level-chip' + (lv === level ? ' on' : '') + '" onclick="act(\'showroomLibraryLevel\',' + jsArg(lv) + ')">' + escHtml(lv) + '</button>';
     }
 
     var songsHtml = "";
