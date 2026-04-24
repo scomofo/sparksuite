@@ -982,4 +982,32 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   assert.strictEqual(S.guidedBlockType, null);
 });
 
+test("openPracticePlan resumes the guided screen when a guided session is already active", function() {
+  var planOpenCalls = [];
+  global.openPracticePlanScreenRequest = function(payload) {
+    planOpenCalls.push(payload || {});
+    return payload || {};
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: { guidedPlan: S.guidedPlan }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/actions/system_family.js"));
+
+  var handled = global.runSparkActionFamilies("openPracticePlan");
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.screen, "guided");
+  assert.deepStrictEqual(planOpenCalls, []);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

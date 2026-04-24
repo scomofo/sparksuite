@@ -3562,6 +3562,46 @@ test("orchestrator requests can resolve sparkCore from the global binding", func
   assert.ok(calls.length >= 11);
 });
 
+test("studio openPlan resumes guided sessions instead of opening the plan screen when guided runtime is active", function() {
+  global.window = {};
+  global.__actionFamilies = global.__actionFamilies || {};
+  global.window.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.S = global.S || {};
+  global.S.screen = "home";
+  global.SCR = global.SCR || {};
+  global.SCR.PLAN = "plan";
+  global.SCR.GUIDED = "guided";
+  var practicePlanRequests = [];
+  global.openPracticePlanScreenRequest = function(payload) {
+    practicePlanRequests.push(payload || {});
+    return payload || {};
+  };
+  global.render = function() {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: { guidedPlan: { title: "How guitars get tuned" } }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+
+  eval(loadJS("js/actions/studio_family.js"));
+  var handled = __actionFamilies.studio("openPlan");
+
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.screen, "guided");
+  assert.deepStrictEqual(practicePlanRequests, []);
+});
+
 test("SparkCore can build performance completion requests from runtime state", function() {
   var core = createDefaultSparkCore();
   core.syncPerformanceRuntimeState("select_song", {
