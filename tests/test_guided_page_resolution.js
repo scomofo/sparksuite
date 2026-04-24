@@ -463,12 +463,12 @@ test("guided page header reflects non-drill block themes", function() {
     return {
       plan: {
         flow: "guided_session",
-        context: { guidedPlan: S.guidedPlan },
+        context: { guidedPlan: S.guidedPlan, guidedShellExtensionSec: 300 },
         segments: [
           { id: "gtr-d03_warm_engine", label: "Warm Engine", durationSec: 90, completed: true, meta: { guidedBlockType: "warm_engine" } },
           { id: "gtr-d03_drill", label: "Drill", durationSec: 180, completed: true, meta: { guidedBlockType: "drill" } },
           { id: "gtr-d03_song", label: "Song Slice", durationSec: 240, completed: true, meta: { guidedBlockType: "song" } },
-          { id: "gtr-d03_cooldown", label: "Cooldown", durationSec: 90, completed: false, meta: { guidedBlockType: "cooldown" } }
+          { id: "gtr-d03_cooldown", label: "Cooldown", durationSec: 390, completed: false, meta: { guidedBlockType: "cooldown", guidedExtensionSec: 300 } }
         ]
       },
       runtimeState: {
@@ -484,6 +484,8 @@ test("guided page header reflects non-drill block themes", function() {
   assert.ok(cooldownHtml.indexOf(">Finish Session<") >= 0);
   assert.ok(cooldownHtml.indexOf("onclick=\"act('guidedExtendBlock')\"") >= 0);
   assert.ok(cooldownHtml.indexOf(">Keep Going +5 min<") >= 0);
+  assert.ok(cooldownHtml.indexOf("+5 min extra") >= 0);
+  assert.ok(cooldownHtml.indexOf("+5 min extra focus time") >= 0);
   assert.ok(cooldownHtml.indexOf("guidedSkipBlock") === -1);
 });
 

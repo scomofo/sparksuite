@@ -1811,12 +1811,15 @@
     segments = Array.isArray(this.currentPlan.segments) ? this.currentPlan.segments : [];
     for (i = 0; i < segments.length; i++) {
       if (segments[i] && segments[i].id === segmentId) {
+        if (!segments[i].meta || typeof segments[i].meta !== "object") segments[i].meta = {};
+        segments[i].meta.guidedExtensionSec = Math.max(0, Math.round(segments[i].meta.guidedExtensionSec || 0)) + extensionSec;
         segments[i].durationSec = Math.max(0, Math.round(segments[i].durationSec || 0)) + extensionSec;
         break;
       }
     }
 
     context = this.currentPlan.context || {};
+    context.guidedShellExtensionSec = Math.max(0, Math.round(context.guidedShellExtensionSec || 0)) + extensionSec;
     context.guidedShellDurationSec = Math.max(0, Math.round(context.guidedShellDurationSec || 0)) + extensionSec;
     guidedPlan = context.guidedPlan || null;
     blockActivities = guidedPlan && guidedPlan.blockActivities ? guidedPlan.blockActivities : null;
