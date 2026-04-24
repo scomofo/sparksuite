@@ -147,11 +147,37 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
       state: state,
       detail: state === "now"
         ? getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase)
-        : ""
+        : "",
+      progressRatio: state === "done"
+        ? 1
+        : (state === "now"
+          ? getGuidedBlockProgressRatio(blockType, guidedStep, guidedNewMovePhase, runtimeState, segment)
+          : 0)
     });
   }
 
   return progress;
+}
+
+function getGuidedBlockProgressRatio(blockType, guidedStep, guidedNewMovePhase, runtimeState, segment) {
+  var durationMs = normalizeGuidedCount(segment && segment.durationSec, 0) * 1000;
+  var transportPositionMs = runtimeState && runtimeState.transport
+    ? normalizeGuidedCount(runtimeState.transport.positionMs, 0)
+    : 0;
+  var phaseOrder = ["watch", "shadow", "try", "refine"];
+  var phaseIndex;
+  if (durationMs > 0 && transportPositionMs > 0) {
+    return Math.max(0, Math.min(1, transportPositionMs / durationMs));
+  }
+  if (blockType === "warm_engine") return guidedStep === "spark" ? 0.5 : 0;
+  if (blockType === "song") return guidedStep === "songSlice" ? 0.5 : 0;
+  if (blockType === "cooldown") return guidedStep === "victoryLap" ? 0.5 : 0;
+  if (blockType !== "drill") return 0;
+  if (guidedStep === "review") return 0.2;
+  if (guidedStep !== "newMove") return 0;
+  phaseIndex = phaseOrder.indexOf(guidedNewMovePhase);
+  if (phaseIndex === -1) return 0.35;
+  return Math.max(0, Math.min(1, (phaseIndex + 1) / phaseOrder.length));
 }
 
 function getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase) {
@@ -181,6 +207,7 @@ function renderGuidedBlockProgress(blockProgress) {
       var durationLabel = block.durationSec > 0
         ? Math.max(1, Math.round(block.durationSec / 60)) + " min"
         : "";
+      var progressPercent = Math.max(0, Math.min(100, Math.round((block.progressRatio || 0) * 100)));
       var stateColor = block.state === "done"
         ? "#4ECDC4"
         : block.state === "now"
@@ -195,6 +222,9 @@ function renderGuidedBlockProgress(blockProgress) {
         '<div style="font-size:11px;font-weight:700;color:' + (block.state === "now" ? "#FF8A5C" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(block.detail || " ") +
         '</div>' +
+        '<div style="height:6px;border-radius:999px;background:#FFFFFF88;overflow:hidden;margin-bottom:6px">' +
+          '<div style="height:100%;width:' + progressPercent + '%;background:' + stateColor + ';border-radius:999px"></div>' +
+        '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
       '</div>';
     }).join("") +
@@ -207,7 +237,9 @@ function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
     totalBlocks: blockProgress ? blockProgress.length : 0,
     totalDurationSec: 0,
     activeBlockLabel: "",
-    activeBlockDurationSec: 0
+    activeBlockDurationSec: 0,
+    elapsedSec: 0,
+    completionRatio: 0
   };
   var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
   var i;
@@ -250,16 +282,29 @@ function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
       activeBlock = blockProgress[blockProgress.length - 1];
       summary.activeBlockIndex = blockProgress.length;
     }
+    for (i = 0; i < blockProgress.length; i++) {
+      if (!blockProgress[i]) continue;
+      if (blockProgress[i].state === "done") {
+        summary.elapsedSec += normalizeGuidedCount(blockProgress[i].durationSec, 0);
+      } else if (activeBlock && blockProgress[i].id === activeBlock.id) {
+        summary.elapsedSec += Math.round(normalizeGuidedCount(blockProgress[i].durationSec, 0) * (blockProgress[i].progressRatio || 0));
+      }
+    }
   }
   summary.activeBlockLabel = firstGuidedTextToken(activeBlock && activeBlock.label);
   summary.activeBlockDurationSec = normalizeGuidedCount(activeBlock && activeBlock.durationSec, 0);
+  summary.completionRatio = summary.totalDurationSec > 0
+    ? Math.max(0, Math.min(1, summary.elapsedSec / summary.totalDurationSec))
+    : 0;
   return summary;
 }
 
 function renderGuidedShellSummary(shellSummary) {
   var shellMinutes;
   var blockMinutes;
+  var elapsedMinutes;
   var detail = [];
+  var progressPercent;
   if (!shellSummary || !shellSummary.totalBlocks) return "";
   shellMinutes = shellSummary.totalDurationSec > 0
     ? Math.max(1, Math.round(shellSummary.totalDurationSec / 60))
@@ -267,13 +312,21 @@ function renderGuidedShellSummary(shellSummary) {
   blockMinutes = shellSummary.activeBlockDurationSec > 0
     ? Math.max(1, Math.round(shellSummary.activeBlockDurationSec / 60))
     : 0;
+  elapsedMinutes = shellSummary.elapsedSec > 0
+    ? Math.max(1, Math.round(shellSummary.elapsedSec / 60))
+    : 0;
+  progressPercent = Math.max(0, Math.min(100, Math.round((shellSummary.completionRatio || 0) * 100)));
   if (shellSummary.activeBlockLabel) detail.push(shellSummary.activeBlockLabel);
   if (blockMinutes > 0) detail.push(blockMinutes + " min block");
   if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
   return '<div style="margin:0 0 14px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#FF8A5C11,#4ECDC411);text-align:left">' +
     '<div style="font-size:12px;font-weight:900;color:var(--text-primary);text-transform:uppercase;letter-spacing:.04em">Block ' +
       shellSummary.activeBlockIndex + ' of ' + shellSummary.totalBlocks + '</div>' +
+    '<div style="height:8px;border-radius:999px;background:#FFFFFF88;overflow:hidden;margin-top:8px">' +
+      '<div style="height:100%;width:' + progressPercent + '%;background:linear-gradient(135deg,#FF8A5C,#4ECDC4);border-radius:999px"></div>' +
+    '</div>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(detail.join(" • ")) + '</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML((elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min through session") + '</div>' +
     '</div>';
 }
 
