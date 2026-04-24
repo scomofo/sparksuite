@@ -151,4 +151,33 @@ test("guided done page ignores malformed completion counters", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("guided exit routes through a confirmation action", function() {
+  var source = loadJS("js/pages/guided.js");
+  assert.ok(source.indexOf('onclick="act(\\\'guidedConfirmStop\\\')"') >= 0);
+  assert.strictEqual(source.indexOf("if(confirm('End session early?'))act('guidedStop')"), -1);
+});
+
+test("guided confirmation action delegates to guidedStop only after confirm", function() {
+  var handled;
+  var acted = [];
+  global.window = global;
+  global.S = {};
+  global.T = {};
+  global.confirm = function() { return true; };
+  global.act = function(name) { acted.push(name); };
+  global.registerSparkActionFamily = function(name, handler) {
+    global.runSparkActionFamilies = handler;
+  };
+  global.eval(loadJS("js/actions/system_family.js"));
+  handled = global.runSparkActionFamilies("guidedConfirmStop");
+  assert.strictEqual(handled, true);
+  assert.deepStrictEqual(acted, ["guidedStop"]);
+
+  acted = [];
+  global.confirm = function() { return false; };
+  handled = global.runSparkActionFamilies("guidedConfirmStop");
+  assert.strictEqual(handled, true);
+  assert.deepStrictEqual(acted, []);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
