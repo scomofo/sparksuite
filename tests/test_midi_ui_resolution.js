@@ -42,4 +42,34 @@ test("piano runtime mirrors midi refresh and desktop import actions", function()
   assert.ok(pianoSource.indexOf('if (typeof importMidiDesktopAware === "function") importMidiDesktopAware();') >= 0);
 });
 
+test("midiSettingsPage can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.S = {
+    midiDevices: [],
+    midiProfiles: {},
+    activeMidiProfileId: null
+  };
+  global.escHTML = function(value) { return String(value); };
+  global.getActiveMidiDevice = function() { return null; };
+  global.getActiveMidiProfile = function() { return null; };
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return {
+        midiActiveDeviceName: "Launchkey Mini",
+        midiActiveProfileName: "Stage Keys",
+        midiDeviceOptions: [{ id: "dev_1", name: "Launchkey Mini" }],
+        midiProfileOptions: [{ id: "profile_1", name: "Stage Keys", type: "piano" }],
+        midiActiveProfileId: "profile_1"
+      };
+    }
+  };
+
+  global.eval(loadJS("js/midi/ui.js"));
+  var html = global.window.midiSettingsPage();
+
+  assert.ok(html.indexOf("Launchkey Mini") >= 0);
+  assert.ok(html.indexOf("Stage Keys") >= 0);
+  assert.ok(html.indexOf("(active)") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

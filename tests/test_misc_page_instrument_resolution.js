@@ -151,6 +151,20 @@ function resetEnvironment() {
       newMovePhase: "watch"
     };
   };
+  global.buildSkillTree = function() {
+    return {
+      branches: [{
+        id: "rhythm",
+        label: "Rhythm",
+        nodes: [{
+          label: "Steady Pulse",
+          status: "developing",
+          progress: 42,
+          children: []
+        }]
+      }]
+    };
+  };
   global.SparkInstruments = {
     getActive: function() {
       return { appId: "pianospark" };
@@ -167,8 +181,10 @@ function test(name, fn) {
     global.eval(loadJS("js/pages/dual.js"));
     global.eval(loadJS("js/pages/games.js"));
     global.eval(loadJS("js/pages/guided.js"));
+    global.eval(loadJS("js/meta/challenge_ui.js"));
     global.eval(loadJS("js/pages/tools.js"));
     global.eval(loadJS("js/pages/shared.js"));
+    global.eval(loadJS("js/pages/skill_tree.js"));
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -316,6 +332,43 @@ test("tools page can resolve sparkCore from the global binding", function() {
   assert.ok(html.indexOf("146.8 Hz") >= 0 || html.indexOf("146.80 Hz") >= 0 || html.indexOf("147 Hz") >= 0);
   assert.ok(html.indexOf("USB Interface") >= 0);
   assert.ok(html.indexOf("Signal detected - play to confirm") >= 0);
+});
+
+test("challenge and skill tree pages can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  S.activeChallenges = [];
+  S.skillTreeFocus = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardChallenges: [{
+            id: "daily_1",
+            title: "Daily Groove",
+            description: "Hit 3 clean reps",
+            progress: 2,
+            target: 3,
+            completed: false,
+            claimed: false
+          }]
+        }
+      };
+    },
+    getRuntimeState: function() {
+      return {
+        skillTreeFocus: "rhythm"
+      };
+    }
+  };
+
+  var challengeHtml = renderActiveChallengesCard();
+  var skillHtml = skillTreePage();
+
+  assert.ok(challengeHtml.indexOf("Daily Groove") >= 0);
+  assert.ok(challengeHtml.indexOf("2 / 3") >= 0);
+  assert.ok(skillHtml.indexOf("Rhythm") >= 0);
+  assert.ok(skillHtml.indexOf("Steady Pulse") >= 0);
+  assert.ok(skillHtml.indexOf("Overview") >= 0);
 });
 
 test("updateTunerUI rehydrates an app-id-only active instrument shell", function() {
