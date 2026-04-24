@@ -296,6 +296,14 @@
     return null;
   };
 
+  SparkCore.prototype.getNextGuidedStep = function(step) {
+    var steps = ["spark", "review", "newMove", "songSlice", "victoryLap"];
+    var idx = steps.indexOf(step);
+    if (idx === -1) return steps[0];
+    if (idx >= steps.length - 1) return null;
+    return steps[idx + 1];
+  };
+
   SparkCore.prototype.startSession = function(input) {
     input = input || {};
     if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
@@ -1692,6 +1700,62 @@
     });
     this.applyGuidedNavigationRequest("guided_done");
     return result;
+  };
+
+  SparkCore.prototype.advanceGuidedSession = function(options) {
+    options = options || {};
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var nextStep = Object.prototype.hasOwnProperty.call(options, "nextStep")
+      ? options.nextStep
+      : this.getNextGuidedStep(currentStep);
+    var nextPhase = Object.prototype.hasOwnProperty.call(options, "guidedNewMovePhase")
+      ? options.guidedNewMovePhase
+      : this.runtimeState.guidedNewMovePhase;
+    var currentActivity = this.resolveGuidedRuntimeActivity(currentStep, this.currentPlan);
+    var nextActivity = this.resolveGuidedRuntimeActivity(nextStep, this.currentPlan);
+    var currentSegmentId = this.resolveGuidedRuntimeSegmentId(currentStep, this.currentPlan) || this.runtimeState.activeSegmentId;
+    var shouldCompleteCurrentBlock = !!(
+      this.currentPlan
+      && this.currentPlan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION
+      && currentSegmentId
+      && currentActivity.guidedBlockType
+      && nextActivity.guidedBlockType
+      && currentActivity.guidedBlockType !== nextActivity.guidedBlockType
+    );
+    var completion = null;
+    var runtimeState;
+
+    if (!nextStep) {
+      completion = this.completeGuidedSession();
+      return {
+        runtimeState: this.getRuntimeState(),
+        completion: completion
+      };
+    }
+
+    if (shouldCompleteCurrentBlock) {
+      completion = this.completeSession({
+        flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+        itemId: currentSegmentId
+      });
+      if (completion && completion.planCompleted) {
+        this.applyGuidedNavigationRequest("guided_done");
+        return {
+          runtimeState: this.getRuntimeState(),
+          completion: completion
+        };
+      }
+    }
+
+    runtimeState = this.syncGuidedRuntimeState({
+      guidedStep: nextStep,
+      guidedNewMovePhase: nextPhase
+    });
+
+    return {
+      runtimeState: runtimeState,
+      completion: completion
+    };
   };
 
   SparkCore.prototype.completeSession = function(payload) {
