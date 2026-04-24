@@ -135,7 +135,7 @@ function planPage(){
     }
     h += '<div class="card mb16" style="text-align:center">';
     h += activeGuided
-      ? '<button class="btn" onclick="act(\'start_guided_session\')">Resume Guided Session</button> '
+      ? '<button class="btn" onclick="act(\'resume_guided_session\')">Resume Guided Session</button> '
       : '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
     h += '<button class="btn" onclick="act(\'back\')">Back</button>';
     h += '</div>';

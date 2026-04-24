@@ -708,7 +708,7 @@ function renderPracticePlanSummaryCard(plan) {
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(activeGuided.statusLabel) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(normalizePracticeDisplayCount(activeGuided.targetDurationMin, 10) + " min shell") + '</div>';
     h += '</div>';
-    h += '<button class="btn" onclick="act(\'start_guided_session\')" style="background:#4ECDC4;color:#fff;font-weight:800">Resume Guided Session</button>';
+    h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:#4ECDC4;color:#fff;font-weight:800">Resume Guided Session</button>';
     h += '</div>';
     return h;
   }
@@ -728,7 +728,7 @@ function renderPracticeQuickStartCard() {
     h += '<div style="font-size:12px;color:rgba(255,255,255,.88);margin:4px 0 6px">' + escHTML(activeGuided.title) + '</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(activeGuided.statusLabel + " • " + normalizePracticeDisplayCount(activeGuided.blockCount, 4) + " blocks") + '</div>';
     h += '<div style="display:flex;gap:8px;justify-content:center">';
-    h += '<button onclick="act(\'start_guided_session\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Resume Guided</button>';
+    h += '<button onclick="act(\'resume_guided_session\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Resume Guided</button>';
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Quick Chord</button>';
     h += '</div>';
   } else if(S.lastChordName){
@@ -1008,7 +1008,7 @@ function practiceTab(){
 
   // Practice Plan CTA
   h+='<div class="card mb12" style="text-align:center">';
-  h+='<button class="btn" onclick="act(\'' + (activeGuided ? 'start_guided_session' : 'openPlan') + '\')" style="background:var(--accent);color:#fff;font-weight:700">&#128218; ' + escHTML(activeGuided ? 'Resume Guided Session' : 'Today\'s Practice Plan') + '</button>';
+  h+='<button class="btn" onclick="act(\'' + (activeGuided ? 'resume_guided_session' : 'openPlan') + '\')" style="background:var(--accent);color:#fff;font-weight:700">&#128218; ' + escHTML(activeGuided ? 'Resume Guided Session' : 'Today\'s Practice Plan') + '</button>';
   h+='</div>';
 
   // Guided Session CTA
