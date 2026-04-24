@@ -765,6 +765,8 @@ test("guided done page acknowledges deep focus landings", function() {
   var html = guidedDonePage();
   assert.ok(html.indexOf("Session 3 Landed Smoothly") >= 0);
   assert.ok(html.indexOf("You ended from deep focus time. Nice work stopping on your terms.") >= 0);
+  assert.ok(html.indexOf("Start Next Session Gently") >= 0);
+  assert.ok(html.indexOf("Land at Home") >= 0);
 });
 
 test("guided exit routes through a confirmation action", function() {

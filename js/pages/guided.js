@@ -178,6 +178,20 @@ function getGuidedDoneSupportLabel(extensionCount) {
   return "You wrapped from a deep focus stretch. Nice work ending where it felt right.";
 }
 
+function getGuidedDoneNextActionLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "Next Session";
+  if (count === 2) return "Start Next Session Gently";
+  return "Begin Another Softly";
+}
+
+function getGuidedDoneHomeLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "Home";
+  if (count === 2) return "Land at Home";
+  return "Ease Back Home";
+}
+
 function getGuidedCooldownDetailLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count <= 0) return "Victory Lap";
@@ -1190,8 +1204,8 @@ function guidedDonePage() {
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/' + totalSessions + '</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
   h += '</div></div>';
-  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
-  h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';
+  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
+  h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
   h += '</div>';
   return h;
 }
