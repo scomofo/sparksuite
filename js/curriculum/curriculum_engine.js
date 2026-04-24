@@ -22,6 +22,39 @@
     return inst;
   }
 
+  function getInstrumentCurriculumMap(inst) {
+    var map = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
+    if (Array.isArray(map) && map.length) return map;
+    map = typeof inst.getCurriculumMapV2 === "function" ? inst.getCurriculumMapV2() : [];
+    return Array.isArray(map) ? map : [];
+  }
+
+  function getCompletedCurriculumLessonIds(inst) {
+    var completedLessons = [];
+    var lessonMasteryMap;
+    var instrumentKey;
+    var v2Completed;
+    if (typeof S !== "undefined") {
+      completedLessons = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
+      lessonMasteryMap = typeof SparkMastery !== "undefined"
+        ? SparkMastery.category("lessons")
+        : ((S.mastery && S.mastery.lessons) || {});
+      for (var lessonId in lessonMasteryMap) {
+        if (lessonMasteryMap[lessonId] && completedLessons.indexOf(lessonId) === -1) {
+          completedLessons.push(lessonId);
+        }
+      }
+      instrumentKey = inst && (inst.instrument || inst.instrumentType) ? (inst.instrument || inst.instrumentType) : null;
+      v2Completed = instrumentKey && S.curriculumV2CompletedSessions ? S.curriculumV2CompletedSessions[instrumentKey] : null;
+      if (Array.isArray(v2Completed)) {
+        for (var i = 0; i < v2Completed.length; i++) {
+          if (completedLessons.indexOf(v2Completed[i]) === -1) completedLessons.push(v2Completed[i]);
+        }
+      }
+    }
+    return completedLessons;
+  }
+
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
     var curriculum = getCurriculumItem("curriculums", curriculumId);
     if(!curriculum) return null;
@@ -150,25 +183,13 @@
       }
 
       // 2. Get next lesson from curriculum
-      var completedLessons = [];
-      if (typeof S !== "undefined") {
-        completedLessons = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-        var lessonMasteryMap = typeof SparkMastery !== "undefined"
-          ? SparkMastery.category("lessons")
-          : ((S.mastery && S.mastery.lessons) || {});
-        for (var lessonId in lessonMasteryMap) {
-          if (lessonMasteryMap[lessonId] && completedLessons.indexOf(lessonId) === -1) {
-            completedLessons.push(lessonId);
-          }
-        }
-      }
-
       // Try to find next lesson from active instrument's curriculum map
       // currMap is an array of lesson/level objects (not a curriculum root ID),
       // so iterate directly for the first incomplete lesson.
       var inst = getActiveCurriculumInstrument();
       if (inst) {
-        var currMap = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
+        var completedLessons = getCompletedCurriculumLessonIds(inst);
+        var currMap = getInstrumentCurriculumMap(inst);
         for (var ci = 0; ci < currMap.length; ci++) {
           var cmItem = currMap[ci];
           var cmId = cmItem && cmItem.id ? cmItem.id : null;

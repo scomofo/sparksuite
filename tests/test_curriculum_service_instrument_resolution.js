@@ -10,13 +10,18 @@ function resetEnvironment() {
   global.window = global;
   global.S = {
     completedLessons: [],
+    curriculumV2CompletedSessions: {},
     mastery: { chords: {}, lessons: {}, rhythm: {} },
     chordProgress: {}
   };
 
   eval(loadJS("js/launcher.js"));
+  eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  eval(loadJS("js/curriculum/curriculum_v2.js"));
+  eval(loadJS("js/curriculum/curriculum_v2_legacy_adapter.js"));
   eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_lessons.js"));
   eval(loadJS("js/instruments/ukulele/register.js"));
+  eval(loadJS("js/instruments/guitar/register.js"));
   eval(loadJS("js/curriculum/curriculum_engine.js"));
 }
 
@@ -47,6 +52,49 @@ test("buildLearningQueue rehydrates an app-id-only active instrument through the
   assert.ok(queue.some(function(item) {
     return item && item.type === "lesson" && String(item.id || "").indexOf("uke_") === 0;
   }), "Expected a ukulele lesson suggestion from the rehydrated active instrument");
+});
+
+test("buildLearningQueue falls back to curriculum v2 when legacy maps are absent", function() {
+  var originalGetActive = SparkInstruments.getActive;
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      instrument: "guitar",
+      getCurriculumMap: function() { return []; },
+      getCurriculumMapV2: function() {
+        return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+      }
+    };
+  };
+
+  var queue = SparkCurriculumService.buildLearningQueue({});
+
+  SparkInstruments.getActive = originalGetActive;
+  assert.ok(queue.some(function(item) {
+    return item && item.type === "lesson" && item.id === "gtr-d01";
+  }), "Expected guitar day 1 from curriculum v2 fallback");
+});
+
+test("buildLearningQueue respects curriculum v2 completion state", function() {
+  var originalGetActive = SparkInstruments.getActive;
+  S.curriculumV2CompletedSessions.guitar = ["gtr-d01"];
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      instrument: "guitar",
+      getCurriculumMap: function() { return []; },
+      getCurriculumMapV2: function() {
+        return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+      }
+    };
+  };
+
+  var queue = SparkCurriculumService.buildLearningQueue({});
+
+  SparkInstruments.getActive = originalGetActive;
+  assert.ok(queue.some(function(item) {
+    return item && item.type === "lesson" && item.id === "gtr-d02";
+  }), "Expected guitar day 2 after curriculum v2 day 1 is marked complete");
 });
 
 if (process.exitCode) process.exit(process.exitCode);

@@ -1,18 +1,24 @@
 (function() {
+  function getCompletedLessonIds() {
+    var completed = [];
+    var lessonMap;
+    if (Array.isArray(S.completedLessons)) completed = completed.concat(S.completedLessons);
+    lessonMap = typeof SparkMastery !== "undefined"
+      ? SparkMastery.category("lessons")
+      : (S.mastery && S.mastery.lessons ? S.mastery.lessons : {});
+    for (var lessonId in lessonMap) {
+      if (lessonMap[lessonId] && completed.indexOf(lessonId) === -1) completed.push(lessonId);
+    }
+    return completed;
+  }
+
   function getNextLesson(context) {
     context = context || {};
     var curriculumMap = context.curriculumMap || [];
     if (!curriculumMap.length) return null;
 
     if (curriculumMap[0] && curriculumMap[0].id && typeof getNextLessonFromCurriculum === "function") {
-      var completed = [];
-      if (Array.isArray(S.completedLessons)) completed = completed.concat(S.completedLessons);
-      var lessonMap = typeof SparkMastery !== "undefined"
-        ? SparkMastery.category("lessons")
-        : (S.mastery && S.mastery.lessons ? S.mastery.lessons : {});
-      for (var lessonId in lessonMap) {
-        if (lessonMap[lessonId]) completed.push(lessonId);
-      }
+      var completed = getCompletedLessonIds();
 
       var nextLessonId = getNextLessonFromCurriculum(curriculumMap[0].id, completed);
       if (nextLessonId) return nextLessonId;
