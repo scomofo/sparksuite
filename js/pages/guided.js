@@ -61,9 +61,7 @@ function getGuidedInstrumentType() {
 function getGuidedSessionTotalCount() {
   var inst = getGuidedPageInstrument();
   var D = inst && typeof inst.getData === "function" ? inst.getData() : null;
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getGuidedPageCoreView();
   var context = coreView && coreView.plan && coreView.plan.context ? coreView.plan.context : null;
   var summary;
   var instrumentType;
@@ -169,6 +167,40 @@ function getGuidedStepActivity(plan, step) {
   return null;
 }
 
+function resolveGuidedViewActivity(plan, step, runtimeState) {
+  var activity = null;
+  var blockActivities = plan && plan.blockActivities ? plan.blockActivities : null;
+  if (!blockActivities) return null;
+  if (runtimeState && runtimeState.guidedActivityId) {
+    for (var blockType in blockActivities) {
+      if (!Object.prototype.hasOwnProperty.call(blockActivities, blockType)) continue;
+      activity = blockActivities[blockType];
+      if (activity && activity.id === runtimeState.guidedActivityId) return activity;
+    }
+  }
+  activity = getGuidedStepActivity(plan, step);
+  if (!activity) return null;
+  if (
+    runtimeState
+    && (runtimeState.guidedActivityId || runtimeState.guidedActivityKind || runtimeState.guidedBlockType)
+    && (!activity.id || !activity.kind || !activity.block_type)
+  ) {
+    return Object.assign({}, activity, {
+      id: activity.id || runtimeState.guidedActivityId || null,
+      kind: activity.kind || runtimeState.guidedActivityKind || null,
+      block_type: activity.block_type || runtimeState.guidedBlockType || null
+    });
+  }
+  return activity;
+}
+
+function getGuidedPageCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 function renderGuidedActivityMeta(activity, fallbackFocusSong) {
   var chips = [];
   var durationSec;
@@ -232,7 +264,7 @@ function buildGuidedPhasePrompt(activity, phase) {
 
 function _guidedSpark(plan) {
   var sparkText = firstGuidedTextToken(plan.spark && plan.spark.text, "Let's get started.");
-  var sparkActivity = getGuidedStepActivity(plan, "spark");
+  var sparkActivity = getGuidedSessionView().activeActivity;
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#10024; Spark</h3>';
   h += renderGuidedActivityMeta(sparkActivity, plan.focus_song);
@@ -250,7 +282,7 @@ function _guidedReview(plan) {
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var reviewText = firstGuidedTextToken(plan.review && plan.review.text, "Take a quick review pass.");
-  var reviewActivity = getGuidedStepActivity(plan, "review");
+  var reviewActivity = getGuidedSessionView().activeActivity;
   if (!plan.review) {
     return '<div class="card mb16"><h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>' +
       '<p style="color:var(--text-muted)">No review for this session \u2014 it\'s your first!</p>' +
@@ -285,7 +317,7 @@ function _guidedNewMove(plan) {
   var guidedView = getGuidedSessionView();
   var newMoveText = firstGuidedTextToken(plan.newMove && plan.newMove.text, "Practice the new move slowly and cleanly.");
   var guidedBpm = normalizeGuidedBpm(plan && plan.bpm, 80);
-  var newMoveActivity = getGuidedStepActivity(plan, "newMove");
+  var newMoveActivity = guidedView.activeActivity;
   if (!plan.newMove) return '';
   if (window._watchCleanup && window._watchCleanup.cleanup) { window._watchCleanup.cleanup(); window._watchCleanup = null; }
   if (window._shadowCleanup && window._shadowCleanup.cleanup) { window._shadowCleanup.cleanup(); window._shadowCleanup = null; }
@@ -376,7 +408,7 @@ function _guidedNewMove(plan) {
 function _guidedSongSlice(plan) {
   var songSliceText = firstGuidedTextToken(plan.songSlice && plan.songSlice.text, "Play this short song slice with steady timing.");
   var songSliceTitle = firstGuidedTextToken(plan.songSlice && plan.songSlice.song);
-  var songActivity = getGuidedStepActivity(plan, "songSlice");
+  var songActivity = getGuidedSessionView().activeActivity;
   if (!plan.songSlice) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #45B7D1">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#45B7D1;font-weight:800">&#127925; Song Slice</h3>';
@@ -398,7 +430,7 @@ function _guidedVictoryLap(plan) {
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var victoryText = firstGuidedTextToken(plan.victoryLap && plan.victoryLap.text, "Give it one confident final pass.");
-  var victoryActivity = getGuidedStepActivity(plan, "victoryLap");
+  var victoryActivity = getGuidedSessionView().activeActivity;
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D;background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#127942; Victory Lap!</h3>';
@@ -421,9 +453,7 @@ function _guidedVictoryLap(plan) {
 function guidedDonePage() {
   var guidedView = getGuidedSessionView();
   var plan = guidedView.plan;
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getGuidedPageCoreView();
   var lastOutcome = coreView && coreView.lastSessionOutcome ? coreView.lastSessionOutcome : null;
   var title = plan ? firstGuidedTextToken(plan.title, plan.id, "Guided session") : "";
   var num = plan ? plan.num : 0;
@@ -447,23 +477,28 @@ function guidedDonePage() {
 }
 
 function getGuidedSessionView() {
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getGuidedPageCoreView();
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var plan = coreView
     && coreView.plan
     && coreView.plan.flow === "guided_session"
     && coreView.plan.context
     ? coreView.plan.context.guidedPlan || null
     : null;
+  var guidedStep = runtimeState && runtimeState.guidedStep
+    ? runtimeState.guidedStep
+    : (S.guidedStep || "spark");
 
   return {
     plan: plan || S.guidedPlan || null,
-    guidedStep: coreView && coreView.runtimeState && coreView.runtimeState.guidedStep
-      ? coreView.runtimeState.guidedStep
-      : (S.guidedStep || "spark"),
-    newMovePhase: coreView && coreView.runtimeState && coreView.runtimeState.guidedNewMovePhase
-      ? coreView.runtimeState.guidedNewMovePhase
+    guidedStep: guidedStep,
+    newMovePhase: runtimeState && runtimeState.guidedNewMovePhase
+      ? runtimeState.guidedNewMovePhase
       : (S.newMovePhase || null)
+    ,
+    activeActivity: resolveGuidedViewActivity(plan || S.guidedPlan || null, guidedStep, runtimeState),
+    activeActivityId: runtimeState && runtimeState.guidedActivityId ? runtimeState.guidedActivityId : (S.guidedActivityId || null),
+    activeActivityKind: runtimeState && runtimeState.guidedActivityKind ? runtimeState.guidedActivityKind : (S.guidedActivityKind || null),
+    activeBlockType: runtimeState && runtimeState.guidedBlockType ? runtimeState.guidedBlockType : (S.guidedBlockType || null)
   };
 }

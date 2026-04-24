@@ -123,10 +123,22 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
         flow: "guided_session",
         context: { guidedPlan: S.guidedPlan }
       },
-      runtimeState: { guidedStep: "newMove", guidedNewMovePhase: "try" },
+      runtimeState: {
+        guidedStep: "newMove",
+        guidedNewMovePhase: "try",
+        guidedActivityId: "gtr-d01-drill",
+        guidedActivityKind: "review",
+        guidedBlockType: "drill"
+      },
       lastSessionOutcome: { xpAwarded: 30 }
     };
   };
+  var guidedView = getGuidedSessionView();
+  assert.strictEqual(guidedView.activeActivityId, "gtr-d01-drill");
+  assert.strictEqual(guidedView.activeActivityKind, "review");
+  assert.strictEqual(guidedView.activeBlockType, "drill");
+  assert.ok(guidedView.activeActivity);
+  assert.strictEqual(guidedView.activeActivity.id, "gtr-d01-drill");
   var newMoveHtml = guidedSessionPage();
   assert.ok(newMoveHtml.indexOf("drill block") >= 0);
   assert.ok(newMoveHtml.indexOf(">3 min<") >= 0);
