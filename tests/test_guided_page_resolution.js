@@ -278,6 +278,7 @@ test("guided page shows block progress from the active v2 session plan", functio
   assert.ok(html.indexOf("width:50%") >= 0);
   assert.ok(html.indexOf("1m 30s left") >= 0);
   assert.ok(html.indexOf("7m left") >= 0);
+  assert.ok(html.indexOf("About 1m 30s left in this block.") >= 0);
 });
 
 test("guided page shows drill subphase progress on the active block card", function() {
@@ -393,6 +394,7 @@ test("guided page shows drill subphase progress on the active block card", funct
   assert.ok(shadowHtml.indexOf("Shadow 2/4") >= 0);
   assert.ok(shadowHtml.indexOf("width:50%") >= 0);
   assert.ok(shadowHtml.indexOf("1m 30s left") >= 0);
+  assert.ok(shadowHtml.indexOf("About 1m 30s left in this block.") >= 0);
 });
 
 test("guided page header reflects non-drill block themes", function() {
@@ -537,6 +539,44 @@ test("guided cards use block-aware transition labels", function() {
   };
   assert.ok(guidedSessionPage().indexOf("Complete Session!") >= 0);
   assert.ok(guidedSessionPage().indexOf("Cooldown Block") >= 0);
+});
+
+test("guided cards switch to ready copy near the end of a block", function() {
+  S.guidedPlan = {
+    id: "gtr-d05",
+    num: 5,
+    title: "The A chord",
+    level: 1,
+    bpm: 80,
+    songSlice: { text: "Play the loop.", song: "A loop" }
+  };
+
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan },
+        segments: [
+          { id: "gtr-d05_warm_engine", label: "Warm Engine", durationSec: 90, completed: true, meta: { guidedBlockType: "warm_engine" } },
+          { id: "gtr-d05_drill", label: "Drill", durationSec: 180, completed: true, meta: { guidedBlockType: "drill" } },
+          { id: "gtr-d05_song", label: "Song Slice", durationSec: 240, completed: false, meta: { guidedBlockType: "song" } },
+          { id: "gtr-d05_cooldown", label: "Cooldown", durationSec: 90, completed: false, meta: { guidedBlockType: "cooldown" } }
+        ]
+      },
+      runtimeState: {
+        guidedStep: "songSlice",
+        activeSegmentId: "gtr-d05_song",
+        transport: {
+          status: "running",
+          positionMs: 225000
+        }
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+
+  var html = guidedSessionPage();
+  assert.ok(html.indexOf("Ready to move on when you are.") >= 0);
 });
 
 test("guided song slice ignores stale cached copy", function() {
