@@ -22,6 +22,43 @@
     return [];
   }
 
+  function getActivityBundle(instrument) {
+    var catalog = getCatalog();
+    var bundles;
+    var i;
+    if (!catalog || !Array.isArray(catalog.activity_bundles)) return null;
+    bundles = catalog.activity_bundles;
+    for (i = 0; i < bundles.length; i++) {
+      if (bundles[i] && bundles[i].instrument === instrument) return bundles[i];
+    }
+    return null;
+  }
+
+  function getSessionActivities(instrument, sessionId) {
+    var bundle = getActivityBundle(instrument);
+    var activities;
+    var matches = [];
+    var i;
+    if (!bundle || !Array.isArray(bundle.activities) || !sessionId) return matches;
+    activities = bundle.activities;
+    for (i = 0; i < activities.length; i++) {
+      if (activities[i] && activities[i].session_id === sessionId) matches.push(activities[i]);
+    }
+    return matches;
+  }
+
+  function getActivity(instrument, activityId) {
+    var bundle = getActivityBundle(instrument);
+    var activities;
+    var i;
+    if (!bundle || !Array.isArray(bundle.activities) || !activityId) return null;
+    activities = bundle.activities;
+    for (i = 0; i < activities.length; i++) {
+      if (activities[i] && activities[i].id === activityId) return activities[i];
+    }
+    return null;
+  }
+
   function getNextSession(instrument) {
     var track = getTrack(instrument);
     var completed;
@@ -55,6 +92,9 @@
   window.SparkCurriculumV2 = {
     getCatalog: getCatalog,
     getTrack: getTrack,
+    getActivityBundle: getActivityBundle,
+    getSessionActivities: getSessionActivities,
+    getActivity: getActivity,
     getNextSession: getNextSession,
     getTrackSummary: getTrackSummary
   };

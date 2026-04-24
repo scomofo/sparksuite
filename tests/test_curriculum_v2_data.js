@@ -54,6 +54,13 @@ test("browser helper exposes next session summaries", function() {
   assert.strictEqual(summary.sessionCount, 30);
   assert.ok(summary.nextSession);
   assert.strictEqual(summary.nextSession.id, "gtr-d01");
+  const activities = global.SparkCurriculumV2.getSessionActivities("guitar", "gtr-d01");
+  assert.strictEqual(activities.length, 4);
+  assert.strictEqual(activities[0].id, "gtr-d01-warm_engine");
+  assert.ok(activities[0].copy.setup.indexOf("warm engine block") >= 0);
+  const songActivity = global.SparkCurriculumV2.getActivity("guitar", "gtr-d01-song");
+  assert.ok(songActivity);
+  assert.strictEqual(songActivity.block_type, "song");
   const legacyLessons = global.SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
   assert.strictEqual(legacyLessons.length, 30);
   assert.strictEqual(legacyLessons[0].id, "gtr-d01");
