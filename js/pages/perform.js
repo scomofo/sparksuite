@@ -152,12 +152,17 @@ function renderPerformControlSection(label, body, accentColor) {
     '</div>';
 }
 
+function getPerformPageCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 function performPage() {
   var chart = S.performChart;
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getPerformPageCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
     ? runtimeState.performanceTargetTechnique
@@ -369,9 +374,7 @@ function performPage() {
 }
 
 function performDonePage() {
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getPerformPageCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var r = runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults;
   var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
