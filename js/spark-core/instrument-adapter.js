@@ -78,6 +78,7 @@ window.SparkInstrumentAdapter = (function () {
 
   function getSkillTree()                 { return _proxy("getSkillTree") || { branches: [] }; }
   function getCurriculumMap()             { return _proxy("getCurriculumMap") || []; }
+  function getCurriculumMapV2()           { return _proxy("getCurriculumMapV2") || []; }
   function getExercises()                 { return _proxy("getExercises") || []; }
   function getSongs()                     { return _proxy("getSongs") || []; }
   function getDifficultyRules(context)    { return _proxy("getDifficultyRules", context) || { difficultyAction: "keep" }; }
@@ -96,6 +97,7 @@ window.SparkInstrumentAdapter = (function () {
     getSessionStructure:   getSessionStructure,
     getSkillTree:          getSkillTree,
     getCurriculumMap:      getCurriculumMap,
+    getCurriculumMapV2:    getCurriculumMapV2,
     getExercises:          getExercises,
     getSongs:              getSongs,
     getDifficultyRules:    getDifficultyRules,

@@ -209,6 +209,12 @@
       return this.getData().CURRICULUM || [];
     },
 
+    getCurriculumMapV2: function() {
+      return typeof SparkCurriculumV2LegacyAdapter !== "undefined"
+        ? SparkCurriculumV2LegacyAdapter.toLegacyLessons("bass")
+        : [];
+    },
+
     getExercises: function() {
       return this.getData().FINGER_EXERCISES || [];
     },

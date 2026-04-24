@@ -46,12 +46,19 @@ test("generated browser data file exists", function() {
 test("browser helper exposes next session summaries", function() {
   evalFile(path.join("js", "curriculum", "curriculum_v2_data.generated.js"));
   evalFile(path.join("js", "curriculum", "curriculum_v2.js"));
+  evalFile(path.join("js", "curriculum", "curriculum_v2_legacy_adapter.js"));
   assert.ok(global.SparkCurriculumV2);
+  assert.ok(global.SparkCurriculumV2LegacyAdapter);
   const summary = global.SparkCurriculumV2.getTrackSummary("guitar");
   assert.ok(summary);
   assert.strictEqual(summary.sessionCount, 30);
   assert.ok(summary.nextSession);
   assert.strictEqual(summary.nextSession.id, "gtr-d01");
+  const legacyLessons = global.SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+  assert.strictEqual(legacyLessons.length, 30);
+  assert.strictEqual(legacyLessons[0].id, "gtr-d01");
+  assert.strictEqual(legacyLessons[0].num, 1);
+  assert.strictEqual(legacyLessons[0].source, "curriculum-v2");
 });
 
 TRACKS.forEach((instrument) => {

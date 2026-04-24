@@ -342,6 +342,12 @@
       return window.SparkUkuleleLessons || [];
     },
 
+    getCurriculumMapV2: function() {
+      return typeof SparkCurriculumV2LegacyAdapter !== "undefined"
+        ? SparkCurriculumV2LegacyAdapter.toLegacyLessons("ukulele")
+        : [];
+    },
+
     getExercises: function() {
       var lessons = window.SparkUkuleleLessons || [];
       if (!lessons.length) return [];
@@ -393,4 +399,3 @@
     }
   });
 })();
-
