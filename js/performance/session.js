@@ -4,6 +4,12 @@ var _performRAF = null;
 var _performStopping = false;
 var _performDirectAudio = null;
 
+function getPerformanceSessionCore() {
+  if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+  if (typeof sparkCore !== "undefined") return sparkCore;
+  return null;
+}
+
 function cleanupPerformanceDirectAudio() {
   if (!_performDirectAudio) return;
   try { _performDirectAudio.pause(); } catch (e) {}
@@ -257,8 +263,9 @@ function startPerformance(chartIdOrChart, opts) {
       if (opts.preset) S.performPracticePreset = opts.preset;
       S.performInputSource = S.performMode;
     }
-    if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-      window.sparkCore.syncPerformanceRuntimeState("start", {
+    var core = getPerformanceSessionCore();
+    if (core && typeof core.syncPerformanceRuntimeState === "function") {
+      core.syncPerformanceRuntimeState("start", {
         chartId: chartId,
         difficulty: opts.difficulty || S.performDifficulty,
         arrangementType: chart.arrangementType || S.performArrangementType,
@@ -359,8 +366,9 @@ function startPerformance(chartIdOrChart, opts) {
       S.screen = SCR.HOME;
       S.tab = TAB.SONGS;
     }
-    if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-      window.sparkCore.syncPerformanceRuntimeState("start_failed", {
+    var startFailedCore = getPerformanceSessionCore();
+    if (startFailedCore && typeof startFailedCore.syncPerformanceRuntimeState === "function") {
+      startFailedCore.syncPerformanceRuntimeState("start_failed", {
         screen: "home"
       });
     }
@@ -387,8 +395,9 @@ function stopPerformance() {
     S.performPlaying = false;
     S.performPaused = false;
   }
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState("stop", {
+  var stopCore = getPerformanceSessionCore();
+  if (stopCore && typeof stopCore.syncPerformanceRuntimeState === "function") {
+    stopCore.syncPerformanceRuntimeState("stop", {
       screen: "performance_song"
     });
   }
@@ -419,8 +428,9 @@ function pausePerformance() {
     S.performPaused = true;
     S.performPlaying = false;
   }
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState("pause");
+  var pauseCore = getPerformanceSessionCore();
+  if (pauseCore && typeof pauseCore.syncPerformanceRuntimeState === "function") {
+    pauseCore.syncPerformanceRuntimeState("pause");
   }
   if (_performRAF) { cancelAnimationFrame(_performRAF); _performRAF = null; }
   render();
@@ -434,8 +444,9 @@ function resumePerformance() {
     S.performPaused = false;
     S.performPlaying = true;
   }
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState("resume");
+  var resumeCore = getPerformanceSessionCore();
+  if (resumeCore && typeof resumeCore.syncPerformanceRuntimeState === "function") {
+    resumeCore.syncPerformanceRuntimeState("resume");
   }
   if (typeof playStems === "function") playStems();
   if (_performDirectAudio) playPerformanceDirectAudio(S.performCurrentSec, S.performSpeed);
@@ -453,8 +464,9 @@ function seekPerformance(sec) {
   } else {
     S.performCurrentSec = sec;
   }
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState("seek", { sec: sec });
+  var seekCore = getPerformanceSessionCore();
+  if (seekCore && typeof seekCore.syncPerformanceRuntimeState === "function") {
+    seekCore.syncPerformanceRuntimeState("seek", { sec: sec });
   }
   if (typeof seekStems === "function") seekStems(sec);
   seekPerformanceDirectAudio(sec, S.performSpeed);
@@ -468,8 +480,9 @@ function setPerformanceLoop(loopObj) {
   } else {
     S.performLoop = loopObj;
   }
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState("set_loop", { loop: loopObj });
+  var loopCore = getPerformanceSessionCore();
+  if (loopCore && typeof loopCore.syncPerformanceRuntimeState === "function") {
+    loopCore.syncPerformanceRuntimeState("set_loop", { loop: loopObj });
   }
   render();
 }
@@ -480,8 +493,9 @@ function clearPerformanceLoop() {
   } else {
     S.performLoop = null;
   }
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState("clear_loop");
+  var clearLoopCore = getPerformanceSessionCore();
+  if (clearLoopCore && typeof clearLoopCore.syncPerformanceRuntimeState === "function") {
+    clearLoopCore.syncPerformanceRuntimeState("clear_loop");
   }
   render();
 }
@@ -491,8 +505,9 @@ function updatePerformanceFrame() {
 
   var nowSec = PerformanceTransport.now();
   S.performCurrentSec = nowSec;
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState("tick", { sec: nowSec, status: "running" });
+  var tickCore = getPerformanceSessionCore();
+  if (tickCore && typeof tickCore.syncPerformanceRuntimeState === "function") {
+    tickCore.syncPerformanceRuntimeState("tick", { sec: nowSec, status: "running" });
   }
   S.performPhraseIdx = getPerformancePhraseIndexForTime(S.performChart, nowSec);
 
@@ -727,17 +742,18 @@ function finishPerformance() {
     S.performResults = results;
     S.performStarRating = results.stars;
   }
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState("finish", {
+  var finishCore = getPerformanceSessionCore();
+  if (finishCore && typeof finishCore.syncPerformanceRuntimeState === "function") {
+    finishCore.syncPerformanceRuntimeState("finish", {
       screen: "perform_done"
     });
   }
 
   var xpAward = Math.max(5, Math.round(S.performResults.accuracy / 10));
   var corePerformanceResult = null;
-  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-    var completionRequest = typeof window.sparkCore.buildPerformanceCompletionRequest === "function"
-      ? window.sparkCore.buildPerformanceCompletionRequest({
+  if (finishCore && typeof finishCore.completeSession === "function") {
+    var completionRequest = typeof finishCore.buildPerformanceCompletionRequest === "function"
+      ? finishCore.buildPerformanceCompletionRequest({
           performanceResults: S.performResults,
           xpAwarded: xpAward,
           chartId: S.performChartId || "unknown",
@@ -750,7 +766,7 @@ function finishPerformance() {
           performanceResults: S.performResults,
           xpAwarded: xpAward
         };
-    corePerformanceResult = window.sparkCore.completeSession(completionRequest);
+    corePerformanceResult = finishCore.completeSession(completionRequest);
     if (corePerformanceResult && typeof corePerformanceResult.xpAwarded === "number") {
       xpAward = corePerformanceResult.xpAwarded;
     }
