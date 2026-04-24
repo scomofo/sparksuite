@@ -202,6 +202,7 @@ test("piano interactive surface tiles expose keyboard handlers", function() {
   assert.ok(practiceSource.indexOf('act(\\\'view_level\\\',') >= 0 && practiceSource.indexOf('role="button" tabindex="0"') >= 0);
   assert.ok(songsSource.indexOf('style-header" role="button" tabindex="0"') >= 0);
   assert.ok(toolsSource.indexOf('role="button" tabindex="0"') >= 0);
+  assert.ok(toolsSource.indexOf('onclick="act(\\\'exportProgress\\\')"') >= 0);
 });
 
 test("piano practice tab ignores stale curriculum and custom set labels", function() {

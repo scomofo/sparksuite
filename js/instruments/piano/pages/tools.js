@@ -259,7 +259,7 @@ function settingsTab() {
   // Export / Import / Reset
   html += '<h3 style="margin-top:20px">Data</h3>';
   html += '<div class="setting-row">';
-  html += '<button class="btn" onclick="exportState()" style="background:#F59E0B;color:#fff">Export JSON</button>';
+  html += '<button class="btn" onclick="act(\'exportProgress\')" style="background:#F59E0B;color:#fff">Export JSON</button>';
   html += '</div>';
   html += '<div class="setting-row">';
   html += '<button class="btn btn-danger" onclick="if(confirm(\'Reset all progress?\'))act(\'reset\')">Reset Progress</button>';
