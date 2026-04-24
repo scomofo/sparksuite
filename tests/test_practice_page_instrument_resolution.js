@@ -199,6 +199,7 @@ test("practice instrument switcher rows expose keyboard handlers", function() {
   var source = loadJS("js/pages/practice.js");
   assert.ok(source.indexOf('sv2-inst-row__item" role="button" tabindex="0"') >= 0);
   assert.ok(source.indexOf('onclick="act(\\\'reset\\\')"') >= 0);
+  assert.ok(loadJS("js/pages/plan.js").indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
 });
 
 test("practicePage renders human plan labels from a core-backed daily practice plan", function() {
