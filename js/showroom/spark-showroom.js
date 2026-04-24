@@ -1862,7 +1862,6 @@
     var progressPct = (opts.progressPct != null) ? opts.progressPct : 65;
     var nextXpGoal  = opts.nextXpGoal  || "250 XP to Silver Badge";
     var ctaLabel    = opts.ctaLabel    || "Start Next Lesson";
-    var ctaAction   = opts.ctaAction   || "act('startLesson')";
     var userInitial = (opts.userInitial || "A").charAt(0).toUpperCase();
 
     var modules = opts.modules || [
