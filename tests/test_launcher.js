@@ -353,6 +353,8 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomFocusLibrarySearch\\\')"') >= 0);
   assert.ok(showroomSource.indexOf('id="showroom-library-search"') >= 0);
   assert.ok(showroomSource.indexOf('oninput="act(\\\'communitySearch\\\',this.value);render()"') >= 0);
+  assert.ok(showroomSource.indexOf('var keyboard = row.onClick ?') >= 0);
+  assert.ok(showroomSource.indexOf('role="button" tabindex="0" onkeydown="if(event.key===\\\'Enter\\\'||event.key===\\\' \\') >= 0);
   assert.ok(showroomSource.indexOf('class="showroom-song-row ') >= 0);
   assert.ok(showroomSource.indexOf('" role="button" tabindex="0" onclick="') >= 0);
   assert.ok(showroomSource.indexOf("onkeydown=\"if(event.key===\\'Enter\\'||event.key===\\' \\'){event.preventDefault();") >= 0);
