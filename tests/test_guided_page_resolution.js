@@ -279,6 +279,8 @@ test("guided page shows block progress from the active v2 session plan", functio
   assert.ok(html.indexOf("1m 30s left") >= 0);
   assert.ok(html.indexOf("7m left") >= 0);
   assert.ok(html.indexOf("About 1m 30s left in this block.") >= 0);
+  assert.ok(html.indexOf("onclick=\"act('guidedAdvancePhase')\"") >= 0);
+  assert.ok(html.indexOf(">Continue<") >= 0);
 });
 
 test("guided page shows drill subphase progress on the active block card", function() {
@@ -395,6 +397,7 @@ test("guided page shows drill subphase progress on the active block card", funct
   assert.ok(shadowHtml.indexOf("width:50%") >= 0);
   assert.ok(shadowHtml.indexOf("1m 30s left") >= 0);
   assert.ok(shadowHtml.indexOf("About 1m 30s left in this block.") >= 0);
+  assert.ok(shadowHtml.indexOf("onclick=\"act('guidedAdvancePhase')\"") >= 0);
 });
 
 test("guided page header reflects non-drill block themes", function() {
@@ -474,6 +477,8 @@ test("guided page header reflects non-drill block themes", function() {
   };
   var cooldownHtml = guidedSessionPage();
   assert.ok(cooldownHtml.indexOf("Cooldown Block") >= 0);
+  assert.ok(cooldownHtml.indexOf("onclick=\"act('guidedComplete')\"") >= 0);
+  assert.ok(cooldownHtml.indexOf(">Finish Session<") >= 0);
 });
 
 test("guided cards use block-aware transition labels", function() {

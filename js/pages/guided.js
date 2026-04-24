@@ -269,10 +269,29 @@ function getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase)
   return phaseLabels[guidedNewMovePhase] + " " + (phaseIndex + 1) + "/" + phaseOrder.length;
 }
 
-function renderGuidedBlockProgress(blockProgress) {
+function getGuidedQuickAction(guidedView) {
+  var step = guidedView && guidedView.guidedStep ? guidedView.guidedStep : null;
+  var phase = guidedView && guidedView.newMovePhase ? guidedView.newMovePhase : null;
+  if (step === "victoryLap") {
+    return { action: "guidedComplete", label: "Finish Session" };
+  }
+  if (step === "newMove" && phase && phase !== "refine") {
+    return { action: "guidedAdvancePhase", label: "Continue" };
+  }
+  if (step === "newMove" && phase === "refine") {
+    return { action: "guidedNext", label: "Continue" };
+  }
+  if (step === "spark" || step === "review" || step === "songSlice") {
+    return { action: "guidedNext", label: "Continue" };
+  }
+  return null;
+}
+
+function renderGuidedBlockProgress(blockProgress, guidedView) {
   if (!blockProgress || !blockProgress.length) return "";
   return '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 16px">' +
     blockProgress.map(function(block) {
+      var quickAction = block.state === "now" ? getGuidedQuickAction(guidedView) : null;
       var durationLabel = block.durationSec > 0
         ? Math.max(1, Math.round(block.durationSec / 60)) + " min"
         : "";
@@ -301,6 +320,9 @@ function renderGuidedBlockProgress(blockProgress) {
           escHTML(remainingLabel || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
+        (quickAction
+          ? '<button class="btn" onclick="act(\'' + quickAction.action + '\')" style="margin-top:8px;padding:8px 12px;font-size:12px;font-weight:800;background:' + stateColor + ';color:' + (block.state === "done" ? "#0F3D38" : "#fff") + '">' + escHTML(quickAction.label) + '</button>'
+          : "") +
       '</div>';
     }).join("") +
     '</div>';
@@ -467,7 +489,7 @@ function guidedSessionPage() {
 
   h += renderGuidedShellSummary(guidedView.shellSummary);
   h += guidedStepIndicator(guidedStep);
-  h += renderGuidedBlockProgress(guidedView.blockProgress);
+  h += renderGuidedBlockProgress(guidedView.blockProgress, guidedView);
 
   // Render current step
   switch (guidedStep) {
