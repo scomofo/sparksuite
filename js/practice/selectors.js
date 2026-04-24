@@ -32,8 +32,11 @@
   }
 
   function getNextModuleLesson(module){
-    if(!module || typeof module.getCurriculumMap!=="function") return null;
-    var curriculum = module.getCurriculumMap() || [];
+    if(!module) return null;
+    var curriculum = typeof module.getCurriculumMap==="function" ? (module.getCurriculumMap() || []) : [];
+    if(!curriculum.length && typeof module.getCurriculumMapV2==="function"){
+      curriculum = module.getCurriculumMapV2() || [];
+    }
     if(!curriculum.length) return null;
     var completed = getCompletedLessonIds();
     if(curriculum[0] && curriculum[0].id && typeof getNextLessonFromCurriculum==="function"){
