@@ -122,5 +122,35 @@ test("showroom practice drills route start buttons through practiceStartItem", f
   assert.strictEqual(showroomSource.indexOf("launchPracticePlanItem(this.getAttribute("), -1);
 });
 
+test("showroom library chips route through action handlers", function() {
+  var showroomSource = loadJS("js/showroom/spark-showroom.js");
+  assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomLibraryCategory\\\',') >= 0);
+  assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomLibraryLevel\\\',') >= 0);
+  assert.strictEqual(showroomSource.indexOf("SparkShowroom.setLibraryCategory("), -1);
+  assert.strictEqual(showroomSource.indexOf("SparkShowroom.setLibraryLevel("), -1);
+});
+
+test("system action family forwards showroom library filters to the showroom api", function() {
+  var handled;
+  var categoryCalls = [];
+  var levelCalls = [];
+  global.runSparkActionFamilies = undefined;
+  global.registerSparkActionFamily = function(name, handler) {
+    global.runSparkActionFamilies = handler;
+  };
+  global.SparkShowroom = {
+    setLibraryCategory: function(value) { categoryCalls.push(value); },
+    setLibraryLevel: function(value) { levelCalls.push(value); }
+  };
+  global.eval(loadJS("js/actions/system_family.js"));
+
+  handled = global.runSparkActionFamilies("showroomLibraryCategory", "Rock");
+  assert.strictEqual(handled, true);
+  handled = global.runSparkActionFamilies("showroomLibraryLevel", "Intermediate");
+  assert.strictEqual(handled, true);
+  assert.deepStrictEqual(categoryCalls, ["Rock"]);
+  assert.deepStrictEqual(levelCalls, ["Intermediate"]);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);

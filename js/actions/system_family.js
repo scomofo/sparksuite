@@ -155,6 +155,22 @@
       return true;
     }
 
+    if (a === "showroomLibraryCategory") {
+      if (typeof window !== "undefined" && window.SparkShowroom && typeof window.SparkShowroom.setLibraryCategory === "function") {
+        window.SparkShowroom.setLibraryCategory(v);
+        return true;
+      }
+      return false;
+    }
+
+    if (a === "showroomLibraryLevel") {
+      if (typeof window !== "undefined" && window.SparkShowroom && typeof window.SparkShowroom.setLibraryLevel === "function") {
+        window.SparkShowroom.setLibraryLevel(v);
+        return true;
+      }
+      return false;
+    }
+
     if (a === "showroomOpenQuickTools") {
       showMicroToast("Quick tools are available below. More are on the way.", "&#128295;");
       render();
