@@ -696,9 +696,18 @@ function renderPracticePlanSummaryCard(plan) {
 }
 
 function renderPracticeQuickStartCard() {
+  var activeGuided = getPracticeActiveGuidedSummary();
   var h = '<div class="card mb12" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);border:none;text-align:center;padding:20px">';
   h += '<div style="font-size:28px;margin-bottom:4px">&#9889;</div>';
-  if(S.lastChordName){
+  if (activeGuided) {
+    h += '<div style="font-size:16px;font-weight:900;color:#fff">Guided Session Live</div>';
+    h += '<div style="font-size:12px;color:rgba(255,255,255,.88);margin:4px 0 6px">' + escHTML(activeGuided.title) + '</div>';
+    h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(activeGuided.statusLabel + " • " + normalizePracticeDisplayCount(activeGuided.blockCount, 4) + " blocks") + '</div>';
+    h += '<div style="display:flex;gap:8px;justify-content:center">';
+    h += '<button onclick="act(\'start_guided_session\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Resume Guided</button>';
+    h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Quick Chord</button>';
+    h += '</div>';
+  } else if(S.lastChordName){
     h += '<div style="font-size:16px;font-weight:900;color:#fff">Pick Up Where You Left Off</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 12px">Continue practicing: <strong>'+escHTML(S.lastChordName)+'</strong></div>';
     h += '<div style="display:flex;gap:8px;justify-content:center">';
