@@ -324,6 +324,7 @@ test('onboarding intention input ignores stale sentinel strings', function() {
   var renderSource = loadJS('js/render.js');
   assert.ok(renderSource.indexOf('var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);') >= 0);
   assert.ok(renderSource.indexOf('value="\'+escHTML(onboardingPracticeIntention)+\'"') >= 0);
+  assert.ok(renderSource.indexOf('onclick="act(\\\'appReload\\\')"') >= 0);
 });
 
 test('app boot resets to showroom home instead of restoring last active instrument', function() {

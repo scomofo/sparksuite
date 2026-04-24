@@ -27,4 +27,22 @@ test("feedback page routes draft updates through utility actions", function() {
   assert.ok(utilitySource.indexOf('S.feedbackDraft.text = v;') >= 0);
 });
 
+test("utility family exposes app reload through an action", function() {
+  var utilitySource = loadJS("js/actions/utility_family.js");
+  var reloadCalls = 0;
+  global.location = {
+    reload: function() {
+      reloadCalls++;
+    }
+  };
+  global.window = global;
+  global.registerSparkActionFamily = function(name, fn) {
+    global.runSparkActionFamilies = fn;
+  };
+  global.eval(utilitySource);
+  assert.ok(utilitySource.indexOf('if (a === "appReload") {') >= 0);
+  assert.strictEqual(global.runSparkActionFamilies("appReload"), true);
+  assert.strictEqual(reloadCalls, 1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
