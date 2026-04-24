@@ -357,11 +357,13 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('var keyboard = row.onClick ?') >= 0);
   assert.ok(showroomSource.indexOf('role="button" tabindex="0" onkeydown="if(event.key===\\\'Enter\\\'||event.key===\\\' \\') >= 0);
   assert.ok(showroomSource.indexOf('class="showroom-song-row ') >= 0);
-  assert.ok(showroomSource.indexOf('" role="button" tabindex="0" onclick="') >= 0);
+  assert.ok(showroomSource.indexOf('" role="button" tabindex="0" onclick="if(event.target&&event.target.closest&&event.target.closest(\\\'button,input,select,textarea,a\\\')){return;}') >= 0);
   assert.ok(showroomSource.indexOf("onkeydown=\"if(event.key===\\'Enter\\'||event.key===\\' \\'){event.preventDefault();") >= 0);
   assert.ok(showroomSource.indexOf('Quick Drills</h3><span class="link"') >= 0);
   assert.ok(showroomSource.indexOf('onkeydown="if(event.key===\\\'Enter\\\'||event.key===\\\' \\') >= 0);
   assert.ok(showroomSource.indexOf("act('showroomPlayLibrarySong'") >= 0 || showroomSource.indexOf('act(\\\'showroomPlayLibrarySong\\\'') >= 0);
+  assert.strictEqual(showroomSource.indexOf("event.stopPropagation();act('showroomPlayLibrarySong'"), -1);
+  assert.strictEqual(showroomSource.indexOf("event.stopPropagation();act('openPerformSong'"), -1);
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomOpenQuickTools\\\')"') >= 0);
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomToggleRecorder\\\')"') >= 0);
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomToneGenerator\\\')"') >= 0);
