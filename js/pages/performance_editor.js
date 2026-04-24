@@ -97,7 +97,7 @@ function performanceEditorPage() {
         var lc = editorLibrary[li];
         var libraryTitle = _firstPerformanceEditorTextToken(lc.title, lc.id, "Untitled");
         var libraryArrangement = _firstPerformanceEditorTextToken(lc.arrangementType, "chords");
-        h += '<div class="card" style="cursor:pointer;margin-top:8px" onclick="act(\'editorLoad\',' + li + ')">';
+        h += '<div class="card" role="button" tabindex="0" style="cursor:pointer;margin-top:8px" onclick="act(\'editorLoad\',' + li + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorLoad\',' + li + ')}">';
         h += '<div style="display:flex;justify-content:space-between;align-items:center">';
         h += '<div><strong>' + escHTML(libraryTitle) + '</strong><br><span style="font-size:11px;color:var(--text-muted)">' + (lc.events ? lc.events.length : 0) + ' events &bull; ' + escHTML(libraryArrangement) + '</span></div>';
         h += '<button class="btn btn-sm" onclick="event.stopPropagation();act(\'editorDelete\',' + li + ')" style="color:#FF6B6B;background:none;font-size:16px">&times;</button>';
@@ -121,7 +121,7 @@ function performanceEditorPage() {
         var phraseName = _firstPerformanceEditorTextToken(p.name, "Phrase " + (pi + 1));
         var phraseStart = _normalizePerformanceEditorNumber(p.startSec, 0);
         var phraseEnd = _normalizePerformanceEditorNumber(p.endSec, 0);
-        h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:'+(phraseSelected?"#45B7D122":"transparent")+';border:1px solid '+(phraseSelected?"#45B7D1":"transparent")+'" onclick="act(\'editorSelectPhrase\','+p.id+')">';
+        h += '<div role="button" tabindex="0" style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:'+(phraseSelected?"#45B7D122":"transparent")+';border:1px solid '+(phraseSelected?"#45B7D1":"transparent")+'" onclick="act(\'editorSelectPhrase\','+p.id+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelectPhrase\','+p.id+')}">';
         h += '<span style="font-weight:700;color:var(--text-primary)">' + escHTML(phraseName) + '</span>';
         h += '<span style="color:var(--text-muted)">' + phraseStart.toFixed(1) + 's - ' + phraseEnd.toFixed(1) + 's</span>';
         h += '</div>';
