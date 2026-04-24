@@ -425,6 +425,43 @@ test("start_guided_session delegates to sparkCore and syncs piano session aliase
   assert.strictEqual(S.adaptiveBpm, 84);
 });
 
+test("resume_guided_session reopens the active piano guided shell without restarting it", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "Session 2",
+              bpm: 84,
+              spark: { text: "next" },
+              newMove: { chord: "G" }
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+
+  pianoAct("resume_guided_session");
+
+  assert.strictEqual(sparkCoreCalls.length, 0);
+  assert.strictEqual(S.currentSession, 2);
+  assert.strictEqual(S.guidedSession, 2);
+  assert.strictEqual(S.sessionPlan.title, "Session 2");
+  assert.strictEqual(S.sessionStep, "songSlice");
+  assert.strictEqual(S.screen, "session");
+  assert.strictEqual(saveStateCalls, 1);
+});
+
 test("complete_victory_lap delegates to sparkCore and syncs piano completion aliases", function() {
   S.sessionPlan = {
     num: 2,
