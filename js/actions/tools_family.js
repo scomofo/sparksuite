@@ -483,6 +483,7 @@
       S.communitySearch = v;
       applySongBrowserRequest("community_search", { communitySearch: S.communitySearch });
       fetchCommunity();
+      render();
       return true;
     }
 

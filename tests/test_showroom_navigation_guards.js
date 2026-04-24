@@ -152,5 +152,34 @@ test("system action family forwards showroom library filters to the showroom api
   assert.deepStrictEqual(levelCalls, ["Intermediate"]);
 });
 
+test("community search action owns rerender after updating search state", function() {
+  var handled;
+  var browserRequests = [];
+  var fetchCalls = 0;
+  var renderCalls = 0;
+  global.runSparkActionFamilies = undefined;
+  global.registerSparkActionFamily = function(name, handler) {
+    global.runSparkActionFamilies = handler;
+  };
+  global.S = { communitySearch: "" };
+  global.applySongBrowserRequest = function(type, payload) {
+    browserRequests.push({ type: type, payload: payload });
+  };
+  global.fetchCommunity = function() {
+    fetchCalls++;
+  };
+  global.render = function() {
+    renderCalls++;
+  };
+  global.eval(loadJS("js/actions/tools_family.js"));
+
+  handled = global.runSparkActionFamilies("communitySearch", "Midnight");
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.communitySearch, "Midnight");
+  assert.deepStrictEqual(browserRequests, [{ type: "community_search", payload: { communitySearch: "Midnight" } }]);
+  assert.strictEqual(fetchCalls, 1);
+  assert.strictEqual(renderCalls, 1);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);
