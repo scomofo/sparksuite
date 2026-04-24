@@ -106,6 +106,8 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
   var blockOrder = ["warm_engine", "drill", "song", "cooldown"];
   var segments = corePlan && Array.isArray(corePlan.segments) ? corePlan.segments : [];
   var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
+  var guidedStep = runtimeState && runtimeState.guidedStep ? runtimeState.guidedStep : null;
+  var guidedNewMovePhase = runtimeState && runtimeState.guidedNewMovePhase ? runtimeState.guidedNewMovePhase : null;
   var progress = [];
   var nextPendingAssigned = false;
   var i;
@@ -142,11 +144,34 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
       id: segment && segment.id ? segment.id : blockType,
       label: label,
       durationSec: normalizeGuidedCount(segment && segment.durationSec, 0),
-      state: state
+      state: state,
+      detail: state === "now"
+        ? getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase)
+        : ""
     });
   }
 
   return progress;
+}
+
+function getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase) {
+  var phaseLabels = {
+    watch: "Watch",
+    shadow: "Shadow",
+    try: "Try",
+    refine: "Refine"
+  };
+  var phaseOrder = ["watch", "shadow", "try", "refine"];
+  var phaseIndex;
+  if (blockType === "warm_engine") return "Spark";
+  if (blockType === "song") return "Song Slice";
+  if (blockType === "cooldown") return "Victory Lap";
+  if (blockType !== "drill") return "";
+  if (guidedStep === "review") return "Review Pass";
+  if (guidedStep !== "newMove") return "";
+  phaseIndex = phaseOrder.indexOf(guidedNewMovePhase);
+  if (phaseIndex === -1) return "New Move";
+  return phaseLabels[guidedNewMovePhase] + " " + (phaseIndex + 1) + "/" + phaseOrder.length;
 }
 
 function renderGuidedBlockProgress(blockProgress) {
@@ -166,6 +191,9 @@ function renderGuidedBlockProgress(blockProgress) {
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">' +
           '<span style="font-size:12px;font-weight:800;color:var(--text-primary)">' + escHTML(block.label) + '</span>' +
           '<span style="font-size:11px;font-weight:800;color:' + stateColor + ';text-transform:uppercase">' + escHTML(stateText) + '</span>' +
+        '</div>' +
+        '<div style="font-size:11px;font-weight:700;color:' + (block.state === "now" ? "#FF8A5C" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+          escHTML(block.detail || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
       '</div>';
