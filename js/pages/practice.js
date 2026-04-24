@@ -654,6 +654,7 @@ function getPracticeTrackSessionByDay(track, dayNumber) {
 }
 
 function renderPracticePlanSummaryCard(plan) {
+  var activeGuided = getPracticeActiveGuidedSummary();
   var h = "";
   var planProgress;
   var item;
@@ -666,6 +667,13 @@ function renderPracticePlanSummaryCard(plan) {
     h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
     h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+planProgress.completedItems+'/'+planProgress.totalItems+'</span>';
     h += '</div>';
+    if (activeGuided) {
+      h += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);color:var(--text-primary)">';
+      h += '<div style="font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2f8f89">Guided Session Live</div>';
+      h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + escHTML(activeGuided.statusLabel + " - Resume when you're ready.") + '</div>';
+      h += '</div>';
+    }
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(getPracticeSummaryFocus(plan))+'</div>';
     for(var pi=0;pi<plan.items.length;pi++){
       item = plan.items[pi];
@@ -685,6 +693,22 @@ function renderPracticePlanSummaryCard(plan) {
       }
       h += '</div>';
     }
+    h += '</div>';
+    return h;
+  }
+  if (activeGuided) {
+    h += '<div class="card mb20" style="border:2px solid #4ECDC4">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Guided Session Flow</h3>';
+    h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML(normalizePracticeDisplayCount(activeGuided.blockCount, 4) + " blocks") + '</span>';
+    h += '</div>';
+    h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Your live guided shell is the plan right now.</div>';
+    h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
+    h += '<div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(activeGuided.title) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(activeGuided.statusLabel) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(normalizePracticeDisplayCount(activeGuided.targetDurationMin, 10) + " min shell") + '</div>';
+    h += '</div>';
+    h += '<button class="btn" onclick="act(\'start_guided_session\')" style="background:#4ECDC4;color:#fff;font-weight:800">Resume Guided Session</button>';
     h += '</div>';
     return h;
   }
@@ -979,11 +1003,12 @@ function practiceTab(){
   var practiceGoalMetrics = getPracticeGoalMetrics();
   var currentLevel = normalizePracticeDisplayCount(S.level, 1);
   var plan = resolvePracticeSummaryPlan();
+  var activeGuided = getPracticeActiveGuidedSummary();
   var h = renderPracticeGoalCard(practiceGoalMetrics);
 
   // Practice Plan CTA
   h+='<div class="card mb12" style="text-align:center">';
-  h+='<button class="btn" onclick="act(\'openPlan\')" style="background:var(--accent);color:#fff;font-weight:700">&#128218; Today\'s Practice Plan</button>';
+  h+='<button class="btn" onclick="act(\'' + (activeGuided ? 'start_guided_session' : 'openPlan') + '\')" style="background:var(--accent);color:#fff;font-weight:700">&#128218; ' + escHTML(activeGuided ? 'Resume Guided Session' : 'Today\'s Practice Plan') + '</button>';
   h+='</div>';
 
   // Guided Session CTA
