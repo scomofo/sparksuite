@@ -206,6 +206,7 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
       id: segment && segment.id ? segment.id : blockType,
       label: label,
       durationSec: normalizeGuidedCount(segment && segment.durationSec, 0),
+      extensionSec: normalizeGuidedCount(segment && segment.meta && segment.meta.guidedExtensionSec, 0),
       state: state,
       detail: state === "now"
         ? getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase)
@@ -319,6 +320,9 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
       var durationLabel = block.durationSec > 0
         ? Math.max(1, Math.round(block.durationSec / 60)) + " min"
         : "";
+      var extensionLabel = block.extensionSec > 0
+        ? "+" + Math.max(1, Math.round(block.extensionSec / 60)) + " min extra"
+        : "";
       var remainingLabel = block.state === "now" && block.remainingSec > 0
         ? formatGuidedDurationLabel(block.remainingSec) + " left"
         : "";
@@ -342,6 +346,9 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
         '</div>' +
         '<div style="font-size:11px;color:' + (block.state === "now" ? "#FF8A5C" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(remainingLabel || " ") +
+        '</div>' +
+        '<div style="font-size:11px;color:' + (extensionLabel ? stateColor : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+          escHTML(extensionLabel || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
         (quickAction || extendAction || skipAction
@@ -367,6 +374,7 @@ function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
     activeBlockIndex: 0,
     totalBlocks: blockProgress ? blockProgress.length : 0,
     totalDurationSec: 0,
+    extensionSec: 0,
     activeBlockLabel: "",
     activeBlockDurationSec: 0,
     elapsedSec: 0,
@@ -378,6 +386,7 @@ function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
   var activeBlock = null;
   if (corePlan && corePlan.context) {
     summary.totalDurationSec = normalizeGuidedCount(corePlan.context.guidedShellDurationSec, 0);
+    summary.extensionSec = normalizeGuidedCount(corePlan.context.guidedShellExtensionSec, 0);
   }
   if (!summary.totalDurationSec && blockProgress && blockProgress.length) {
     for (i = 0; i < blockProgress.length; i++) {
@@ -437,6 +446,7 @@ function renderGuidedShellSummary(shellSummary) {
   var blockMinutes;
   var elapsedMinutes;
   var remainingLabel;
+  var extensionLabel;
   var detail = [];
   var progressPercent;
   if (!shellSummary || !shellSummary.totalBlocks) return "";
@@ -453,6 +463,9 @@ function renderGuidedShellSummary(shellSummary) {
   remainingLabel = shellSummary.remainingSec > 0
     ? formatGuidedDurationLabel(shellSummary.remainingSec) + " left"
     : "Done";
+  extensionLabel = shellSummary.extensionSec > 0
+    ? "+" + Math.max(1, Math.round(shellSummary.extensionSec / 60)) + " min extra focus time"
+    : "";
   if (shellSummary.activeBlockLabel) detail.push(shellSummary.activeBlockLabel);
   if (blockMinutes > 0) detail.push(blockMinutes + " min block");
   if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
@@ -464,6 +477,7 @@ function renderGuidedShellSummary(shellSummary) {
     '</div>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(detail.join(" • ")) + '</div>' +
     '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML((elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min through session") + '</div>' +
+    '<div style="font-size:11px;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionLabel || " ") + '</div>' +
     '<div style="font-size:11px;color:#FF8A5C;margin-top:2px">' + escHTML(remainingLabel) + '</div>' +
     '</div>';
 }

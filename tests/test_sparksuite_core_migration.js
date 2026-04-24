@@ -4283,6 +4283,8 @@ test("extendGuidedBlock keeps victory lap active and lengthens the cooldown shel
   assert.strictEqual(state.transport.status, "running");
   assert.strictEqual(state.transport.positionMs, 0);
   assert.strictEqual(plan.segments[3].durationSec, 390);
+  assert.strictEqual(plan.segments[3].meta.guidedExtensionSec, 300);
+  assert.strictEqual(plan.context.guidedShellExtensionSec, 300);
   assert.strictEqual(plan.context.guidedShellDurationSec, 900);
   assert.strictEqual(plan.context.guidedPlan.blockActivities.cooldown.duration_sec, 390);
 });
