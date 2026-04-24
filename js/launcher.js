@@ -173,7 +173,7 @@
 
   function renderAvatar(profile) {
     var src = profile && (profile.avatarImage || profile.avatarUrl);
-    var h = '<div class="showroom-avatar" role="button" tabindex="0" aria-label="Profile" onclick="SparkInstruments.openLauncherView(\'profile\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();SparkInstruments.openLauncherView(\'profile\')}">';
+    var h = '<div class="showroom-avatar" role="button" tabindex="0" aria-label="Profile" onclick="act(\'openLauncherView\',\'profile\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'openLauncherView\',\'profile\')}">';
     if (src) {
       h += '<img src="' + safeEsc(src) + '" alt="Profile avatar">';
     } else {
@@ -270,7 +270,7 @@
       bg = '<div class="showroom-hero-bg-fallback" aria-hidden="true">' + glyphFor(featured) + '</div>';
     }
 
-    var onClick = 'SparkInstruments.launchInstrumentPerformance(\'' + safeEsc(featured.id) + '\')';
+    var onClick = 'act(\'launcherLaunchPerformance\',\'' + safeEsc(featured.id) + '\')';
 
     return '' +
       '<section class="showroom-hero-wrap">' +
@@ -288,7 +288,7 @@
 
   function renderCard(inst) {
     var type = instrumentType(inst);
-    var onClick = 'SparkInstruments.selectInstrument(\'' + safeEsc(inst.id) + '\')';
+    var onClick = 'act(\'launcherSelectInstrument\',\'' + safeEsc(inst.id) + '\')';
     var onKeyDown = 'if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + onClick + '}';
     return '' +
       '<div class="showroom-card showroom-glass" data-instrument="' + safeEsc(type) + '"'
@@ -354,10 +354,10 @@
 
   function renderBottomNav(activeView) {
     var items = [
-      { id:"home",     label:"Home",     icon:"home_app_logo", onClick:"SparkInstruments.showLauncher()" },
-      { id:"library",  label:"Library",  icon:"library_music", onClick:"SparkInstruments.openLauncherView('library')" },
-      { id:"learn",    label:"Learn",    icon:"school",        onClick:"SparkInstruments.openLauncherView('learn')" },
-      { id:"settings", label:"Settings", icon:"settings",      onClick:"SparkInstruments.openLauncherView('settings')" }
+      { id:"home",     label:"Home",     icon:"home_app_logo", onClick:"act('showLauncher')" },
+      { id:"library",  label:"Library",  icon:"library_music", onClick:"act('openLauncherView','library')" },
+      { id:"learn",    label:"Learn",    icon:"school",        onClick:"act('openLauncherView','learn')" },
+      { id:"settings", label:"Settings", icon:"settings",      onClick:"act('openLauncherView','settings')" }
     ];
     var inner = '';
     for (var i = 0; i < items.length; i++) {
@@ -410,7 +410,7 @@
     }
 
     var fabOnClick = featured
-      ? 'SparkInstruments.selectInstrument(\'' + safeEsc(featured.id) + '\')'
+      ? 'act(\'launcherSelectInstrument\',\'' + safeEsc(featured.id) + '\')'
       : '';
 
     return '' +
@@ -422,7 +422,7 @@
           '<section class="showroom-section">' +
             '<div class="showroom-section-head">' +
               '<h3 class="showroom-section-title">Your Collection</h3>' +
-              '<button class="showroom-section-link" onclick="SparkInstruments.openLauncherView(\'instruments\')">See All</button>' +
+              '<button class="showroom-section-link" onclick="act(\'openLauncherView\',\'instruments\')">See All</button>' +
             '</div>' +
             '<div class="showroom-grid">' + cards + '</div>' +
           '</section>' +
