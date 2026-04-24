@@ -173,6 +173,82 @@ function renderGuidedBlockProgress(blockProgress) {
     '</div>';
 }
 
+function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
+  var summary = {
+    activeBlockIndex: 0,
+    totalBlocks: blockProgress ? blockProgress.length : 0,
+    totalDurationSec: 0,
+    activeBlockLabel: "",
+    activeBlockDurationSec: 0
+  };
+  var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
+  var i;
+  var activeBlock = null;
+  if (corePlan && corePlan.context) {
+    summary.totalDurationSec = normalizeGuidedCount(corePlan.context.guidedShellDurationSec, 0);
+  }
+  if (!summary.totalDurationSec && blockProgress && blockProgress.length) {
+    for (i = 0; i < blockProgress.length; i++) {
+      summary.totalDurationSec += normalizeGuidedCount(blockProgress[i] && blockProgress[i].durationSec, 0);
+    }
+  }
+  if (blockProgress && blockProgress.length) {
+    for (i = 0; i < blockProgress.length; i++) {
+      if (blockProgress[i] && blockProgress[i].state === "now") {
+        activeBlock = blockProgress[i];
+        summary.activeBlockIndex = i + 1;
+        break;
+      }
+    }
+    if (!activeBlock && activeSegmentId) {
+      for (i = 0; i < blockProgress.length; i++) {
+        if (blockProgress[i] && blockProgress[i].id === activeSegmentId) {
+          activeBlock = blockProgress[i];
+          summary.activeBlockIndex = i + 1;
+          break;
+        }
+      }
+    }
+    if (!activeBlock) {
+      for (i = 0; i < blockProgress.length; i++) {
+        if (blockProgress[i] && blockProgress[i].state !== "done") {
+          activeBlock = blockProgress[i];
+          summary.activeBlockIndex = i + 1;
+          break;
+        }
+      }
+    }
+    if (!activeBlock && blockProgress[blockProgress.length - 1]) {
+      activeBlock = blockProgress[blockProgress.length - 1];
+      summary.activeBlockIndex = blockProgress.length;
+    }
+  }
+  summary.activeBlockLabel = firstGuidedTextToken(activeBlock && activeBlock.label);
+  summary.activeBlockDurationSec = normalizeGuidedCount(activeBlock && activeBlock.durationSec, 0);
+  return summary;
+}
+
+function renderGuidedShellSummary(shellSummary) {
+  var shellMinutes;
+  var blockMinutes;
+  var detail = [];
+  if (!shellSummary || !shellSummary.totalBlocks) return "";
+  shellMinutes = shellSummary.totalDurationSec > 0
+    ? Math.max(1, Math.round(shellSummary.totalDurationSec / 60))
+    : 0;
+  blockMinutes = shellSummary.activeBlockDurationSec > 0
+    ? Math.max(1, Math.round(shellSummary.activeBlockDurationSec / 60))
+    : 0;
+  if (shellSummary.activeBlockLabel) detail.push(shellSummary.activeBlockLabel);
+  if (blockMinutes > 0) detail.push(blockMinutes + " min block");
+  if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
+  return '<div style="margin:0 0 14px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#FF8A5C11,#4ECDC411);text-align:left">' +
+    '<div style="font-size:12px;font-weight:900;color:var(--text-primary);text-transform:uppercase;letter-spacing:.04em">Block ' +
+      shellSummary.activeBlockIndex + ' of ' + shellSummary.totalBlocks + '</div>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(detail.join(" • ")) + '</div>' +
+    '</div>';
+}
+
 function newMovePhaseIndicator(phase) {
   var phases = [
     {id:"watch",label:"Watch",icon:"&#128064;"},
@@ -212,6 +288,7 @@ function guidedSessionPage() {
   h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
 
+  h += renderGuidedShellSummary(guidedView.shellSummary);
   h += guidedStepIndicator(guidedStep);
   h += renderGuidedBlockProgress(guidedView.blockProgress);
 
@@ -553,6 +630,7 @@ function getGuidedSessionView() {
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var currentPlan = coreView && coreView.plan ? coreView.plan : null;
   var resolvedPlan;
+  var blockProgress;
   var plan = coreView
     && coreView.plan
     && coreView.plan.flow === "guided_session"
@@ -563,6 +641,7 @@ function getGuidedSessionView() {
     ? runtimeState.guidedStep
     : (S.guidedStep || "spark");
   resolvedPlan = plan || S.guidedPlan || null;
+  blockProgress = getGuidedBlockProgress(resolvedPlan, currentPlan, runtimeState);
 
   return {
     plan: resolvedPlan,
@@ -577,6 +656,7 @@ function getGuidedSessionView() {
     activeActivityKind: runtimeState && runtimeState.guidedActivityKind ? runtimeState.guidedActivityKind : (S.guidedActivityKind || null),
     activeBlockType: runtimeState && runtimeState.guidedBlockType ? runtimeState.guidedBlockType : (S.guidedBlockType || null),
     activeSegmentId: runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null,
-    blockProgress: getGuidedBlockProgress(resolvedPlan, currentPlan, runtimeState)
+    blockProgress: blockProgress,
+    shellSummary: getGuidedShellSummary(currentPlan, blockProgress, runtimeState)
   };
 }
