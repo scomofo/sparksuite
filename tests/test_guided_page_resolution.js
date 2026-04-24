@@ -525,9 +525,10 @@ test("guided victory lap tiers extension copy for deeper focus stretches", funct
   };
 
   var html = guidedSessionPage();
-  assert.ok(html.indexOf("Focus Stretch Victory Lap!") >= 0);
+  assert.ok(html.indexOf("Focus Stretch Landing") >= 0);
   assert.ok(html.indexOf("Extended Focus x2") >= 0);
   assert.ok(html.indexOf("Focus Stretch x2") >= 0);
+  assert.ok(html.indexOf("Open landing. End on your terms.") >= 0);
   assert.ok(html.indexOf("Deep Focus Stretch Active") >= 0);
   assert.ok(html.indexOf("Deep Focus Live") >= 0);
   assert.ok(html.indexOf("Extended session mode x2") >= 0);

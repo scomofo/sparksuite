@@ -148,6 +148,21 @@ function getGuidedCompleteCtaLabel(extensionCount) {
   return "Wrap Up Gently";
 }
 
+function getGuidedVictoryLapTitle(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count <= 0) return "Victory Lap!";
+  if (count === 1) return "Extended Victory Lap!";
+  if (count === 2) return "Focus Stretch Landing";
+  return "Soft Landing";
+}
+
+function getGuidedVictoryLapSupportLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "Open landing. End on your terms.";
+  return "Gentle landing. You can end whenever it feels complete.";
+}
+
 function getGuidedCooldownDetailLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count <= 0) return "Victory Lap";
@@ -1098,7 +1113,8 @@ function _guidedVictoryLap(plan) {
     : 0;
   var extensionThemeLabel = getGuidedExtensionLabel(extensionCount);
   var focusStretchLabel = getGuidedFocusStretchLabel(extensionCount);
-  var victoryTitle = extensionCount > 1 ? "Focus Stretch Victory Lap!" : (extensionCount > 0 ? "Extended Victory Lap!" : "Victory Lap!");
+  var victoryTitle = getGuidedVictoryLapTitle(extensionCount);
+  var victorySupportLabel = getGuidedVictoryLapSupportLabel(extensionCount);
   var victoryCopy = getGuidedVictoryLapCopy(extensionCount, victoryText);
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + ';background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
@@ -1109,6 +1125,9 @@ function _guidedVictoryLap(plan) {
   }
   if (focusStretchLabel) {
     h += '<div style="display:flex;justify-content:center;margin:0 0 12px"><span style="padding:7px 12px;border-radius:999px;background:#6E56B311;color:#6E56B3;font-size:12px;font-weight:900;letter-spacing:.02em">' + escHTML(focusStretchLabel) + '</span></div>';
+  }
+  if (victorySupportLabel) {
+    h += '<div style="display:flex;justify-content:center;margin:-4px 0 12px"><span style="padding:6px 10px;border-radius:999px;background:#FFFFFFAA;color:#6E56B3;font-size:11px;font-weight:800;letter-spacing:.02em">' + escHTML(victorySupportLabel) + '</span></div>';
   }
   h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(victoryCopy) + '</p>';
   // Show the session's main chord
