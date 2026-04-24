@@ -15,6 +15,18 @@ function resetEnvironment() {
       title: "undefined",
       level: 1,
       bpm: 80,
+      blocks: [
+        { type: "warm_engine", duration_sec: 90 },
+        { type: "drill", duration_sec: 180 },
+        { type: "song", duration_sec: 240 },
+        { type: "cooldown", duration_sec: 90 }
+      ],
+      blockActivities: {
+        warm_engine: { kind: "warm_engine_play", copy: { setup: "Warm up with one note." } },
+        drill: { kind: "chord_intro", copy: { setup: "Place C-E-G under your hand.", success: "Quick review pass." } },
+        song: { kind: "song_chunk", copy: { setup: "Loop the phrase with relaxed timing.", success: "Moonlight intro" } },
+        cooldown: { kind: "freeplay", copy: { setup: "Let it ring once more." } }
+      },
       spark: { text: "null" },
       review: { text: "undefined", chords: [] },
       newMove: { chord: "C", text: "null" },
@@ -80,8 +92,10 @@ test("piano session page ignores stale guided session text", function() {
   assert.ok(html.indexOf(">null<") === -1);
   assert.ok(html.indexOf(">NaN<") === -1);
   assert.ok(html.indexOf("Guided session") >= 0);
-  assert.ok(html.indexOf("Play a short song slice.") >= 0);
-  assert.ok(html.indexOf("Song slice") >= 0);
+  assert.ok(html.indexOf("Loop the phrase with relaxed timing.") >= 0);
+  assert.ok(html.indexOf("song chunk") >= 0);
+  assert.ok(html.indexOf("4 min block") >= 0);
+  assert.ok(html.indexOf("Moonlight intro") >= 0);
 });
 
 test("legacy session page ignores stale chord labels", function() {
@@ -104,6 +118,18 @@ test("piano session page ignores stale finger focus and transition tip text", fu
   assert.ok(html.indexOf(">undefined<") === -1);
   assert.ok(html.indexOf(">null<") === -1);
   assert.ok(html.indexOf(">NaN<") === -1);
+});
+
+test("piano session page uses v2 block activity copy for spark and victory lap", function() {
+  S.sessionStep = "spark";
+  var sparkHtml = pianoSessionPage();
+  assert.ok(sparkHtml.indexOf("Warm up with one note.") >= 0);
+  assert.ok(sparkHtml.indexOf("warm engine play") >= 0);
+
+  S.sessionStep = "victoryLap";
+  var victoryHtml = pianoSessionPage();
+  assert.ok(victoryHtml.indexOf("Let it ring once more.") >= 0);
+  assert.ok(victoryHtml.indexOf("freeplay") >= 0);
 });
 
 test("victory lap ignores stale finger check text", function() {
