@@ -63,7 +63,6 @@
 
   function ensureDeferredAssets(callback) {
     if (!deferredAssetsPending()) {
-      if (typeof callback === "function") callback();
       return false;
     }
     SparkBootLoader.loadDeferredScripts(callback);

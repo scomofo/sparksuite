@@ -70,7 +70,12 @@
   }
 
   function loadDeferredScripts(callback) {
-    if (_loaded || !hasDeferredScripts()) {
+    if (_loaded) {
+      if (typeof callback === "function") callback();
+      return;
+    }
+    if (_failed.length) return;
+    if (!hasDeferredScripts()) {
       _loaded = true;
       if (typeof callback === "function") callback();
       return;
@@ -83,6 +88,7 @@
 
   function afterDeferredScripts(callback) {
     if (typeof callback !== "function") return;
+    if (_failed.length) return;
     if (_loaded || !hasDeferredScripts()) {
       callback();
       return;

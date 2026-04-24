@@ -299,6 +299,7 @@ test('boot loader tracks deferred failures instead of silently reporting ready',
   assert.ok(bootLoaderSource.indexOf('placeholder.setAttribute("data-deferred-failed", "true");') >= 0);
   assert.ok(bootLoaderSource.indexOf('hasFailures: function() { return _failed.length > 0; }') >= 0);
   assert.ok(bootLoaderSource.indexOf('document.documentElement.setAttribute("data-spark-deferred-failed", "true");') >= 0);
+  assert.ok(bootLoaderSource.indexOf('if (_failed.length) return;') >= 0);
 });
 
 test('showroom source wires remaining library, tuner, and syllabus controls', function() {
@@ -314,6 +315,32 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(systemFamilySource.indexOf('if (a === "showroomFocusLibrarySearch")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToggleRecorder")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToneGenerator")') >= 0);
+});
+
+test('launcher deferred asset guard does not synchronously recurse when already ready', function() {
+  global.S = { activeInstrument: null, launcherView: 'home' };
+  global.SparkBootLoader = {
+    hasDeferredScripts: function() { return false; },
+    hasFailures: function() { return false; }
+  };
+  var saveCalls = 0;
+  var renderCalls = 0;
+  global.saveState = function() { saveCalls++; };
+  global.render = function() { renderCalls++; };
+  global.SCR = { HOME: 'home' };
+  global.TAB = { PRACTICE: 'practice', SONGS: 'songs' };
+  global.openPerformanceSongSelectionRequest = function() {};
+
+  SparkInstruments.selectInstrument('test_guitar');
+  assert.strictEqual(S.activeInstrument, 'test_guitar');
+  assert.strictEqual(saveCalls, 1);
+  assert.strictEqual(renderCalls, 1);
+
+  SparkInstruments.launchInstrumentPerformance('test_guitar');
+  assert.strictEqual(S.activeInstrument, 'test_guitar');
+  assert.strictEqual(S.tab, 'songs');
+  assert.strictEqual(saveCalls, 2);
+  assert.strictEqual(renderCalls, 2);
 });
 
 // Summary
