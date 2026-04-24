@@ -124,6 +124,7 @@ test('renderLauncher wires hero and launcher utility actions', function() {
   assert.ok(html.indexOf("SparkInstruments.launchInstrumentPerformance('test_guitar')") >= 0);
   assert.ok(html.indexOf("SparkInstruments.openLauncherView('profile')") >= 0);
   assert.ok(html.indexOf("SparkInstruments.openLauncherView('instruments')") >= 0);
+  assert.ok(html.indexOf("onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();SparkInstruments.selectInstrument('test_guitar')}\"") >= 0);
 });
 
 test('piano songs build helper stays namespaced so shared build tab is not shadowed', function() {

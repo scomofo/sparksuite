@@ -285,9 +285,11 @@
   function renderCard(inst) {
     var type = instrumentType(inst);
     var onClick = 'SparkInstruments.selectInstrument(\'' + safeEsc(inst.id) + '\')';
+    var onKeyDown = 'if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + onClick + '}';
     return '' +
       '<div class="showroom-card showroom-glass" data-instrument="' + safeEsc(type) + '"'
         + ' onclick="' + onClick + '"'
+        + ' onkeydown="' + onKeyDown + '"'
         + ' role="button" tabindex="0"'
         + ' aria-label="Launch ' + safeEsc(inst.name || type) + '">' +
         renderCardThumb(inst) +
