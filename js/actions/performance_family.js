@@ -667,6 +667,11 @@
       return true;
     }
 
+    if (a === "performCalibrateStop") {
+      if (typeof stopCalibration === "function") stopCalibration();
+      return true;
+    }
+
     if (a === "performCalibrationTap") {
       if (typeof recordCalibrationTap === "function") recordCalibrationTap();
       return true;

@@ -80,6 +80,10 @@ function resetEnv() {
   global.cancelCalibration = function() {
     cancelCalibrationCalls++;
   };
+  global.stopCalibrationCalls = 0;
+  global.stopCalibration = function() {
+    stopCalibrationCalls++;
+  };
   global.applyCalibrationOffset = function() { return 42; };
   global.getPerformanceCalibrationView = function() {
     return { source: "mic" };
@@ -136,6 +140,11 @@ test("performCalibrationTap and performCalibrationCancel delegate to page helper
   assert.strictEqual(registeredFamily("performCalibrationCancel"), true);
   assert.strictEqual(recordCalibrationTapCalls, 1);
   assert.strictEqual(cancelCalibrationCalls, 1);
+});
+
+test("performCalibrateStop delegates to the legacy calibration stop helper", function() {
+  assert.strictEqual(registeredFamily("performCalibrateStop"), true);
+  assert.strictEqual(stopCalibrationCalls, 1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
