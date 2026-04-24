@@ -173,6 +173,7 @@ function getGuidedDoneTitle(extensionCount, sessionNum) {
 
 function getGuidedDoneSupportLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 1) return "Nice work. Momentum counts.";
   if (count < 2) return "";
   if (count === 2) return "You ended from deep focus time. Nice work stopping on your terms.";
   return "You wrapped from a deep focus stretch. Nice work ending where it felt right.";
@@ -243,7 +244,7 @@ function getGuidedDoneStatLabels(extensionCount) {
 
 function getGuidedDoneStatsCardStyle(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
-  if (count < 2) return "";
+  if (count < 1) return "border:1px solid #FFD78A;background:linear-gradient(135deg,#FFF7D6,#FFF0E7)";
   if (count === 2) return "border:1px solid #6E56B322;background:linear-gradient(135deg,#6E56B308,#F6F3FF)";
   return "border:1px solid #7C8C6A22;background:linear-gradient(135deg,#F4F7EF,#FFF8F1)";
 }
