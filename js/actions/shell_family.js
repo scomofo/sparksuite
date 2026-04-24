@@ -11,6 +11,38 @@
   }
 
   function handleShellAction(a, v) {
+    if (a === "openLauncherView") {
+      if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.openLauncherView === "function") {
+        SparkInstruments.openLauncherView(v || "home");
+        return true;
+      }
+      return false;
+    }
+
+    if (a === "showLauncher") {
+      if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.showLauncher === "function") {
+        SparkInstruments.showLauncher();
+        return true;
+      }
+      return false;
+    }
+
+    if (a === "launcherSelectInstrument" && v) {
+      if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.selectInstrument === "function") {
+        SparkInstruments.selectInstrument(v);
+        return true;
+      }
+      return false;
+    }
+
+    if (a === "launcherLaunchPerformance" && v) {
+      if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.launchInstrumentPerformance === "function") {
+        SparkInstruments.launchInstrumentPerformance(v);
+        return true;
+      }
+      return false;
+    }
+
     if (a === "switchInstrumentBack") {
       if (typeof SparkInstruments !== "undefined" && SparkInstruments.deactivate) {
         SparkInstruments.deactivate();

@@ -141,10 +141,10 @@ test('renderLauncher returns HTML with instrument cards', function() {
 
 test('renderLauncher wires hero and launcher utility actions', function() {
   var html = SparkInstruments.renderLauncher();
-  assert.ok(html.indexOf("SparkInstruments.launchInstrumentPerformance('test_guitar')") >= 0);
-  assert.ok(html.indexOf("SparkInstruments.openLauncherView('profile')") >= 0);
-  assert.ok(html.indexOf("SparkInstruments.openLauncherView('instruments')") >= 0);
-  assert.ok(html.indexOf("onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();SparkInstruments.selectInstrument('test_guitar')}\"") >= 0);
+  assert.ok(html.indexOf("act('launcherLaunchPerformance','test_guitar')") >= 0);
+  assert.ok(html.indexOf("act('openLauncherView','profile')") >= 0);
+  assert.ok(html.indexOf("act('openLauncherView','instruments')") >= 0);
+  assert.ok(html.indexOf("onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();act('launcherSelectInstrument','test_guitar')}\"") >= 0);
 });
 
 test('piano songs build helper stays namespaced so shared build tab is not shadowed', function() {
@@ -441,6 +441,37 @@ test('launcher deferred asset guard does not synchronously recurse when already 
   assert.strictEqual(S.tab, 'songs');
   assert.strictEqual(saveCalls, 2);
   assert.strictEqual(renderCalls, 2);
+});
+
+test('shell action family routes launcher interactions through SparkInstruments', function() {
+  var handled;
+  var calls = [];
+  global.runSparkActionFamilies = undefined;
+  global.registerSparkActionFamily = function(name, handler) {
+    global.runSparkActionFamilies = handler;
+  };
+  global.SparkInstruments = {
+    openLauncherView: function(view) { calls.push(["openLauncherView", view]); },
+    showLauncher: function() { calls.push(["showLauncher"]); },
+    selectInstrument: function(appId) { calls.push(["selectInstrument", appId]); },
+    launchInstrumentPerformance: function(appId) { calls.push(["launchInstrumentPerformance", appId]); }
+  };
+  global.eval(loadJS("js/actions/shell_family.js"));
+
+  handled = global.runSparkActionFamilies("openLauncherView", "library");
+  assert.strictEqual(handled, true);
+  handled = global.runSparkActionFamilies("showLauncher");
+  assert.strictEqual(handled, true);
+  handled = global.runSparkActionFamilies("launcherSelectInstrument", "test_guitar");
+  assert.strictEqual(handled, true);
+  handled = global.runSparkActionFamilies("launcherLaunchPerformance", "test_piano");
+  assert.strictEqual(handled, true);
+  assert.deepStrictEqual(calls, [
+    ["openLauncherView", "library"],
+    ["showLauncher"],
+    ["selectInstrument", "test_guitar"],
+    ["launchInstrumentPerformance", "test_piano"]
+  ]);
 });
 
 // Summary
