@@ -1873,6 +1873,58 @@ test("action families can resolve sparkCore from the global binding", function()
   assert.strictEqual(shellUpdates[0].activeTab, "songs");
 });
 
+test("practice planning helpers can resolve sparkCore from the global binding", function() {
+  var core = createDefaultSparkCore();
+  var syncedChallenge = null;
+  var syncedComplete = null;
+  global.window = {};
+  global.sparkCore = core;
+  eval(loadJS("js/performance/recommendations.js"));
+  eval(loadJS("js/performance/practice_engine.js"));
+  eval(loadJS("js/practice/plan.js"));
+  var legacyGenerateDailyPracticePlan = global.window.generateDailyPracticePlan;
+  var legacyCompletePracticeItem = global.window.completePracticeItem;
+  var performanceGeneratePracticePlan = global.window.generatePracticePlan;
+  var performanceMarkPracticePlanItem = global.window.markPracticePlanItem;
+  var chooseDailyChallenge = global.window.choosePerformanceDailyChallenge;
+  var completeDailyChallenge = global.window.markPerformanceDailyComplete;
+
+  var plan = legacyGenerateDailyPracticePlan();
+  assert.ok(plan);
+  assert.strictEqual(plan.items.length, 2);
+  assert.strictEqual(plan.curriculum.nextLessonId, "session_1");
+  assert.strictEqual(core.getRuntimeState().activeFlow, "daily_practice");
+
+  var completion = legacyCompletePracticeItem(plan.items[0].id, { accuracy: 0.82 });
+  assert.ok(completion);
+  assert.strictEqual(completion.planCompleted, false);
+
+  var performancePlan = performanceGeneratePracticePlan();
+  assert.ok(performancePlan);
+  assert.strictEqual(performancePlan.items.length, 2);
+
+  var performanceCompletion = performanceMarkPracticePlanItem(performancePlan.items[1].id);
+  assert.ok(performanceCompletion);
+  assert.strictEqual(typeof performanceCompletion.planCompleted, "boolean");
+
+  core.syncPerformanceDailyChallengeState = function(challenge, isComplete) {
+    syncedChallenge = challenge;
+    syncedComplete = isComplete;
+  };
+
+  var challenge = chooseDailyChallenge();
+  assert.ok(challenge);
+  assert.strictEqual(syncedChallenge.id, challenge.id);
+  assert.strictEqual(syncedComplete, false);
+
+  var xp = completeDailyChallenge();
+  assert.strictEqual(xp, challenge.xp || 0);
+  assert.strictEqual(syncedChallenge.id, challenge.id);
+  assert.strictEqual(syncedComplete, true);
+
+  delete global.sparkCore;
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
