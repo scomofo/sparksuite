@@ -348,6 +348,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('"curriculum":      function(){ S._showroomOverride = "curriculum"; }') >= 0);
   assert.ok(showroomSource.indexOf('"syllabus":        function(){ S._showroomOverride = "syllabus"; }') >= 0);
   assert.ok(showroomSource.indexOf(' : "act(\\\'showroomStartPerf\\\')"') >= 0 || showroomSource.indexOf(' : "act(\'showroomStartPerf\')"') >= 0);
+  assert.ok(showroomSource.indexOf('var signInAction = opts.signInAction || "act(\\\'showroomOpenSignIn\\\')"') >= 0 || showroomSource.indexOf('var signInAction = opts.signInAction || "act(\'showroomOpenSignIn\')"') >= 0);
   assert.ok(showroomSource.indexOf("act(\\'showroomStartPerf\\'" ) >= 0 || showroomSource.indexOf("act('showroomStartPerf'") >= 0);
   assert.ok(showroomSource.indexOf("sampleInstrumentMap") >= 0);
   assert.ok(showroomSource.indexOf('window.SparkLeaderboard') >= 0);
@@ -356,6 +357,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(systemFamilySource.indexOf('if (a === "showroomOpenTrendingScores")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToggleRecorder")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToneGenerator")') >= 0);
+  assert.ok(systemFamilySource.indexOf('if (a === "showroomOpenSignIn")') >= 0);
   assert.ok(performanceFamilySource.indexOf('if (a === "showroomPlayLibrarySong")') >= 0);
   assert.ok(performanceFamilySource.indexOf('resolveShowroomPerformanceAppId') >= 0);
   assert.ok(performanceFamilySource.indexOf('ensureShowroomPerformanceInstrument("guitar");') >= 0);

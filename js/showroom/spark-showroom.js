@@ -1677,7 +1677,7 @@
     var ctaLabel = opts.ctaLabel || "Begin Your Journey";
     var ctaAction = opts.ctaAction || "act('completeOnboarding')";
     var signInLabel = opts.signInLabel || "Already have an account?";
-    var signInAction = opts.signInAction || "act('completeOnboarding')";
+    var signInAction = opts.signInAction || "act('showroomOpenSignIn')";
     // Escape " in action strings so a caller passing e.g. act("x") doesn't
     // prematurely close the onclick attribute. Single quotes inside the JS
     // call stay intact; this is the minimum-safe encoding for an attribute
