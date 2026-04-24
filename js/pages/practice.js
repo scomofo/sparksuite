@@ -411,10 +411,15 @@ function homePage(){
 function gamesTab(){ return '<div class="card"><div><b>Games</b></div><div class="muted">Mini-games and challenges.</div></div>'; }
 function toolsTab(){ return '<div class="card"><div><b>Tools</b></div><div class="muted">Tuner, metronome, and utilities.</div></div>'; }
 
-function resolvePracticeSummaryPlan() {
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
+function getPracticeCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
     : null;
+}
+
+function resolvePracticeSummaryPlan() {
+  var coreView = getPracticeCoreView();
   var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
   var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
     ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
@@ -471,9 +476,7 @@ function getPracticeGuidedSessionSummary(D) {
       totalSessions: sessions.length
     };
   }
-  coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  coreView = getPracticeCoreView();
   guidedPlan = coreView
     && coreView.plan
     && coreView.plan.flow === "guided_session"
@@ -850,9 +853,7 @@ function dailyTab(){
 
 // ===== QUIZ TAB =====
 function quizTab(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getPracticeCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   var quizScore = normalizePracticeDisplayCount(S.quizCorrect, normalizePracticeDisplayCount(runtime && runtime.legacyQuizScore, 0));
   return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p>'+renderQuizOverviewCard(quizScore)+'</div>';
@@ -860,9 +861,7 @@ function quizTab(){
 
 // ===== EAR TRAINING TAB =====
 function getLegacyEarTrainingRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getPracticeCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   return {
     question: typeof S.earTrainQ === "string" ? S.earTrainQ : (runtime ? runtime.legacyEarTrainQuestion : null),
@@ -904,8 +903,8 @@ function practicePage(){
 
 function startPracticeItem(id){
   var plan = null;
-  if(window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"){
-    var view = window.sparkCore.getActiveSessionView();
+  if(getPracticeCoreView()){
+    var view = getPracticeCoreView();
     if(view && view.plan && view.plan.flow === "daily_practice" && window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
       plan = SparkPracticeBridge.toLegacyPlan(view.plan);
     }
