@@ -326,9 +326,9 @@ function _renderSpotifyPlaylistPanel(inst, songList){
     h += '</div>';
   }
   h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-  h += '<button class="btn btn-sm" onclick="sparkSpotifyPlaylistConnect()" style="background:#1DB954;color:#fff"'+(syncBusy?' disabled':'')+'>'+(state.connected?'Reconnect Spotify':'Connect Spotify')+'</button>';
-  h += '<button class="btn btn-sm" onclick="sparkSpotifyPlaylistCreate()" style="background:var(--input-bg);color:var(--text-secondary)"'+((!state.connected||syncBusy)?' disabled':'')+'>Create Playlist</button>';
-  h += '<button class="btn btn-sm" onclick="sparkSpotifyPlaylistSync()" style="background:linear-gradient(135deg,#1DB954,#1ed760);color:#fff"'+((!state.connected||syncBusy)?' disabled':'')+'>'+(syncBusy?'Syncing...':'Sync Playlist')+'</button>';
+  h += '<button class="btn btn-sm" onclick="act(\'spotifyPlaylistConnect\')" style="background:#1DB954;color:#fff"'+(syncBusy?' disabled':'')+'>'+(state.connected?'Reconnect Spotify':'Connect Spotify')+'</button>';
+  h += '<button class="btn btn-sm" onclick="act(\'spotifyPlaylistCreate\')" style="background:var(--input-bg);color:var(--text-secondary)"'+((!state.connected||syncBusy)?' disabled':'')+'>Create Playlist</button>';
+  h += '<button class="btn btn-sm" onclick="act(\'spotifyPlaylistSync\')" style="background:linear-gradient(135deg,#1DB954,#1ed760);color:#fff"'+((!state.connected||syncBusy)?' disabled':'')+'>'+(syncBusy?'Syncing...':'Sync Playlist')+'</button>';
   h += '</div></div>';
   return h;
 }
