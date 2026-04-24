@@ -1762,6 +1762,31 @@
     };
   };
 
+  SparkCore.prototype.skipGuidedBlock = function(options) {
+    options = options || {};
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var targetStep = null;
+    if (currentStep === "spark") targetStep = "review";
+    else if (currentStep === "review" || currentStep === "newMove") targetStep = "songSlice";
+    else if (currentStep === "songSlice") targetStep = "victoryLap";
+    else if (currentStep === "victoryLap") {
+      return {
+        runtimeState: this.completeGuidedSession(options)
+      };
+    }
+    if (!targetStep) {
+      return {
+        runtimeState: this.getRuntimeState(),
+        completion: null
+      };
+    }
+    return this.advanceGuidedSession({
+      currentStep: currentStep,
+      nextStep: targetStep,
+      guidedNewMovePhase: null
+    });
+  };
+
   SparkCore.prototype.completeSession = function(payload) {
     payload = payload || {};
     if (!this.currentPlan || (payload.sessionId && this.currentPlan.id !== payload.sessionId)) {

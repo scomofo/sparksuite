@@ -281,6 +281,8 @@ test("guided page shows block progress from the active v2 session plan", functio
   assert.ok(html.indexOf("About 1m 30s left in this block.") >= 0);
   assert.ok(html.indexOf("onclick=\"act('guidedAdvancePhase')\"") >= 0);
   assert.ok(html.indexOf(">Continue<") >= 0);
+  assert.ok(html.indexOf("onclick=\"act('guidedSkipBlock')\"") >= 0);
+  assert.ok(html.indexOf(">Skip Drill<") >= 0);
 });
 
 test("guided page shows drill subphase progress on the active block card", function() {
@@ -398,6 +400,7 @@ test("guided page shows drill subphase progress on the active block card", funct
   assert.ok(shadowHtml.indexOf("1m 30s left") >= 0);
   assert.ok(shadowHtml.indexOf("About 1m 30s left in this block.") >= 0);
   assert.ok(shadowHtml.indexOf("onclick=\"act('guidedAdvancePhase')\"") >= 0);
+  assert.ok(shadowHtml.indexOf("onclick=\"act('guidedSkipBlock')\"") >= 0);
 });
 
 test("guided page header reflects non-drill block themes", function() {
@@ -479,6 +482,7 @@ test("guided page header reflects non-drill block themes", function() {
   assert.ok(cooldownHtml.indexOf("Cooldown Block") >= 0);
   assert.ok(cooldownHtml.indexOf("onclick=\"act('guidedComplete')\"") >= 0);
   assert.ok(cooldownHtml.indexOf(">Finish Session<") >= 0);
+  assert.ok(cooldownHtml.indexOf("guidedSkipBlock") === -1);
 });
 
 test("guided cards use block-aware transition labels", function() {
@@ -709,6 +713,7 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   var handled;
   var syncCalls = [];
   var advanceCalls = [];
+  var skipCalls = [];
   var completeCalls = [];
   var startCalls = [];
   global.window = {
@@ -737,6 +742,19 @@ test("guided actions can resolve sparkCore from the global binding", function() 
           guidedActivityId: "gtr-d01-drill",
           guidedActivityKind: "review",
           guidedBlockType: "drill"
+        }
+      };
+    },
+    skipGuidedBlock: function(payload) {
+      skipCalls.push(payload);
+      return {
+        runtimeState: {
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null,
+          guidedActivityId: "gtr-d01-song",
+          guidedActivityKind: "song_chunk",
+          guidedBlockType: "song",
+          activeScreen: "guided_session"
         }
       };
     },
@@ -788,6 +806,20 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   assert.strictEqual(S.guidedActivityKind, "review");
   assert.strictEqual(S.guidedBlockType, "drill");
 
+  handled = global.runSparkActionFamilies("guidedSkipBlock");
+  assert.strictEqual(handled, true);
+  assert.deepStrictEqual(skipCalls, [{}]);
+  assert.strictEqual(S.guidedStep, "songSlice");
+  assert.strictEqual(S.newMovePhase, null);
+  assert.strictEqual(S.guidedActivityId, "gtr-d01-song");
+  assert.strictEqual(S.guidedActivityKind, "song_chunk");
+  assert.strictEqual(S.guidedBlockType, "song");
+
+  S.guidedStep = "review";
+  S.newMovePhase = null;
+  S.guidedActivityId = "gtr-d01-drill";
+  S.guidedActivityKind = "review";
+  S.guidedBlockType = "drill";
   delete global.sparkCore.advanceGuidedSession;
   handled = global.runSparkActionFamilies("guidedNext");
   assert.strictEqual(handled, true);

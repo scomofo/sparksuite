@@ -287,11 +287,26 @@ function getGuidedQuickAction(guidedView) {
   return null;
 }
 
+function getGuidedSkipAction(guidedView) {
+  var step = guidedView && guidedView.guidedStep ? guidedView.guidedStep : null;
+  if (step === "spark") {
+    return { action: "guidedSkipBlock", label: "Skip Warm-Up" };
+  }
+  if (step === "review" || step === "newMove") {
+    return { action: "guidedSkipBlock", label: "Skip Drill" };
+  }
+  if (step === "songSlice") {
+    return { action: "guidedSkipBlock", label: "Skip Song" };
+  }
+  return null;
+}
+
 function renderGuidedBlockProgress(blockProgress, guidedView) {
   if (!blockProgress || !blockProgress.length) return "";
   return '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 16px">' +
     blockProgress.map(function(block) {
       var quickAction = block.state === "now" ? getGuidedQuickAction(guidedView) : null;
+      var skipAction = block.state === "now" ? getGuidedSkipAction(guidedView) : null;
       var durationLabel = block.durationSec > 0
         ? Math.max(1, Math.round(block.durationSec / 60)) + " min"
         : "";
@@ -320,8 +335,15 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
           escHTML(remainingLabel || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
-        (quickAction
-          ? '<button class="btn" onclick="act(\'' + quickAction.action + '\')" style="margin-top:8px;padding:8px 12px;font-size:12px;font-weight:800;background:' + stateColor + ';color:' + (block.state === "done" ? "#0F3D38" : "#fff") + '">' + escHTML(quickAction.label) + '</button>'
+        (quickAction || skipAction
+          ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' +
+              (quickAction
+                ? '<button class="btn" onclick="act(\'' + quickAction.action + '\')" style="padding:8px 12px;font-size:12px;font-weight:800;background:' + stateColor + ';color:' + (block.state === "done" ? "#0F3D38" : "#fff") + '">' + escHTML(quickAction.label) + '</button>'
+                : '') +
+              (skipAction
+                ? '<button class="btn" onclick="act(\'' + skipAction.action + '\')" style="padding:8px 12px;font-size:12px;font-weight:800;background:transparent;color:' + stateColor + ';border:1px solid ' + stateColor + '">' + escHTML(skipAction.label) + '</button>'
+                : '') +
+            '</div>'
           : "") +
       '</div>';
     }).join("") +
