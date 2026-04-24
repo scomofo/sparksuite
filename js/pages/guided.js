@@ -440,7 +440,20 @@ function guidedSessionPage() {
   var guidedStep = guidedView.guidedStep;
   var guidedBpm;
   if (plan && !plan.spark) {
-    plan = {num:plan.num||1,title:plan.title||"Session",level:plan.level||1,bpm:plan.bpm||80,spark:{text:plan.desc||"Practice this skill!"},review:null,newMove:plan.skill?{text:"Focus on: "+plan.skill,chord:null}:null,songSlice:null,victoryLap:{text:"Great work on "+(plan.title||"this session")+"!"}};
+    plan = {
+      id: plan.id || null,
+      num: plan.num || 1,
+      title: plan.title || "Session",
+      level: plan.level || 1,
+      bpm: plan.bpm || 80,
+      focus_song: plan.focus_song || null,
+      blockActivities: plan.blockActivities || null,
+      spark: plan.spark || { text: plan.desc || "Practice this skill!" },
+      review: plan.review || null,
+      newMove: plan.newMove || (plan.skill ? { text: "Focus on: " + plan.skill, chord: null } : null),
+      songSlice: plan.songSlice || null,
+      victoryLap: plan.victoryLap || { text: "Great work on " + (plan.title || "this session") + "!" }
+    };
   }
   if (!plan) return '<div class="card text-center"><p>No session loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
   var guidedTitle = firstGuidedTextToken(plan.title, plan.id, "Guided session");
@@ -630,6 +643,36 @@ function getGuidedAdvanceLabel(step, newMovePhase) {
   return "Next " + String.fromCharCode(8594);
 }
 
+function getGuidedActiveBlockSnapshot(blockProgress) {
+  var i;
+  if (!blockProgress || !blockProgress.length) return null;
+  for (i = 0; i < blockProgress.length; i++) {
+    if (blockProgress[i] && blockProgress[i].state === "now") return blockProgress[i];
+  }
+  for (i = 0; i < blockProgress.length; i++) {
+    if (blockProgress[i] && blockProgress[i].state !== "done") return blockProgress[i];
+  }
+  return blockProgress[blockProgress.length - 1] || null;
+}
+
+function renderGuidedActionStatus(guidedView, accentColor) {
+  var activeBlock = getGuidedActiveBlockSnapshot(guidedView && guidedView.blockProgress);
+  var statusText = "";
+  var statusColor = accentColor || "#FF8A5C";
+  if (!activeBlock) return "";
+  if ((activeBlock.progressRatio || 0) >= 0.85 || normalizeGuidedCount(activeBlock.remainingSec, 0) <= 20) {
+    statusText = "Ready to move on when you are.";
+  } else if (normalizeGuidedCount(activeBlock.remainingSec, 0) > 0) {
+    statusText = "About " + formatGuidedDurationLabel(activeBlock.remainingSec) + " left in this block.";
+  } else if (activeBlock.detail) {
+    statusText = activeBlock.detail + " is live now.";
+  }
+  if (!statusText) return "";
+  return '<div style="margin:0 0 12px;font-size:12px;font-weight:800;color:' + statusColor + '">' +
+    escHTML(statusText) +
+    '</div>';
+}
+
 function _guidedSpark(plan) {
   var sparkText = firstGuidedTextToken(plan.spark && plan.spark.text, "Let's get started.");
   var guidedView = getGuidedSessionView();
@@ -642,6 +685,7 @@ function _guidedSpark(plan) {
   if (plan.ifThen) {
     h += '<div style="background:var(--input-bg);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;' + escHTML(plan.ifThen) + '&#8221;</div>';
   }
+  h += renderGuidedActionStatus(guidedView, cardTheme.titleColor);
   h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("spark")) + '</button>';
   h += '</div>';
   return h;
@@ -675,9 +719,10 @@ function _guidedReview(plan) {
         h += '<div style="text-align:center"><div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:4px">' + ch.short + '</div>';
         h += UI.chord(ch, 100) + '</div>';
       }
-    }
-    h += '</div>';
   }
+  h += '</div>';
+  }
+  h += renderGuidedActionStatus(guidedView, cardTheme.titleColor);
   h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("review")) + '</button>';
   h += '</div>';
   return h;
@@ -727,6 +772,7 @@ function _guidedNewMove(plan) {
           h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200, ch.name, true) + '</div>';
           h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
         }
+        h += renderGuidedActionStatus(guidedView, "#FF6B6B");
         h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#FF6B6B;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("newMove", "watch")) + '</button>';
       }
       break;
@@ -747,6 +793,7 @@ function _guidedNewMove(plan) {
         if (ch) {
           h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200) + '</div>';
         }
+        h += renderGuidedActionStatus(guidedView, "#45B7D1");
         h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("newMove", "shadow")) + '</button>';
       }
       break;
@@ -760,6 +807,7 @@ function _guidedNewMove(plan) {
       if (plan.newMove.strum) {
         h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Strum: <strong>' + escHTML(plan.newMove.strum) + '</strong> at ' + guidedBpm + ' BPM</div>';
       }
+      h += renderGuidedActionStatus(guidedView, "#4ECDC4");
       h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("newMove", "try")) + '</button>';
       break;
 
@@ -776,6 +824,7 @@ function _guidedNewMove(plan) {
         h += '<div style="background:var(--input-bg);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px">';
         h += '<span style="color:#4ECDC4;font-weight:700">&#128161; Tip:</span> <span style="color:var(--text-secondary)">' + escHTML(tip) + '</span></div>';
       }
+      h += renderGuidedActionStatus(guidedView, "#A78BFA");
       h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#A78BFA;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("newMove", "refine")) + '</button>';
       break;
   }
@@ -800,6 +849,7 @@ function _guidedSongSlice(plan) {
   h += '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">';
   h += '<button class="btn" onclick="act(\'toggleMetro\')" style="padding:8px 16px;font-size:13px;background:' + (S.metronomeOn ? '#FFE66D' : '#4ECDC4') + ';color:' + (S.metronomeOn ? '#333' : '#fff') + '">' + (S.metronomeOn ? '&#9632; Metro' : '&#9654; Metro') + '</button>';
   h += '</div>';
+  h += renderGuidedActionStatus(guidedView, cardTheme.titleColor);
   h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("songSlice")) + '</button>';
   h += '</div>';
   return h;
@@ -827,6 +877,7 @@ function _guidedVictoryLap(plan) {
     h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 160) + '</div>';
     h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
   }
+  h += renderGuidedActionStatus(guidedView, cardTheme.titleColor);
   h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">' + escHTML(getGuidedAdvanceLabel("victoryLap")) + '</button>';
   h += '</div>';
   return h;
