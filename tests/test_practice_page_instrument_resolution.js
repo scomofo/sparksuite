@@ -197,8 +197,12 @@ test("homePage uses rehydrated tab renderers from the active instrument module",
 
 test("practice instrument switcher rows expose keyboard handlers", function() {
   var source = loadJS("js/pages/practice.js");
+  var uiSource = loadJS("js/ui.js");
   assert.ok(source.indexOf('sv2-inst-row__item" role="button" tabindex="0"') >= 0);
   assert.ok(source.indexOf('onclick="act(\\\'reset\\\')"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'previewChord\\\',\\\'') >= 0);
+  assert.strictEqual(source.indexOf("event.stopPropagation();act('previewChord'"), -1);
+  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}') >= 0);
   assert.ok(loadJS("js/pages/plan.js").indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
 });
 

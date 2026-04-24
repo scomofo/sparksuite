@@ -217,6 +217,14 @@ test("songDetailPage and songDonePage ignore stale song copy tokens", function()
   assert.ok(doneHtml.indexOf(">undefined<") === -1);
 });
 
+test("song library perform buttons rely on clickable card guards instead of inline propagation hacks", function() {
+  var songsSource = loadJS("js/pages/songs.js");
+  var uiSource = loadJS("js/ui.js");
+  assert.ok(songsSource.indexOf('onclick="act(\\\'openPerformSong\\\',') >= 0);
+  assert.strictEqual(songsSource.indexOf("event.stopPropagation();act('openPerformSong'"), -1);
+  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}') >= 0);
+});
+
 test("strumDetailPage ignores malformed BPM values", function() {
   S.selectedStrum = {
     name: "Groove",
