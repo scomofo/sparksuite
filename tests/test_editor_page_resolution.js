@@ -99,4 +99,9 @@ test("editorPage ignores malformed timeline numbers", function() {
   assert.ok(html.indexOf("NaNs") === -1);
 });
 
+test("editor surfaces expose keyboard handlers for selectable rows", function() {
+  var source = loadJS("js/pages/editor.js");
+  assert.ok(source.indexOf('role="button" tabindex="0" onclick="act(\\\'editorSelect\\\',') >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

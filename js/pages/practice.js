@@ -297,7 +297,7 @@ function renderSv2InstrumentRow(activeInstrumentId, allInstruments) {
   for (j = 0; j < otherInstruments.length; j++) {
     var oi = otherInstruments[j];
     var oiColor = typeof SparkTheme !== "undefined" ? SparkTheme.getColor(getPracticePageInstrumentType(oi)) : "#888";
-    h += '<div class="sv2-inst-row__item" onclick="act(\'switchInstrument\',\'' + oi.id + '\')">';
+    h += '<div class="sv2-inst-row__item" role="button" tabindex="0" onclick="act(\'switchInstrument\',\'' + oi.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'switchInstrument\',\'' + oi.id + '\')}">';
     h += '<div class="sv2-icon sv2-icon--sm" style="background:' + oiColor + '">' + (oi.icon || "\uD83C\uDFB5") + '</div>';
     h += '<div style="font-size:' + 'var(--text-micro)' + ';color:' + oiColor + ';font-weight:700;font-family:var(--font-body-v2)">' + escHTML(oi.name) + '</div>';
     h += '</div>';

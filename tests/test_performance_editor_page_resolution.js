@@ -177,4 +177,9 @@ test("performanceEditorPage ignores malformed numeric editor values", function()
   assert.ok(html.indexOf("0.00s / 0.00s") >= 0);
 });
 
+test("performance editor event rows expose keyboard handlers", function() {
+  var source = loadJS("js/pages/performance_editor.js");
+  assert.ok(source.indexOf('role="button" tabindex="0" onclick="act(\\\'editorSelectEvent\\\',') >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
