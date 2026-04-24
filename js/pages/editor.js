@@ -148,7 +148,7 @@ function renderEditorItemsList(obj){
       var rawItemId = firstEditorTextToken(item && item.id);
       var selected = rawItemId ? String(S.editorSelectedId)===rawItemId : false;
       var itemId = firstEditorTextToken(rawItemId, entry.kind);
-      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+(rawItemId?';cursor:pointer':'')+'"'+(rawItemId?' onclick="act(\'editorSelect\',\''+rawItemId+'\')"':'')+'>';
+      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+(rawItemId?';cursor:pointer':'')+'"'+(rawItemId?' role="button" tabindex="0" onclick="act(\'editorSelect\',\''+rawItemId+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelect\',\''+rawItemId+'\')}"':'')+'>';
       h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(itemId)+'</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(getEditorItemSummary(entry.kind, item))+'</div>';
       h += '</div>';

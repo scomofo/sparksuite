@@ -195,6 +195,11 @@ test("homePage uses rehydrated tab renderers from the active instrument module",
   assert.ok(html.indexOf("Piano Practice") >= 0);
 });
 
+test("practice instrument switcher rows expose keyboard handlers", function() {
+  var source = loadJS("js/pages/practice.js");
+  assert.ok(source.indexOf('sv2-inst-row__item" role="button" tabindex="0"') >= 0);
+});
+
 test("practicePage renders human plan labels from a core-backed daily practice plan", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
