@@ -183,7 +183,7 @@
         "profile":         function(){ S._showroomOverride = "profile"; },
         "lesson":          function(){ S._showroomOverride = "lesson"; },
         // Explicit "switch instrument" action.
-        "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; }
+        "instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; S.launcherView = "instruments"; }
       };
       // Clear any prior override so the legacy slot routing wins again —
       // but keep it for routes whose handlers set an override themselves.
