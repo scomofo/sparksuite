@@ -4184,6 +4184,58 @@ test("advanceGuidedSession completes V2 blocks only when the step leaves them", 
   assert.strictEqual(plan.segments[2].completed, true);
 });
 
+test("skipGuidedBlock jumps to the next V2 shell block and completes the skipped block", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 1 });
+  var state = core.skipGuidedBlock({}).runtimeState;
+
+  assert.strictEqual(state.guidedStep, "review");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_drill");
+  assert.strictEqual(plan.segments[0].completed, true);
+  assert.strictEqual(plan.segments[1].completed, false);
+
+  core.syncGuidedRuntimeState({
+    guidedStep: "newMove",
+    guidedNewMovePhase: "shadow"
+  });
+  state = core.skipGuidedBlock({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "songSlice");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_song");
+  assert.strictEqual(plan.segments[1].completed, true);
+
+  state = core.skipGuidedBlock({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "victoryLap");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(plan.segments[2].completed, true);
+});
+
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
   SparkInstrumentAdapter = {
     getAppId: function() { return "bassspark"; },

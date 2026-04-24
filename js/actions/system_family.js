@@ -530,6 +530,36 @@
       return true;
     }
 
+    if (a === "guidedSkipBlock") {
+      var guidedSkipCore = getSparkCoreHandle();
+      if (guidedSkipCore && typeof guidedSkipCore.skipGuidedBlock === "function") {
+        var guidedSkipResult = guidedSkipCore.skipGuidedBlock({});
+        var guidedSkipState = guidedSkipResult && guidedSkipResult.runtimeState ? guidedSkipResult.runtimeState : null;
+        mirrorGuidedRuntimeFields(guidedSkipState || null);
+        if (guidedSkipState && guidedSkipState.guidedStep != null) {
+          S.guidedStep = guidedSkipState.guidedStep;
+          S.newMovePhase = guidedSkipState.guidedNewMovePhase || null;
+        }
+        if (guidedSkipState && guidedSkipState.activeScreen === "guided_done") {
+          S.screen = SCR.GUIDED_DONE || "guided_done";
+        }
+      } else if (S.guidedStep === "spark") {
+        act("guidedNext");
+        return true;
+      } else if (S.guidedStep === "review" || S.guidedStep === "newMove") {
+        S.guidedStep = "songSlice";
+        S.newMovePhase = null;
+      } else if (S.guidedStep === "songSlice") {
+        S.guidedStep = "victoryLap";
+        S.newMovePhase = null;
+      } else if (S.guidedStep === "victoryLap") {
+        act("guidedComplete");
+        return true;
+      }
+      render();
+      return true;
+    }
+
     if (a === "guidedConfirmStop") {
       if (typeof confirm !== "function" || confirm("End session early?")) {
         act("guidedStop");
