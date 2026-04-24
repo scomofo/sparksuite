@@ -254,6 +254,10 @@ test("guided page shows block progress from the active v2 session plan", functio
   assert.ok(html.indexOf(">2 min<") >= 0);
   assert.ok(html.indexOf(">3 min<") >= 0);
   assert.ok(html.indexOf(">4 min<") >= 0);
+  assert.ok(html.indexOf("Block 2 of 4") >= 0);
+  assert.ok(html.indexOf("Drill") >= 0);
+  assert.ok(html.indexOf("3 min block") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
 });
 
 test("guided song slice ignores stale cached copy", function() {
