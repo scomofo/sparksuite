@@ -72,7 +72,7 @@ function pianoPracticeTab() {
     var isLocked = lvl.num > S.level + 1; // can see current + next
     var color = levelColor(lvl.num);
     var cls = "level-tab" + (isActive ? " active" : "") + (isLocked ? " locked" : "");
-    html += '<div class="' + cls + '" style="color:' + color + ';background:' + color + '15" onclick="' + (isLocked ? '' : "act('view_level'," + lvl.num + ")") + '">';
+    html += '<div class="' + cls + '" style="color:' + color + ';background:' + color + '15"' + (isLocked ? '' : ' role="button" tabindex="0" onclick="act(\'view_level\',' + lvl.num + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'view_level\',' + lvl.num + ')}"') + '>';
     html += lvl.icon + ' ' + lvl.num;
     html += '</div>';
   }

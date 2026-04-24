@@ -82,7 +82,7 @@ function pianoSongsTab() {
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = S._songTab === t.id ? " active" : "";
-    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="S._songTab=\'' + t.id + '\';render()">' + t.label + '</div>';
+    html += '<div class="level-tab' + active + '" style="color:var(--accent)" role="button" tabindex="0" onclick="S._songTab=\'' + t.id + '\';render()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();S._songTab=\'' + t.id + '\';render()}">' + t.label + '</div>';
   });
   html += '</div>';
 
@@ -234,7 +234,7 @@ function stylesTab() {
   PLAY_STYLES.forEach(function(ps, i) {
     var active = S.styleIdx === i;
     html += '<div class="style-card ' + (active ? 'active' : '') + '">';
-    html += '<div class="style-header" onclick="act(\'select_style\',' + i + ')">';
+    html += '<div class="style-header" role="button" tabindex="0" onclick="act(\'select_style\',' + i + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'select_style\',' + i + ')}">';
     html += '<strong>' + ps.name + '</strong> <span class="level-tag">Lvl ' + ps.level + '</span>';
     html += '</div>';
     if (active) {
