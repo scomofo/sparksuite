@@ -5,6 +5,18 @@
     return null;
   }
 
+  function isStudioGuidedSessionActive() {
+    var core = getStudioCore();
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    return !!(view &&
+      view.plan &&
+      view.plan.flow === "guided_session" &&
+      view.runtimeState &&
+      view.runtimeState.activeScreen === "guided_session");
+  }
+
   function setLegacyFields(setFields, save) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
       SparkProgressBridge.applyLegacyActivityRuntime({ setFields: setFields, save: save });
@@ -174,8 +186,12 @@
     }
 
     if (a === "openPlan") {
-      if (getStudioCore()) openPracticePlanScreenRequest();
-      S.screen = SCR.PLAN;
+      if (isStudioGuidedSessionActive()) {
+        S.screen = SCR.GUIDED;
+      } else {
+        if (getStudioCore()) openPracticePlanScreenRequest();
+        S.screen = SCR.PLAN;
+      }
       render();
       return true;
     }

@@ -43,6 +43,18 @@
     return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
   }
 
+  function isGuidedSessionActive() {
+    var core = getSparkCoreHandle();
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    return !!(view &&
+      view.plan &&
+      view.plan.flow === "guided_session" &&
+      view.runtimeState &&
+      view.runtimeState.activeScreen === "guided_session");
+  }
+
   function mirrorGuidedRuntimeFields(runtimeState) {
     if (!runtimeState) return;
     S.guidedActivityId = runtimeState.guidedActivityId || null;
@@ -435,8 +447,12 @@
     }
 
     if (a === "openPracticePlan") {
-      openPracticePlanScreenRequest();
-      openScreen(SCR.PLAN);
+      if (isGuidedSessionActive()) {
+        openScreen(SCR.GUIDED);
+      } else {
+        openPracticePlanScreenRequest();
+        openScreen(SCR.PLAN);
+      }
       render();
       return true;
     }
