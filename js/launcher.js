@@ -613,6 +613,7 @@
 
     // Ask the app shell to show the launcher home view
     showLauncher: function() {
+      _active = null;
       if (typeof S !== "undefined") {
         S.activeInstrument = null;
         S._showroomOverride = null;
@@ -625,6 +626,7 @@
     // Switch the launcher to a named view (settings/library/learn)
     openLauncherView: function(view) {
       if (typeof S === "undefined") return;
+      _active = null;
       S.activeInstrument = null;
       S._showroomOverride = null;
       S.launcherView = view || "home";
