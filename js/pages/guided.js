@@ -57,6 +57,57 @@ function humanizeGuidedLabel(value) {
   return token.replace(/[-_]+/g, " ");
 }
 
+function getGuidedBlockTheme(blockType) {
+  if (blockType === "warm_engine") {
+    return {
+      label: "Warm Engine Live",
+      color: "#FFE66D",
+      background: "#FFE66D22",
+      textColor: "#8A6A00"
+    };
+  }
+  if (blockType === "drill") {
+    return {
+      label: "Drill In Progress",
+      color: "#FF8A5C",
+      background: "#FF8A5C22",
+      textColor: "#B6491E"
+    };
+  }
+  if (blockType === "song") {
+    return {
+      label: "Song Block Live",
+      color: "#45B7D1",
+      background: "#45B7D122",
+      textColor: "#1D7387"
+    };
+  }
+  if (blockType === "cooldown") {
+    return {
+      label: "Cooldown Block",
+      color: "#A78BFA",
+      background: "#A78BFA22",
+      textColor: "#6E56B3"
+    };
+  }
+  return {
+    label: "Guided Session",
+    color: "var(--text-muted)",
+    background: "var(--input-bg)",
+    textColor: "var(--text-muted)"
+  };
+}
+
+function renderGuidedActiveBlockBadge(blockType) {
+  var theme = getGuidedBlockTheme(blockType);
+  if (!theme || !theme.label) return "";
+  return '<div style="display:flex;justify-content:center;margin:0 0 12px">' +
+    '<span style="padding:7px 12px;border-radius:999px;background:' + theme.background + ';color:' + theme.textColor + ';font-size:12px;font-weight:900;letter-spacing:.02em">' +
+      escHTML(theme.label) +
+    '</span>' +
+    '</div>';
+}
+
 function getGuidedInstrumentType() {
   var inst = getGuidedPageInstrument();
   return firstGuidedTextToken(
@@ -399,6 +450,7 @@ function guidedSessionPage() {
   h += '<button class="back-btn" onclick="act(\'guidedConfirmStop\')">&#8592; Exit</button>';
   h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
+  h += renderGuidedActiveBlockBadge(guidedView.activeBlockType);
 
   h += renderGuidedShellSummary(guidedView.shellSummary);
   h += guidedStepIndicator(guidedStep);
@@ -453,6 +505,25 @@ function resolveGuidedViewActivity(plan, step, runtimeState) {
     });
   }
   return activity;
+}
+
+function resolveGuidedActiveBlockType(plan, step, runtimeState, corePlan, activeActivity) {
+  var segments;
+  var activeSegmentId;
+  var i;
+  if (runtimeState && runtimeState.guidedBlockType) return runtimeState.guidedBlockType;
+  if (activeActivity && activeActivity.block_type) return activeActivity.block_type;
+  activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
+  segments = corePlan && Array.isArray(corePlan.segments) ? corePlan.segments : [];
+  if (activeSegmentId) {
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === activeSegmentId && segments[i].meta && segments[i].meta.guidedBlockType) {
+        return segments[i].meta.guidedBlockType;
+      }
+    }
+  }
+  activeActivity = getGuidedStepActivity(plan, step);
+  return activeActivity && activeActivity.block_type ? activeActivity.block_type : null;
 }
 
 function getGuidedPageCoreView() {
@@ -743,6 +814,8 @@ function getGuidedSessionView() {
   var currentPlan = coreView && coreView.plan ? coreView.plan : null;
   var resolvedPlan;
   var blockProgress;
+  var activeActivity;
+  var activeBlockType;
   var plan = coreView
     && coreView.plan
     && coreView.plan.flow === "guided_session"
@@ -754,6 +827,8 @@ function getGuidedSessionView() {
     : (S.guidedStep || "spark");
   resolvedPlan = plan || S.guidedPlan || null;
   blockProgress = getGuidedBlockProgress(resolvedPlan, currentPlan, runtimeState);
+  activeActivity = resolveGuidedViewActivity(resolvedPlan, guidedStep, runtimeState);
+  activeBlockType = resolveGuidedActiveBlockType(resolvedPlan, guidedStep, runtimeState, currentPlan, activeActivity);
 
   return {
     plan: resolvedPlan,
@@ -763,10 +838,10 @@ function getGuidedSessionView() {
       ? runtimeState.guidedNewMovePhase
       : (S.newMovePhase || null)
     ,
-    activeActivity: resolveGuidedViewActivity(resolvedPlan, guidedStep, runtimeState),
+    activeActivity: activeActivity,
     activeActivityId: runtimeState && runtimeState.guidedActivityId ? runtimeState.guidedActivityId : (S.guidedActivityId || null),
     activeActivityKind: runtimeState && runtimeState.guidedActivityKind ? runtimeState.guidedActivityKind : (S.guidedActivityKind || null),
-    activeBlockType: runtimeState && runtimeState.guidedBlockType ? runtimeState.guidedBlockType : (S.guidedBlockType || null),
+    activeBlockType: activeBlockType || (S.guidedBlockType || null),
     activeSegmentId: runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null,
     blockProgress: blockProgress,
     shellSummary: getGuidedShellSummary(currentPlan, blockProgress, runtimeState)
