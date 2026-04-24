@@ -318,16 +318,26 @@ test('boot loader tracks deferred failures instead of silently reporting ready',
 test('showroom source wires remaining library, tuner, and syllabus controls', function() {
   var showroomSource = loadJS('js/showroom/spark-showroom.js');
   var systemFamilySource = loadJS('js/actions/system_family.js');
+  var performanceFamilySource = loadJS('js/actions/performance_family.js');
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomFocusLibrarySearch\\\')"') >= 0);
   assert.ok(showroomSource.indexOf('id="showroom-library-search"') >= 0);
   assert.ok(showroomSource.indexOf('oninput="act(\\\'communitySearch\\\',this.value);render()"') >= 0);
+  assert.ok(showroomSource.indexOf('Quick Drills</h3><span class="link"') >= 0);
+  assert.ok(showroomSource.indexOf('onkeydown="if(event.key===\\\'Enter\\\'||event.key===\\\' \\') >= 0);
+  assert.ok(showroomSource.indexOf("act('showroomPlayLibrarySong'") >= 0 || showroomSource.indexOf('act(\\\'showroomPlayLibrarySong\\\'') >= 0);
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomOpenQuickTools\\\')"') >= 0);
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomToggleRecorder\\\')"') >= 0);
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomToneGenerator\\\')"') >= 0);
+  assert.ok(showroomSource.indexOf('act(\\\'showroomOpenTrendingScores\\\')') >= 0);
+  assert.ok(showroomSource.indexOf('Continue Learning</h3><span class="link"') >= 0);
+  assert.ok(showroomSource.indexOf('nav("curriculum")') >= 0);
   assert.ok(showroomSource.indexOf('opts.ctaAction || nav("lesson")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomFocusLibrarySearch")') >= 0);
+  assert.ok(systemFamilySource.indexOf('if (a === "showroomOpenTrendingScores")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToggleRecorder")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToneGenerator")') >= 0);
+  assert.ok(performanceFamilySource.indexOf('if (a === "showroomPlayLibrarySong")') >= 0);
+  assert.ok(performanceFamilySource.indexOf('return handlePerformanceAction("showroomStartPerf");') >= 0);
 });
 
 test('launcher deferred asset guard does not synchronously recurse when already ready', function() {

@@ -712,7 +712,7 @@
                + '<div class="showroom-mini-row"><span class="showroom-mini-num" style="color:var(--perform-cyan)">' + focusScore + '</span><span class="showroom-mini-unit">/100</span></div></div>'
            + '</div>'
            + '<section><div class="showroom-section-h2" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px">'
-             + '<h3 style="font-family:\'Syne\';font-weight:800;font-size:15px">Quick Drills</h3><span class="link" style="font-size:11px;font-weight:700;color:var(--text-secondary);cursor:pointer">View All</span></div>'
+             + '<h3 style="font-family:\'Syne\';font-weight:800;font-size:15px">Quick Drills</h3><span class="link" style="font-size:11px;font-weight:700;color:var(--text-secondary);cursor:pointer" role="button" tabindex="0" onclick="' + nav("lesson") + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("lesson") + '}">View All</span></div>'
              + '<div style="display:flex;flex-direction:column;gap:8px">' + drillHtml + '</div></section>'
          + '</main>'
          + bottomNav(navItems, "practice")
@@ -803,9 +803,10 @@
     var songsHtml = "";
     for (var s = 0; s < songs.length; s++) {
       var sg = songs[s];
+      var playPayload = (sg.id || sg.name) + "|" + (sg.instrument || "");
       var playAction = typeof sg.songIndex === "number"
         ? "event.stopPropagation();act('openPerformSong'," + sg.songIndex + ")"
-        : "event.stopPropagation();" + nav("song-details", sg.id || sg.name);
+        : "event.stopPropagation();act('showroomPlayLibrarySong'," + jsArg(playPayload) + ")";
       var thumb = sg.cover
         ? '<img src="' + escHtml(sg.cover) + '" alt="">'
         : '<div class="showroom-song-thumb-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
@@ -847,7 +848,7 @@
            + '<div class="showroom-search"><span class="material-symbols-outlined">search</span><input id="showroom-library-search" type="search" placeholder="Search songs, artists..." value="' + escHtml((typeof S !== "undefined" && typeof S.communitySearch === "string") ? S.communitySearch : "") + '" oninput="act(\'communitySearch\',this.value);render()" aria-label="Search songs and artists"></div>'
            + '<div class="showroom-chiprow">' + chipsHtml + '</div>'
            + '<div class="showroom-level-row">' + levelsHtml + '</div>'
-           + '<div class="showroom-trending-head"><h3>Trending Scores</h3><span class="link">View All</span></div>'
+           + '<div class="showroom-trending-head"><h3>Trending Scores</h3><span class="link" role="button" tabindex="0" onclick="act(\'showroomOpenTrendingScores\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'showroomOpenTrendingScores\')}">View All</span></div>'
            + (songsHtml || '<div class="showroom-empty-state"><p>No songs matched your search.</p></div>')
            + '<div class="showroom-daily">'
              + '<div class="showroom-daily-head"><span class="showroom-daily-eyebrow">Daily Challenge</span><span class="showroom-daily-xp">XP +500</span></div>'
@@ -1458,7 +1459,7 @@
                + '<div class="bolt"><span class="material-symbols-outlined fill">bolt</span></div>'
              + '</div>'
            + '</div>'
-           + '<div class="showroom-path-section-head"><h3>Continue Learning</h3><span class="link">VIEW ALL</span></div>'
+           + '<div class="showroom-path-section-head"><h3>Continue Learning</h3><span class="link" role="button" tabindex="0" onclick="' + nav("curriculum") + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("curriculum") + '}">VIEW ALL</span></div>'
            + '<div style="display:flex;flex-direction:column;gap:8px">' + lessonsHtml + '</div>'
          + '</div>'
          + '<button class="showroom-path-fab" aria-label="Start practice" onclick="' + nav("practice") + '"><span class="material-symbols-outlined" aria-hidden="true" style="font-size:28px">timer</span></button>'
