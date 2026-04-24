@@ -161,6 +161,12 @@
       return true;
     }
 
+    if (a === "showroomOpenTrendingScores") {
+      showMicroToast("Leaderboard details are coming soon. Browse the top songs below for now.", "&#127942;");
+      render();
+      return true;
+    }
+
     if (a === "showroomToggleRecorder") {
       try {
         if (typeof isRecording === "function" && isRecording()) {

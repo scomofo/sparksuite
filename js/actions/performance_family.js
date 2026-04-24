@@ -98,6 +98,57 @@
       return true;
     }
 
+    if (a === "showroomPlayLibrarySong") {
+      var rawPayload = v != null ? String(v) : "";
+      var parts = rawPayload.split("|");
+      var songKey = parts[0] || "";
+      var instrumentType = parts[1] || "";
+      var inst = typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function"
+        ? SparkInstruments.getActive()
+        : null;
+      if ((!inst || !inst.getData || instrumentType) && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {
+        var allInst = SparkInstruments.getAll() || [];
+        for (var ai = 0; ai < allInst.length; ai++) {
+          var candidateInst = allInst[ai];
+          if (!candidateInst) continue;
+          var candidateType = candidateInst.instrument || candidateInst.instrumentType || "";
+          if (instrumentType && candidateType !== instrumentType) continue;
+          if (typeof candidateInst.getData === "function") {
+            inst = candidateInst;
+            break;
+          }
+        }
+        if (inst && typeof SparkInstruments.activate === "function" && (!S.activeInstrument || S.activeInstrument !== (inst.id || inst.appId))) {
+          SparkInstruments.activate(inst.id || inst.appId);
+        }
+      }
+      var data = inst && typeof inst.getData === "function" ? inst.getData() : null;
+      var songs = data && Array.isArray(data.SONGS) ? data.SONGS : [];
+      var selected = null;
+      for (var si = 0; si < songs.length; si++) {
+        var candidate = songs[si];
+        if (!candidate) continue;
+        if (String(candidate.id || "") === songKey || String(candidate.title || "") === songKey || String(candidate.name || "") === songKey) {
+          selected = candidate;
+          break;
+        }
+      }
+      if (selected) {
+        S.selectedSong = selected;
+        return handlePerformanceAction("showroomStartPerf");
+      }
+      if (inst && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.launchInstrumentPerformance === "function") {
+        SparkInstruments.launchInstrumentPerformance(inst.id || inst.appId);
+        return true;
+      }
+      if (typeof S !== "undefined") {
+        S._showroomSongId = songKey || null;
+      }
+      if (typeof showMicroToast === "function") showMicroToast("This song's performance chart isn't ready yet.", "&#127925;");
+      render();
+      return true;
+    }
+
     if (a === "performSong") {
       var songIdx = parseInt(v, 10);
       if (preparePerformanceSongSelection(songIdx, {
