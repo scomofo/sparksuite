@@ -141,6 +141,13 @@ function getGuidedExtendStatusLabel(extensionCount) {
   return "Deep focus stretch is active. Stay with the useful part and wrap whenever you feel complete.";
 }
 
+function getGuidedCompleteCtaLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "Finish Session";
+  if (count === 2) return "Wrap Up When Ready";
+  return "Wrap Up Gently";
+}
+
 function getGuidedCooldownDetailLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count <= 0) return "Victory Lap";
@@ -356,8 +363,11 @@ function getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase)
 function getGuidedQuickAction(guidedView) {
   var step = guidedView && guidedView.guidedStep ? guidedView.guidedStep : null;
   var phase = guidedView && guidedView.newMovePhase ? guidedView.newMovePhase : null;
+  var extensionCount = guidedView && guidedView.shellSummary
+    ? normalizeGuidedCount(guidedView.shellSummary.extensionCount, 0)
+    : 0;
   if (step === "victoryLap") {
-    return { action: "guidedComplete", label: "Finish Session" };
+    return { action: "guidedComplete", label: getGuidedCompleteCtaLabel(extensionCount) };
   }
   if (step === "newMove" && phase && phase !== "refine") {
     return { action: "guidedAdvancePhase", label: "Continue" };
@@ -1112,7 +1122,7 @@ function _guidedVictoryLap(plan) {
   }
   h += renderGuidedActionStatus(guidedView, cardTheme.titleColor);
   h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
-  h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">' + escHTML(getGuidedAdvanceLabel("victoryLap")) + '</button>';
+  h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">' + escHTML(getGuidedCompleteCtaLabel(extensionCount)) + '</button>';
   h += '<button class="btn" onclick="act(\'guidedExtendBlock\')" style="background:transparent;color:' + cardTheme.titleColor + ';padding:14px 24px;font-size:14px;font-weight:900;border:1px solid ' + cardTheme.titleColor + '">' + escHTML(getGuidedExtendCtaLabel(extensionCount)) + '</button>';
   h += '</div>';
   h += '</div>';
