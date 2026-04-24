@@ -560,6 +560,23 @@
       return true;
     }
 
+    if (a === "guidedExtendBlock") {
+      var guidedExtendCore = getSparkCoreHandle();
+      if (guidedExtendCore && typeof guidedExtendCore.extendGuidedBlock === "function") {
+        var guidedExtendResult = guidedExtendCore.extendGuidedBlock({});
+        var guidedExtendState = guidedExtendResult && guidedExtendResult.runtimeState ? guidedExtendResult.runtimeState : null;
+        mirrorGuidedRuntimeFields(guidedExtendState || null);
+        if (guidedExtendState && guidedExtendState.guidedStep != null) {
+          S.guidedStep = guidedExtendState.guidedStep;
+          S.newMovePhase = guidedExtendState.guidedNewMovePhase || null;
+        }
+      } else if (S.guidedStep === "victoryLap" && S.guidedPlan && S.guidedPlan.blockActivities && S.guidedPlan.blockActivities.cooldown) {
+        S.guidedPlan.blockActivities.cooldown.duration_sec = (parseInt(S.guidedPlan.blockActivities.cooldown.duration_sec, 10) || 0) + 300;
+      }
+      render();
+      return true;
+    }
+
     if (a === "guidedConfirmStop") {
       if (typeof confirm !== "function" || confirm("End session early?")) {
         act("guidedStop");

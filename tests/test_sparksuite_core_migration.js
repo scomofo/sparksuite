@@ -4236,6 +4236,57 @@ test("skipGuidedBlock jumps to the next V2 shell block and completes the skipped
   assert.strictEqual(plan.segments[2].completed, true);
 });
 
+test("extendGuidedBlock keeps victory lap active and lengthens the cooldown shell", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 1 });
+  var state;
+
+  core.syncGuidedRuntimeState({
+    guidedStep: "victoryLap",
+    guidedNewMovePhase: null,
+    status: "running",
+    positionMs: 45000
+  });
+  state = core.extendGuidedBlock({}).runtimeState;
+
+  assert.strictEqual(state.guidedStep, "victoryLap");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(state.guidedActivityId, "gtr-d01-cooldown");
+  assert.strictEqual(state.guidedBlockType, "cooldown");
+  assert.strictEqual(state.transport.status, "running");
+  assert.strictEqual(state.transport.positionMs, 0);
+  assert.strictEqual(plan.segments[3].durationSec, 390);
+  assert.strictEqual(plan.context.guidedShellDurationSec, 900);
+  assert.strictEqual(plan.context.guidedPlan.blockActivities.cooldown.duration_sec, 390);
+});
+
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
   SparkInstrumentAdapter = {
     getAppId: function() { return "bassspark"; },
