@@ -269,6 +269,20 @@ function getGuidedDoneActionHint(extensionCount) {
   return "You can leave this here and come back when the next spark shows up.";
 }
 
+function getGuidedDoneNextActionStyle(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff";
+  if (count === 2) return "background:linear-gradient(135deg,#A78BFA,#FFB86B);color:#2F2347";
+  return "background:linear-gradient(135deg,#C9D7B8,#F4C98B);color:#32402A";
+}
+
+function getGuidedDoneHomeStyle(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "background:#4ECDC4;color:#fff;margin-top:8px";
+  if (count === 2) return "background:#E9E0FF;color:#6E56B3;margin-top:8px;border:1px solid #C8B5FF";
+  return "background:#EEF4E4;color:#5F7351;margin-top:8px;border:1px solid #C9D7B8";
+}
+
 function getGuidedCooldownDetailLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count <= 0) return "Victory Lap";
@@ -1288,8 +1302,8 @@ function guidedDonePage() {
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.streak) + '</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/' + totalSessions + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.sessions) + '</div></div>';
   h += '</div></div>';
-  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
-  h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
+  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="' + getGuidedDoneNextActionStyle(extensionCount) + '">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
+  h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="' + getGuidedDoneHomeStyle(extensionCount) + '">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
   if (extensionCount >= 2) {
     h += '<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">' + escHTML(getGuidedDoneActionHint(extensionCount)) + '</div>';
   }
