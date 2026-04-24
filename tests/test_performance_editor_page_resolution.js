@@ -179,10 +179,12 @@ test("performanceEditorPage ignores malformed numeric editor values", function()
 
 test("performance editor event rows expose keyboard handlers", function() {
   var source = loadJS("js/pages/performance_editor.js");
-  assert.ok(source.indexOf('role="button" tabindex="0" onclick="act(\\\'editorSelectEvent\\\',') >= 0);
-  assert.ok(source.indexOf('role="button" tabindex="0" style="cursor:pointer;margin-top:8px" onclick="act(\\\'editorLoad\\\',') >= 0);
+  assert.ok(source.indexOf('role="button" tabindex="0" onclick="if(event.target&&event.target.closest&&event.target.closest(\\\'button,input,select,textarea,a\\\')){return;}act(\\\'editorSelectEvent\\\',') >= 0);
+  assert.ok(source.indexOf('role="button" tabindex="0" style="cursor:pointer;margin-top:8px" onclick="if(event.target&&event.target.closest&&event.target.closest(\\\'button,input,select,textarea,a\\\')){return;}act(\\\'editorLoad\\\',') >= 0);
   assert.ok(source.indexOf('role="button" tabindex="0" style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:') >= 0);
   assert.ok(source.indexOf('onclick="act(\\\'editorSelectPhrase\\\',') >= 0);
+  assert.strictEqual(source.indexOf("event.stopPropagation();act('editorDelete'"), -1);
+  assert.strictEqual(source.indexOf("event.stopPropagation();act('editorDeleteEvent'"), -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
