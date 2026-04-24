@@ -141,6 +141,21 @@ function getGuidedExtendStatusLabel(extensionCount) {
   return "Deep focus stretch is active. Stay with the useful part and wrap whenever you feel complete.";
 }
 
+function getGuidedCooldownDetailLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count <= 0) return "Victory Lap";
+  if (count === 1) return "Extra Focus";
+  if (count === 2) return "Deep Focus Live";
+  return "Deep Focus x" + count;
+}
+
+function getGuidedDeepFocusLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "Deep Focus Stretch Active";
+  return "Deep Focus Stretch x" + count;
+}
+
 function renderGuidedActiveBlockBadge(blockType, shellSummary) {
   var theme = getGuidedBlockTheme(blockType);
   var extensionCount = shellSummary ? normalizeGuidedCount(shellSummary.extensionCount, 0) : 0;
@@ -256,7 +271,9 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
       extensionCount: normalizeGuidedCount(segment && segment.meta && segment.meta.guidedExtensionCount, 0),
       state: state,
       detail: state === "now"
-        ? getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase)
+        ? (blockType === "cooldown"
+          ? getGuidedCooldownDetailLabel(normalizeGuidedCount(segment && segment.meta && segment.meta.guidedExtensionCount, 0))
+          : getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase))
         : "",
       progressRatio: state === "done"
         ? 1
@@ -343,7 +360,7 @@ function getGuidedExtendAction(guidedView) {
   if (step === "victoryLap") {
     return {
       action: "guidedExtendBlock",
-      label: extensionCount > 0 ? "Keep Going +5 more min" : "Keep Going +5 min"
+      label: getGuidedExtendCtaLabel(extensionCount)
     };
   }
   return null;
@@ -378,6 +395,7 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
         : "";
       var extensionThemeLabel = getGuidedExtensionLabel(block.extensionCount);
       var focusStretchLabel = getGuidedFocusStretchLabel(block.extensionCount);
+      var deepFocusLabel = getGuidedDeepFocusLabel(block.extensionCount);
       var remainingLabel = block.state === "now" && block.remainingSec > 0
         ? formatGuidedDurationLabel(block.remainingSec) + " left"
         : "";
@@ -388,9 +406,16 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
           ? "#FF8A5C"
           : "var(--text-muted)";
       var cardBackground = block.extensionCount > 0
-        ? "linear-gradient(135deg,#A78BFA18,#FFFFFFCC)"
+        ? (block.extensionCount >= 2
+          ? "linear-gradient(135deg,#6E56B322,#A78BFA1C,#FFFFFFCC)"
+          : "linear-gradient(135deg,#A78BFA18,#FFFFFFCC)")
         : "var(--input-bg)";
-      var cardBorder = block.extensionCount > 0 ? "1px solid #A78BFA44" : "1px solid transparent";
+      var cardBorder = block.extensionCount > 0
+        ? (block.extensionCount >= 2 ? "1px solid #6E56B366" : "1px solid #A78BFA44")
+        : "1px solid transparent";
+      var progressBarFill = block.extensionCount >= 2
+        ? "linear-gradient(135deg,#6E56B3,#FF8A5C)"
+        : stateColor;
       var stateText = block.state ? block.state : "&nbsp;";
       return '<div style="padding:10px 12px;border-radius:12px;background:' + cardBackground + ';border:' + cardBorder + ';text-align:left">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">' +
@@ -401,7 +426,7 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
           escHTML(block.detail || " ") +
         '</div>' +
         '<div style="height:6px;border-radius:999px;background:#FFFFFF88;overflow:hidden;margin-bottom:6px">' +
-          '<div style="height:100%;width:' + progressPercent + '%;background:' + stateColor + ';border-radius:999px"></div>' +
+          '<div style="height:100%;width:' + progressPercent + '%;background:' + progressBarFill + ';border-radius:999px"></div>' +
         '</div>' +
         '<div style="font-size:11px;color:' + (block.state === "now" ? "#FF8A5C" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(remainingLabel || " ") +
@@ -414,6 +439,9 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
         '</div>' +
         '<div style="font-size:11px;font-weight:800;color:' + (focusStretchLabel ? "#6E56B3" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(focusStretchLabel || " ") +
+        '</div>' +
+        '<div style="font-size:11px;font-weight:800;color:' + (deepFocusLabel ? "#5B46A3" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+          escHTML(deepFocusLabel || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
         (quickAction || extendAction || skipAction
@@ -516,9 +544,11 @@ function renderGuidedShellSummary(shellSummary) {
   var extensionLabel;
   var extensionThemeLabel;
   var focusStretchLabel;
+  var deepFocusLabel;
   var extendedModeLabel;
   var summaryBackground;
   var summaryBorder;
+  var progressFill;
   var detail = [];
   var progressPercent;
   if (!shellSummary || !shellSummary.totalBlocks) return "";
@@ -540,13 +570,19 @@ function renderGuidedShellSummary(shellSummary) {
     : "";
   extensionThemeLabel = getGuidedExtensionLabel(shellSummary.extensionCount);
   focusStretchLabel = getGuidedFocusStretchLabel(shellSummary.extensionCount);
+  deepFocusLabel = getGuidedDeepFocusLabel(shellSummary.extensionCount);
   extendedModeLabel = getGuidedExtendedModeLabel(shellSummary.extensionCount);
   summaryBackground = shellSummary.extensionCount > 0
-    ? "linear-gradient(135deg,#A78BFA22,#FF8A5C16)"
+    ? (shellSummary.extensionCount >= 2
+      ? "linear-gradient(135deg,#6E56B328,#A78BFA22,#FF8A5C18)"
+      : "linear-gradient(135deg,#A78BFA22,#FF8A5C16)")
     : "linear-gradient(135deg,#FF8A5C11,#4ECDC411)";
   summaryBorder = shellSummary.extensionCount > 0
-    ? "1px solid #A78BFA44"
+    ? (shellSummary.extensionCount >= 2 ? "1px solid #6E56B366" : "1px solid #A78BFA44")
     : "1px solid transparent";
+  progressFill = shellSummary.extensionCount >= 2
+    ? "linear-gradient(135deg,#6E56B3,#FF8A5C)"
+    : "linear-gradient(135deg,#FF8A5C,#4ECDC4)";
   if (shellSummary.activeBlockLabel) detail.push(shellSummary.activeBlockLabel);
   if (blockMinutes > 0) detail.push(blockMinutes + " min block");
   if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
@@ -554,13 +590,14 @@ function renderGuidedShellSummary(shellSummary) {
     '<div style="font-size:12px;font-weight:900;color:var(--text-primary);text-transform:uppercase;letter-spacing:.04em">Block ' +
       shellSummary.activeBlockIndex + ' of ' + shellSummary.totalBlocks + '</div>' +
     '<div style="height:8px;border-radius:999px;background:#FFFFFF88;overflow:hidden;margin-top:8px">' +
-      '<div style="height:100%;width:' + progressPercent + '%;background:linear-gradient(135deg,#FF8A5C,#4ECDC4);border-radius:999px"></div>' +
+      '<div style="height:100%;width:' + progressPercent + '%;background:' + progressFill + ';border-radius:999px"></div>' +
     '</div>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(detail.join(" • ")) + '</div>' +
     '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML((elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min through session") + '</div>' +
     '<div style="font-size:11px;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionLabel || " ") + '</div>' +
     '<div style="font-size:11px;font-weight:800;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionThemeLabel || " ") + '</div>' +
     '<div style="font-size:11px;font-weight:800;color:#6E56B3;margin-top:2px;min-height:14px">' + escHTML(focusStretchLabel || " ") + '</div>' +
+    '<div style="font-size:11px;font-weight:800;color:#5B46A3;margin-top:2px;min-height:14px">' + escHTML(deepFocusLabel || " ") + '</div>' +
     '<div style="font-size:11px;font-weight:800;color:#8B5CF6;margin-top:2px;min-height:14px">' + escHTML(extendedModeLabel || " ") + '</div>' +
     '<div style="font-size:11px;color:#FF8A5C;margin-top:2px">' + escHTML(remainingLabel) + '</div>' +
     '</div>';

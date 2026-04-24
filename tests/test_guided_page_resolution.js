@@ -528,9 +528,12 @@ test("guided victory lap tiers extension copy for deeper focus stretches", funct
   assert.ok(html.indexOf("Focus Stretch Victory Lap!") >= 0);
   assert.ok(html.indexOf("Extended Focus x2") >= 0);
   assert.ok(html.indexOf("Focus Stretch x2") >= 0);
+  assert.ok(html.indexOf("Deep Focus Stretch Active") >= 0);
+  assert.ok(html.indexOf("Deep Focus Live") >= 0);
   assert.ok(html.indexOf("Extended session mode x2") >= 0);
   assert.ok(html.indexOf("This is a real focus stretch now. Loop the part that still feels rewarding and let it breathe.") >= 0);
   assert.ok(html.indexOf("You're in a real focus stretch now. Keep looping the part that still feels alive.") >= 0);
+  assert.ok(html.indexOf("background:linear-gradient(135deg,#6E56B3,#FF8A5C)") >= 0);
   assert.ok(html.indexOf(">Stretch Another +5 min<") >= 0);
 });
 
