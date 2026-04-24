@@ -153,6 +153,12 @@
       return true;
     }
 
+    if (a === "feedbackDraftText") {
+      if (!S.feedbackDraft || typeof S.feedbackDraft !== "object") S.feedbackDraft = {};
+      S.feedbackDraft.text = v;
+      return true;
+    }
+
     if (a === "openCurriculum") {
       openUtilityScreenRequest("curriculum");
       syncCurriculumStateRequest();
