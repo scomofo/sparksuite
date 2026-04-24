@@ -190,6 +190,20 @@ test("piano surfaces rehydrate an app-id-only active instrument shell", function
   assert.deepStrictEqual(pianoCheckBadges(), ["starter"]);
 });
 
+test("piano interactive surface tiles expose keyboard handlers", function() {
+  var gamesSource = loadJS("js/instruments/piano/pages/games.js");
+  var onboardingSource = loadJS("js/instruments/piano/pages/onboarding.js");
+  var practiceSource = loadJS("js/instruments/piano/pages/practice.js");
+  var songsSource = loadJS("js/instruments/piano/pages/songs.js");
+  var toolsSource = loadJS("js/instruments/piano/pages/tools.js");
+
+  assert.ok(gamesSource.indexOf('role="button" tabindex="0"') >= 0);
+  assert.ok(onboardingSource.indexOf('keyboard-size-btn') >= 0 && onboardingSource.indexOf('onkeydown="if(event.key===\\\'Enter\\\'||event.key===\\\' \\') >= 0);
+  assert.ok(practiceSource.indexOf('act(\\\'view_level\\\',') >= 0 && practiceSource.indexOf('role="button" tabindex="0"') >= 0);
+  assert.ok(songsSource.indexOf('style-header" role="button" tabindex="0"') >= 0);
+  assert.ok(toolsSource.indexOf('role="button" tabindex="0"') >= 0);
+});
+
 test("piano practice tab ignores stale curriculum and custom set labels", function() {
   resetEnvironment("pianospark");
   global.getPianoPageInstrument = function() {
