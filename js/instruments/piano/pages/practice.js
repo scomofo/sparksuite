@@ -271,6 +271,11 @@ function practicePlanSection(){
     );
   }
   var h = '';
+  var activeGuidedView = pianoGetActiveGuidedSessionView();
+  var activeGuidedContext = activeGuidedView && activeGuidedView.plan && activeGuidedView.plan.context ? activeGuidedView.plan.context : null;
+  var activeGuided = activeGuidedContext && activeGuidedContext.guidedPlan
+    ? pianoGetQuickStartGuidedSummary(activeGuidedContext.guidedPlan)
+    : null;
 
   // Practice stats card
   if(typeof getPracticeStats === "function"){
@@ -318,10 +323,35 @@ function practicePlanSection(){
     }
     h += '</div>';
   } else {
-    h += '<div class="card" style="margin-top:12px">';
-    h += '<div><b>Today\'s Practice Plan</b></div>';
-    h += '<div class="text-muted">No practice plan yet.</div>';
-    h += '</div>';
+    if (activeGuided && activeGuided.isActive) {
+      h += '<div class="card" style="margin-top:12px;border:2px solid var(--accent)">';
+      h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">';
+      h += '<div><b>Guided Session Flow</b></div>';
+      h += '<div class="text-muted">' + escHTML((activeGuided.blockCount || 4) + ' blocks') + '</div>';
+      h += '</div>';
+      h += '<div class="text-muted" style="margin-bottom:10px">Your live guided shell is the plan right now.</div>';
+      h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
+      h += '<div style="font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)">Guided Session Live</div>';
+      h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
+      h += '<div class="text-muted" style="margin-top:4px">' + escHTML(activeGuided.statusLabel) + '</div>';
+      if (activeGuided.targetDurationMin > 0) {
+        h += '<div class="text-muted" style="margin-top:4px">' + escHTML(activeGuided.targetDurationMin + " min shell") + '</div>';
+      }
+      if (activeGuided.focusSong) {
+        h += '<div class="text-muted" style="margin-top:4px">Song hook: ' + escHTML(activeGuided.focusSong) + '</div>';
+      }
+      if (activeGuided.newElement) {
+        h += '<div class="text-muted" style="margin-top:4px">New move: ' + escHTML(activeGuided.newElement) + '</div>';
+      }
+      h += '</div>';
+      h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:var(--accent);color:#fff;font-weight:700">Resume Guided Session</button>';
+      h += '</div>';
+    } else {
+      h += '<div class="card" style="margin-top:12px">';
+      h += '<div><b>Today\'s Practice Plan</b></div>';
+      h += '<div class="text-muted">No practice plan yet.</div>';
+      h += '</div>';
+    }
   }
 
   // Progression mastery summary
