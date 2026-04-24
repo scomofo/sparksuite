@@ -445,6 +445,51 @@ test("practice guided session card can resolve sparkCore from the global binding
   assert.ok(html.indexOf("0/30 done") >= 0);
 });
 
+test("shared session helpers can resolve sparkCore from the global binding", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.FINGER_EXERCISES = [{
+    id: "spider",
+    name: "Spider Walk",
+    desc: "Warm up evenly",
+    tier: 1,
+    duration: 90,
+    frequency: "daily",
+    goal: "Stay relaxed"
+  }];
+  global.getExpectedNotes = function() { return ["C", "E", "G"]; };
+  global.getCoachFeedback = function() { return []; };
+  global.ringHTML = function(value) { return "<div class=\"ring\">" + String(value) + "</div>"; };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          chordDetectActive: true,
+          chordDetectNotes: ["C", "E"],
+          chordDetectMatch: 92,
+          chordDetectError: "",
+          legacyFingerExerciseActive: true,
+          legacyFingerExerciseId: "spider",
+          legacyPracticeRemainingSec: 45,
+          legacyFingerExerciseCount: 2
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/pages/shared.js"));
+
+  var runtime = getLegacyChordDetectRuntime();
+  var fingerHtml = fingerExerciseCard();
+
+  assert.strictEqual(runtime.active, true);
+  assert.deepStrictEqual(runtime.notes, ["C", "E"]);
+  assert.strictEqual(runtime.match, 92);
+  assert.ok(fingerHtml.indexOf("Spider Walk") >= 0);
+  assert.ok(fingerHtml.indexOf("0:45") >= 0);
+  assert.ok(fingerHtml.indexOf("Completed 2x") >= 0);
+});
+
 test("piano app confirms reset before dispatching reset", function() {
   resetEnvironment("pianospark");
   var resetCalls = 0;
