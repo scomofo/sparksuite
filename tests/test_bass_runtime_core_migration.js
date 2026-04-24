@@ -149,6 +149,42 @@ test("guidedStart delegates to shared guided session helper", function() {
   assert.strictEqual(saveStateCalls, 1);
 });
 
+test("resume_guided_session reopens the active bass guided shell without restarting it", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "Bass Session 2",
+              bpm: 80,
+              spark: { text: "next" },
+              newMove: { chord: "A" }
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+
+  bassAct("resume_guided_session");
+
+  assert.strictEqual(sparkCoreCalls.length, 0);
+  assert.strictEqual(S.guidedPlan.title, "Bass Session 2");
+  assert.strictEqual(S.guidedSession, 2);
+  assert.strictEqual(S.guidedStep, "songSlice");
+  assert.strictEqual(S.screen, "guided");
+  assert.strictEqual(saveStateCalls, 1);
+});
+
 test("guidedComplete delegates to shared completion and guided navigation helpers", function() {
   S.screen = "guided";
 

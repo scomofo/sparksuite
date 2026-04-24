@@ -529,6 +529,41 @@ function startGuidedSession() {
   render();
 }
 
+function getActivePianoGuidedView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var view = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+  return view &&
+    view.plan &&
+    view.plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION &&
+    view.runtimeState &&
+    view.runtimeState.activeScreen === "guided_session"
+    ? view
+    : null;
+}
+
+function resumeGuidedSession() {
+  var view = getActivePianoGuidedView();
+  var runtimeState = view && view.runtimeState ? view.runtimeState : {};
+  if (!view || !view.plan || !view.plan.context || !view.plan.context.guidedPlan) {
+    startGuidedSession();
+    return;
+  }
+  syncPianoGuidedPlanFromCore(view.plan);
+  if (runtimeState.guidedStep != null) {
+    S.sessionStep = runtimeState.guidedStep;
+    S.guidedStep = runtimeState.guidedStep;
+  }
+  if (runtimeState.guidedNewMovePhase !== undefined) S.newMovePhase = runtimeState.guidedNewMovePhase || null;
+  if (runtimeState.guidedPaused !== undefined) S.paused = !!runtimeState.guidedPaused;
+  if (runtimeState.transport && runtimeState.transport.status === "paused") S.paused = true;
+  checkPracticeDate();
+  playSound("start");
+  saveState();
+  render();
+}
+
 function syncPianoGuidedPlanFromCore(plan) {
   var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
   if (!guidedPlan) return null;
@@ -1002,6 +1037,10 @@ function act(action, param) {
 
     case "start_guided_session":
       startGuidedSession();
+      return;
+
+    case "resume_guided_session":
+      resumeGuidedSession();
       return;
 
     case "next_step":
