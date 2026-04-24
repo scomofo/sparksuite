@@ -1,5 +1,10 @@
 (function() {
   function handleUtilityAction(a, v) {
+    if (a === "appReload") {
+      if (typeof location !== "undefined" && location && typeof location.reload === "function") location.reload();
+      return true;
+    }
+
     if (a === "setMidiDevice") {
       S.activeMidiDeviceId = v;
       syncMidiSettingsStateRequest();

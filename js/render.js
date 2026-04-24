@@ -46,7 +46,7 @@ var _renderQueued = false;
 function _renderNow(){
   try{_renderInner();}catch(e){
     console.error("Render error:",e);
-    _writeAppHtml('<div class="card" style="margin:20px;text-align:center"><h2>Something went wrong</h2><p style="color:var(--text-muted);margin:8px 0">'+escHTML(String(e.message||e))+'</p><button class="btn" onclick="location.reload()" style="background:#FF6B6B;color:#fff;margin-top:12px">Reload</button></div>');
+    _writeAppHtml('<div class="card" style="margin:20px;text-align:center"><h2>Something went wrong</h2><p style="color:var(--text-muted);margin:8px 0">'+escHTML(String(e.message||e))+'</p><button class="btn" onclick="act(\'appReload\')" style="background:#FF6B6B;color:#fff;margin-top:12px">Reload</button></div>');
   }
 }
 
