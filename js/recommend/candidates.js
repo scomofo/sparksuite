@@ -1,5 +1,45 @@
 (function(){
 
+  function getActiveRecommendationInstrument(){
+    var inst;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if(typeof SparkInstruments==="undefined" || !SparkInstruments || typeof SparkInstruments.getActive!=="function") return null;
+    inst = SparkInstruments.getActive();
+    if(!inst) return null;
+    if(typeof inst.getCurriculumMap==="function" || typeof inst.getCurriculumMapV2==="function") return inst;
+    candidate = inst.id || inst.appId || inst.instrumentId || null;
+    if(!candidate || typeof SparkInstruments.getAll!=="function") return inst;
+    all = SparkInstruments.getAll() || [];
+    for(i=0;i<all.length;i++){
+      entry = all[i] || {};
+      if(entry.id===candidate || entry.appId===candidate) return entry;
+    }
+    return inst;
+  }
+
+  function getRecommendationCurriculumMap(inst){
+    var map = inst && typeof inst.getCurriculumMap==="function" ? (inst.getCurriculumMap() || []) : [];
+    if(Array.isArray(map) && map.length) return map;
+    map = inst && typeof inst.getCurriculumMapV2==="function" ? (inst.getCurriculumMapV2() || []) : [];
+    return Array.isArray(map) ? map : [];
+  }
+
+  function getCompletedLessons(){
+    var completed = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
+    var inst = getActiveRecommendationInstrument();
+    var instrumentType = inst && (inst.instrument || inst.instrumentType) ? (inst.instrument || inst.instrumentType) : null;
+    var v2Completed = instrumentType && S.curriculumV2CompletedSessions ? S.curriculumV2CompletedSessions[instrumentType] : null;
+    if(Array.isArray(v2Completed)){
+      for(var i=0;i<v2Completed.length;i++){
+        if(completed.indexOf(v2Completed[i])===-1) completed.push(v2Completed[i]);
+      }
+    }
+    return completed;
+  }
+
   function collectRecommendationCandidates(appType){
     var out = [];
     out = out.concat(getCurriculumCandidates(appType));
@@ -32,15 +72,30 @@
 
   function getCurriculumCandidates(appType){
     var out = [];
+    var inst = getActiveRecommendationInstrument();
+    var curriculumMap = getRecommendationCurriculumMap(inst);
     var curriculumId = appType === "piano"
       ? "curriculum_pianospark_main"
       : "curriculum_chordspark_main";
     var completedLessons = getCompletedLessons();
-    var nextLessonId = typeof getNextLessonFromCurriculum === "function"
-      ? getNextLessonFromCurriculum(curriculumId, completedLessons)
-      : null;
+    var nextLessonId = null;
+    var lesson = null;
+    var i;
+    if(curriculumMap.length){
+      for(i=0;i<curriculumMap.length;i++){
+        if(curriculumMap[i] && curriculumMap[i].id && completedLessons.indexOf(curriculumMap[i].id)===-1){
+          nextLessonId = curriculumMap[i].id;
+          lesson = curriculumMap[i];
+          break;
+        }
+      }
+    } else {
+      nextLessonId = typeof getNextLessonFromCurriculum === "function"
+        ? getNextLessonFromCurriculum(curriculumId, completedLessons)
+        : null;
+    }
     if(nextLessonId){
-      var lesson = typeof getCurriculumItem === "function" ? getCurriculumItem("lessons", nextLessonId) : null;
+      if(!lesson) lesson = typeof getCurriculumItem === "function" ? getCurriculumItem("lessons", nextLessonId) : null;
       if(lesson){
         out.push({
           id: lesson.id,
@@ -151,10 +206,6 @@
       });
     }
     return out;
-  }
-
-  function getCompletedLessons(){
-    return S.completedLessons || [];
   }
 
   window.collectRecommendationCandidates = collectRecommendationCandidates;
