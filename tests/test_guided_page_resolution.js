@@ -239,6 +239,7 @@ test("guided page shows block progress from the active v2 session plan", functio
       },
       runtimeState: {
         guidedStep: "newMove",
+        guidedNewMovePhase: "try",
         activeSegmentId: "gtr-d01_drill"
       },
       lastSessionOutcome: { xpAwarded: 30 }
@@ -258,6 +259,119 @@ test("guided page shows block progress from the active v2 session plan", functio
   assert.ok(html.indexOf("Drill") >= 0);
   assert.ok(html.indexOf("3 min block") >= 0);
   assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("New Move") >= 0);
+  assert.ok(html.indexOf("Try 3/4") >= 0);
+});
+
+test("guided page shows drill subphase progress on the active block card", function() {
+  S.guidedPlan = {
+    id: "gtr-d02",
+    num: 2,
+    title: "The D chord",
+    level: 1,
+    bpm: 80,
+    newMove: { text: "Try the shape.", chord: "D" }
+  };
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: {
+          guidedPlan: S.guidedPlan,
+          guidedShellDurationSec: 600
+        },
+        segments: [
+          {
+            id: "gtr-d02_warm_engine",
+            label: "Warm Engine",
+            durationSec: 90,
+            completed: true,
+            meta: { guidedBlockType: "warm_engine" }
+          },
+          {
+            id: "gtr-d02_drill",
+            label: "Drill",
+            durationSec: 180,
+            completed: false,
+            meta: { guidedBlockType: "drill" }
+          },
+          {
+            id: "gtr-d02_song",
+            label: "Song Slice",
+            durationSec: 240,
+            completed: false,
+            meta: { guidedBlockType: "song" }
+          },
+          {
+            id: "gtr-d02_cooldown",
+            label: "Cooldown",
+            durationSec: 90,
+            completed: false,
+            meta: { guidedBlockType: "cooldown" }
+          }
+        ]
+      },
+      runtimeState: {
+        guidedStep: "review",
+        activeSegmentId: "gtr-d02_drill"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+
+  var reviewHtml = guidedSessionPage();
+  assert.ok(reviewHtml.indexOf("Review Pass") >= 0);
+
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: {
+          guidedPlan: S.guidedPlan,
+          guidedShellDurationSec: 600
+        },
+        segments: [
+          {
+            id: "gtr-d02_warm_engine",
+            label: "Warm Engine",
+            durationSec: 90,
+            completed: true,
+            meta: { guidedBlockType: "warm_engine" }
+          },
+          {
+            id: "gtr-d02_drill",
+            label: "Drill",
+            durationSec: 180,
+            completed: false,
+            meta: { guidedBlockType: "drill" }
+          },
+          {
+            id: "gtr-d02_song",
+            label: "Song Slice",
+            durationSec: 240,
+            completed: false,
+            meta: { guidedBlockType: "song" }
+          },
+          {
+            id: "gtr-d02_cooldown",
+            label: "Cooldown",
+            durationSec: 90,
+            completed: false,
+            meta: { guidedBlockType: "cooldown" }
+          }
+        ]
+      },
+      runtimeState: {
+        guidedStep: "newMove",
+        guidedNewMovePhase: "shadow",
+        activeSegmentId: "gtr-d02_drill"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+
+  var shadowHtml = guidedSessionPage();
+  assert.ok(shadowHtml.indexOf("Shadow 2/4") >= 0);
 });
 
 test("guided song slice ignores stale cached copy", function() {
