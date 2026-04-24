@@ -45,6 +45,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
+    global.eval(loadJS("js/instruments/piano/pages/practice.js"));
     global.eval(loadJS("js/instruments/piano/pages/plan.js"));
     fn();
     console.log("  PASS: " + name);
@@ -83,6 +84,56 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
   assert.ok(html.indexOf('data-item-id="practice_1"') >= 0);
   assert.ok(html.indexOf("ukulele - strum pattern - performance song") >= 0);
   assert.ok(html.indexOf("piano - left hand - finger") >= 0);
+});
+
+test("pianoPlanPage pivots into guided resume mode with V2 shell details when a guided session is active and no daily plan exists", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedShellDurationSec: 600,
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ],
+              focus_song: "Horse With No Name",
+              new_elements: ["use the tuner"]
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        },
+        lastSessionOutcome: null
+      };
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("Guided Session Flow") >= 0);
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("4 blocks") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: Horse With No Name") >= 0);
+  assert.ok(html.indexOf("New move: use the tuner") >= 0);
+  assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.ok(html.indexOf("No practice plan yet.") === -1);
 });
 
 test("piano practice plan section reads the active core-backed plan without generating one during render", function() {
