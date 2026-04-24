@@ -821,14 +821,14 @@
       var sg = songs[s];
       var playPayload = (sg.id || sg.name) + "|" + (sg.instrument || "");
       var playAction = typeof sg.songIndex === "number"
-        ? "event.stopPropagation();act('openPerformSong'," + sg.songIndex + ")"
-        : "event.stopPropagation();act('showroomPlayLibrarySong'," + jsArg(playPayload) + ")";
+        ? "act('openPerformSong'," + sg.songIndex + ")"
+        : "act('showroomPlayLibrarySong'," + jsArg(playPayload) + ")";
       var thumb = sg.cover
         ? '<img src="' + escHtml(sg.cover) + '" alt="">'
         : '<div class="showroom-song-thumb-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
       var statusLabel = sg.label || (sg.pct || "");
       var statusClass = sg.statusClass || "muted";
-      songsHtml += '<div class="showroom-song-row ' + escHtml(sg.instrument || '') + '" role="button" tabindex="0" onclick="' + nav("song-details", sg.id || sg.name) + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("song-details", sg.id || sg.name) + '}">'
+      songsHtml += '<div class="showroom-song-row ' + escHtml(sg.instrument || '') + '" role="button" tabindex="0" onclick="if(event.target&&event.target.closest&&event.target.closest(\'button,input,select,textarea,a\')){return;}' + nav("song-details", sg.id || sg.name) + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("song-details", sg.id || sg.name) + '}">'
                 + '<div class="showroom-song-thumb">' + thumb + '</div>'
                 + '<div class="showroom-song-body">'
                   + '<h4 class="showroom-song-name">' + escHtml(sg.name) + '</h4>'
