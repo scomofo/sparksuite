@@ -97,10 +97,10 @@ function performanceEditorPage() {
         var lc = editorLibrary[li];
         var libraryTitle = _firstPerformanceEditorTextToken(lc.title, lc.id, "Untitled");
         var libraryArrangement = _firstPerformanceEditorTextToken(lc.arrangementType, "chords");
-        h += '<div class="card" role="button" tabindex="0" style="cursor:pointer;margin-top:8px" onclick="act(\'editorLoad\',' + li + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorLoad\',' + li + ')}">';
+        h += '<div class="card" role="button" tabindex="0" style="cursor:pointer;margin-top:8px" onclick="if(event.target&&event.target.closest&&event.target.closest(\'button,input,select,textarea,a\')){return;}act(\'editorLoad\',' + li + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorLoad\',' + li + ')}">';
         h += '<div style="display:flex;justify-content:space-between;align-items:center">';
         h += '<div><strong>' + escHTML(libraryTitle) + '</strong><br><span style="font-size:11px;color:var(--text-muted)">' + (lc.events ? lc.events.length : 0) + ' events &bull; ' + escHTML(libraryArrangement) + '</span></div>';
-        h += '<button class="btn btn-sm" onclick="event.stopPropagation();act(\'editorDelete\',' + li + ')" style="color:#FF6B6B;background:none;font-size:16px">&times;</button>';
+        h += '<button class="btn btn-sm" onclick="act(\'editorDelete\',' + li + ')" style="color:#FF6B6B;background:none;font-size:16px">&times;</button>';
         h += '</div></div>';
       }
     }
@@ -158,10 +158,10 @@ function performanceEditorPage() {
         var eventLabel = _firstPerformanceEditorTextToken(evt.laneLabel, evt.chord, evt.note, "?");
         var listEventTime = _normalizePerformanceEditorNumber(evt.t, 0);
         var listEventDuration = _normalizePerformanceEditorNumber(evt.dur, 0);
-        h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px;margin:2px 0;border-radius:6px;background:' + (sel ? "#4ECDC422" : "transparent") + ';border:1px solid ' + (sel ? "#4ECDC4" : "transparent") + ';cursor:pointer" role="button" tabindex="0" onclick="act(\'editorSelectEvent\',' + evt.id + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelectEvent\',' + evt.id + ')}">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px;margin:2px 0;border-radius:6px;background:' + (sel ? "#4ECDC422" : "transparent") + ';border:1px solid ' + (sel ? "#4ECDC4" : "transparent") + ';cursor:pointer" role="button" tabindex="0" onclick="if(event.target&&event.target.closest&&event.target.closest(\'button,input,select,textarea,a\')){return;}act(\'editorSelectEvent\',' + evt.id + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelectEvent\',' + evt.id + ')}">';
         h += '<div><span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(eventLabel) + '</span>';
         h += ' <span style="font-size:11px;color:var(--text-muted)">' + listEventTime.toFixed(2) + 's / ' + listEventDuration.toFixed(2) + 's</span></div>';
-        h += '<button class="btn btn-sm" onclick="event.stopPropagation();act(\'editorDeleteEvent\',' + evt.id + ')" style="color:#FF6B6B;background:none;padding:2px 6px">&times;</button>';
+        h += '<button class="btn btn-sm" onclick="act(\'editorDeleteEvent\',' + evt.id + ')" style="color:#FF6B6B;background:none;padding:2px 6px">&times;</button>';
         h += '</div>';
       }
     }
