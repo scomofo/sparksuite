@@ -613,8 +613,11 @@
 
     // Ask the app shell to show the launcher home view
     showLauncher: function() {
-      if (typeof S !== "undefined") S.activeInstrument = null;
-      if (typeof S !== "undefined") S.launcherView = "home";
+      if (typeof S !== "undefined") {
+        S.activeInstrument = null;
+        S._showroomOverride = null;
+        S.launcherView = "home";
+      }
       if (typeof saveState === "function") saveState();
       if (typeof render === "function") render();
     },
@@ -623,6 +626,7 @@
     openLauncherView: function(view) {
       if (typeof S === "undefined") return;
       S.activeInstrument = null;
+      S._showroomOverride = null;
       S.launcherView = view || "home";
       if (typeof saveState === "function") saveState();
       if (typeof render === "function") render();
