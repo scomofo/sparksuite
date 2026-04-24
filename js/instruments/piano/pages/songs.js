@@ -89,7 +89,7 @@ function pianoSongsTab() {
   switch (S._songTab) {
     case "library": html += songLibrary(); break;
     case "styles":  html += stylesTab(); break;
-    case "build":   html += buildTab(); break;
+    case "build":   html += pianoBuildTab(); break;
     case "stems":   html += stemsSection(); break;
   }
   return html;
@@ -255,7 +255,7 @@ function stylesTab() {
 }
 
 // ── Progression Builder ──
-function buildTab() {
+function pianoBuildTab() {
   var html = '<div class="card"><h2>Progression Builder</h2>';
   html += '<p>Create your own chord progressions.</p>';
 
