@@ -233,6 +233,60 @@ test("piano practice plan section shows an empty state when no plan exists", fun
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
 });
 
+test("piano practice plan section pivots into guided resume mode with V2 shell details when a guided session is active", function() {
+  global.S = { practicePlan: null };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedShellDurationSec: 600,
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ],
+              focus_song: "Horse With No Name",
+              new_elements: ["use the tuner"]
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = practicePlanSection();
+  assert.ok(html.indexOf("Guided Session Flow") >= 0);
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("4 blocks") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: Horse With No Name") >= 0);
+  assert.ok(html.indexOf("New move: use the tuner") >= 0);
+  assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.strictEqual(html.indexOf("No practice plan yet."), -1);
+});
+
 test("piano practice plan section treats malformed cached plan shells without array items as empty state", function() {
   global.S = {
     practicePlan: {
