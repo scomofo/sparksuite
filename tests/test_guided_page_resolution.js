@@ -736,6 +736,37 @@ test("guided done page falls back to curriculum v2 session totals", function() {
   assert.ok(html.indexOf("/22<") === -1);
 });
 
+test("guided done page acknowledges deep focus landings", function() {
+  S.guidedPlan = {
+    id: "gtr-d03",
+    num: 3,
+    title: "The D chord",
+    level: 1,
+    bpm: 80
+  };
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan, guidedShellExtensionSec: 600, guidedShellExtensionCount: 2 },
+        segments: [
+          { id: "gtr-d03_warm_engine", label: "Warm Engine", durationSec: 90, completed: true, meta: { guidedBlockType: "warm_engine" } },
+          { id: "gtr-d03_drill", label: "Drill", durationSec: 180, completed: true, meta: { guidedBlockType: "drill" } },
+          { id: "gtr-d03_song", label: "Song Slice", durationSec: 240, completed: true, meta: { guidedBlockType: "song" } },
+          { id: "gtr-d03_cooldown", label: "Cooldown", durationSec: 690, completed: true, meta: { guidedBlockType: "cooldown", guidedExtensionSec: 600, guidedExtensionCount: 2 } }
+        ]
+      },
+      runtimeState: {
+        guidedStep: "guided_done"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  var html = guidedDonePage();
+  assert.ok(html.indexOf("Session 3 Landed Smoothly") >= 0);
+  assert.ok(html.indexOf("You ended from deep focus time. Nice work stopping on your terms.") >= 0);
+});
+
 test("guided exit routes through a confirmation action", function() {
   var source = loadJS("js/pages/guided.js");
   assert.ok(source.indexOf('onclick="act(\\\'guidedConfirmStop\\\')"') >= 0);
