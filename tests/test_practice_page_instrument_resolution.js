@@ -1116,6 +1116,7 @@ test("planPage pivots into guided resume mode when a guided session is active an
   assert.ok(html.indexOf("In progress - Song block") >= 0);
   assert.ok(html.indexOf("Your live guided shell is the plan right now.") >= 0);
   assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.ok(html.indexOf("act('resume_guided_session')") >= 0);
   assert.strictEqual(html.indexOf("No practice plan yet."), -1);
 });
 

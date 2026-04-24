@@ -757,6 +757,19 @@
       return true;
     }
 
+    if (a === "resume_guided_session") {
+      var guidedResumeCore = getSparkCoreHandle();
+      var resumeGuidedSessionNum = getActiveGuidedSessionNumber();
+      if (guidedResumeCore && isGuidedSessionActive()) {
+        mirrorGuidedRuntimeFields(guidedResumeCore.getRuntimeState ? guidedResumeCore.getRuntimeState() : null);
+        S.guidedSession = resumeGuidedSessionNum || S.guidedSession || 1;
+        S.screen = SCR.GUIDED;
+        render();
+        return true;
+      }
+      return handleSystemAction("start_guided_session", v);
+    }
+
     if (a === "guidedDoneHome") {
       applyGuidedNavigationRequest("guided_home");
       act("tab", "practice");

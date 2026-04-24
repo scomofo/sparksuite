@@ -1100,4 +1100,46 @@ test("start_guided_session resumes the active guided shell when no new session i
   assert.deepStrictEqual(startCalls, []);
 });
 
+test("resume_guided_session reopens the active guided shell without restarting it", function() {
+  var startCalls = [];
+  S.guidedSession = 1;
+  S.screen = "home";
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          lesson: { num: 2 },
+          context: { guidedSession: 2, guidedPlan: S.guidedPlan }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "review"
+        }
+      };
+    },
+    getRuntimeState: function() {
+      return {
+        guidedActivityId: "gtr-d02-drill",
+        guidedActivityKind: "review",
+        guidedBlockType: "drill"
+      };
+    },
+    startSession: function(payload) {
+      startCalls.push(payload);
+      return null;
+    }
+  };
+  global.eval(loadJS("js/actions/system_family.js"));
+
+  var handled = global.runSparkActionFamilies("resume_guided_session");
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.screen, "guided");
+  assert.strictEqual(S.guidedSession, 2);
+  assert.strictEqual(S.guidedActivityId, "gtr-d02-drill");
+  assert.strictEqual(S.guidedActivityKind, "review");
+  assert.strictEqual(S.guidedBlockType, "drill");
+  assert.deepStrictEqual(startCalls, []);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
