@@ -494,6 +494,46 @@ test("guided page header reflects non-drill block themes", function() {
   assert.ok(cooldownHtml.indexOf("guidedSkipBlock") === -1);
 });
 
+test("guided victory lap tiers extension copy for deeper focus stretches", function() {
+  S.guidedPlan = {
+    id: "gtr-d03",
+    num: 3,
+    title: "The D chord",
+    level: 1,
+    bpm: 80,
+    victoryLap: { text: "Finish easy." }
+  };
+
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan, guidedShellExtensionSec: 600, guidedShellExtensionCount: 2 },
+        segments: [
+          { id: "gtr-d03_warm_engine", label: "Warm Engine", durationSec: 90, completed: true, meta: { guidedBlockType: "warm_engine" } },
+          { id: "gtr-d03_drill", label: "Drill", durationSec: 180, completed: true, meta: { guidedBlockType: "drill" } },
+          { id: "gtr-d03_song", label: "Song Slice", durationSec: 240, completed: true, meta: { guidedBlockType: "song" } },
+          { id: "gtr-d03_cooldown", label: "Cooldown", durationSec: 690, completed: false, meta: { guidedBlockType: "cooldown", guidedExtensionSec: 600, guidedExtensionCount: 2 } }
+        ]
+      },
+      runtimeState: {
+        guidedStep: "victoryLap",
+        activeSegmentId: "gtr-d03_cooldown"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+
+  var html = guidedSessionPage();
+  assert.ok(html.indexOf("Focus Stretch Victory Lap!") >= 0);
+  assert.ok(html.indexOf("Extended Focus x2") >= 0);
+  assert.ok(html.indexOf("Focus Stretch x2") >= 0);
+  assert.ok(html.indexOf("Extended session mode x2") >= 0);
+  assert.ok(html.indexOf("This is a real focus stretch now. Loop the part that still feels rewarding and let it breathe.") >= 0);
+  assert.ok(html.indexOf("You're in a real focus stretch now. Keep looping the part that still feels alive.") >= 0);
+  assert.ok(html.indexOf(">Stretch Another +5 min<") >= 0);
+});
+
 test("guided cards use block-aware transition labels", function() {
   S.guidedPlan = {
     id: "gtr-d04",

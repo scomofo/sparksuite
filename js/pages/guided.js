@@ -117,6 +117,30 @@ function getGuidedExtendedModeLabel(extensionCount) {
   return count > 1 ? "Extended session mode x" + count : "Extended session mode";
 }
 
+function getGuidedVictoryLapCopy(extensionCount, baseText) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  var fallback = firstGuidedTextToken(baseText, "Give it one confident final pass.");
+  if (count <= 0) return fallback;
+  if (count === 1) return "You're in extra focus time. Keep the groove easy and stay with what feels good.";
+  if (count === 2) return "This is a real focus stretch now. Loop the part that still feels rewarding and let it breathe.";
+  return "Deep focus stretch. Stay with the part that still gives you momentum and end whenever it feels complete.";
+}
+
+function getGuidedExtendCtaLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count <= 0) return "Keep Going +5 min";
+  if (count === 1) return "Keep Going +5 more min";
+  return "Stretch Another +5 min";
+}
+
+function getGuidedExtendStatusLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count <= 0) return "";
+  if (count === 1) return "You're in extra focus time. Stay here as long as it feels useful.";
+  if (count === 2) return "You're in a real focus stretch now. Keep looping the part that still feels alive.";
+  return "Deep focus stretch is active. Stay with the useful part and wrap whenever you feel complete.";
+}
+
 function renderGuidedActiveBlockBadge(blockType, shellSummary) {
   var theme = getGuidedBlockTheme(blockType);
   var extensionCount = shellSummary ? normalizeGuidedCount(shellSummary.extensionCount, 0) : 0;
@@ -796,9 +820,11 @@ function renderGuidedActionStatus(guidedView, accentColor) {
   var activeBlock = getGuidedActiveBlockSnapshot(guidedView && guidedView.blockProgress);
   var statusText = "";
   var statusColor = accentColor || "#FF8A5C";
+  var extensionCount;
   if (!activeBlock) return "";
-  if (normalizeGuidedCount(activeBlock.extensionCount, 0) > 0) {
-    statusText = "You're in extra focus time. Stay here as long as it feels useful.";
+  extensionCount = normalizeGuidedCount(activeBlock.extensionCount, 0);
+  if (extensionCount > 0) {
+    statusText = getGuidedExtendStatusLabel(extensionCount);
     statusColor = "#A78BFA";
   } else if ((activeBlock.progressRatio || 0) >= 0.85 || normalizeGuidedCount(activeBlock.remainingSec, 0) <= 20) {
     statusText = "Ready to move on when you are.";
@@ -1007,14 +1033,20 @@ function _guidedVictoryLap(plan) {
     ? normalizeGuidedCount(guidedView.shellSummary.extensionCount, 0)
     : 0;
   var extensionThemeLabel = getGuidedExtensionLabel(extensionCount);
+  var focusStretchLabel = getGuidedFocusStretchLabel(extensionCount);
+  var victoryTitle = extensionCount > 1 ? "Focus Stretch Victory Lap!" : (extensionCount > 0 ? "Extended Victory Lap!" : "Victory Lap!");
+  var victoryCopy = getGuidedVictoryLapCopy(extensionCount, victoryText);
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + ';background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
-  h += renderGuidedCardHeader(extensionCount > 0 ? "Extended Victory Lap!" : "Victory Lap!", "&#127942;", cardTheme);
+  h += renderGuidedCardHeader(victoryTitle, "&#127942;", cardTheme);
   h += renderGuidedActivityMeta(victoryActivity, plan.focus_song);
   if (extensionThemeLabel) {
     h += '<div style="display:flex;justify-content:center;margin:0 0 12px"><span style="padding:7px 12px;border-radius:999px;background:#A78BFA22;color:#6E56B3;font-size:12px;font-weight:900;letter-spacing:.02em">' + escHTML(extensionThemeLabel) + '</span></div>';
   }
-  h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(victoryText) + '</p>';
+  if (focusStretchLabel) {
+    h += '<div style="display:flex;justify-content:center;margin:0 0 12px"><span style="padding:7px 12px;border-radius:999px;background:#6E56B311;color:#6E56B3;font-size:12px;font-weight:900;letter-spacing:.02em">' + escHTML(focusStretchLabel) + '</span></div>';
+  }
+  h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(victoryCopy) + '</p>';
   // Show the session's main chord
   var ch = null;
   if (plan.newMove) {
@@ -1027,7 +1059,7 @@ function _guidedVictoryLap(plan) {
   h += renderGuidedActionStatus(guidedView, cardTheme.titleColor);
   h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
   h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">' + escHTML(getGuidedAdvanceLabel("victoryLap")) + '</button>';
-  h += '<button class="btn" onclick="act(\'guidedExtendBlock\')" style="background:transparent;color:' + cardTheme.titleColor + ';padding:14px 24px;font-size:14px;font-weight:900;border:1px solid ' + cardTheme.titleColor + '">' + escHTML(extensionCount > 0 ? "Keep Going +5 more min" : "Keep Going +5 min") + '</button>';
+  h += '<button class="btn" onclick="act(\'guidedExtendBlock\')" style="background:transparent;color:' + cardTheme.titleColor + ';padding:14px 24px;font-size:14px;font-weight:900;border:1px solid ' + cardTheme.titleColor + '">' + escHTML(getGuidedExtendCtaLabel(extensionCount)) + '</button>';
   h += '</div>';
   h += '</div>';
   return h;
