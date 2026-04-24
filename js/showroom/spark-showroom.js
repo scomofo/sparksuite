@@ -1361,10 +1361,10 @@
          + '</div>'
          // When a real lesson is loaded, Start Practice launches the
          // instrument's guided session for that lesson number via the
-         // canonical "start_guided_session" action. Otherwise fall back
-         // to the generic performance home (sample opts-only renders,
-         // or an instrument without a guided flow).
-         + '<div class="showroom-lesson-cta-wrap"><button class="showroom-lesson-cta showroom-ember-glow-button" onclick="' + (activeLesson && activeLesson.num ? "act('start_guided_session'," + jsArg(String(activeLesson.num)) + ")" : nav("performance")) + '"><span class="material-symbols-outlined fill">play_arrow</span>Start Practice</button></div>'
+        // canonical "start_guided_session" action. Otherwise fall back
+        // to the showroom performance launcher so the CTA still enters
+        // a playable flow instead of dropping the user onto practice home.
+        + '<div class="showroom-lesson-cta-wrap"><button class="showroom-lesson-cta showroom-ember-glow-button" onclick="' + (activeLesson && activeLesson.num ? "act('start_guided_session'," + jsArg(String(activeLesson.num)) + ")" : "act('showroomStartPerf')") + '"><span class="material-symbols-outlined fill">play_arrow</span>Start Practice</button></div>'
          + bottomNav(navItems, "practice")
          + '</div>';
   }

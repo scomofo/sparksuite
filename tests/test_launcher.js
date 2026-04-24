@@ -347,6 +347,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('"instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; S.launcherView = "instruments"; }') >= 0);
   assert.ok(showroomSource.indexOf('"curriculum":      function(){ S._showroomOverride = "curriculum"; }') >= 0);
   assert.ok(showroomSource.indexOf('"syllabus":        function(){ S._showroomOverride = "syllabus"; }') >= 0);
+  assert.ok(showroomSource.indexOf(' : "act(\\\'showroomStartPerf\\\')"') >= 0 || showroomSource.indexOf(' : "act(\'showroomStartPerf\')"') >= 0);
   assert.ok(showroomSource.indexOf("act(\\'showroomStartPerf\\'" ) >= 0 || showroomSource.indexOf("act('showroomStartPerf'") >= 0);
   assert.ok(showroomSource.indexOf("sampleInstrumentMap") >= 0);
   assert.ok(showroomSource.indexOf('window.SparkLeaderboard') >= 0);
