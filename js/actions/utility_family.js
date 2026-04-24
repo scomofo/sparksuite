@@ -45,6 +45,16 @@
       return true;
     }
 
+    if (a === "refreshMidiDevices") {
+      if (typeof refreshMidiDevices === "function") refreshMidiDevices();
+      return true;
+    }
+
+    if (a === "importMidiDesktop") {
+      if (typeof importMidiDesktopAware === "function") importMidiDesktopAware();
+      return true;
+    }
+
     if (a === "importMidiFile") {
       if (typeof handleMidiImport === "function") handleMidiImport(v);
       return true;

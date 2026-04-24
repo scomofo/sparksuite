@@ -36,7 +36,7 @@
     h += '<div><b>MIDI Import</b></div>';
     h += '<input type="file" accept=".mid,.midi" onchange="act(\'importMidiFile\', this.files[0])" />';
     if(typeof isDesktopBuild === "function" && isDesktopBuild() && typeof openImportFileDesktopAware === "function"){
-      h += ' <button onclick="importMidiDesktopAware()">Import from Desktop</button>';
+      h += ' <button onclick="act(\'importMidiDesktop\')">Import from Desktop</button>';
     }
     h += '</div>';
 

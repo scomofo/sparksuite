@@ -1891,6 +1891,14 @@ function act(action, param) {
       if(typeof logoutSpark === "function") logoutSpark();
       break;
 
+    case "refreshMidiDevices":
+      if (typeof refreshMidiDevices === "function") refreshMidiDevices();
+      return;
+
+    case "importMidiDesktop":
+      if (typeof importMidiDesktopAware === "function") importMidiDesktopAware();
+      return;
+
     case "cloudLoginPrompt": {
       var clEmail = prompt("Email:");
       var clPassword = prompt("Password:");
