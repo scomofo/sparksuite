@@ -48,6 +48,13 @@ function renderPerformSongSection(title, body, accentColor) {
     '</div>';
 }
 
+function getPerformanceSongCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
@@ -218,9 +225,7 @@ function performSongPage() {
 }
 
 function getPerformanceSongView() {
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getPerformanceSongCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var performanceSong = coreView
     && coreView.plan
