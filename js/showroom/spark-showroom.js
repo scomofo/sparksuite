@@ -18,6 +18,33 @@
       || (typeof sparkCore !== "undefined" ? sparkCore : null);
     return core && typeof core.getActiveSessionView === "function" ? core.getActiveSessionView() : null;
   }
+  function getShowroomActiveGuidedSessionNum() {
+    var view = getShowroomCoreView();
+    var context = view && view.plan && view.plan.context ? view.plan.context : null;
+    if (!view || !view.plan || view.plan.flow !== "guided_session") return null;
+    if (!view.runtimeState || view.runtimeState.activeScreen !== "guided_session") return null;
+    if (context && context.guidedSession != null) {
+      var contextNum = parseInt(context.guidedSession, 10);
+      return isFinite(contextNum) ? contextNum : null;
+    }
+    if (view.plan.lesson && view.plan.lesson.num != null) {
+      var lessonNum = parseInt(view.plan.lesson.num, 10);
+      return isFinite(lessonNum) ? lessonNum : null;
+    }
+    return null;
+  }
+  function getShowroomLessonCtaAction(lesson) {
+    if (!lesson || lesson.num == null) return "act('showroomStartPerf')";
+    var lessonNum = parseInt(lesson.num, 10);
+    if (getShowroomActiveGuidedSessionNum() === lessonNum) return "act('resume_guided_session')";
+    return "act('start_guided_session'," + jsArg(String(lesson.num)) + ")";
+  }
+  function getShowroomLessonCtaLabel(lesson) {
+    if (!lesson || lesson.num == null) return "Start Practice";
+    return getShowroomActiveGuidedSessionNum() === parseInt(lesson.num, 10)
+      ? "Resume Practice"
+      : "Start Practice";
+  }
   // Format a value as a single-quoted JS string literal safe to drop
   // inside a double-quoted HTML attribute (onclick="..."). Using
   // JSON.stringify here (which produces double quotes) would break the
@@ -1365,14 +1392,14 @@
              + '<div class="seg timer"><span class="material-symbols-outlined fill">timer</span><span class="num">' + escHtml(time) + '</span></div>'
            + '</section>'
          + '</div>'
-         // When a real lesson is loaded, Start Practice launches the
-         // instrument's guided session for that lesson number via the
-        // canonical "start_guided_session" action. Otherwise fall back
-        // to the showroom performance launcher so the CTA still enters
-        // a playable flow instead of dropping the user onto practice home.
-        + '<div class="showroom-lesson-cta-wrap"><button class="showroom-lesson-cta showroom-ember-glow-button" onclick="' + (activeLesson && activeLesson.num ? "act('start_guided_session'," + jsArg(String(activeLesson.num)) + ")" : "act('showroomStartPerf')") + '"><span class="material-symbols-outlined fill">play_arrow</span>Start Practice</button></div>'
-         + bottomNav(navItems, "practice")
-         + '</div>';
+        // When a real lesson is loaded, the CTA respects live guided runtime:
+        // reopen the current shell if this exact lesson is already active,
+        // otherwise explicitly start the selected guided session. If there is
+        // no real lesson context, fall back to the showroom performance
+        // launcher so the CTA still enters a playable flow.
+       + '<div class="showroom-lesson-cta-wrap"><button class="showroom-lesson-cta showroom-ember-glow-button" onclick="' + getShowroomLessonCtaAction(activeLesson) + '"><span class="material-symbols-outlined fill">play_arrow</span>' + escHtml(getShowroomLessonCtaLabel(activeLesson)) + '</button></div>'
+        + bottomNav(navItems, "practice")
+        + '</div>';
   }
 
   // ───────────────────────────────────────────────────────────────────────
