@@ -350,6 +350,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToneGenerator")') >= 0);
   assert.ok(performanceFamilySource.indexOf('if (a === "showroomPlayLibrarySong")') >= 0);
   assert.ok(performanceFamilySource.indexOf('resolveShowroomPerformanceAppId') >= 0);
+  assert.ok(performanceFamilySource.indexOf('ensureShowroomPerformanceInstrument("guitar");') >= 0);
   assert.ok(performanceFamilySource.indexOf('SparkInstruments.launchInstrumentPerformance(appId)') >= 0);
   assert.ok(performanceFamilySource.indexOf('return handlePerformanceAction("showroomStartPerf");') >= 0);
   assert.ok(launcherSource.indexOf('leaderboard: typeof SparkLeaderboard') >= 0);

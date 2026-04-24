@@ -47,6 +47,20 @@
     return fallback;
   }
 
+  function ensureShowroomPerformanceInstrument(hint) {
+    if (S && S.activeInstrument) return S.activeInstrument;
+    var appId = resolveShowroomPerformanceAppId(hint);
+    if (!appId) return null;
+    if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.activate === "function") {
+      SparkInstruments.activate(appId);
+    }
+    if (typeof S !== "undefined") {
+      S.launcherView = null;
+      S._showroomOverride = null;
+    }
+    return appId;
+  }
+
   function preparePerformanceSongSelection(songIndex, options) {
     var song;
     var songId;
@@ -444,6 +458,7 @@
     }
 
     if (a === "openPerformanceDaily") {
+      ensureShowroomPerformanceInstrument("guitar");
       var challenge = choosePerformanceDailyChallenge();
       if (!challenge) {
         render();
