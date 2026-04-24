@@ -163,6 +163,21 @@ function getGuidedVictoryLapSupportLabel(extensionCount) {
   return "Gentle landing. You can end whenever it feels complete.";
 }
 
+function getGuidedDoneTitle(extensionCount, sessionNum) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  var num = normalizeGuidedCount(sessionNum, 0);
+  if (count < 2) return "Session " + num + " Complete!";
+  if (count === 2) return "Session " + num + " Landed Smoothly";
+  return "Session " + num + " Wrapped Gently";
+}
+
+function getGuidedDoneSupportLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "You ended from deep focus time. Nice work stopping on your terms.";
+  return "You wrapped from a deep focus stretch. Nice work ending where it felt right.";
+}
+
 function getGuidedCooldownDetailLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count <= 0) return "Victory Lap";
@@ -1155,14 +1170,21 @@ function guidedDonePage() {
   var lastOutcome = coreView && coreView.lastSessionOutcome ? coreView.lastSessionOutcome : null;
   var title = plan ? firstGuidedTextToken(plan.title, plan.id, "Guided session") : "";
   var num = plan ? plan.num : 0;
+  var extensionCount = guidedView && guidedView.shellSummary
+    ? normalizeGuidedCount(guidedView.shellSummary.extensionCount, 0)
+    : 0;
+  var doneSupportLabel = getGuidedDoneSupportLabel(extensionCount);
   var xpAwarded = normalizeGuidedCount(lastOutcome && lastOutcome.xpAwarded, 30);
   var streak = normalizeGuidedCount(S.streak, 0);
   var completedSessions = Array.isArray(S.completedGuidedSessions) ? S.completedGuidedSessions.length : 0;
   var totalSessions = getGuidedSessionTotalCount();
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127881;</div>';
-  h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Session ' + num + ' Complete!</h2>';
+  h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">' + escHTML(getGuidedDoneTitle(extensionCount, num)) + '</h2>';
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(title) + '</p>';
+  if (doneSupportLabel) {
+    h += '<div style="display:flex;justify-content:center;margin:-8px 0 18px"><span style="padding:7px 12px;border-radius:999px;background:#6E56B311;color:#6E56B3;font-size:12px;font-weight:800;letter-spacing:.02em">' + escHTML(doneSupportLabel) + '</span></div>';
+  }
   h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
