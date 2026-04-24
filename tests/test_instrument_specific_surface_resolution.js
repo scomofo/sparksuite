@@ -415,6 +415,10 @@ test("practice guided session card falls back to curriculum v2 when legacy sessi
   assert.ok(html.indexOf("Guided Session 1") >= 0);
   assert.ok(html.indexOf("First sound in 2 minutes") >= 0);
   assert.ok(html.indexOf("0/30 done") >= 0);
+  assert.ok(html.indexOf("4 blocks • 10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: \"Horse\" intro, open strings only") >= 0);
+  assert.ok(html.indexOf("New move: open-string-strum") >= 0);
+  assert.ok(html.indexOf("Start 10-Min Session") >= 0);
 });
 
 test("practice guided session card can resolve sparkCore from the global binding", function() {
@@ -429,7 +433,16 @@ test("practice guided session card can resolve sparkCore from the global binding
             guidedPlan: {
               num: 1,
               title: "First sound in 2 minutes",
-              level: 1
+              level: 1,
+              target_duration_min: 10,
+              focus_song: "\"Horse\" intro, open strings only",
+              new_elements: ["open-string-strum"],
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
             },
             totalGuidedSessions: 30
           }
@@ -443,6 +456,10 @@ test("practice guided session card can resolve sparkCore from the global binding
   assert.ok(html.indexOf("Guided Session 1") >= 0);
   assert.ok(html.indexOf("First sound in 2 minutes") >= 0);
   assert.ok(html.indexOf("0/30 done") >= 0);
+  assert.ok(html.indexOf("4 blocks • 10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: \"Horse\" intro, open strings only") >= 0);
+  assert.ok(html.indexOf("New move: open-string-strum") >= 0);
+  assert.ok(html.indexOf("Start 10-Min Session") >= 0);
 });
 
 test("shared session helpers can resolve sparkCore from the global binding", function() {
