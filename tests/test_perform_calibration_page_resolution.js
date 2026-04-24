@@ -69,4 +69,10 @@ test("performCalibrationPage ignores malformed cached calibration state", functi
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("perform page calibration controls route through actions", function() {
+  var source = loadJS("js/pages/perform.js");
+  assert.ok(source.indexOf('onclick="act(\\\'performCalibrationTap\\\')"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'performCalibrationCancel\\\')"') >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

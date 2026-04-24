@@ -72,6 +72,14 @@ function resetEnv() {
   global.applyPerformanceCalibrationRequest = function(action, payload) {
     applyPerformanceCalibrationRequestCalls.push({ action: action, payload: payload });
   };
+  global.recordCalibrationTapCalls = 0;
+  global.recordCalibrationTap = function() {
+    recordCalibrationTapCalls++;
+  };
+  global.cancelCalibrationCalls = 0;
+  global.cancelCalibration = function() {
+    cancelCalibrationCalls++;
+  };
   global.applyCalibrationOffset = function() { return 42; };
   global.getPerformanceCalibrationView = function() {
     return { source: "mic" };
@@ -121,6 +129,13 @@ test("performCalibrationReset clears both mic offset fields for legacy compatibi
   assert.strictEqual(S.performAudioOffsetMs, 0);
   assert.strictEqual(applyPerformanceCalibrationRequestCalls.length, 1);
   assert.strictEqual(applyPerformanceCalibrationRequestCalls[0].payload.micOffsetMs, 0);
+});
+
+test("performCalibrationTap and performCalibrationCancel delegate to page helpers", function() {
+  assert.strictEqual(registeredFamily("performCalibrationTap"), true);
+  assert.strictEqual(registeredFamily("performCalibrationCancel"), true);
+  assert.strictEqual(recordCalibrationTapCalls, 1);
+  assert.strictEqual(cancelCalibrationCalls, 1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
