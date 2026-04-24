@@ -88,6 +88,14 @@
       }
     }
 
+    if (payload.markPlanComplete && Array.isArray(plan.segments)) {
+      for (var i = 0; i < plan.segments.length; i++) plan.segments[i].completed = true;
+      progress.completedItems = plan.segments.length;
+      progress.totalItems = plan.segments.length;
+      progress.planCompleted = true;
+      SparkProgressBridge.syncPlanToState(plan);
+    }
+
     if (outcome) {
       sessionStatePatch.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
       progress.xpAwarded = outcome.xpEarned || 0;
