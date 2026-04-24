@@ -594,17 +594,55 @@ function buildGuidedPhasePrompt(activity, phase) {
   return "";
 }
 
+function getGuidedCardTheme(blockType) {
+  var theme = getGuidedBlockTheme(blockType);
+  return {
+    badge: theme && theme.label ? theme.label : "Guided Session",
+    borderColor: theme && theme.color ? theme.color : "var(--text-muted)",
+    titleColor: theme && theme.textColor ? theme.textColor : "var(--text-primary)",
+    badgeBackground: theme && theme.background ? theme.background : "var(--input-bg)",
+    badgeTextColor: theme && theme.textColor ? theme.textColor : "var(--text-muted)"
+  };
+}
+
+function renderGuidedCardHeader(title, icon, theme) {
+  var resolvedTheme = theme || getGuidedCardTheme(null);
+  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:0 0 8px">' +
+    '<h3 style="margin:0;font-size:16px;color:' + resolvedTheme.titleColor + ';font-weight:800">' + icon + " " + escHTML(title) + '</h3>' +
+    '<span style="padding:6px 10px;border-radius:999px;background:' + resolvedTheme.badgeBackground + ';color:' + resolvedTheme.badgeTextColor + ';font-size:11px;font-weight:900;letter-spacing:.02em">' +
+      escHTML(resolvedTheme.badge) +
+    '</span>' +
+    '</div>';
+}
+
+function getGuidedAdvanceLabel(step, newMovePhase) {
+  if (step === "spark") return "Into Review " + String.fromCharCode(8594);
+  if (step === "review") return "Into New Move " + String.fromCharCode(8594);
+  if (step === "newMove") {
+    if (newMovePhase === "watch") return "Start Shadow " + String.fromCharCode(8594);
+    if (newMovePhase === "shadow") return "Start Try " + String.fromCharCode(8594);
+    if (newMovePhase === "try") return "Into Refine " + String.fromCharCode(8594);
+    if (newMovePhase === "refine") return "Into Song " + String.fromCharCode(8594);
+    return "Keep Going " + String.fromCharCode(8594);
+  }
+  if (step === "songSlice") return "Into Cooldown " + String.fromCharCode(8594);
+  if (step === "victoryLap") return String.fromCharCode(127881) + " Complete Session!";
+  return "Next " + String.fromCharCode(8594);
+}
+
 function _guidedSpark(plan) {
   var sparkText = firstGuidedTextToken(plan.spark && plan.spark.text, "Let's get started.");
-  var sparkActivity = getGuidedSessionView().activeActivity;
-  var h = '<div class="card mb16" style="border-left:4px solid #FFE66D">';
-  h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#10024; Spark</h3>';
+  var guidedView = getGuidedSessionView();
+  var sparkActivity = guidedView.activeActivity;
+  var cardTheme = getGuidedCardTheme(guidedView.activeBlockType || "warm_engine");
+  var h = '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + '">';
+  h += renderGuidedCardHeader("Spark", "&#10024;", cardTheme);
   h += renderGuidedActivityMeta(sparkActivity, plan.focus_song);
   h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(sparkText) + '</p>';
   if (plan.ifThen) {
     h += '<div style="background:var(--input-bg);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;' + escHTML(plan.ifThen) + '&#8221;</div>';
   }
-  h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:12px 28px;font-weight:800">Next &#8594;</button>';
+  h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("spark")) + '</button>';
   h += '</div>';
   return h;
 }
@@ -614,14 +652,17 @@ function _guidedReview(plan) {
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var reviewText = firstGuidedTextToken(plan.review && plan.review.text, "Take a quick review pass.");
-  var reviewActivity = getGuidedSessionView().activeActivity;
+  var guidedView = getGuidedSessionView();
+  var reviewActivity = guidedView.activeActivity;
+  var cardTheme = getGuidedCardTheme(guidedView.activeBlockType || "drill");
   if (!plan.review) {
-    return '<div class="card mb16"><h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>' +
+    return '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + '">' +
+      renderGuidedCardHeader("Review", "&#128260;", cardTheme) +
       '<p style="color:var(--text-muted)">No review for this session \u2014 it\'s your first!</p>' +
-      '<button class="btn" onclick="act(\'guidedNext\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">Next &#8594;</button></div>';
+      '<button class="btn" onclick="act(\'guidedNext\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("review")) + '</button></div>';
   }
-  var h = '<div class="card mb16" style="border-left:4px solid #4ECDC4">';
-  h += '<h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>';
+  var h = '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + '">';
+  h += renderGuidedCardHeader("Review", "&#128260;", cardTheme);
   h += renderGuidedActivityMeta(reviewActivity, plan.focus_song);
   h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(reviewText) + '</p>';
   // Show review chord diagrams
@@ -637,7 +678,7 @@ function _guidedReview(plan) {
     }
     h += '</div>';
   }
-  h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">Next &#8594;</button>';
+  h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("review")) + '</button>';
   h += '</div>';
   return h;
 }
@@ -650,11 +691,12 @@ function _guidedNewMove(plan) {
   var newMoveText = firstGuidedTextToken(plan.newMove && plan.newMove.text, "Practice the new move slowly and cleanly.");
   var guidedBpm = normalizeGuidedBpm(plan && plan.bpm, 80);
   var newMoveActivity = guidedView.activeActivity;
+  var cardTheme = getGuidedCardTheme(guidedView.activeBlockType || "drill");
   if (!plan.newMove) return '';
   if (window._watchCleanup && window._watchCleanup.cleanup) { window._watchCleanup.cleanup(); window._watchCleanup = null; }
   if (window._shadowCleanup && window._shadowCleanup.cleanup) { window._shadowCleanup.cleanup(); window._shadowCleanup = null; }
-  var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
-  h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FF6B6B;font-weight:800">&#127919; New Move</h3>';
+  var h = '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + '">';
+  h += renderGuidedCardHeader("New Move", "&#127919;", cardTheme);
   h += newMovePhaseIndicator(guidedView.newMovePhase);
   h += renderGuidedActivityMeta(newMoveActivity, plan.focus_song);
 
@@ -680,10 +722,12 @@ function _guidedNewMove(plan) {
           var el = document.getElementById('watch-phase-container');
           if (el) window._watchCleanup = UI.watchAnimation(el, ch, {onComplete: function(){act('guidedAdvancePhase')}});
         }, 0);
-      } else if (ch) {
-        h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200, ch.name, true) + '</div>';
-        h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
-        h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#FF6B6B;color:#fff;padding:12px 28px;font-weight:800">I\'ve Watched &#8594;</button>';
+      } else {
+        if (ch) {
+          h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200, ch.name, true) + '</div>';
+          h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
+        }
+        h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#FF6B6B;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("newMove", "watch")) + '</button>';
       }
       break;
 
@@ -694,14 +738,16 @@ function _guidedNewMove(plan) {
       h += '</div>';
       if (ch && UI.shadowQuiz) {
         h += '<div id="shadow-phase-container"></div>';
-        h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:10px 24px;font-weight:700;margin-top:12px">Skip to Try &#8594;</button>';
+        h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:10px 24px;font-weight:700;margin-top:12px">' + escHTML(getGuidedAdvanceLabel("newMove", "shadow")) + '</button>';
         setTimeout(function() {
           var el = document.getElementById('shadow-phase-container');
           if (el) window._shadowCleanup = UI.shadowQuiz(el, ch, {onComplete: function(){act('guidedAdvancePhase')}});
         }, 0);
-      } else if (ch) {
-        h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200) + '</div>';
-        h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">I\'ve Shadowed &#8594;</button>';
+      } else {
+        if (ch) {
+          h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 200) + '</div>';
+        }
+        h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("newMove", "shadow")) + '</button>';
       }
       break;
 
@@ -714,7 +760,7 @@ function _guidedNewMove(plan) {
       if (plan.newMove.strum) {
         h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Strum: <strong>' + escHTML(plan.newMove.strum) + '</strong> at ' + guidedBpm + ' BPM</div>';
       }
-      h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">I Can Play It &#8594;</button>';
+      h += '<button class="btn" onclick="act(\'guidedAdvancePhase\')" style="background:#4ECDC4;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("newMove", "try")) + '</button>';
       break;
 
     case "refine":
@@ -730,7 +776,7 @@ function _guidedNewMove(plan) {
         h += '<div style="background:var(--input-bg);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px">';
         h += '<span style="color:#4ECDC4;font-weight:700">&#128161; Tip:</span> <span style="color:var(--text-secondary)">' + escHTML(tip) + '</span></div>';
       }
-      h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#A78BFA;color:#fff;padding:12px 28px;font-weight:800">Done &#8594;</button>';
+      h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#A78BFA;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("newMove", "refine")) + '</button>';
       break;
   }
   h += '</div>';
@@ -740,10 +786,12 @@ function _guidedNewMove(plan) {
 function _guidedSongSlice(plan) {
   var songSliceText = firstGuidedTextToken(plan.songSlice && plan.songSlice.text, "Play this short song slice with steady timing.");
   var songSliceTitle = firstGuidedTextToken(plan.songSlice && plan.songSlice.song);
-  var songActivity = getGuidedSessionView().activeActivity;
+  var guidedView = getGuidedSessionView();
+  var songActivity = guidedView.activeActivity;
+  var cardTheme = getGuidedCardTheme(guidedView.activeBlockType || "song");
   if (!plan.songSlice) return '';
-  var h = '<div class="card mb16" style="border-left:4px solid #45B7D1">';
-  h += '<h3 style="margin:0 0 8px;font-size:16px;color:#45B7D1;font-weight:800">&#127925; Song Slice</h3>';
+  var h = '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + '">';
+  h += renderGuidedCardHeader("Song Slice", "&#127925;", cardTheme);
   h += renderGuidedActivityMeta(songActivity, songSliceTitle || plan.focus_song);
   h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(songSliceText) + '</p>';
   if (songSliceTitle) {
@@ -752,7 +800,7 @@ function _guidedSongSlice(plan) {
   h += '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">';
   h += '<button class="btn" onclick="act(\'toggleMetro\')" style="padding:8px 16px;font-size:13px;background:' + (S.metronomeOn ? '#FFE66D' : '#4ECDC4') + ';color:' + (S.metronomeOn ? '#333' : '#fff') + '">' + (S.metronomeOn ? '&#9632; Metro' : '&#9654; Metro') + '</button>';
   h += '</div>';
-  h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">Done &#8594;</button>';
+  h += '<button class="btn" onclick="act(\'guidedNext\')" style="background:#45B7D1;color:#fff;padding:12px 28px;font-weight:800">' + escHTML(getGuidedAdvanceLabel("songSlice")) + '</button>';
   h += '</div>';
   return h;
 }
@@ -762,10 +810,12 @@ function _guidedVictoryLap(plan) {
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var victoryText = firstGuidedTextToken(plan.victoryLap && plan.victoryLap.text, "Give it one confident final pass.");
-  var victoryActivity = getGuidedSessionView().activeActivity;
+  var guidedView = getGuidedSessionView();
+  var victoryActivity = guidedView.activeActivity;
+  var cardTheme = getGuidedCardTheme(guidedView.activeBlockType || "cooldown");
   if (!plan.victoryLap) return '';
-  var h = '<div class="card mb16" style="border-left:4px solid #FFE66D;background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
-  h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#127942; Victory Lap!</h3>';
+  var h = '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + ';background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
+  h += renderGuidedCardHeader("Victory Lap!", "&#127942;", cardTheme);
   h += renderGuidedActivityMeta(victoryActivity, plan.focus_song);
   h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(victoryText) + '</p>';
   // Show the session's main chord
@@ -777,7 +827,7 @@ function _guidedVictoryLap(plan) {
     h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 160) + '</div>';
     h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
   }
-  h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">&#127881; Complete Session!</button>';
+  h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">' + escHTML(getGuidedAdvanceLabel("victoryLap")) + '</button>';
   h += '</div>';
   return h;
 }
