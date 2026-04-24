@@ -212,6 +212,7 @@
     var instrumentContext = context.instrumentContext || {};
     var sessions = Array.isArray(instrumentContext.sessions) ? instrumentContext.sessions : [];
     var sessionNum = parseInt(context.sessionNum, 10);
+    var guidedShell;
     if (isNaN(sessionNum) || sessionNum < 1) sessionNum = 1;
 
     var sessionIndex = Math.max(0, Math.min(sessions.length - 1, sessionNum - 1));
@@ -221,6 +222,7 @@
     }
     guidedPlan = normalizeGuidedPlan(guidedPlan);
     if (guidedPlan && guidedPlan.num != null) sessionNum = guidedPlan.num;
+    guidedShell = buildGuidedSessionShell(guidedPlan, sessionNum, instrumentContext.instrumentType);
 
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
@@ -229,13 +231,14 @@
       focus: "guided",
       lesson: guidedPlan,
       difficulty: guidedPlan ? guidedPlan.level || null : null,
-      segments: guidedPlan ? [normalizeSegment({id: "guided_session_" + sessionNum, type: "practice", durationSec: 300, meta: {guidedSession: sessionNum}}).segment] : [],
-      exercises: guidedPlan ? [normalizeSegment({id: "guided_session_" + sessionNum, type: "practice", durationSec: 300, meta: {guidedSession: sessionNum}}).exercise] : [],
+      segments: guidedShell.segments,
+      exercises: guidedShell.exercises,
       rewards: [{ type: "xp", amount: 30 }],
       context: {
         guidedPlan: guidedPlan,
         guidedSession: sessionNum,
-        totalGuidedSessions: sessions.length
+        totalGuidedSessions: sessions.length,
+        guidedShellDurationSec: guidedShell.totalDurationSec
       }
     });
   };
@@ -476,6 +479,63 @@
     };
   }
 
+  function buildGuidedSessionShell(plan, sessionNum, instrumentType) {
+    var fallback = normalizeSegment({
+      id: "guided_session_" + sessionNum,
+      type: "practice",
+      durationSec: 300,
+      meta: {
+        guidedSession: sessionNum,
+        instrument: instrumentType || null
+      }
+    });
+    var shell = {
+      segments: plan ? [fallback.segment] : [],
+      exercises: plan ? [fallback.exercise] : [],
+      totalDurationSec: plan ? 300 : 0
+    };
+    var segments = [];
+    var exercises = [];
+    var totalDurationSec = 0;
+    var i;
+    var block;
+    var blockType;
+    var activity;
+    var normalized;
+    if (!plan || !Array.isArray(plan.blocks) || !plan.blocks.length) return shell;
+    for (i = 0; i < plan.blocks.length; i++) {
+      block = plan.blocks[i];
+      if (!block || !block.type) continue;
+      blockType = block.type;
+      activity = plan.blockActivities && plan.blockActivities[blockType]
+        ? plan.blockActivities[blockType]
+        : null;
+      normalized = normalizeSegment({
+        id: String(plan.id || ("guided_session_" + sessionNum)) + "_" + blockType,
+        type: normalizeGuidedBlockSegmentType(blockType),
+        label: buildGuidedBlockLabel(blockType, activity),
+        desc: buildGuidedBlockDescription(activity, blockType),
+        durationSec: parseGuidedBlockDurationSec(block, activity),
+        meta: {
+          guidedSession: sessionNum,
+          guidedBlockType: blockType,
+          activityId: block.activity_id || (activity && activity.id) || null,
+          activityKind: activity && activity.kind ? activity.kind : null,
+          instrument: instrumentType || plan.instrument || null
+        }
+      });
+      totalDurationSec += normalized.segment.durationSec || 0;
+      segments.push(normalized.segment);
+      exercises.push(normalized.exercise);
+    }
+    if (!segments.length) return shell;
+    return {
+      segments: segments,
+      exercises: exercises,
+      totalDurationSec: totalDurationSec
+    };
+  }
+
   function resolveGuidedBlockActivities(instrumentType, plan) {
     var resolved = {
       warm_engine: null,
@@ -512,6 +572,39 @@
       if (blocks[i] && blocks[i].tempo_bpm) return parseLevel(blocks[i].tempo_bpm);
     }
     return 80;
+  }
+
+  function normalizeGuidedBlockSegmentType(blockType) {
+    if (blockType === "song") return "song";
+    return "practice";
+  }
+
+  function parseGuidedBlockDurationSec(block, activity) {
+    var duration = parseInt(block && block.duration_sec, 10);
+    if (!isNaN(duration) && duration > 0) return duration;
+    duration = parseInt(activity && activity.duration_sec, 10);
+    if (!isNaN(duration) && duration > 0) return duration;
+    return 60;
+  }
+
+  function buildGuidedBlockLabel(blockType, activity) {
+    var labels = {
+      warm_engine: "Warm Engine",
+      drill: "Drill",
+      song: "Song Slice",
+      cooldown: "Cooldown"
+    };
+    var focusSong = humanizeGuidedToken(activity && activity.focus_song);
+    if (blockType === "song" && focusSong) return "Song Slice: " + focusSong;
+    return labels[blockType] || humanizeGuidedToken(blockType) || "Guided Block";
+  }
+
+  function buildGuidedBlockDescription(activity, blockType) {
+    return firstGuidedActivityText(
+      activity && activity.copy && activity.copy.setup,
+      activity && activity.copy && activity.copy.success,
+      humanizeGuidedToken(blockType)
+    );
   }
 
   function buildNewMoveText(newElement, title) {
