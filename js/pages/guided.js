@@ -269,6 +269,20 @@ function getGuidedDoneActionHint(extensionCount) {
   return "You can leave this here and come back when the next spark shows up.";
 }
 
+function getGuidedDonePauseTitle(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "Pause First";
+  return "Take A Beat";
+}
+
+function getGuidedDonePauseCopy(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "Set the instrument down, roll your shoulders, and let the session settle for a moment.";
+  return "Give yourself one quiet beat before choosing what comes next. The momentum will still be here.";
+}
+
 function getGuidedDoneNextActionStyle(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count < 2) return "background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff";
@@ -1302,6 +1316,12 @@ function guidedDonePage() {
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.streak) + '</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/' + totalSessions + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.sessions) + '</div></div>';
   h += '</div></div>';
+  if (extensionCount >= 2) {
+    h += '<div class="card mb16" style="max-width:520px;margin:0 auto 16px;border:1px solid #D8D2EA;background:#FAF7FF;text-align:left">';
+    h += '<div style="font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#6E56B3;margin-bottom:8px">' + escHTML(getGuidedDonePauseTitle(extensionCount)) + '</div>';
+    h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDonePauseCopy(extensionCount)) + '</div>';
+    h += '</div>';
+  }
   h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="' + getGuidedDoneNextActionStyle(extensionCount) + '">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="' + getGuidedDoneHomeStyle(extensionCount) + '">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
   if (extensionCount >= 2) {

@@ -779,6 +779,8 @@ test("guided done page acknowledges deep focus landings", function() {
   assert.ok(html.indexOf("Ready now is great. Later is great too.") >= 0);
   assert.ok(html.indexOf("background:linear-gradient(135deg,#A78BFA,#FFB86B);color:#2F2347") >= 0);
   assert.ok(html.indexOf("background:#E9E0FF;color:#6E56B3;margin-top:8px;border:1px solid #C8B5FF") >= 0);
+  assert.ok(html.indexOf("Pause First") >= 0);
+  assert.ok(html.indexOf("Set the instrument down, roll your shoulders, and let the session settle for a moment.") >= 0);
 });
 
 test("guided exit routes through a confirmation action", function() {
