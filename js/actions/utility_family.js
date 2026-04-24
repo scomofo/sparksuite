@@ -55,6 +55,21 @@
       return true;
     }
 
+    if (a === "spotifyPlaylistConnect") {
+      if (typeof sparkSpotifyPlaylistConnect === "function") sparkSpotifyPlaylistConnect();
+      return true;
+    }
+
+    if (a === "spotifyPlaylistCreate") {
+      if (typeof sparkSpotifyPlaylistCreate === "function") sparkSpotifyPlaylistCreate();
+      return true;
+    }
+
+    if (a === "spotifyPlaylistSync") {
+      if (typeof sparkSpotifyPlaylistSync === "function") sparkSpotifyPlaylistSync();
+      return true;
+    }
+
     if (a === "importMidiFile") {
       if (typeof handleMidiImport === "function") handleMidiImport(v);
       return true;
