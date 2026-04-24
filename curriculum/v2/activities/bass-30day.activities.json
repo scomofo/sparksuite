@@ -1,0 +1,1687 @@
+{
+  "version": "2026-04-24",
+  "instrument": "bass",
+  "activity_count": 120,
+  "activities": [
+    {
+      "id": "bass-d01-warm_engine",
+      "session_id": "bass-d01",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "rock drums at 80 BPM",
+      "copy": {
+        "setup": "Make one note sound good. warm engine block.",
+        "success": "Nice. Make one note sound good.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d01-drill",
+      "session_id": "bass-d01",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "rock drums at 80 BPM",
+      "copy": {
+        "setup": "Make one note sound good. drill block.",
+        "success": "Nice. Make one note sound good.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d01-song",
+      "session_id": "bass-d01",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "rock drums at 80 BPM",
+      "copy": {
+        "setup": "Make one note sound good. song block.",
+        "success": "Nice. Make one note sound good.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d01-cooldown",
+      "session_id": "bass-d01",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "rock drums at 80 BPM",
+      "copy": {
+        "setup": "Make one note sound good. cooldown block.",
+        "success": "Nice. Make one note sound good.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d02-warm_engine",
+      "session_id": "bass-d02",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "tuner",
+      "copy": {
+        "setup": "Tuning the bass. warm engine block.",
+        "success": "Nice. Tuning the bass.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d02-drill",
+      "session_id": "bass-d02",
+      "instrument": "bass",
+      "kind": "tuning",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "tuner",
+      "copy": {
+        "setup": "Tuning the bass. drill block.",
+        "success": "Nice. Tuning the bass.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d02-song",
+      "session_id": "bass-d02",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "tuner",
+      "copy": {
+        "setup": "Tuning the bass. song block.",
+        "success": "Nice. Tuning the bass.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d02-cooldown",
+      "session_id": "bass-d02",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "tuner",
+      "copy": {
+        "setup": "Tuning the bass. cooldown block.",
+        "success": "Nice. Tuning the bass.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d03-warm_engine",
+      "session_id": "bass-d03",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "drums at 70",
+      "copy": {
+        "setup": "Quarter notes on E. warm engine block.",
+        "success": "Nice. Quarter notes on E.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d03-drill",
+      "session_id": "bass-d03",
+      "instrument": "bass",
+      "kind": "rhythm_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "drums at 70",
+      "copy": {
+        "setup": "Quarter notes on E. drill block.",
+        "success": "Nice. Quarter notes on E.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d03-song",
+      "session_id": "bass-d03",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "drums at 70",
+      "copy": {
+        "setup": "Quarter notes on E. song block.",
+        "success": "Nice. Quarter notes on E.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d03-cooldown",
+      "session_id": "bass-d03",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "drums at 70",
+      "copy": {
+        "setup": "Quarter notes on E. cooldown block.",
+        "success": "Nice. Quarter notes on E.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d04-warm_engine",
+      "session_id": "bass-d04",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "drums",
+      "copy": {
+        "setup": "Open A too. warm engine block.",
+        "success": "Nice. Open A too.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d04-drill",
+      "session_id": "bass-d04",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "drums",
+      "copy": {
+        "setup": "Open A too. drill block.",
+        "success": "Nice. Open A too.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d04-song",
+      "session_id": "bass-d04",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "drums",
+      "copy": {
+        "setup": "Open A too. song block.",
+        "success": "Nice. Open A too.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d04-cooldown",
+      "session_id": "bass-d04",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "drums",
+      "copy": {
+        "setup": "Open A too. cooldown block.",
+        "success": "Nice. Open A too.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d05-warm_engine",
+      "session_id": "bass-d05",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "rock loop",
+      "copy": {
+        "setup": "E-A groove. warm engine block.",
+        "success": "Nice. E-A groove.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d05-drill",
+      "session_id": "bass-d05",
+      "instrument": "bass",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "rock loop",
+      "copy": {
+        "setup": "E-A groove. drill block.",
+        "success": "Nice. E-A groove.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d05-song",
+      "session_id": "bass-d05",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "rock loop",
+      "copy": {
+        "setup": "E-A groove. song block.",
+        "success": "Nice. E-A groove.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d05-cooldown",
+      "session_id": "bass-d05",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "rock loop",
+      "copy": {
+        "setup": "E-A groove. cooldown block.",
+        "success": "Nice. E-A groove.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d06-warm_engine",
+      "session_id": "bass-d06",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "pulse loop",
+      "copy": {
+        "setup": "Fretting F on the E string. warm engine block.",
+        "success": "Nice. Fretting F on the E string.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d06-drill",
+      "session_id": "bass-d06",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "pulse loop",
+      "copy": {
+        "setup": "Fretting F on the E string. drill block.",
+        "success": "Nice. Fretting F on the E string.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d06-song",
+      "session_id": "bass-d06",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "pulse loop",
+      "copy": {
+        "setup": "Fretting F on the E string. song block.",
+        "success": "Nice. Fretting F on the E string.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d06-cooldown",
+      "session_id": "bass-d06",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "pulse loop",
+      "copy": {
+        "setup": "Fretting F on the E string. cooldown block.",
+        "success": "Nice. Fretting F on the E string.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d07-warm_engine",
+      "session_id": "bass-d07",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Seven Nation Army\" riff (simplified). warm engine block.",
+        "success": "Nice. \"Seven Nation Army\" riff (simplified).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d07-drill",
+      "session_id": "bass-d07",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Seven Nation Army\" riff (simplified). drill block.",
+        "success": "Nice. \"Seven Nation Army\" riff (simplified).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d07-song",
+      "session_id": "bass-d07",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Seven Nation Army\" riff (simplified). song block.",
+        "success": "Nice. \"Seven Nation Army\" riff (simplified).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d07-cooldown",
+      "session_id": "bass-d07",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Seven Nation Army\" riff (simplified). cooldown block.",
+        "success": "Nice. \"Seven Nation Army\" riff (simplified).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d08-warm_engine",
+      "session_id": "bass-d08",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "same riff doubled",
+      "copy": {
+        "setup": "Eighth notes. warm engine block.",
+        "success": "Nice. Eighth notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d08-drill",
+      "session_id": "bass-d08",
+      "instrument": "bass",
+      "kind": "rhythm_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "same riff doubled",
+      "copy": {
+        "setup": "Eighth notes. drill block.",
+        "success": "Nice. Eighth notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d08-song",
+      "session_id": "bass-d08",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "same riff doubled",
+      "copy": {
+        "setup": "Eighth notes. song block.",
+        "success": "Nice. Eighth notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d08-cooldown",
+      "session_id": "bass-d08",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "same riff doubled",
+      "copy": {
+        "setup": "Eighth notes. cooldown block.",
+        "success": "Nice. Eighth notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d09-warm_engine",
+      "session_id": "bass-d09",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "4-string pulse",
+      "copy": {
+        "setup": "D and G strings. warm engine block.",
+        "success": "Nice. D and G strings.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d09-drill",
+      "session_id": "bass-d09",
+      "instrument": "bass",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "4-string pulse",
+      "copy": {
+        "setup": "D and G strings. drill block.",
+        "success": "Nice. D and G strings.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d09-song",
+      "session_id": "bass-d09",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "4-string pulse",
+      "copy": {
+        "setup": "D and G strings. song block.",
+        "success": "Nice. D and G strings.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d09-cooldown",
+      "session_id": "bass-d09",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "4-string pulse",
+      "copy": {
+        "setup": "D and G strings. cooldown block.",
+        "success": "Nice. D and G strings.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d10-warm_engine",
+      "session_id": "bass-d10",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "jazz-ish drum",
+      "copy": {
+        "setup": "Walking bassline on opens. warm engine block.",
+        "success": "Nice. Walking bassline on opens.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d10-drill",
+      "session_id": "bass-d10",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "jazz-ish drum",
+      "copy": {
+        "setup": "Walking bassline on opens. drill block.",
+        "success": "Nice. Walking bassline on opens.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d10-song",
+      "session_id": "bass-d10",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "jazz-ish drum",
+      "copy": {
+        "setup": "Walking bassline on opens. song block.",
+        "success": "Nice. Walking bassline on opens.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d10-cooldown",
+      "session_id": "bass-d10",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "jazz-ish drum",
+      "copy": {
+        "setup": "Walking bassline on opens. cooldown block.",
+        "success": "Nice. Walking bassline on opens.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d11-warm_engine",
+      "session_id": "bass-d11",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d11-drill",
+      "session_id": "bass-d11",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d11-song",
+      "session_id": "bass-d11",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d11-cooldown",
+      "session_id": "bass-d11",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d12-warm_engine",
+      "session_id": "bass-d12",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "drills",
+      "copy": {
+        "setup": "The moveable anchor. warm engine block.",
+        "success": "Nice. The moveable anchor.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d12-drill",
+      "session_id": "bass-d12",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "drills",
+      "copy": {
+        "setup": "The moveable anchor. drill block.",
+        "success": "Nice. The moveable anchor.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d12-song",
+      "session_id": "bass-d12",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "drills",
+      "copy": {
+        "setup": "The moveable anchor. song block.",
+        "success": "Nice. The moveable anchor.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d12-cooldown",
+      "session_id": "bass-d12",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "drills",
+      "copy": {
+        "setup": "The moveable anchor. cooldown block.",
+        "success": "Nice. The moveable anchor.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d13-warm_engine",
+      "session_id": "bass-d13",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Come As You Are\" riff. warm engine block.",
+        "success": "Nice. \"Come As You Are\" riff.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d13-drill",
+      "session_id": "bass-d13",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Come As You Are\" riff. drill block.",
+        "success": "Nice. \"Come As You Are\" riff.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d13-song",
+      "session_id": "bass-d13",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Come As You Are\" riff. song block.",
+        "success": "Nice. \"Come As You Are\" riff.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d13-cooldown",
+      "session_id": "bass-d13",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Come As You Are\" riff. cooldown block.",
+        "success": "Nice. \"Come As You Are\" riff.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d14-warm_engine",
+      "session_id": "bass-d14",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "I-V in E",
+      "copy": {
+        "setup": "Root-5th shape. warm engine block.",
+        "success": "Nice. Root-5th shape.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d14-drill",
+      "session_id": "bass-d14",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "I-V in E",
+      "copy": {
+        "setup": "Root-5th shape. drill block.",
+        "success": "Nice. Root-5th shape.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d14-song",
+      "session_id": "bass-d14",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "I-V in E",
+      "copy": {
+        "setup": "Root-5th shape. song block.",
+        "success": "Nice. Root-5th shape.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d14-cooldown",
+      "session_id": "bass-d14",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "I-V in E",
+      "copy": {
+        "setup": "Root-5th shape. cooldown block.",
+        "success": "Nice. Root-5th shape.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d15-warm_engine",
+      "session_id": "bass-d15",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "12-bar in E",
+      "copy": {
+        "setup": "Root-5-octave shape. warm engine block.",
+        "success": "Nice. Root-5-octave shape.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d15-drill",
+      "session_id": "bass-d15",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "12-bar in E",
+      "copy": {
+        "setup": "Root-5-octave shape. drill block.",
+        "success": "Nice. Root-5-octave shape.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d15-song",
+      "session_id": "bass-d15",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "12-bar in E",
+      "copy": {
+        "setup": "Root-5-octave shape. song block.",
+        "success": "Nice. Root-5-octave shape.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d15-cooldown",
+      "session_id": "bass-d15",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "12-bar in E",
+      "copy": {
+        "setup": "Root-5-octave shape. cooldown block.",
+        "success": "Nice. Root-5-octave shape.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d16-warm_engine",
+      "session_id": "bass-d16",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "E-min vamp",
+      "copy": {
+        "setup": "Minor pentatonic (first 3 notes). warm engine block.",
+        "success": "Nice. Minor pentatonic (first 3 notes).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d16-drill",
+      "session_id": "bass-d16",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "E-min vamp",
+      "copy": {
+        "setup": "Minor pentatonic (first 3 notes). drill block.",
+        "success": "Nice. Minor pentatonic (first 3 notes).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d16-song",
+      "session_id": "bass-d16",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "E-min vamp",
+      "copy": {
+        "setup": "Minor pentatonic (first 3 notes). song block.",
+        "success": "Nice. Minor pentatonic (first 3 notes).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d16-cooldown",
+      "session_id": "bass-d16",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "E-min vamp",
+      "copy": {
+        "setup": "Minor pentatonic (first 3 notes). cooldown block.",
+        "success": "Nice. Minor pentatonic (first 3 notes).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d17-warm_engine",
+      "session_id": "bass-d17",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Sunshine of Your Love\" intro. warm engine block.",
+        "success": "Nice. \"Sunshine of Your Love\" intro.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d17-drill",
+      "session_id": "bass-d17",
+      "instrument": "bass",
+      "kind": "scale_fragment",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Sunshine of Your Love\" intro. drill block.",
+        "success": "Nice. \"Sunshine of Your Love\" intro.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d17-song",
+      "session_id": "bass-d17",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Sunshine of Your Love\" intro. song block.",
+        "success": "Nice. \"Sunshine of Your Love\" intro.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d17-cooldown",
+      "session_id": "bass-d17",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Sunshine of Your Love\" intro. cooldown block.",
+        "success": "Nice. \"Sunshine of Your Love\" intro.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d18-warm_engine",
+      "session_id": "bass-d18",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "12-bar blues",
+      "copy": {
+        "setup": "Blues scale (6 notes). warm engine block.",
+        "success": "Nice. Blues scale (6 notes).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d18-drill",
+      "session_id": "bass-d18",
+      "instrument": "bass",
+      "kind": "scale_fragment",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "12-bar blues",
+      "copy": {
+        "setup": "Blues scale (6 notes). drill block.",
+        "success": "Nice. Blues scale (6 notes).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d18-song",
+      "session_id": "bass-d18",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "12-bar blues",
+      "copy": {
+        "setup": "Blues scale (6 notes). song block.",
+        "success": "Nice. Blues scale (6 notes).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d18-cooldown",
+      "session_id": "bass-d18",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "12-bar blues",
+      "copy": {
+        "setup": "Blues scale (6 notes). cooldown block.",
+        "success": "Nice. Blues scale (6 notes).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d19-warm_engine",
+      "session_id": "bass-d19",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d19-drill",
+      "session_id": "bass-d19",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d19-song",
+      "session_id": "bass-d19",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d19-cooldown",
+      "session_id": "bass-d19",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d20-warm_engine",
+      "session_id": "bass-d20",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "slide drills",
+      "copy": {
+        "setup": "Sliding between notes. warm engine block.",
+        "success": "Nice. Sliding between notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d20-drill",
+      "session_id": "bass-d20",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "slide drills",
+      "copy": {
+        "setup": "Sliding between notes. drill block.",
+        "success": "Nice. Sliding between notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d20-song",
+      "session_id": "bass-d20",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "slide drills",
+      "copy": {
+        "setup": "Sliding between notes. song block.",
+        "success": "Nice. Sliding between notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d20-cooldown",
+      "session_id": "bass-d20",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "slide drills",
+      "copy": {
+        "setup": "Sliding between notes. cooldown block.",
+        "success": "Nice. Sliding between notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d21-warm_engine",
+      "session_id": "bass-d21",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Another One Bites the Dust\" riff. warm engine block.",
+        "success": "Nice. \"Another One Bites the Dust\" riff.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d21-drill",
+      "session_id": "bass-d21",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Another One Bites the Dust\" riff. drill block.",
+        "success": "Nice. \"Another One Bites the Dust\" riff.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d21-song",
+      "session_id": "bass-d21",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Another One Bites the Dust\" riff. song block.",
+        "success": "Nice. \"Another One Bites the Dust\" riff.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d21-cooldown",
+      "session_id": "bass-d21",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Another One Bites the Dust\" riff. cooldown block.",
+        "success": "Nice. \"Another One Bites the Dust\" riff.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d22-warm_engine",
+      "session_id": "bass-d22",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "funk loop",
+      "copy": {
+        "setup": "Muting with the picking hand. warm engine block.",
+        "success": "Nice. Muting with the picking hand.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d22-drill",
+      "session_id": "bass-d22",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "funk loop",
+      "copy": {
+        "setup": "Muting with the picking hand. drill block.",
+        "success": "Nice. Muting with the picking hand.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d22-song",
+      "session_id": "bass-d22",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "funk loop",
+      "copy": {
+        "setup": "Muting with the picking hand. song block.",
+        "success": "Nice. Muting with the picking hand.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d22-cooldown",
+      "session_id": "bass-d22",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "funk loop",
+      "copy": {
+        "setup": "Muting with the picking hand. cooldown block.",
+        "success": "Nice. Muting with the picking hand.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d23-warm_engine",
+      "session_id": "bass-d23",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "funk groove",
+      "copy": {
+        "setup": "Syncopation basics. warm engine block.",
+        "success": "Nice. Syncopation basics.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d23-drill",
+      "session_id": "bass-d23",
+      "instrument": "bass",
+      "kind": "rhythm_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "funk groove",
+      "copy": {
+        "setup": "Syncopation basics. drill block.",
+        "success": "Nice. Syncopation basics.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d23-song",
+      "session_id": "bass-d23",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "funk groove",
+      "copy": {
+        "setup": "Syncopation basics. song block.",
+        "success": "Nice. Syncopation basics.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d23-cooldown",
+      "session_id": "bass-d23",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "funk groove",
+      "copy": {
+        "setup": "Syncopation basics. cooldown block.",
+        "success": "Nice. Syncopation basics.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d24-warm_engine",
+      "session_id": "bass-d24",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d24-drill",
+      "session_id": "bass-d24",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d24-song",
+      "session_id": "bass-d24",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d24-cooldown",
+      "session_id": "bass-d24",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d25-warm_engine",
+      "session_id": "bass-d25",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "funk",
+      "copy": {
+        "setup": "Ghost notes. warm engine block.",
+        "success": "Nice. Ghost notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d25-drill",
+      "session_id": "bass-d25",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "funk",
+      "copy": {
+        "setup": "Ghost notes. drill block.",
+        "success": "Nice. Ghost notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d25-song",
+      "session_id": "bass-d25",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "funk",
+      "copy": {
+        "setup": "Ghost notes. song block.",
+        "success": "Nice. Ghost notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d25-cooldown",
+      "session_id": "bass-d25",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "funk",
+      "copy": {
+        "setup": "Ghost notes. cooldown block.",
+        "success": "Nice. Ghost notes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d26-warm_engine",
+      "session_id": "bass-d26",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "I-IV-V in A",
+      "copy": {
+        "setup": "Root motion over changes. warm engine block.",
+        "success": "Nice. Root motion over changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d26-drill",
+      "session_id": "bass-d26",
+      "instrument": "bass",
+      "kind": "chord_change_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "I-IV-V in A",
+      "copy": {
+        "setup": "Root motion over changes. drill block.",
+        "success": "Nice. Root motion over changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d26-song",
+      "session_id": "bass-d26",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "I-IV-V in A",
+      "copy": {
+        "setup": "Root motion over changes. song block.",
+        "success": "Nice. Root motion over changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d26-cooldown",
+      "session_id": "bass-d26",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "I-IV-V in A",
+      "copy": {
+        "setup": "Root motion over changes. cooldown block.",
+        "success": "Nice. Root motion over changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d27-warm_engine",
+      "session_id": "bass-d27",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "E-min vamp",
+      "copy": {
+        "setup": "Improvising over a vamp. warm engine block.",
+        "success": "Nice. Improvising over a vamp.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d27-drill",
+      "session_id": "bass-d27",
+      "instrument": "bass",
+      "kind": "scale_fragment",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "E-min vamp",
+      "copy": {
+        "setup": "Improvising over a vamp. drill block.",
+        "success": "Nice. Improvising over a vamp.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d27-song",
+      "session_id": "bass-d27",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "E-min vamp",
+      "copy": {
+        "setup": "Improvising over a vamp. song block.",
+        "success": "Nice. Improvising over a vamp.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d27-cooldown",
+      "session_id": "bass-d27",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "E-min vamp",
+      "copy": {
+        "setup": "Improvising over a vamp. cooldown block.",
+        "success": "Nice. Improvising over a vamp.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d28-warm_engine",
+      "session_id": "bass-d28",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d28-drill",
+      "session_id": "bass-d28",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d28-song",
+      "session_id": "bass-d28",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d28-cooldown",
+      "session_id": "bass-d28",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d29-warm_engine",
+      "session_id": "bass-d29",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase prep. warm engine block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d29-drill",
+      "session_id": "bass-d29",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase prep. drill block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d29-song",
+      "session_id": "bass-d29",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase prep. song block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d29-cooldown",
+      "session_id": "bass-d29",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase prep. cooldown block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d30-warm_engine",
+      "session_id": "bass-d30",
+      "instrument": "bass",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase day. warm engine block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d30-drill",
+      "session_id": "bass-d30",
+      "instrument": "bass",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase day. drill block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d30-song",
+      "session_id": "bass-d30",
+      "instrument": "bass",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase day. song block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "bass-d30-cooldown",
+      "session_id": "bass-d30",
+      "instrument": "bass",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase day. cooldown block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    }
+  ]
+}

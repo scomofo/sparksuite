@@ -675,6 +675,41 @@ function renderPracticePlanRows(plan) {
   h += '</div>';
   return h;
 }
+
+function renderPracticeCurriculumV2Card(inst) {
+  var instrumentType = getPracticePageInstrumentType(inst);
+  var service = window.SparkCurriculumV2;
+  var summary;
+  var nextSession;
+  var h;
+  if (!service || typeof service.getTrackSummary !== "function") return "";
+  summary = service.getTrackSummary(instrumentType);
+  if (!summary) return "";
+  nextSession = summary.nextSession;
+  h = '<div class="card mb12">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">';
+  h += '<div>';
+  h += '<div style="font-size:12px;font-weight:800;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase">Phase 1 Track</div>';
+  h += '<div style="font-size:18px;font-weight:900;color:var(--text-primary)">' + escHTML(summary.title || "30-Day Track") + '</div>';
+  h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(String(summary.completedCount)) + ' of ' + escHTML(String(summary.sessionCount)) + ' sessions completed</div>';
+  h += '</div>';
+  h += '<div style="padding:8px 10px;border-radius:999px;background:var(--chip-bg);color:var(--chip-color);font-size:12px;font-weight:800">Curriculum V2</div>';
+  h += '</div>';
+  if (nextSession) {
+    h += '<div style="margin-top:12px;padding:12px;border-radius:16px;background:var(--input-bg)">';
+    h += '<div style="font-size:12px;font-weight:800;color:var(--text-muted)">Next Session</div>';
+    h += '<div style="font-size:16px;font-weight:900;color:var(--text-primary);margin-top:4px">Day ' + escHTML(String(nextSession.day)) + ': ' + escHTML(nextSession.title || nextSession.id) + '</div>';
+    if (nextSession.focus_song) {
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">Song focus: ' + escHTML(nextSession.focus_song) + '</div>';
+    }
+    if (Array.isArray(nextSession.new_elements) && nextSession.new_elements.length) {
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:6px">New element: ' + escHTML(nextSession.new_elements[0]) + '</div>';
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  return h;
+}
 // ===== PRACTICE TAB =====
 function practiceTab(){
   var inst = getPracticePageInstrument();
@@ -695,6 +730,9 @@ function practiceTab(){
 
   // Adaptive Practice Plan
   h += renderPracticePlanSummaryCard(plan);
+
+  // Canonical curriculum preview
+  h += renderPracticeCurriculumV2Card(inst);
 
   // Quick Start / Resume
   h += renderPracticeQuickStartCard();
