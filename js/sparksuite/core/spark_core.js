@@ -1787,6 +1787,58 @@
     });
   };
 
+  SparkCore.prototype.extendGuidedBlock = function(options) {
+    options = options || {};
+    var extensionSec = Math.max(60, Math.round(options.extensionSec || 300));
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var segmentId = options.itemId
+      || this.runtimeState.activeSegmentId
+      || this.resolveGuidedRuntimeSegmentId(currentStep, this.currentPlan);
+    var segments;
+    var context;
+    var guidedPlan;
+    var blockActivities;
+    var activity;
+    var i;
+
+    if (!this.currentPlan || this.currentPlan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION || currentStep !== "victoryLap" || !segmentId) {
+      return {
+        runtimeState: this.getRuntimeState(),
+        extended: false
+      };
+    }
+
+    segments = Array.isArray(this.currentPlan.segments) ? this.currentPlan.segments : [];
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === segmentId) {
+        segments[i].durationSec = Math.max(0, Math.round(segments[i].durationSec || 0)) + extensionSec;
+        break;
+      }
+    }
+
+    context = this.currentPlan.context || {};
+    context.guidedShellDurationSec = Math.max(0, Math.round(context.guidedShellDurationSec || 0)) + extensionSec;
+    guidedPlan = context.guidedPlan || null;
+    blockActivities = guidedPlan && guidedPlan.blockActivities ? guidedPlan.blockActivities : null;
+    activity = blockActivities && blockActivities.cooldown ? blockActivities.cooldown : null;
+    if (activity) {
+      activity.duration_sec = Math.max(0, Math.round(activity.duration_sec || 0)) + extensionSec;
+    }
+
+    return {
+      runtimeState: this.syncGuidedRuntimeState({
+        guidedStep: "victoryLap",
+        guidedNewMovePhase: null,
+        transport: {
+          status: "running",
+          positionMs: 0
+        }
+      }),
+      extended: true,
+      extensionSec: extensionSec
+    };
+  };
+
   SparkCore.prototype.completeSession = function(payload) {
     payload = payload || {};
     if (!this.currentPlan || (payload.sessionId && this.currentPlan.id !== payload.sessionId)) {

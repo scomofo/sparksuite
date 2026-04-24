@@ -482,6 +482,8 @@ test("guided page header reflects non-drill block themes", function() {
   assert.ok(cooldownHtml.indexOf("Cooldown Block") >= 0);
   assert.ok(cooldownHtml.indexOf("onclick=\"act('guidedComplete')\"") >= 0);
   assert.ok(cooldownHtml.indexOf(">Finish Session<") >= 0);
+  assert.ok(cooldownHtml.indexOf("onclick=\"act('guidedExtendBlock')\"") >= 0);
+  assert.ok(cooldownHtml.indexOf(">Keep Going +5 min<") >= 0);
   assert.ok(cooldownHtml.indexOf("guidedSkipBlock") === -1);
 });
 
@@ -714,6 +716,7 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   var syncCalls = [];
   var advanceCalls = [];
   var skipCalls = [];
+  var extendCalls = [];
   var completeCalls = [];
   var startCalls = [];
   global.window = {
@@ -754,6 +757,19 @@ test("guided actions can resolve sparkCore from the global binding", function() 
           guidedActivityId: "gtr-d01-song",
           guidedActivityKind: "song_chunk",
           guidedBlockType: "song",
+          activeScreen: "guided_session"
+        }
+      };
+    },
+    extendGuidedBlock: function(payload) {
+      extendCalls.push(payload);
+      return {
+        runtimeState: {
+          guidedStep: "victoryLap",
+          guidedNewMovePhase: null,
+          guidedActivityId: "gtr-d01-cooldown",
+          guidedActivityKind: "freeplay",
+          guidedBlockType: "cooldown",
           activeScreen: "guided_session"
         }
       };
@@ -814,6 +830,16 @@ test("guided actions can resolve sparkCore from the global binding", function() 
   assert.strictEqual(S.guidedActivityId, "gtr-d01-song");
   assert.strictEqual(S.guidedActivityKind, "song_chunk");
   assert.strictEqual(S.guidedBlockType, "song");
+
+  S.guidedStep = "victoryLap";
+  S.newMovePhase = null;
+  handled = global.runSparkActionFamilies("guidedExtendBlock");
+  assert.strictEqual(handled, true);
+  assert.deepStrictEqual(extendCalls, [{}]);
+  assert.strictEqual(S.guidedStep, "victoryLap");
+  assert.strictEqual(S.guidedActivityId, "gtr-d01-cooldown");
+  assert.strictEqual(S.guidedActivityKind, "freeplay");
+  assert.strictEqual(S.guidedBlockType, "cooldown");
 
   S.guidedStep = "review";
   S.newMovePhase = null;

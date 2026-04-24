@@ -287,6 +287,14 @@ function getGuidedQuickAction(guidedView) {
   return null;
 }
 
+function getGuidedExtendAction(guidedView) {
+  var step = guidedView && guidedView.guidedStep ? guidedView.guidedStep : null;
+  if (step === "victoryLap") {
+    return { action: "guidedExtendBlock", label: "Keep Going +5 min" };
+  }
+  return null;
+}
+
 function getGuidedSkipAction(guidedView) {
   var step = guidedView && guidedView.guidedStep ? guidedView.guidedStep : null;
   if (step === "spark") {
@@ -306,6 +314,7 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
   return '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 16px">' +
     blockProgress.map(function(block) {
       var quickAction = block.state === "now" ? getGuidedQuickAction(guidedView) : null;
+      var extendAction = block.state === "now" ? getGuidedExtendAction(guidedView) : null;
       var skipAction = block.state === "now" ? getGuidedSkipAction(guidedView) : null;
       var durationLabel = block.durationSec > 0
         ? Math.max(1, Math.round(block.durationSec / 60)) + " min"
@@ -335,10 +344,13 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
           escHTML(remainingLabel || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
-        (quickAction || skipAction
+        (quickAction || extendAction || skipAction
           ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' +
               (quickAction
                 ? '<button class="btn" onclick="act(\'' + quickAction.action + '\')" style="padding:8px 12px;font-size:12px;font-weight:800;background:' + stateColor + ';color:' + (block.state === "done" ? "#0F3D38" : "#fff") + '">' + escHTML(quickAction.label) + '</button>'
+                : '') +
+              (extendAction
+                ? '<button class="btn" onclick="act(\'' + extendAction.action + '\')" style="padding:8px 12px;font-size:12px;font-weight:800;background:transparent;color:' + stateColor + ';border:1px solid ' + stateColor + '">' + escHTML(extendAction.label) + '</button>'
                 : '') +
               (skipAction
                 ? '<button class="btn" onclick="act(\'' + skipAction.action + '\')" style="padding:8px 12px;font-size:12px;font-weight:800;background:transparent;color:' + stateColor + ';border:1px solid ' + stateColor + '">' + escHTML(skipAction.label) + '</button>'
@@ -922,7 +934,10 @@ function _guidedVictoryLap(plan) {
     h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:12px">&#128264; Listen</button><br>';
   }
   h += renderGuidedActionStatus(guidedView, cardTheme.titleColor);
+  h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
   h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">' + escHTML(getGuidedAdvanceLabel("victoryLap")) + '</button>';
+  h += '<button class="btn" onclick="act(\'guidedExtendBlock\')" style="background:transparent;color:' + cardTheme.titleColor + ';padding:14px 24px;font-size:14px;font-weight:900;border:1px solid ' + cardTheme.titleColor + '">Keep Going +5 min</button>';
+  h += '</div>';
   h += '</div>';
   return h;
 }
