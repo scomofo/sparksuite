@@ -249,8 +249,13 @@ function getGuidedDoneStatsCardStyle(extensionCount) {
   return "border:1px solid #7C8C6A22;background:linear-gradient(135deg,#F4F7EF,#FFF8F1)";
 }
 
-function getGuidedDoneNextActionLabel(extensionCount) {
+function getGuidedDoneNextActionLabel(extensionCount, hasNextSession) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (hasNextSession === false) {
+    if (count < 2) return "Play This One Again";
+    if (count === 2) return "Revisit This Session Gently";
+    return "Return Softly to This Session";
+  }
   if (count < 2) return "Next Session";
   if (count === 2) return "Start Next Session Gently";
   return "Begin Another Softly";
@@ -263,8 +268,13 @@ function getGuidedDoneHomeLabel(extensionCount) {
   return "Ease Back Home";
 }
 
-function getGuidedDoneActionHint(extensionCount) {
+function getGuidedDoneActionHint(extensionCount, hasNextSession) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (hasNextSession === false) {
+    if (count < 2) return "You've reached the end of this track. Replay this one or head home whenever you like.";
+    if (count === 2) return "You've reached the end of this track. Replay this session gently, or leave it here for now.";
+    return "Track complete. You can revisit this session softly, or let it rest until the next spark.";
+  }
   if (count < 2) return "";
   if (count === 2) return "Ready now is great. Later is great too.";
   return "You can leave this here and come back when the next spark shows up.";
@@ -1299,6 +1309,7 @@ function guidedDonePage() {
   var completedSessions = Array.isArray(S.completedGuidedSessions) ? S.completedGuidedSessions.length : 0;
   var totalSessions = getGuidedSessionTotalCount();
   var nextSessionNum = getGuidedDoneNextSessionNum(num, totalSessions);
+  var hasNextSession = nextSessionNum > normalizeGuidedCount(num, 0);
   var statLabels = getGuidedDoneStatLabels(extensionCount);
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="' + getGuidedDoneCelebrationStyle(extensionCount) + '">' + getGuidedDoneCelebrationIcon(extensionCount) + '</div>';
@@ -1324,10 +1335,10 @@ function guidedDonePage() {
     h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDonePauseCopy(extensionCount)) + '</div>';
     h += '</div>';
   }
-  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\',' + escHTML(String(nextSessionNum)) + ')" style="' + getGuidedDoneNextActionStyle(extensionCount) + '">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
+  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\',' + escHTML(String(nextSessionNum)) + ')" style="' + getGuidedDoneNextActionStyle(extensionCount) + '">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount, hasNextSession)) + '</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="' + getGuidedDoneHomeStyle(extensionCount) + '">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
-  if (extensionCount >= 2) {
-    h += '<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">' + escHTML(getGuidedDoneActionHint(extensionCount)) + '</div>';
+  if (extensionCount >= 2 || !hasNextSession) {
+    h += '<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">' + escHTML(getGuidedDoneActionHint(extensionCount, hasNextSession)) + '</div>';
   }
   h += '</div>';
   return h;

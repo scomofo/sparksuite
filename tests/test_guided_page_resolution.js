@@ -787,6 +787,50 @@ test("guided done page acknowledges deep focus landings", function() {
   assert.ok(html.indexOf("Set the instrument down, roll your shoulders, and let the session settle for a moment.") >= 0);
 });
 
+test("guided done page softens the primary CTA when the track is complete", function() {
+  S.guidedPlan = {
+    id: "gtr-d30",
+    num: 30,
+    title: "Showcase day",
+    level: 1,
+    bpm: 80
+  };
+  S.completedGuidedSessions = Array.apply(null, { length: 30 }).map(function(_, index) {
+    return "gtr-d" + (index + 1);
+  });
+  SparkInstruments.getActive = function() {
+    return {
+      instrumentType: "guitar",
+      id: "guitar",
+      appId: "guitar",
+      getData: function() { return { ALL_CHORDS: [] }; },
+      ui: { chord: function() { return "<div>chord</div>"; } }
+    };
+  };
+  SparkCurriculumV2 = {
+    getTrackSummary: function(instrument) {
+      assert.strictEqual(instrument, "guitar");
+      return { sessionCount: 30 };
+    }
+  };
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: { guidedStep: "guided_done" },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+
+  var html = guidedDonePage();
+  assert.ok(html.indexOf("Play This One Again") >= 0);
+  assert.ok(html.indexOf("act('start_guided_session',30)") >= 0);
+  assert.ok(html.indexOf("You've reached the end of this track. Replay this one or head home whenever you like.") >= 0);
+  assert.strictEqual(html.indexOf("Next Session"), -1);
+});
+
 test("guided exit routes through a confirmation action", function() {
   var source = loadJS("js/pages/guided.js");
   assert.ok(source.indexOf('onclick="act(\\\'guidedConfirmStop\\\')"') >= 0);
