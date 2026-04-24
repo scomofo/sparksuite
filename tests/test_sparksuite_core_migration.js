@@ -1707,6 +1707,86 @@ test("audio helpers can resolve sparkCore from the global binding", function() {
   global.cancelAnimationFrame = originalCancelAnimationFrame;
 });
 
+test("timer helpers can resolve sparkCore from the global binding", function() {
+  var completedSession = null;
+  var completedDrill = null;
+  var syncedQuiz = null;
+  global.window = {};
+  global.sparkCore = {
+    completeLegacyPracticeSession: function(payload) {
+      completedSession = payload;
+      return payload;
+    },
+    completeLegacyPracticeDrill: function(payload) {
+      completedDrill = payload;
+      return payload;
+    },
+    syncLegacyQuizRuntimeState: function(payload) {
+      syncedQuiz = payload;
+      return payload;
+    }
+  };
+  global.SparkPsychology = { shouldReward: function() { return false; } };
+  global.snd = function() {};
+  global.addPracticeSecond = function() {};
+  global.render = function() {};
+  global.stopMetronome = function() {};
+  global.stopChordDetect = function() {};
+  global.trigC = function() {};
+  global.saveState = function() {};
+  global.logHistory = function() {};
+  global.checkBadges = function() {};
+  global._sparkEmit = function() {};
+  global.getActiveInstrumentIdentityForActivity = function() {
+    return { appId: "chordspark", instrumentType: "guitar" };
+  };
+  global.syncLegacyPracticeRuntimeRequest = function() {};
+  global.SparkSession = {
+    processResults: function() {
+      return { xpEarned: 20, jackpot: false, leveledUp: false };
+    }
+  };
+  global.updateDrillTimerUI = function() { return true; };
+  global.SCR = {
+    COMPLETE: "complete",
+    DRILL: "drill",
+    DRILL_DONE: "drill_done",
+    DAILY: "daily"
+  };
+  global.T = { session: null, drill: null };
+  global.clearTimeout = function() {};
+  global.setTimeout = function() { return 1; };
+  S.timerActive = true;
+  S.timer = 0;
+  S.metronomeOn = false;
+  S.chordDetectOn = false;
+  S.lastChordName = "C";
+  S.currentChord = { name: "C" };
+  S.screen = SCR.DRILL;
+  S.drillTimer = 0;
+  S.drillChords = [{ name: "C" }, { name: "G" }];
+  S.sessions = 0;
+
+  eval(loadJS("js/timers.js"));
+
+  tickS();
+  S.screen = SCR.DRILL;
+  tickD();
+  S.level = 1;
+  global.CHORDS = { 1: [{ name: "C Major", short: "C" }] };
+  global.ALL_CHORDS = [{ name: "C Major", short: "C" }, { name: "G Major", short: "G" }];
+  global.shuffle = function(items) { return items; };
+  genQ();
+
+  assert.ok(completedSession);
+  assert.strictEqual(completedSession.chordName, "C");
+  assert.ok(completedDrill);
+  assert.deepStrictEqual(completedDrill.chordNames, ["C", "G"]);
+  assert.ok(syncedQuiz);
+  assert.strictEqual(syncedQuiz.question.name, "C Major");
+  assert.strictEqual(syncedQuiz.answer, null);
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
