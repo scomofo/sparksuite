@@ -78,7 +78,7 @@ function pianoSessionPage() {
   html += '<div class="session-btns">';
   if (S.sessionStep && S.sessionStep !== "victoryLap") {
     html += '<button class="btn" onclick="act(\'pause\')">' + (S.paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
-    html += '<button class="btn btn-secondary" onclick="if(confirm(\'End session early?\'))act(\'stop_session\')">End Session</button>';
+    html += '<button class="btn btn-secondary" onclick="act(\'pianoConfirmStopSession\')">End Session</button>';
   }
   html += '</div>';
 
