@@ -2286,7 +2286,7 @@ test("SparkCore can apply guided navigation requests explicitly", function() {
 
 test("SparkCore can track guided runtime step and phase state explicitly", function() {
   var core = createDefaultSparkCore();
-  core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
 
   core.syncGuidedRuntimeState({
     guidedStep: "newMove",
@@ -2299,6 +2299,7 @@ test("SparkCore can track guided runtime step and phase state explicitly", funct
   assert.strictEqual(state.activeScreen, "guided_session");
   assert.strictEqual(state.guidedStep, "newMove");
   assert.strictEqual(state.guidedNewMovePhase, "shadow");
+  assert.strictEqual(state.activeSegmentId, plan.segments[0].id);
   assert.strictEqual(state.transport.status, "running");
   assert.strictEqual(state.transport.positionMs, 18000);
 });
@@ -4081,6 +4082,7 @@ test("guided sessions normalize curriculum v2 plans into the legacy guided flow 
   assert.strictEqual(plan.segments[3].label, "Cooldown");
   assert.strictEqual(plan.segments[3].durationSec, 90);
   assert.strictEqual(plan.context.guidedShellDurationSec, 600);
+  assert.strictEqual(guidedState.activeSegmentId, "gtr-d01_warm_engine");
   assert.strictEqual(guidedPlan.blockActivities.warm_engine.id, "gtr-d01-warm_engine");
   assert.strictEqual(guidedPlan.blockActivities.drill.id, "gtr-d01-drill");
   assert.strictEqual(guidedPlan.blockActivities.song.id, "gtr-d01-song");
@@ -4092,11 +4094,28 @@ test("guided sessions normalize curriculum v2 plans into the legacy guided flow 
     guidedStep: "newMove",
     guidedNewMovePhase: "watch"
   });
+  assert.strictEqual(guidedState.activeSegmentId, "gtr-d01_drill");
   assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-drill");
   assert.strictEqual(guidedState.guidedActivityKind, "review");
   assert.strictEqual(guidedState.guidedBlockType, "drill");
 
+  guidedState = core.syncGuidedRuntimeState({
+    guidedStep: "songSlice",
+    guidedNewMovePhase: null
+  });
+  assert.strictEqual(guidedState.activeSegmentId, "gtr-d01_song");
+  assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-song");
+  assert.strictEqual(guidedState.guidedBlockType, "song");
+
+  guidedState = core.syncGuidedRuntimeState({
+    guidedStep: "victoryLap"
+  });
+  assert.strictEqual(guidedState.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-cooldown");
+  assert.strictEqual(guidedState.guidedBlockType, "cooldown");
+
   guidedState = core.applyGuidedNavigationRequest("guided_done");
+  assert.strictEqual(guidedState.activeSegmentId, null);
   assert.strictEqual(guidedState.guidedActivityId, null);
   assert.strictEqual(guidedState.guidedActivityKind, null);
   assert.strictEqual(guidedState.guidedBlockType, null);

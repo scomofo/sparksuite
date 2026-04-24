@@ -281,6 +281,21 @@
     };
   };
 
+  SparkCore.prototype.resolveGuidedRuntimeSegmentId = function(step, plan) {
+    var guidedActivity = this.resolveGuidedRuntimeActivity(step, plan);
+    var blockType = guidedActivity.guidedBlockType;
+    var segments;
+    var i;
+    if (!plan || !Array.isArray(plan.segments) || !blockType) return null;
+    segments = plan.segments;
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].meta && segments[i].meta.guidedBlockType === blockType) {
+        return segments[i].id;
+      }
+    }
+    return null;
+  };
+
   SparkCore.prototype.startSession = function(input) {
     input = input || {};
     if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
@@ -2401,9 +2416,13 @@
       ? patch.guidedStep
       : this.runtimeState.guidedStep;
     var guidedActivity = this.resolveGuidedRuntimeActivity(nextGuidedStep, this.currentPlan);
+    var guidedSegmentId = this.resolveGuidedRuntimeSegmentId(nextGuidedStep, this.currentPlan);
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
       activeScreen: patch.activeScreen || this.runtimeState.activeScreen || "guided_session",
+      activeSegmentId: Object.prototype.hasOwnProperty.call(patch, "activeSegmentId")
+        ? patch.activeSegmentId
+        : (guidedSegmentId || this.runtimeState.activeSegmentId),
       guidedStep: nextGuidedStep,
       guidedNewMovePhase: Object.prototype.hasOwnProperty.call(patch, "guidedNewMovePhase")
         ? patch.guidedNewMovePhase
@@ -2428,6 +2447,7 @@
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
       activeScreen: this.runtimeState.activeScreen || "guided_session",
       activeTab: this.runtimeState.activeTab || "practice",
+      activeSegmentId: this.runtimeState.activeSegmentId,
       guidedStep: this.runtimeState.guidedStep,
       guidedNewMovePhase: this.runtimeState.guidedNewMovePhase,
       guidedActivityId: this.runtimeState.guidedActivityId,
@@ -2439,6 +2459,7 @@
     if (request.target === "guided_home") {
       request.activeScreen = "home";
       request.activeTab = "practice";
+      request.activeSegmentId = null;
       request.guidedStep = null;
       request.guidedNewMovePhase = null;
       request.guidedActivityId = null;
@@ -2446,6 +2467,7 @@
       request.guidedBlockType = null;
     } else if (request.target === "guided_done") {
       request.activeScreen = "guided_done";
+      request.activeSegmentId = null;
       request.guidedStep = null;
       request.guidedNewMovePhase = null;
       request.guidedActivityId = null;
@@ -2469,6 +2491,7 @@
       activeFlow: request.activeFlow,
       activeScreen: request.activeScreen,
       activeTab: request.activeTab,
+      activeSegmentId: request.activeSegmentId,
       guidedStep: request.guidedStep,
       guidedNewMovePhase: request.guidedNewMovePhase,
       guidedActivityId: request.guidedActivityId,
