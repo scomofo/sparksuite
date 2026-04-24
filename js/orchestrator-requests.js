@@ -14,13 +14,18 @@ function _sparkEmit(type, payload) {
   if (typeof SparkEvents !== "undefined") SparkEvents.emit(type, payload);
 }
 
+function getOrchestratorCore() {
+  return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+}
+
 function syncPerformanceEditorDocumentState(chart, options) {
-  if (!window.sparkCore) return;
-  if (typeof window.sparkCore.syncPerformanceEditorDocument === "function") {
-    window.sparkCore.syncPerformanceEditorDocument(chart, options || {});
+  var core = getOrchestratorCore();
+  if (!core) return;
+  if (typeof core.syncPerformanceEditorDocument === "function") {
+    core.syncPerformanceEditorDocument(chart, options || {});
     return;
   }
-  if (typeof window.sparkCore.syncPerformanceRuntimeState !== "function") return;
+  if (typeof core.syncPerformanceRuntimeState !== "function") return;
 
   options = options || {};
   var events = chart && Array.isArray(chart.events) ? chart.events : [];
@@ -34,7 +39,7 @@ function syncPerformanceEditorDocumentState(chart, options) {
     ? options.selectedPhraseId
     : (selectedPhrase ? selectedPhrase.id : null);
 
-  window.sparkCore.syncPerformanceRuntimeState(options.action || "configure_editor", {
+  core.syncPerformanceRuntimeState(options.action || "configure_editor", {
     mode: Object.prototype.hasOwnProperty.call(options, "mode") ? options.mode : S.performEditorMode,
     snap: Object.prototype.hasOwnProperty.call(options, "snap") ? options.snap : S.performEditorSnap,
     chartId: chart && chart.id ? chart.id : null,
@@ -74,8 +79,9 @@ function syncPerformanceEditorDocumentState(chart, options) {
 }
 
 function applyPerformanceEditorCoreMutation(action, payload) {
-  if (!window.sparkCore || typeof window.sparkCore.applyPerformanceEditorMutation !== "function") return null;
-  return window.sparkCore.applyPerformanceEditorMutation(action, payload || {});
+  var core = getOrchestratorCore();
+  if (!core || typeof core.applyPerformanceEditorMutation !== "function") return null;
+  return core.applyPerformanceEditorMutation(action, payload || {});
 }
 
 function syncPerformanceEditorLibraryState(library) {
@@ -85,8 +91,9 @@ function syncPerformanceEditorLibraryState(library) {
 }
 
 function getPerformanceEditorExportData() {
-  if (window.sparkCore && typeof window.sparkCore.getPerformanceEditorExportData === "function") {
-    return window.sparkCore.getPerformanceEditorExportData();
+  var core = getOrchestratorCore();
+  if (core && typeof core.getPerformanceEditorExportData === "function") {
+    return core.getPerformanceEditorExportData();
   }
   if (!S.performEditorChart) return { chart: null, json: "", fileName: "chart.json" };
   return {
@@ -97,15 +104,17 @@ function getPerformanceEditorExportData() {
 }
 
 function getPerformanceEditorPreviewChart() {
-  if (window.sparkCore && typeof window.sparkCore.getPerformanceEditorPreviewChart === "function") {
-    return window.sparkCore.getPerformanceEditorPreviewChart();
+  var core = getOrchestratorCore();
+  if (core && typeof core.getPerformanceEditorPreviewChart === "function") {
+    return core.getPerformanceEditorPreviewChart();
   }
   return S.performEditorChart || null;
 }
 
 function getPerformanceEditorPreviewRequest() {
-  if (window.sparkCore && typeof window.sparkCore.startPerformanceEditorPreview === "function") {
-    return window.sparkCore.startPerformanceEditorPreview();
+  var core = getOrchestratorCore();
+  if (core && typeof core.startPerformanceEditorPreview === "function") {
+    return core.startPerformanceEditorPreview();
   }
   var chart = getPerformanceEditorPreviewChart();
   if (!chart) return null;
@@ -121,8 +130,9 @@ function getPerformanceEditorPreviewRequest() {
 }
 
 function getPerformanceRetryRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.startPerformanceRetrySession === "function") {
-    return window.sparkCore.startPerformanceRetrySession(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.startPerformanceRetrySession === "function") {
+    return core.startPerformanceRetrySession(options || {});
   }
   options = options || {};
   return {
@@ -139,12 +149,13 @@ function getPerformanceRetryRequest(options) {
 }
 
 function applyPerformanceCalibrationRequest(action, options) {
-  if (window.sparkCore && typeof window.sparkCore.applyPerformanceCalibrationRequest === "function") {
-    return window.sparkCore.applyPerformanceCalibrationRequest(action, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.applyPerformanceCalibrationRequest === "function") {
+    return core.applyPerformanceCalibrationRequest(action, options || {});
   }
   options = options || {};
-  if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-    window.sparkCore.syncPerformanceRuntimeState(action, {
+  if (core && typeof core.syncPerformanceRuntimeState === "function") {
+    core.syncPerformanceRuntimeState(action, {
       source: Object.prototype.hasOwnProperty.call(options, "source") ? options.source : (S.performCalibrationSource || "midi"),
       appliedOffsetMs: Object.prototype.hasOwnProperty.call(options, "appliedOffsetMs") ? options.appliedOffsetMs : null,
       globalOffsetMs: Object.prototype.hasOwnProperty.call(options, "globalOffsetMs") ? options.globalOffsetMs : (S.performTimingOffsetMs || 0),
@@ -158,53 +169,60 @@ function applyPerformanceCalibrationRequest(action, options) {
 }
 
 function applyPerformanceNavigationRequest(target, options) {
-  if (window.sparkCore && typeof window.sparkCore.applyPerformanceNavigationRequest === "function") {
-    return window.sparkCore.applyPerformanceNavigationRequest(target, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.applyPerformanceNavigationRequest === "function") {
+    return core.applyPerformanceNavigationRequest(target, options || {});
   }
   return null;
 }
 
 function openPerformanceStatsRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openPerformanceStats === "function") {
-    return window.sparkCore.openPerformanceStats(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openPerformanceStats === "function") {
+    return core.openPerformanceStats(options || {});
   }
   return null;
 }
 
 function openPerformanceEditorRequest(chart, options) {
-  if (window.sparkCore && typeof window.sparkCore.openPerformanceEditor === "function") {
-    return window.sparkCore.openPerformanceEditor(chart || null, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openPerformanceEditor === "function") {
+    return core.openPerformanceEditor(chart || null, options || {});
   }
   return null;
 }
 
 function openPerformanceCalibrationRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openPerformanceCalibration === "function") {
-    return window.sparkCore.openPerformanceCalibration(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openPerformanceCalibration === "function") {
+    return core.openPerformanceCalibration(options || {});
   }
   return applyPerformanceCalibrationRequest("open_calibration", options || {});
 }
 
 function openPerformanceSongSelectionRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openPerformanceSongSelection === "function") {
-    return window.sparkCore.openPerformanceSongSelection(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openPerformanceSongSelection === "function") {
+    return core.openPerformanceSongSelection(options || {});
   }
   return null;
 }
 
 function startSelectedPerformanceSongRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.startSelectedPerformanceSong === "function") {
-    return window.sparkCore.startSelectedPerformanceSong(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.startSelectedPerformanceSong === "function") {
+    return core.startSelectedPerformanceSong(options || {});
   }
   return getPerformanceRetryRequest(options || {});
 }
 
 function openDailyPracticePlanRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openDailyPracticePlan === "function") {
-    return window.sparkCore.openDailyPracticePlan(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openDailyPracticePlan === "function") {
+    return core.openDailyPracticePlan(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-    return window.sparkCore.startSession({
+  if (core && typeof core.startSession === "function") {
+    return core.startSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
       forceRebuild: !!(options && options.forceRebuild)
     });
@@ -213,15 +231,17 @@ function openDailyPracticePlanRequest(options) {
 }
 
 function openDashboardPracticePlanRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openDashboardPracticePlan === "function") {
-    return window.sparkCore.openDashboardPracticePlan(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openDashboardPracticePlan === "function") {
+    return core.openDashboardPracticePlan(options || {});
   }
   return openDailyPracticePlanRequest(options || {});
 }
 
 function openPracticePlanScreenRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openPracticePlanScreen === "function") {
-    return window.sparkCore.openPracticePlanScreen(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openPracticePlanScreen === "function") {
+    return core.openPracticePlanScreen(options || {});
   }
   return openDashboardPracticePlanRequest(options || {});
 }
