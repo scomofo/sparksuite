@@ -262,6 +262,13 @@ function getGuidedDoneHomeLabel(extensionCount) {
   return "Ease Back Home";
 }
 
+function getGuidedDoneActionHint(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "Ready now is great. Later is great too.";
+  return "You can leave this here and come back when the next spark shows up.";
+}
+
 function getGuidedCooldownDetailLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count <= 0) return "Victory Lap";
@@ -1283,6 +1290,9 @@ function guidedDonePage() {
   h += '</div></div>';
   h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
+  if (extensionCount >= 2) {
+    h += '<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">' + escHTML(getGuidedDoneActionHint(extensionCount)) + '</div>';
+  }
   h += '</div>';
   return h;
 }
