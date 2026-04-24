@@ -55,6 +55,21 @@
     return completedLessons;
   }
 
+  function getCurriculumLessonById(lessonId, inst) {
+    var lesson;
+    var currMap;
+    var i;
+    if (typeof getCurriculumItem === "function") {
+      lesson = getCurriculumItem("lessons", lessonId);
+      if (lesson) return lesson;
+    }
+    currMap = inst ? getInstrumentCurriculumMap(inst) : [];
+    for (i = 0; i < currMap.length; i++) {
+      if (currMap[i] && currMap[i].id === lessonId) return currMap[i];
+    }
+    return null;
+  }
+
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
     var curriculum = getCurriculumItem("curriculums", curriculumId);
     if(!curriculum) return null;
@@ -119,10 +134,7 @@
     },
 
     getLessonById: function(lessonId) {
-      if (typeof getCurriculumItem === "function") {
-        return getCurriculumItem("lessons", lessonId);
-      }
-      return null;
+      return getCurriculumLessonById(lessonId, getActiveCurriculumInstrument());
     },
 
     getReviewTargets: function(userContext) {
