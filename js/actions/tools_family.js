@@ -170,6 +170,12 @@
       return true;
     }
 
+    if (a === "rhythmResultsBack") {
+      S.rhythmResults = null;
+      render();
+      return true;
+    }
+
     if (a === "rhythmTap" && S.rhythmActive) {
       var now = performance.now() - S.rhythmStartTime;
       var closest = null;
@@ -606,6 +612,12 @@
       snd("start");
       render();
       _runnerAnim = requestAnimationFrame(runnerTick);
+      return true;
+    }
+
+    if (a === "runnerResultsBack") {
+      S.runnerResults = null;
+      render();
       return true;
     }
 
