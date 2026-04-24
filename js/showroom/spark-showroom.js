@@ -151,7 +151,10 @@
         // below — so we set BOTH the override and the legacy slot so
         // users never land on a blank screen.
         "library":         function(){ S._showroomOverride = "library"; S.screen = SCR_.HOME; S.tab = TAB_.SONGS; },
-        "tuner":           function(){ S._showroomOverride = "tuner";   S.screen = SCR_.HOME; S.tab = TAB_.TUNER || "tuner"; },
+        "leaderboard":     function(){ S._showroomOverride = "leaderboard"; S.screen = SCR_.HOME; S.tab = TAB_.SONGS; },
+        "tuner":           function(){ S._showroomOverride = "tools";   S.screen = SCR_.HOME; S.tab = TAB_.TUNER || "tuner"; },
+        "tools":           function(){ S._showroomOverride = "tools";   S.screen = SCR_.HOME; S.tab = TAB_.TUNER || "tuner"; },
+        "insights":        function(){ S.screen = SCR_.INSIGHTS; },
         "settings":        function(){ S.screen = SCR_.SETTINGS; },
         // "path" / "learn" route to the Warm Ember Learning Path screen
         // (SparkPath.render) which reads the active instrument's real
@@ -184,7 +187,7 @@
       };
       // Clear any prior override so the legacy slot routing wins again —
       // but keep it for routes whose handlers set an override themselves.
-      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "library":1, "tuner":1, "session-summary":1, "song-details":1, "practice-metro":1 };
+      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1 };
       if (!_overrideRoutes[view]) S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
@@ -347,7 +350,7 @@
     var navItems = [
       { id:"flow",     label:"Flow",     icon:"waves",       onClick: nav("home") },
       { id:"library",  label:"Library",  icon:"music_note",  onClick: nav("library") },
-      { id:"insights", label:"Insights", icon:"insights",    onClick: nav("home") },
+      { id:"insights", label:"Insights", icon:"insights",    onClick: nav("insights") },
       { id:"settings", label:"Settings", icon:"settings" }
     ];
 
@@ -448,7 +451,7 @@
     var navItems = [
       { id:"home",     label:"Practice",    icon:"music_note", onClick: nav("home") },
       { id:"journey",  label:"Journey",     icon:"explore",    onClick: nav("path") },
-      { id:"leaderboard", label:"Leaderboard", icon:"military_tech", onClick: nav("library") },
+      { id:"leaderboard", label:"Leaderboard", icon:"military_tech", onClick: nav("leaderboard") },
       { id:"profile",  label:"Profile",     icon:"person" }
     ];
 
@@ -669,7 +672,7 @@
     var navItems = [
       { id:"home",     label:"Home",     icon:"home",         onClick: nav("home") },
       { id:"practice", label:"Practice", icon:"music_note" },
-      { id:"insights", label:"Insights", icon:"query_stats",  onClick: nav("home") },
+      { id:"insights", label:"Insights", icon:"query_stats",  onClick: nav("insights") },
       { id:"profile",  label:"Profile",  icon:"person",       onClick: nav("profile") }
     ];
 
@@ -861,6 +864,49 @@
            + '</div>'
          + '</div>'
          + bottomNav(navItems, "library")
+         + '</div>';
+  }
+
+  function leaderboardRender(opts) {
+    opts = opts || {};
+    var entries = [
+      { rank: 1, name: "Alex Chen", score: "98,420", song: "Ember's Resonance", badge: "Perfect Run" },
+      { rank: 2, name: "Maya Brooks", score: "96,870", song: "Midnight Strum", badge: "No Misses" },
+      { rank: 3, name: "Jordan Vale", score: "95,310", song: "Ivory Cascades", badge: "Mastered" },
+      { rank: 4, name: "Riley Stone", score: "93,440", song: "Deep Groove", badge: "Hot Streak" }
+    ];
+    var rows = "";
+    for (var i = 0; i < entries.length; i++) {
+      var item = entries[i];
+      rows += '<div class="showroom-row" style="align-items:center">'
+           + '<div style="display:flex;align-items:center;gap:12px">'
+             + '<div class="showroom-lesson-idx" style="min-width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center">#' + item.rank + '</div>'
+             + '<div><div style="font-weight:800;color:var(--text-primary)">' + escHtml(item.name) + '</div>'
+             + '<div style="font-size:12px;color:var(--text-muted)">' + escHtml(item.song) + ' • ' + escHtml(item.badge) + '</div></div>'
+           + '</div>'
+           + '<div style="font-family:\'JetBrains Mono\';font-weight:900;color:var(--primary-fixed)">' + escHtml(item.score) + '</div>'
+         + '</div>';
+    }
+    var navItems = [
+      { id:"home", label:"Practice", icon:"music_note", onClick: nav("home") },
+      { id:"journey", label:"Journey", icon:"explore", onClick: nav("path") },
+      { id:"leaderboard", label:"Leaderboard", icon:"military_tech" },
+      { id:"profile", label:"Profile", icon:"person", onClick: nav("profile") }
+    ];
+    return '<div class="showroom-root with-bg showroom-profile-ember">'
+         + '<div class="showroom-profile-ember-wash" aria-hidden="true"></div>'
+         + '<header class="showroom-appbar showroom-profile-ember-appbar">'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button></div>'
+         + '<h1 class="showroom-appbar-title centered showroom-profile-ember-title">Leaderboard</h1>'
+         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn showroom-profile-ember-settings" onclick="' + nav("profile") + '" aria-label="Profile"><span class="material-symbols-outlined" aria-hidden="true">person</span></button></div>'
+         + '</header>'
+         + '<div class="showroom-canvas showroom-profile-ember-canvas">'
+         + '<section class="showroom-glass-card" style="padding:20px;border-radius:20px">'
+         + '<div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:14px"><div><div class="showroom-focus-eyebrow">Top Performers</div><h3 style="margin:0;font-family:\'Syne\';font-size:24px">Weekly Standings</h3></div><div style="font-size:12px;color:var(--text-muted)">Updated today</div></div>'
+         + '<div style="display:flex;flex-direction:column;gap:10px">' + rows + '</div>'
+         + '</section>'
+         + bottomNav(navItems, "leaderboard")
+         + '</div>'
          + '</div>';
   }
 
@@ -1520,7 +1566,7 @@
     var navItems = [
       { id:"tuner",   label:"Tuner",   icon:"tune" },
       { id:"path",    label:"Courses", icon:"school",     onClick: nav("path") },
-      { id:"tools",   label:"Tools",   icon:"build",      onClick: nav("tuner") },
+      { id:"tools",   label:"Tools",   icon:"build",      onClick: nav("tools") },
       { id:"profile", label:"Profile", icon:"person",     onClick: nav("profile") }
     ];
 
@@ -1750,7 +1796,7 @@
     var navItems = [
       { id:"tuner",    label:"Tuner",   icon:"tune",       onClick: nav("tuner") },
       { id:"curriculum",label:"Courses", icon:"school" },
-      { id:"tools",    label:"Tools",   icon:"construction",onClick: nav("tuner") },
+      { id:"tools",    label:"Tools",   icon:"construction",onClick: nav("tools") },
       { id:"profile",  label:"Profile", icon:"person",     onClick: nav("profile") }
     ];
 
@@ -1907,7 +1953,7 @@
     var navItems = [
       { id: "tuner",      label: "Tuner",   icon: "tune",         onClick: nav("tuner") },
       { id: "curriculum", label: "Courses", icon: "school" },
-      { id: "tools",      label: "Tools",   icon: "construction", onClick: nav("tuner") },
+      { id: "tools",      label: "Tools",   icon: "construction", onClick: nav("tools") },
       { id: "profile",    label: "Profile", icon: "person",       onClick: nav("profile") }
     ];
 
@@ -1971,5 +2017,6 @@
   window.SparkCurriculumDashboard = { render: curriculumDashboardRender };
   window.SparkOnboardingWelcome   = { render: onboardingWelcomeRender };
   window.SparkCourseSyllabus      = { render: courseSyllabusRender };
+  window.SparkLeaderboard         = { render: leaderboardRender };
   window.SparkShowroom       = SparkShowroom;
 })();

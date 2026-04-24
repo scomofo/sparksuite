@@ -437,6 +437,9 @@
       profile: typeof SparkProfileScreen !== "undefined" && SparkProfileScreen && typeof SparkProfileScreen.render === "function"
         ? SparkProfileScreen.render
         : null,
+      leaderboard: typeof SparkLeaderboard !== "undefined" && SparkLeaderboard && typeof SparkLeaderboard.render === "function"
+        ? SparkLeaderboard.render
+        : null,
       library: typeof SparkSongLibrary !== "undefined" && SparkSongLibrary && typeof SparkSongLibrary.render === "function"
         ? SparkSongLibrary.render
         : null,
@@ -444,6 +447,9 @@
         ? SparkSongDetails.render
         : null,
       tuner: typeof SparkTuner !== "undefined" && SparkTuner && typeof SparkTuner.render === "function"
+        ? SparkTuner.render
+        : null,
+      tools: typeof SparkTuner !== "undefined" && SparkTuner && typeof SparkTuner.render === "function"
         ? SparkTuner.render
         : null,
       practice: typeof SparkPracticeMetro !== "undefined" && SparkPracticeMetro && typeof SparkPracticeMetro.render === "function"
@@ -457,6 +463,9 @@
         : null,
       lesson: typeof SparkLesson !== "undefined" && SparkLesson && typeof SparkLesson.render === "function"
         ? SparkLesson.render
+        : null,
+      insights: typeof insightsDashboardPage === "function"
+        ? insightsDashboardPage
         : null,
       "practice-metro": typeof SparkPracticeMetro !== "undefined" && SparkPracticeMetro && typeof SparkPracticeMetro.render === "function"
         ? SparkPracticeMetro.render
