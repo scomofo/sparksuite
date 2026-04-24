@@ -97,4 +97,25 @@ test("buildLearningQueue respects curriculum v2 completion state", function() {
   }), "Expected guitar day 2 after curriculum v2 day 1 is marked complete");
 });
 
+test("getLessonById resolves curriculum v2 lessons when legacy registry is empty", function() {
+  var originalGetActive = SparkInstruments.getActive;
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      instrument: "guitar",
+      getCurriculumMap: function() { return []; },
+      getCurriculumMapV2: function() {
+        return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+      }
+    };
+  };
+
+  var lesson = SparkCurriculumService.getLessonById("gtr-d01");
+
+  SparkInstruments.getActive = originalGetActive;
+  assert.ok(lesson, "Expected curriculum v2 lesson lookup to resolve");
+  assert.strictEqual(lesson.id, "gtr-d01");
+  assert.strictEqual(lesson.num, 1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
