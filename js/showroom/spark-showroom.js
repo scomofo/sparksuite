@@ -677,7 +677,7 @@
                 + (isDone
                     ? '<span class="showroom-drill-meta" style="color:var(--success)">Done</span>'
                     : (canLaunch
-                        ? '<button class="showroom-drill-cta" data-item-id="' + escHtml(String(d.id)) + '" onclick="launchPracticePlanItem(this.getAttribute(\'data-item-id\'))">Start</button>'
+                        ? '<button class="showroom-drill-cta" data-item-id="' + escHtml(String(d.id)) + '" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))">Start</button>'
                         : '<button class="showroom-drill-cta" onclick="' + nav("lesson") + '">Start</button>'))
               + '</div>';
     }

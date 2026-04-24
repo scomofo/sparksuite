@@ -336,14 +336,8 @@ function renderStatsQuizAccuracyCard(hist){
   return h;
 }
 
-function getStatsLearningPathAction(){
-  return (typeof window !== "undefined" && typeof window.SparkShowroomNavigate === "function" && typeof window.SparkPath !== "undefined")
-    ? "SparkShowroomNavigate('path')"
-    : "act('openSkillTree')";
-}
-
 function renderStatsLearningPathButton(){
-  return '<div style="text-align:center;margin-bottom:12px"><button class="btn" onclick="'+getStatsLearningPathAction()+'" style="background:var(--accent);color:#fff">&#127795; Learning Path</button></div>';
+  return '<div style="text-align:center;margin-bottom:12px"><button class="btn" onclick="act(\'openLearningPath\')" style="background:var(--accent);color:#fff">&#127795; Learning Path</button></div>';
 }
 
 function tunerTab(){
