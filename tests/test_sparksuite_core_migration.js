@@ -180,6 +180,9 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/index.js"));
+eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+eval(loadJS("js/curriculum/curriculum_v2.js"));
+eval(loadJS("js/curriculum/curriculum_v2_legacy_adapter.js"));
 eval(loadJS("js/sparksuite/core/storage.js"));
 eval(loadJS("js/sparksuite/core/ai_engine.js"));
 eval(loadJS("js/sparksuite/core/instrument_manager.js"));
@@ -3103,6 +3106,46 @@ test("createDefaultSparkCore prefers the rehydrated active instrument over a sta
   assert.strictEqual(context.curriculumMap[0].title, "White Keys Only");
   assert.strictEqual(context.sessions[0].title, "Piano Spark 1");
   assert.strictEqual(context.songs[1].title, "River Walk");
+});
+
+test("createDefaultSparkCore keeps curriculum v2 maps from thin active instruments while using registered adapters", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return [{ num: 1, title: "Stale Guitar Lesson" }]; },
+    getCurriculum: function() { return { SESSIONS: [{ num: 1, title: "Stale Guitar Session" }] }; },
+    getSongs: function() { return [{ title: "Stale Guitar Song", artist: "Spark Suite" }]; }
+  };
+
+  var core = createDefaultSparkCore();
+  var context = core.instrumentManager.getActiveContext();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  assert.strictEqual(context.instrumentType, "guitar");
+  assert.strictEqual(context.curriculumMap[0].id, "gtr-d01");
+  assert.strictEqual(context.sessions[0].id, "gtr-d01");
+  assert.strictEqual(plan.context.curriculum.nextLessonId, "gtr-d01");
+  assert.strictEqual(plan.context.curriculum.nextLesson.id, "gtr-d01");
+  assert.strictEqual(plan.lesson.id, "gtr-d01");
 });
 
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
