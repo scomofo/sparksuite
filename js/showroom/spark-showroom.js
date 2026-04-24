@@ -827,7 +827,7 @@
         : '<div class="showroom-song-thumb-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
       var statusLabel = sg.label || (sg.pct || "");
       var statusClass = sg.statusClass || "muted";
-      songsHtml += '<div class="showroom-song-row ' + escHtml(sg.instrument || '') + '" onclick="' + nav("song-details", sg.id || sg.name) + '">'
+      songsHtml += '<div class="showroom-song-row ' + escHtml(sg.instrument || '') + '" role="button" tabindex="0" onclick="' + nav("song-details", sg.id || sg.name) + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("song-details", sg.id || sg.name) + '}">'
                 + '<div class="showroom-song-thumb">' + thumb + '</div>'
                 + '<div class="showroom-song-body">'
                   + '<h4 class="showroom-song-name">' + escHtml(sg.name) + '</h4>'
