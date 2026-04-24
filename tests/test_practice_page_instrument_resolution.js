@@ -344,6 +344,51 @@ test("practicePage and planPage ignore string false completion flags in cached i
   assert.strictEqual(planHtml.indexOf("Plan completed!"), -1);
 });
 
+test("planPage and launchPracticePlanItem can resolve sparkCore from the global binding", function() {
+  var launchedItem = null;
+  global.SparkPracticeBridge = {
+    toLegacyPlan: function(plan) { return plan._legacyPlan; }
+  };
+  global.window = {
+    SparkPracticeBridge: global.SparkPracticeBridge
+  };
+  global.launchPracticeItem = function(item) {
+    launchedItem = item;
+  };
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            focus: "Core focus",
+            items: [
+              { id: "practice_1", type: "practice", label: "Core Warmup", completed: false, meta: { exerciseId: "warmup_1", instrument: "piano" } }
+            ]
+          }
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var planHtml = planPage();
+  launchPracticePlanItem("practice_1");
+
+  assert.ok(planHtml.indexOf("Core Warmup") >= 0);
+  assert.deepStrictEqual(launchedItem, {
+    id: "practice_1",
+    type: "practice",
+    label: "Core Warmup",
+    completed: false,
+    meta: { exerciseId: "warmup_1", instrument: "piano" }
+  });
+});
+
 test("practicePage and practiceTab safely render cached item ids containing apostrophes", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
