@@ -216,6 +216,7 @@
 
     var sessionIndex = Math.max(0, Math.min(sessions.length - 1, sessionNum - 1));
     var guidedPlan = sessions.length ? clone(sessions[sessionIndex]) : null;
+    guidedPlan = normalizeGuidedPlan(guidedPlan);
     if (guidedPlan && guidedPlan.num != null) sessionNum = guidedPlan.num;
 
     return new SessionPlan({
@@ -398,6 +399,102 @@
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value || null));
+  }
+
+  function normalizeGuidedPlan(plan) {
+    var newElement;
+    var focusSong;
+    var chordName;
+    var completionPrompt;
+    if (!plan) return null;
+    if (plan.spark || plan.review || plan.newMove || plan.songSlice || plan.victoryLap) return plan;
+    if (!Array.isArray(plan.blocks) || !plan.blocks.length) return plan;
+
+    newElement = Array.isArray(plan.new_elements) && plan.new_elements.length
+      ? plan.new_elements[0]
+      : (plan.skill || "");
+    focusSong = plan.focus_song || ((Array.isArray(plan.songs) && plan.songs.length) ? plan.songs[0] : "");
+    chordName = extractGuidedChordName(plan.title, newElement);
+    completionPrompt = plan.completion_criteria && plan.completion_criteria.prompt
+      ? String(plan.completion_criteria.prompt)
+      : (plan.completion && plan.completion.prompt ? String(plan.completion.prompt) : "");
+
+    return {
+      id: plan.id,
+      num: plan.day != null ? plan.day : plan.num,
+      day: plan.day != null ? plan.day : plan.num,
+      title: plan.title || "Guided session",
+      level: plan.level || 1,
+      bpm: normalizeGuidedTempo(plan.blocks),
+      spark: {
+        text: plan.title
+          ? (plan.title + ". Start with a quick, playable warm-up.")
+          : "Start with a quick, playable warm-up."
+      },
+      review: plan.day > 1 ? {
+        text: "Take a quick review pass before the new move."
+      } : null,
+      newMove: {
+        text: buildNewMoveText(newElement, plan.title),
+        chord: chordName,
+        strum: null
+      },
+      songSlice: {
+        text: focusSong
+          ? ("Play the " + focusSong + " slice with relaxed timing.")
+          : "Play this short song slice with steady timing.",
+        song: focusSong || null
+      },
+      victoryLap: {
+        text: completionPrompt || buildVictoryLapText(plan.title)
+      },
+      source: plan.source || null,
+      blocks: clone(plan.blocks),
+      new_elements: clone(plan.new_elements || (plan.skill ? [plan.skill] : [])),
+      prerequisites: clone(plan.prerequisites || []),
+      completion_criteria: clone(plan.completion_criteria || plan.completion || null),
+      focus_song: focusSong || null
+    };
+  }
+
+  function normalizeGuidedTempo(blocks) {
+    var i;
+    if (!Array.isArray(blocks)) return 80;
+    for (i = 0; i < blocks.length; i++) {
+      if (blocks[i] && blocks[i].tempo_bpm) return parseLevel(blocks[i].tempo_bpm);
+    }
+    return 80;
+  }
+
+  function buildNewMoveText(newElement, title) {
+    var label = humanizeGuidedToken(newElement);
+    if (label) return "Focus on " + label + " for this session.";
+    if (title) return "Focus on the main move from " + title + ".";
+    return "Practice the new move slowly and cleanly.";
+  }
+
+  function buildVictoryLapText(title) {
+    if (title) return "Finish with one confident pass through " + title + ".";
+    return "Finish with one confident pass.";
+  }
+
+  function humanizeGuidedToken(value) {
+    if (!value) return "";
+    return String(value)
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/^\s+|\s+$/g, "");
+  }
+
+  function extractGuidedChordName(title, newElement) {
+    var sources = [title, newElement];
+    var i;
+    var match;
+    for (i = 0; i < sources.length; i++) {
+      match = /(?:^|\s)(A|Am|A7|B|Bm|C|C7|D|Dm|D7|E|Em|E7|F|F#m|G|G7)(?:\s|$)/.exec(String(sources[i] || ""));
+      if (match && match[1]) return match[1];
+    }
+    return null;
   }
 
   function parseLevel(level) {
