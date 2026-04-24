@@ -192,6 +192,24 @@ function getGuidedDoneRecoveryCopy(extensionCount) {
   return "A small pause now can help the next session feel clean and inviting whenever you come back.";
 }
 
+function getGuidedDoneCelebrationIcon(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "&#127881;";
+  if (count === 2) return "&#127807;";
+  return "&#127752;";
+}
+
+function getGuidedDoneCelebrationStyle(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) {
+    return "font-size:56px;animation:bn .6s ease;color:inherit";
+  }
+  if (count === 2) {
+    return "font-size:52px;animation:bn .45s ease;color:#6E56B3;filter:saturate(.85)";
+  }
+  return "font-size:50px;animation:bn .35s ease;color:#7C8C6A;filter:saturate(.7)";
+}
+
 function getGuidedDoneNextActionLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count < 2) return "Next Session";
@@ -1207,7 +1225,7 @@ function guidedDonePage() {
   var completedSessions = Array.isArray(S.completedGuidedSessions) ? S.completedGuidedSessions.length : 0;
   var totalSessions = getGuidedSessionTotalCount();
   var h = '<div class="text-center" style="padding-top:30px">';
-  h += '<div style="font-size:56px;animation:bn .6s ease">&#127881;</div>';
+  h += '<div style="' + getGuidedDoneCelebrationStyle(extensionCount) + '">' + getGuidedDoneCelebrationIcon(extensionCount) + '</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">' + escHTML(getGuidedDoneTitle(extensionCount, num)) + '</h2>';
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(title) + '</p>';
   if (doneSupportLabel) {

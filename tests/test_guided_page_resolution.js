@@ -765,6 +765,8 @@ test("guided done page acknowledges deep focus landings", function() {
   var html = guidedDonePage();
   assert.ok(html.indexOf("Session 3 Landed Smoothly") >= 0);
   assert.ok(html.indexOf("You ended from deep focus time. Nice work stopping on your terms.") >= 0);
+  assert.ok(html.indexOf("&#127807;") >= 0);
+  assert.ok(html.indexOf("color:#6E56B3") >= 0);
   assert.ok(html.indexOf("Good landing") >= 0);
   assert.ok(html.indexOf("Take a breath, a sip of water, or a minute away from the instrument before you jump into the next thing.") >= 0);
   assert.ok(html.indexOf("Start Next Session Gently") >= 0);
