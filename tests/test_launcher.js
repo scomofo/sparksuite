@@ -99,14 +99,18 @@ test('launcher view switches clear stale showroom overrides', function() {
   S.activeInstrument = 'test_guitar';
   S._showroomOverride = 'library';
   S.launcherView = 'song-details';
+  SparkInstruments.activate('test_guitar');
 
   SparkInstruments.openLauncherView('settings');
   assert.strictEqual(S.activeInstrument, null);
+  assert.strictEqual(SparkInstruments.getActive(), null);
   assert.strictEqual(S._showroomOverride, null);
   assert.strictEqual(S.launcherView, 'settings');
 
+  SparkInstruments.activate('test_piano');
   S._showroomOverride = 'profile';
   SparkInstruments.showLauncher();
+  assert.strictEqual(SparkInstruments.getActive(), null);
   assert.strictEqual(S._showroomOverride, null);
   assert.strictEqual(S.launcherView, 'home');
 });
@@ -386,6 +390,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(launcherSource.indexOf('tools: typeof SparkTuner') >= 0);
   assert.ok(launcherSource.indexOf('instruments: typeof renderInstrumentsView === "function" ? renderInstrumentsView : null') >= 0);
   assert.ok(launcherSource.indexOf('S._showroomOverride = null;') >= 0);
+  assert.ok(launcherSource.indexOf('_active = null;') >= 0);
   assert.ok(showroomRenderSource.indexOf('"curriculum":      typeof SparkCurriculumDashboard') >= 0);
   assert.ok(showroomRenderSource.indexOf('"syllabus":        typeof SparkCourseSyllabus') >= 0);
   assert.ok(showroomRenderSource.indexOf('"leaderboard":     typeof SparkLeaderboard') >= 0);
