@@ -85,9 +85,14 @@
     };
   }
 
+  function getRhythmHighwayCore() {
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
   function startRhythmHighwaySegment(segmentId, presetName, loopSpec) {
-    if (!window.sparkCore || typeof window.sparkCore.getSegmentById !== "function") return false;
-    var segment = window.sparkCore.getSegmentById(segmentId);
+    var core = getRhythmHighwayCore();
+    if (!core || typeof core.getSegmentById !== "function") return false;
+    var segment = core.getSegmentById(segmentId);
     if (!segment || !segment.meta || !segment.meta.gameplayPayload) return false;
     return startRhythmHighwayPayload(segment.meta.gameplayPayload, presetName, {
       segmentId: segmentId,
@@ -165,10 +170,11 @@
   function finalizeRhythmHighway() {
     if (!runtime.engine) return;
     var result = runtime.engine.finalize();
+    var core = getRhythmHighwayCore();
     S.rhythmHighwayResult = result;
     S.rhythmHighwayFeedback = buildFeedback(result);
-    if (runtime.segmentId && window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-      window.sparkCore.completeSession({
+    if (runtime.segmentId && core && typeof core.completeSession === "function") {
+      core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         itemId: runtime.segmentId,
         result: result,

@@ -545,6 +545,76 @@ test("rhythm highway falls back to the thin active instrument when payloads omit
   }
 });
 
+test("rhythm highway can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  var completed = null;
+  var payload = new SparkUkuleleRhythmAdapter().createPayload({});
+  global.sparkCore = {
+    getSegmentById: function(segmentId) {
+      return {
+        id: segmentId,
+        label: "Island Groove",
+        meta: { gameplayPayload: payload }
+      };
+    },
+    completeSession: function(request) {
+      completed = request;
+      return { ok: true };
+    }
+  };
+
+  var OriginalTimingEngine = global.SparkTimingEngine;
+  var OriginalGameplayEngine = global.SparkRhythmGameplayEngine;
+
+  global.SparkTimingEngine = function() {};
+  SparkTimingEngine.prototype.createClock = function() {
+    return { getSongTime: function() { return 0; }, close: function() {} };
+  };
+
+  global.SparkRhythmGameplayEngine = function() {
+    this.update = function() {
+      return {
+        gameplay: { score: 900, maxCombo: 5, accuracy: 0.8 },
+        notes: [],
+        songTimeSec: 0,
+        finished: true
+      };
+    };
+    this.getSnapshot = function() {
+      return {
+        gameplay: { score: 0, maxCombo: 0, accuracy: 0 },
+        notes: [],
+        songTimeSec: 0,
+        finished: false
+      };
+    };
+    this.finalize = function() {
+      return {
+        gameplay: { score: 900, maxCombo: 5, accuracy: 0.8 },
+        learning: { weakAreas: ["late"], skills: [] }
+      };
+    };
+  };
+
+  try {
+    var started = startRhythmHighwaySegment("seg_uke_1", "spark_balanced");
+
+    assert.strictEqual(started, true);
+    assert.strictEqual(S.activeCoreSegmentId, "seg_uke_1");
+    assert.strictEqual(S.rhythmHighwayLaunchContext.label, "Island Groove");
+
+    assert.ok(completed);
+    assert.strictEqual(completed.itemId, "seg_uke_1");
+    assert.strictEqual(completed.flow, SparkSessionTypes.FLOW_DAILY_PRACTICE);
+    assert.strictEqual(completed.gameplayContext.source, "core_segment");
+    assert.strictEqual(completed.gameplayContext.label, "Island Groove");
+  } finally {
+    global.SparkTimingEngine = OriginalTimingEngine;
+    global.SparkRhythmGameplayEngine = OriginalGameplayEngine;
+    delete global.sparkCore;
+  }
+});
+
 test("bass module can provide rhythm guidance for focused authored drills", function() {
   var guidance = SparkBassModule.getRhythmGuidance("walking_bass", {
     gameplay: { accuracy: 71 / 100 },
