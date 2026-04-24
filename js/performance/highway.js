@@ -220,7 +220,9 @@ function notifyHighwayHit(evt) {
 function renderPerformanceHighway(chart, nowSec) {
   var height = 400;
   var h = '<div class="perform-highway" style="height:' + height + 'px;padding:0;border:none;background:transparent;position:relative;overflow:hidden">';
-  h += '<canvas id="spark-highway-canvas" style="width:100%;height:100%;display:block"></canvas>';
+  h += '<canvas id="spark-highway-canvas" style="width:100%;height:100%;display:block;filter:saturate(1.08) contrast(1.03) drop-shadow(0 10px 18px rgba(0,0,0,.18))"></canvas>';
+  h += '<div style="position:absolute;left:8%;right:8%;bottom:18%;height:16px;border-radius:999px;background:linear-gradient(90deg,rgba(82,255,255,0),rgba(82,255,255,.12) 18%,rgba(255,255,255,.22) 50%,rgba(82,255,255,.12) 82%,rgba(82,255,255,0));filter:blur(8px);pointer-events:none"></div>';
+  h += '<div style="position:absolute;left:9%;right:9%;bottom:18.5%;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(82,255,255,.1),rgba(82,255,255,.7) 28%,rgba(255,255,255,.95) 50%,rgba(82,255,255,.7) 72%,rgba(82,255,255,.1));box-shadow:0 0 18px rgba(82,255,255,.28);pointer-events:none"></div>';
   h += '<div id="perform-imported-overlay" style="position:absolute;inset:0;pointer-events:none">';
   h += renderImportedTechniqueOverlay(chart, nowSec, 3);
   h += '</div>';

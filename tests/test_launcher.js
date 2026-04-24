@@ -113,6 +113,23 @@ test('renderLauncher returns HTML with instrument cards', function() {
   assert.ok(html.indexOf('SparkSuite') >= 0);
 });
 
+test('renderLauncher respects launcherView showroom routes', function() {
+  global.SparkSongLibrary = { render: function() { return '<div>Library View</div>'; } };
+  global.SparkPath = { render: function() { return '<div>Learn View</div>'; } };
+  global.SparkSettings = { render: function() { return '<div>Settings View</div>'; } };
+
+  S.launcherView = 'library';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Library View') >= 0);
+
+  S.launcherView = 'learn';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Learn View') >= 0);
+
+  S.launcherView = 'settings';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Settings View') >= 0);
+
+  S.launcherView = 'home';
+});
+
 test('ukulele register adds a selectable launcher instrument', function() {
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));
@@ -173,6 +190,13 @@ test('onboarding intention input ignores stale sentinel strings', function() {
   var renderSource = loadJS('js/render.js');
   assert.ok(renderSource.indexOf('var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);') >= 0);
   assert.ok(renderSource.indexOf('value="\'+escHTML(onboardingPracticeIntention)+\'"') >= 0);
+});
+
+test('app boot resets to showroom home instead of restoring last active instrument', function() {
+  var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('S.activeInstrument=null;') >= 0);
+  assert.ok(appSource.indexOf('S._showroomOverride=null;') >= 0);
+  assert.ok(appSource.indexOf('S.launcherView="home";') >= 0);
 });
 
 // Summary

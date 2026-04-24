@@ -18,8 +18,9 @@ function performanceStatsPage(){
   var h='<div class="perform-page">';
   h+='<div class="perform-header"><button class="back-btn" onclick="act(\'performStatsBack\')">&larr; Back</button>';
   h+='<div class="perform-title"><strong>Performance Stats</strong></div></div>';
-  h+='<div class="perform-controls">';
-  h+='<div class="perform-toggle-group"><span class="perform-toggle-label">View</span>';
+  h+='<div class="card mb20" style="padding:12px;border-radius:18px;border:1px solid rgba(69,183,209,.16);background:linear-gradient(180deg,rgba(15,19,30,.94),rgba(8,10,16,.94))">';
+  h+='<div style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">View</div>';
+  h+='<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">';
   var focuses=["overview","recent","top","weak","daily"];
   for(var fi=0;fi<focuses.length;fi++){
     var focusId=focuses[fi];

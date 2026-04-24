@@ -144,6 +144,14 @@ function getPerformPageMicOffsetMs() {
   return 0;
 }
 
+function renderPerformControlSection(label, body, accentColor) {
+  var borderColor = accentColor || "rgba(255,255,255,.08)";
+  return '<div style="display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px;border-radius:16px;border:1px solid ' + borderColor + ';background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.03)">' +
+    '<div style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted)">' + escHTML(label) + '</div>' +
+    '<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">' + body + '</div>' +
+    '</div>';
+}
+
 function performPage() {
   var chart = S.performChart;
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
@@ -231,7 +239,7 @@ function performPage() {
   }
 
   // Input source badge + detected notes
-  h += '<div class="perform-input-badge">' + (S.performInputSource === "midi" ? "MIDI" : "MIC");
+  h += '<div class="perform-input-badge" style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:6px 12px;margin:6px 12px 0;border-radius:999px;background:rgba(9,12,20,.7);border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 28px rgba(0,0,0,.18)">' + (S.performInputSource === "midi" ? "MIDI" : "MIC");
   if (S.performInputNotes && S.performInputNotes.length) {
     h += ' &mdash; ';
     for (var ni = 0; ni < S.performInputNotes.length; ni++) {
@@ -270,71 +278,78 @@ function performPage() {
   }
 
   // Controls
-  h += '<div class="perform-controls">';
+  h += '<div class="card" style="margin:10px 12px 0;padding:14px;border-radius:18px;border:1px solid rgba(120,206,255,.12);background:linear-gradient(180deg,rgba(15,19,31,.94),rgba(7,10,18,.94));box-shadow:0 18px 36px rgba(0,0,0,.24)">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">';
 
   // Pause/Resume
   var performPaused = runtimeState && runtimeState.transport ? runtimeState.transport.status === "paused" : S.performPaused;
   if (performPaused) {
-    h += '<button class="btn perform-ctrl-btn" onclick="act(\'resumePerform\')" style="background:#4ECDC4;color:#fff">&#9654; Resume</button>';
+    h += '<button class="btn perform-ctrl-btn" onclick="act(\'resumePerform\')" style="background:linear-gradient(135deg,#37d6c8,#6ef1df);color:#06262a;box-shadow:0 10px 24px rgba(78,205,196,.24)">&#9654; Resume</button>';
   } else {
-    h += '<button class="btn perform-ctrl-btn" onclick="act(\'pausePerform\')" style="background:#FFE66D;color:#333">&#9208; Pause</button>';
+    h += '<button class="btn perform-ctrl-btn" onclick="act(\'pausePerform\')" style="background:linear-gradient(135deg,#FFE66D,#FFD36E);color:#3b3000;box-shadow:0 10px 24px rgba(255,230,109,.22)">&#9208; Pause</button>';
   }
+  h += '<div style="font-size:11px;color:var(--text-muted);font-weight:700">Tighten timing, change feel, or loop a weak phrase without leaving the run.</div>';
+  h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">';
 
   // Mode toggle
-  h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Input</span>';
+  var inputControls = '';
   var performMode = runtimeState && runtimeState.performanceInputMode ? runtimeState.performanceInputMode : S.performMode;
-  h += '<button class="btn btn-sm' + (performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
-  h += '<button class="btn btn-sm' + (performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
-  h += '</div>';
+  inputControls += '<button class="btn btn-sm' + (performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
+  inputControls += '<button class="btn btn-sm' + (performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
+  h += renderPerformControlSection("Input", inputControls, "rgba(69,183,209,.28)");
 
   // Difficulty toggle
-  h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Difficulty</span>';
+  var difficultyControls = '';
   var diffs = ["easy", "normal", "pro"];
   var performDifficulty = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
   for (var d = 0; d < diffs.length; d++) {
-    h += '<button class="btn btn-sm' + (performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
+    difficultyControls += '<button class="btn btn-sm' + (performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
   }
-  h += '</div>';
+  h += renderPerformControlSection("Difficulty", difficultyControls, "rgba(255,138,92,.24)");
 
   // Speed toggle
-  h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Speed</span>';
+  var speedControls = '';
   var speeds = [0.5, 0.75, 1.0];
   var performSpeed = runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed;
   for (var sp = 0; sp < speeds.length; sp++) {
-    h += '<button class="btn btn-sm' + (performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
+    speedControls += '<button class="btn btn-sm' + (performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
   }
-  h += '</div>';
+  h += renderPerformControlSection("Speed", speedControls, "rgba(255,230,109,.22)");
 
   // Practice presets
-  h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Mix</span>';
+  var mixControls = '';
   var presets = getPerformancePracticePresetOptions();
   var performPracticePreset = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : S.performPracticePreset;
   for (var pr = 0; pr < presets.length; pr++) {
-    h += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
+    mixControls += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
   }
-  h += '</div>';
+  h += renderPerformControlSection("Mix", mixControls, "rgba(78,205,196,.24)");
 
   // Loop phrase
+  var utilityControls = '';
   var performLoop = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceLoop")
     ? runtimeState.performanceLoop
     : S.performLoop;
   if (performLoop) {
-    h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performClearLoop\')" style="background:#FF6B6B;color:#fff">&#128260; Clear Loop</button>';
+    utilityControls += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performClearLoop\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128260; Clear Loop</button>';
   } else {
-    h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performLoopPhrase\')" style="background:#4ECDC4;color:#fff">&#128257; Loop Phrase</button>';
+    utilityControls += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performLoopPhrase\')" style="background:linear-gradient(135deg,#37d6c8,#4ECDC4);color:#083232">&#128257; Loop Phrase</button>';
   }
 
   // Calibration
-  h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performCalibrate\')" style="background:var(--input-bg);color:var(--text-secondary)">&#9201; Calibrate</button>';
+  utilityControls += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performCalibrate\')" style="background:var(--input-bg);color:var(--text-secondary)">&#9201; Calibrate</button>';
   var curOffset = normalizePerformPageNumber(
       S.performMode === "midi" ? S.performMidiOffsetMs : getPerformPageMicOffsetMs(),
     0
   );
   if (curOffset !== 0) {
-    h += '<span style="font-size:10px;color:var(--text-muted);margin-left:4px">offset: ' + curOffset + 'ms</span>';
+    utilityControls += '<span style="font-size:10px;color:var(--text-muted);margin-left:4px">offset: ' + curOffset + 'ms</span>';
   }
+  h += renderPerformControlSection("Utilities", utilityControls, "rgba(255,255,255,.08)");
 
-  h += '</div>'; // .perform-controls
+  h += '</div>';
+  h += '</div>';
 
   // Calibration section
   if (S._calibrating) {

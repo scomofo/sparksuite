@@ -14,6 +14,12 @@
 S.dailyChallenge=DAILY_CHALLENGES[Math.floor(Date.now()/86400000)%DAILY_CHALLENGES.length];
 try{if(typeof generatePracticePlan==="function")generatePracticePlan();}catch(e){}
 applyTheme();
+// Always boot to the instrument showroom home instead of restoring the last
+// active instrument. This keeps app launches predictable and gives users a
+// consistent "choose your instrument" entry point on reload.
+S.activeInstrument=null;
+S._showroomOverride=null;
+S.launcherView="home";
 // Init MIDI if previously enabled
 if(S.midiEnabled){try{initMIDI();}catch(e){console.error("ChordSpark: MIDI init failed",e);}}
 // Preload guitar WAV samples
