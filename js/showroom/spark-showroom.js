@@ -13,6 +13,11 @@
       return { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c];
     });
   }
+  function getShowroomCoreView() {
+    var core = (typeof window !== "undefined" && window.sparkCore)
+      || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    return core && typeof core.getActiveSessionView === "function" ? core.getActiveSessionView() : null;
+  }
   // Format a value as a single-quoted JS string literal safe to drop
   // inside a double-quoted HTML attribute (onclick="..."). Using
   // JSON.stringify here (which produces double quotes) would break the
@@ -614,8 +619,8 @@
 
     // Resolve practice plan
     var plan = null;
-    if (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-      var view = window.sparkCore.getActiveSessionView();
+    var view = getShowroomCoreView();
+    if (view) {
       if (view && view.plan && view.plan.flow === "daily_practice" && window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function") {
         plan = SparkPracticeBridge.toLegacyPlan(view.plan);
       }

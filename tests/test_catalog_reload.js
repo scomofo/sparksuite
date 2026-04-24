@@ -245,6 +245,22 @@ test("loadCurriculumManifest rejects failed section fetches without partially mu
   );
 });
 
+test("content and curriculum loaders resolve sparkCore from the global binding", async function() {
+  var originalWindow = global.window;
+  global.window = {};
+  sparkCore.events = [];
+
+  await loadAllContent("/content-manifest-a.json");
+  await loadCurriculumManifest("/curriculum-manifest-a.json");
+
+  assert.deepStrictEqual(
+    sparkCore.events.map(function(entry) { return entry.action; }),
+    ["content_load_start", "content_load_done", "curriculum_load_start", "curriculum_load_done"]
+  );
+
+  global.window = originalWindow;
+});
+
 async function run() {
   for (var i = 0; i < tests.length; i++) {
     try {

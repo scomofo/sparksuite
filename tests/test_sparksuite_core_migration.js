@@ -2176,6 +2176,83 @@ test("dashboard utility UI surfaces can resolve sparkCore from the global bindin
   delete global.sparkCore;
 });
 
+test("song family and showroom practice metro can resolve sparkCore from the global binding", function() {
+  var songSyncs = [];
+  var songCompletions = [];
+  var originalPracticeBridge = global.SparkPracticeBridge;
+  global.window = {};
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return {
+        songSessionSource: "community"
+      };
+    },
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          id: "plan_1"
+        }
+      };
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.syncSongRuntimeRequest = function(action, payload) {
+    songSyncs.push({ action: action, payload: payload });
+    return payload;
+  };
+  global.completeSongSessionRequest = function(payload) {
+    songCompletions.push(payload);
+    return payload;
+  };
+  global.snd = function() {};
+  global.render = function() {};
+  global.strumChord = function() {};
+  global.setInterval = function() { return 1; };
+  global.clearInterval = function() {};
+  global.fireMicro = function() {};
+  global.trigC = function() {};
+  global.saveState = function() {};
+  global.logHistory = function() {};
+  global.checkBadges = function() {};
+  global._sparkEmit = function() {};
+  global.getActiveInstrumentIdentityForActivity = function() {
+    return { appId: "chordspark" };
+  };
+  global.CHORD_NAME_MAP = {};
+  global.T = {};
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.SONG_DONE = "song_done";
+  global.S = global.S || {};
+  global.S.selectedSong = {
+    title: "Night Drive",
+    bpm: 120,
+    progression: ["C", "G", "Am"]
+  };
+  global.S.songPlaying = false;
+  global.S.songBeat = 0;
+  global.S.songsPlayed = 0;
+
+  eval(loadJS("js/actions/song_family.js"));
+  var showroomSource = loadJS("js/showroom/spark-showroom.js");
+
+  __actionFamilies.songs("toggleSong");
+  __actionFamilies.songs("completeSong");
+
+  assert.strictEqual(songSyncs[0].payload.source, "community");
+  assert.strictEqual(songCompletions[0].source, "community");
+  assert.ok(showroomSource.indexOf("function getShowroomCoreView()") >= 0);
+  assert.ok(showroomSource.indexOf("var view = getShowroomCoreView();") >= 0);
+
+  global.SparkPracticeBridge = originalPracticeBridge;
+  delete global.sparkCore;
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
