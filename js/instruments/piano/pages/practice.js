@@ -22,6 +22,29 @@ function pianoNormalizePracticeNumber(value, fallback) {
   return isFinite(num) ? num : fallback;
 }
 
+function pianoGetActiveGuidedSessionView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var view = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+  return view &&
+    view.plan &&
+    view.plan.flow === "guided_session" &&
+    view.runtimeState &&
+    view.runtimeState.activeScreen === "guided_session"
+    ? view
+    : null;
+}
+
+function pianoGetActiveGuidedSessionNum() {
+  var view = pianoGetActiveGuidedSessionView();
+  var context = view && view.plan && view.plan.context ? view.plan.context : null;
+  if (!view) return null;
+  if (context && context.guidedSession != null) return pianoNormalizePracticeNumber(context.guidedSession, null);
+  if (view.plan.lesson && view.plan.lesson.num != null) return pianoNormalizePracticeNumber(view.plan.lesson.num, null);
+  return null;
+}
+
 function pianoPracticeTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -55,8 +78,9 @@ function pianoPracticeTab() {
   if (plan) {
     var sessionTitle = pianoFirstPracticeCardTextToken(plan.title, "Guided session");
     var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[plan.level - 1] && CURRICULUM[plan.level - 1].title, "Level");
+    var shouldResumeGuided = pianoGetActiveGuidedSessionNum() === pianoNormalizePracticeNumber(plan.num, null);
     html += pianoClickableDiv(
-      "act('start_guided_session')",
+      "act('" + (shouldResumeGuided ? "resume_guided_session" : "start_guided_session") + "')",
       '<h3>Session ' + plan.num + ': ' + escHTML(sessionTitle) + '</h3>' +
       '<p>Level ' + plan.level + ' \u2022 ' + escHTML(levelTitle) + '</p>',
       "quick-start"
