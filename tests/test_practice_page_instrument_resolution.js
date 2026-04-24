@@ -1077,6 +1077,48 @@ test("planPage stays read-only when no plan exists and shows an empty state", fu
   assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
 });
 
+test("planPage pivots into guided resume mode when a guided session is active and no daily plan exists", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              target_duration_min: 10,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+
+  var html = planPage();
+  assert.ok(html.indexOf("Guided Session Flow") >= 0);
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("Your live guided shell is the plan right now.") >= 0);
+  assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.strictEqual(html.indexOf("No practice plan yet."), -1);
+});
+
 test("planPage falls back to cached plan state when the practice bridge is unavailable", function() {
   global.S = {
     practicePlanComplete: false,
