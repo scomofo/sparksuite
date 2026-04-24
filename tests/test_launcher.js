@@ -176,6 +176,7 @@ test('renderLauncher respects launcherView showroom routes', function() {
   global.SparkPerformance = { render: function() { return '<div>Performance View</div>'; } };
   global.SparkLesson = { render: function() { return '<div>Lesson View</div>'; } };
   global.SparkPath = { render: function() { return '<div>Learn View</div>'; } };
+  global.insightsDashboardPage = function() { return '<div>Insights View</div>'; };
   global.SparkCurriculumDashboard = { render: function() { return '<div>Curriculum View</div>'; } };
   global.SparkCourseSyllabus = { render: function() { return '<div>Syllabus View</div>'; } };
   global.SparkOnboardingWelcome = { render: function() { return '<div>Onboarding View</div>'; } };
@@ -216,6 +217,9 @@ test('renderLauncher respects launcherView showroom routes', function() {
 
   S.launcherView = 'lesson';
   assert.ok(SparkInstruments.renderLauncher().indexOf('Lesson View') >= 0);
+
+  S.launcherView = 'insights';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Insights View') >= 0);
 
   S.launcherView = 'curriculum';
   assert.ok(SparkInstruments.renderLauncher().indexOf('Curriculum View') >= 0);
@@ -319,6 +323,8 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   var showroomSource = loadJS('js/showroom/spark-showroom.js');
   var systemFamilySource = loadJS('js/actions/system_family.js');
   var performanceFamilySource = loadJS('js/actions/performance_family.js');
+  var launcherSource = loadJS('js/launcher.js');
+  var showroomRenderSource = loadJS('js/render_showroom.js');
   assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomFocusLibrarySearch\\\')"') >= 0);
   assert.ok(showroomSource.indexOf('id="showroom-library-search"') >= 0);
   assert.ok(showroomSource.indexOf('oninput="act(\\\'communitySearch\\\',this.value);render()"') >= 0);
@@ -331,6 +337,10 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('act(\\\'showroomOpenTrendingScores\\\')') >= 0);
   assert.ok(showroomSource.indexOf('Continue Learning</h3><span class="link"') >= 0);
   assert.ok(showroomSource.indexOf('nav("curriculum")') >= 0);
+  assert.ok(showroomSource.indexOf('nav("leaderboard")') >= 0);
+  assert.ok(showroomSource.indexOf('nav("tools")') >= 0);
+  assert.ok(showroomSource.indexOf('nav("insights")') >= 0);
+  assert.ok(showroomSource.indexOf('window.SparkLeaderboard') >= 0);
   assert.ok(showroomSource.indexOf('opts.ctaAction || nav("lesson")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomFocusLibrarySearch")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomOpenTrendingScores")') >= 0);
@@ -338,6 +348,11 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToneGenerator")') >= 0);
   assert.ok(performanceFamilySource.indexOf('if (a === "showroomPlayLibrarySong")') >= 0);
   assert.ok(performanceFamilySource.indexOf('return handlePerformanceAction("showroomStartPerf");') >= 0);
+  assert.ok(launcherSource.indexOf('leaderboard: typeof SparkLeaderboard') >= 0);
+  assert.ok(launcherSource.indexOf('insights: typeof insightsDashboardPage') >= 0);
+  assert.ok(launcherSource.indexOf('tools: typeof SparkTuner') >= 0);
+  assert.ok(showroomRenderSource.indexOf('"leaderboard":     typeof SparkLeaderboard') >= 0);
+  assert.ok(showroomRenderSource.indexOf('"tools":           typeof SparkTuner') >= 0);
 });
 
 test('launcher deferred asset guard does not synchronously recurse when already ready', function() {
