@@ -340,6 +340,8 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('nav("leaderboard")') >= 0);
   assert.ok(showroomSource.indexOf('nav("tools")') >= 0);
   assert.ok(showroomSource.indexOf('nav("insights")') >= 0);
+  assert.ok(showroomSource.indexOf("act(\\'showroomStartPerf\\'" ) >= 0 || showroomSource.indexOf("act('showroomStartPerf'") >= 0);
+  assert.ok(showroomSource.indexOf("sampleInstrumentMap") >= 0);
   assert.ok(showroomSource.indexOf('window.SparkLeaderboard') >= 0);
   assert.ok(showroomSource.indexOf('opts.ctaAction || nav("lesson")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomFocusLibrarySearch")') >= 0);
@@ -347,6 +349,8 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToggleRecorder")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomToneGenerator")') >= 0);
   assert.ok(performanceFamilySource.indexOf('if (a === "showroomPlayLibrarySong")') >= 0);
+  assert.ok(performanceFamilySource.indexOf('resolveShowroomPerformanceAppId') >= 0);
+  assert.ok(performanceFamilySource.indexOf('SparkInstruments.launchInstrumentPerformance(appId)') >= 0);
   assert.ok(performanceFamilySource.indexOf('return handlePerformanceAction("showroomStartPerf");') >= 0);
   assert.ok(launcherSource.indexOf('leaderboard: typeof SparkLeaderboard') >= 0);
   assert.ok(launcherSource.indexOf('insights: typeof insightsDashboardPage') >= 0);

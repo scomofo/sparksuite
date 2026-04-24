@@ -30,6 +30,23 @@
     return 0;
   }
 
+  function resolveShowroomPerformanceAppId(hint) {
+    var targetHint = hint != null ? String(hint).toLowerCase() : "";
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+      return null;
+    }
+    var all = SparkInstruments.getAll() || [];
+    var fallback = null;
+    for (var i = 0; i < all.length; i++) {
+      var inst = all[i];
+      if (!inst) continue;
+      if (!fallback && (inst.id || inst.appId)) fallback = inst.id || inst.appId;
+      var instType = String(inst.instrument || inst.instrumentType || "").toLowerCase();
+      if (targetHint && instType === targetHint) return inst.id || inst.appId || null;
+    }
+    return fallback;
+  }
+
   function preparePerformanceSongSelection(songIndex, options) {
     var song;
     var songId;
@@ -77,7 +94,7 @@
     }
 
     if (a === "showroomStartPerf") {
-      if (v && typeof startPerformance === "function") {
+      if (v && typeof v === "object" && typeof startPerformance === "function") {
         startPerformance(v);
         return true;
       }
@@ -89,6 +106,16 @@
         var showroomChart = buildPerformanceChartFromSong(S.selectedSong, "imported");
         if (showroomChart) {
           startPerformance(showroomChart);
+          return true;
+        }
+      }
+      if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.launchInstrumentPerformance === "function") {
+        var appId = null;
+        if (S && S.activeInstrument) appId = S.activeInstrument;
+        if (!appId && v != null && typeof v !== "object") appId = resolveShowroomPerformanceAppId(v);
+        if (!appId) appId = resolveShowroomPerformanceAppId(null);
+        if (appId) {
+          SparkInstruments.launchInstrumentPerformance(appId);
           return true;
         }
       }
