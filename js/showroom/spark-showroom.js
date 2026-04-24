@@ -861,7 +861,7 @@
            + '</div>'
          + '</header>'
           + '<div class="showroom-canvas" style="padding-top:0">'
-           + '<div class="showroom-search"><span class="material-symbols-outlined">search</span><input id="showroom-library-search" type="search" placeholder="Search songs, artists..." value="' + escHtml((typeof S !== "undefined" && typeof S.communitySearch === "string") ? S.communitySearch : "") + '" oninput="act(\'communitySearch\',this.value);render()" aria-label="Search songs and artists"></div>'
+           + '<div class="showroom-search"><span class="material-symbols-outlined">search</span><input id="showroom-library-search" type="search" placeholder="Search songs, artists..." value="' + escHtml((typeof S !== "undefined" && typeof S.communitySearch === "string") ? S.communitySearch : "") + '" oninput="act(\'communitySearch\',this.value)" aria-label="Search songs and artists"></div>'
            + '<div class="showroom-chiprow">' + chipsHtml + '</div>'
            + '<div class="showroom-level-row">' + levelsHtml + '</div>'
            + '<div class="showroom-trending-head"><h3>Trending Scores</h3><span class="link" role="button" tabindex="0" onclick="act(\'showroomOpenTrendingScores\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'showroomOpenTrendingScores\')}">View All</span></div>'
