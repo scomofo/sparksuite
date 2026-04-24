@@ -462,6 +462,50 @@ test("practice guided session card can resolve sparkCore from the global binding
   assert.ok(html.indexOf("Start 10-Min Session") >= 0);
 });
 
+test("practice guided session card shows resume state for an active guided runtime", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              level: 1,
+              target_duration_min: 10,
+              focus_song: "same",
+              new_elements: ["use-the-tuner"],
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "newMove",
+          guidedNewMovePhase: "shadow"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeGuidedSessionCard({});
+  assert.ok(html.indexOf("Guided Session 2") >= 0);
+  assert.ok(html.indexOf("1/30 done") >= 0);
+  assert.ok(html.indexOf("In progress - shadow") >= 0);
+  assert.ok(html.indexOf("Resume 10-Min Session") >= 0);
+});
+
 test("practice curriculum v2 card shows track progress instead of duplicating the launcher hook", function() {
   resetEnvironment("chordspark");
   global.eval(loadJS("js/utils/normalize.js"));

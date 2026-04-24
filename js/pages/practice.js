@@ -447,6 +447,8 @@ function renderPracticeGuidedSessionCard(D) {
   var gsDone;
   var totalSessions;
   var shellBits = [];
+  var statusLabel = "";
+  var buttonLabel;
   var h = "";
   if(!gs) return h;
   completedGuidedSessions = normalizePracticeArray(S.completedGuidedSessions);
@@ -454,10 +456,19 @@ function renderPracticeGuidedSessionCard(D) {
   totalSessions = normalizePracticeDisplayCount(gs.totalSessions, Array.isArray(D.SESSIONS) ? D.SESSIONS.length : 0);
   if (gs.blockCount > 0) shellBits.push(gs.blockCount + " blocks");
   if (gs.targetDurationMin > 0) shellBits.push(gs.targetDurationMin + " min shell");
+  if (gs.isActive) {
+    statusLabel = getPracticeGuidedRuntimeLabel(gs);
+  }
+  buttonLabel = gs.isActive
+    ? (gs.targetDurationMin > 0 ? ("Resume " + gs.targetDurationMin + "-Min Session") : "Resume Session")
+    : (gs.targetDurationMin > 0 ? ("Start " + gs.targetDurationMin + "-Min Session") : "Start Session");
   h += '<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
   h += '<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
   h += '<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
   h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+totalSessions+' done</div>';
+  if (statusLabel) {
+    h += '<div style="font-size:12px;font-weight:900;color:#fff;margin:-2px 0 8px">' + escHTML(statusLabel) + '</div>';
+  }
   if (shellBits.length) {
     h += '<div style="font-size:12px;font-weight:800;color:#fff;margin:-2px 0 8px">' + escHTML(shellBits.join(' • ')) + '</div>';
   }
@@ -467,7 +478,7 @@ function renderPracticeGuidedSessionCard(D) {
   if (gs.newElement) {
     h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 10px">New move: ' + escHTML(gs.newElement) + '</div>';
   }
-  h += '<button onclick="act(\'start_guided_session\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">' + escHTML(gs.targetDurationMin > 0 ? ('Start ' + gs.targetDurationMin + '-Min Session') : 'Start Session') + ' &#9654;</button>';
+  h += '<button onclick="act(\'start_guided_session\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">' + escHTML(buttonLabel) + ' &#9654;</button>';
   h += '</div>';
   return h;
 }
@@ -476,6 +487,20 @@ function getPracticeGuidedPrimaryNewElement(newElements) {
   return Array.isArray(newElements) && newElements.length && typeof newElements[0] === "string"
     ? newElements[0]
     : "";
+}
+
+function getPracticeGuidedRuntimeLabel(summary) {
+  if (!summary || !summary.isActive) return "";
+  if (summary.guidedStep === "victoryLap") return "In progress - Cooldown block";
+  if (summary.guidedStep === "songSlice") return "In progress - Song block";
+  if (summary.guidedStep === "review") return "In progress - Review pass";
+  if (summary.guidedStep === "newMove") {
+    if (summary.guidedNewMovePhase) {
+      return "In progress - " + summary.guidedNewMovePhase;
+    }
+    return "In progress - Drill block";
+  }
+  return "In progress - Warm engine";
 }
 
 function getPracticeGuidedSessionDurationMin(session, fallbackSec) {
@@ -497,6 +522,7 @@ function getPracticeGuidedSessionSummary(D) {
   var guidedIndex = Math.max(0, normalizePracticeDisplayCount(S.guidedSession, 1) - 1);
   var sessions = D && Array.isArray(D.SESSIONS) ? D.SESSIONS : [];
   var coreView;
+  var runtimeState;
   var guidedPlan;
   var guidedContext;
   var instrumentType;
@@ -516,6 +542,7 @@ function getPracticeGuidedSessionSummary(D) {
     };
   }
   coreView = getPracticeCoreView();
+  runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   guidedContext = coreView && coreView.plan && coreView.plan.context ? coreView.plan.context : null;
   guidedPlan = coreView
     && coreView.plan
@@ -533,6 +560,9 @@ function getPracticeGuidedSessionSummary(D) {
       focusSong: guidedPlan.focus_song || "",
       newElement: getPracticeGuidedPrimaryNewElement(guidedPlan.new_elements),
       completedCount: normalizePracticeDisplayCount(guidedContext && guidedContext.completedGuidedSessions, 0),
+      isActive: runtimeState && runtimeState.activeScreen === "guided_session",
+      guidedStep: runtimeState && runtimeState.guidedStep ? runtimeState.guidedStep : "spark",
+      guidedNewMovePhase: runtimeState && runtimeState.guidedNewMovePhase ? runtimeState.guidedNewMovePhase : null,
       totalSessions: guidedContext.totalGuidedSessions || 0
     };
   }
