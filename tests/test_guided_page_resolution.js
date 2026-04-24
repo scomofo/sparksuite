@@ -1010,4 +1010,46 @@ test("openPracticePlan resumes the guided screen when a guided session is alread
   assert.deepStrictEqual(planOpenCalls, []);
 });
 
+test("start_guided_session resumes the active guided shell when no new session is requested", function() {
+  var startCalls = [];
+  S.guidedSession = 1;
+  S.screen = "home";
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          lesson: { num: 2 },
+          context: { guidedSession: 2, guidedPlan: S.guidedPlan }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    },
+    getRuntimeState: function() {
+      return {
+        guidedActivityId: "gtr-d02-song",
+        guidedActivityKind: "song_chunk",
+        guidedBlockType: "song"
+      };
+    },
+    startSession: function(payload) {
+      startCalls.push(payload);
+      return null;
+    }
+  };
+  global.eval(loadJS("js/actions/system_family.js"));
+
+  var handled = global.runSparkActionFamilies("start_guided_session");
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.screen, "guided");
+  assert.strictEqual(S.guidedSession, 2);
+  assert.strictEqual(S.guidedActivityId, "gtr-d02-song");
+  assert.strictEqual(S.guidedActivityKind, "song_chunk");
+  assert.strictEqual(S.guidedBlockType, "song");
+  assert.deepStrictEqual(startCalls, []);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
