@@ -41,11 +41,32 @@ function _writeAppHtml(html){
 }
 
 var _lastScreen="";
-function render(){
+var _renderQueued = false;
+
+function _renderNow(){
   try{_renderInner();}catch(e){
     console.error("Render error:",e);
     _writeAppHtml('<div class="card" style="margin:20px;text-align:center"><h2>Something went wrong</h2><p style="color:var(--text-muted);margin:8px 0">'+escHTML(String(e.message||e))+'</p><button class="btn" onclick="location.reload()" style="background:#FF6B6B;color:#fff;margin-top:12px">Reload</button></div>');
   }
+}
+
+function render(options){
+  if(options===true || (options && options.sync)){
+    _renderQueued = false;
+    _renderNow();
+    return;
+  }
+  if(_renderQueued) return;
+  _renderQueued = true;
+  var flush = function(){
+    _renderQueued = false;
+    _renderNow();
+  };
+  if(typeof window !== "undefined" && typeof window.requestAnimationFrame === "function"){
+    window.requestAnimationFrame(flush);
+    return;
+  }
+  setTimeout(flush,0);
 }
 // First-launch onboarding overlay. This stays in render.js because tests
 // assert against the exact normalized-input markup contract here.

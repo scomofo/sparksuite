@@ -47,6 +47,76 @@
     return (inst && inst.tagline) || INSTRUMENT_SUBTITLE[instrumentType(inst)] || "";
   }
 
+  function deferredAssetsPending() {
+    return typeof SparkBootLoader !== "undefined"
+      && SparkBootLoader
+      && typeof SparkBootLoader.hasDeferredScripts === "function"
+      && SparkBootLoader.hasDeferredScripts();
+  }
+
+  function deferredAssetsFailed() {
+    return typeof SparkBootLoader !== "undefined"
+      && SparkBootLoader
+      && typeof SparkBootLoader.hasFailures === "function"
+      && SparkBootLoader.hasFailures();
+  }
+
+  function ensureDeferredAssets(callback) {
+    if (!deferredAssetsPending()) {
+      if (typeof callback === "function") callback();
+      return false;
+    }
+    SparkBootLoader.loadDeferredScripts(callback);
+    return true;
+  }
+
+  function renderLauncherLoading(view) {
+    return '' +
+      '<div class="showroom-root">' +
+        '<div class="showroom-woodgrain" aria-hidden="true"></div>' +
+        '<div class="showroom-content" style="padding-top:32px">' +
+          '<section class="showroom-section">' +
+            '<div class="showroom-stat-wide showroom-glass">' +
+              '<div>' +
+                '<div class="showroom-stat-label">Loading</div>' +
+                '<div class="showroom-stat-row">' +
+                  '<span class="showroom-stat-num" style="font-size:28px">Preparing ' + safeEsc(view || "view") + '</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</section>' +
+        '</div>' +
+        renderBottomNav("home") +
+      '</div>';
+  }
+
+  function renderLauncherLoadFailure(view) {
+    var failures = (typeof SparkBootLoader !== "undefined" && SparkBootLoader && typeof SparkBootLoader.getFailures === "function")
+      ? SparkBootLoader.getFailures()
+      : [];
+    var details = failures.length
+      ? 'Missing: ' + safeEsc(failures.join(", "))
+      : 'A deferred startup module could not be loaded.';
+    return '' +
+      '<div class="showroom-root">' +
+        '<div class="showroom-woodgrain" aria-hidden="true"></div>' +
+        '<div class="showroom-content" style="padding-top:32px">' +
+          '<section class="showroom-section">' +
+            '<div class="showroom-stat-wide showroom-glass">' +
+              '<div>' +
+                '<div class="showroom-stat-label">Startup Problem</div>' +
+                '<div class="showroom-stat-row">' +
+                  '<span class="showroom-stat-num" style="font-size:28px">Could not load ' + safeEsc(view || "launcher") + '</span>' +
+                '</div>' +
+                '<p class="showroom-card-sub" style="margin:12px 0 0">' + details + '</p>' +
+              '</div>' +
+            '</div>' +
+          '</section>' +
+        '</div>' +
+        renderBottomNav("home") +
+      '</div>';
+  }
+
   function safeEsc(s) {
     if (typeof escHTML === "function") return escHTML(s == null ? "" : String(s));
     return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
@@ -104,7 +174,7 @@
 
   function renderAvatar(profile) {
     var src = profile && (profile.avatarImage || profile.avatarUrl);
-    var h = '<div class="showroom-avatar" role="button" tabindex="0" aria-label="Profile">';
+    var h = '<div class="showroom-avatar" role="button" tabindex="0" aria-label="Profile" onclick="SparkInstruments.openLauncherView(\'profile\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();SparkInstruments.openLauncherView(\'profile\')}">';
     if (src) {
       h += '<img src="' + safeEsc(src) + '" alt="Profile avatar">';
     } else {
@@ -139,11 +209,25 @@
   }
 
   function selectInstrument(appId) {
+    if (ensureDeferredAssets(function() { selectInstrument(appId); })) return;
     SparkInstruments.activate(appId);
     if (typeof S !== "undefined") {
       S.activeInstrument = appId;
       if (typeof SCR !== "undefined") S.screen = SCR.HOME;
       if (typeof TAB !== "undefined") S.tab = TAB.PRACTICE;
+    }
+    if (typeof saveState === "function") saveState();
+    if (typeof render === "function") render();
+  }
+
+  function launchInstrumentPerformance(appId) {
+    if (ensureDeferredAssets(function() { launchInstrumentPerformance(appId); })) return;
+    SparkInstruments.activate(appId);
+    if (typeof S !== "undefined") {
+      S.activeInstrument = appId;
+      if (typeof openPerformanceSongSelectionRequest === "function") openPerformanceSongSelectionRequest({});
+      if (typeof SCR !== "undefined") S.screen = SCR.HOME;
+      if (typeof TAB !== "undefined") S.tab = TAB.SONGS || TAB.PRACTICE;
     }
     if (typeof saveState === "function") saveState();
     if (typeof render === "function") render();
@@ -183,7 +267,7 @@
       bg = '<div class="showroom-hero-bg-fallback" aria-hidden="true">' + glyphFor(featured) + '</div>';
     }
 
-    var onClick = 'SparkInstruments.selectInstrument(\'' + safeEsc(featured.id) + '\')';
+    var onClick = 'SparkInstruments.launchInstrumentPerformance(\'' + safeEsc(featured.id) + '\')';
 
     return '' +
       '<section class="showroom-hero-wrap">' +
@@ -314,7 +398,11 @@
       if (_instruments[i].available !== false) available.push(_instruments[i]);
     }
     for (var j = 0; j < available.length; j++) cards += renderCard(available[j]);
-    if (available.length < 4) cards += renderLockedCard();
+    if (available.length === 0 && deferredAssetsPending()) {
+      cards += '<div class="showroom-card locked" aria-disabled="true"><div class="showroom-card-text"><h4 class="showroom-card-name">Loading instruments</h4><p class="showroom-card-sub">Finishing startup in the background</p></div></div>';
+    } else if (available.length < 4) {
+      cards += renderLockedCard();
+    }
 
     var fabOnClick = featured
       ? 'SparkInstruments.selectInstrument(\'' + safeEsc(featured.id) + '\')'
@@ -329,7 +417,7 @@
           '<section class="showroom-section">' +
             '<div class="showroom-section-head">' +
               '<h3 class="showroom-section-title">Your Collection</h3>' +
-              '<button class="showroom-section-link">See All</button>' +
+              '<button class="showroom-section-link" onclick="SparkInstruments.openLauncherView(\'instruments\')">See All</button>' +
             '</div>' +
             '<div class="showroom-grid">' + cards + '</div>' +
           '</section>' +
@@ -345,17 +433,62 @@
   function renderLauncherView(view) {
     var route = {
       home: typeof renderHome === "function" ? renderHome : null,
+      back: typeof renderHome === "function" ? renderHome : null,
+      instruments: typeof renderHome === "function" ? renderHome : null,
+      profile: typeof SparkProfileScreen !== "undefined" && SparkProfileScreen && typeof SparkProfileScreen.render === "function"
+        ? SparkProfileScreen.render
+        : null,
       library: typeof SparkSongLibrary !== "undefined" && SparkSongLibrary && typeof SparkSongLibrary.render === "function"
         ? SparkSongLibrary.render
         : null,
+      "song-details": typeof SparkSongDetails !== "undefined" && SparkSongDetails && typeof SparkSongDetails.render === "function"
+        ? SparkSongDetails.render
+        : null,
+      tuner: typeof SparkTuner !== "undefined" && SparkTuner && typeof SparkTuner.render === "function"
+        ? SparkTuner.render
+        : null,
+      practice: typeof SparkPracticeMetro !== "undefined" && SparkPracticeMetro && typeof SparkPracticeMetro.render === "function"
+        ? SparkPracticeMetro.render
+        : null,
       learn: typeof SparkPath !== "undefined" && SparkPath && typeof SparkPath.render === "function"
         ? SparkPath.render
+        : null,
+      path: typeof SparkPath !== "undefined" && SparkPath && typeof SparkPath.render === "function"
+        ? SparkPath.render
+        : null,
+      lesson: typeof SparkLesson !== "undefined" && SparkLesson && typeof SparkLesson.render === "function"
+        ? SparkLesson.render
+        : null,
+      "practice-metro": typeof SparkPracticeMetro !== "undefined" && SparkPracticeMetro && typeof SparkPracticeMetro.render === "function"
+        ? SparkPracticeMetro.render
+        : null,
+      "session-summary": typeof SparkSessionSummary !== "undefined" && SparkSessionSummary && typeof SparkSessionSummary.render === "function"
+        ? SparkSessionSummary.render
+        : null,
+      performance: typeof SparkPerformance !== "undefined" && SparkPerformance && typeof SparkPerformance.render === "function"
+        ? SparkPerformance.render
+        : null,
+      curriculum: typeof SparkCurriculumDashboard !== "undefined" && SparkCurriculumDashboard && typeof SparkCurriculumDashboard.render === "function"
+        ? SparkCurriculumDashboard.render
+        : null,
+      syllabus: typeof SparkCourseSyllabus !== "undefined" && SparkCourseSyllabus && typeof SparkCourseSyllabus.render === "function"
+        ? SparkCourseSyllabus.render
+        : null,
+      onboarding: typeof SparkOnboardingWelcome !== "undefined" && SparkOnboardingWelcome && typeof SparkOnboardingWelcome.render === "function"
+        ? SparkOnboardingWelcome.render
         : null,
       settings: typeof SparkSettings !== "undefined" && SparkSettings && typeof SparkSettings.render === "function"
         ? SparkSettings.render
         : null
     };
     var renderer = route[view] || route.home;
+    if (deferredAssetsFailed()) return renderLauncherLoadFailure(view);
+    if (!route[view] && deferredAssetsPending()) {
+      ensureDeferredAssets(function() {
+        if (typeof render === "function") render();
+      });
+      return view === "home" ? renderHome() : renderLauncherLoading(view);
+    }
     return renderer ? renderer() : "";
   }
 
@@ -368,6 +501,7 @@
     },
 
     selectInstrument: selectInstrument,
+    launchInstrumentPerformance: launchInstrumentPerformance,
 
     activate: function(appId) {
       for (var i = 0; i < _instruments.length; i++) {

@@ -1,4 +1,29 @@
 (function() {
+  var _showroomTapTempoTimes = [];
+
+  function showMicroToast(message, icon) {
+    S.microToast = { msg: message, icon: icon || "&#9889;", time: Date.now() };
+  }
+
+  function setMetronomeBpmValue(bpm) {
+    if (bpm < 40 || bpm > 200) return false;
+    S.metronomeBpm = bpm;
+    syncMetronomeRuntimeRequest({
+      active: !!S.metronomeOn,
+      bpm: S.metronomeBpm,
+      beat: S._metroBeat,
+      beatsPerBar: S._metroBeats
+    });
+    if (S.metronomeOn) {
+      clearTimeout(T.metro);
+      T.metro = null;
+      if (typeof _metroNextTime === "number" && audioCtx) _metroNextTime = audioCtx.currentTime;
+      _metroSchedule();
+    }
+    render();
+    return true;
+  }
+
   function setLegacyFields(setFields, save) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
       SparkProgressBridge.applyLegacyActivityRuntime({ setFields: setFields, save: save });
@@ -89,22 +114,75 @@
 
     if (a === "metroBpm") {
       var bpm = parseInt(v, 10);
-      if (bpm >= 40 && bpm <= 200) {
-        S.metronomeBpm = bpm;
-        syncMetronomeRuntimeRequest({
-          active: !!S.metronomeOn,
-          bpm: S.metronomeBpm,
-          beat: S._metroBeat,
-          beatsPerBar: S._metroBeats
-        });
-        if (S.metronomeOn) {
-          clearTimeout(T.metro);
-          T.metro = null;
-          if (typeof _metroNextTime === "number" && audioCtx) _metroNextTime = audioCtx.currentTime;
-          _metroSchedule();
-        }
+      return setMetronomeBpmValue(bpm);
+    }
+
+    if (a === "showroomTapTempo") {
+      var tapNow = Date.now();
+      _showroomTapTempoTimes.push(tapNow);
+      if (_showroomTapTempoTimes.length > 5) _showroomTapTempoTimes.shift();
+      if (_showroomTapTempoTimes.length < 2) {
+        showMicroToast("Tap a few beats to set the tempo.", "&#128079;");
         render();
+        return true;
       }
+      var intervals = [];
+      for (var i = 1; i < _showroomTapTempoTimes.length; i++) {
+        intervals.push(_showroomTapTempoTimes[i] - _showroomTapTempoTimes[i - 1]);
+      }
+      var total = 0;
+      for (var j = 0; j < intervals.length; j++) total += intervals[j];
+      var derivedBpm = Math.round(60000 / Math.max(1, total / intervals.length));
+      derivedBpm = Math.max(40, Math.min(200, derivedBpm));
+      showMicroToast("Tempo set to " + derivedBpm + " BPM.", "&#127932;");
+      return setMetronomeBpmValue(derivedBpm);
+    }
+
+    if (a === "showroomManageSubscription") {
+      showMicroToast("Subscription management is coming soon.", "&#11088;");
+      render();
+      return true;
+    }
+
+    if (a === "showroomFocusLibrarySearch") {
+      if (typeof document !== "undefined") {
+        var searchInput = document.getElementById("showroom-library-search");
+        if (searchInput && typeof searchInput.focus === "function") {
+          searchInput.focus();
+          if (typeof searchInput.select === "function") searchInput.select();
+        }
+      }
+      return true;
+    }
+
+    if (a === "showroomOpenQuickTools") {
+      showMicroToast("Quick tools are available below. More are on the way.", "&#128295;");
+      render();
+      return true;
+    }
+
+    if (a === "showroomToggleRecorder") {
+      try {
+        if (typeof isRecording === "function" && isRecording()) {
+          if (typeof stopRecording === "function") stopRecording();
+          showMicroToast("Recorder stopped.", "&#9209;");
+        } else if (typeof startRecording === "function") {
+          startRecording();
+          showMicroToast("Recorder started.", "&#127908;");
+        } else {
+          showMicroToast("Recorder isn't available for this instrument yet.", "&#127908;");
+        }
+      } catch (err) {
+        console.error("Showroom recorder toggle failed", err);
+        showMicroToast("Recorder couldn't start right now.", "&#9888;");
+      }
+      render();
+      return true;
+    }
+
+    if (a === "showroomToneGenerator") {
+      showMicroToast("Tone Generator is coming soon.", "&#127911;");
+      render();
       return true;
     }
 
