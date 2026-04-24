@@ -40,6 +40,41 @@ function firstGuidedTextToken() {
 function normalizeGuidedBpm(value, fallback) { return SparkNormalize.positiveInt(value, fallback); }
 function normalizeGuidedCount(value, fallback) { return SparkNormalize.integer(value, fallback); }
 
+function getGuidedInstrumentType() {
+  var inst = getGuidedPageInstrument();
+  return firstGuidedTextToken(
+    inst && inst.instrumentType,
+    inst && inst.type,
+    inst && inst.id,
+    inst && inst.appId,
+    S && S.instrument,
+    S && S.activeInstrument
+  );
+}
+
+function getGuidedSessionTotalCount() {
+  var inst = getGuidedPageInstrument();
+  var D = inst && typeof inst.getData === "function" ? inst.getData() : null;
+  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
+    ? window.sparkCore.getActiveSessionView()
+    : null;
+  var context = coreView && coreView.plan && coreView.plan.context ? coreView.plan.context : null;
+  var summary;
+  var instrumentType;
+  if (normalizeGuidedCount(context && context.totalGuidedSessions, 0) > 0) {
+    return normalizeGuidedCount(context.totalGuidedSessions, 0);
+  }
+  if (D && Array.isArray(D.SESSIONS) && D.SESSIONS.length) {
+    return D.SESSIONS.length;
+  }
+  instrumentType = getGuidedInstrumentType();
+  if (instrumentType && typeof SparkCurriculumV2 !== "undefined" && SparkCurriculumV2 && typeof SparkCurriculumV2.getTrackSummary === "function") {
+    summary = SparkCurriculumV2.getTrackSummary(instrumentType);
+    if (summary) return normalizeGuidedCount(summary.sessionCount, 0);
+  }
+  return 22;
+}
+
 function guidedStepIndicator(step) {
   var steps = [
     {id:"spark",label:"Spark",icon:"&#10024;"},
@@ -308,6 +343,7 @@ function guidedDonePage() {
   var xpAwarded = normalizeGuidedCount(lastOutcome && lastOutcome.xpAwarded, 30);
   var streak = normalizeGuidedCount(S.streak, 0);
   var completedSessions = Array.isArray(S.completedGuidedSessions) ? S.completedGuidedSessions.length : 0;
+  var totalSessions = getGuidedSessionTotalCount();
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127881;</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Session ' + num + ' Complete!</h2>';
@@ -315,7 +351,7 @@ function guidedDonePage() {
   h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/22</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/' + totalSessions + '</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
   h += '</div></div>';
   h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Next Session</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; Home</button></div>';
