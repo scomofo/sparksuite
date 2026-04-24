@@ -310,4 +310,79 @@ test("guided confirmation action delegates to guidedStop only after confirm", fu
   assert.deepStrictEqual(acted, []);
 });
 
+test("guided actions can resolve sparkCore from the global binding", function() {
+  var handled;
+  var syncCalls = [];
+  var startCalls = [];
+  global.window = {
+    registerSparkActionFamily: function(name, handler) {
+      global.runSparkActionFamilies = handler;
+    }
+  };
+  global.S = {
+    guidedStep: "spark",
+    newMovePhase: null
+  };
+  global.T = {};
+  global.SCR = {
+    GUIDED: "guided",
+    HOME: "home"
+  };
+  global.SparkSessionTypes = {
+    FLOW_GUIDED_SESSION: "guided_session"
+  };
+  global.render = function() {};
+  global.sparkCore = {
+    syncGuidedRuntimeState: function(payload) {
+      syncCalls.push(payload);
+      return {
+        guidedActivityId: "gtr-d01-drill",
+        guidedActivityKind: "review",
+        guidedBlockType: "drill"
+      };
+    },
+    startSession: function(payload) {
+      startCalls.push(payload);
+      return {
+        context: {
+          guidedPlan: {
+            id: "gtr-d01"
+          }
+        }
+      };
+    },
+    getRuntimeState: function() {
+      return {
+        guidedActivityId: "gtr-d01-warm_engine",
+        guidedActivityKind: "warm_engine_play",
+        guidedBlockType: "warm_engine"
+      };
+    }
+  };
+
+  global.eval(loadJS("js/actions/system_family.js"));
+
+  handled = global.runSparkActionFamilies("guidedNext");
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.guidedStep, "review");
+  assert.deepStrictEqual(syncCalls, [{
+    guidedStep: "review",
+    guidedNewMovePhase: null
+  }]);
+  assert.strictEqual(S.guidedActivityId, "gtr-d01-drill");
+  assert.strictEqual(S.guidedActivityKind, "review");
+  assert.strictEqual(S.guidedBlockType, "drill");
+
+  handled = global.runSparkActionFamilies("start_guided_session", "1");
+  assert.strictEqual(handled, true);
+  assert.deepStrictEqual(startCalls, [{
+    flow: "guided_session",
+    sessionNum: 1
+  }]);
+  assert.strictEqual(S.screen, "guided");
+  assert.strictEqual(S.guidedActivityId, "gtr-d01-warm_engine");
+  assert.strictEqual(S.guidedActivityKind, "warm_engine_play");
+  assert.strictEqual(S.guidedBlockType, "warm_engine");
+});
+
 if (process.exitCode) process.exit(process.exitCode);

@@ -39,6 +39,10 @@
     setLegacyFields({ screen: screen });
   }
 
+  function getSparkCoreHandle() {
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
   function mirrorGuidedRuntimeFields(runtimeState) {
     if (!runtimeState) return;
     S.guidedActivityId = runtimeState.guidedActivityId || null;
@@ -487,11 +491,12 @@
     if (a === "guidedNext") {
       var steps = ["spark", "review", "newMove", "songSlice", "victoryLap"];
       var idx = steps.indexOf(S.guidedStep);
+      var guidedCore = getSparkCoreHandle();
       if (idx < steps.length - 1) {
         S.guidedStep = steps[idx + 1];
         if (S.guidedStep === "newMove") S.newMovePhase = "watch";
-        if (window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function") {
-          mirrorGuidedRuntimeFields(window.sparkCore.syncGuidedRuntimeState({
+        if (guidedCore && typeof guidedCore.syncGuidedRuntimeState === "function") {
+          mirrorGuidedRuntimeFields(guidedCore.syncGuidedRuntimeState({
             guidedStep: S.guidedStep,
             guidedNewMovePhase: S.newMovePhase || null
           }));
@@ -504,10 +509,11 @@
     if (a === "guidedAdvancePhase") {
       var phases = ["watch", "shadow", "try", "refine"];
       var pi = phases.indexOf(S.newMovePhase);
+      var guidedPhaseCore = getSparkCoreHandle();
       if (pi < phases.length - 1) {
         S.newMovePhase = phases[pi + 1];
-        if (window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function") {
-          mirrorGuidedRuntimeFields(window.sparkCore.syncGuidedRuntimeState({
+        if (guidedPhaseCore && typeof guidedPhaseCore.syncGuidedRuntimeState === "function") {
+          mirrorGuidedRuntimeFields(guidedPhaseCore.syncGuidedRuntimeState({
             guidedStep: S.guidedStep,
             guidedNewMovePhase: S.newMovePhase
           }));
@@ -626,10 +632,11 @@
 
     if (a === "start_guided_session") {
       var _gsNum = parseInt(v, 10) || S.guidedSession || 1;
-      if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-        var _gsPlan = window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
+      var guidedStartCore = getSparkCoreHandle();
+      if (guidedStartCore && typeof guidedStartCore.startSession === "function") {
+        var _gsPlan = guidedStartCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
         if (_gsPlan && _gsPlan.context && _gsPlan.context.guidedPlan) {
-          mirrorGuidedRuntimeFields(window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState() : null);
+          mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
           S.screen = SCR.GUIDED;
           render();
           return true;
