@@ -370,7 +370,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
 });
 
 test('launcher deferred asset guard does not synchronously recurse when already ready', function() {
-  global.S = { activeInstrument: null, launcherView: 'home' };
+  global.S = { activeInstrument: null, launcherView: 'song-details', _showroomOverride: 'song-details' };
   global.SparkBootLoader = {
     hasDeferredScripts: function() { return false; },
     hasFailures: function() { return false; }
@@ -385,11 +385,17 @@ test('launcher deferred asset guard does not synchronously recurse when already 
 
   SparkInstruments.selectInstrument('test_guitar');
   assert.strictEqual(S.activeInstrument, 'test_guitar');
+  assert.strictEqual(S.launcherView, null);
+  assert.strictEqual(S._showroomOverride, null);
   assert.strictEqual(saveCalls, 1);
   assert.strictEqual(renderCalls, 1);
 
+  S.launcherView = 'session-summary';
+  S._showroomOverride = 'session-summary';
   SparkInstruments.launchInstrumentPerformance('test_guitar');
   assert.strictEqual(S.activeInstrument, 'test_guitar');
+  assert.strictEqual(S.launcherView, null);
+  assert.strictEqual(S._showroomOverride, null);
   assert.strictEqual(S.tab, 'songs');
   assert.strictEqual(saveCalls, 2);
   assert.strictEqual(renderCalls, 2);

@@ -212,6 +212,8 @@
     SparkInstruments.activate(appId);
     if (typeof S !== "undefined") {
       S.activeInstrument = appId;
+      S.launcherView = null;
+      S._showroomOverride = null;
       if (typeof SCR !== "undefined") S.screen = SCR.HOME;
       if (typeof TAB !== "undefined") S.tab = TAB.PRACTICE;
     }
@@ -224,6 +226,8 @@
     SparkInstruments.activate(appId);
     if (typeof S !== "undefined") {
       S.activeInstrument = appId;
+      S.launcherView = null;
+      S._showroomOverride = null;
       if (typeof openPerformanceSongSelectionRequest === "function") openPerformanceSongSelectionRequest({});
       if (typeof SCR !== "undefined") S.screen = SCR.HOME;
       if (typeof TAB !== "undefined") S.tab = TAB.SONGS || TAB.PRACTICE;
