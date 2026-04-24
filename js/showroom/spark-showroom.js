@@ -276,11 +276,11 @@
         // to the picker once an instrument was chosen — the activeInstrument
         // field is persisted to localStorage.
         { icon: "swap_horiz", label: "Switch Instrument", chevron: true, onClick: nav("instruments") },
-        { icon: "workspace_premium", label: "Subscription Plan", chevron: true, badge: "Pro" }
+        { icon: "workspace_premium", label: "Subscription Plan", chevron: true, badge: "Pro", onClick: "act('showroomManageSubscription')" }
       ]},
       { title: "Audio & Input", rows: [
         { type: "slider", icon: "mic", label: "Microphone Sensitivity", value: micPct + "%", pct: micPct },
-        { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true }
+        { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true, onClick: "if(S&&S.activeInstrument){act('openPerformCalibration')}else{SparkInstruments.openLauncherView('tuner')}" }
       ]},
       { title: "Appearance", rows: [
         // Dark Mode is wired to the canonical act("toggleDark") handler so
@@ -727,6 +727,7 @@
     var flags = loadFlags();
     var category = flags.libraryCategory || "All";
     var level = flags.libraryLevel || "Intermediate";
+    var query = (typeof S !== "undefined" && typeof S.communitySearch === "string") ? S.communitySearch.trim().toLowerCase() : "";
     var categories = ["All","Guitar","Bass","Piano","Ukulele"];
     var levels = ["Beginner","Intermediate","Advanced"];
 
@@ -746,7 +747,7 @@
           var minutes = bpm ? Math.max(1, Math.round(240 / bpm)) : 3;
           return minutes + ":00";
         };
-        realSongs = _rawSongs.map(function(s) {
+        realSongs = _rawSongs.map(function(s, idx) {
           var lvl = typeof s.level === "number" ? s.level : (typeof s.difficulty === "number" ? s.difficulty : 1);
           return {
             id: s.id || s.title,
@@ -757,7 +758,8 @@
             status: "",
             label: (Array.isArray(s.chords) ? s.chords.slice(0, 4).join(" • ") : ""),
             statusClass: "muted",
-            instrument: _instType
+            instrument: _instType,
+            songIndex: idx
           };
         });
       }
@@ -768,6 +770,17 @@
       { name:"Ivory Cascades",    artist:"Serene Melodies",         lvl:5, len:"5:45", status:"hot",  label:"Mastered", statusClass:"success", instrument:"piano"  },
       { name:"Deep Groove",       artist:"Bassline Dynasty",        lvl:9, len:"4:10", status:"dim",  label:"Try Again", statusClass:"warn",    instrument:"bass"   }
     ];
+    if (query) {
+      songs = songs.filter(function(song) {
+        var haystack = [
+          song.name || "",
+          song.artist || "",
+          song.instrument || "",
+          song.label || ""
+        ].join(" ").toLowerCase();
+        return haystack.indexOf(query) >= 0;
+      });
+    }
 
     function lvlClass(n) {
       if (n <= 3) return "lvl-low";
@@ -790,6 +803,9 @@
     var songsHtml = "";
     for (var s = 0; s < songs.length; s++) {
       var sg = songs[s];
+      var playAction = typeof sg.songIndex === "number"
+        ? "event.stopPropagation();act('openPerformSong'," + sg.songIndex + ")"
+        : "event.stopPropagation();" + nav("song-details", sg.id || sg.name);
       var thumb = sg.cover
         ? '<img src="' + escHtml(sg.cover) + '" alt="">'
         : '<div class="showroom-song-thumb-fallback" aria-hidden="true">\uD83C\uDFB5</div>';
@@ -804,7 +820,7 @@
                   + '<span class="showroom-song-len">• ' + escHtml(sg.len) + '</span></div>'
                 + '</div>'
                 + '<div class="showroom-song-action">'
-                  + '<button class="showroom-song-play ' + (sg.status || "") + '" aria-label="Play"><span class="material-symbols-outlined fill" aria-hidden="true">play_arrow</span></button>'
+                  + '<button class="showroom-song-play ' + (sg.status || "") + '" onclick="' + playAction + '" aria-label="Play"><span class="material-symbols-outlined fill" aria-hidden="true">play_arrow</span></button>'
                   + '<span class="showroom-song-status ' + statusClass + '">' + escHtml(statusLabel) + '</span>'
                 + '</div>'
               + '</div>';
@@ -821,25 +837,25 @@
          + '<header class="showroom-library-bar">'
            + '<h1 class="showroom-library-title">Song Library</h1>'
            + '<div class="showroom-library-actions">'
-             + '<button class="showroom-iconbtn accent" aria-label="Search"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>'
+             + '<button class="showroom-iconbtn accent" aria-label="Search" onclick="act(\'showroomFocusLibrarySearch\')"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>'
              + '<button class="showroom-iconbtn showroom-library-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
                + '<span class="showroom-library-avatar-fallback">A</span>'
              + '</button>'
            + '</div>'
          + '</header>'
-         + '<div class="showroom-canvas" style="padding-top:0">'
-           + '<div class="showroom-search"><span class="material-symbols-outlined">search</span><input type="search" placeholder="Search songs, artists..."></div>'
+          + '<div class="showroom-canvas" style="padding-top:0">'
+           + '<div class="showroom-search"><span class="material-symbols-outlined">search</span><input id="showroom-library-search" type="search" placeholder="Search songs, artists..." value="' + escHtml((typeof S !== "undefined" && typeof S.communitySearch === "string") ? S.communitySearch : "") + '" oninput="act(\'communitySearch\',this.value);render()" aria-label="Search songs and artists"></div>'
            + '<div class="showroom-chiprow">' + chipsHtml + '</div>'
            + '<div class="showroom-level-row">' + levelsHtml + '</div>'
            + '<div class="showroom-trending-head"><h3>Trending Scores</h3><span class="link">View All</span></div>'
-           + songsHtml
+           + (songsHtml || '<div class="showroom-empty-state"><p>No songs matched your search.</p></div>')
            + '<div class="showroom-daily">'
              + '<div class="showroom-daily-head"><span class="showroom-daily-eyebrow">Daily Challenge</span><span class="showroom-daily-xp">XP +500</span></div>'
              + '<h3 class="showroom-daily-title">Neon Horizon</h3>'
              + '<p class="showroom-daily-sub">Cyberpunk Synth Ensemble</p>'
              + '<div class="showroom-daily-foot">'
                + '<div class="showroom-daily-players"><div class="showroom-daily-avstack"><span></span><span></span><span></span></div><span>1.2k playing now</span></div>'
-               + '<button class="showroom-daily-cta" onclick="' + nav("performance") + '">Join Session</button>'
+                + '<button class="showroom-daily-cta" onclick="act(\'openPerformanceDaily\')">Join Session</button>'
              + '</div>'
            + '</div>'
          + '</div>'
@@ -1469,10 +1485,13 @@
         defaultTuning = _td.STRINGS.map(function(s){ return s.note; }).join("");
       }
     }
+    var tunerActive = !!(liveRuntime && liveRuntime.active);
     var note = opts.note || (liveRuntime && liveRuntime.note) || "E";
-    var freq = opts.frequency != null ? opts.frequency : 440.0;
+    var freq = opts.frequency != null
+      ? opts.frequency
+      : (liveRuntime && typeof liveRuntime.freq === "number" && liveRuntime.freq > 0 ? liveRuntime.freq : 440.0);
     var tuning = opts.tuning || defaultTuning;
-    var bpm = opts.bpm || 120;
+    var bpm = opts.bpm != null ? opts.bpm : ((typeof S !== "undefined" && S.metronomeBpm) ? S.metronomeBpm : 120);
     // Status derived from cents: within ±5 is in-tune, flat/sharp past that.
     var cents = liveRuntime && typeof liveRuntime.cents === "number" ? liveRuntime.cents : 0;
     var derivedStatus = "in-tune";
@@ -1526,7 +1545,7 @@
              + '<div class="showroom-tuner-row">'
                + '<div class="showroom-tuner-cell"><span class="showroom-tuner-cell-label">Frequency</span>'
                  + '<div class="showroom-tuner-freq"><span class="showroom-tuner-freq-num">' + freq.toFixed(1) + '</span><span class="showroom-tuner-freq-unit">Hz</span></div></div>'
-               + '<button class="showroom-tuner-mic" aria-label="Toggle microphone"><span class="material-symbols-outlined fill" aria-hidden="true">mic</span></button>'
+                + '<button class="showroom-tuner-mic" onclick="act(\'' + (tunerActive ? 'stopTuner' : 'startTuner') + '\')" aria-label="' + (tunerActive ? 'Stop microphone' : 'Start microphone') + '"><span class="material-symbols-outlined fill" aria-hidden="true">mic</span></button>'
                + '<div class="showroom-tuner-cell right"><span class="showroom-tuner-cell-label">Standard</span>'
                  + '<span class="showroom-tuner-tuning">' + escHtml(standardLetters) + '</span></div>'
              + '</div>'
@@ -1535,24 +1554,24 @@
              + '<div class="showroom-tuner-metro-head"><h3 class="showroom-tuner-metro-h">Metronome</h3>'
                + '<div class="showroom-tuner-metro-pulse"><span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>'
              + '<div class="showroom-tuner-metro-bpm-row">'
-               + '<button class="showroom-tuner-bpm-btn" aria-label="Slower"><span class="material-symbols-outlined" aria-hidden="true">remove</span></button>'
-               + '<span class="showroom-tuner-bpm-num">' + bpm + '</span>'
-               + '<button class="showroom-tuner-bpm-btn" aria-label="Faster"><span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
+                + '<button class="showroom-tuner-bpm-btn" onclick="act(\'metroBpm\',\'' + Math.max(40, bpm - 5) + '\')" aria-label="Slower"><span class="material-symbols-outlined" aria-hidden="true">remove</span></button>'
+                + '<span class="showroom-tuner-bpm-num">' + bpm + '</span>'
+                + '<button class="showroom-tuner-bpm-btn" onclick="act(\'metroBpm\',\'' + Math.min(200, bpm + 5) + '\')" aria-label="Faster"><span class="material-symbols-outlined" aria-hidden="true">add</span></button>'
              + '</div>'
              + '<div class="showroom-tuner-bpm-unit">BPM</div>'
              + '<div class="showroom-tuner-metro-actions">'
-               + '<button class="showroom-tuner-start"><span class="material-symbols-outlined fill">play_arrow</span>Start</button>'
-               + '<button class="showroom-tuner-tap"><span class="material-symbols-outlined">touch_app</span>Tap</button>'
+                + '<button class="showroom-tuner-start" onclick="act(\'toggleMetro\')"><span class="material-symbols-outlined fill">' + ((typeof S !== "undefined" && S.metronomeOn) ? 'stop' : 'play_arrow') + '</span>' + ((typeof S !== "undefined" && S.metronomeOn) ? 'Stop' : 'Start') + '</button>'
+                + '<button class="showroom-tuner-tap" onclick="act(\'showroomTapTempo\')"><span class="material-symbols-outlined">touch_app</span>Tap</button>'
              + '</div>'
            + '</section>'
            + '<div style="width:100%">'
-             + '<div class="showroom-quicktools-head"><h3>Quick Tools</h3><span class="link">View All</span></div>'
+             + '<div class="showroom-quicktools-head"><h3>Quick Tools</h3><span class="link" role="button" tabindex="0" onclick="act(\'showroomOpenQuickTools\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'showroomOpenQuickTools\')}">View All</span></div>'
              + '<div class="showroom-quicktools">'
-               + '<button class="showroom-quicktool recorder"><div class="showroom-quicktool-icon"><span class="material-symbols-outlined fill">mic</span></div><span class="showroom-quicktool-label">Recorder</span></button>'
-               + '<button class="showroom-quicktool tonegen"><div class="showroom-quicktool-icon"><span class="material-symbols-outlined fill">graphic_eq</span></div><span class="showroom-quicktool-label">Tone Gen</span></button>'
+               + '<button class="showroom-quicktool recorder" onclick="act(\'showroomToggleRecorder\')"><div class="showroom-quicktool-icon"><span class="material-symbols-outlined fill">mic</span></div><span class="showroom-quicktool-label">Recorder</span></button>'
+               + '<button class="showroom-quicktool tonegen" onclick="act(\'showroomToneGenerator\')"><div class="showroom-quicktool-icon"><span class="material-symbols-outlined fill">graphic_eq</span></div><span class="showroom-quicktool-label">Tone Gen</span></button>'
                + '<button class="showroom-quicktool chords" onclick="' + nav("library") + '"><div class="showroom-quicktool-icon"><span class="material-symbols-outlined fill">library_music</span></div><span class="showroom-quicktool-label">Chords</span></button>'
              + '</div>'
-           + '</div>'
+            + '</div>'
          + '</div>'
          + bottomNav(navItems, "tuner")
          + '</div>';
@@ -1864,7 +1883,7 @@
       }
 
       var ctaHtml = mod.showCta
-        ? '<button type="button" class="showroom-syllabus-cta" onclick="' + (opts.ctaAction || "act('showroomStartLesson')") + '">'
+        ? '<button type="button" class="showroom-syllabus-cta" onclick="' + (opts.ctaAction || nav("lesson")) + '">'
           + escHtml(ctaLabel)
           + '</button>'
         : '';

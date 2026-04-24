@@ -113,19 +113,111 @@ test('renderLauncher returns HTML with instrument cards', function() {
   assert.ok(html.indexOf('SparkSuite') >= 0);
 });
 
+test('renderLauncher wires hero and launcher utility actions', function() {
+  var html = SparkInstruments.renderLauncher();
+  assert.ok(html.indexOf("SparkInstruments.launchInstrumentPerformance('test_guitar')") >= 0);
+  assert.ok(html.indexOf("SparkInstruments.openLauncherView('profile')") >= 0);
+  assert.ok(html.indexOf("SparkInstruments.openLauncherView('instruments')") >= 0);
+});
+
+test('piano bootstrap preserves existing pages while adding deferred registrations', function() {
+  SparkInstruments.register({
+    id: 'pianospark', instrument: 'piano', name: 'PianoSpark', icon: 'P',
+    skin: SparkHighway.PIANO_SKIN, available: true,
+    getData: function() { return {}; },
+    pages: { legacy: function() { return '<div>Legacy Piano Page</div>'; } },
+    tabs: ['practice'], stemMutePreset: {}, init: function() {}
+  });
+  global.SCR = {
+    SESSION: 'session',
+    PERFORM: 'perform',
+    PERFORM_DONE: 'perform_done',
+    PERFORM_SONG: 'perform_song',
+    PLAN: 'plan',
+    INSIGHTS: 'insights',
+    PERF_EDITOR: 'perf_editor',
+    ONBOARDING: 'onboarding',
+    STEMS: 'stems'
+  };
+  global.pianoSessionPage = function() { return '<div>Session</div>'; };
+  eval(loadJS('js/piano-registration-bootstrap.js'));
+
+  var all = SparkInstruments.getAll();
+  var piano = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === 'pianospark') piano = all[i];
+  }
+
+  assert.ok(piano);
+  assert.strictEqual(typeof piano.pages.legacy, 'function');
+  assert.strictEqual(typeof piano.pages.session, 'function');
+});
+
 test('renderLauncher respects launcherView showroom routes', function() {
+  global.SparkProfileScreen = { render: function() { return '<div>Profile View</div>'; } };
   global.SparkSongLibrary = { render: function() { return '<div>Library View</div>'; } };
+  global.SparkSongDetails = { render: function() { return '<div>Song Details View</div>'; } };
+  global.SparkTuner = { render: function() { return '<div>Tuner View</div>'; } };
+  global.SparkPracticeMetro = { render: function() { return '<div>Practice Metro View</div>'; } };
+  global.SparkSessionSummary = { render: function() { return '<div>Session Summary View</div>'; } };
+  global.SparkPerformance = { render: function() { return '<div>Performance View</div>'; } };
+  global.SparkLesson = { render: function() { return '<div>Lesson View</div>'; } };
   global.SparkPath = { render: function() { return '<div>Learn View</div>'; } };
+  global.SparkCurriculumDashboard = { render: function() { return '<div>Curriculum View</div>'; } };
+  global.SparkCourseSyllabus = { render: function() { return '<div>Syllabus View</div>'; } };
+  global.SparkOnboardingWelcome = { render: function() { return '<div>Onboarding View</div>'; } };
   global.SparkSettings = { render: function() { return '<div>Settings View</div>'; } };
 
   S.launcherView = 'library';
   assert.ok(SparkInstruments.renderLauncher().indexOf('Library View') >= 0);
 
+  S.launcherView = 'practice';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Practice Metro View') >= 0);
+
+  S.launcherView = 'song-details';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Song Details View') >= 0);
+
   S.launcherView = 'learn';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Learn View') >= 0);
+
+  S.launcherView = 'path';
   assert.ok(SparkInstruments.renderLauncher().indexOf('Learn View') >= 0);
 
   S.launcherView = 'settings';
   assert.ok(SparkInstruments.renderLauncher().indexOf('Settings View') >= 0);
+
+  S.launcherView = 'profile';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Profile View') >= 0);
+
+  S.launcherView = 'tuner';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Tuner View') >= 0);
+
+  S.launcherView = 'practice-metro';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Practice Metro View') >= 0);
+
+  S.launcherView = 'session-summary';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Session Summary View') >= 0);
+
+  S.launcherView = 'performance';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Performance View') >= 0);
+
+  S.launcherView = 'lesson';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Lesson View') >= 0);
+
+  S.launcherView = 'curriculum';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Curriculum View') >= 0);
+
+  S.launcherView = 'syllabus';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Syllabus View') >= 0);
+
+  S.launcherView = 'onboarding';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('Onboarding View') >= 0);
+
+  S.launcherView = 'instruments';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('SparkSuite') >= 0);
+
+  S.launcherView = 'back';
+  assert.ok(SparkInstruments.renderLauncher().indexOf('SparkSuite') >= 0);
 
   S.launcherView = 'home';
 });
@@ -194,9 +286,34 @@ test('onboarding intention input ignores stale sentinel strings', function() {
 
 test('app boot resets to showroom home instead of restoring last active instrument', function() {
   var appSource = loadJS('js/app.js');
+  assert.ok(appSource.indexOf('S.dailyChallenge=selectBootDailyChallenge();') >= 0);
+  assert.ok(appSource.indexOf('console.error("ChordSpark: generatePracticePlan failed",e);') >= 0);
+  assert.ok(appSource.indexOf('console.error("ChordSpark: choosePerformanceDailyChallenge failed",e);') >= 0);
   assert.ok(appSource.indexOf('S.activeInstrument=null;') >= 0);
   assert.ok(appSource.indexOf('S._showroomOverride=null;') >= 0);
   assert.ok(appSource.indexOf('S.launcherView="home";') >= 0);
+});
+
+test('boot loader tracks deferred failures instead of silently reporting ready', function() {
+  var bootLoaderSource = loadJS('js/boot_loader.js');
+  assert.ok(bootLoaderSource.indexOf('placeholder.setAttribute("data-deferred-failed", "true");') >= 0);
+  assert.ok(bootLoaderSource.indexOf('hasFailures: function() { return _failed.length > 0; }') >= 0);
+  assert.ok(bootLoaderSource.indexOf('document.documentElement.setAttribute("data-spark-deferred-failed", "true");') >= 0);
+});
+
+test('showroom source wires remaining library, tuner, and syllabus controls', function() {
+  var showroomSource = loadJS('js/showroom/spark-showroom.js');
+  var systemFamilySource = loadJS('js/actions/system_family.js');
+  assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomFocusLibrarySearch\\\')"') >= 0);
+  assert.ok(showroomSource.indexOf('id="showroom-library-search"') >= 0);
+  assert.ok(showroomSource.indexOf('oninput="act(\\\'communitySearch\\\',this.value);render()"') >= 0);
+  assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomOpenQuickTools\\\')"') >= 0);
+  assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomToggleRecorder\\\')"') >= 0);
+  assert.ok(showroomSource.indexOf('onclick="act(\\\'showroomToneGenerator\\\')"') >= 0);
+  assert.ok(showroomSource.indexOf('opts.ctaAction || nav("lesson")') >= 0);
+  assert.ok(systemFamilySource.indexOf('if (a === "showroomFocusLibrarySearch")') >= 0);
+  assert.ok(systemFamilySource.indexOf('if (a === "showroomToggleRecorder")') >= 0);
+  assert.ok(systemFamilySource.indexOf('if (a === "showroomToneGenerator")') >= 0);
 });
 
 // Summary
