@@ -114,6 +114,8 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
   assert.ok(sparkHtml.indexOf(">2 min<") >= 0);
   assert.ok(sparkHtml.indexOf(">warm engine<") >= 0);
   assert.ok(sparkHtml.indexOf(">\"Horse\" intro, open strings only<") >= 0);
+  assert.ok(sparkHtml.indexOf("Into Review") >= 0);
+  assert.ok(sparkHtml.indexOf("Warm Engine Live") >= 0);
 
   S.guidedStep = "newMove";
   S.newMovePhase = "try";
@@ -144,6 +146,8 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
   assert.ok(newMoveHtml.indexOf(">3 min<") >= 0);
   assert.ok(newMoveHtml.indexOf(">drill<") >= 0);
   assert.ok(newMoveHtml.indexOf("Use the drill block copy here.") >= 0);
+  assert.ok(newMoveHtml.indexOf("Into Refine") >= 0);
+  assert.ok(newMoveHtml.indexOf("Drill In Progress") >= 0);
 
   S.newMovePhase = "watch";
   sparkCore.getActiveSessionView = function() {
@@ -158,6 +162,7 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
   };
   var watchHtml = guidedSessionPage();
   assert.ok(watchHtml.indexOf("Use the drill block copy here.") >= 0);
+  assert.ok(watchHtml.indexOf("Start Shadow") >= 0);
 
   S.newMovePhase = "refine";
   sparkCore.getActiveSessionView = function() {
@@ -172,6 +177,7 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
   };
   var refineHtml = guidedSessionPage();
   assert.ok(refineHtml.indexOf("Nice. Drill cleaned up.") >= 0);
+  assert.ok(refineHtml.indexOf("Into Song") >= 0);
 
   S.guidedStep = "songSlice";
   sparkCore.getActiveSessionView = function() {
@@ -187,6 +193,8 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
   var songHtml = guidedSessionPage();
   assert.ok(songHtml.indexOf(">4 min<") >= 0);
   assert.ok(songHtml.indexOf(">song<") >= 0);
+  assert.ok(songHtml.indexOf("Into Cooldown") >= 0);
+  assert.ok(songHtml.indexOf("Song Block Live") >= 0);
 });
 
 test("guided page shows block progress from the active v2 session plan", function() {
@@ -464,6 +472,71 @@ test("guided page header reflects non-drill block themes", function() {
   };
   var cooldownHtml = guidedSessionPage();
   assert.ok(cooldownHtml.indexOf("Cooldown Block") >= 0);
+});
+
+test("guided cards use block-aware transition labels", function() {
+  S.guidedPlan = {
+    id: "gtr-d04",
+    num: 4,
+    title: "D with a drum loop",
+    level: 1,
+    bpm: 80,
+    spark: { text: "Wake the hands up." },
+    review: { text: "Take a pass." },
+    newMove: { text: "Drill it.", chord: "D" },
+    songSlice: { text: "Play the loop.", song: "D loop" },
+    victoryLap: { text: "Finish loose." }
+  };
+
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: {
+        guidedStep: "review",
+        activeSegmentId: "gtr-d04_drill",
+        guidedBlockType: "drill"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  assert.ok(guidedSessionPage().indexOf("Into New Move") >= 0);
+
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: {
+        guidedStep: "newMove",
+        guidedNewMovePhase: "shadow",
+        activeSegmentId: "gtr-d04_drill",
+        guidedBlockType: "drill"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  assert.ok(guidedSessionPage().indexOf("Start Try") >= 0);
+
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: {
+        guidedStep: "victoryLap",
+        activeSegmentId: "gtr-d04_cooldown",
+        guidedBlockType: "cooldown"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  assert.ok(guidedSessionPage().indexOf("Complete Session!") >= 0);
+  assert.ok(guidedSessionPage().indexOf("Cooldown Block") >= 0);
 });
 
 test("guided song slice ignores stale cached copy", function() {
