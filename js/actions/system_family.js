@@ -305,6 +305,71 @@
       return true;
     }
 
+    if (a === "onboardingSetInstrument") {
+      if (typeof setOnboardingInstrument === "function") setOnboardingInstrument(v);
+      render();
+      return true;
+    }
+
+    if (a === "onboardingSetSkillLevel") {
+      if (typeof setOnboardingSkillLevel === "function") setOnboardingSkillLevel(v);
+      render();
+      return true;
+    }
+
+    if (a === "onboardingToggleGoal") {
+      if (typeof toggleOnboardingGoal === "function") toggleOnboardingGoal(v);
+      render();
+      return true;
+    }
+
+    if (a === "onboardingMidiSetupDone") {
+      if (typeof markOnboardingMidiSetupDone === "function") markOnboardingMidiSetupDone();
+      render();
+      return true;
+    }
+
+    if (a === "onboardingCalibrationDone") {
+      if (typeof markOnboardingCalibrationDone === "function") markOnboardingCalibrationDone();
+      render();
+      return true;
+    }
+
+    if (a === "onboardingUnlockStarterContent") {
+      if (typeof applyStarterUnlocksFromOnboarding === "function") applyStarterUnlocksFromOnboarding();
+      render();
+      return true;
+    }
+
+    if (a === "onboardingGeneratePlan") {
+      if (typeof generateInitialPracticePlanFromOnboarding === "function") generateInitialPracticePlanFromOnboarding();
+      render();
+      return true;
+    }
+
+    if (a === "onboardingGenerateRecommendations") {
+      if (typeof generateInitialRecommendationsFromOnboarding === "function") generateInitialRecommendationsFromOnboarding();
+      render();
+      return true;
+    }
+
+    if (a === "onboardingFinish") {
+      if (typeof finishOnboardingFlow === "function") finishOnboardingFlow();
+      return true;
+    }
+
+    if (a === "onboardingBack") {
+      if (typeof goToPreviousOnboardingStep === "function") goToPreviousOnboardingStep();
+      render();
+      return true;
+    }
+
+    if (a === "onboardingNext") {
+      if (typeof goToNextOnboardingStep === "function") goToNextOnboardingStep();
+      render();
+      return true;
+    }
+
     if (a === "refreshHome") {
       if (typeof generateRecommendations === "function") generateRecommendations();
       if (typeof generatePersonalInsights === "function") generatePersonalInsights();
