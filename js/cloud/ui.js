@@ -13,7 +13,7 @@
       if(syncStatus==="syncing")h+="<div style=\"color:#3b82f6\"><span class=\"spinner-inline\"></span> Syncing...</div>";
       else if(syncStatus==="ok")h+="<div style=\"color:#22c55e\">Sync complete</div>";
       else if(syncStatus==="error")h+="<div style=\"color:#ef4444\">Sync failed <button onclick=\"act('cloudSync')\">Retry</button></div>";
-      else if(syncStatus==="conflict"){h+="<div style=\"border:1px solid #f59e0b;padding:8px;border-radius:6px;margin:8px 0\">";h+="<div style=\"color:#f59e0b;font-weight:bold\">Sync Conflict</div>";h+="<div>Both local and cloud data changed since last sync.</div>";h+="<button onclick=\"resolveCloudConflict('local')\">Keep Local</button> ";h+="<button onclick=\"resolveCloudConflict('cloud')\">Keep Cloud</button> ";h+="<button onclick=\"resolveCloudConflict('newest')\">Newest Per-Category</button>";h+="</div>";}
+      else if(syncStatus==="conflict"){h+="<div style=\"border:1px solid #f59e0b;padding:8px;border-radius:6px;margin:8px 0\">";h+="<div style=\"color:#f59e0b;font-weight:bold\">Sync Conflict</div>";h+="<div>Both local and cloud data changed since last sync.</div>";h+="<button onclick=\"act('cloudResolveConflict','local')\">Keep Local</button> ";h+="<button onclick=\"act('cloudResolveConflict','cloud')\">Keep Cloud</button> ";h+="<button onclick=\"act('cloudResolveConflict','newest')\">Newest Per-Category</button>";h+="</div>";}
       else h+="<div>Status: "+escHTML(syncStatus||"idle")+"</div>";
       if(syncAt){var ago=Math.round((Date.now()-syncAt)/60000);var agoText=ago<1?"just now":(ago===1?"1 min ago":ago+" min ago");h+="<div style=\"color:#9ca3af;font-size:0.85em\">Last synced: "+agoText+"</div>";}
       h+="<div style=\"margin-top:8px\">";

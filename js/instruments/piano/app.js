@@ -1883,6 +1883,10 @@ function act(action, param) {
       if(typeof pullSparkCloud === "function") pullSparkCloud();
       return;
 
+    case "cloudResolveConflict":
+      if(typeof resolveCloudConflict === "function") resolveCloudConflict(param);
+      return;
+
     case "cloudLogout":
       if(typeof logoutSpark === "function") logoutSpark();
       break;
