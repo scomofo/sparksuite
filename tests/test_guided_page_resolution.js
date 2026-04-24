@@ -240,7 +240,11 @@ test("guided page shows block progress from the active v2 session plan", functio
       runtimeState: {
         guidedStep: "newMove",
         guidedNewMovePhase: "try",
-        activeSegmentId: "gtr-d01_drill"
+        activeSegmentId: "gtr-d01_drill",
+        transport: {
+          status: "running",
+          positionMs: 90000
+        }
       },
       lastSessionOutcome: { xpAwarded: 30 }
     };
@@ -261,6 +265,8 @@ test("guided page shows block progress from the active v2 session plan", functio
   assert.ok(html.indexOf("10 min shell") >= 0);
   assert.ok(html.indexOf("New Move") >= 0);
   assert.ok(html.indexOf("Try 3/4") >= 0);
+  assert.ok(html.indexOf("3/10 min through session") >= 0);
+  assert.ok(html.indexOf("width:50%") >= 0);
 });
 
 test("guided page shows drill subphase progress on the active block card", function() {
@@ -372,6 +378,7 @@ test("guided page shows drill subphase progress on the active block card", funct
 
   var shadowHtml = guidedSessionPage();
   assert.ok(shadowHtml.indexOf("Shadow 2/4") >= 0);
+  assert.ok(shadowHtml.indexOf("width:50%") >= 0);
 });
 
 test("guided song slice ignores stale cached copy", function() {
