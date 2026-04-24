@@ -163,6 +163,8 @@
         // SCR_.SKILL_TREE which the allow-list auto-unwinds.
         "path":            function(){ S._showroomOverride = "path"; },
         "learn":           function(){ S._showroomOverride = "path"; },
+        "curriculum":      function(){ S._showroomOverride = "curriculum"; },
+        "syllabus":        function(){ S._showroomOverride = "syllabus"; },
         // song-details → Warm Ember details view (reads S._showroomSongId
         // pinned by the nav() 2-arg form above). Also sets the legacy slot
         // as a safety net if the Showroom module isn't loaded.
@@ -187,7 +189,7 @@
       };
       // Clear any prior override so the legacy slot routing wins again —
       // but keep it for routes whose handlers set an override themselves.
-      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1 };
+      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "curriculum":1, "syllabus":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1 };
       if (!_overrideRoutes[view]) S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();

@@ -7,6 +7,8 @@ function _renderShowroomOverride(){
     var showroomRoute = {
       "lesson":          typeof SparkLesson          !== "undefined" && SparkLesson.render,
       "path":            typeof SparkPath            !== "undefined" && SparkPath.render,
+      "curriculum":      typeof SparkCurriculumDashboard !== "undefined" && SparkCurriculumDashboard.render,
+      "syllabus":        typeof SparkCourseSyllabus  !== "undefined" && SparkCourseSyllabus.render,
       "profile":         typeof SparkProfileScreen   !== "undefined" && SparkProfileScreen.render,
       "leaderboard":     typeof SparkLeaderboard     !== "undefined" && SparkLeaderboard.render,
       "library":         typeof SparkSongLibrary     !== "undefined" && SparkSongLibrary.render,
