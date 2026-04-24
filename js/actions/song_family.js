@@ -1,4 +1,10 @@
 (function() {
+  function getSongFamilyCoreRuntimeState() {
+    var core = (typeof window !== "undefined" && window.sparkCore)
+      || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    return core && typeof core.getRuntimeState === "function" ? core.getRuntimeState() : null;
+  }
+
   function handleSongAction(a, v) {
     if (a === "songsSubTab") {
       S.songsSubTab = v;
@@ -10,11 +16,13 @@
 
     if (a === "toggleSong") {
       var nextSongPlaying;
+      var runtimeState;
       snd("click");
       nextSongPlaying = !S.songPlaying;
+      runtimeState = getSongFamilyCoreRuntimeState();
       syncSongRuntimeRequest(nextSongPlaying ? "play" : "pause", {
         songData: S.selectedSong,
-        source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
+        source: runtimeState ? runtimeState.songSessionSource : "builtin",
         songBeat: nextSongPlaying ? 0 : S.songBeat
       });
       if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
@@ -48,6 +56,7 @@
 
     if (a === "completeSong") {
       var songActivityInstrument;
+      var completionRuntimeState;
       if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
         SparkProgressBridge.applyLegacyActivityRuntime({
           setFields: { songPlaying: false },
@@ -76,9 +85,10 @@
         checkBadges();
         saveState();
       }
+      completionRuntimeState = getSongFamilyCoreRuntimeState();
       completeSongSessionRequest({
         songData: S.selectedSong,
-        source: window.sparkCore && window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState().songSessionSource : "builtin",
+        source: completionRuntimeState ? completionRuntimeState.songSessionSource : "builtin",
         songBeat: S.songBeat
       });
       fireMicro("full_song", "Rockstar!", "&#127908;");
