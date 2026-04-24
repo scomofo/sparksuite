@@ -1617,6 +1617,96 @@ test("session family pages can resolve sparkCore from the global binding", funct
   assert.ok(songHtml.indexOf("Pause") >= 0);
 });
 
+test("audio helpers can resolve sparkCore from the global binding", function() {
+  var originalSetTimeout = global.setTimeout;
+  var originalClearTimeout = global.clearTimeout;
+  var originalCancelAnimationFrame = global.cancelAnimationFrame;
+  var metronomeStates = [];
+  var chordStates = [];
+  var audioInputStates = [];
+  var stemStates = [];
+  global.window = {};
+  global.sparkCore = {
+    syncMetronomeRuntimeState: function(payload) {
+      metronomeStates.push(payload);
+      return payload;
+    },
+    syncChordDetectRuntimeState: function(payload) {
+      chordStates.push(payload);
+      return payload;
+    },
+    syncAudioInputRuntimeState: function(payload) {
+      audioInputStates.push(payload);
+      return payload;
+    },
+    syncStemPlayerRuntimeState: function(payload) {
+      stemStates.push(payload);
+      return payload;
+    }
+  };
+  global.T = {};
+  global.render = function() {};
+  global.updateChordCheckUI = function() {};
+  global.setTimeout = function() { return 1; };
+  global.clearTimeout = function() {};
+  global.cancelAnimationFrame = function() {};
+  global.NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  global.CHORD_NOTES = { "C Major": ["C", "E", "G"] };
+  global.SCR = { PERFORM: "perform" };
+  S.metronomeBpm = 88;
+  S._metroBeats = 4;
+  S.metronomeOn = false;
+  S.chordDetectOn = true;
+  S.currentChord = { name: "C Major" };
+  S.screen = "practice";
+  S.performMode = "listen";
+  S.audioInputDevices = [{ id: "mic_1", name: "Built-in Mic" }];
+  S.audioInputId = "mic_1";
+  S.audioTestingId = "mic_1";
+  S.audioTestLevel = 17;
+  S.stemCurrentTime = 5;
+  S.stemDuration = 42;
+  S.stemPlaying = true;
+
+  eval(loadJS("js/audio.js"));
+
+  startMetronome();
+  stopMetronome();
+
+  _midiInputNotes = { 60: true, 64: true, 67: true };
+  _processMIDIChord();
+
+  stopAudioTest();
+
+  _stemAudios = {
+    mix: {
+      currentTime: 0,
+      pause: function() {},
+      src: "",
+      ended: false
+    }
+  };
+  pauseStems();
+  seekStems(12);
+  cleanupStems();
+
+  assert.strictEqual(metronomeStates[0].active, true);
+  assert.strictEqual(metronomeStates[0].bpm, 88);
+  assert.strictEqual(metronomeStates[1].active, false);
+  assert.ok(chordStates.length >= 1);
+  assert.deepStrictEqual(chordStates[chordStates.length - 1].notes, ["C", "E", "G"]);
+  assert.strictEqual(chordStates[chordStates.length - 1].active, true);
+  assert.strictEqual(audioInputStates[0].testingId, "");
+  assert.strictEqual(audioInputStates[0].testLevel, 0);
+  assert.strictEqual(stemStates[0].playing, false);
+  assert.strictEqual(stemStates[1].currentTime, 12);
+  assert.strictEqual(stemStates[stemStates.length - 1].duration, 0);
+
+  global.setTimeout = originalSetTimeout;
+  global.clearTimeout = originalClearTimeout;
+  global.cancelAnimationFrame = originalCancelAnimationFrame;
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
