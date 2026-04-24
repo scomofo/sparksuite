@@ -551,6 +551,8 @@
       if (typeof S !== "undefined") {
         S._showroomOverride = null;
         S.launcherView = null;
+        S.screen = "home";
+        S.tab = "practice";
       }
       _active = null;
     },

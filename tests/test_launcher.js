@@ -85,8 +85,14 @@ test('activate sets active instrument', function() {
 });
 
 test('deactivate clears active instrument', function() {
+  S.screen = 'session';
+  S.tab = 'songs';
+  S.launcherView = 'profile';
   SparkInstruments.deactivate();
   assert.strictEqual(SparkInstruments.getActive(), null);
+  assert.strictEqual(S.screen, 'home');
+  assert.strictEqual(S.tab, 'practice');
+  assert.strictEqual(S.launcherView, null);
 });
 
 test('getPage returns page from active instrument', function() {
