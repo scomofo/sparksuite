@@ -267,6 +267,8 @@ test("guided page shows block progress from the active v2 session plan", functio
   assert.ok(html.indexOf("Try 3/4") >= 0);
   assert.ok(html.indexOf("3/10 min through session") >= 0);
   assert.ok(html.indexOf("width:50%") >= 0);
+  assert.ok(html.indexOf("1m 30s left") >= 0);
+  assert.ok(html.indexOf("7m left") >= 0);
 });
 
 test("guided page shows drill subphase progress on the active block card", function() {
@@ -379,6 +381,7 @@ test("guided page shows drill subphase progress on the active block card", funct
   var shadowHtml = guidedSessionPage();
   assert.ok(shadowHtml.indexOf("Shadow 2/4") >= 0);
   assert.ok(shadowHtml.indexOf("width:50%") >= 0);
+  assert.ok(shadowHtml.indexOf("1m 30s left") >= 0);
 });
 
 test("guided song slice ignores stale cached copy", function() {

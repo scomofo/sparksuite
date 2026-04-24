@@ -40,6 +40,17 @@ function firstGuidedTextToken() {
 function normalizeGuidedBpm(value, fallback) { return SparkNormalize.positiveInt(value, fallback); }
 function normalizeGuidedCount(value, fallback) { return SparkNormalize.integer(value, fallback); }
 
+function formatGuidedDurationLabel(totalSec) {
+  var seconds = Math.max(0, normalizeGuidedCount(totalSec, 0));
+  var minutes = Math.floor(seconds / 60);
+  var remainder = seconds % 60;
+  if (minutes > 0) {
+    if (remainder > 0) return minutes + "m " + remainder + "s";
+    return minutes + "m";
+  }
+  return remainder + "s";
+}
+
 function humanizeGuidedLabel(value) {
   var token = firstGuidedTextToken(value);
   if (!token) return "";
@@ -152,7 +163,14 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
         ? 1
         : (state === "now"
           ? getGuidedBlockProgressRatio(blockType, guidedStep, guidedNewMovePhase, runtimeState, segment)
-          : 0)
+          : 0),
+      remainingSec: state === "done"
+        ? 0
+        : Math.max(0, normalizeGuidedCount(segment && segment.durationSec, 0) - Math.round(normalizeGuidedCount(segment && segment.durationSec, 0) * (
+          state === "now"
+            ? getGuidedBlockProgressRatio(blockType, guidedStep, guidedNewMovePhase, runtimeState, segment)
+            : 0
+        )))
     });
   }
 
@@ -207,6 +225,9 @@ function renderGuidedBlockProgress(blockProgress) {
       var durationLabel = block.durationSec > 0
         ? Math.max(1, Math.round(block.durationSec / 60)) + " min"
         : "";
+      var remainingLabel = block.state === "now" && block.remainingSec > 0
+        ? formatGuidedDurationLabel(block.remainingSec) + " left"
+        : "";
       var progressPercent = Math.max(0, Math.min(100, Math.round((block.progressRatio || 0) * 100)));
       var stateColor = block.state === "done"
         ? "#4ECDC4"
@@ -225,6 +246,9 @@ function renderGuidedBlockProgress(blockProgress) {
         '<div style="height:6px;border-radius:999px;background:#FFFFFF88;overflow:hidden;margin-bottom:6px">' +
           '<div style="height:100%;width:' + progressPercent + '%;background:' + stateColor + ';border-radius:999px"></div>' +
         '</div>' +
+        '<div style="font-size:11px;color:' + (block.state === "now" ? "#FF8A5C" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+          escHTML(remainingLabel || " ") +
+        '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
       '</div>';
     }).join("") +
@@ -239,7 +263,8 @@ function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
     activeBlockLabel: "",
     activeBlockDurationSec: 0,
     elapsedSec: 0,
-    completionRatio: 0
+    completionRatio: 0,
+    remainingSec: 0
   };
   var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
   var i;
@@ -296,6 +321,7 @@ function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
   summary.completionRatio = summary.totalDurationSec > 0
     ? Math.max(0, Math.min(1, summary.elapsedSec / summary.totalDurationSec))
     : 0;
+  summary.remainingSec = Math.max(0, summary.totalDurationSec - summary.elapsedSec);
   return summary;
 }
 
@@ -303,6 +329,7 @@ function renderGuidedShellSummary(shellSummary) {
   var shellMinutes;
   var blockMinutes;
   var elapsedMinutes;
+  var remainingLabel;
   var detail = [];
   var progressPercent;
   if (!shellSummary || !shellSummary.totalBlocks) return "";
@@ -316,6 +343,9 @@ function renderGuidedShellSummary(shellSummary) {
     ? Math.max(1, Math.round(shellSummary.elapsedSec / 60))
     : 0;
   progressPercent = Math.max(0, Math.min(100, Math.round((shellSummary.completionRatio || 0) * 100)));
+  remainingLabel = shellSummary.remainingSec > 0
+    ? formatGuidedDurationLabel(shellSummary.remainingSec) + " left"
+    : "Done";
   if (shellSummary.activeBlockLabel) detail.push(shellSummary.activeBlockLabel);
   if (blockMinutes > 0) detail.push(blockMinutes + " min block");
   if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
@@ -327,6 +357,7 @@ function renderGuidedShellSummary(shellSummary) {
     '</div>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(detail.join(" • ")) + '</div>' +
     '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML((elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min through session") + '</div>' +
+    '<div style="font-size:11px;color:#FF8A5C;margin-top:2px">' + escHTML(remainingLabel) + '</div>' +
     '</div>';
 }
 
