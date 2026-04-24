@@ -449,7 +449,7 @@
     }
 
     var navItems = [
-      { id:"home",     label:"Practice",    icon:"music_note", onClick: nav("home") },
+      { id:"home",     label:"Practice",    icon:"music_note", onClick: nav("practice") },
       { id:"journey",  label:"Journey",     icon:"explore",    onClick: nav("path") },
       { id:"leaderboard", label:"Leaderboard", icon:"military_tech", onClick: nav("leaderboard") },
       { id:"profile",  label:"Profile",     icon:"person" }
@@ -898,7 +898,7 @@
          + '</div>';
     }
     var navItems = [
-      { id:"home", label:"Practice", icon:"music_note", onClick: nav("home") },
+      { id:"home", label:"Practice", icon:"music_note", onClick: nav("practice") },
       { id:"journey", label:"Journey", icon:"explore", onClick: nav("path") },
       { id:"leaderboard", label:"Leaderboard", icon:"military_tech" },
       { id:"profile", label:"Profile", icon:"person", onClick: nav("profile") }
@@ -1471,7 +1471,7 @@
     var navItems = [
       { id:"path",        label:"Path",        icon:"map" },
       { id:"practice",    label:"Practice",    icon:"timer",       onClick: nav("practice") },
-      { id:"instruments", label:"Instruments", icon:"piano",       onClick: nav("home") },
+      { id:"instruments", label:"Instruments", icon:"piano",       onClick: nav("instruments") },
       { id:"profile",     label:"Profile",     icon:"person",      onClick: nav("profile") }
     ];
 
