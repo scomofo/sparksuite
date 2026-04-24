@@ -12,6 +12,13 @@ function prettyPerformanceStatsToken(value){
   return text;
 }
 
+function getPerformanceStatsCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 function performanceStatsPage(){
   var statsView = getPerformanceStatsView();
   var focus = statsView.focus;
@@ -106,9 +113,7 @@ function performanceStatsPage(){
 }
 
 function getPerformanceStatsView(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getPerformanceStatsCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var focus = prettyPerformanceStatsToken(runtimeState && runtimeState.performanceStatsFocus);
   var allowedFocuses = { overview: true, recent: true, top: true, weak: true, daily: true };
