@@ -1,20 +1,23 @@
 (function() {
-  if (typeof SparkCore === "undefined") return;
+  var SparkCoreCtor = null;
+  if (typeof SparkCoreRuntime === "function") SparkCoreCtor = SparkCoreRuntime;
+  else if (typeof SparkCore === "function") SparkCoreCtor = SparkCore;
+  if (!SparkCoreCtor) return;
 
-  SparkCore.prototype.initSpotifyPlaylistSync = function(options) {
+  SparkCoreCtor.prototype.initSpotifyPlaylistSync = function(options) {
     options = options || {};
     this.spotifyPlaylistClient = options.client || new SparkSpotifyPlaylistClient(options);
     return this.spotifyPlaylistClient;
   };
 
-  SparkCore.prototype.getSpotifyPlaylistClient = function() {
+  SparkCoreCtor.prototype.getSpotifyPlaylistClient = function() {
     if (!this.spotifyPlaylistClient && typeof SparkSpotifyPlaylistClient !== "undefined") {
       this.spotifyPlaylistClient = new SparkSpotifyPlaylistClient();
     }
     return this.spotifyPlaylistClient || null;
   };
 
-  SparkCore.prototype.syncSpotifyPlaylistStatus = function() {
+  SparkCoreCtor.prototype.syncSpotifyPlaylistStatus = function() {
     var self = this;
     var client = this.getSpotifyPlaylistClient();
     if (!client || typeof client.getStatus !== "function") return Promise.resolve(null);
@@ -36,7 +39,7 @@
     });
   };
 
-  SparkCore.prototype.connectSpotifyPlaylist = function(options) {
+  SparkCoreCtor.prototype.connectSpotifyPlaylist = function(options) {
     var client = this.getSpotifyPlaylistClient();
     if (!client || typeof client.getConnectUrl !== "function") return Promise.resolve(false);
     options = options || {};
@@ -47,7 +50,7 @@
     });
   };
 
-  SparkCore.prototype.disconnectSpotifyPlaylist = function() {
+  SparkCoreCtor.prototype.disconnectSpotifyPlaylist = function() {
     var self = this;
     var client = this.getSpotifyPlaylistClient();
     if (!client || typeof client.disconnect !== "function") return Promise.resolve(false);
@@ -65,7 +68,7 @@
     });
   };
 
-  SparkCore.prototype.createSpotifyCurriculumPlaylist = function(input) {
+  SparkCoreCtor.prototype.createSpotifyCurriculumPlaylist = function(input) {
     var self = this;
     var client = this.getSpotifyPlaylistClient();
     if (!client || typeof client.createCurriculumPlaylist !== "function") return Promise.resolve(null);
@@ -76,7 +79,7 @@
     });
   };
 
-  SparkCore.prototype.syncSpotifyCurriculumPlaylist = function(input) {
+  SparkCoreCtor.prototype.syncSpotifyCurriculumPlaylist = function(input) {
     var self = this;
     var client = this.getSpotifyPlaylistClient();
     if (!client || typeof client.syncCurriculumPlaylist !== "function") return Promise.resolve(null);

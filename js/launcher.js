@@ -342,6 +342,23 @@
       '</div>';
   }
 
+  function renderLauncherView(view) {
+    var route = {
+      home: typeof renderHome === "function" ? renderHome : null,
+      library: typeof SparkSongLibrary !== "undefined" && SparkSongLibrary && typeof SparkSongLibrary.render === "function"
+        ? SparkSongLibrary.render
+        : null,
+      learn: typeof SparkPath !== "undefined" && SparkPath && typeof SparkPath.render === "function"
+        ? SparkPath.render
+        : null,
+      settings: typeof SparkSettings !== "undefined" && SparkSettings && typeof SparkSettings.render === "function"
+        ? SparkSettings.render
+        : null
+    };
+    var renderer = route[view] || route.home;
+    return renderer ? renderer() : "";
+  }
+
   var SparkInstruments = {
     register: function(config) {
       for (var i = 0; i < _instruments.length; i++) {
@@ -431,13 +448,8 @@
     },
 
     renderLauncher: function() {
-      // The launcher only renders its own home (instrument picker). The
-      // bottom-nav Library / Learn / Settings views previously dispatched
-      // to Showroom modules, which are design-reference mocks (see
-      // js/showroom/spark-showroom.js) — so those views fall through to
-      // home until they're either wired to real data or replaced with
-      // legacy-backed screens.
-      return renderHome();
+      var view = typeof S !== "undefined" && S && S.launcherView ? S.launcherView : "home";
+      return renderLauncherView(view);
     }
   };
 
