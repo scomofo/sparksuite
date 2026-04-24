@@ -242,6 +242,30 @@ test("piano practice tab ignores stale curriculum and custom set labels", functi
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("piano practice quick start resumes an active guided shell when the session matches", function() {
+  resetEnvironment("pianospark");
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: { guidedSession: 1 }
+        },
+        runtimeState: {
+          activeScreen: "guided_session"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+  assert.ok(html.indexOf('onclick="act(\'resume_guided_session\')"') >= 0);
+  assert.strictEqual(html.indexOf('onclick="act(\'start_guided_session\')"'), -1);
+});
+
 test("piano onboarding and tools ignore stale intention strings", function() {
   resetEnvironment("pianospark");
   global.S.practiceIntention = "undefined";
