@@ -1323,4 +1323,9 @@ test("piano plan and practice sections skip null slots when real plan items exis
   assert.ok(practiceHtml.indexOf("warmup 1") >= 0);
 });
 
+test("piano plan page routes go actions through practiceStartItem", function() {
+  var source = loadJS("js/instruments/piano/pages/plan.js");
+  assert.ok(source.indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

@@ -104,7 +104,7 @@ function planPage(){
     var actionHtml = isCompleted
       ? '<span class="text-muted">Done</span>'
       : (canLaunch
-        ? '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="launchPracticePlanItem(this.getAttribute(\'data-item-id\'))" style="background:var(--accent);color:#fff">Go</button>'
+        ? '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))" style="background:var(--accent);color:#fff">Go</button>'
         : '<span class="text-muted">Unavailable</span>');
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPlanDisplayType(item))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center">';
