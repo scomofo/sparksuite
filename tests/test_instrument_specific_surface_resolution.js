@@ -417,6 +417,34 @@ test("practice guided session card falls back to curriculum v2 when legacy sessi
   assert.ok(html.indexOf("0/30 done") >= 0);
 });
 
+test("practice guided session card can resolve sparkCore from the global binding", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 1,
+              title: "First sound in 2 minutes",
+              level: 1
+            },
+            totalGuidedSessions: 30
+          }
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeGuidedSessionCard({});
+  assert.ok(html.indexOf("Guided Session 1") >= 0);
+  assert.ok(html.indexOf("First sound in 2 minutes") >= 0);
+  assert.ok(html.indexOf("0/30 done") >= 0);
+});
+
 test("piano app confirms reset before dispatching reset", function() {
   resetEnvironment("pianospark");
   var resetCalls = 0;
