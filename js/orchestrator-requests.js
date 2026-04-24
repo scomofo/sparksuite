@@ -496,11 +496,12 @@ function completeDailyPracticePlanRequest(options) {
 }
 
 function openGuidedSessionRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openGuidedSession === "function") {
-    return window.sparkCore.openGuidedSession(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openGuidedSession === "function") {
+    return core.openGuidedSession(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-    return window.sparkCore.startSession({
+  if (core && typeof core.startSession === "function") {
+    return core.startSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       sessionNum: options && Object.prototype.hasOwnProperty.call(options, "sessionNum") ? options.sessionNum : undefined
     });
@@ -509,12 +510,13 @@ function openGuidedSessionRequest(options) {
 }
 
 function openSongSessionRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openSongSession === "function") {
-    return window.sparkCore.openSongSession(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openSongSession === "function") {
+    return core.openSongSession(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+  if (core && typeof core.updateRuntimeState === "function") {
     options = options || {};
-    return window.sparkCore.updateRuntimeState({
+    return core.updateRuntimeState({
       activeFlow: "song_session",
       activeScreen: options.targetScreen || "song",
       activeTab: "songs",
@@ -529,34 +531,38 @@ function openSongSessionRequest(options) {
 }
 
 function openCareerSongSelectionRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openCareerSongSelection === "function") {
-    return window.sparkCore.openCareerSongSelection(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openCareerSongSelection === "function") {
+    return core.openCareerSongSelection(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.openPerformanceSongSelection === "function") {
-    return window.sparkCore.openPerformanceSongSelection(options || {});
+  if (core && typeof core.openPerformanceSongSelection === "function") {
+    return core.openPerformanceSongSelection(options || {});
   }
   return null;
 }
 
 function openPerformanceDailyChallengeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openPerformanceDailyChallenge === "function") {
-    return window.sparkCore.openPerformanceDailyChallenge(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openPerformanceDailyChallenge === "function") {
+    return core.openPerformanceDailyChallenge(options || {});
   }
   return openPerformanceSongSelectionRequest(options || {});
 }
 
 function syncSongRuntimeRequest(action, options) {
-  if (window.sparkCore && typeof window.sparkCore.syncSongRuntimeState === "function") {
-    return window.sparkCore.syncSongRuntimeState(action, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncSongRuntimeState === "function") {
+    return core.syncSongRuntimeState(action, options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+  if (core && typeof core.updateRuntimeState === "function") {
     options = options || {};
-    return window.sparkCore.updateRuntimeState({
+    var runtimeState = typeof core.getRuntimeState === "function" ? core.getRuntimeState() : {};
+    return core.updateRuntimeState({
       activeFlow: "song_session",
       activeScreen: options.targetScreen || (action === "complete" ? "song_done" : "song"),
       activeTab: "songs",
-      songSessionData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : window.sparkCore.getRuntimeState().songSessionData,
-      songSessionSource: options.source || window.sparkCore.getRuntimeState().songSessionSource || "builtin",
+      songSessionData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : runtimeState.songSessionData,
+      songSessionSource: options.source || runtimeState.songSessionSource || "builtin",
       songPlaying: action === "play" ? true : !!options.songPlaying,
       songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat") ? options.songBeat : 0,
       transport: {
@@ -569,11 +575,12 @@ function syncSongRuntimeRequest(action, options) {
 }
 
 function applySongNavigationRequest(target, options) {
-  if (window.sparkCore && typeof window.sparkCore.applySongNavigationRequest === "function") {
-    return window.sparkCore.applySongNavigationRequest(target, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.applySongNavigationRequest === "function") {
+    return core.applySongNavigationRequest(target, options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeFlow: "song_session",
       activeScreen: target === "song_done" ? "song_done" : (target === "song_detail" ? "song" : "home"),
       activeTab: "songs",
@@ -585,12 +592,13 @@ function applySongNavigationRequest(target, options) {
 }
 
 function applySongBrowserRequest(action, options) {
-  if (window.sparkCore && typeof window.sparkCore.applySongBrowserRequest === "function") {
-    return window.sparkCore.applySongBrowserRequest(action, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.applySongBrowserRequest === "function") {
+    return core.applySongBrowserRequest(action, options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+  if (core && typeof core.updateRuntimeState === "function") {
     options = options || {};
-    return window.sparkCore.updateRuntimeState({
+    return core.updateRuntimeState({
       activeTab: "songs",
       songsSubTab: Object.prototype.hasOwnProperty.call(options, "songsSubTab") ? options.songsSubTab : S.songsSubTab,
       songFilter: Object.prototype.hasOwnProperty.call(options, "songFilter") ? options.songFilter : S.songFilter,
@@ -605,12 +613,13 @@ function applySongBrowserRequest(action, options) {
 }
 
 function applyDashboardRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.applyDashboardRequest === "function") {
-    return window.sparkCore.applyDashboardRequest(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.applyDashboardRequest === "function") {
+    return core.applyDashboardRequest(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+  if (core && typeof core.updateRuntimeState === "function") {
     options = options || {};
-    return window.sparkCore.updateRuntimeState({
+    return core.updateRuntimeState({
       dashboardRecommendations: Object.prototype.hasOwnProperty.call(options, "recommendations") ? options.recommendations : (S.recommendations || []),
       dashboardInsights: Object.prototype.hasOwnProperty.call(options, "insights") ? options.insights : (S.personalInsights || null),
       dashboardChallenges: Object.prototype.hasOwnProperty.call(options, "challenges") ? options.challenges : (S.activeChallenges || []),
@@ -621,44 +630,49 @@ function applyDashboardRequest(options) {
 }
 
 function refreshDashboardSnapshotRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.refreshDashboardSnapshot === "function") {
-    return window.sparkCore.refreshDashboardSnapshot(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.refreshDashboardSnapshot === "function") {
+    return core.refreshDashboardSnapshot(options || {});
   }
   return applyDashboardRequest(options || {});
 }
 
 function initializeDashboardChallengesRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.initializeDashboardChallenges === "function") {
-    return window.sparkCore.initializeDashboardChallenges(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.initializeDashboardChallenges === "function") {
+    return core.initializeDashboardChallenges(options || {});
   }
   return applyDashboardRequest(options || {});
 }
 
 function applyDashboardNavigationRequest(target) {
-  if (window.sparkCore && typeof window.sparkCore.applyDashboardNavigationRequest === "function") {
-    return window.sparkCore.applyDashboardNavigationRequest(target);
+  var core = getOrchestratorCore();
+  if (core && typeof core.applyDashboardNavigationRequest === "function") {
+    return core.applyDashboardNavigationRequest(target);
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
+  if (core && typeof core.updateRuntimeState === "function") {
     var screen = "home_dash";
     if (target === "recommendations") screen = "recommendations";
     else if (target === "insights") screen = "insights";
     else if (target === "challenges") screen = "challenges";
     else if (target === "career") screen = "career";
-    return window.sparkCore.updateRuntimeState({ activeScreen: screen });
+    return core.updateRuntimeState({ activeScreen: screen });
   }
   return null;
 }
 
 function openDashboardSectionRequest(target) {
-  if (window.sparkCore && typeof window.sparkCore.openDashboardSection === "function") {
-    return window.sparkCore.openDashboardSection(target);
+  var core = getOrchestratorCore();
+  if (core && typeof core.openDashboardSection === "function") {
+    return core.openDashboardSection(target);
   }
   return applyDashboardNavigationRequest(target);
 }
 
 function returnFromHomeFamilyRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.returnFromHomeFamily === "function") {
-    return window.sparkCore.returnFromHomeFamily(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.returnFromHomeFamily === "function") {
+    return core.returnFromHomeFamily(options || {});
   }
   if (options && options.currentScreen) {
     var currentScreen = options.currentScreen;
@@ -669,8 +683,8 @@ function returnFromHomeFamilyRequest(options) {
       || currentScreen === "home_dash";
     if (isDashboardFamily) return applyDashboardNavigationRequest("dashboard_back");
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeScreen: "home",
       activeTab: S.tab || null,
       transport: { status: "idle", positionMs: 0 }
@@ -680,11 +694,12 @@ function returnFromHomeFamilyRequest(options) {
 }
 
 function openUtilityScreenRequest(target) {
-  if (window.sparkCore && typeof window.sparkCore.openUtilityScreen === "function") {
-    return window.sparkCore.openUtilityScreen(target);
+  var core = getOrchestratorCore();
+  if (core && typeof core.openUtilityScreen === "function") {
+    return core.openUtilityScreen(target);
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeScreen: target || "home",
       activeTab: S.tab || null
     });
@@ -693,8 +708,9 @@ function openUtilityScreenRequest(target) {
 }
 
 function syncSettingsStateRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.syncSettingsState === "function") {
-    return window.sparkCore.syncSettingsState(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncSettingsState === "function") {
+    return core.syncSettingsState(options || {});
   }
   return null;
 }
@@ -733,13 +749,14 @@ function buildMidiSettingsRuntimePayload() {
 
 function syncMidiSettingsStateRequest(options) {
   var payload = buildMidiSettingsRuntimePayload();
+  var core = getOrchestratorCore();
   var key;
   options = options || {};
   for (key in options) {
     if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
   }
-  if (window.sparkCore && typeof window.sparkCore.syncMidiSettingsState === "function") {
-    return window.sparkCore.syncMidiSettingsState(payload);
+  if (core && typeof core.syncMidiSettingsState === "function") {
+    return core.syncMidiSettingsState(payload);
   }
   return null;
 }
@@ -755,29 +772,31 @@ function buildCloudSettingsRuntimePayload() {
 
 function syncCloudSettingsStateRequest(options) {
   var payload = buildCloudSettingsRuntimePayload();
+  var core = getOrchestratorCore();
   var key;
   options = options || {};
   for (key in options) {
     if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
   }
-  if (window.sparkCore && typeof window.sparkCore.syncCloudSettingsState === "function") {
-    return window.sparkCore.syncCloudSettingsState(payload);
+  if (core && typeof core.syncCloudSettingsState === "function") {
+    return core.syncCloudSettingsState(payload);
   }
   return null;
 }
 
 function applyCloudWorkflowRequest(action, options) {
   var payload = buildCloudSettingsRuntimePayload();
+  var core = getOrchestratorCore();
   var key;
   options = options || {};
   for (key in options) {
     if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
   }
-  if (window.sparkCore && typeof window.sparkCore.applyCloudWorkflowRequest === "function") {
-    return window.sparkCore.applyCloudWorkflowRequest(action, payload);
+  if (core && typeof core.applyCloudWorkflowRequest === "function") {
+    return core.applyCloudWorkflowRequest(action, payload);
   }
-  if (window.sparkCore && typeof window.sparkCore.syncCloudSettingsState === "function") {
-    return window.sparkCore.syncCloudSettingsState(payload);
+  if (core && typeof core.syncCloudSettingsState === "function") {
+    return core.syncCloudSettingsState(payload);
   }
   return null;
 }
@@ -809,13 +828,14 @@ function buildCurriculumRuntimePayload() {
 
 function syncCurriculumStateRequest(options) {
   var payload = buildCurriculumRuntimePayload();
+  var core = getOrchestratorCore();
   var key;
   options = options || {};
   for (key in options) {
     if (Object.prototype.hasOwnProperty.call(options, key)) payload[key] = options[key];
   }
-  if (window.sparkCore && typeof window.sparkCore.syncCurriculumState === "function") {
-    return window.sparkCore.syncCurriculumState(payload);
+  if (core && typeof core.syncCurriculumState === "function") {
+    return core.syncCurriculumState(payload);
   }
   return null;
 }
@@ -851,18 +871,20 @@ function buildMidiImportRuntimePayload(options) {
 
 function syncMidiImportStateRequest(options) {
   var payload = buildMidiImportRuntimePayload(options || {});
-  if (window.sparkCore && typeof window.sparkCore.syncMidiImportState === "function") {
-    return window.sparkCore.syncMidiImportState(payload);
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncMidiImportState === "function") {
+    return core.syncMidiImportState(payload);
   }
   return null;
 }
 
 function openSkillTreeRequest() {
-  if (window.sparkCore && typeof window.sparkCore.openSkillTree === "function") {
-    return window.sparkCore.openSkillTree();
+  var core = getOrchestratorCore();
+  if (core && typeof core.openSkillTree === "function") {
+    return core.openSkillTree();
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeScreen: "skill_tree",
       activeTab: S.tab || null
     });
@@ -871,11 +893,12 @@ function openSkillTreeRequest() {
 }
 
 function setSkillTreeFocusRequest(focus) {
-  if (window.sparkCore && typeof window.sparkCore.setSkillTreeFocus === "function") {
-    return window.sparkCore.setSkillTreeFocus(focus);
+  var core = getOrchestratorCore();
+  if (core && typeof core.setSkillTreeFocus === "function") {
+    return core.setSkillTreeFocus(focus);
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeScreen: "skill_tree",
       activeTab: S.tab || null,
       skillTreeFocus: focus || "overview"
@@ -885,11 +908,12 @@ function setSkillTreeFocusRequest(focus) {
 }
 
 function openStemPlayerRequest() {
-  if (window.sparkCore && typeof window.sparkCore.openStemPlayer === "function") {
-    return window.sparkCore.openStemPlayer();
+  var core = getOrchestratorCore();
+  if (core && typeof core.openStemPlayer === "function") {
+    return core.openStemPlayer();
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeScreen: "stems",
       activeTab: "songs",
       songsSubTab: "stems"
@@ -899,11 +923,12 @@ function openStemPlayerRequest() {
 }
 
 function closeStemPlayerRequest() {
-  if (window.sparkCore && typeof window.sparkCore.closeStemPlayer === "function") {
-    return window.sparkCore.closeStemPlayer();
+  var core = getOrchestratorCore();
+  if (core && typeof core.closeStemPlayer === "function") {
+    return core.closeStemPlayer();
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeScreen: "home",
       activeTab: "songs",
       songsSubTab: "stems",
@@ -914,11 +939,12 @@ function closeStemPlayerRequest() {
 }
 
 function returnFromUtilityFamilyRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.returnFromUtilityFamily === "function") {
-    return window.sparkCore.returnFromUtilityFamily(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.returnFromUtilityFamily === "function") {
+    return core.returnFromUtilityFamily(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeScreen: "home",
       activeTab: S.tab || null,
       transport: { status: "idle", positionMs: 0 }
@@ -928,30 +954,33 @@ function returnFromUtilityFamilyRequest(options) {
 }
 
 function applyDashboardChallengeRewardRequest(challengeId) {
-  if (window.sparkCore && typeof window.sparkCore.applyDashboardChallengeReward === "function") {
-    return window.sparkCore.applyDashboardChallengeReward(challengeId);
+  var core = getOrchestratorCore();
+  if (core && typeof core.applyDashboardChallengeReward === "function") {
+    return core.applyDashboardChallengeReward(challengeId);
   }
   return null;
 }
 
 function completeSongSessionRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.completeSongSession === "function") {
-    return window.sparkCore.completeSongSession(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.completeSongSession === "function") {
+    return core.completeSongSession(options || {});
   }
   return syncSongRuntimeRequest("complete", options || {});
 }
 
 function completeGuidedSessionRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.completeGuidedSession === "function") {
-    return window.sparkCore.completeGuidedSession(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.completeGuidedSession === "function") {
+    return core.completeGuidedSession(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-    var result = window.sparkCore.completeSession({
+  if (core && typeof core.completeSession === "function") {
+    var result = core.completeSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       markPlanComplete: true
     });
-    if (typeof window.sparkCore.syncGuidedRuntimeState === "function") {
-      window.sparkCore.syncGuidedRuntimeState({
+    if (typeof core.syncGuidedRuntimeState === "function") {
+      core.syncGuidedRuntimeState({
         activeScreen: "guided_done",
         guidedStep: null,
         guidedNewMovePhase: null,
@@ -980,12 +1009,13 @@ function completeGuidedSessionRequest(options) {
 }
 
 function applyGuidedNavigationRequest(target, options) {
-  if (window.sparkCore && typeof window.sparkCore.applyGuidedNavigationRequest === "function") {
-    return window.sparkCore.applyGuidedNavigationRequest(target, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.applyGuidedNavigationRequest === "function") {
+    return core.applyGuidedNavigationRequest(target, options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function") {
+  if (core && typeof core.syncGuidedRuntimeState === "function") {
     if (target === "guided_home") {
-      return window.sparkCore.syncGuidedRuntimeState({
+      return core.syncGuidedRuntimeState({
         activeScreen: "home",
         guidedStep: null,
         guidedNewMovePhase: null,
@@ -993,7 +1023,7 @@ function applyGuidedNavigationRequest(target, options) {
       });
     }
     if (target === "guided_done") {
-      return window.sparkCore.syncGuidedRuntimeState({
+      return core.syncGuidedRuntimeState({
         activeScreen: "guided_done",
         guidedStep: null,
         guidedNewMovePhase: null,
