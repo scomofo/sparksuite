@@ -1,7 +1,9 @@
 (function(){
 
   function getMidiUiRuntimeState(){
-    var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    var core = (typeof window !== "undefined" && window && window.sparkCore)
+      ? window.sparkCore
+      : (typeof sparkCore !== "undefined" ? sparkCore : null);
     if(!core || typeof core.getRuntimeState !== "function") return null;
     return core.getRuntimeState();
   }

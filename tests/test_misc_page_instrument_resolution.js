@@ -219,6 +219,34 @@ test("guided review rehydrates an app-id-only active instrument shell", function
   assert.ok(html.indexOf("Review") >= 0);
 });
 
+test("active challenges card can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.S.activeChallenges = [];
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardChallenges: [{
+            id: "daily-clean-change",
+            title: "Clean Change",
+            description: "Land 5 clean switches",
+            progress: 3,
+            target: 5,
+            completed: false,
+            claimed: false
+          }]
+        }
+      };
+    }
+  };
+
+  global.eval(loadJS("js/meta/challenge_ui.js"));
+  var html = renderActiveChallengesCard();
+
+  assert.ok(html.indexOf("Clean Change") >= 0);
+  assert.ok(html.indexOf("3 / 5") >= 0);
+});
+
 test("tunerTab rehydrates an app-id-only active instrument shell", function() {
   var html = tunerTab();
   assert.ok(html.indexOf("Piano Tuner") >= 0);
