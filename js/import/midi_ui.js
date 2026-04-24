@@ -1,5 +1,11 @@
 (function(){
 
+  function getMidiImportRuntimeState(){
+    var core = (typeof window !== "undefined" && window.sparkCore)
+      || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    return core && typeof core.getRuntimeState === "function" ? core.getRuntimeState() : null;
+  }
+
   function inferMidiImportAppType() {
     if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
       var active = SparkInstruments.getActive();
@@ -20,9 +26,7 @@
   }
 
   function midiImportPage(){
-    var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-      ? window.sparkCore.getRuntimeState()
-      : null;
+    var runtimeState = getMidiImportRuntimeState();
     var importSummary = runtimeState && runtimeState.midiImportSummary
       ? runtimeState.midiImportSummary
       : null;

@@ -1,7 +1,13 @@
 (function(){
 
+  function getCloudUiRuntimeState(){
+    var core = (typeof window !== "undefined" && window.sparkCore)
+      || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    return core && typeof core.getRuntimeState === "function" ? core.getRuntimeState() : null;
+  }
+
   function cloudSettingsPage(){
-    var runtimeState=window.sparkCore&&typeof window.sparkCore.getRuntimeState==="function"?window.sparkCore.getRuntimeState():null;
+    var runtimeState=getCloudUiRuntimeState();
     var loggedIn=runtimeState&&runtimeState.cloudLoggedIn!=null?!!runtimeState.cloudLoggedIn:isLoggedInSpark();
     var email=runtimeState&&Object.prototype.hasOwnProperty.call(runtimeState,"cloudEmail")?runtimeState.cloudEmail:(S.cloudAuth?(S.cloudAuth.email||null):null);
     var syncStatus=runtimeState&&runtimeState.cloudLastSyncStatus?runtimeState.cloudLastSyncStatus:((S.cloudSync&&S.cloudSync.lastSyncStatus)||"idle");

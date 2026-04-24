@@ -18,8 +18,10 @@ function buildInsightSkillLabel(entry) {
 }
 
 function insightsDashboardPage(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
+  var core = (typeof window !== "undefined" && window.sparkCore)
+    || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var coreView = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var pi = runtimeState && runtimeState.dashboardInsights ? runtimeState.dashboardInsights : S.personalInsights;
