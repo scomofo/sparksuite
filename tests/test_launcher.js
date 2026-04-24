@@ -232,7 +232,7 @@ test('renderLauncher respects launcherView showroom routes', function() {
   assert.ok(SparkInstruments.renderLauncher().indexOf('Onboarding View') >= 0);
 
   S.launcherView = 'instruments';
-  assert.ok(SparkInstruments.renderLauncher().indexOf('SparkSuite') >= 0);
+  assert.ok(SparkInstruments.renderLauncher().indexOf('All Instruments') >= 0);
 
   S.launcherView = 'back';
   assert.ok(SparkInstruments.renderLauncher().indexOf('SparkSuite') >= 0);
@@ -366,6 +366,7 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(launcherSource.indexOf('leaderboard: typeof SparkLeaderboard') >= 0);
   assert.ok(launcherSource.indexOf('insights: typeof insightsDashboardPage') >= 0);
   assert.ok(launcherSource.indexOf('tools: typeof SparkTuner') >= 0);
+  assert.ok(launcherSource.indexOf('instruments: typeof renderInstrumentsView === "function" ? renderInstrumentsView : null') >= 0);
   assert.ok(showroomRenderSource.indexOf('"curriculum":      typeof SparkCurriculumDashboard') >= 0);
   assert.ok(showroomRenderSource.indexOf('"syllabus":        typeof SparkCourseSyllabus') >= 0);
   assert.ok(showroomRenderSource.indexOf('"leaderboard":     typeof SparkLeaderboard') >= 0);
