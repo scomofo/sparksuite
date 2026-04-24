@@ -11,7 +11,7 @@
     }
     inst = SparkInstruments.getActive();
     if (!inst) return null;
-    if (typeof inst.getCurriculumMap === "function") return inst;
+    if (typeof inst.getCurriculumMap === "function" || typeof inst.getCurriculumMapV2 === "function") return inst;
     candidate = inst.id || inst.appId || inst.instrumentId || null;
     if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
     all = SparkInstruments.getAll() || [];

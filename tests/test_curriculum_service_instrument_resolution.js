@@ -76,6 +76,31 @@ test("buildLearningQueue falls back to curriculum v2 when legacy maps are absent
   }), "Expected guitar day 1 from curriculum v2 fallback");
 });
 
+test("buildLearningQueue keeps an active instrument that only exposes curriculum v2", function() {
+  var originalGetActive = SparkInstruments.getActive;
+  var originalGetAll = SparkInstruments.getAll;
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      instrument: "guitar",
+      getCurriculumMapV2: function() {
+        return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+      }
+    };
+  };
+  SparkInstruments.getAll = function() {
+    return [{ id: "chordspark", appId: "chordspark", instrument: "guitar" }];
+  };
+
+  var queue = SparkCurriculumService.buildLearningQueue({});
+
+  SparkInstruments.getActive = originalGetActive;
+  SparkInstruments.getAll = originalGetAll;
+  assert.ok(queue.some(function(item) {
+    return item && item.type === "lesson" && item.id === "gtr-d01";
+  }), "Expected the active instrument's curriculum v2 map to survive registry rehydration");
+});
+
 test("buildLearningQueue respects curriculum v2 completion state", function() {
   var originalGetActive = SparkInstruments.getActive;
   S.curriculumV2CompletedSessions.guitar = ["gtr-d01"];

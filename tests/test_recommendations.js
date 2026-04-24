@@ -117,6 +117,17 @@ function resetState() {
       ];
     }
   };
+  global.SparkCurriculumV2LegacyAdapter = {
+    toLegacyLessons: function(instrumentType) {
+      if (instrumentType === "ukulele") {
+        return [
+          { id: "uke-d01", title: "First strum", skill: "open_strum" },
+          { id: "uke-d02", title: "Tuning the uke", skill: "tuning" }
+        ];
+      }
+      return [];
+    }
+  };
 
   global.eval(loadJS("js/practice/selectors.js"));
   global.eval(loadJS("js/recommend/candidates.js"));
@@ -236,6 +247,32 @@ test("collectRecommendationCandidates uses instrument curriculum maps when regis
   assert.ok(curriculumCandidate);
   assert.strictEqual(curriculumCandidate.id, "bass_level_3");
   assert.strictEqual(curriculumCandidate.meta.lessonId, "bass_level_3");
+});
+
+test("collectRecommendationCandidates falls back to curriculum v2 by instrument type when the registry is thin", function() {
+  SparkInstruments.getActive = function() {
+    return { appId: "ukespark" };
+  };
+  SparkInstruments.getAll = function() {
+    return [{ id: "ukespark", appId: "ukespark", instrument: "ukulele" }];
+  };
+  global.getCurriculumItem = function() { return null; };
+  global.getNextLessonFromCurriculum = function() { return null; };
+  S.completedLessons = [];
+  S.curriculumV2CompletedSessions.ukulele = ["uke-d01"];
+
+  var candidates = collectRecommendationCandidates("ukulele");
+  var curriculumCandidate = null;
+  for (var i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "curriculum") {
+      curriculumCandidate = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(curriculumCandidate);
+  assert.strictEqual(curriculumCandidate.id, "uke-d02");
+  assert.strictEqual(curriculumCandidate.meta.lessonId, "uke-d02");
 });
 
 test("module-progress scoring increases when the weakest metric is lower", function() {
