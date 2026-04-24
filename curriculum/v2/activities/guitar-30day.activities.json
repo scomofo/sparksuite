@@ -1,0 +1,1687 @@
+{
+  "version": "2026-04-24",
+  "instrument": "guitar",
+  "activity_count": 120,
+  "activities": [
+    {
+      "id": "gtr-d01-warm_engine",
+      "session_id": "gtr-d01",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Horse\" intro, open strings only",
+      "copy": {
+        "setup": "First sound in 2 minutes. warm engine block.",
+        "success": "Nice. First sound in 2 minutes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d01-drill",
+      "session_id": "gtr-d01",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Horse\" intro, open strings only",
+      "copy": {
+        "setup": "First sound in 2 minutes. drill block.",
+        "success": "Nice. First sound in 2 minutes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d01-song",
+      "session_id": "gtr-d01",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Horse\" intro, open strings only",
+      "copy": {
+        "setup": "First sound in 2 minutes. song block.",
+        "success": "Nice. First sound in 2 minutes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d01-cooldown",
+      "session_id": "gtr-d01",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Horse\" intro, open strings only",
+      "copy": {
+        "setup": "First sound in 2 minutes. cooldown block.",
+        "success": "Nice. First sound in 2 minutes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d02-warm_engine",
+      "session_id": "gtr-d02",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "same",
+      "copy": {
+        "setup": "How guitars get tuned. warm engine block.",
+        "success": "Nice. How guitars get tuned.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d02-drill",
+      "session_id": "gtr-d02",
+      "instrument": "guitar",
+      "kind": "tuning",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "same",
+      "copy": {
+        "setup": "How guitars get tuned. drill block.",
+        "success": "Nice. How guitars get tuned.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d02-song",
+      "session_id": "gtr-d02",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "same",
+      "copy": {
+        "setup": "How guitars get tuned. song block.",
+        "success": "Nice. How guitars get tuned.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d02-cooldown",
+      "session_id": "gtr-d02",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "same",
+      "copy": {
+        "setup": "How guitars get tuned. cooldown block.",
+        "success": "Nice. How guitars get tuned.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d03-warm_engine",
+      "session_id": "gtr-d03",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "1-chord reggae",
+      "copy": {
+        "setup": "The D chord. warm engine block.",
+        "success": "Nice. The D chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d03-drill",
+      "session_id": "gtr-d03",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "1-chord reggae",
+      "copy": {
+        "setup": "The D chord. drill block.",
+        "success": "Nice. The D chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d03-song",
+      "session_id": "gtr-d03",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "1-chord reggae",
+      "copy": {
+        "setup": "The D chord. song block.",
+        "success": "Nice. The D chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d03-cooldown",
+      "session_id": "gtr-d03",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "1-chord reggae",
+      "copy": {
+        "setup": "The D chord. cooldown block.",
+        "success": "Nice. The D chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d04-warm_engine",
+      "session_id": "gtr-d04",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "1-chord pop",
+      "copy": {
+        "setup": "D with a drum loop. warm engine block.",
+        "success": "Nice. D with a drum loop.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d04-drill",
+      "session_id": "gtr-d04",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "1-chord pop",
+      "copy": {
+        "setup": "D with a drum loop. drill block.",
+        "success": "Nice. D with a drum loop.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d04-song",
+      "session_id": "gtr-d04",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "1-chord pop",
+      "copy": {
+        "setup": "D with a drum loop. song block.",
+        "success": "Nice. D with a drum loop.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d04-cooldown",
+      "session_id": "gtr-d04",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "1-chord pop",
+      "copy": {
+        "setup": "D with a drum loop. cooldown block.",
+        "success": "Nice. D with a drum loop.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d05-warm_engine",
+      "session_id": "gtr-d05",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "A loop",
+      "copy": {
+        "setup": "The A chord. warm engine block.",
+        "success": "Nice. The A chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d05-drill",
+      "session_id": "gtr-d05",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "A loop",
+      "copy": {
+        "setup": "The A chord. drill block.",
+        "success": "Nice. The A chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d05-song",
+      "session_id": "gtr-d05",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "A loop",
+      "copy": {
+        "setup": "The A chord. song block.",
+        "success": "Nice. The A chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d05-cooldown",
+      "session_id": "gtr-d05",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "A loop",
+      "copy": {
+        "setup": "The A chord. cooldown block.",
+        "success": "Nice. The A chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d06-warm_engine",
+      "session_id": "gtr-d06",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "D-A-D-A over drums",
+      "copy": {
+        "setup": "D to A, slowly. warm engine block.",
+        "success": "Nice. D to A, slowly.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d06-drill",
+      "session_id": "gtr-d06",
+      "instrument": "guitar",
+      "kind": "chord_change_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "D-A-D-A over drums",
+      "copy": {
+        "setup": "D to A, slowly. drill block.",
+        "success": "Nice. D to A, slowly.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d06-song",
+      "session_id": "gtr-d06",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "D-A-D-A over drums",
+      "copy": {
+        "setup": "D to A, slowly. song block.",
+        "success": "Nice. D to A, slowly.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d06-cooldown",
+      "session_id": "gtr-d06",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "D-A-D-A over drums",
+      "copy": {
+        "setup": "D to A, slowly. cooldown block.",
+        "success": "Nice. D to A, slowly.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d07-warm_engine",
+      "session_id": "gtr-d07",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "E jam",
+      "copy": {
+        "setup": "The E chord. warm engine block.",
+        "success": "Nice. The E chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d07-drill",
+      "session_id": "gtr-d07",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "E jam",
+      "copy": {
+        "setup": "The E chord. drill block.",
+        "success": "Nice. The E chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d07-song",
+      "session_id": "gtr-d07",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "E jam",
+      "copy": {
+        "setup": "The E chord. song block.",
+        "success": "Nice. The E chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d07-cooldown",
+      "session_id": "gtr-d07",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "E jam",
+      "copy": {
+        "setup": "The E chord. cooldown block.",
+        "success": "Nice. The E chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d08-warm_engine",
+      "session_id": "gtr-d08",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "simple blues loop",
+      "copy": {
+        "setup": "A-D-E 12-bar blues. warm engine block.",
+        "success": "Nice. A-D-E 12-bar blues.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d08-drill",
+      "session_id": "gtr-d08",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "simple blues loop",
+      "copy": {
+        "setup": "A-D-E 12-bar blues. drill block.",
+        "success": "Nice. A-D-E 12-bar blues.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d08-song",
+      "session_id": "gtr-d08",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "simple blues loop",
+      "copy": {
+        "setup": "A-D-E 12-bar blues. song block.",
+        "success": "Nice. A-D-E 12-bar blues.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d08-cooldown",
+      "session_id": "gtr-d08",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "simple blues loop",
+      "copy": {
+        "setup": "A-D-E 12-bar blues. cooldown block.",
+        "success": "Nice. A-D-E 12-bar blues.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d09-warm_engine",
+      "session_id": "gtr-d09",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Horse\" full (Em-D6add9)",
+      "copy": {
+        "setup": "The Em chord. warm engine block.",
+        "success": "Nice. The Em chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d09-drill",
+      "session_id": "gtr-d09",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Horse\" full (Em-D6add9)",
+      "copy": {
+        "setup": "The Em chord. drill block.",
+        "success": "Nice. The Em chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d09-song",
+      "session_id": "gtr-d09",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Horse\" full (Em-D6add9)",
+      "copy": {
+        "setup": "The Em chord. song block.",
+        "success": "Nice. The Em chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d09-cooldown",
+      "session_id": "gtr-d09",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Horse\" full (Em-D6add9)",
+      "copy": {
+        "setup": "The Em chord. cooldown block.",
+        "success": "Nice. The Em chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d10-warm_engine",
+      "session_id": "gtr-d10",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Stand By Me\" (transposed)",
+      "copy": {
+        "setup": "The Am chord. warm engine block.",
+        "success": "Nice. The Am chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d10-drill",
+      "session_id": "gtr-d10",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Stand By Me\" (transposed)",
+      "copy": {
+        "setup": "The Am chord. drill block.",
+        "success": "Nice. The Am chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d10-song",
+      "session_id": "gtr-d10",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Stand By Me\" (transposed)",
+      "copy": {
+        "setup": "The Am chord. song block.",
+        "success": "Nice. The Am chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d10-cooldown",
+      "session_id": "gtr-d10",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Stand By Me\" (transposed)",
+      "copy": {
+        "setup": "The Am chord. cooldown block.",
+        "success": "Nice. The Am chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d11-warm_engine",
+      "session_id": "gtr-d11",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "full verse loop",
+      "copy": {
+        "setup": "\"Stand By Me\" full. warm engine block.",
+        "success": "Nice. \"Stand By Me\" full.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d11-drill",
+      "session_id": "gtr-d11",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "full verse loop",
+      "copy": {
+        "setup": "\"Stand By Me\" full. drill block.",
+        "success": "Nice. \"Stand By Me\" full.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d11-song",
+      "session_id": "gtr-d11",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "full verse loop",
+      "copy": {
+        "setup": "\"Stand By Me\" full. song block.",
+        "success": "Nice. \"Stand By Me\" full.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d11-cooldown",
+      "session_id": "gtr-d11",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "full verse loop",
+      "copy": {
+        "setup": "\"Stand By Me\" full. cooldown block.",
+        "success": "Nice. \"Stand By Me\" full.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d12-warm_engine",
+      "session_id": "gtr-d12",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d12-drill",
+      "session_id": "gtr-d12",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d12-song",
+      "session_id": "gtr-d12",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d12-cooldown",
+      "session_id": "gtr-d12",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d13-warm_engine",
+      "session_id": "gtr-d13",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "any prior song",
+      "copy": {
+        "setup": "Down-down-down-down strum. warm engine block.",
+        "success": "Nice. Down-down-down-down strum.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d13-drill",
+      "session_id": "gtr-d13",
+      "instrument": "guitar",
+      "kind": "strum_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "any prior song",
+      "copy": {
+        "setup": "Down-down-down-down strum. drill block.",
+        "success": "Nice. Down-down-down-down strum.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d13-song",
+      "session_id": "gtr-d13",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "any prior song",
+      "copy": {
+        "setup": "Down-down-down-down strum. song block.",
+        "success": "Nice. Down-down-down-down strum.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d13-cooldown",
+      "session_id": "gtr-d13",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "any prior song",
+      "copy": {
+        "setup": "Down-down-down-down strum. cooldown block.",
+        "success": "Nice. Down-down-down-down strum.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d14-warm_engine",
+      "session_id": "gtr-d14",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "same",
+      "copy": {
+        "setup": "The and: downs and ups. warm engine block.",
+        "success": "Nice. The and: downs and ups.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d14-drill",
+      "session_id": "gtr-d14",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "same",
+      "copy": {
+        "setup": "The and: downs and ups. drill block.",
+        "success": "Nice. The and: downs and ups.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d14-song",
+      "session_id": "gtr-d14",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "same",
+      "copy": {
+        "setup": "The and: downs and ups. song block.",
+        "success": "Nice. The and: downs and ups.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d14-cooldown",
+      "session_id": "gtr-d14",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "same",
+      "copy": {
+        "setup": "The and: downs and ups. cooldown block.",
+        "success": "Nice. The and: downs and ups.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d15-warm_engine",
+      "session_id": "gtr-d15",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Stand By Me\"",
+      "copy": {
+        "setup": "DDU UDU pattern. warm engine block.",
+        "success": "Nice. DDU UDU pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d15-drill",
+      "session_id": "gtr-d15",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Stand By Me\"",
+      "copy": {
+        "setup": "DDU UDU pattern. drill block.",
+        "success": "Nice. DDU UDU pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d15-song",
+      "session_id": "gtr-d15",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Stand By Me\"",
+      "copy": {
+        "setup": "DDU UDU pattern. song block.",
+        "success": "Nice. DDU UDU pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d15-cooldown",
+      "session_id": "gtr-d15",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Stand By Me\"",
+      "copy": {
+        "setup": "DDU UDU pattern. cooldown block.",
+        "success": "Nice. DDU UDU pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d16-warm_engine",
+      "session_id": "gtr-d16",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Knockin'\" intro",
+      "copy": {
+        "setup": "The G chord. warm engine block.",
+        "success": "Nice. The G chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d16-drill",
+      "session_id": "gtr-d16",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Knockin'\" intro",
+      "copy": {
+        "setup": "The G chord. drill block.",
+        "success": "Nice. The G chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d16-song",
+      "session_id": "gtr-d16",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Knockin'\" intro",
+      "copy": {
+        "setup": "The G chord. song block.",
+        "success": "Nice. The G chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d16-cooldown",
+      "session_id": "gtr-d16",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Knockin'\" intro",
+      "copy": {
+        "setup": "The G chord. cooldown block.",
+        "success": "Nice. The G chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d17-warm_engine",
+      "session_id": "gtr-d17",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Knockin'\" full (G-D-Am-C)",
+      "copy": {
+        "setup": "The C chord. warm engine block.",
+        "success": "Nice. The C chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d17-drill",
+      "session_id": "gtr-d17",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Knockin'\" full (G-D-Am-C)",
+      "copy": {
+        "setup": "The C chord. drill block.",
+        "success": "Nice. The C chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d17-song",
+      "session_id": "gtr-d17",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Knockin'\" full (G-D-Am-C)",
+      "copy": {
+        "setup": "The C chord. song block.",
+        "success": "Nice. The C chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d17-cooldown",
+      "session_id": "gtr-d17",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Knockin'\" full (G-D-Am-C)",
+      "copy": {
+        "setup": "The C chord. cooldown block.",
+        "success": "Nice. The C chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d18-warm_engine",
+      "session_id": "gtr-d18",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d18-drill",
+      "session_id": "gtr-d18",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d18-song",
+      "session_id": "gtr-d18",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d18-cooldown",
+      "session_id": "gtr-d18",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d19-warm_engine",
+      "session_id": "gtr-d19",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "metronome-only",
+      "copy": {
+        "setup": "1-minute changes. warm engine block.",
+        "success": "Nice. 1-minute changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d19-drill",
+      "session_id": "gtr-d19",
+      "instrument": "guitar",
+      "kind": "chord_change_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "metronome-only",
+      "copy": {
+        "setup": "1-minute changes. drill block.",
+        "success": "Nice. 1-minute changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d19-song",
+      "session_id": "gtr-d19",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "metronome-only",
+      "copy": {
+        "setup": "1-minute changes. song block.",
+        "success": "Nice. 1-minute changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d19-cooldown",
+      "session_id": "gtr-d19",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "metronome-only",
+      "copy": {
+        "setup": "1-minute changes. cooldown block.",
+        "success": "Nice. 1-minute changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d20-warm_engine",
+      "session_id": "gtr-d20",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Mad World\" intro",
+      "copy": {
+        "setup": "The Dm chord. warm engine block.",
+        "success": "Nice. The Dm chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d20-drill",
+      "session_id": "gtr-d20",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Mad World\" intro",
+      "copy": {
+        "setup": "The Dm chord. drill block.",
+        "success": "Nice. The Dm chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d20-song",
+      "session_id": "gtr-d20",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Mad World\" intro",
+      "copy": {
+        "setup": "The Dm chord. song block.",
+        "success": "Nice. The Dm chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d20-cooldown",
+      "session_id": "gtr-d20",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Mad World\" intro",
+      "copy": {
+        "setup": "The Dm chord. cooldown block.",
+        "success": "Nice. The Dm chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d21-warm_engine",
+      "session_id": "gtr-d21",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "song of choice",
+      "copy": {
+        "setup": "G to C fast. warm engine block.",
+        "success": "Nice. G to C fast.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d21-drill",
+      "session_id": "gtr-d21",
+      "instrument": "guitar",
+      "kind": "chord_change_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "song of choice",
+      "copy": {
+        "setup": "G to C fast. drill block.",
+        "success": "Nice. G to C fast.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d21-song",
+      "session_id": "gtr-d21",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "song of choice",
+      "copy": {
+        "setup": "G to C fast. song block.",
+        "success": "Nice. G to C fast.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d21-cooldown",
+      "session_id": "gtr-d21",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "song of choice",
+      "copy": {
+        "setup": "G to C fast. cooldown block.",
+        "success": "Nice. G to C fast.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d22-warm_engine",
+      "session_id": "gtr-d22",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "any prior song",
+      "copy": {
+        "setup": "Palm muting. warm engine block.",
+        "success": "Nice. Palm muting.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d22-drill",
+      "session_id": "gtr-d22",
+      "instrument": "guitar",
+      "kind": "strum_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "any prior song",
+      "copy": {
+        "setup": "Palm muting. drill block.",
+        "success": "Nice. Palm muting.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d22-song",
+      "session_id": "gtr-d22",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "any prior song",
+      "copy": {
+        "setup": "Palm muting. song block.",
+        "success": "Nice. Palm muting.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d22-cooldown",
+      "session_id": "gtr-d22",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "any prior song",
+      "copy": {
+        "setup": "Palm muting. cooldown block.",
+        "success": "Nice. Palm muting.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d23-warm_engine",
+      "session_id": "gtr-d23",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d23-drill",
+      "session_id": "gtr-d23",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d23-song",
+      "session_id": "gtr-d23",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d23-cooldown",
+      "session_id": "gtr-d23",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d24-warm_engine",
+      "session_id": "gtr-d24",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "jam over Em loop",
+      "copy": {
+        "setup": "E minor pentatonic pos. 1. warm engine block.",
+        "success": "Nice. E minor pentatonic pos. 1.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d24-drill",
+      "session_id": "gtr-d24",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "jam over Em loop",
+      "copy": {
+        "setup": "E minor pentatonic pos. 1. drill block.",
+        "success": "Nice. E minor pentatonic pos. 1.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d24-song",
+      "session_id": "gtr-d24",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "jam over Em loop",
+      "copy": {
+        "setup": "E minor pentatonic pos. 1. song block.",
+        "success": "Nice. E minor pentatonic pos. 1.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d24-cooldown",
+      "session_id": "gtr-d24",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "jam over Em loop",
+      "copy": {
+        "setup": "E minor pentatonic pos. 1. cooldown block.",
+        "success": "Nice. E minor pentatonic pos. 1.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d25-warm_engine",
+      "session_id": "gtr-d25",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "A-blues loop",
+      "copy": {
+        "setup": "Noodle over the blues. warm engine block.",
+        "success": "Nice. Noodle over the blues.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d25-drill",
+      "session_id": "gtr-d25",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "A-blues loop",
+      "copy": {
+        "setup": "Noodle over the blues. drill block.",
+        "success": "Nice. Noodle over the blues.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d25-song",
+      "session_id": "gtr-d25",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "A-blues loop",
+      "copy": {
+        "setup": "Noodle over the blues. song block.",
+        "success": "Nice. Noodle over the blues.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d25-cooldown",
+      "session_id": "gtr-d25",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "A-blues loop",
+      "copy": {
+        "setup": "Noodle over the blues. cooldown block.",
+        "success": "Nice. Noodle over the blues.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d26-warm_engine",
+      "session_id": "gtr-d26",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Let It Be\" intro",
+      "copy": {
+        "setup": "The F cheat chord. warm engine block.",
+        "success": "Nice. The F cheat chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d26-drill",
+      "session_id": "gtr-d26",
+      "instrument": "guitar",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Let It Be\" intro",
+      "copy": {
+        "setup": "The F cheat chord. drill block.",
+        "success": "Nice. The F cheat chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d26-song",
+      "session_id": "gtr-d26",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Let It Be\" intro",
+      "copy": {
+        "setup": "The F cheat chord. song block.",
+        "success": "Nice. The F cheat chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d26-cooldown",
+      "session_id": "gtr-d26",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Let It Be\" intro",
+      "copy": {
+        "setup": "The F cheat chord. cooldown block.",
+        "success": "Nice. The F cheat chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d27-warm_engine",
+      "session_id": "gtr-d27",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "prior song",
+      "copy": {
+        "setup": "Dynamics: loud and soft. warm engine block.",
+        "success": "Nice. Dynamics: loud and soft.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d27-drill",
+      "session_id": "gtr-d27",
+      "instrument": "guitar",
+      "kind": "strum_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "prior song",
+      "copy": {
+        "setup": "Dynamics: loud and soft. drill block.",
+        "success": "Nice. Dynamics: loud and soft.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d27-song",
+      "session_id": "gtr-d27",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "prior song",
+      "copy": {
+        "setup": "Dynamics: loud and soft. song block.",
+        "success": "Nice. Dynamics: loud and soft.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d27-cooldown",
+      "session_id": "gtr-d27",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "prior song",
+      "copy": {
+        "setup": "Dynamics: loud and soft. cooldown block.",
+        "success": "Nice. Dynamics: loud and soft.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d28-warm_engine",
+      "session_id": "gtr-d28",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d28-drill",
+      "session_id": "gtr-d28",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d28-song",
+      "session_id": "gtr-d28",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d28-cooldown",
+      "session_id": "gtr-d28",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d29-warm_engine",
+      "session_id": "gtr-d29",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user's chosen song",
+      "copy": {
+        "setup": "Prep for showcase. warm engine block.",
+        "success": "Nice. Prep for showcase.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d29-drill",
+      "session_id": "gtr-d29",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user's chosen song",
+      "copy": {
+        "setup": "Prep for showcase. drill block.",
+        "success": "Nice. Prep for showcase.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d29-song",
+      "session_id": "gtr-d29",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user's chosen song",
+      "copy": {
+        "setup": "Prep for showcase. song block.",
+        "success": "Nice. Prep for showcase.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d29-cooldown",
+      "session_id": "gtr-d29",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user's chosen song",
+      "copy": {
+        "setup": "Prep for showcase. cooldown block.",
+        "success": "Nice. Prep for showcase.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d30-warm_engine",
+      "session_id": "gtr-d30",
+      "instrument": "guitar",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user's chosen song",
+      "copy": {
+        "setup": "Showcase day. warm engine block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d30-drill",
+      "session_id": "gtr-d30",
+      "instrument": "guitar",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user's chosen song",
+      "copy": {
+        "setup": "Showcase day. drill block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d30-song",
+      "session_id": "gtr-d30",
+      "instrument": "guitar",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user's chosen song",
+      "copy": {
+        "setup": "Showcase day. song block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "gtr-d30-cooldown",
+      "session_id": "gtr-d30",
+      "instrument": "guitar",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user's chosen song",
+      "copy": {
+        "setup": "Showcase day. cooldown block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    }
+  ]
+}

@@ -5,6 +5,12 @@
 Documents the real curriculum data shapes used across SparkSuite instruments.
 This is a reference for the actual contracts in use, not aspirational architecture.
 
+As of 2026-04-24, the repo also includes a canonical Phase 1 curriculum dataset
+under `curriculum/v2/`. That dataset is intentionally parallel to the legacy
+runtime contracts documented below. It is the source-of-truth for the 30-day
+ADHD-first rebuild plan, while the legacy contracts remain the active app
+runtime until the session shell is migrated.
+
 ---
 
 ## getCurriculumMap() Return Values
