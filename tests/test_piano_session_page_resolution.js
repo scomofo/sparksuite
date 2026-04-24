@@ -125,4 +125,45 @@ test("piano session page ignores malformed BPM values", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("piano session exit routes through a confirmation action", function() {
+  var source = loadJS("js/instruments/piano/pages/session.js");
+  assert.ok(source.indexOf('onclick="act(\\\'pianoConfirmStopSession\\\')"') >= 0);
+  assert.strictEqual(source.indexOf("if(confirm('End session early?'))act('stop_session')"), -1);
+});
+
+test("piano app confirms session stop before dispatching stop_session", function() {
+  global.window = global;
+  global.document = {
+    addEventListener: function() {},
+    removeEventListener: function() {},
+    getElementById: function() { return null; }
+  };
+  global.S = {
+    screen: "session",
+    active: true,
+    detecting: true,
+    sessionStep: "spark",
+    sessionPlan: { num: 1 }
+  };
+  global.T = { sessionStep: 1, session: 1 };
+  global.confirm = function() { return true; };
+  global.eval(loadJS("js/instruments/piano/app.js"));
+
+  pianoAct("pianoConfirmStopSession");
+  assert.strictEqual(S.active, false);
+  assert.strictEqual(S.screen, "home");
+  assert.strictEqual(S.sessionStep, null);
+  assert.strictEqual(S.sessionPlan, null);
+
+  S.active = true;
+  S.screen = "session";
+  S.sessionStep = "spark";
+  S.sessionPlan = { num: 1 };
+  global.confirm = function() { return false; };
+  pianoAct("pianoConfirmStopSession");
+  assert.strictEqual(S.active, true);
+  assert.strictEqual(S.screen, "session");
+  assert.deepStrictEqual(S.sessionPlan, { num: 1 });
+});
+
 if (process.exitCode) process.exit(process.exitCode);

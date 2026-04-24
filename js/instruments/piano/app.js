@@ -1078,6 +1078,12 @@ function act(action, param) {
       }
       break;
 
+    case "pianoConfirmStopSession":
+      if (typeof confirm !== "function" || confirm("End session early?")) {
+        act("stop_session");
+      }
+      break;
+
     case "pause":
       S.paused = !S.paused;
       break;
@@ -1779,6 +1785,12 @@ function act(action, param) {
 
     case "reset":
       resetProgress();
+      break;
+
+    case "pianoConfirmResetProgress":
+      if (typeof confirm !== "function" || confirm("Reset all progress?")) {
+        act("reset");
+      }
       break;
 
     case "undo_reset":

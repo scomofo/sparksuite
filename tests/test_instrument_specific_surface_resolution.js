@@ -206,6 +206,7 @@ test("piano interactive surface tiles expose keyboard handlers", function() {
   assert.ok(toolsSource.indexOf("act(\\'pianoToolTab\\',") >= 0);
   assert.ok(toolsSource.indexOf('role="button" tabindex="0"') >= 0);
   assert.ok(toolsSource.indexOf('onclick="act(\\\'exportProgress\\\')"') >= 0);
+  assert.ok(toolsSource.indexOf('onclick="act(\\\'pianoConfirmResetProgress\\\')"') >= 0);
 });
 
 test("piano practice tab ignores stale curriculum and custom set labels", function() {
@@ -401,6 +402,24 @@ test("bassAct rehydrates an app-id-only active instrument shell", function() {
   bassAct("guidedStart", "1");
   assert.strictEqual(S.guidedPlan.title, "Bass Basics");
   assert.strictEqual(S.screen, SCR.GUIDED);
+});
+
+test("piano app confirms reset before dispatching reset", function() {
+  resetEnvironment("pianospark");
+  var resetCalls = 0;
+  global.document.addEventListener = function() {};
+  global.document.removeEventListener = function() {};
+  global.resetProgress = function() { resetCalls++; };
+  global.confirm = function() { return true; };
+  global.eval(loadJS("js/instruments/piano/app.js"));
+
+  pianoAct("pianoConfirmResetProgress");
+  assert.strictEqual(resetCalls, 1);
+
+  resetCalls = 0;
+  global.confirm = function() { return false; };
+  pianoAct("pianoConfirmResetProgress");
+  assert.strictEqual(resetCalls, 0);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
