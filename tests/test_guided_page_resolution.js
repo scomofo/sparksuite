@@ -769,6 +769,10 @@ test("guided done page acknowledges deep focus landings", function() {
   assert.ok(html.indexOf("color:#6E56B3") >= 0);
   assert.ok(html.indexOf("Good landing") >= 0);
   assert.ok(html.indexOf("Take a breath, a sip of water, or a minute away from the instrument before you jump into the next thing.") >= 0);
+  assert.ok(html.indexOf(">Earned<") >= 0);
+  assert.ok(html.indexOf(">Rhythm<") >= 0);
+  assert.ok(html.indexOf(">In Bank<") >= 0);
+  assert.ok(html.indexOf("background:linear-gradient(135deg,#6E56B308,#F6F3FF)") >= 0);
   assert.ok(html.indexOf("Start Next Session Gently") >= 0);
   assert.ok(html.indexOf("Land at Home") >= 0);
 });

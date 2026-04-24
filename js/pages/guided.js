@@ -210,6 +210,36 @@ function getGuidedDoneCelebrationStyle(extensionCount) {
   return "font-size:50px;animation:bn .35s ease;color:#7C8C6A;filter:saturate(.7)";
 }
 
+function getGuidedDoneStatLabels(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) {
+    return {
+      xp: "XP",
+      streak: "Streak",
+      sessions: "Sessions"
+    };
+  }
+  if (count === 2) {
+    return {
+      xp: "Earned",
+      streak: "Rhythm",
+      sessions: "In Bank"
+    };
+  }
+  return {
+    xp: "Banked",
+    streak: "Steady",
+    sessions: "Session Bank"
+  };
+}
+
+function getGuidedDoneStatsCardStyle(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "border:1px solid #6E56B322;background:linear-gradient(135deg,#6E56B308,#F6F3FF)";
+  return "border:1px solid #7C8C6A22;background:linear-gradient(135deg,#F4F7EF,#FFF8F1)";
+}
+
 function getGuidedDoneNextActionLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count < 2) return "Next Session";
@@ -1224,6 +1254,7 @@ function guidedDonePage() {
   var streak = normalizeGuidedCount(S.streak, 0);
   var completedSessions = Array.isArray(S.completedGuidedSessions) ? S.completedGuidedSessions.length : 0;
   var totalSessions = getGuidedSessionTotalCount();
+  var statLabels = getGuidedDoneStatLabels(extensionCount);
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="' + getGuidedDoneCelebrationStyle(extensionCount) + '">' + getGuidedDoneCelebrationIcon(extensionCount) + '</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">' + escHTML(getGuidedDoneTitle(extensionCount, num)) + '</h2>';
@@ -1237,10 +1268,10 @@ function guidedDonePage() {
     h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDoneRecoveryCopy(extensionCount)) + '</div>';
     h += '</div>';
   }
-  h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/' + totalSessions + '</div><div style="font-size:11px;color:var(--text-muted)">Sessions</div></div>';
+  h += '<div class="card mb20"' + (getGuidedDoneStatsCardStyle(extensionCount) ? ' style="' + getGuidedDoneStatsCardStyle(extensionCount) + '"' : '') + '><div style="display:flex;justify-content:space-around;text-align:center">';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.xp) + '</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.streak) + '</div></div>';
+  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/' + totalSessions + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.sessions) + '</div></div>';
   h += '</div></div>';
   h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount)) + '</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="background:#4ECDC4;color:#fff;margin-top:8px">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
