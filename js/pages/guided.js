@@ -98,6 +98,13 @@ function getGuidedBlockTheme(blockType) {
   };
 }
 
+function getGuidedExtensionLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count <= 0) return "";
+  if (count === 1) return "Extra Focus Time";
+  return "Extended Focus x" + count;
+}
+
 function renderGuidedActiveBlockBadge(blockType) {
   var theme = getGuidedBlockTheme(blockType);
   if (!theme || !theme.label) return "";
@@ -207,6 +214,7 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
       label: label,
       durationSec: normalizeGuidedCount(segment && segment.durationSec, 0),
       extensionSec: normalizeGuidedCount(segment && segment.meta && segment.meta.guidedExtensionSec, 0),
+      extensionCount: normalizeGuidedCount(segment && segment.meta && segment.meta.guidedExtensionCount, 0),
       state: state,
       detail: state === "now"
         ? getGuidedBlockProgressDetail(blockType, guidedStep, guidedNewMovePhase)
@@ -290,8 +298,14 @@ function getGuidedQuickAction(guidedView) {
 
 function getGuidedExtendAction(guidedView) {
   var step = guidedView && guidedView.guidedStep ? guidedView.guidedStep : null;
+  var extensionCount = guidedView && guidedView.shellSummary
+    ? normalizeGuidedCount(guidedView.shellSummary.extensionCount, 0)
+    : 0;
   if (step === "victoryLap") {
-    return { action: "guidedExtendBlock", label: "Keep Going +5 min" };
+    return {
+      action: "guidedExtendBlock",
+      label: extensionCount > 0 ? "Keep Going +5 more min" : "Keep Going +5 min"
+    };
   }
   return null;
 }
@@ -323,6 +337,7 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
       var extensionLabel = block.extensionSec > 0
         ? "+" + Math.max(1, Math.round(block.extensionSec / 60)) + " min extra"
         : "";
+      var extensionThemeLabel = getGuidedExtensionLabel(block.extensionCount);
       var remainingLabel = block.state === "now" && block.remainingSec > 0
         ? formatGuidedDurationLabel(block.remainingSec) + " left"
         : "";
@@ -350,6 +365,9 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
         '<div style="font-size:11px;color:' + (extensionLabel ? stateColor : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(extensionLabel || " ") +
         '</div>' +
+        '<div style="font-size:11px;font-weight:800;color:' + (extensionThemeLabel ? "#A78BFA" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+          escHTML(extensionThemeLabel || " ") +
+        '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
         (quickAction || extendAction || skipAction
           ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' +
@@ -375,6 +393,7 @@ function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
     totalBlocks: blockProgress ? blockProgress.length : 0,
     totalDurationSec: 0,
     extensionSec: 0,
+    extensionCount: 0,
     activeBlockLabel: "",
     activeBlockDurationSec: 0,
     elapsedSec: 0,
@@ -387,6 +406,7 @@ function getGuidedShellSummary(corePlan, blockProgress, runtimeState) {
   if (corePlan && corePlan.context) {
     summary.totalDurationSec = normalizeGuidedCount(corePlan.context.guidedShellDurationSec, 0);
     summary.extensionSec = normalizeGuidedCount(corePlan.context.guidedShellExtensionSec, 0);
+    summary.extensionCount = normalizeGuidedCount(corePlan.context.guidedShellExtensionCount, 0);
   }
   if (!summary.totalDurationSec && blockProgress && blockProgress.length) {
     for (i = 0; i < blockProgress.length; i++) {
@@ -447,6 +467,7 @@ function renderGuidedShellSummary(shellSummary) {
   var elapsedMinutes;
   var remainingLabel;
   var extensionLabel;
+  var extensionThemeLabel;
   var detail = [];
   var progressPercent;
   if (!shellSummary || !shellSummary.totalBlocks) return "";
@@ -466,6 +487,7 @@ function renderGuidedShellSummary(shellSummary) {
   extensionLabel = shellSummary.extensionSec > 0
     ? "+" + Math.max(1, Math.round(shellSummary.extensionSec / 60)) + " min extra focus time"
     : "";
+  extensionThemeLabel = getGuidedExtensionLabel(shellSummary.extensionCount);
   if (shellSummary.activeBlockLabel) detail.push(shellSummary.activeBlockLabel);
   if (blockMinutes > 0) detail.push(blockMinutes + " min block");
   if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
@@ -478,6 +500,7 @@ function renderGuidedShellSummary(shellSummary) {
     '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(detail.join(" • ")) + '</div>' +
     '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML((elapsedMinutes || 0) + "/" + (shellMinutes || 0) + " min through session") + '</div>' +
     '<div style="font-size:11px;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionLabel || " ") + '</div>' +
+    '<div style="font-size:11px;font-weight:800;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionThemeLabel || " ") + '</div>' +
     '<div style="font-size:11px;color:#FF8A5C;margin-top:2px">' + escHTML(remainingLabel) + '</div>' +
     '</div>';
 }
@@ -730,7 +753,10 @@ function renderGuidedActionStatus(guidedView, accentColor) {
   var statusText = "";
   var statusColor = accentColor || "#FF8A5C";
   if (!activeBlock) return "";
-  if ((activeBlock.progressRatio || 0) >= 0.85 || normalizeGuidedCount(activeBlock.remainingSec, 0) <= 20) {
+  if (normalizeGuidedCount(activeBlock.extensionCount, 0) > 0) {
+    statusText = "You're in extra focus time. Stay here as long as it feels useful.";
+    statusColor = "#A78BFA";
+  } else if ((activeBlock.progressRatio || 0) >= 0.85 || normalizeGuidedCount(activeBlock.remainingSec, 0) <= 20) {
     statusText = "Ready to move on when you are.";
   } else if (normalizeGuidedCount(activeBlock.remainingSec, 0) > 0) {
     statusText = "About " + formatGuidedDurationLabel(activeBlock.remainingSec) + " left in this block.";
@@ -933,10 +959,17 @@ function _guidedVictoryLap(plan) {
   var guidedView = getGuidedSessionView();
   var victoryActivity = guidedView.activeActivity;
   var cardTheme = getGuidedCardTheme(guidedView.activeBlockType || "cooldown");
+  var extensionCount = guidedView && guidedView.shellSummary
+    ? normalizeGuidedCount(guidedView.shellSummary.extensionCount, 0)
+    : 0;
+  var extensionThemeLabel = getGuidedExtensionLabel(extensionCount);
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid ' + cardTheme.borderColor + ';background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
-  h += renderGuidedCardHeader("Victory Lap!", "&#127942;", cardTheme);
+  h += renderGuidedCardHeader(extensionCount > 0 ? "Extended Victory Lap!" : "Victory Lap!", "&#127942;", cardTheme);
   h += renderGuidedActivityMeta(victoryActivity, plan.focus_song);
+  if (extensionThemeLabel) {
+    h += '<div style="display:flex;justify-content:center;margin:0 0 12px"><span style="padding:7px 12px;border-radius:999px;background:#A78BFA22;color:#6E56B3;font-size:12px;font-weight:900;letter-spacing:.02em">' + escHTML(extensionThemeLabel) + '</span></div>';
+  }
   h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(victoryText) + '</p>';
   // Show the session's main chord
   var ch = null;
@@ -950,7 +983,7 @@ function _guidedVictoryLap(plan) {
   h += renderGuidedActionStatus(guidedView, cardTheme.titleColor);
   h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
   h += '<button class="btn" onclick="act(\'guidedComplete\')" style="background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:#333;padding:14px 32px;font-size:16px;font-weight:900">' + escHTML(getGuidedAdvanceLabel("victoryLap")) + '</button>';
-  h += '<button class="btn" onclick="act(\'guidedExtendBlock\')" style="background:transparent;color:' + cardTheme.titleColor + ';padding:14px 24px;font-size:14px;font-weight:900;border:1px solid ' + cardTheme.titleColor + '">Keep Going +5 min</button>';
+  h += '<button class="btn" onclick="act(\'guidedExtendBlock\')" style="background:transparent;color:' + cardTheme.titleColor + ';padding:14px 24px;font-size:14px;font-weight:900;border:1px solid ' + cardTheme.titleColor + '">' + escHTML(extensionCount > 0 ? "Keep Going +5 more min" : "Keep Going +5 min") + '</button>';
   h += '</div>';
   h += '</div>';
   return h;
