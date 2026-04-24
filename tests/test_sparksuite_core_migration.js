@@ -2765,6 +2765,7 @@ test("SparkCore can build and apply calibration requests from runtime state", fu
 test("orchestrator requests can resolve sparkCore from the global binding", function() {
   global.window = {};
   var syncedCalibration = null;
+  var calls = [];
   global.sparkCore = {
     openPerformanceEditor: function(chart, options) {
       return {
@@ -2785,6 +2786,26 @@ test("orchestrator requests can resolve sparkCore from the global binding", func
         type: "session",
         options: options
       };
+    },
+    openLegacyPracticeSession: function(options) {
+      calls.push({ type: "legacy_session", options: options });
+      return { type: "legacy_session", options: options };
+    },
+    syncLegacyPracticeRuntimeState: function(action, options) {
+      calls.push({ type: "legacy_practice_sync", action: action, options: options });
+      return { type: "legacy_practice_sync", action: action, options: options };
+    },
+    openLegacyDailyChallenge: function(options) {
+      calls.push({ type: "daily_open", options: options });
+      return { type: "daily_open", options: options };
+    },
+    syncTunerRuntimeState: function(options) {
+      calls.push({ type: "tuner_sync", options: options });
+      return { type: "tuner_sync", options: options };
+    },
+    openLegacyRhythmGame: function(options) {
+      calls.push({ type: "rhythm_open", options: options });
+      return { type: "rhythm_open", options: options };
     }
   };
   global.eval(loadJS("js/orchestrator-requests.js"));
@@ -2797,6 +2818,11 @@ test("orchestrator requests can resolve sparkCore from the global binding", func
     micOffsetMs: 9
   });
   var practicePlanRequest = openPracticePlanScreenRequest({ forceRebuild: true });
+  var legacySessionRequest = openLegacyPracticeSessionRequest({ mode: "chord", chordName: "C" });
+  var practiceSyncRequest = syncLegacyPracticeRuntimeRequest("tick", { remainingSec: 42 });
+  var dailyRequest = openLegacyDailyChallengeRequest({ challengeId: "daily_1" });
+  var tunerRequest = syncTunerRuntimeRequest({ tunerNote: "E" });
+  var rhythmRequest = openLegacyRhythmGameRequest({ mode: "strum" });
 
   assert.strictEqual(editorRequest.type, "editor");
   assert.strictEqual(editorRequest.chart.id, "chart_1");
@@ -2809,6 +2835,18 @@ test("orchestrator requests can resolve sparkCore from the global binding", func
   assert.strictEqual(practicePlanRequest.type, "session");
   assert.strictEqual(practicePlanRequest.options.flow, SparkSessionTypes.FLOW_DAILY_PRACTICE);
   assert.strictEqual(practicePlanRequest.options.forceRebuild, true);
+  assert.strictEqual(legacySessionRequest.type, "legacy_session");
+  assert.strictEqual(legacySessionRequest.options.chordName, "C");
+  assert.strictEqual(practiceSyncRequest.type, "legacy_practice_sync");
+  assert.strictEqual(practiceSyncRequest.action, "tick");
+  assert.strictEqual(practiceSyncRequest.options.remainingSec, 42);
+  assert.strictEqual(dailyRequest.type, "daily_open");
+  assert.strictEqual(dailyRequest.options.challengeId, "daily_1");
+  assert.strictEqual(tunerRequest.type, "tuner_sync");
+  assert.strictEqual(tunerRequest.options.tunerNote, "E");
+  assert.strictEqual(rhythmRequest.type, "rhythm_open");
+  assert.strictEqual(rhythmRequest.options.mode, "strum");
+  assert.ok(calls.length >= 5);
 });
 
 test("SparkCore can build performance completion requests from runtime state", function() {

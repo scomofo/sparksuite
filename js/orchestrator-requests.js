@@ -328,130 +328,148 @@ function buildModuleExerciseRhythmPayload(options) {
 }
 
 function openLegacyPracticeSessionRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeSession === "function") {
-    return window.sparkCore.openLegacyPracticeSession(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openLegacyPracticeSession === "function") {
+    return core.openLegacyPracticeSession(options || {});
   }
   return null;
 }
 
 function openLegacyPracticeDrillRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openLegacyPracticeDrill === "function") {
-    return window.sparkCore.openLegacyPracticeDrill(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openLegacyPracticeDrill === "function") {
+    return core.openLegacyPracticeDrill(options || {});
   }
   return null;
 }
 
 function syncLegacyPracticeRuntimeRequest(action, options) {
-  if (window.sparkCore && typeof window.sparkCore.syncLegacyPracticeRuntimeState === "function") {
-    return window.sparkCore.syncLegacyPracticeRuntimeState(action, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncLegacyPracticeRuntimeState === "function") {
+    return core.syncLegacyPracticeRuntimeState(action, options || {});
   }
   return null;
 }
 
 function repeatLegacyPracticeSessionRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.repeatLegacyPracticeSession === "function") {
-    return window.sparkCore.repeatLegacyPracticeSession(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.repeatLegacyPracticeSession === "function") {
+    return core.repeatLegacyPracticeSession(options || {});
   }
   return openLegacyPracticeSessionRequest(options || {});
 }
 
 function repeatLegacyPracticeDrillRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.repeatLegacyPracticeDrill === "function") {
-    return window.sparkCore.repeatLegacyPracticeDrill(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.repeatLegacyPracticeDrill === "function") {
+    return core.repeatLegacyPracticeDrill(options || {});
   }
   return openLegacyPracticeDrillRequest(options || {});
 }
 
 function openLegacyDailyChallengeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openLegacyDailyChallenge === "function") {
-    return window.sparkCore.openLegacyDailyChallenge(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openLegacyDailyChallenge === "function") {
+    return core.openLegacyDailyChallenge(options || {});
   }
   return null;
 }
 
 function syncLegacyDailyRuntimeRequest(action, options) {
-  if (window.sparkCore && typeof window.sparkCore.syncLegacyDailyRuntimeState === "function") {
-    return window.sparkCore.syncLegacyDailyRuntimeState(action, options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncLegacyDailyRuntimeState === "function") {
+    return core.syncLegacyDailyRuntimeState(action, options || {});
   }
   return null;
 }
 
 function completeLegacyDailyChallengeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.completeLegacyDailyChallenge === "function") {
-    return window.sparkCore.completeLegacyDailyChallenge(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.completeLegacyDailyChallenge === "function") {
+    return core.completeLegacyDailyChallenge(options || {});
   }
   return null;
 }
 
 function openLegacyRunnerGameRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openLegacyRunnerGame === "function") {
-    return window.sparkCore.openLegacyRunnerGame(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openLegacyRunnerGame === "function") {
+    return core.openLegacyRunnerGame(options || {});
   }
   return null;
 }
 
 function syncLegacyRunnerRuntimeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.syncLegacyRunnerRuntimeState === "function") {
-    return window.sparkCore.syncLegacyRunnerRuntimeState(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncLegacyRunnerRuntimeState === "function") {
+    return core.syncLegacyRunnerRuntimeState(options || {});
   }
   return null;
 }
 
 function completeLegacyRunnerGameRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.completeLegacyRunnerGame === "function") {
-    return window.sparkCore.completeLegacyRunnerGame(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.completeLegacyRunnerGame === "function") {
+    return core.completeLegacyRunnerGame(options || {});
   }
   return null;
 }
 
 function syncTunerRuntimeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.syncTunerRuntimeState === "function") {
-    return window.sparkCore.syncTunerRuntimeState(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncTunerRuntimeState === "function") {
+    return core.syncTunerRuntimeState(options || {});
   }
   return null;
 }
 
 function syncAudioInputRuntimeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.syncAudioInputRuntimeState === "function") {
-    return window.sparkCore.syncAudioInputRuntimeState(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncAudioInputRuntimeState === "function") {
+    return core.syncAudioInputRuntimeState(options || {});
   }
   return null;
 }
 
 function syncMetronomeRuntimeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.syncMetronomeRuntimeState === "function") {
-    return window.sparkCore.syncMetronomeRuntimeState(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncMetronomeRuntimeState === "function") {
+    return core.syncMetronomeRuntimeState(options || {});
   }
   return null;
 }
 
 function openLegacyRhythmGameRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.openLegacyRhythmGame === "function") {
-    return window.sparkCore.openLegacyRhythmGame(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.openLegacyRhythmGame === "function") {
+    return core.openLegacyRhythmGame(options || {});
   }
   return null;
 }
 
 function syncLegacyRhythmRuntimeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.syncLegacyRhythmRuntimeState === "function") {
-    return window.sparkCore.syncLegacyRhythmRuntimeState(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.syncLegacyRhythmRuntimeState === "function") {
+    return core.syncLegacyRhythmRuntimeState(options || {});
   }
   return null;
 }
 
 function completeLegacyRhythmGameRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.completeLegacyRhythmGame === "function") {
-    return window.sparkCore.completeLegacyRhythmGame(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.completeLegacyRhythmGame === "function") {
+    return core.completeLegacyRhythmGame(options || {});
   }
   return null;
 }
 
 function returnFromLegacyDailyChallengeRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.returnFromLegacyDailyChallenge === "function") {
-    return window.sparkCore.returnFromLegacyDailyChallenge(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.returnFromLegacyDailyChallenge === "function") {
+    return core.returnFromLegacyDailyChallenge(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.updateRuntimeState === "function") {
-    return window.sparkCore.updateRuntimeState({
+  if (core && typeof core.updateRuntimeState === "function") {
+    return core.updateRuntimeState({
       activeFlow: "legacy_daily_challenge",
       activeScreen: "home",
       activeTab: options && options.activeTab ? options.activeTab : "daily",
@@ -463,11 +481,12 @@ function returnFromLegacyDailyChallengeRequest(options) {
 }
 
 function completeDailyPracticePlanRequest(options) {
-  if (window.sparkCore && typeof window.sparkCore.completeDailyPracticePlan === "function") {
-    return window.sparkCore.completeDailyPracticePlan(options || {});
+  var core = getOrchestratorCore();
+  if (core && typeof core.completeDailyPracticePlan === "function") {
+    return core.completeDailyPracticePlan(options || {});
   }
-  if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-    return window.sparkCore.completeSession({
+  if (core && typeof core.completeSession === "function") {
+    return core.completeSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
       markPlanComplete: true,
       itemId: options && Object.prototype.hasOwnProperty.call(options, "itemId") ? options.itemId : undefined
