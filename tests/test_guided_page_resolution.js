@@ -488,6 +488,7 @@ test("guided page header reflects non-drill block themes", function() {
   assert.ok(cooldownHtml.indexOf("+5 min extra focus time") >= 0);
   assert.ok(cooldownHtml.indexOf("Extended Victory Lap!") >= 0);
   assert.ok(cooldownHtml.indexOf("Extra Focus Time") >= 0);
+  assert.ok(cooldownHtml.indexOf("Focus Stretch x1") >= 0);
   assert.ok(cooldownHtml.indexOf("You're in extra focus time. Stay here as long as it feels useful.") >= 0);
   assert.ok(cooldownHtml.indexOf("guidedSkipBlock") === -1);
 });
