@@ -478,7 +478,7 @@ function renderPracticeGuidedSessionCard(D) {
   if (gs.newElement) {
     h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 10px">New move: ' + escHTML(gs.newElement) + '</div>';
   }
-  h += '<button onclick="act(\'start_guided_session\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">' + escHTML(buttonLabel) + ' &#9654;</button>';
+  h += '<button onclick="act(\'' + (gs.isActive ? 'resume_guided_session' : 'start_guided_session') + '\')" style="background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 28px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">' + escHTML(buttonLabel) + ' &#9654;</button>';
   h += '</div>';
   return h;
 }

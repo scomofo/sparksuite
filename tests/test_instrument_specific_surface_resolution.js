@@ -504,6 +504,7 @@ test("practice guided session card shows resume state for an active guided runti
   assert.ok(html.indexOf("1/30 done") >= 0);
   assert.ok(html.indexOf("In progress - shadow") >= 0);
   assert.ok(html.indexOf("Resume 10-Min Session") >= 0);
+  assert.ok(html.indexOf("act('resume_guided_session')") >= 0);
 });
 
 test("practice curriculum v2 card shows track progress instead of duplicating the launcher hook", function() {
