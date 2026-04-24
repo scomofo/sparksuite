@@ -189,6 +189,73 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
   assert.ok(songHtml.indexOf(">song<") >= 0);
 });
 
+test("guided page shows block progress from the active v2 session plan", function() {
+  S.guidedPlan = {
+    id: "gtr-d01",
+    num: 1,
+    title: "First sound in 2 minutes",
+    level: 1,
+    bpm: 80,
+    spark: { text: "Warm up." },
+    newMove: { text: "Try the drill.", chord: "C" },
+    songSlice: { text: "Play the song." },
+    victoryLap: { text: "Free play." }
+  };
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan },
+        segments: [
+          {
+            id: "gtr-d01_warm_engine",
+            label: "Warm Engine",
+            durationSec: 90,
+            completed: true,
+            meta: { guidedBlockType: "warm_engine" }
+          },
+          {
+            id: "gtr-d01_drill",
+            label: "Drill",
+            durationSec: 180,
+            completed: false,
+            meta: { guidedBlockType: "drill" }
+          },
+          {
+            id: "gtr-d01_song",
+            label: "Song Slice",
+            durationSec: 240,
+            completed: false,
+            meta: { guidedBlockType: "song" }
+          },
+          {
+            id: "gtr-d01_cooldown",
+            label: "Cooldown",
+            durationSec: 90,
+            completed: false,
+            meta: { guidedBlockType: "cooldown" }
+          }
+        ]
+      },
+      runtimeState: {
+        guidedStep: "newMove",
+        activeSegmentId: "gtr-d01_drill"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+
+  var html = guidedSessionPage();
+  assert.ok(html.indexOf("Warm Engine") >= 0);
+  assert.ok(html.indexOf("Song Slice") >= 0);
+  assert.ok(html.indexOf(">done<") >= 0);
+  assert.ok(html.indexOf(">now<") >= 0);
+  assert.ok(html.indexOf(">up next<") >= 0);
+  assert.ok(html.indexOf(">2 min<") >= 0);
+  assert.ok(html.indexOf(">3 min<") >= 0);
+  assert.ok(html.indexOf(">4 min<") >= 0);
+});
+
 test("guided song slice ignores stale cached copy", function() {
   S.guidedPlan.songSlice = {
     text: "undefined",
