@@ -1,4 +1,8 @@
 (function() {
+  function getPracticeActionCore() {
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
   function handlePracticeAction(a, v) {
     if (a === "practiceStartItem" && typeof startPracticeItem === "function") {
       startPracticeItem(v);
@@ -27,16 +31,18 @@
     }
 
     if (a === "completeSessionHome") {
-      if (window.sparkCore && typeof window.sparkCore.returnFromLegacyPracticeFamily === "function") {
-        window.sparkCore.returnFromLegacyPracticeFamily({ activeTab: "practice" });
+      var core = getPracticeActionCore();
+      if (core && typeof core.returnFromLegacyPracticeFamily === "function") {
+        core.returnFromLegacyPracticeFamily({ activeTab: "practice" });
       }
       act("tab", "practice");
       return true;
     }
 
     if (a === "drillDoneHome") {
-      if (window.sparkCore && typeof window.sparkCore.returnFromLegacyPracticeFamily === "function") {
-        window.sparkCore.returnFromLegacyPracticeFamily({ activeTab: "practice" });
+      var core = getPracticeActionCore();
+      if (core && typeof core.returnFromLegacyPracticeFamily === "function") {
+        core.returnFromLegacyPracticeFamily({ activeTab: "practice" });
       }
       act("tab", "drill");
       return true;
@@ -133,8 +139,9 @@
       var nextEarTrainTotal = (S.earTrainTotal || 0) + 1;
       var nextEarTrainScore = (S.earTrainScore || 0) + (earTrainOk ? 1 : 0);
       var nextEarTrainStreak = earTrainOk ? ((S.earTrainStreak || 0) + 1) : 0;
-      if (window.sparkCore && typeof window.sparkCore.syncLegacyEarTrainingRuntimeState === "function") {
-        window.sparkCore.syncLegacyEarTrainingRuntimeState({
+      var core = getPracticeActionCore();
+      if (core && typeof core.syncLegacyEarTrainingRuntimeState === "function") {
+        core.syncLegacyEarTrainingRuntimeState({
           question: S.earTrainQ,
           options: S.earTrainOpts,
           answer: v,

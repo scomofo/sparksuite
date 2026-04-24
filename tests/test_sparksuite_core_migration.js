@@ -1787,6 +1787,92 @@ test("timer helpers can resolve sparkCore from the global binding", function() {
   assert.strictEqual(syncedQuiz.answer, null);
 });
 
+test("action families can resolve sparkCore from the global binding", function() {
+  var strumOpened = null;
+  var strumSynced = [];
+  var returnedPractice = null;
+  var earTrainingSynced = null;
+  var shellUpdates = [];
+  global.window = {};
+  global.sparkCore = {
+    openLegacyStrumPattern: function(payload) {
+      strumOpened = payload;
+      return payload;
+    },
+    syncLegacyStrumRuntimeState: function(payload) {
+      strumSynced.push(payload);
+      return payload;
+    },
+    returnFromLegacyPracticeFamily: function(payload) {
+      returnedPractice = payload;
+      return payload;
+    },
+    syncLegacyEarTrainingRuntimeState: function(payload) {
+      earTrainingSynced = payload;
+      return payload;
+    },
+    updateRuntimeState: function(payload) {
+      shellUpdates.push(payload);
+      return payload;
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.saveState = function() {};
+  global.stopAllTimers = function() {};
+  global.fetchCommunity = function() {};
+  global.act = function() {};
+  global.snd = function() {};
+  global.strumChord = function() {};
+  global.setInterval = function() { return 1; };
+  global.clearInterval = function() {};
+  global.setTimeout = function() { return 1; };
+  global.T = { strum: null };
+  global.SCR = { HOME: "home", STRUM: "strum" };
+  global.TAB = { SONGS: "songs" };
+  global.STRUM_PATTERNS = [
+    { name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U"] }
+  ];
+  S.level = 1;
+  S.strumActive = false;
+  S.selectedStrum = STRUM_PATTERNS[0];
+  S.currentChord = { name: "C Major" };
+  S.earTrainQ = "C Major";
+  S.earTrainOpts = ["C Major", "G Major", "A Minor"];
+  S.earTrainAns = null;
+  S.earTrainScore = 1;
+  S.earTrainTotal = 2;
+  S.earTrainStreak = 1;
+  S.tab = "practice";
+  S.songsSubTab = "library";
+
+  eval(loadJS("js/actions/media_family.js"));
+  eval(loadJS("js/actions/practice_family.js"));
+  eval(loadJS("js/actions/shell_family.js"));
+
+  __actionFamilies.media("openStrum", "Island Groove");
+  __actionFamilies.media("toggleStrum");
+  __actionFamilies.practice("completeSessionHome");
+  __actionFamilies.practice("answerEarTrain", "G Major");
+  __actionFamilies.shell("tab", "songs");
+
+  assert.ok(strumOpened);
+  assert.strictEqual(strumOpened.pattern.name, "Island Groove");
+  assert.strictEqual(strumSynced[0].active, true);
+  assert.strictEqual(strumSynced[0].beat, 0);
+  assert.ok(returnedPractice);
+  assert.strictEqual(returnedPractice.activeTab, "practice");
+  assert.ok(earTrainingSynced);
+  assert.strictEqual(earTrainingSynced.answer, "G Major");
+  assert.strictEqual(earTrainingSynced.total, 3);
+  assert.strictEqual(shellUpdates[0].activeScreen, "home");
+  assert.strictEqual(shellUpdates[0].activeTab, "songs");
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
