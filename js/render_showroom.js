@@ -8,8 +8,10 @@ function _renderShowroomOverride(){
       "lesson":          typeof SparkLesson          !== "undefined" && SparkLesson.render,
       "path":            typeof SparkPath            !== "undefined" && SparkPath.render,
       "profile":         typeof SparkProfileScreen   !== "undefined" && SparkProfileScreen.render,
+      "leaderboard":     typeof SparkLeaderboard     !== "undefined" && SparkLeaderboard.render,
       "library":         typeof SparkSongLibrary     !== "undefined" && SparkSongLibrary.render,
       "tuner":           typeof SparkTuner           !== "undefined" && SparkTuner.render,
+      "tools":           typeof SparkTuner           !== "undefined" && SparkTuner.render,
       "song-details":    typeof SparkSongDetails     !== "undefined" && SparkSongDetails.render,
       "practice-metro":  typeof SparkPracticeMetro   !== "undefined" && SparkPracticeMetro.render,
       "session-summary": typeof SparkSessionSummary  !== "undefined" && SparkSessionSummary.render
