@@ -1,5 +1,9 @@
 (function(){
 
+  function getPracticeCore(){
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
   function currentInstrumentType(){
     var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive
       ? SparkInstruments.getActive()
@@ -18,9 +22,10 @@
       && S.practicePlanDate === today
       && (!currentInstrument || S.practicePlanInstrument === currentInstrument);
 
-    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+    var core = getPracticeCore();
+    if(core && typeof core.startSession === "function"){
       var forceRebuild = !!opts.forceRebuild || !cacheValid;
-      var plan = window.sparkCore.startSession({
+      var plan = core.startSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         forceRebuild: forceRebuild
       });
@@ -37,8 +42,9 @@
   }
 
   function buildPracticePlan(){
-    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
-      var plan = window.sparkCore.startSession({
+    var core = getPracticeCore();
+    if(core && typeof core.startSession === "function"){
+      var plan = core.startSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         forceRebuild: true
       });
@@ -101,7 +107,8 @@
   }
 
   function completePracticePlan(){
-    if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
+    var core = getPracticeCore();
+    if(core && typeof core.completeSession === "function"){
       var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
       if (activeInstrument && !activeInstrument.instrument && typeof SparkInstruments.getAll === "function") {
         var activeId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
@@ -114,7 +121,7 @@
           }
         }
       }
-      window.sparkCore.completeSession({
+      core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         markPlanComplete: true
       });
