@@ -23,6 +23,7 @@ function resetEnvironment() {
   eval(loadJS("js/instruments/ukulele/register.js"));
   eval(loadJS("js/instruments/guitar/register.js"));
   eval(loadJS("js/curriculum/curriculum_engine.js"));
+  eval(loadJS("js/sparksuite/bridges/curriculum_bridge.js"));
 }
 
 function test(name, fn) {
@@ -116,6 +117,17 @@ test("getLessonById resolves curriculum v2 lessons when legacy registry is empty
   assert.ok(lesson, "Expected curriculum v2 lesson lookup to resolve");
   assert.strictEqual(lesson.id, "gtr-d01");
   assert.strictEqual(lesson.num, 1);
+});
+
+test("SparkCurriculumBridge.getNextLesson respects curriculum v2 completion state", function() {
+  S.curriculumV2CompletedSessions.guitar = ["gtr-d01"];
+
+  var nextLessonId = SparkCurriculumBridge.getNextLesson({
+    instrument: "guitar",
+    curriculumMap: SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar")
+  });
+
+  assert.strictEqual(nextLessonId, "gtr-d02");
 });
 
 if (process.exitCode) process.exit(process.exitCode);
