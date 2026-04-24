@@ -55,7 +55,8 @@
     return nextLegacy.title || null;
   }
 
-  function isLessonUnlocked(lessonId) {
+  function isLessonUnlocked(lessonId, context) {
+    context = context || {};
     if (typeof checkLessonUnlockRules !== "function") return true;
     return checkLessonUnlockRules(lessonId);
   }
