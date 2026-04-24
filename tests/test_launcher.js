@@ -349,6 +349,8 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('"syllabus":        function(){ S._showroomOverride = "syllabus"; }') >= 0);
   assert.ok(showroomSource.indexOf(' : "act(\\\'showroomStartPerf\\\')"') >= 0 || showroomSource.indexOf(' : "act(\'showroomStartPerf\')"') >= 0);
   assert.ok(showroomSource.indexOf('var signInAction = opts.signInAction || "act(\\\'showroomOpenSignIn\\\')"') >= 0 || showroomSource.indexOf('var signInAction = opts.signInAction || "act(\'showroomOpenSignIn\')"') >= 0);
+  assert.ok(showroomSource.indexOf('<button type="button" class="showroom-avatar" onclick="') >= 0);
+  assert.ok(showroomSource.indexOf('<button type="button" class="showroom-syllabus-avatar" onclick="') >= 0);
   assert.ok(showroomSource.indexOf("act(\\'showroomStartPerf\\'" ) >= 0 || showroomSource.indexOf("act('showroomStartPerf'") >= 0);
   assert.ok(showroomSource.indexOf("sampleInstrumentMap") >= 0);
   assert.ok(showroomSource.indexOf('window.SparkLeaderboard') >= 0);

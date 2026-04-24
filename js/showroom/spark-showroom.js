@@ -1818,7 +1818,7 @@
          + '<div class="showroom-appbar-left">'
          + '<button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
          + '<h1 class="showroom-appbar-title">Ember Studio</h1></div>'
-         + '<div class="showroom-appbar-right"><div class="showroom-avatar" onclick="' + nav("profile") + '"><div class="showroom-avatar-inner">A</div></div></div>'
+        + '<div class="showroom-appbar-right"><button type="button" class="showroom-avatar" onclick="' + nav("profile") + '" aria-label="Profile"><div class="showroom-avatar-inner">A</div></button></div>'
          + '</header>'
          + '<main class="showroom-canvas">'
          + '<section class="showroom-course-hero">'
@@ -1976,9 +1976,9 @@
          +     '</div>'
          // CSP note: Stitch source used an external avatar image URL. Replaced
          // with an initial-letter bubble so the Showroom stays same-origin.
-         +     '<div class="showroom-syllabus-avatar" onclick="' + nav("profile") + '" aria-label="Profile">'
-         +       '<span>' + escHtml(userInitial) + '</span>'
-         +     '</div>'
+        +     '<button type="button" class="showroom-syllabus-avatar" onclick="' + nav("profile") + '" aria-label="Profile">'
+        +       '<span>' + escHtml(userInitial) + '</span>'
+        +     '</button>'
          +   '</header>'
          +   '<main class="showroom-syllabus-main">'
          +     '<section class="showroom-syllabus-hero">'
