@@ -22,9 +22,15 @@ function getSessionPageInstrument(){
   return inst;
 }
 
+function getSessionCoreView(){
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 function getSparkCoreRuntimeState(){
-  if (!window.sparkCore || typeof window.sparkCore.getActiveSessionView !== "function") return null;
-  var view = window.sparkCore.getActiveSessionView();
+  var view = getSessionCoreView();
   return view && view.runtimeState ? view.runtimeState : null;
 }
 
@@ -372,11 +378,8 @@ function dailyPage(){
 function quizPage(){
   var inst = getSessionPageInstrument();
   var UI = inst && inst.ui ? inst.ui : {};
-  var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
-  }
+  var view = getSessionCoreView();
+  var runtime = view && view.runtimeState ? view.runtimeState : null;
   var quizQuestion = S.quizQ || (runtime && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : null);
   var quizOptions = Array.isArray(S.quizOpts) && S.quizOpts.length ? S.quizOpts : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
   var quizAnswer = typeof S.quizAns === "string" ? S.quizAns : (runtime ? runtime.legacyQuizAnswer : null);
@@ -396,11 +399,8 @@ function quizPage(){
 }
 
 function strumDetailPage(){
-  var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
-  }
+  var view = getSessionCoreView();
+  var runtime = view && view.runtimeState ? view.runtimeState : null;
   var sp = S.selectedStrum || (runtime && runtime.legacyStrumPattern ? runtime.legacyStrumPattern : null); if(!sp)return '';
   var strumActive = typeof S.strumActive === "boolean" ? S.strumActive : !!(runtime && runtime.legacyStrumActive);
   var curBeat = strumActive
@@ -424,9 +424,7 @@ function songDetailPage(){
   var inst = getSessionPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getSessionCoreView();
   var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var sg = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : S.selectedSong;
   if(!sg)return '';
@@ -451,9 +449,7 @@ function songDetailPage(){
 }
 
 function songDonePage(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getSessionCoreView();
   var songRuntime = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var runtimeSong = songRuntime && songRuntime.songSessionData ? songRuntime.songSessionData : null;
   var selectedSong = S.selectedSong || null;
