@@ -1,8 +1,19 @@
 (function(){
 
+  function getPerformanceRecommendationsCore(){
+    if(typeof window !== "undefined" && window.sparkCore){
+      return window.sparkCore;
+    }
+    if(typeof sparkCore !== "undefined"){
+      return sparkCore;
+    }
+    return null;
+  }
+
   function syncPerformanceDailyStateWithCore(challenge, isComplete){
-    if(!window.sparkCore||typeof window.sparkCore.syncPerformanceDailyChallengeState!=="function")return;
-    window.sparkCore.syncPerformanceDailyChallengeState(challenge||null, !!isComplete);
+    var core = getPerformanceRecommendationsCore();
+    if(!core || typeof core.syncPerformanceDailyChallengeState!=="function")return;
+    core.syncPerformanceDailyChallengeState(challenge||null, !!isComplete);
   }
 
   function getTechniqueAccuracy(bucket){
