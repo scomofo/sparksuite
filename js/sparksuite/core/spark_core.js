@@ -153,6 +153,9 @@
       contentLastLoadStatus: "idle",
       guidedStep: null,
       guidedNewMovePhase: null,
+      guidedActivityId: null,
+      guidedActivityKind: null,
+      guidedBlockType: null,
       performanceChartId: null,
       performanceSongData: null,
       performanceSongIndex: null,
@@ -254,6 +257,28 @@
     if (flow === "legacy_practice_session") return "session";
     if (flow === "legacy_practice_drill") return "drill";
     return flow || null;
+  };
+
+  SparkCore.prototype.resolveGuidedRuntimeActivity = function(step, plan) {
+    var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
+    var blockActivities = guidedPlan && guidedPlan.blockActivities ? guidedPlan.blockActivities : null;
+    var activity = null;
+    if (!blockActivities) {
+      return {
+        guidedActivityId: null,
+        guidedActivityKind: null,
+        guidedBlockType: null
+      };
+    }
+    if (step === "spark") activity = blockActivities.warm_engine || null;
+    else if (step === "review" || step === "newMove") activity = blockActivities.drill || null;
+    else if (step === "songSlice") activity = blockActivities.song || null;
+    else if (step === "victoryLap") activity = blockActivities.cooldown || null;
+    return {
+      guidedActivityId: activity && activity.id ? activity.id : null,
+      guidedActivityKind: activity && activity.kind ? activity.kind : null,
+      guidedBlockType: activity && activity.block_type ? activity.block_type : null
+    };
   };
 
   SparkCore.prototype.startSession = function(input) {
@@ -375,6 +400,9 @@
     }
     this.currentPlan = plan;
     this.storage.setCurrentPlanId(plan.id);
+    var guidedRuntimeActivity = plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION
+      ? this.resolveGuidedRuntimeActivity("spark", plan)
+      : { guidedActivityId: null, guidedActivityKind: null, guidedBlockType: null };
     this.updateRuntimeState({
       activeFlow: plan.flow,
       activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
@@ -385,6 +413,9 @@
       activeTab: this.runtimeState.activeTab,
       guidedStep: plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION ? "spark" : null,
       guidedNewMovePhase: null,
+      guidedActivityId: guidedRuntimeActivity.guidedActivityId,
+      guidedActivityKind: guidedRuntimeActivity.guidedActivityKind,
+      guidedBlockType: guidedRuntimeActivity.guidedBlockType,
       performanceChartId: null,
       performanceSongData: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.songData || null) : null,
       performanceSongIndex: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.songIndex != null ? plan.context.performanceSong.songIndex : null) : null,
@@ -1668,6 +1699,9 @@
       activeTab: this.runtimeState.activeTab,
       guidedStep: result.planCompleted ? null : this.runtimeState.guidedStep,
       guidedNewMovePhase: result.planCompleted ? null : this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: result.planCompleted ? null : this.runtimeState.guidedActivityId,
+      guidedActivityKind: result.planCompleted ? null : this.runtimeState.guidedActivityKind,
+      guidedBlockType: result.planCompleted ? null : this.runtimeState.guidedBlockType,
       performanceChartId: result.planCompleted ? this.runtimeState.performanceChartId : this.runtimeState.performanceChartId,
       performanceSongData: this.runtimeState.performanceSongData,
       performanceSongIndex: this.runtimeState.performanceSongIndex,
@@ -2363,15 +2397,26 @@
 
   SparkCore.prototype.syncGuidedRuntimeState = function(patch) {
     patch = patch || {};
+    var nextGuidedStep = Object.prototype.hasOwnProperty.call(patch, "guidedStep")
+      ? patch.guidedStep
+      : this.runtimeState.guidedStep;
+    var guidedActivity = this.resolveGuidedRuntimeActivity(nextGuidedStep, this.currentPlan);
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
       activeScreen: patch.activeScreen || this.runtimeState.activeScreen || "guided_session",
-      guidedStep: Object.prototype.hasOwnProperty.call(patch, "guidedStep")
-        ? patch.guidedStep
-        : this.runtimeState.guidedStep,
+      guidedStep: nextGuidedStep,
       guidedNewMovePhase: Object.prototype.hasOwnProperty.call(patch, "guidedNewMovePhase")
         ? patch.guidedNewMovePhase
         : this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: Object.prototype.hasOwnProperty.call(patch, "guidedActivityId")
+        ? patch.guidedActivityId
+        : guidedActivity.guidedActivityId,
+      guidedActivityKind: Object.prototype.hasOwnProperty.call(patch, "guidedActivityKind")
+        ? patch.guidedActivityKind
+        : guidedActivity.guidedActivityKind,
+      guidedBlockType: Object.prototype.hasOwnProperty.call(patch, "guidedBlockType")
+        ? patch.guidedBlockType
+        : guidedActivity.guidedBlockType,
       transport: patch.transport || this.runtimeState.transport
     });
   };
@@ -2385,6 +2430,9 @@
       activeTab: this.runtimeState.activeTab || "practice",
       guidedStep: this.runtimeState.guidedStep,
       guidedNewMovePhase: this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: this.runtimeState.guidedActivityId,
+      guidedActivityKind: this.runtimeState.guidedActivityKind,
+      guidedBlockType: this.runtimeState.guidedBlockType,
       transport: { status: "idle", positionMs: 0 }
     };
 
@@ -2393,10 +2441,16 @@
       request.activeTab = "practice";
       request.guidedStep = null;
       request.guidedNewMovePhase = null;
+      request.guidedActivityId = null;
+      request.guidedActivityKind = null;
+      request.guidedBlockType = null;
     } else if (request.target === "guided_done") {
       request.activeScreen = "guided_done";
       request.guidedStep = null;
       request.guidedNewMovePhase = null;
+      request.guidedActivityId = null;
+      request.guidedActivityKind = null;
+      request.guidedBlockType = null;
       request.transport.status = "completed";
     }
 
@@ -2417,6 +2471,9 @@
       activeTab: request.activeTab,
       guidedStep: request.guidedStep,
       guidedNewMovePhase: request.guidedNewMovePhase,
+      guidedActivityId: request.guidedActivityId,
+      guidedActivityKind: request.guidedActivityKind,
+      guidedBlockType: request.guidedBlockType,
       transport: request.transport
     });
   };

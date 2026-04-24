@@ -39,6 +39,13 @@
     setLegacyFields({ screen: screen });
   }
 
+  function mirrorGuidedRuntimeFields(runtimeState) {
+    if (!runtimeState) return;
+    S.guidedActivityId = runtimeState.guidedActivityId || null;
+    S.guidedActivityKind = runtimeState.guidedActivityKind || null;
+    S.guidedBlockType = runtimeState.guidedBlockType || null;
+  }
+
   function handleSystemAction(a, v) {
     if (a === "startTuner") {
       if (!AC) {
@@ -484,10 +491,10 @@
         S.guidedStep = steps[idx + 1];
         if (S.guidedStep === "newMove") S.newMovePhase = "watch";
         if (window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function") {
-          window.sparkCore.syncGuidedRuntimeState({
+          mirrorGuidedRuntimeFields(window.sparkCore.syncGuidedRuntimeState({
             guidedStep: S.guidedStep,
             guidedNewMovePhase: S.newMovePhase || null
-          });
+          }));
         }
       }
       render();
@@ -500,10 +507,10 @@
       if (pi < phases.length - 1) {
         S.newMovePhase = phases[pi + 1];
         if (window.sparkCore && typeof window.sparkCore.syncGuidedRuntimeState === "function") {
-          window.sparkCore.syncGuidedRuntimeState({
+          mirrorGuidedRuntimeFields(window.sparkCore.syncGuidedRuntimeState({
             guidedStep: S.guidedStep,
             guidedNewMovePhase: S.newMovePhase
-          });
+          }));
         }
       } else {
         act("guidedNext");
@@ -622,6 +629,7 @@
       if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
         var _gsPlan = window.sparkCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
         if (_gsPlan && _gsPlan.context && _gsPlan.context.guidedPlan) {
+          mirrorGuidedRuntimeFields(window.sparkCore.getRuntimeState ? window.sparkCore.getRuntimeState() : null);
           S.screen = SCR.GUIDED;
           render();
           return true;

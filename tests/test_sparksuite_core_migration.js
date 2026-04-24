@@ -3179,6 +3179,7 @@ test("guided sessions normalize curriculum v2 plans into the legacy guided flow 
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 1 });
   var guidedPlan = plan.context.guidedPlan;
+  var guidedState = core.getRuntimeState();
 
   assert.strictEqual(guidedPlan.id, "gtr-d01");
   assert.strictEqual(guidedPlan.num, 1);
@@ -3191,6 +3192,22 @@ test("guided sessions normalize curriculum v2 plans into the legacy guided flow 
   assert.strictEqual(guidedPlan.blockActivities.warm_engine.id, "gtr-d01-warm_engine");
   assert.strictEqual(guidedPlan.blockActivities.drill.id, "gtr-d01-drill");
   assert.strictEqual(guidedPlan.blockActivities.song.id, "gtr-d01-song");
+  assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-warm_engine");
+  assert.strictEqual(guidedState.guidedActivityKind, "warm_engine_play");
+  assert.strictEqual(guidedState.guidedBlockType, "warm_engine");
+
+  guidedState = core.syncGuidedRuntimeState({
+    guidedStep: "newMove",
+    guidedNewMovePhase: "watch"
+  });
+  assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-drill");
+  assert.strictEqual(guidedState.guidedActivityKind, "review");
+  assert.strictEqual(guidedState.guidedBlockType, "drill");
+
+  guidedState = core.applyGuidedNavigationRequest("guided_done");
+  assert.strictEqual(guidedState.guidedActivityId, null);
+  assert.strictEqual(guidedState.guidedActivityKind, null);
+  assert.strictEqual(guidedState.guidedBlockType, null);
 });
 
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
