@@ -82,7 +82,7 @@ function pianoSongsTab() {
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = S._songTab === t.id ? " active" : "";
-    html += '<div class="level-tab' + active + '" style="color:var(--accent)" role="button" tabindex="0" onclick="S._songTab=\'' + t.id + '\';render()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();S._songTab=\'' + t.id + '\';render()}">' + t.label + '</div>';
+    html += '<div class="level-tab' + active + '" style="color:var(--accent)" role="button" tabindex="0" onclick="act(\'pianoSongTab\',\'' + t.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'pianoSongTab\',\'' + t.id + '\')}">' + t.label + '</div>';
   });
   html += '</div>';
 

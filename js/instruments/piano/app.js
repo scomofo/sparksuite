@@ -892,6 +892,18 @@ function act(action, param) {
       }
       break;
 
+    case "pianoGameTab":
+      S._gameTab = param;
+      break;
+
+    case "pianoSongTab":
+      S._songTab = param;
+      break;
+
+    case "pianoToolTab":
+      S._toolTab = param;
+      break;
+
     case "toggle_dark":
       S.darkMode = !S.darkMode;
       document.body.classList.toggle("dark", S.darkMode);

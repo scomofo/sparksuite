@@ -198,9 +198,12 @@ test("piano interactive surface tiles expose keyboard handlers", function() {
   var toolsSource = loadJS("js/instruments/piano/pages/tools.js");
 
   assert.ok(gamesSource.indexOf('role="button" tabindex="0"') >= 0);
+  assert.ok(gamesSource.indexOf("act(\\'pianoGameTab\\',") >= 0);
   assert.ok(onboardingSource.indexOf('keyboard-size-btn') >= 0 && onboardingSource.indexOf('onkeydown="if(event.key===\\\'Enter\\\'||event.key===\\\' \\') >= 0);
   assert.ok(practiceSource.indexOf('act(\\\'view_level\\\',') >= 0 && practiceSource.indexOf('role="button" tabindex="0"') >= 0);
+  assert.ok(songsSource.indexOf("act(\\'pianoSongTab\\',") >= 0);
   assert.ok(songsSource.indexOf('style-header" role="button" tabindex="0"') >= 0);
+  assert.ok(toolsSource.indexOf("act(\\'pianoToolTab\\',") >= 0);
   assert.ok(toolsSource.indexOf('role="button" tabindex="0"') >= 0);
   assert.ok(toolsSource.indexOf('onclick="act(\\\'exportProgress\\\')"') >= 0);
 });

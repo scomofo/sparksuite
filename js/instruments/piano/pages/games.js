@@ -55,7 +55,7 @@ function pianoGamesTab() {
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = S._gameTab === t.id ? " active" : "";
-    html += '<div class="level-tab' + active + '" style="color:var(--accent)" role="button" tabindex="0" onclick="S._gameTab=\'' + t.id + '\';render()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();S._gameTab=\'' + t.id + '\';render()}">' + t.icon + ' ' + t.label + '</div>';
+    html += '<div class="level-tab' + active + '" style="color:var(--accent)" role="button" tabindex="0" onclick="act(\'pianoGameTab\',\'' + t.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'pianoGameTab\',\'' + t.id + '\')}">' + t.icon + ' ' + t.label + '</div>';
   });
   html += '</div>';
 
