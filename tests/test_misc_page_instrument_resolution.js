@@ -282,6 +282,42 @@ test("tunerTab and statsTab ignore malformed shared counters", function() {
   assert.ok(statsHtml.indexOf("NaN") === -1);
 });
 
+test("tools page can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  S.tunerActive = undefined;
+  S.tunerNote = undefined;
+  S.tunerFreq = undefined;
+  S.tunerCents = undefined;
+  S.tunerErr = undefined;
+  S.audioInputDevices = [];
+  S.audioInputId = undefined;
+  S.audioTestingId = undefined;
+  S.audioTestLevel = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          tunerActive: true,
+          tunerNote: "D",
+          tunerFreq: 146.8,
+          tunerCents: 1,
+          tunerError: null,
+          audioInputDevices: [{ id: "usb-1", name: "USB Interface" }],
+          audioInputId: "usb-1",
+          audioTestingId: "usb-1",
+          audioTestLevel: 18
+        }
+      };
+    }
+  };
+
+  var html = tunerTab();
+  assert.ok(html.indexOf(">D<") >= 0);
+  assert.ok(html.indexOf("146.8 Hz") >= 0 || html.indexOf("146.80 Hz") >= 0 || html.indexOf("147 Hz") >= 0);
+  assert.ok(html.indexOf("USB Interface") >= 0);
+  assert.ok(html.indexOf("Signal detected - play to confirm") >= 0);
+});
+
 test("updateTunerUI rehydrates an app-id-only active instrument shell", function() {
   var strings = [];
   var i;

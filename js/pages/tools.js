@@ -29,6 +29,13 @@ function normalizeToolsCount(value, fallback) { return SparkNormalize.count(valu
 function normalizeToolsPercent(value, fallback) { return SparkNormalize.percent(value, fallback); }
 function formatToolsHz(value, fallback) { return SparkNormalize.formatHz(value, fallback); }
 
+function getToolsCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 function getToolsInstrumentName(inst) {
   return normalizeToolsTextToken(
     inst && (inst.name || inst.displayName || inst.instrumentName || inst.instrument)
@@ -64,9 +71,7 @@ function getToolsTuningLabel(strings) {
 
 // ===== TUNER TAB =====
 function getLegacyTunerRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getToolsCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   // Use typeof checks (matching the `active` and `error` predicates above and
   // below): hasOwnProperty treats S.tunerNote=undefined and S.tunerFreq=null
@@ -81,9 +86,7 @@ function getLegacyTunerRuntime(){
 }
 
 function getLegacyAudioInputRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getToolsCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   return {
     devices: Array.isArray(S.audioInputDevices) && S.audioInputDevices.length ? S.audioInputDevices : (runtime && Array.isArray(runtime.audioInputDevices) ? runtime.audioInputDevices : []),
