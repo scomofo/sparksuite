@@ -40,6 +40,12 @@ function firstGuidedTextToken() {
 function normalizeGuidedBpm(value, fallback) { return SparkNormalize.positiveInt(value, fallback); }
 function normalizeGuidedCount(value, fallback) { return SparkNormalize.integer(value, fallback); }
 
+function humanizeGuidedLabel(value) {
+  var token = firstGuidedTextToken(value);
+  if (!token) return "";
+  return token.replace(/[-_]+/g, " ");
+}
+
 function getGuidedInstrumentType() {
   var inst = getGuidedPageInstrument();
   return firstGuidedTextToken(
@@ -153,10 +159,47 @@ function guidedSessionPage() {
   return h;
 }
 
+function getGuidedStepActivity(plan, step) {
+  var blockActivities = plan && plan.blockActivities ? plan.blockActivities : null;
+  if (!blockActivities) return null;
+  if (step === "spark") return blockActivities.warm_engine || null;
+  if (step === "review" || step === "newMove") return blockActivities.drill || null;
+  if (step === "songSlice") return blockActivities.song || null;
+  if (step === "victoryLap") return blockActivities.cooldown || null;
+  return null;
+}
+
+function renderGuidedActivityMeta(activity, fallbackFocusSong) {
+  var chips = [];
+  var durationSec;
+  var minutes;
+  var focusSong;
+  var kindLabel;
+  if (!activity) return "";
+  durationSec = normalizeGuidedCount(activity.duration_sec, 0);
+  if (durationSec > 0) {
+    minutes = Math.max(1, Math.round(durationSec / 60));
+    chips.push(minutes + " min");
+  }
+  kindLabel = humanizeGuidedLabel(activity.block_type || activity.kind);
+  if (kindLabel) chips.push(kindLabel);
+  focusSong = firstGuidedTextToken(activity.focus_song, fallbackFocusSong);
+  if (focusSong) chips.push(focusSong);
+  if (!chips.length) return "";
+  return '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 12px">' +
+    chips.map(function(chip) {
+      return '<span style="padding:6px 10px;border-radius:999px;background:var(--input-bg);font-size:12px;font-weight:700;color:var(--text-muted)">' +
+        escHTML(chip) + '</span>';
+    }).join("") +
+    '</div>';
+}
+
 function _guidedSpark(plan) {
   var sparkText = firstGuidedTextToken(plan.spark && plan.spark.text, "Let's get started.");
+  var sparkActivity = getGuidedStepActivity(plan, "spark");
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#10024; Spark</h3>';
+  h += renderGuidedActivityMeta(sparkActivity, plan.focus_song);
   h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(sparkText) + '</p>';
   if (plan.ifThen) {
     h += '<div style="background:var(--input-bg);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;' + escHTML(plan.ifThen) + '&#8221;</div>';
@@ -171,6 +214,7 @@ function _guidedReview(plan) {
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var reviewText = firstGuidedTextToken(plan.review && plan.review.text, "Take a quick review pass.");
+  var reviewActivity = getGuidedStepActivity(plan, "review");
   if (!plan.review) {
     return '<div class="card mb16"><h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>' +
       '<p style="color:var(--text-muted)">No review for this session \u2014 it\'s your first!</p>' +
@@ -178,6 +222,7 @@ function _guidedReview(plan) {
   }
   var h = '<div class="card mb16" style="border-left:4px solid #4ECDC4">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#4ECDC4;font-weight:800">&#128260; Review</h3>';
+  h += renderGuidedActivityMeta(reviewActivity, plan.focus_song);
   h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(reviewText) + '</p>';
   // Show review chord diagrams
   if (plan.review.chords) {
@@ -204,12 +249,14 @@ function _guidedNewMove(plan) {
   var guidedView = getGuidedSessionView();
   var newMoveText = firstGuidedTextToken(plan.newMove && plan.newMove.text, "Practice the new move slowly and cleanly.");
   var guidedBpm = normalizeGuidedBpm(plan && plan.bpm, 80);
+  var newMoveActivity = getGuidedStepActivity(plan, "newMove");
   if (!plan.newMove) return '';
   if (window._watchCleanup && window._watchCleanup.cleanup) { window._watchCleanup.cleanup(); window._watchCleanup = null; }
   if (window._shadowCleanup && window._shadowCleanup.cleanup) { window._shadowCleanup.cleanup(); window._shadowCleanup = null; }
   var h = '<div class="card mb16" style="border-left:4px solid #FF6B6B">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FF6B6B;font-weight:800">&#127919; New Move</h3>';
   h += newMovePhaseIndicator(guidedView.newMovePhase);
+  h += renderGuidedActivityMeta(newMoveActivity, plan.focus_song);
 
   // Find chord
   var ch = null;
@@ -293,9 +340,11 @@ function _guidedNewMove(plan) {
 function _guidedSongSlice(plan) {
   var songSliceText = firstGuidedTextToken(plan.songSlice && plan.songSlice.text, "Play this short song slice with steady timing.");
   var songSliceTitle = firstGuidedTextToken(plan.songSlice && plan.songSlice.song);
+  var songActivity = getGuidedStepActivity(plan, "songSlice");
   if (!plan.songSlice) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #45B7D1">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#45B7D1;font-weight:800">&#127925; Song Slice</h3>';
+  h += renderGuidedActivityMeta(songActivity, songSliceTitle || plan.focus_song);
   h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(songSliceText) + '</p>';
   if (songSliceTitle) {
     h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:12px">&#127926; ' + escHTML(songSliceTitle) + '</div>';
@@ -313,9 +362,11 @@ function _guidedVictoryLap(plan) {
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var victoryText = firstGuidedTextToken(plan.victoryLap && plan.victoryLap.text, "Give it one confident final pass.");
+  var victoryActivity = getGuidedStepActivity(plan, "victoryLap");
   if (!plan.victoryLap) return '';
   var h = '<div class="card mb16" style="border-left:4px solid #FFE66D;background:linear-gradient(135deg,#FFE66D11,#FF8A5C11)">';
   h += '<h3 style="margin:0 0 8px;font-size:16px;color:#FFE66D;font-weight:800">&#127942; Victory Lap!</h3>';
+  h += renderGuidedActivityMeta(victoryActivity, plan.focus_song);
   h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(victoryText) + '</p>';
   // Show the session's main chord
   var ch = null;

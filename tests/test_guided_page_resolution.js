@@ -89,12 +89,21 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
     title: "First sound in 2 minutes",
     level: 1,
     bpm: 80,
+    focus_song: "\"Horse\" intro, open strings only",
+    blockActivities: {
+      warm_engine: { duration_sec: 90, block_type: "warm_engine", focus_song: "\"Horse\" intro, open strings only" },
+      drill: { duration_sec: 180, block_type: "drill", focus_song: "\"Horse\" intro, open strings only" },
+      song: { duration_sec: 240, block_type: "song", focus_song: "\"Horse\" intro, open strings only" }
+    },
     spark: { text: "First sound in 2 minutes. warm engine block." },
     newMove: { text: "First sound in 2 minutes. drill block.", chord: "C" },
     songSlice: { text: "First sound in 2 minutes. song block.", song: "\"Horse\" intro, open strings only" }
   };
   var sparkHtml = guidedSessionPage();
   assert.ok(sparkHtml.indexOf("warm engine block") >= 0);
+  assert.ok(sparkHtml.indexOf(">2 min<") >= 0);
+  assert.ok(sparkHtml.indexOf(">warm engine<") >= 0);
+  assert.ok(sparkHtml.indexOf(">\"Horse\" intro, open strings only<") >= 0);
 
   S.guidedStep = "newMove";
   S.newMovePhase = "try";
@@ -110,6 +119,23 @@ test("guided page prefers block-aware curriculum v2 copy when present", function
   };
   var newMoveHtml = guidedSessionPage();
   assert.ok(newMoveHtml.indexOf("drill block") >= 0);
+  assert.ok(newMoveHtml.indexOf(">3 min<") >= 0);
+  assert.ok(newMoveHtml.indexOf(">drill<") >= 0);
+
+  S.guidedStep = "songSlice";
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan }
+      },
+      runtimeState: { guidedStep: "songSlice" },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+  var songHtml = guidedSessionPage();
+  assert.ok(songHtml.indexOf(">4 min<") >= 0);
+  assert.ok(songHtml.indexOf(">song<") >= 0);
 });
 
 test("guided song slice ignores stale cached copy", function() {
