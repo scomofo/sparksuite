@@ -178,6 +178,14 @@ function getGuidedDoneSupportLabel(extensionCount) {
   return "You wrapped from a deep focus stretch. Nice work ending where it felt right.";
 }
 
+function getGuidedDoneSummaryLine(extensionCount, title) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  var safeTitle = firstGuidedTextToken(title, "Guided session");
+  if (count < 2) return safeTitle;
+  if (count === 2) return safeTitle + " · You can step away now or ease into whatever comes next.";
+  return safeTitle + " · Leave a little space before the next thing if that feels good.";
+}
+
 function getGuidedDoneRecoveryTitle(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count < 2) return "";
@@ -1258,7 +1266,7 @@ function guidedDonePage() {
   var h = '<div class="text-center" style="padding-top:30px">';
   h += '<div style="' + getGuidedDoneCelebrationStyle(extensionCount) + '">' + getGuidedDoneCelebrationIcon(extensionCount) + '</div>';
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">' + escHTML(getGuidedDoneTitle(extensionCount, num)) + '</h2>';
-  h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(title) + '</p>';
+  h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(getGuidedDoneSummaryLine(extensionCount, title)) + '</p>';
   if (doneSupportLabel) {
     h += '<div style="display:flex;justify-content:center;margin:-8px 0 18px"><span style="padding:7px 12px;border-radius:999px;background:#6E56B311;color:#6E56B3;font-size:12px;font-weight:800;letter-spacing:.02em">' + escHTML(doneSupportLabel) + '</span></div>';
   }
