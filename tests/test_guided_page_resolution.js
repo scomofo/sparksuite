@@ -708,9 +708,11 @@ test("guided done page ignores malformed completion counters", function() {
     };
   };
   var html = guidedDonePage();
+  assert.ok(html.indexOf("Nice work. Momentum counts.") >= 0);
   assert.ok(html.indexOf("+30") >= 0);
   assert.ok(html.indexOf("&#128293;0") >= 0);
   assert.ok(html.indexOf(">0/22<") >= 0);
+  assert.ok(html.indexOf("background:linear-gradient(135deg,#FFF7D6,#FFF0E7)") >= 0);
   assert.ok(html.indexOf("NaN") === -1);
 });
 
