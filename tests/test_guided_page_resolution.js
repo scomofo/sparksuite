@@ -536,6 +536,7 @@ test("guided victory lap tiers extension copy for deeper focus stretches", funct
   assert.ok(html.indexOf("14/20 min in focus stretch") >= 0);
   assert.ok(html.indexOf("Focus stretch is open. About 5m 45s available if you want it.") >= 0);
   assert.ok(html.indexOf("background:linear-gradient(135deg,#6E56B3,#FF8A5C)") >= 0);
+  assert.ok(html.indexOf(">Wrap Up When Ready<") >= 0);
   assert.ok(html.indexOf(">Stretch Another +5 min<") >= 0);
 });
 
@@ -600,7 +601,7 @@ test("guided cards use block-aware transition labels", function() {
       lastSessionOutcome: { xpAwarded: 30 }
     };
   };
-  assert.ok(guidedSessionPage().indexOf("Complete Session!") >= 0);
+  assert.ok(guidedSessionPage().indexOf("Finish Session") >= 0);
   assert.ok(guidedSessionPage().indexOf("Cooldown Block") >= 0);
 });
 
