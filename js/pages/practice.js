@@ -556,7 +556,7 @@ function renderPracticeProgressAndLibrary(currentLevel) {
   h += '<div style="text-align:center;margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
   h += '<button class="reset-btn" onclick="act(\'exportProgress\')" style="border-color:#4ECDC4;color:#4ECDC4">&#128190; Export</button>';
   h += '<button class="reset-btn" onclick="act(\'importProgress\')" style="border-color:#45B7D1;color:#45B7D1">&#128194; Import</button>';
-  h += '<button class="reset-btn" onclick="resetProgress()">Reset Progress</button>';
+  h += '<button class="reset-btn" onclick="act(\'reset\')">Reset Progress</button>';
   h += '</div>';
   if(S.importMsg) h += '<div style="text-align:center;margin-top:8px;font-size:12px;color:'+(S.importMsg.ok?"#4ECDC4":"#FF6B6B")+'">'+S.importMsg.text+'</div>';
   return h;

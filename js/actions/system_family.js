@@ -589,6 +589,11 @@
       return true;
     }
 
+    if (a === "reset") {
+      if (typeof resetProgress === "function") resetProgress();
+      return true;
+    }
+
     if (a === "start_guided_session") {
       var _gsNum = parseInt(v, 10) || S.guidedSession || 1;
       if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
