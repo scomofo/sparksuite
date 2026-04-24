@@ -2765,6 +2765,10 @@ test("SparkCore can build and apply calibration requests from runtime state", fu
 test("orchestrator requests can resolve sparkCore from the global binding", function() {
   global.window = {};
   var syncedCalibration = null;
+  var syncedSong = null;
+  var syncedCloud = null;
+  var syncedCurriculum = null;
+  var syncedGuided = null;
   var calls = [];
   global.sparkCore = {
     openPerformanceEditor: function(chart, options) {
@@ -2806,6 +2810,46 @@ test("orchestrator requests can resolve sparkCore from the global binding", func
     openLegacyRhythmGame: function(options) {
       calls.push({ type: "rhythm_open", options: options });
       return { type: "rhythm_open", options: options };
+    },
+    openGuidedSession: function(options) {
+      calls.push({ type: "guided_open", options: options });
+      return { type: "guided_open", options: options };
+    },
+    syncSongRuntimeState: function(action, options) {
+      syncedSong = { action: action, options: options };
+      calls.push({ type: "song_sync", action: action, options: options });
+      return syncedSong;
+    },
+    applyDashboardRequest: function(options) {
+      calls.push({ type: "dashboard_apply", options: options });
+      return { type: "dashboard_apply", options: options };
+    },
+    syncCloudSettingsState: function(payload) {
+      syncedCloud = payload;
+      calls.push({ type: "cloud_sync", payload: payload });
+      return payload;
+    },
+    syncCurriculumState: function(payload) {
+      syncedCurriculum = payload;
+      calls.push({ type: "curriculum_sync", payload: payload });
+      return payload;
+    },
+    openSkillTree: function() {
+      calls.push({ type: "skill_tree_open" });
+      return { type: "skill_tree_open" };
+    },
+    openStemPlayer: function() {
+      calls.push({ type: "stem_player_open" });
+      return { type: "stem_player_open" };
+    },
+    completeSession: function(options) {
+      calls.push({ type: "guided_complete", options: options });
+      return { type: "guided_complete", options: options };
+    },
+    syncGuidedRuntimeState: function(payload) {
+      syncedGuided = payload;
+      calls.push({ type: "guided_sync", payload: payload });
+      return payload;
     }
   };
   global.eval(loadJS("js/orchestrator-requests.js"));
@@ -2823,6 +2867,14 @@ test("orchestrator requests can resolve sparkCore from the global binding", func
   var dailyRequest = openLegacyDailyChallengeRequest({ challengeId: "daily_1" });
   var tunerRequest = syncTunerRuntimeRequest({ tunerNote: "E" });
   var rhythmRequest = openLegacyRhythmGameRequest({ mode: "strum" });
+  var guidedRequest = openGuidedSessionRequest({ sessionNum: 3 });
+  var songSyncRequest = syncSongRuntimeRequest("play", { songData: { id: "stand-by-me" }, source: "library" });
+  var dashboardRequest = applyDashboardRequest({ recommendations: [{ id: "rec_1" }] });
+  var cloudRequest = syncCloudSettingsStateRequest({ loggedIn: true, email: "scott@example.com" });
+  var curriculumRequest = syncCurriculumStateRequest({ activeTrackId: "guitar-30day" });
+  var skillTreeRequest = openSkillTreeRequest();
+  var stemPlayerRequest = openStemPlayerRequest();
+  var guidedCompleteRequest = completeGuidedSessionRequest();
 
   assert.strictEqual(editorRequest.type, "editor");
   assert.strictEqual(editorRequest.chart.id, "chart_1");
@@ -2846,7 +2898,26 @@ test("orchestrator requests can resolve sparkCore from the global binding", func
   assert.strictEqual(tunerRequest.options.tunerNote, "E");
   assert.strictEqual(rhythmRequest.type, "rhythm_open");
   assert.strictEqual(rhythmRequest.options.mode, "strum");
-  assert.ok(calls.length >= 5);
+  assert.strictEqual(guidedRequest.type, "guided_open");
+  assert.strictEqual(guidedRequest.options.sessionNum, 3);
+  assert.ok(syncedSong);
+  assert.strictEqual(songSyncRequest.action, "play");
+  assert.strictEqual(songSyncRequest.options.source, "library");
+  assert.strictEqual(songSyncRequest.options.songData.id, "stand-by-me");
+  assert.strictEqual(dashboardRequest.type, "dashboard_apply");
+  assert.strictEqual(dashboardRequest.options.recommendations[0].id, "rec_1");
+  assert.ok(syncedCloud);
+  assert.strictEqual(cloudRequest.email, "scott@example.com");
+  assert.strictEqual(cloudRequest.loggedIn, true);
+  assert.ok(syncedCurriculum);
+  assert.strictEqual(curriculumRequest.activeTrackId, "guitar-30day");
+  assert.strictEqual(skillTreeRequest.type, "skill_tree_open");
+  assert.strictEqual(stemPlayerRequest.type, "stem_player_open");
+  assert.strictEqual(guidedCompleteRequest.type, "guided_complete");
+  assert.strictEqual(guidedCompleteRequest.options.flow, SparkSessionTypes.FLOW_GUIDED_SESSION);
+  assert.ok(syncedGuided);
+  assert.strictEqual(syncedGuided.activeScreen, "guided_done");
+  assert.ok(calls.length >= 11);
 });
 
 test("SparkCore can build performance completion requests from runtime state", function() {
