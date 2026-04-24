@@ -1,4 +1,10 @@
 (function() {
+  function getPerformanceActionCore() {
+    if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+    if (typeof sparkCore !== "undefined") return sparkCore;
+    return null;
+  }
+
   function setLegacyFields(setFields, save) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
       SparkProgressBridge.applyLegacyActivityRuntime({ setFields: setFields, save: save });
@@ -83,7 +89,8 @@
       performDifficulty: difficultyId
     });
 
-    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+    var core = getPerformanceActionCore();
+    if (core && typeof core.startSession === "function") {
       openPerformanceSongSelectionRequest({
         songIndex: songIndex,
         songId: songId,
@@ -317,8 +324,9 @@
     }
 
     if (a === "performStatsFocus") {
-      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-        window.sparkCore.syncPerformanceRuntimeState("configure_stats", {
+      var statsCore = getPerformanceActionCore();
+      if (statsCore && typeof statsCore.syncPerformanceRuntimeState === "function") {
+        statsCore.syncPerformanceRuntimeState("configure_stats", {
           focus: v || "overview"
         });
       }
@@ -346,8 +354,9 @@
     }
 
     if (a === "editorBack") {
-      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-        window.sparkCore.syncPerformanceRuntimeState("close_editor", { screen: "home" });
+      var editorCore = getPerformanceActionCore();
+      if (editorCore && typeof editorCore.syncPerformanceRuntimeState === "function") {
+        editorCore.syncPerformanceRuntimeState("close_editor", { screen: "home" });
       }
       goHomeSongs();
       render();
@@ -497,9 +506,10 @@
 
     if (a === "performArrangement") {
       S.performArrangementType = v || "chords";
-      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-        var arrangementState = window.sparkCore.getRuntimeState();
-        window.sparkCore.syncPerformanceRuntimeState("configure", {
+      var arrangementCore = getPerformanceActionCore();
+      if (arrangementCore && typeof arrangementCore.syncPerformanceRuntimeState === "function") {
+        var arrangementState = typeof arrangementCore.getRuntimeState === "function" ? arrangementCore.getRuntimeState() : {};
+        arrangementCore.syncPerformanceRuntimeState("configure", {
           arrangementType: S.performArrangementType,
           songIndex: arrangementState.performanceSongIndex,
           songTitle: arrangementState.performanceSongTitle
@@ -511,8 +521,9 @@
     }
 
     if (a === "performStartFromSong") {
-      var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-        ? window.sparkCore.getActiveSessionView()
+      var startCore = getPerformanceActionCore();
+      var coreView = startCore && typeof startCore.getActiveSessionView === "function"
+        ? startCore.getActiveSessionView()
         : null;
       var performanceSong = coreView && coreView.plan && coreView.plan.flow === "performance_song" && coreView.plan.context
         ? coreView.plan.context.performanceSong || null
@@ -605,8 +616,9 @@
       S.performMode = v;
       S.performInputSource = v;
       PerformanceInput.start(v);
-      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-        window.sparkCore.syncPerformanceRuntimeState("configure", { mode: v });
+      var modeCore = getPerformanceActionCore();
+      if (modeCore && typeof modeCore.syncPerformanceRuntimeState === "function") {
+        modeCore.syncPerformanceRuntimeState("configure", { mode: v });
       }
       saveState();
       render();
@@ -615,11 +627,13 @@
 
     if (a === "performDifficulty") {
       applyPerformanceDifficultyToState(v || "normal");
-      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-        window.sparkCore.syncPerformanceRuntimeState("configure", {
+      var difficultyCore = getPerformanceActionCore();
+      var difficultyState = difficultyCore && typeof difficultyCore.getRuntimeState === "function" ? difficultyCore.getRuntimeState() : {};
+      if (difficultyCore && typeof difficultyCore.syncPerformanceRuntimeState === "function") {
+        difficultyCore.syncPerformanceRuntimeState("configure", {
           difficulty: S.performDifficulty,
-          songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
-          songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
+          songIndex: difficultyState.performanceSongIndex,
+          songTitle: difficultyState.performanceSongTitle
         });
       }
       saveState();
@@ -630,11 +644,13 @@
     if (a === "performSpeed") {
       S.performSpeed = parseFloat(v);
       PerformanceTransport.setSpeed(S.performSpeed);
-      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-        window.sparkCore.syncPerformanceRuntimeState("configure", {
+      var speedCore = getPerformanceActionCore();
+      var speedState = speedCore && typeof speedCore.getRuntimeState === "function" ? speedCore.getRuntimeState() : {};
+      if (speedCore && typeof speedCore.syncPerformanceRuntimeState === "function") {
+        speedCore.syncPerformanceRuntimeState("configure", {
           speed: S.performSpeed,
-          songIndex: window.sparkCore.getRuntimeState().performanceSongIndex,
-          songTitle: window.sparkCore.getRuntimeState().performanceSongTitle
+          songIndex: speedState.performanceSongIndex,
+          songTitle: speedState.performanceSongTitle
         });
       }
       saveState();
@@ -655,8 +671,9 @@
 
     if (a === "performPracticePreset") {
       applyPerformanceStemPreset(v);
-      if (window.sparkCore && typeof window.sparkCore.syncPerformanceRuntimeState === "function") {
-        window.sparkCore.syncPerformanceRuntimeState("configure", { preset: S.performPracticePreset });
+      var presetCore = getPerformanceActionCore();
+      if (presetCore && typeof presetCore.syncPerformanceRuntimeState === "function") {
+        presetCore.syncPerformanceRuntimeState("configure", { preset: S.performPracticePreset });
       }
       render();
       return true;
@@ -705,8 +722,9 @@
     if (a === "performRetryPhrase") {
       if (S.performChart && S.performResults && S.performResults.phraseStats) {
         var targetTechniqueRetry = null;
-        if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-          var retryCoreView = window.sparkCore.getActiveSessionView();
+        var retryCore = getPerformanceActionCore();
+        if (retryCore && typeof retryCore.getActiveSessionView === "function") {
+          var retryCoreView = retryCore.getActiveSessionView();
           if (retryCoreView && retryCoreView.runtimeState && Object.prototype.hasOwnProperty.call(retryCoreView.runtimeState, "performanceTargetTechnique")) {
             targetTechniqueRetry = retryCoreView.runtimeState.performanceTargetTechnique;
           }

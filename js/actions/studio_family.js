@@ -1,4 +1,10 @@
 (function() {
+  function getStudioCore() {
+    if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+    if (typeof sparkCore !== "undefined") return sparkCore;
+    return null;
+  }
+
   function setLegacyFields(setFields, save) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
       SparkProgressBridge.applyLegacyActivityRuntime({ setFields: setFields, save: save });
@@ -17,7 +23,8 @@
       var arrangementType = parts[1] || "chords";
       var difficultyId = parts[2] || "normal";
       setLegacyFields({ performTargetTechnique: null });
-      if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+      var planSongCore = getStudioCore();
+      if (planSongCore && typeof planSongCore.startSession === "function") {
         openPerformanceSongSelectionRequest({
           songId: songId,
           targetTechnique: null,
@@ -63,7 +70,8 @@
       var techniqueDifficultyId = techniqueParts[2] || "normal";
       var techniqueKey = techniqueParts[3] || null;
       setLegacyFields({ performTargetTechnique: techniqueKey });
-      if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+      var techniqueCore = getStudioCore();
+      if (techniqueCore && typeof techniqueCore.startSession === "function") {
         openPerformanceSongSelectionRequest({
           songId: techniqueSongId,
           arrangementType: techniqueArrangementType,
@@ -166,21 +174,21 @@
     }
 
     if (a === "openPlan") {
-      if (window.sparkCore) openPracticePlanScreenRequest();
+      if (getStudioCore()) openPracticePlanScreenRequest();
       S.screen = SCR.PLAN;
       render();
       return true;
     }
 
     if (a === "completePlan") {
-      if (window.sparkCore) completeDailyPracticePlanRequest();
+      if (getStudioCore()) completeDailyPracticePlanRequest();
       else completePracticePlan();
       render();
       return true;
     }
 
     if (a === "regeneratePlan") {
-      if (window.sparkCore) openDailyPracticePlanRequest({ forceRebuild: true });
+      if (getStudioCore()) openDailyPracticePlanRequest({ forceRebuild: true });
       else buildPracticePlan();
       render();
       return true;
@@ -490,7 +498,7 @@
     }
 
     if (a === "completePlanItem") {
-      if (window.sparkCore) completeDailyPracticePlanRequest({ itemId: v });
+      if (getStudioCore()) completeDailyPracticePlanRequest({ itemId: v });
       else if (typeof markPracticePlanItem === "function") markPracticePlanItem(v);
       render();
       return true;
@@ -511,7 +519,8 @@
 
     if (a === "rhythmHighwayLoopWindow") {
       if (typeof _createRhythmHighwayLoopSpec === "function" && S.activeCoreSegmentId) {
-        var segment = window.sparkCore && typeof window.sparkCore.getSegmentById === "function" ? window.sparkCore.getSegmentById(S.activeCoreSegmentId) : null;
+        var studioCore = getStudioCore();
+        var segment = studioCore && typeof studioCore.getSegmentById === "function" ? studioCore.getSegmentById(S.activeCoreSegmentId) : null;
         var payload = segment && segment.meta ? segment.meta.gameplayPayload : null;
         var loopSpec = _createRhythmHighwayLoopSpec(payload, S.rhythmHighwaySnapshot);
         if (loopSpec && typeof startRhythmHighwaySegment === "function") {

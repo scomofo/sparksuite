@@ -1925,6 +1925,155 @@ test("practice planning helpers can resolve sparkCore from the global binding", 
   delete global.sparkCore;
 });
 
+test("performance and studio action families can resolve sparkCore from the global binding", function() {
+  var syncCalls = [];
+  var performanceSelections = [];
+  var practicePlanRequests = [];
+  var segmentLookups = [];
+  global.window = {};
+  global.sparkCore = {
+    startSession: function(payload) {
+      return payload;
+    },
+    syncPerformanceRuntimeState: function(action, payload) {
+      syncCalls.push({ action: action, payload: payload });
+      return payload;
+    },
+    getRuntimeState: function() {
+      return {
+        performanceSongIndex: 4,
+        performanceSongTitle: "Night Drive"
+      };
+    },
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          performanceTargetTechnique: "tap"
+        }
+      };
+    },
+    getSegmentById: function(id) {
+      segmentLookups.push(id);
+      return {
+        meta: {
+          gameplayPayload: { chartId: "seg_chart" }
+        }
+      };
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.openPerformanceSongSelectionRequest = function(payload) {
+    performanceSelections.push(payload);
+    return payload;
+  };
+  global.openPracticePlanScreenRequest = function(payload) {
+    practicePlanRequests.push({ kind: "open", payload: payload || {} });
+    return payload || {};
+  };
+  global.completeDailyPracticePlanRequest = function(payload) {
+    practicePlanRequests.push({ kind: "complete", payload: payload || {} });
+    return payload || {};
+  };
+  global.openDailyPracticePlanRequest = function(payload) {
+    practicePlanRequests.push({ kind: "regenerate", payload: payload || {} });
+    return payload || {};
+  };
+  global.render = function() {};
+  global.saveState = function() {};
+  global.setTimeout = function(fn) { if (typeof fn === "function") fn(); return 1; };
+  global.performance = { now: function() { return 1000; } };
+  global.Blob = function(parts, opts) { this.parts = parts; this.opts = opts; };
+  global.URL = {
+    createObjectURL: function() { return "blob:mock"; },
+    revokeObjectURL: function() {}
+  };
+  global.document = {
+    body: {
+      appendChild: function() {},
+      removeChild: function() {}
+    },
+    createElement: function() {
+      return {
+        click: function() {}
+      };
+    }
+  };
+  global.resolveModuleExerciseLaunchOptions = function(v) { return v; };
+  global.buildModuleExerciseRhythmPayload = function() { return null; };
+  global.startRhythmHighwaySegment = function() { return true; };
+  global._createRhythmHighwayLoopSpec = function() { return { startSec: 0, endSec: 4 }; };
+  global.applyPerformanceDifficultyToState = function(v) {
+    S.performDifficulty = v || "normal";
+  };
+  global.applyPerformanceStemPreset = function(v) {
+    S.performPracticePreset = v;
+  };
+  global.PerformanceTransport = {
+    setSpeed: function(v) {
+      S.performSpeed = v;
+    }
+  };
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.PERFORM_SONG = "performSong";
+  global.SCR.PLAN = "plan";
+  global.S.screen = "home";
+  global.S.performArrangementType = "chords";
+  global.S.performDifficulty = "normal";
+  global.S.performSpeed = 1;
+  global.S.performPracticePreset = "full_mix";
+  global.S.performMode = "midi";
+  global.S.performTargetTechnique = null;
+  global.S.activeCoreSegmentId = "segment_7";
+  global.S.rhythmHighwaySnapshot = {};
+  global.S.performChart = { phrases: [], events: [] };
+  global.S.performResults = { phraseStats: [] };
+
+  eval(loadJS("js/actions/performance_family.js"));
+  eval(loadJS("js/actions/studio_family.js"));
+
+  __actionFamilies.performance("performArrangement", "rhythm_chords");
+  __actionFamilies.performance("performDifficulty", "hard");
+  __actionFamilies.performance("performSpeed", "0.8");
+  __actionFamilies.performance("performPracticePreset", "guitar_solo");
+  __actionFamilies.performance("performStatsFocus", "accuracy");
+  __actionFamilies.studio("openPlan");
+  __actionFamilies.studio("completePlanItem", "warmup_1");
+  __actionFamilies.studio("regeneratePlan");
+  __actionFamilies.studio("planStartPerformanceSong", "night_drive|rhythm_chords|hard");
+  __actionFamilies.studio("rhythmHighwayLoopWindow");
+
+  assert.deepStrictEqual(syncCalls.map(function(entry) { return entry.action; }), [
+    "configure",
+    "configure",
+    "configure",
+    "configure",
+    "configure_stats"
+  ]);
+  assert.strictEqual(syncCalls[0].payload.arrangementType, "rhythm_chords");
+  assert.strictEqual(syncCalls[1].payload.songIndex, 4);
+  assert.strictEqual(syncCalls[1].payload.songTitle, "Night Drive");
+  assert.strictEqual(syncCalls[2].payload.speed, 0.8);
+  assert.strictEqual(syncCalls[3].payload.preset, "guitar_solo");
+  assert.strictEqual(syncCalls[4].payload.focus, "accuracy");
+  assert.strictEqual(practicePlanRequests.length, 3);
+  assert.strictEqual(practicePlanRequests[0].kind, "open");
+  assert.strictEqual(practicePlanRequests[1].kind, "complete");
+  assert.strictEqual(practicePlanRequests[1].payload.itemId, "warmup_1");
+  assert.strictEqual(practicePlanRequests[2].kind, "regenerate");
+  assert.strictEqual(performanceSelections.length, 1);
+  assert.strictEqual(performanceSelections[0].songId, "night_drive");
+  assert.strictEqual(performanceSelections[0].arrangementType, "rhythm_chords");
+  assert.strictEqual(performanceSelections[0].difficultyId, "hard");
+  assert.deepStrictEqual(segmentLookups, ["segment_7"]);
+
+  delete global.sparkCore;
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
