@@ -111,6 +111,12 @@ function getGuidedFocusStretchLabel(extensionCount) {
   return "Focus Stretch x" + count;
 }
 
+function getGuidedExtendedModeLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count <= 0) return "";
+  return count > 1 ? "Extended session mode x" + count : "Extended session mode";
+}
+
 function renderGuidedActiveBlockBadge(blockType, shellSummary) {
   var theme = getGuidedBlockTheme(blockType);
   var extensionCount = shellSummary ? normalizeGuidedCount(shellSummary.extensionCount, 0) : 0;
@@ -347,6 +353,7 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
         ? "+" + Math.max(1, Math.round(block.extensionSec / 60)) + " min extra"
         : "";
       var extensionThemeLabel = getGuidedExtensionLabel(block.extensionCount);
+      var focusStretchLabel = getGuidedFocusStretchLabel(block.extensionCount);
       var remainingLabel = block.state === "now" && block.remainingSec > 0
         ? formatGuidedDurationLabel(block.remainingSec) + " left"
         : "";
@@ -356,8 +363,12 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
         : block.state === "now"
           ? "#FF8A5C"
           : "var(--text-muted)";
+      var cardBackground = block.extensionCount > 0
+        ? "linear-gradient(135deg,#A78BFA18,#FFFFFFCC)"
+        : "var(--input-bg)";
+      var cardBorder = block.extensionCount > 0 ? "1px solid #A78BFA44" : "1px solid transparent";
       var stateText = block.state ? block.state : "&nbsp;";
-      return '<div style="padding:10px 12px;border-radius:12px;background:var(--input-bg);text-align:left">' +
+      return '<div style="padding:10px 12px;border-radius:12px;background:' + cardBackground + ';border:' + cardBorder + ';text-align:left">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">' +
           '<span style="font-size:12px;font-weight:800;color:var(--text-primary)">' + escHTML(block.label) + '</span>' +
           '<span style="font-size:11px;font-weight:800;color:' + stateColor + ';text-transform:uppercase">' + escHTML(stateText) + '</span>' +
@@ -376,6 +387,9 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
         '</div>' +
         '<div style="font-size:11px;font-weight:800;color:' + (extensionThemeLabel ? "#A78BFA" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(extensionThemeLabel || " ") +
+        '</div>' +
+        '<div style="font-size:11px;font-weight:800;color:' + (focusStretchLabel ? "#6E56B3" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+          escHTML(focusStretchLabel || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
         (quickAction || extendAction || skipAction
@@ -478,6 +492,9 @@ function renderGuidedShellSummary(shellSummary) {
   var extensionLabel;
   var extensionThemeLabel;
   var focusStretchLabel;
+  var extendedModeLabel;
+  var summaryBackground;
+  var summaryBorder;
   var detail = [];
   var progressPercent;
   if (!shellSummary || !shellSummary.totalBlocks) return "";
@@ -499,10 +516,17 @@ function renderGuidedShellSummary(shellSummary) {
     : "";
   extensionThemeLabel = getGuidedExtensionLabel(shellSummary.extensionCount);
   focusStretchLabel = getGuidedFocusStretchLabel(shellSummary.extensionCount);
+  extendedModeLabel = getGuidedExtendedModeLabel(shellSummary.extensionCount);
+  summaryBackground = shellSummary.extensionCount > 0
+    ? "linear-gradient(135deg,#A78BFA22,#FF8A5C16)"
+    : "linear-gradient(135deg,#FF8A5C11,#4ECDC411)";
+  summaryBorder = shellSummary.extensionCount > 0
+    ? "1px solid #A78BFA44"
+    : "1px solid transparent";
   if (shellSummary.activeBlockLabel) detail.push(shellSummary.activeBlockLabel);
   if (blockMinutes > 0) detail.push(blockMinutes + " min block");
   if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
-  return '<div style="margin:0 0 14px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#FF8A5C11,#4ECDC411);text-align:left">' +
+  return '<div style="margin:0 0 14px;padding:12px 14px;border-radius:14px;background:' + summaryBackground + ';border:' + summaryBorder + ';text-align:left">' +
     '<div style="font-size:12px;font-weight:900;color:var(--text-primary);text-transform:uppercase;letter-spacing:.04em">Block ' +
       shellSummary.activeBlockIndex + ' of ' + shellSummary.totalBlocks + '</div>' +
     '<div style="height:8px;border-radius:999px;background:#FFFFFF88;overflow:hidden;margin-top:8px">' +
@@ -513,6 +537,7 @@ function renderGuidedShellSummary(shellSummary) {
     '<div style="font-size:11px;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionLabel || " ") + '</div>' +
     '<div style="font-size:11px;font-weight:800;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionThemeLabel || " ") + '</div>' +
     '<div style="font-size:11px;font-weight:800;color:#6E56B3;margin-top:2px;min-height:14px">' + escHTML(focusStretchLabel || " ") + '</div>' +
+    '<div style="font-size:11px;font-weight:800;color:#8B5CF6;margin-top:2px;min-height:14px">' + escHTML(extendedModeLabel || " ") + '</div>' +
     '<div style="font-size:11px;color:#FF8A5C;margin-top:2px">' + escHTML(remainingLabel) + '</div>' +
     '</div>';
 }
@@ -568,6 +593,13 @@ function guidedSessionPage() {
   h += '<button class="back-btn" onclick="act(\'guidedConfirmStop\')">&#8592; Exit</button>';
   h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
+  if (guidedView.shellSummary && guidedView.shellSummary.extensionCount > 0) {
+    h += '<div style="display:flex;justify-content:center;margin:-4px 0 12px">' +
+      '<span style="padding:6px 10px;border-radius:999px;background:#A78BFA22;border:1px solid #A78BFA44;color:#6E56B3;font-size:11px;font-weight:900;letter-spacing:.03em">' +
+        escHTML(getGuidedExtendedModeLabel(guidedView.shellSummary.extensionCount)) +
+      '</span>' +
+      '</div>';
+  }
   h += renderGuidedActiveBlockBadge(guidedView.activeBlockType, guidedView.shellSummary);
 
   h += renderGuidedShellSummary(guidedView.shellSummary);
