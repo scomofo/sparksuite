@@ -102,6 +102,77 @@ function guidedStepIndicator(step) {
   return h;
 }
 
+function getGuidedBlockProgress(plan, corePlan, runtimeState) {
+  var blockOrder = ["warm_engine", "drill", "song", "cooldown"];
+  var segments = corePlan && Array.isArray(corePlan.segments) ? corePlan.segments : [];
+  var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
+  var progress = [];
+  var nextPendingAssigned = false;
+  var i;
+  var blockType;
+  var segment;
+  var label;
+  var state;
+
+  for (i = 0; i < blockOrder.length; i++) {
+    blockType = blockOrder[i];
+    segment = null;
+    for (var j = 0; j < segments.length; j++) {
+      if (segments[j] && segments[j].meta && segments[j].meta.guidedBlockType === blockType) {
+        segment = segments[j];
+        break;
+      }
+    }
+    label = firstGuidedTextToken(
+      segment && segment.label,
+      segment && segment.title,
+      segment && segment.name,
+      humanizeGuidedLabel(blockType)
+    );
+    state = "";
+    if (segment && segment.completed) {
+      state = "done";
+    } else if (segment && activeSegmentId && segment.id === activeSegmentId) {
+      state = "now";
+    } else if (segment && !nextPendingAssigned) {
+      state = "up next";
+      nextPendingAssigned = true;
+    }
+    progress.push({
+      id: segment && segment.id ? segment.id : blockType,
+      label: label,
+      durationSec: normalizeGuidedCount(segment && segment.durationSec, 0),
+      state: state
+    });
+  }
+
+  return progress;
+}
+
+function renderGuidedBlockProgress(blockProgress) {
+  if (!blockProgress || !blockProgress.length) return "";
+  return '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 16px">' +
+    blockProgress.map(function(block) {
+      var durationLabel = block.durationSec > 0
+        ? Math.max(1, Math.round(block.durationSec / 60)) + " min"
+        : "";
+      var stateColor = block.state === "done"
+        ? "#4ECDC4"
+        : block.state === "now"
+          ? "#FF8A5C"
+          : "var(--text-muted)";
+      var stateText = block.state ? block.state : "&nbsp;";
+      return '<div style="padding:10px 12px;border-radius:12px;background:var(--input-bg);text-align:left">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">' +
+          '<span style="font-size:12px;font-weight:800;color:var(--text-primary)">' + escHTML(block.label) + '</span>' +
+          '<span style="font-size:11px;font-weight:800;color:' + stateColor + ';text-transform:uppercase">' + escHTML(stateText) + '</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
+      '</div>';
+    }).join("") +
+    '</div>';
+}
+
 function newMovePhaseIndicator(phase) {
   var phases = [
     {id:"watch",label:"Watch",icon:"&#128064;"},
@@ -142,6 +213,7 @@ function guidedSessionPage() {
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
 
   h += guidedStepIndicator(guidedStep);
+  h += renderGuidedBlockProgress(guidedView.blockProgress);
 
   // Render current step
   switch (guidedStep) {
@@ -479,6 +551,8 @@ function guidedDonePage() {
 function getGuidedSessionView() {
   var coreView = getGuidedPageCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var currentPlan = coreView && coreView.plan ? coreView.plan : null;
+  var resolvedPlan;
   var plan = coreView
     && coreView.plan
     && coreView.plan.flow === "guided_session"
@@ -488,17 +562,21 @@ function getGuidedSessionView() {
   var guidedStep = runtimeState && runtimeState.guidedStep
     ? runtimeState.guidedStep
     : (S.guidedStep || "spark");
+  resolvedPlan = plan || S.guidedPlan || null;
 
   return {
-    plan: plan || S.guidedPlan || null,
+    plan: resolvedPlan,
+    corePlan: currentPlan,
     guidedStep: guidedStep,
     newMovePhase: runtimeState && runtimeState.guidedNewMovePhase
       ? runtimeState.guidedNewMovePhase
       : (S.newMovePhase || null)
     ,
-    activeActivity: resolveGuidedViewActivity(plan || S.guidedPlan || null, guidedStep, runtimeState),
+    activeActivity: resolveGuidedViewActivity(resolvedPlan, guidedStep, runtimeState),
     activeActivityId: runtimeState && runtimeState.guidedActivityId ? runtimeState.guidedActivityId : (S.guidedActivityId || null),
     activeActivityKind: runtimeState && runtimeState.guidedActivityKind ? runtimeState.guidedActivityKind : (S.guidedActivityKind || null),
-    activeBlockType: runtimeState && runtimeState.guidedBlockType ? runtimeState.guidedBlockType : (S.guidedBlockType || null)
+    activeBlockType: runtimeState && runtimeState.guidedBlockType ? runtimeState.guidedBlockType : (S.guidedBlockType || null),
+    activeSegmentId: runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null,
+    blockProgress: getGuidedBlockProgress(resolvedPlan, currentPlan, runtimeState)
   };
 }
