@@ -178,6 +178,20 @@ function getGuidedDoneSupportLabel(extensionCount) {
   return "You wrapped from a deep focus stretch. Nice work ending where it felt right.";
 }
 
+function getGuidedDoneRecoveryTitle(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "Good landing";
+  return "Soft reset";
+}
+
+function getGuidedDoneRecoveryCopy(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "";
+  if (count === 2) return "Take a breath, a sip of water, or a minute away from the instrument before you jump into the next thing.";
+  return "A small pause now can help the next session feel clean and inviting whenever you come back.";
+}
+
 function getGuidedDoneNextActionLabel(extensionCount) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   if (count < 2) return "Next Session";
@@ -1198,6 +1212,12 @@ function guidedDonePage() {
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(title) + '</p>';
   if (doneSupportLabel) {
     h += '<div style="display:flex;justify-content:center;margin:-8px 0 18px"><span style="padding:7px 12px;border-radius:999px;background:#6E56B311;color:#6E56B3;font-size:12px;font-weight:800;letter-spacing:.02em">' + escHTML(doneSupportLabel) + '</span></div>';
+  }
+  if (extensionCount >= 2) {
+    h += '<div class="card mb16" style="max-width:520px;margin:0 auto 16px;border:1px solid #6E56B322;background:linear-gradient(135deg,#6E56B30D,#FF8A5C12);text-align:left">';
+    h += '<div style="font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#6E56B3;margin-bottom:8px">' + escHTML(getGuidedDoneRecoveryTitle(extensionCount)) + '</div>';
+    h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDoneRecoveryCopy(extensionCount)) + '</div>';
+    h += '</div>';
   }
   h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center">';
   h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">+' + xpAwarded + '</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div>';
