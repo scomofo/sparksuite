@@ -290,7 +290,7 @@ function shortcutOverlay(){
     ["1-9","Quick tab switch"],
     ["0","Stats tab"]
   ];
-  var h='<div class="shortcut-overlay" onclick="act(\'toggleShortcuts\')" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">';
+  var h='<div class="shortcut-overlay" onclick="act(\'toggleShortcuts\')" onkeydown="if(event.key===\'Escape\'){event.preventDefault();act(\'toggleShortcuts\')}" role="dialog" tabindex="0" aria-modal="true" aria-label="Keyboard shortcuts">';
   h+='<div class="shortcut-modal" onclick="event.stopPropagation()">';
   h+='<h3 style="margin:0 0 16px;font-size:18px;font-weight:800;color:var(--text-primary)">&#9000; Keyboard Shortcuts</h3>';
   for(var i=0;i<shortcuts.length;i++){
