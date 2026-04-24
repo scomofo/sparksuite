@@ -2074,6 +2074,108 @@ test("performance and studio action families can resolve sparkCore from the glob
   delete global.sparkCore;
 });
 
+test("dashboard utility UI surfaces can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return {
+        cloudLoggedIn: true,
+        cloudEmail: "scott@example.com",
+        cloudLastSyncStatus: "ok",
+        cloudLastSyncAt: Date.now() - 60000,
+        curriculumLoading: false,
+        curriculumLastManifestPath: "curriculum/manifest.json",
+        curriculumLastLoadStatus: "ok",
+        curriculumSummaries: [{ id: "guitar", title: "Guitar", trackCount: 1 }],
+        contentLoading: false,
+        contentLastManifestPath: "content/manifest.json",
+        contentLastLoadStatus: "ok",
+        curriculumPackSummaries: [{ id: "starter-pack", title: "Starter Pack", type: "songs" }],
+        midiImportSummary: {
+          tracks: [{ id: "track_1", name: "Piano RH", noteCount: 42 }]
+        },
+        midiImportAssignments: {
+          track_1: "melody"
+        },
+        midiImportSeedMode: "piano_melody",
+        midiImportSeedTitle: "Demo Seed",
+        settingsTheme: "retro"
+      };
+    },
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardRecommendations: [{ id: "rec-1", title: "Recommendation" }],
+          dashboardChallenges: [{ id: "challenge-1", title: "Challenge" }],
+          dashboardInsights: {
+            strongestSkills: [{ bucket: "timing", id: "sixteenth_grid", value: 0.91 }],
+            weakestSkills: [{ bucket: "chords", id: "bm", value: 0.42 }],
+            masteryTrend: { chords: [0.2, 0.5, 0.8] },
+            practiceTrend: { minutes: [5, 10, 15] },
+            recommendationQuality: { totalAccepted: 3, focusedTechnique: { songId: "night_drive", techniqueLabel: "tap notes", accuracy: 78 } },
+            careerTrend: { clearedSongs: 4, averageStars: 3.5, completedStages: 2 }
+          }
+        }
+      };
+    }
+  };
+  global.escHTML = function(value) { return String(value); };
+  global.isLoggedInSpark = function() { return false; };
+  global.SparkCurriculum = { curriculums: {} };
+  global.SparkContent = { packs: {} };
+  global.S = global.S || {};
+  global.S.cloudAuth = { email: null };
+  global.S.cloudSync = { lastSyncStatus: "idle", lastSyncAt: null };
+  global.S.personalInsights = {};
+  global.S.lastInsightRun = Date.now();
+  global.S.importedMidi = null;
+  global.S.importedMidiAssignments = {};
+  global.S.settings = { theme: "dark", uiVolume: 0.5, practiceReminder: false };
+  global.S.releaseInfo = { version: "1.2.3", build: 7 };
+  global.getCurriculumItem = function() { return null; };
+  global.getSettingsCategories = function() {
+    return [
+      { id: "display", title: "Display" },
+      { id: "about", title: "About" }
+    ];
+  };
+  global.renderInsightLineChart = function(series) {
+    return "<chart>" + (series || []).length + "</chart>";
+  };
+  global.getRecommendedCareerSong = function() {
+    return { title: "Career Song" };
+  };
+  global.getActiveSeasonalEvent = function() {
+    return { id: "event-1" };
+  };
+
+  eval(loadJS("js/cloud/ui.js"));
+  eval(loadJS("js/curriculum/curriculum_ui.js"));
+  eval(loadJS("js/home/home_engine.js"));
+  eval(loadJS("js/import/midi_ui.js"));
+  eval(loadJS("js/insights/ui.js"));
+  eval(loadJS("js/settings/settings_ui.js"));
+
+  var cloudHtml = global.window.cloudSettingsPage();
+  var curriculumHtml = global.window.curriculumPage();
+  var dashboardData = global.window.buildHomeDashboardData();
+  var midiHtml = global.window.midiImportPage();
+  var insightsHtml = insightsDashboardPage();
+  var settingsHtml = settingsPage();
+
+  assert.ok(cloudHtml.indexOf("scott@example.com") >= 0);
+  assert.ok(curriculumHtml.indexOf("curriculum/manifest.json") >= 0);
+  assert.strictEqual(dashboardData.recommendations[0].id, "rec-1");
+  assert.strictEqual(dashboardData.challenges[0].id, "challenge-1");
+  assert.strictEqual(dashboardData.insights.careerTrend.completedStages, 2);
+  assert.ok(midiHtml.indexOf("Piano RH") >= 0);
+  assert.ok(midiHtml.indexOf("Demo Seed") >= 0);
+  assert.ok(insightsHtml.indexOf("tap notes is still at 78% in night drive") >= 0);
+  assert.ok(settingsHtml.indexOf("retro") >= 0);
+
+  delete global.sparkCore;
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });

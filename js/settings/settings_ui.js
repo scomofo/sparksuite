@@ -23,8 +23,10 @@ function settingsPage(){
 }
 
 function renderSettingsCategory(cat){
-  var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-    ? window.sparkCore.getRuntimeState()
+  var core = (typeof window !== "undefined" && window.sparkCore)
+    || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var runtimeState = core && typeof core.getRuntimeState === "function"
+    ? core.getRuntimeState()
     : null;
   var theme = runtimeState && runtimeState.settingsTheme
     ? runtimeState.settingsTheme
