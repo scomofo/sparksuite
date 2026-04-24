@@ -608,6 +608,50 @@ test("practice curriculum v2 surfaces react to canonical completion state", func
   assert.ok(trackHtml.indexOf("You've banked 1 sessions. Day 2 is next.") >= 0);
 });
 
+test("practice quick start card favors an active guided runtime over stale chord resume state", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.S.lastChordName = "Em";
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              target_duration_min: 10,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1,
+            guidedShellDurationSec: 600
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeQuickStartCard();
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block • 4 blocks") >= 0);
+  assert.ok(html.indexOf("Resume Guided") >= 0);
+  assert.ok(html.indexOf("Quick Chord") >= 0);
+  assert.strictEqual(html.indexOf("Pick Up Where You Left Off"), -1);
+});
+
 test("shared session helpers can resolve sparkCore from the global binding", function() {
   resetEnvironment("chordspark");
   global.window = {};
