@@ -1537,6 +1537,86 @@ test("song detail page uses SparkCore song runtime for active playback rendering
   assert.ok(songHtml.indexOf("Pause") >= 0);
 });
 
+test("session family pages can resolve sparkCore from the global binding", function() {
+  var core = createDefaultSparkCore();
+  global.window = {};
+  global.sparkCore = core;
+  global.VOICINGS = {};
+  global._prevChordKey = "";
+  global.ringHTML = function(_pct, _size, _stroke, _color, inner) { return inner; };
+  global.getExpectedNotes = function() { return []; };
+  global._buildChordCheckInner = function() { return ""; };
+  global.getCoachFeedback = function() { return []; };
+  global.escHTML = function(value) { return String(value); };
+  global.tierBadgeHTML = function() { return ""; };
+  global.getTransitionTip = function() { return null; };
+  global.clickableDiv = function() { return ""; };
+  global.strumHandSVG = function(direction, active) { return "<div>" + direction + ":" + active + "</div>"; };
+  global.strumHTML = function(pattern, beat) { return "<div>" + pattern.join("-") + "|" + beat + "</div>"; };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            ALL_CHORDS: [{ name: "C", short: "C" }, { name: "G", short: "G" }],
+            LC: { 1: "#fff" }
+          };
+        },
+        ui: {
+          chord: function(chord) { return "<div>" + chord.name + "</div>"; }
+        }
+      };
+    }
+  };
+  S.selectedVoicing = 0;
+  S.level = 1;
+  S.currentChord = { name: "C", short: "C" };
+  S.metronomeOn = undefined;
+  S.metronomeBpm = undefined;
+  S._metroBeat = undefined;
+  S._metroBeats = undefined;
+  S.chordDetectOn = false;
+  S.chordDetectErr = "";
+  S.practiceIntention = "";
+  S.timer = undefined;
+  S.timerActive = undefined;
+  S.selectedSong = undefined;
+  S.songPlaying = undefined;
+  S.songBeat = undefined;
+  S.strumTone = "classic";
+
+  eval(loadJS("js/pages/session.js"));
+
+  core.openLegacyPracticeSession({ mode: "chord", chordName: "C", durationSec: 120 });
+  core.syncMetronomeRuntimeState({
+    active: true,
+    bpm: 92,
+    beat: 1,
+    beatsPerBar: 4
+  });
+  var sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf(">C<") >= 0);
+  assert.ok(sessionHtml.indexOf(">92<") >= 0);
+  assert.ok(sessionHtml.indexOf("Stop") >= 0);
+
+  core.openSongSession({
+    songData: {
+      title: "Fire Road",
+      artist: "Spark Suite",
+      bpm: 96,
+      chords: ["C", "G"],
+      progression: ["C", "G", "C", "G"],
+      pattern: ["D", "D", "U", "U"]
+    },
+    source: "builtin"
+  });
+  core.syncSongRuntimeState("play", { songBeat: 2 });
+  var songHtml = songDetailPage();
+  assert.ok(songHtml.indexOf("U:true") >= 0);
+  assert.ok(songHtml.indexOf("D-D-U-U|2") >= 0);
+  assert.ok(songHtml.indexOf("Pause") >= 0);
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
