@@ -179,6 +179,20 @@ function getGuidedDoneSupportLabel(extensionCount) {
   return "You wrapped from a deep focus stretch. Nice work ending where it felt right.";
 }
 
+function getGuidedDoneTrackCompleteLabel(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "Phase 1 Track Complete";
+  if (count === 2) return "Track Complete, Smooth Landing";
+  return "Track Complete, Soft Landing";
+}
+
+function getGuidedDoneTrackCompleteCopy(extensionCount) {
+  var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
+  if (count < 2) return "You finished every session in this track. Replay a favorite, switch instruments, or leave this one proudly in the bank.";
+  if (count === 2) return "You finished the whole track and landed gently out of focus time. Replay this session if it feels good, or leave the full track banked for now.";
+  return "You finished the whole track and brought it to a soft close. Let it rest here, or revisit a favorite session whenever it feels inviting.";
+}
+
 function getGuidedDoneSummaryLine(extensionCount, title) {
   var count = Math.max(0, normalizeGuidedCount(extensionCount, 0));
   var safeTitle = firstGuidedTextToken(title, "Guided session");
@@ -1317,6 +1331,12 @@ function guidedDonePage() {
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(getGuidedDoneSummaryLine(extensionCount, title)) + '</p>';
   if (doneSupportLabel) {
     h += '<div style="display:flex;justify-content:center;margin:-8px 0 18px"><span style="padding:7px 12px;border-radius:999px;background:#6E56B311;color:#6E56B3;font-size:12px;font-weight:800;letter-spacing:.02em">' + escHTML(doneSupportLabel) + '</span></div>';
+  }
+  if (!hasNextSession) {
+    h += '<div class="card mb16" style="max-width:560px;margin:0 auto 16px;border:1px solid #45B7D122;background:linear-gradient(135deg,#45B7D10A,#4ECDC40F);text-align:left">';
+    h += '<div style="font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2F8F89;margin-bottom:8px">' + escHTML(getGuidedDoneTrackCompleteLabel(extensionCount)) + '</div>';
+    h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDoneTrackCompleteCopy(extensionCount)) + '</div>';
+    h += '</div>';
   }
   if (extensionCount >= 2) {
     h += '<div class="card mb16" style="max-width:520px;margin:0 auto 16px;border:1px solid #6E56B322;background:linear-gradient(135deg,#6E56B30D,#FF8A5C12);text-align:left">';

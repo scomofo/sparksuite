@@ -825,6 +825,8 @@ test("guided done page softens the primary CTA when the track is complete", func
   };
 
   var html = guidedDonePage();
+  assert.ok(html.indexOf("Phase 1 Track Complete") >= 0);
+  assert.ok(html.indexOf("You finished every session in this track. Replay a favorite, switch instruments, or leave this one proudly in the bank.") >= 0);
   assert.ok(html.indexOf("Play This One Again") >= 0);
   assert.ok(html.indexOf("act('start_guided_session',30)") >= 0);
   assert.ok(html.indexOf("You've reached the end of this track. Replay this one or head home whenever you like.") >= 0);
