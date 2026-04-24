@@ -377,10 +377,13 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('label:"Practice", icon:"music_note", onClick: nav("practice")') >= 0);
   assert.ok(showroomSource.indexOf('label:"Instruments", icon:"piano",       onClick: nav("instruments")') >= 0);
   assert.ok(showroomSource.indexOf('"instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; S.launcherView = "instruments"; }') >= 0);
-  assert.ok(showroomSource.indexOf('"curriculum":      function(){ S._showroomOverride = "curriculum"; }') >= 0);
-  assert.ok(showroomSource.indexOf('"syllabus":        function(){ S._showroomOverride = "syllabus"; }') >= 0);
-  assert.ok(showroomSource.indexOf(' : "act(\\\'showroomStartPerf\\\')"') >= 0 || showroomSource.indexOf(' : "act(\'showroomStartPerf\')"') >= 0);
-  assert.ok(showroomSource.indexOf('var signInAction = opts.signInAction || "act(\\\'showroomOpenSignIn\\\')"') >= 0 || showroomSource.indexOf('var signInAction = opts.signInAction || "act(\'showroomOpenSignIn\')"') >= 0);
+assert.ok(showroomSource.indexOf('"curriculum":      function(){ S._showroomOverride = "curriculum"; }') >= 0);
+assert.ok(showroomSource.indexOf('"syllabus":        function(){ S._showroomOverride = "syllabus"; }') >= 0);
+assert.ok(showroomSource.indexOf("return \"act('showroomStartPerf')\";") >= 0 || showroomSource.indexOf("act('showroomStartPerf')") >= 0);
+assert.ok(showroomSource.indexOf('function getShowroomLessonCtaAction(lesson)') >= 0);
+assert.ok(showroomSource.indexOf("act('resume_guided_session')") >= 0);
+assert.ok(showroomSource.indexOf("Resume Practice") >= 0);
+assert.ok(showroomSource.indexOf('var signInAction = opts.signInAction || "act(\\\'showroomOpenSignIn\\\')"') >= 0 || showroomSource.indexOf('var signInAction = opts.signInAction || "act(\'showroomOpenSignIn\')"') >= 0);
   assert.ok(showroomSource.indexOf("SparkInstruments.openLauncherView('calibration')") >= 0);
   assert.ok(showroomSource.indexOf('<button type="button" class="showroom-avatar" onclick="') >= 0);
   assert.ok(showroomSource.indexOf('<button type="button" class="showroom-syllabus-avatar" onclick="') >= 0);
