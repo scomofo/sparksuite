@@ -98,6 +98,34 @@ test("piano session page ignores stale guided session text", function() {
   assert.ok(html.indexOf("Moonlight intro") >= 0);
 });
 
+test("piano session page surfaces the live guided shell from sparkCore", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          segments: [
+            { id: "warm_1", type: "warm_engine", label: "Warm engine", duration_sec: 90 },
+            { id: "song_1", type: "song", label: "Song block", duration_sec: 240 }
+          ]
+        },
+        activeSegment: { id: "song_1", type: "song", label: "Song block", duration_sec: 240 },
+        runtimeState: {
+          activeSegmentId: "song_1",
+          transport: { status: "running", positionMs: 60000, durationMs: 240000 }
+        }
+      };
+    }
+  };
+
+  var html = pianoSessionPage();
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("Block 3 of 4") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("1m 0s in block") >= 0);
+  assert.ok(html.indexOf("3m 0s left") >= 0);
+});
+
 test("legacy session page ignores stale chord labels", function() {
   var html = legacySessionHTML();
   assert.ok(html.indexOf(">undefined<") === -1);

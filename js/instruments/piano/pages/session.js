@@ -55,6 +55,65 @@ function pianoSessionStepBlock(plan, step) {
   return null;
 }
 
+function pianoGetSessionCoreView() {
+  var core = (typeof window !== "undefined" && window && window.sparkCore)
+    ? window.sparkCore
+    : (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
+function pianoGetSessionShellSummary(plan) {
+  var view = pianoGetSessionCoreView();
+  var runtimeState = view && view.runtimeState ? view.runtimeState : null;
+  var segments = view && view.plan && Array.isArray(view.plan.segments) ? view.plan.segments : [];
+  var activeSegment = view && view.activeSegment ? view.activeSegment : null;
+  var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
+  var i;
+  var durationMs;
+  var positionMs;
+  var progressPct;
+  var remainingMs;
+  var totalDurationSec = 0;
+  var activeIndex = 0;
+  if (!Array.isArray(plan && plan.blocks) || !plan.blocks.length) return null;
+  if (!activeSegment && activeSegmentId) {
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === activeSegmentId) {
+        activeSegment = segments[i];
+        break;
+      }
+    }
+  }
+  if (!activeSegment) {
+    activeSegment = pianoSessionStepBlock(plan, S.sessionStep) || plan.blocks[0];
+  }
+  for (i = 0; i < plan.blocks.length; i++) {
+    totalDurationSec += Number(plan.blocks[i] && plan.blocks[i].duration_sec) || 0;
+    if (plan.blocks[i] === activeSegment || (plan.blocks[i] && activeSegment && plan.blocks[i].type === activeSegment.type)) {
+      activeIndex = i;
+    }
+  }
+  durationMs = Number(runtimeState && runtimeState.transport && runtimeState.transport.durationMs);
+  if (!isFinite(durationMs) || durationMs <= 0) durationMs = (Number(activeSegment && activeSegment.duration_sec) || 0) * 1000;
+  positionMs = Number(runtimeState && runtimeState.transport && runtimeState.transport.positionMs);
+  if (!isFinite(positionMs) || positionMs < 0) positionMs = 0;
+  if (durationMs > 0 && positionMs > durationMs) positionMs = durationMs;
+  progressPct = durationMs > 0 ? Math.max(0, Math.min(100, Math.round((positionMs / durationMs) * 100))) : 0;
+  remainingMs = durationMs > positionMs ? (durationMs - positionMs) : 0;
+  return {
+    activeIndex: activeIndex,
+    blockCount: plan.blocks.length,
+    status: runtimeState && runtimeState.transport && runtimeState.transport.status ? runtimeState.transport.status : "ready",
+    label: pianoFirstSessionTextToken(activeSegment && activeSegment.label, activeSegment && activeSegment.title, activeSegment && activeSegment.type, "Practice block"),
+    totalDurationMin: Math.max(1, Math.round(totalDurationSec / 60)),
+    progressPct: progressPct,
+    elapsedLabel: Math.floor(positionMs / 60000) + "m " + Math.floor((positionMs % 60000) / 1000) + "s in block",
+    remainingLabel: Math.floor(remainingMs / 60000) + "m " + Math.floor((remainingMs % 60000) / 1000) + "s left"
+  };
+}
+
 function pianoFormatSessionBlockDuration(durationSec) {
   var numeric = Number(durationSec);
   var minutes;
@@ -87,14 +146,25 @@ function pianoRenderSessionBlockMeta(plan, step) {
 function pianoSessionPage() {
   var plan = S.sessionPlan;
   var planBpm;
+  var shell;
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
   planBpm = pianoNormalizeSessionBpm(plan.bpm, 80);
+  shell = pianoGetSessionShellSummary(plan);
 
   var html = '<div class="session-screen">';
 
   // Session header
   html += '<div class="session-title">Session ' + plan.num + ': ' + escHTML(pianoFirstSessionTextToken(plan.title, "Guided session")) + '</div>';
   html += '<div class="session-subtitle">Level ' + plan.level + ' \u2022 ' + planBpm + ' BPM</div>';
+  if (shell) {
+    html += '<div class="card" style="margin:12px 0;text-align:left;background:linear-gradient(180deg,rgba(78,205,196,.12),rgba(69,183,209,.08));border:1px solid rgba(78,205,196,.35)">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#4ECDC4">Guided Session Live</div><div style="font-size:11px;color:var(--text-muted)">Block ' + (shell.activeIndex + 1) + ' of ' + shell.blockCount + '</div></div>';
+    html += '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">' + escHTML((shell.status === "paused" ? "Paused" : (shell.status === "running" ? "In progress" : "Ready")) + " - " + shell.label) + '</div>';
+    html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">' + shell.totalDurationMin + ' min shell</div>';
+    html += '<div style="height:8px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden;margin-bottom:8px"><div style="height:100%;width:' + shell.progressPct + '%;background:linear-gradient(90deg,#4ECDC4,#45B7D1)"></div></div>';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;color:var(--text-muted)"><span>' + escHTML(shell.elapsedLabel) + '</span><span>' + escHTML(shell.remainingLabel) + '</span></div>';
+    html += '</div>';
+  }
 
   // Step indicator
   html += sessionStepIndicator(S.sessionStep);
