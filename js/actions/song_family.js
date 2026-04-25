@@ -5,6 +5,32 @@
     return core && typeof core.getRuntimeState === "function" ? core.getRuntimeState() : null;
   }
 
+  function applySongFamilyRuntimeUpdate(update, fallback) {
+    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
+      SparkProgressBridge.applyLegacyActivityRuntime(update || {});
+      return true;
+    }
+    if (typeof fallback === "function") fallback();
+    return false;
+  }
+
+  function applySongFamilyCompletionUpdate(update, fallback) {
+    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
+      SparkProgressBridge.applyLegacyActivityCompletion(update || {});
+      return true;
+    }
+    if (typeof fallback === "function") fallback();
+    return false;
+  }
+
+  function applySongFamilyNavigation(target, options) {
+    if (typeof applySongNavigationRequest === "function") {
+      applySongNavigationRequest(target, options || {});
+      return true;
+    }
+    return false;
+  }
+
   function handleSongAction(a, v) {
     if (a === "songsSubTab") {
       S.songsSubTab = v;
@@ -25,16 +51,14 @@
         source: runtimeState ? runtimeState.songSessionSource : "builtin",
         songBeat: nextSongPlaying ? 0 : S.songBeat
       });
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields: nextSongPlaying ? { songPlaying: true, songBeat: 0 } : { songPlaying: false },
-          clearIntervals: nextSongPlaying ? [] : ["song"]
-        });
-      } else {
+      applySongFamilyRuntimeUpdate({
+        setFields: nextSongPlaying ? { songPlaying: true, songBeat: 0 } : { songPlaying: false },
+        clearIntervals: nextSongPlaying ? [] : ["song"]
+      }, function() {
         S.songPlaying = nextSongPlaying;
         if (S.songPlaying) S.songBeat = 0;
         else clearInterval(T.song);
-      }
+      });
       if (S.songPlaying) {
         var ms = 60000 / S.selectedSong.bpm;
         var chordName = S.selectedSong.progression[0];
@@ -57,26 +81,22 @@
     if (a === "completeSong") {
       var songActivityInstrument;
       var completionRuntimeState;
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields: { songPlaying: false },
-          clearIntervals: ["song"]
-        });
-      } else {
+      applySongFamilyRuntimeUpdate({
+        setFields: { songPlaying: false },
+        clearIntervals: ["song"]
+      }, function() {
         S.songPlaying = false;
         clearInterval(T.song);
-      }
+      });
       snd("complete");
       songActivityInstrument = getActiveInstrumentIdentityForActivity();
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
-        SparkProgressBridge.applyLegacyActivityCompletion({
-          xpDelta: 40,
-          incrementFields: { songsPlayed: 1 },
-          history: { type: "song", detail: S.selectedSong ? S.selectedSong.title : "Song", xp: 40 },
-          emit: { type: "lesson_completed", payload: { appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 } },
-          checkBadges: true
-        });
-      } else {
+      applySongFamilyCompletionUpdate({
+        xpDelta: 40,
+        incrementFields: { songsPlayed: 1 },
+        history: { type: "song", detail: S.selectedSong ? S.selectedSong.title : "Song", xp: 40 },
+        emit: { type: "lesson_completed", payload: { appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 } },
+        checkBadges: true
+      }, function() {
         S.songsPlayed++;
         if (window.SparkProgressBridge) SparkProgressBridge.applyLegacyReward({ xpDelta: 40 });
         else S.xp += 40;
@@ -84,7 +104,7 @@
         _sparkEmit("lesson_completed", { appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });
         checkBadges();
         saveState();
-      }
+      });
       completionRuntimeState = getSongFamilyCoreRuntimeState();
       completeSongSessionRequest({
         songData: S.selectedSong,
@@ -99,25 +119,21 @@
     }
 
     if (a === "songBack") {
-      applySongNavigationRequest("songs_home");
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({ setFields: { screen: SCR.HOME, tab: TAB.SONGS } });
-      } else {
+      applySongFamilyNavigation("songs_home");
+      applySongFamilyRuntimeUpdate({ setFields: { screen: SCR.HOME, tab: TAB.SONGS } }, function() {
         S.screen = SCR.HOME;
         S.tab = TAB.SONGS;
-      }
+      });
       render();
       return true;
     }
 
     if (a === "songDoneHome") {
-      applySongNavigationRequest("songs_home");
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({ setFields: { screen: SCR.HOME, tab: TAB.SONGS } });
-      } else {
+      applySongFamilyNavigation("songs_home");
+      applySongFamilyRuntimeUpdate({ setFields: { screen: SCR.HOME, tab: TAB.SONGS } }, function() {
         S.screen = SCR.HOME;
         S.tab = TAB.SONGS;
-      }
+      });
       render();
       return true;
     }
