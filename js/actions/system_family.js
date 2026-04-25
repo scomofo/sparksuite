@@ -669,7 +669,9 @@
           scheduleTick: false
         });
       }
-      if (guidedPauseRuntime && typeof guidedPauseRuntime.syncSegmentTransport === "function") {
+      if (guidedPauseRuntime && typeof guidedPauseRuntime.pauseActiveSegment === "function") {
+        guidedPauseRuntime.pauseActiveSegment();
+      } else if (guidedPauseRuntime && typeof guidedPauseRuntime.syncSegmentTransport === "function") {
         guidedPauseRuntime.syncSegmentTransport("pause");
       } else if (guidedPauseCore && typeof guidedPauseCore.syncGuidedRuntimeState === "function") {
         guidedPauseCore.syncGuidedRuntimeState({
@@ -689,7 +691,9 @@
           scheduleTick: false
         });
       }
-      if (guidedResumeRuntime && typeof guidedResumeRuntime.syncSegmentTransport === "function") {
+      if (guidedResumeRuntime && typeof guidedResumeRuntime.resumeActiveSegment === "function") {
+        guidedResumeRuntime.resumeActiveSegment();
+      } else if (guidedResumeRuntime && typeof guidedResumeRuntime.syncSegmentTransport === "function") {
         guidedResumeRuntime.syncSegmentTransport("resume");
       } else if (guidedResumeCore && typeof guidedResumeCore.syncGuidedRuntimeState === "function") {
         guidedResumeCore.syncGuidedRuntimeState({

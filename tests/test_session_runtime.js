@@ -308,5 +308,88 @@ test("runSegmentById launches the matching active session segment", function() {
   assert.strictEqual(Runtime.getActiveSegment().id, "seg_b");
 });
 
+test("named transport helpers pause, resume, and complete the active segment", function() {
+  var runtimePatches = [];
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    return true;
+  };
+  global.window.sparkCore = {
+    updateRuntimeState: function(patch) {
+      runtimePatches.push(patch);
+      return patch;
+    }
+  };
+
+  Runtime.attachSession({
+    flow: "daily_practice",
+    segments: [
+      { id: "seg_transport", type: "practice", durationSec: 2, exerciseIds: ["ex_transport"] }
+    ],
+    exercises: [
+      { id: "ex_transport", data: { core: { skill: "timing" }, gameplay: {} } }
+    ]
+  }, {
+    segmentId: "seg_transport",
+    status: "running",
+    positionMs: 600,
+    nowMs: 1000,
+    scheduleTick: false
+  });
+
+  Runtime.pauseActiveSegment({ nowMs: 1400 });
+  assert.strictEqual(Runtime.getSegmentTransport().status, "paused");
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 1000);
+
+  Runtime.resumeActiveSegment({ nowMs: 2000, scheduleTick: false });
+  assert.strictEqual(Runtime.getSegmentTransport().status, "running");
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 1000);
+
+  var completion = Runtime.completeActiveSegment({ accuracy: 0.9 }, { nowMs: 2600 });
+  assert.strictEqual(completion.hasNext, false);
+  assert.strictEqual(Runtime.getSegmentTransport().status, "completed");
+  assert.strictEqual(Runtime.getActiveSession().segments[0].completed, true);
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].transport.status, "completed");
+
+  delete global.window.sparkCore;
+});
+
+test("completeSegmentById completes a non-active segment through the shared shell", function() {
+  var runtimePatches = [];
+  global.window.sparkCore = {
+    updateRuntimeState: function(patch) {
+      runtimePatches.push(patch);
+      return patch;
+    }
+  };
+
+  Runtime.attachSession({
+    flow: "daily_practice",
+    segments: [
+      { id: "seg_one", type: "practice", durationSec: 2, exerciseIds: ["ex_one"] },
+      { id: "seg_two", type: "song", durationSec: 3, exerciseIds: ["ex_two"] }
+    ],
+    exercises: [
+      { id: "ex_one", data: { core: { skill: "timing" }, gameplay: {} } },
+      { id: "ex_two", data: { core: { songId: "song_two" }, gameplay: {} } }
+    ]
+  }, {
+    segmentId: "seg_one",
+    status: "running",
+    positionMs: 500,
+    nowMs: 1000,
+    scheduleTick: false
+  });
+
+  var completion = Runtime.completeSegmentById("seg_two", null, { autoAdvance: false });
+
+  assert.strictEqual(completion.hasNext, false);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_two");
+  assert.strictEqual(Runtime.getActiveSession().segments[1].completed, true);
+  assert.strictEqual(Runtime.getSegmentTransport().status, "completed");
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].activeSegmentId, "seg_two");
+
+  delete global.window.sparkCore;
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);
