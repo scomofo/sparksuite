@@ -1,4 +1,21 @@
 (function() {
+  function applyUtilityFamilyRuntimeUpdate(update, fallback) {
+    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
+      SparkProgressBridge.applyLegacyActivityRuntime(update || {});
+      return true;
+    }
+    if (typeof fallback === "function") fallback();
+    return false;
+  }
+
+  function applyUtilityFamilySongNavigation(target, options) {
+    if (typeof applySongNavigationRequest === "function") {
+      applySongNavigationRequest(target, options || {});
+      return true;
+    }
+    return false;
+  }
+
   function handleUtilityAction(a, v) {
     if (a === "appReload") {
       if (typeof location !== "undefined" && location && typeof location.reload === "function") location.reload();
@@ -167,11 +184,9 @@
     if (a === "openCurriculum") {
       openUtilityScreenRequest("curriculum");
       syncCurriculumStateRequest();
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({ setFields: { screen: SCR.CURRICULUM } });
-      } else {
+      applyUtilityFamilyRuntimeUpdate({ setFields: { screen: SCR.CURRICULUM } }, function() {
         S.screen = SCR.CURRICULUM;
-      }
+      });
       render();
       return true;
     }
@@ -181,7 +196,7 @@
       var utilityBack = S.screen === SCR.SETTINGS || S.screen === SCR.CLOUD_SETTINGS || S.screen === SCR.CURRICULUM || S.screen === SCR.MIDI_SETTINGS || S.screen === SCR.MIDI_IMPORT;
       var dailyBack = S.screen === SCR.DAILY;
       if (S.screen === SCR.SONG || S.screen === SCR.SONG_DONE) {
-        applySongNavigationRequest("songs_home");
+        applyUtilityFamilySongNavigation("songs_home");
       }
       if (dailyBack) {
         returnFromLegacyDailyChallengeRequest({ activeTab: "daily" });
@@ -198,13 +213,11 @@
         returnFromHomeFamilyRequest({ currentScreen: dashboardBack ? "home_dash" : "home" });
       }
       stopAllTimers();
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({ setFields: { selectedVoicing: 0, screen: dashboardBack ? SCR.HOME_DASH : SCR.HOME, tab: dailyBack ? TAB.DAILY : S.tab } });
-      } else {
+      applyUtilityFamilyRuntimeUpdate({ setFields: { selectedVoicing: 0, screen: dashboardBack ? SCR.HOME_DASH : SCR.HOME, tab: dailyBack ? TAB.DAILY : S.tab } }, function() {
         S.selectedVoicing = 0;
         S.screen = dashboardBack ? SCR.HOME_DASH : SCR.HOME;
         if (dailyBack) S.tab = TAB.DAILY;
-      }
+      });
       render();
       return true;
     }
