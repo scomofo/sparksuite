@@ -1,0 +1,78 @@
+{
+  "id": "session_fixture_guitar_1",
+  "flow": "daily_practice",
+  "generatedDate": "2026-04-24",
+  "instrumentId": "chordspark",
+  "instrumentType": "guitar",
+  "focus": "Open chord fluency",
+  "lesson": {
+    "id": "gtr-d01",
+    "skill": "open_chords",
+    "title": "Open Chords"
+  },
+  "lessonId": "gtr-d01",
+  "skillId": "open_chords",
+  "difficulty": "easy",
+  "segments": [
+    {
+      "id": "seg_gtr_1",
+      "type": "practice",
+      "exerciseIds": ["ex_gtr_1"]
+    },
+    {
+      "id": "seg_gtr_2",
+      "type": "song",
+      "exerciseIds": ["ex_gtr_2"]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_gtr_1",
+      "type": "chord_transition",
+      "difficulty": "easy",
+      "data": {
+        "presentation": {
+          "label": "G to C",
+          "reason": "Smooth the common open-chord switch."
+        },
+        "core": {
+          "skill": "open_chords",
+          "chords": ["G", "C"],
+          "instrument": "guitar",
+          "durationSec": 120,
+          "lessonId": "gtr-d01"
+        },
+        "gameplay": {
+          "payload": null
+        }
+      }
+    },
+    {
+      "id": "ex_gtr_2",
+      "type": "song",
+      "difficulty": "easy",
+      "data": {
+        "presentation": {
+          "label": "Song Slice",
+          "reason": "Apply the open chords in context."
+        },
+        "core": {
+          "skill": "open_chords",
+          "songId": "fire-road",
+          "instrument": "guitar",
+          "durationSec": 180,
+          "lessonId": "gtr-d01"
+        },
+        "gameplay": {
+          "payload": null
+        }
+      }
+    }
+  ],
+  "rewards": {
+    "xp": 40,
+    "unlocks": [],
+    "achievements": []
+  },
+  "context": {}
+}
