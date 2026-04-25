@@ -12,6 +12,37 @@
   var _activeSegmentIndex = -1;
   var _sessionEvents = [];
 
+  function findExerciseById(session, exerciseId) {
+    var exercises = session && Array.isArray(session.exercises) ? session.exercises : [];
+    var i;
+    for (i = 0; i < exercises.length; i++) {
+      if (exercises[i] && exercises[i].id === exerciseId) return exercises[i];
+    }
+    return null;
+  }
+
+  function resolveSegmentExercise(segment) {
+    var ids = segment && Array.isArray(segment.exerciseIds) ? segment.exerciseIds : [];
+    if (!_activeSession || !ids.length) return null;
+    return findExerciseById(_activeSession, ids[0]);
+  }
+
+  function getExecutionGateway() {
+    if (typeof window !== "undefined" && window.SparkExecutionGateway) return window.SparkExecutionGateway;
+    if (typeof SparkExecutionGateway !== "undefined") return SparkExecutionGateway;
+    return null;
+  }
+
+  function buildSegmentLaunchOptions(segment, exercise) {
+    return {
+      source: "session_runtime",
+      session: _activeSession,
+      segment: segment,
+      exercise: exercise,
+      segmentIndex: _activeSegmentIndex
+    };
+  }
+
   // Start a new session loop via SessionEngine
   function startSessionLoop(options) {
     options = options || {};
@@ -45,21 +76,16 @@
 
     _activeSegmentIndex = segmentIndex;
     var segment = _activeSession.segments[segmentIndex];
-
-    // Find the exercise(s) for this segment
-    var exercise = null;
-    if (segment.exerciseIds && segment.exerciseIds.length && _activeSession.exercises) {
-      for (var i = 0; i < _activeSession.exercises.length; i++) {
-        if (_activeSession.exercises[i].id === segment.exerciseIds[0]) {
-          exercise = _activeSession.exercises[i];
-          break;
-        }
-      }
-    }
+    var exercise = resolveSegmentExercise(segment);
+    var gateway = getExecutionGateway();
 
     // Log session start event
     if (typeof SparkEventLogger !== "undefined") {
       SparkEventLogger.log("session_start", { segmentId: segment.id, segmentType: segment.type, exerciseId: exercise ? exercise.id : null });
+    }
+
+    if (gateway && typeof gateway.runSessionSegment === "function") {
+      return gateway.runSessionSegment(_activeSession, segment, buildSegmentLaunchOptions(segment, exercise));
     }
 
     // Dispatch to appropriate launcher based on segment type
@@ -102,6 +128,12 @@
   // Get active session info
   function getActiveSession() { return _activeSession; }
   function getActiveSegmentIndex() { return _activeSegmentIndex; }
+  function getActiveSegment() {
+    if (!_activeSession || !Array.isArray(_activeSession.segments)) return null;
+    if (_activeSegmentIndex < 0 || _activeSegmentIndex >= _activeSession.segments.length) return null;
+    return _activeSession.segments[_activeSegmentIndex] || null;
+  }
+  function getActiveExercise() { return resolveSegmentExercise(getActiveSegment()); }
   function getSessionEvents() { return _sessionEvents.slice(); }
 
   // --- Internal launchers (delegate to existing functions) ---
@@ -176,6 +208,8 @@
     completeSegment: completeSegment,
     getActiveSession: getActiveSession,
     getActiveSegmentIndex: getActiveSegmentIndex,
+    getActiveSegment: getActiveSegment,
+    getActiveExercise: getActiveExercise,
     getSessionEvents: getSessionEvents
   };
 

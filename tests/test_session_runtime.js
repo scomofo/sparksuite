@@ -14,6 +14,11 @@ global.SparkInstruments = {
     return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
   }
 };
+global.SparkExecutionGateway = {
+  runSessionSegment: function() {
+    return false;
+  }
+};
 
 require("../js/sparksuite/core/session_runtime.js");
 var Runtime = window.SparkSessionRuntime;
@@ -48,12 +53,57 @@ test("getActiveSegmentIndex returns -1 initially", function() {
   assert.strictEqual(Runtime.getActiveSegmentIndex(), -1);
 });
 
-test("runSegment normalizes app-id instruments for playable practice payloads", function() {
+test("runSegment delegates segment launches to SparkExecutionGateway when available", function() {
+  var captured = null;
+  global.SparkExecutionGateway.runSessionSegment = function(session, segment, options) {
+    captured = {
+      session: session,
+      segment: segment,
+      options: options
+    };
+    return "gateway_launch";
+  };
+
+  global.window.sparkCore = {
+    startSession: function() {
+      return {
+        segments: [{ id: "seg_1", type: "practice", exerciseIds: ["ex_1"] }],
+        exercises: [{
+          id: "ex_1",
+          data: {
+            core: { skill: "timing", instrument: "pianospark" },
+            gameplay: { payload: { adapterType: "pianospark" } }
+          }
+        }]
+      };
+    }
+  };
+
+  Runtime.startSessionLoop();
+  var launched = Runtime.runSegment(0);
+
+  assert.strictEqual(launched, "gateway_launch");
+  assert.ok(captured);
+  assert.strictEqual(captured.segment.id, "seg_1");
+  assert.strictEqual(captured.options.source, "session_runtime");
+  assert.strictEqual(captured.options.segmentIndex, 0);
+  assert.strictEqual(captured.options.exercise.id, "ex_1");
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_1");
+  assert.strictEqual(Runtime.getActiveExercise().id, "ex_1");
+
+  delete global.window.sparkCore;
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    return false;
+  };
+});
+
+test("runSegment falls back to direct legacy launchers when SparkExecutionGateway is unavailable", function() {
   var captured = null;
   global.startPlayableRhythmHighwayPayload = function(payload, options) {
     captured = { payload: payload, options: options };
     return true;
   };
+  delete global.SparkExecutionGateway;
 
   global.window.sparkCore = {
     startSession: function() {
@@ -79,6 +129,11 @@ test("runSegment normalizes app-id instruments for playable practice payloads", 
 
   delete global.window.sparkCore;
   delete global.startPlayableRhythmHighwayPayload;
+  global.SparkExecutionGateway = {
+    runSessionSegment: function() {
+      return false;
+    }
+  };
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");
