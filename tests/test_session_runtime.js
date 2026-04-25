@@ -213,5 +213,31 @@ test("syncSegmentTransport updates transport progress and auto-advances timed se
   };
 });
 
+test("runSegmentById launches the matching active session segment", function() {
+  var launches = [];
+  global.SparkExecutionGateway.runSessionSegment = function(session, segment) {
+    launches.push(segment.id);
+    return true;
+  };
+
+  Runtime.attachSession({
+    flow: "daily_practice",
+    segments: [
+      { id: "seg_a", type: "practice", exerciseIds: ["ex_a"] },
+      { id: "seg_b", type: "song", exerciseIds: ["ex_b"] }
+    ],
+    exercises: [
+      { id: "ex_a", data: { core: { skill: "timing" }, gameplay: {} } },
+      { id: "ex_b", data: { core: { songId: "song_b" }, gameplay: {} } }
+    ]
+  }, { segmentId: "seg_a", status: "ready", scheduleTick: false });
+
+  var launched = Runtime.runSegmentById("seg_b", { scheduleTick: false });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(launches, ["seg_b"]);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_b");
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

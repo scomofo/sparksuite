@@ -1873,6 +1873,55 @@ test("action families can resolve sparkCore from the global binding", function()
   assert.strictEqual(shellUpdates[0].activeTab, "songs");
 });
 
+test("practiceStartItem prefers the shared session runtime for active daily-practice segments", function() {
+  var syncCalls = [];
+  var launchedSegmentId = null;
+  var directStartItem = null;
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "practice_item_1", type: "practice", exerciseIds: ["ex_1"] }
+          ]
+        }
+      };
+    },
+    syncSessionRuntime: function(payload) {
+      syncCalls.push(payload);
+      return true;
+    }
+  };
+  global.SparkSessionRuntime = {
+    runSegmentById: function(segmentId) {
+      launchedSegmentId = segmentId;
+      return true;
+    }
+  };
+  global.startPracticeItem = function(itemId) {
+    directStartItem = itemId;
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.saveState = function() {};
+  global.act = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("practiceStartItem", "practice_item_1"), true);
+  assert.strictEqual(launchedSegmentId, "practice_item_1");
+  assert.strictEqual(directStartItem, null);
+  assert.strictEqual(syncCalls.length, 1);
+  assert.strictEqual(syncCalls[0].segmentId, "practice_item_1");
+  assert.strictEqual(syncCalls[0].status, "ready");
+});
+
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
   var core = createDefaultSparkCore();
   var syncedChallenge = null;
