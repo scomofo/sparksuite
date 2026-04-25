@@ -2313,6 +2313,87 @@ test("system action family routes guided and career screen state through the sha
   }));
 });
 
+test("tools action family routes imported song and rhythm starts through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var songRequests = [];
+  var rhythmRequests = [];
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.openSongSessionRequest = function(payload) {
+    songRequests.push(payload);
+    return payload;
+  };
+  global.openLegacyRhythmGameRequest = function(payload) {
+    rhythmRequests.push(payload);
+    return payload;
+  };
+  global.render = function() {};
+  global.saveState = function() {};
+  global.strumChord = function() {};
+  global.rhythmTick = function() {};
+  global.requestAnimationFrame = function() { return 1; };
+  global.performance = { now: function() { return 2500; } };
+  global.S = global.S || {};
+  global.T = {};
+  global.SCR = global.SCR || {};
+  global.SCR.SONG = "song";
+  global.S.importedSongs = [{
+    title: "Imported Groove",
+    artist: "Spark User",
+    bpm: 96,
+    chords: ["Am", "F"],
+    progression: ["Am", "F", "C", "G"],
+    pattern: ["D", "U"]
+  }];
+  global.S.rhythmBpm = 120;
+  global.S.rhythmActive = false;
+  global.CHORDS = { 1: [{ name: "C Major" }, { name: "G Major" }] };
+  global.S.level = 1;
+
+  eval(loadJS("js/actions/tools_family.js"));
+
+  assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
+  assert.strictEqual(__actionFamilies.tools("startRhythm"), true);
+
+  assert.strictEqual(songRequests.length, 1);
+  assert.strictEqual(songRequests[0].source, "imported");
+  assert.strictEqual(songRequests[0].songData.title, "Imported Groove");
+  assert.strictEqual(rhythmRequests.length, 1);
+  assert.ok(Array.isArray(rhythmRequests[0].beats));
+  assert.ok(rhythmRequests[0].beats.length > 0);
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: {
+        selectedSong: global.S.importedSongs[0],
+        songPlaying: false,
+        songBeat: 0,
+        screen: "song"
+      },
+      clearIntervals: ["song"],
+      save: undefined
+    });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update &&
+      update.setFields &&
+      update.setFields.rhythmActive === true &&
+      Array.isArray(update.setFields.rhythmBeats) &&
+      update.setFields.rhythmScore === 0;
+  }));
+});
+
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
   var core = createDefaultSparkCore();
   var syncedChallenge = null;
