@@ -1,5 +1,25 @@
 (function() {
-  var CURRENT_PROFILE_SCHEMA_VERSION = 3;
+  var CURRENT_PROFILE_SCHEMA_VERSION = 4;
+
+  function createAccessibilityDefaults() {
+    if (typeof SparkNormalizeAccessibilitySettings === "function") {
+      return SparkNormalizeAccessibilitySettings({});
+    }
+    return {
+      reducedMotion: false,
+      highContrast: false,
+      noteSize: "normal",
+      laneLabels: true,
+      colorblindSafeLanes: false,
+      metronomeVisualOnly: false,
+      disableFailureAnimations: false,
+      keyboardRemapping: {},
+      leftHandedLayout: false,
+      slowerDefaultSpeed: false,
+      audioCueVolume: 0.8,
+      metronomeVolume: 0.6
+    };
+  }
 
   function createDefaultProfile(userId) {
     return {
@@ -17,13 +37,7 @@
           hitWindowMs: 140,
           noteSpeed: 0.32
         },
-        accessibility: {
-          reducedMotion: false,
-          highContrast: false,
-          noteSize: "normal",
-          laneLabels: true,
-          colorblindSafeLanes: false
-        }
+        accessibility: createAccessibilityDefaults()
       }
     };
   }

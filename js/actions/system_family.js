@@ -56,6 +56,36 @@
     return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
   }
 
+  function getAccessibilitySettingsHandle() {
+    var core = getSparkCoreHandle();
+    if (core && typeof core.getAccessibilitySettings === "function") {
+      return core.getAccessibilitySettings();
+    }
+    return (S.settings && S.settings.accessibility) || {};
+  }
+
+  function persistAccessibilitySettings(patch) {
+    var core = getSparkCoreHandle();
+    var current = getAccessibilitySettingsHandle();
+    var next = typeof SparkNormalizeAccessibilitySettings === "function"
+      ? SparkNormalizeAccessibilitySettings(Object.assign({}, current, patch || {}))
+      : Object.assign({}, current, patch || {});
+    if (!S.settings) S.settings = {};
+    S.settings.accessibility = next;
+    if (core && typeof core.syncAccessibilitySettings === "function") {
+      core.syncAccessibilitySettings(next);
+    }
+    if (core && core.storage && typeof core.storage.updateUserProfile === "function") {
+      core.storage.updateUserProfile("default", {
+        settings: {
+          accessibility: next
+        }
+      });
+    }
+    if (typeof saveState === "function") saveState();
+    return next;
+  }
+
   function getSessionRuntimeHandle() {
     return window.SparkSessionRuntime || (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
   }
@@ -517,6 +547,23 @@
       if (S.settings) S.settings.theme = v;
       if (typeof applyThemeSetting === "function") applyThemeSetting();
       saveState();
+      render();
+      return true;
+    }
+
+    if (a === "toggleAccessibilitySetting") {
+      var accessibility = getAccessibilitySettingsHandle();
+      persistAccessibilitySettings((function() {
+        var patch = {};
+        patch[v] = !accessibility[v];
+        return patch;
+      })());
+      render();
+      return true;
+    }
+
+    if (a === "setAccessibilityNoteSize") {
+      persistAccessibilitySettings({ noteSize: v });
       render();
       return true;
     }

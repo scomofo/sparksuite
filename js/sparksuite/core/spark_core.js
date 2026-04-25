@@ -114,6 +114,22 @@
           leftHanded: false,
           noStrumMode: false
         };
+    var accessibilitySettings = typeof SparkNormalizeAccessibilitySettings === "function"
+      ? SparkNormalizeAccessibilitySettings({})
+      : {
+          reducedMotion: false,
+          highContrast: false,
+          noteSize: "normal",
+          laneLabels: true,
+          colorblindSafeLanes: false,
+          metronomeVisualOnly: false,
+          disableFailureAnimations: false,
+          keyboardRemapping: {},
+          leftHandedLayout: false,
+          slowerDefaultSpeed: false,
+          audioCueVolume: 0.8,
+          metronomeVolume: 0.6
+        };
     return {
       activeFlow: null,
       activeInstrumentId: null,
@@ -281,6 +297,7 @@
       performanceMicOffsetMs: 0,
       gameplayTimingConfig: gameplayTimingConfig,
       practiceAssistConfig: practiceAssistConfig,
+      accessibilitySettings: accessibilitySettings,
       performanceResults: null,
       transport: {
         status: "idle",
@@ -370,6 +387,24 @@
       ? SparkNormalizePracticeAssist(Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {}))
       : Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {});
     this.updateRuntimeState({ practiceAssistConfig: next });
+    return next;
+  };
+
+  SparkCore.prototype.getAccessibilitySettings = function() {
+    var settings = this.runtimeState && this.runtimeState.accessibilitySettings
+      ? this.runtimeState.accessibilitySettings
+      : null;
+    if (typeof SparkNormalizeAccessibilitySettings === "function") {
+      return SparkNormalizeAccessibilitySettings(settings || {});
+    }
+    return this.cloneValue(settings);
+  };
+
+  SparkCore.prototype.syncAccessibilitySettings = function(patch) {
+    var next = typeof SparkNormalizeAccessibilitySettings === "function"
+      ? SparkNormalizeAccessibilitySettings(Object.assign({}, this.getAccessibilitySettings() || {}, patch || {}))
+      : Object.assign({}, this.getAccessibilitySettings() || {}, patch || {});
+    this.updateRuntimeState({ accessibilitySettings: next });
     return next;
   };
 
@@ -2020,6 +2055,21 @@
     });
 
     var result = this.progressEngine.completeSession(this.currentPlan, payload);
+    var performance = payload.gameplayResult || payload.result || null;
+    var nextRecommendedSkill = this.curriculumEngine && typeof this.curriculumEngine.peekNextSkill === "function"
+      ? this.curriculumEngine.peekNextSkill({
+          session: this.currentPlan,
+          instrumentType: this.currentPlan ? this.currentPlan.instrumentType : null
+        })
+      : null;
+    if (this.aiEngine && typeof this.aiEngine.generateCoachingNote === "function") {
+      result.coaching = this.aiEngine.generateCoachingNote({
+        session: this.currentPlan,
+        performance: performance,
+        mastery: result.mastery || null,
+        nextRecommendedSkill: nextRecommendedSkill
+      });
+    }
     this.lastSessionOutcome = result;
     this.transitionSessionState(result.planCompleted ? sessionStates.COMPLETED : sessionStates.SEGMENT_COMPLETE, {
       reason: result.planCompleted ? "session_completed" : "segment_completed",

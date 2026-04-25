@@ -49,7 +49,7 @@
   function createDefaultProfile(userId) {
     if (typeof SparkCreateDefaultProfile === "function") return SparkCreateDefaultProfile(userId);
     return {
-      schemaVersion: 3,
+      schemaVersion: 4,
       userId: userId || "default",
       xp: 0,
       level: 1,
@@ -63,13 +63,22 @@
           hitWindowMs: 140,
           noteSpeed: 0.32
         },
-        accessibility: {
-          reducedMotion: false,
-          highContrast: false,
-          noteSize: "normal",
-          laneLabels: true,
-          colorblindSafeLanes: false
-        }
+        accessibility: typeof SparkNormalizeAccessibilitySettings === "function"
+          ? SparkNormalizeAccessibilitySettings({})
+          : {
+              reducedMotion: false,
+              highContrast: false,
+              noteSize: "normal",
+              laneLabels: true,
+              colorblindSafeLanes: false,
+              metronomeVisualOnly: false,
+              disableFailureAnimations: false,
+              keyboardRemapping: {},
+              leftHandedLayout: false,
+              slowerDefaultSpeed: false,
+              audioCueVolume: 0.8,
+              metronomeVolume: 0.6
+            }
       }
     };
   }
