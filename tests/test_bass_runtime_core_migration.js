@@ -226,5 +226,42 @@ test("legacy practice replay actions delegate to shared retry helpers", function
   ]);
 });
 
+test("bass shell controls delegate to the shared session runtime for active daily practice", function() {
+  var runtimeCalls = [];
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "practice_1", type: "practice", durationSec: 120, exerciseIds: ["ex_1"] },
+            { id: "song_1", type: "song", durationSec: 240, exerciseIds: ["ex_2"] }
+          ]
+        },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          transport: { status: "running", positionMs: 400 }
+        }
+      };
+    },
+    syncSessionRuntime: function(plan, patch) {
+      sparkCoreCalls.push({ fn: "syncSessionRuntime", plan: plan, patch: patch });
+      return patch;
+    }
+  };
+  global.SparkSessionRuntime = {
+    pauseActiveSegment: function() { runtimeCalls.push("pause"); return true; },
+    resumeActiveSegment: function() { runtimeCalls.push("resume"); return true; },
+    skipActiveSegment: function() { runtimeCalls.push("skip"); return true; }
+  };
+
+  assert.strictEqual(bassAct("sessionPauseBlock"), true);
+  assert.strictEqual(bassAct("sessionResumeBlock"), true);
+  assert.strictEqual(bassAct("sessionSkipBlock"), true);
+  assert.deepStrictEqual(runtimeCalls, ["pause", "resume", "skip"]);
+  assert.strictEqual(sparkCoreCalls.filter(function(call) { return call.fn === "syncSessionRuntime"; }).length, 3);
+  assert.strictEqual(saveStateCalls, 3);
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);

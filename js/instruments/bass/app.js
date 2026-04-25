@@ -47,6 +47,44 @@
       : null;
   }
 
+  function getBassActivePracticeShellView() {
+    var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    return view &&
+      view.plan &&
+      view.plan.flow === "daily_practice" &&
+      view.runtimeState &&
+      view.runtimeState.activeSegmentId
+      ? view
+      : null;
+  }
+
+  function syncBassPracticeShellRuntime(view) {
+    var runtime = typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : (window && window.SparkSessionRuntime ? window.SparkSessionRuntime : null);
+    var runtimeState = view && view.runtimeState ? view.runtimeState : null;
+    if (!runtime || !view || !view.plan) return null;
+    if (window.sparkCore && typeof window.sparkCore.syncSessionRuntime === "function") {
+      window.sparkCore.syncSessionRuntime(view.plan, {
+        activeSegmentId: runtimeState && runtimeState.activeSegmentId,
+        transport: runtimeState && runtimeState.transport ? {
+          status: runtimeState.transport.status,
+          positionMs: runtimeState.transport.positionMs
+        } : null
+      });
+    } else if (typeof runtime.attachSession === "function") {
+      runtime.attachSession(view.plan, {
+        activeSegmentId: runtimeState && runtimeState.activeSegmentId,
+        transport: runtimeState && runtimeState.transport ? {
+          status: runtimeState.transport.status,
+          positionMs: runtimeState.transport.positionMs
+        } : null
+      });
+    }
+    return runtime;
+  }
+
   function syncBassGuidedViewToState(view) {
     var guidedPlan = view && view.plan && view.plan.context ? view.plan.context.guidedPlan : null;
     var runtimeState = view && view.runtimeState ? view.runtimeState : {};
@@ -203,6 +241,24 @@
         return true;
       }
       return bassAct("start_guided_session", v);
+    }
+
+    if (a === "sessionPauseBlock" || a === "sessionResumeBlock" || a === "sessionSkipBlock") {
+      var shellView = getBassActivePracticeShellView();
+      var shellRuntime = shellView ? syncBassPracticeShellRuntime(shellView) : null;
+      if (!shellRuntime) return false;
+      if (a === "sessionPauseBlock") {
+        if (typeof shellRuntime.pauseActiveSegment === "function") shellRuntime.pauseActiveSegment({});
+        else if (typeof shellRuntime.syncSegmentTransport === "function") shellRuntime.syncSegmentTransport("pause", {});
+      } else if (a === "sessionResumeBlock") {
+        if (typeof shellRuntime.resumeActiveSegment === "function") shellRuntime.resumeActiveSegment({ scheduleTick: true });
+        else if (typeof shellRuntime.syncSegmentTransport === "function") shellRuntime.syncSegmentTransport("resume", { scheduleTick: true });
+      } else if (typeof shellRuntime.skipActiveSegment === "function") {
+        shellRuntime.skipActiveSegment({ autoAdvance: true });
+      }
+      render();
+      saveState();
+      return true;
     }
 
     if (a === "start_guided_session") {
