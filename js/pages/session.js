@@ -34,6 +34,60 @@ function getSparkCoreRuntimeState(){
   return view && view.runtimeState ? view.runtimeState : null;
 }
 
+function getSessionPageActiveShellSummary(){
+  var view = getSessionCoreView();
+  var runtimeState;
+  var plan;
+  var segments;
+  var activeSegment;
+  var activeSegmentId;
+  var activeIndex;
+  var totalDurationSec;
+  var status;
+  var segmentLabel;
+  if (!view) return null;
+  plan = view.plan || null;
+  runtimeState = view.runtimeState || null;
+  if (!plan || plan.flow !== "daily_practice") return null;
+  segments = Array.isArray(plan.segments) ? plan.segments : [];
+  if (!segments.length) return null;
+  activeSegment = view.activeSegment || null;
+  activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : (activeSegment && activeSegment.id ? activeSegment.id : null);
+  if (!activeSegment && activeSegmentId) {
+    for (activeIndex = 0; activeIndex < segments.length; activeIndex++) {
+      if (segments[activeIndex] && segments[activeIndex].id === activeSegmentId) {
+        activeSegment = segments[activeIndex];
+        break;
+      }
+    }
+  }
+  if (!activeSegment) activeSegment = segments[0] || null;
+  if (!activeSegment) return null;
+  activeIndex = 0;
+  for (; activeIndex < segments.length; activeIndex++) {
+    if (segments[activeIndex] === activeSegment || (segments[activeIndex] && activeSegment && segments[activeIndex].id === activeSegment.id)) break;
+  }
+  if (activeIndex >= segments.length) activeIndex = 0;
+  totalDurationSec = 0;
+  for (var i = 0; i < segments.length; i++) {
+    totalDurationSec += normalizeSessionNumber(segments[i] && segments[i].durationSec, 0);
+  }
+  status = runtimeState && runtimeState.transport && runtimeState.transport.status ? runtimeState.transport.status : "ready";
+  segmentLabel = _firstSessionSongTextToken(activeSegment.label, activeSegment.title, activeSegment.type, "Practice block");
+  return {
+    title: _firstSessionSongTextToken(plan.focus, plan.title, "Practice Session"),
+    activeIndex: activeIndex,
+    blockCount: segments.length,
+    segmentLabel: segmentLabel,
+    durationMin: Math.max(1, Math.round(totalDurationSec / 60)),
+    status: status,
+    statusLabel: (status === "paused" ? "Paused" : (status === "running" ? "In progress" : "Ready")) + " - " + segmentLabel,
+    primaryAction: status === "paused" ? "sessionResumeBlock" : "sessionPauseBlock",
+    primaryLabel: status === "paused" ? "Resume Block" : "Pause Block",
+    canSkip: activeIndex < segments.length - 1
+  };
+}
+
 function findInstrumentChordByName(D, chordName){
   if (!D || !chordName || !Array.isArray(D.ALL_CHORDS)) return null;
   for (var i = 0; i < D.ALL_CHORDS.length; i++) {
@@ -194,6 +248,18 @@ function renderPracticeIntentionCard(practiceIntention){
   return '<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(practiceIntention)+', I open ChordSpark.&#8221;</div>';
 }
 
+function renderSessionShellCard(shell){
+  var h = '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(78,205,196,.12),rgba(69,183,209,.08));border:1px solid rgba(78,205,196,.35)">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#4ECDC4">Practice Session Live</div><div style="font-size:11px;color:var(--text-muted)">Block '+(shell.activeIndex+1)+' of '+shell.blockCount+'</div></div>';
+  h += '<div style="font-size:18px;font-weight:900;color:var(--text-primary);margin-bottom:4px">'+escHTML(shell.title)+'</div>';
+  h += '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">'+escHTML(shell.statusLabel)+'</div>';
+  h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">'+shell.durationMin+' min shell</div>';
+  h += '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" onclick="act(\''+shell.primaryAction+'\')" style="background:#4ECDC4;color:#fff">'+shell.primaryLabel+'</button>';
+  if(shell.canSkip) h += '<button class="btn" onclick="act(\'sessionSkipBlock\')" style="background:var(--input-bg);color:var(--text-primary)">Skip Block</button>';
+  h += '</div></div>';
+  return h;
+}
+
 function renderSessionActionButtons(runtime){
   return '<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div>';
 }
@@ -291,6 +357,7 @@ function sessionPage(){
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var runtime = getLegacySessionRuntime(D);
+  var shell = getSessionPageActiveShellSummary();
   var c = runtime.chord;
   if(!c)return '';
   // Check if voicings are available
@@ -308,6 +375,7 @@ function sessionPage(){
     h+=renderSessionVoicingTabs(voicings);
   }
 
+  if(shell) h+=renderSessionShellCard(shell);
   h+='<div class="flex-center mb12">'+ringHTML((1-timer/120)*100,90,7,"#FF6B6B",'<div style="font-size:22px;font-weight:900;color:var(--text-primary)">'+m+':'+(s<10?'0':'')+s+'</div>',"Session timer")+'</div>';
   var chordKey=c.name+"_v"+S.selectedVoicing;
   var chordChanged=_prevChordKey!==chordKey;
@@ -343,6 +411,7 @@ function drillPage(){
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var runtime = getLegacyDrillRuntime(D);
+  var shell = getSessionPageActiveShellSummary();
   if(runtime.chords.length<2)return '';
   var drillIdx = typeof S.drillIdx === "number" ? S.drillIdx : 0;
   var c=runtime.chords[drillIdx],nx=runtime.chords[(drillIdx+1)%2];
@@ -350,6 +419,7 @@ function drillPage(){
   var drillChanged=_prevChordKey!==c.name;
   var morphClass=(drillChanged&&_prevChordKey)?" chord-morph":"";
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button>';
+  if(shell) h+=renderSessionShellCard(shell);
   h+=renderDrillHeader(drillTimer);
   h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
   h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+D.LC[S.level]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+UI.chord(c,180,null,drillChanged)+'</div>';
@@ -367,8 +437,10 @@ function drillDonePage(){
 function dailyPage(){
   var dc=S.dailyChallenge;if(!dc)return '';
   var runtime = getLegacyDailyRuntime();
+  var shell = getSessionPageActiveShellSummary();
   var mx=dc.id==="hold"?30:dc.id==="marathon"?180:60;
   var h='<div class="text-center">';
+  if(shell) h+=renderSessionShellCard(shell);
   h+=renderDailyChallengeHeader(dc);
   if(!runtime.complete) h+=renderDailyChallengeTimer(runtime.timer, mx);
   else h+=renderDailyChallengeComplete(dc);

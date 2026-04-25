@@ -149,6 +149,40 @@ test("sessionPage rehydrates an app-id-only active instrument shell", function()
   assert.ok(html.indexOf("chord-svg") >= 0);
 });
 
+test("session family pages surface the live daily-practice shell from sparkCore", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
+            { id: "song_1", type: "song", label: "Song push", durationSec: 240 }
+          ]
+        },
+        activeSegment: { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          transport: { status: "paused" }
+        }
+      };
+    }
+  };
+  S.dailyChallenge = { id: "marathon", icon: "X", title: "Daily", desc: "Challenge", xp: 15 };
+
+  var sessionHtml = sessionPage();
+  var drillHtml = drillPage();
+  var dailyHtml = dailyPage();
+
+  assert.ok(sessionHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(sessionHtml.indexOf("Paused - Quick warmup") >= 0);
+  assert.ok(sessionHtml.indexOf("Resume Block") >= 0);
+  assert.ok(sessionHtml.indexOf("Skip Block") >= 0);
+  assert.ok(drillHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(dailyHtml.indexOf("Practice Session Live") >= 0);
+});
+
 test("sessionPage ignores stale practice intention text", function() {
   S.practiceIntention = "undefined";
   var html = sessionPage();
