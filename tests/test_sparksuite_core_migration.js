@@ -4403,6 +4403,44 @@ test("SparkBassModule exposes authored advanced exercises for later-phase bass s
   assert.strictEqual(ghost[0].focus, "ghost_notes");
 });
 
+test("InstrumentManager rejects adapter factories that return incomplete contracts", function() {
+  var manager = new SparkInstrumentManager();
+
+  assert.throws(function() {
+    manager.register("broken", function() {
+      return {
+        getId: function() { return "broken"; }
+      };
+    });
+  }, /missing required method/);
+});
+
+test("InstrumentManager getActiveContext fails fast for unregistered instrument types without module capabilities", function() {
+  var previousInstruments = global.SparkInstruments;
+  var previousAdapter = global.SparkInstrumentAdapter;
+  var manager = new SparkInstrumentManager();
+
+  global.SparkInstruments = {
+    getActive: function() {
+      return { id: "mysteryspark", appId: "mysteryspark", instrument: "mystery" };
+    },
+    getAll: function() {
+      return [];
+    }
+  };
+  global.SparkInstrumentAdapter = {
+    getAppId: function() { return "mysteryspark"; },
+    getInstrumentType: function() { return "mystery"; }
+  };
+
+  assert.throws(function() {
+    manager.getActiveContext();
+  }, /Instrument "mystery" is not registered/);
+
+  global.SparkInstruments = previousInstruments;
+  global.SparkInstrumentAdapter = previousAdapter;
+});
+
 test("completeSession routes performance completion rewards through core", function() {
   var core = createDefaultSparkCore();
   core.startSession({
