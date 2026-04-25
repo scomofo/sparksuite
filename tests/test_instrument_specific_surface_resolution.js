@@ -329,6 +329,49 @@ test("piano practice quick start shows V2 shell details for a fresh guided sessi
   assert.ok(html.indexOf("New move: open-string strum") >= 0);
 });
 
+test("piano practice quick start stays honest when guided shell metadata is thin", function() {
+  resetEnvironment("pianospark");
+  global.getCurrentSessionPlan = function() {
+    return {
+      num: 1,
+      title: "How guitars get tuned",
+      level: 1
+    };
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 1,
+            guidedPlan: {
+              num: 1,
+              title: "How guitars get tuned",
+              level: 1
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+  assert.ok(html.indexOf('onclick="act(\'resume_guided_session\')"') >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("Guided shell") >= 0);
+  assert.strictEqual(html.indexOf("4 blocks"), -1);
+  assert.strictEqual(html.indexOf("10 min shell"), -1);
+});
+
 test("piano onboarding and tools ignore stale intention strings", function() {
   resetEnvironment("pianospark");
   global.S.practiceIntention = "undefined";
@@ -493,6 +536,7 @@ test("bassAct rehydrates an app-id-only active instrument shell", function() {
 
 test("practice guided session card falls back to curriculum v2 when legacy sessions are absent", function() {
   resetEnvironment("chordspark");
+  global.sparkCore = undefined;
   global.eval(loadJS("js/utils/normalize.js"));
   global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
   global.eval(loadJS("js/curriculum/curriculum_v2.js"));
@@ -592,6 +636,57 @@ test("practice guided session card shows resume state for an active guided runti
   assert.ok(html.indexOf("In progress - shadow") >= 0);
   assert.ok(html.indexOf("Resume 10-Min Session") >= 0);
   assert.ok(html.indexOf("act('resume_guided_session')") >= 0);
+});
+
+test("practice guided session and track cards do not invent shell details when metadata is missing", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              level: 1
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "newMove",
+          guidedNewMovePhase: "shadow"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var guidedHtml = renderPracticeGuidedSessionCard({});
+  var trackHtml = renderPracticeCurriculumV2Card({
+    instrument: "guitar"
+  });
+  var quickStartHtml = renderPracticeQuickStartCard();
+
+  assert.ok(guidedHtml.indexOf("Guided Session 2") >= 0);
+  assert.ok(guidedHtml.indexOf("In progress - shadow") >= 0);
+  assert.ok(guidedHtml.indexOf("Resume Session") >= 0);
+  assert.strictEqual(guidedHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(guidedHtml.indexOf("10 min shell"), -1);
+  assert.ok(trackHtml.indexOf("Track Rhythm") >= 0);
+  assert.ok(trackHtml.indexOf("shadow") >= 0);
+  assert.strictEqual(trackHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(trackHtml.indexOf("10 min shell"), -1);
+  assert.ok(quickStartHtml.indexOf("Guided Session Live") >= 0);
+  assert.ok(quickStartHtml.indexOf("In progress - shadow") >= 0);
+  assert.strictEqual(quickStartHtml.indexOf("4 blocks"), -1);
 });
 
 test("practice curriculum v2 card shows track progress instead of duplicating the launcher hook", function() {

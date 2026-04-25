@@ -1,7 +1,6 @@
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
-const childProcess = require("child_process");
 
 let passed = 0;
 let failed = 0;
@@ -21,6 +20,7 @@ const loader = require("../js/sparksuite/content/load_instrument_content.js");
 const validator = require("../js/sparksuite/content/validate_content.js");
 const factory = require("../js/sparksuite/content/create_instrument_module.js");
 const moduleValidator = require("../js/sparksuite/content/validate_instrument_module.js");
+const previewContent = require("../scripts/preview_content.js");
 
 const contentBaseDir = path.join(process.cwd(), "content", "instruments");
 
@@ -64,14 +64,13 @@ test("content validator rejects missing prerequisites and duplicate lesson ids",
 });
 
 test("preview_content prints a summary for a real instrument", function() {
-  const result = childProcess.spawnSync(process.execPath, ["scripts/preview_content.js", "guitar"], {
-    cwd: process.cwd(),
-    encoding: "utf8"
+  const output = previewContent.previewInstrumentContent("guitar", {
+    fs,
+    baseDir: contentBaseDir
   });
 
-  assert.strictEqual(result.status, 0, result.stderr);
-  assert.ok(result.stdout.includes("Guitar content preview"));
-  assert.ok(result.stdout.includes("- lessons: 2"));
+  assert.ok(output.includes("Guitar content preview"));
+  assert.ok(output.includes("- lessons: 2"));
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");

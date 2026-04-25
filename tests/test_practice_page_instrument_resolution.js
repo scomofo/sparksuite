@@ -448,6 +448,68 @@ test("practicePage and planPage surface the live daily-practice shell from spark
   assert.ok(planHtml.indexOf("Resume Block") >= 0);
 });
 
+test("planPage keeps daily shell metadata honest when duration is missing from the active shell", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", completed: false, exerciseIds: ["ex_1"] },
+            { id: "song_1", type: "song", label: "Song push", completed: false, exerciseIds: ["ex_2"] }
+          ],
+          _legacyPlan: null
+        },
+        activeSegment: {
+          id: "practice_1",
+          type: "practice",
+          label: "Quick warmup",
+          exerciseIds: ["ex_1"]
+        },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          transport: {
+            status: "paused",
+            positionMs: 45
+          }
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("Practice Session Live") >= 0);
+  assert.ok(html.indexOf("2 blocks") >= 0);
+  assert.strictEqual(html.indexOf("10 min shell"), -1);
+  assert.strictEqual(html.indexOf("0 min shell"), -1);
+});
+
 test("practicePage and practiceTab safely render cached item ids containing apostrophes", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
@@ -2533,6 +2595,70 @@ test("practiceTab, practicePage, and planPage treat whitespace-only label shells
   assert.ok(summaryHtml.indexOf("No practice plan yet.") >= 0);
   assert.ok(practiceHtml.indexOf("No practice plan yet.") >= 0);
   assert.ok(planHtml.indexOf("No practice plan yet.") >= 0);
+});
+
+test("shared guided plan surfaces stay honest when the active shell has no duration or block metadata", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 2,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned"
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var summaryHtml = practiceTab();
+  var planHtml = planPage();
+
+  assert.ok(summaryHtml.indexOf("Guided Session Flow") >= 0);
+  assert.ok(summaryHtml.indexOf("How guitars get tuned") >= 0);
+  assert.ok(summaryHtml.indexOf("In progress - Song block") >= 0);
+  assert.ok(summaryHtml.indexOf("Guided shell") >= 0);
+  assert.strictEqual(summaryHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(summaryHtml.indexOf("10 min shell"), -1);
+  assert.ok(planHtml.indexOf("Guided Session Flow") >= 0);
+  assert.ok(planHtml.indexOf("Resume Guided Session") >= 0);
+  assert.ok(planHtml.indexOf("Guided shell") >= 0 || planHtml.indexOf("Shell details loading") >= 0);
+  assert.strictEqual(planHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(planHtml.indexOf("10 min shell"), -1);
 });
 
 test("sv2HomeDashboard uses instrumentType when the rehydrated module does not expose instrument", function() {

@@ -503,6 +503,44 @@ function getPracticeGuidedRuntimeLabel(summary) {
   return "In progress - Warm engine";
 }
 
+function getPracticeGuidedShellBits(summary) {
+  var bits = [];
+  if (summary && normalizePracticeDisplayCount(summary.blockCount, 0) > 0) {
+    bits.push(normalizePracticeDisplayCount(summary.blockCount, 0) + " blocks");
+  }
+  if (summary && normalizePracticeDisplayCount(summary.targetDurationMin, 0) > 0) {
+    bits.push(normalizePracticeDisplayCount(summary.targetDurationMin, 0) + " min shell");
+  }
+  return bits;
+}
+
+function getPracticeGuidedShellLabel(summary, fallbackLabel) {
+  var bits = getPracticeGuidedShellBits(summary);
+  var fallback = prettyPracticeSummaryToken(fallbackLabel);
+  return bits.length ? bits.join(" • ") : fallback;
+}
+
+function getPracticeGuidedStatusWithShell(summary, options) {
+  var opts = options || {};
+  var status = prettyPracticeSummaryToken(opts.statusLabel != null ? opts.statusLabel : (summary && summary.statusLabel));
+  var shellLabel = getPracticeGuidedShellLabel(summary, opts.shellFallback);
+  if (opts.trimProgressPrefix && status.indexOf("In progress - ") === 0) {
+    status = status.slice("In progress - ".length);
+  }
+  if (status && shellLabel) return status + " • " + shellLabel;
+  return status || shellLabel;
+}
+
+function getPracticeTrackSessionShellLabel(session, fallbackLabel) {
+  var blockCount = Array.isArray(session && session.blocks) ? session.blocks.length : 0;
+  var durationMin = getPracticeGuidedSessionDurationMin(session, 0);
+  var bits = [];
+  var fallback = prettyPracticeSummaryToken(fallbackLabel) || "Shell details loading";
+  if (blockCount > 0) bits.push(blockCount + " blocks");
+  if (durationMin > 0) bits.push(durationMin + " min shell");
+  return bits.length ? bits.join(" • ") : fallback;
+}
+
 function getPracticeActiveGuidedSummary() {
   var coreView = getPracticeCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
@@ -724,13 +762,13 @@ function renderPracticePlanSummaryCard(plan) {
     h += '<div class="card mb20" style="border:2px solid #4ECDC4">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
     h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Guided Session Flow</h3>';
-    h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML(normalizePracticeDisplayCount(activeGuided.blockCount, 4) + " blocks") + '</span>';
+    h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML(getPracticeGuidedShellLabel(activeGuided, "Guided shell")) + '</span>';
     h += '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Your live guided shell is the plan right now.</div>';
     h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
     h += '<div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(activeGuided.title) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(activeGuided.statusLabel) + '</div>';
-    h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(normalizePracticeDisplayCount(activeGuided.targetDurationMin, 10) + " min shell") + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(getPracticeGuidedShellLabel(activeGuided, "Shell details loading")) + '</div>';
     h += '</div>';
     h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:#4ECDC4;color:#fff;font-weight:800">Resume Guided Session</button>';
     h += '</div>';
@@ -770,7 +808,7 @@ function renderPracticeQuickStartCard() {
   if (activeGuided) {
     h += '<div style="font-size:16px;font-weight:900;color:#fff">Guided Session Live</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.88);margin:4px 0 6px">' + escHTML(activeGuided.title) + '</div>';
-    h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(activeGuided.statusLabel + " • " + normalizePracticeDisplayCount(activeGuided.blockCount, 4) + " blocks") + '</div>';
+    h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(getPracticeGuidedStatusWithShell(activeGuided, { shellFallback: "" })) + '</div>';
     h += '<div style="display:flex;gap:8px;justify-content:center">';
     h += '<button onclick="act(\'resume_guided_session\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Resume Guided</button>';
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Quick Chord</button>';
@@ -1020,10 +1058,13 @@ function renderPracticeCurriculumV2Card(inst) {
     ? ((activeGuided ? "After this: Day " : "After that: Day ") + (followupSession.day || "?") + " - " + (followupSession.title || followupSession.id || "Coming up"))
     : "After that: More free play and review";
   shellLabel = activeGuided
-    ? (activeGuided.statusLabel.replace("In progress - ", "") + " • " + normalizePracticeDisplayCount(activeGuided.blockCount, 4) + " blocks • " + normalizePracticeDisplayCount(activeGuided.targetDurationMin, 10) + " min shell")
+    ? getPracticeGuidedStatusWithShell(activeGuided, {
+        trimProgressPrefix: true,
+        shellFallback: "Shell details loading"
+      })
     : (nextSession
-      ? ((Array.isArray(nextSession.blocks) ? nextSession.blocks.length : 4) + " blocks • " + getPracticeGuidedSessionDurationMin(nextSession, 0) + " min shell")
-      : "4 blocks • 10 min shell");
+      ? getPracticeTrackSessionShellLabel(nextSession, "Shell details loading")
+      : "Track complete");
   unlockLabel = activeGuided
     ? ("Unlock path: Day " + activeGuided.num + " in motion")
     : (nextSession && Array.isArray(nextSession.prerequisites) && nextSession.prerequisites.length

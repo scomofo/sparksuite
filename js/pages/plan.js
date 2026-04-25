@@ -48,6 +48,39 @@ function getPlanPageActiveShellSummary() {
   });
 }
 
+function getPlanPageGuidedShellBits(summary) {
+  var bits = [];
+  if (summary && typeof normalizePracticeDisplayCount === "function" && normalizePracticeDisplayCount(summary.blockCount, 0) > 0) {
+    bits.push(normalizePracticeDisplayCount(summary.blockCount, 0) + " blocks");
+  }
+  if (summary && typeof normalizePracticeDisplayCount === "function" && normalizePracticeDisplayCount(summary.targetDurationMin, 0) > 0) {
+    bits.push(normalizePracticeDisplayCount(summary.targetDurationMin, 0) + " min shell");
+  }
+  return bits;
+}
+
+function getPlanPageGuidedShellLabel(summary, fallbackLabel) {
+  var bits = getPlanPageGuidedShellBits(summary);
+  var fallback = typeof prettyPracticeSummaryToken === "function"
+    ? prettyPracticeSummaryToken(fallbackLabel)
+    : (typeof fallbackLabel === "string" ? fallbackLabel : "");
+  return bits.length ? bits.join(" - ") : fallback;
+}
+
+function getPlanPageShellLabel(summary, fallbackLabel) {
+  var bits = [];
+  var fallback = typeof prettyPracticeSummaryToken === "function"
+    ? prettyPracticeSummaryToken(fallbackLabel)
+    : (typeof fallbackLabel === "string" ? fallbackLabel : "");
+  if (summary && typeof normalizePracticeDisplayCount === "function" && normalizePracticeDisplayCount(summary.targetDurationMin, 0) > 0) {
+    bits.push(normalizePracticeDisplayCount(summary.targetDurationMin, 0) + " min shell");
+  }
+  if (summary && typeof normalizePracticeDisplayCount === "function" && normalizePracticeDisplayCount(summary.blockCount, 0) > 0) {
+    bits.push(normalizePracticeDisplayCount(summary.blockCount, 0) + " blocks");
+  }
+  return bits.length ? bits.join(" - ") : fallback;
+}
+
 function planPage(){
   function isCompletedPlanItem(item){
     var value = item ? item.completed : null;
@@ -153,9 +186,9 @@ function planPage(){
 
   if(!hasPlanItems){
     if(activeGuided){
-      h += '<div class="card mb16"><div class="muted">Your live guided shell is the plan right now.</div><div style="margin-top:8px;font-size:12px;color:var(--text-muted)">' + escHTML((activeGuided.targetDurationMin || 10) + ' min shell - ' + (activeGuided.blockCount || 4) + ' blocks') + '</div></div>';
+      h += '<div class="card mb16"><div class="muted">Your live guided shell is the plan right now.</div><div style="margin-top:8px;font-size:12px;color:var(--text-muted)">' + escHTML(getPlanPageGuidedShellLabel(activeGuided, "Shell details loading")) + '</div></div>';
     } else if(activeShell){
-      h += '<div class="card mb16"><div class="muted">The shared session shell is already in motion.</div><div style="margin-top:8px;font-size:12px;color:var(--text-muted)">' + escHTML((activeShell.targetDurationMin || 10) + ' min shell - ' + activeShell.blockCount + ' blocks') + '</div></div>';
+      h += '<div class="card mb16"><div class="muted">The shared session shell is already in motion.</div><div style="margin-top:8px;font-size:12px;color:var(--text-muted)">' + escHTML(getPlanPageShellLabel(activeShell, "Shell details loading")) + '</div></div>';
     } else {
       h += '<div class="card mb16"><div class="muted">No practice plan yet.</div></div>';
     }
