@@ -164,7 +164,7 @@ test("session family pages surface the live daily-practice shell from sparkCore"
         activeSegment: { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
         runtimeState: {
           activeSegmentId: "practice_1",
-          transport: { status: "paused" }
+          transport: { status: "paused", positionMs: 30000, durationMs: 120000 }
         }
       };
     }
@@ -179,6 +179,8 @@ test("session family pages surface the live daily-practice shell from sparkCore"
   assert.ok(sessionHtml.indexOf("Paused - Quick warmup") >= 0);
   assert.ok(sessionHtml.indexOf("Resume Block") >= 0);
   assert.ok(sessionHtml.indexOf("Skip Block") >= 0);
+  assert.ok(sessionHtml.indexOf("0m 30s in block") >= 0);
+  assert.ok(sessionHtml.indexOf("1m 30s left") >= 0);
   assert.ok(drillHtml.indexOf("Practice Session Live") >= 0);
   assert.ok(dailyHtml.indexOf("Practice Session Live") >= 0);
 });
