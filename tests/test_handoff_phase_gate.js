@@ -31,6 +31,7 @@ test("handoff phase gate script exists", function() {
 test("handoff phase gate runs the required contract suites", function() {
   [
     "tests/test_session_plan_contracts.js",
+    "tests/test_instrument_manager_phase_gate.js",
     "tests/test_execution_gateway.js",
     "tests/test_curriculum_practice_engine_contracts.js",
     "tests/test_gameplay_timing_contracts.js",
