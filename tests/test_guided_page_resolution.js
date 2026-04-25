@@ -1241,4 +1241,32 @@ test("guided pause and resume actions sync the shared session runtime transport"
   delete global.SparkSessionRuntime;
 });
 
+test("guided actions prefer sparkCore.syncSessionRuntime when it is available", function() {
+  var syncCalls = [];
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: { flow: "guided_session" }
+      };
+    },
+    syncSessionRuntime: function(options) {
+      syncCalls.push(options);
+      return true;
+    },
+    syncGuidedRuntimeState: function(patch) {
+      return patch;
+    }
+  };
+  global.window.sparkCore = global.sparkCore;
+  global.window.SparkSessionRuntime = null;
+
+  global.eval(loadJS("js/actions/system_family.js"));
+
+  assert.strictEqual(global.runSparkActionFamilies("guidedPauseBlock"), true);
+  assert.strictEqual(global.runSparkActionFamilies("guidedResumeBlock"), true);
+  assert.strictEqual(syncCalls.length, 2);
+  assert.strictEqual(syncCalls[0].scheduleTick, false);
+  assert.strictEqual(syncCalls[1].scheduleTick, false);
+});
+
 if (process.exitCode) process.exit(process.exitCode);
