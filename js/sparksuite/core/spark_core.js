@@ -1753,7 +1753,10 @@
 
     runtimeState = this.syncGuidedRuntimeState({
       guidedStep: nextStep,
-      guidedNewMovePhase: nextPhase
+      guidedNewMovePhase: nextPhase,
+      transport: shouldCompleteCurrentBlock
+        ? { status: "running", positionMs: 0 }
+        : this.runtimeState.transport
     });
 
     return {

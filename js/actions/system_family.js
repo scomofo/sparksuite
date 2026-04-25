@@ -43,6 +43,33 @@
     return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
   }
 
+  function getSessionRuntimeHandle() {
+    return window.SparkSessionRuntime || (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
+  }
+
+  function syncGuidedSessionRuntime(options) {
+    var core = getSparkCoreHandle();
+    var runtime = getSessionRuntimeHandle();
+    var view;
+    var runtimeState;
+    options = options || {};
+    if (!core || !runtime || typeof runtime.attachSession !== "function" || typeof core.getActiveSessionView !== "function") {
+      return false;
+    }
+    view = core.getActiveSessionView();
+    runtimeState = view && view.runtimeState ? view.runtimeState : null;
+    if (!view || !view.plan || view.plan.flow !== "guided_session") return false;
+    runtime.attachSession(view.plan, {
+      segmentId: runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null,
+      status: runtimeState && runtimeState.transport ? runtimeState.transport.status : "ready",
+      positionMs: runtimeState && runtimeState.transport ? runtimeState.transport.positionMs : 0,
+      autoAdvance: !!options.autoAdvance,
+      scheduleTick: options.scheduleTick !== false,
+      syncState: false
+    });
+    return true;
+  }
+
   function isGuidedSessionActive() {
     var core = getSparkCoreHandle();
     var view = core && typeof core.getActiveSessionView === "function"
@@ -520,6 +547,7 @@
       var steps = ["spark", "review", "newMove", "songSlice", "victoryLap"];
       var idx = steps.indexOf(S.guidedStep);
       var guidedCore = getSparkCoreHandle();
+      var previousGuidedStep = S.guidedStep;
       if (idx < steps.length - 1) {
         S.guidedStep = steps[idx + 1];
         if (S.guidedStep === "newMove") S.newMovePhase = "watch";
@@ -527,6 +555,10 @@
           mirrorGuidedRuntimeFields((guidedCore.advanceGuidedSession({
             guidedNewMovePhase: S.newMovePhase || null
           }) || {}).runtimeState || null);
+          syncGuidedSessionRuntime({
+            autoAdvance: false,
+            scheduleTick: S.guidedStep !== previousGuidedStep
+          });
         } else if (guidedCore && typeof guidedCore.syncGuidedRuntimeState === "function") {
           mirrorGuidedRuntimeFields(guidedCore.syncGuidedRuntimeState({
             guidedStep: S.guidedStep,
@@ -549,6 +581,10 @@
             guidedStep: S.guidedStep,
             guidedNewMovePhase: S.newMovePhase
           }));
+          syncGuidedSessionRuntime({
+            autoAdvance: false,
+            scheduleTick: true
+          });
         }
       } else {
         act("guidedNext");
@@ -570,6 +606,11 @@
         }
         if (guidedSkipState && guidedSkipState.activeScreen === "guided_done") {
           S.screen = SCR.GUIDED_DONE || "guided_done";
+        } else {
+          syncGuidedSessionRuntime({
+            autoAdvance: false,
+            scheduleTick: true
+          });
         }
       } else if (S.guidedStep === "spark") {
         act("guidedNext");
@@ -598,8 +639,52 @@
           S.guidedStep = guidedExtendState.guidedStep;
           S.newMovePhase = guidedExtendState.guidedNewMovePhase || null;
         }
+        syncGuidedSessionRuntime({
+          autoAdvance: false,
+          scheduleTick: true
+        });
       } else if (S.guidedStep === "victoryLap" && S.guidedPlan && S.guidedPlan.blockActivities && S.guidedPlan.blockActivities.cooldown) {
         S.guidedPlan.blockActivities.cooldown.duration_sec = (parseInt(S.guidedPlan.blockActivities.cooldown.duration_sec, 10) || 0) + 300;
+      }
+      render();
+      return true;
+    }
+
+    if (a === "guidedPauseBlock") {
+      var guidedPauseRuntime = getSessionRuntimeHandle();
+      var guidedPauseCore = getSparkCoreHandle();
+      if (guidedPauseCore) {
+        syncGuidedSessionRuntime({
+          autoAdvance: false,
+          scheduleTick: false
+        });
+      }
+      if (guidedPauseRuntime && typeof guidedPauseRuntime.syncSegmentTransport === "function") {
+        guidedPauseRuntime.syncSegmentTransport("pause");
+      } else if (guidedPauseCore && typeof guidedPauseCore.syncGuidedRuntimeState === "function") {
+        guidedPauseCore.syncGuidedRuntimeState({
+          transport: { status: "paused" }
+        });
+      }
+      render();
+      return true;
+    }
+
+    if (a === "guidedResumeBlock") {
+      var guidedResumeRuntime = getSessionRuntimeHandle();
+      var guidedResumeCore = getSparkCoreHandle();
+      if (guidedResumeCore) {
+        syncGuidedSessionRuntime({
+          autoAdvance: false,
+          scheduleTick: false
+        });
+      }
+      if (guidedResumeRuntime && typeof guidedResumeRuntime.syncSegmentTransport === "function") {
+        guidedResumeRuntime.syncSegmentTransport("resume");
+      } else if (guidedResumeCore && typeof guidedResumeCore.syncGuidedRuntimeState === "function") {
+        guidedResumeCore.syncGuidedRuntimeState({
+          transport: { status: "running" }
+        });
       }
       render();
       return true;
@@ -727,6 +812,10 @@
       if (guidedStartCore && isGuidedSessionActive() && (!requestedGuidedSessionNum || requestedGuidedSessionNum === activeGuidedSessionNum)) {
         mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
         S.guidedSession = activeGuidedSessionNum || S.guidedSession || _gsNum;
+        syncGuidedSessionRuntime({
+          autoAdvance: false,
+          scheduleTick: true
+        });
         S.screen = SCR.GUIDED;
         render();
         return true;
@@ -736,6 +825,10 @@
         if (_gsPlan && _gsPlan.context && _gsPlan.context.guidedPlan) {
           mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
           S.guidedSession = _gsPlan.context.guidedSession || _gsNum;
+          syncGuidedSessionRuntime({
+            autoAdvance: false,
+            scheduleTick: false
+          });
           S.screen = SCR.GUIDED;
           render();
           return true;
@@ -763,6 +856,10 @@
       if (guidedResumeCore && isGuidedSessionActive()) {
         mirrorGuidedRuntimeFields(guidedResumeCore.getRuntimeState ? guidedResumeCore.getRuntimeState() : null);
         S.guidedSession = resumeGuidedSessionNum || S.guidedSession || 1;
+        syncGuidedSessionRuntime({
+          autoAdvance: false,
+          scheduleTick: true
+        });
         S.screen = SCR.GUIDED;
         render();
         return true;

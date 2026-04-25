@@ -4216,11 +4216,15 @@ test("advanceGuidedSession completes V2 blocks only when the step leaves them", 
   state = core.advanceGuidedSession({ guidedNewMovePhase: null }).runtimeState;
   assert.strictEqual(state.guidedStep, "songSlice");
   assert.strictEqual(state.activeSegmentId, "gtr-d01_song");
+  assert.strictEqual(state.transport.status, "running");
+  assert.strictEqual(state.transport.positionMs, 0);
   assert.strictEqual(plan.segments[1].completed, true);
 
   state = core.advanceGuidedSession({}).runtimeState;
   assert.strictEqual(state.guidedStep, "victoryLap");
   assert.strictEqual(state.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(state.transport.status, "running");
+  assert.strictEqual(state.transport.positionMs, 0);
   assert.strictEqual(plan.segments[2].completed, true);
 });
 
