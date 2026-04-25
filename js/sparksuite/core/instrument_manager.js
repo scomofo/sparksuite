@@ -158,6 +158,10 @@
     return factory;
   };
 
+  InstrumentManager.prototype.listInstruments = function() {
+    return Object.keys(this.adapters).sort();
+  };
+
   InstrumentManager.prototype.getActiveContext = function() {
     var activeInstrument = resolveActiveInstrument();
     var appId = activeInstrument ? (activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null) : null;
