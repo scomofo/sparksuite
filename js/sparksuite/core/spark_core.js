@@ -20,11 +20,224 @@
     this.playbackEngine = null;
     this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
+    this.lastRecoveryRequest = null;
+    this.errorBoundary = options.errorBoundary || this.createErrorBoundary();
+  }
+
+  function getSparkErrorApi() {
+    function SparkFallbackError(code, message, context) {
+      this.name = "SparkError";
+      this.code = code;
+      this.message = message || code;
+      this.context = context || {};
+    }
+    SparkFallbackError.prototype = Object.create(Error.prototype);
+    SparkFallbackError.prototype.constructor = SparkFallbackError;
+    SparkFallbackError.prototype.toString = function() {
+      return this.name + ": " + this.message;
+    };
+    if (typeof SparkError !== "undefined" && typeof SparkErrorCodes !== "undefined") {
+      return {
+        SparkError: SparkError,
+        SparkErrorCodes: SparkErrorCodes,
+        normalizeSparkError: typeof normalizeSparkError === "function" ? normalizeSparkError : null
+      };
+    }
+    if (typeof window !== "undefined" && window.SparkError && window.SparkErrorCodes) {
+      return {
+        SparkError: window.SparkError,
+        SparkErrorCodes: window.SparkErrorCodes,
+        normalizeSparkError: typeof window.normalizeSparkError === "function" ? window.normalizeSparkError : null
+      };
+    }
+    if (typeof require === "function") {
+      try {
+        return {
+          SparkError: require("./spark_error.js").SparkError,
+          SparkErrorCodes: require("./error_codes.js").SparkErrorCodes,
+          normalizeSparkError: require("./spark_error.js").normalizeSparkError
+        };
+      } catch (error) {}
+    }
+    return {
+      SparkError: SparkFallbackError,
+      SparkErrorCodes: {
+        UNEXPECTED_ERROR: "UNEXPECTED_ERROR",
+        SESSION_STATE_INVALID_TRANSITION: "SESSION_STATE_INVALID_TRANSITION"
+      },
+      normalizeSparkError: null
+    };
+  }
+
+  function createCoreError(code, message, context) {
+    var api = getSparkErrorApi();
+    return new api.SparkError(code, message, context || {});
   }
 
   SparkCore.prototype.cloneValue = function(value) {
     if (value == null) return value;
     return JSON.parse(JSON.stringify(value));
+  };
+
+  SparkCore.prototype.createErrorBoundary = function() {
+    var self = this;
+    if (typeof SparkErrorBoundary === "undefined") return null;
+    return new SparkErrorBoundary({
+      eventBus: {
+        emit: function(eventName, payload) {
+          if (typeof SparkEventLogger !== "undefined" && SparkEventLogger && typeof SparkEventLogger.log === "function") {
+            SparkEventLogger.log(eventName, payload);
+          }
+        }
+      },
+      onError: function(payload) {
+        self.captureStructuredError(payload.error, payload.context);
+      }
+    });
+  };
+
+  SparkCore.prototype.normalizeStructuredError = function(error, fallbackCode, context) {
+    var api = getSparkErrorApi();
+    if (typeof api.normalizeSparkError === "function") {
+      return api.normalizeSparkError(error, fallbackCode || api.SparkErrorCodes.UNEXPECTED_ERROR, context || {});
+    }
+    if (error && typeof error.code === "string" && typeof error.message === "string") return error;
+    return createCoreError(
+      fallbackCode || api.SparkErrorCodes.UNEXPECTED_ERROR,
+      error && error.message ? error.message : String(error || "SparkSuite error"),
+      context || {}
+    );
+  };
+
+  SparkCore.prototype.buildRecoveryActions = function() {
+    return [
+      { id: "retry_current_action", label: "Retry current action" },
+      { id: "return_to_lesson_select", label: "Return to lesson select" },
+      { id: "return_to_instrument_select", label: "Return to instrument select" },
+      { id: "restart_session", label: "Restart session" },
+      { id: "export_debug_bundle", label: "Export debug bundle" }
+    ];
+  };
+
+  SparkCore.prototype.captureStructuredError = function(error, context) {
+    var normalized = this.normalizeStructuredError(error, getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR, context || {});
+    var serialized = typeof normalized.toJSON === "function"
+      ? normalized.toJSON()
+      : {
+          name: normalized.name || "Error",
+          code: normalized.code || getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR,
+          message: normalized.message || String(normalized),
+          context: normalized.context || {},
+          createdAt: normalized.createdAt || new Date().toISOString(),
+          stack: normalized.stack || null
+        };
+    this.updateRuntimeState({
+      activeScreen: "spark_error",
+      lastError: serialized,
+      recoveryActions: this.buildRecoveryActions(serialized),
+      recoveryContext: this.cloneValue(context || {}),
+      transport: { status: "error", positionMs: this.runtimeState.transport && this.runtimeState.transport.positionMs || 0 }
+    });
+    return serialized;
+  };
+
+  SparkCore.prototype.clearStructuredError = function() {
+    this.lastRecoveryRequest = null;
+    return this.updateRuntimeState({
+      lastError: null,
+      recoveryActions: [],
+      recoveryContext: null
+    });
+  };
+
+  SparkCore.prototype.runWithErrorRecovery = function(label, recoveryContext, fn) {
+    var normalized;
+    this.lastRecoveryRequest = {
+      label: label,
+      context: this.cloneValue(recoveryContext || {}),
+      retry: function() {
+        return fn();
+      }
+    };
+    try {
+      var result = fn();
+      this.clearStructuredError();
+      return result;
+    } catch (error) {
+      normalized = this.normalizeStructuredError(
+        error,
+        getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR,
+        Object.assign({ label: label }, recoveryContext || {})
+      );
+      if (this.errorBoundary && typeof this.errorBoundary.handle === "function") {
+        this.errorBoundary.handle(normalized, Object.assign({ label: label }, recoveryContext || {}));
+      } else {
+        this.captureStructuredError(normalized, Object.assign({ label: label }, recoveryContext || {}));
+      }
+      throw normalized;
+    }
+  };
+
+  SparkCore.prototype.getRecoveryState = function() {
+    return {
+      error: this.cloneValue(this.runtimeState.lastError),
+      actions: this.cloneValue(this.runtimeState.recoveryActions || []),
+      context: this.cloneValue(this.runtimeState.recoveryContext || null)
+    };
+  };
+
+  SparkCore.prototype.buildRecoveryDebugBundle = function() {
+    return {
+      exportedAt: new Date().toISOString(),
+      error: this.cloneValue(this.runtimeState.lastError),
+      recoveryContext: this.cloneValue(this.runtimeState.recoveryContext),
+      currentPlan: this.cloneValue(this.currentPlan),
+      runtimeState: this.cloneValue(this.runtimeState),
+      lastSessionOutcome: this.cloneValue(this.lastSessionOutcome),
+      missingHandlers: typeof SparkExecutionGateway !== "undefined" && SparkExecutionGateway && typeof SparkExecutionGateway.getMissingHandlerReport === "function"
+        ? SparkExecutionGateway.getMissingHandlerReport()
+        : {}
+    };
+  };
+
+  SparkCore.prototype.applyRecoveryAction = function(actionId) {
+    var request;
+    if (actionId === "retry_current_action") {
+      request = this.lastRecoveryRequest;
+      if (!request || typeof request.retry !== "function") return false;
+      return request.retry();
+    }
+    if (actionId === "return_to_lesson_select") {
+      this.clearStructuredError();
+      return this.updateRuntimeState({
+        activeScreen: "lesson_select",
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if (actionId === "return_to_instrument_select") {
+      this.clearStructuredError();
+      return this.updateRuntimeState({
+        activeScreen: "instrument_select",
+        activePlanId: null,
+        activeSegmentId: null,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if (actionId === "restart_session") {
+      if (!this.currentPlan) return false;
+      this.clearStructuredError();
+      return this.startSession({
+        flow: this.currentPlan.flow,
+        forceRebuild: true,
+        sessionNum: this.currentPlan.context && this.currentPlan.context.guidedSession
+          ? this.currentPlan.context.guidedSession
+          : null
+      });
+    }
+    if (actionId === "export_debug_bundle") {
+      return this.buildRecoveryDebugBundle();
+    }
+    return false;
   };
 
   SparkCore.prototype.getSessionRuntimeHandle = function() {
@@ -88,7 +301,14 @@
     if (snapshot.state !== sessionStates.READY
       && snapshot.state !== sessionStates.RUNNING
       && snapshot.state !== sessionStates.SEGMENT_COMPLETE) {
-      throw new Error("Cannot complete session from state " + snapshot.state);
+      throw createCoreError(
+        getSparkErrorApi().SparkErrorCodes.SESSION_STATE_INVALID_TRANSITION,
+        "Cannot complete session from state " + snapshot.state,
+        {
+          state: snapshot.state,
+          sessionId: snapshot.sessionId || (this.currentPlan && this.currentPlan.id) || null
+        }
+      );
     }
     return true;
   };
@@ -303,6 +523,9 @@
         status: "idle",
         positionMs: 0
       },
+      lastError: null,
+      recoveryActions: [],
+      recoveryContext: null,
       lastCompletedSessionId: null,
       lastCompletedFlow: null,
       lastOutcomeSummary: null
@@ -659,6 +882,17 @@
       syncState: false
     });
     return plan;
+  };
+
+  SparkCore.prototype._unsafeStartSession = SparkCore.prototype.startSession;
+  SparkCore.prototype.startSession = function(input) {
+    var self = this;
+    input = input || {};
+    return this.runWithErrorRecovery("startSession", {
+      input: this.cloneValue(input)
+    }, function() {
+      return self._unsafeStartSession(input);
+    });
   };
 
   SparkCore.prototype.startLegacyPracticeSession = function(input) {
@@ -2133,6 +2367,18 @@
     return result;
   };
 
+  SparkCore.prototype._unsafeCompleteSession = SparkCore.prototype.completeSession;
+  SparkCore.prototype.completeSession = function(payload) {
+    var self = this;
+    payload = payload || {};
+    return this.runWithErrorRecovery("completeSession", {
+      payload: this.cloneValue(payload),
+      sessionId: payload.sessionId || (this.currentPlan && this.currentPlan.id) || null
+    }, function() {
+      return self._unsafeCompleteSession(payload);
+    });
+  };
+
   SparkCore.prototype.getCurrentPlan = function() {
     return this.currentPlan;
   };
@@ -2182,7 +2428,8 @@
       activeExercise: exercise,
       stateMachine: this.getSessionStateMachineSnapshot(),
       runtimeState: this.getRuntimeState(),
-      lastSessionOutcome: this.getLastSessionOutcome()
+      lastSessionOutcome: this.getLastSessionOutcome(),
+      recovery: this.getRecoveryState()
     };
   };
 

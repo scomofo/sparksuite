@@ -14,6 +14,54 @@
   var _lastAction = null;
   var _lastResult = null;
 
+  function getSparkErrorApi() {
+    function SparkFallbackError(code, message, context) {
+      this.name = "SparkError";
+      this.code = code;
+      this.message = message || code;
+      this.context = context || {};
+    }
+    SparkFallbackError.prototype = Object.create(Error.prototype);
+    SparkFallbackError.prototype.constructor = SparkFallbackError;
+    SparkFallbackError.prototype.toString = function() {
+      return this.name + ": " + this.message;
+    };
+    if (typeof SparkError !== "undefined" && typeof SparkErrorCodes !== "undefined") {
+      return {
+        SparkError: SparkError,
+        SparkErrorCodes: SparkErrorCodes
+      };
+    }
+    if (typeof window !== "undefined" && window.SparkError && window.SparkErrorCodes) {
+      return {
+        SparkError: window.SparkError,
+        SparkErrorCodes: window.SparkErrorCodes
+      };
+    }
+    if (typeof require === "function") {
+      try {
+        return {
+          SparkError: require("./spark_error.js").SparkError,
+          SparkErrorCodes: require("./error_codes.js").SparkErrorCodes
+        };
+      } catch (error) {}
+    }
+    return {
+      SparkError: SparkFallbackError,
+      SparkErrorCodes: {
+        ACTION_UNKNOWN: "ACTION_UNKNOWN",
+        ACTION_HANDLER_MISSING: "ACTION_HANDLER_MISSING",
+        SESSION_INVALID: "SESSION_INVALID",
+        SESSION_INVALID_EXERCISE_REFERENCE: "SESSION_INVALID_EXERCISE_REFERENCE"
+      }
+    };
+  }
+
+  function createGatewayError(code, message, context) {
+    var api = getSparkErrorApi();
+    return new api.SparkError(code, message, context || {});
+  }
+
   function getActionRegistryApi() {
     if (typeof window !== "undefined" && typeof window.isKnownSparkAction === "function") {
       return {
@@ -44,13 +92,24 @@
 
   function register(name, handler) {
     if (typeof name !== "string" || !name) {
-      throw new Error("SparkExecutionGateway: handler name must be a non-empty string");
+      throw createGatewayError(
+        getSparkErrorApi().SparkErrorCodes.ACTION_UNKNOWN,
+        "SparkExecutionGateway: handler name must be a non-empty string"
+      );
     }
     if (!isKnownSparkAction(name)) {
-      throw new Error('SparkExecutionGateway: unknown action "' + name + '"');
+      throw createGatewayError(
+        getSparkErrorApi().SparkErrorCodes.ACTION_UNKNOWN,
+        'SparkExecutionGateway: unknown action "' + name + '"',
+        { actionName: name }
+      );
     }
     if (typeof handler !== "function") {
-      throw new Error('SparkExecutionGateway: handler "' + name + '" must be a function');
+      throw createGatewayError(
+        getSparkErrorApi().SparkErrorCodes.ACTION_HANDLER_MISSING,
+        'SparkExecutionGateway: handler "' + name + '" must be a function',
+        { actionName: name }
+      );
     }
     _handlers[name] = handler;
     return handler;
@@ -112,12 +171,22 @@
   }
 
   function handleMissingAction(name, payload, fallback, reason) {
+    var codes = getSparkErrorApi().SparkErrorCodes;
     logMissingHandler(name);
     if (typeof fallback === "function") {
       return recordExecutionResult(name, fallback(payload || {}));
     }
     if (_strict) {
-      throw new Error('SparkExecutionGateway: missing handler "' + name + '" (' + reason + ')');
+      throw createGatewayError(
+        reason === "unknown_action" ? codes.ACTION_UNKNOWN : codes.ACTION_HANDLER_MISSING,
+        'SparkExecutionGateway: missing handler "' + name + '" (' + reason + ')',
+        {
+          actionName: name,
+          reason: reason,
+          payload: payload || {},
+          missingHandlers: getMissingHandlerReport()
+        }
+      );
     }
     return recordExecutionResult(name, false);
   }
@@ -299,11 +368,15 @@
     return exercises.length ? exercises[0] : null;
   }
 
-  function failExecution(message, detail) {
+  function failExecution(message, detail, code, context) {
     if (typeof console !== "undefined" && console.error) {
       console.error("SparkExecutionGateway: " + message, detail || null);
     }
-    throw new Error("SparkExecutionGateway: " + message);
+    throw createGatewayError(
+      code || getSparkErrorApi().SparkErrorCodes.SESSION_INVALID,
+      "SparkExecutionGateway: " + message,
+      Object.assign({ detail: detail || null }, context || {})
+    );
   }
 
   function normalizeInstrumentType(instrument) {
@@ -338,7 +411,15 @@
     var segmentType;
     var segmentPayload;
     if (!exercises.length) {
-      failExecution("segment requires resolved exercises", segment && segment.id ? segment.id : null);
+      failExecution(
+        "segment requires resolved exercises",
+        segment && segment.id ? segment.id : null,
+        getSparkErrorApi().SparkErrorCodes.SESSION_INVALID_EXERCISE_REFERENCE,
+        {
+          segmentId: segment && segment.id ? segment.id : null,
+          sessionId: session && session.id ? session.id : null
+        }
+      );
     }
 
     primaryExercise = exercises[0];
@@ -518,7 +599,14 @@
     var payload = gameplay.payload || null;
 
     if (!payload) {
-      failExecution("practice exercise missing gameplay payload", exercise && exercise.id ? exercise.id : null);
+      failExecution(
+        "practice exercise missing gameplay payload",
+        exercise && exercise.id ? exercise.id : null,
+        getSparkErrorApi().SparkErrorCodes.SESSION_INVALID,
+        {
+          exerciseId: exercise && exercise.id ? exercise.id : null
+        }
+      );
     }
 
     if (payload) {
