@@ -14,6 +14,21 @@
     return "sparksuite";
   }
 
+  function getSparkCoreHandle() {
+    if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+    if (typeof sparkCore !== "undefined") return sparkCore;
+    return null;
+  }
+
+  function resolveBackupStorage() {
+    var core = getSparkCoreHandle();
+    if (core && core.storage) return core.storage;
+    if (typeof SparkSuiteStorage === "function") {
+      return new SparkSuiteStorage();
+    }
+    return null;
+  }
+
   async function exportEditorObjectDesktopAware() {
     if (!S.performEditorChart) return false;
     if (isDesktopBuild()) {
@@ -53,11 +68,29 @@
   }
 
   function buildFullLocalBackup(){
+    var storage = resolveBackupStorage();
+    var userData = null;
+    var debugBundle = null;
+    if (storage && typeof exportSparkUserData === "function") {
+      userData = exportSparkUserData({
+        storage: storage
+      });
+    }
+    if (typeof buildSparkDebugBundle === "function") {
+      debugBundle = buildSparkDebugBundle({
+        sparkCore: getSparkCoreHandle(),
+        storage: storage
+      });
+    }
     return {
       exportedAt: Date.now(),
       app: resolveDesktopBackupAppId(),
       version: (S.releaseInfo && S.releaseInfo.version) || "dev",
-      state: S
+      schemaVersion: storage && typeof storage.getCurrentSchemaVersion === "function"
+        ? storage.getCurrentSchemaVersion()
+        : null,
+      userData: userData,
+      debugBundle: debugBundle
     };
   }
 
