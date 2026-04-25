@@ -1,12 +1,19 @@
 (function() {
-  function setLegacyFields(setFields, clearIntervals, save) {
+  function applyToolsFamilyRuntimeUpdate(update, fallback) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields: setFields,
-        clearIntervals: clearIntervals || [],
-        save: save
-      });
-    } else {
+      SparkProgressBridge.applyLegacyActivityRuntime(update || {});
+      return true;
+    }
+    if (typeof fallback === "function") fallback();
+    return false;
+  }
+
+  function setLegacyFields(setFields, clearIntervals, save) {
+    applyToolsFamilyRuntimeUpdate({
+      setFields: setFields,
+      clearIntervals: clearIntervals || [],
+      save: save
+    }, function() {
       var key;
       for (key in setFields) {
         if (Object.prototype.hasOwnProperty.call(setFields, key)) S[key] = setFields[key];
@@ -16,7 +23,7 @@
           if (T && T[name]) clearInterval(T[name]);
         });
       }
-    }
+    });
   }
 
   function openLegacySongSelection(songData, source) {
