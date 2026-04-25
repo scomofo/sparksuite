@@ -1,0 +1,4 @@
+[
+  { "id": "bas_content_01", "skill": "root_pulse", "title": "Root Notes in Time", "prerequisites": [], "masteryRequired": 0.7, "estimatedMinutes": 5 },
+  { "id": "bas_content_02", "skill": "walking_root", "title": "Walking Root Motion", "prerequisites": ["root_pulse"], "masteryRequired": 0.75, "estimatedMinutes": 6 }
+]

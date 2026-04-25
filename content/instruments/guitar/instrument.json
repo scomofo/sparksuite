@@ -1,0 +1,20 @@
+{
+  "id": "guitar",
+  "name": "Guitar",
+  "version": 1,
+  "tuning": {
+    "strings": ["E2", "A2", "D3", "G3", "B3", "E4"],
+    "stringCount": 6,
+    "type": "standard"
+  },
+  "capabilities": {
+    "stringCount": 6,
+    "supportsChords": true,
+    "supportsScales": true,
+    "supportsStrumming": true,
+    "supportsFingerpicking": true,
+    "supportsMelody": true,
+    "preferredRenderer": "string-lane-highway",
+    "inputModes": ["keyboard", "mouse"]
+  }
+}

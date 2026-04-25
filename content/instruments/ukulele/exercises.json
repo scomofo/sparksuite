@@ -1,0 +1,4 @@
+[
+  { "id": "uke_ex_01", "skillId": "down_strum", "type": "strum", "pattern": "D D D D", "tempo": 72, "difficulty": "easy" },
+  { "id": "uke_ex_02", "skillId": "starter_chords", "type": "chord", "chordIds": ["C", "F", "G"], "tempo": 76, "difficulty": "easy" }
+]

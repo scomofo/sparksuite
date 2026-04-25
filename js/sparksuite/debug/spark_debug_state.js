@@ -10,6 +10,14 @@
       return options.gateway || (typeof window !== "undefined" ? window.SparkExecutionGateway : null) || null;
     }
 
+    function getEventBus() {
+      var sparkCore = getSparkCore();
+      if (sparkCore && typeof sparkCore.getEventBus === "function") {
+        return sparkCore.getEventBus();
+      }
+      return (typeof window !== "undefined" ? window.sparkEventBus : null) || null;
+    }
+
     function getRuntime() {
       return options.runtime || (typeof window !== "undefined" ? window.SparkSessionRuntime : null) || null;
     }
@@ -120,6 +128,21 @@
       return null;
     }
 
+    function getRecentEvents() {
+      var bus = getEventBus();
+      if (bus && typeof bus.getRecent === "function") {
+        return bus.getRecent(10);
+      }
+      return [];
+    }
+
+    function getLastError() {
+      var view = getCurrentSessionView();
+      if (view && view.recovery && view.recovery.error) return view.recovery.error;
+      if (view && view.runtimeState && view.runtimeState.lastError) return view.runtimeState.lastError;
+      return null;
+    }
+
     return {
       getCurrentSession: getCurrentSession,
       getCurrentInstrument: function() {
@@ -138,7 +161,9 @@
       getMissingHandlers: getMissingHandlers,
       getTimingConfig: getTimingConfig,
       getAssistConfig: getAssistConfig,
-      getScore: getScore
+      getScore: getScore,
+      getRecentEvents: getRecentEvents,
+      getLastError: getLastError
     };
   }
 

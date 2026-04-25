@@ -3,10 +3,14 @@
     options = options || {};
     this.chart = options.chart;
     this.adapter = options.adapter;
+    this.eventBus = options.eventBus || null;
     this.preset = options.preset || SparkEnginePresetRegistry.get("spark_learning");
     this.timingEngine = options.timingEngine || new SparkTimingEngine(new SparkCalibrationEngine());
     this.inputJudge = options.inputJudge || new SparkInputJudge();
     this.scoringEngine = options.scoringEngine || new SparkScoringEngine(this.preset);
+    if (this.scoringEngine && typeof this.scoringEngine.setEventBus === "function") {
+      this.scoringEngine.setEventBus(this.eventBus);
+    }
     this.replayEngine = options.replayEngine || new SparkReplayEngine();
     this.assistConfig = typeof SparkNormalizePracticeAssist === "function"
       ? SparkNormalizePracticeAssist(options.assistConfig || {})
@@ -26,6 +30,12 @@
       if (!note.hit && !note.missed && songTimeSec > note.timeSec + (missMs / 1000)) {
         note.missed = true;
         this.scoringEngine.apply({ note: note, judgement: "miss", reason: "late" });
+        this.emit("runtime.note.missed", {
+          noteId: note.id,
+          timeSec: note.timeSec,
+          laneMask: note.laneMask,
+          reason: "late"
+        });
       }
     }
     if (songTimeSec > this.songEndSec + 1 && this.isFinished()) {
@@ -36,6 +46,9 @@
 
   RhythmGameplayEngine.prototype.handleInput = function(inputEvent) {
     if (this.completed) return null;
+    this.emit("runtime.input.received", {
+      input: inputEvent
+    });
     this.replayEngine.record(inputEvent);
     var resolution = this.inputJudge.resolve(this.noteStates, inputEvent, this.preset);
     if (resolution.note && resolution.judgement !== "miss") {
@@ -45,6 +58,12 @@
       resolution.note.result = "wrong_fret";
     }
     var applied = this.scoringEngine.apply(resolution);
+    this.emit("runtime.input.resolved", {
+      judgement: resolution.judgement,
+      reason: resolution.reason || null,
+      noteId: resolution.note && resolution.note.id ? resolution.note.id : null,
+      scoreDelta: applied.scoreDelta
+    });
     return {
       resolution: resolution,
       applied: applied
@@ -85,11 +104,21 @@
 
   RhythmGameplayEngine.prototype.finalize = function() {
     var summary = this.scoringEngine.toSummary();
+    this.emit("runtime.session.finalized", {
+      gameplay: summary.gameplay,
+      learning: buildLearningSummary(summary.learning)
+    });
     return new SparkGameplayResult({
       gameplay: summary.gameplay,
       learning: buildLearningSummary(summary.learning),
       replay: this.replayEngine.export()
     });
+  };
+
+  RhythmGameplayEngine.prototype.emit = function(type, payload) {
+    if (this.eventBus && typeof this.eventBus.emit === "function") {
+      this.eventBus.emit(type, payload || {});
+    }
   };
 
   RhythmGameplayEngine.prototype.isFinished = function() {

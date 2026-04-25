@@ -45,7 +45,9 @@
         missing: debugState.getMissingHandlers ? debugState.getMissingHandlers() : {},
         timing: debugState.getTimingConfig ? debugState.getTimingConfig() : null,
         assist: debugState.getAssistConfig ? debugState.getAssistConfig() : null,
-        score: debugState.getScore ? debugState.getScore() : null
+        score: debugState.getScore ? debugState.getScore() : null,
+        recentEvents: debugState.getRecentEvents ? debugState.getRecentEvents() : [],
+        lastError: debugState.getLastError ? debugState.getLastError() : null
       };
 
       root.innerHTML =

@@ -1,0 +1,4 @@
+[
+  { "id": "Cmaj", "name": "C Major", "notes": ["C4", "E4", "G4"] },
+  { "id": "Fmaj", "name": "F Major", "notes": ["F4", "A4", "C5"] }
+]

@@ -1,0 +1,20 @@
+{
+  "id": "ukulele",
+  "name": "Ukulele",
+  "version": 1,
+  "tuning": {
+    "strings": ["G4", "C4", "E4", "A4"],
+    "stringCount": 4,
+    "type": "reentrant"
+  },
+  "capabilities": {
+    "stringCount": 4,
+    "supportsChords": true,
+    "supportsScales": true,
+    "supportsStrumming": true,
+    "supportsFingerpicking": true,
+    "supportsMelody": true,
+    "preferredRenderer": "string-lane-highway",
+    "inputModes": ["keyboard", "mouse"]
+  }
+}
