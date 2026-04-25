@@ -35,73 +35,19 @@ function getSparkCoreRuntimeState(){
 }
 
 function getSessionPageActiveShellSummary(){
-  var view = getSessionCoreView();
-  var runtimeState;
-  var plan;
-  var segments;
-  var activeSegment;
-  var activeSegmentId;
-  var activeIndex;
-  var totalDurationSec;
-  var transport;
-  var status;
-  var segmentLabel;
-  var durationMs;
-  var positionMs;
-  var progressPct;
-  var remainingMs;
-  if (!view) return null;
-  plan = view.plan || null;
-  runtimeState = view.runtimeState || null;
-  if (!plan || plan.flow !== "daily_practice") return null;
-  segments = Array.isArray(plan.segments) ? plan.segments : [];
-  if (!segments.length) return null;
-  activeSegment = view.activeSegment || null;
-  activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : (activeSegment && activeSegment.id ? activeSegment.id : null);
-  if (!activeSegment && activeSegmentId) {
-    for (activeIndex = 0; activeIndex < segments.length; activeIndex++) {
-      if (segments[activeIndex] && segments[activeIndex].id === activeSegmentId) {
-        activeSegment = segments[activeIndex];
-        break;
-      }
-    }
+  if (typeof SparkSessionShellUI === "undefined" || !SparkSessionShellUI || typeof SparkSessionShellUI.buildDailyShellSummary !== "function") {
+    return null;
   }
-  if (!activeSegment) activeSegment = segments[0] || null;
-  if (!activeSegment) return null;
-  activeIndex = 0;
-  for (; activeIndex < segments.length; activeIndex++) {
-    if (segments[activeIndex] === activeSegment || (segments[activeIndex] && activeSegment && segments[activeIndex].id === activeSegment.id)) break;
-  }
-  if (activeIndex >= segments.length) activeIndex = 0;
-  totalDurationSec = 0;
-  for (var i = 0; i < segments.length; i++) {
-    totalDurationSec += normalizeSessionNumber(segments[i] && segments[i].durationSec, 0);
-  }
-  transport = runtimeState && runtimeState.transport ? runtimeState.transport : null;
-  status = transport && transport.status ? transport.status : "ready";
-  durationMs = normalizeSessionNumber(transport && transport.durationMs, normalizeSessionNumber(activeSegment.durationSec, 0) * 1000);
-  positionMs = normalizeSessionNumber(transport && transport.positionMs, 0);
-  if (durationMs < 0) durationMs = 0;
-  if (positionMs < 0) positionMs = 0;
-  if (durationMs > 0 && positionMs > durationMs) positionMs = durationMs;
-  progressPct = durationMs > 0 ? Math.max(0, Math.min(100, Math.round((positionMs / durationMs) * 100))) : 0;
-  remainingMs = durationMs > positionMs ? (durationMs - positionMs) : 0;
-  segmentLabel = _firstSessionSongTextToken(activeSegment.label, activeSegment.title, activeSegment.type, "Practice block");
-  return {
-    title: _firstSessionSongTextToken(plan.focus, plan.title, "Practice Session"),
-    activeIndex: activeIndex,
-    blockCount: segments.length,
-    segmentLabel: segmentLabel,
-    durationMin: Math.max(1, Math.round(totalDurationSec / 60)),
-    status: status,
-    statusLabel: (status === "paused" ? "Paused" : (status === "running" ? "In progress" : "Ready")) + " - " + segmentLabel,
-    progressPct: progressPct,
-    elapsedLabel: Math.floor(positionMs / 60000) + "m " + Math.floor((positionMs % 60000) / 1000) + "s in block",
-    remainingLabel: Math.floor(remainingMs / 60000) + "m " + Math.floor((remainingMs % 60000) / 1000) + "s left",
-    primaryAction: status === "paused" ? "sessionResumeBlock" : "sessionPauseBlock",
-    primaryLabel: status === "paused" ? "Resume Block" : "Pause Block",
-    canSkip: activeIndex < segments.length - 1
-  };
+  return SparkSessionShellUI.buildDailyShellSummary(getSessionCoreView(), {
+    focusFormatter: function(plan) {
+      return _firstSessionSongTextToken(plan && plan.focus, plan && plan.title, "Practice Session");
+    },
+    segmentFormatter: function(segment) {
+      return _firstSessionSongTextToken(segment && segment.label, segment && segment.title, segment && segment.type, "Practice block");
+    },
+    fallbackTitle: "Practice Session",
+    fallbackSegmentLabel: "Practice block"
+  });
 }
 
 function findInstrumentChordByName(D, chordName){
@@ -265,17 +211,14 @@ function renderPracticeIntentionCard(practiceIntention){
 }
 
 function renderSessionShellCard(shell){
-  var h = '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(78,205,196,.12),rgba(69,183,209,.08));border:1px solid rgba(78,205,196,.35)">';
-  h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#4ECDC4">Practice Session Live</div><div style="font-size:11px;color:var(--text-muted)">Block '+(shell.activeIndex+1)+' of '+shell.blockCount+'</div></div>';
-  h += '<div style="font-size:18px;font-weight:900;color:var(--text-primary);margin-bottom:4px">'+escHTML(shell.title)+'</div>';
-  h += '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">'+escHTML(shell.statusLabel)+'</div>';
-  h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">'+shell.durationMin+' min shell</div>';
-  h += '<div style="height:8px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden;margin-bottom:8px"><div style="height:100%;width:'+shell.progressPct+'%;background:linear-gradient(90deg,#4ECDC4,#45B7D1)"></div></div>';
-  h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;color:var(--text-muted);margin-bottom:10px"><span>'+escHTML(shell.elapsedLabel)+'</span><span>'+escHTML(shell.remainingLabel)+'</span></div>';
-  h += '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" onclick="act(\''+shell.primaryAction+'\')" style="background:#4ECDC4;color:#fff">'+shell.primaryLabel+'</button>';
-  if(shell.canSkip) h += '<button class="btn" onclick="act(\'sessionSkipBlock\')" style="background:var(--input-bg);color:var(--text-primary)">Skip Block</button>';
-  h += '</div></div>';
-  return h;
+  if (typeof SparkSessionShellUI === "undefined" || !SparkSessionShellUI || typeof SparkSessionShellUI.renderLiveCard !== "function") {
+    return "";
+  }
+  return SparkSessionShellUI.renderLiveCard(shell, {
+    label: "Practice Session Live",
+    accent: "#4ECDC4",
+    fill: "linear-gradient(90deg,#4ECDC4,#45B7D1)"
+  });
 }
 
 function renderSessionActionButtons(runtime){

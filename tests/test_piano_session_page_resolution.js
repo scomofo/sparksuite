@@ -74,6 +74,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
+    global.eval(loadJS("js/sparksuite/ui/session_shell.js"));
     global.eval(loadJS("js/instruments/piano/pages/session.js"));
     fn();
     console.log("  PASS: " + name);

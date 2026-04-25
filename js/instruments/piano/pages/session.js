@@ -103,12 +103,14 @@ function pianoGetSessionShellSummary(plan) {
   progressPct = durationMs > 0 ? Math.max(0, Math.min(100, Math.round((positionMs / durationMs) * 100))) : 0;
   remainingMs = durationMs > positionMs ? (durationMs - positionMs) : 0;
   return {
+    title: pianoFirstSessionTextToken(plan && plan.title, "Guided session"),
     activeIndex: activeIndex,
     blockCount: plan.blocks.length,
     status: runtimeState && runtimeState.transport && runtimeState.transport.status ? runtimeState.transport.status : "ready",
     label: pianoFirstSessionTextToken(activeSegment && activeSegment.label, activeSegment && activeSegment.title, activeSegment && activeSegment.type, "Practice block"),
-    totalDurationMin: Math.max(1, Math.round(totalDurationSec / 60)),
+    durationMin: Math.max(1, Math.round(totalDurationSec / 60)),
     progressPct: progressPct,
+    statusLabel: (runtimeState && runtimeState.transport && runtimeState.transport.status === "paused" ? "Paused" : ((runtimeState && runtimeState.transport && runtimeState.transport.status === "running") ? "In progress" : "Ready")) + " - " + pianoFirstSessionTextToken(activeSegment && activeSegment.label, activeSegment && activeSegment.title, activeSegment && activeSegment.type, "Practice block"),
     elapsedLabel: Math.floor(positionMs / 60000) + "m " + Math.floor((positionMs % 60000) / 1000) + "s in block",
     remainingLabel: Math.floor(remainingMs / 60000) + "m " + Math.floor((remainingMs % 60000) / 1000) + "s left"
   };
@@ -157,13 +159,14 @@ function pianoSessionPage() {
   html += '<div class="session-title">Session ' + plan.num + ': ' + escHTML(pianoFirstSessionTextToken(plan.title, "Guided session")) + '</div>';
   html += '<div class="session-subtitle">Level ' + plan.level + ' \u2022 ' + planBpm + ' BPM</div>';
   if (shell) {
-    html += '<div class="card" style="margin:12px 0;text-align:left;background:linear-gradient(180deg,rgba(78,205,196,.12),rgba(69,183,209,.08));border:1px solid rgba(78,205,196,.35)">';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#4ECDC4">Guided Session Live</div><div style="font-size:11px;color:var(--text-muted)">Block ' + (shell.activeIndex + 1) + ' of ' + shell.blockCount + '</div></div>';
-    html += '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">' + escHTML((shell.status === "paused" ? "Paused" : (shell.status === "running" ? "In progress" : "Ready")) + " - " + shell.label) + '</div>';
-    html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">' + shell.totalDurationMin + ' min shell</div>';
-    html += '<div style="height:8px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden;margin-bottom:8px"><div style="height:100%;width:' + shell.progressPct + '%;background:linear-gradient(90deg,#4ECDC4,#45B7D1)"></div></div>';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;color:var(--text-muted)"><span>' + escHTML(shell.elapsedLabel) + '</span><span>' + escHTML(shell.remainingLabel) + '</span></div>';
-    html += '</div>';
+    html += typeof SparkSessionShellUI !== "undefined" && SparkSessionShellUI && typeof SparkSessionShellUI.renderLiveCard === "function"
+      ? SparkSessionShellUI.renderLiveCard(shell, {
+          label: "Guided Session Live",
+          accent: "#4ECDC4",
+          fill: "linear-gradient(90deg,#4ECDC4,#45B7D1)",
+          hideControls: true
+        })
+      : "";
   }
 
   // Step indicator
