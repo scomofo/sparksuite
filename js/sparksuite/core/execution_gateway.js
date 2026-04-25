@@ -183,16 +183,34 @@
     if (!session || !segment) return false;
 
     var exercises = resolveSegmentExercises(session, segment);
+    var primaryExercise;
+    var segmentType;
+    var segmentPayload;
     if (!exercises.length) {
       failExecution("segment requires resolved exercises", segment && segment.id ? segment.id : null);
     }
 
-    return runExercise(exercises[0], mergeLaunchOptions(options, {
+    primaryExercise = exercises[0];
+    segmentType = segment && segment.type ? String(segment.type) : "practice";
+    segmentPayload = {
       session: session,
       segment: segment,
-      exerciseIndex: 0,
-      exerciseCount: exercises.length
-    }));
+      exercise: primaryExercise,
+      exercises: exercises.slice(),
+      options: mergeLaunchOptions(options, {
+        session: session,
+        segment: segment,
+        exerciseIndex: 0,
+        exerciseCount: exercises.length
+      }),
+      source: options.source || "session_segment"
+    };
+
+    return execute("session.segment." + segmentType, segmentPayload, function(payload) {
+      return execute("session.segment.start", payload, function(fallbackPayload) {
+        return runExercise(fallbackPayload.exercise, fallbackPayload.options);
+      });
+    });
   }
 
   function runSessionSegmentById(session, segmentId, options) {
