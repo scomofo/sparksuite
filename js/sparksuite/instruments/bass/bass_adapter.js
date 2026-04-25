@@ -43,6 +43,57 @@
     return typeof SparkInstrumentAdapter !== "undefined" ? SparkInstrumentAdapter.getCurriculumMap() : [];
   };
 
+  BassAdapter.prototype.getSkillTree = function() {
+    var module = getBassModule();
+    if (module && typeof module.getSkillTree === "function") {
+      return module.getSkillTree();
+    }
+    return typeof SparkInstrumentAdapter !== "undefined" && typeof SparkInstrumentAdapter.getSkillTree === "function"
+      ? SparkInstrumentAdapter.getSkillTree()
+      : [];
+  };
+
+  BassAdapter.prototype.getLessons = function() {
+    var module = getBassModule();
+    if (module && typeof module.getLessons === "function") {
+      return module.getLessons();
+    }
+    var curriculumMap = this.getCurriculumMap();
+    return Array.isArray(curriculumMap) ? curriculumMap.slice() : [];
+  };
+
+  BassAdapter.prototype.getExercises = function(skill) {
+    var module = getBassModule();
+    if (module && typeof module.getExercises === "function") {
+      return module.getExercises(skill);
+    }
+    return typeof SparkInstrumentAdapter !== "undefined" && typeof SparkInstrumentAdapter.getExercises === "function"
+      ? (SparkInstrumentAdapter.getExercises(skill) || [])
+      : [];
+  };
+
+  BassAdapter.prototype.getTuning = function() {
+    var module = getBassModule();
+    if (module && typeof module.getTuning === "function") {
+      return module.getTuning();
+    }
+    return ["E1", "A1", "D2", "G2"];
+  };
+
+  BassAdapter.prototype.getCapabilities = function() {
+    return {
+      stringCount: 4,
+      keyCount: null,
+      supportsChords: false,
+      supportsScales: true,
+      supportsStrumming: false,
+      supportsFingerpicking: true,
+      supportsMelody: true,
+      preferredRenderer: "string-lane-highway",
+      inputModes: ["keyboard", "midi", "mouse"]
+    };
+  };
+
   BassAdapter.prototype.getSongs = function() {
     var module = getBassModule();
     if (module && typeof module.getSongs === "function") {

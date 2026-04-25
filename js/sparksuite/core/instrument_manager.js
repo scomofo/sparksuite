@@ -17,6 +17,10 @@
     if (!adapter || typeof adapter !== "object") {
       throw new Error('Instrument "' + type + '" adapter factory must return an object');
     }
+    if (typeof SparkValidateInstrumentModule === "function") {
+      SparkValidateInstrumentModule(adapter, type);
+      return;
+    }
     for (i = 0; i < required.length; i++) {
       if (typeof adapter[required[i]] !== "function") {
         throw new Error('Instrument "' + type + '" adapter missing required method: ' + required[i]);
@@ -194,8 +198,10 @@
     songs = activeInstrument && typeof activeInstrument.getSongs === "function"
       ? activeInstrument.getSongs() || []
       : [];
-    var lessons = adapter && typeof adapter.getLessons === "function" ? (adapter.getLessons() || []) : [];
     curriculumMap = adapter && typeof adapter.getCurriculumMap === "function" ? (adapter.getCurriculumMap() || []) : [];
+    var lessons = looksLikeCurriculumV2Sessions(curriculumMap)
+      ? curriculumMap.slice()
+      : (adapter && typeof adapter.getLessons === "function" ? (adapter.getLessons() || []) : []);
     if (!sessions.length && looksLikeCurriculumV2Sessions(curriculumMap)) sessions = curriculumMap.slice();
     if (!sessions.length && typeof SparkInstrumentAdapter !== "undefined" && typeof SparkInstrumentAdapter.getCurriculum === "function") {
       sessions = (SparkInstrumentAdapter.getCurriculum() || {}).SESSIONS || [];

@@ -81,6 +81,12 @@ manager.register("canary", function() {
     },
     getTuning: function() {
       return ["C4", "G4"];
+    },
+    getCapabilities: function() {
+      return {
+        preferredRenderer: "string-lane-highway",
+        inputModes: ["keyboard", "midi"]
+      };
     }
   };
 });
