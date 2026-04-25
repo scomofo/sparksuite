@@ -67,6 +67,23 @@
     return null;
   }
 
+  function buildStartSessionRequest(options) {
+    var context = options && options.context && typeof options.context === "object"
+      ? options.context
+      : {};
+    var request = {};
+    var key;
+    for (key in context) {
+      if (Object.prototype.hasOwnProperty.call(context, key)) {
+        request[key] = context[key];
+      }
+    }
+    request.flow = options && options.flow
+      ? options.flow
+      : (request.flow || (typeof SparkSessionTypes !== "undefined" ? SparkSessionTypes.FLOW_DAILY_PRACTICE : "daily_practice"));
+    return request;
+  }
+
   function stopTransportTicker() {
     if (_segmentTransport.tickHandle && typeof clearInterval === "function") {
       clearInterval(_segmentTransport.tickHandle);
@@ -253,25 +270,40 @@
 
   // Start a new session loop via SessionEngine
   function startSessionLoop(options) {
+    var core;
+    var engine;
+    var flow;
     options = options || {};
     _sessionEvents = [];
     _activeSegmentIndex = -1;
     resetSegmentTransport();
 
     // Build session through the engine (single authoritative path)
-    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-      var flow = options.flow || (typeof SparkSessionTypes !== "undefined" ? SparkSessionTypes.FLOW_DAILY_PRACTICE : "daily_practice");
-      _activeSession = window.sparkCore.startSession(flow, options.context || {});
+    core = getSparkCoreHandle();
+    if (core && typeof core.startSession === "function") {
+      _activeSession = core.startSession(buildStartSessionRequest(options));
     } else if (typeof SparkSuiteSessionEngine !== "undefined") {
       // Fallback: direct engine call
-      var engine = new SparkSuiteSessionEngine(
+      flow = options.flow || (typeof SparkSessionTypes !== "undefined" ? SparkSessionTypes.FLOW_DAILY_PRACTICE : "daily_practice");
+      engine = new SparkSuiteSessionEngine(
         window.SparkSuitePracticeEngine || { buildDailyPracticePlan: function() { return { segments: [], exercises: [] }; } },
         window.SparkSuiteCurriculumEngine || { getDailyPracticeContext: function() { return {}; } }
       );
-      _activeSession = engine.buildSession(options.flow || "daily_practice", options.context || {});
+      _activeSession = engine.buildSession(flow, options.context || {});
     }
 
     if (_activeSession) {
+      if (Array.isArray(_activeSession.segments) && _activeSession.segments.length) {
+        attachSession(_activeSession, {
+          segmentIndex: 0,
+          status: "ready",
+          positionMs: 0,
+          autoAdvance: options.autoAdvance !== false,
+          scheduleTick: false,
+          syncState: false,
+          preserveEvents: true
+        });
+      }
       console.log("[SparkRuntime] SESSION PLAN", _activeSession);
     }
 

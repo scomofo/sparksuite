@@ -30,6 +30,75 @@ test("startSessionLoop returns null without engines", function() {
   assert.strictEqual(session, null);
 });
 
+test("startSessionLoop passes a single request object to sparkCore and supports global-only bindings", function() {
+  var captured = null;
+  global.sparkCore = {
+    startSession: function(request) {
+      captured = request;
+      return {
+        id: "plan_1",
+        flow: request.flow,
+        requestedSessionNum: request.sessionNum,
+        forceRebuild: !!request.forceRebuild,
+        segments: [],
+        exercises: []
+      };
+    }
+  };
+
+  var session = Runtime.startSessionLoop({
+    flow: "guided_session",
+    context: {
+      sessionNum: 3,
+      forceRebuild: true,
+      customSeed: "alpha"
+    }
+  });
+
+  assert.ok(captured);
+  assert.strictEqual(captured.flow, "guided_session");
+  assert.strictEqual(captured.sessionNum, 3);
+  assert.strictEqual(captured.forceRebuild, true);
+  assert.strictEqual(captured.customSeed, "alpha");
+  assert.strictEqual(session.flow, "guided_session");
+  assert.strictEqual(session.requestedSessionNum, 3);
+
+  delete global.sparkCore;
+  Runtime.attachSession(null, {});
+});
+
+test("startSessionLoop primes the first segment as the active ready shell block", function() {
+  global.sparkCore = {
+    startSession: function() {
+      return {
+        id: "plan_2",
+        flow: "daily_practice",
+        segments: [
+          { id: "seg_ready", type: "practice", durationSec: 2, exerciseIds: ["ex_ready"] },
+          { id: "seg_next", type: "song", durationSec: 3, exerciseIds: ["ex_next"] }
+        ],
+        exercises: [
+          { id: "ex_ready", data: { core: { skill: "timing" }, gameplay: {} } },
+          { id: "ex_next", data: { core: { songId: "song_next" }, gameplay: {} } }
+        ]
+      };
+    }
+  };
+
+  var session = Runtime.startSessionLoop();
+
+  assert.strictEqual(session.id, "plan_2");
+  assert.strictEqual(Runtime.getActiveSegmentIndex(), 0);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_ready");
+  assert.strictEqual(Runtime.getActiveExercise().id, "ex_ready");
+  assert.strictEqual(Runtime.getSegmentTransport().status, "ready");
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 0);
+  assert.strictEqual(Runtime.getSegmentTransport().durationMs, 2000);
+
+  delete global.sparkCore;
+  Runtime.attachSession(null, {});
+});
+
 test("runSegment returns false with no active session", function() {
   assert.strictEqual(Runtime.runSegment(0), false);
 });
