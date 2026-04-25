@@ -1,5 +1,85 @@
 (function() {
-  function ProgressEngine() {}
+  function ProgressEngine(storage) {
+    this.storage = storage || null;
+  }
+
+  ProgressEngine.prototype.calculatePerformanceScore = function(performance) {
+    performance = performance || {};
+    var accuracy = typeof performance.accuracy === "number" ? performance.accuracy : 0;
+    var timing = performance.timing && typeof performance.timing.score === "number"
+      ? performance.timing.score
+      : accuracy;
+    return accuracy * 0.7 + timing * 0.3;
+  };
+
+  ProgressEngine.prototype.smoothMastery = function(current, score) {
+    current = typeof current === "number" ? current : 0;
+    score = typeof score === "number" ? score : 0;
+    return Number((current * 0.75 + score * 0.25).toFixed(3));
+  };
+
+  ProgressEngine.prototype.calculateNextReview = function(mastery) {
+    mastery = typeof mastery === "number" ? mastery : 0;
+    var days = mastery > 0.85 ? 7 : mastery > 0.7 ? 3 : 1;
+    var date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString();
+  };
+
+  ProgressEngine.prototype.updateMastery = function(payload) {
+    payload = payload || {};
+    var userId = payload.userId || null;
+    var instrument = payload.instrument || null;
+    var skillId = payload.skillId || null;
+    var performance = payload.performance || {};
+    var performanceScore = this.calculatePerformanceScore(performance);
+    var profile;
+    var current;
+    var nextMastery;
+
+    if (!skillId) throw new Error("updateMastery requires skillId");
+
+    if (this.storage && typeof this.storage.getUserProfile === "function" && typeof this.storage.updateUserProfile === "function") {
+      profile = this.storage.getUserProfile(userId) || {};
+      current = profile.mastery && profile.mastery[skillId] && typeof profile.mastery[skillId].mastery === "number"
+        ? profile.mastery[skillId].mastery
+        : 0;
+      nextMastery = this.smoothMastery(current, performanceScore);
+      return this.storage.updateUserProfile(userId, {
+        mastery: mergeNamedObjects(profile.mastery || {}, buildMasteryEntry(skillId, instrument, nextMastery, performance))
+      });
+    }
+
+    if (typeof SparkMastery !== "undefined" && typeof SparkMastery.get === "function" && typeof SparkMastery.set === "function") {
+      current = SparkMastery.get("lessons", skillId) || 0;
+      nextMastery = this.smoothMastery(current, performanceScore);
+      SparkMastery.set("lessons", skillId, nextMastery);
+      return buildMasteryValue(skillId, instrument, nextMastery, performance);
+    }
+
+    if (typeof S !== "undefined") {
+      if (!S.mastery || typeof S.mastery !== "object") S.mastery = {};
+      if (!S.mastery.lessons || typeof S.mastery.lessons !== "object") S.mastery.lessons = {};
+      current = S.mastery.lessons[skillId] && typeof S.mastery.lessons[skillId].mastery === "number"
+        ? S.mastery.lessons[skillId].mastery
+        : 0;
+      nextMastery = this.smoothMastery(current, performanceScore);
+      S.mastery.lessons[skillId] = buildMasteryValue(skillId, instrument, nextMastery, performance);
+      if (typeof saveState === "function") saveState();
+      return S.mastery.lessons[skillId];
+    }
+
+    throw new Error("No mastery store available");
+  };
+
+  ProgressEngine.prototype.addXp = function(user, amount) {
+    amount = typeof amount === "number" ? amount : 0;
+    if (typeof SparkInstrumentProgress !== "undefined" && typeof SparkInstrumentProgress.addXp === "function") {
+      SparkInstrumentProgress.addXp(amount);
+      return { xp: typeof S !== "undefined" ? (S.xp || 0) : amount };
+    }
+    return { xp: Math.max(0, ((user && user.xp) || 0) + amount) };
+  };
 
   ProgressEngine.prototype.completeSession = function(plan, payload) {
     payload = payload || {};
@@ -287,6 +367,45 @@
     for (var skillId in incoming) {
       target[skillId] = incoming[skillId];
     }
+  }
+
+  function mergeNamedObjects(target, incoming) {
+    var merged = clone(target || {});
+    var key;
+    for (key in incoming) {
+      if (Object.prototype.hasOwnProperty.call(incoming, key)) merged[key] = incoming[key];
+    }
+    return merged;
+  }
+
+  function buildMasteryEntry(skillId, instrument, mastery, performance) {
+    var entry = {};
+    entry[skillId] = buildMasteryValue(skillId, instrument, mastery, performance);
+    return entry;
+  }
+
+  function buildMasteryValue(skillId, instrument, mastery, performance) {
+    return {
+      instrument: instrument,
+      skillId: skillId,
+      mastery: mastery,
+      lastAccuracy: performance.accuracy,
+      lastTiming: performance.timing || null,
+      updatedAt: new Date().toISOString(),
+      nextReviewAt: calculateNextReviewAt(mastery)
+    };
+  }
+
+  function calculateNextReviewAt(mastery) {
+    mastery = typeof mastery === "number" ? mastery : 0;
+    var days = mastery > 0.85 ? 7 : mastery > 0.7 ? 3 : 1;
+    var date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString();
+  }
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value || {}));
   }
 
   window.SparkSuiteProgressEngine = ProgressEngine;
