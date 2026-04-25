@@ -90,6 +90,7 @@ test("createSparkDebugState reads current session, gateway, runtime, and score",
         return "running";
       },
       timingConfig: { hitWindowMs: 140, noteSpeed: 0.32 },
+      assistConfig: { speedMultiplier: 0.75, noFailMode: true },
       score: { combo: 12 }
     }
   });
@@ -104,6 +105,7 @@ test("createSparkDebugState reads current session, gateway, runtime, and score",
   assert.deepStrictEqual(state.getLastResult(), { result: true });
   assert.deepStrictEqual(state.getMissingHandlers(), { "practice.start": 1 });
   assert.deepStrictEqual(state.getTimingConfig(), { hitWindowMs: 140, noteSpeed: 0.32 });
+  assert.deepStrictEqual(state.getAssistConfig(), { speedMultiplier: 0.75, noFailMode: true });
   assert.deepStrictEqual(state.getScore(), { combo: 12 });
 });
 
@@ -139,6 +141,9 @@ test("mountSparkDebugOverlay renders payload and cleans up cleanly", function() 
     getTimingConfig() {
       return { hitWindowMs: 140, noteSpeed: 0.32 };
     },
+    getAssistConfig() {
+      return { speedMultiplier: 0.75, noFailMode: true };
+    },
     getScore() {
       return { accuracy: 0.88, combo: 5 };
     }
@@ -153,6 +158,7 @@ test("mountSparkDebugOverlay renders payload and cleans up cleanly", function() 
 
   intervalFn();
   assert.ok(document.body.children[0].innerHTML.includes("practice.complete"));
+  assert.ok(document.body.children[0].innerHTML.includes("speedMultiplier"));
 
   unmount();
   assert.strictEqual(clearedInterval, 42);
