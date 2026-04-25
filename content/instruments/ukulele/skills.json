@@ -1,0 +1,4 @@
+[
+  { "id": "down_strum", "name": "Down Strum", "category": "rhythm", "prerequisites": [] },
+  { "id": "starter_chords", "name": "Starter Chords", "category": "harmony", "prerequisites": ["down_strum"] }
+]

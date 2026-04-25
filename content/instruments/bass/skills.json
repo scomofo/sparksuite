@@ -1,0 +1,4 @@
+[
+  { "id": "root_pulse", "name": "Root Pulse", "category": "groove", "prerequisites": [] },
+  { "id": "walking_root", "name": "Walking Root", "category": "groove", "prerequisites": ["root_pulse"] }
+]

@@ -1,0 +1,4 @@
+[
+  { "id": "c_position", "name": "C Position", "category": "technique", "prerequisites": [] },
+  { "id": "basic_rhythm", "name": "Basic Rhythm", "category": "rhythm", "prerequisites": ["c_position"] }
+]

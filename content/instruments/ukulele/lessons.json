@@ -1,0 +1,4 @@
+[
+  { "id": "uke_content_01", "skill": "down_strum", "title": "First Down Strums", "prerequisites": [], "masteryRequired": 0.7, "estimatedMinutes": 5 },
+  { "id": "uke_content_02", "skill": "starter_chords", "title": "Starter Chords", "prerequisites": ["down_strum"], "masteryRequired": 0.75, "estimatedMinutes": 6 }
+]

@@ -53,6 +53,7 @@ const debugStateModule = require("../js/sparksuite/debug/spark_debug_state.js");
 const debugOverlayModule = require("../js/sparksuite/debug/spark_debug_overlay.js");
 
 test("createSparkDebugState reads current session, gateway, runtime, and score", function() {
+  const recentEvents = [{ type: "gateway.action.execute", payload: { actionName: "practice.start" } }];
   const state = debugStateModule.createSparkDebugState({
     sparkCore: {
       currentSession: { id: "fallback_session", instrument: "guitar", lessonId: "lesson_fallback" },
@@ -64,6 +65,19 @@ test("createSparkDebugState reads current session, gateway, runtime, and score",
           runtimeState: {
             transport: { status: "running", positionMs: 500 },
             score: { accuracy: 0.9 }
+          },
+          recovery: {
+            error: {
+              code: "SESSION_INVALID",
+              message: "bad session"
+            }
+          }
+        };
+      },
+      getEventBus() {
+        return {
+          getRecent() {
+            return recentEvents;
           }
         };
       }
@@ -107,6 +121,8 @@ test("createSparkDebugState reads current session, gateway, runtime, and score",
   assert.deepStrictEqual(state.getTimingConfig(), { hitWindowMs: 140, noteSpeed: 0.32 });
   assert.deepStrictEqual(state.getAssistConfig(), { speedMultiplier: 0.75, noFailMode: true });
   assert.deepStrictEqual(state.getScore(), { combo: 12 });
+  assert.deepStrictEqual(state.getRecentEvents(), recentEvents);
+  assert.deepStrictEqual(state.getLastError(), { code: "SESSION_INVALID", message: "bad session" });
 });
 
 test("mountSparkDebugOverlay renders payload and cleans up cleanly", function() {
@@ -146,6 +162,12 @@ test("mountSparkDebugOverlay renders payload and cleans up cleanly", function() 
     },
     getScore() {
       return { accuracy: 0.88, combo: 5 };
+    },
+    getRecentEvents() {
+      return [{ type: "runtime.input.received", payload: { lane: 2 } }];
+    },
+    getLastError() {
+      return { code: "ACTION_HANDLER_MISSING", message: "resume handler missing" };
     }
   };
 
@@ -159,6 +181,8 @@ test("mountSparkDebugOverlay renders payload and cleans up cleanly", function() 
   intervalFn();
   assert.ok(document.body.children[0].innerHTML.includes("practice.complete"));
   assert.ok(document.body.children[0].innerHTML.includes("speedMultiplier"));
+  assert.ok(document.body.children[0].innerHTML.includes("runtime.input.received"));
+  assert.ok(document.body.children[0].innerHTML.includes("ACTION_HANDLER_MISSING"));
 
   unmount();
   assert.strictEqual(clearedInterval, 42);

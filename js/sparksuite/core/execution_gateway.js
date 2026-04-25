@@ -62,6 +62,20 @@
     return new api.SparkError(code, message, context || {});
   }
 
+  function getEventBusHandle() {
+    var core = getSparkCoreHandle();
+    if (core && typeof core.getEventBus === "function") return core.getEventBus();
+    if (typeof window !== "undefined" && window.sparkEventBus) return window.sparkEventBus;
+    return null;
+  }
+
+  function emitGatewayEvent(type, payload) {
+    var bus = getEventBusHandle();
+    if (bus && typeof bus.emit === "function") {
+      bus.emit(type, payload || {});
+    }
+  }
+
   function getActionRegistryApi() {
     if (typeof window !== "undefined" && typeof window.isKnownSparkAction === "function") {
       return {
@@ -160,6 +174,10 @@
       payload: actionPayload,
       at: new Date().toISOString()
     };
+    emitGatewayEvent("gateway.action.execute", {
+      actionName: name,
+      payload: actionPayload
+    });
     if (!isKnownSparkAction(name)) {
       return handleMissingAction(name, actionPayload, fallback, "unknown_action");
     }
@@ -173,6 +191,12 @@
   function handleMissingAction(name, payload, fallback, reason) {
     var codes = getSparkErrorApi().SparkErrorCodes;
     logMissingHandler(name);
+    emitGatewayEvent("gateway.action.missing", {
+      actionName: name,
+      reason: reason,
+      payload: payload || {},
+      missingHandlers: getMissingHandlerReport()
+    });
     if (typeof fallback === "function") {
       return recordExecutionResult(name, fallback(payload || {}));
     }
@@ -197,6 +221,10 @@
       result: result,
       at: new Date().toISOString()
     };
+    emitGatewayEvent("gateway.action.result", {
+      actionName: name,
+      result: result
+    });
     return result;
   }
 

@@ -1,0 +1,4 @@
+[
+  { "id": "bas_ex_01", "skillId": "root_pulse", "type": "pluck", "chordIds": ["E_root"], "tempo": 76, "difficulty": "easy" },
+  { "id": "bas_ex_02", "skillId": "walking_root", "type": "pluck_pattern", "chordIds": ["E_root", "A_root"], "tempo": 84, "difficulty": "easy" }
+]

@@ -20,8 +20,12 @@
     this.playbackEngine = null;
     this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
+    this.eventBus = options.eventBus || (typeof SparkEventBus !== "undefined" ? new SparkEventBus({ maxEvents: 1000 }) : null);
     this.lastRecoveryRequest = null;
     this.errorBoundary = options.errorBoundary || this.createErrorBoundary();
+    if (this.progressEngine && typeof this.progressEngine.setEventBus === "function") {
+      this.progressEngine.setEventBus(this.eventBus);
+    }
   }
 
   function getSparkErrorApi() {
@@ -83,7 +87,7 @@
     var self = this;
     if (typeof SparkErrorBoundary === "undefined") return null;
     return new SparkErrorBoundary({
-      eventBus: {
+      eventBus: this.eventBus || {
         emit: function(eventName, payload) {
           if (typeof SparkEventLogger !== "undefined" && SparkEventLogger && typeof SparkEventLogger.log === "function") {
             SparkEventLogger.log(eventName, payload);
@@ -94,6 +98,20 @@
         self.captureStructuredError(payload.error, payload.context);
       }
     });
+  };
+
+  SparkCore.prototype.getEventBus = function() {
+    return this.eventBus;
+  };
+
+  SparkCore.prototype.emitEvent = function(type, payload) {
+    if (this.eventBus && typeof this.eventBus.emit === "function") {
+      return this.eventBus.emit(type, payload || {});
+    }
+    if (typeof SparkEventLogger !== "undefined" && SparkEventLogger && typeof SparkEventLogger.log === "function") {
+      SparkEventLogger.log(type, payload || {});
+    }
+    return null;
   };
 
   SparkCore.prototype.normalizeStructuredError = function(error, fallbackCode, context) {
@@ -187,6 +205,14 @@
   };
 
   SparkCore.prototype.buildRecoveryDebugBundle = function() {
+    if (typeof buildSparkDebugBundle === "function") {
+      return buildSparkDebugBundle({
+        sparkCore: this,
+        gateway: typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null,
+        eventBus: this.eventBus,
+        storage: this.storage
+      });
+    }
     return {
       exportedAt: new Date().toISOString(),
       error: this.cloneValue(this.runtimeState.lastError),
@@ -888,10 +914,23 @@
   SparkCore.prototype.startSession = function(input) {
     var self = this;
     input = input || {};
+    this.emitEvent("session.start.requested", {
+      flow: input.flow || null,
+      sessionNum: input.sessionNum || null,
+      songId: input.songId || null,
+      forceRebuild: !!input.forceRebuild
+    });
     return this.runWithErrorRecovery("startSession", {
       input: this.cloneValue(input)
     }, function() {
-      return self._unsafeStartSession(input);
+      var plan = self._unsafeStartSession(input);
+      self.emitEvent("session.start.completed", {
+        sessionId: plan && plan.id ? plan.id : null,
+        flow: plan && plan.flow ? plan.flow : null,
+        instrumentType: plan && plan.instrumentType ? plan.instrumentType : null,
+        segmentCount: plan && Array.isArray(plan.segments) ? plan.segments.length : 0
+      });
+      return plan;
     });
   };
 
@@ -2371,11 +2410,22 @@
   SparkCore.prototype.completeSession = function(payload) {
     var self = this;
     payload = payload || {};
+    this.emitEvent("session.complete.requested", {
+      sessionId: payload.sessionId || (this.currentPlan && this.currentPlan.id) || null,
+      itemId: payload.itemId || null
+    });
     return this.runWithErrorRecovery("completeSession", {
       payload: this.cloneValue(payload),
       sessionId: payload.sessionId || (this.currentPlan && this.currentPlan.id) || null
     }, function() {
-      return self._unsafeCompleteSession(payload);
+      var result = self._unsafeCompleteSession(payload);
+      self.emitEvent("session.complete.completed", {
+        sessionId: self.currentPlan && self.currentPlan.id ? self.currentPlan.id : null,
+        completedItems: result && typeof result.completedItems === "number" ? result.completedItems : null,
+        planCompleted: !!(result && result.planCompleted),
+        xpAwarded: result && typeof result.xpAwarded === "number" ? result.xpAwarded : 0
+      });
+      return result;
     });
   };
 
@@ -3480,5 +3530,8 @@
   window.SparkCoreRuntime = SparkCore;
   window.createDefaultSparkCore = createDefaultSparkCore;
   window.sparkCore = createDefaultSparkCore();
+  window.sparkEventBus = window.sparkCore && typeof window.sparkCore.getEventBus === "function"
+    ? window.sparkCore.getEventBus()
+    : null;
   mountDefaultSparkDebugOverlay(window.sparkCore);
 })();

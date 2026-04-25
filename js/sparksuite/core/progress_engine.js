@@ -1,7 +1,17 @@
 (function() {
   function ProgressEngine(storage) {
     this.storage = storage || null;
+    this.eventBus = null;
   }
+
+  ProgressEngine.prototype.setEventBus = function(eventBus) {
+    this.eventBus = eventBus || null;
+    return this.eventBus;
+  };
+
+  ProgressEngine.prototype.emit = function(type, payload) {
+    emitProgressEvent(this, type, payload);
+  };
 
   ProgressEngine.prototype.calculatePerformanceScore = function(performance) {
     performance = performance || {};
@@ -45,15 +55,28 @@
         ? profile.mastery[skillId].mastery
         : 0;
       nextMastery = this.smoothMastery(current, performanceScore);
-      return this.storage.updateUserProfile(userId, {
+      var updatedProfile = this.storage.updateUserProfile(userId, {
         mastery: mergeNamedObjects(profile.mastery || {}, buildMasteryEntry(skillId, instrument, nextMastery, performance))
       });
+      this.emit("progress.mastery.updated", {
+        userId: userId,
+        skillId: skillId,
+        instrument: instrument,
+        mastery: nextMastery
+      });
+      return updatedProfile;
     }
 
     if (typeof SparkMastery !== "undefined" && typeof SparkMastery.get === "function" && typeof SparkMastery.set === "function") {
       current = SparkMastery.get("lessons", skillId) || 0;
       nextMastery = this.smoothMastery(current, performanceScore);
       SparkMastery.set("lessons", skillId, nextMastery);
+      this.emit("progress.mastery.updated", {
+        userId: userId,
+        skillId: skillId,
+        instrument: instrument,
+        mastery: nextMastery
+      });
       return buildMasteryValue(skillId, instrument, nextMastery, performance);
     }
 
@@ -66,6 +89,12 @@
       nextMastery = this.smoothMastery(current, performanceScore);
       S.mastery.lessons[skillId] = buildMasteryValue(skillId, instrument, nextMastery, performance);
       if (typeof saveState === "function") saveState();
+      this.emit("progress.mastery.updated", {
+        userId: userId,
+        skillId: skillId,
+        instrument: instrument,
+        mastery: nextMastery
+      });
       return S.mastery.lessons[skillId];
     }
 
@@ -76,16 +105,25 @@
     amount = typeof amount === "number" ? amount : 0;
     if (typeof SparkInstrumentProgress !== "undefined" && typeof SparkInstrumentProgress.addXp === "function") {
       SparkInstrumentProgress.addXp(amount);
+      this.emit("progress.xp.awarded", {
+        amount: amount,
+        totalXp: typeof S !== "undefined" ? (S.xp || 0) : amount
+      });
       return { xp: typeof S !== "undefined" ? (S.xp || 0) : amount };
     }
-    return { xp: Math.max(0, ((user && user.xp) || 0) + amount) };
+    var nextXp = Math.max(0, ((user && user.xp) || 0) + amount);
+    this.emit("progress.xp.awarded", {
+      amount: amount,
+      totalXp: nextXp
+    });
+    return { xp: nextXp };
   };
 
   ProgressEngine.prototype.completeSession = function(plan, payload) {
     payload = payload || {};
     if (!plan) return { completedItems: 0, totalItems: 0, planCompleted: false, xpAwarded: 0 };
-    if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return completeGuidedSession(plan, payload);
-    if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return completePerformanceSong(plan, payload);
+    if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return completeGuidedSession(this, plan, payload);
+    if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return completePerformanceSong(this, plan, payload);
 
     var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
@@ -129,6 +167,13 @@
       progress.xpAwarded = xpAwarded;
       progress.sessionStatePatch = sessionStatePatch;
       progress.completionSummary = completionSummary;
+      emitProgressEvent(this, "progress.session.completed", {
+        sessionId: plan.id,
+        flow: plan.flow,
+        xpAwarded: xpAwarded,
+        completedItems: progress.completedItems,
+        totalItems: progress.totalItems
+      });
     } else if (typeof saveState === "function") {
       saveState();
     }
@@ -136,7 +181,7 @@
     return progress;
   };
 
-  function completeGuidedSession(plan, payload) {
+  function completeGuidedSession(engine, plan, payload) {
     var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
       totalItems: plan.segments.length,
@@ -189,10 +234,17 @@
     SparkProgressBridge.applySessionStatePatch(sessionStatePatch);
     progress.sessionStatePatch = sessionStatePatch;
     if (typeof saveState === "function") saveState();
+    emitProgressEvent(engine, "progress.session.completed", {
+      sessionId: plan.id,
+      flow: plan.flow,
+      xpAwarded: progress.xpAwarded || 0,
+      completedItems: progress.completedItems,
+      totalItems: progress.totalItems
+    });
     return progress;
   }
 
-  function completePerformanceSong(plan, payload) {
+  function completePerformanceSong(engine, plan, payload) {
     var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
       totalItems: plan.segments.length,
@@ -223,6 +275,13 @@
         }
       };
       progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded);
+      emitProgressEvent(engine, "progress.session.completed", {
+        sessionId: plan.id,
+        flow: plan.flow,
+        xpAwarded: xpAwarded,
+        completedItems: progress.completedItems,
+        totalItems: progress.totalItems
+      });
     }
 
     if (typeof saveState === "function") saveState();
@@ -406,6 +465,12 @@
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value || {}));
+  }
+
+  function emitProgressEvent(engine, type, payload) {
+    if (engine && engine.eventBus && typeof engine.eventBus.emit === "function") {
+      engine.eventBus.emit(type, payload || {});
+    }
   }
 
   window.SparkSuiteProgressEngine = ProgressEngine;
