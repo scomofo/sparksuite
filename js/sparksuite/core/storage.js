@@ -1,6 +1,13 @@
 (function() {
   function SparkSuiteStorage() {}
 
+  SparkSuiteStorage.prototype.getCurrentSchemaVersion = function() {
+    if (typeof SparkCurrentProfileSchemaVersion === "number") {
+      return SparkCurrentProfileSchemaVersion;
+    }
+    return 4;
+  };
+
   SparkSuiteStorage.prototype.setPerformanceMonitor = function(performanceMonitor) {
     this.performanceMonitor = performanceMonitor || null;
     return this.performanceMonitor;
@@ -8,6 +15,10 @@
 
   SparkSuiteStorage.prototype.getProfileStorageKey = function(userId) {
     return "spark_profile_" + (userId || "default");
+  };
+
+  SparkSuiteStorage.prototype.getPracticeJournalStorageKey = function(userId) {
+    return "spark_practice_journal_" + (userId || "default");
   };
 
   SparkSuiteStorage.prototype.getCurrentPlanId = function() {
@@ -69,6 +80,44 @@
     var profile = this.getUserProfile(userId);
     var nextProfile = mergeDeep(profile, patch || {});
     return this.saveUserProfile(nextProfile);
+  };
+
+  SparkSuiteStorage.prototype.replaceUserProfile = function(profile) {
+    return this.saveUserProfile(profile);
+  };
+
+  SparkSuiteStorage.prototype.getSettings = function(userId) {
+    var profile = this.getUserProfile(userId);
+    return clone(profile && profile.settings ? profile.settings : {});
+  };
+
+  SparkSuiteStorage.prototype.replaceSettings = function(settings, userId) {
+    var profile = this.getUserProfile(userId);
+    profile.settings = mergeDeep(profile.settings || {}, settings || {});
+    return this.saveUserProfile(profile);
+  };
+
+  SparkSuiteStorage.prototype.getPracticeJournal = function(userId) {
+    var raw = null;
+    try {
+      raw = localStorage.getItem(this.getPracticeJournalStorageKey(userId));
+    } catch (error) {
+      raw = null;
+    }
+    if (!raw) return [];
+    try {
+      return JSON.parse(raw);
+    } catch (error) {
+      return [];
+    }
+  };
+
+  SparkSuiteStorage.prototype.replacePracticeJournal = function(entries, userId) {
+    var journal = Array.isArray(entries) ? clone(entries) : [];
+    try {
+      localStorage.setItem(this.getPracticeJournalStorageKey(userId), JSON.stringify(journal));
+    } catch (error) {}
+    return journal;
   };
 
   SparkSuiteStorage.prototype.measureMigration = function(profile) {

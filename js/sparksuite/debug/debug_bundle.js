@@ -17,6 +17,12 @@
 
     return {
       exportedAt: new Date().toISOString(),
+      appVersion: options.appVersion
+        || (typeof S !== "undefined" && S.releaseInfo && S.releaseInfo.version)
+        || "dev",
+      schemaVersion: storage && typeof storage.getCurrentSchemaVersion === "function"
+        ? storage.getCurrentSchemaVersion()
+        : null,
       session: sessionView && sessionView.plan ? {
         id: sessionView.plan.id || null,
         flow: sessionView.plan.flow || null,
