@@ -4228,6 +4228,47 @@ test("advanceGuidedSession completes V2 blocks only when the step leaves them", 
   assert.strictEqual(plan.segments[2].completed, true);
 });
 
+test("SparkCore can sync the shared session runtime and expose active segment/exercise in the session view", function() {
+  var originalWindow = global.window;
+  var attachCalls = [];
+  global.window = global.window || {};
+  global.window.SparkSessionRuntime = {
+    attachSession: function(plan, options) {
+      attachCalls.push({
+        plan: plan,
+        options: options
+      });
+      return true;
+    },
+    getActiveSession: function() {
+      return core.currentPlan;
+    },
+    getActiveSegment: function() {
+      return core.currentPlan && core.currentPlan.segments ? core.currentPlan.segments[0] : null;
+    },
+    getActiveExercise: function() {
+      return core.currentPlan && core.currentPlan.exercises ? core.currentPlan.exercises[0] : null;
+    }
+  };
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+  var synced = core.syncSessionRuntime({ scheduleTick: false });
+  var view = core.getActiveSessionView();
+
+  assert.strictEqual(synced, true);
+  assert.strictEqual(attachCalls.length, 1);
+  assert.strictEqual(attachCalls[0].plan, plan);
+  assert.strictEqual(attachCalls[0].options.segmentId, plan.segments[0].id);
+  assert.strictEqual(attachCalls[0].options.status, "ready");
+  assert.strictEqual(attachCalls[0].options.positionMs, 0);
+  assert.ok(view.activeSegment);
+  assert.ok(view.activeExercise);
+  assert.strictEqual(view.activeSegment.id, plan.segments[0].id);
+  assert.strictEqual(view.activeExercise.id, plan.exercises[0].id);
+
+  global.window = originalWindow;
+});
+
 test("skipGuidedBlock jumps to the next V2 shell block and completes the skipped block", function() {
   SparkInstruments = {
     getActive: function() {

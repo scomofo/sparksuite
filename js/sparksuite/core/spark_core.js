@@ -26,6 +26,12 @@
     return JSON.parse(JSON.stringify(value));
   };
 
+  SparkCore.prototype.getSessionRuntimeHandle = function() {
+    if (typeof window !== "undefined" && window.SparkSessionRuntime) return window.SparkSessionRuntime;
+    if (typeof SparkSessionRuntime !== "undefined") return SparkSessionRuntime;
+    return null;
+  };
+
   SparkCore.prototype.createInitialRuntimeState = function() {
     return {
       activeFlow: null,
@@ -1930,11 +1936,64 @@
   };
 
   SparkCore.prototype.getActiveSessionView = function() {
+    var segment = null;
+    var exercise = null;
+    var runtime = this.getSessionRuntimeHandle();
+    var segments;
+    var i;
+    if (runtime && typeof runtime.getActiveSession === "function" && runtime.getActiveSession() === this.currentPlan) {
+      if (typeof runtime.getActiveSegment === "function") segment = runtime.getActiveSegment();
+      if (typeof runtime.getActiveExercise === "function") exercise = runtime.getActiveExercise();
+    }
+    if (!segment && this.currentPlan && Array.isArray(this.currentPlan.segments)) {
+      segments = this.currentPlan.segments;
+      for (i = 0; i < segments.length; i++) {
+        if (segments[i] && segments[i].id === this.runtimeState.activeSegmentId) {
+          segment = segments[i];
+          break;
+        }
+      }
+    }
+    if (!exercise && segment && Array.isArray(segment.exerciseIds) && Array.isArray(this.currentPlan && this.currentPlan.exercises)) {
+      for (i = 0; i < this.currentPlan.exercises.length; i++) {
+        if (this.currentPlan.exercises[i] && this.currentPlan.exercises[i].id === segment.exerciseIds[0]) {
+          exercise = this.currentPlan.exercises[i];
+          break;
+        }
+      }
+    }
     return {
       plan: this.currentPlan,
+      activeSegment: segment,
+      activeExercise: exercise,
       runtimeState: this.getRuntimeState(),
       lastSessionOutcome: this.getLastSessionOutcome()
     };
+  };
+
+  SparkCore.prototype.syncSessionRuntime = function(options) {
+    var runtime = this.getSessionRuntimeHandle();
+    var view;
+    var runtimeState;
+    options = options || {};
+    if (!runtime || typeof runtime.attachSession !== "function" || !this.currentPlan) return false;
+    view = this.getActiveSessionView();
+    runtimeState = view && view.runtimeState ? view.runtimeState : this.runtimeState;
+    runtime.attachSession(this.currentPlan, {
+      segmentId: Object.prototype.hasOwnProperty.call(options, "segmentId")
+        ? options.segmentId
+        : (runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null),
+      status: Object.prototype.hasOwnProperty.call(options, "status")
+        ? options.status
+        : ((runtimeState && runtimeState.transport && runtimeState.transport.status) || "ready"),
+      positionMs: Object.prototype.hasOwnProperty.call(options, "positionMs")
+        ? options.positionMs
+        : ((runtimeState && runtimeState.transport && runtimeState.transport.positionMs) || 0),
+      autoAdvance: !!options.autoAdvance,
+      scheduleTick: options.scheduleTick !== false,
+      syncState: options.syncState === true
+    });
+    return true;
   };
 
   SparkCore.prototype.getPerformanceEditorDocumentView = function() {

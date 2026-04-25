@@ -53,6 +53,16 @@
     var view;
     var runtimeState;
     options = options || {};
+    if (core && typeof core.syncSessionRuntime === "function") {
+      return core.syncSessionRuntime({
+        segmentId: null,
+        status: undefined,
+        positionMs: undefined,
+        autoAdvance: !!options.autoAdvance,
+        scheduleTick: options.scheduleTick !== false,
+        syncState: false
+      });
+    }
     if (!core || !runtime || typeof runtime.attachSession !== "function" || typeof core.getActiveSessionView !== "function") {
       return false;
     }
