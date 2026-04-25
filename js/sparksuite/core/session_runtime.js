@@ -146,13 +146,17 @@
     if (_segmentTransport.durationMs > 0) {
       _segmentTransport.positionMs = Math.min(_segmentTransport.durationMs, Math.max(0, Math.round(_segmentTransport.positionMs || 0)));
     }
-    if (segment) segment.completed = true;
+    if (segment) {
+      segment.completed = true;
+      segment.skipped = !!options.skipped;
+    }
     syncSparkCoreTransport("completed", _segmentTransport.positionMs);
 
     if (typeof SparkEventLogger !== "undefined") {
       SparkEventLogger.log("segment_complete", {
         segmentIndex: _activeSegmentIndex,
-        accuracy: result ? result.accuracy : 0
+        accuracy: result ? result.accuracy : 0,
+        skipped: !!options.skipped
       });
     }
 
@@ -248,7 +252,8 @@
         _segmentTransport.positionMs = Math.min(_segmentTransport.durationMs, _segmentTransport.positionMs);
       }
       return finalizeSegmentCompletion(options.result || null, {
-        autoAdvance: options.autoAdvance === true
+        autoAdvance: options.autoAdvance === true,
+        skipped: options.skipped === true
       });
     }
 
@@ -436,6 +441,20 @@
     return syncSegmentTransport("complete", options);
   }
 
+  function skipActiveSegment(options) {
+    options = options || {};
+    options.skipped = true;
+    if (!Object.prototype.hasOwnProperty.call(options, "autoAdvance")) {
+      options.autoAdvance = true;
+    }
+    if (!Object.prototype.hasOwnProperty.call(options, "positionMs")) {
+      options.positionMs = _segmentTransport.durationMs > 0
+        ? _segmentTransport.durationMs
+        : computeTransportPosition(options.nowMs);
+    }
+    return syncSegmentTransport("complete", options);
+  }
+
   // Record a gameplay event (hit, miss, etc.)
   function recordEvent(event) {
     _sessionEvents.push(event);
@@ -546,6 +565,7 @@
     pauseActiveSegment: pauseActiveSegment,
     resumeActiveSegment: resumeActiveSegment,
     completeActiveSegment: completeActiveSegment,
+    skipActiveSegment: skipActiveSegment,
     syncSegmentTransport: syncSegmentTransport,
     attachSession: attachSession
   };

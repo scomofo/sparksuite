@@ -79,6 +79,73 @@ test("execute records missing handler counts when fallback path is used", functi
   GW.clearHandlers();
 });
 
+test("runSessionSegment uses registered segment handlers before exercise launch fallbacks", function() {
+  var captured = null;
+  GW.clearHandlers();
+  GW.register("session.segment.practice", function(payload) {
+    captured = payload;
+    return "segment_handled";
+  });
+
+  var result = GW.runSessionSegment({
+    id: "plan_segment",
+    segments: [
+      { id: "seg_segment", type: "practice", exerciseIds: ["ex_segment"] }
+    ],
+    exercises: [
+      {
+        id: "ex_segment",
+        type: "practice",
+        data: {
+          core: { skill: "timing", instrument: "pianospark" },
+          gameplay: { payload: { adapterType: "pianospark" } }
+        }
+      }
+    ]
+  }, { id: "seg_segment", type: "practice", exerciseIds: ["ex_segment"] }, { source: "segment_test" });
+
+  assert.strictEqual(result, "segment_handled");
+  assert.ok(captured);
+  assert.strictEqual(captured.segment.id, "seg_segment");
+  assert.strictEqual(captured.exercise.id, "ex_segment");
+  assert.strictEqual(captured.options.exerciseCount, 1);
+  assert.deepStrictEqual(GW.getMissingHandlerReport(), {});
+  GW.clearHandlers();
+});
+
+test("runSessionSegment falls back through the shared segment-start handler", function() {
+  var captured = null;
+  GW.clearHandlers();
+  GW.register("session.segment.start", function(payload) {
+    captured = payload;
+    return "segment_start_handled";
+  });
+
+  var result = GW.runSessionSegment({
+    id: "plan_shared_segment",
+    segments: [
+      { id: "seg_shared", type: "song", exerciseIds: ["ex_shared"] }
+    ],
+    exercises: [
+      {
+        id: "ex_shared",
+        type: "song",
+        data: {
+          core: { songId: "shared_song" },
+          gameplay: {}
+        }
+      }
+    ]
+  }, { id: "seg_shared", type: "song", exerciseIds: ["ex_shared"] }, { source: "segment_start_test" });
+
+  assert.strictEqual(result, "segment_start_handled");
+  assert.ok(captured);
+  assert.strictEqual(captured.segment.id, "seg_shared");
+  assert.strictEqual(captured.exercise.id, "ex_shared");
+  assert.strictEqual(GW.getMissingHandlerReport()["session.segment.song"], 1);
+  GW.clearHandlers();
+});
+
 test("normalizeToExercise wraps string chartId", function() {
   var ex = GW.normalizeToExercise("my_chart_id");
   assert.strictEqual(ex.type, "song");

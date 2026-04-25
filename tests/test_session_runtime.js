@@ -391,5 +391,54 @@ test("completeSegmentById completes a non-active segment through the shared shel
   delete global.window.sparkCore;
 });
 
+test("skipActiveSegment marks the shell block skipped and advances to the next segment", function() {
+  var launches = [];
+
+  global.SparkExecutionGateway.runSessionSegment = function(session, segment) {
+    launches.push(segment.id);
+    return true;
+  };
+
+  global.window.sparkCore = {
+    updateRuntimeState: function() {
+      return true;
+    }
+  };
+
+  Runtime.attachSession({
+    flow: "daily_practice",
+    segments: [
+      { id: "seg_skip", type: "practice", durationSec: 2, exerciseIds: ["ex_skip"] },
+      { id: "seg_after", type: "song", durationSec: 3, exerciseIds: ["ex_after"] }
+    ],
+    exercises: [
+      { id: "ex_skip", data: { core: { skill: "timing" }, gameplay: {} } },
+      { id: "ex_after", data: { core: { songId: "song_after" }, gameplay: {} } }
+    ]
+  }, {
+    segmentId: "seg_skip",
+    status: "running",
+    positionMs: 600,
+    nowMs: 1000,
+    autoAdvance: true,
+    scheduleTick: false
+  });
+
+  Runtime.runSegmentById("seg_skip", { nowMs: 1000, scheduleTick: false });
+  var completion = Runtime.skipActiveSegment({ nowMs: 1200 });
+
+  assert.strictEqual(completion.hasNext, true);
+  assert.strictEqual(completion.nextIndex, 1);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_after");
+  assert.strictEqual(Runtime.getActiveSession().segments[0].completed, true);
+  assert.strictEqual(Runtime.getActiveSession().segments[0].skipped, true);
+  assert.deepStrictEqual(launches, ["seg_skip", "seg_after"]);
+
+  delete global.window.sparkCore;
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    return false;
+  };
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);
