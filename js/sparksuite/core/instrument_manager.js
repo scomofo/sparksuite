@@ -3,6 +3,9 @@
     return !!(entry && (
       typeof entry.getCurriculumMap === "function" ||
       typeof entry.getCurriculumMapV2 === "function" ||
+      typeof entry.getLessons === "function" ||
+      typeof entry.getExercises === "function" ||
+      typeof entry.getTuning === "function" ||
       typeof entry.getRhythmAdapter === "function" ||
       typeof entry.getSongs === "function"
     ));
@@ -71,6 +74,37 @@
         var songs = activeInstrument && typeof activeInstrument.getSongs === "function" ? activeInstrument.getSongs() : [];
         if (Array.isArray(songs) && songs.length) return songs;
         return fallbackAdapter && typeof fallbackAdapter.getSongs === "function" ? (fallbackAdapter.getSongs() || []) : [];
+      },
+      getLessons: function() {
+        var lessons = activeInstrument && typeof activeInstrument.getLessons === "function" ? activeInstrument.getLessons() : [];
+        if (Array.isArray(lessons) && lessons.length) return lessons;
+        return fallbackAdapter && typeof fallbackAdapter.getLessons === "function" ? (fallbackAdapter.getLessons() || []) : [];
+      },
+      getExercises: function(skill) {
+        var exercises = activeInstrument && typeof activeInstrument.getExercises === "function" ? activeInstrument.getExercises(skill) : [];
+        if (Array.isArray(exercises) && exercises.length) return exercises;
+        return fallbackAdapter && typeof fallbackAdapter.getExercises === "function" ? (fallbackAdapter.getExercises(skill) || []) : [];
+      },
+      getTuning: function() {
+        var tuning = activeInstrument && typeof activeInstrument.getTuning === "function" ? activeInstrument.getTuning() : null;
+        if (tuning) return tuning;
+        return fallbackAdapter && typeof fallbackAdapter.getTuning === "function" ? fallbackAdapter.getTuning() : null;
+      },
+      pickPracticeExercise: function(lesson, exercises, state) {
+        if (activeInstrument && typeof activeInstrument.pickPracticeExercise === "function") {
+          return activeInstrument.pickPracticeExercise(lesson, exercises, state);
+        }
+        return fallbackAdapter && typeof fallbackAdapter.pickPracticeExercise === "function"
+          ? fallbackAdapter.pickPracticeExercise(lesson, exercises, state)
+          : null;
+      },
+      getPracticeRecommendation: function(lesson, exercise, state) {
+        if (activeInstrument && typeof activeInstrument.getPracticeRecommendation === "function") {
+          return activeInstrument.getPracticeRecommendation(lesson, exercise, state);
+        }
+        return fallbackAdapter && typeof fallbackAdapter.getPracticeRecommendation === "function"
+          ? fallbackAdapter.getPracticeRecommendation(lesson, exercise, state)
+          : null;
       },
       getRhythmAdapter: function() {
         var adapter = activeInstrument && typeof activeInstrument.getRhythmAdapter === "function" ? activeInstrument.getRhythmAdapter() : null;
@@ -156,6 +190,7 @@
     songs = activeInstrument && typeof activeInstrument.getSongs === "function"
       ? activeInstrument.getSongs() || []
       : [];
+    var lessons = adapter && typeof adapter.getLessons === "function" ? (adapter.getLessons() || []) : [];
     curriculumMap = adapter && typeof adapter.getCurriculumMap === "function" ? (adapter.getCurriculumMap() || []) : [];
     if (!sessions.length && looksLikeCurriculumV2Sessions(curriculumMap)) sessions = curriculumMap.slice();
     if (!sessions.length && typeof SparkInstrumentAdapter !== "undefined" && typeof SparkInstrumentAdapter.getCurriculum === "function") {
@@ -169,6 +204,7 @@
       adapter: adapter,
       rhythmAdapter: adapter && typeof adapter.getRhythmAdapter === "function" ? adapter.getRhythmAdapter() : null,
       curriculumMap: curriculumMap,
+      lessons: lessons,
       sessions: sessions,
       songs: songs
     };
