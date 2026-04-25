@@ -10,6 +10,7 @@
     this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine();
     this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine);
     this.currentPlan = null;
+    this.currentStateMachine = null;
     this.lastSessionOutcome = null;
     this.performanceEditorDocument = null;
     this.performanceEditorLibrary = [];
@@ -30,6 +31,66 @@
     if (typeof window !== "undefined" && window.SparkSessionRuntime) return window.SparkSessionRuntime;
     if (typeof SparkSessionRuntime !== "undefined") return SparkSessionRuntime;
     return null;
+  };
+
+  SparkCore.prototype.getSessionStates = function() {
+    if (typeof SparkSessionStates !== "undefined") return SparkSessionStates;
+    return {
+      CREATED: "created",
+      READY: "ready",
+      RUNNING: "running",
+      SEGMENT_COMPLETE: "segment_complete",
+      COMPLETED: "completed",
+      FAILED: "failed",
+      CANCELLED: "cancelled"
+    };
+  };
+
+  SparkCore.prototype.createSessionStateMachine = function(plan) {
+    var sessionStates = this.getSessionStates();
+    if (typeof SparkSessionStateMachine === "undefined" || !plan || !plan.id) return null;
+    this.currentStateMachine = new SparkSessionStateMachine({
+      sessionId: plan.id
+    });
+    this.currentStateMachine.transition(sessionStates.READY, {
+      reason: "session_built",
+      flow: plan.flow || null
+    });
+    return this.currentStateMachine;
+  };
+
+  SparkCore.prototype.getSessionStateMachineSnapshot = function() {
+    if (!this.currentStateMachine || typeof this.currentStateMachine.snapshot !== "function") return null;
+    return this.currentStateMachine.snapshot();
+  };
+
+  SparkCore.prototype.transitionSessionState = function(nextState, meta) {
+    if (!this.currentStateMachine || typeof this.currentStateMachine.transition !== "function") return null;
+    return this.currentStateMachine.transition(nextState, meta || {});
+  };
+
+  SparkCore.prototype.ensureCompletionFlowState = function(meta) {
+    var sessionStates = this.getSessionStates();
+    var snapshot = this.getSessionStateMachineSnapshot();
+    if (!snapshot || !snapshot.state) return null;
+    if (snapshot.state === sessionStates.READY || snapshot.state === sessionStates.SEGMENT_COMPLETE) {
+      return this.transitionSessionState(sessionStates.RUNNING, Object.assign({
+        reason: "completion_flow_started"
+      }, meta || {}));
+    }
+    return snapshot.state;
+  };
+
+  SparkCore.prototype.assertCanCompleteSession = function() {
+    var sessionStates = this.getSessionStates();
+    var snapshot = this.getSessionStateMachineSnapshot();
+    if (!snapshot || !snapshot.state) return true;
+    if (snapshot.state !== sessionStates.READY
+      && snapshot.state !== sessionStates.RUNNING
+      && snapshot.state !== sessionStates.SEGMENT_COMPLETE) {
+      throw new Error("Cannot complete session from state " + snapshot.state);
+    }
+    return true;
   };
 
   SparkCore.prototype.createInitialRuntimeState = function() {
@@ -327,6 +388,9 @@
       || !this.currentPlan.instrumentType
       || this.currentPlan.instrumentType === currentInstrumentType;
     if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today && cacheInstrumentMatches) {
+      if (!this.currentStateMachine || this.currentStateMachine.sessionId !== this.currentPlan.id) {
+        this.createSessionStateMachine(this.currentPlan);
+      }
       this.updateRuntimeState({
         activeFlow: this.currentPlan.flow,
         activeInstrumentId: this.currentPlan.instrumentId || this.currentPlan.instrumentType || null,
@@ -433,6 +497,7 @@
       });
     }
     this.currentPlan = plan;
+    this.createSessionStateMachine(plan);
     this.storage.setCurrentPlanId(plan.id);
     var guidedRuntimeActivity = plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION
       ? this.resolveGuidedRuntimeActivity("spark", plan)
@@ -515,6 +580,7 @@
     var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
 
     this.currentPlan = plan;
+    this.createSessionStateMachine(plan);
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
@@ -1877,13 +1943,24 @@
   };
 
   SparkCore.prototype.completeSession = function(payload) {
+    var sessionStates = this.getSessionStates();
     payload = payload || {};
     if (!this.currentPlan || (payload.sessionId && this.currentPlan.id !== payload.sessionId)) {
       this.startSession({ flow: payload.flow || SparkSessionTypes.FLOW_DAILY_PRACTICE });
     }
 
+    this.assertCanCompleteSession();
+    this.ensureCompletionFlowState({
+      itemId: payload.itemId || null,
+      flow: payload.flow || (this.currentPlan ? this.currentPlan.flow : null)
+    });
+
     var result = this.progressEngine.completeSession(this.currentPlan, payload);
     this.lastSessionOutcome = result;
+    this.transitionSessionState(result.planCompleted ? sessionStates.COMPLETED : sessionStates.SEGMENT_COMPLETE, {
+      reason: result.planCompleted ? "session_completed" : "segment_completed",
+      itemId: payload.itemId || null
+    });
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
       activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
@@ -1989,6 +2066,7 @@
       plan: this.currentPlan,
       activeSegment: segment,
       activeExercise: exercise,
+      stateMachine: this.getSessionStateMachineSnapshot(),
       runtimeState: this.getRuntimeState(),
       lastSessionOutcome: this.getLastSessionOutcome()
     };

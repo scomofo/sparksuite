@@ -56,6 +56,9 @@
         return runtime.sessionState;
       }
       var view = getCurrentSessionView();
+      if (view && view.stateMachine) {
+        return view.stateMachine;
+      }
       return view && view.runtimeState ? (view.runtimeState.transport || null) : null;
     }
 
