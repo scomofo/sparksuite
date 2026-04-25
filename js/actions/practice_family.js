@@ -3,9 +3,56 @@
     return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
   }
 
+  function getPracticeActionRuntime() {
+    return window.SparkSessionRuntime || (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
+  }
+
+  function startRuntimePracticeItem(itemId) {
+    var core = getPracticeActionCore();
+    var runtime = getPracticeActionRuntime();
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    var plan = view && view.plan ? view.plan : null;
+    var segments = plan && Array.isArray(plan.segments) ? plan.segments : [];
+    var hasSegment = false;
+    var i;
+
+    if (!itemId || !core || !runtime || !plan || plan.flow !== "daily_practice" || typeof runtime.runSegmentById !== "function") {
+      return false;
+    }
+
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === itemId) {
+        hasSegment = true;
+        break;
+      }
+    }
+    if (!hasSegment) return false;
+
+    if (typeof core.syncSessionRuntime === "function") {
+      core.syncSessionRuntime({
+        segmentId: itemId,
+        status: "ready",
+        positionMs: 0,
+        autoAdvance: true,
+        scheduleTick: false,
+        syncState: false
+      });
+    }
+
+    return runtime.runSegmentById(itemId, {
+      autoAdvance: true
+    }) !== false;
+  }
+
   function handlePracticeAction(a, v) {
-    if (a === "practiceStartItem" && typeof startPracticeItem === "function") {
-      startPracticeItem(v);
+    if (a === "practiceStartItem") {
+      if (startRuntimePracticeItem(v)) return true;
+      if (typeof startPracticeItem === "function") {
+        startPracticeItem(v);
+        return true;
+      }
       return true;
     }
 

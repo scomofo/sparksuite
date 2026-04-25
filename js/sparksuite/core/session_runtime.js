@@ -365,6 +365,12 @@
     }
   }
 
+  function runSegmentById(segmentId, options) {
+    var segmentIndex = findSegmentIndexById(_activeSession, segmentId);
+    if (segmentIndex < 0) return false;
+    return runSegment(segmentIndex, options || {});
+  }
+
   // Record a gameplay event (hit, miss, etc.)
   function recordEvent(event) {
     _sessionEvents.push(event);
@@ -470,6 +476,7 @@
     getActiveExercise: getActiveExercise,
     getSessionEvents: getSessionEvents,
     getSegmentTransport: getSegmentTransport,
+    runSegmentById: runSegmentById,
     syncSegmentTransport: syncSegmentTransport,
     attachSession: attachSession
   };
