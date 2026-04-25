@@ -388,7 +388,7 @@ assert.ok(showroomSource.indexOf('var signInAction = opts.signInAction || "act(\
   assert.ok(showroomSource.indexOf('<button type="button" class="showroom-avatar" onclick="') >= 0);
   assert.ok(showroomSource.indexOf('<button type="button" class="showroom-syllabus-avatar" onclick="') >= 0);
   assert.ok(showroomSource.indexOf("act(\\'showroomStartPerf\\'" ) >= 0 || showroomSource.indexOf("act('showroomStartPerf'") >= 0);
-  assert.ok(showroomSource.indexOf("sampleInstrumentMap") >= 0);
+  assert.ok(showroomSource.indexOf("function showroomInstrumentDisplayName(type)") >= 0);
   assert.ok(showroomSource.indexOf('window.SparkLeaderboard') >= 0);
   assert.ok(showroomSource.indexOf('opts.ctaAction || nav("lesson")') >= 0);
   assert.ok(systemFamilySource.indexOf('if (a === "showroomFocusLibrarySearch")') >= 0);

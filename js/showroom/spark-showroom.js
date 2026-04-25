@@ -45,6 +45,311 @@
       ? "Resume Practice"
       : "Start Practice";
   }
+  function normalizeShowroomText(value) {
+    var text;
+    var lower;
+    if (value == null) return "";
+    if (typeof value !== "string" && typeof value !== "number") return "";
+    text = String(value).replace(/_/g, " ").trim();
+    if (!text) return "";
+    lower = text.toLowerCase();
+    if (lower === "undefined" || lower === "null" || lower === "nan") return "";
+    return text;
+  }
+  function humanizeShowroomToken(value) {
+    var text = normalizeShowroomText(value);
+    var parts;
+    var out = [];
+    var i;
+    if (!text) return "";
+    parts = text.split(/\s+/);
+    for (i = 0; i < parts.length; i++) {
+      if (!parts[i]) continue;
+      out.push(parts[i].charAt(0).toUpperCase() + parts[i].slice(1));
+    }
+    return out.join(" ");
+  }
+  function pickShowroomNumber() {
+    var i;
+    var value;
+    for (i = 0; i < arguments.length; i++) {
+      value = arguments[i];
+      if (typeof value === "number" && isFinite(value)) return value;
+    }
+    return null;
+  }
+  function clampShowroomPct(value) {
+    var num = pickShowroomNumber(value);
+    if (num == null) return 0;
+    return Math.max(0, Math.min(100, Math.round(num)));
+  }
+  function getShowroomStoredProfile() {
+    if (typeof SparkStorage === "undefined" || !SparkStorage || typeof SparkStorage.load !== "function") return null;
+    try { return SparkStorage.load(); }
+    catch (e) { return null; }
+  }
+  function getShowroomStateProfileValue(key) {
+    if (typeof S === "undefined" || !S) return "";
+    if (S.profile && S.profile[key] != null) return S.profile[key];
+    if (S.sparkProfile && S.sparkProfile[key] != null) return S.sparkProfile[key];
+    if (S.cloudProfile && S.cloudProfile[key] != null) return S.cloudProfile[key];
+    return "";
+  }
+  function getShowroomProfileDisplayName(profile) {
+    return normalizeShowroomText(profile && (profile.displayName || profile.name))
+      || normalizeShowroomText(getShowroomStateProfileValue("displayName"))
+      || "Spark Player";
+  }
+  function getShowroomProfileAvatarSrc(profile) {
+    return normalizeShowroomText(profile && (profile.avatarImage || profile.avatarUrl))
+      || normalizeShowroomText(getShowroomStateProfileValue("avatarImage"))
+      || normalizeShowroomText(getShowroomStateProfileValue("avatarUrl"))
+      || "";
+  }
+  function getShowroomPrimaryInstrument(profile) {
+    var active;
+    var candidate = normalizeShowroomText(profile && (profile.selectedInstrument || profile.instrumentPrimary))
+      || normalizeShowroomText(getShowroomStateProfileValue("instrumentPrimary"));
+    if (candidate) return candidate.toLowerCase();
+    active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
+    if (active) {
+      candidate = normalizeShowroomText(active.instrument || active.instrumentType || active.id || active.appId);
+      if (candidate) return candidate.toLowerCase();
+    }
+    if (profile && profile.apps) {
+      for (candidate in profile.apps) {
+        if (!Object.prototype.hasOwnProperty.call(profile.apps, candidate)) continue;
+        return normalizeShowroomText((profile.apps[candidate] || {}).instrument || candidate).toLowerCase() || "guitar";
+      }
+    }
+    return "guitar";
+  }
+  function showroomInstrumentDisplayName(type) {
+    var value = normalizeShowroomText(type).toLowerCase();
+    if (!value) return "Instrument";
+    if (value === "chordspark" || value === "guitar") return "Guitar";
+    if (value === "pianospark" || value === "piano") return "Piano";
+    if (value === "bassspark" || value === "bass") return "Bass";
+    if (value === "ukespark" || value === "ukulele") return "Ukulele";
+    return humanizeShowroomToken(value);
+  }
+  function getShowroomAvatarInitial(profile) {
+    var name = getShowroomProfileDisplayName(profile);
+    return name ? name.charAt(0).toUpperCase() : "S";
+  }
+  function resolveShowroomProfileApp(profile, inst) {
+    var apps;
+    var keys = [];
+    var i;
+    var key;
+    var targetType;
+    if (!profile || !profile.apps || !inst) return null;
+    apps = profile.apps;
+    if (inst.id) keys.push(inst.id);
+    if (inst.appId && keys.indexOf(inst.appId) < 0) keys.push(inst.appId);
+    for (i = 0; i < keys.length; i++) {
+      if (apps[keys[i]]) return apps[keys[i]];
+    }
+    targetType = normalizeShowroomText(inst.instrument || inst.instrumentType || inst.id || inst.appId).toLowerCase();
+    for (key in apps) {
+      if (!Object.prototype.hasOwnProperty.call(apps, key)) continue;
+      if (normalizeShowroomText((apps[key] || {}).instrument).toLowerCase() === targetType) return apps[key];
+    }
+    return null;
+  }
+  function hasShowroomProgress(stats) {
+    return !!(
+      pickShowroomNumber(stats && stats.xp, 0) > 0 ||
+      pickShowroomNumber(stats && stats.level, 1) > 1 ||
+      pickShowroomNumber(stats && stats.lessonsCompleted, 0) > 0 ||
+      pickShowroomNumber(stats && stats.sessionsCompleted, 0) > 0 ||
+      pickShowroomNumber(stats && stats.streakDays, 0) > 0
+    );
+  }
+  function deriveShowroomProgressPct(stats) {
+    var pct = pickShowroomNumber(stats && stats.progressPct);
+    var lessons = pickShowroomNumber(stats && stats.lessonsCompleted, 0);
+    var sessions = pickShowroomNumber(stats && stats.sessionsCompleted, 0);
+    var level = pickShowroomNumber(stats && stats.level, 1);
+    if (pct != null) return clampShowroomPct(pct);
+    if (lessons > 0) return Math.min(100, lessons * 20);
+    if (sessions > 0) return Math.min(100, sessions * 10);
+    if (level > 1) return Math.min(100, (level - 1) * 10);
+    return 0;
+  }
+  function buildShowroomProfileProgressRows(profile) {
+    var insts = (typeof SparkInstruments !== "undefined" && SparkInstruments.getAll) ? SparkInstruments.getAll() : [];
+    var rows = [];
+    var seen = {};
+    var key;
+    function pushRow(type, name, stats) {
+      var typeKey = normalizeShowroomText(type).toLowerCase() || "instrument";
+      var rowKey = normalizeShowroomText(name).toLowerCase() || typeKey;
+      var color;
+      var icon;
+      if (seen[rowKey]) return;
+      seen[rowKey] = true;
+      color = typeKey === "piano" ? "#0EA5E9"
+            : typeKey === "bass" ? "#7C3AED"
+            : typeKey === "ukulele" ? "#14B8A6"
+            : "#FF2D55";
+      icon = typeKey === "piano" ? "piano"
+           : typeKey === "bass" ? "speaker"
+           : typeKey === "ukulele" ? "music_note"
+           : "graphic_eq";
+      rows.push({
+        type: typeKey,
+        name: name || showroomInstrumentDisplayName(typeKey),
+        icon: icon,
+        color: color,
+        pct: deriveShowroomProgressPct(stats || {}),
+        started: hasShowroomProgress(stats || {})
+      });
+    }
+    if (insts && insts.length) {
+      for (key = 0; key < insts.length; key++) {
+        var inst = insts[key] || {};
+        var app = resolveShowroomProfileApp(profile, inst);
+        pushRow(inst.instrument || inst.instrumentType || inst.id || inst.appId, inst.name || showroomInstrumentDisplayName(inst.instrument || inst.id), app && app.stats ? app.stats : {});
+      }
+    }
+    if (profile && profile.apps) {
+      for (key in profile.apps) {
+        if (!Object.prototype.hasOwnProperty.call(profile.apps, key)) continue;
+        var appProfile = profile.apps[key] || {};
+        pushRow(appProfile.instrument || key, showroomInstrumentDisplayName(appProfile.instrument || key), appProfile.stats || {});
+      }
+    }
+    if (!rows.length) {
+      pushRow(getShowroomPrimaryInstrument(profile), showroomInstrumentDisplayName(getShowroomPrimaryInstrument(profile)), {});
+    }
+    return rows;
+  }
+  function collectShowroomBadgeIds(profile) {
+    var ids = [];
+    var i;
+    function pushUnique(value) {
+      var id = normalizeShowroomText(value);
+      if (!id || ids.indexOf(id) >= 0) return;
+      ids.push(id);
+    }
+    if (profile && profile.suiteRewards && Array.isArray(profile.suiteRewards.badges)) {
+      for (i = 0; i < profile.suiteRewards.badges.length; i++) pushUnique(profile.suiteRewards.badges[i]);
+    }
+    if (typeof S !== "undefined" && S.playerAchievements) {
+      for (i in S.playerAchievements) {
+        if (Object.prototype.hasOwnProperty.call(S.playerAchievements, i) && S.playerAchievements[i]) pushUnique(i);
+      }
+    }
+    if (typeof S !== "undefined" && S.profile && Array.isArray(S.profile.achievements)) {
+      for (i = 0; i < S.profile.achievements.length; i++) pushUnique(S.profile.achievements[i]);
+    }
+    return ids;
+  }
+  function getShowroomBadgeMeta(id) {
+    var key = normalizeShowroomText(id).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    var map = {
+      first_lesson: { icon: "school", color: "#FFE66D", label: "First Lesson" },
+      first_session: { icon: "play_circle", color: "#FF7B3A", label: "First Session" },
+      streak_3: { icon: "local_fire_department", color: "#FF7B3A", label: "3-Day Streak" },
+      streak_7: { icon: "bolt", color: "#FF7B3A", label: "7-Day Spark" },
+      xp_100: { icon: "star", color: "#FFE66D", label: "100 XP" },
+      xp_1000: { icon: "workspace_premium", color: "#D4AF37", label: "1,000 XP" },
+      dual_instrument_starter: { icon: "library_music", color: "#14B8A6", label: "Dual Instrument" },
+      first_song: { icon: "music_note", color: "#FFE66D", label: "First Song" },
+      practice_100: { icon: "timer", color: "#0EA5E9", label: "100 Minutes" },
+      level_5: { icon: "military_tech", color: "#7C3AED", label: "Level 5" }
+    };
+    return map[key] || {
+      icon: "workspace_premium",
+      color: "#8FD5C4",
+      label: humanizeShowroomToken(key)
+    };
+  }
+  function getShowroomActiveInstrumentMeta() {
+    var active;
+    var all;
+    var i;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") return null;
+    active = SparkInstruments.getActive();
+    if (!active) return null;
+    if (typeof SparkInstruments.getAll !== "function") return active;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      if (!all[i]) continue;
+      if (all[i].id === active.id || all[i].id === active.appId || all[i].appId === active.id || all[i].appId === active.appId) return all[i];
+    }
+    return active;
+  }
+  function buildShowroomCurriculumModulesFromLessons(lessons) {
+    var modules = [];
+    var chunkSize = 3;
+    var i;
+    if (!Array.isArray(lessons) || !lessons.length) return modules;
+    for (i = 0; i < lessons.length; i += chunkSize) {
+      var chunk = lessons.slice(i, i + chunkSize);
+      var lessonItems = [];
+      var hasActive = false;
+      var allDone = true;
+      var hasStarted = false;
+      var j;
+      for (j = 0; j < chunk.length; j++) {
+        var lesson = chunk[j] || {};
+        var state = "locked";
+        if (lesson.completed) {
+          state = "done";
+          hasStarted = true;
+        } else if (lesson.active) {
+          state = "now";
+          hasActive = true;
+          hasStarted = true;
+          allDone = false;
+        } else {
+          allDone = false;
+          state = hasStarted || i === 0 ? "unlocked" : "locked";
+        }
+        lessonItems.push({
+          name: lesson.title || ("Session " + (lesson.num || (i + j + 1))),
+          state: state
+        });
+      }
+      modules.push({
+        id: "module_" + (modules.length + 1),
+        title: "Sessions " + (chunk[0].num || (i + 1)) + (chunk.length > 1 ? ("–" + (chunk[chunk.length - 1].num || (i + chunk.length))) : ""),
+        status: allDone ? "COMPLETED" : (hasActive ? "RESUME" : (hasStarted || i === 0 ? "UP NEXT" : "LOCKED")),
+        statusClass: allDone ? "completed" : (hasActive || hasStarted || i === 0 ? "active" : "locked"),
+        state: allDone ? "completed" : (hasActive || hasStarted || i === 0 ? "active" : "locked"),
+        lessons: lessonItems,
+        cta: hasActive ? "Open Lesson" : null,
+        showCta: hasActive
+      });
+    }
+    return modules;
+  }
+  function getShowroomCurriculumSummary(opts) {
+    var lessons = getActiveInstrumentLessons();
+    var activeInstrument = getShowroomActiveInstrumentMeta();
+    var completed = 0;
+    var activeLesson = null;
+    var i;
+    opts = opts || {};
+    for (i = 0; i < lessons.length; i++) {
+      if (lessons[i].completed) completed++;
+      if (!activeLesson && lessons[i].active) activeLesson = lessons[i];
+    }
+    return {
+      courseTitle: normalizeShowroomText(opts.courseTitle) || ((activeInstrument && activeInstrument.name) ? (activeInstrument.name + " Path") : "Course Path"),
+      level: opts.level != null ? opts.level : (activeLesson ? activeLesson.num : Math.max(1, completed)),
+      progress: opts.progress != null ? opts.progress : (lessons.length ? Math.round((completed / lessons.length) * 100) : 0),
+      progressPct: opts.progressPct != null ? opts.progressPct : (lessons.length ? Math.round((completed / lessons.length) * 100) : 0),
+      nextGoalText: normalizeShowroomText(opts.nextGoalText)
+        || (activeLesson
+          ? ("Next up: Session " + activeLesson.num + " • " + activeLesson.title)
+          : (lessons.length ? (completed + " sessions completed") : "No curriculum loaded yet")),
+      modules: Array.isArray(opts.modules) ? opts.modules : buildShowroomCurriculumModulesFromLessons(lessons),
+      userInitial: normalizeShowroomText(opts.userInitial) || getShowroomAvatarInitial(getShowroomStoredProfile())
+    };
+  }
   // Format a value as a single-quoted JS string literal safe to drop
   // inside a double-quoted HTML attribute (onclick="..."). Using
   // JSON.stringify here (which produces double quotes) would break the
@@ -402,60 +707,51 @@
   // Profile
   // ───────────────────────────────────────────────────────────────────────
   function profileRender() {
-    var profile = typeof SparkStorage !== "undefined" ? SparkStorage.load() : null;
-    var name = (profile && (profile.displayName || profile.name)) || "Alex Chen";
-    var tag = (profile && profile.title) || "Virtuoso";
-    var totalXp = 0, maxStreak = 0, mastered = 0, level = 1;
+    var profile = getShowroomStoredProfile();
+    var name = getShowroomProfileDisplayName(profile);
+    var totalXp = 0, maxStreak = 0, lessonsDone = 0, level = 1;
+    var progressRows;
+    var badgeIds;
+    var tag;
+    var avatarSrc;
+    var avatarHtml;
+    var progHtml = "";
+    var badgesHtml = "";
+    var i;
     if (profile && profile.apps) {
       for (var id in profile.apps) {
         var st = (profile.apps[id] || {}).stats || {};
         totalXp += st.xp || 0;
         if ((st.streakDays || 0) > maxStreak) maxStreak = st.streakDays;
         if ((st.level || 0) > level) level = st.level;
-        if (st.skills && typeof st.skills.mastered === "number") mastered += st.skills.mastered;
+        lessonsDone += pickShowroomNumber(st.lessonsCompleted, 0) || 0;
       }
     }
-    if (!totalXp) totalXp = 12450;
-    if (!maxStreak) maxStreak = 42;
-    if (!mastered) mastered = 18;
-    if (level < 12) level = 12;
-    var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
+    totalXp = pickShowroomNumber(totalXp, typeof S !== "undefined" ? S.playerXP : null, 0) || 0;
+    maxStreak = pickShowroomNumber(maxStreak, typeof S !== "undefined" ? S.practiceStreak : null, typeof S !== "undefined" && S.playerStats ? S.playerStats.streakBest : null, 0) || 0;
+    lessonsDone = pickShowroomNumber(lessonsDone, typeof S !== "undefined" && S.playerStats ? S.playerStats.lessonsCompleted : null, 0) || 0;
+    level = pickShowroomNumber(level, typeof S !== "undefined" ? S.playerLevel : null, 1) || 1;
+    progressRows = buildShowroomProfileProgressRows(profile);
+    badgeIds = collectShowroomBadgeIds(profile);
+    tag = normalizeShowroomText(profile && profile.title);
+    if (!tag) {
+      var startedCount = 0;
+      for (i = 0; i < progressRows.length; i++) {
+        if (progressRows[i].started) startedCount++;
+      }
+      tag = startedCount > 1
+        ? "Multi-instrument learner"
+        : (showroomInstrumentDisplayName(getShowroomPrimaryInstrument(profile)) + " learner");
+    }
+    avatarSrc = getShowroomProfileAvatarSrc(profile);
     // No external-URL fallback — the app-wide CSP (`img-src 'self' data:`)
     // blocks remote hosts. When avatarSrc is absent the renderer below
     // falls through to the initial-letter bubble, which stays same-origin.
 
-    // Per-instrument progress (read from registry + profile or stub)
-    var insts = (typeof SparkInstruments !== "undefined" && SparkInstruments.getAll) ? SparkInstruments.getAll() : [];
-    var progressRows = [];
-    var fallback = [
-      { name:"Guitar", icon:"graphic_eq", color:"#FF2D55", pct:80 },
-      { name:"Piano",  icon:"piano",      color:"#0EA5E9", pct:30 },
-      { name:"Bass",   icon:"speaker",    color:"#7C3AED", pct:15 }
-    ];
-    if (!insts.length) progressRows = fallback;
-    else {
-      for (var i = 0; i < insts.length; i++) {
-        var inst = insts[i];
-        var type = inst.instrument || inst.id || "guitar";
-        var stats = profile && profile.apps && profile.apps[inst.id] ? profile.apps[inst.id].stats : {};
-        var pct = stats && typeof stats.progressPct === "number"
-          ? stats.progressPct
-          : (fallback.find ? (fallback.find(function(f){ return f.name.toLowerCase() === type; }) || {pct:0}).pct : 0);
-        var color = type === "piano" ? "#0EA5E9"
-                  : type === "bass" ? "#7C3AED"
-                  : type === "ukulele" ? "#14B8A6" : "#FF2D55";
-        var icon = type === "piano" ? "piano"
-                 : type === "bass" ? "speaker"
-                 : type === "ukulele" ? "music_note" : "graphic_eq";
-        progressRows.push({ name: inst.name || type, icon: icon, color: color, pct: pct });
-      }
-    }
-
-    var avatarHtml = avatarSrc
+    avatarHtml = avatarSrc
       ? '<img src="' + escHtml(avatarSrc) + '" alt="">'
-      : '<div class="showroom-profile-avatar-fallback">' + escHtml(name.charAt(0).toUpperCase()) + '</div>';
+      : '<div class="showroom-profile-avatar-fallback">' + escHtml(getShowroomAvatarInitial(profile)) + '</div>';
 
-    var progHtml = "";
     for (var p = 0; p < progressRows.length; p++) {
       var pr = progressRows[p];
       progHtml += '<div class="showroom-progress-row">'
@@ -468,19 +764,16 @@
               + '</div>';
     }
 
-    var badges = [
-      { icon:"music_cast", color:"#FFE66D", label:"First Chord", state:"" },
-      { icon:"dark_mode",  color:"#7C3AED", label:"Night Owl",   state:"" },
-      { icon:"bolt",       color:"#ff7b3a", label:"7-Day Spark", state:"featured" },
-      { icon:"lock",       color:"#7A7060", label:"Rhythm King", state:"locked" }
-    ];
-    var badgesHtml = "";
-    for (var b = 0; b < badges.length; b++) {
-      var bd = badges[b];
-      badgesHtml += '<div class="showroom-badge ' + bd.state + '">'
-                  + '<div class="showroom-badge-circle" style="border-color:' + bd.color + '40;background:' + bd.color + '14">'
-                  + '<span class="material-symbols-outlined fill" style="color:' + bd.color + ';font-size:24px">' + bd.icon + '</span></div>'
-                  + '<span class="showroom-badge-label">' + escHtml(bd.label) + '</span></div>';
+    if (!badgeIds.length) {
+      badgesHtml = '<div class="showroom-empty-state"><p>No badges unlocked yet. Finish sessions to start building your collection.</p></div>';
+    } else {
+      for (var b = 0; b < badgeIds.length; b++) {
+        var bd = getShowroomBadgeMeta(badgeIds[b]);
+        badgesHtml += '<div class="showroom-badge">'
+                    + '<div class="showroom-badge-circle" style="border-color:' + bd.color + '40;background:' + bd.color + '14">'
+                    + '<span class="material-symbols-outlined fill" style="color:' + bd.color + ';font-size:24px">' + bd.icon + '</span></div>'
+                    + '<span class="showroom-badge-label">' + escHtml(bd.label) + '</span></div>';
+      }
     }
 
     var navItems = [
@@ -516,8 +809,8 @@
              + '<div class="showroom-stat-stack">'
                + '<div class="showroom-stat-mini showroom-profile-ember-stat-mini glass-card"><div class="showroom-stat-mini-icon yellow showroom-profile-ember-mini-icon"><span class="material-symbols-outlined fill">star</span></div>'
                  + '<div><div class="showroom-stat-mini-num showroom-profile-ember-mini-num">' + totalXp.toLocaleString() + '</div><div class="showroom-stat-mini-label showroom-profile-ember-mini-label">Total XP</div></div></div>'
-               + '<div class="showroom-stat-mini showroom-profile-ember-stat-mini glass-card"><div class="showroom-stat-mini-icon cyan showroom-profile-ember-mini-icon"><span class="material-symbols-outlined fill">music_note</span></div>'
-                 + '<div><div class="showroom-stat-mini-num showroom-profile-ember-mini-num">' + mastered + '</div><div class="showroom-stat-mini-label showroom-profile-ember-mini-label">Songs Mastered</div></div></div>'
+                + '<div class="showroom-stat-mini showroom-profile-ember-stat-mini glass-card"><div class="showroom-stat-mini-icon cyan showroom-profile-ember-mini-icon"><span class="material-symbols-outlined fill">music_note</span></div>'
+                  + '<div><div class="showroom-stat-mini-num showroom-profile-ember-mini-num">' + lessonsDone + '</div><div class="showroom-stat-mini-label showroom-profile-ember-mini-label">Lessons Done</div></div></div>'
              + '</div>'
            + '</section>'
            + '<section class="showroom-profile-ember-section">'
@@ -540,7 +833,7 @@
     opts = opts || {};
     // Look up the pinned song (nav("song-details", <id>)) on the active
     // instrument. Falls back to the first song in the library, then to
-    // the sample "Ember's Resonance" copy if we have no songs at all.
+    // honest empty-state copy when no songs are available at all.
     var pinned = null;
     if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
       var _sdInst = SparkInstruments.getActive();
@@ -555,37 +848,39 @@
       }
       if (!pinned && _sdSongs.length) pinned = _sdSongs[0];
     }
-    var title = opts.title || (pinned && pinned.title) || "Ember's Resonance";
-    var artist = opts.artist || (pinned && pinned.artist) || "The Spark Collective";
+    var hasSong = !!(normalizeShowroomText(opts.title) || (pinned && normalizeShowroomText(pinned.title)));
+    var title = normalizeShowroomText(opts.title || (pinned && pinned.title)) || "No song selected";
+    var artist = normalizeShowroomText(opts.artist || (pinned && pinned.artist)) || (hasSong ? "Unknown Artist" : "Open a song from your library");
     // "Key" isn't on the standard SONGS record — derive from first chord.
     var keyFromSong = (pinned && Array.isArray(pinned.chords) && pinned.chords.length) ? pinned.chords[0] : null;
-    var key = opts.key || keyFromSong || "G Maj";
-    var bpm = opts.bpm || (pinned && pinned.bpm) || 120;
+    var key = normalizeShowroomText(opts.key || keyFromSong) || "--";
+    var bpm = pickShowroomNumber(opts.bpm, pinned && pinned.bpm);
     // Length estimate uses the same 240/bpm heuristic as the library list.
     var lenFromBpm = pinned && pinned.bpm ? Math.max(1, Math.round(240 / pinned.bpm)) + ":00" : null;
-    var len = opts.length || lenFromBpm || "3:45";
+    var len = normalizeShowroomText(opts.length || lenFromBpm) || "--";
     var pinnedDiff = pinned && (typeof pinned.difficulty === "number" ? pinned.difficulty : (typeof pinned.level === "number" ? pinned.level : null));
-    var diff = typeof opts.difficulty === "number" ? opts.difficulty : (pinnedDiff != null ? pinnedDiff : 7);
+    var diff = pickShowroomNumber(opts.difficulty, pinnedDiff, 0) || 0;
     var diffMax = opts.difficultyMax || 10;
-    var diffPct = Math.round((diff / diffMax) * 100);
+    var diffPct = diffMax > 0 ? Math.round((diff / diffMax) * 100) : 0;
     var inferredInstrument = opts.instrument || (pinned && pinned.instrument) || null;
-    if (!inferredInstrument) {
-      var sampleInstrumentMap = {
-        "Ember's Resonance": "guitar",
-        "Midnight Strum": "ukulele",
-        "Ivory Cascades": "piano",
-        "Deep Groove": "bass"
-      };
-      inferredInstrument = sampleInstrumentMap[title] || null;
-    }
+    if (!inferredInstrument && pinned && pinned.instrument) inferredInstrument = pinned.instrument;
     // Description: use the song's chord progression if no explicit one
     // is supplied by the caller.
     var progDesc = (pinned && Array.isArray(pinned.chords) && pinned.chords.length)
       ? "Chords: " + pinned.chords.slice(0, 8).join(" • ")
       : null;
-    var desc = opts.description || progDesc || "Intermediate level. Focuses on rapid chord transitions and fingerpicking accuracy.";
+    var desc = normalizeShowroomText(opts.description || progDesc)
+      || (hasSong
+        ? "Open this song to review the arrangement and launch performance mode."
+        : "Choose a song from the library to view performance details.");
     var coverSrc = opts.cover;
-    var tags = opts.tags || ["Acoustic"];
+    var tags = Array.isArray(opts.tags) ? opts.tags.slice() : [];
+    if (!tags.length && pinned && Array.isArray(pinned.chords) && pinned.chords.length) {
+      tags.push(pinned.chords[0]);
+    }
+    if (!tags.length && hasSong && inferredInstrument) {
+      tags.push(showroomInstrumentDisplayName(inferredInstrument));
+    }
 
     var cover = coverSrc
       ? '<img src="' + escHtml(coverSrc) + '" alt="' + escHtml(title) + '" style="width:100%;height:100%;object-fit:cover">'
@@ -626,11 +921,11 @@
              + '<p class="showroom-difficulty-desc">' + escHtml(desc) + '</p>'
            + '</div>'
          + '</div>'
-         + '<div class="showroom-actionbar">'
-           + '<button class="showroom-action-cta" onclick="act(\'showroomStartPerf\'' + (inferredInstrument ? ',' + jsArg(inferredInstrument) : '') + ')">'
-             + '<div class="showroom-shimmer-overlay"></div>'
-             + '<span class="material-symbols-outlined fill">play_circle</span>Start Performance</button>'
-         + '</div>'
+          + '<div class="showroom-actionbar">'
+            + '<button class="showroom-action-cta" onclick="' + (hasSong ? ("act('showroomStartPerf'" + (inferredInstrument ? ',' + jsArg(inferredInstrument) : '') + ")") : nav("library")) + '">'
+              + '<div class="showroom-shimmer-overlay"></div>'
+              + '<span class="material-symbols-outlined fill">play_circle</span>' + (hasSong ? 'Start Performance' : 'Open Library') + '</button>'
+          + '</div>'
          + '</div>';
   }
 
@@ -679,15 +974,10 @@
         }
       }
     } else {
-      // Fallback/Placeholder
-      focusTitle = opts.focus ? opts.focus.title : "Spider Walk Drills";
-      focusPct = opts.focus ? opts.focus.pct : 60;
-      focusXp = opts.focus ? opts.focus.xp : 150;
-      drillItems = opts.drills || [
-        { name:"C Major Scale",      sub:"Warmup • 5 mins",     icon:"music_note" },
-        { name:"Alternating Picking", sub:"Technique • 10 mins", icon:"speed" },
-        { name:"Basic Strumming",     sub:"Rhythm • 8 mins",     icon:"waves" }
-      ];
+      focusTitle = opts.focus ? opts.focus.title : "No practice focus yet.";
+      focusPct = opts.focus ? opts.focus.pct : 0;
+      focusXp = opts.focus ? opts.focus.xp : 0;
+      drillItems = opts.drills || [];
     }
 
     var drillHtml = "";
@@ -812,12 +1102,18 @@
         });
       }
     }
-    var songs = opts.songs || realSongs || [
-      { name:"Ember's Resonance", artist:"The Electric Collective", lvl:7, len:"4:20", status:"hot",  pct:"85%",       statusClass:"success", instrument:"guitar" },
-      { name:"Midnight Strum",    artist:"The Acoustic Soul",       lvl:3, len:"3:15", status:"new",  label:"New",      statusClass:"muted",   instrument:"ukulele" },
-      { name:"Ivory Cascades",    artist:"Serene Melodies",         lvl:5, len:"5:45", status:"hot",  label:"Mastered", statusClass:"success", instrument:"piano"  },
-      { name:"Deep Groove",       artist:"Bassline Dynasty",        lvl:9, len:"4:10", status:"dim",  label:"Try Again", statusClass:"warn",    instrument:"bass"   }
-    ];
+    var songs = opts.songs || realSongs || [];
+    var dailyChallenge = (opts.dailyChallenge || (typeof S !== "undefined" ? S.performanceDailyChallenge : null)) || null;
+    var dailyTitle = normalizeShowroomText(dailyChallenge && (dailyChallenge.songTitle || dailyChallenge.label || dailyChallenge.id))
+      || "No daily challenge loaded";
+    var dailySubtitle = normalizeShowroomText(dailyChallenge && dailyChallenge.reason)
+      || (dailyChallenge ? "Today’s featured performance is ready when you are." : "Load songs or refresh your recommendations to see the next featured run.");
+    var dailyXp = pickShowroomNumber(dailyChallenge && dailyChallenge.xp, 0) || 0;
+    var dailyPlayersLabel = dailyChallenge
+      ? (dailyChallenge.instrument ? (showroomInstrumentDisplayName(dailyChallenge.instrument) + " focus") : "Ready when you are")
+      : "No live challenge yet";
+    var dailyAction = dailyChallenge ? "act('openPerformanceDaily')" : nav("practice");
+    var dailyActionLabel = dailyChallenge ? "Join Session" : "Open Practice";
     if (query) {
       songs = songs.filter(function(song) {
         var haystack = [
@@ -887,9 +1183,9 @@
            + '<h1 class="showroom-library-title">Song Library</h1>'
            + '<div class="showroom-library-actions">'
              + '<button class="showroom-iconbtn accent" aria-label="Search" onclick="act(\'showroomFocusLibrarySearch\')"><span class="material-symbols-outlined" aria-hidden="true">search</span></button>'
-             + '<button class="showroom-iconbtn showroom-library-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
-               + '<span class="showroom-library-avatar-fallback">A</span>'
-             + '</button>'
+              + '<button class="showroom-iconbtn showroom-library-avatar-btn" aria-label="Profile" onclick="' + nav("profile") + '">'
+                + '<span class="showroom-library-avatar-fallback">' + escHtml(getShowroomAvatarInitial(getShowroomStoredProfile())) + '</span>'
+              + '</button>'
            + '</div>'
          + '</header>'
           + '<div class="showroom-canvas" style="padding-top:0">'
@@ -897,16 +1193,16 @@
            + '<div class="showroom-chiprow">' + chipsHtml + '</div>'
            + '<div class="showroom-level-row">' + levelsHtml + '</div>'
            + '<div class="showroom-trending-head"><h3>Trending Scores</h3><span class="link" role="button" tabindex="0" onclick="act(\'showroomOpenTrendingScores\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'showroomOpenTrendingScores\')}">View All</span></div>'
-           + (songsHtml || '<div class="showroom-empty-state"><p>No songs matched your search.</p></div>')
-           + '<div class="showroom-daily">'
-             + '<div class="showroom-daily-head"><span class="showroom-daily-eyebrow">Daily Challenge</span><span class="showroom-daily-xp">XP +500</span></div>'
-             + '<h3 class="showroom-daily-title">Neon Horizon</h3>'
-             + '<p class="showroom-daily-sub">Cyberpunk Synth Ensemble</p>'
-             + '<div class="showroom-daily-foot">'
-               + '<div class="showroom-daily-players"><div class="showroom-daily-avstack"><span></span><span></span><span></span></div><span>1.2k playing now</span></div>'
-                + '<button class="showroom-daily-cta" onclick="act(\'openPerformanceDaily\')">Join Session</button>'
-             + '</div>'
-           + '</div>'
+            + (songsHtml || '<div class="showroom-empty-state"><p>' + escHtml(query ? 'No songs matched your search.' : 'No songs loaded for this instrument yet.') + '</p></div>')
+            + '<div class="showroom-daily">'
+              + '<div class="showroom-daily-head"><span class="showroom-daily-eyebrow">Daily Challenge</span><span class="showroom-daily-xp">XP +' + dailyXp + '</span></div>'
+              + '<h3 class="showroom-daily-title">' + escHtml(dailyTitle) + '</h3>'
+              + '<p class="showroom-daily-sub">' + escHtml(dailySubtitle) + '</p>'
+              + '<div class="showroom-daily-foot">'
+                + '<div class="showroom-daily-players"><div class="showroom-daily-avstack"><span></span><span></span><span></span></div><span>' + escHtml(dailyPlayersLabel) + '</span></div>'
+                 + '<button class="showroom-daily-cta" onclick="' + dailyAction + '">' + escHtml(dailyActionLabel) + '</button>'
+              + '</div>'
+            + '</div>'
          + '</div>'
          + bottomNav(navItems, "library")
          + '</div>';
@@ -914,12 +1210,22 @@
 
   function leaderboardRender(opts) {
     opts = opts || {};
-    var entries = [
-      { rank: 1, name: "Alex Chen", score: "98,420", song: "Ember's Resonance", badge: "Perfect Run" },
-      { rank: 2, name: "Maya Brooks", score: "96,870", song: "Midnight Strum", badge: "No Misses" },
-      { rank: 3, name: "Jordan Vale", score: "95,310", song: "Ivory Cascades", badge: "Mastered" },
-      { rank: 4, name: "Riley Stone", score: "93,440", song: "Deep Groove", badge: "Hot Streak" }
-    ];
+    var entries = Array.isArray(opts.entries) ? opts.entries.slice() : [];
+    var profileName = getShowroomProfileDisplayName(getShowroomStoredProfile());
+    var topSongs;
+    if (!entries.length && typeof getPerformanceTopSongs === "function") {
+      topSongs = getPerformanceTopSongs() || [];
+      for (var ts = 0; ts < topSongs.length; ts++) {
+        var entry = topSongs[ts] || {};
+        entries.push({
+          rank: ts + 1,
+          name: profileName,
+          score: (pickShowroomNumber(entry.bestScore, 0) || 0).toLocaleString(),
+          song: normalizeShowroomText(entry.songId || entry.key) || ("Run " + (ts + 1)),
+          badge: normalizeShowroomText(entry.mastery) || "Personal Best"
+        });
+      }
+    }
     var rows = "";
     for (var i = 0; i < entries.length; i++) {
       var item = entries[i];
@@ -947,8 +1253,8 @@
          + '</header>'
          + '<div class="showroom-canvas showroom-profile-ember-canvas">'
          + '<section class="showroom-glass-card" style="padding:20px;border-radius:20px">'
-         + '<div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:14px"><div><div class="showroom-focus-eyebrow">Top Performers</div><h3 style="margin:0;font-family:\'Syne\';font-size:24px">Weekly Standings</h3></div><div style="font-size:12px;color:var(--text-muted)">Updated today</div></div>'
-         + '<div style="display:flex;flex-direction:column;gap:10px">' + rows + '</div>'
+         + '<div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:14px"><div><div class="showroom-focus-eyebrow">Top Local Runs</div><h3 style="margin:0;font-family:\'Syne\';font-size:24px">Best Scores</h3></div><div style="font-size:12px;color:var(--text-muted)">Updated from this device</div></div>'
+         + '<div style="display:flex;flex-direction:column;gap:10px">' + (rows || '<div class="showroom-empty-state"><p>No scored runs yet. Finish a performance session to seed your local board.</p></div>') + '</div>'
          + '</section>'
          + bottomNav(navItems, "leaderboard")
          + '</div>'
@@ -973,9 +1279,9 @@
       if (typeof S.lastSessionAccuracy === "number") liveAccuracy = Math.round(S.lastSessionAccuracy);
       else if (typeof S.sessionAccuracy === "number") liveAccuracy = Math.round(S.sessionAccuracy);
     }
-    var xp = opts.xp != null ? opts.xp : (liveXp != null ? liveXp : 450);
-    var accuracy = opts.accuracy != null ? opts.accuracy : (liveAccuracy != null ? liveAccuracy : 98);
-    var streak = opts.streak != null ? opts.streak : (liveStreak != null ? liveStreak : 125);
+    var xp = opts.xp != null ? opts.xp : (liveXp != null ? liveXp : 0);
+    var accuracy = opts.accuracy != null ? opts.accuracy : (liveAccuracy != null ? liveAccuracy : 0);
+    var streak = opts.streak != null ? opts.streak : (liveStreak != null ? liveStreak : 0);
 
     // Look up the most-recently-completed lesson so the thumbnail copy
     // describes what the user actually just finished.
@@ -987,11 +1293,13 @@
       // Mid-session: show the current lesson while it's still in-flight.
       lastDone = findActiveLesson(String(S.guidedSession));
     }
-    var lessonTitle = opts.lessonTitle || (lastDone ? lastDone.title : "Midnight Ember Jam");
+    var lessonTitle = normalizeShowroomText(opts.lessonTitle || (lastDone ? lastDone.title : "")) || "No completed session yet";
     var lessonMeta = opts.lessonMeta || (lastDone
       ? ("Level " + (lastDone.level || 1) + " • " + (lastDone.bpm || 80) + " BPM")
-      : "Level 12 • 4:20 Duration");
-    var subtitle = opts.subtitle || "You're finding your rhythm. Another great set finished.";
+      : "Finish a guided, daily, or performance session to see your recap here.");
+    var subtitle = normalizeShowroomText(opts.subtitle) || (lastDone
+      ? "You wrapped that session cleanly. Here’s the latest recap."
+      : "Your next completed session will show up here.");
     var coverSrc = opts.cover;
 
     // Build accuracy ring
@@ -1082,8 +1390,8 @@
              + '</div>'
            + '</section>'
            + '<section class="showroom-summary-actions">'
-             + '<button class="showroom-summary-cta" onclick="' + backToHome() + '">Continue</button>'
-             + '<button class="showroom-summary-cta ghost" onclick="act(\'showroomStartPerf\')">Replay Session</button>'
+            + '<button class="showroom-summary-cta" onclick="' + backToHome() + '">' + (lastDone ? 'Continue' : 'Open Practice') + '</button>'
+            + '<button class="showroom-summary-cta ghost" onclick="' + (lastDone ? "act('showroomStartPerf')" : nav("practice")) + '">' + (lastDone ? 'Replay Session' : 'Start Session') + '</button>'
            + '</section>'
          + '</main>'
          + bottomNav(navItems, "practice")
@@ -1095,25 +1403,22 @@
   // ───────────────────────────────────────────────────────────────────────
   function performanceRender(opts) {
     opts = opts || {};
-    var score = opts.score || 42850;
-    var streak = opts.streak || 124;
-    var mult = opts.mult || 4;
-    var rank = opts.nextRank || "S+";
-    var feedback = opts.feedback || "PERFECT";
-    var combo = opts.combo || "COMBO BREAKER";
-    var pct = opts.progressPct || 65;
-    var title = opts.songTitle || "Midnight Ember Jam";
-    var meta = opts.songMeta || "Level 12 • Hard Mode";
+    var liveSongTitle = typeof S !== "undefined" && S.selectedSong ? normalizeShowroomText(S.selectedSong.title) : "";
+    var liveSongMeta = typeof S !== "undefined" && S.selectedSong
+      ? ("Level " + (pickShowroomNumber(S.selectedSong.level, 1) || 1) + " • " + (pickShowroomNumber(S.selectedSong.bpm, 0) || "--") + " BPM")
+      : "";
+    var score = pickShowroomNumber(opts.score, 0) || 0;
+    var streak = pickShowroomNumber(opts.streak, typeof S !== "undefined" ? S.streak : null, 0) || 0;
+    var mult = pickShowroomNumber(opts.mult, 1) || 1;
+    var rank = normalizeShowroomText(opts.nextRank) || "--";
+    var feedback = normalizeShowroomText(opts.feedback) || (liveSongTitle ? "READY" : "NO CHART");
+    var combo = normalizeShowroomText(opts.combo) || (liveSongTitle ? "Keep the groove going." : "Open a song from the library to start a run.");
+    var pct = clampShowroomPct(opts.progressPct);
+    var title = normalizeShowroomText(opts.songTitle || liveSongTitle) || "No performance loaded";
+    var meta = normalizeShowroomText(opts.songMeta || liveSongMeta) || "Choose a song from the library to start performance mode.";
 
     // Sample notes: { lane: 0..3, top: "15%", color: "cyan|yellow|peach" }
-    var notes = opts.notes || [
-      { lane:0, top:"10%", color:"cyan" },
-      { lane:0, top:"60%", color:"cyan" },
-      { lane:1, top:"35%", color:"yellow" },
-      { lane:2, top:"15%", color:"peach" },
-      { lane:2, top:"80%", color:"peach" },
-      { lane:3, top:"45%", color:"cyan" }
-    ];
+    var notes = Array.isArray(opts.notes) ? opts.notes : [];
     var lanePos = ["2%","27%","52%","77%"];
     var notesHtml = "";
     for (var i = 0; i < notes.length; i++) {
@@ -1147,7 +1452,7 @@
            + '<div class="showroom-perf2-floating">'
              + '<div class="showroom-perf2-energy">'
                + '<span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings:\'FILL\' 1">electric_bolt</span>'
-               + '<div class="showroom-perf2-energy-track"><div class="showroom-perf2-energy-fill" style="width:80%"></div></div>'
+                + '<div class="showroom-perf2-energy-track"><div class="showroom-perf2-energy-fill" style="width:' + Math.max(10, pct) + '%"></div></div>'
              + '</div>'
              + '<div class="showroom-perf2-rank">'
                + '<span class="showroom-perf2-rank-label">NEXT RANK</span>'
@@ -1751,86 +2056,67 @@
   // ───────────────────────────────────────────────────────────────────────
   function curriculumDashboardRender(opts) {
     opts = opts || {};
-    var courseTitle = opts.courseTitle || "Guitar Fundamentals";
-    var level = opts.level != null ? opts.level : 12;
-    var progress = opts.progress != null ? opts.progress : 65;
-    var nextXp = opts.nextXp != null ? opts.nextXp : 250;
-    var nextBadge = opts.nextBadge || "Silver Badge";
+    var summary = getShowroomCurriculumSummary(opts);
+    var courseTitle = summary.courseTitle;
+    var level = summary.level != null ? summary.level : 1;
+    var progress = summary.progressPct != null ? summary.progressPct : 0;
+    var nextGoalText = normalizeShowroomText(opts.nextGoalText) || summary.nextGoalText || "No milestone loaded yet";
+    var modules = Array.isArray(summary.modules) ? summary.modules.slice() : [];
 
     // Progress ring math
     var radius = 40;
     var circumference = 2 * Math.PI * radius;
     var dashOffset = circumference * (1 - progress / 100);
-
-    var modules = opts.modules || [
-      {
-        id: "mod1",
-        title: "Module 1: Getting Started",
-        status: "COMPLETED",
-        statusClass: "completed",
-        lessons: [
-          { name: "Anatomy of the Guitar", completed: true },
-          { name: "Holding & Tuning", completed: true }
-        ]
-      },
-      {
-        id: "mod2",
-        title: "Module 2: First Chords",
-        status: "RESUME",
-        statusClass: "active",
-        lessons: [
-          { name: "The E Minor & A Minor", active: true },
-          { name: "Basic Strumming Patterns", locked: true }
-        ],
-        cta: "Start Next Lesson"
-      },
-      {
-        id: "mod3",
-        title: "Module 3: Major Scales",
-        status: "LOCKED",
+    if (!modules.length) {
+      modules = [{
+        id: "empty",
+        title: "No curriculum loaded yet",
+        status: "EMPTY",
         statusClass: "locked",
         lessons: [
-          { name: "The C Major Scale", locked: true },
-          { name: "Intervals 101", locked: true }
+          { name: "Select an instrument path or load lessons to populate this view.", state: "locked" }
         ]
-      }
-    ];
+      }];
+    }
 
     var timelineHtml = "";
     for (var i = 0; i < modules.length; i++) {
       var mod = modules[i];
-      var markerIcon = mod.statusClass === "completed" ? "check" :
-                       mod.statusClass === "active" ? "auto_awesome" : "lock";
-      var markerFill = mod.statusClass === "active" ? " fill" : "";
+      var modState = normalizeShowroomText(mod.state || mod.statusClass).toLowerCase() || "locked";
+      var markerIcon = modState === "completed" ? "check" :
+                       modState === "active" ? "auto_awesome" : "lock";
+      var markerFill = modState === "active" ? " fill" : "";
 
       var lessonsHtml = "";
       for (var j = 0; j < mod.lessons.length; j++) {
         var les = mod.lessons[j];
-        var lesStatusHtml = les.completed ? '<span class="material-symbols-outlined showroom-lesson-check">check_circle</span>' :
-                            les.active ? '<span class="showroom-lesson-badge">NOW</span>' :
+        var lessonState = normalizeShowroomText(les.state).toLowerCase();
+        if (!lessonState) lessonState = les.completed ? "done" : (les.active ? "now" : (les.locked ? "locked" : "unlocked"));
+        var lesStatusHtml = lessonState === "done" ? '<span class="material-symbols-outlined showroom-lesson-check">check_circle</span>' :
+                            lessonState === "now" ? '<span class="showroom-lesson-badge">NOW</span>' :
                             // Locked lessons render a closed-lock glyph so the state reads
                             // correctly alongside the module-marker logic that uses "lock".
                             '<span class="material-symbols-outlined showroom-lesson-lock">lock</span>';
 
-        lessonsHtml += '<div class="showroom-lesson-item' + (les.active ? ' active' : '') + '">'
+        lessonsHtml += '<div class="showroom-lesson-item' + (lessonState === "now" ? ' active' : '') + '">'
                     + '<div class="showroom-lesson-info">'
-                    + '<span class="material-symbols-outlined showroom-lesson-icon">' + (les.locked ? 'music_note' : 'play_circle') + '</span>'
+                    + '<span class="material-symbols-outlined showroom-lesson-icon">' + (lessonState === "locked" ? 'music_note' : 'play_circle') + '</span>'
                     + '<span class="showroom-lesson-name">' + escHtml(les.name) + '</span>'
                     + '</div>'
                     + lesStatusHtml
                     + '</div>';
       }
 
-      var ctaHtml = mod.cta ? '<button class="showroom-module-cta" onclick="' + nav("lesson") + '">' + escHtml(mod.cta) + '</button>' : '';
+      var ctaHtml = mod.cta && mod.showCta ? '<button class="showroom-module-cta" onclick="' + nav("lesson") + '">' + escHtml(mod.cta) + '</button>' : '';
 
       timelineHtml += '<div class="showroom-timeline-item">'
-                   + '<div class="showroom-timeline-marker ' + mod.statusClass + '">'
+                   + '<div class="showroom-timeline-marker ' + modState + '">'
                    + '<span class="material-symbols-outlined' + markerFill + '" style="font-size:16px">' + markerIcon + '</span>'
                    + '</div>'
-                   + '<div class="showroom-module-card ' + mod.statusClass + '">'
+                   + '<div class="showroom-module-card ' + modState + '">'
                    + '<div class="showroom-module-head">'
                    + '<h3 class="showroom-module-title">' + escHtml(mod.title) + '</h3>'
-                   + '<span class="showroom-module-status ' + mod.statusClass + '">' + escHtml(mod.status) + '</span>'
+                   + '<span class="showroom-module-status ' + modState + '">' + escHtml(mod.status) + '</span>'
                    + '</div>'
                    + '<div class="showroom-lesson-list">' + lessonsHtml + '</div>'
                    + ctaHtml
@@ -1848,10 +2134,10 @@
     return '<div class="showroom-root with-bg">'
          + '<div class="showroom-woodgrain-overlay"></div>'
          + '<header class="showroom-appbar">'
-         + '<div class="showroom-appbar-left">'
-         + '<button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
-         + '<h1 class="showroom-appbar-title">Ember Studio</h1></div>'
-        + '<div class="showroom-appbar-right"><button type="button" class="showroom-avatar" onclick="' + nav("profile") + '" aria-label="Profile"><div class="showroom-avatar-inner">A</div></button></div>'
+        + '<div class="showroom-appbar-left">'
+        + '<button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>'
+        + '<h1 class="showroom-appbar-title">Ember Studio</h1></div>'
+        + '<div class="showroom-appbar-right"><button type="button" class="showroom-avatar" onclick="' + nav("profile") + '" aria-label="Profile"><div class="showroom-avatar-inner">' + escHtml(summary.userInitial) + '</div></button></div>'
          + '</header>'
          + '<main class="showroom-canvas">'
          + '<section class="showroom-course-hero">'
@@ -1868,7 +2154,7 @@
          + '</svg>'
          + '<div class="showroom-course-hero-ring-label"><span class="showroom-course-hero-ring-num">' + progress + '%</span><span class="showroom-course-hero-ring-unit">DONE</span></div></div>'
          + '<div class="showroom-course-hero-progress">'
-         + '<div class="showroom-course-hero-xp-row"><span class="material-symbols-outlined fill showroom-course-hero-xp-icon" style="font-size:14px">bolt</span>Next: ' + nextXp + ' XP to ' + escHtml(nextBadge) + '</div>'
+         + '<div class="showroom-course-hero-xp-row"><span class="material-symbols-outlined fill showroom-course-hero-xp-icon" style="font-size:14px">bolt</span>' + escHtml(nextGoalText) + '</div>'
          + '<div class="showroom-course-hero-bar"><div class="showroom-course-hero-fill" style="width:' + progress + '%"></div></div></div></div>'
          + '</section>'
          + '<section class="showroom-timeline">'
@@ -1890,43 +2176,31 @@
   // ───────────────────────────────────────────────────────────────────────
   function courseSyllabusRender(opts) {
     opts = opts || {};
-    var courseName  = opts.courseName  || "Guitar Fundamentals";
-    var level       = (opts.level != null) ? opts.level : 12;
-    var progressPct = (opts.progressPct != null) ? opts.progressPct : 65;
-    var nextXpGoal  = opts.nextXpGoal  || "250 XP to Silver Badge";
-    var ctaLabel    = opts.ctaLabel    || "Start Next Lesson";
-    var userInitial = (opts.userInitial || "A").charAt(0).toUpperCase();
-
-    var modules = opts.modules || [
-      {
-        title: "Module 1: Getting Started",
-        status: "COMPLETED",
-        state: "completed",
-        lessons: [
-          { name: "Anatomy of the Guitar", state: "done" },
-          { name: "Holding & Tuning",      state: "done" }
-        ]
-      },
-      {
-        title: "Module 2: First Chords",
-        status: "RESUME",
-        state: "active",
-        lessons: [
-          { name: "The E Minor & A Minor",     state: "now" },
-          { name: "Basic Strumming Patterns",  state: "unlocked" }
-        ],
-        showCta: true
-      },
-      {
-        title: "Module 3: Major Scales",
-        status: "LOCKED",
+    var summary = getShowroomCurriculumSummary({
+      courseTitle: opts.courseName || opts.courseTitle,
+      level: opts.level,
+      progressPct: opts.progressPct,
+      nextGoalText: opts.nextXpGoal || opts.nextGoalText,
+      modules: opts.modules,
+      userInitial: opts.userInitial
+    });
+    var courseName  = summary.courseTitle;
+    var level       = (summary.level != null) ? summary.level : 1;
+    var progressPct = (summary.progressPct != null) ? summary.progressPct : 0;
+    var nextXpGoal  = summary.nextGoalText || "No milestone loaded yet";
+    var ctaLabel    = opts.ctaLabel || "Open Lesson";
+    var userInitial = (summary.userInitial || "S").charAt(0).toUpperCase();
+    var modules = Array.isArray(summary.modules) ? summary.modules.slice() : [];
+    if (!modules.length) {
+      modules = [{
+        title: "No curriculum loaded yet",
+        status: "EMPTY",
         state: "locked",
         lessons: [
-          { name: "The C Major Scale", state: "locked" },
-          { name: "Intervals 101",     state: "locked" }
+          { name: "Select an instrument path or load lessons to populate this view.", state: "locked" }
         ]
-      }
-    ];
+      }];
+    }
 
     // Progress ring math — r=40, stroke-dasharray = 2πr
     var ringR = 40;
