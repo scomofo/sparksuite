@@ -10,32 +10,16 @@ function pianoGetActiveGuidedPlanSummary() {
   var context = coreView && coreView.plan && coreView.plan.context ? coreView.plan.context : null;
   var guidedPlan = context && context.guidedPlan ? context.guidedPlan : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var blocks = guidedPlan && Array.isArray(guidedPlan.blocks) ? guidedPlan.blocks : [];
-  var totalSec = 0;
-  var i;
   if (!coreView || !guidedPlan || !runtimeState || runtimeState.activeScreen !== "guided_session" || coreView.plan.flow !== "guided_session") {
     return null;
   }
-  if (guidedPlan.target_duration_min) {
-    totalSec = Number(guidedPlan.target_duration_min) * 60;
-  } else {
-    for (i = 0; i < blocks.length; i++) {
-      totalSec += Number(blocks[i] && blocks[i].duration_sec) || 0;
-    }
-    if (!totalSec) totalSec = Number(context.guidedShellDurationSec) || 0;
-  }
-  return {
-    title: prettyPianoPlanToken(guidedPlan.title) || prettyPianoPlanToken(guidedPlan.id) || "Guided Session",
-    blockCount: blocks.length,
-    targetDurationMin: totalSec > 0 ? Math.max(1, Math.round(totalSec / 60)) : 0,
-    statusLabel: typeof pianoSessionStepRuntimeLabel === "function"
-      ? pianoSessionStepRuntimeLabel(runtimeState.guidedStep || "spark", runtimeState.guidedNewMovePhase || null)
-      : "Guided session live",
-    focusSong: prettyPianoPlanToken(guidedPlan.focus_song),
-    newElement: typeof pianoGetGuidedPrimaryNewElement === "function"
-      ? pianoGetGuidedPrimaryNewElement(guidedPlan)
-      : (Array.isArray(guidedPlan.new_elements) ? prettyPianoPlanToken(guidedPlan.new_elements[0]) : "")
-  };
+  return typeof pianoBuildGuidedSessionSummary === "function"
+    ? pianoBuildGuidedSessionSummary(guidedPlan, runtimeState, {
+        guidedShellDurationSec: context.guidedShellDurationSec,
+        isActive: true,
+        fallbackTitle: prettyPianoPlanToken(guidedPlan.id) || "Guided Session"
+      })
+    : null;
 }
 
 function pianoPlanPage(){
@@ -125,28 +109,12 @@ function pianoPlanPage(){
 
   if(!hasPlanItems){
     if (activeGuided) {
-      h += '<div class="card mb16" style="border:2px solid var(--accent)">';
-      h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">';
-      h += '<div style="font-size:15px;font-weight:800">Guided Session Flow</div>';
-      h += '<div class="muted">' + escHTML((activeGuided.blockCount || 4) + ' blocks') + '</div>';
-      h += '</div>';
-      h += '<div class="muted" style="margin-bottom:10px">Your live guided shell is the plan right now.</div>';
-      h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
-      h += '<div style="font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)">Guided Session Live</div>';
-      h += '<div style="font-size:14px;font-weight:800;margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
-      h += '<div class="muted" style="margin-top:4px">' + escHTML(activeGuided.statusLabel) + '</div>';
-      if (activeGuided.targetDurationMin > 0) {
-        h += '<div class="muted" style="margin-top:4px">' + escHTML(activeGuided.targetDurationMin + " min shell") + '</div>';
-      }
-      if (activeGuided.focusSong) {
-        h += '<div class="muted" style="margin-top:4px">Song hook: ' + escHTML(activeGuided.focusSong) + '</div>';
-      }
-      if (activeGuided.newElement) {
-        h += '<div class="muted" style="margin-top:4px">New move: ' + escHTML(activeGuided.newElement) + '</div>';
-      }
-      h += '</div>';
-      h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:var(--accent);color:#fff;font-weight:700">Resume Guided Session</button>';
-      h += '</div>';
+      h += pianoRenderGuidedFlowCard(activeGuided, {
+        cardClass: "card mb16",
+        cardStyle: "border:2px solid var(--accent)",
+        mutedClass: "muted",
+        summaryTitleStyle: "font-size:14px;font-weight:800;margin-top:4px"
+      });
       h += '<div class="card mb16" style="text-align:center">';
       h += '<button class="btn" onclick="act(\'back\')">Back</button>';
       h += '</div>';
