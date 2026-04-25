@@ -7,6 +7,41 @@
     return window.SparkSessionRuntime || (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
   }
 
+  function syncActivePracticeRuntime(options) {
+    var core = getPracticeActionCore();
+    var runtime = getPracticeActionRuntime();
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    var runtimeState = view && view.runtimeState ? view.runtimeState : null;
+    options = options || {};
+
+    if (core && typeof core.syncSessionRuntime === "function") {
+      return core.syncSessionRuntime({
+        segmentId: runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null,
+        status: runtimeState && runtimeState.transport ? runtimeState.transport.status : "ready",
+        positionMs: runtimeState && runtimeState.transport ? runtimeState.transport.positionMs : 0,
+        autoAdvance: !!options.autoAdvance,
+        scheduleTick: options.scheduleTick !== false,
+        syncState: false
+      });
+    }
+
+    if (!view || !view.plan || view.plan.flow !== "daily_practice" || !runtime || typeof runtime.attachSession !== "function") {
+      return false;
+    }
+
+    runtime.attachSession(view.plan, {
+      segmentId: runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null,
+      status: runtimeState && runtimeState.transport ? runtimeState.transport.status : "ready",
+      positionMs: runtimeState && runtimeState.transport ? runtimeState.transport.positionMs : 0,
+      autoAdvance: !!options.autoAdvance,
+      scheduleTick: options.scheduleTick !== false,
+      syncState: false
+    });
+    return true;
+  }
+
   function startRuntimePracticeItem(itemId) {
     var core = getPracticeActionCore();
     var runtime = getPracticeActionRuntime();
@@ -54,6 +89,49 @@
         return true;
       }
       return true;
+    }
+
+    if (a === "sessionPauseBlock") {
+      var pauseRuntime = getPracticeActionRuntime();
+      syncActivePracticeRuntime({ autoAdvance: true, scheduleTick: false });
+      if (pauseRuntime && typeof pauseRuntime.pauseActiveSegment === "function") {
+        pauseRuntime.pauseActiveSegment({});
+        render();
+        return true;
+      }
+      if (pauseRuntime && typeof pauseRuntime.syncSegmentTransport === "function") {
+        pauseRuntime.syncSegmentTransport("pause", {});
+        render();
+        return true;
+      }
+      return false;
+    }
+
+    if (a === "sessionResumeBlock") {
+      var resumeRuntime = getPracticeActionRuntime();
+      syncActivePracticeRuntime({ autoAdvance: true, scheduleTick: false });
+      if (resumeRuntime && typeof resumeRuntime.resumeActiveSegment === "function") {
+        resumeRuntime.resumeActiveSegment({ scheduleTick: true });
+        render();
+        return true;
+      }
+      if (resumeRuntime && typeof resumeRuntime.syncSegmentTransport === "function") {
+        resumeRuntime.syncSegmentTransport("resume", { scheduleTick: true });
+        render();
+        return true;
+      }
+      return false;
+    }
+
+    if (a === "sessionSkipBlock") {
+      var skipRuntime = getPracticeActionRuntime();
+      syncActivePracticeRuntime({ autoAdvance: true, scheduleTick: false });
+      if (skipRuntime && typeof skipRuntime.skipActiveSegment === "function") {
+        skipRuntime.skipActiveSegment({ autoAdvance: true });
+        render();
+        return true;
+      }
+      return false;
     }
 
     if (a === "selLevel" && parseInt(v, 10) <= S.level) {
