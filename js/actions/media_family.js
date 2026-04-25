@@ -3,14 +3,21 @@
     return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
   }
 
-  function setLegacyFields(setFields, clearIntervals, save) {
+  function applyMediaFamilyRuntimeUpdate(update, fallback) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-      SparkProgressBridge.applyLegacyActivityRuntime({
-        setFields: setFields,
-        clearIntervals: clearIntervals || [],
-        save: save
-      });
-    } else {
+      SparkProgressBridge.applyLegacyActivityRuntime(update || {});
+      return true;
+    }
+    if (typeof fallback === "function") fallback();
+    return false;
+  }
+
+  function setLegacyFields(setFields, clearIntervals, save) {
+    applyMediaFamilyRuntimeUpdate({
+      setFields: setFields,
+      clearIntervals: clearIntervals || [],
+      save: save
+    }, function() {
       var key;
       for (key in setFields) {
         if (Object.prototype.hasOwnProperty.call(setFields, key)) S[key] = setFields[key];
@@ -20,7 +27,7 @@
           if (T && T[name]) clearInterval(T[name]);
         });
       }
-    }
+    });
   }
 
   function handleMediaAction(a, v) {
@@ -113,14 +120,12 @@
       render();
       var removeProgress = window.electron.stems.onProgress(function(data) {
         if (data.line) {
-          if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-            SparkProgressBridge.applyLegacyActivityRuntime({
-              setFields: { stemProgress: Math.min(95, S.stemProgress + 2) },
-              save: false
-            });
-          } else {
+          applyMediaFamilyRuntimeUpdate({
+            setFields: { stemProgress: Math.min(95, S.stemProgress + 2) },
+            save: false
+          }, function() {
             S.stemProgress = Math.min(95, S.stemProgress + 2);
-          }
+          });
           render();
         }
       });

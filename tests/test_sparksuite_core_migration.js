@@ -1835,6 +1835,8 @@ test("action families can resolve sparkCore from the global binding", function()
   var returnedPractice = null;
   var earTrainingSynced = null;
   var shellUpdates = [];
+  var mediaRuntimeUpdates = [];
+  var existingBridge = global.SparkProgressBridge || {};
   global.window = {};
   global.sparkCore = {
     openLegacyStrumPattern: function(payload) {
@@ -1904,6 +1906,7 @@ test("action families can resolve sparkCore from the global binding", function()
 
   assert.ok(strumOpened);
   assert.strictEqual(strumOpened.pattern.name, "Island Groove");
+
   assert.strictEqual(strumSynced[0].active, true);
   assert.strictEqual(strumSynced[0].beat, 0);
   assert.ok(returnedPractice);
@@ -4977,3 +4980,5 @@ test("completeSession can carry focused bass rhythm drill progress into bass ski
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);
+
+
