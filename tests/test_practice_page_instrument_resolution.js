@@ -389,6 +389,64 @@ test("planPage and launchPracticePlanItem can resolve sparkCore from the global 
   });
 });
 
+test("practicePage and planPage surface the live daily-practice shell from sparkCore", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.SparkPracticeBridge = {
+    toLegacyPlan: function(plan) { return plan._legacyPlan; }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120, completed: false, exerciseIds: ["ex_1"] },
+            { id: "song_1", type: "song", label: "Song push", durationSec: 240, completed: false, exerciseIds: ["ex_2"] }
+          ],
+          _legacyPlan: {
+            focus: "Timing focus",
+            items: [
+              { id: "practice_1", type: "practice", label: "Quick warmup", completed: false, meta: { exerciseId: "warmup_1", instrument: "piano" } },
+              { id: "song_1", type: "song", label: "Song push", completed: false, meta: { songId: "moonlight", instrument: "piano" } }
+            ]
+          }
+        },
+        activeSegment: {
+          id: "practice_1",
+          type: "practice",
+          label: "Quick warmup",
+          durationSec: 120,
+          exerciseIds: ["ex_1"]
+        },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          transport: {
+            status: "paused",
+            positionMs: 45
+          }
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practicePage();
+  var summaryHtml = practiceTab();
+  var planHtml = planPage();
+
+  assert.ok(practiceHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(practiceHtml.indexOf("Paused - Quick warmup") >= 0);
+  assert.ok(practiceHtml.indexOf("Resume Block") >= 0);
+  assert.ok(practiceHtml.indexOf("Skip Block") >= 0);
+  assert.ok(summaryHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(planHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(planHtml.indexOf("Block 1 of 2") >= 0);
+  assert.ok(planHtml.indexOf("Resume Block") >= 0);
+});
+
 test("practicePage and practiceTab safely render cached item ids containing apostrophes", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };

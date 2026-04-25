@@ -613,6 +613,56 @@ function getPracticeGuidedSessionSummary(D) {
   return null;
 }
 
+function getPracticeActiveShellSummary() {
+  var coreView = getPracticeCoreView();
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  var plan = coreView && coreView.plan ? coreView.plan : null;
+  var segments;
+  var activeSegment;
+  var activeIndex = -1;
+  var completedCount = 0;
+  var totalDurationSec = 0;
+  var i;
+  var status;
+  var segmentLabel;
+  if (!plan || plan.flow !== "daily_practice" || !runtimeState || !runtimeState.activeSegmentId) return null;
+  segments = Array.isArray(plan.segments) ? plan.segments : [];
+  if (!segments.length) return null;
+  activeSegment = coreView.activeSegment || null;
+  for (i = 0; i < segments.length; i++) {
+    if (segments[i] && segments[i].completed) completedCount++;
+    totalDurationSec += normalizePracticeDisplayCount(segments[i] && segments[i].durationSec, 0);
+    if (!activeSegment && segments[i] && segments[i].id === runtimeState.activeSegmentId) {
+      activeSegment = segments[i];
+      activeIndex = i;
+    } else if (activeSegment && segments[i] && activeSegment.id === segments[i].id) {
+      activeIndex = i;
+    }
+  }
+  if (!activeSegment) return null;
+  status = runtimeState.transport && runtimeState.transport.status ? runtimeState.transport.status : "ready";
+  segmentLabel = prettyPracticeSummaryToken(activeSegment.label) || firstPrettyPracticeSummaryToken(activeSegment.type, "practice block");
+  return {
+    title: prettyPracticeSummaryToken(plan.focus) || "Practice Session",
+    segmentLabel: segmentLabel,
+    blockCount: segments.length,
+    activeIndex: activeIndex >= 0 ? activeIndex : 0,
+    completedCount: completedCount,
+    targetDurationMin: totalDurationSec > 0 ? Math.max(1, Math.round(totalDurationSec / 60)) : 0,
+    status: status,
+    statusLabel: status === "paused"
+      ? ("Paused - " + segmentLabel)
+      : status === "completed"
+        ? ("Wrapped - " + segmentLabel)
+        : status === "running"
+          ? ("In progress - " + segmentLabel)
+          : ("Ready - " + segmentLabel),
+    primaryAction: status === "paused" ? "sessionResumeBlock" : "sessionPauseBlock",
+    primaryLabel: status === "paused" ? "Resume Block" : "Pause Block",
+    canSkip: activeIndex >= 0 && activeIndex < segments.length - 1
+  };
+}
+
 function isPracticeCurriculumReviewSession(session) {
   var title = session && typeof session.title === "string" ? session.title.toLowerCase() : "";
   var focusSong = session && typeof session.focus_song === "string" ? session.focus_song.toLowerCase() : "";
@@ -655,6 +705,7 @@ function getPracticeTrackSessionByDay(track, dayNumber) {
 
 function renderPracticePlanSummaryCard(plan) {
   var activeGuided = getPracticeActiveGuidedSummary();
+  var activeShell = activeGuided ? null : getPracticeActiveShellSummary();
   var h = "";
   var planProgress;
   var item;
@@ -672,6 +723,19 @@ function renderPracticePlanSummaryCard(plan) {
       h += '<div style="font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2f8f89">Guided Session Live</div>';
       h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
       h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + escHTML(activeGuided.statusLabel + " - Resume when you're ready.") + '</div>';
+      h += '</div>';
+    } else if (activeShell) {
+      h += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:14px;background:rgba(69,183,209,.12);color:var(--text-primary)">';
+      h += '<div style="font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2a7f93">Practice Session Live</div>';
+      h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeShell.title) + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + escHTML(activeShell.statusLabel) + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + escHTML("Block " + (activeShell.activeIndex + 1) + " of " + activeShell.blockCount + " • " + (activeShell.targetDurationMin || 10) + " min shell") + '</div>';
+      h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">';
+      h += '<button class="btn btn-sm" onclick="act(\'' + activeShell.primaryAction + '\')" style="background:#45B7D1;color:#fff;font-size:11px;padding:4px 8px">' + escHTML(activeShell.primaryLabel) + '</button>';
+      if (activeShell.canSkip) {
+        h += '<button class="btn btn-sm" onclick="act(\'sessionSkipBlock\')" style="background:#FF8A5C;color:#fff;font-size:11px;padding:4px 8px">Skip Block</button>';
+      }
+      h += '</div>';
       h += '</div>';
     }
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(getPracticeSummaryFocus(plan))+'</div>';
@@ -712,6 +776,28 @@ function renderPracticePlanSummaryCard(plan) {
     h += '</div>';
     return h;
   }
+  if (activeShell) {
+    h += '<div class="card mb20" style="border:2px solid #45B7D1">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Practice Session Live</h3>';
+    h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML("Block " + (activeShell.activeIndex + 1) + "/" + activeShell.blockCount) + '</span>';
+    h += '</div>';
+    h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">The shared session shell is already in motion.</div>';
+    h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(69,183,209,.12);margin-bottom:10px">';
+    h += '<div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(activeShell.title) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(activeShell.statusLabel) + '</div>';
+    h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML((activeShell.targetDurationMin || 10) + " min shell") + '</div>';
+    h += '</div>';
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    h += '<button class="btn" onclick="act(\'' + activeShell.primaryAction + '\')" style="background:#45B7D1;color:#fff;font-weight:800">' + escHTML(activeShell.primaryLabel) + '</button>';
+    if (activeShell.canSkip) {
+      h += '<button class="btn" onclick="act(\'sessionSkipBlock\')" style="background:#FF8A5C;color:#fff;font-weight:800">Skip Block</button>';
+    }
+    h += '<button class="btn" onclick="act(\'openPlan\')" style="background:var(--input-bg);color:var(--text-primary);font-weight:800">Open Plan</button>';
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
   h += '<div class="card mb20">';
   h += '<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
   h += '<div style="font-size:12px;color:var(--text-dim)">No practice plan yet.</div>';
@@ -721,6 +807,7 @@ function renderPracticePlanSummaryCard(plan) {
 
 function renderPracticeQuickStartCard() {
   var activeGuided = getPracticeActiveGuidedSummary();
+  var activeShell = activeGuided ? null : getPracticeActiveShellSummary();
   var h = '<div class="card mb12" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);border:none;text-align:center;padding:20px">';
   h += '<div style="font-size:28px;margin-bottom:4px">&#9889;</div>';
   if (activeGuided) {
@@ -730,6 +817,14 @@ function renderPracticeQuickStartCard() {
     h += '<div style="display:flex;gap:8px;justify-content:center">';
     h += '<button onclick="act(\'resume_guided_session\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Resume Guided</button>';
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Quick Chord</button>';
+    h += '</div>';
+  } else if (activeShell) {
+    h += '<div style="font-size:16px;font-weight:900;color:#fff">Practice Session Live</div>';
+    h += '<div style="font-size:12px;color:rgba(255,255,255,.88);margin:4px 0 6px">' + escHTML(activeShell.title) + '</div>';
+    h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(activeShell.statusLabel + " • Block " + (activeShell.activeIndex + 1) + " of " + activeShell.blockCount) + '</div>';
+    h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
+    h += '<button onclick="act(\'' + activeShell.primaryAction + '\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">' + escHTML(activeShell.primaryLabel) + '</button>';
+    h += '<button onclick="act(\'openPlan\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Open Plan</button>';
     h += '</div>';
   } else if(S.lastChordName){
     h += '<div style="font-size:16px;font-weight:900;color:#fff">Pick Up Where You Left Off</div>';
@@ -880,7 +975,20 @@ function renderPracticeStatsCard(stats) {
 }
 
 function renderPracticePlanRows(plan) {
-  var h='<div class="card mb16"><div><b>Today\'s Practice Plan</b></div>';
+  var activeGuided = getPracticeActiveGuidedSummary();
+  var activeShell = activeGuided ? null : getPracticeActiveShellSummary();
+  var h='<div class="card mb16"><div><b>' + escHTML(activeGuided ? 'Guided Session Flow' : (activeShell ? 'Practice Session Live' : 'Today\'s Practice Plan')) + '</b></div>';
+  if (activeGuided) {
+    h += '<div class="muted" style="margin-top:6px">' + escHTML(activeGuided.statusLabel) + '</div>';
+  } else if (activeShell) {
+    h += '<div class="muted" style="margin-top:6px">' + escHTML(activeShell.statusLabel + ' • Block ' + (activeShell.activeIndex + 1) + ' of ' + activeShell.blockCount) + '</div>';
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 6px">';
+    h += '<button data-action="' + escHTML(activeShell.primaryAction) + '" onclick="act(this.getAttribute(\'data-action\'))">' + escHTML(activeShell.primaryLabel) + '</button>';
+    if (activeShell.canSkip) {
+      h += '<button onclick="act(\'sessionSkipBlock\')">Skip Block</button>';
+    }
+    h += '</div>';
+  }
   if(hasRenderablePracticeSummaryItems(plan)){
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
@@ -903,7 +1011,7 @@ function renderPracticePlanRows(plan) {
       h += '</div>';
     }
   } else {
-    h += '<div class="muted">No practice plan yet.</div>';
+    h += '<div class="muted">' + escHTML(activeGuided ? 'Your live guided shell is the plan right now.' : (activeShell ? 'The shared session shell is already in motion.' : 'No practice plan yet.')) + '</div>';
   }
   h += '</div>';
   return h;

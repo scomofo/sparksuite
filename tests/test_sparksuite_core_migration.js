@@ -1922,6 +1922,68 @@ test("practiceStartItem prefers the shared session runtime for active daily-prac
   assert.strictEqual(syncCalls[0].status, "ready");
 });
 
+test("practice action family can pause, resume, and skip the shared daily-practice shell", function() {
+  var syncCalls = [];
+  var runtimeCalls = [];
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "practice_item_1", type: "practice", exerciseIds: ["ex_1"] },
+            { id: "practice_item_2", type: "song", exerciseIds: ["ex_2"] }
+          ]
+        },
+        runtimeState: {
+          activeSegmentId: "practice_item_1",
+          transport: {
+            status: "running",
+            positionMs: 400
+          }
+        }
+      };
+    },
+    syncSessionRuntime: function(payload) {
+      syncCalls.push(payload);
+      return true;
+    }
+  };
+  global.SparkSessionRuntime = {
+    pauseActiveSegment: function() {
+      runtimeCalls.push("pause");
+      return true;
+    },
+    resumeActiveSegment: function() {
+      runtimeCalls.push("resume");
+      return true;
+    },
+    skipActiveSegment: function() {
+      runtimeCalls.push("skip");
+      return { hasNext: true, nextIndex: 1 };
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.saveState = function() {};
+  global.act = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("sessionPauseBlock"), true);
+  assert.strictEqual(__actionFamilies.practice("sessionResumeBlock"), true);
+  assert.strictEqual(__actionFamilies.practice("sessionSkipBlock"), true);
+  assert.deepStrictEqual(runtimeCalls, ["pause", "resume", "skip"]);
+  assert.strictEqual(syncCalls.length, 3);
+  assert.strictEqual(syncCalls[0].segmentId, "practice_item_1");
+  assert.strictEqual(syncCalls[0].status, "running");
+});
+
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
   var core = createDefaultSparkCore();
   var syncedChallenge = null;
