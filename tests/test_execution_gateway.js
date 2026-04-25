@@ -145,5 +145,83 @@ test("runDirectExercise normalizes app-id instruments for practice payload launc
   delete global.startPlayableRhythmHighwayPayload;
 });
 
+test("runPlanItem can resolve sparkCore from the global binding", function() {
+  GW.clearHandlers();
+  var captured = null;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          segments: [
+            { id: "seg_plan", type: "practice", exerciseIds: ["ex_plan"] }
+          ],
+          exercises: [
+            {
+              id: "ex_plan",
+              type: "practice",
+              data: {
+                core: { skill: "timing", instrument: "pianospark" },
+                gameplay: { payload: { adapterType: "pianospark" } }
+              }
+            }
+          ]
+        }
+      };
+    }
+  };
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+    return true;
+  };
+
+  var launched = GW.runPlanItem({ id: "seg_plan" }, { source: "plan_item_test" });
+
+  assert.strictEqual(launched, true);
+  assert.ok(captured);
+  assert.strictEqual(captured.options.instrument, "piano");
+
+  delete global.startPlayableRhythmHighwayPayload;
+  delete global.sparkCore;
+});
+
+test("runRhythmHighwaySegment can resolve sparkCore from the global binding", function() {
+  GW.clearHandlers();
+  var captured = null;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          segments: [
+            { id: "seg_rhythm", type: "practice", exerciseIds: ["ex_rhythm"] }
+          ],
+          exercises: [
+            {
+              id: "ex_rhythm",
+              type: "practice",
+              data: {
+                core: { skill: "timing", instrument: "ukespark" },
+                gameplay: { payload: { adapterType: "ukespark" } }
+              }
+            }
+          ]
+        }
+      };
+    }
+  };
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+    return true;
+  };
+
+  var launched = GW.runRhythmHighwaySegment("seg_rhythm", { source: "rhythm_segment_test" });
+
+  assert.strictEqual(launched, true);
+  assert.ok(captured);
+  assert.strictEqual(captured.options.instrument, "ukulele");
+
+  delete global.startPlayableRhythmHighwayPayload;
+  delete global.sparkCore;
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);
