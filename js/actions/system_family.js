@@ -39,6 +39,19 @@
     setLegacyFields({ screen: screen });
   }
 
+  function setGuidedLegacyState(setFields, save) {
+    setLegacyFields(setFields || {}, save);
+    if (Object.prototype.hasOwnProperty.call(setFields || {}, "guidedSession")) {
+      S.guidedSession = setFields.guidedSession;
+    }
+    if (Object.prototype.hasOwnProperty.call(setFields || {}, "guidedStep")) {
+      S.guidedStep = setFields.guidedStep;
+    }
+    if (Object.prototype.hasOwnProperty.call(setFields || {}, "newMovePhase")) {
+      S.newMovePhase = setFields.newMovePhase;
+    }
+  }
+
   function getSparkCoreHandle() {
     return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
   }
@@ -337,18 +350,12 @@
           arrangementType: S.performArrangementType || "chords",
           difficultyId: S.performDifficulty || "normal"
         });
-        S.performSongData = nextSong;
-        S.performSongId = v;
       }
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields: { currentSong: nextSong, performSongData: nextSong, performSongId: v, screen: SCR.PERFORM_SONG }
-        });
-      } else {
+      setLegacyFields({ currentSong: nextSong, performSongData: nextSong, performSongId: v, screen: SCR.PERFORM_SONG }, false);
+      if (!window.SparkProgressBridge || typeof SparkProgressBridge.applyLegacyActivityRuntime !== "function") {
         S.currentSong = nextSong;
         S.performSongData = nextSong;
         S.performSongId = v;
-        S.screen = SCR.PERFORM_SONG;
       }
       render();
       return true;
@@ -719,8 +726,7 @@
       clearInterval(T.strum);
       if (S.metronomeOn) stopMetronome();
       applyGuidedNavigationRequest("guided_home");
-      S.screen = SCR.HOME;
-      S.tab = TAB.PRACTICE;
+      setLegacyFields({ screen: SCR.HOME, tab: TAB.PRACTICE }, false);
       render();
       return true;
     }
@@ -730,7 +736,7 @@
       if (guidedCompleteCore && typeof guidedCompleteCore.completeGuidedSession === "function") {
         mirrorGuidedRuntimeFields(guidedCompleteCore.completeGuidedSession({}) || null);
       }
-      S.screen = SCR.GUIDED_DONE || "guided_done";
+      setLegacyFields({ screen: SCR.GUIDED_DONE || "guided_done" }, false);
       render();
       return true;
     }
@@ -825,12 +831,11 @@
       var requestedGuidedSessionNum = parseInt(v, 10);
       if (guidedStartCore && isGuidedSessionActive() && (!requestedGuidedSessionNum || requestedGuidedSessionNum === activeGuidedSessionNum)) {
         mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
-        S.guidedSession = activeGuidedSessionNum || S.guidedSession || _gsNum;
+        setGuidedLegacyState({ guidedSession: activeGuidedSessionNum || S.guidedSession || _gsNum, screen: SCR.GUIDED }, false);
         syncGuidedSessionRuntime({
           autoAdvance: false,
           scheduleTick: true
         });
-        S.screen = SCR.GUIDED;
         render();
         return true;
       }
@@ -838,12 +843,11 @@
         var _gsPlan = guidedStartCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
         if (_gsPlan && _gsPlan.context && _gsPlan.context.guidedPlan) {
           mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
-          S.guidedSession = _gsPlan.context.guidedSession || _gsNum;
+          setGuidedLegacyState({ guidedSession: _gsPlan.context.guidedSession || _gsNum, screen: SCR.GUIDED }, false);
           syncGuidedSessionRuntime({
             autoAdvance: false,
             scheduleTick: false
           });
-          S.screen = SCR.GUIDED;
           render();
           return true;
         }
@@ -852,14 +856,11 @@
       var _sessions = _inst && _inst.getData ? (_inst.getData().SESSIONS || []) : (typeof SESSIONS !== "undefined" ? SESSIONS : []);
       if (_gsNum > 0 && _gsNum <= _sessions.length) {
         S.guidedPlan = _sessions[_gsNum - 1];
-        S.guidedSession = _gsNum;
-        S.guidedStep = "spark";
-        S.newMovePhase = null;
-        S.screen = SCR.GUIDED;
+        setGuidedLegacyState({ guidedSession: _gsNum, guidedStep: "spark", newMovePhase: null, screen: SCR.GUIDED }, false);
         render();
         return true;
       }
-      S.screen = SCR.HOME;
+      setLegacyFields({ screen: SCR.HOME }, false);
       render();
       return true;
     }
@@ -869,12 +870,11 @@
       var resumeGuidedSessionNum = getActiveGuidedSessionNumber();
       if (guidedResumeCore && isGuidedSessionActive()) {
         mirrorGuidedRuntimeFields(guidedResumeCore.getRuntimeState ? guidedResumeCore.getRuntimeState() : null);
-        S.guidedSession = resumeGuidedSessionNum || S.guidedSession || 1;
+        setGuidedLegacyState({ guidedSession: resumeGuidedSessionNum || S.guidedSession || 1, screen: SCR.GUIDED }, false);
         syncGuidedSessionRuntime({
           autoAdvance: false,
           scheduleTick: true
         });
-        S.screen = SCR.GUIDED;
         render();
         return true;
       }

@@ -2216,6 +2216,103 @@ test("utility action family routes curriculum and back navigation through the sh
   });
 });
 
+test("system action family routes guided and career screen state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var dashboardRequests = [];
+  var careerSongRequests = [];
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: { flow: "guided_session" },
+        runtimeState: { activeScreen: "guided_session" }
+      };
+    },
+    getRuntimeState: function() {
+      return { guidedActivityId: "gtr-d02-song", guidedBlockType: "song" };
+    },
+    completeGuidedSession: function() {
+      return { guidedActivityId: null, guidedBlockType: null };
+    }
+  };
+  global.openDashboardSectionRequest = function(section) {
+    dashboardRequests.push(section);
+    return section;
+  };
+  global.openCareerSongSelectionRequest = function(payload) {
+    careerSongRequests.push(payload);
+    return payload;
+  };
+  global.getCareerItem = function(kind, id) {
+    if (kind === "songs" && id === "career_anthem") {
+      return { title: "Career Anthem", artist: "Spark Career" };
+    }
+    return null;
+  };
+  global.applyGuidedNavigationRequest = function() {};
+  global.clearTimeout = function() {};
+  global.clearInterval = function() {};
+  global.stopMetronome = function() {};
+  global.render = function() {};
+  global.saveState = function() {};
+  global.S = global.S || {};
+  global.T = {};
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.CAREER = "career";
+  global.SCR.PERFORM_SONG = "perform_song";
+  global.SCR.GUIDED_DONE = "guided_done";
+  global.SCR.HOME = "home";
+  global.TAB.PRACTICE = "practice";
+  global.S.performArrangementType = "lead";
+  global.S.performDifficulty = "hard";
+  global.S.metronomeOn = false;
+
+  eval(loadJS("js/actions/system_family.js"));
+
+  assert.strictEqual(__actionFamilies.system("openCareer"), true);
+  assert.strictEqual(__actionFamilies.system("openCareerSong", "career_anthem"), true);
+  assert.strictEqual(__actionFamilies.system("guidedComplete"), true);
+
+  assert.deepStrictEqual(dashboardRequests, ["career"]);
+  assert.strictEqual(careerSongRequests.length, 1);
+  assert.strictEqual(careerSongRequests[0].songId, "career_anthem");
+  assert.strictEqual(careerSongRequests[0].difficultyId, "hard");
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({ setFields: { screen: "career" } });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: {
+        currentSong: { title: "Career Anthem", artist: "Spark Career" },
+        performSongData: { title: "Career Anthem", artist: "Spark Career" },
+        performSongId: "career_anthem",
+        screen: "perform_song"
+      },
+      save: false
+    });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: { screen: "guided_done" },
+      save: false
+    });
+  }));
+});
+
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
   var core = createDefaultSparkCore();
   var syncedChallenge = null;
