@@ -375,6 +375,11 @@
       transport: { status: "ready", positionMs: 0 }
     });
       SparkProgressBridge.syncPlanToState(this.currentPlan);
+      this.syncSessionRuntime({
+        autoAdvance: this.currentPlan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION,
+        scheduleTick: false,
+        syncState: false
+      });
       return this.currentPlan;
     }
 
@@ -484,6 +489,11 @@
       transport: { status: "ready", positionMs: 0 }
     });
     SparkProgressBridge.syncPlanToState(plan);
+    this.syncSessionRuntime({
+      autoAdvance: plan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION,
+      scheduleTick: false,
+      syncState: false
+    });
     return plan;
   };
 
@@ -1764,6 +1774,11 @@
         ? { status: "running", positionMs: 0 }
         : this.runtimeState.transport
     });
+    this.syncSessionRuntime({
+      autoAdvance: false,
+      scheduleTick: nextStep !== currentStep,
+      syncState: false
+    });
 
     return {
       runtimeState: runtimeState,
@@ -1808,6 +1823,7 @@
     var guidedPlan;
     var blockActivities;
     var activity;
+    var runtimeState;
     var i;
 
     if (!this.currentPlan || this.currentPlan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION || currentStep !== "victoryLap" || !segmentId) {
@@ -1839,15 +1855,22 @@
       activity.duration_sec = Math.max(0, Math.round(activity.duration_sec || 0)) + extensionSec;
     }
 
+    runtimeState = this.syncGuidedRuntimeState({
+      guidedStep: "victoryLap",
+      guidedNewMovePhase: null,
+      transport: {
+        status: "running",
+        positionMs: 0
+      }
+    });
+    this.syncSessionRuntime({
+      autoAdvance: false,
+      scheduleTick: true,
+      syncState: false
+    });
+
     return {
-      runtimeState: this.syncGuidedRuntimeState({
-        guidedStep: "victoryLap",
-        guidedNewMovePhase: null,
-        transport: {
-          status: "running",
-          positionMs: 0
-        }
-      }),
+      runtimeState: runtimeState,
       extended: true,
       extensionSec: extensionSec
     };
