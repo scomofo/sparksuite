@@ -111,6 +111,12 @@
     return "practice";
   }
 
+  function getSparkCoreHandle() {
+    if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+    if (typeof sparkCore !== "undefined") return sparkCore;
+    return null;
+  }
+
   function findSegmentById(session, segmentId) {
     var segments = session && Array.isArray(session.segments) ? session.segments : [];
     for (var i = 0; i < segments.length; i++) {
@@ -195,9 +201,10 @@
 
   function runPlanItem(item, options) {
     options = options || {};
+    var core = getSparkCoreHandle();
 
-    var activeView = (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function")
-      ? window.sparkCore.getActiveSessionView()
+    var activeView = (core && typeof core.getActiveSessionView === "function")
+      ? core.getActiveSessionView()
       : null;
     var session = activeView && activeView.plan ? activeView.plan : null;
     var segment = session && item && item.id ? findSegmentById(session, item.id) : null;
@@ -252,9 +259,10 @@
 
   function runRhythmHighwaySegment(segmentId, options) {
     options = options || {};
+    var core = getSparkCoreHandle();
 
-    var activeView = (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function")
-      ? window.sparkCore.getActiveSessionView()
+    var activeView = (core && typeof core.getActiveSessionView === "function")
+      ? core.getActiveSessionView()
       : null;
     var session = activeView && activeView.plan ? activeView.plan : null;
     var segment = session ? findSegmentById(session, segmentId) : null;
