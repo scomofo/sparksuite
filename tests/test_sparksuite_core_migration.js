@@ -1836,8 +1836,22 @@ test("action families can resolve sparkCore from the global binding", function()
   var earTrainingSynced = null;
   var shellUpdates = [];
   var mediaRuntimeUpdates = [];
+  var shellRuntimeUpdates = [];
+  var activatedInstrument = null;
+  var deactivatedInstrument = false;
   var existingBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    syncLegacyMediaRuntimeState: function(update) {
+      mediaRuntimeUpdates.push(update);
+      return update;
+    },
+    applyLegacyActivityRuntime: function(update) {
+      shellRuntimeUpdates.push(update);
+      return update;
+    }
+  });
   global.window = {};
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
   global.sparkCore = {
     openLegacyStrumPattern: function(payload) {
       strumOpened = payload;
@@ -1877,7 +1891,15 @@ test("action families can resolve sparkCore from the global binding", function()
   global.setTimeout = function() { return 1; };
   global.T = { strum: null };
   global.SCR = { HOME: "home", STRUM: "strum" };
-  global.TAB = { SONGS: "songs" };
+  global.TAB = { SONGS: "songs", PRACTICE: "practice" };
+  global.SparkInstruments = {
+    activate: function(id) {
+      activatedInstrument = id;
+    },
+    deactivate: function() {
+      deactivatedInstrument = true;
+    }
+  };
   global.STRUM_PATTERNS = [
     { name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U"] }
   ];
@@ -1903,6 +1925,8 @@ test("action families can resolve sparkCore from the global binding", function()
   __actionFamilies.practice("completeSessionHome");
   __actionFamilies.practice("answerEarTrain", "G Major");
   __actionFamilies.shell("tab", "songs");
+  __actionFamilies.shell("switchInstrument", "pianospark");
+  __actionFamilies.shell("switchInstrumentBack");
 
   assert.ok(strumOpened);
   assert.strictEqual(strumOpened.pattern.name, "Island Groove");
@@ -1916,6 +1940,31 @@ test("action families can resolve sparkCore from the global binding", function()
   assert.strictEqual(earTrainingSynced.total, 3);
   assert.strictEqual(shellUpdates[0].activeScreen, "home");
   assert.strictEqual(shellUpdates[0].activeTab, "songs");
+  assert.strictEqual(activatedInstrument, "pianospark");
+  assert.strictEqual(deactivatedInstrument, true);
+  assert.ok(shellRuntimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: {
+        tab: "songs",
+        screen: "home",
+        earTrainQ: null,
+        earTrainAns: null,
+        selectedVoicing: 0
+      }
+    });
+  }));
+  assert.ok(shellRuntimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: { activeInstrument: "pianospark", screen: "home", tab: "practice" },
+      save: false
+    });
+  }));
+  assert.ok(shellRuntimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: { activeInstrument: null },
+      save: false
+    });
+  }));
 });
 
 test("practiceStartItem prefers the shared session runtime for active daily-practice segments", function() {
