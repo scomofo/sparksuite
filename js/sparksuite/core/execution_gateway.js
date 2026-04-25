@@ -66,6 +66,10 @@
     return name && Object.prototype.hasOwnProperty.call(_handlers, name) ? _handlers[name] : null;
   }
 
+  function listRegisteredHandlers() {
+    return Object.keys(_handlers).sort();
+  }
+
   function logMissingHandler(name) {
     _missingCounts[name] = (_missingCounts[name] || 0) + 1;
     if (typeof console !== "undefined" && console.warn) {
@@ -582,6 +586,8 @@
     getMissingHandlerReport: getMissingHandlerReport,
     getLastAction: getLastAction,
     getLastResult: getLastResult,
+    getRegisteredHandler: getRegisteredHandler,
+    listRegisteredHandlers: listRegisteredHandlers,
     isKnownSparkAction: isKnownSparkAction,
     listKnownSparkActions: listKnownSparkActions,
     clearHandlers: clearHandlers,
