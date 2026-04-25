@@ -43,6 +43,12 @@
         "setup": "First sound in 2 minutes. song block.",
         "success": "Nice. First sound in 2 minutes.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/horse-intro-open-strings-only-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -99,6 +105,12 @@
         "setup": "How guitars get tuned. song block.",
         "success": "Nice. How guitars get tuned.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/same-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -155,6 +167,12 @@
         "setup": "The D chord. song block.",
         "success": "Nice. The D chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/1-chord-reggae-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -211,6 +229,12 @@
         "setup": "D with a drum loop. song block.",
         "success": "Nice. D with a drum loop.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/1-chord-pop-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -267,6 +291,12 @@
         "setup": "The A chord. song block.",
         "success": "Nice. The A chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/a-loop-loop.mp3",
+        "tempo_bpm": 82,
+        "key": "A",
+        "loop": true
       }
     },
     {
@@ -323,6 +353,12 @@
         "setup": "D to A, slowly. song block.",
         "success": "Nice. D to A, slowly.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/d-a-d-a-over-drums-loop.mp3",
+        "tempo_bpm": 82,
+        "key": "D",
+        "loop": true
       }
     },
     {
@@ -379,6 +415,12 @@
         "setup": "The E chord. song block.",
         "success": "Nice. The E chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/e-jam-loop.mp3",
+        "tempo_bpm": 82,
+        "key": "E",
+        "loop": true
       }
     },
     {
@@ -435,6 +477,12 @@
         "setup": "A-D-E 12-bar blues. song block.",
         "success": "Nice. A-D-E 12-bar blues.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/simple-blues-loop-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -491,6 +539,12 @@
         "setup": "The Em chord. song block.",
         "success": "Nice. The Em chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/horse-full-em-d6add9-loop.mp3",
+        "tempo_bpm": 82,
+        "key": "Em",
+        "loop": true
       }
     },
     {
@@ -547,6 +601,12 @@
         "setup": "The Am chord. song block.",
         "success": "Nice. The Am chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/stand-by-me-transposed-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -603,6 +663,12 @@
         "setup": "\"Stand By Me\" full. song block.",
         "success": "Nice. \"Stand By Me\" full.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/full-verse-loop-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -659,6 +725,12 @@
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/user-picks-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -715,6 +787,12 @@
         "setup": "Down-down-down-down strum. song block.",
         "success": "Nice. Down-down-down-down strum.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/any-prior-song-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -771,6 +849,12 @@
         "setup": "The and: downs and ups. song block.",
         "success": "Nice. The and: downs and ups.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/same-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -827,6 +911,12 @@
         "setup": "DDU UDU pattern. song block.",
         "success": "Nice. DDU UDU pattern.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/stand-by-me-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -883,6 +973,12 @@
         "setup": "The G chord. song block.",
         "success": "Nice. The G chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/knockin-intro-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -939,6 +1035,12 @@
         "setup": "The C chord. song block.",
         "success": "Nice. The C chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/knockin-full-g-d-am-c-loop.mp3",
+        "tempo_bpm": 82,
+        "key": "G",
+        "loop": true
       }
     },
     {
@@ -995,6 +1097,12 @@
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/user-picks-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1051,6 +1159,12 @@
         "setup": "1-minute changes. song block.",
         "success": "Nice. 1-minute changes.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/metronome-only-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1107,6 +1221,12 @@
         "setup": "The Dm chord. song block.",
         "success": "Nice. The Dm chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/mad-world-intro-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1163,6 +1283,12 @@
         "setup": "G to C fast. song block.",
         "success": "Nice. G to C fast.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/song-of-choice-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1219,6 +1345,12 @@
         "setup": "Palm muting. song block.",
         "success": "Nice. Palm muting.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/any-prior-song-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1275,6 +1407,12 @@
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/user-picks-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1331,6 +1469,12 @@
         "setup": "E minor pentatonic pos. 1. song block.",
         "success": "Nice. E minor pentatonic pos. 1.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/jam-over-em-loop-loop.mp3",
+        "tempo_bpm": 82,
+        "key": "Em",
+        "loop": true
       }
     },
     {
@@ -1387,6 +1531,12 @@
         "setup": "Noodle over the blues. song block.",
         "success": "Nice. Noodle over the blues.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/a-blues-loop-loop.mp3",
+        "tempo_bpm": 82,
+        "key": "A",
+        "loop": true
       }
     },
     {
@@ -1443,6 +1593,12 @@
         "setup": "The F cheat chord. song block.",
         "success": "Nice. The F cheat chord.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/let-it-be-intro-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1499,6 +1655,12 @@
         "setup": "Dynamics: loud and soft. song block.",
         "success": "Nice. Dynamics: loud and soft.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/prior-song-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1555,6 +1717,12 @@
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/user-picks-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1611,6 +1779,12 @@
         "setup": "Prep for showcase. song block.",
         "success": "Nice. Prep for showcase.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/user-s-chosen-song-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {
@@ -1667,6 +1841,12 @@
         "setup": "Showcase day. song block.",
         "success": "Nice. Showcase day.",
         "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/guitar/backing/user-s-chosen-song-loop.mp3",
+        "tempo_bpm": 82,
+        "key": null,
+        "loop": true
       }
     },
     {

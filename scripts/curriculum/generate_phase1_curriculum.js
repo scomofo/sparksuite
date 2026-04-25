@@ -51,6 +51,35 @@ function buildBlocks(sessionId) {
   }));
 }
 
+function inferTempoBpm(text, fallback) {
+  var match = String(text || "").match(/(\d{2,3})\s*bpm/i);
+  if (match) return Number(match[1]);
+  return fallback;
+}
+
+function inferKey(text) {
+  var match = String(text || "").match(/\b([A-G](?:#|b)?m?)\b/);
+  return match ? match[1] : null;
+}
+
+function buildActivityAudio(activity, sessionRow) {
+  var focus = sessionRow && sessionRow.focus_song ? sessionRow.focus_song : sessionRow && sessionRow.title;
+  var slug = slugify(focus || activity.id || "loop");
+  var defaults = {
+    guitar: 82,
+    bass: 80,
+    piano: 76,
+    ukulele: 90
+  };
+  if (activity.block_type !== "song") return null;
+  return {
+    backing_track: path.posix.join("assets", "audio", activity.instrument, "backing", slug + "-loop.mp3"),
+    tempo_bpm: inferTempoBpm(focus, defaults[activity.instrument] || 80),
+    key: inferKey(focus),
+    loop: true
+  };
+}
+
 function completion(type, detail) {
   if (!COMPLETION_TYPES.has(type)) {
     throw new Error(`Unsupported completion type: ${type}`);
@@ -108,7 +137,7 @@ function buildActivities(track) {
   const activities = [];
   track.sessions.forEach((sessionRow) => {
     sessionRow.blocks.forEach((block) => {
-      activities.push({
+      const activity = {
         id: block.activity_id,
         session_id: sessionRow.id,
         instrument: sessionRow.instrument,
@@ -121,7 +150,10 @@ function buildActivities(track) {
           success: `Nice. ${sessionRow.title}.`,
           retry: "Let's loop that."
         }
-      });
+      };
+      const audio = buildActivityAudio(activity, sessionRow);
+      if (audio) activity.audio = audio;
+      activities.push(activity);
     });
   });
   return activities;
