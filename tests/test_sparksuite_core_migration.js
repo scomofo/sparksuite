@@ -4252,6 +4252,7 @@ test("SparkCore can sync the shared session runtime and expose active segment/ex
   };
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+  attachCalls.length = 0;
   var synced = core.syncSessionRuntime({ scheduleTick: false });
   var view = core.getActiveSessionView();
 
@@ -4265,6 +4266,29 @@ test("SparkCore can sync the shared session runtime and expose active segment/ex
   assert.ok(view.activeExercise);
   assert.strictEqual(view.activeSegment.id, plan.segments[0].id);
   assert.strictEqual(view.activeExercise.id, plan.exercises[0].id);
+
+  global.window = originalWindow;
+});
+
+test("SparkCore startSession automatically syncs the shared runtime for guided plans", function() {
+  var originalWindow = global.window;
+  var attachCalls = [];
+  global.window = global.window || {};
+  global.window.SparkSessionRuntime = {
+    attachSession: function(plan, options) {
+      attachCalls.push({ plan: plan, options: options });
+      return true;
+    }
+  };
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+
+  assert.strictEqual(attachCalls.length, 1);
+  assert.strictEqual(attachCalls[0].plan, plan);
+  assert.strictEqual(attachCalls[0].options.segmentId, plan.segments[0].id);
+  assert.strictEqual(attachCalls[0].options.status, "ready");
+  assert.strictEqual(attachCalls[0].options.scheduleTick, false);
+  assert.strictEqual(attachCalls[0].options.autoAdvance, false);
 
   global.window = originalWindow;
 });
@@ -4375,6 +4399,7 @@ test("extendGuidedBlock keeps victory lap active and lengthens the cooldown shel
   assert.strictEqual(plan.context.guidedShellDurationSec, 900);
   assert.strictEqual(plan.context.guidedPlan.blockActivities.cooldown.duration_sec, 390);
 });
+
 
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
   SparkInstrumentAdapter = {
