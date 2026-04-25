@@ -614,53 +614,19 @@ function getPracticeGuidedSessionSummary(D) {
 }
 
 function getPracticeActiveShellSummary() {
-  var coreView = getPracticeCoreView();
-  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var plan = coreView && coreView.plan ? coreView.plan : null;
-  var segments;
-  var activeSegment;
-  var activeIndex = -1;
-  var completedCount = 0;
-  var totalDurationSec = 0;
-  var i;
-  var status;
-  var segmentLabel;
-  if (!plan || plan.flow !== "daily_practice" || !runtimeState || !runtimeState.activeSegmentId) return null;
-  segments = Array.isArray(plan.segments) ? plan.segments : [];
-  if (!segments.length) return null;
-  activeSegment = coreView.activeSegment || null;
-  for (i = 0; i < segments.length; i++) {
-    if (segments[i] && segments[i].completed) completedCount++;
-    totalDurationSec += normalizePracticeDisplayCount(segments[i] && segments[i].durationSec, 0);
-    if (!activeSegment && segments[i] && segments[i].id === runtimeState.activeSegmentId) {
-      activeSegment = segments[i];
-      activeIndex = i;
-    } else if (activeSegment && segments[i] && activeSegment.id === segments[i].id) {
-      activeIndex = i;
-    }
+  if (typeof SparkSessionShellUI === "undefined" || !SparkSessionShellUI || typeof SparkSessionShellUI.buildDailyShellSummary !== "function") {
+    return null;
   }
-  if (!activeSegment) return null;
-  status = runtimeState.transport && runtimeState.transport.status ? runtimeState.transport.status : "ready";
-  segmentLabel = prettyPracticeSummaryToken(activeSegment.label) || firstPrettyPracticeSummaryToken(activeSegment.type, "practice block");
-  return {
-    title: prettyPracticeSummaryToken(plan.focus) || "Practice Session",
-    segmentLabel: segmentLabel,
-    blockCount: segments.length,
-    activeIndex: activeIndex >= 0 ? activeIndex : 0,
-    completedCount: completedCount,
-    targetDurationMin: totalDurationSec > 0 ? Math.max(1, Math.round(totalDurationSec / 60)) : 0,
-    status: status,
-    statusLabel: status === "paused"
-      ? ("Paused - " + segmentLabel)
-      : status === "completed"
-        ? ("Wrapped - " + segmentLabel)
-        : status === "running"
-          ? ("In progress - " + segmentLabel)
-          : ("Ready - " + segmentLabel),
-    primaryAction: status === "paused" ? "sessionResumeBlock" : "sessionPauseBlock",
-    primaryLabel: status === "paused" ? "Resume Block" : "Pause Block",
-    canSkip: activeIndex >= 0 && activeIndex < segments.length - 1
-  };
+  return SparkSessionShellUI.buildDailyShellSummary(getPracticeCoreView(), {
+    focusFormatter: function(plan) {
+      return prettyPracticeSummaryToken(plan && plan.focus) || "Practice Session";
+    },
+    segmentFormatter: function(segment) {
+      return prettyPracticeSummaryToken(segment && segment.label) || firstPrettyPracticeSummaryToken(segment && segment.type, "practice block");
+    },
+    fallbackTitle: "Practice Session",
+    fallbackSegmentLabel: "practice block"
+  });
 }
 
 function isPracticeCurriculumReviewSession(session) {
@@ -725,18 +691,12 @@ function renderPracticePlanSummaryCard(plan) {
       h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + escHTML(activeGuided.statusLabel + " - Resume when you're ready.") + '</div>';
       h += '</div>';
     } else if (activeShell) {
-      h += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:14px;background:rgba(69,183,209,.12);color:var(--text-primary)">';
-      h += '<div style="font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2a7f93">Practice Session Live</div>';
-      h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeShell.title) + '</div>';
-      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + escHTML(activeShell.statusLabel) + '</div>';
-      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + escHTML("Block " + (activeShell.activeIndex + 1) + " of " + activeShell.blockCount + " • " + (activeShell.targetDurationMin || 10) + " min shell") + '</div>';
-      h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">';
-      h += '<button class="btn btn-sm" onclick="act(\'' + activeShell.primaryAction + '\')" style="background:#45B7D1;color:#fff;font-size:11px;padding:4px 8px">' + escHTML(activeShell.primaryLabel) + '</button>';
-      if (activeShell.canSkip) {
-        h += '<button class="btn btn-sm" onclick="act(\'sessionSkipBlock\')" style="background:#FF8A5C;color:#fff;font-size:11px;padding:4px 8px">Skip Block</button>';
-      }
-      h += '</div>';
-      h += '</div>';
+      h += SparkSessionShellUI.renderCompactSummary(activeShell, {
+        label: "Practice Session Live",
+        accent: "#45B7D1",
+        background: "rgba(69,183,209,.12)",
+        marginTop: "0"
+      });
     }
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Focus: '+escHTML(getPracticeSummaryFocus(plan))+'</div>';
     for(var pi=0;pi<plan.items.length;pi++){
@@ -783,18 +743,15 @@ function renderPracticePlanSummaryCard(plan) {
     h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML("Block " + (activeShell.activeIndex + 1) + "/" + activeShell.blockCount) + '</span>';
     h += '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">The shared session shell is already in motion.</div>';
-    h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(69,183,209,.12);margin-bottom:10px">';
-    h += '<div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(activeShell.title) + '</div>';
-    h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(activeShell.statusLabel) + '</div>';
-    h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML((activeShell.targetDurationMin || 10) + " min shell") + '</div>';
-    h += '</div>';
-    h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-    h += '<button class="btn" onclick="act(\'' + activeShell.primaryAction + '\')" style="background:#45B7D1;color:#fff;font-weight:800">' + escHTML(activeShell.primaryLabel) + '</button>';
-    if (activeShell.canSkip) {
-      h += '<button class="btn" onclick="act(\'sessionSkipBlock\')" style="background:#FF8A5C;color:#fff;font-weight:800">Skip Block</button>';
-    }
-    h += '<button class="btn" onclick="act(\'openPlan\')" style="background:var(--input-bg);color:var(--text-primary);font-weight:800">Open Plan</button>';
-    h += '</div>';
+    h += SparkSessionShellUI.renderCompactSummary(activeShell, {
+      label: "Practice Session Live",
+      accent: "#45B7D1",
+      background: "rgba(69,183,209,.12)",
+      marginTop: "0",
+      renderExtraButtons: function() {
+        return '<button class="btn btn-sm" onclick="act(\'openPlan\')" style="background:var(--input-bg);color:var(--text-primary);font-size:11px;padding:4px 8px">Open Plan</button>';
+      }
+    });
     h += '</div>';
     return h;
   }

@@ -12,6 +12,7 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
+_testEval(loadJS("js/sparksuite/ui/session_shell.js"));
 
 
 function resetEnvironment() {
