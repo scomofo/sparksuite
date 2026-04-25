@@ -365,6 +365,20 @@
       return window.SparkUkuleleTuning || null;
     },
 
+    getCapabilities: function() {
+      return {
+        stringCount: 4,
+        keyCount: null,
+        supportsChords: true,
+        supportsScales: true,
+        supportsStrumming: true,
+        supportsFingerpicking: true,
+        supportsMelody: true,
+        preferredRenderer: "string-lane-highway",
+        inputModes: ["keyboard", "midi", "mouse"]
+      };
+    },
+
     getSongs: function() {
       return getSongs();
     },

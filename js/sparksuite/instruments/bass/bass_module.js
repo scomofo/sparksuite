@@ -510,6 +510,20 @@
       return window.BASS_STRINGS || [];
     },
 
+    getCapabilities: function() {
+      return {
+        stringCount: 4,
+        keyCount: null,
+        supportsChords: false,
+        supportsScales: true,
+        supportsStrumming: false,
+        supportsFingerpicking: true,
+        supportsMelody: true,
+        preferredRenderer: "string-lane-highway",
+        inputModes: ["keyboard", "midi", "mouse"]
+      };
+    },
+
     getRhythmAdapter: function() {
       return new BassRhythmAdapter();
     },
