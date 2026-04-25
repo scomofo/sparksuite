@@ -3,6 +3,24 @@
     return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
   }
 
+  function applyPracticeFamilyRuntimeUpdate(update, fallback) {
+    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
+      SparkProgressBridge.applyLegacyActivityRuntime(update || {});
+      return true;
+    }
+    if (typeof fallback === "function") fallback();
+    return false;
+  }
+
+  function applyPracticeFamilyCompletionUpdate(update, fallback) {
+    if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
+      SparkProgressBridge.applyLegacyActivityCompletion(update || {});
+      return true;
+    }
+    if (typeof fallback === "function") fallback();
+    return false;
+  }
+
   function getPracticeActionRuntime() {
     return window.SparkSessionRuntime || (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
   }
@@ -177,14 +195,12 @@
       clearTimeout(T.session);
       if (S.metronomeOn) stopMetronome();
       if (S.chordDetectOn) stopChordDetect();
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields: { timerActive: true, timer: 0 }
-        });
-      } else {
+      applyPracticeFamilyRuntimeUpdate({
+        setFields: { timerActive: true, timer: 0 }
+      }, function() {
         S.timerActive = true;
         S.timer = 0;
-      }
+      });
       syncLegacyPracticeRuntimeRequest("set_remaining", {
         remainingSec: 0,
         timerActive: true,
@@ -198,15 +214,13 @@
 
     if (a === "startDaily" && S.dailyChallenge) {
       var durationSec = S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge.id === "marathon" ? 180 : 60;
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields: { dailyTimer: durationSec, dailyComplete: false, screen: SCR.DAILY }
-        });
-      } else {
+      applyPracticeFamilyRuntimeUpdate({
+        setFields: { dailyTimer: durationSec, dailyComplete: false, screen: SCR.DAILY }
+      }, function() {
         S.dailyTimer = durationSec;
         S.dailyComplete = false;
         S.screen = SCR.DAILY;
-      }
+      });
       openLegacyDailyChallengeRequest({
         challengeId: S.dailyChallenge.id,
         durationSec: durationSec
@@ -226,15 +240,13 @@
         challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
         durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
       });
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
-        SparkProgressBridge.applyLegacyActivityCompletion({
-          xpDelta: xp,
-          setFlags: { dailyComplete: true },
-          incrementFields: { dailyDone: 1 },
-          history: { type: "daily", detail: S.dailyChallenge ? S.dailyChallenge.title : "Challenge", xp: xp },
-          checkBadges: true
-        });
-      } else {
+      applyPracticeFamilyCompletionUpdate({
+        xpDelta: xp,
+        setFlags: { dailyComplete: true },
+        incrementFields: { dailyDone: 1 },
+        history: { type: "daily", detail: S.dailyChallenge ? S.dailyChallenge.title : "Challenge", xp: xp },
+        checkBadges: true
+      }, function() {
         S.dailyComplete = true;
         S.dailyDone++;
         if (window.SparkProgressBridge) SparkProgressBridge.applyLegacyReward({ xpDelta: xp });
@@ -242,7 +254,7 @@
         logHistory("daily", S.dailyChallenge ? S.dailyChallenge.title : "Challenge", xp);
         checkBadges();
         saveState();
-      }
+      });
       trigC();
       render();
       return true;
@@ -275,25 +287,21 @@
           streak: nextEarTrainStreak
         });
       }
-      if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-        SparkProgressBridge.applyLegacyActivityRuntime({
-          setFields: { earTrainAns: v },
-          incrementFields: { earTrainTotal: 1 }
-        });
-      } else {
+      applyPracticeFamilyRuntimeUpdate({
+        setFields: { earTrainAns: v },
+        incrementFields: { earTrainTotal: 1 }
+      }, function() {
         S.earTrainAns = v;
         S.earTrainTotal++;
-      }
+      });
       if (earTrainOk) {
         snd("correct");
-        if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
-          SparkProgressBridge.applyLegacyActivityCompletion({
-            xpDelta: 15,
-            incrementFields: { earTrainScore: 1, earTrainStreak: 1 },
-            history: { type: "ear", detail: S.earTrainQ, xp: 15 },
-            checkBadges: true
-          });
-        } else {
+        applyPracticeFamilyCompletionUpdate({
+          xpDelta: 15,
+          incrementFields: { earTrainScore: 1, earTrainStreak: 1 },
+          history: { type: "ear", detail: S.earTrainQ, xp: 15 },
+          checkBadges: true
+        }, function() {
           S.earTrainScore++;
           S.earTrainStreak++;
           if (window.SparkProgressBridge) SparkProgressBridge.applyLegacyReward({ xpDelta: 15 });
@@ -301,16 +309,14 @@
           logHistory("ear", S.earTrainQ, 15);
           checkBadges();
           saveState();
-        }
+        });
       } else {
         snd("wrong");
-        if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-          SparkProgressBridge.applyLegacyActivityRuntime({
-            setFields: { earTrainStreak: 0 }
-          });
-        } else {
+        applyPracticeFamilyRuntimeUpdate({
+          setFields: { earTrainStreak: 0 }
+        }, function() {
           S.earTrainStreak = 0;
-        }
+        });
       }
       render();
       setTimeout(function() { act("startEarTrain"); }, 1500);
