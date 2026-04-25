@@ -280,9 +280,55 @@ test("guided page shows block progress from the active v2 session plan", functio
   assert.ok(html.indexOf("7m left") >= 0);
   assert.ok(html.indexOf("About 1m 30s left in this block.") >= 0);
   assert.ok(html.indexOf("onclick=\"act('guidedAdvancePhase')\"") >= 0);
+  assert.ok(html.indexOf("onclick=\"act('guidedPauseBlock')\"") >= 0);
+  assert.ok(html.indexOf(">Pause Block<") >= 0);
   assert.ok(html.indexOf(">Continue<") >= 0);
   assert.ok(html.indexOf("onclick=\"act('guidedSkipBlock')\"") >= 0);
   assert.ok(html.indexOf(">Skip Drill<") >= 0);
+});
+
+test("guided page switches active block controls and status when transport is paused", function() {
+  S.guidedPlan = {
+    id: "gtr-d06",
+    num: 6,
+    title: "D to A slowly",
+    level: 1,
+    bpm: 80,
+    spark: { text: "Warm up." },
+    newMove: { text: "Try the drill.", chord: "A" },
+    songSlice: { text: "Play the song." },
+    victoryLap: { text: "Free play." }
+  };
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: { guidedPlan: S.guidedPlan, guidedShellDurationSec: 600 },
+        segments: [
+          { id: "gtr-d06_warm_engine", label: "Warm Engine", durationSec: 90, completed: true, meta: { guidedBlockType: "warm_engine" } },
+          { id: "gtr-d06_drill", label: "Drill", durationSec: 180, completed: false, meta: { guidedBlockType: "drill" } },
+          { id: "gtr-d06_song", label: "Song Slice", durationSec: 240, completed: false, meta: { guidedBlockType: "song" } },
+          { id: "gtr-d06_cooldown", label: "Cooldown", durationSec: 90, completed: false, meta: { guidedBlockType: "cooldown" } }
+        ]
+      },
+      runtimeState: {
+        guidedStep: "newMove",
+        guidedNewMovePhase: "shadow",
+        activeSegmentId: "gtr-d06_drill",
+        transport: {
+          status: "paused",
+          positionMs: 90000
+        }
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+
+  var html = guidedSessionPage();
+  assert.ok(html.indexOf("Paused with 1m 30s left in this block.") >= 0);
+  assert.ok(html.indexOf("onclick=\"act('guidedResumeBlock')\"") >= 0);
+  assert.ok(html.indexOf(">Resume Block<") >= 0);
+  assert.ok(html.indexOf("onclick=\"act('guidedPauseBlock')\"") === -1);
 });
 
 test("guided page shows drill subphase progress on the active block card", function() {
@@ -1140,6 +1186,59 @@ test("resume_guided_session reopens the active guided shell without restarting i
   assert.strictEqual(S.guidedActivityKind, "review");
   assert.strictEqual(S.guidedBlockType, "drill");
   assert.deepStrictEqual(startCalls, []);
+});
+
+test("guided pause and resume actions sync the shared session runtime transport", function() {
+  var attachCalls = [];
+  var transportCalls = [];
+  S.guidedSession = 2;
+  S.guidedStep = "newMove";
+  S.newMovePhase = "shadow";
+  S.screen = "guided";
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          lesson: { num: 2 },
+          context: { guidedSession: 2, guidedPlan: S.guidedPlan },
+          segments: [
+            { id: "gtr-d02_drill", label: "Drill", durationSec: 180, meta: { guidedBlockType: "drill" } }
+          ]
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          activeSegmentId: "gtr-d02_drill",
+          guidedStep: "newMove",
+          guidedNewMovePhase: "shadow",
+          transport: { status: "running", positionMs: 45000 }
+        }
+      };
+    },
+    syncGuidedRuntimeState: function(patch) {
+      return patch;
+    }
+  };
+  global.SparkSessionRuntime = {
+    attachSession: function(plan, options) {
+      attachCalls.push({ plan: plan, options: options });
+      return true;
+    },
+    syncSegmentTransport: function(action) {
+      transportCalls.push(action);
+      return true;
+    }
+  };
+  global.eval(loadJS("js/actions/system_family.js"));
+
+  assert.strictEqual(global.runSparkActionFamilies("guidedPauseBlock"), true);
+  assert.strictEqual(global.runSparkActionFamilies("guidedResumeBlock"), true);
+  assert.strictEqual(attachCalls.length, 2);
+  assert.strictEqual(attachCalls[0].options.segmentId, "gtr-d02_drill");
+  assert.strictEqual(attachCalls[0].options.positionMs, 45000);
+  assert.deepStrictEqual(transportCalls, ["pause", "resume"]);
+
+  delete global.SparkSessionRuntime;
 });
 
 if (process.exitCode) process.exit(process.exitCode);

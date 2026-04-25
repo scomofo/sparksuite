@@ -583,6 +583,16 @@ function getGuidedSkipAction(guidedView) {
   return null;
 }
 
+function getGuidedTransportAction(guidedView) {
+  var runtimeState = guidedView && guidedView.runtimeState ? guidedView.runtimeState : null;
+  var step = guidedView && guidedView.guidedStep ? guidedView.guidedStep : null;
+  var status = runtimeState && runtimeState.transport ? runtimeState.transport.status : "";
+  if (step === "victoryLap" && status === "completed") return null;
+  if (status === "paused") return { action: "guidedResumeBlock", label: "Resume Block" };
+  if (status === "running") return { action: "guidedPauseBlock", label: "Pause Block" };
+  return null;
+}
+
 function renderGuidedBlockProgress(blockProgress, guidedView) {
   if (!blockProgress || !blockProgress.length) return "";
   return '<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 16px">' +
@@ -590,6 +600,7 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
       var quickAction = block.state === "now" ? getGuidedQuickAction(guidedView) : null;
       var extendAction = block.state === "now" ? getGuidedExtendAction(guidedView) : null;
       var skipAction = block.state === "now" ? getGuidedSkipAction(guidedView) : null;
+      var transportAction = block.state === "now" ? getGuidedTransportAction(guidedView) : null;
       var durationLabel = block.durationSec > 0
         ? Math.max(1, Math.round(block.durationSec / 60)) + " min"
         : "";
@@ -647,10 +658,13 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
           escHTML(deepFocusLabel || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
-        (quickAction || extendAction || skipAction
+        (quickAction || transportAction || extendAction || skipAction
           ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' +
               (quickAction
                 ? '<button class="btn" onclick="act(\'' + quickAction.action + '\')" style="padding:8px 12px;font-size:12px;font-weight:800;background:' + stateColor + ';color:' + (block.state === "done" ? "#0F3D38" : "#fff") + '">' + escHTML(quickAction.label) + '</button>'
+                : '') +
+              (transportAction
+                ? '<button class="btn" onclick="act(\'' + transportAction.action + '\')" style="padding:8px 12px;font-size:12px;font-weight:800;background:#fff;color:' + stateColor + ';border:1px solid ' + stateColor + '">' + escHTML(transportAction.label) + '</button>'
                 : '') +
               (extendAction
                 ? '<button class="btn" onclick="act(\'' + extendAction.action + '\')" style="padding:8px 12px;font-size:12px;font-weight:800;background:transparent;color:' + stateColor + ';border:1px solid ' + stateColor + '">' + escHTML(extendAction.label) + '</button>'
@@ -1058,10 +1072,18 @@ function renderGuidedActionStatus(guidedView, accentColor) {
   var activeBlock = getGuidedActiveBlockSnapshot(guidedView && guidedView.blockProgress);
   var statusText = "";
   var statusColor = accentColor || "#FF8A5C";
+  var transportStatus = guidedView && guidedView.runtimeState && guidedView.runtimeState.transport
+    ? guidedView.runtimeState.transport.status
+    : "";
   var extensionCount;
   if (!activeBlock) return "";
   extensionCount = normalizeGuidedCount(activeBlock.extensionCount, 0);
-  if (extensionCount > 0) {
+  if (transportStatus === "paused") {
+    statusText = normalizeGuidedCount(activeBlock.remainingSec, 0) > 0
+      ? "Paused with " + formatGuidedDurationLabel(activeBlock.remainingSec) + " left in this block."
+      : "Paused.";
+    statusColor = "#6E56B3";
+  } else if (extensionCount > 0) {
     statusText = getGuidedExtendStatusLabel(extensionCount);
     statusColor = "#A78BFA";
   } else if ((activeBlock.progressRatio || 0) >= 0.85 || normalizeGuidedCount(activeBlock.remainingSec, 0) <= 20) {
@@ -1397,6 +1419,7 @@ function getGuidedSessionView() {
   return {
     plan: resolvedPlan,
     corePlan: currentPlan,
+    runtimeState: runtimeState,
     guidedStep: guidedStep,
     newMovePhase: runtimeState && runtimeState.guidedNewMovePhase
       ? runtimeState.guidedNewMovePhase

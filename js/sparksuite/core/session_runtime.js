@@ -36,6 +36,15 @@
     return findExerciseById(_activeSession, ids[0]);
   }
 
+  function findSegmentIndexById(session, segmentId) {
+    var segments = session && Array.isArray(session.segments) ? session.segments : [];
+    var i;
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === segmentId) return i;
+    }
+    return -1;
+  }
+
   function getExecutionGateway() {
     if (typeof window !== "undefined" && window.SparkExecutionGateway) return window.SparkExecutionGateway;
     if (typeof SparkExecutionGateway !== "undefined") return SparkExecutionGateway;
@@ -269,6 +278,55 @@
     return _activeSession;
   }
 
+  function attachSession(session, options) {
+    var segmentIndex;
+    var nowMs;
+    var segment;
+    options = options || {};
+    if (!session || !Array.isArray(session.segments) || !session.segments.length) {
+      resetSegmentTransport();
+      _activeSession = session || null;
+      _activeSegmentIndex = -1;
+      return false;
+    }
+
+    _activeSession = session;
+    if (!options.preserveEvents) _sessionEvents = [];
+    segmentIndex = Object.prototype.hasOwnProperty.call(options, "segmentIndex")
+      ? parseInt(options.segmentIndex, 10)
+      : findSegmentIndexById(session, options.segmentId || null);
+    if (isNaN(segmentIndex) || segmentIndex < 0 || segmentIndex >= session.segments.length) {
+      segmentIndex = 0;
+    }
+    _activeSegmentIndex = segmentIndex;
+    stopTransportTicker();
+
+    segment = getActiveSegment();
+    nowMs = options.nowMs != null ? options.nowMs : Date.now();
+    _segmentTransport.status = options.status || "ready";
+    _segmentTransport.positionMs = Math.max(0, Math.round(options.positionMs || 0));
+    _segmentTransport.durationMs = Math.max(0, Math.round(((segment && segment.durationSec) || 0) * 1000));
+    if (_segmentTransport.durationMs > 0) {
+      _segmentTransport.positionMs = Math.min(_segmentTransport.durationMs, _segmentTransport.positionMs);
+    }
+    _segmentTransport.autoAdvance = !!options.autoAdvance;
+    _segmentTransport.startedAtMs = 0;
+    _segmentTransport.pauseStartedAtMs = 0;
+    if (_segmentTransport.status === "running") {
+      _segmentTransport.startedAtMs = nowMs - _segmentTransport.positionMs;
+      if (options.scheduleTick !== false) scheduleTransportTicker();
+    } else if (_segmentTransport.status === "paused") {
+      _segmentTransport.pauseStartedAtMs = nowMs;
+    }
+    if (segment && _segmentTransport.status === "completed") {
+      segment.completed = true;
+    }
+    if (options.syncState !== false) {
+      syncSparkCoreTransport(_segmentTransport.status, _segmentTransport.positionMs);
+    }
+    return true;
+  }
+
   // Run a specific segment from the active session
   function runSegment(segmentIndex, options) {
     if (!_activeSession || !_activeSession.segments) return false;
@@ -412,7 +470,8 @@
     getActiveExercise: getActiveExercise,
     getSessionEvents: getSessionEvents,
     getSegmentTransport: getSegmentTransport,
-    syncSegmentTransport: syncSegmentTransport
+    syncSegmentTransport: syncSegmentTransport,
+    attachSession: attachSession
   };
 
   if (typeof window !== "undefined") window.SparkSessionRuntime = SparkSessionRuntime;
