@@ -2125,6 +2125,94 @@ test("practice action family routes ear-training and daily progression through t
   assert.strictEqual(dailyCompleteRequests[0].challengeId, "daily_1");
 });
 
+test("utility action family routes curriculum and back navigation through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var utilityRequests = [];
+  var curriculumSyncs = 0;
+  var homeReturns = [];
+  var utilityReturns = [];
+  var songNavigations = [];
+  var stopTimerCalls = 0;
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.openUtilityScreenRequest = function(screen) {
+    utilityRequests.push(screen);
+    return screen;
+  };
+  global.syncCurriculumStateRequest = function() {
+    curriculumSyncs += 1;
+  };
+  global.returnFromHomeFamilyRequest = function(payload) {
+    homeReturns.push(payload);
+    return payload;
+  };
+  global.returnFromUtilityFamilyRequest = function(payload) {
+    utilityReturns.push(payload);
+    return payload;
+  };
+  global.applySongNavigationRequest = function(target) {
+    songNavigations.push(target);
+    return target;
+  };
+  global.stopAllTimers = function() {
+    stopTimerCalls += 1;
+  };
+  global.render = function() {};
+  global.S = {
+    screen: "song_done",
+    tab: "songs",
+    selectedVoicing: 2
+  };
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.SONG = "song";
+  global.SCR.SONG_DONE = "song_done";
+  global.SCR.CURRICULUM = "curriculum";
+  global.SCR.HOME = "home";
+  global.SCR.HOME_DASH = "home_dash";
+  global.SCR.SETTINGS = "settings";
+  global.SCR.CLOUD_SETTINGS = "cloud_settings";
+  global.SCR.MIDI_SETTINGS = "midi_settings";
+  global.SCR.MIDI_IMPORT = "midi_import";
+  global.SCR.DAILY = "daily";
+  global.SCR.RECOMMENDATIONS = "recommendations";
+  global.SCR.INSIGHTS = "insights";
+  global.SCR.CHALLENGES = "challenges";
+  global.SCR.CAREER = "career";
+  global.TAB.DAILY = "daily";
+
+  eval(loadJS("js/actions/utility_family.js"));
+
+  assert.strictEqual(__actionFamilies.utilities("openCurriculum"), true);
+  assert.strictEqual(__actionFamilies.utilities("back"), true);
+
+  assert.deepStrictEqual(utilityRequests, ["curriculum"]);
+  assert.strictEqual(curriculumSyncs, 1);
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { screen: "curriculum" }
+  });
+  assert.deepStrictEqual(songNavigations, ["songs_home"]);
+  assert.strictEqual(homeReturns.length, 1);
+  assert.deepStrictEqual(homeReturns[0], { currentScreen: "home" });
+  assert.strictEqual(utilityReturns.length, 0);
+  assert.strictEqual(stopTimerCalls, 1);
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: { selectedVoicing: 0, screen: "home", tab: "songs" }
+  });
+});
+
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
   var core = createDefaultSparkCore();
   var syncedChallenge = null;
