@@ -2026,6 +2026,105 @@ test("practice action family can pause, resume, and skip the shared daily-practi
   assert.strictEqual(syncCalls[0].status, "running");
 });
 
+test("practice action family routes ear-training and daily progression through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var completionUpdates = [];
+  var dailyChallengeRequests = [];
+  var dailyCompleteRequests = [];
+  var acted = [];
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.sparkCore = {
+    syncLegacyEarTrainingRuntimeState: function(payload) {
+      acted.push({ type: "syncEar", payload: payload });
+      return true;
+    }
+  };
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      runtimeUpdates.push(update);
+      return update;
+    },
+    applyLegacyActivityCompletion: function(update) {
+      completionUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.S = {
+    earTrainQ: "C Major",
+    earTrainOpts: ["C Major", "G Major", "A Minor"],
+    earTrainAns: null,
+    earTrainScore: 1,
+    earTrainTotal: 2,
+    earTrainStreak: 1,
+    dailyChallenge: { id: "daily_1", title: "Chord Sprint", xp: 40 }
+  };
+  global.T = {};
+  global.SCR = { DAILY: "daily" };
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies = global.__actionFamilies || {};
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.saveState = function() {};
+  global.snd = function() {};
+  global.trigC = function() {};
+  global.tickDy = function() {};
+  global.strumChord = function() {};
+  global.logHistory = function() {};
+  global.checkBadges = function() {};
+  global.openLegacyDailyChallengeRequest = function(payload) {
+    dailyChallengeRequests.push(payload);
+  };
+  global.completeLegacyDailyChallengeRequest = function(payload) {
+    dailyCompleteRequests.push(payload);
+  };
+  global.act = function(action) {
+    acted.push({ type: "act", action: action });
+  };
+  global.setTimeout = function(fn) {
+    fn();
+    return 1;
+  };
+  global.clearTimeout = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("answerEarTrain", "C Major"), true);
+  assert.strictEqual(__actionFamilies.practice("startDaily"), true);
+  assert.strictEqual(__actionFamilies.practice("completeDaily"), true);
+
+  assert.strictEqual(runtimeUpdates.length, 2);
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { earTrainAns: "C Major" },
+    incrementFields: { earTrainTotal: 1 }
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: { dailyTimer: 60, dailyComplete: false, screen: "daily" }
+  });
+
+  assert.strictEqual(completionUpdates.length, 2);
+  assert.deepStrictEqual(completionUpdates[0], {
+    xpDelta: 15,
+    incrementFields: { earTrainScore: 1, earTrainStreak: 1 },
+    history: { type: "ear", detail: "C Major", xp: 15 },
+    checkBadges: true
+  });
+  assert.deepStrictEqual(completionUpdates[1], {
+    xpDelta: 40,
+    setFlags: { dailyComplete: true },
+    incrementFields: { dailyDone: 1 },
+    history: { type: "daily", detail: "Chord Sprint", xp: 40 },
+    checkBadges: true
+  });
+  assert.strictEqual(dailyChallengeRequests.length, 1);
+  assert.strictEqual(dailyChallengeRequests[0].durationSec, 60);
+  assert.strictEqual(dailyCompleteRequests.length, 1);
+  assert.strictEqual(dailyCompleteRequests[0].challengeId, "daily_1");
+});
+
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
   var core = createDefaultSparkCore();
   var syncedChallenge = null;
