@@ -11,6 +11,15 @@
   var _activeSession = null;
   var _activeSegmentIndex = -1;
   var _sessionEvents = [];
+  var _segmentTransport = {
+    status: "idle",
+    positionMs: 0,
+    durationMs: 0,
+    startedAtMs: 0,
+    pauseStartedAtMs: 0,
+    autoAdvance: true,
+    tickHandle: null
+  };
 
   function findExerciseById(session, exerciseId) {
     var exercises = session && Array.isArray(session.exercises) ? session.exercises : [];
@@ -43,11 +52,202 @@
     };
   }
 
+  function getSparkCoreHandle() {
+    if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+    if (typeof sparkCore !== "undefined") return sparkCore;
+    return null;
+  }
+
+  function stopTransportTicker() {
+    if (_segmentTransport.tickHandle && typeof clearInterval === "function") {
+      clearInterval(_segmentTransport.tickHandle);
+    }
+    _segmentTransport.tickHandle = null;
+  }
+
+  function resetSegmentTransport() {
+    stopTransportTicker();
+    _segmentTransport.status = "idle";
+    _segmentTransport.positionMs = 0;
+    _segmentTransport.durationMs = 0;
+    _segmentTransport.startedAtMs = 0;
+    _segmentTransport.pauseStartedAtMs = 0;
+    _segmentTransport.autoAdvance = true;
+  }
+
+  function computeTransportPosition(nowMs) {
+    if (_segmentTransport.status === "paused" || _segmentTransport.status === "completed") {
+      return Math.max(0, Math.round(_segmentTransport.positionMs || 0));
+    }
+    if (_segmentTransport.startedAtMs <= 0) {
+      return Math.max(0, Math.round(_segmentTransport.positionMs || 0));
+    }
+    return Math.max(0, Math.round((nowMs || Date.now()) - _segmentTransport.startedAtMs));
+  }
+
+  function syncSparkCoreTransport(status, positionMs) {
+    var core = getSparkCoreHandle();
+    var segment = getActiveSegment();
+    var patch;
+    if (!core) return null;
+    patch = {
+      activeSegmentId: segment && segment.id ? segment.id : null,
+      transport: {
+        status: status || _segmentTransport.status,
+        positionMs: Math.max(0, Math.round(positionMs != null ? positionMs : _segmentTransport.positionMs || 0))
+      }
+    };
+    if (
+      _activeSession &&
+      _activeSession.flow === "guided_session" &&
+      typeof core.syncGuidedRuntimeState === "function"
+    ) {
+      return core.syncGuidedRuntimeState(patch);
+    }
+    if (typeof core.updateRuntimeState === "function") {
+      return core.updateRuntimeState(patch);
+    }
+    return null;
+  }
+
+  function finalizeSegmentCompletion(result, options) {
+    var segment = getActiveSegment();
+    var nextIndex;
+    options = options || {};
+
+    stopTransportTicker();
+    _segmentTransport.status = "completed";
+    if (_segmentTransport.durationMs > 0) {
+      _segmentTransport.positionMs = Math.min(_segmentTransport.durationMs, Math.max(0, Math.round(_segmentTransport.positionMs || 0)));
+    }
+    if (segment) segment.completed = true;
+    syncSparkCoreTransport("completed", _segmentTransport.positionMs);
+
+    if (typeof SparkEventLogger !== "undefined") {
+      SparkEventLogger.log("segment_complete", {
+        segmentIndex: _activeSegmentIndex,
+        accuracy: result ? result.accuracy : 0
+      });
+    }
+
+    if (typeof S !== "undefined") {
+      S.lastSessionEvents = _sessionEvents.slice();
+    }
+
+    nextIndex = _activeSegmentIndex + 1;
+    if (_activeSession && nextIndex < _activeSession.segments.length) {
+      if (options.autoAdvance) {
+        runSegment(nextIndex, { autoAdvance: true });
+      }
+      return { hasNext: true, nextIndex: nextIndex };
+    }
+    return { hasNext: false, nextIndex: -1 };
+  }
+
+  function scheduleTransportTicker() {
+    if (typeof setInterval !== "function") return;
+    stopTransportTicker();
+    _segmentTransport.tickHandle = setInterval(function() {
+      syncSegmentTransport("tick");
+    }, 250);
+    if (_segmentTransport.tickHandle && typeof _segmentTransport.tickHandle.unref === "function") {
+      _segmentTransport.tickHandle.unref();
+    }
+  }
+
+  function startSegmentTransport(segment, options) {
+    var durationMs = Math.max(0, Math.round(((segment && segment.durationSec) || 0) * 1000));
+    var nowMs = options && options.nowMs != null ? options.nowMs : Date.now();
+    _segmentTransport.status = "running";
+    _segmentTransport.positionMs = 0;
+    _segmentTransport.durationMs = durationMs;
+    _segmentTransport.startedAtMs = nowMs;
+    _segmentTransport.pauseStartedAtMs = 0;
+    _segmentTransport.autoAdvance = !options || options.autoAdvance !== false;
+    syncSparkCoreTransport("running", 0);
+    if (!options || options.scheduleTick !== false) {
+      scheduleTransportTicker();
+    }
+  }
+
+  function syncSegmentTransport(action, options) {
+    var nowMs;
+    var nextPositionMs;
+    var completed;
+    options = options || {};
+    if (_activeSegmentIndex < 0 || !getActiveSegment()) {
+      if (action === "complete") return { hasNext: false, nextIndex: -1 };
+      return false;
+    }
+    nowMs = options.nowMs != null ? options.nowMs : Date.now();
+
+    if (action === "pause") {
+      if (_segmentTransport.status !== "running") return _segmentTransport;
+      _segmentTransport.positionMs = computeTransportPosition(nowMs);
+      _segmentTransport.status = "paused";
+      _segmentTransport.pauseStartedAtMs = nowMs;
+      stopTransportTicker();
+      syncSparkCoreTransport("paused", _segmentTransport.positionMs);
+      return _segmentTransport;
+    }
+
+    if (action === "resume") {
+      if (_segmentTransport.status !== "paused") return _segmentTransport;
+      _segmentTransport.status = "running";
+      _segmentTransport.startedAtMs = nowMs - Math.max(0, Math.round(_segmentTransport.positionMs || 0));
+      _segmentTransport.pauseStartedAtMs = 0;
+      syncSparkCoreTransport("running", _segmentTransport.positionMs);
+      if (options.scheduleTick !== false) scheduleTransportTicker();
+      return _segmentTransport;
+    }
+
+    if (action === "seek") {
+      nextPositionMs = Math.max(0, Math.round(options.positionMs || 0));
+      if (_segmentTransport.durationMs > 0) nextPositionMs = Math.min(_segmentTransport.durationMs, nextPositionMs);
+      _segmentTransport.positionMs = nextPositionMs;
+      if (_segmentTransport.status === "running") {
+        _segmentTransport.startedAtMs = nowMs - nextPositionMs;
+      }
+      syncSparkCoreTransport(_segmentTransport.status, _segmentTransport.positionMs);
+      return _segmentTransport;
+    }
+
+    if (action === "complete") {
+      if (Object.prototype.hasOwnProperty.call(options, "positionMs")) {
+        _segmentTransport.positionMs = Math.max(0, Math.round(options.positionMs || 0));
+      } else {
+        _segmentTransport.positionMs = computeTransportPosition(nowMs);
+      }
+      if (_segmentTransport.durationMs > 0) {
+        _segmentTransport.positionMs = Math.min(_segmentTransport.durationMs, _segmentTransport.positionMs);
+      }
+      return finalizeSegmentCompletion(options.result || null, {
+        autoAdvance: options.autoAdvance === true
+      });
+    }
+
+    nextPositionMs = Object.prototype.hasOwnProperty.call(options, "positionMs")
+      ? Math.max(0, Math.round(options.positionMs || 0))
+      : computeTransportPosition(nowMs);
+    if (_segmentTransport.durationMs > 0) {
+      nextPositionMs = Math.min(_segmentTransport.durationMs, nextPositionMs);
+    }
+    _segmentTransport.positionMs = nextPositionMs;
+    syncSparkCoreTransport(_segmentTransport.status || "running", _segmentTransport.positionMs);
+
+    completed = _segmentTransport.durationMs > 0 && _segmentTransport.positionMs >= _segmentTransport.durationMs;
+    if (completed) {
+      return finalizeSegmentCompletion(null, { autoAdvance: _segmentTransport.autoAdvance });
+    }
+    return _segmentTransport;
+  }
+
   // Start a new session loop via SessionEngine
   function startSessionLoop(options) {
     options = options || {};
     _sessionEvents = [];
     _activeSegmentIndex = -1;
+    resetSegmentTransport();
 
     // Build session through the engine (single authoritative path)
     if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
@@ -70,10 +270,11 @@
   }
 
   // Run a specific segment from the active session
-  function runSegment(segmentIndex) {
+  function runSegment(segmentIndex, options) {
     if (!_activeSession || !_activeSession.segments) return false;
     if (segmentIndex < 0 || segmentIndex >= _activeSession.segments.length) return false;
 
+    options = options || {};
     _activeSegmentIndex = segmentIndex;
     var segment = _activeSession.segments[segmentIndex];
     var exercise = resolveSegmentExercise(segment);
@@ -85,16 +286,24 @@
     }
 
     if (gateway && typeof gateway.runSessionSegment === "function") {
-      return gateway.runSessionSegment(_activeSession, segment, buildSegmentLaunchOptions(segment, exercise));
+      var launched = gateway.runSessionSegment(_activeSession, segment, buildSegmentLaunchOptions(segment, exercise));
+      if (launched) startSegmentTransport(segment, options);
+      return launched;
     }
 
     // Dispatch to appropriate launcher based on segment type
     if (segment.type === "song") {
-      return _launchSong(segment, exercise);
+      var launchedSong = _launchSong(segment, exercise);
+      if (launchedSong) startSegmentTransport(segment, options);
+      return launchedSong;
     } else if (segment.type === "challenge") {
-      return _launchChallenge(segment, exercise);
+      var launchedChallenge = _launchChallenge(segment, exercise);
+      if (launchedChallenge) startSegmentTransport(segment, options);
+      return launchedChallenge;
     } else {
-      return _launchPractice(segment, exercise);
+      var launchedPractice = _launchPractice(segment, exercise);
+      if (launchedPractice) startSegmentTransport(segment, options);
+      return launchedPractice;
     }
   }
 
@@ -105,24 +314,7 @@
 
   // Complete current segment and advance
   function completeSegment(result) {
-    if (typeof SparkEventLogger !== "undefined") {
-      SparkEventLogger.log("segment_complete", {
-        segmentIndex: _activeSegmentIndex,
-        accuracy: result ? result.accuracy : 0
-      });
-    }
-
-    // Store events for next session's LearningBrain
-    if (typeof S !== "undefined") {
-      S.lastSessionEvents = _sessionEvents.slice();
-    }
-
-    // Auto-advance to next segment
-    var nextIndex = _activeSegmentIndex + 1;
-    if (_activeSession && nextIndex < _activeSession.segments.length) {
-      return { hasNext: true, nextIndex: nextIndex };
-    }
-    return { hasNext: false, nextIndex: -1 };
+    return syncSegmentTransport("complete", { result: result });
   }
 
   // Get active session info
@@ -135,6 +327,14 @@
   }
   function getActiveExercise() { return resolveSegmentExercise(getActiveSegment()); }
   function getSessionEvents() { return _sessionEvents.slice(); }
+  function getSegmentTransport() {
+    return {
+      status: _segmentTransport.status,
+      positionMs: _segmentTransport.positionMs,
+      durationMs: _segmentTransport.durationMs,
+      autoAdvance: _segmentTransport.autoAdvance
+    };
+  }
 
   // --- Internal launchers (delegate to existing functions) ---
 
@@ -210,7 +410,9 @@
     getActiveSegmentIndex: getActiveSegmentIndex,
     getActiveSegment: getActiveSegment,
     getActiveExercise: getActiveExercise,
-    getSessionEvents: getSessionEvents
+    getSessionEvents: getSessionEvents,
+    getSegmentTransport: getSegmentTransport,
+    syncSegmentTransport: syncSegmentTransport
   };
 
   if (typeof window !== "undefined") window.SparkSessionRuntime = SparkSessionRuntime;

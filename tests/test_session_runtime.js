@@ -55,6 +55,7 @@ test("getActiveSegmentIndex returns -1 initially", function() {
 
 test("runSegment delegates segment launches to SparkExecutionGateway when available", function() {
   var captured = null;
+  var runtimePatch = null;
   global.SparkExecutionGateway.runSessionSegment = function(session, segment, options) {
     captured = {
       session: session,
@@ -65,6 +66,10 @@ test("runSegment delegates segment launches to SparkExecutionGateway when availa
   };
 
   global.window.sparkCore = {
+    updateRuntimeState: function(patch) {
+      runtimePatch = patch;
+      return patch;
+    },
     startSession: function() {
       return {
         segments: [{ id: "seg_1", type: "practice", exerciseIds: ["ex_1"] }],
@@ -80,7 +85,7 @@ test("runSegment delegates segment launches to SparkExecutionGateway when availa
   };
 
   Runtime.startSessionLoop();
-  var launched = Runtime.runSegment(0);
+  var launched = Runtime.runSegment(0, { scheduleTick: false });
 
   assert.strictEqual(launched, "gateway_launch");
   assert.ok(captured);
@@ -90,6 +95,11 @@ test("runSegment delegates segment launches to SparkExecutionGateway when availa
   assert.strictEqual(captured.options.exercise.id, "ex_1");
   assert.strictEqual(Runtime.getActiveSegment().id, "seg_1");
   assert.strictEqual(Runtime.getActiveExercise().id, "ex_1");
+  assert.ok(runtimePatch);
+  assert.strictEqual(runtimePatch.activeSegmentId, "seg_1");
+  assert.strictEqual(runtimePatch.transport.status, "running");
+  assert.strictEqual(runtimePatch.transport.positionMs, 0);
+  assert.strictEqual(Runtime.getSegmentTransport().status, "running");
 
   delete global.window.sparkCore;
   global.SparkExecutionGateway.runSessionSegment = function() {
@@ -121,7 +131,7 @@ test("runSegment falls back to direct legacy launchers when SparkExecutionGatewa
   };
 
   Runtime.startSessionLoop();
-  var launched = Runtime.runSegment(0);
+  var launched = Runtime.runSegment(0, { scheduleTick: false });
 
   assert.strictEqual(launched, true);
   assert.ok(captured);
@@ -133,6 +143,73 @@ test("runSegment falls back to direct legacy launchers when SparkExecutionGatewa
     runSessionSegment: function() {
       return false;
     }
+  };
+});
+
+test("syncSegmentTransport updates transport progress and auto-advances timed segments", function() {
+  var launches = [];
+  var runtimePatches = [];
+
+  global.SparkExecutionGateway.runSessionSegment = function(session, segment) {
+    launches.push(segment.id);
+    return true;
+  };
+
+  global.window.sparkCore = {
+    updateRuntimeState: function(patch) {
+      runtimePatches.push(patch);
+      return patch;
+    },
+    startSession: function() {
+      return {
+        flow: "daily_practice",
+        segments: [
+          { id: "seg_1", type: "practice", durationSec: 1, exerciseIds: ["ex_1"] },
+          { id: "seg_2", type: "song", durationSec: 2, exerciseIds: ["ex_2"] }
+        ],
+        exercises: [
+          {
+            id: "ex_1",
+            data: {
+              core: { skill: "timing", instrument: "pianospark" },
+              gameplay: { payload: { adapterType: "pianospark" } }
+            }
+          },
+          {
+            id: "ex_2",
+            data: {
+              core: { songId: "song_2", arrangementType: "chords" },
+              gameplay: {}
+            }
+          }
+        ]
+      };
+    }
+  };
+
+  Runtime.startSessionLoop();
+  Runtime.runSegment(0, { nowMs: 1000, scheduleTick: false });
+  Runtime.syncSegmentTransport("tick", { nowMs: 1400 });
+
+  assert.strictEqual(Runtime.getActiveSegmentIndex(), 0);
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 400);
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].transport.positionMs, 400);
+
+  Runtime.syncSegmentTransport("tick", { nowMs: 2100, scheduleTick: false });
+
+  assert.deepStrictEqual(launches, ["seg_1", "seg_2"]);
+  assert.strictEqual(Runtime.getActiveSegmentIndex(), 1);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_2");
+  assert.strictEqual(Runtime.getActiveSession().segments[0].completed, true);
+  assert.strictEqual(Runtime.getSegmentTransport().status, "running");
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 0);
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].activeSegmentId, "seg_2");
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].transport.status, "running");
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].transport.positionMs, 0);
+
+  delete global.window.sparkCore;
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    return false;
   };
 });
 
