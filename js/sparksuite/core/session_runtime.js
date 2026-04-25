@@ -403,6 +403,39 @@
     return runSegment(segmentIndex, options || {});
   }
 
+  function completeSegmentById(segmentId, result, options) {
+    var segmentIndex = findSegmentIndexById(_activeSession, segmentId);
+    options = options || {};
+    if (segmentIndex < 0) return false;
+    if (_activeSegmentIndex !== segmentIndex) {
+      attachSession(_activeSession, {
+        segmentIndex: segmentIndex,
+        status: options.status || "ready",
+        positionMs: Object.prototype.hasOwnProperty.call(options, "positionMs") ? options.positionMs : 0,
+        autoAdvance: options.autoAdvance === true,
+        scheduleTick: false,
+        syncState: false,
+        preserveEvents: true,
+        nowMs: options.nowMs
+      });
+    }
+    return completeActiveSegment(result, options);
+  }
+
+  function pauseActiveSegment(options) {
+    return syncSegmentTransport("pause", options || {});
+  }
+
+  function resumeActiveSegment(options) {
+    return syncSegmentTransport("resume", options || {});
+  }
+
+  function completeActiveSegment(result, options) {
+    options = options || {};
+    options.result = result || null;
+    return syncSegmentTransport("complete", options);
+  }
+
   // Record a gameplay event (hit, miss, etc.)
   function recordEvent(event) {
     _sessionEvents.push(event);
@@ -509,6 +542,10 @@
     getSessionEvents: getSessionEvents,
     getSegmentTransport: getSegmentTransport,
     runSegmentById: runSegmentById,
+    completeSegmentById: completeSegmentById,
+    pauseActiveSegment: pauseActiveSegment,
+    resumeActiveSegment: resumeActiveSegment,
+    completeActiveSegment: completeActiveSegment,
     syncSegmentTransport: syncSegmentTransport,
     attachSession: attachSession
   };

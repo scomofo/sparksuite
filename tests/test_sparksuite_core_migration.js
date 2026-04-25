@@ -1979,6 +1979,7 @@ test("performance and studio action families can resolve sparkCore from the glob
   var performanceSelections = [];
   var practicePlanRequests = [];
   var segmentLookups = [];
+  var runtimeCompletions = [];
   global.window = {};
   global.sparkCore = {
     startSession: function(payload) {
@@ -1996,6 +1997,15 @@ test("performance and studio action families can resolve sparkCore from the glob
     },
     getActiveSessionView: function() {
       return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "warmup_1", type: "practice", exerciseIds: ["ex_warmup"] }
+          ],
+          exercises: [
+            { id: "ex_warmup", type: "practice", data: { core: { skill: "timing" }, gameplay: {} } }
+          ]
+        },
         runtimeState: {
           performanceTargetTechnique: "tap"
         }
@@ -2008,6 +2018,12 @@ test("performance and studio action families can resolve sparkCore from the glob
           gameplayPayload: { chartId: "seg_chart" }
         }
       };
+    }
+  };
+  global.window.SparkSessionRuntime = {
+    completeSegmentById: function(id, result, options) {
+      runtimeCompletions.push({ id: id, result: result, options: options });
+      return { hasNext: false, nextIndex: -1 };
     }
   };
   global.__actionFamilies = {};
@@ -2109,11 +2125,15 @@ test("performance and studio action families can resolve sparkCore from the glob
   assert.strictEqual(syncCalls[2].payload.speed, 0.8);
   assert.strictEqual(syncCalls[3].payload.preset, "guitar_solo");
   assert.strictEqual(syncCalls[4].payload.focus, "accuracy");
-  assert.strictEqual(practicePlanRequests.length, 3);
-  assert.strictEqual(practicePlanRequests[0].kind, "open");
-  assert.strictEqual(practicePlanRequests[1].kind, "complete");
-  assert.strictEqual(practicePlanRequests[1].payload.itemId, "warmup_1");
-  assert.strictEqual(practicePlanRequests[2].kind, "regenerate");
+  assert.deepStrictEqual(runtimeCompletions, [{
+    id: "warmup_1",
+    result: null,
+    options: { autoAdvance: false }
+  }]);
+  assert.deepStrictEqual(practicePlanRequests, [
+    { kind: "open", payload: {} },
+    { kind: "regenerate", payload: { forceRebuild: true } }
+  ]);
   assert.strictEqual(performanceSelections.length, 1);
   assert.strictEqual(performanceSelections[0].songId, "night_drive");
   assert.strictEqual(performanceSelections[0].arrangementType, "rhythm_chords");

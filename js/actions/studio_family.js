@@ -5,6 +5,51 @@
     return null;
   }
 
+  function getStudioSessionRuntime() {
+    if (typeof window !== "undefined" && window.SparkSessionRuntime) return window.SparkSessionRuntime;
+    if (typeof SparkSessionRuntime !== "undefined") return SparkSessionRuntime;
+    return null;
+  }
+
+  function completeRuntimePlanItem(itemId) {
+    var core = getStudioCore();
+    var runtime = getStudioSessionRuntime();
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    var plan = view && view.plan ? view.plan : null;
+    var segments = plan && Array.isArray(plan.segments) ? plan.segments : [];
+    var hasSegment = false;
+    var i;
+
+    if (!itemId || !core || !runtime || !plan || plan.flow !== "daily_practice" || typeof runtime.completeSegmentById !== "function") {
+      return false;
+    }
+
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === itemId) {
+        hasSegment = true;
+        break;
+      }
+    }
+    if (!hasSegment) return false;
+
+    if (typeof core.syncSessionRuntime === "function") {
+      core.syncSessionRuntime({
+        segmentId: itemId,
+        status: "ready",
+        positionMs: 0,
+        autoAdvance: false,
+        scheduleTick: false,
+        syncState: false
+      });
+    }
+
+    return runtime.completeSegmentById(itemId, null, {
+      autoAdvance: false
+    }) !== false;
+  }
+
   function isStudioGuidedSessionActive() {
     var core = getStudioCore();
     var view = core && typeof core.getActiveSessionView === "function"
@@ -514,7 +559,7 @@
     }
 
     if (a === "completePlanItem") {
-      if (getStudioCore()) completeDailyPracticePlanRequest({ itemId: v });
+      if (!completeRuntimePlanItem(v) && getStudioCore()) completeDailyPracticePlanRequest({ itemId: v });
       else if (typeof markPracticePlanItem === "function") markPracticePlanItem(v);
       render();
       return true;

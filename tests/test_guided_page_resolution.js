@@ -1224,8 +1224,12 @@ test("guided pause and resume actions sync the shared session runtime transport"
       attachCalls.push({ plan: plan, options: options });
       return true;
     },
-    syncSegmentTransport: function(action) {
-      transportCalls.push(action);
+    pauseActiveSegment: function() {
+      transportCalls.push("pause");
+      return true;
+    },
+    resumeActiveSegment: function() {
+      transportCalls.push("resume");
       return true;
     }
   };
