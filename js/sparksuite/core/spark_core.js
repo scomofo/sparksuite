@@ -3005,7 +3005,41 @@
     return core;
   }
 
+  function shouldMountSparkDebugOverlay() {
+    if (window.SPARK_DEBUG === true) return true;
+    if (!window.location || typeof window.location.search !== "string") return false;
+    return window.location.search.indexOf("debug=true") >= 0;
+  }
+
+  function mountDefaultSparkDebugOverlay(core) {
+    var gateway;
+    var runtime;
+    var debugState;
+
+    if (!shouldMountSparkDebugOverlay()) return false;
+    if (typeof window.createSparkDebugState !== "function" || typeof window.mountSparkDebugOverlay !== "function") {
+      return false;
+    }
+
+    gateway = window.SparkExecutionGateway || (typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null);
+    runtime = window.SparkSessionRuntime || null;
+    debugState = window.createSparkDebugState({
+      sparkCore: core,
+      gateway: gateway,
+      runtime: runtime
+    });
+
+    if (typeof window.__unmountSparkDebugOverlay === "function") {
+      window.__unmountSparkDebugOverlay();
+    }
+
+    window.SparkDebug = debugState;
+    window.__unmountSparkDebugOverlay = window.mountSparkDebugOverlay(debugState);
+    return true;
+  }
+
   window.SparkCoreRuntime = SparkCore;
   window.createDefaultSparkCore = createDefaultSparkCore;
   window.sparkCore = createDefaultSparkCore();
+  mountDefaultSparkDebugOverlay(window.sparkCore);
 })();
