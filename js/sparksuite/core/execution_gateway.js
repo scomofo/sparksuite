@@ -8,6 +8,8 @@
 
   var _handlers = {};
   var _missingCounts = {};
+  var _defaultHandlersInstalled = false;
+  var _sparkCoreHandle = null;
 
   function register(name, handler) {
     if (typeof name !== "string" || !name) {
@@ -49,6 +51,7 @@
   function clearHandlers() {
     _handlers = {};
     _missingCounts = {};
+    _defaultHandlersInstalled = false;
   }
 
   function execute(name, payload, fallback) {
@@ -111,10 +114,73 @@
     return "practice";
   }
 
+  function setSparkCoreHandle(core) {
+    _sparkCoreHandle = core || null;
+    return _sparkCoreHandle;
+  }
+
   function getSparkCoreHandle() {
+    if (_sparkCoreHandle) return _sparkCoreHandle;
     if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
     if (typeof sparkCore !== "undefined") return sparkCore;
     return null;
+  }
+
+  function registerDefaultHandler(name, handler, options) {
+    if (options && options.force === true) unregister(name);
+    if (!getRegisteredHandler(name)) register(name, handler);
+  }
+
+  function runDefaultSegment(payload) {
+    if (!payload || !payload.exercise) return false;
+    return runExercise(payload.exercise, payload.options);
+  }
+
+  function startDefaultSong(payload) {
+    if (!payload || !payload.target || typeof startPerformance !== "function") return false;
+    startPerformance(payload.target, payload.options || {});
+    return true;
+  }
+
+  function startDefaultPractice(payload) {
+    if (!payload || !payload.payload || typeof startPlayableRhythmHighwayPayload !== "function") return false;
+    startPlayableRhythmHighwayPayload(payload.payload, payload.options || {});
+    return true;
+  }
+
+  function installDefaultHandlers(options) {
+    var segmentTypes;
+    var i;
+    options = options || {};
+
+    if (Object.prototype.hasOwnProperty.call(options, "sparkCore")) {
+      setSparkCoreHandle(options.sparkCore);
+    }
+    if (_defaultHandlersInstalled && options.force !== true) return false;
+
+    segmentTypes = [
+      "practice",
+      "song",
+      "challenge",
+      "warm_engine",
+      "drill",
+      "cooldown",
+      "review",
+      "newMove",
+      "songSlice",
+      "victoryLap"
+    ];
+
+    for (i = 0; i < segmentTypes.length; i++) {
+      registerDefaultHandler("session.segment." + segmentTypes[i], runDefaultSegment, options);
+    }
+    registerDefaultHandler("session.segment.start", runDefaultSegment, options);
+    registerDefaultHandler("song.start", startDefaultSong, options);
+    registerDefaultHandler("practice.start", startDefaultPractice, options);
+    registerDefaultHandler("challenge.start", startDefaultPractice, options);
+
+    _defaultHandlersInstalled = true;
+    return true;
   }
 
   function findSegmentById(session, segmentId) {
@@ -428,6 +494,8 @@
     register: register,
     unregister: unregister,
     execute: execute,
+    setSparkCoreHandle: setSparkCoreHandle,
+    installDefaultHandlers: installDefaultHandlers,
     getMissingHandlerReport: getMissingHandlerReport,
     clearHandlers: clearHandlers,
     normalizeToExercise: normalizeToExercise,

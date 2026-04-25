@@ -79,6 +79,39 @@ test("execute records missing handler counts when fallback path is used", functi
   GW.clearHandlers();
 });
 
+test("installDefaultHandlers registers explicit practice and song launch handlers", function() {
+  var practiceCaptured = null;
+  var songCaptured = null;
+  GW.clearHandlers();
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    practiceCaptured = { payload: payload, options: options };
+    return true;
+  };
+  global.startPerformance = function(target, options) {
+    songCaptured = { target: target, options: options };
+    return true;
+  };
+
+  GW.installDefaultHandlers();
+
+  assert.strictEqual(GW.runDirectExercise({
+    type: "practice",
+    gameplayPayload: { adapterType: "ukespark" },
+    instrument: "ukespark"
+  }, { source: "default_practice" }), true);
+  assert.ok(practiceCaptured);
+  assert.strictEqual(practiceCaptured.options.instrument, "ukulele");
+
+  assert.strictEqual(GW.runDirectExercise("default_song_chart", { source: "default_song" }), true);
+  assert.ok(songCaptured);
+  assert.strictEqual(songCaptured.target, "default_song_chart");
+  assert.deepStrictEqual(GW.getMissingHandlerReport(), {});
+
+  delete global.startPlayableRhythmHighwayPayload;
+  delete global.startPerformance;
+  GW.clearHandlers();
+});
+
 test("runSessionSegment uses registered segment handlers before exercise launch fallbacks", function() {
   var captured = null;
   GW.clearHandlers();
@@ -143,6 +176,42 @@ test("runSessionSegment falls back through the shared segment-start handler", fu
   assert.strictEqual(captured.segment.id, "seg_shared");
   assert.strictEqual(captured.exercise.id, "ex_shared");
   assert.strictEqual(GW.getMissingHandlerReport()["session.segment.song"], 1);
+  GW.clearHandlers();
+});
+
+test("installDefaultHandlers registers explicit session segment handlers", function() {
+  var captured = null;
+  GW.clearHandlers();
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    captured = { payload: payload, options: options };
+    return true;
+  };
+
+  GW.installDefaultHandlers();
+
+  var result = GW.runSessionSegment({
+    id: "plan_default_segment",
+    segments: [
+      { id: "seg_default_practice", type: "drill", exerciseIds: ["ex_default_practice"] }
+    ],
+    exercises: [
+      {
+        id: "ex_default_practice",
+        type: "practice",
+        data: {
+          core: { skill: "timing", instrument: "pianospark" },
+          gameplay: { payload: { adapterType: "pianospark" } }
+        }
+      }
+    ]
+  }, { id: "seg_default_practice", type: "drill", exerciseIds: ["ex_default_practice"] }, { source: "default_segment" });
+
+  assert.strictEqual(result, true);
+  assert.ok(captured);
+  assert.strictEqual(captured.options.instrument, "piano");
+  assert.deepStrictEqual(GW.getMissingHandlerReport(), {});
+
+  delete global.startPlayableRhythmHighwayPayload;
   GW.clearHandlers();
 });
 

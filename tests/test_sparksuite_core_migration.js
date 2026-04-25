@@ -191,6 +191,7 @@ eval(loadJS("js/sparksuite/core/curriculum_engine.js"));
 eval(loadJS("js/sparksuite/core/practice_engine.js"));
 eval(loadJS("js/sparksuite/core/progress_engine.js"));
 eval(loadJS("js/sparksuite/core/session_engine.js"));
+eval(loadJS("js/sparksuite/core/execution_gateway.js"));
 eval(loadJS("js/sparksuite/core/spark_core.js"));
 
 console.log("\n--- SparkSuite Core Migration ---");
@@ -205,6 +206,47 @@ test("startSession returns a SessionPlan and syncs the legacy practice plan", fu
   assert.ok(S.practicePlan);
   assert.strictEqual(S.practicePlan.items.length, 2);
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "session_1");
+});
+
+test("createDefaultSparkCore installs explicit default execution gateway handlers", function() {
+  var practiceCaptured = null;
+  var songCaptured = null;
+  var core;
+
+  SparkExecutionGateway.clearHandlers();
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    practiceCaptured = { payload: payload, options: options };
+    return true;
+  };
+  global.startPerformance = function(target, options) {
+    songCaptured = { target: target, options: options };
+    return true;
+  };
+
+  core = createDefaultSparkCore();
+
+  assert.ok(core);
+  assert.strictEqual(
+    SparkExecutionGateway.runDirectExercise({
+      type: "practice",
+      gameplayPayload: { adapterType: "pianospark" },
+      instrument: "pianospark"
+    }, { source: "gateway_bootstrap_practice" }),
+    true
+  );
+  assert.ok(practiceCaptured);
+  assert.strictEqual(practiceCaptured.options.instrument, "pianospark");
+
+  assert.strictEqual(
+    SparkExecutionGateway.runDirectExercise("gateway_bootstrap_song", { source: "gateway_bootstrap_song" }),
+    true
+  );
+  assert.ok(songCaptured);
+  assert.strictEqual(songCaptured.target, "gateway_bootstrap_song");
+  assert.deepStrictEqual(SparkExecutionGateway.getMissingHandlerReport(), {});
+
+  delete global.startPlayableRhythmHighwayPayload;
+  delete global.startPerformance;
 });
 
 test("daily practice plans preserve segment labels when projected back to legacy state", function() {

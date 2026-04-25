@@ -2976,6 +2976,8 @@
 
   function createDefaultSparkCore() {
     var instrumentManager = new SparkInstrumentManager();
+    var gateway;
+    var core;
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.guitar) {
       instrumentManager.register("guitar", window.SparkSuiteInstrumentAdapters.guitar);
     }
@@ -2988,9 +2990,19 @@
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.ukulele) {
       instrumentManager.register("ukulele", window.SparkSuiteInstrumentAdapters.ukulele);
     }
-    return new SparkCore({
+    core = new SparkCore({
       instrumentManager: instrumentManager
     });
+    gateway = window.SparkExecutionGateway || (typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null);
+    if (gateway && typeof gateway.installDefaultHandlers === "function") {
+      gateway.installDefaultHandlers({
+        sparkCore: core,
+        force: true
+      });
+    } else if (gateway && typeof gateway.setSparkCoreHandle === "function") {
+      gateway.setSparkCoreHandle(core);
+    }
+    return core;
   }
 
   window.SparkCoreRuntime = SparkCore;
