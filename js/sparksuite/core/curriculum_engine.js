@@ -155,5 +155,18 @@
     };
   };
 
+  CurriculumEngine.prototype.peekNextSkill = function(context) {
+    context = context || {};
+    var session = context.session || null;
+    var instrumentType = session && session.instrumentType
+      ? session.instrumentType
+      : (context.instrumentType || null);
+    var instrumentContext = context.instrumentContext || { instrumentType: instrumentType };
+    var dailyContext = this.getDailyPracticeContext(instrumentContext);
+    var nextLesson = dailyContext && dailyContext.nextLesson ? dailyContext.nextLesson : null;
+    if (!nextLesson) return null;
+    return nextLesson.skill || nextLesson.id || null;
+  };
+
   window.SparkSuiteCurriculumEngine = CurriculumEngine;
 })();

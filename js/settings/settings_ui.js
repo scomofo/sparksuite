@@ -31,6 +31,9 @@ function renderSettingsCategory(cat){
   var theme = runtimeState && runtimeState.settingsTheme
     ? runtimeState.settingsTheme
     : ((S.settings && S.settings.theme) || "dark");
+  var accessibility = core && typeof core.getAccessibilitySettings === "function"
+    ? core.getAccessibilitySettings()
+    : ((S.settings && S.settings.accessibility) || {});
   var h = '<div class="card mb16">';
   h += '<div><b>'+escHTML(cat.title)+'</b></div>';
   if(cat.id === "display"){
@@ -47,6 +50,22 @@ function renderSettingsCategory(cat){
   }
   if(cat.id === "practice"){
     h += '<div style="margin-top:8px">Practice Reminder: '+((S.settings && S.settings.practiceReminder) ? "On" : "Off")+'</div>';
+  }
+  if(cat.id === "accessibility"){
+    h += '<div style="margin-top:8px;font-size:12px;color:var(--text-secondary)">Comfort settings live here without touching progression or scoring.</div>';
+    h += '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">';
+    h += '<button onclick="act(\'toggleAccessibilitySetting\',\'reducedMotion\')" style="opacity:' + (accessibility.reducedMotion ? 1 : 0.6) + '">Reduced Motion</button>';
+    h += '<button onclick="act(\'toggleAccessibilitySetting\',\'laneLabels\')" style="opacity:' + (accessibility.laneLabels !== false ? 1 : 0.6) + '">Lane Labels</button>';
+    h += '<button onclick="act(\'toggleAccessibilitySetting\',\'colorblindSafeLanes\')" style="opacity:' + (accessibility.colorblindSafeLanes ? 1 : 0.6) + '">Colorblind Safe</button>';
+    h += '<button onclick="act(\'toggleAccessibilitySetting\',\'leftHandedLayout\')" style="opacity:' + (accessibility.leftHandedLayout ? 1 : 0.6) + '">Left-Handed</button>';
+    h += '</div>';
+    h += '<div style="margin-top:8px">Note Size: ';
+    var noteSizes = ["compact","normal","large"];
+    for (var ni = 0; ni < noteSizes.length; ni++) {
+      var selected = accessibility.noteSize === noteSizes[ni];
+      h += '<button onclick="act(\'setAccessibilityNoteSize\',\'' + noteSizes[ni] + '\')" style="margin:2px;opacity:' + (selected ? 1 : 0.5) + '">' + escHTML(noteSizes[ni]) + '</button>';
+    }
+    h += '</div>';
   }
   if(cat.id === "about"){
     h += '<div style="margin-top:8px">Version: '+escHTML((S.releaseInfo && S.releaseInfo.version) || "dev")+'</div>';

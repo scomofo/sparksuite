@@ -32,6 +32,8 @@ assert.strictEqual(fresh.schemaVersion, CURRENT_PROFILE_SCHEMA_VERSION);
 assert.strictEqual(fresh.userId, "user_1");
 assert.strictEqual(fresh.settings.gameplay.hitWindowMs, 140);
 assert.strictEqual(fresh.settings.accessibility.reducedMotion, false);
+assert.strictEqual(fresh.settings.accessibility.metronomeVisualOnly, false);
+assert.deepStrictEqual(fresh.settings.accessibility.keyboardRemapping, {});
 
 var migratedFromV1 = migrateProfile({
   userId: "user_old",
@@ -63,6 +65,25 @@ var migratedFromV2 = migrateProfile({
 assert.strictEqual(migratedFromV2.schemaVersion, CURRENT_PROFILE_SCHEMA_VERSION);
 assert.strictEqual(migratedFromV2.settings.gameplay.inputLatencyOffsetMs, -24);
 assert.strictEqual(migratedFromV2.settings.accessibility.highContrast, false);
+assert.strictEqual(migratedFromV2.settings.accessibility.audioCueVolume, 0.8);
+
+var migratedFromV3 = migrateProfile({
+  schemaVersion: 3,
+  userId: "user_access",
+  settings: {
+    gameplay: {
+      noteSpeed: 0.4
+    },
+    accessibility: {
+      reducedMotion: true,
+      laneLabels: false
+    }
+  }
+});
+assert.strictEqual(migratedFromV3.schemaVersion, CURRENT_PROFILE_SCHEMA_VERSION);
+assert.strictEqual(migratedFromV3.settings.accessibility.reducedMotion, true);
+assert.strictEqual(migratedFromV3.settings.accessibility.laneLabels, false);
+assert.strictEqual(migratedFromV3.settings.accessibility.leftHandedLayout, false);
 
 var removed = migrationMap[2];
 delete migrationMap[2];
@@ -79,7 +100,7 @@ localStorage.setItem("spark_profile_user_store", JSON.stringify({
 var loaded = storage.getUserProfile("user_store");
 assert.strictEqual(loaded.schemaVersion, CURRENT_PROFILE_SCHEMA_VERSION);
 assert.strictEqual(loaded.xp, 9);
-assert.ok(localStorage.getItem("spark_profile_user_store").indexOf("\"schemaVersion\":3") >= 0);
+assert.ok(localStorage.getItem("spark_profile_user_store").indexOf("\"schemaVersion\":" + CURRENT_PROFILE_SCHEMA_VERSION) >= 0);
 
 var updated = storage.updateUserProfile("user_store", {
   mastery: {
@@ -95,6 +116,7 @@ var updated = storage.updateUserProfile("user_store", {
 });
 assert.strictEqual(updated.mastery.lesson_1.mastery, 0.5);
 assert.strictEqual(updated.settings.gameplay.inputLatencyOffsetMs, -18);
+assert.strictEqual(updated.settings.accessibility.metronomeVisualOnly, false);
 assert.strictEqual(storage.getCurrentPlanId(), null);
 storage.setCurrentPlanId("plan_123");
 assert.strictEqual(storage.getCurrentPlanId(), "plan_123");

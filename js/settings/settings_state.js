@@ -40,6 +40,24 @@
       cloudSyncEnabled: true,
       uiVolume: 0.5
     };
+    if (!S.settings.accessibility) {
+      S.settings.accessibility = typeof SparkNormalizeAccessibilitySettings === "function"
+        ? SparkNormalizeAccessibilitySettings({})
+        : {
+            reducedMotion: false,
+            highContrast: false,
+            noteSize: "normal",
+            laneLabels: true,
+            colorblindSafeLanes: false,
+            metronomeVisualOnly: false,
+            disableFailureAnimations: false,
+            keyboardRemapping: {},
+            leftHandedLayout: false,
+            slowerDefaultSpeed: false,
+            audioCueVolume: 0.8,
+            metronomeVolume: 0.6
+          };
+    }
     S.profile = S.profile || {
       displayName: "",
       avatar: "default",

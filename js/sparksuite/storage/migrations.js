@@ -1,11 +1,12 @@
 (function() {
   var CURRENT_PROFILE_SCHEMA_VERSION = typeof SparkCurrentProfileSchemaVersion === "number"
     ? SparkCurrentProfileSchemaVersion
-    : 3;
+    : 4;
 
   var migrations = {
     1: migrateV1ToV2,
-    2: migrateV2ToV3
+    2: migrateV2ToV3,
+    3: migrateV3ToV4
   };
 
   function migrateProfile(profile) {
@@ -64,6 +65,49 @@
           laneLabels: accessibility.laneLabels !== false,
           colorblindSafeLanes: !!accessibility.colorblindSafeLanes
         }
+      }
+    };
+  }
+
+  function migrateV3ToV4(profile) {
+    var gameplay = profile.settings && profile.settings.gameplay ? profile.settings.gameplay : {};
+    var accessibility = profile.settings && profile.settings.accessibility ? profile.settings.accessibility : {};
+    var normalizeAccessibility = typeof SparkNormalizeAccessibilitySettings === "function"
+      ? SparkNormalizeAccessibilitySettings
+      : function(settings) {
+          settings = settings && typeof settings === "object" ? settings : {};
+          return {
+            reducedMotion: !!settings.reducedMotion,
+            highContrast: !!settings.highContrast,
+            noteSize: settings.noteSize || "normal",
+            laneLabels: settings.laneLabels !== false,
+            colorblindSafeLanes: !!settings.colorblindSafeLanes,
+            metronomeVisualOnly: !!settings.metronomeVisualOnly,
+            disableFailureAnimations: !!settings.disableFailureAnimations,
+            keyboardRemapping: settings.keyboardRemapping && typeof settings.keyboardRemapping === "object" ? clone(settings.keyboardRemapping) : {},
+            leftHandedLayout: !!settings.leftHandedLayout,
+            slowerDefaultSpeed: !!settings.slowerDefaultSpeed,
+            audioCueVolume: typeof settings.audioCueVolume === "number" ? settings.audioCueVolume : 0.8,
+            metronomeVolume: typeof settings.metronomeVolume === "number" ? settings.metronomeVolume : 0.6
+          };
+        };
+
+    return {
+      schemaVersion: 4,
+      userId: profile.userId || "default",
+      xp: typeof profile.xp === "number" ? profile.xp : 0,
+      level: typeof profile.level === "number" ? profile.level : 1,
+      selectedInstrument: profile.selectedInstrument || "guitar",
+      mastery: profile.mastery || {},
+      streaks: profile.streaks || {},
+      achievements: Array.isArray(profile.achievements) ? profile.achievements.slice() : [],
+      settings: {
+        gameplay: {
+          inputLatencyOffsetMs: typeof gameplay.inputLatencyOffsetMs === "number" ? gameplay.inputLatencyOffsetMs : 0,
+          hitWindowMs: typeof gameplay.hitWindowMs === "number" ? gameplay.hitWindowMs : 140,
+          noteSpeed: typeof gameplay.noteSpeed === "number" ? gameplay.noteSpeed : 0.32
+        },
+        accessibility: normalizeAccessibility(accessibility)
       }
     };
   }
