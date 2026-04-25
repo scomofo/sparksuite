@@ -38,6 +38,26 @@
     }
   }
 
+  function assertSessionPlan(plan) {
+    if (!plan || typeof plan !== "object") {
+      throw new Error("SessionPlan must be an object");
+    }
+    if (typeof plan.flow !== "string" || !plan.flow) {
+      throw new Error("SessionPlan requires a flow");
+    }
+    if (!Array.isArray(plan.segments)) {
+      throw new Error("SessionPlan segments must be an array");
+    }
+    if (!Array.isArray(plan.exercises)) {
+      throw new Error("SessionPlan exercises must be an array");
+    }
+    if (!plan.rewards || typeof plan.rewards !== "object") {
+      throw new Error("SessionPlan rewards must be an object or array");
+    }
+    validateSegmentReferences(plan.segments, validateExerciseIds(plan.exercises));
+    return plan;
+  }
+
   function SessionPlan(input) {
     input = input || {};
     this.id = input.id || ("plan_" + Math.random().toString(36).slice(2, 10));
@@ -58,21 +78,7 @@
   }
 
   SessionPlan.prototype.validate = function() {
-    var exerciseIds;
-    if (typeof this.flow !== "string" || !this.flow) {
-      throw new Error("SessionPlan requires a flow");
-    }
-    if (!Array.isArray(this.segments)) {
-      throw new Error("SessionPlan segments must be an array");
-    }
-    if (!Array.isArray(this.exercises)) {
-      throw new Error("SessionPlan exercises must be an array");
-    }
-    if (!this.rewards || typeof this.rewards !== "object") {
-      throw new Error("SessionPlan rewards must be an object or array");
-    }
-    exerciseIds = validateExerciseIds(this.exercises);
-    validateSegmentReferences(this.segments, exerciseIds);
+    assertSessionPlan(this);
     return true;
   };
 
@@ -94,7 +100,9 @@
   };
 
   window.SessionPlan = SessionPlan;
+  window.assertSessionPlan = assertSessionPlan;
   window.SparkSessionV2 = {
+    assertSessionPlan: assertSessionPlan,
     getExercise: function(segment, session) {
       if (!segment || !session || !Array.isArray(session.exercises)) return null;
       var exerciseIds = Array.isArray(segment.exerciseIds) ? segment.exerciseIds : [];

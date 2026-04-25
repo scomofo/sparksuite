@@ -297,6 +297,10 @@
       _activeSession = engine.buildSession(flow, options.context || {});
     }
 
+    if (_activeSession && typeof assertSessionPlan === "function") {
+      assertSessionPlan(_activeSession);
+    }
+
     if (_activeSession) {
       if (Array.isArray(_activeSession.segments) && _activeSession.segments.length) {
         attachSession(_activeSession, {
@@ -320,6 +324,9 @@
     var nowMs;
     var segment;
     options = options || {};
+    if (session && typeof assertSessionPlan === "function") {
+      assertSessionPlan(session);
+    }
     if (!session || !Array.isArray(session.segments) || !session.segments.length) {
       resetSegmentTransport();
       _activeSession = session || null;

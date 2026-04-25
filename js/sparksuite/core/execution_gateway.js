@@ -247,6 +247,9 @@
   function runSessionSegment(session, segment, options) {
     options = options || {};
     if (!session || !segment) return false;
+    if (typeof assertSessionPlan === "function") {
+      assertSessionPlan(session);
+    }
 
     var exercises = resolveSegmentExercises(session, segment);
     var primaryExercise;
