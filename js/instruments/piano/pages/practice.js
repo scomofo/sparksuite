@@ -74,6 +74,60 @@ function pianoGetGuidedPrimaryNewElement(session) {
   return pianoFirstPracticeCardTextToken(elements[0]);
 }
 
+function pianoBuildGuidedSessionSummary(sourcePlan, runtimeState, options) {
+  var opts = options || {};
+  return {
+    title: pianoFirstPracticeCardTextToken(sourcePlan && sourcePlan.title, opts.fallbackTitle || "Guided session"),
+    level: pianoNormalizePracticeNumber(sourcePlan && sourcePlan.level, pianoNormalizePracticeNumber(opts.level, 1)),
+    blockCount: sourcePlan && Array.isArray(sourcePlan.blocks) ? sourcePlan.blocks.length : 0,
+    targetDurationMin: pianoGetGuidedSessionDurationMin(sourcePlan, opts.guidedShellDurationSec),
+    focusSong: pianoFirstPracticeCardTextToken(sourcePlan && sourcePlan.focus_song),
+    newElement: pianoGetGuidedPrimaryNewElement(sourcePlan),
+    isActive: !!opts.isActive,
+    statusLabel: runtimeState ? pianoSessionStepRuntimeLabel(runtimeState.guidedStep || "spark", runtimeState.guidedNewMovePhase || null) : ""
+  };
+}
+
+function pianoRenderGuidedSummaryMeta(summary, options) {
+  var opts = options || {};
+  var mutedClass = opts.mutedClass || "text-muted";
+  var marginStyle = opts.marginStyle || "margin-top:4px";
+  var shellBits = [];
+  var html = "";
+  if (!summary) return html;
+  if (summary.statusLabel) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">' + escHTML(summary.statusLabel) + '</div>';
+  if (summary.blockCount > 0) shellBits.push(summary.blockCount + " blocks");
+  if (summary.targetDurationMin > 0) shellBits.push(summary.targetDurationMin + " min shell");
+  if (shellBits.length) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">' + escHTML(shellBits.join(" • ")) + '</div>';
+  if (summary.focusSong) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">Song hook: ' + escHTML(summary.focusSong) + '</div>';
+  if (summary.newElement) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">New move: ' + escHTML(summary.newElement) + '</div>';
+  return html;
+}
+
+function pianoRenderGuidedFlowCard(summary, options) {
+  var opts = options || {};
+  var cardClass = opts.cardClass || "card mb16";
+  var cardStyle = opts.cardStyle || "border:2px solid var(--accent)";
+  var mutedClass = opts.mutedClass || "muted";
+  var summaryTitleStyle = opts.summaryTitleStyle || "font-size:14px;font-weight:800;margin-top:4px";
+  var h = '';
+  if (!summary) return h;
+  h += '<div class="' + cardClass + '" style="' + cardStyle + '">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">';
+  h += '<div style="font-size:15px;font-weight:800">Guided Session Flow</div>';
+  h += '<div class="' + mutedClass + '">' + escHTML((summary.blockCount || 4) + ' blocks') + '</div>';
+  h += '</div>';
+  h += '<div class="' + mutedClass + '" style="margin-bottom:10px">Your live guided shell is the plan right now.</div>';
+  h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
+  h += '<div style="font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)">Guided Session Live</div>';
+  h += '<div style="' + summaryTitleStyle + '">' + escHTML(summary.title) + '</div>';
+  h += pianoRenderGuidedSummaryMeta(summary, { mutedClass: mutedClass, marginStyle: "margin-top:4px" });
+  h += '</div>';
+  h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:var(--accent);color:#fff;font-weight:700">Resume Guided Session</button>';
+  h += '</div>';
+  return h;
+}
+
 function pianoGetQuickStartGuidedSummary(plan) {
   var activeView = pianoGetActiveGuidedSessionView();
   var activeContext = activeView && activeView.plan && activeView.plan.context ? activeView.plan.context : null;
@@ -83,16 +137,12 @@ function pianoGetQuickStartGuidedSummary(plan) {
   var useActivePlan = !!(activePlan && activeSessionNum != null && sessionNum != null && activeSessionNum === sessionNum);
   var sourcePlan = useActivePlan ? activePlan : plan;
   var runtimeState = useActivePlan && activeView && activeView.runtimeState ? activeView.runtimeState : null;
-  return {
-    title: pianoFirstPracticeCardTextToken(sourcePlan && sourcePlan.title, "Guided session"),
-    level: pianoNormalizePracticeNumber(sourcePlan && sourcePlan.level, pianoNormalizePracticeNumber(plan && plan.level, 1)),
-    blockCount: sourcePlan && Array.isArray(sourcePlan.blocks) ? sourcePlan.blocks.length : 0,
-    targetDurationMin: pianoGetGuidedSessionDurationMin(sourcePlan, activeContext && activeContext.guidedShellDurationSec),
-    focusSong: pianoFirstPracticeCardTextToken(sourcePlan && sourcePlan.focus_song),
-    newElement: pianoGetGuidedPrimaryNewElement(sourcePlan),
-    isActive: !!useActivePlan,
-    statusLabel: runtimeState ? pianoSessionStepRuntimeLabel(runtimeState.guidedStep || "spark", runtimeState.guidedNewMovePhase || null) : ""
-  };
+  return pianoBuildGuidedSessionSummary(sourcePlan, runtimeState, {
+    level: pianoNormalizePracticeNumber(plan && plan.level, 1),
+    guidedShellDurationSec: activeContext && activeContext.guidedShellDurationSec,
+    isActive: useActivePlan,
+    fallbackTitle: "Guided session"
+  });
 }
 
 function pianoPracticeTab() {
@@ -131,7 +181,7 @@ function pianoPracticeTab() {
     var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[guidedSummary.level - 1] && CURRICULUM[guidedSummary.level - 1].title, "Level");
     var shouldResumeGuided = guidedSummary.isActive;
     var shellBits = [];
-    var guidedMetaHtml = "";
+    var guidedMetaHtml = pianoRenderGuidedSummaryMeta(guidedSummary, { mutedClass: "text-muted", marginStyle: "margin-top:4px" });
     if (guidedSummary.statusLabel) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">' + escHTML(guidedSummary.statusLabel) + '</div>';
     if (guidedSummary.blockCount > 0) shellBits.push(guidedSummary.blockCount + " blocks");
     if (guidedSummary.targetDurationMin > 0) shellBits.push(guidedSummary.targetDurationMin + " min shell");
@@ -324,28 +374,12 @@ function practicePlanSection(){
     h += '</div>';
   } else {
     if (activeGuided && activeGuided.isActive) {
-      h += '<div class="card" style="margin-top:12px;border:2px solid var(--accent)">';
-      h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">';
-      h += '<div><b>Guided Session Flow</b></div>';
-      h += '<div class="text-muted">' + escHTML((activeGuided.blockCount || 4) + ' blocks') + '</div>';
-      h += '</div>';
-      h += '<div class="text-muted" style="margin-bottom:10px">Your live guided shell is the plan right now.</div>';
-      h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
-      h += '<div style="font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)">Guided Session Live</div>';
-      h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
-      h += '<div class="text-muted" style="margin-top:4px">' + escHTML(activeGuided.statusLabel) + '</div>';
-      if (activeGuided.targetDurationMin > 0) {
-        h += '<div class="text-muted" style="margin-top:4px">' + escHTML(activeGuided.targetDurationMin + " min shell") + '</div>';
-      }
-      if (activeGuided.focusSong) {
-        h += '<div class="text-muted" style="margin-top:4px">Song hook: ' + escHTML(activeGuided.focusSong) + '</div>';
-      }
-      if (activeGuided.newElement) {
-        h += '<div class="text-muted" style="margin-top:4px">New move: ' + escHTML(activeGuided.newElement) + '</div>';
-      }
-      h += '</div>';
-      h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:var(--accent);color:#fff;font-weight:700">Resume Guided Session</button>';
-      h += '</div>';
+      h += pianoRenderGuidedFlowCard(activeGuided, {
+        cardClass: "card",
+        cardStyle: "margin-top:12px;border:2px solid var(--accent)",
+        mutedClass: "text-muted",
+        summaryTitleStyle: "font-size:13px;font-weight:800;margin-top:4px"
+      });
     } else {
       h += '<div class="card" style="margin-top:12px">';
       h += '<div><b>Today\'s Practice Plan</b></div>';
