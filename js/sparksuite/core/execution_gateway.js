@@ -6,6 +6,63 @@
    *   Session -> segments -> exerciseIds -> exercises -> runExercise()
    */
 
+  var _handlers = {};
+  var _missingCounts = {};
+
+  function register(name, handler) {
+    if (typeof name !== "string" || !name) {
+      throw new Error("SparkExecutionGateway: handler name must be a non-empty string");
+    }
+    if (typeof handler !== "function") {
+      throw new Error('SparkExecutionGateway: handler "' + name + '" must be a function');
+    }
+    _handlers[name] = handler;
+    return handler;
+  }
+
+  function unregister(name) {
+    if (name && Object.prototype.hasOwnProperty.call(_handlers, name)) {
+      delete _handlers[name];
+    }
+  }
+
+  function getRegisteredHandler(name) {
+    return name && Object.prototype.hasOwnProperty.call(_handlers, name) ? _handlers[name] : null;
+  }
+
+  function logMissingHandler(name) {
+    _missingCounts[name] = (_missingCounts[name] || 0) + 1;
+    if (typeof console !== "undefined" && console.warn) {
+      console.warn('SparkExecutionGateway: missing handler "' + name + '"');
+    }
+  }
+
+  function getMissingHandlerReport() {
+    var result = {};
+    var key;
+    for (key in _missingCounts) {
+      if (Object.prototype.hasOwnProperty.call(_missingCounts, key)) result[key] = _missingCounts[key];
+    }
+    return result;
+  }
+
+  function clearHandlers() {
+    _handlers = {};
+    _missingCounts = {};
+  }
+
+  function execute(name, payload, fallback) {
+    var handler = getRegisteredHandler(name);
+    if (handler) {
+      return handler(payload || {});
+    }
+    logMissingHandler(name);
+    if (typeof fallback === "function") {
+      return fallback(payload || {});
+    }
+    return false;
+  }
+
   function normalizeToExercise(input) {
     if (input && input.id && input.data) return input;
 
@@ -263,9 +320,17 @@
       }
     }
 
-    if (launchTarget && typeof startPerformance === "function") {
-      startPerformance(launchTarget, launchOptions);
-      return true;
+    if (launchTarget) {
+      return execute("song.start", {
+        exercise: exercise,
+        target: launchTarget,
+        options: launchOptions,
+        source: options.source || "exercise"
+      }, function(payload) {
+        if (typeof startPerformance !== "function") return false;
+        startPerformance(payload.target, payload.options);
+        return true;
+      });
     }
     return false;
   }
@@ -279,20 +344,28 @@
       failExecution("practice exercise missing gameplay payload", exercise && exercise.id ? exercise.id : null);
     }
 
-    if (payload && typeof startPlayableRhythmHighwayPayload === "function") {
+    if (payload) {
       var practiceInstrument = normalizeInstrumentType(options.instrument || core.instrument || (payload && payload.adapterType)) || "guitar";
-      startPlayableRhythmHighwayPayload(payload, {
-        source: options.source || "exercise",
-        label: options.label || core.skill || core.chartId || core.songId || "Practice",
-        instrument: practiceInstrument,
-        segmentId: options.segment ? options.segment.id : (options.segmentId || null),
-        exerciseId: exercise.id,
-        exerciseFocus: core.skill || null,
-        song: options.song || null,
-        playlist: Array.isArray(options.playlist) ? options.playlist.slice() : null,
-        options: mergeLaunchOptions(options.options || {}, buildPlayableLaunchOptions(core, gameplay, options))
+      return execute("practice.start", {
+        exercise: exercise,
+        payload: payload,
+        options: {
+          source: options.source || "exercise",
+          label: options.label || core.skill || core.chartId || core.songId || "Practice",
+          instrument: practiceInstrument,
+          segmentId: options.segment ? options.segment.id : (options.segmentId || null),
+          exerciseId: exercise.id,
+          exerciseFocus: core.skill || null,
+          song: options.song || null,
+          playlist: Array.isArray(options.playlist) ? options.playlist.slice() : null,
+          options: mergeLaunchOptions(options.options || {}, buildPlayableLaunchOptions(core, gameplay, options))
+        },
+        source: options.source || "exercise"
+      }, function(payloadOptions) {
+        if (typeof startPlayableRhythmHighwayPayload !== "function") return false;
+        startPlayableRhythmHighwayPayload(payloadOptions.payload, payloadOptions.options);
+        return true;
       });
-      return true;
     }
 
     return false;
@@ -326,6 +399,11 @@
   }
 
   var SparkExecutionGateway = {
+    register: register,
+    unregister: unregister,
+    execute: execute,
+    getMissingHandlerReport: getMissingHandlerReport,
+    clearHandlers: clearHandlers,
     normalizeToExercise: normalizeToExercise,
     resolveSegmentExercises: resolveSegmentExercises,
     resolvePrimaryExercise: resolvePrimaryExercise,
