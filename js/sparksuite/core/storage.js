@@ -1,6 +1,11 @@
 (function() {
   function SparkSuiteStorage() {}
 
+  SparkSuiteStorage.prototype.setPerformanceMonitor = function(performanceMonitor) {
+    this.performanceMonitor = performanceMonitor || null;
+    return this.performanceMonitor;
+  };
+
   SparkSuiteStorage.prototype.getProfileStorageKey = function(userId) {
     return "spark_profile_" + (userId || "default");
   };
@@ -14,6 +19,16 @@
   };
 
   SparkSuiteStorage.prototype.getUserProfile = function(userId) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("storage.read_profile", "storageReadMs", function() {
+        return self._getUserProfileInternal(userId);
+      });
+    }
+    return this._getUserProfileInternal(userId);
+  };
+
+  SparkSuiteStorage.prototype._getUserProfileInternal = function(userId) {
     var resolvedUserId = userId || "default";
     var raw = null;
     var parsed;
@@ -25,7 +40,7 @@
     }
     if (!raw) return createDefaultProfile(resolvedUserId);
     parsed = JSON.parse(raw);
-    migrated = migrateProfile(parsed);
+    migrated = this.measureMigration(parsed);
     if (migrated.schemaVersion !== parsed.schemaVersion || JSON.stringify(migrated) !== JSON.stringify(parsed)) {
       this.saveUserProfile(migrated);
     }
@@ -33,6 +48,16 @@
   };
 
   SparkSuiteStorage.prototype.saveUserProfile = function(profile) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("storage.write_profile", "storageWriteMs", function() {
+        return self._saveUserProfileInternal(profile);
+      });
+    }
+    return this._saveUserProfileInternal(profile);
+  };
+
+  SparkSuiteStorage.prototype._saveUserProfileInternal = function(profile) {
     var nextProfile = migrateProfile(profile || createDefaultProfile("default"));
     try {
       localStorage.setItem(this.getProfileStorageKey(nextProfile.userId), JSON.stringify(nextProfile));
@@ -44,6 +69,16 @@
     var profile = this.getUserProfile(userId);
     var nextProfile = mergeDeep(profile, patch || {});
     return this.saveUserProfile(nextProfile);
+  };
+
+  SparkSuiteStorage.prototype.measureMigration = function(profile) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("storage.migrate_profile", "storageReadMs", function() {
+        return migrateProfile(profile);
+      });
+    }
+    return migrateProfile(profile);
   };
 
   function createDefaultProfile(userId) {
@@ -112,4 +147,9 @@
   }
 
   window.SparkSuiteStorage = SparkSuiteStorage;
+  if (typeof module !== "undefined") {
+    module.exports = {
+      SparkSuiteStorage: SparkSuiteStorage
+    };
+  }
 })();

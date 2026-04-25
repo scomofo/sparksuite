@@ -21,10 +21,24 @@
     this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
     this.eventBus = options.eventBus || (typeof SparkEventBus !== "undefined" ? new SparkEventBus({ maxEvents: 1000 }) : null);
+    this.performanceMonitor = options.performanceMonitor || (
+      typeof SparkPerformanceMonitor !== "undefined"
+        ? new SparkPerformanceMonitor({
+            eventBus: this.eventBus,
+            budgets: typeof SparkPerformanceBudgets !== "undefined" ? SparkPerformanceBudgets : {}
+          })
+        : null
+    );
     this.lastRecoveryRequest = null;
     this.errorBoundary = options.errorBoundary || this.createErrorBoundary();
     if (this.progressEngine && typeof this.progressEngine.setEventBus === "function") {
       this.progressEngine.setEventBus(this.eventBus);
+    }
+    if (this.storage && typeof this.storage.setPerformanceMonitor === "function") {
+      this.storage.setPerformanceMonitor(this.performanceMonitor);
+    }
+    if (this.sessionEngine && typeof this.sessionEngine.setPerformanceMonitor === "function") {
+      this.sessionEngine.setPerformanceMonitor(this.performanceMonitor);
     }
   }
 
@@ -205,12 +219,23 @@
   };
 
   SparkCore.prototype.buildRecoveryDebugBundle = function() {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("debug.export_bundle", "debugBundleExportMs", function() {
+        return self._buildRecoveryDebugBundleInternal();
+      });
+    }
+    return this._buildRecoveryDebugBundleInternal();
+  };
+
+  SparkCore.prototype._buildRecoveryDebugBundleInternal = function() {
     if (typeof buildSparkDebugBundle === "function") {
       return buildSparkDebugBundle({
         sparkCore: this,
         gateway: typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null,
         eventBus: this.eventBus,
-        storage: this.storage
+        storage: this.storage,
+        performanceMonitor: this.performanceMonitor
       });
     }
     return {

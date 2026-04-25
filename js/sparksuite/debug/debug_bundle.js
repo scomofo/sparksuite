@@ -9,9 +9,11 @@
     var gateway = options.gateway || null;
     var eventBus = options.eventBus || (sparkCore && typeof sparkCore.getEventBus === "function" ? sparkCore.getEventBus() : null);
     var storage = options.storage || (sparkCore && sparkCore.storage ? sparkCore.storage : null);
+    var performanceMonitor = options.performanceMonitor || (sparkCore && sparkCore.performanceMonitor ? sparkCore.performanceMonitor : null);
     var sessionView = sparkCore && typeof sparkCore.getActiveSessionView === "function"
       ? sparkCore.getActiveSessionView()
       : null;
+    var recentEvents = eventBus && typeof eventBus.getRecent === "function" ? eventBus.getRecent(200) : [];
 
     return {
       exportedAt: new Date().toISOString(),
@@ -23,15 +25,15 @@
         activeSegmentId: sessionView.runtimeState ? sessionView.runtimeState.activeSegmentId : null,
         activeExerciseId: sessionView.activeExercise ? sessionView.activeExercise.id : null
       } : null,
-      recentEvents: eventBus && typeof eventBus.getRecent === "function" ? eventBus.getRecent(200) : [],
+      recentEvents: recentEvents,
       missingHandlers: gateway && typeof gateway.getMissingHandlerReport === "function"
         ? gateway.getMissingHandlerReport()
         : {},
-      recentErrors: eventBus && typeof eventBus.getRecent === "function"
-        ? eventBus.getRecent(200).filter(function(event) { return event.type === "error.captured"; }).slice(-20)
-        : [],
+      recentErrors: recentEvents.filter(function(event) { return event.type === "error.captured"; }).slice(-20),
+      performanceBudgetWarnings: recentEvents.filter(function(event) { return event.type === "performance.budget_exceeded"; }).slice(-20),
       runtimeState: sparkCore && typeof sparkCore.getRuntimeState === "function" ? clone(sparkCore.getRuntimeState()) : null,
-      settings: storage && typeof storage.getSettings === "function" ? clone(storage.getSettings()) : null
+      settings: storage && typeof storage.getSettings === "function" ? clone(storage.getSettings()) : null,
+      performanceBudgets: performanceMonitor && performanceMonitor.budgets ? clone(performanceMonitor.budgets) : null
     };
   }
 

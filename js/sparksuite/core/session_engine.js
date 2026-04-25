@@ -36,9 +36,25 @@
   function SessionEngine(practiceEngine, curriculumEngine) {
     this.practiceEngine = practiceEngine;
     this.curriculumEngine = curriculumEngine;
+    this.performanceMonitor = null;
   }
 
+  SessionEngine.prototype.setPerformanceMonitor = function(performanceMonitor) {
+    this.performanceMonitor = performanceMonitor || null;
+    return this.performanceMonitor;
+  };
+
   SessionEngine.prototype.buildSession = function(flow, context) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("session.build_plan", "sessionPlanBuildMs", function() {
+        return self._buildSessionInternal(flow, context);
+      });
+    }
+    return this._buildSessionInternal(flow, context);
+  };
+
+  SessionEngine.prototype._buildSessionInternal = function(flow, context) {
     context = context || {};
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.buildGuidedSession(context);
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.buildPerformanceSongSession(context);
@@ -693,4 +709,9 @@
   }
 
   window.SparkSuiteSessionEngine = SessionEngine;
+  if (typeof module !== "undefined") {
+    module.exports = {
+      SparkSuiteSessionEngine: SessionEngine
+    };
+  }
 })();

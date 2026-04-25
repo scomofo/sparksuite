@@ -4,12 +4,16 @@
     this.chart = options.chart;
     this.adapter = options.adapter;
     this.eventBus = options.eventBus || null;
+    this.performanceMonitor = options.performanceMonitor || null;
     this.preset = options.preset || SparkEnginePresetRegistry.get("spark_learning");
     this.timingEngine = options.timingEngine || new SparkTimingEngine(new SparkCalibrationEngine());
     this.inputJudge = options.inputJudge || new SparkInputJudge();
     this.scoringEngine = options.scoringEngine || new SparkScoringEngine(this.preset);
     if (this.scoringEngine && typeof this.scoringEngine.setEventBus === "function") {
       this.scoringEngine.setEventBus(this.eventBus);
+    }
+    if (this.scoringEngine && typeof this.scoringEngine.setPerformanceMonitor === "function") {
+      this.scoringEngine.setPerformanceMonitor(this.performanceMonitor);
     }
     this.replayEngine = options.replayEngine || new SparkReplayEngine();
     this.assistConfig = typeof SparkNormalizePracticeAssist === "function"
@@ -22,6 +26,16 @@
   }
 
   RhythmGameplayEngine.prototype.update = function(songTimeSec) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("runtime.frame", "frameRenderMs", function() {
+        return self._updateInternal(songTimeSec);
+      });
+    }
+    return this._updateInternal(songTimeSec);
+  };
+
+  RhythmGameplayEngine.prototype._updateInternal = function(songTimeSec) {
     songTimeSec = this.getDisplaySongTimeSec(songTimeSec);
     if (this.completed) return this.getSnapshot(songTimeSec);
     var missMs = this.preset.hitWindowMs.miss;
@@ -41,10 +55,24 @@
     if (songTimeSec > this.songEndSec + 1 && this.isFinished()) {
       this.completed = true;
     }
+    this.emit("runtime.session.frame", {
+      songTimeSec: songTimeSec,
+      finished: this.completed
+    });
     return this.getSnapshot(songTimeSec);
   };
 
   RhythmGameplayEngine.prototype.handleInput = function(inputEvent) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("input.process", "inputProcessingMs", function() {
+        return self._handleInputInternal(inputEvent);
+      });
+    }
+    return this._handleInputInternal(inputEvent);
+  };
+
+  RhythmGameplayEngine.prototype._handleInputInternal = function(inputEvent) {
     if (this.completed) return null;
     this.emit("runtime.input.received", {
       input: inputEvent
@@ -179,4 +207,9 @@
   }
 
   window.SparkRhythmGameplayEngine = RhythmGameplayEngine;
+  if (typeof module !== "undefined") {
+    module.exports = {
+      SparkRhythmGameplayEngine: RhythmGameplayEngine
+    };
+  }
 })();

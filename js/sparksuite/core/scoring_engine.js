@@ -2,6 +2,7 @@
   function ScoringEngine(preset) {
     this.preset = preset || SparkEnginePresetRegistry.get("spark_learning");
     this.eventBus = null;
+    this.performanceMonitor = null;
     this.state = {
       score: 0,
       combo: 0,
@@ -21,7 +22,22 @@
     return this.eventBus;
   };
 
+  ScoringEngine.prototype.setPerformanceMonitor = function(performanceMonitor) {
+    this.performanceMonitor = performanceMonitor || null;
+    return this.performanceMonitor;
+  };
+
   ScoringEngine.prototype.apply = function(resolution) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("gameplay.hit_detection", "hitDetectionMs", function() {
+        return self._applyInternal(resolution);
+      });
+    }
+    return this._applyInternal(resolution);
+  };
+
+  ScoringEngine.prototype._applyInternal = function(resolution) {
     this.state.total++;
     var judgement = resolution.judgement;
     var note = resolution.note;
@@ -93,4 +109,9 @@
   }
 
   window.SparkScoringEngine = ScoringEngine;
+  if (typeof module !== "undefined") {
+    module.exports = {
+      SparkScoringEngine: ScoringEngine
+    };
+  }
 })();
