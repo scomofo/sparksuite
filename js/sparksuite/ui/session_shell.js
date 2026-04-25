@@ -26,6 +26,27 @@
     return minutes + "m " + seconds + "s " + suffix;
   }
 
+  function getShellDurationMin(shell) {
+    return Math.max(0, number(shell && (shell.durationMin || shell.targetDurationMin), 0));
+  }
+
+  function getShellDurationText(shell, fallbackLabel) {
+    var durationMin = getShellDurationMin(shell);
+    return durationMin > 0
+      ? (durationMin + " min shell")
+      : firstText(fallbackLabel, "Shell details loading");
+  }
+
+  function getCompactMetaLabel(shell, fallbackLabel) {
+    var durationMin = getShellDurationMin(shell);
+    var parts = [];
+    if (shell) {
+      parts.push("Block " + (number(shell.activeIndex, 0) + 1) + " of " + number(shell.blockCount, 0));
+      if (durationMin > 0) parts.push(durationMin + " min shell");
+    }
+    return parts.length ? parts.join(" • ") : firstText(fallbackLabel, "Shell details loading");
+  }
+
   function resolveSegmentLabel(segment, formatter, fallback) {
     if (typeof formatter === "function") {
       var formatted = formatter(segment);
@@ -133,7 +154,7 @@
     var label = opts.label || "Practice Session Live";
     var accent = opts.accent || "#45B7D1";
     var background = opts.background || "rgba(69,183,209,.12)";
-    var metaLabel = opts.metaLabel || ("Block " + (shell.activeIndex + 1) + " of " + shell.blockCount + " • " + (shell.targetDurationMin || shell.durationMin || 10) + " min shell");
+    var metaLabel = opts.metaLabel || getCompactMetaLabel(shell, "Shell details loading");
     var extraButtons = typeof opts.renderExtraButtons === "function" ? opts.renderExtraButtons(shell) : "";
     var h = "";
     h += '<div style="margin-top:' + esc(opts.marginTop || "0") + ';padding:10px 12px;border-radius:14px;background:' + background + ';color:var(--text-primary)">';
@@ -161,7 +182,7 @@
     h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:' + accent + '">' + esc(label) + '</div><div style="font-size:11px;color:var(--text-muted)">Block ' + esc(shell.activeIndex + 1) + ' of ' + esc(shell.blockCount) + '</div></div>';
     h += '<div style="font-size:18px;font-weight:900;color:var(--text-primary);margin-bottom:4px">' + esc(shell.title) + '</div>';
     h += '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">' + esc(shell.statusLabel) + '</div>';
-    h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">' + esc((shell.durationMin || shell.targetDurationMin || 10) + " min shell") + '</div>';
+    h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">' + esc(getShellDurationText(shell, "Shell details loading")) + '</div>';
     h += '<div style="height:8px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden;margin-bottom:8px"><div style="height:100%;width:' + esc(shell.progressPct) + '%;background:' + fill + '"></div></div>';
     h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;color:var(--text-muted);margin-bottom:10px"><span>' + esc(shell.elapsedLabel) + '</span><span>' + esc(shell.remainingLabel) + '</span></div>';
     if (!opts.hideControls) {

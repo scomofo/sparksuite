@@ -88,17 +88,35 @@ function pianoBuildGuidedSessionSummary(sourcePlan, runtimeState, options) {
   };
 }
 
+function pianoGetGuidedShellBits(summary) {
+  var bits = [];
+  if (summary && summary.blockCount > 0) bits.push(summary.blockCount + " blocks");
+  if (summary && summary.targetDurationMin > 0) bits.push(summary.targetDurationMin + " min shell");
+  return bits;
+}
+
+function pianoGetGuidedShellLabel(summary, fallbackText) {
+  var bits = pianoGetGuidedShellBits(summary);
+  var fallback = pianoFirstPracticeCardTextToken(fallbackText);
+  return bits.length ? bits.join(" • ") : fallback;
+}
+
+function pianoGetGuidedShellBadge(summary) {
+  if (summary && summary.blockCount > 0) return summary.blockCount + " blocks";
+  if (summary && summary.targetDurationMin > 0) return summary.targetDurationMin + " min shell";
+  return "Guided shell";
+}
+
 function pianoRenderGuidedSummaryMeta(summary, options) {
   var opts = options || {};
   var mutedClass = opts.mutedClass || "text-muted";
   var marginStyle = opts.marginStyle || "margin-top:4px";
-  var shellBits = [];
+  var shellLabel = "";
   var html = "";
   if (!summary) return html;
   if (summary.statusLabel) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">' + escHTML(summary.statusLabel) + '</div>';
-  if (summary.blockCount > 0) shellBits.push(summary.blockCount + " blocks");
-  if (summary.targetDurationMin > 0) shellBits.push(summary.targetDurationMin + " min shell");
-  if (shellBits.length) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">' + escHTML(shellBits.join(" • ")) + '</div>';
+  shellLabel = pianoGetGuidedShellLabel(summary, opts.shellFallbackText || "");
+  if (shellLabel) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">' + escHTML(shellLabel) + '</div>';
   if (summary.focusSong) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">Song hook: ' + escHTML(summary.focusSong) + '</div>';
   if (summary.newElement) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">New move: ' + escHTML(summary.newElement) + '</div>';
   return html;
@@ -115,13 +133,13 @@ function pianoRenderGuidedFlowCard(summary, options) {
   h += '<div class="' + cardClass + '" style="' + cardStyle + '">';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">';
   h += '<div style="font-size:15px;font-weight:800">Guided Session Flow</div>';
-  h += '<div class="' + mutedClass + '">' + escHTML((summary.blockCount || 4) + ' blocks') + '</div>';
+  h += '<div class="' + mutedClass + '">' + escHTML(pianoGetGuidedShellBadge(summary)) + '</div>';
   h += '</div>';
   h += '<div class="' + mutedClass + '" style="margin-bottom:10px">Your live guided shell is the plan right now.</div>';
   h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
   h += '<div style="font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)">Guided Session Live</div>';
   h += '<div style="' + summaryTitleStyle + '">' + escHTML(summary.title) + '</div>';
-  h += pianoRenderGuidedSummaryMeta(summary, { mutedClass: mutedClass, marginStyle: "margin-top:4px" });
+  h += pianoRenderGuidedSummaryMeta(summary, { mutedClass: mutedClass, marginStyle: "margin-top:4px", shellFallbackText: "Shell details loading" });
   h += '</div>';
   h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:var(--accent);color:#fff;font-weight:700">Resume Guided Session</button>';
   h += '</div>';
@@ -180,14 +198,11 @@ function pianoPracticeTab() {
     var sessionTitle = guidedSummary.title;
     var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[guidedSummary.level - 1] && CURRICULUM[guidedSummary.level - 1].title, "Level");
     var shouldResumeGuided = guidedSummary.isActive;
-    var shellBits = [];
-    var guidedMetaHtml = pianoRenderGuidedSummaryMeta(guidedSummary, { mutedClass: "text-muted", marginStyle: "margin-top:4px" });
-    if (guidedSummary.statusLabel) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">' + escHTML(guidedSummary.statusLabel) + '</div>';
-    if (guidedSummary.blockCount > 0) shellBits.push(guidedSummary.blockCount + " blocks");
-    if (guidedSummary.targetDurationMin > 0) shellBits.push(guidedSummary.targetDurationMin + " min shell");
-    if (shellBits.length) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">' + escHTML(shellBits.join(" • ")) + '</div>';
-    if (guidedSummary.focusSong) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">Song hook: ' + escHTML(guidedSummary.focusSong) + '</div>';
-    if (guidedSummary.newElement) guidedMetaHtml += '<div class="text-muted" style="margin-top:4px">New move: ' + escHTML(guidedSummary.newElement) + '</div>';
+    var guidedMetaHtml = pianoRenderGuidedSummaryMeta(guidedSummary, {
+      mutedClass: "text-muted",
+      marginStyle: "margin-top:4px",
+      shellFallbackText: "Guided shell"
+    });
     html += pianoClickableDiv(
       "act('" + (shouldResumeGuided ? "resume_guided_session" : "start_guided_session") + "')",
       '<h3>Session ' + plan.num + ': ' + escHTML(sessionTitle) + '</h3>' +

@@ -287,6 +287,55 @@ test("piano practice plan section pivots into guided resume mode with V2 shell d
   assert.strictEqual(html.indexOf("No practice plan yet."), -1);
 });
 
+test("piano guided flow surfaces stay honest when the live shell has no duration or block metadata", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned"
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.ok(planHtml.indexOf("Guided Session Flow") >= 0);
+  assert.ok(planHtml.indexOf("In progress - Song block") >= 0);
+  assert.ok(planHtml.indexOf("Guided shell") >= 0);
+  assert.strictEqual(planHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(planHtml.indexOf("10 min shell"), -1);
+  assert.ok(practiceHtml.indexOf("Guided Session Flow") >= 0);
+  assert.ok(practiceHtml.indexOf("Guided shell") >= 0);
+  assert.strictEqual(practiceHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(practiceHtml.indexOf("10 min shell"), -1);
+});
+
 test("piano practice plan section treats malformed cached plan shells without array items as empty state", function() {
   global.S = {
     practicePlan: {

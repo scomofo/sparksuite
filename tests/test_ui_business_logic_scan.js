@@ -2,17 +2,16 @@ var assert = require("assert");
 var fs = require("fs");
 var os = require("os");
 var path = require("path");
-var childProcess = require("child_process");
 
 var repoRoot = path.resolve(__dirname, "..");
-var scriptPath = path.join(repoRoot, "scripts", "check_ui_business_logic.js");
+var scanner = require("../scripts/check_ui_business_logic.js");
 
-var cleanRun = childProcess.spawnSync("node", [scriptPath], {
-  cwd: repoRoot,
-  encoding: "utf8"
+var cleanRun = scanner.runScan({
+  repoRoot: repoRoot,
+  fs: fs
 });
 
-assert.strictEqual(cleanRun.status, 0, cleanRun.stdout + cleanRun.stderr);
+assert.strictEqual(cleanRun.status, 0, cleanRun.stderr);
 assert.ok(cleanRun.stdout.indexOf("OK no UI business logic violations found") >= 0);
 
 var tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "sparksuite-ui-scan-"));
@@ -24,9 +23,9 @@ fs.writeFileSync(
   "utf8"
 );
 
-var violationRun = childProcess.spawnSync("node", [scriptPath], {
-  cwd: repoRoot,
-  encoding: "utf8",
+var violationRun = scanner.runScan({
+  repoRoot: repoRoot,
+  fs: fs,
   env: Object.assign({}, process.env, {
     UI_LOGIC_DIRS: tempUiDir
   })
