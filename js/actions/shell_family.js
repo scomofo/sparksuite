@@ -3,15 +3,22 @@
     return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
   }
 
-  function setLegacyFields(setFields, save) {
+  function applyShellFamilyRuntimeUpdate(update, fallback) {
     if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyActivityRuntime === "function") {
-      SparkProgressBridge.applyLegacyActivityRuntime({ setFields: setFields, save: save });
-    } else {
+      SparkProgressBridge.applyLegacyActivityRuntime(update || {});
+      return true;
+    }
+    if (typeof fallback === "function") fallback();
+    return false;
+  }
+
+  function setLegacyFields(setFields, save) {
+    applyShellFamilyRuntimeUpdate({ setFields: setFields, save: save }, function() {
       var key;
       for (key in setFields) {
         if (Object.prototype.hasOwnProperty.call(setFields, key)) S[key] = setFields[key];
       }
-    }
+    });
   }
 
   function handleShellAction(a, v) {
@@ -51,7 +58,7 @@
       if (typeof SparkInstruments !== "undefined" && SparkInstruments.deactivate) {
         SparkInstruments.deactivate();
       }
-      S.activeInstrument = null;
+      setLegacyFields({ activeInstrument: null }, false);
       if (typeof saveState === "function") saveState();
       render();
       return true;
@@ -59,9 +66,7 @@
 
     if (a === "switchInstrument" && v) {
       SparkInstruments.activate(v);
-      S.activeInstrument = v;
-      S.screen = SCR.HOME;
-      S.tab = TAB.PRACTICE;
+      setLegacyFields({ activeInstrument: v, screen: SCR.HOME, tab: TAB.PRACTICE }, false);
       saveState();
       render();
       return true;
