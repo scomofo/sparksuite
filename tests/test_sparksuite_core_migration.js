@@ -2451,6 +2451,8 @@ test("dashboard utility UI surfaces can resolve sparkCore from the global bindin
 test("song family and showroom practice metro can resolve sparkCore from the global binding", function() {
   var songSyncs = [];
   var songCompletions = [];
+  var songRuntimeUpdates = [];
+  var songCompletionUpdates = [];
   var originalPracticeBridge = global.SparkPracticeBridge;
   global.window = {};
   global.sparkCore = {
@@ -2495,11 +2497,23 @@ test("song family and showroom practice metro can resolve sparkCore from the glo
   global.getActiveInstrumentIdentityForActivity = function() {
     return { appId: "chordspark" };
   };
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    songRuntimeUpdates.push(update);
+    return update;
+  };
+  global.SparkProgressBridge.applyLegacyActivityCompletion = function(update) {
+    songCompletionUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
   global.CHORD_NAME_MAP = {};
   global.T = {};
   global.SCR = global.SCR || {};
   global.TAB = global.TAB || {};
   global.SCR.SONG_DONE = "song_done";
+  global.SCR.HOME = "home";
+  global.TAB.SONGS = "songs";
   global.S = global.S || {};
   global.S.selectedSong = {
     title: "Night Drive",
@@ -2515,9 +2529,30 @@ test("song family and showroom practice metro can resolve sparkCore from the glo
 
   __actionFamilies.songs("toggleSong");
   __actionFamilies.songs("completeSong");
+  __actionFamilies.songs("songDoneHome");
 
   assert.strictEqual(songSyncs[0].payload.source, "community");
   assert.strictEqual(songCompletions[0].source, "community");
+  assert.strictEqual(songRuntimeUpdates.length, 3);
+  assert.deepStrictEqual(songRuntimeUpdates[0], {
+    setFields: { songPlaying: true, songBeat: 0 },
+    clearIntervals: []
+  });
+  assert.deepStrictEqual(songRuntimeUpdates[1], {
+    setFields: { songPlaying: false },
+    clearIntervals: ["song"]
+  });
+  assert.deepStrictEqual(songRuntimeUpdates[2], {
+    setFields: { screen: "home", tab: "songs" }
+  });
+  assert.strictEqual(songCompletionUpdates.length, 1);
+  assert.deepStrictEqual(songCompletionUpdates[0], {
+    xpDelta: 40,
+    incrementFields: { songsPlayed: 1 },
+    history: { type: "song", detail: "Night Drive", xp: 40 },
+    emit: { type: "lesson_completed", payload: { appId: "chordspark", lessonId: "song_Night Drive", xp: 40 } },
+    checkBadges: true
+  });
   assert.ok(showroomSource.indexOf("function getShowroomCoreView()") >= 0);
   assert.ok(showroomSource.indexOf("var view = getShowroomCoreView();") >= 0);
 
