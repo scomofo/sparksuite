@@ -10,10 +10,44 @@
   var _missingCounts = {};
   var _defaultHandlersInstalled = false;
   var _sparkCoreHandle = null;
+  var _strict = true;
+  var _lastAction = null;
+  var _lastResult = null;
+
+  function getActionRegistryApi() {
+    if (typeof window !== "undefined" && typeof window.isKnownSparkAction === "function") {
+      return {
+        isKnownSparkAction: window.isKnownSparkAction,
+        listKnownSparkActions: typeof window.listKnownSparkActions === "function"
+          ? window.listKnownSparkActions
+          : function() { return []; }
+      };
+    }
+    if (typeof require === "function") {
+      try {
+        return require("./action_registry.js");
+      } catch (error) {}
+    }
+    return {
+      isKnownSparkAction: function() { return true; },
+      listKnownSparkActions: function() { return []; }
+    };
+  }
+
+  function isKnownSparkAction(name) {
+    return !!getActionRegistryApi().isKnownSparkAction(name);
+  }
+
+  function listKnownSparkActions() {
+    return getActionRegistryApi().listKnownSparkActions();
+  }
 
   function register(name, handler) {
     if (typeof name !== "string" || !name) {
       throw new Error("SparkExecutionGateway: handler name must be a non-empty string");
+    }
+    if (!isKnownSparkAction(name)) {
+      throw new Error('SparkExecutionGateway: unknown action "' + name + '"');
     }
     if (typeof handler !== "function") {
       throw new Error('SparkExecutionGateway: handler "' + name + '" must be a function');
@@ -52,18 +86,62 @@
     _handlers = {};
     _missingCounts = {};
     _defaultHandlersInstalled = false;
+    _lastAction = null;
+    _lastResult = null;
   }
 
   function execute(name, payload, fallback) {
+    var actionPayload = payload || {};
+    _lastAction = {
+      actionName: name,
+      payload: actionPayload,
+      at: new Date().toISOString()
+    };
+    if (!isKnownSparkAction(name)) {
+      return handleMissingAction(name, actionPayload, fallback, "unknown_action");
+    }
     var handler = getRegisteredHandler(name);
     if (handler) {
-      return handler(payload || {});
+      return recordExecutionResult(name, handler(actionPayload));
     }
+    return handleMissingAction(name, actionPayload, fallback, "unregistered_handler");
+  }
+
+  function handleMissingAction(name, payload, fallback, reason) {
     logMissingHandler(name);
     if (typeof fallback === "function") {
-      return fallback(payload || {});
+      return recordExecutionResult(name, fallback(payload || {}));
     }
-    return false;
+    if (_strict) {
+      throw new Error('SparkExecutionGateway: missing handler "' + name + '" (' + reason + ')');
+    }
+    return recordExecutionResult(name, false);
+  }
+
+  function recordExecutionResult(name, result) {
+    _lastResult = {
+      actionName: name,
+      result: result,
+      at: new Date().toISOString()
+    };
+    return result;
+  }
+
+  function setStrict(value) {
+    _strict = value !== false;
+    return _strict;
+  }
+
+  function isStrict() {
+    return _strict;
+  }
+
+  function getLastAction() {
+    return _lastAction;
+  }
+
+  function getLastResult() {
+    return _lastResult;
   }
 
   function normalizeToExercise(input) {
@@ -497,9 +575,15 @@
     register: register,
     unregister: unregister,
     execute: execute,
+    setStrict: setStrict,
+    isStrict: isStrict,
     setSparkCoreHandle: setSparkCoreHandle,
     installDefaultHandlers: installDefaultHandlers,
     getMissingHandlerReport: getMissingHandlerReport,
+    getLastAction: getLastAction,
+    getLastResult: getLastResult,
+    isKnownSparkAction: isKnownSparkAction,
+    listKnownSparkActions: listKnownSparkActions,
     clearHandlers: clearHandlers,
     normalizeToExercise: normalizeToExercise,
     resolveSegmentExercises: resolveSegmentExercises,

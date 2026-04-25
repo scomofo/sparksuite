@@ -22,10 +22,27 @@ global.SparkInstruments = {
   }
 };
 
+var ActionRegistry = require("../js/sparksuite/core/action_registry.js");
 require("../js/sparksuite/core/execution_gateway.js");
 var GW = window.SparkExecutionGateway;
 
 console.log("=== Execution Gateway Tests ===");
+
+test("action registry recognizes known action names and rejects typos", function() {
+  assert.strictEqual(ActionRegistry.isKnownSparkAction(ActionRegistry.SparkActions.PRACTICE_START), true);
+  assert.strictEqual(ActionRegistry.isKnownSparkAction("practice.star"), false);
+});
+
+test("action registry is immutable", function() {
+  assert.strictEqual(Object.isFrozen(ActionRegistry.SparkActions), true);
+});
+
+test("register rejects unknown actions", function() {
+  GW.clearHandlers();
+  assert.throws(function() {
+    GW.register("practice.star", function() {});
+  }, /unknown action/);
+});
 
 test("register rejects non-function handlers", function() {
   assert.throws(function() {
@@ -33,9 +50,28 @@ test("register rejects non-function handlers", function() {
   }, /must be a function/);
 });
 
+test("execute throws for unknown actions in strict mode", function() {
+  GW.clearHandlers();
+  GW.setStrict(true);
+  assert.throws(function() {
+    GW.execute("practice.star", { userId: "u_1" });
+  }, /missing handler "practice.star" \(unknown_action\)/);
+  assert.strictEqual(GW.getMissingHandlerReport()["practice.star"], 1);
+});
+
+test("execute throws for unregistered known actions in strict mode", function() {
+  GW.clearHandlers();
+  GW.setStrict(true);
+  assert.throws(function() {
+    GW.execute(ActionRegistry.SparkActions.PRACTICE_COMPLETE, { results: {} });
+  }, /missing handler "practice.complete" \(unregistered_handler\)/);
+  assert.strictEqual(GW.getMissingHandlerReport()["practice.complete"], 1);
+});
+
 test("execute uses registered handlers before fallback launchers", function() {
   var captured = null;
   GW.clearHandlers();
+  GW.setStrict(true);
   GW.register("practice.start", function(payload) {
     captured = payload;
     return "handled";
@@ -50,6 +86,8 @@ test("execute uses registered handlers before fallback launchers", function() {
   assert.strictEqual(result, "handled");
   assert.ok(captured);
   assert.strictEqual(captured.options.instrument, "piano");
+  assert.strictEqual(GW.getLastAction().actionName, "practice.start");
+  assert.strictEqual(GW.getLastResult().result, "handled");
   assert.deepStrictEqual(GW.getMissingHandlerReport(), {});
   GW.clearHandlers();
 });
@@ -57,6 +95,7 @@ test("execute uses registered handlers before fallback launchers", function() {
 test("execute records missing handler counts when fallback path is used", function() {
   var captured = null;
   GW.clearHandlers();
+  GW.setStrict(true);
   warnings = [];
   global.startPlayableRhythmHighwayPayload = function(payload, options) {
     captured = { payload: payload, options: options };
@@ -83,6 +122,7 @@ test("installDefaultHandlers registers explicit practice and song launch handler
   var practiceCaptured = null;
   var songCaptured = null;
   GW.clearHandlers();
+  GW.setStrict(true);
   global.startPlayableRhythmHighwayPayload = function(payload, options) {
     practiceCaptured = { payload: payload, options: options };
     return true;
@@ -115,6 +155,7 @@ test("installDefaultHandlers registers explicit practice and song launch handler
 test("runSessionSegment uses registered segment handlers before exercise launch fallbacks", function() {
   var captured = null;
   GW.clearHandlers();
+  GW.setStrict(true);
   GW.register("session.segment.practice", function(payload) {
     captured = payload;
     return "segment_handled";
@@ -149,6 +190,7 @@ test("runSessionSegment uses registered segment handlers before exercise launch 
 test("runSessionSegment falls back through the shared segment-start handler", function() {
   var captured = null;
   GW.clearHandlers();
+  GW.setStrict(true);
   GW.register("session.segment.start", function(payload) {
     captured = payload;
     return "segment_start_handled";
@@ -182,6 +224,7 @@ test("runSessionSegment falls back through the shared segment-start handler", fu
 test("installDefaultHandlers registers explicit session segment handlers", function() {
   var captured = null;
   GW.clearHandlers();
+  GW.setStrict(true);
   global.startPlayableRhythmHighwayPayload = function(payload, options) {
     captured = { payload: payload, options: options };
     return true;
@@ -244,6 +287,7 @@ test("normalizeToExercise passes through V2 exercise", function() {
 
 test("runDirectExercise returns false without launchers", function() {
   GW.clearHandlers();
+  GW.setStrict(false);
   var result = GW.runDirectExercise("some_chart", { source: "test" });
   assert.strictEqual(result, false);
   assert.strictEqual(GW.getMissingHandlerReport()["song.start"], 1);
@@ -251,6 +295,7 @@ test("runDirectExercise returns false without launchers", function() {
 
 test("runDirectExercise calls startPerformance for songs", function() {
   GW.clearHandlers();
+  GW.setStrict(true);
   var called = false;
   global.startPerformance = function() { called = true; };
   GW.runDirectExercise("chart_id", { source: "retry" });
@@ -261,6 +306,7 @@ test("runDirectExercise calls startPerformance for songs", function() {
 
 test("runDirectExercise normalizes app-id instruments for practice payload launches", function() {
   GW.clearHandlers();
+  GW.setStrict(true);
   var captured = null;
   global.startPlayableRhythmHighwayPayload = function(payload, options) {
     captured = { payload: payload, options: options };
@@ -283,6 +329,7 @@ test("runDirectExercise normalizes app-id instruments for practice payload launc
 
 test("runPlanItem can resolve sparkCore from the global binding", function() {
   GW.clearHandlers();
+  GW.setStrict(true);
   var captured = null;
   global.sparkCore = {
     getActiveSessionView: function() {
@@ -322,6 +369,7 @@ test("runPlanItem can resolve sparkCore from the global binding", function() {
 
 test("runRhythmHighwaySegment can resolve sparkCore from the global binding", function() {
   GW.clearHandlers();
+  GW.setStrict(true);
   var captured = null;
   global.sparkCore = {
     getActiveSessionView: function() {
