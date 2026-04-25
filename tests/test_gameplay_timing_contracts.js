@@ -8,6 +8,7 @@ global.performance = {
   }
 };
 
+require("../js/sparksuite/runtime/gameplay_timing_config.js");
 require("../js/sparksuite/gameplay/gameplay_timing.js");
 require("../js/sparksuite/gameplay/input_mapper.js");
 require("../js/sparksuite/gameplay/scoring_engine.js");
@@ -20,10 +21,10 @@ var DefaultKeyToLane = window.SparkDefaultKeyToLane;
 var GameplayScoringEngine = window.SparkGameplayScoringEngine;
 var TimingEngine = window.SparkTimingEngine;
 
-assert.strictEqual(GameplayTiming.hitWindowMs, 150);
+assert.strictEqual(GameplayTiming.hitWindowMs, 140);
 assert.strictEqual(GameplayTiming.perfectWindowMs, 50);
 assert.strictEqual(GameplayTiming.goodWindowMs, 90);
-assert.strictEqual(GameplayTiming.noteSpeed, 0.3);
+assert.strictEqual(GameplayTiming.noteSpeed, 0.32);
 assert.strictEqual(GameplayTiming.inputLatencyOffsetMs, 0);
 
 var clock = new ExerciseClock(function() { return performance.now(); });

@@ -90,9 +90,25 @@
       var runtime = getRuntime();
       if (runtime && runtime.timingConfig) return runtime.timingConfig;
       var view = getCurrentSessionView();
+      if (view && view.runtimeState && view.runtimeState.gameplayTimingConfig) {
+        return view.runtimeState.gameplayTimingConfig;
+      }
       if (view && view.runtimeState && view.runtimeState.transport && view.runtimeState.transport.timingConfig) {
         return view.runtimeState.transport.timingConfig;
       }
+      if (typeof SparkGameplayTiming !== "undefined") return SparkGameplayTiming;
+      if (typeof SparkDefaultGameplayTiming !== "undefined") return SparkDefaultGameplayTiming;
+      return null;
+    }
+
+    function getAssistConfig() {
+      var runtime = getRuntime();
+      if (runtime && runtime.assistConfig) return runtime.assistConfig;
+      var view = getCurrentSessionView();
+      if (view && view.runtimeState && view.runtimeState.practiceAssistConfig) {
+        return view.runtimeState.practiceAssistConfig;
+      }
+      if (typeof SparkDefaultPracticeAssist !== "undefined") return SparkDefaultPracticeAssist;
       return null;
     }
 
@@ -121,6 +137,7 @@
       getLastResult: getLastResult,
       getMissingHandlers: getMissingHandlers,
       getTimingConfig: getTimingConfig,
+      getAssistConfig: getAssistConfig,
       getScore: getScore
     };
   }

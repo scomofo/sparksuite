@@ -1,25 +1,32 @@
 (function() {
   function GameplayScoringEngine(config) {
-    this.config = config || (typeof SparkGameplayTiming !== "undefined" ? SparkGameplayTiming : {
-      hitWindowMs: 150,
+    var defaults = typeof SparkGameplayTiming !== "undefined" ? SparkGameplayTiming : {
+      hitWindowMs: 140,
       perfectWindowMs: 50,
       goodWindowMs: 90,
+      noteSpeed: 0.32,
       inputLatencyOffsetMs: 0
-    });
+    };
+    this.config = typeof SparkNormalizeTimingConfig === "function"
+      ? SparkNormalizeTimingConfig(config || defaults)
+      : (config || defaults);
   }
 
   GameplayScoringEngine.prototype.judge = function(input) {
     input = input || {};
-    var delta = Math.abs(
-      (input.inputTimeMs || 0) -
-      (input.expectedTimeMs || 0) -
-      (this.config.inputLatencyOffsetMs || 0)
-    );
+    var rawDelta = (input.inputTimeMs || 0) - (input.expectedTimeMs || 0);
+    var delta = Math.abs(rawDelta - (this.config.inputLatencyOffsetMs || 0));
+    var result = typeof SparkScoreTimingDelta === "function"
+      ? SparkScoreTimingDelta(rawDelta, this.config)
+      : "miss";
 
-    if (delta <= this.config.perfectWindowMs) return { result: "perfect", delta: delta };
-    if (delta <= this.config.goodWindowMs) return { result: "good", delta: delta };
-    if (delta <= this.config.hitWindowMs) return { result: "hit", delta: delta };
-    return { result: "miss", delta: delta };
+    if (typeof SparkScoreTimingDelta !== "function") {
+      if (delta <= this.config.perfectWindowMs) result = "perfect";
+      else if (delta <= this.config.goodWindowMs) result = "good";
+      else if (delta <= this.config.hitWindowMs) result = "hit";
+    }
+
+    return { result: result, delta: delta };
   };
 
   if (typeof window !== "undefined") {

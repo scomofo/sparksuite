@@ -8,6 +8,9 @@
     this.inputJudge = options.inputJudge || new SparkInputJudge();
     this.scoringEngine = options.scoringEngine || new SparkScoringEngine(this.preset);
     this.replayEngine = options.replayEngine || new SparkReplayEngine();
+    this.assistConfig = typeof SparkNormalizePracticeAssist === "function"
+      ? SparkNormalizePracticeAssist(options.assistConfig || {})
+      : (options.assistConfig || null);
     this.noteStates = buildNoteStates(this.chart, this.timingEngine);
     this.songEndSec = getSongEndSec(this.noteStates);
     this.completed = false;
@@ -15,6 +18,7 @@
   }
 
   RhythmGameplayEngine.prototype.update = function(songTimeSec) {
+    songTimeSec = this.getDisplaySongTimeSec(songTimeSec);
     if (this.completed) return this.getSnapshot(songTimeSec);
     var missMs = this.preset.hitWindowMs.miss;
     for (var i = 0; i < this.noteStates.length; i++) {
@@ -48,6 +52,7 @@
   };
 
   RhythmGameplayEngine.prototype.getSnapshot = function(songTimeSec) {
+    songTimeSec = this.getDisplaySongTimeSec(songTimeSec);
     var upcoming = [];
     for (var i = 0; i < this.noteStates.length; i++) {
       var note = this.noteStates[i];
@@ -72,6 +77,7 @@
       songTimeSec: songTimeSec,
       notes: upcoming,
       gameplay: summary.gameplay,
+      assistConfig: this.assistConfig,
       finished: this.completed
     };
     return JSON.parse(JSON.stringify(this.lastSnapshot));
@@ -91,6 +97,13 @@
       if (!this.noteStates[i].hit && !this.noteStates[i].missed) return false;
     }
     return true;
+  };
+
+  RhythmGameplayEngine.prototype.getDisplaySongTimeSec = function(songTimeSec) {
+    if (typeof SparkResolveLoopedPositionMs !== "function" || !this.assistConfig || !this.assistConfig.loopRange) {
+      return songTimeSec;
+    }
+    return SparkResolveLoopedPositionMs(Math.round(songTimeSec * 1000), this.assistConfig) / 1000;
   };
 
   function buildNoteStates(chart, timingEngine) {

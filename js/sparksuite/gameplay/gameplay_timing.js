@@ -1,11 +1,13 @@
 (function() {
-  var GameplayTiming = {
-    hitWindowMs: 150,
-    perfectWindowMs: 50,
-    goodWindowMs: 90,
-    noteSpeed: 0.3,
-    inputLatencyOffsetMs: 0
-  };
+  var GameplayTiming = typeof SparkNormalizeTimingConfig === "function"
+    ? SparkNormalizeTimingConfig(typeof SparkDefaultGameplayTiming !== "undefined" ? SparkDefaultGameplayTiming : {})
+    : {
+        hitWindowMs: 140,
+        perfectWindowMs: 50,
+        goodWindowMs: 90,
+        noteSpeed: 0.32,
+        inputLatencyOffsetMs: 0
+      };
 
   function ExerciseClock(now) {
     this.now = typeof now === "function" ? now : function() {

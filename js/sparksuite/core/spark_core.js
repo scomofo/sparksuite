@@ -94,6 +94,26 @@
   };
 
   SparkCore.prototype.createInitialRuntimeState = function() {
+    var gameplayTimingConfig = typeof SparkNormalizeTimingConfig === "function"
+      ? SparkNormalizeTimingConfig()
+      : {
+          hitWindowMs: 140,
+          perfectWindowMs: 50,
+          goodWindowMs: 90,
+          noteSpeed: 0.32,
+          inputLatencyOffsetMs: 0
+        };
+    var practiceAssistConfig = typeof SparkNormalizePracticeAssist === "function"
+      ? SparkNormalizePracticeAssist()
+      : {
+          speedMultiplier: 1,
+          loopRange: null,
+          showGhostNotes: false,
+          metronome: false,
+          noFailMode: true,
+          leftHanded: false,
+          noStrumMode: false
+        };
     return {
       activeFlow: null,
       activeInstrumentId: null,
@@ -259,6 +279,8 @@
       performanceTimingOffsetMs: 0,
       performanceMidiOffsetMs: 0,
       performanceMicOffsetMs: 0,
+      gameplayTimingConfig: gameplayTimingConfig,
+      practiceAssistConfig: practiceAssistConfig,
       performanceResults: null,
       transport: {
         status: "idle",
@@ -307,6 +329,48 @@
 
     this.runtimeState = next;
     return this.runtimeState;
+  };
+
+  SparkCore.prototype.getGameplayTimingConfig = function() {
+    var config = this.runtimeState && this.runtimeState.gameplayTimingConfig
+      ? this.runtimeState.gameplayTimingConfig
+      : null;
+    if (typeof SparkNormalizeTimingConfig === "function") {
+      return SparkNormalizeTimingConfig(config || {});
+    }
+    return this.cloneValue(config);
+  };
+
+  SparkCore.prototype.syncGameplayTimingConfig = function(patch) {
+    var next = typeof SparkNormalizeTimingConfig === "function"
+      ? SparkNormalizeTimingConfig(Object.assign({}, this.getGameplayTimingConfig() || {}, patch || {}))
+      : Object.assign({}, this.getGameplayTimingConfig() || {}, patch || {});
+    this.updateRuntimeState({ gameplayTimingConfig: next });
+    return next;
+  };
+
+  SparkCore.prototype.applyInputCalibrationOffset = function(offsetMs) {
+    return this.syncGameplayTimingConfig({
+      inputLatencyOffsetMs: Math.round(typeof offsetMs === "number" && isFinite(offsetMs) ? offsetMs : 0)
+    });
+  };
+
+  SparkCore.prototype.getPracticeAssistConfig = function() {
+    var config = this.runtimeState && this.runtimeState.practiceAssistConfig
+      ? this.runtimeState.practiceAssistConfig
+      : null;
+    if (typeof SparkNormalizePracticeAssist === "function") {
+      return SparkNormalizePracticeAssist(config || {});
+    }
+    return this.cloneValue(config);
+  };
+
+  SparkCore.prototype.syncPracticeAssistConfig = function(patch) {
+    var next = typeof SparkNormalizePracticeAssist === "function"
+      ? SparkNormalizePracticeAssist(Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {}))
+      : Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {});
+    this.updateRuntimeState({ practiceAssistConfig: next });
+    return next;
   };
 
 

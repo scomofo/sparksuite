@@ -44,6 +44,7 @@
         lastResult: debugState.getLastResult ? debugState.getLastResult() : null,
         missing: debugState.getMissingHandlers ? debugState.getMissingHandlers() : {},
         timing: debugState.getTimingConfig ? debugState.getTimingConfig() : null,
+        assist: debugState.getAssistConfig ? debugState.getAssistConfig() : null,
         score: debugState.getScore ? debugState.getScore() : null
       };
 
