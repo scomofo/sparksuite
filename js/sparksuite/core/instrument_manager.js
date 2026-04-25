@@ -1,4 +1,26 @@
 (function() {
+  function hasDirectInstrumentCapabilities(entry) {
+    return !!(entry && (
+      typeof entry.getCurriculumMap === "function" ||
+      typeof entry.getCurriculumMapV2 === "function" ||
+      typeof entry.getRhythmAdapter === "function" ||
+      typeof entry.getSongs === "function"
+    ));
+  }
+
+  function validateAdapter(type, adapter) {
+    var required = ["getId", "getType", "getCurriculumMap"];
+    var i;
+    if (!adapter || typeof adapter !== "object") {
+      throw new Error('Instrument "' + type + '" adapter factory must return an object');
+    }
+    for (i = 0; i < required.length; i++) {
+      if (typeof adapter[required[i]] !== "function") {
+        throw new Error('Instrument "' + type + '" adapter missing required method: ' + required[i]);
+      }
+    }
+  }
+
   function mergeInstrumentEntry(primary, fallback) {
     var merged = {};
     var key;
@@ -82,7 +104,24 @@
   }
 
   InstrumentManager.prototype.register = function(type, factory) {
+    var adapter;
+    if (typeof factory !== "function") {
+      throw new Error('Instrument "' + type + '" registration requires an adapter factory');
+    }
+    adapter = factory();
+    validateAdapter(type, adapter);
     this.adapters[type] = factory;
+  };
+
+  InstrumentManager.prototype.requireFactory = function(type) {
+    var factory = type && this.adapters[type] ? this.adapters[type] : null;
+    if (!factory) {
+      throw new Error(
+        'Instrument "' + type + '" is not registered. Registered: ' +
+        (Object.keys(this.adapters).length ? Object.keys(this.adapters).join(", ") : "none")
+      );
+    }
+    return factory;
   };
 
   InstrumentManager.prototype.getActiveContext = function() {
@@ -103,12 +142,12 @@
       type = SparkInstrumentAdapter.getInstrumentType();
     }
     adapterFactory = type && this.adapters[type] ? this.adapters[type] : null;
+    if (type && !adapterFactory && !hasDirectInstrumentCapabilities(activeInstrument)) {
+      this.requireFactory(type);
+    }
     fallbackAdapter = adapterFactory ? adapterFactory() : null;
     adapter = activeInstrument && (
-      typeof activeInstrument.getCurriculumMap === "function" ||
-      typeof activeInstrument.getCurriculumMapV2 === "function" ||
-      typeof activeInstrument.getRhythmAdapter === "function" ||
-      typeof activeInstrument.getSongs === "function"
+      hasDirectInstrumentCapabilities(activeInstrument)
     ) ? createModuleAdapter(activeInstrument, fallbackAdapter) : fallbackAdapter;
     data = activeInstrument && typeof activeInstrument.getData === "function"
       ? (activeInstrument.getData() || {})
