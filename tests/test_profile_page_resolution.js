@@ -145,6 +145,7 @@ test("showroom practice, lesson, and path shells do not invent progress or guita
   assert.ok(practiceHtml.indexOf("No drills loaded yet.") >= 0);
   assert.strictEqual(practiceHtml.indexOf(">45</span><span class=\"showroom-mini-unit\">min"), -1);
   assert.strictEqual(practiceHtml.indexOf(">92</span><span class=\"showroom-mini-unit\">/100"), -1);
+  assert.strictEqual(practiceHtml.indexOf("+150 XP"), -1);
 
   assert.ok(lessonHtml.indexOf("No lesson loaded yet") >= 0);
   assert.ok(lessonHtml.indexOf("Choose a lesson from your path") >= 0);
