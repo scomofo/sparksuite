@@ -34,13 +34,13 @@
     return null;
   }
   function getShowroomLessonCtaAction(lesson) {
-    if (!lesson || lesson.num == null) return "act('showroomStartPerf')";
+    if (!lesson || lesson.num == null) return nav("path");
     var lessonNum = parseInt(lesson.num, 10);
     if (getShowroomActiveGuidedSessionNum() === lessonNum) return "act('resume_guided_session')";
     return "act('start_guided_session'," + jsArg(String(lesson.num)) + ")";
   }
   function getShowroomLessonCtaLabel(lesson) {
-    if (!lesson || lesson.num == null) return "Start Practice";
+    if (!lesson || lesson.num == null) return "Open Path";
     return getShowroomActiveGuidedSessionNum() === parseInt(lesson.num, 10)
       ? "Resume Practice"
       : "Start Practice";
@@ -936,8 +936,11 @@
     opts = opts || {};
     var bpm = (typeof S !== "undefined" && S.metronomeBpm) || opts.bpm || 120;
     var metroOn = (typeof S !== "undefined" && S.metronomeOn);
-    var todayMin = (typeof S !== "undefined") ? Math.floor(S.todayPracticeSeconds / 60) : (opts.todayMinutes || 45);
-    var focusScore = opts.focusScore || 92;
+    var todaySeconds = (typeof S !== "undefined" && typeof S.todayPracticeSeconds === "number" && isFinite(S.todayPracticeSeconds))
+      ? S.todayPracticeSeconds
+      : null;
+    var todayMin = todaySeconds != null ? Math.floor(todaySeconds / 60) : (pickShowroomNumber(opts.todayMinutes, 0) || 0);
+    var focusScore = pickShowroomNumber(opts.focusScore, 0) || 0;
 
     // Resolve practice plan
     var plan = null;
@@ -1051,7 +1054,7 @@
            + '</div>'
            + '<section><div class="showroom-section-h2" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px">'
              + '<h3 style="font-family:\'Syne\';font-weight:800;font-size:15px">Quick Drills</h3><span class="link" style="font-size:11px;font-weight:700;color:var(--text-secondary);cursor:pointer" role="button" tabindex="0" onclick="' + nav("lesson") + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("lesson") + '}">View All</span></div>'
-             + '<div style="display:flex;flex-direction:column;gap:8px">' + drillHtml + '</div></section>'
+             + '<div style="display:flex;flex-direction:column;gap:8px">' + (drillHtml || '<div class="showroom-empty-state"><p>No drills loaded yet. Start or refresh a practice plan to populate this list.</p></div>') + '</div></section>'
          + '</main>'
          + bottomNav(navItems, "practice")
          + '</div>';
@@ -1522,14 +1525,14 @@
     var lessonLevel = activeLesson ? activeLesson.level : 1;
     var module = opts.module || (activeLesson
       ? "Lesson " + lessonNum + " • Level " + lessonLevel
-      : "Module 01 • Guitar Basics");
-    var unit = opts.unit || (activeLesson ? activeLesson.title : "G Major Foundation");
-    var chordName = opts.chord || (activeLesson && activeLesson.chord) || "G Major Chord";
-    var position = opts.position || "Open Position";
-    var strum = opts.strum || "All 6";
-    var type = opts.type || "Major";
-    var xp = opts.xp || 12;
-    var time = opts.time || "05:00";
+      : "No lesson loaded yet");
+    var unit = opts.unit || (activeLesson ? activeLesson.title : "Choose a lesson from your path");
+    var chordName = opts.chord || (activeLesson && activeLesson.chord) || "";
+    var position = opts.position || (activeLesson ? "Open Position" : "No chord selected");
+    var strum = opts.strum || (activeLesson ? "All 6" : "--");
+    var type = opts.type || (activeLesson ? "Practice" : "--");
+    var xp = opts.xp != null ? opts.xp : (activeLesson ? 12 : 0);
+    var time = opts.time || (activeLesson ? "05:00" : "--");
     var lessonDesc = (activeLesson && activeLesson.desc) || "";
     var rawLesson = activeLesson ? activeLesson.raw : null;
     var sparkText = (rawLesson && rawLesson.spark && rawLesson.spark.text) || "";
@@ -1560,7 +1563,7 @@
     // Fall back to the hand-drawn 6-string guitar diagram only when we're
     // on guitar and the lookup didn't find a match — it's better than
     // nothing for guitar lessons with chord names that aren't in ALL_CHORDS.
-    var showChordDiagram = !chordVisualHtml && instrumentType === "guitar";
+    var showChordDiagram = !!chordName && !chordVisualHtml && instrumentType === "guitar";
     // Default G Major fingering: positions on (string left%, fret top%)
     // Aligned to 6-string justify-between grid: 0, 20, 40, 60, 80, 100
     var fingers = opts.fingers || [
@@ -1713,16 +1716,25 @@
   function pathRender(opts) {
     opts = opts || {};
     var profile = typeof SparkStorage !== "undefined" ? SparkStorage.load() : null;
-    var streak = 42, dailyMin = 18, dailyGoal = 20, level = 12, accuracy = 85;
+    var streak = 0, dailyMin = 0, dailyGoal = 20, level = 1, accuracy = 0;
     if (profile && profile.apps) {
-      var maxLvl = 0, maxStreak = 0;
+      var maxLvl = 0, maxStreak = 0, maxDailyMin = 0, maxAccuracy = 0;
       for (var id in profile.apps) {
         var st = (profile.apps[id] || {}).stats || {};
         if ((st.level || 0) > maxLvl) maxLvl = st.level;
         if ((st.streakDays || 0) > maxStreak) maxStreak = st.streakDays;
+        if ((st.todayMinutes || 0) > maxDailyMin) maxDailyMin = st.todayMinutes;
+        if ((st.accuracy || 0) > maxAccuracy) maxAccuracy = st.accuracy;
       }
       if (maxLvl) level = maxLvl;
       if (maxStreak) streak = maxStreak;
+      if (maxDailyMin) dailyMin = maxDailyMin;
+      if (maxAccuracy) accuracy = Math.round(maxAccuracy);
+    }
+    if (typeof S !== "undefined") {
+      if (typeof S.todayPracticeSeconds === "number" && isFinite(S.todayPracticeSeconds)) dailyMin = Math.floor(S.todayPracticeSeconds / 60);
+      if (typeof S.lastSessionAccuracy === "number" && isFinite(S.lastSessionAccuracy)) accuracy = Math.round(S.lastSessionAccuracy);
+      if (typeof S.practiceStreak === "number" && isFinite(S.practiceStreak)) streak = Math.max(streak, S.practiceStreak);
     }
 
     // Build lesson list from the active instrument's real data. Completed
@@ -1765,11 +1777,7 @@
         };
       });
     } else {
-      lessons = opts.lessons || [
-        { tier:"Beginner",     title:"Chord Basics",      desc:"Master the fundamental G and C major shapes.", time:"8 MIN",  icon:"music_note", instrument:"guitar",  unlocked:true,  cta:"Continue" },
-        { tier:"Intermediate", title:"Strumming Patterns",desc:"Unlock the \"Island Strum\" for versatile rhythms.", time:"12 MIN", icon:"waves",     instrument:"ukulele", unlocked:false, cta:"Locked" },
-        { tier:"Milestone",    title:"First Song",        desc:"Put it all together with \"Simple Melodies\".",    time:"15 MIN", icon:"piano",     instrument:"piano",   unlocked:false, cta:"Locked", thumb:true }
-      ];
+      lessons = opts.lessons || [];
     }
 
     var goalPct = Math.min(100, Math.round((dailyMin / dailyGoal) * 100));
@@ -1807,6 +1815,9 @@
                   + '</div>'
                 + '</div>';
     }
+    if (!lessonsHtml) {
+      lessonsHtml = '<div class="showroom-empty-state"><p>No lessons loaded yet. Select an instrument path or load curriculum to continue.</p></div>';
+    }
 
     var navItems = [
       { id:"path",        label:"Path",        icon:"map" },
@@ -1818,7 +1829,7 @@
     var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
     var avatarHtml = avatarSrc
       ? '<img src="' + escHtml(avatarSrc) + '" alt="Profile" style="width:100%;height:100%;object-fit:cover">'
-      : '<span class="showroom-path-avatar-fallback">' + (profile && profile.displayName ? profile.displayName.charAt(0).toUpperCase() : 'A') + '</span>';
+      : '<span class="showroom-path-avatar-fallback">' + (profile && profile.displayName ? profile.displayName.charAt(0).toUpperCase() : 'S') + '</span>';
 
     return '<div class="showroom-root with-bg showroom-path-2026">'
          + '<header class="showroom-path-bar">'
