@@ -6298,7 +6298,8 @@ test("createDefaultSparkCore registers bass as a first-class instrument adapter"
   assert.ok(context.adapter);
   assert.strictEqual(context.instrumentType, "bass");
   assert.strictEqual(context.adapter.getType(), "bass");
-  assert.strictEqual(context.curriculumMap[0].title, "First Groove");
+  assert.strictEqual(context.curriculumMap[0].skill, "posture");
+  assert.ok(context.curriculumMap.some(function(lesson) { return lesson.skill === "improvisation"; }));
   assert.strictEqual(context.songs[0].title, "Seven Nation Army");
   assert.ok(context.rhythmAdapter);
   assert.strictEqual(context.rhythmAdapter.getLaneCount(), 4);
@@ -6340,6 +6341,10 @@ test("SparkBassModule exposes authored advanced exercises for later-phase bass s
   var walking = SparkBassModule.getExercises("walking_bass");
   var slap = SparkBassModule.getExercises("slap");
   var ghost = SparkBassModule.getExercises("ghost_notes");
+  var passing = SparkBassModule.getExercises("passing_notes");
+  var arpeggios = SparkBassModule.getExercises("arpeggios");
+  var accents = SparkBassModule.getExercises("groove_accents");
+  var improv = SparkBassModule.getExercises("improvisation");
 
   assert.strictEqual(walking[0].id, "bass_walk_lines_01");
   assert.strictEqual(walking[0].focus, "walking_bass");
@@ -6347,6 +6352,21 @@ test("SparkBassModule exposes authored advanced exercises for later-phase bass s
   assert.strictEqual(slap[0].focus, "slap");
   assert.strictEqual(ghost[0].id, "bass_ghost_grid_02");
   assert.strictEqual(ghost[0].focus, "ghost_notes");
+  assert.strictEqual(passing[0].id, "bass_passing_notes_01");
+  assert.strictEqual(arpeggios[0].id, "bass_arpeggio_climb_01");
+  assert.strictEqual(accents[0].id, "bass_accent_lock_01");
+  assert.strictEqual(improv[0].id, "bass_improv_cells_01");
+});
+
+test("SparkBassModule exposes a peer-level authored bass lesson path", function() {
+  var lessons = SparkBassModule.getLessons();
+  var lastLesson = lessons[lessons.length - 1];
+
+  assert.ok(lessons.length >= 12);
+  assert.strictEqual(lessons[0].skill, "posture");
+  assert.strictEqual(lastLesson.skill, "improvisation");
+  assert.deepStrictEqual(lastLesson.prerequisites, ["groove_accents"]);
+  assert.strictEqual(SparkBassModule.getCurriculumMap().length, lessons.length);
 });
 
 test("InstrumentManager rejects adapter factories that return incomplete contracts", function() {

@@ -267,7 +267,8 @@ var BASS_SKILL_TREE = {
   fretboard: ["notes_E_string", "notes_A_string", "notes_D_string", "notes_G_string", "octaves", "position_shifting", "fretboard_navigation", "root_note_finding"],
   rhythm: ["quarter_notes", "eighth_notes", "rests", "note_duration", "groove_consistency", "syncopation", "swing_feel", "drum_loop_playing"],
   basslines: ["root_notes", "root_fifth", "octaves", "walking_bass", "passing_notes", "arpeggios", "scale_runs", "chord_tones", "groove_patterns", "song_basslines"],
-  technique: ["muting_right_hand", "muting_left_hand", "string_crossing", "slides", "hammer_ons", "pull_offs", "ghost_notes", "slap", "pop"]
+  technique: ["muting_right_hand", "muting_left_hand", "string_crossing", "slides", "hammer_ons", "pull_offs", "ghost_notes", "slap", "pop"],
+  performance: ["funk_grooves", "groove_accents", "improvisation", "walking_multi_key", "jam_tracks"]
 };
 
 // ── Exercises ──

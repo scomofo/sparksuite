@@ -279,21 +279,29 @@
     return match ? parseInt(match[1], 10) : 1;
   }
 
+  var BASS_AUTHORED_LESSONS = [
+    { id: "bass_level_1", skill: "posture", title: "Ready Hands, Relaxed Groove", level: 1, prerequisites: [], masteryRequired: 0.65, focusSkills: ["posture", "plucking"], bpmRange: [60, 70] },
+    { id: "bass_level_2", skill: "plucking", title: "Alternating Finger Pulse", level: 1, prerequisites: ["posture"], masteryRequired: 0.7, focusSkills: ["plucking"], bpmRange: [66, 74] },
+    { id: "bass_level_3", skill: "root_notes", title: "Root Notes In Time", level: 2, prerequisites: ["plucking"], masteryRequired: 0.72, focusSkills: ["root_notes"], bpmRange: [70, 80] },
+    { id: "bass_level_4", skill: "root_fifth", title: "Root-Fifth Movement", level: 3, prerequisites: ["root_notes"], masteryRequired: 0.74, focusSkills: ["root_fifth"], bpmRange: [80, 90] },
+    { id: "bass_level_5", skill: "walking_bass", title: "Walking Line Steps", level: 4, prerequisites: ["root_fifth"], masteryRequired: 0.76, focusSkills: ["walking_bass", "passing_notes"], bpmRange: [88, 96] },
+    { id: "bass_level_6", skill: "ghost_notes", title: "Ghost Note Pocket", level: 5, prerequisites: ["walking_bass"], masteryRequired: 0.78, focusSkills: ["ghost_notes"], bpmRange: [88, 100] },
+    { id: "bass_level_7", skill: "slap", title: "Clean Slap Touch", level: 6, prerequisites: ["ghost_notes"], masteryRequired: 0.8, focusSkills: ["slap"], bpmRange: [92, 104] },
+    { id: "bass_level_8", skill: "funk_grooves", title: "Funk Groove Flow", level: 6, prerequisites: ["slap"], masteryRequired: 0.82, focusSkills: ["funk_grooves"], bpmRange: [96, 108] },
+    { id: "bass_level_9", skill: "passing_notes", title: "Connect The Chord Changes", level: 7, prerequisites: ["funk_grooves"], masteryRequired: 0.84, focusSkills: ["passing_notes"], bpmRange: [92, 104] },
+    { id: "bass_level_10", skill: "arpeggios", title: "Chord Tones Across The Bar", level: 7, prerequisites: ["passing_notes"], masteryRequired: 0.85, focusSkills: ["arpeggios"], bpmRange: [88, 100] },
+    { id: "bass_level_11", skill: "groove_accents", title: "Accented Pocket Control", level: 8, prerequisites: ["arpeggios"], masteryRequired: 0.86, focusSkills: ["groove_accents"], bpmRange: [96, 112] },
+    { id: "bass_level_12", skill: "improvisation", title: "Pocket Improvisation Run", level: 8, prerequisites: ["groove_accents"], masteryRequired: 0.88, focusSkills: ["improvisation"], bpmRange: [98, 112] }
+  ];
+
   function buildBassLessons() {
-    var curriculum = window.BASS_CURRICULUM || [];
-    var lessons = [];
-    for (var i = 0; i < curriculum.length; i++) {
-      var row = curriculum[i];
-      lessons.push({
-        id: "bass_level_" + row.num,
-        skill: row.skills && row.skills.length ? row.skills[0] : "posture",
-        title: row.title,
-        level: row.num,
-        focusSkills: row.skills || [],
-        bpmRange: row.bpmRange || [60, 80]
+    return BASS_AUTHORED_LESSONS.map(function(lesson) {
+      return Object.assign({}, lesson, {
+        prerequisites: (lesson.prerequisites || []).slice(),
+        focusSkills: (lesson.focusSkills || []).slice(),
+        bpmRange: (lesson.bpmRange || []).slice()
       });
-    }
-    return lessons;
+    });
   }
 
   function getBassSongs() {
@@ -491,7 +499,7 @@
     },
 
     getCurriculumMap: function() {
-      return window.BASS_CURRICULUM || [];
+      return this.getLessons();
     },
 
     getExercises: function(skill) {
