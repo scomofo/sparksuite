@@ -2710,6 +2710,34 @@
   color:var(--text-secondary);
   max-width:280px; margin:0 auto;
 }
+.showroom-onboarding-intention-card{
+  width:100%;
+  max-width:360px;
+  margin:4px auto 0;
+  padding:16px;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:22px;
+  background:linear-gradient(180deg,rgba(45,35,28,.78),rgba(20,16,13,.86));
+  box-shadow:0 18px 46px rgba(0,0,0,.28);
+  text-align:left;
+}
+.showroom-onboarding-intention-kicker{
+  margin:0 0 8px;
+  color:var(--brand-peach);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.showroom-onboarding-intention-copy{
+  margin:0 0 8px;
+  color:var(--text-secondary);
+  font-size:13px;
+  font-weight:700;
+}
+.showroom-onboarding-intention-input{
+  margin-bottom:8px;
+}
 .showroom-onboarding-cta-wrap{
   width:100%;
   padding:32px 24px 0;

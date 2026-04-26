@@ -2074,6 +2074,7 @@
     var ctaAction = opts.ctaAction || "act('completeOnboarding')";
     var signInLabel = opts.signInLabel || "Already have an account?";
     var signInAction = opts.signInAction || "act('showroomOpenSignIn')";
+    var afterBodyHtml = opts.afterBodyHtml || "";
     // Escape " in action strings so a caller passing e.g. act("x") doesn't
     // prematurely close the onclick attribute. Single quotes inside the JS
     // call stay intact; this is the minimum-safe encoding for an attribute
@@ -2095,6 +2096,7 @@
              + '<h2 class="showroom-onboarding-subtitle">' + escHtml(subtitle) + '</h2>'
              + '<p class="showroom-onboarding-body">' + escHtml(body) + '</p>'
            + '</div>'
+           + afterBodyHtml
            + '<div class="showroom-onboarding-cta-wrap">'
              + '<button type="button" class="showroom-onboarding-cta" onclick="' + _attrSafeJs(ctaAction) + '">'
                + escHtml(String(ctaLabel).toUpperCase())

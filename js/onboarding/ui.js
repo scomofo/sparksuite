@@ -1,5 +1,16 @@
 function onboardingPage(){
   var step = getCurrentOnboardingStep();
+  if(step === "welcome" && typeof SparkOnboardingWelcome !== "undefined" && SparkOnboardingWelcome && typeof SparkOnboardingWelcome.render === "function"){
+    return SparkOnboardingWelcome.render({
+      title: "SparkSuite",
+      subtitle: "Let's tune the app to you",
+      body: "This setup keeps the first lesson grounded in your instrument, goals, timing, and starter content.",
+      ctaLabel: "Start setup",
+      ctaAction: "act('onboardingNext')",
+      signInLabel: "Already set up?",
+      signInAction: "act('onboardingNext')"
+    });
+  }
   var h = '<div class="card mb16">';
   h += '<div><b>Setup</b></div>';
   h += '<div class="muted">Let\'s get Spark ready for you.</div>';

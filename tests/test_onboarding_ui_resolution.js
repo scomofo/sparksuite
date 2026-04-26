@@ -21,6 +21,8 @@ console.log("\n--- Onboarding UI Resolution ---");
 
 test("onboarding ui routes legacy controls through app actions", function() {
   var source = loadJS("js/onboarding/ui.js");
+  assert.ok(source.indexOf("SparkOnboardingWelcome.render") >= 0);
+  assert.ok(source.indexOf("ctaAction: \"act('onboardingNext')\"") >= 0);
   assert.ok(source.indexOf("act(\\'onboardingSetInstrument\\',\\'guitar\\')") >= 0);
   assert.ok(source.indexOf("act(\\'onboardingSetSkillLevel\\',\\'beginner\\')") >= 0);
   assert.ok(source.indexOf("act(\\'onboardingToggleGoal\\',") >= 0);
@@ -32,6 +34,14 @@ test("onboarding ui routes legacy controls through app actions", function() {
   assert.ok(source.indexOf("act(\\'onboardingFinish\\')") >= 0);
   assert.ok(source.indexOf("act(\\'onboardingBack\\')") >= 0);
   assert.ok(source.indexOf("act(\\'onboardingNext\\')") >= 0);
+});
+
+test("first-launch onboarding overlay can use Warm Ember welcome without losing the intention input", function() {
+  var source = loadJS("js/render.js");
+  assert.ok(source.indexOf("SparkOnboardingWelcome.render") >= 0);
+  assert.ok(source.indexOf("afterBodyHtml: intentionCard") >= 0);
+  assert.ok(source.indexOf("var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);") >= 0);
+  assert.ok(source.indexOf("value=\"'+escHTML(onboardingPracticeIntention)+'\"") >= 0);
 });
 
 test("system family handles onboarding ui actions", function() {
