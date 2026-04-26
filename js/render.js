@@ -73,6 +73,25 @@ function render(options){
 function _renderOnboardingOverlay(){
   if (S.onboardingDone || S.activeInstrument) return "";
   var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);
+  if (typeof SparkOnboardingWelcome !== "undefined" && SparkOnboardingWelcome && typeof SparkOnboardingWelcome.render === "function") {
+    var intentionCard = "";
+    intentionCard += '<section class="showroom-onboarding-intention-card" aria-label="Practice trigger">';
+    intentionCard += '<p class="showroom-onboarding-intention-kicker">Complete this sentence</p>';
+    intentionCard += '<p class="showroom-onboarding-intention-copy">&#8220;Every day, when I&nbsp;&hellip;</p>';
+    intentionCard += '<input type="text" id="intention-input" class="set-input showroom-onboarding-intention-input" placeholder="finish dinner, make coffee..." value="'+escHTML(onboardingPracticeIntention)+'" oninput="act(\'setIntention\',this.value)" aria-label="Practice trigger"/>';
+    intentionCard += '<p class="showroom-onboarding-intention-copy">&#8230;&nbsp;I will open SparkSuite.&#8221;</p>';
+    intentionCard += '</section>';
+    return SparkOnboardingWelcome.render({
+      title: "SparkSuite",
+      subtitle: "Welcome to your practice cockpit",
+      body: "Pick your instrument, set a tiny practice trigger, and we will keep the first run honest instead of pretending your profile already exists.",
+      ctaLabel: "Let's Go!",
+      ctaAction: "act('completeOnboarding')",
+      signInLabel: "Need a minute?",
+      signInAction: "act('completeOnboarding')",
+      afterBodyHtml: intentionCard
+    });
+  }
   var h = "";
   h += '<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
   h += '<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
