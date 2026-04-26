@@ -2943,6 +2943,10 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(__actionFamilies.tools("setGoal", "25"), true);
   assert.strictEqual(__actionFamilies.tools("newSet"), true);
   assert.strictEqual(__actionFamilies.tools("setName", "Bright Set"), true);
+  assert.strictEqual(__actionFamilies.tools("toggleSetChord", "C Major"), true);
+  assert.strictEqual(__actionFamilies.tools("toggleSetChord", "G Major"), true);
+  assert.strictEqual(__actionFamilies.tools("saveSet"), true);
+  assert.strictEqual(__actionFamilies.tools("deleteSet", "1"), true);
   assert.strictEqual(__actionFamilies.tools("editSet", "0"), true);
   assert.strictEqual(__actionFamilies.tools("cancelSet"), true);
   assert.strictEqual(__actionFamilies.tools("rhythmBpm", "132"), true);
@@ -3007,6 +3011,14 @@ test("tools action family routes imported song and rhythm starts through the sha
   }));
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.customSetName === "Bright Set";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.customSetChords) && update.setFields.customSetChords.indexOf("C Major") >= 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.customSets) && update.setFields.customSets.some(function(set) {
+      return set && set.name === "Bright Set";
+    });
   }));
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.rhythmBpm === 132;
@@ -3083,6 +3095,7 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(S.dualAnchorOn, true);
   assert.strictEqual(S.dailyGoalMinutes, 25);
   assert.strictEqual(S.editingSet, false);
+  assert.deepStrictEqual(S.customSets, [{ name: "Old Set", chords: ["C Major", "G Major"] }]);
   assert.strictEqual(S.rhythmBpm, 132);
   assert.deepStrictEqual(S.progChords, []);
   assert.strictEqual(S.progPlaying, false);
