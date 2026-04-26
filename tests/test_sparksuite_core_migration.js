@@ -3506,6 +3506,122 @@ test("studio action family routes plan launch state through the shared bridge", 
   assert.strictEqual(S.skillTreeFocus, "rhythm");
 });
 
+test("studio action family routes performance editor state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var editorSyncs = [];
+  var saveCalls = 0;
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    runtimeUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.syncPerformanceEditorDocumentState = function(chart, options) {
+    editorSyncs.push({ chart: chart, options: options || {} });
+  };
+  global.applyPerformanceEditorCoreMutation = function(action, payload) {
+    var chart = JSON.parse(JSON.stringify(S.performEditorChart || {
+      id: "chart_1",
+      title: "Bridge Chart",
+      events: [],
+      phrases: []
+    }));
+    if (action === "select_event") return { chart: chart };
+    if (action === "add_event") {
+      chart.events.push({ id: 2, laneLabel: "G", t: 2, dur: 1 });
+      return { chart: chart };
+    }
+    if (action === "delete_event") {
+      chart.events = chart.events.filter(function(event) { return event.id !== payload.id; });
+      return { chart: chart };
+    }
+    if (action === "update_event") {
+      chart.events = chart.events.map(function(event) {
+        return event.id === payload.id ? Object.assign({}, event, { laneLabel: payload.val }) : event;
+      });
+      return { chart: chart };
+    }
+    if (action === "add_phrase") {
+      chart.phrases.push({ id: 1, name: "Chorus", startSec: 8, endSec: 16 });
+      return { chart: chart };
+    }
+    if (action === "select_phrase") return { chart: chart };
+    if (action === "update_phrase") {
+      chart.phrases = chart.phrases.map(function(phrase) {
+        return phrase.id === payload.id ? Object.assign({}, phrase, { name: payload.val }) : phrase;
+      });
+      return { chart: chart };
+    }
+    if (action === "delete_phrase") {
+      chart.phrases = chart.phrases.filter(function(phrase) { return phrase.id !== payload.id; });
+      return { chart: chart };
+    }
+    if (action === "save_to_library") return { library: [chart] };
+    if (action === "load_from_library") return { chart: S.performEditorLibrary[payload.index], library: S.performEditorLibrary };
+    if (action === "delete_from_library") return { library: [] };
+    return null;
+  };
+  global.render = function() {};
+  global.saveState = function() { saveCalls += 1; };
+  global.S = global.S || {};
+  global.S.performEditorMode = "chords";
+  global.S.performEditorDirty = false;
+  global.S.performEditorSelectedEventId = null;
+  global.S.performEditorSelectedPhraseId = null;
+  global.S.performEditorChart = {
+    id: "chart_1",
+    title: "Bridge Chart",
+    events: [{ id: 1, laneLabel: "C", t: 0, dur: 1 }],
+    phrases: [{ id: 0, name: "Verse", startSec: 0, endSec: 8 }]
+  };
+  global.S.performEditorLibrary = [];
+
+  eval(loadJS("js/actions/studio_family.js"));
+
+  __actionFamilies.studio("editorSelectEvent", "1");
+  __actionFamilies.studio("editorAddEvent");
+  __actionFamilies.studio("editorDeleteEvent", "1");
+  __actionFamilies.studio("editorEvt", JSON.stringify({ id: 2, prop: "label", val: "Am" }));
+  __actionFamilies.studio("editorAddPhrase");
+  __actionFamilies.studio("editorSelectPhrase", "1");
+  __actionFamilies.studio("editorPhrase", JSON.stringify({ id: 1, prop: "name", val: "Bridge" }));
+  __actionFamilies.studio("editorDeletePhrase", "1");
+  __actionFamilies.studio("editorSave");
+  __actionFamilies.studio("editorLoad", "0");
+  __actionFamilies.studio("editorDelete", "0");
+
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorSelectedEventId === 1;
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorChart && update.setFields.performEditorChart.events.length === 2;
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorSelectedEventId === null;
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorSelectedPhraseId === 1;
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.performEditorLibrary);
+  }), true);
+  assert.strictEqual(S.performEditorLibrary.length, 0);
+  assert.strictEqual(S.performEditorDirty, false);
+  assert.strictEqual(saveCalls, 2);
+  assert.strictEqual(editorSyncs.length, 10);
+});
+
 test("performance action family routes showroom and config state through the shared bridge", function() {
   var runtimeUpdates = [];
   var performanceSyncs = [];

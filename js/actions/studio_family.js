@@ -264,22 +264,23 @@
     }
 
     if (a === "editorSelectEvent") {
-      S.performEditorSelectedEventId = parseInt(v, 10);
-      var selectedEventMutation = applyPerformanceEditorCoreMutation("select_event", { id: S.performEditorSelectedEventId });
-      if (selectedEventMutation && selectedEventMutation.chart) S.performEditorChart = selectedEventMutation.chart;
+      var selectedEventId = parseInt(v, 10);
+      var selectedEventMutation = applyPerformanceEditorCoreMutation("select_event", { id: selectedEventId });
+      var selectedEventChart = selectedEventMutation && selectedEventMutation.chart ? selectedEventMutation.chart : S.performEditorChart;
       var selectedEditorEvent = null;
-      if (S.performEditorChart && S.performEditorChart.events) {
-        for (var selectedIdx = 0; selectedIdx < S.performEditorChart.events.length; selectedIdx++) {
-          if (S.performEditorChart.events[selectedIdx].id === S.performEditorSelectedEventId) {
-            selectedEditorEvent = S.performEditorChart.events[selectedIdx];
+      if (selectedEventChart && selectedEventChart.events) {
+        for (var selectedIdx = 0; selectedIdx < selectedEventChart.events.length; selectedIdx++) {
+          if (selectedEventChart.events[selectedIdx].id === selectedEventId) {
+            selectedEditorEvent = selectedEventChart.events[selectedIdx];
             break;
           }
         }
       }
-      syncPerformanceEditorDocumentState(S.performEditorChart, {
-        source: S.performEditorChart ? "existing" : "blank",
+      setLegacyFields({ performEditorSelectedEventId: selectedEventId, performEditorChart: selectedEventChart }, false);
+      syncPerformanceEditorDocumentState(selectedEventChart, {
+        source: selectedEventChart ? "existing" : "blank",
         dirty: !!S.performEditorDirty,
-        selectedEventId: S.performEditorSelectedEventId,
+        selectedEventId: selectedEventId,
         selectedEvent: selectedEditorEvent
       });
       render();
@@ -289,14 +290,14 @@
     if (a === "editorAddEvent") {
       if (S.performEditorChart) {
         var addEventMutation = applyPerformanceEditorCoreMutation("add_event", { mode: S.performEditorMode });
-        if (addEventMutation && addEventMutation.chart) S.performEditorChart = addEventMutation.chart;
-        syncPerformanceEditorDocumentState(S.performEditorChart, {
+        var addEventChart = addEventMutation && addEventMutation.chart ? addEventMutation.chart : S.performEditorChart;
+        setLegacyFields({ performEditorChart: addEventChart, performEditorDirty: true }, false);
+        syncPerformanceEditorDocumentState(addEventChart, {
           source: "existing",
           dirty: true,
           selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
           selectedEvent: null
         });
-        S.performEditorDirty = true;
         render();
       }
       return true;
@@ -306,16 +307,23 @@
       if (S.performEditorChart) {
         var deleteEventId = parseInt(v, 10);
         var deleteEventMutation = applyPerformanceEditorCoreMutation("delete_event", { id: deleteEventId });
-        if (deleteEventMutation && deleteEventMutation.chart) S.performEditorChart = deleteEventMutation.chart;
-        else S.performEditorChart.events = S.performEditorChart.events.filter(function(e) { return e.id !== deleteEventId; });
-        if (S.performEditorSelectedEventId === deleteEventId) S.performEditorSelectedEventId = null;
-        syncPerformanceEditorDocumentState(S.performEditorChart, {
+        var deleteEventChart = deleteEventMutation && deleteEventMutation.chart
+          ? deleteEventMutation.chart
+          : Object.assign({}, S.performEditorChart, {
+            events: (S.performEditorChart.events || []).filter(function(e) { return e.id !== deleteEventId; })
+          });
+        var nextSelectedEventId = S.performEditorSelectedEventId === deleteEventId ? null : S.performEditorSelectedEventId;
+        setLegacyFields({
+          performEditorChart: deleteEventChart,
+          performEditorSelectedEventId: nextSelectedEventId,
+          performEditorDirty: true
+        }, false);
+        syncPerformanceEditorDocumentState(deleteEventChart, {
           source: "existing",
           dirty: true,
-          selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
+          selectedEventId: nextSelectedEventId != null ? nextSelectedEventId : null,
           selectedEvent: null
         });
-        S.performEditorDirty = true;
         render();
       }
       return true;
@@ -326,21 +334,21 @@
         var eventPatch = JSON.parse(v);
         if (S.performEditorChart) {
           var editorMutation = applyPerformanceEditorCoreMutation("update_event", eventPatch);
+          var updatedEventChart = editorMutation && editorMutation.chart ? editorMutation.chart : S.performEditorChart;
           var editedEvent = null;
-          if (editorMutation && editorMutation.chart) S.performEditorChart = editorMutation.chart;
-          for (var ee = 0; ee < S.performEditorChart.events.length; ee++) {
-            if (S.performEditorChart.events[ee].id === eventPatch.id) {
-              editedEvent = S.performEditorChart.events[ee];
+          for (var ee = 0; ee < updatedEventChart.events.length; ee++) {
+            if (updatedEventChart.events[ee].id === eventPatch.id) {
+              editedEvent = updatedEventChart.events[ee];
               break;
             }
           }
-          syncPerformanceEditorDocumentState(S.performEditorChart, {
+          setLegacyFields({ performEditorChart: updatedEventChart, performEditorDirty: true }, false);
+          syncPerformanceEditorDocumentState(updatedEventChart, {
             source: "existing",
             dirty: true,
             selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null,
             selectedEvent: editedEvent || null
           });
-          S.performEditorDirty = true;
           render();
         }
       } catch (e) {}
@@ -350,16 +358,16 @@
     if (a === "editorAddPhrase") {
       if (S.performEditorChart) {
         var addPhraseMutation = applyPerformanceEditorCoreMutation("add_phrase");
-        if (addPhraseMutation && addPhraseMutation.chart) S.performEditorChart = addPhraseMutation.chart;
-        var phrases = S.performEditorChart.phrases;
+        var addPhraseChart = addPhraseMutation && addPhraseMutation.chart ? addPhraseMutation.chart : S.performEditorChart;
+        var phrases = addPhraseChart.phrases;
         var addedPhrase = phrases[phrases.length - 1];
-        syncPerformanceEditorDocumentState(S.performEditorChart, {
+        setLegacyFields({ performEditorChart: addPhraseChart, performEditorDirty: true }, false);
+        syncPerformanceEditorDocumentState(addPhraseChart, {
           source: "existing",
           dirty: true,
           selectedPhraseId: addedPhrase.id,
           selectedPhrase: addedPhrase
         });
-        S.performEditorDirty = true;
         render();
       }
       return true;
@@ -368,18 +376,19 @@
     if (a === "editorSelectPhrase") {
       var selectedPhraseId = parseInt(v, 10);
       var selectedPhraseMutation = applyPerformanceEditorCoreMutation("select_phrase", { id: selectedPhraseId });
-      if (selectedPhraseMutation && selectedPhraseMutation.chart) S.performEditorChart = selectedPhraseMutation.chart;
+      var selectedPhraseChart = selectedPhraseMutation && selectedPhraseMutation.chart ? selectedPhraseMutation.chart : S.performEditorChart;
       var selectedPhrase = null;
-      if (S.performEditorChart && S.performEditorChart.phrases) {
-        for (var phraseIndex = 0; phraseIndex < S.performEditorChart.phrases.length; phraseIndex++) {
-          if (S.performEditorChart.phrases[phraseIndex].id === selectedPhraseId) {
-            selectedPhrase = S.performEditorChart.phrases[phraseIndex];
+      if (selectedPhraseChart && selectedPhraseChart.phrases) {
+        for (var phraseIndex = 0; phraseIndex < selectedPhraseChart.phrases.length; phraseIndex++) {
+          if (selectedPhraseChart.phrases[phraseIndex].id === selectedPhraseId) {
+            selectedPhrase = selectedPhraseChart.phrases[phraseIndex];
             break;
           }
         }
       }
-      syncPerformanceEditorDocumentState(S.performEditorChart, {
-        source: S.performEditorChart ? "existing" : "blank",
+      setLegacyFields({ performEditorChart: selectedPhraseChart, performEditorSelectedPhraseId: selectedPhrase ? selectedPhrase.id : null }, false);
+      syncPerformanceEditorDocumentState(selectedPhraseChart, {
+        source: selectedPhraseChart ? "existing" : "blank",
         dirty: !!S.performEditorDirty,
         selectedPhraseId: selectedPhrase ? selectedPhrase.id : null,
         selectedPhrase: selectedPhrase
@@ -394,20 +403,20 @@
         var updatedPhrase = null;
         if (S.performEditorChart && S.performEditorChart.phrases) {
           var phraseMutation = applyPerformanceEditorCoreMutation("update_phrase", phrasePatch);
-          if (phraseMutation && phraseMutation.chart) S.performEditorChart = phraseMutation.chart;
-          for (var phraseEditIndex = 0; phraseEditIndex < S.performEditorChart.phrases.length; phraseEditIndex++) {
-            if (S.performEditorChart.phrases[phraseEditIndex].id === phrasePatch.id) {
-              updatedPhrase = S.performEditorChart.phrases[phraseEditIndex];
+          var updatedPhraseChart = phraseMutation && phraseMutation.chart ? phraseMutation.chart : S.performEditorChart;
+          for (var phraseEditIndex = 0; phraseEditIndex < updatedPhraseChart.phrases.length; phraseEditIndex++) {
+            if (updatedPhraseChart.phrases[phraseEditIndex].id === phrasePatch.id) {
+              updatedPhrase = updatedPhraseChart.phrases[phraseEditIndex];
               break;
             }
           }
-          syncPerformanceEditorDocumentState(S.performEditorChart, {
+          setLegacyFields({ performEditorChart: updatedPhraseChart, performEditorDirty: true }, false);
+          syncPerformanceEditorDocumentState(updatedPhraseChart, {
             source: "existing",
             dirty: true,
             selectedPhraseId: updatedPhrase ? updatedPhrase.id : null,
             selectedPhrase: updatedPhrase
           });
-          S.performEditorDirty = true;
           render();
         }
       } catch (e) {}
@@ -418,14 +427,18 @@
       var deletePhraseId = parseInt(v, 10);
       if (S.performEditorChart && S.performEditorChart.phrases) {
         var deletePhraseMutation = applyPerformanceEditorCoreMutation("delete_phrase", { id: deletePhraseId });
-        if (deletePhraseMutation && deletePhraseMutation.chart) S.performEditorChart = deletePhraseMutation.chart;
-        syncPerformanceEditorDocumentState(S.performEditorChart, {
+        var deletePhraseChart = deletePhraseMutation && deletePhraseMutation.chart ? deletePhraseMutation.chart : S.performEditorChart;
+        setLegacyFields({
+          performEditorChart: deletePhraseChart,
+          performEditorSelectedPhraseId: null,
+          performEditorDirty: true
+        }, false);
+        syncPerformanceEditorDocumentState(deletePhraseChart, {
           source: "existing",
           dirty: true,
           selectedPhraseId: null,
           selectedPhrase: null
         });
-        S.performEditorDirty = true;
         render();
       }
       return true;
@@ -435,25 +448,26 @@
       if (S.performEditorChart) {
         var copy = JSON.parse(JSON.stringify(S.performEditorChart));
         var saveMutation = applyPerformanceEditorCoreMutation("save_to_library");
-        if (saveMutation && Array.isArray(saveMutation.library)) syncPerformanceEditorLibraryState(saveMutation.library);
+        var nextEditorLibrary;
+        if (saveMutation && Array.isArray(saveMutation.library)) nextEditorLibrary = saveMutation.library;
         else {
-          if (!Array.isArray(S.performEditorLibrary)) S.performEditorLibrary = [];
+          nextEditorLibrary = Array.isArray(S.performEditorLibrary) ? S.performEditorLibrary.slice() : [];
           var exists = -1;
-          for (var si = 0; si < S.performEditorLibrary.length; si++) {
-            if (S.performEditorLibrary[si].id === S.performEditorChart.id) {
+          for (var si = 0; si < nextEditorLibrary.length; si++) {
+            if (nextEditorLibrary[si].id === S.performEditorChart.id) {
               exists = si;
               break;
             }
           }
-          if (exists >= 0) S.performEditorLibrary[exists] = copy;
-          else S.performEditorLibrary.push(copy);
+          if (exists >= 0) nextEditorLibrary[exists] = copy;
+          else nextEditorLibrary.push(copy);
         }
+        setLegacyFields({ performEditorLibrary: nextEditorLibrary, performEditorDirty: false }, false);
         syncPerformanceEditorDocumentState(copy, {
           source: "library",
           dirty: false,
           selectedEventId: S.performEditorSelectedEventId != null ? S.performEditorSelectedEventId : null
         });
-        S.performEditorDirty = false;
         saveState();
         render();
       }
@@ -463,17 +477,23 @@
     if (a === "editorLoad") {
       var idx = parseInt(v, 10);
       var loadMutation = applyPerformanceEditorCoreMutation("load_from_library", { index: idx });
-      if (loadMutation && Array.isArray(loadMutation.library)) syncPerformanceEditorLibraryState(loadMutation.library);
+      if (loadMutation && Array.isArray(loadMutation.library)) {
+        setLegacyFields({ performEditorLibrary: loadMutation.library }, false);
+      }
       if ((loadMutation && loadMutation.chart) || (S.performEditorLibrary && S.performEditorLibrary[idx])) {
-        S.performEditorChart = loadMutation && loadMutation.chart ? loadMutation.chart : JSON.parse(JSON.stringify(S.performEditorLibrary[idx]));
-        syncPerformanceEditorDocumentState(S.performEditorChart, {
+        var loadedEditorChart = loadMutation && loadMutation.chart ? loadMutation.chart : JSON.parse(JSON.stringify(S.performEditorLibrary[idx]));
+        setLegacyFields({
+          performEditorChart: loadedEditorChart,
+          performEditorDirty: false,
+          performEditorSelectedEventId: null,
+          performEditorSelectedPhraseId: null
+        }, false);
+        syncPerformanceEditorDocumentState(loadedEditorChart, {
           source: "library",
           dirty: false,
           selectedEventId: null,
           selectedPhraseId: null
         });
-        S.performEditorDirty = false;
-        S.performEditorSelectedEventId = null;
         render();
       }
       return true;
@@ -483,13 +503,15 @@
       var di = parseInt(v, 10);
       var deleteMutation = applyPerformanceEditorCoreMutation("delete_from_library", { index: di });
       if (deleteMutation && Array.isArray(deleteMutation.library)) {
-        syncPerformanceEditorLibraryState(deleteMutation.library);
+        setLegacyFields({ performEditorLibrary: deleteMutation.library }, false);
         saveState();
         render();
         return true;
       }
       if (S.performEditorLibrary && S.performEditorLibrary[di]) {
-        S.performEditorLibrary.splice(di, 1);
+        var deletedEditorLibrary = S.performEditorLibrary.slice();
+        deletedEditorLibrary.splice(di, 1);
+        setLegacyFields({ performEditorLibrary: deletedEditorLibrary }, false);
         saveState();
         render();
       }
