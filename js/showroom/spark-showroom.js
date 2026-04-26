@@ -832,8 +832,8 @@
   function songDetailsRender(opts) {
     opts = opts || {};
     // Look up the pinned song (nav("song-details", <id>)) on the active
-    // instrument. Falls back to the first song in the library, then to
-    // honest empty-state copy when no songs are available at all.
+    // instrument. If no song is pinned, render honest empty-state copy
+    // instead of silently selecting the first library item.
     var pinned = null;
     if (typeof SparkInstruments !== "undefined" && SparkInstruments.getActive) {
       var _sdInst = SparkInstruments.getActive();
@@ -846,7 +846,6 @@
           if (_c && (_c.id === _pinId || _c.title === _pinId)) { pinned = _c; break; }
         }
       }
-      if (!pinned && _sdSongs.length) pinned = _sdSongs[0];
     }
     var hasSong = !!(normalizeShowroomText(opts.title) || (pinned && normalizeShowroomText(pinned.title)));
     var title = normalizeShowroomText(opts.title || (pinned && pinned.title)) || "No song selected";

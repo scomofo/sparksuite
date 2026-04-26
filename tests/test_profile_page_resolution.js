@@ -120,14 +120,28 @@ test("profile screen renders earned badges and real instrument progress", functi
 
 test("showroom empty states stay honest across song, leaderboard, session, and performance pages", function() {
   global.getPerformanceTopSongs = function() { return []; };
+  global.SparkInstruments.getActive = function() {
+    return {
+      getData: function() {
+        return {
+          SONGS: [
+            { id: "song_1", title: "Real Library Song", artist: "Catalog", bpm: 96, chords: ["C"] }
+          ]
+        };
+      }
+    };
+  };
 
   var libraryHtml = SparkSongLibrary.render({ songs: [] });
+  var detailsHtml = SparkSongDetails.render({});
   var leaderboardHtml = SparkLeaderboard.render({ entries: [] });
   var sessionHtml = SparkSessionSummary.render({});
   var performanceHtml = SparkPerformance.render({});
 
   assert.ok(libraryHtml.indexOf("No songs loaded for this instrument yet.") >= 0);
   assert.strictEqual(libraryHtml.indexOf("Neon Horizon"), -1);
+  assert.ok(detailsHtml.indexOf("No song selected") >= 0);
+  assert.strictEqual(detailsHtml.indexOf("Real Library Song"), -1);
   assert.ok(leaderboardHtml.indexOf("No scored runs yet.") >= 0);
   assert.strictEqual(leaderboardHtml.indexOf("Alex Chen"), -1);
   assert.ok(sessionHtml.indexOf("No completed session yet") >= 0);
