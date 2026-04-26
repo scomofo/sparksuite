@@ -2698,6 +2698,8 @@ test("tools action family routes imported song and rhythm starts through the sha
   var runtimeUpdates = [];
   var songRequests = [];
   var rhythmRequests = [];
+  var songBrowserRequests = [];
+  var communityFetches = 0;
   var existingBridge = global.SparkProgressBridge || {};
   global.window = {};
   global.__actionFamilies = {};
@@ -2725,6 +2727,20 @@ test("tools action family routes imported song and rhythm starts through the sha
     rhythmRequests.push(payload);
     return payload;
   };
+  global.applySongBrowserRequest = function(action, payload) {
+    songBrowserRequests.push({ action: action, payload: payload });
+    return payload;
+  };
+  global.fetchCommunity = function() {
+    communityFetches += 1;
+  };
+  global.parseChordSheet = function(text) {
+    if (text === "bad chart") return { error: "Could not parse chart" };
+    return {
+      chords: ["D Major", "A Major"],
+      progression: ["D Major", "A Major", "G Major", "A Major"]
+    };
+  };
   global.render = function() {};
   global.saveState = function() {};
   global.strumChord = function() {};
@@ -2748,6 +2764,12 @@ test("tools action family routes imported song and rhythm starts through the sha
     progression: ["Am", "F", "C", "G"],
     pattern: ["D", "U"]
   }];
+  global.S.importText = "";
+  global.S.importedSong = null;
+  global.S.importError = null;
+  global.S.communityTab = "browse";
+  global.S.communitySearch = "";
+  global.S.communitySort = "popular";
   global.S.rhythmBpm = 120;
   global.S.rhythmActive = false;
   global.S.dualChord = "C Major";
@@ -2790,7 +2812,17 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(__actionFamilies.tools("progPlay"), true);
   assert.strictEqual(__actionFamilies.tools("progPlay"), true);
   assert.strictEqual(__actionFamilies.tools("progClear"), true);
+  assert.strictEqual(__actionFamilies.tools("importText", "D A G A"), true);
+  assert.strictEqual(__actionFamilies.tools("parseImport"), true);
+  assert.strictEqual(__actionFamilies.tools("importTitle", "Bridge Import"), true);
+  assert.strictEqual(__actionFamilies.tools("importArtist", "Core User"), true);
+  assert.strictEqual(__actionFamilies.tools("importBpm", "104"), true);
+  assert.strictEqual(__actionFamilies.tools("saveImport"), true);
+  assert.strictEqual(__actionFamilies.tools("communityTab", "latest"), true);
+  assert.strictEqual(__actionFamilies.tools("communitySearch", "groove"), true);
+  assert.strictEqual(__actionFamilies.tools("communitySort", "newest"), true);
   assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
+  assert.strictEqual(__actionFamilies.tools("deleteImport", "1"), true);
   assert.strictEqual(__actionFamilies.tools("startRhythm"), true);
 
   assert.strictEqual(songRequests.length, 1);
@@ -2857,6 +2889,42 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && Array.isArray(update.setFields.progChords) && update.setFields.progChords.length === 0;
   }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importText === "D A G A";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedSong && update.setFields.importedSong.title === "Imported Song";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedSong && update.setFields.importedSong.title === "Bridge Import";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedSong && update.setFields.importedSong.artist === "Core User";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedSong && update.setFields.importedSong.bpm === 104;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.importedSongs) && update.setFields.importedSongs.length === 2;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.importedSongs) && update.setFields.importedSongs.length === 1;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.communityTab === "latest";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.communitySearch === "groove";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.communitySort === "newest";
+  }));
+  assert.deepStrictEqual(songBrowserRequests, [
+    { action: "community_tab", payload: { communityTab: "latest" } },
+    { action: "community_search", payload: { communitySearch: "groove" } },
+    { action: "community_sort", payload: { communitySort: "newest" } }
+  ]);
+  assert.strictEqual(communityFetches, 2);
   assert.strictEqual(S.dualChord, "G Major");
   assert.strictEqual(S.dualAnchorOn, true);
   assert.strictEqual(S.dailyGoalMinutes, 25);
@@ -2864,6 +2932,13 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(S.rhythmBpm, 132);
   assert.deepStrictEqual(S.progChords, []);
   assert.strictEqual(S.progPlaying, false);
+  assert.strictEqual(S.importedSongs.length, 1);
+  assert.strictEqual(S.importedSong, null);
+  assert.strictEqual(S.importText, "");
+  assert.strictEqual(S.importError, null);
+  assert.strictEqual(S.communityTab, "latest");
+  assert.strictEqual(S.communitySearch, "groove");
+  assert.strictEqual(S.communitySort, "newest");
 });
 
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
