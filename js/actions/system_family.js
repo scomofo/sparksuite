@@ -843,24 +843,25 @@
     }
 
     if (a === "toggleFocus") {
-      S.focusMode = !S.focusMode;
-      if (S.focusMode && [TAB.PRACTICE, TAB.DRILL, TAB.DAILY, TAB.STATS, TAB.GUIDE].indexOf(S.tab) === -1) {
-        S.tab = TAB.PRACTICE;
+      var nextFocusMode = !S.focusMode;
+      var focusPatch = { focusMode: nextFocusMode };
+      if (nextFocusMode && [TAB.PRACTICE, TAB.DRILL, TAB.DAILY, TAB.STATS, TAB.GUIDE].indexOf(S.tab) === -1) {
+        focusPatch.tab = TAB.PRACTICE;
       }
+      setLegacyFields(focusPatch, false);
       saveState();
       render();
       return true;
     }
 
     if (a === "dismissBreak") {
-      S.breakDismissed = true;
-      S.sessionStartTime = Date.now();
+      setLegacyFields({ breakDismissed: true, sessionStartTime: Date.now() }, false);
       render();
       return true;
     }
 
     if (a === "toggleShortcuts") {
-      S.showShortcuts = !S.showShortcuts;
+      setLegacyFields({ showShortcuts: !S.showShortcuts }, false);
       render();
       return true;
     }
