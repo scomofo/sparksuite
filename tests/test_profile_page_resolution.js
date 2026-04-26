@@ -136,6 +136,31 @@ test("showroom empty states stay honest across song, leaderboard, session, and p
   assert.strictEqual(performanceHtml.indexOf("S+"), -1);
 });
 
+test("showroom practice, lesson, and path shells do not invent progress or guitar lessons", function() {
+  var practiceHtml = SparkPracticeMetro.render({});
+  var lessonHtml = SparkLesson.render({});
+  var pathHtml = SparkPath.render({});
+
+  assert.ok(practiceHtml.indexOf("No practice focus yet.") >= 0);
+  assert.ok(practiceHtml.indexOf("No drills loaded yet.") >= 0);
+  assert.strictEqual(practiceHtml.indexOf(">45</span><span class=\"showroom-mini-unit\">min"), -1);
+  assert.strictEqual(practiceHtml.indexOf(">92</span><span class=\"showroom-mini-unit\">/100"), -1);
+
+  assert.ok(lessonHtml.indexOf("No lesson loaded yet") >= 0);
+  assert.ok(lessonHtml.indexOf("Choose a lesson from your path") >= 0);
+  assert.ok(lessonHtml.indexOf("Open Path") >= 0);
+  assert.strictEqual(lessonHtml.indexOf("G Major Foundation"), -1);
+  assert.strictEqual(lessonHtml.indexOf("G Major Chord"), -1);
+  assert.strictEqual(lessonHtml.indexOf("Module 01"), -1);
+
+  assert.ok(pathHtml.indexOf("No lessons loaded yet") >= 0);
+  assert.ok(pathHtml.indexOf("LEVEL 1") >= 0);
+  assert.ok(pathHtml.indexOf("0% ACCURACY") >= 0);
+  assert.strictEqual(pathHtml.indexOf("Chord Basics"), -1);
+  assert.strictEqual(pathHtml.indexOf("Strumming Patterns"), -1);
+  assert.strictEqual(pathHtml.indexOf("42" + String.fromCodePoint(0x1F525)), -1);
+});
+
 test("curriculum dashboard and syllabus use real lesson data instead of sample modules", function() {
   global.S.guidedSession = 2;
   global.S.completedGuidedSessions = [1];
