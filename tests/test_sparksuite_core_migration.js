@@ -2813,6 +2813,8 @@ test("tools action family routes imported song and rhythm starts through the sha
   var runtimeUpdates = [];
   var songRequests = [];
   var rhythmRequests = [];
+  var rhythmSyncs = [];
+  var runnerSyncs = [];
   var songBrowserRequests = [];
   var communityFetches = 0;
   var fetchCalls = [];
@@ -2841,6 +2843,14 @@ test("tools action family routes imported song and rhythm starts through the sha
   };
   global.openLegacyRhythmGameRequest = function(payload) {
     rhythmRequests.push(payload);
+    return payload;
+  };
+  global.syncLegacyRhythmRuntimeRequest = function(payload) {
+    rhythmSyncs.push(payload);
+    return payload;
+  };
+  global.syncLegacyRunnerRuntimeRequest = function(payload) {
+    runnerSyncs.push(payload);
     return payload;
   };
   global.applySongBrowserRequest = function(action, payload) {
@@ -2874,8 +2884,11 @@ test("tools action family routes imported song and rhythm starts through the sha
   };
   global.render = function() {};
   global.saveState = function() {};
+  global.snd = function() {};
   global.strumChord = function() {};
   global.rhythmTick = function() {};
+  global.changeRunnerTarget = function() {};
+  global.finishRunner = function() {};
   global.setInterval = function(fn) {
     fn();
     return 123;
@@ -2927,6 +2940,14 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.S.progPlaying = false;
   global.S.progBeat = 0;
   global.S.runnerResults = { score: 50 };
+  global.S.runnerActive = true;
+  global.S.runnerTarget = { name: "C Major" };
+  global.S.runnerScore = 0;
+  global.S.runnerCombo = 0;
+  global.S.runnerMaxCombo = 0;
+  global.S.runnerLives = 3;
+  global.S.runnerDistance = 1200;
+  global.S.runnerObstacles = [{ id: 1, x: 62, isTarget: true, hit: false, result: null }];
   global.COMMON_PROGRESSIONS = [
     { name: "Axis", key: "C", chords: ["C Major", "G Major", "A Minor", "F Major"] }
   ];
@@ -2976,6 +2997,8 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(__actionFamilies.tools("deleteImport", "1"), true);
   assert.strictEqual(__actionFamilies.tools("runnerResultsBack"), true);
   assert.strictEqual(__actionFamilies.tools("startRhythm"), true);
+  assert.strictEqual(__actionFamilies.tools("rhythmTap"), true);
+  assert.strictEqual(__actionFamilies.tools("runnerStrum"), true);
 
   assert.strictEqual(songRequests.length, 1);
   assert.strictEqual(songRequests[0].source, "imported");
@@ -2983,6 +3006,12 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(rhythmRequests.length, 1);
   assert.ok(Array.isArray(rhythmRequests[0].beats));
   assert.ok(rhythmRequests[0].beats.length > 0);
+  assert.strictEqual(rhythmSyncs.length, 1);
+  assert.strictEqual(rhythmSyncs[0].score, 100);
+  assert.strictEqual(rhythmSyncs[0].combo, 1);
+  assert.strictEqual(runnerSyncs.length, 1);
+  assert.strictEqual(runnerSyncs[0].score, 100);
+  assert.strictEqual(runnerSyncs[0].combo, 1);
   assert.ok(runtimeUpdates.some(function(update) {
     return JSON.stringify(update) === JSON.stringify({
       setFields: {
@@ -3001,6 +3030,27 @@ test("tools action family routes imported song and rhythm starts through the sha
       update.setFields.rhythmActive === true &&
       Array.isArray(update.setFields.rhythmBeats) &&
       update.setFields.rhythmScore === 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update &&
+      update.setFields &&
+      Array.isArray(update.setFields.rhythmBeats) &&
+      update.setFields.rhythmBeats[0] &&
+      update.setFields.rhythmBeats[0].hit === true &&
+      update.setFields.rhythmScore === 100 &&
+      update.setFields.rhythmCombo === 1 &&
+      update.setFields.rhythmMaxCombo === 1;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update &&
+      update.setFields &&
+      Array.isArray(update.setFields.runnerObstacles) &&
+      update.setFields.runnerObstacles[0] &&
+      update.setFields.runnerObstacles[0].hit === true &&
+      update.setFields.runnerScore === 100 &&
+      update.setFields.runnerCombo === 1 &&
+      update.setFields.runnerMaxCombo === 1 &&
+      update.setFields.runnerLives === 3;
   }));
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.dualChord === "G Major";
