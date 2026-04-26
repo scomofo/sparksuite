@@ -61,8 +61,7 @@
       SparkInstruments.activate(appId);
     }
     if (typeof S !== "undefined") {
-      S.launcherView = null;
-      S._showroomOverride = null;
+      setLegacyFields({ launcherView: null, _showroomOverride: null }, false);
     }
     return appId;
   }
@@ -140,8 +139,7 @@
           return true;
         }
       }
-      S.screen = SCR.HOME;
-      S.tab = TAB.PRACTICE;
+      setLegacyFields({ screen: SCR.HOME, tab: TAB.PRACTICE }, false);
       render();
       return true;
     }
@@ -182,7 +180,7 @@
         }
       }
       if (selected) {
-        S.selectedSong = selected;
+        setLegacyFields({ selectedSong: selected }, false);
         return handlePerformanceAction("showroomStartPerf");
       }
       if (inst && typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.launchInstrumentPerformance === "function") {
@@ -190,7 +188,7 @@
         return true;
       }
       if (typeof S !== "undefined") {
-        S._showroomSongId = songKey || null;
+        setLegacyFields({ _showroomSongId: songKey || null }, false);
       }
       if (typeof showMicroToast === "function") showMicroToast("This song's performance chart isn't ready yet.", "&#127925;");
       render();
@@ -488,11 +486,13 @@
               songIndex: di,
               targetTechnique: challenge.techniqueKey || null
             });
-            S.performSongData = SONGS[di];
-            S.performSongId = challenge.songId;
-            S.performArrangementType = challenge.arrangementType || "chords";
-            S.performDifficulty = challenge.difficultyId || "normal";
-            setLegacyFields({ screen: SCR.PERFORM_SONG });
+            setLegacyFields({
+              performSongData: SONGS[di],
+              performSongId: challenge.songId,
+              performArrangementType: challenge.arrangementType || "chords",
+              performDifficulty: challenge.difficultyId || "normal",
+              screen: SCR.PERFORM_SONG
+            });
             render();
             return true;
           }
@@ -505,12 +505,13 @@
     }
 
     if (a === "performArrangement") {
-      S.performArrangementType = v || "chords";
+      var nextArrangementType = v || "chords";
+      setLegacyFields({ performArrangementType: nextArrangementType }, false);
       var arrangementCore = getPerformanceActionCore();
       if (arrangementCore && typeof arrangementCore.syncPerformanceRuntimeState === "function") {
         var arrangementState = typeof arrangementCore.getRuntimeState === "function" ? arrangementCore.getRuntimeState() : {};
         arrangementCore.syncPerformanceRuntimeState("configure", {
-          arrangementType: S.performArrangementType,
+          arrangementType: nextArrangementType,
           songIndex: arrangementState.performanceSongIndex,
           songTitle: arrangementState.performanceSongTitle
         });
@@ -613,8 +614,7 @@
     }
 
     if (a === "performMode") {
-      S.performMode = v;
-      S.performInputSource = v;
+      setLegacyFields({ performMode: v, performInputSource: v }, false);
       PerformanceInput.start(v);
       var modeCore = getPerformanceActionCore();
       if (modeCore && typeof modeCore.syncPerformanceRuntimeState === "function") {
@@ -642,13 +642,14 @@
     }
 
     if (a === "performSpeed") {
-      S.performSpeed = parseFloat(v);
-      PerformanceTransport.setSpeed(S.performSpeed);
+      var nextPerformanceSpeed = parseFloat(v);
+      setLegacyFields({ performSpeed: nextPerformanceSpeed }, false);
+      PerformanceTransport.setSpeed(nextPerformanceSpeed);
       var speedCore = getPerformanceActionCore();
       var speedState = speedCore && typeof speedCore.getRuntimeState === "function" ? speedCore.getRuntimeState() : {};
       if (speedCore && typeof speedCore.syncPerformanceRuntimeState === "function") {
         speedCore.syncPerformanceRuntimeState("configure", {
-          speed: S.performSpeed,
+          speed: nextPerformanceSpeed,
           songIndex: speedState.performanceSongIndex,
           songTitle: speedState.performanceSongTitle
         });
@@ -714,7 +715,7 @@
     }
 
     if (a === "performDebug") {
-      S.performDebug = !S.performDebug;
+      setLegacyFields({ performDebug: !S.performDebug }, false);
       render();
       return true;
     }
@@ -748,7 +749,7 @@
         }
         var weakPhrase = S.performChart.phrases[weakIdx];
         if (weakPhrase) {
-          S.performTargetPhrase = weakIdx;
+          setLegacyFields({ performTargetPhrase: weakIdx }, false);
           var retryPhraseRequest = getPerformanceRetryRequest({
             chart: S.performChart,
             chartId: S.performChartId || (S.performChart && S.performChart.id) || "generated",
