@@ -810,10 +810,10 @@
 
     if (a === "selectAudioInput") {
       stopAudioTest();
-      S.audioInputId = v;
+      setLegacyFields({ audioInputId: v }, false);
       syncAudioInputRuntimeRequest({
         devices: S.audioInputDevices || [],
-        inputId: S.audioInputId || null,
+        inputId: v || null,
         testingId: "",
         testLevel: 0
       });
@@ -823,12 +823,14 @@
     }
 
     if (a === "toggleMidi") {
-      S.midiEnabled = !S.midiEnabled;
-      if (S.midiEnabled) initMIDI();
-      else {
-        S.midiOutput = null;
-        S.midiDevices = [];
+      var nextMidiEnabled = !S.midiEnabled;
+      var midiPatch = { midiEnabled: nextMidiEnabled };
+      if (!nextMidiEnabled) {
+        midiPatch.midiOutput = null;
+        midiPatch.midiDevices = [];
       }
+      setLegacyFields(midiPatch, false);
+      if (nextMidiEnabled) initMIDI();
       syncMidiSettingsStateRequest();
       saveState();
       render();

@@ -2477,6 +2477,10 @@ test("system action family routes guided and career screen state through the sha
   var dashboardRequests = [];
   var careerSongRequests = [];
   var songBrowserRequests = [];
+  var audioInputSyncs = [];
+  var midiSyncs = 0;
+  var audioStops = 0;
+  var midiInits = 0;
   var existingBridge = global.SparkProgressBridge || {};
   global.window = {};
   global.__actionFamilies = {};
@@ -2529,6 +2533,19 @@ test("system action family routes guided and career screen state through the sha
     songBrowserRequests.push({ type: type, payload: payload });
     return payload;
   };
+  global.syncAudioInputRuntimeRequest = function(payload) {
+    audioInputSyncs.push(payload);
+    return payload;
+  };
+  global.syncMidiSettingsStateRequest = function() {
+    midiSyncs += 1;
+  };
+  global.stopAudioTest = function() {
+    audioStops += 1;
+  };
+  global.initMIDI = function() {
+    midiInits += 1;
+  };
   global.applyThemeSetting = function() {};
   global.clearTimeout = function() {};
   global.clearInterval = function() {};
@@ -2557,6 +2574,11 @@ test("system action family routes guided and career screen state through the sha
   global.S.breakDismissed = false;
   global.S.sessionStartTime = 0;
   global.S.showShortcuts = false;
+  global.S.audioInputDevices = [{ id: "usb-1", name: "USB Interface" }];
+  global.S.audioInputId = "";
+  global.S.midiEnabled = false;
+  global.S.midiOutput = { id: "old-midi" };
+  global.S.midiDevices = [{ id: "old-midi", name: "Old MIDI" }];
 
   eval(loadJS("js/actions/system_family.js"));
 
@@ -2567,6 +2589,9 @@ test("system action family routes guided and career screen state through the sha
   assert.strictEqual(__actionFamilies.system("toggleFocus"), true);
   assert.strictEqual(__actionFamilies.system("dismissBreak"), true);
   assert.strictEqual(__actionFamilies.system("toggleShortcuts"), true);
+  assert.strictEqual(__actionFamilies.system("selectAudioInput", "usb-1"), true);
+  assert.strictEqual(__actionFamilies.system("toggleMidi"), true);
+  assert.strictEqual(__actionFamilies.system("toggleMidi"), true);
   assert.strictEqual(__actionFamilies.system("openCareer"), true);
   assert.strictEqual(__actionFamilies.system("openCareerSong", "career_anthem"), true);
   assert.strictEqual(__actionFamilies.system("guidedComplete"), true);
@@ -2576,6 +2601,15 @@ test("system action family routes guided and career screen state through the sha
     { type: "song_filter", payload: { songFilter: "ballad" } }
   ]);
   assert.deepStrictEqual(dashboardRequests, ["career"]);
+  assert.strictEqual(audioStops, 1);
+  assert.deepStrictEqual(audioInputSyncs, [{
+    devices: [{ id: "usb-1", name: "USB Interface" }],
+    inputId: "usb-1",
+    testingId: "",
+    testLevel: 0
+  }]);
+  assert.strictEqual(midiInits, 1);
+  assert.strictEqual(midiSyncs, 2);
   assert.strictEqual(careerSongRequests.length, 1);
   assert.strictEqual(careerSongRequests[0].songId, "career_anthem");
   assert.strictEqual(careerSongRequests[0].difficultyId, "hard");
@@ -2619,6 +2653,15 @@ test("system action family routes guided and career screen state through the sha
   }));
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.showShortcuts === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.audioInputId === "usb-1";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.midiEnabled === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.midiEnabled === false && update.setFields.midiOutput === null && Array.isArray(update.setFields.midiDevices);
   }));
 });
 
