@@ -1,4 +1,10 @@
 [
-  { "id": "uke_ex_01", "skillId": "down_strum", "type": "strum", "pattern": "D D D D", "tempo": 72, "difficulty": "easy" },
-  { "id": "uke_ex_02", "skillId": "starter_chords", "type": "chord", "chordIds": ["C", "F", "G"], "tempo": 76, "difficulty": "easy" }
+  { "id": "uke_ex_01", "skillId": "down_strum", "type": "strum", "name": "Open Down-Strum Pulse", "pattern": "D D D D", "tempo": 72, "difficulty": "easy", "focus": "steady_downstrokes" },
+  { "id": "uke_ex_02", "skillId": "basic_chords", "type": "chord", "name": "C-F-G Shapes", "chordIds": ["C", "F", "G"], "tempo": 76, "difficulty": "easy", "focus": "starter_chords" },
+  { "id": "uke_ex_03", "skillId": "chord_switching", "type": "transition", "name": "C-Am-F-G Flow", "chordIds": ["C", "Am", "F", "G"], "tempo": 74, "difficulty": "easy", "focus": "smooth_changes" },
+  { "id": "uke_ex_04", "skillId": "strumming_patterns", "type": "strum_pattern", "name": "Island Pattern", "chordIds": ["C", "Am", "F", "G"], "pattern": "D DU UDU", "tempo": 76, "difficulty": "normal", "focus": "island_strum" },
+  { "id": "uke_ex_05", "skillId": "songs", "type": "song_loop", "name": "Campfire Loop", "chordIds": ["C", "G", "Am", "F"], "tempo": 80, "difficulty": "normal", "focus": "song_flow" },
+  { "id": "uke_ex_06", "skillId": "fingerpicking", "type": "fingerpick", "name": "Thumb-Index-Middle-Ring", "chordIds": ["C", "Am"], "pattern": "P I M A", "tempo": 68, "difficulty": "normal", "focus": "finger_independence" },
+  { "id": "uke_ex_07", "skillId": "melody", "type": "melody_line", "name": "Chord-Tone Lift", "chordIds": ["C", "F", "G"], "tempo": 80, "difficulty": "hard", "focus": "melody_notes" },
+  { "id": "uke_ex_08", "skillId": "performance", "type": "performance_run", "name": "Campfire Stage Flow", "chordIds": ["C", "Am", "F", "G"], "tempo": 86, "difficulty": "hard", "focus": "full_song_confidence" }
 ]

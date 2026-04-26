@@ -1,5 +1,8 @@
 [
   { "id": "C", "name": "C", "notes": ["C4", "E4", "G4"] },
+  { "id": "Am", "name": "A Minor", "notes": ["A4", "C5", "E5"] },
   { "id": "F", "name": "F", "notes": ["F4", "A4", "C5"] },
-  { "id": "G", "name": "G", "notes": ["G4", "B4", "D5"] }
+  { "id": "G", "name": "G", "notes": ["G4", "B4", "D5"] },
+  { "id": "Dm", "name": "D Minor", "notes": ["D4", "F4", "A4"] },
+  { "id": "Em", "name": "E Minor", "notes": ["E4", "G4", "B4"] }
 ]

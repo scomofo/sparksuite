@@ -1,1 +1,4 @@
-[]
+[
+  { "id": "bass_roots_stand_by_me", "title": "Stand By Me Root Pocket", "artist": "SparkSuite", "bpm": 118, "skillId": "root_notes", "chordIds": ["A_root", "E_root", "D_root"], "arrangementType": "bassline", "difficulty": "easy" },
+  { "id": "bass_funk_grid", "title": "Pocket Funk Grid", "artist": "SparkSuite", "bpm": 96, "skillId": "funk_grooves", "chordIds": ["E_root", "A_root", "D_root", "G_root"], "arrangementType": "performance", "difficulty": "hard" }
+]

@@ -1,4 +1,10 @@
 [
-  { "id": "bas_ex_01", "skillId": "root_pulse", "type": "pluck", "chordIds": ["E_root"], "tempo": 76, "difficulty": "easy" },
-  { "id": "bas_ex_02", "skillId": "walking_root", "type": "pluck_pattern", "chordIds": ["E_root", "A_root"], "tempo": 84, "difficulty": "easy" }
+  { "id": "bas_ex_01", "skillId": "posture", "type": "warmup", "name": "Four-String Setup", "chordIds": ["E_root", "A_root", "D_root", "G_root"], "tempo": 64, "difficulty": "easy", "focus": "relaxed_hand_shape" },
+  { "id": "bas_ex_02", "skillId": "plucking", "type": "pluck", "name": "Index-Middle Pulse", "chordIds": ["E_root", "A_root"], "tempo": 72, "difficulty": "easy", "focus": "alternating_fingers" },
+  { "id": "bas_ex_03", "skillId": "root_notes", "type": "root_pulse", "name": "E-A Root Lock", "chordIds": ["E_root", "A_root"], "tempo": 76, "difficulty": "easy", "focus": "root_timing", "lanes": [0, 1] },
+  { "id": "bas_ex_04", "skillId": "root_fifth", "type": "bassline", "name": "Root-Fifth Drive", "chordIds": ["E_root", "B_fifth", "A_root"], "tempo": 82, "difficulty": "normal", "focus": "root_fifth_motion", "lanes": [0, 1, 2] },
+  { "id": "bas_ex_05", "skillId": "walking_bass", "type": "bassline", "name": "Walk Into The Change", "chordIds": ["C_root", "D_root", "E_root", "G_root"], "tempo": 90, "difficulty": "normal", "focus": "walking_bass" },
+  { "id": "bas_ex_06", "skillId": "ghost_notes", "type": "groove", "name": "Note-Ghost Grid", "chordIds": ["E_root", "ghost_x", "A_root"], "tempo": 88, "difficulty": "normal", "focus": "ghost_notes" },
+  { "id": "bas_ex_07", "skillId": "slap", "type": "technique", "name": "Thumb Pop Touch", "chordIds": ["E_root", "A_root", "D_root"], "tempo": 92, "difficulty": "hard", "focus": "slap_touch" },
+  { "id": "bas_ex_08", "skillId": "funk_grooves", "type": "performance_run", "name": "Pocket Funk Loop", "chordIds": ["E_root", "A_root", "D_root", "G_root"], "tempo": 96, "difficulty": "hard", "focus": "funk_groove_flow" }
 ]

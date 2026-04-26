@@ -1,4 +1,10 @@
 [
-  { "id": "uke_content_01", "skill": "down_strum", "title": "First Down Strums", "prerequisites": [], "masteryRequired": 0.7, "estimatedMinutes": 5 },
-  { "id": "uke_content_02", "skill": "starter_chords", "title": "Starter Chords", "prerequisites": ["down_strum"], "masteryRequired": 0.75, "estimatedMinutes": 6 }
+  { "id": "uke_content_01", "skill": "down_strum", "title": "First Down Strums", "prerequisites": [], "masteryRequired": 0.65, "estimatedMinutes": 5 },
+  { "id": "uke_content_02", "skill": "basic_chords", "title": "Starter Chords", "prerequisites": ["down_strum"], "masteryRequired": 0.7, "estimatedMinutes": 6 },
+  { "id": "uke_content_03", "skill": "chord_switching", "title": "C-Am-F-G Changes", "prerequisites": ["basic_chords"], "masteryRequired": 0.72, "estimatedMinutes": 7 },
+  { "id": "uke_content_04", "skill": "strumming_patterns", "title": "Island Strum Pattern", "prerequisites": ["chord_switching"], "masteryRequired": 0.74, "estimatedMinutes": 7 },
+  { "id": "uke_content_05", "skill": "songs", "title": "First Song Loop", "prerequisites": ["strumming_patterns"], "masteryRequired": 0.76, "estimatedMinutes": 8 },
+  { "id": "uke_content_06", "skill": "fingerpicking", "title": "Fingerpicked Arpeggio", "prerequisites": ["songs"], "masteryRequired": 0.78, "estimatedMinutes": 8 },
+  { "id": "uke_content_07", "skill": "melody", "title": "Melody From Chords", "prerequisites": ["fingerpicking"], "masteryRequired": 0.8, "estimatedMinutes": 9 },
+  { "id": "uke_content_08", "skill": "performance", "title": "Campfire Performance", "prerequisites": ["melody"], "masteryRequired": 0.82, "estimatedMinutes": 10 }
 ]
