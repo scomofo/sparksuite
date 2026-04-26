@@ -363,30 +363,30 @@
 
     if (a === "editorMode") {
       syncPerformanceEditorDocumentState(S.performEditorChart, { mode: v });
-      S.performEditorMode = v;
+      setLegacyFields({ performEditorMode: v }, false);
       render();
       return true;
     }
 
     if (a === "editorSnap") {
       syncPerformanceEditorDocumentState(S.performEditorChart, { snap: v });
-      S.performEditorSnap = v;
+      setLegacyFields({ performEditorSnap: v }, false);
       render();
       return true;
     }
 
     if (a === "editorNew") {
       var newEditorChartResult = applyPerformanceEditorCoreMutation("new_blank", { mode: S.performEditorMode });
-      S.performEditorChart = newEditorChartResult && newEditorChartResult.chart
+      var newEditorChart = newEditorChartResult && newEditorChartResult.chart
         ? newEditorChartResult.chart
         : { id: "custom_" + Date.now(), title: "New Chart", artist: "Custom", bpm: 90, beatsPerBar: 4, arrangementType: S.performEditorMode, events: [], phrases: [{ id: 0, name: "Phrase 1", startSec: 0, endSec: 8 }] };
-      syncPerformanceEditorDocumentState(S.performEditorChart, {
+      setLegacyFields({ performEditorChart: newEditorChart, performEditorDirty: true }, false);
+      syncPerformanceEditorDocumentState(newEditorChart, {
         source: "blank",
         dirty: true,
         selectedEventId: null,
         selectedPhraseId: null
       });
-      S.performEditorDirty = true;
       render();
       return true;
     }
@@ -395,14 +395,13 @@
       if (S.performSongData) {
         var editorChart = buildPerformanceChartFromSong(S.performSongData, "builtin", S.performEditorMode);
         if (editorChart) {
-          S.performEditorChart = editorChart;
+          setLegacyFields({ performEditorChart: editorChart, performEditorDirty: true }, false);
           syncPerformanceEditorDocumentState(editorChart, {
             source: "song",
             dirty: true,
             selectedEventId: null,
             selectedPhraseId: null
           });
-          S.performEditorDirty = true;
           render();
         }
       }
@@ -412,10 +411,11 @@
     if (a === "editorTitle") {
       if (S.performEditorChart) {
         var titleMutation = applyPerformanceEditorCoreMutation("set_title", { title: v });
-        S.performEditorChart = titleMutation && titleMutation.chart ? titleMutation.chart : S.performEditorChart;
-        S.performEditorChart.title = v;
-        syncPerformanceEditorDocumentState(S.performEditorChart, { source: "existing", dirty: true });
-        S.performEditorDirty = true;
+        var titledEditorChart = titleMutation && titleMutation.chart
+          ? titleMutation.chart
+          : Object.assign({}, S.performEditorChart, { title: v });
+        setLegacyFields({ performEditorChart: titledEditorChart, performEditorDirty: true }, false);
+        syncPerformanceEditorDocumentState(titledEditorChart, { source: "existing", dirty: true });
         render();
       }
       return true;
@@ -425,10 +425,11 @@
       if (S.performEditorChart) {
         var bpmValue = parseInt(v, 10) || 90;
         var bpmMutation = applyPerformanceEditorCoreMutation("set_bpm", { bpm: bpmValue });
-        S.performEditorChart = bpmMutation && bpmMutation.chart ? bpmMutation.chart : S.performEditorChart;
-        S.performEditorChart.bpm = bpmValue;
-        syncPerformanceEditorDocumentState(S.performEditorChart, { source: "existing", dirty: true });
-        S.performEditorDirty = true;
+        var bpmEditorChart = bpmMutation && bpmMutation.chart
+          ? bpmMutation.chart
+          : Object.assign({}, S.performEditorChart, { bpm: bpmValue });
+        setLegacyFields({ performEditorChart: bpmEditorChart, performEditorDirty: true }, false);
+        syncPerformanceEditorDocumentState(bpmEditorChart, { source: "existing", dirty: true });
         render();
       }
       return true;
