@@ -407,9 +407,44 @@ function homePage(){
   return v2Home + h;
 }
 
-// ===== STUB TABS (games, tools) =====
-function gamesTab(){ return '<div class="card"><div><b>Games</b></div><div class="muted">Mini-games and challenges.</div></div>'; }
-function toolsTab(){ return '<div class="card"><div><b>Tools</b></div><div class="muted">Tuner, metronome, and utilities.</div></div>'; }
+function renderPracticeSectionStack(title, subtitle, sections, emptyCopy) {
+  var h = '<div class="home-section-stack">';
+  var rendered = 0;
+  var i;
+  var section;
+  var body;
+  h += '<div class="card mb12"><div style="font-size:18px;font-weight:900;color:var(--text-primary)">' + escHTML(title) + '</div>';
+  h += '<div class="muted" style="margin-top:4px">' + escHTML(subtitle) + '</div></div>';
+  for (i = 0; i < sections.length; i++) {
+    section = sections[i];
+    if (!section || typeof section.render !== "function") continue;
+    body = section.render();
+    if (!body) continue;
+    rendered++;
+    h += '<section class="home-section-stack__item" aria-label="' + escHTML(section.label) + '">' + body + '</section>';
+  }
+  if (!rendered) {
+    h += '<div class="card"><div class="muted">' + escHTML(emptyCopy) + '</div></div>';
+  }
+  h += '</div>';
+  return h;
+}
+
+function gamesTab(){
+  return renderPracticeSectionStack("Games", "Skill games use your current instrument data and shared runtime state.", [
+    { label: "Rhythm game", render: typeof rhythmTab === "function" ? rhythmTab : null },
+    { label: "Chord runner", render: typeof runnerTab === "function" ? runnerTab : null },
+    { label: "Progression builder", render: typeof buildTab === "function" ? buildTab : null }
+  ], "No game modules loaded yet.");
+}
+
+function toolsTab(){
+  return renderPracticeSectionStack("Tools", "Utilities reflect the active instrument, profile, and runtime state.", [
+    { label: "Tuner", render: typeof tunerTab === "function" ? tunerTab : null },
+    { label: "Practice stats", render: typeof statsTab === "function" ? statsTab : null },
+    { label: "Guide", render: typeof guideTab === "function" ? guideTab : null }
+  ], "No tool modules loaded yet.");
+}
 
 function getPracticeCoreView() {
   var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);

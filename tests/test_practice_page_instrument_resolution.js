@@ -196,6 +196,35 @@ test("homePage uses rehydrated tab renderers from the active instrument module",
   assert.ok(html.indexOf("Piano Practice") >= 0);
 });
 
+test("homePage games and tools tabs render real loaded sections instead of stub cards", function() {
+  var module = SparkInstruments.getAll()[0];
+  module.tabs = [
+    { id: "games", label: "Games", icon: "G" },
+    { id: "tools", label: "Tools", icon: "T" }
+  ];
+  module.tabRenderers = {};
+  global.rhythmTab = function() { return "<div>Real Rhythm Runtime</div>"; };
+  global.runnerTab = function() { return "<div>Real Runner Runtime</div>"; };
+  global.buildTab = function() { return "<div>Real Builder Runtime</div>"; };
+  global.tunerTab = function() { return "<div>Real Tuner Runtime</div>"; };
+  global.statsTab = function() { return "<div>Real Stats Runtime</div>"; };
+  global.guideTab = function() { return "<div>Real Guide Runtime</div>"; };
+
+  S.tab = "games";
+  var gamesHtml = homePage();
+  S.tab = "tools";
+  var toolsHtml = homePage();
+
+  assert.ok(gamesHtml.indexOf("Real Rhythm Runtime") >= 0);
+  assert.ok(gamesHtml.indexOf("Real Runner Runtime") >= 0);
+  assert.ok(gamesHtml.indexOf("Real Builder Runtime") >= 0);
+  assert.strictEqual(gamesHtml.indexOf("Mini-games and challenges."), -1);
+  assert.ok(toolsHtml.indexOf("Real Tuner Runtime") >= 0);
+  assert.ok(toolsHtml.indexOf("Real Stats Runtime") >= 0);
+  assert.ok(toolsHtml.indexOf("Real Guide Runtime") >= 0);
+  assert.strictEqual(toolsHtml.indexOf("Tuner, metronome, and utilities."), -1);
+});
+
 test("practice instrument switcher rows expose keyboard handlers", function() {
   var source = loadJS("js/pages/practice.js");
   var uiSource = loadJS("js/ui.js");
