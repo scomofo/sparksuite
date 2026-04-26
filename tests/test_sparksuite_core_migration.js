@@ -2802,6 +2802,7 @@ test("tools action family routes imported song and rhythm starts through the sha
   var rhythmRequests = [];
   var songBrowserRequests = [];
   var communityFetches = 0;
+  var fetchCalls = [];
   var existingBridge = global.SparkProgressBridge || {};
   global.window = {};
   global.__actionFamilies = {};
@@ -2836,6 +2837,21 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.fetchCommunity = function() {
     communityFetches += 1;
   };
+  global.fetch = function(url, options) {
+    fetchCalls.push({ url: url, options: options });
+    return {
+      then: function(fn) {
+        fn({ json: function() { return {}; } });
+        return {
+          then: function(next) {
+            next({});
+            return { catch: function() {} };
+          }
+        };
+      }
+    };
+  };
+  global.escHTML = function(value) { return String(value); };
   global.parseChordSheet = function(text) {
     if (text === "bad chart") return { error: "Could not parse chart" };
     return {
@@ -2872,6 +2888,15 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.S.communityTab = "browse";
   global.S.communitySearch = "";
   global.S.communitySort = "popular";
+  global.S.submitSong = {
+    title: "Shared Song",
+    artist: "Spark Artist",
+    chords: ["C Major", "G Major"],
+    progression: ["C Major", "G Major"],
+    bpm: 102,
+    pattern: [],
+    submittedBy: "Tester"
+  };
   global.S.rhythmBpm = 120;
   global.S.rhythmActive = false;
   global.S.dualChord = "C Major";
@@ -2892,6 +2917,7 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.COMMON_PROGRESSIONS = [
     { name: "Axis", key: "C", chords: ["C Major", "G Major", "A Minor", "F Major"] }
   ];
+  global.COMMUNITY_URL = "https://community.example";
   global.CHORDS = { 1: [{ name: "C Major" }, { name: "G Major" }] };
   global.S.level = 1;
 
@@ -2924,6 +2950,7 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(__actionFamilies.tools("communityTab", "latest"), true);
   assert.strictEqual(__actionFamilies.tools("communitySearch", "groove"), true);
   assert.strictEqual(__actionFamilies.tools("communitySort", "newest"), true);
+  assert.strictEqual(__actionFamilies.tools("submitSong"), true);
   assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
   assert.strictEqual(__actionFamilies.tools("deleteImport", "1"), true);
   assert.strictEqual(__actionFamilies.tools("runnerResultsBack"), true);
@@ -3031,7 +3058,12 @@ test("tools action family routes imported song and rhythm starts through the sha
     { action: "community_search", payload: { communitySearch: "groove" } },
     { action: "community_sort", payload: { communitySort: "newest" } }
   ]);
-  assert.strictEqual(communityFetches, 2);
+  assert.strictEqual(communityFetches, 3);
+  assert.strictEqual(fetchCalls.length, 1);
+  assert.strictEqual(fetchCalls[0].url, "https://community.example/api/songs");
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.submitSong && update.setFields.submitSong.title === "" && update.setFields.communityTab === "browse";
+  }));
   assert.strictEqual(S.dualChord, "G Major");
   assert.strictEqual(S.dualAnchorOn, true);
   assert.strictEqual(S.dailyGoalMinutes, 25);
@@ -3043,9 +3075,10 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(S.importedSong, null);
   assert.strictEqual(S.importText, "");
   assert.strictEqual(S.importError, null);
-  assert.strictEqual(S.communityTab, "latest");
+  assert.strictEqual(S.communityTab, "browse");
   assert.strictEqual(S.communitySearch, "groove");
   assert.strictEqual(S.communitySort, "newest");
+  assert.strictEqual(S.submitSong.title, "");
   assert.strictEqual(S.runnerResults, null);
 });
 
