@@ -67,13 +67,17 @@
     return true;
   }
 
-  function buildFullLocalBackup(){
+  function buildFullLocalBackup(options){
+    options = options || {};
     var storage = resolveBackupStorage();
+    var userId = options.userId || null;
     var userData = null;
     var debugBundle = null;
+    var payload;
     if (storage && typeof exportSparkUserData === "function") {
       userData = exportSparkUserData({
-        storage: storage
+        storage: storage,
+        userId: userId || undefined
       });
     }
     if (typeof buildSparkDebugBundle === "function") {
@@ -82,7 +86,7 @@
         storage: storage
       });
     }
-    return {
+    payload = {
       exportedAt: Date.now(),
       app: resolveDesktopBackupAppId(),
       version: (S.releaseInfo && S.releaseInfo.version) || "dev",
@@ -92,10 +96,27 @@
       userData: userData,
       debugBundle: debugBundle
     };
+    payload.integrity = summarizeFullLocalBackup(payload);
+    return payload;
   }
 
-  async function exportFullBackupDesktopAware(){
-    var payload = buildFullLocalBackup();
+  function summarizeFullLocalBackup(payload) {
+    var userData = payload && payload.userData ? payload.userData : null;
+    var profile = userData && userData.profile ? userData.profile : null;
+    var journal = userData && Array.isArray(userData.practiceJournal) ? userData.practiceJournal : [];
+    var debugBundle = payload && payload.debugBundle ? payload.debugBundle : null;
+    return {
+      hasCanonicalUserData: !!(userData && profile),
+      hasDebugBundle: !!debugBundle,
+      profileUserId: profile && profile.userId ? profile.userId : null,
+      selectedInstrument: profile && profile.selectedInstrument ? profile.selectedInstrument : null,
+      practiceJournalCount: journal.length,
+      schemaVersion: userData && userData.schemaVersion ? userData.schemaVersion : payload.schemaVersion || null
+    };
+  }
+
+  async function exportFullBackupDesktopAware(options){
+    var payload = buildFullLocalBackup(options);
     if(isDesktopBuild()){
       var result = await window.sparkDesktop.saveJson(payload);
       if(result && result.ok){
@@ -114,5 +135,6 @@
   window.checkForDesktopUpdates = checkForDesktopUpdates;
   window.buildFullLocalBackup = buildFullLocalBackup;
   window.exportFullBackupDesktopAware = exportFullBackupDesktopAware;
+  window.summarizeFullLocalBackup = summarizeFullLocalBackup;
 
 })();

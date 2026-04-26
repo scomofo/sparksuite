@@ -27,6 +27,7 @@ function buildRendererSmokeScript(options) {
           hasSparkCore: !!window.sparkCore,
           hasExport: !!window.exportSparkUserData,
           hasImport: !!window.importSparkUserData,
+          hasFullBackup: !!window.buildFullLocalBackup,
           hasDebugBundle: !!window.buildSparkDebugBundle,
           hasSessionTypes: !!window.SparkSessionTypes,
           sparkKeys: sparkKeys.slice(0, 40)
@@ -57,6 +58,7 @@ function buildRendererSmokeScript(options) {
         var plan;
         var exported;
         var debugBundle;
+        var fullBackup;
         var segmentIds;
         var outcome = null;
         var index;
@@ -81,6 +83,7 @@ function buildRendererSmokeScript(options) {
           return !!(
             window.exportSparkUserData &&
             window.importSparkUserData &&
+            window.buildFullLocalBackup &&
             window.buildSparkDebugBundle &&
             window.SparkSessionTypes &&
             typeof window.createDefaultSparkCore === "function" &&
@@ -154,6 +157,10 @@ function buildRendererSmokeScript(options) {
           performanceMonitor: window.sparkCore.performanceMonitor
         });
 
+        fullBackup = window.buildFullLocalBackup({
+          userId: smokeUserId
+        });
+
         return {
           ok: true,
           importedUserId: imported && imported.profile ? imported.profile.userId : null,
@@ -162,6 +169,9 @@ function buildRendererSmokeScript(options) {
           segmentCount: segmentIds.length,
           completed: !!(outcome && outcome.planCompleted),
           debugBundleSessionId: debugBundle && debugBundle.session ? debugBundle.session.id : null,
+          backupApp: fullBackup ? fullBackup.app : null,
+          backupSchemaVersion: fullBackup ? fullBackup.schemaVersion : null,
+          backupIntegrity: fullBackup ? fullBackup.integrity : null,
           schemaVersion: exported ? exported.schemaVersion : null,
           practiceJournalCount: exported && Array.isArray(exported.practiceJournal) ? exported.practiceJournal.length : 0
         };

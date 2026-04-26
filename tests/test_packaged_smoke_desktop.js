@@ -29,6 +29,7 @@ test("buildRendererSmokeScript covers import, export, debug bundle, and session 
 
   assert.ok(source.indexOf("importSparkUserData") >= 0, "should import migrated user data");
   assert.ok(source.indexOf("exportSparkUserData") >= 0, "should export canonical user data");
+  assert.ok(source.indexOf("buildFullLocalBackup") >= 0, "should verify full local backup payloads");
   assert.ok(source.indexOf("buildSparkDebugBundle") >= 0, "should export a debug bundle");
   assert.ok(source.indexOf("startSession") >= 0, "should start a real session");
   assert.ok(source.indexOf("completeSession") >= 0, "should complete the session");
@@ -52,6 +53,15 @@ test("runPackagedSmokeForWindow writes smoke results from the renderer", async f
           sessionPlanId: "plan_1",
           completed: true,
           debugBundleSessionId: "plan_1",
+          backupApp: "chordspark",
+          backupSchemaVersion: 4,
+          backupIntegrity: {
+            hasCanonicalUserData: true,
+            hasDebugBundle: true,
+            profileUserId: "smoke_user",
+            practiceJournalCount: 1,
+            schemaVersion: 4
+          },
           schemaVersion: 4
         });
       }
@@ -76,6 +86,7 @@ test("runPackagedSmokeForWindow writes smoke results from the renderer", async f
   assert.strictEqual(payload.ok, true);
   assert.strictEqual(payload.importedUserId, "smoke_user");
   assert.strictEqual(payload.completed, true);
+  assert.strictEqual(payload.backupIntegrity.hasCanonicalUserData, true);
 });
 
 test("runPackagedSmokeForWindow writes a structured failure payload when the renderer throws", async function() {
