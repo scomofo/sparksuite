@@ -81,9 +81,11 @@
     }
 
     if (a === "toggleSetChord") {
-      var setIdx = S.customSetChords.indexOf(v);
-      if (setIdx === -1) S.customSetChords.push(v);
-      else S.customSetChords.splice(setIdx, 1);
+      var nextCustomSetChords = Array.isArray(S.customSetChords) ? S.customSetChords.slice() : [];
+      var setIdx = nextCustomSetChords.indexOf(v);
+      if (setIdx === -1) nextCustomSetChords.push(v);
+      else nextCustomSetChords.splice(setIdx, 1);
+      setLegacyFields({ customSetChords: nextCustomSetChords }, [], false);
       render();
       return true;
     }
@@ -91,12 +93,14 @@
     if (a === "saveSet") {
       if (S.customSetChords.length < 2 || !S.customSetName.trim()) return true;
       var setObj = { name: S.customSetName.trim(), chords: S.customSetChords.slice() };
+      var nextCustomSets = Array.isArray(S.customSets) ? S.customSets.slice() : [];
       if (S.editingSetIdx >= 0 && S.editingSetIdx < S.customSets.length) {
-        S.customSets[S.editingSetIdx] = setObj;
+        nextCustomSets[S.editingSetIdx] = setObj;
       } else {
-        S.customSets.push(setObj);
+        nextCustomSets.push(setObj);
       }
       setLegacyFields({
+        customSets: nextCustomSets,
         editingSet: false,
         editingSetIdx: -1,
         customSetName: "",
@@ -136,7 +140,9 @@
     if (a === "deleteSet") {
       var deleteIdx = parseInt(v, 10);
       if (deleteIdx >= 0 && deleteIdx < S.customSets.length) {
-        S.customSets.splice(deleteIdx, 1);
+        var nextSetsAfterDelete = S.customSets.slice();
+        nextSetsAfterDelete.splice(deleteIdx, 1);
+        setLegacyFields({ customSets: nextSetsAfterDelete }, [], false);
         saveState();
         render();
       }
