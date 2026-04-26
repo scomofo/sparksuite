@@ -360,10 +360,10 @@
       anchor.click();
       document.body.removeChild(anchor);
       URL.revokeObjectURL(url);
-      S.importMsg = { ok: true, text: "Progress exported!" };
+      setLegacyFields({ importMsg: { ok: true, text: "Progress exported!" } }, [], false);
       render();
       setTimeout(function() {
-        S.importMsg = null;
+        setLegacyFields({ importMsg: null }, [], false);
         render();
       }, 3000);
       return true;
@@ -406,13 +406,13 @@
             if (typeof SparkTransitionStats !== "undefined") SparkTransitionStats.ensureShape();
             else if (typeof S.transitionStats !== "object" || S.transitionStats === null) S.transitionStats = {};
             saveState();
-            S.importMsg = { ok: true, text: "Progress imported successfully!" };
+            setLegacyFields({ importMsg: { ok: true, text: "Progress imported successfully!" } }, [], false);
           } catch (err) {
-            S.importMsg = { ok: false, text: "Invalid backup file: " + (err.message || "unknown error") };
+            setLegacyFields({ importMsg: { ok: false, text: "Invalid backup file: " + (err.message || "unknown error") } }, [], false);
           }
           render();
           setTimeout(function() {
-            S.importMsg = null;
+            setLegacyFields({ importMsg: null }, [], false);
             render();
           }, 3000);
         };
