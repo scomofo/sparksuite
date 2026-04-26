@@ -6,5 +6,9 @@
   { "id": "bas_ex_05", "skillId": "walking_bass", "type": "bassline", "name": "Walk Into The Change", "chordIds": ["C_root", "D_root", "E_root", "G_root"], "tempo": 90, "difficulty": "normal", "focus": "walking_bass" },
   { "id": "bas_ex_06", "skillId": "ghost_notes", "type": "groove", "name": "Note-Ghost Grid", "chordIds": ["E_root", "ghost_x", "A_root"], "tempo": 88, "difficulty": "normal", "focus": "ghost_notes" },
   { "id": "bas_ex_07", "skillId": "slap", "type": "technique", "name": "Thumb Pop Touch", "chordIds": ["E_root", "A_root", "D_root"], "tempo": 92, "difficulty": "hard", "focus": "slap_touch" },
-  { "id": "bas_ex_08", "skillId": "funk_grooves", "type": "performance_run", "name": "Pocket Funk Loop", "chordIds": ["E_root", "A_root", "D_root", "G_root"], "tempo": 96, "difficulty": "hard", "focus": "funk_groove_flow" }
+  { "id": "bas_ex_08", "skillId": "funk_grooves", "type": "performance_run", "name": "Pocket Funk Loop", "chordIds": ["E_root", "A_root", "D_root", "G_root"], "tempo": 96, "difficulty": "hard", "focus": "funk_groove_flow" },
+  { "id": "bas_ex_09", "skillId": "passing_notes", "type": "bassline", "name": "Root Walk-In", "chordIds": ["C_root", "D_root", "E_root", "G_root"], "tempo": 92, "difficulty": "hard", "focus": "passing_note_motion", "lanes": [0, 1, 2, 3] },
+  { "id": "bas_ex_10", "skillId": "arpeggios", "type": "bassline", "name": "Triad Anchor Line", "chordIds": ["C_root", "E_root", "G_root", "B_fifth"], "tempo": 88, "difficulty": "hard", "focus": "chord_tone_targeting", "lanes": [0, 1, 2, 3] },
+  { "id": "bas_ex_11", "skillId": "groove_accents", "type": "groove", "name": "Accent The Backbeat", "chordIds": ["E_root", "ghost_x", "A_root", "D_root"], "tempo": 100, "difficulty": "hard", "focus": "accented_pocket_control" },
+  { "id": "bas_ex_12", "skillId": "improvisation", "type": "performance_run", "name": "Four-Bar Pocket Improv", "chordIds": ["E_root", "G_root", "A_root", "B_fifth"], "tempo": 98, "difficulty": "hard", "focus": "pocket_improvisation" }
 ]

@@ -6,5 +6,9 @@
   { "id": "walking_bass", "name": "Walking Bass Lines", "category": "movement", "prerequisites": ["root_fifth"] },
   { "id": "ghost_notes", "name": "Ghost Note Pocket", "category": "feel", "prerequisites": ["walking_bass"] },
   { "id": "slap", "name": "Slap Touch", "category": "technique", "prerequisites": ["ghost_notes"] },
-  { "id": "funk_grooves", "name": "Funk Groove Flow", "category": "performance", "prerequisites": ["slap"] }
+  { "id": "funk_grooves", "name": "Funk Groove Flow", "category": "performance", "prerequisites": ["slap"] },
+  { "id": "passing_notes", "name": "Passing Note Motion", "category": "movement", "prerequisites": ["funk_grooves"] },
+  { "id": "arpeggios", "name": "Chord-Tone Arpeggios", "category": "harmony", "prerequisites": ["passing_notes"] },
+  { "id": "groove_accents", "name": "Groove Accents", "category": "feel", "prerequisites": ["arpeggios"] },
+  { "id": "improvisation", "name": "Pocket Improvisation", "category": "performance", "prerequisites": ["groove_accents"] }
 ]
