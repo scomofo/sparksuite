@@ -206,8 +206,14 @@
       var now = performance.now() - S.rhythmStartTime;
       var closest = null;
       var closestDiff = 999999;
-      for (var rhythmIdx = 0; rhythmIdx < S.rhythmBeats.length; rhythmIdx++) {
-        var rhythmBeat = S.rhythmBeats[rhythmIdx];
+      var nextRhythmBeats = Array.isArray(S.rhythmBeats) ? S.rhythmBeats.map(function(rhythmBeatCopy) {
+        return Object.assign({}, rhythmBeatCopy);
+      }) : [];
+      var nextRhythmScore = S.rhythmScore || 0;
+      var nextRhythmCombo = S.rhythmCombo || 0;
+      var nextRhythmMaxCombo = S.rhythmMaxCombo || 0;
+      for (var rhythmIdx = 0; rhythmIdx < nextRhythmBeats.length; rhythmIdx++) {
+        var rhythmBeat = nextRhythmBeats[rhythmIdx];
         if (rhythmBeat.hit) continue;
         var diff = Math.abs(now - rhythmBeat.time);
         if (diff < closestDiff) {
@@ -216,34 +222,40 @@
         }
       }
       if (closest !== null && closestDiff < 300) {
-        var beat = S.rhythmBeats[closest];
+        var beat = nextRhythmBeats[closest];
         beat.hit = true;
         if (closestDiff < 50) {
           beat.result = "perfect";
-          S.rhythmScore += 100 * (1 + Math.floor(S.rhythmCombo / 5));
-          S.rhythmCombo++;
+          nextRhythmScore += 100 * (1 + Math.floor(nextRhythmCombo / 5));
+          nextRhythmCombo++;
           snd("correct");
         } else if (closestDiff < 100) {
           beat.result = "good";
-          S.rhythmScore += 50 * (1 + Math.floor(S.rhythmCombo / 5));
-          S.rhythmCombo++;
+          nextRhythmScore += 50 * (1 + Math.floor(nextRhythmCombo / 5));
+          nextRhythmCombo++;
           snd("click");
         } else {
           beat.result = "ok";
-          S.rhythmScore += 25;
-          S.rhythmCombo = 0;
+          nextRhythmScore += 25;
+          nextRhythmCombo = 0;
         }
-        if (S.rhythmCombo > S.rhythmMaxCombo) S.rhythmMaxCombo = S.rhythmCombo;
+        if (nextRhythmCombo > nextRhythmMaxCombo) nextRhythmMaxCombo = nextRhythmCombo;
       } else {
-        S.rhythmCombo = 0;
+        nextRhythmCombo = 0;
         snd("wrong");
       }
+      setLegacyFields({
+        rhythmBeats: nextRhythmBeats,
+        rhythmScore: nextRhythmScore,
+        rhythmCombo: nextRhythmCombo,
+        rhythmMaxCombo: nextRhythmMaxCombo
+      }, [], false);
       syncLegacyRhythmRuntimeRequest({
         active: S.rhythmActive,
-        beats: S.rhythmBeats,
-        score: S.rhythmScore,
-        combo: S.rhythmCombo,
-        maxCombo: S.rhythmMaxCombo,
+        beats: nextRhythmBeats,
+        score: nextRhythmScore,
+        combo: nextRhythmCombo,
+        maxCombo: nextRhythmMaxCombo,
         startTimeMs: S.rhythmStartTime
       });
       render();
@@ -682,8 +694,15 @@
     if (a === "runnerStrum" && S.runnerActive) {
       var closestObstacle = null;
       var closestDist = 999;
-      for (var obstacleIdx = 0; obstacleIdx < S.runnerObstacles.length; obstacleIdx++) {
-        var obstacle = S.runnerObstacles[obstacleIdx];
+      var nextRunnerObstacles = Array.isArray(S.runnerObstacles) ? S.runnerObstacles.map(function(obstacleCopy) {
+        return Object.assign({}, obstacleCopy);
+      }) : [];
+      var nextRunnerCombo = S.runnerCombo || 0;
+      var nextRunnerMaxCombo = S.runnerMaxCombo || 0;
+      var nextRunnerScore = S.runnerScore || 0;
+      var nextRunnerLives = S.runnerLives || 0;
+      for (var obstacleIdx = 0; obstacleIdx < nextRunnerObstacles.length; obstacleIdx++) {
+        var obstacle = nextRunnerObstacles[obstacleIdx];
         if (obstacle.hit) continue;
         var obstacleDist = Math.abs(obstacle.x - 60);
         if (obstacleDist < closestDist && obstacle.x > 0 && obstacle.x < 140) {
@@ -692,38 +711,52 @@
         }
       }
       if (closestObstacle !== null) {
-        var targetObstacle = S.runnerObstacles[closestObstacle];
+        var targetObstacle = nextRunnerObstacles[closestObstacle];
         targetObstacle.hit = true;
         if (targetObstacle.isTarget) {
-          S.runnerCombo++;
-          if (S.runnerCombo > S.runnerMaxCombo) S.runnerMaxCombo = S.runnerCombo;
-          var pts = 100 * (1 + Math.floor(S.runnerCombo / 5));
-          S.runnerScore += pts;
+          nextRunnerCombo++;
+          if (nextRunnerCombo > nextRunnerMaxCombo) nextRunnerMaxCombo = nextRunnerCombo;
+          var pts = 100 * (1 + Math.floor(nextRunnerCombo / 5));
+          nextRunnerScore += pts;
           targetObstacle.result = "correct";
           snd("correct");
-          if (S.runnerCombo % 5 === 0 && S.runnerCombo > 0) changeRunnerTarget();
+          if (nextRunnerCombo % 5 === 0 && nextRunnerCombo > 0) changeRunnerTarget();
         } else {
-          S.runnerLives--;
-          S.runnerCombo = 0;
+          nextRunnerLives--;
+          nextRunnerCombo = 0;
           targetObstacle.result = "wrong";
           snd("wrong");
-          if (S.runnerLives <= 0) {
+          setLegacyFields({
+            runnerObstacles: nextRunnerObstacles,
+            runnerScore: nextRunnerScore,
+            runnerCombo: nextRunnerCombo,
+            runnerMaxCombo: nextRunnerMaxCombo,
+            runnerLives: nextRunnerLives
+          }, [], false);
+          if (nextRunnerLives <= 0) {
             finishRunner();
             return true;
           }
         }
       } else {
-        S.runnerCombo = 0;
+        nextRunnerCombo = 0;
       }
+      setLegacyFields({
+        runnerObstacles: nextRunnerObstacles,
+        runnerScore: nextRunnerScore,
+        runnerCombo: nextRunnerCombo,
+        runnerMaxCombo: nextRunnerMaxCombo,
+        runnerLives: nextRunnerLives
+      }, [], false);
       syncLegacyRunnerRuntimeRequest({
         active: S.runnerActive,
         targetName: S.runnerTarget ? S.runnerTarget.name : null,
-        score: S.runnerScore,
-        combo: S.runnerCombo,
-        maxCombo: S.runnerMaxCombo,
-        lives: S.runnerLives,
+        score: nextRunnerScore,
+        combo: nextRunnerCombo,
+        maxCombo: nextRunnerMaxCombo,
+        lives: nextRunnerLives,
         distance: Math.floor(S.runnerDistance / 100),
-        obstacles: S.runnerObstacles
+        obstacles: nextRunnerObstacles
       });
       render();
       return true;
