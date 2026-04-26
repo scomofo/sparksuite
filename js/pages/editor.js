@@ -33,7 +33,7 @@ function editorPage(){
     return h;
   }
 
-  var errors = validateEditorObject ? validateEditorObject(obj) : [];
+  var errors = typeof validateEditorObject === "function" ? validateEditorObject(obj) : [];
 
   h += '<div class="card mb16">';
   h += '<div><b>Mode:</b> '+escHTML(firstEditorTextToken(S.editorMode, "chart"))+'</div>';
