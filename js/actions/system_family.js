@@ -914,8 +914,13 @@
       var _inst = SparkInstruments.getActive();
       var _sessions = _inst && _inst.getData ? (_inst.getData().SESSIONS || []) : (typeof SESSIONS !== "undefined" ? SESSIONS : []);
       if (_gsNum > 0 && _gsNum <= _sessions.length) {
-        S.guidedPlan = _sessions[_gsNum - 1];
-        setGuidedLegacyState({ guidedSession: _gsNum, guidedStep: "spark", newMovePhase: null, screen: SCR.GUIDED }, false);
+        setGuidedLegacyState({
+          guidedPlan: _sessions[_gsNum - 1],
+          guidedSession: _gsNum,
+          guidedStep: "spark",
+          newMovePhase: null,
+          screen: SCR.GUIDED
+        }, false);
         render();
         return true;
       }
