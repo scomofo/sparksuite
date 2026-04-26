@@ -2,7 +2,7 @@
   var _showroomTapTempoTimes = [];
 
   function showMicroToast(message, icon) {
-    S.microToast = { msg: message, icon: icon || "&#9889;", time: Date.now() };
+    setLegacyFields({ microToast: { msg: message, icon: icon || "&#9889;", time: Date.now() } }, false);
   }
 
   function setMetronomeBpmValue(bpm) {
@@ -41,15 +41,6 @@
 
   function setGuidedLegacyState(setFields, save) {
     setLegacyFields(setFields || {}, save);
-    if (Object.prototype.hasOwnProperty.call(setFields || {}, "guidedSession")) {
-      S.guidedSession = setFields.guidedSession;
-    }
-    if (Object.prototype.hasOwnProperty.call(setFields || {}, "guidedStep")) {
-      S.guidedStep = setFields.guidedStep;
-    }
-    if (Object.prototype.hasOwnProperty.call(setFields || {}, "newMovePhase")) {
-      S.newMovePhase = setFields.newMovePhase;
-    }
   }
 
   function getSparkCoreHandle() {
@@ -70,8 +61,11 @@
     var next = typeof SparkNormalizeAccessibilitySettings === "function"
       ? SparkNormalizeAccessibilitySettings(Object.assign({}, current, patch || {}))
       : Object.assign({}, current, patch || {});
-    if (!S.settings) S.settings = {};
-    S.settings.accessibility = next;
+    setLegacyFields({
+      settings: Object.assign({}, S.settings || {}, {
+        accessibility: next
+      })
+    }, false);
     if (core && typeof core.syncAccessibilitySettings === "function") {
       core.syncAccessibilitySettings(next);
     }
@@ -149,9 +143,11 @@
 
   function mirrorGuidedRuntimeFields(runtimeState) {
     if (!runtimeState) return;
-    S.guidedActivityId = runtimeState.guidedActivityId || null;
-    S.guidedActivityKind = runtimeState.guidedActivityKind || null;
-    S.guidedBlockType = runtimeState.guidedBlockType || null;
+    setLegacyFields({
+      guidedActivityId: runtimeState.guidedActivityId || null,
+      guidedActivityKind: runtimeState.guidedActivityKind || null,
+      guidedBlockType: runtimeState.guidedBlockType || null
+    }, false);
   }
 
   function handleSystemAction(a, v) {
@@ -386,11 +382,6 @@
         });
       }
       setLegacyFields({ currentSong: nextSong, performSongData: nextSong, performSongId: v, screen: SCR.PERFORM_SONG }, false);
-      if (!window.SparkProgressBridge || typeof SparkProgressBridge.applyLegacyActivityRuntime !== "function") {
-        S.currentSong = nextSong;
-        S.performSongData = nextSong;
-        S.performSongId = v;
-      }
       render();
       return true;
     }
@@ -617,20 +608,24 @@
       var guidedCore = getSparkCoreHandle();
       var previousGuidedStep = S.guidedStep;
       if (idx < steps.length - 1) {
-        S.guidedStep = steps[idx + 1];
-        if (S.guidedStep === "newMove") S.newMovePhase = "watch";
+        var nextGuidedStep = steps[idx + 1];
+        var nextNewMovePhase = nextGuidedStep === "newMove" ? "watch" : S.newMovePhase;
+        setGuidedLegacyState({
+          guidedStep: nextGuidedStep,
+          newMovePhase: nextNewMovePhase
+        }, false);
         if (guidedCore && typeof guidedCore.advanceGuidedSession === "function") {
           mirrorGuidedRuntimeFields((guidedCore.advanceGuidedSession({
-            guidedNewMovePhase: S.newMovePhase || null
+            guidedNewMovePhase: nextNewMovePhase || null
           }) || {}).runtimeState || null);
           syncGuidedSessionRuntime({
             autoAdvance: false,
-            scheduleTick: S.guidedStep !== previousGuidedStep
+            scheduleTick: nextGuidedStep !== previousGuidedStep
           });
         } else if (guidedCore && typeof guidedCore.syncGuidedRuntimeState === "function") {
           mirrorGuidedRuntimeFields(guidedCore.syncGuidedRuntimeState({
-            guidedStep: S.guidedStep,
-            guidedNewMovePhase: S.newMovePhase || null
+            guidedStep: nextGuidedStep,
+            guidedNewMovePhase: nextNewMovePhase || null
           }));
         }
       }
@@ -643,11 +638,12 @@
       var pi = phases.indexOf(S.newMovePhase);
       var guidedPhaseCore = getSparkCoreHandle();
       if (pi < phases.length - 1) {
-        S.newMovePhase = phases[pi + 1];
+        var nextGuidedPhase = phases[pi + 1];
+        setGuidedLegacyState({ newMovePhase: nextGuidedPhase }, false);
         if (guidedPhaseCore && typeof guidedPhaseCore.syncGuidedRuntimeState === "function") {
           mirrorGuidedRuntimeFields(guidedPhaseCore.syncGuidedRuntimeState({
             guidedStep: S.guidedStep,
-            guidedNewMovePhase: S.newMovePhase
+            guidedNewMovePhase: nextGuidedPhase
           }));
           syncGuidedSessionRuntime({
             autoAdvance: false,
@@ -669,11 +665,13 @@
         var guidedSkipState = guidedSkipResult && guidedSkipResult.runtimeState ? guidedSkipResult.runtimeState : null;
         mirrorGuidedRuntimeFields(guidedSkipState || null);
         if (guidedSkipState && guidedSkipState.guidedStep != null) {
-          S.guidedStep = guidedSkipState.guidedStep;
-          S.newMovePhase = guidedSkipState.guidedNewMovePhase || null;
+          setGuidedLegacyState({
+            guidedStep: guidedSkipState.guidedStep,
+            newMovePhase: guidedSkipState.guidedNewMovePhase || null
+          }, false);
         }
         if (guidedSkipState && guidedSkipState.activeScreen === "guided_done") {
-          S.screen = SCR.GUIDED_DONE || "guided_done";
+          setLegacyFields({ screen: SCR.GUIDED_DONE || "guided_done" }, false);
         } else {
           syncGuidedSessionRuntime({
             autoAdvance: false,
@@ -684,11 +682,9 @@
         act("guidedNext");
         return true;
       } else if (S.guidedStep === "review" || S.guidedStep === "newMove") {
-        S.guidedStep = "songSlice";
-        S.newMovePhase = null;
+        setGuidedLegacyState({ guidedStep: "songSlice", newMovePhase: null }, false);
       } else if (S.guidedStep === "songSlice") {
-        S.guidedStep = "victoryLap";
-        S.newMovePhase = null;
+        setGuidedLegacyState({ guidedStep: "victoryLap", newMovePhase: null }, false);
       } else if (S.guidedStep === "victoryLap") {
         act("guidedComplete");
         return true;
@@ -704,15 +700,24 @@
         var guidedExtendState = guidedExtendResult && guidedExtendResult.runtimeState ? guidedExtendResult.runtimeState : null;
         mirrorGuidedRuntimeFields(guidedExtendState || null);
         if (guidedExtendState && guidedExtendState.guidedStep != null) {
-          S.guidedStep = guidedExtendState.guidedStep;
-          S.newMovePhase = guidedExtendState.guidedNewMovePhase || null;
+          setGuidedLegacyState({
+            guidedStep: guidedExtendState.guidedStep,
+            newMovePhase: guidedExtendState.guidedNewMovePhase || null
+          }, false);
         }
         syncGuidedSessionRuntime({
           autoAdvance: false,
           scheduleTick: true
         });
       } else if (S.guidedStep === "victoryLap" && S.guidedPlan && S.guidedPlan.blockActivities && S.guidedPlan.blockActivities.cooldown) {
-        S.guidedPlan.blockActivities.cooldown.duration_sec = (parseInt(S.guidedPlan.blockActivities.cooldown.duration_sec, 10) || 0) + 300;
+        var extendedGuidedPlan = Object.assign({}, S.guidedPlan, {
+          blockActivities: Object.assign({}, S.guidedPlan.blockActivities, {
+            cooldown: Object.assign({}, S.guidedPlan.blockActivities.cooldown, {
+              duration_sec: (parseInt(S.guidedPlan.blockActivities.cooldown.duration_sec, 10) || 0) + 300
+            })
+          })
+        });
+        setGuidedLegacyState({ guidedPlan: extendedGuidedPlan }, false);
       }
       render();
       return true;
