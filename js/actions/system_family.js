@@ -7,10 +7,10 @@
 
   function setMetronomeBpmValue(bpm) {
     if (bpm < 40 || bpm > 200) return false;
-    S.metronomeBpm = bpm;
+    setLegacyFields({ metronomeBpm: bpm }, false);
     syncMetronomeRuntimeRequest({
       active: !!S.metronomeOn,
-      bpm: S.metronomeBpm,
+      bpm: bpm,
       beat: S._metroBeat,
       beatsPerBar: S._metroBeats
     });
