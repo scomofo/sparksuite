@@ -2584,6 +2584,68 @@ test("system action family routes live tuner detection state through the shared 
   assert.ok(/setLegacyFields\(\{\s*tunerNote: null/.test(source));
 });
 
+test("system action family routes metronome BPM changes through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var metronomeStates = [];
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      runtimeUpdates.push(update);
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.sparkCore = {
+    syncMetronomeRuntimeState: function(payload) {
+      metronomeStates.push(payload);
+      return payload;
+    }
+  };
+  global.syncMetronomeRuntimeRequest = function(payload) {
+    return global.sparkCore.syncMetronomeRuntimeState(payload);
+  };
+  global.S = global.S || {};
+  global.T = {};
+  global.S.metronomeOn = false;
+  global.S.metronomeBpm = 80;
+  global.S._metroBeat = 1;
+  global.S._metroBeats = 4;
+  global.clearTimeout = function() {};
+  global.startMetronome = function() {};
+  global.stopMetronome = function() {};
+  global.render = function() {};
+  global.saveState = function() {};
+  global.showMicroToast = function() {};
+  global.SCR = {};
+  global.TAB = {};
+
+  eval(loadJS("js/actions/system_family.js"));
+
+  assert.strictEqual(__actionFamilies.system("metroBpm", "112"), true);
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { metronomeBpm: 112 },
+    save: false
+  });
+  assert.deepStrictEqual(metronomeStates[0], {
+    active: false,
+    bpm: 112,
+    beat: 1,
+    beatsPerBar: 4
+  });
+  assert.strictEqual(S.metronomeBpm, 112);
+});
+
 test("tools action family routes imported song and rhythm starts through the shared bridge", function() {
   var runtimeUpdates = [];
   var songRequests = [];
