@@ -2970,6 +2970,169 @@ test("studio action family routes plan launch state through the shared bridge", 
   assert.strictEqual(S.skillTreeFocus, "rhythm");
 });
 
+test("performance action family routes showroom and config state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var performanceSyncs = [];
+  var activated = [];
+  var starts = [];
+  var dailyRequests = [];
+  var inputStarts = [];
+  var speedChanges = [];
+  var saveCalls = 0;
+  global.window = {};
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return {
+        performanceSongIndex: 2,
+        performanceSongTitle: "Night Drive"
+      };
+    },
+    syncPerformanceRuntimeState: function(action, payload) {
+      performanceSyncs.push({ action: action, payload: payload });
+      return payload;
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    runtimeUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.SparkInstruments = {
+    getActive: function() { return null; },
+    getAll: function() {
+      return [{
+        id: "bassspark",
+        appId: "bassspark",
+        instrument: "bass",
+        getData: function() {
+          return {
+            SONGS: [{ id: "night_drive", title: "Night Drive", bpm: 100 }]
+          };
+        }
+      }];
+    },
+    activate: function(appId) {
+      activated.push(appId);
+      S.activeInstrument = appId;
+    }
+  };
+  global.buildPerformanceChartFromSong = function(song) {
+    return { id: "chart_" + song.id, title: song.title, events: [] };
+  };
+  global.startPerformance = function(chart, options) {
+    starts.push({ chart: chart, options: options || null });
+    return true;
+  };
+  global.choosePerformanceDailyChallenge = function() {
+    return {
+      songId: "night_drive",
+      arrangementType: "rhythm_chords",
+      difficultyId: "hard",
+      techniqueKey: "tap"
+    };
+  };
+  global.openPerformanceDailyChallengeRequest = function(payload) {
+    dailyRequests.push(payload || {});
+    return payload || {};
+  };
+  global.resolvePerformanceSongId = function(song) {
+    return song.id || String(song.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  };
+  global.PerformanceInput = {
+    start: function(mode) {
+      inputStarts.push(mode);
+    }
+  };
+  global.PerformanceTransport = {
+    setSpeed: function(speed) {
+      speedChanges.push(speed);
+    }
+  };
+  global.saveState = function() {
+    saveCalls += 1;
+  };
+  global.render = function() {};
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.HOME = "home";
+  global.SCR.PERFORM_SONG = "performSong";
+  global.TAB.PRACTICE = "practice";
+  global.S = global.S || {};
+  global.S.activeInstrument = null;
+  global.S.launcherView = "performance";
+  global.S._showroomOverride = "bass";
+  global.S.performArrangementType = "chords";
+  global.S.performDifficulty = "normal";
+  global.S.performMode = "midi";
+  global.S.performInputSource = "midi";
+  global.S.performSpeed = 1;
+  global.S.performDebug = false;
+  global.SONGS = [{ id: "night_drive", title: "Night Drive", bpm: 100 }];
+
+  eval(loadJS("js/actions/performance_family.js"));
+
+  __actionFamilies.performance("showroomPlayLibrarySong", "night_drive|bass");
+  __actionFamilies.performance("openPerformanceDaily");
+  __actionFamilies.performance("performArrangement", "rhythm_chords");
+  __actionFamilies.performance("performMode", "mic");
+  __actionFamilies.performance("performSpeed", "0.75");
+  __actionFamilies.performance("performDebug");
+  S.selectedSong = null;
+  S.performChart = null;
+  __actionFamilies.performance("showroomStartPerf", "missing");
+
+  assert.deepStrictEqual(activated, ["bassspark"]);
+  assert.strictEqual(starts.length, 1);
+  assert.strictEqual(starts[0].chart.id, "chart_night_drive");
+  assert.strictEqual(dailyRequests.length, 1);
+  assert.strictEqual(dailyRequests[0].songId, "night_drive");
+  assert.strictEqual(dailyRequests[0].difficultyId, "hard");
+  assert.deepStrictEqual(performanceSyncs.map(function(entry) { return entry.action; }), [
+    "configure",
+    "configure",
+    "configure"
+  ]);
+  assert.deepStrictEqual(inputStarts, ["mic"]);
+  assert.deepStrictEqual(speedChanges, [0.75]);
+  assert.strictEqual(saveCalls, 3);
+  assert.deepStrictEqual(runtimeUpdates.map(function(update) { return update && update.setFields; }), [
+    { selectedSong: { id: "night_drive", title: "Night Drive", bpm: 100 } },
+    {
+      performSongData: { id: "night_drive", title: "Night Drive", bpm: 100 },
+      performSongId: "night_drive",
+      performArrangementType: "rhythm_chords",
+      performDifficulty: "hard",
+      screen: "performSong"
+    },
+    { performArrangementType: "rhythm_chords" },
+    { performMode: "mic", performInputSource: "mic" },
+    { performSpeed: 0.75 },
+    { performDebug: true },
+    { screen: "home", tab: "practice" }
+  ]);
+  assert.strictEqual(runtimeUpdates[0].setFields.selectedSong.title, "Night Drive");
+  assert.strictEqual(S.performSongId, "night_drive");
+  assert.strictEqual(S.performArrangementType, "rhythm_chords");
+  assert.strictEqual(S.performMode, "mic");
+  assert.strictEqual(S.performSpeed, 0.75);
+  assert.strictEqual(S.performDebug, true);
+  assert.strictEqual(S.screen, "home");
+  assert.strictEqual(S.tab, "practice");
+
+  delete global.sparkCore;
+});
+
 test("dashboard utility UI surfaces can resolve sparkCore from the global binding", function() {
   global.window = {};
   global.sparkCore = {
