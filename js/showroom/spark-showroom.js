@@ -961,12 +961,18 @@
       focusTitle = getPracticeSummaryFocus(plan);
       var progress = (typeof getPracticeSummaryProgress === "function") ? getPracticeSummaryProgress(plan) : { completedItems: 0, totalItems: 1 };
       focusPct = progress.totalItems > 0 ? Math.round((progress.completedItems / progress.totalItems) * 100) : 0;
-      focusXp = 150; // Standard XP for daily focus
 
       if (Array.isArray(plan.items)) {
         for (var pi = 0; pi < plan.items.length; pi++) {
           var item = plan.items[pi];
           if (typeof isRenderablePracticeSummaryItem === "function" && !isRenderablePracticeSummaryItem(item)) continue;
+          focusXp += pickShowroomNumber(
+            item && item.xp,
+            item && item.rewardXp,
+            item && item.rewards && item.rewards.xp,
+            item && item.meta && item.meta.xp,
+            0
+          ) || 0;
           drillItems.push({
             id: (typeof normalizePracticeSummaryItemId === "function") ? normalizePracticeSummaryItemId(item.id) : item.id,
             name: (typeof getPracticeSummaryItemLabel === "function") ? getPracticeSummaryItemLabel(item) : (item.label || "Drill"),
