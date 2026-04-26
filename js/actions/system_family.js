@@ -348,7 +348,7 @@
     }
 
     if (a === "setIntention") {
-      S.practiceIntention = v || "";
+      setLegacyFields({ practiceIntention: v || "" }, false);
       return true;
     }
 
@@ -548,7 +548,8 @@
     }
 
     if (a === "setTheme") {
-      if (S.settings) S.settings.theme = v;
+      var nextSettings = Object.assign({}, S.settings || {}, { theme: v });
+      setLegacyFields({ settings: nextSettings }, false);
       if (typeof applyThemeSetting === "function") applyThemeSetting();
       saveState();
       render();
@@ -573,22 +574,21 @@
     }
 
     if (a === "songSort") {
-      if (S.songSort === v) S.songSortAsc = !S.songSortAsc;
-      else {
-        S.songSort = v;
-        S.songSortAsc = true;
-      }
+      var nextSongSort = S.songSort === v ? S.songSort : v;
+      var nextSongSortAsc = S.songSort === v ? !S.songSortAsc : true;
+      setLegacyFields({ songSort: nextSongSort, songSortAsc: nextSongSortAsc }, false);
       applySongBrowserRequest("song_sort", {
-        songSort: S.songSort,
-        songSortAsc: S.songSortAsc
+        songSort: nextSongSort,
+        songSortAsc: nextSongSortAsc
       });
       render();
       return true;
     }
 
     if (a === "songFilter") {
-      S.songFilter = v || "";
-      applySongBrowserRequest("song_filter", { songFilter: S.songFilter });
+      var nextSongFilter = v || "";
+      setLegacyFields({ songFilter: nextSongFilter }, false);
+      applySongBrowserRequest("song_filter", { songFilter: nextSongFilter });
       render();
       return true;
     }
