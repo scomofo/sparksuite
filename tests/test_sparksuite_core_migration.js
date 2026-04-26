@@ -3172,6 +3172,8 @@ test("practice planning helpers can resolve sparkCore from the global binding", 
 
 test("performance and studio action families can resolve sparkCore from the global binding", function() {
   var syncCalls = [];
+  var editorSyncs = [];
+  var runtimeUpdates = [];
   var performanceSelections = [];
   var practicePlanRequests = [];
   var segmentLookups = [];
@@ -3227,9 +3229,36 @@ test("performance and studio action families can resolve sparkCore from the glob
     global.__actionFamilies[name] = handler;
   };
   global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    runtimeUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
   global.openPerformanceSongSelectionRequest = function(payload) {
     performanceSelections.push(payload);
     return payload;
+  };
+  global.syncPerformanceEditorDocumentState = function(chart, options) {
+    editorSyncs.push({ chart: chart, options: options || {} });
+  };
+  global.applyPerformanceEditorCoreMutation = function(action, payload) {
+    if (action === "set_title") {
+      return {
+        chart: Object.assign({}, S.performEditorChart, { title: payload.title })
+      };
+    }
+    if (action === "set_bpm") {
+      return {
+        chart: Object.assign({}, S.performEditorChart, { bpm: payload.bpm })
+      };
+    }
+    return null;
   };
   global.openPracticePlanScreenRequest = function(payload) {
     practicePlanRequests.push({ kind: "open", payload: payload || {} });
@@ -3289,6 +3318,17 @@ test("performance and studio action families can resolve sparkCore from the glob
   global.S.performPracticePreset = "full_mix";
   global.S.performMode = "midi";
   global.S.performTargetTechnique = null;
+  global.S.performEditorMode = "chords";
+  global.S.performEditorSnap = "1/8";
+  global.S.performEditorDirty = false;
+  global.S.performEditorChart = {
+    id: "custom_chart",
+    title: "Old Chart",
+    artist: "Custom",
+    bpm: 90,
+    events: [],
+    phrases: []
+  };
   global.S.activeCoreSegmentId = "segment_7";
   global.S.rhythmHighwaySnapshot = {};
   global.S.performChart = { phrases: [], events: [] };
@@ -3302,6 +3342,10 @@ test("performance and studio action families can resolve sparkCore from the glob
   __actionFamilies.performance("performSpeed", "0.8");
   __actionFamilies.performance("performPracticePreset", "guitar_solo");
   __actionFamilies.performance("performStatsFocus", "accuracy");
+  __actionFamilies.performance("editorMode", "lead");
+  __actionFamilies.performance("editorSnap", "1/16");
+  __actionFamilies.performance("editorTitle", "Bridge Chart");
+  __actionFamilies.performance("editorBpm", "128");
   __actionFamilies.studio("openPlan");
   __actionFamilies.studio("completePlanItem", "warmup_1");
   __actionFamilies.studio("regeneratePlan");
@@ -3321,6 +3365,24 @@ test("performance and studio action families can resolve sparkCore from the glob
   assert.strictEqual(syncCalls[2].payload.speed, 0.8);
   assert.strictEqual(syncCalls[3].payload.preset, "guitar_solo");
   assert.strictEqual(syncCalls[4].payload.focus, "accuracy");
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorMode === "lead";
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorSnap === "1/16";
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorChart && update.setFields.performEditorChart.title === "Bridge Chart";
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorChart && update.setFields.performEditorChart.bpm === 128;
+  }), true);
+  assert.strictEqual(S.performEditorMode, "lead");
+  assert.strictEqual(S.performEditorSnap, "1/16");
+  assert.strictEqual(S.performEditorChart.title, "Bridge Chart");
+  assert.strictEqual(S.performEditorChart.bpm, 128);
+  assert.strictEqual(S.performEditorDirty, true);
+  assert.strictEqual(editorSyncs.length, 4);
   assert.deepStrictEqual(runtimeCompletions, [{
     id: "warmup_1",
     result: null,
