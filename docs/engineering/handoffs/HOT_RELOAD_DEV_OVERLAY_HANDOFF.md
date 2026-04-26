@@ -1,5 +1,9 @@
 # Hot Reload + Dev Mode Overlay Handoff
 
+## Status
+
+Implemented. The watch script calls the canonical apply script, `_dev_reload_signal.txt` is ignored, and `index.html` loads the dev overlay, reload client, curriculum highlighter, structured validator, and unified dev panel behind the existing `?dev=1` / `spark_dev_overlay=true` activation gate.
+
 ## Goal
 
 Add developer-experience tooling so newly generated instruments can be
