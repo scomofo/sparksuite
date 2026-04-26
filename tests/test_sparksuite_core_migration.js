@@ -2546,6 +2546,8 @@ test("utility action family routes curriculum and back navigation through the sh
 test("system action family routes guided and career screen state through the shared bridge", function() {
   var runtimeUpdates = [];
   var dashboardRequests = [];
+  var utilityRequests = [];
+  var settingsSyncs = [];
   var careerSongRequests = [];
   var songBrowserRequests = [];
   var audioInputSyncs = [];
@@ -2588,6 +2590,14 @@ test("system action family routes guided and career screen state through the sha
   global.openDashboardSectionRequest = function(section) {
     dashboardRequests.push(section);
     return section;
+  };
+  global.openUtilityScreenRequest = function(screen) {
+    utilityRequests.push(screen);
+    return screen;
+  };
+  global.syncSettingsStateRequest = function(payload) {
+    settingsSyncs.push(payload || {});
+    return payload;
   };
   global.openCareerSongSelectionRequest = function(payload) {
     careerSongRequests.push(payload);
@@ -2636,7 +2646,7 @@ test("system action family routes guided and career screen state through the sha
   global.S.performDifficulty = "hard";
   global.S.metronomeOn = false;
   global.S.practiceIntention = "";
-  global.S.settings = { theme: "dark", accessibility: {} };
+  global.S.settings = { theme: "dark", uiVolume: 0.5, practiceReminder: false, accessibility: {} };
   global.S.songSort = "level";
   global.S.songSortAsc = true;
   global.S.songFilter = "";
@@ -2655,6 +2665,9 @@ test("system action family routes guided and career screen state through the sha
 
   assert.strictEqual(__actionFamilies.system("setIntention", "After coffee"), true);
   assert.strictEqual(__actionFamilies.system("setTheme", "ember"), true);
+  assert.strictEqual(__actionFamilies.system("setUIVolume", "75"), true);
+  assert.strictEqual(__actionFamilies.system("togglePracticeReminder"), true);
+  assert.strictEqual(__actionFamilies.system("openSettings"), true);
   assert.strictEqual(__actionFamilies.system("songSort", "level"), true);
   assert.strictEqual(__actionFamilies.system("songFilter", "ballad"), true);
   assert.strictEqual(__actionFamilies.system("toggleFocus"), true);
@@ -2672,6 +2685,8 @@ test("system action family routes guided and career screen state through the sha
     { type: "song_filter", payload: { songFilter: "ballad" } }
   ]);
   assert.deepStrictEqual(dashboardRequests, ["career"]);
+  assert.deepStrictEqual(utilityRequests, ["settings"]);
+  assert.strictEqual(settingsSyncs[0].theme, "ember");
   assert.strictEqual(audioStops, 1);
   assert.deepStrictEqual(audioInputSyncs, [{
     devices: [{ id: "usb-1", name: "USB Interface" }],
@@ -2709,6 +2724,15 @@ test("system action family routes guided and career screen state through the sha
   }));
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.settings && update.setFields.settings.theme === "ember";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.settings && update.setFields.settings.uiVolume === 0.75;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.settings && update.setFields.settings.practiceReminder === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.screen === "settings" && update.setFields._showroomOverride === "settings";
   }));
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.songSort === "level" && update.setFields.songSortAsc === false;

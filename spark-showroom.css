@@ -604,6 +604,33 @@
   box-shadow:0 0 12px rgba(255,123,58,.5);
   border-radius:9999px;
 }
+.showroom-settings-range{
+  width:100%;
+  accent-color:#ff7b3a;
+  cursor:pointer;
+}
+.showroom-theme-picker{
+  display:flex;flex-wrap:wrap;gap:8px;
+  padding:0 16px 16px;
+  border-bottom:1px solid rgba(58,50,40,.5);
+}
+.showroom-theme-chip{
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);
+  color:var(--text-secondary);
+  border-radius:9999px;
+  padding:7px 10px;
+  font-size:12px;
+  font-weight:800;
+  text-transform:capitalize;
+  cursor:pointer;
+}
+.showroom-theme-chip.active{
+  border-color:rgba(255,123,58,.65);
+  background:linear-gradient(135deg,rgba(255,123,58,.24),rgba(232,168,122,.12));
+  color:#ffd2bc;
+  box-shadow:0 0 12px rgba(255,123,58,.22);
+}
 
 /* Toggle switch */
 .showroom-toggle{

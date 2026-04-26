@@ -10,6 +10,7 @@ function _renderShowroomOverride(){
       "curriculum":      typeof SparkCurriculumDashboard !== "undefined" && SparkCurriculumDashboard.render,
       "syllabus":        typeof SparkCourseSyllabus  !== "undefined" && SparkCourseSyllabus.render,
       "profile":         typeof SparkProfileScreen   !== "undefined" && SparkProfileScreen.render,
+      "settings":        typeof SparkSettings        !== "undefined" && SparkSettings.render,
       "leaderboard":     typeof SparkLeaderboard     !== "undefined" && SparkLeaderboard.render,
       "library":         typeof SparkSongLibrary     !== "undefined" && SparkSongLibrary.render,
       "tuner":           typeof SparkTuner           !== "undefined" && SparkTuner.render,

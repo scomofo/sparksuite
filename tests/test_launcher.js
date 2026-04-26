@@ -264,6 +264,40 @@ test('renderLauncher respects launcherView showroom routes', function() {
   S.launcherView = 'home';
 });
 
+test('render_showroom routes settings overrides to SparkSettings', function() {
+  var previousDocument = global.document;
+  var previousWrite = global._writeAppHtml;
+  var previousSettings = global.SparkSettings;
+  var previousS = global.S;
+  var previousSCR = global.SCR;
+  var header = { style: {} };
+  var written = "";
+
+  global.document = {
+    getElementById: function(id) {
+      return id === "header" ? header : null;
+    }
+  };
+  global._writeAppHtml = function(html) {
+    written = html;
+  };
+  global.SparkSettings = { render: function() { return "<div>Settings Override</div>"; } };
+  global.S = { _showroomOverride: "settings" };
+  global.SCR = { COMPLETE: "complete" };
+
+  eval(loadJS("js/render_showroom.js"));
+
+  assert.strictEqual(_renderShowroomOverride(), true);
+  assert.strictEqual(header.style.display, "none");
+  assert.ok(written.indexOf("Settings Override") >= 0);
+
+  global.document = previousDocument;
+  global._writeAppHtml = previousWrite;
+  global.SparkSettings = previousSettings;
+  global.S = previousS;
+  global.SCR = previousSCR;
+});
+
 test('ukulele register adds a selectable launcher instrument', function() {
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));

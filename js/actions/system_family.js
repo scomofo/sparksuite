@@ -410,7 +410,7 @@
     if (a === "openSettings") {
       openUtilityScreenRequest("settings");
       syncSettingsStateRequest({ theme: S.settings ? S.settings.theme : null });
-      openScreen(SCR.SETTINGS);
+      setLegacyFields({ screen: SCR.SETTINGS, _showroomOverride: "settings" }, false);
       render();
       return true;
     }
@@ -542,6 +542,26 @@
       var nextSettings = Object.assign({}, S.settings || {}, { theme: v });
       setLegacyFields({ settings: nextSettings }, false);
       if (typeof applyThemeSetting === "function") applyThemeSetting();
+      saveState();
+      render();
+      return true;
+    }
+
+    if (a === "setUIVolume") {
+      var parsedVolume = Number(v);
+      if (!isFinite(parsedVolume)) parsedVolume = 50;
+      var normalizedVolume = Math.max(0, Math.min(1, parsedVolume > 1 ? parsedVolume / 100 : parsedVolume));
+      var nextVolumeSettings = Object.assign({}, S.settings || {}, { uiVolume: normalizedVolume });
+      setLegacyFields({ settings: nextVolumeSettings }, false);
+      saveState();
+      render();
+      return true;
+    }
+
+    if (a === "togglePracticeReminder") {
+      var currentReminder = !(S.settings && S.settings.practiceReminder === false);
+      var nextReminderSettings = Object.assign({}, S.settings || {}, { practiceReminder: !currentReminder });
+      setLegacyFields({ settings: nextReminderSettings }, false);
       saveState();
       render();
       return true;
