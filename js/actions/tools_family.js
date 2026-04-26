@@ -564,25 +564,37 @@
       var sep = v.indexOf(":");
       var field = v.substring(0, sep);
       var val = v.substring(sep + 1);
-      if (field === "bpm") S.submitSong.bpm = parseInt(val, 10) || 100;
-      else S.submitSong[field] = val;
+      var nextSubmitSong = Object.assign({}, S.submitSong || {});
+      if (field === "bpm") nextSubmitSong.bpm = parseInt(val, 10) || 100;
+      else nextSubmitSong[field] = val;
+      setLegacyFields({ submitSong: nextSubmitSong }, [], false);
       return true;
     }
 
     if (a === "submitToggleChord") {
-      var submitIdx = S.submitSong.chords.indexOf(v);
+      var nextSubmitChords = Array.isArray(S.submitSong && S.submitSong.chords) ? S.submitSong.chords.slice() : [];
+      var nextSubmitProgression = Array.isArray(S.submitSong && S.submitSong.progression) ? S.submitSong.progression.slice() : [];
+      var submitIdx = nextSubmitChords.indexOf(v);
       if (submitIdx === -1) {
-        S.submitSong.chords.push(v);
-        S.submitSong.progression.push(v);
+        nextSubmitChords.push(v);
+        nextSubmitProgression.push(v);
       } else {
-        S.submitSong.chords.splice(submitIdx, 1);
+        nextSubmitChords.splice(submitIdx, 1);
       }
+      setLegacyFields({
+        submitSong: Object.assign({}, S.submitSong || {}, {
+          chords: nextSubmitChords,
+          progression: nextSubmitProgression
+        })
+      }, [], false);
       render();
       return true;
     }
 
     if (a === "submitClearProg") {
-      S.submitSong.progression = [];
+      setLegacyFields({
+        submitSong: Object.assign({}, S.submitSong || {}, { progression: [] })
+      }, [], false);
       render();
       return true;
     }
