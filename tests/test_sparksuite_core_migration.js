@@ -2865,6 +2865,111 @@ test("performance and studio action families can resolve sparkCore from the glob
   delete global.sparkCore;
 });
 
+test("studio action family routes plan launch state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var skillFocusRequests = [];
+  var planRequests = [];
+  var rhythmStarts = [];
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: { flow: "daily_practice" },
+        runtimeState: { activeScreen: "daily_practice" }
+      };
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    runtimeUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.openPracticePlanScreenRequest = function(payload) {
+    planRequests.push(payload || {});
+    return payload || {};
+  };
+  global.setSkillTreeFocusRequest = function(focus) {
+    skillFocusRequests.push(focus);
+    return focus;
+  };
+  global.startRhythmHighwaySegment = function(segmentId, preset) {
+    rhythmStarts.push({ segmentId: segmentId, preset: preset });
+    return true;
+  };
+  global.findChordByName = function(name) {
+    return { name: name };
+  };
+  global.render = function() {};
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.HOME = "home";
+  global.SCR.DRILL = "drill";
+  global.SCR.PLAN = "plan";
+  global.SCR.GUIDED = "guided";
+  global.TAB.PRACTICE = "practice";
+  global.S = global.S || {};
+  global.S.activeCoreSegmentId = "segment_7";
+  global.S.rhythmHighwayPreset = "spark_learning";
+
+  eval(loadJS("js/actions/studio_family.js"));
+
+  __actionFamilies.studio("planStartWarmup");
+  __actionFamilies.studio("planStartTransition", "C Major|G Major");
+  __actionFamilies.studio("planStartRhythm", "110");
+  __actionFamilies.studio("rhythmHighwayPreset", "tight");
+  __actionFamilies.studio("skillTreeFocus", "rhythm");
+  __actionFamilies.studio("openPlan");
+
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { screen: "home", tab: "practice" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: {
+      drillChords: [{ name: "C Major" }, { name: "G Major" }],
+      drillIdx: 0,
+      drillTimer: 60,
+      screen: "drill"
+    },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
+    setFields: { rhythmBpm: 110, rhythmActive: false, screen: "home", tab: "games" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[3], {
+    setFields: { rhythmHighwayPreset: "tight" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[4], {
+    setFields: { skillTreeFocus: "rhythm" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[5], {
+    setFields: { screen: "plan" },
+    save: false
+  });
+  assert.deepStrictEqual(skillFocusRequests, ["rhythm"]);
+  assert.deepStrictEqual(planRequests, [{}]);
+  assert.deepStrictEqual(rhythmStarts, [{ segmentId: "segment_7", preset: "tight" }]);
+  assert.strictEqual(S.screen, "plan");
+  assert.strictEqual(S.tab, "games");
+  assert.strictEqual(S.rhythmBpm, 110);
+  assert.strictEqual(S.rhythmHighwayPreset, "tight");
+  assert.strictEqual(S.skillTreeFocus, "rhythm");
+});
+
 test("dashboard utility UI surfaces can resolve sparkCore from the global binding", function() {
   global.window = {};
   global.sparkCore = {

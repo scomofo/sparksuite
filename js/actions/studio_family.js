@@ -97,11 +97,13 @@
           ? resolvePerformanceSongId(SONGS[psi], SONGS[psi] && SONGS[psi].title)
           : (SONGS[psi].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
         if (planSongId === songId) {
-          S.performSongData = SONGS[psi];
-          S.performSongId = songId;
-          S.performArrangementType = arrangementType;
-          S.performDifficulty = difficultyId;
-          setLegacyFields({ screen: SCR.PERFORM_SONG });
+          setLegacyFields({
+            performSongData: SONGS[psi],
+            performSongId: songId,
+            performArrangementType: arrangementType,
+            performDifficulty: difficultyId,
+            screen: SCR.PERFORM_SONG
+          });
           render();
           return true;
         }
@@ -159,8 +161,7 @@
     }
 
     if (a === "planStartWarmup") {
-      S.screen = SCR.HOME;
-      S.tab = TAB.PRACTICE;
+      setLegacyFields({ screen: SCR.HOME, tab: TAB.PRACTICE }, false);
       render();
       return true;
     }
@@ -168,24 +169,29 @@
     if (a === "planStartTransition" && v) {
       var transitionParts = v.split("|");
       if (transitionParts.length >= 2) {
-        S.drillChords = [];
+        var drillChords = [];
         var from = findChordByName(transitionParts[0]);
         var to = findChordByName(transitionParts[1]);
-        if (from) S.drillChords.push(from);
-        if (to) S.drillChords.push(to);
-        S.drillIdx = 0;
-        S.drillTimer = 60;
-        S.screen = SCR.DRILL;
+        if (from) drillChords.push(from);
+        if (to) drillChords.push(to);
+        setLegacyFields({
+          drillChords: drillChords,
+          drillIdx: 0,
+          drillTimer: 60,
+          screen: SCR.DRILL
+        }, false);
         render();
       }
       return true;
     }
 
     if (a === "planStartRhythm") {
-      S.rhythmBpm = parseInt(v, 10) || 90;
-      S.rhythmActive = false;
-      S.screen = SCR.HOME;
-      S.tab = "games";
+      setLegacyFields({
+        rhythmBpm: parseInt(v, 10) || 90,
+        rhythmActive: false,
+        screen: SCR.HOME,
+        tab: "games"
+      }, false);
       render();
       return true;
     }
@@ -214,9 +220,10 @@
     }
 
     if (a === "rhythmHighwayPreset") {
-      S.rhythmHighwayPreset = v || "spark_learning";
+      var nextPreset = v || "spark_learning";
+      setLegacyFields({ rhythmHighwayPreset: nextPreset }, false);
       if (S.activeCoreSegmentId && typeof startRhythmHighwaySegment === "function") {
-        startRhythmHighwaySegment(S.activeCoreSegmentId, S.rhythmHighwayPreset);
+        startRhythmHighwaySegment(S.activeCoreSegmentId, nextPreset);
         return true;
       }
       render();
@@ -224,18 +231,19 @@
     }
 
     if (a === "skillTreeFocus") {
-      S.skillTreeFocus = v || "overview";
-      setSkillTreeFocusRequest(S.skillTreeFocus);
+      var nextFocus = v || "overview";
+      setLegacyFields({ skillTreeFocus: nextFocus }, false);
+      setSkillTreeFocusRequest(nextFocus);
       render();
       return true;
     }
 
     if (a === "openPlan") {
       if (isStudioGuidedSessionActive()) {
-        S.screen = SCR.GUIDED;
+        setLegacyFields({ screen: SCR.GUIDED }, false);
       } else {
         if (getStudioCore()) openPracticePlanScreenRequest();
-        S.screen = SCR.PLAN;
+        setLegacyFields({ screen: SCR.PLAN }, false);
       }
       render();
       return true;
