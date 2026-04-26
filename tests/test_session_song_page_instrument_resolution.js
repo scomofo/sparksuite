@@ -228,6 +228,46 @@ test("sessionPage prefers canonical runtime values over stale legacy session sta
   assert.strictEqual(html.indexOf(">C</h2>"), -1);
 });
 
+test("session mini-game pages prefer canonical runtime over stale legacy quiz and strum state", function() {
+  global.S.quizQ = { name: "Legacy Quiz" };
+  global.S.quizOpts = [{ name: "Legacy Quiz" }];
+  global.S.quizScore = 1;
+  global.S.quizTotal = 1;
+  global.S.quizStreak = 1;
+  global.S.selectedStrum = { name: "Legacy Strum", desc: "Old", bpm: 60, pattern: ["D"] };
+  global.S.strumActive = false;
+  global.S._strumBeat = 0;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          legacyQuizQuestion: { name: "Core Quiz" },
+          legacyQuizOptions: [{ name: "Core Quiz" }, { name: "Runtime Choice" }],
+          legacyQuizAnswer: null,
+          legacyQuizScore: 4,
+          legacyQuizTotal: 6,
+          legacyQuizStreak: 2,
+          legacyStrumPattern: { name: "Core Strum", desc: "Runtime", bpm: 96, pattern: ["D", "U"] },
+          legacyStrumActive: true,
+          legacyStrumBeat: 1
+        }
+      };
+    }
+  };
+  global.window.sparkCore = global.sparkCore;
+
+  var quizHtml = quizPage();
+  var strumHtml = strumDetailPage();
+
+  assert.ok(quizHtml.indexOf("Core Quiz") >= 0);
+  assert.ok(quizHtml.indexOf("Runtime Choice") >= 0);
+  assert.strictEqual(quizHtml.indexOf("Legacy Quiz"), -1);
+  assert.ok(quizHtml.indexOf("4/6") >= 0);
+  assert.ok(strumHtml.indexOf("Core Strum") >= 0);
+  assert.ok(strumHtml.indexOf("96 BPM") >= 0);
+  assert.strictEqual(strumHtml.indexOf("Legacy Strum"), -1);
+});
+
 test("drillPage prefers canonical drill chords over stale legacy drill state", function() {
   S.drillChords = [{ name: "C" }, { name: "G" }];
   global.sparkCore = {

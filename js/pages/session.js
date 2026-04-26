@@ -522,12 +522,19 @@ function quizPage(){
   var UI = inst && inst.ui ? inst.ui : {};
   var view = getSessionCoreView();
   var runtime = view && view.runtimeState ? view.runtimeState : null;
-  var quizQuestion = S.quizQ || (runtime && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : null);
-  var quizOptions = Array.isArray(S.quizOpts) && S.quizOpts.length ? S.quizOpts : (runtime && Array.isArray(runtime.legacyQuizOptions) ? runtime.legacyQuizOptions : []);
-  var quizAnswer = typeof S.quizAns === "string" ? S.quizAns : (runtime ? runtime.legacyQuizAnswer : null);
-  var quizScore = normalizeSessionNumber(S.quizScore, normalizeSessionNumber(runtime && runtime.legacyQuizScore, 0));
-  var quizTotal = normalizeSessionNumber(S.quizTotal, normalizeSessionNumber(runtime && runtime.legacyQuizTotal, 0));
-  var quizStreak = normalizeSessionNumber(S.quizStreak, normalizeSessionNumber(runtime && runtime.legacyQuizStreak, 0));
+  var hasCoreQuiz = !!(runtime && (
+    runtime.legacyQuizQuestion != null ||
+    runtime.legacyQuizAnswer != null ||
+    runtime.legacyQuizScore != null ||
+    runtime.legacyQuizTotal != null ||
+    runtime.legacyQuizStreak != null
+  ));
+  var quizQuestion = hasCoreQuiz && runtime.legacyQuizQuestion ? runtime.legacyQuizQuestion : (S.quizQ || null);
+  var quizOptions = hasCoreQuiz && Array.isArray(runtime.legacyQuizOptions) && runtime.legacyQuizOptions.length ? runtime.legacyQuizOptions : (Array.isArray(S.quizOpts) && S.quizOpts.length ? S.quizOpts : []);
+  var quizAnswer = hasCoreQuiz && typeof runtime.legacyQuizAnswer === "string" ? runtime.legacyQuizAnswer : (typeof S.quizAns === "string" ? S.quizAns : null);
+  var quizScore = normalizeSessionNumber(hasCoreQuiz ? runtime.legacyQuizScore : null, normalizeSessionNumber(S.quizScore, 0));
+  var quizTotal = normalizeSessionNumber(hasCoreQuiz ? runtime.legacyQuizTotal : null, normalizeSessionNumber(S.quizTotal, 0));
+  var quizStreak = normalizeSessionNumber(hasCoreQuiz ? runtime.legacyQuizStreak : null, normalizeSessionNumber(S.quizStreak, 0));
   if(!quizQuestion)return '';
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'tab\',\'quiz\')">&#8592; Back</button>';
   h+=renderQuizScoreHeader(quizScore, quizTotal, quizStreak);
@@ -543,10 +550,15 @@ function quizPage(){
 function strumDetailPage(){
   var view = getSessionCoreView();
   var runtime = view && view.runtimeState ? view.runtimeState : null;
-  var sp = S.selectedStrum || (runtime && runtime.legacyStrumPattern ? runtime.legacyStrumPattern : null); if(!sp)return '';
-  var strumActive = typeof S.strumActive === "boolean" ? S.strumActive : !!(runtime && runtime.legacyStrumActive);
+  var hasCoreStrum = !!(runtime && (
+    runtime.legacyStrumPattern ||
+    runtime.legacyStrumActive != null ||
+    runtime.legacyStrumBeat != null
+  ));
+  var sp = hasCoreStrum && runtime.legacyStrumPattern ? runtime.legacyStrumPattern : (S.selectedStrum || null); if(!sp)return '';
+  var strumActive = hasCoreStrum && typeof runtime.legacyStrumActive === "boolean" ? runtime.legacyStrumActive : (typeof S.strumActive === "boolean" ? S.strumActive : false);
   var curBeat = strumActive
-    ? (typeof S._strumBeat === "number" ? S._strumBeat : (runtime && typeof runtime.legacyStrumBeat === "number" ? runtime.legacyStrumBeat : -1))
+    ? (hasCoreStrum && typeof runtime.legacyStrumBeat === "number" ? runtime.legacyStrumBeat : (typeof S._strumBeat === "number" ? S._strumBeat : -1))
     : -1;
   var curDir=curBeat>=0?sp.pattern[curBeat]:"x";
   var strumBpm = formatSessionBpm(sp.bpm, "--");
