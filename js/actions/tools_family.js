@@ -605,11 +605,13 @@
       }).then(function(r) {
         return r.json();
       }).then(function() {
-        S.submitSong = { title: "", artist: "", chords: [], progression: [], bpm: 100, pattern: [], submittedBy: "" };
-        S.communityTab = "browse";
+        setLegacyFields({
+          submitSong: { title: "", artist: "", chords: [], progression: [], bpm: 100, pattern: [], submittedBy: "" },
+          communityTab: "browse"
+        }, [], false);
         fetchCommunity();
       }).catch(function() {
-        S.communityError = "Failed to submit song";
+        setLegacyFields({ communityError: "Failed to submit song" }, [], false);
         render();
       });
       return true;
