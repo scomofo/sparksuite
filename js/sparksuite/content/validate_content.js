@@ -23,6 +23,7 @@
     var lessons = Array.isArray(content.lessons) ? content.lessons : [];
     var chords = Array.isArray(content.chords) ? content.chords : [];
     var exercises = Array.isArray(content.exercises) ? content.exercises : [];
+    var songs = Array.isArray(content.songs) ? content.songs : [];
     var errors = [];
     var skillIds = {};
     var chordIds = {};
@@ -38,6 +39,7 @@
     errors = errors.concat(uniqueIds(lessons, "lesson"));
     errors = errors.concat(uniqueIds(chords, "chord"));
     errors = errors.concat(uniqueIds(exercises, "exercise"));
+    errors = errors.concat(uniqueIds(songs, "song"));
 
     for (i = 0; i < skills.length; i++) {
       if (skills[i] && skills[i].id) skillIds[skills[i].id] = true;
@@ -77,6 +79,19 @@
       }
     }
 
+    for (i = 0; i < songs.length; i++) {
+      if (songs[i].skillId && !skillIds[songs[i].skillId]) {
+        errors.push('song "' + songs[i].id + '" references missing skill "' + songs[i].skillId + '"');
+      }
+      if (Array.isArray(songs[i].chordIds)) {
+        for (j = 0; j < songs[i].chordIds.length; j++) {
+          if (!chordIds[songs[i].chordIds[j]]) {
+            errors.push('song "' + songs[i].id + '" references missing chord "' + songs[i].chordIds[j] + '"');
+          }
+        }
+      }
+    }
+
     return {
       ok: errors.length === 0,
       errors: errors,
@@ -85,7 +100,7 @@
         lessons: lessons.length,
         chords: chords.length,
         exercises: exercises.length,
-        songs: Array.isArray(content.songs) ? content.songs.length : 0
+        songs: songs.length
       }
     };
   }

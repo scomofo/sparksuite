@@ -39,6 +39,27 @@ test("JSON-backed instrument content can build a valid ukulele module", function
   assert.ok(moduleApi.getExercises("down_strum").length > 0);
 });
 
+test("JSON-backed bass and ukulele content expose peer-level authored paths", function() {
+  ["bass", "ukulele"].forEach(function(instrumentId) {
+    const content = loader.loadInstrumentContentSync(instrumentId, {
+      fs,
+      baseDir: contentBaseDir
+    });
+    const validation = validator.validateInstrumentContent(content);
+    assert.strictEqual(validation.ok, true, instrumentId + " validation failed: " + validation.errors.join("; "));
+    assert.ok(validation.counts.skills >= 8, instrumentId + " should expose a real skill path");
+    assert.ok(validation.counts.lessons >= 8, instrumentId + " should expose a real lesson path");
+    assert.ok(validation.counts.exercises >= 8, instrumentId + " should expose a real exercise path");
+    assert.ok(validation.counts.songs >= 2, instrumentId + " should expose authored songs");
+
+    const moduleApi = factory.createInstrumentModule(content);
+    moduleValidator.validateInstrumentModule(moduleApi, instrumentId);
+    const firstSong = moduleApi.getSongs()[0];
+    assert.ok(firstSong && firstSong.skillId, instrumentId + " song should carry a skill target");
+    assert.ok(moduleApi.getExercises(content.lessons[content.lessons.length - 1].skill).length > 0);
+  });
+});
+
 test("content validator rejects missing prerequisites and duplicate lesson ids", function() {
   const result = validator.validateInstrumentContent({
     instrument: {
@@ -54,13 +75,15 @@ test("content validator rejects missing prerequisites and duplicate lesson ids",
     ],
     chords: [],
     exercises: [{ id: "exercise_1", skillId: "skill_a", type: "strum", chordIds: ["ghost"] }],
-    songs: []
+    songs: [{ id: "song_1", skillId: "missing_skill", chordIds: ["ghost"] }]
   });
 
   assert.strictEqual(result.ok, false);
   assert.ok(result.errors.some((error) => error.includes('duplicate id "lesson_1"')));
   assert.ok(result.errors.some((error) => error.includes('missing prerequisite "missing_skill"')));
   assert.ok(result.errors.some((error) => error.includes('missing chord "ghost"')));
+  assert.ok(result.errors.some((error) => error.includes('song "song_1" references missing skill "missing_skill"')));
+  assert.ok(result.errors.some((error) => error.includes('song "song_1" references missing chord "ghost"')));
 });
 
 test("preview_content prints a summary for a real instrument", function() {
