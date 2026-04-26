@@ -8,6 +8,7 @@ function loadJS(file) {
 
 function resetEnvironment() {
   global.window = global;
+  global.sparkCore = undefined;
   global.escHTML = function(value) { return String(value == null ? "" : value); };
   global.S = {
     sessionPlan: {
@@ -65,6 +66,7 @@ function resetEnvironment() {
   global.detectionConfidenceHTML = function() { return "<div>confidence</div>"; };
   global.getSessionExercise = function() { return null; };
   global.getCurrentLevel = function() { return null; };
+  global.TRANSITION_TIPS = {};
   global.lhPatternViz = function() { return "<div>lh</div>"; };
   global.adaptiveBpmDisplay = function(bpm) { return "<div>" + bpm + "</div>"; };
   global.pianoFormatTime = function(value) { return String(value); };
@@ -125,6 +127,83 @@ test("piano session page surfaces the live guided shell from sparkCore", functio
   assert.ok(html.indexOf("10 min shell") >= 0);
   assert.ok(html.indexOf("1m 0s in block") >= 0);
   assert.ok(html.indexOf("3m 0s left") >= 0);
+});
+
+test("piano session page prefers canonical guided runtime over stale local session state", function() {
+  S.sessionPlan = {
+    num: 9,
+    title: "Stale session",
+    level: 4,
+    bpm: 60,
+    blocks: [
+      { type: "warm_engine", duration_sec: 60 }
+    ],
+    blockActivities: {
+      warm_engine: { kind: "warm_engine_play", copy: { setup: "Stale spark." } }
+    },
+    spark: { text: "Stale spark." },
+    review: null,
+    newMove: null,
+    songSlice: null,
+    victoryLap: null
+  };
+  S.sessionStep = "spark";
+  S.sessionTimer = 99;
+  S.paused = false;
+  S.newMovePhase = "watch";
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "Core Guided Plan",
+              level: 1,
+              bpm: 80,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ],
+              blockActivities: {
+                warm_engine: { kind: "warm_engine_play", copy: { setup: "Warm up with one note." } },
+                drill: { kind: "chord_intro", copy: { setup: "Place C-E-G under your hand.", success: "Quick review pass." } },
+                song: { kind: "song_chunk", copy: { setup: "Loop the phrase with relaxed timing.", success: "Moonlight intro" } },
+                cooldown: { kind: "freeplay", copy: { setup: "Let it ring once more." } }
+              },
+              spark: { text: "null" },
+              review: { text: "undefined", chords: [] },
+              newMove: { chord: "C", text: "null" },
+              songSlice: { text: "undefined", song: "null" },
+              victoryLap: { text: "NaN" },
+              lh: "undefined"
+            }
+          },
+          segments: [
+            { id: "drill_1", type: "drill", label: "Drill block", duration_sec: 180 }
+          ]
+        },
+        activeSegment: { id: "drill_1", type: "drill", label: "Drill block", duration_sec: 180 },
+        runtimeState: {
+          guidedStep: "newMove",
+          guidedNewMovePhase: "refine",
+          activeSegmentId: "drill_1",
+          transport: { status: "paused", positionMs: 30000, durationMs: 180000 }
+        }
+      };
+    }
+  };
+
+  var html = pianoSessionPage();
+  assert.ok(html.indexOf("Core Guided Plan") >= 0);
+  assert.ok(html.indexOf(">150<") >= 0);
+  assert.ok(html.indexOf("🎯 New Move") >= 0);
+  assert.ok(html.indexOf("Refine: Focus on clean transitions and consistent finger placement.") >= 0);
+  assert.ok(html.indexOf("▶ Resume") >= 0);
+  assert.strictEqual(html.indexOf("Stale session"), -1);
 });
 
 test("legacy session page ignores stale chord labels", function() {

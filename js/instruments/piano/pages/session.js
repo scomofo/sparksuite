@@ -64,12 +64,62 @@ function pianoGetSessionCoreView() {
     : null;
 }
 
+function pianoGetSessionRuntimeState() {
+  var view = pianoGetSessionCoreView();
+  return view && view.runtimeState ? view.runtimeState : null;
+}
+
+function pianoGetSessionPlanView() {
+  var view = pianoGetSessionCoreView();
+  var plan = view && view.plan ? view.plan : null;
+  var context = plan && plan.context ? plan.context : null;
+  if (plan && plan.flow === "guided_session") {
+    if (context && context.guidedPlan) return context.guidedPlan;
+    if (plan._legacyPlan) return plan._legacyPlan;
+    if (Array.isArray(plan.blocks) && plan.blocks.length) return plan;
+  }
+  return S.sessionPlan;
+}
+
+function pianoGetSessionStepValue() {
+  var runtimeState = pianoGetSessionRuntimeState();
+  var runtimeStep = pianoSessionTextToken(runtimeState && runtimeState.guidedStep);
+  return runtimeStep || S.sessionStep;
+}
+
+function pianoGetSessionPausedValue() {
+  var runtimeState = pianoGetSessionRuntimeState();
+  var status = runtimeState && runtimeState.transport ? runtimeState.transport.status : null;
+  if (status === "paused") return true;
+  if (status === "running" || status === "ready" || status === "complete") return false;
+  return !!S.paused;
+}
+
+function pianoGetSessionTimerValue() {
+  var runtimeState = pianoGetSessionRuntimeState();
+  var durationMs = Number(runtimeState && runtimeState.transport && runtimeState.transport.durationMs);
+  var positionMs = Number(runtimeState && runtimeState.transport && runtimeState.transport.positionMs);
+  if (isFinite(durationMs) && durationMs > 0) {
+    if (!isFinite(positionMs) || positionMs < 0) positionMs = 0;
+    if (positionMs > durationMs) positionMs = durationMs;
+    return Math.max(0, Math.ceil((durationMs - positionMs) / 1000));
+  }
+  return typeof S.sessionTimer === "number" && S.sessionTimer > 0 ? S.sessionTimer : 0;
+}
+
+function pianoGetNewMovePhaseValue() {
+  var runtimeState = pianoGetSessionRuntimeState();
+  var runtimePhase = pianoSessionTextToken(runtimeState && runtimeState.guidedNewMovePhase);
+  return runtimePhase || S.newMovePhase;
+}
+
 function pianoGetSessionShellSummary(plan) {
   var view = pianoGetSessionCoreView();
-  var runtimeState = view && view.runtimeState ? view.runtimeState : null;
+  var runtimeState = pianoGetSessionRuntimeState();
   var segments = view && view.plan && Array.isArray(view.plan.segments) ? view.plan.segments : [];
   var activeSegment = view && view.activeSegment ? view.activeSegment : null;
   var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
+  var sessionStep = pianoGetSessionStepValue();
   var i;
   var durationMs;
   var positionMs;
@@ -87,7 +137,7 @@ function pianoGetSessionShellSummary(plan) {
     }
   }
   if (!activeSegment) {
-    activeSegment = pianoSessionStepBlock(plan, S.sessionStep) || plan.blocks[0];
+    activeSegment = pianoSessionStepBlock(plan, sessionStep) || plan.blocks[0];
   }
   for (i = 0; i < plan.blocks.length; i++) {
     totalDurationSec += Number(plan.blocks[i] && plan.blocks[i].duration_sec) || 0;
@@ -146,9 +196,12 @@ function pianoRenderSessionBlockMeta(plan, step) {
 }
 
 function pianoSessionPage() {
-  var plan = S.sessionPlan;
+  var plan = pianoGetSessionPlanView();
   var planBpm;
   var shell;
+  var sessionStep = pianoGetSessionStepValue();
+  var sessionTimer = pianoGetSessionTimerValue();
+  var paused = pianoGetSessionPausedValue();
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
   planBpm = pianoNormalizeSessionBpm(plan.bpm, 80);
   shell = pianoGetSessionShellSummary(plan);
@@ -170,15 +223,15 @@ function pianoSessionPage() {
   }
 
   // Step indicator
-  html += sessionStepIndicator(S.sessionStep);
+  html += sessionStepIndicator(sessionStep);
 
   // Timer
-  if (S.sessionTimer > 0) {
-    html += '<div class="timer-display">' + pianoFormatTime(S.sessionTimer) + '</div>';
+  if (sessionTimer > 0) {
+    html += '<div class="timer-display">' + pianoFormatTime(sessionTimer) + '</div>';
   }
 
   // Render current step
-  switch (S.sessionStep) {
+  switch (sessionStep) {
     case "spark":
       html += renderSpark(plan);
       break;
@@ -203,8 +256,8 @@ function pianoSessionPage() {
   // to it is nonsensical (nothing to pause; ending isn't "early" anymore
   // when the session has reached its last step).
   html += '<div class="session-btns">';
-  if (S.sessionStep && S.sessionStep !== "victoryLap") {
-    html += '<button class="btn" onclick="act(\'pause\')">' + (S.paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
+  if (sessionStep && sessionStep !== "victoryLap") {
+    html += '<button class="btn" onclick="act(\'pause\')">' + (paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
     html += '<button class="btn btn-secondary" onclick="act(\'pianoConfirmStopSession\')">End Session</button>';
   }
   html += '</div>';
@@ -293,11 +346,12 @@ function renderNewMove(plan) {
   html += pianoRenderSessionBlockMeta(plan, "newMove");
 
   // Phase indicator (Watch/Shadow/Try/Refine)
-  html += newMovePhaseIndicator(S.newMovePhase);
+  var newMovePhase = pianoGetNewMovePhaseValue();
+  html += newMovePhaseIndicator(newMovePhase);
 
   var chord = findChord(plan.newMove.chord);
 
-  switch (S.newMovePhase) {
+  switch (newMovePhase) {
     case "watch":
       html += '<div class="watch-overlay">';
       html += '<div class="watch-label">👀 Watch — Hands Off!</div>';
