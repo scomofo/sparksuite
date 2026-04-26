@@ -520,7 +520,7 @@
         // safe fallback for CTAs that don't yet have a canonical binding
         // (Library Daily, Lesson) — they land on the practice home so the
         // user can pick their own chart instead of launching a wrong one.
-        "performance":     function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
+        "performance":     function(){ S._showroomOverride = "performance"; S.screen = SCR_.HOME; S.tab = TAB_.PRACTICE; },
         // No legacy slots — render via launcherView while keeping instrument.
         "profile":         function(){ S._showroomOverride = "profile"; },
         "lesson":          function(){ S._showroomOverride = "lesson"; },
@@ -529,7 +529,7 @@
       };
       // Clear any prior override so the legacy slot routing wins again —
       // but keep it for routes whose handlers set an override themselves.
-      var _overrideRoutes = { "profile":1, "settings":1, "practice":1, "lesson":1, "path":1, "learn":1, "curriculum":1, "syllabus":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1 };
+      var _overrideRoutes = { "profile":1, "settings":1, "practice":1, "lesson":1, "path":1, "learn":1, "curriculum":1, "syllabus":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1, "performance":1 };
       if (!_overrideRoutes[view]) S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
@@ -1465,6 +1465,10 @@
     var pct = clampShowroomPct(opts.progressPct);
     var title = normalizeShowroomText(opts.songTitle || liveSongTitle) || "No performance loaded";
     var meta = normalizeShowroomText(opts.songMeta || liveSongMeta) || "Choose a song from the library to start performance mode.";
+    var hasPerformanceTarget = !!(liveSongTitle || (typeof S !== "undefined" && S.performChart) || opts.chart);
+    var primaryCta = hasPerformanceTarget
+      ? '<button class="showroom-performance-ready-cta" type="button" onclick="act(\'showroomStartPerf\')"><span class="material-symbols-outlined fill" aria-hidden="true">play_arrow</span>Start Run</button>'
+      : '<button class="showroom-performance-ready-cta" type="button" onclick="' + nav("library") + '"><span class="material-symbols-outlined fill" aria-hidden="true">library_music</span>Open Song Library</button>';
 
     // Sample notes: { lane: 0..3, top: "15%", color: "cyan|yellow|peach" }
     var notes = Array.isArray(opts.notes) ? opts.notes : [];
@@ -1527,6 +1531,7 @@
              + '<span class="showroom-perf2-songtitle">' + escHtml(title) + '</span>'
              + '<span class="showroom-perf2-songmeta">' + escHtml(meta) + '</span>'
            + '</div>'
+           + '<div class="showroom-performance-ready-actions">' + primaryCta + '</div>'
          + '</main>'
          // Tap-pad grid replaces the standard bottomNav() on this screen.
          // Four dashed lane-colored tap targets (cyan/yellow/peach/cyan)

@@ -85,6 +85,13 @@ test("practice metro preview keeps canonical practice tab while setting override
   assert.strictEqual(S._showroomOverride, "practice-metro");
 });
 
+test("performance navigation opens showroom ready screen with legacy practice fallback", function() {
+  SparkShowroomNavigate("performance");
+  assert.strictEqual(S.screen, "home");
+  assert.strictEqual(S.tab, "practice");
+  assert.strictEqual(S._showroomOverride, "performance");
+});
+
 test("lesson navigation pins the requested lesson id", function() {
   SparkShowroomNavigate("lesson", 3);
   assert.strictEqual(S._showroomOverride, "lesson");

@@ -2777,6 +2777,31 @@
 }
 .showroom-onboarding-signin-link:hover{ color:var(--accent-deep); }
 
+.showroom-performance-ready-actions{
+  position:relative;
+  z-index:3;
+  display:flex;
+  justify-content:center;
+  padding:0 20px 20px;
+}
+.showroom-performance-ready-cta{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-width:210px;
+  min-height:48px;
+  border:1px solid rgba(255,123,58,.55);
+  border-radius:16px;
+  background:linear-gradient(135deg,#ff7b3a,#e8a87a);
+  color:#27160d;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  box-shadow:0 14px 34px rgba(255,123,58,.24);
+  cursor:pointer;
+}
+
 /* ═════════════════════════════════════════════════════════════════════
    Profile Screen (Stitch 2026-04)
    Ported from docs/design/stitch-2026-04/profile/.

@@ -17,6 +17,7 @@ function _renderShowroomOverride(){
       "tools":           typeof SparkTuner           !== "undefined" && SparkTuner.render,
       "song-details":    typeof SparkSongDetails     !== "undefined" && SparkSongDetails.render,
       "practice-metro":  typeof SparkPracticeMetro   !== "undefined" && SparkPracticeMetro.render,
+      "performance":     typeof SparkPerformance     !== "undefined" && SparkPerformance.render,
       "session-summary": typeof SparkSessionSummary  !== "undefined" && SparkSessionSummary.render
     };
     var overrideFn = showroomRoute[S._showroomOverride];
