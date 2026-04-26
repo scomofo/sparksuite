@@ -33,7 +33,7 @@ Target loop:
 ### Watch Script
 
 1. If instrument does not exist, generates scaffold via pipeline
-2. Runs apply_generated_instrument_final.js (manifest + index.html + tests)
+2. Runs apply_generated_instrument.js (manifest + index.html + tests)
 3. Writes timestamp to _dev_reload_signal.txt
 4. Watches js/instruments/<name>/ and js/sparksuite/instruments/<name>/
 5. On file change (debounced 800ms), re-runs apply and writes signal
