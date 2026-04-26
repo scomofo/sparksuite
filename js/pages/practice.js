@@ -453,12 +453,23 @@ function getPracticeCoreView() {
     : null;
 }
 
+function resolvePracticeCoreDailyPlan(coreView) {
+  var corePlan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? coreView.plan
+    : null;
+  var bridgedPlan;
+  if (!corePlan) return null;
+  if (window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function") {
+    bridgedPlan = SparkPracticeBridge.toLegacyPlan(corePlan);
+    if (bridgedPlan) return bridgedPlan;
+  }
+  if (corePlan._legacyPlan) return corePlan._legacyPlan;
+  return Array.isArray(corePlan.items) ? corePlan : null;
+}
+
 function resolvePracticeSummaryPlan() {
   var coreView = getPracticeCoreView();
-  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
-  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
-    : S.practicePlan;
+  var plan = resolvePracticeCoreDailyPlan(coreView);
   return plan || S.practicePlan;
 }
 
@@ -1282,13 +1293,8 @@ function practicePage(){
 }
 
 function startPracticeItem(id){
-  var plan = null;
-  if(getPracticeCoreView()){
-    var view = getPracticeCoreView();
-    if(view && view.plan && view.plan.flow === "daily_practice" && window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
-      plan = SparkPracticeBridge.toLegacyPlan(view.plan);
-    }
-  }
+  var view = getPracticeCoreView();
+  var plan = resolvePracticeCoreDailyPlan(view);
   if(!plan) plan = S.practicePlan;
   if(!plan || !Array.isArray(plan.items)) return;
   for(var i=0;i<plan.items.length;i++){

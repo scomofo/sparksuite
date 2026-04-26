@@ -327,7 +327,7 @@ test("practicePage does not generate a plan during render and shows an empty sta
   assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
 });
 
-test("practicePage falls back to cached plan state when the practice bridge is unavailable", function() {
+test("practicePage prefers the active core plan when the practice bridge is unavailable", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
   };
@@ -351,8 +351,8 @@ test("practicePage falls back to cached plan state when the practice bridge is u
   };
 
   var html = practicePage();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("practicePage does not render completed items as clickable start buttons", function() {
@@ -1306,7 +1306,7 @@ test("planPage pivots into guided resume mode when a guided session is active an
   assert.strictEqual(html.indexOf("No practice plan yet."), -1);
 });
 
-test("planPage falls back to cached plan state when the practice bridge is unavailable", function() {
+test("planPage prefers the active core plan when the practice bridge is unavailable", function() {
   global.S = {
     practicePlanComplete: false,
     practicePlan: {
@@ -1332,8 +1332,8 @@ test("planPage falls back to cached plan state when the practice bridge is unava
   global.eval(loadJS("js/pages/plan.js"));
 
   var html = planPage();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("planPage does not render completed items as clickable go buttons", function() {
@@ -2275,7 +2275,7 @@ test("practiceTab pivots the plan area into guided resume mode when a guided ses
   assert.strictEqual(html.indexOf("No practice plan yet."), -1);
 });
 
-test("practiceTab falls back to cached plan state when the practice bridge is unavailable", function() {
+test("practiceTab prefers the active core plan when the practice bridge is unavailable", function() {
   global.S = {
     level: 1,
     selectedLevel: 1,
@@ -2317,8 +2317,8 @@ test("practiceTab falls back to cached plan state when the practice bridge is un
   };
 
   var html = practiceTab();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("practiceTab treats malformed cached plan shells without array items as empty state", function() {

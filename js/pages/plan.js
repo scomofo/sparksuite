@@ -5,6 +5,20 @@ function getPlanPageCoreView(){
     : null;
 }
 
+function resolvePlanPageCoreDailyPlan(coreView) {
+  var corePlan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? coreView.plan
+    : null;
+  var bridgedPlan;
+  if (!corePlan) return null;
+  if (window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function") {
+    bridgedPlan = SparkPracticeBridge.toLegacyPlan(corePlan);
+    if (bridgedPlan) return bridgedPlan;
+  }
+  if (corePlan._legacyPlan) return corePlan._legacyPlan;
+  return Array.isArray(corePlan.items) ? corePlan : null;
+}
+
 function getPlanPageActiveGuidedSummary(){
   var coreView = getPlanPageCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
@@ -142,10 +156,7 @@ function planPage(){
       : [];
   }
   var coreView = getPlanPageCoreView();
-  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
-  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
-    : S.practicePlan;
+  var plan = resolvePlanPageCoreDailyPlan(coreView);
   if(!plan) plan = S.practicePlan;
   var activeGuided = getPlanPageActiveGuidedSummary();
   var activeShell = activeGuided ? null : getPlanPageActiveShellSummary();
@@ -349,11 +360,8 @@ function getPlanFocusLabel(plan){
 }
 
 function launchPracticePlanItem(itemId){
-  var plan = null;
   var view = getPlanPageCoreView();
-  if(view && view.plan && view.plan.flow === "daily_practice" && window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function"){
-    plan = SparkPracticeBridge.toLegacyPlan(view.plan);
-  }
+  var plan = resolvePlanPageCoreDailyPlan(view);
   if(!plan) plan = S.practicePlan;
   if(!plan || !Array.isArray(plan.items)) return;
 
