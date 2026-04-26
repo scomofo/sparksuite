@@ -2196,7 +2196,7 @@ test("practice action family can pause, resume, and skip the shared daily-practi
   assert.strictEqual(syncCalls[0].status, "running");
 });
 
-test("practice action family routes ear-training and daily progression through the shared bridge", function() {
+test("practice action family routes controls, ear-training, and daily progression through the shared bridge", function() {
   var runtimeUpdates = [];
   var completionUpdates = [];
   var dailyChallengeRequests = [];
@@ -2232,6 +2232,10 @@ test("practice action family routes ear-training and daily progression through t
   });
   global.window.SparkProgressBridge = global.SparkProgressBridge;
   global.S = {
+    level: 3,
+    selectedLevel: 1,
+    selectedVoicing: 0,
+    currentChord: { name: "C Major" },
     earTrainQ: "C Major",
     earTrainOpts: ["C Major", "G Major", "A Minor"],
     earTrainAns: null,
@@ -2272,20 +2276,28 @@ test("practice action family routes ear-training and daily progression through t
 
   eval(loadJS("js/actions/practice_family.js"));
 
+  assert.strictEqual(__actionFamilies.practice("selLevel", "2"), true);
+  assert.strictEqual(__actionFamilies.practice("selectVoicing", "1"), true);
   assert.strictEqual(__actionFamilies.practice("answerEarTrain", "C Major"), true);
   assert.strictEqual(__actionFamilies.practice("startDaily"), true);
   assert.strictEqual(__actionFamilies.practice("completeDaily"), true);
 
-  assert.strictEqual(runtimeUpdates.length, 3);
+  assert.strictEqual(runtimeUpdates.length, 5);
   assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { selectedLevel: 2 }
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: { selectedVoicing: 1 }
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
     setFields: { earTrainAns: "C Major" },
     incrementFields: { earTrainTotal: 1 }
   });
-  assert.deepStrictEqual(runtimeUpdates[1], {
+  assert.deepStrictEqual(runtimeUpdates[3], {
     setFields: { dailyTimer: 60, dailyComplete: false, screen: "daily" },
     clearTimeouts: ["daily"]
   });
-  assert.deepStrictEqual(runtimeUpdates[2], {
+  assert.deepStrictEqual(runtimeUpdates[4], {
     clearTimeouts: ["daily"]
   });
 

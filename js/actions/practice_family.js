@@ -169,7 +169,12 @@
     }
 
     if (a === "selLevel" && parseInt(v, 10) <= S.level) {
-      S.selectedLevel = parseInt(v, 10);
+      var nextSelectedLevel = parseInt(v, 10);
+      applyPracticeFamilyRuntimeUpdate({
+        setFields: { selectedLevel: nextSelectedLevel }
+      }, function() {
+        S.selectedLevel = nextSelectedLevel;
+      });
       render();
       return true;
     }
@@ -359,7 +364,12 @@
 
     if (a === "selectVoicing") {
       _prevChordKey = S.currentChord ? S.currentChord.name + "_v" + S.selectedVoicing : "";
-      S.selectedVoicing = parseInt(v, 10);
+      var nextSelectedVoicing = parseInt(v, 10);
+      applyPracticeFamilyRuntimeUpdate({
+        setFields: { selectedVoicing: nextSelectedVoicing }
+      }, function() {
+        S.selectedVoicing = nextSelectedVoicing;
+      });
       render();
       return true;
     }
