@@ -33,8 +33,10 @@
 
   function handleSongAction(a, v) {
     if (a === "songsSubTab") {
-      S.songsSubTab = v;
-      applySongBrowserRequest("songs_subtab", { songsSubTab: S.songsSubTab });
+      applySongFamilyRuntimeUpdate({ setFields: { songsSubTab: v } }, function() {
+        S.songsSubTab = v;
+      });
+      applySongBrowserRequest("songs_subtab", { songsSubTab: v });
       if (v === "community") fetchCommunity();
       render();
       return true;
@@ -42,12 +44,14 @@
 
     if (a === "toggleSong") {
       var nextSongPlaying;
+      var selectedSong;
       var runtimeState;
       snd("click");
       nextSongPlaying = !S.songPlaying;
+      selectedSong = S.selectedSong;
       runtimeState = getSongFamilyCoreRuntimeState();
       syncSongRuntimeRequest(nextSongPlaying ? "play" : "pause", {
-        songData: S.selectedSong,
+        songData: selectedSong,
         source: runtimeState ? runtimeState.songSessionSource : "builtin",
         songBeat: nextSongPlaying ? 0 : S.songBeat
       });
@@ -59,16 +63,23 @@
         if (S.songPlaying) S.songBeat = 0;
         else clearInterval(T.song);
       });
-      if (S.songPlaying) {
-        var ms = 60000 / S.selectedSong.bpm;
-        var chordName = S.selectedSong.progression[0];
+      if (nextSongPlaying && selectedSong && Array.isArray(selectedSong.progression) && selectedSong.progression.length) {
+        var currentBeat = 0;
+        var ms = 60000 / selectedSong.bpm;
+        var chordName = selectedSong.progression[0];
         strumChord(CHORD_NAME_MAP[chordName] || chordName);
         render();
         T.song = setInterval(function() {
           var nextChordName;
-          S.songBeat = (S.songBeat + 1) % S.selectedSong.progression.length;
-          syncSongRuntimeRequest("tick", { songBeat: S.songBeat });
-          nextChordName = S.selectedSong.progression[S.songBeat];
+          currentBeat = (currentBeat + 1) % selectedSong.progression.length;
+          applySongFamilyRuntimeUpdate({
+            setFields: { songBeat: currentBeat },
+            save: false
+          }, function() {
+            S.songBeat = currentBeat;
+          });
+          syncSongRuntimeRequest("tick", { songBeat: currentBeat });
+          nextChordName = selectedSong.progression[currentBeat];
           strumChord(CHORD_NAME_MAP[nextChordName] || nextChordName);
           render();
         }, ms);
@@ -82,10 +93,11 @@
       var songActivityInstrument;
       var completionRuntimeState;
       applySongFamilyRuntimeUpdate({
-        setFields: { songPlaying: false },
+        setFields: { songPlaying: false, screen: SCR.SONG_DONE },
         clearIntervals: ["song"]
       }, function() {
         S.songPlaying = false;
+        S.screen = SCR.SONG_DONE;
         clearInterval(T.song);
       });
       snd("complete");
@@ -113,7 +125,6 @@
       });
       fireMicro("full_song", "Rockstar!", "&#127908;");
       trigC();
-      S.screen = SCR.SONG_DONE;
       render();
       return true;
     }

@@ -2967,11 +2967,14 @@ test("dashboard utility UI surfaces can resolve sparkCore from the global bindin
   delete global.sparkCore;
 });
 
-test("song family and showroom practice metro can resolve sparkCore from the global binding", function() {
+test("song family routes browser, playback, and completion state through the shared bridge", function() {
   var songSyncs = [];
   var songCompletions = [];
   var songRuntimeUpdates = [];
   var songCompletionUpdates = [];
+  var browserRequests = [];
+  var communityFetches = 0;
+  var strumHits = [];
   var originalPracticeBridge = global.SparkPracticeBridge;
   global.window = {};
   global.sparkCore = {
@@ -2994,6 +2997,13 @@ test("song family and showroom practice metro can resolve sparkCore from the glo
     global.__actionFamilies[name] = handler;
   };
   global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.applySongBrowserRequest = function(action, payload) {
+    browserRequests.push({ action: action, payload: payload });
+    return payload;
+  };
+  global.fetchCommunity = function() {
+    communityFetches += 1;
+  };
   global.syncSongRuntimeRequest = function(action, payload) {
     songSyncs.push({ action: action, payload: payload });
     return payload;
@@ -3004,8 +3014,13 @@ test("song family and showroom practice metro can resolve sparkCore from the glo
   };
   global.snd = function() {};
   global.render = function() {};
-  global.strumChord = function() {};
-  global.setInterval = function() { return 1; };
+  global.strumChord = function(name) {
+    strumHits.push(name);
+  };
+  global.setInterval = function(fn) {
+    fn();
+    return 1;
+  };
   global.clearInterval = function() {};
   global.fireMicro = function() {};
   global.trigC = function() {};
@@ -3018,10 +3033,20 @@ test("song family and showroom practice metro can resolve sparkCore from the glo
   };
   global.SparkProgressBridge = global.SparkProgressBridge || {};
   global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
     songRuntimeUpdates.push(update);
     return update;
   };
   global.SparkProgressBridge.applyLegacyActivityCompletion = function(update) {
+    if (update && update.incrementFields) {
+      Object.keys(update.incrementFields).forEach(function(key) {
+        S[key] = (S[key] || 0) + update.incrementFields[key];
+      });
+    }
     songCompletionUpdates.push(update);
     return update;
   };
@@ -3039,6 +3064,7 @@ test("song family and showroom practice metro can resolve sparkCore from the glo
     bpm: 120,
     progression: ["C", "G", "Am"]
   };
+  global.S.songsSubTab = "library";
   global.S.songPlaying = false;
   global.S.songBeat = 0;
   global.S.songsPlayed = 0;
@@ -3046,22 +3072,32 @@ test("song family and showroom practice metro can resolve sparkCore from the glo
   eval(loadJS("js/actions/song_family.js"));
   var showroomSource = loadJS("js/showroom/spark-showroom.js");
 
+  __actionFamilies.songs("songsSubTab", "community");
   __actionFamilies.songs("toggleSong");
   __actionFamilies.songs("completeSong");
   __actionFamilies.songs("songDoneHome");
 
   assert.strictEqual(songSyncs[0].payload.source, "community");
+  assert.strictEqual(songSyncs[1].action, "tick");
+  assert.strictEqual(songSyncs[1].payload.songBeat, 1);
   assert.strictEqual(songCompletions[0].source, "community");
-  assert.strictEqual(songRuntimeUpdates.length, 3);
+  assert.strictEqual(songRuntimeUpdates.length, 5);
   assert.deepStrictEqual(songRuntimeUpdates[0], {
+    setFields: { songsSubTab: "community" }
+  });
+  assert.deepStrictEqual(songRuntimeUpdates[1], {
     setFields: { songPlaying: true, songBeat: 0 },
     clearIntervals: []
   });
-  assert.deepStrictEqual(songRuntimeUpdates[1], {
-    setFields: { songPlaying: false },
+  assert.deepStrictEqual(songRuntimeUpdates[2], {
+    setFields: { songBeat: 1 },
+    save: false
+  });
+  assert.deepStrictEqual(songRuntimeUpdates[3], {
+    setFields: { songPlaying: false, screen: "song_done" },
     clearIntervals: ["song"]
   });
-  assert.deepStrictEqual(songRuntimeUpdates[2], {
+  assert.deepStrictEqual(songRuntimeUpdates[4], {
     setFields: { screen: "home", tab: "songs" }
   });
   assert.strictEqual(songCompletionUpdates.length, 1);
@@ -3072,6 +3108,17 @@ test("song family and showroom practice metro can resolve sparkCore from the glo
     emit: { type: "lesson_completed", payload: { appId: "chordspark", lessonId: "song_Night Drive", xp: 40 } },
     checkBadges: true
   });
+  assert.deepStrictEqual(browserRequests[0], {
+    action: "songs_subtab",
+    payload: { songsSubTab: "community" }
+  });
+  assert.strictEqual(communityFetches, 1);
+  assert.deepStrictEqual(strumHits, ["C", "G"]);
+  assert.strictEqual(S.screen, "home");
+  assert.strictEqual(S.tab, "songs");
+  assert.strictEqual(S.songsSubTab, "community");
+  assert.strictEqual(S.songBeat, 1);
+  assert.strictEqual(S.songsPlayed, 1);
   assert.ok(showroomSource.indexOf("function getShowroomCoreView()") >= 0);
   assert.ok(showroomSource.indexOf("var view = getShowroomCoreView();") >= 0);
 
