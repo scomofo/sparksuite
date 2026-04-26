@@ -335,6 +335,20 @@ var CHORDS = {
       "G7": { inversion:"root", shared:["D4","F4"], movement:"A4\u2192G4, C5\u2192B4" }
     }
   },
+  "Dm7b5": {
+    name:"D Half-Diminished 7th", short:"Dm7b5", type:"dim", level:8,
+    color: CHORD_COLORS.dim,
+    rootPosition: { notes:["D4","F4","Ab4","C5"], midi:[62,65,68,72],
+                    fingers_rh:[1,2,3,5], fingers_lh:[5,3,2,1] },
+    firstInversion: { notes:["F4","Ab4","C5","D5"], midi:[65,68,72,74],
+                      fingers_rh:[1,2,4,5], fingers_lh:[5,3,2,1] },
+    secondInversion: { notes:["Ab3","C4","D4","F4"], midi:[56,60,62,65],
+                       fingers_rh:[1,2,3,5], fingers_lh:[5,3,2,1] },
+    bassNote:"D3", bassMidi:50,
+    voiceLeadTo: {
+      "G7": { inversion:"root", shared:["D4","F4"], movement:"Ab4\u2192G4, C5\u2192B4" }
+    }
+  },
   "Cmaj7": {
     name:"C Major 7th", short:"Cmaj7", type:"maj7", level:7,
     color: CHORD_COLORS.maj7,
