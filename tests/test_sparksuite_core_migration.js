@@ -2552,6 +2552,11 @@ test("system action family routes guided and career screen state through the sha
   global.S.songSort = "level";
   global.S.songSortAsc = true;
   global.S.songFilter = "";
+  global.S.focusMode = false;
+  global.S.tab = "songs";
+  global.S.breakDismissed = false;
+  global.S.sessionStartTime = 0;
+  global.S.showShortcuts = false;
 
   eval(loadJS("js/actions/system_family.js"));
 
@@ -2559,6 +2564,9 @@ test("system action family routes guided and career screen state through the sha
   assert.strictEqual(__actionFamilies.system("setTheme", "ember"), true);
   assert.strictEqual(__actionFamilies.system("songSort", "level"), true);
   assert.strictEqual(__actionFamilies.system("songFilter", "ballad"), true);
+  assert.strictEqual(__actionFamilies.system("toggleFocus"), true);
+  assert.strictEqual(__actionFamilies.system("dismissBreak"), true);
+  assert.strictEqual(__actionFamilies.system("toggleShortcuts"), true);
   assert.strictEqual(__actionFamilies.system("openCareer"), true);
   assert.strictEqual(__actionFamilies.system("openCareerSong", "career_anthem"), true);
   assert.strictEqual(__actionFamilies.system("guidedComplete"), true);
@@ -2602,6 +2610,15 @@ test("system action family routes guided and career screen state through the sha
   }));
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.songFilter === "ballad";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.focusMode === true && update.setFields.tab === "practice";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.breakDismissed === true && typeof update.setFields.sessionStartTime === "number";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.showShortcuts === true;
   }));
 });
 
