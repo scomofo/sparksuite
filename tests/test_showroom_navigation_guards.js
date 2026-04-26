@@ -69,11 +69,11 @@ function resetEnvironment() {
 
 console.log("\n--- Showroom Navigation Guards ---");
 
-test("practice navigation restores canonical screen and tab state", function() {
+test("practice navigation promotes Practice Metro with legacy slot fallback", function() {
   SparkShowroomNavigate("practice");
   assert.strictEqual(S.screen, "home");
   assert.strictEqual(S.tab, "practice");
-  assert.strictEqual(S._showroomOverride, null);
+  assert.strictEqual(S._showroomOverride, "practice-metro");
   assert.strictEqual(global._saveStateCalls, 1);
   assert.strictEqual(global._renderCalls, 1);
 });
@@ -119,6 +119,8 @@ test("practice action family wires practiceStartItem to the runtime launcher", f
 test("showroom practice drills route start buttons through practiceStartItem", function() {
   var showroomSource = loadJS("js/showroom/spark-showroom.js");
   assert.ok(showroomSource.indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
+  assert.ok(showroomSource.indexOf('>View All</span></div>') >= 0);
+  assert.ok(showroomSource.indexOf('onclick="\' + nav("path") + \'"') >= 0);
   assert.strictEqual(showroomSource.indexOf("launchPracticePlanItem(this.getAttribute("), -1);
 });
 

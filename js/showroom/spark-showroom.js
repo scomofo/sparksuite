@@ -474,12 +474,11 @@
         // "back" — return to instrument Practice from a sub-page without
         // dropping the user out of the instrument context.
         "back":            function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
-        "practice":        function(){ S.screen = SCR_.HOME;       S.tab = TAB_.PRACTICE; },
-        // Opt-in preview of the Warm Ember practice-session screen
-        // (SparkPracticeMetro). Kept separate from "practice" so the
-        // legacy practice tab (with full drill launchers + plan controls)
-        // stays the default. Entry is explicit: callers invoke
-        // nav("practice-metro") to try the Warm Ember version.
+        // Practice now prefers the Warm Ember Practice Metro surface. It
+        // still sets the legacy HOME/PRACTICE slot so render_showroom.js can
+        // fall through safely if the showroom module is unavailable.
+        "practice":        function(){ S._showroomOverride = "practice-metro"; S.screen = SCR_.HOME; S.tab = TAB_.PRACTICE; },
+        // Explicit alias retained for older deep links and test fixtures.
         "practice-metro":  function(){ S._showroomOverride = "practice-metro"; S.screen = SCR_.HOME; S.tab = TAB_.PRACTICE; },
         // "library" / "tuner" → Warm Ember Song Library / Tuner when the
         // Showroom renderers are present (they're on the render.js allow
@@ -530,7 +529,7 @@
       };
       // Clear any prior override so the legacy slot routing wins again —
       // but keep it for routes whose handlers set an override themselves.
-      var _overrideRoutes = { "profile":1, "settings":1, "lesson":1, "path":1, "learn":1, "curriculum":1, "syllabus":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1 };
+      var _overrideRoutes = { "profile":1, "settings":1, "practice":1, "lesson":1, "path":1, "learn":1, "curriculum":1, "syllabus":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1 };
       if (!_overrideRoutes[view]) S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
@@ -1096,7 +1095,7 @@
                + '<div class="showroom-mini-row"><span class="showroom-mini-num" style="color:var(--perform-cyan)">' + focusScore + '</span><span class="showroom-mini-unit">/100</span></div></div>'
            + '</div>'
            + '<section><div class="showroom-section-h2" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px">'
-             + '<h3 style="font-family:\'Syne\';font-weight:800;font-size:15px">Quick Drills</h3><span class="link" style="font-size:11px;font-weight:700;color:var(--text-secondary);cursor:pointer" role="button" tabindex="0" onclick="' + nav("lesson") + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("lesson") + '}">View All</span></div>'
+             + '<h3 style="font-family:\'Syne\';font-weight:800;font-size:15px">Quick Drills</h3><span class="link" style="font-size:11px;font-weight:700;color:var(--text-secondary);cursor:pointer" role="button" tabindex="0" onclick="' + nav("path") + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("path") + '}">View All</span></div>'
              + '<div style="display:flex;flex-direction:column;gap:8px">' + (drillHtml || '<div class="showroom-empty-state"><p>No drills loaded yet. Start or refresh a practice plan to populate this list.</p></div>') + '</div></section>'
          + '</main>'
          + bottomNav(navItems, "practice")
