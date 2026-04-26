@@ -254,7 +254,8 @@
     }
 
     if (a === "showroomManageSubscription") {
-      showMicroToast("Subscription management is coming soon.", "&#11088;");
+      setLegacyFields({ screen: SCR.SETTINGS, _showroomOverride: "settings" }, false);
+      showMicroToast("Subscription settings are available from Settings.", "&#11088;");
       render();
       return true;
     }
@@ -293,7 +294,10 @@
     }
 
     if (a === "showroomOpenTrendingScores") {
-      showMicroToast("Leaderboard details are coming soon. Browse the top songs below for now.", "&#127942;");
+      if (typeof openPerformanceStatsRequest === "function") {
+        openPerformanceStatsRequest({ focus: "leaderboard" });
+      }
+      setLegacyFields({ screen: SCR.PERF_STATS }, false);
       render();
       return true;
     }
@@ -318,13 +322,16 @@
     }
 
     if (a === "showroomToneGenerator") {
-      showMicroToast("Tone Generator is coming soon.", "&#127911;");
+      showMicroToast("No tone generator module is loaded yet. Use Tuner or Strum Tone for available audio tools.", "&#127911;");
       render();
       return true;
     }
 
     if (a === "showroomOpenSignIn") {
-      showMicroToast("Sign in is coming soon.", "&#128274;");
+      if (typeof openUtilityScreenRequest === "function") {
+        openUtilityScreenRequest("cloud_settings");
+      }
+      setLegacyFields({ screen: SCR.CLOUD_SETTINGS }, false);
       render();
       return true;
     }
