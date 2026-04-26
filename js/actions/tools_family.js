@@ -649,12 +649,12 @@
     }
 
     if (a === "runnerResultsReplay") {
-      S.runnerResults = null;
+      setLegacyFields({ runnerResults: null }, [], false);
       return handleToolsAction("startRunner");
     }
 
     if (a === "runnerResultsBack") {
-      S.runnerResults = null;
+      setLegacyFields({ runnerResults: null }, [], false);
       render();
       return true;
     }

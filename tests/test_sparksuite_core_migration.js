@@ -2888,6 +2888,7 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.S.progBpm = 90;
   global.S.progPlaying = false;
   global.S.progBeat = 0;
+  global.S.runnerResults = { score: 50 };
   global.COMMON_PROGRESSIONS = [
     { name: "Axis", key: "C", chords: ["C Major", "G Major", "A Minor", "F Major"] }
   ];
@@ -2925,6 +2926,7 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(__actionFamilies.tools("communitySort", "newest"), true);
   assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
   assert.strictEqual(__actionFamilies.tools("deleteImport", "1"), true);
+  assert.strictEqual(__actionFamilies.tools("runnerResultsBack"), true);
   assert.strictEqual(__actionFamilies.tools("startRhythm"), true);
 
   assert.strictEqual(songRequests.length, 1);
@@ -3021,6 +3023,9 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.communitySort === "newest";
   }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Object.prototype.hasOwnProperty.call(update.setFields, "runnerResults") && update.setFields.runnerResults === null;
+  }));
   assert.deepStrictEqual(songBrowserRequests, [
     { action: "community_tab", payload: { communityTab: "latest" } },
     { action: "community_search", payload: { communitySearch: "groove" } },
@@ -3041,6 +3046,7 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(S.communityTab, "latest");
   assert.strictEqual(S.communitySearch, "groove");
   assert.strictEqual(S.communitySort, "newest");
+  assert.strictEqual(S.runnerResults, null);
 });
 
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
