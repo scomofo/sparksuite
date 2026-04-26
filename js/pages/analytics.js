@@ -1,5 +1,5 @@
 function analyticsPage(){
-  var summary = buildAnalyticsSummary ? buildAnalyticsSummary() : null;
+  var summary = typeof buildAnalyticsSummary === "function" ? buildAnalyticsSummary() : null;
   var h = '';
   h += '<div class="card mb16">';
   h += '<h2>Analytics</h2>';
