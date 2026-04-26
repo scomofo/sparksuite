@@ -25,6 +25,22 @@
     return window.SparkSessionRuntime || (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
   }
 
+  function clearPracticeFamilyTimeout(timeoutKey, fallback) {
+    return applyPracticeFamilyRuntimeUpdate({
+      clearTimeouts: timeoutKey ? [timeoutKey] : []
+    }, fallback);
+  }
+
+  function setPracticeFamilyTimerActive(nextTimerActive, fallback, options) {
+    var update = {
+      setFields: { timerActive: !!nextTimerActive }
+    };
+    var opts = options || {};
+    if (opts.resetTimer === true) update.setFields.timer = 0;
+    if (opts.clearTimeoutKey) update.clearTimeouts = [opts.clearTimeoutKey];
+    return applyPracticeFamilyRuntimeUpdate(update, fallback);
+  }
+
   function syncActivePracticeRuntime(options) {
     var core = getPracticeActionCore();
     var runtime = getPracticeActionRuntime();
@@ -159,16 +175,20 @@
     }
 
     if (a === "toggleTimer") {
-      S.timerActive = !S.timerActive;
-      syncLegacyPracticeRuntimeRequest(S.timerActive ? "resume" : "pause", {
+      var nextTimerActive = !S.timerActive;
+      setPracticeFamilyTimerActive(nextTimerActive, function() {
+        S.timerActive = nextTimerActive;
+      }, {
+        clearTimeoutKey: nextTimerActive ? null : "session"
+      });
+      syncLegacyPracticeRuntimeRequest(nextTimerActive ? "resume" : "pause", {
         remainingSec: S.timer,
-        timerActive: S.timerActive,
+        timerActive: nextTimerActive,
         mode: S.lastChordName ? "chord" : "quickStart",
         chordName: S.currentChord ? S.currentChord.name : null,
         durationSec: 120
       });
-      if (S.timerActive) T.session = setTimeout(tickS, 1000);
-      else clearTimeout(T.session);
+      if (nextTimerActive) T.session = setTimeout(tickS, 1000);
       render();
       return true;
     }
@@ -192,14 +212,17 @@
     }
 
     if (a === "doneSession") {
-      clearTimeout(T.session);
+      clearPracticeFamilyTimeout("session", function() {
+        clearTimeout(T.session);
+        T.session = null;
+      });
       if (S.metronomeOn) stopMetronome();
       if (S.chordDetectOn) stopChordDetect();
-      applyPracticeFamilyRuntimeUpdate({
-        setFields: { timerActive: true, timer: 0 }
-      }, function() {
+      setPracticeFamilyTimerActive(true, function() {
         S.timerActive = true;
         S.timer = 0;
+      }, {
+        resetTimer: true
       });
       syncLegacyPracticeRuntimeRequest("set_remaining", {
         remainingSec: 0,
@@ -215,8 +238,11 @@
     if (a === "startDaily" && S.dailyChallenge) {
       var durationSec = S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge.id === "marathon" ? 180 : 60;
       applyPracticeFamilyRuntimeUpdate({
-        setFields: { dailyTimer: durationSec, dailyComplete: false, screen: SCR.DAILY }
+        setFields: { dailyTimer: durationSec, dailyComplete: false, screen: SCR.DAILY },
+        clearTimeouts: ["daily"]
       }, function() {
+        clearTimeout(T.daily);
+        T.daily = null;
         S.dailyTimer = durationSec;
         S.dailyComplete = false;
         S.screen = SCR.DAILY;
@@ -233,7 +259,10 @@
 
     if (a === "completeDaily") {
       var xp;
-      clearTimeout(T.daily);
+      clearPracticeFamilyTimeout("daily", function() {
+        clearTimeout(T.daily);
+        T.daily = null;
+      });
       snd("complete");
       xp = (S.dailyChallenge && S.dailyChallenge.xp) || 40;
       completeLegacyDailyChallengeRequest({

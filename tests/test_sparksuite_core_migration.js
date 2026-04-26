@@ -2094,6 +2094,16 @@ test("practice action family routes ear-training and daily progression through t
   };
   global.SparkProgressBridge = Object.assign({}, existingBridge, {
     applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      if (update && update.incrementFields) {
+        Object.keys(update.incrementFields).forEach(function(key) {
+          S[key] = (S[key] || 0) + update.incrementFields[key];
+        });
+      }
       runtimeUpdates.push(update);
       return update;
     },
@@ -2148,13 +2158,17 @@ test("practice action family routes ear-training and daily progression through t
   assert.strictEqual(__actionFamilies.practice("startDaily"), true);
   assert.strictEqual(__actionFamilies.practice("completeDaily"), true);
 
-  assert.strictEqual(runtimeUpdates.length, 2);
+  assert.strictEqual(runtimeUpdates.length, 3);
   assert.deepStrictEqual(runtimeUpdates[0], {
     setFields: { earTrainAns: "C Major" },
     incrementFields: { earTrainTotal: 1 }
   });
   assert.deepStrictEqual(runtimeUpdates[1], {
-    setFields: { dailyTimer: 60, dailyComplete: false, screen: "daily" }
+    setFields: { dailyTimer: 60, dailyComplete: false, screen: "daily" },
+    clearTimeouts: ["daily"]
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
+    clearTimeouts: ["daily"]
   });
 
   assert.strictEqual(completionUpdates.length, 2);
@@ -2175,6 +2189,75 @@ test("practice action family routes ear-training and daily progression through t
   assert.strictEqual(dailyChallengeRequests[0].durationSec, 60);
   assert.strictEqual(dailyCompleteRequests.length, 1);
   assert.strictEqual(dailyCompleteRequests[0].challengeId, "daily_1");
+});
+
+test("practice action family routes timer cleanup through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var syncRequests = [];
+  var tickCalls = 0;
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.S = {
+    timerActive: false,
+    timer: 45,
+    metronomeOn: false,
+    chordDetectOn: false,
+    lastChordName: "C",
+    currentChord: { name: "C" }
+  };
+  global.T = { session: 42 };
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies = global.__actionFamilies || {};
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.syncLegacyPracticeRuntimeRequest = function(kind, payload) {
+    syncRequests.push({ kind: kind, payload: payload });
+  };
+  global.render = function() {};
+  global.tickS = function() { tickCalls += 1; };
+  global.setTimeout = function() { return 99; };
+  global.clearTimeout = function() {};
+  global.stopMetronome = function() {};
+  global.stopChordDetect = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("toggleTimer"), true);
+  assert.strictEqual(__actionFamilies.practice("toggleTimer"), true);
+  assert.strictEqual(__actionFamilies.practice("doneSession"), true);
+
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { timerActive: true }
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: { timerActive: false },
+    clearTimeouts: ["session"]
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
+    clearTimeouts: ["session"]
+  });
+  assert.deepStrictEqual(runtimeUpdates[3], {
+    setFields: { timerActive: true, timer: 0 }
+  });
+  assert.strictEqual(syncRequests.length, 3);
+  assert.strictEqual(syncRequests[0].kind, "resume");
+  assert.strictEqual(syncRequests[1].kind, "pause");
+  assert.strictEqual(syncRequests[2].kind, "set_remaining");
+  assert.strictEqual(syncRequests[2].payload.remainingSec, 0);
+  assert.strictEqual(tickCalls, 1);
 });
 
 test("utility action family routes curriculum and back navigation through the shared bridge", function() {
