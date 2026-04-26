@@ -191,6 +191,42 @@ test("practice surfaces ignore malformed legacy progress counters", function() {
   assert.ok(earHtml.indexOf("NaN") === -1);
 });
 
+test("practice mini-game cards prefer canonical runtime counters over stale legacy state", function() {
+  global.S.quizCorrect = 1;
+  global.S.earTrainQ = "Legacy Question";
+  global.S.earTrainOpts = ["Legacy Question"];
+  global.S.earTrainAns = null;
+  global.S.earTrainScore = 1;
+  global.S.earTrainTotal = 2;
+  global.S.earTrainStreak = 1;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          legacyQuizScore: 7,
+          legacyEarTrainQuestion: "Core Question",
+          legacyEarTrainOptions: ["Core Question", "Runtime Option"],
+          legacyEarTrainAnswer: null,
+          legacyEarTrainScore: 5,
+          legacyEarTrainTotal: 8,
+          legacyEarTrainStreak: 3
+        }
+      };
+    }
+  };
+  global.window.sparkCore = global.sparkCore;
+
+  var quizHtml = quizTab();
+  var earHtml = earTrainTab();
+
+  assert.ok(quizHtml.indexOf("Correct: <strong>7</strong>") >= 0);
+  assert.strictEqual(quizHtml.indexOf("Correct: <strong>1</strong>"), -1);
+  assert.ok(earHtml.indexOf("Core Question") >= 0);
+  assert.ok(earHtml.indexOf("Runtime Option") >= 0);
+  assert.strictEqual(earHtml.indexOf("Legacy Question"), -1);
+  assert.ok(earHtml.indexOf("5/8") >= 0);
+});
+
 test("homePage uses rehydrated tab renderers from the active instrument module", function() {
   var html = homePage();
   assert.ok(html.indexOf("Piano Practice") >= 0);

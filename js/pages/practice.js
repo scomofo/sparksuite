@@ -1228,7 +1228,7 @@ function dailyTab(){
 function quizTab(){
   var runtime = getPracticeCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
-  var quizScore = normalizePracticeDisplayCount(S.quizCorrect, normalizePracticeDisplayCount(runtime && runtime.legacyQuizScore, 0));
+  var quizScore = normalizePracticeDisplayCount(runtime && runtime.legacyQuizScore, normalizePracticeDisplayCount(S.quizCorrect, 0));
   return '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Quiz &#129504;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Name &#8594; pick the right diagram!</p>'+renderQuizOverviewCard(quizScore)+'</div>';
 }
 
@@ -1236,13 +1236,20 @@ function quizTab(){
 function getLegacyEarTrainingRuntime(){
   var runtime = getPracticeCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
+  var hasCoreEarTraining = !!(runtime && (
+    runtime.legacyEarTrainQuestion != null ||
+    runtime.legacyEarTrainAnswer != null ||
+    runtime.legacyEarTrainScore != null ||
+    runtime.legacyEarTrainTotal != null ||
+    runtime.legacyEarTrainStreak != null
+  ));
   return {
-    question: typeof S.earTrainQ === "string" ? S.earTrainQ : (runtime ? runtime.legacyEarTrainQuestion : null),
-    options: Array.isArray(S.earTrainOpts) && S.earTrainOpts.length ? S.earTrainOpts : (runtime && Array.isArray(runtime.legacyEarTrainOptions) ? runtime.legacyEarTrainOptions : []),
-    answer: typeof S.earTrainAns === "string" ? S.earTrainAns : (runtime ? runtime.legacyEarTrainAnswer : null),
-    score: normalizePracticeDisplayCount(S.earTrainScore, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainScore, 0)),
-    total: normalizePracticeDisplayCount(S.earTrainTotal, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainTotal, 0)),
-    streak: normalizePracticeDisplayCount(S.earTrainStreak, normalizePracticeDisplayCount(runtime && runtime.legacyEarTrainStreak, 0))
+    question: hasCoreEarTraining && typeof runtime.legacyEarTrainQuestion === "string" ? runtime.legacyEarTrainQuestion : (typeof S.earTrainQ === "string" ? S.earTrainQ : null),
+    options: hasCoreEarTraining && Array.isArray(runtime.legacyEarTrainOptions) && runtime.legacyEarTrainOptions.length ? runtime.legacyEarTrainOptions : (Array.isArray(S.earTrainOpts) && S.earTrainOpts.length ? S.earTrainOpts : []),
+    answer: hasCoreEarTraining && typeof runtime.legacyEarTrainAnswer === "string" ? runtime.legacyEarTrainAnswer : (typeof S.earTrainAns === "string" ? S.earTrainAns : null),
+    score: normalizePracticeDisplayCount(hasCoreEarTraining ? runtime.legacyEarTrainScore : null, normalizePracticeDisplayCount(S.earTrainScore, 0)),
+    total: normalizePracticeDisplayCount(hasCoreEarTraining ? runtime.legacyEarTrainTotal : null, normalizePracticeDisplayCount(S.earTrainTotal, 0)),
+    streak: normalizePracticeDisplayCount(hasCoreEarTraining ? runtime.legacyEarTrainStreak : null, normalizePracticeDisplayCount(S.earTrainStreak, 0))
   };
 }
 
