@@ -2797,6 +2797,7 @@ test("system action family routes metronome BPM changes through the shared bridg
 });
 
 test("tools action family routes imported song and rhythm starts through the shared bridge", function() {
+  var toolsSource = loadJS("js/actions/tools_family.js");
   var runtimeUpdates = [];
   var songRequests = [];
   var rhythmRequests = [];
@@ -2921,7 +2922,9 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.CHORDS = { 1: [{ name: "C Major" }, { name: "G Major" }] };
   global.S.level = 1;
 
-  eval(loadJS("js/actions/tools_family.js"));
+  assert.strictEqual(toolsSource.indexOf("S.importMsg ="), -1);
+
+  eval(toolsSource);
 
   assert.strictEqual(__actionFamilies.tools("dualChord", "G Major"), true);
   assert.strictEqual(__actionFamilies.tools("toggleAnchor"), true);
