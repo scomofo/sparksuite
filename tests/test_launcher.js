@@ -298,6 +298,40 @@ test('render_showroom routes settings overrides to SparkSettings', function() {
   global.SCR = previousSCR;
 });
 
+test('render_showroom routes performance overrides to SparkPerformance', function() {
+  var previousDocument = global.document;
+  var previousWrite = global._writeAppHtml;
+  var previousPerformance = global.SparkPerformance;
+  var previousS = global.S;
+  var previousSCR = global.SCR;
+  var header = { style: {} };
+  var written = "";
+
+  global.document = {
+    getElementById: function(id) {
+      return id === "header" ? header : null;
+    }
+  };
+  global._writeAppHtml = function(html) {
+    written = html;
+  };
+  global.SparkPerformance = { render: function() { return "<div>Performance Override</div>"; } };
+  global.S = { _showroomOverride: "performance" };
+  global.SCR = { COMPLETE: "complete" };
+
+  eval(loadJS("js/render_showroom.js"));
+
+  assert.strictEqual(_renderShowroomOverride(), true);
+  assert.strictEqual(header.style.display, "none");
+  assert.ok(written.indexOf("Performance Override") >= 0);
+
+  global.document = previousDocument;
+  global._writeAppHtml = previousWrite;
+  global.SparkPerformance = previousPerformance;
+  global.S = previousS;
+  global.SCR = previousSCR;
+});
+
 test('ukulele register adds a selectable launcher instrument', function() {
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));
