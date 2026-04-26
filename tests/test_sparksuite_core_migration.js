@@ -2395,6 +2395,11 @@ test("utility action family routes curriculum and back navigation through the sh
   global.window.registerSparkActionFamily = global.registerSparkActionFamily;
   global.SparkProgressBridge = Object.assign({}, existingBridge, {
     applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
       runtimeUpdates.push(update);
       return update;
     }
@@ -2449,6 +2454,7 @@ test("utility action family routes curriculum and back navigation through the sh
   eval(loadJS("js/actions/utility_family.js"));
 
   assert.strictEqual(__actionFamilies.utilities("openCurriculum"), true);
+  S.screen = SCR.SONG_DONE;
   assert.strictEqual(__actionFamilies.utilities("back"), true);
 
   assert.deepStrictEqual(utilityRequests, ["curriculum"]);
@@ -2479,6 +2485,11 @@ test("system action family routes guided and career screen state through the sha
   global.window.registerSparkActionFamily = global.registerSparkActionFamily;
   global.SparkProgressBridge = Object.assign({}, existingBridge, {
     applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
       runtimeUpdates.push(update);
       return update;
     }
@@ -2576,6 +2587,11 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.window.registerSparkActionFamily = global.registerSparkActionFamily;
   global.SparkProgressBridge = Object.assign({}, existingBridge, {
     applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
       runtimeUpdates.push(update);
       return update;
     }
@@ -2609,11 +2625,29 @@ test("tools action family routes imported song and rhythm starts through the sha
   }];
   global.S.rhythmBpm = 120;
   global.S.rhythmActive = false;
+  global.S.dualChord = "C Major";
+  global.S.dualAnchorOn = false;
+  global.S.dailyGoalMinutes = 10;
+  global.S.customSets = [{ name: "Old Set", chords: ["C Major", "G Major"] }];
+  global.S.editingSet = false;
+  global.S.editingSetIdx = -1;
+  global.S.customSetName = "";
+  global.S.customSetChords = [];
+  global.S.rhythmResults = { score: 20 };
   global.CHORDS = { 1: [{ name: "C Major" }, { name: "G Major" }] };
   global.S.level = 1;
 
   eval(loadJS("js/actions/tools_family.js"));
 
+  assert.strictEqual(__actionFamilies.tools("dualChord", "G Major"), true);
+  assert.strictEqual(__actionFamilies.tools("toggleAnchor"), true);
+  assert.strictEqual(__actionFamilies.tools("setGoal", "25"), true);
+  assert.strictEqual(__actionFamilies.tools("newSet"), true);
+  assert.strictEqual(__actionFamilies.tools("setName", "Bright Set"), true);
+  assert.strictEqual(__actionFamilies.tools("editSet", "0"), true);
+  assert.strictEqual(__actionFamilies.tools("cancelSet"), true);
+  assert.strictEqual(__actionFamilies.tools("rhythmBpm", "132"), true);
+  assert.strictEqual(__actionFamilies.tools("rhythmResultsBack"), true);
   assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
   assert.strictEqual(__actionFamilies.tools("startRhythm"), true);
 
@@ -2642,6 +2676,29 @@ test("tools action family routes imported song and rhythm starts through the sha
       Array.isArray(update.setFields.rhythmBeats) &&
       update.setFields.rhythmScore === 0;
   }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.dualChord === "G Major";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.dualAnchorOn === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.dailyGoalMinutes === 25;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.customSetName === "Bright Set";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.rhythmBpm === 132;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Object.prototype.hasOwnProperty.call(update.setFields, "rhythmResults") && update.setFields.rhythmResults === null;
+  }));
+  assert.strictEqual(S.dualChord, "G Major");
+  assert.strictEqual(S.dualAnchorOn, true);
+  assert.strictEqual(S.dailyGoalMinutes, 25);
+  assert.strictEqual(S.editingSet, false);
+  assert.strictEqual(S.rhythmBpm, 132);
 });
 
 test("practice planning helpers can resolve sparkCore from the global binding", function() {

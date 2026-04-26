@@ -37,13 +37,13 @@
 
   function handleToolsAction(a, v) {
     if (a === "dualChord") {
-      S.dualChord = v;
+      setLegacyFields({ dualChord: v }, [], false);
       render();
       return true;
     }
 
     if (a === "toggleAnchor") {
-      S.dualAnchorOn = !S.dualAnchorOn;
+      setLegacyFields({ dualAnchorOn: !S.dualAnchorOn }, [], false);
       render();
       return true;
     }
@@ -57,7 +57,7 @@
     if (a === "setGoal") {
       var goal = parseInt(v, 10);
       if (goal >= 1 && goal <= 60) {
-        S.dailyGoalMinutes = goal;
+        setLegacyFields({ dailyGoalMinutes: goal }, [], false);
         saveState();
         render();
       }
@@ -65,16 +65,18 @@
     }
 
     if (a === "newSet") {
-      S.editingSet = true;
-      S.editingSetIdx = -1;
-      S.customSetName = "";
-      S.customSetChords = [];
+      setLegacyFields({
+        editingSet: true,
+        editingSetIdx: -1,
+        customSetName: "",
+        customSetChords: []
+      }, [], false);
       render();
       return true;
     }
 
     if (a === "setName") {
-      S.customSetName = v;
+      setLegacyFields({ customSetName: v }, [], false);
       return true;
     }
 
@@ -94,20 +96,24 @@
       } else {
         S.customSets.push(setObj);
       }
-      S.editingSet = false;
-      S.editingSetIdx = -1;
-      S.customSetName = "";
-      S.customSetChords = [];
+      setLegacyFields({
+        editingSet: false,
+        editingSetIdx: -1,
+        customSetName: "",
+        customSetChords: []
+      }, [], false);
       saveState();
       render();
       return true;
     }
 
     if (a === "cancelSet") {
-      S.editingSet = false;
-      S.editingSetIdx = -1;
-      S.customSetName = "";
-      S.customSetChords = [];
+      setLegacyFields({
+        editingSet: false,
+        editingSetIdx: -1,
+        customSetName: "",
+        customSetChords: []
+      }, [], false);
       render();
       return true;
     }
@@ -116,10 +122,12 @@
       var editIdx = parseInt(v, 10);
       if (editIdx >= 0 && editIdx < S.customSets.length) {
         var customSet = S.customSets[editIdx];
-        S.editingSet = true;
-        S.editingSetIdx = editIdx;
-        S.customSetName = customSet.name;
-        S.customSetChords = customSet.chords.slice();
+        setLegacyFields({
+          editingSet: true,
+          editingSetIdx: editIdx,
+          customSetName: customSet.name,
+          customSetChords: customSet.chords.slice()
+        }, [], false);
         render();
       }
       return true;
@@ -138,7 +146,7 @@
     if (a === "rhythmBpm") {
       var rhythmBpm = parseInt(v, 10);
       if (rhythmBpm >= 60 && rhythmBpm <= 200) {
-        S.rhythmBpm = rhythmBpm;
+        setLegacyFields({ rhythmBpm: rhythmBpm }, [], false);
         render();
       }
       return true;
@@ -178,12 +186,12 @@
     }
 
     if (a === "rhythmResultsReplay") {
-      S.rhythmResults = null;
+      setLegacyFields({ rhythmResults: null }, [], false);
       return handleToolsAction("startRhythm");
     }
 
     if (a === "rhythmResultsBack") {
-      S.rhythmResults = null;
+      setLegacyFields({ rhythmResults: null }, [], false);
       render();
       return true;
     }
