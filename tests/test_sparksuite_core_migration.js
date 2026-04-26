@@ -3413,6 +3413,13 @@ test("studio action family routes plan launch state through the shared bridge", 
         plan: { flow: "daily_practice" },
         runtimeState: { activeScreen: "daily_practice" }
       };
+    },
+    getSegmentById: function() {
+      return {
+        meta: {
+          gameplayPayload: { chartId: "loop_chart" }
+        }
+      };
     }
   };
   global.__actionFamilies = {};
@@ -3440,8 +3447,11 @@ test("studio action family routes plan launch state through the shared bridge", 
     return focus;
   };
   global.startRhythmHighwaySegment = function(segmentId, preset) {
-    rhythmStarts.push({ segmentId: segmentId, preset: preset });
+    rhythmStarts.push({ segmentId: segmentId, preset: preset, loop: arguments.length > 2 ? arguments[2] : undefined });
     return true;
+  };
+  global._createRhythmHighwayLoopSpec = function(payload) {
+    return { chartId: payload.chartId, startSec: 1, endSec: 5 };
   };
   global.findChordByName = function(name) {
     return { name: name };
@@ -3457,6 +3467,8 @@ test("studio action family routes plan launch state through the shared bridge", 
   global.S = global.S || {};
   global.S.activeCoreSegmentId = "segment_7";
   global.S.rhythmHighwayPreset = "spark_learning";
+  global.S.rhythmHighwayHeldMask = 0;
+  global.S.rhythmHighwaySnapshot = {};
 
   eval(loadJS("js/actions/studio_family.js"));
 
@@ -3464,6 +3476,9 @@ test("studio action family routes plan launch state through the shared bridge", 
   __actionFamilies.studio("planStartTransition", "C Major|G Major");
   __actionFamilies.studio("planStartRhythm", "110");
   __actionFamilies.studio("rhythmHighwayPreset", "tight");
+  __actionFamilies.studio("rhythmHighwayLane", "2");
+  __actionFamilies.studio("rhythmHighwayLoopWindow");
+  __actionFamilies.studio("rhythmHighwayClearLoop");
   __actionFamilies.studio("skillTreeFocus", "rhythm");
   __actionFamilies.studio("openPlan");
 
@@ -3489,20 +3504,38 @@ test("studio action family routes plan launch state through the shared bridge", 
     save: false
   });
   assert.deepStrictEqual(runtimeUpdates[4], {
-    setFields: { skillTreeFocus: "rhythm" },
+    setFields: { rhythmHighwayHeldMask: 4 },
     save: false
   });
   assert.deepStrictEqual(runtimeUpdates[5], {
+    setFields: { rhythmHighwayLoop: { chartId: "loop_chart", startSec: 1, endSec: 5 } },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[6], {
+    setFields: { rhythmHighwayLoop: null },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[7], {
+    setFields: { skillTreeFocus: "rhythm" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[8], {
     setFields: { screen: "plan" },
     save: false
   });
   assert.deepStrictEqual(skillFocusRequests, ["rhythm"]);
   assert.deepStrictEqual(planRequests, [{}]);
-  assert.deepStrictEqual(rhythmStarts, [{ segmentId: "segment_7", preset: "tight" }]);
+  assert.deepStrictEqual(rhythmStarts, [
+    { segmentId: "segment_7", preset: "tight", loop: undefined },
+    { segmentId: "segment_7", preset: "tight", loop: { chartId: "loop_chart", startSec: 1, endSec: 5 } },
+    { segmentId: "segment_7", preset: "tight", loop: null }
+  ]);
   assert.strictEqual(S.screen, "plan");
   assert.strictEqual(S.tab, "games");
   assert.strictEqual(S.rhythmBpm, 110);
   assert.strictEqual(S.rhythmHighwayPreset, "tight");
+  assert.strictEqual(S.rhythmHighwayHeldMask, 4);
+  assert.strictEqual(S.rhythmHighwayLoop, null);
   assert.strictEqual(S.skillTreeFocus, "rhythm");
 });
 

@@ -597,7 +597,8 @@
 
     if (a === "rhythmHighwayLane") {
       var laneMask = (1 << parseInt(v, 10));
-      S.rhythmHighwayHeldMask = (S.rhythmHighwayHeldMask & laneMask) ? (S.rhythmHighwayHeldMask & ~laneMask) : (S.rhythmHighwayHeldMask | laneMask);
+      var nextHeldMask = (S.rhythmHighwayHeldMask & laneMask) ? (S.rhythmHighwayHeldMask & ~laneMask) : (S.rhythmHighwayHeldMask | laneMask);
+      setLegacyFields({ rhythmHighwayHeldMask: nextHeldMask }, false);
       render();
       return true;
     }
@@ -615,7 +616,7 @@
         var payload = segment && segment.meta ? segment.meta.gameplayPayload : null;
         var loopSpec = _createRhythmHighwayLoopSpec(payload, S.rhythmHighwaySnapshot);
         if (loopSpec && typeof startRhythmHighwaySegment === "function") {
-          S.rhythmHighwayLoop = loopSpec;
+          setLegacyFields({ rhythmHighwayLoop: loopSpec }, false);
           startRhythmHighwaySegment(S.activeCoreSegmentId, S.rhythmHighwayPreset, loopSpec);
           return true;
         }
@@ -625,7 +626,7 @@
     }
 
     if (a === "rhythmHighwayClearLoop") {
-      S.rhythmHighwayLoop = null;
+      setLegacyFields({ rhythmHighwayLoop: null }, false);
       if (S.activeCoreSegmentId && typeof startRhythmHighwaySegment === "function") {
         startRhythmHighwaySegment(S.activeCoreSegmentId, S.rhythmHighwayPreset, null);
         return true;
