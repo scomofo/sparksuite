@@ -1967,6 +1967,124 @@ test("action families can resolve sparkCore from the global binding", function()
   }));
 });
 
+test("media action family routes strum and stem state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var strumSyncs = [];
+  var stemMuteCalls = [];
+  var stemVolumeCalls = [];
+  var strumHits = [];
+  var saveCalls = 0;
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.sparkCore = {
+    syncLegacyStrumRuntimeState: function(payload) {
+      strumSyncs.push(payload);
+      return payload;
+    }
+  };
+  global.S = {
+    level: 1,
+    strumActive: false,
+    selectedStrum: { name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U"] },
+    currentChord: { name: "C Major" },
+    stemToggles: { vocals: true },
+    stemVolume: 0.8,
+    strumTone: "classic",
+    selectedScale: "Major"
+  };
+  global.T = { strum: 21 };
+  global.SCR = { STRUM: "strum" };
+  global.STRUM_PATTERNS = [S.selectedStrum];
+  global.STRUM_TONES = { electric: true };
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies = global.__actionFamilies || {};
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.snd = function() {};
+  global.strumChord = function(name) {
+    strumHits.push(name);
+  };
+  global.setInterval = function(fn) {
+    fn();
+    return 77;
+  };
+  global.clearInterval = function() {};
+  global.setStemMuted = function(stem, muted) {
+    stemMuteCalls.push({ stem: stem, muted: muted });
+  };
+  global.setStemVolume = function(value) {
+    stemVolumeCalls.push(value);
+  };
+  global.saveState = function() {
+    saveCalls += 1;
+  };
+
+  eval(loadJS("js/actions/media_family.js"));
+
+  assert.strictEqual(__actionFamilies.media("toggleStrum"), true);
+  assert.strictEqual(__actionFamilies.media("toggleStrum"), true);
+  assert.strictEqual(__actionFamilies.media("stemToggle", "vocals"), true);
+  assert.strictEqual(__actionFamilies.media("stemVolume", "0.65"), true);
+  assert.strictEqual(__actionFamilies.media("setTone", "electric"), true);
+  assert.strictEqual(__actionFamilies.media("selectScale", "Minor"), true);
+
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { strumActive: true, _strumBeat: 0 },
+    clearIntervals: [],
+    save: undefined
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: { _strumBeat: 1 },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
+    setFields: { strumActive: false, _strumBeat: -1 },
+    clearIntervals: ["strum"],
+    save: undefined
+  });
+  assert.deepStrictEqual(runtimeUpdates[3], {
+    setFields: { stemToggles: { vocals: false } },
+    clearIntervals: [],
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[4], {
+    setFields: { stemVolume: 0.65 },
+    clearIntervals: [],
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[5], {
+    setFields: { strumTone: "electric" },
+    clearIntervals: [],
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[6], {
+    setFields: { selectedScale: "Minor" },
+    clearIntervals: [],
+    save: false
+  });
+  assert.strictEqual(strumSyncs[0].beat, 0);
+  assert.strictEqual(strumSyncs[1].beat, 1);
+  assert.strictEqual(strumSyncs[2].beat, -1);
+  assert.deepStrictEqual(stemMuteCalls[0], { stem: "vocals", muted: true });
+  assert.strictEqual(stemVolumeCalls[0], 0.65);
+  assert.deepStrictEqual(strumHits, ["C Major", "C Major"]);
+  assert.strictEqual(saveCalls, 1);
+});
+
 test("practiceStartItem prefers the shared session runtime for active daily-practice segments", function() {
   var syncCalls = [];
   var launchedSegmentId = null;

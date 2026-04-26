@@ -55,10 +55,11 @@
     if (a === "toggleStrum") {
       snd("click");
       var nextStrumActive = !S.strumActive;
+      var selectedPattern = S.selectedStrum;
       var core = getMediaCore();
       if (core && typeof core.syncLegacyStrumRuntimeState === "function") {
         core.syncLegacyStrumRuntimeState({
-          pattern: S.selectedStrum,
+          pattern: selectedPattern,
           active: nextStrumActive,
           beat: nextStrumActive ? 0 : -1
         });
@@ -67,27 +68,32 @@
         nextStrumActive ? { strumActive: true, _strumBeat: 0 } : { strumActive: false, _strumBeat: -1 },
         nextStrumActive ? [] : ["strum"]
       );
-      if (S.strumActive) {
-        var p = S.selectedStrum.pattern;
-        var ms = 60000 / S.selectedStrum.bpm / (p.length > 4 ? 2 : 1);
+      if (nextStrumActive && selectedPattern && Array.isArray(selectedPattern.pattern)) {
+        var p = selectedPattern.pattern;
+        var currentBeat = 0;
+        var ms = 60000 / selectedPattern.bpm / (p.length > 4 ? 2 : 1);
         var chordName = S.currentChord ? S.currentChord.name : "E Major";
         if (p[0] !== "x") strumChord(chordName);
         render();
         T.strum = setInterval(function() {
-          S._strumBeat = (S._strumBeat + 1) % p.length;
+          currentBeat = (currentBeat + 1) % p.length;
+          applyMediaFamilyRuntimeUpdate({
+            setFields: { _strumBeat: currentBeat },
+            save: false
+          }, function() {
+            S._strumBeat = currentBeat;
+          });
           if (core && typeof core.syncLegacyStrumRuntimeState === "function") {
             core.syncLegacyStrumRuntimeState({
-              pattern: S.selectedStrum,
+              pattern: selectedPattern,
               active: true,
-              beat: S._strumBeat
+              beat: currentBeat
             });
           }
-          if (p[S._strumBeat] !== "x") strumChord(chordName);
+          if (p[currentBeat] !== "x") strumChord(chordName);
           render();
         }, ms);
       } else {
-        clearInterval(T.strum);
-        S._strumBeat = -1;
         render();
       }
       return true;
@@ -165,8 +171,10 @@
     }
 
     if (a === "stemToggle") {
-      S.stemToggles[v] = !S.stemToggles[v];
-      setStemMuted(v, !S.stemToggles[v]);
+      var nextToggles = Object.assign({}, S.stemToggles || {});
+      nextToggles[v] = !nextToggles[v];
+      setLegacyFields({ stemToggles: nextToggles }, [], false);
+      setStemMuted(v, !nextToggles[v]);
       render();
       return true;
     }
@@ -184,23 +192,24 @@
     }
 
     if (a === "stemVolume") {
-      S.stemVolume = parseFloat(v);
-      setStemVolume(S.stemVolume);
+      var nextStemVolume = parseFloat(v);
+      setLegacyFields({ stemVolume: nextStemVolume }, [], false);
+      setStemVolume(nextStemVolume);
       render();
       return true;
     }
 
     if (a === "setTone") {
       if (STRUM_TONES[v] || v === "guitar") {
-        S.strumTone = v;
-        saveState();
+        setLegacyFields({ strumTone: v }, [], false);
+        if (typeof saveState === "function") saveState();
         render();
       }
       return true;
     }
 
     if (a === "selectScale") {
-      S.selectedScale = v;
+      setLegacyFields({ selectedScale: v }, [], false);
       render();
       return true;
     }
