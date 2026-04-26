@@ -2476,6 +2476,7 @@ test("system action family routes guided and career screen state through the sha
   var runtimeUpdates = [];
   var dashboardRequests = [];
   var careerSongRequests = [];
+  var songBrowserRequests = [];
   var existingBridge = global.SparkProgressBridge || {};
   global.window = {};
   global.__actionFamilies = {};
@@ -2524,6 +2525,11 @@ test("system action family routes guided and career screen state through the sha
     return null;
   };
   global.applyGuidedNavigationRequest = function() {};
+  global.applySongBrowserRequest = function(type, payload) {
+    songBrowserRequests.push({ type: type, payload: payload });
+    return payload;
+  };
+  global.applyThemeSetting = function() {};
   global.clearTimeout = function() {};
   global.clearInterval = function() {};
   global.stopMetronome = function() {};
@@ -2541,13 +2547,26 @@ test("system action family routes guided and career screen state through the sha
   global.S.performArrangementType = "lead";
   global.S.performDifficulty = "hard";
   global.S.metronomeOn = false;
+  global.S.practiceIntention = "";
+  global.S.settings = { theme: "dark", accessibility: {} };
+  global.S.songSort = "level";
+  global.S.songSortAsc = true;
+  global.S.songFilter = "";
 
   eval(loadJS("js/actions/system_family.js"));
 
+  assert.strictEqual(__actionFamilies.system("setIntention", "After coffee"), true);
+  assert.strictEqual(__actionFamilies.system("setTheme", "ember"), true);
+  assert.strictEqual(__actionFamilies.system("songSort", "level"), true);
+  assert.strictEqual(__actionFamilies.system("songFilter", "ballad"), true);
   assert.strictEqual(__actionFamilies.system("openCareer"), true);
   assert.strictEqual(__actionFamilies.system("openCareerSong", "career_anthem"), true);
   assert.strictEqual(__actionFamilies.system("guidedComplete"), true);
 
+  assert.deepStrictEqual(songBrowserRequests, [
+    { type: "song_sort", payload: { songSort: "level", songSortAsc: false } },
+    { type: "song_filter", payload: { songFilter: "ballad" } }
+  ]);
   assert.deepStrictEqual(dashboardRequests, ["career"]);
   assert.strictEqual(careerSongRequests.length, 1);
   assert.strictEqual(careerSongRequests[0].songId, "career_anthem");
@@ -2571,6 +2590,18 @@ test("system action family routes guided and career screen state through the sha
       setFields: { screen: "guided_done" },
       save: false
     });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.practiceIntention === "After coffee";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.settings && update.setFields.settings.theme === "ember";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.songSort === "level" && update.setFields.songSortAsc === false;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.songFilter === "ballad";
   }));
 });
 
