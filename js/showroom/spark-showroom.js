@@ -1308,6 +1308,10 @@
     var subtitle = normalizeShowroomText(opts.subtitle) || (lastDone
       ? "You wrapped that session cleanly. Here’s the latest recap."
       : "Your next completed session will show up here.");
+    var summaryTitle = lastDone ? "Session Complete!" : "No completed session yet";
+    var primaryActionLabel = lastDone ? "Continue" : "Open Practice";
+    var secondaryActionLabel = lastDone ? "Replay Session" : "Start Session";
+    var secondaryAction = lastDone ? "act('showroomStartPerf')" : nav("practice");
     var coverSrc = opts.cover;
 
     // Build accuracy ring
@@ -1352,7 +1356,7 @@
                  + '<span class="material-symbols-outlined fill">workspace_premium</span>'
                + '</div>'
              + '</div>'
-             + '<h1 class="showroom-summary-h">Session Complete!</h1>'
+             + '<h1 class="showroom-summary-h">' + escHtml(summaryTitle) + '</h1>'
              + '<p class="showroom-summary-sub">' + escHtml(subtitle) + '</p>'
            + '</section>'
            + '<section class="showroom-summary-grid">'
@@ -1398,8 +1402,8 @@
              + '</div>'
            + '</section>'
            + '<section class="showroom-summary-actions">'
-            + '<button class="showroom-summary-cta" onclick="' + backToHome() + '">' + (lastDone ? 'Continue' : 'Open Practice') + '</button>'
-            + '<button class="showroom-summary-cta ghost" onclick="' + (lastDone ? "act('showroomStartPerf')" : nav("practice")) + '">' + (lastDone ? 'Replay Session' : 'Start Session') + '</button>'
+            + '<button class="showroom-summary-cta" onclick="' + backToHome() + '">' + primaryActionLabel + '</button>'
+            + '<button class="showroom-summary-cta ghost" onclick="' + secondaryAction + '">' + secondaryActionLabel + '</button>'
            + '</section>'
          + '</main>'
          + bottomNav(navItems, "practice")

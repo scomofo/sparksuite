@@ -145,6 +145,7 @@ test("showroom empty states stay honest across song, leaderboard, session, and p
   assert.ok(leaderboardHtml.indexOf("No scored runs yet.") >= 0);
   assert.strictEqual(leaderboardHtml.indexOf("Alex Chen"), -1);
   assert.ok(sessionHtml.indexOf("No completed session yet") >= 0);
+  assert.strictEqual(sessionHtml.indexOf("Session Complete!"), -1);
   assert.strictEqual(sessionHtml.indexOf("Midnight Ember Jam"), -1);
   assert.ok(performanceHtml.indexOf("No performance loaded") >= 0);
   assert.strictEqual(performanceHtml.indexOf("S+"), -1);
