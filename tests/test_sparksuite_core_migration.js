@@ -2681,6 +2681,11 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.saveState = function() {};
   global.strumChord = function() {};
   global.rhythmTick = function() {};
+  global.setInterval = function(fn) {
+    fn();
+    return 123;
+  };
+  global.clearInterval = function() {};
   global.requestAnimationFrame = function() { return 1; };
   global.performance = { now: function() { return 2500; } };
   global.S = global.S || {};
@@ -2706,6 +2711,14 @@ test("tools action family routes imported song and rhythm starts through the sha
   global.S.customSetName = "";
   global.S.customSetChords = [];
   global.S.rhythmResults = { score: 20 };
+  global.S.progPickerOpen = false;
+  global.S.progChords = ["C Major", "G Major"];
+  global.S.progBpm = 90;
+  global.S.progPlaying = false;
+  global.S.progBeat = 0;
+  global.COMMON_PROGRESSIONS = [
+    { name: "Axis", key: "C", chords: ["C Major", "G Major", "A Minor", "F Major"] }
+  ];
   global.CHORDS = { 1: [{ name: "C Major" }, { name: "G Major" }] };
   global.S.level = 1;
 
@@ -2720,6 +2733,15 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(__actionFamilies.tools("cancelSet"), true);
   assert.strictEqual(__actionFamilies.tools("rhythmBpm", "132"), true);
   assert.strictEqual(__actionFamilies.tools("rhythmResultsBack"), true);
+  assert.strictEqual(__actionFamilies.tools("progPickerToggle"), true);
+  assert.strictEqual(__actionFamilies.tools("progAdd", "A Minor"), true);
+  assert.strictEqual(__actionFamilies.tools("progRemove", "1"), true);
+  assert.strictEqual(__actionFamilies.tools("progMove", "1:left"), true);
+  assert.strictEqual(__actionFamilies.tools("progTemplate", "0"), true);
+  assert.strictEqual(__actionFamilies.tools("progBpm", "112"), true);
+  assert.strictEqual(__actionFamilies.tools("progPlay"), true);
+  assert.strictEqual(__actionFamilies.tools("progPlay"), true);
+  assert.strictEqual(__actionFamilies.tools("progClear"), true);
   assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
   assert.strictEqual(__actionFamilies.tools("startRhythm"), true);
 
@@ -2766,11 +2788,34 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && Object.prototype.hasOwnProperty.call(update.setFields, "rhythmResults") && update.setFields.rhythmResults === null;
   }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progPickerOpen === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.progChords) && update.setFields.progChords.indexOf("A Minor") >= 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progBpm === 112;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progPlaying === true && update.setFields.progBeat === 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progBeat === 1;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progPlaying === false && Array.isArray(update.clearIntervals) && update.clearIntervals.indexOf("prog") >= 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.progChords) && update.setFields.progChords.length === 0;
+  }));
   assert.strictEqual(S.dualChord, "G Major");
   assert.strictEqual(S.dualAnchorOn, true);
   assert.strictEqual(S.dailyGoalMinutes, 25);
   assert.strictEqual(S.editingSet, false);
   assert.strictEqual(S.rhythmBpm, 132);
+  assert.deepStrictEqual(S.progChords, []);
+  assert.strictEqual(S.progPlaying, false);
 });
 
 test("practice planning helpers can resolve sparkCore from the global binding", function() {
