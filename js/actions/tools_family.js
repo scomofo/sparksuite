@@ -423,17 +423,17 @@
     }
 
     if (a === "importText") {
-      S.importText = v;
+      setLegacyFields({ importText: v }, [], false);
       return true;
     }
 
     if (a === "parseImport") {
       var result = parseChordSheet(S.importText);
       if (result.error) {
-        S.importedSong = null;
-        S.importError = result.error;
+        setLegacyFields({ importedSong: null, importError: result.error }, [], false);
       } else {
-        S.importedSong = {
+        setLegacyFields({
+          importedSong: {
           title: "Imported Song",
           artist: "Unknown",
           chords: result.chords,
@@ -441,34 +441,39 @@
           bpm: 100,
           level: 1,
           pattern: ["D", "D", "U", "U", "D", "U"]
-        };
-        S.importError = null;
+          },
+          importError: null
+        }, [], false);
       }
       render();
       return true;
     }
 
     if (a === "importTitle") {
-      if (S.importedSong) S.importedSong.title = v;
+      if (S.importedSong) setLegacyFields({ importedSong: Object.assign({}, S.importedSong, { title: v }) }, [], false);
       return true;
     }
 
     if (a === "importArtist") {
-      if (S.importedSong) S.importedSong.artist = v;
+      if (S.importedSong) setLegacyFields({ importedSong: Object.assign({}, S.importedSong, { artist: v }) }, [], false);
       return true;
     }
 
     if (a === "importBpm") {
-      if (S.importedSong) S.importedSong.bpm = parseInt(v, 10) || 100;
+      if (S.importedSong) setLegacyFields({ importedSong: Object.assign({}, S.importedSong, { bpm: parseInt(v, 10) || 100 }) }, [], false);
       return true;
     }
 
     if (a === "saveImport") {
       if (!S.importedSong) return true;
-      S.importedSongs.push(JSON.parse(JSON.stringify(S.importedSong)));
-      S.importedSong = null;
-      S.importText = "";
-      S.importError = null;
+      var nextImportedSongs = Array.isArray(S.importedSongs) ? S.importedSongs.slice() : [];
+      nextImportedSongs.push(JSON.parse(JSON.stringify(S.importedSong)));
+      setLegacyFields({
+        importedSongs: nextImportedSongs,
+        importedSong: null,
+        importText: "",
+        importError: null
+      }, [], true);
       saveState();
       render();
       return true;
@@ -477,7 +482,9 @@
     if (a === "deleteImport") {
       var importedIdx = parseInt(v, 10);
       if (importedIdx >= 0 && importedIdx < S.importedSongs.length) {
-        S.importedSongs.splice(importedIdx, 1);
+        var remainingImportedSongs = S.importedSongs.slice();
+        remainingImportedSongs.splice(importedIdx, 1);
+        setLegacyFields({ importedSongs: remainingImportedSongs }, [], true);
         saveState();
         render();
       }
@@ -493,23 +500,23 @@
     }
 
     if (a === "communityTab") {
-      S.communityTab = v;
-      applySongBrowserRequest("community_tab", { communityTab: S.communityTab });
+      setLegacyFields({ communityTab: v }, [], false);
+      applySongBrowserRequest("community_tab", { communityTab: v });
       render();
       return true;
     }
 
     if (a === "communitySearch") {
-      S.communitySearch = v;
-      applySongBrowserRequest("community_search", { communitySearch: S.communitySearch });
+      setLegacyFields({ communitySearch: v }, [], false);
+      applySongBrowserRequest("community_search", { communitySearch: v });
       fetchCommunity();
       render();
       return true;
     }
 
     if (a === "communitySort") {
-      S.communitySort = v;
-      applySongBrowserRequest("community_sort", { communitySort: S.communitySort });
+      setLegacyFields({ communitySort: v }, [], false);
+      applySongBrowserRequest("community_sort", { communitySort: v });
       fetchCommunity();
       return true;
     }
@@ -541,7 +548,7 @@
         openLegacySongSelection(parsed, "community");
       } catch (e) {
         console.warn("ChordSpark: Failed to parse community song:", e.message);
-        S.communityError = "Could not load song: invalid data";
+        setLegacyFields({ communityError: "Could not load song: invalid data" }, [], false);
         render();
       }
       return true;
