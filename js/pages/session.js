@@ -34,6 +34,45 @@ function getSparkCoreRuntimeState(){
   return view && view.runtimeState ? view.runtimeState : null;
 }
 
+function shouldPreferSessionCoreRuntime() {
+  var view = getSessionCoreView();
+  return !!(view && view.plan && view.plan.flow === "daily_practice");
+}
+
+function isSessionFiniteNumber(value) {
+  return typeof value === "number" && isFinite(value);
+}
+
+function getPreferredSessionNumber(preferCore, runtimeValue, legacyValue, fallback) {
+  if (preferCore && isSessionFiniteNumber(runtimeValue)) return runtimeValue;
+  if (isSessionFiniteNumber(legacyValue)) return legacyValue;
+  if (isSessionFiniteNumber(runtimeValue)) return runtimeValue;
+  return fallback;
+}
+
+function getPreferredSessionBoolean(preferCore, runtimeValue, legacyValue, fallback) {
+  if (preferCore && typeof runtimeValue === "boolean") return runtimeValue;
+  if (typeof legacyValue === "boolean") return legacyValue;
+  if (typeof runtimeValue === "boolean") return runtimeValue;
+  return fallback;
+}
+
+function getPreferredSessionString(preferCore, runtimeValue, legacyValue, fallback) {
+  var runtimeToken = _firstSessionSongTextToken(runtimeValue);
+  var legacyToken = _firstSessionSongTextToken(legacyValue);
+  if (preferCore && runtimeToken) return runtimeToken;
+  if (legacyToken) return legacyToken;
+  if (runtimeToken) return runtimeToken;
+  return fallback || "";
+}
+
+function getPreferredSessionArray(preferCore, runtimeValue, legacyValue) {
+  if (preferCore && Array.isArray(runtimeValue)) return runtimeValue;
+  if (Array.isArray(legacyValue)) return legacyValue;
+  if (Array.isArray(runtimeValue)) return runtimeValue;
+  return [];
+}
+
 function getSessionPageActiveShellSummary(){
   if (typeof SparkSessionShellUI === "undefined" || !SparkSessionShellUI || typeof SparkSessionShellUI.buildDailyShellSummary !== "function") {
     return null;
@@ -82,16 +121,33 @@ function formatSessionBpm(value, fallback){
 
 function getLegacySessionRuntime(D){
   var runtime = getSparkCoreRuntimeState();
+  var preferCore = shouldPreferSessionCoreRuntime();
+  var runtimeChord = findInstrumentChordByName(D, runtime && runtime.legacyPracticeChordName);
+  var legacyChord = S.currentChord || null;
   return {
-    chord: S.currentChord || findInstrumentChordByName(D, runtime && runtime.legacyPracticeChordName),
-    timer: typeof S.timer === "number" ? S.timer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0)),
-    timerActive: typeof S.timerActive === "boolean" ? S.timerActive : !!(runtime && runtime.legacyPracticeTimerActive)
+    chord: preferCore ? (runtimeChord || legacyChord) : (legacyChord || runtimeChord),
+    timer: getPreferredSessionNumber(
+      preferCore,
+      runtime && typeof runtime.legacyPracticeRemainingSec === "number"
+        ? runtime.legacyPracticeRemainingSec
+        : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : null),
+      typeof S.timer === "number" ? S.timer : null,
+      0
+    ),
+    timerActive: getPreferredSessionBoolean(
+      preferCore,
+      runtime ? !!runtime.legacyPracticeTimerActive : null,
+      typeof S.timerActive === "boolean" ? S.timerActive : null,
+      false
+    )
   };
 }
 
 function getLegacyDrillRuntime(D){
   var runtime = getSparkCoreRuntimeState();
-  var drillChords = Array.isArray(S.drillChords) && S.drillChords.length ? S.drillChords : [];
+  var preferCore = shouldPreferSessionCoreRuntime();
+  var legacyDrillChords = Array.isArray(S.drillChords) && S.drillChords.length ? S.drillChords : [];
+  var drillChords = getPreferredSessionArray(preferCore, null, legacyDrillChords);
   if (!drillChords.length && runtime && Array.isArray(runtime.legacyDrillChordNames)) {
     for (var i = 0; i < runtime.legacyDrillChordNames.length; i++) {
       var chord = findInstrumentChordByName(D, runtime.legacyDrillChordNames[i]);
@@ -100,32 +156,64 @@ function getLegacyDrillRuntime(D){
   }
   return {
     chords: drillChords,
-    timer: typeof S.drillTimer === "number" ? S.drillTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : 0))
+    timer: getPreferredSessionNumber(
+      preferCore,
+      runtime && typeof runtime.legacyPracticeRemainingSec === "number"
+        ? runtime.legacyPracticeRemainingSec
+        : (runtime && typeof runtime.legacyPracticeDurationSec === "number" ? runtime.legacyPracticeDurationSec : null),
+      typeof S.drillTimer === "number" ? S.drillTimer : null,
+      0
+    )
   };
 }
 
 function getLegacyDailyRuntime(){
   var runtime = getSparkCoreRuntimeState();
+  var preferCore = shouldPreferSessionCoreRuntime();
   return {
-    timer: typeof S.dailyTimer === "number" ? S.dailyTimer : (runtime && typeof runtime.legacyDailyRemainingSec === "number" ? runtime.legacyDailyRemainingSec : (runtime && typeof runtime.legacyDailyDurationSec === "number" ? runtime.legacyDailyDurationSec : 0)),
-    complete: typeof S.dailyComplete === "boolean" ? S.dailyComplete : !!(runtime && runtime.legacyDailyComplete)
+    timer: getPreferredSessionNumber(
+      preferCore,
+      runtime && typeof runtime.legacyDailyRemainingSec === "number"
+        ? runtime.legacyDailyRemainingSec
+        : (runtime && typeof runtime.legacyDailyDurationSec === "number" ? runtime.legacyDailyDurationSec : null),
+      typeof S.dailyTimer === "number" ? S.dailyTimer : null,
+      0
+    ),
+    complete: getPreferredSessionBoolean(
+      preferCore,
+      runtime ? !!runtime.legacyDailyComplete : null,
+      typeof S.dailyComplete === "boolean" ? S.dailyComplete : null,
+      false
+    )
   };
 }
 
 function getSessionMetronomeRuntime(){
   var runtime = getSparkCoreRuntimeState();
+  var preferCore = shouldPreferSessionCoreRuntime();
   return {
-    active: typeof S.metronomeOn === "boolean" ? S.metronomeOn : !!(runtime && runtime.metronomeActive),
-    bpm: normalizeSessionNumber(
-      typeof S.metronomeBpm === "number" ? S.metronomeBpm : (runtime ? runtime.metronomeBpm : null),
+    active: getPreferredSessionBoolean(
+      preferCore,
+      runtime ? !!runtime.metronomeActive : null,
+      typeof S.metronomeOn === "boolean" ? S.metronomeOn : null,
+      false
+    ),
+    bpm: getPreferredSessionNumber(
+      preferCore,
+      runtime ? runtime.metronomeBpm : null,
+      typeof S.metronomeBpm === "number" ? S.metronomeBpm : null,
       80
     ),
-    beat: normalizeSessionNumber(
-      typeof S._metroBeat === "number" ? S._metroBeat : (runtime ? runtime.metronomeBeat : null),
+    beat: getPreferredSessionNumber(
+      preferCore,
+      runtime ? runtime.metronomeBeat : null,
+      typeof S._metroBeat === "number" ? S._metroBeat : null,
       0
     ),
-    beatsPerBar: normalizeSessionNumber(
-      typeof S._metroBeats === "number" ? S._metroBeats : (runtime ? runtime.metronomeBeatsPerBar : null),
+    beatsPerBar: getPreferredSessionNumber(
+      preferCore,
+      runtime ? runtime.metronomeBeatsPerBar : null,
+      typeof S._metroBeats === "number" ? S._metroBeats : null,
       4
     )
   };
@@ -134,11 +222,31 @@ function getSessionMetronomeRuntime(){
 function getSessionChordDetectRuntime(){
   if (typeof getLegacyChordDetectRuntime === "function") return getLegacyChordDetectRuntime();
   var runtime = getSparkCoreRuntimeState();
+  var preferCore = shouldPreferSessionCoreRuntime();
   return {
-    active: typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : !!(runtime && runtime.chordDetectActive),
-    notes: Array.isArray(S.detectedNotes) ? S.detectedNotes : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
-    match: typeof S.chordMatch === "number" ? S.chordMatch : (runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : -1),
-    error: S.chordDetectErr || (runtime && runtime.chordDetectError) || ""
+    active: getPreferredSessionBoolean(
+      preferCore,
+      runtime ? !!runtime.chordDetectActive : null,
+      typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : null,
+      false
+    ),
+    notes: getPreferredSessionArray(
+      preferCore,
+      runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : null,
+      Array.isArray(S.detectedNotes) ? S.detectedNotes : null
+    ),
+    match: getPreferredSessionNumber(
+      preferCore,
+      runtime && typeof runtime.chordDetectMatch === "number" ? runtime.chordDetectMatch : null,
+      typeof S.chordMatch === "number" ? S.chordMatch : null,
+      -1
+    ),
+    error: getPreferredSessionString(
+      preferCore,
+      runtime && runtime.chordDetectError,
+      S.chordDetectErr,
+      ""
+    )
   };
 }
 

@@ -17,6 +17,7 @@ _testEval(loadJS("js/sparksuite/ui/session_shell.js"));
 
 function resetEnvironment() {
   global.window = global;
+  global.sparkCore = undefined;
   global.S = {
     currentChord: { name: "C" },
     timer: 45,
@@ -184,6 +185,47 @@ test("session family pages surface the live daily-practice shell from sparkCore"
   assert.ok(sessionHtml.indexOf("1m 30s left") >= 0);
   assert.ok(drillHtml.indexOf("Practice Session Live") >= 0);
   assert.ok(dailyHtml.indexOf("Practice Session Live") >= 0);
+});
+
+test("sessionPage prefers canonical runtime values over stale legacy session state", function() {
+  S.currentChord = { name: "C" };
+  S.timer = 45;
+  S.timerActive = false;
+  S.metronomeOn = false;
+  S.metronomeBpm = 80;
+  global.ringHTML = function(_pct, _size, _width, _color, inner) { return "<div>" + inner + "</div>"; };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 }
+          ]
+        },
+        activeSegment: { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          legacyPracticeChordName: "G",
+          legacyPracticeRemainingSec: 90,
+          legacyPracticeTimerActive: true,
+          metronomeActive: true,
+          metronomeBpm: 96,
+          metronomeBeat: 2,
+          metronomeBeatsPerBar: 4,
+          transport: { status: "running", positionMs: 30000, durationMs: 120000 }
+        }
+      };
+    }
+  };
+
+  var html = sessionPage();
+  assert.ok(html.indexOf(">G</h2>") >= 0);
+  assert.ok(html.indexOf(">1:30<") >= 0);
+  assert.ok(html.indexOf("&#9208; Pause") >= 0);
+  assert.ok(html.indexOf(">96<") >= 0);
+  assert.strictEqual(html.indexOf(">C</h2>"), -1);
 });
 
 test("sessionPage ignores stale practice intention text", function() {
