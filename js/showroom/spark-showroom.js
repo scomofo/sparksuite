@@ -492,7 +492,11 @@
         "tuner":           function(){ S._showroomOverride = "tools";   S.screen = SCR_.HOME; S.tab = TAB_.TUNER || "tuner"; },
         "tools":           function(){ S._showroomOverride = "tools";   S.screen = SCR_.HOME; S.tab = TAB_.TUNER || "tuner"; },
         "insights":        function(){ S.screen = SCR_.INSIGHTS; },
-        "settings":        function(){ S.screen = SCR_.SETTINGS; },
+        // Settings now has Warm Ember parity for the legacy essentials
+        // (theme picker, UI volume, reminders, setup reset, release info).
+        // Keep the legacy slot as a fallback if the override renderer is not
+        // loaded, but prefer the canonical Showroom surface.
+        "settings":        function(){ S._showroomOverride = "settings"; S.screen = SCR_.SETTINGS; },
         // "path" / "learn" route to the Warm Ember Learning Path screen
         // (SparkPath.render) which reads the active instrument's real
         // lesson list + progression. The render.js allow-list guards this;
@@ -526,7 +530,7 @@
       };
       // Clear any prior override so the legacy slot routing wins again —
       // but keep it for routes whose handlers set an override themselves.
-      var _overrideRoutes = { "profile":1, "lesson":1, "path":1, "learn":1, "curriculum":1, "syllabus":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1 };
+      var _overrideRoutes = { "profile":1, "settings":1, "lesson":1, "path":1, "learn":1, "curriculum":1, "syllabus":1, "library":1, "leaderboard":1, "tuner":1, "tools":1, "session-summary":1, "song-details":1, "practice-metro":1 };
       if (!_overrideRoutes[view]) S._showroomOverride = null;
       var fn = routes[view];
       if (fn) fn();
@@ -608,6 +612,14 @@
     var emailOn = !!flags.emailUpdates;
     var micPct = typeof flags.micSensitivity === "number" ? flags.micSensitivity : 85;
     var latency = typeof flags.latencyMs === "number" ? flags.latencyMs : 12;
+    var settings = (typeof S !== "undefined" && S.settings) || {};
+    var theme = settings.theme || (darkOn ? "dark" : "light");
+    var uiVolume = typeof settings.uiVolume === "number" ? settings.uiVolume : 0.5;
+    var uiVolumePct = Math.round(Math.max(0, Math.min(1, uiVolume)) * 100);
+    var reminderOn = settings.practiceReminder !== false;
+    var release = (typeof S !== "undefined" && S.releaseInfo) || {};
+    var releaseVersion = release.version || "dev";
+    var releaseBuild = release.build ? (" build " + release.build) : "";
 
     var sections = [
       { title: "Account", rows: [
@@ -622,14 +634,20 @@
       ]},
       { title: "Audio & Input", rows: [
         { type: "slider", icon: "mic", label: "Microphone Sensitivity", value: micPct + "%", pct: micPct },
+        { type: "range", icon: "volume_up", label: "UI Volume", value: uiVolumePct + "%", pct: uiVolumePct, action: "setUIVolume" },
         { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true, onClick: "if(S&&S.activeInstrument){act('openPerformCalibration')}else{SparkInstruments.openLauncherView('calibration')}" }
       ]},
       { title: "Appearance", rows: [
+        { type: "theme", icon: "palette", label: "Theme", value: theme, options: ["dark", "light", "blue", "highcontrast", "retro"] },
         // Dark Mode is wired to the canonical act("toggleDark") handler so
         // flipping it here also updates the legacy header, body.light
         // class, and persisted S.darkMode state.
         { type: "toggle", icon: "dark_mode", label: "Dark Mode", on: darkOn, key: "dark" },
         { type: "toggle", icon: "blur_on", label: "Reduce Transparency", on: reduceTransp, key: "reduceTransparency" }
+      ]},
+      { title: "Practice", rows: [
+        { type: "toggle", icon: "event_available", label: "Practice Reminder", on: reminderOn, key: "practiceReminder", action: "togglePracticeReminder" },
+        { icon: "restart_alt", label: "Reset Setup", chevron: true, onClick: "act('openOnboarding')" }
       ]},
       { title: "Notifications", rows: [
         { type: "toggle", icon: "notifications_active", label: "Push Notifications", on: pushOn, key: "pushNotifications" },
@@ -652,6 +670,26 @@
           html += '</div><span class="showroom-row-meta">' + escHtml(row.value) + '</span></div>';
           html += '<div class="showroom-slider-track"><div class="showroom-slider-fill" style="width:' + row.pct + '%"></div></div>';
           html += '</div>';
+        } else if (row.type === "range") {
+          html += '<div class="showroom-slider-row">';
+          html += '<div class="showroom-slider-head"><div class="showroom-row-left">';
+          html += '<span class="material-symbols-outlined showroom-row-icon">' + row.icon + '</span>';
+          html += '<span class="showroom-row-label">' + escHtml(row.label) + '</span>';
+          html += '</div><span class="showroom-row-meta">' + escHtml(row.value) + '</span></div>';
+          html += '<input class="showroom-settings-range" type="range" min="0" max="100" value="' + row.pct + '" oninput="act(\'' + row.action + '\',this.value)" aria-label="' + escHtml(row.label) + '">';
+          html += '</div>';
+        } else if (row.type === "theme") {
+          html += '<div class="showroom-row no-action theme-row">';
+          html += '<div class="showroom-row-left">';
+          html += '<span class="material-symbols-outlined showroom-row-icon">' + row.icon + '</span>';
+          html += '<span class="showroom-row-label">' + escHtml(row.label) + '</span>';
+          html += '</div></div><div class="showroom-theme-picker" role="radiogroup" aria-label="Theme">';
+          for (var ti = 0; ti < row.options.length; ti++) {
+            var opt = row.options[ti];
+            var active = opt === row.value;
+            html += '<button class="showroom-theme-chip' + (active ? ' active' : '') + '" type="button" role="radio" aria-checked="' + active + '" onclick="act(\'setTheme\',' + jsArg(opt) + ')">' + escHtml(opt) + '</button>';
+          }
+          html += '</div>';
         } else if (row.type === "toggle") {
           html += '<div class="showroom-row no-action">';
           html += '<div class="showroom-row-left">';
@@ -666,7 +704,7 @@
           // toggleOnClick(key) routes Dark Mode through the canonical
           // act("toggleDark") handler and other toggles through the
           // showroom-only flag store.
-          html += '<button class="showroom-toggle' + (row.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + row.on + '" onclick="' + toggleOnClick(row.key) + '" aria-label="' + escHtml(row.label) + '">';
+          html += '<button class="showroom-toggle' + (row.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + row.on + '" onclick="' + (row.action ? "act('" + row.action + "')" : toggleOnClick(row.key)) + '" aria-label="' + escHtml(row.label) + '">';
           html += '<span class="showroom-toggle-knob" aria-hidden="true"></span></button>';
           html += '</div>';
         } else {
@@ -685,7 +723,7 @@
       }
       html += '</div></div>';
     }
-    html += '<div class="showroom-version"><span class="showroom-version-label">System Core</span><span class="showroom-version-num">v2.4.1</span></div>';
+    html += '<div class="showroom-version"><span class="showroom-version-label">System Core</span><span class="showroom-version-num">v' + escHtml(releaseVersion + releaseBuild) + '</span></div>';
 
     var navItems = [
       { id:"flow",     label:"Flow",     icon:"waves",       onClick: nav("home") },

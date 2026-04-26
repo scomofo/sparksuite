@@ -38,5 +38,9 @@ assert.ok(showroomSource.indexOf("No badges unlocked yet.") >= 0);
 assert.ok(showroomSource.indexOf("No songs loaded for this instrument yet.") >= 0);
 assert.ok(showroomSource.indexOf("No completed session yet") >= 0);
 assert.ok(showroomSource.indexOf("No performance loaded") >= 0);
+assert.ok(showroomSource.indexOf("type: \"theme\"") >= 0);
+assert.ok(showroomSource.indexOf("setUIVolume") >= 0);
+assert.ok(showroomSource.indexOf("togglePracticeReminder") >= 0);
+assert.ok(load("js/render_showroom.js").indexOf("\"settings\"") >= 0);
 
 console.log("  PASS: active profile/showroom surfaces are guarded against template fallbacks");
