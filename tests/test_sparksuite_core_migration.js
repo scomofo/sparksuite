@@ -2969,6 +2969,8 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(__actionFamilies.tools("communityTab", "latest"), true);
   assert.strictEqual(__actionFamilies.tools("communitySearch", "groove"), true);
   assert.strictEqual(__actionFamilies.tools("communitySort", "newest"), true);
+  assert.strictEqual(__actionFamilies.tools("submitField", "title:Shared Song Updated"), true);
+  assert.strictEqual(__actionFamilies.tools("submitToggleChord", "A Minor"), true);
   assert.strictEqual(__actionFamilies.tools("submitSong"), true);
   assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
   assert.strictEqual(__actionFamilies.tools("deleteImport", "1"), true);
@@ -3090,6 +3092,12 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(fetchCalls[0].url, "https://community.example/api/songs");
   assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && update.setFields.submitSong && update.setFields.submitSong.title === "" && update.setFields.communityTab === "browse";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.submitSong && update.setFields.submitSong.title === "Shared Song Updated";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.submitSong && Array.isArray(update.setFields.submitSong.chords) && update.setFields.submitSong.chords.indexOf("A Minor") >= 0;
   }));
   assert.strictEqual(S.dualChord, "G Major");
   assert.strictEqual(S.dualAnchorOn, true);
