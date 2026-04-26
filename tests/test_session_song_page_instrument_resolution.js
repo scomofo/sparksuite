@@ -228,6 +228,35 @@ test("sessionPage prefers canonical runtime values over stale legacy session sta
   assert.strictEqual(html.indexOf(">C</h2>"), -1);
 });
 
+test("drillPage prefers canonical drill chords over stale legacy drill state", function() {
+  S.drillChords = [{ name: "C" }, { name: "G" }];
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 }
+          ]
+        },
+        activeSegment: { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          legacyDrillChordNames: ["G", "C"],
+          legacyPracticeRemainingSec: 90,
+          transport: { status: "running", positionMs: 30000, durationMs: 120000 }
+        }
+      };
+    }
+  };
+
+  var html = drillPage();
+
+  assert.ok(html.indexOf("chord-svg\">G<") >= 0);
+  assert.ok(html.indexOf("Next: <strong>C") >= 0);
+});
+
 test("sessionPage ignores stale practice intention text", function() {
   S.practiceIntention = "undefined";
   var html = sessionPage();

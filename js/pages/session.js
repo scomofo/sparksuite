@@ -146,14 +146,15 @@ function getLegacySessionRuntime(D){
 function getLegacyDrillRuntime(D){
   var runtime = getSparkCoreRuntimeState();
   var preferCore = shouldPreferSessionCoreRuntime();
-  var legacyDrillChords = Array.isArray(S.drillChords) && S.drillChords.length ? S.drillChords : [];
-  var drillChords = getPreferredSessionArray(preferCore, null, legacyDrillChords);
-  if (!drillChords.length && runtime && Array.isArray(runtime.legacyDrillChordNames)) {
+  var legacyDrillChords = Array.isArray(S.drillChords) && S.drillChords.length ? S.drillChords : null;
+  var runtimeDrillChords = [];
+  if (runtime && Array.isArray(runtime.legacyDrillChordNames)) {
     for (var i = 0; i < runtime.legacyDrillChordNames.length; i++) {
       var chord = findInstrumentChordByName(D, runtime.legacyDrillChordNames[i]);
-      if (chord) drillChords.push(chord);
+      if (chord) runtimeDrillChords.push(chord);
     }
   }
+  var drillChords = getPreferredSessionArray(preferCore, runtimeDrillChords.length ? runtimeDrillChords : null, legacyDrillChords);
   return {
     chords: drillChords,
     timer: getPreferredSessionNumber(
