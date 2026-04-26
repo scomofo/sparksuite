@@ -245,14 +245,15 @@
     }
 
     if (a === "progPickerToggle") {
-      S.progPickerOpen = !S.progPickerOpen;
+      setLegacyFields({ progPickerOpen: !S.progPickerOpen }, [], false);
       render();
       return true;
     }
 
     if (a === "progAdd") {
-      S.progChords.push(v);
-      S.progPickerOpen = false;
+      var nextProgChords = Array.isArray(S.progChords) ? S.progChords.slice() : [];
+      nextProgChords.push(v);
+      setLegacyFields({ progChords: nextProgChords, progPickerOpen: false }, [], false);
       render();
       return true;
     }
@@ -260,7 +261,9 @@
     if (a === "progRemove") {
       var progRemoveIdx = parseInt(v, 10);
       if (progRemoveIdx >= 0 && progRemoveIdx < S.progChords.length) {
-        S.progChords.splice(progRemoveIdx, 1);
+        var removedProgChords = S.progChords.slice();
+        removedProgChords.splice(progRemoveIdx, 1);
+        setLegacyFields({ progChords: removedProgChords }, [], false);
         render();
       }
       return true;
@@ -270,14 +273,17 @@
       var parts = v.split(":");
       var progIdx = parseInt(parts[0], 10);
       var dir = parts[1];
+      var movedProgChords = Array.isArray(S.progChords) ? S.progChords.slice() : [];
       if (dir === "left" && progIdx > 0) {
-        var left = S.progChords[progIdx];
-        S.progChords[progIdx] = S.progChords[progIdx - 1];
-        S.progChords[progIdx - 1] = left;
-      } else if (dir === "right" && progIdx < S.progChords.length - 1) {
-        var right = S.progChords[progIdx];
-        S.progChords[progIdx] = S.progChords[progIdx + 1];
-        S.progChords[progIdx + 1] = right;
+        var left = movedProgChords[progIdx];
+        movedProgChords[progIdx] = movedProgChords[progIdx - 1];
+        movedProgChords[progIdx - 1] = left;
+        setLegacyFields({ progChords: movedProgChords }, [], false);
+      } else if (dir === "right" && progIdx < movedProgChords.length - 1) {
+        var right = movedProgChords[progIdx];
+        movedProgChords[progIdx] = movedProgChords[progIdx + 1];
+        movedProgChords[progIdx + 1] = right;
+        setLegacyFields({ progChords: movedProgChords }, [], false);
       }
       render();
       return true;
@@ -286,7 +292,7 @@
     if (a === "progTemplate") {
       var templateIdx = parseInt(v, 10);
       if (templateIdx >= 0 && templateIdx < COMMON_PROGRESSIONS.length) {
-        S.progChords = COMMON_PROGRESSIONS[templateIdx].chords.slice();
+        setLegacyFields({ progChords: COMMON_PROGRESSIONS[templateIdx].chords.slice() }, [], false);
         render();
       }
       return true;
@@ -295,12 +301,12 @@
     if (a === "progBpm") {
       var progressionBpm = parseInt(v, 10);
       if (progressionBpm >= 40 && progressionBpm <= 200) {
-        S.progBpm = progressionBpm;
+        setLegacyFields({ progBpm: progressionBpm }, [], false);
         if (S.progPlaying) {
           clearInterval(T.prog);
           var progMs = 60000 / progressionBpm;
           T.prog = setInterval(function() {
-            S.progBeat = (S.progBeat + 1) % S.progChords.length;
+            setLegacyFields({ progBeat: (S.progBeat + 1) % S.progChords.length }, [], false);
             strumChord(S.progChords[S.progBeat]);
             render();
           }, progMs);
@@ -313,16 +319,15 @@
     if (a === "progPlay") {
       if (S.progChords.length < 2) return true;
       if (S.progPlaying) {
-        S.progPlaying = false;
+        setLegacyFields({ progPlaying: false }, ["prog"], false);
         clearInterval(T.prog);
         render();
       } else {
-        S.progPlaying = true;
-        S.progBeat = 0;
+        setLegacyFields({ progPlaying: true, progBeat: 0 }, [], false);
         strumChord(S.progChords[0]);
         var playMs = 60000 / S.progBpm;
         T.prog = setInterval(function() {
-          S.progBeat = (S.progBeat + 1) % S.progChords.length;
+          setLegacyFields({ progBeat: (S.progBeat + 1) % S.progChords.length }, [], false);
           strumChord(S.progChords[S.progBeat]);
           render();
         }, playMs);
@@ -333,10 +338,10 @@
 
     if (a === "progClear") {
       if (S.progPlaying) {
-        S.progPlaying = false;
+        setLegacyFields({ progPlaying: false }, ["prog"], false);
         clearInterval(T.prog);
       }
-      S.progChords = [];
+      setLegacyFields({ progChords: [] }, [], false);
       render();
       return true;
     }
