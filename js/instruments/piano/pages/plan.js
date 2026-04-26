@@ -5,6 +5,20 @@ function pianoGetPlanCoreView() {
     : null;
 }
 
+function pianoResolvePlanPageCoreDailyPlan(coreView) {
+  var corePlan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? coreView.plan
+    : null;
+  var bridgedPlan;
+  if (!corePlan) return null;
+  if (window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function") {
+    bridgedPlan = SparkPracticeBridge.toLegacyPlan(corePlan);
+    if (bridgedPlan) return bridgedPlan;
+  }
+  if (corePlan._legacyPlan) return corePlan._legacyPlan;
+  return Array.isArray(corePlan.items) ? corePlan : null;
+}
+
 function pianoGetActiveGuidedPlanSummary() {
   var coreView = pianoGetPlanCoreView();
   var context = coreView && coreView.plan && coreView.plan.context ? coreView.plan.context : null;
@@ -83,10 +97,7 @@ function pianoPlanPage(){
       : [];
   }
   var coreView = pianoGetPlanCoreView();
-  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
-  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
-    : S.practicePlan;
+  var plan = pianoResolvePlanPageCoreDailyPlan(coreView);
   var activeGuided = pianoGetActiveGuidedPlanSummary();
   if(!plan) plan = S.practicePlan;
   var renderableItems = getRenderablePlanItems(plan);

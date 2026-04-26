@@ -36,6 +36,20 @@ function pianoGetActiveGuidedSessionView() {
     : null;
 }
 
+function pianoResolveCoreDailyPlan(coreView) {
+  var corePlan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? coreView.plan
+    : null;
+  var bridgedPlan;
+  if (!corePlan) return null;
+  if (window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function") {
+    bridgedPlan = SparkPracticeBridge.toLegacyPlan(corePlan);
+    if (bridgedPlan) return bridgedPlan;
+  }
+  if (corePlan._legacyPlan) return corePlan._legacyPlan;
+  return Array.isArray(corePlan.items) ? corePlan : null;
+}
+
 function pianoGetActiveGuidedSessionNum() {
   var view = pianoGetActiveGuidedSessionView();
   var context = view && view.plan && view.plan.context ? view.plan.context : null;
@@ -358,10 +372,7 @@ function practicePlanSection(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
-  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
-  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
-    : S.practicePlan;
+  var plan = pianoResolveCoreDailyPlan(coreView);
   if(!plan) plan = S.practicePlan;
   if(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePlanItem)){
     h += '<div class="card" style="margin-top:12px">';

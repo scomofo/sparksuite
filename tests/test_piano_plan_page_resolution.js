@@ -180,7 +180,7 @@ test("piano practice plan section reads the active core-backed plan without gene
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
 });
 
-test("piano practice plan section falls back to cached plan state when the practice bridge is unavailable", function() {
+test("piano practice plan section prefers the active core plan when the practice bridge is unavailable", function() {
   global.S = {
     practicePlan: {
       items: [{ id: "cached_1", label: "Cached Warmup", completed: false }]
@@ -208,8 +208,8 @@ test("piano practice plan section falls back to cached plan state when the pract
   global.eval(loadJS("js/instruments/piano/pages/practice.js"));
 
   var html = practicePlanSection();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("piano practice plan section shows an empty state when no plan exists", function() {
@@ -768,7 +768,7 @@ test("pianoPlanPage stays read-only when no plan exists and shows an empty state
   assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
 });
 
-test("pianoPlanPage falls back to cached plan state when the practice bridge is unavailable", function() {
+test("pianoPlanPage prefers the active core plan when the practice bridge is unavailable", function() {
   global.S = {
     practicePlanComplete: false,
     practicePlan: {
@@ -793,8 +793,8 @@ test("pianoPlanPage falls back to cached plan state when the practice bridge is 
   };
 
   var html = pianoPlanPage();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("pianoPlanPage does not render completed items as clickable go buttons", function() {
