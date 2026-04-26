@@ -187,14 +187,18 @@
             var f = autoCorrelate(buf, ctx.sampleRate);
             var result = smoothTunerResult(f);
             if (result.note) {
-              S.tunerNote = result.note;
-              S.tunerFreq = result.freq;
-              S.tunerCents = result.cents;
+              setLegacyFields({
+                tunerNote: result.note,
+                tunerFreq: result.freq,
+                tunerCents: result.cents
+              }, false);
               syncTunerRuntimeRequest({ active: true, note: result.note, freq: result.freq, cents: result.cents, error: null });
             } else if (f < 0) {
-              S.tunerNote = null;
-              S.tunerFreq = 0;
-              S.tunerCents = 0;
+              setLegacyFields({
+                tunerNote: null,
+                tunerFreq: 0,
+                tunerCents: 0
+              }, false);
               syncTunerRuntimeRequest({ active: true, note: null, freq: 0, cents: 0, error: null });
             }
             updateTunerUI();
