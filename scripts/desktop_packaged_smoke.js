@@ -115,6 +115,12 @@ function launchElectronSmoke(artifactPath, rootDir) {
   if (!payload.ok) {
     throw new Error("Packaged smoke failed: " + payload.error);
   }
+  validatePackagedSmokePayload(payload);
+
+  return payload;
+}
+
+function validatePackagedSmokePayload(payload) {
   if (!payload.completed) {
     throw new Error("Packaged smoke did not complete a session");
   }
@@ -124,8 +130,14 @@ function launchElectronSmoke(artifactPath, rootDir) {
   if (!payload.debugBundleSessionId) {
     throw new Error("Packaged smoke did not build a debug bundle");
   }
+  if (!payload.backupIntegrity || !payload.backupIntegrity.hasCanonicalUserData || !payload.backupIntegrity.hasDebugBundle) {
+    throw new Error("Packaged smoke did not build a complete full local backup");
+  }
+  if (payload.backupIntegrity.profileUserId !== payload.exportedUserId) {
+    throw new Error("Packaged smoke full backup user did not match exported user data");
+  }
 
-  return payload;
+  return true;
 }
 
 function main() {
@@ -158,6 +170,8 @@ function main() {
     artifactPath: artifactPath,
     sessionPlanId: payload.sessionPlanId,
     schemaVersion: payload.schemaVersion,
+    backupApp: payload.backupApp,
+    backupSchemaVersion: payload.backupSchemaVersion,
     importedUserId: payload.importedUserId,
     exportedUserId: payload.exportedUserId
   }, null, 2));
@@ -168,7 +182,8 @@ module.exports = {
   launchElectronSmoke,
   parseArgs,
   resolveElectronPortableArtifact,
-  resolveTauriBundleArtifact
+  resolveTauriBundleArtifact,
+  validatePackagedSmokePayload
 };
 
 if (require.main === module) {

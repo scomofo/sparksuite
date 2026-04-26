@@ -87,7 +87,46 @@ test("buildFullLocalBackup uses canonical storage export and debug bundle when a
   assert.strictEqual(backup.schemaVersion, 4);
   assert.strictEqual(backup.userData.profile.userId, "portable_user");
   assert.strictEqual(backup.debugBundle.session.id, "session_1");
+  assert.strictEqual(backup.integrity.hasCanonicalUserData, true);
+  assert.strictEqual(backup.integrity.hasDebugBundle, true);
+  assert.strictEqual(backup.integrity.profileUserId, "portable_user");
+  assert.strictEqual(backup.integrity.practiceJournalCount, 1);
+  assert.strictEqual(backup.integrity.schemaVersion, 4);
   assert.strictEqual(backup.state, undefined);
+});
+
+test("buildFullLocalBackup can target a non-default imported user", function() {
+  resetEnv();
+  var exportedUserIds = [];
+  global.sparkCore = {
+    storage: {
+      getCurrentSchemaVersion: function() { return 4; },
+      getUserProfile: function(userId) { return { userId: userId, selectedInstrument: "bass" }; },
+      getSettings: function() { return {}; },
+      getPracticeJournal: function(userId) { return [{ id: "entry_" + userId }]; }
+    }
+  };
+  global.exportSparkUserData = function(options) {
+    exportedUserIds.push(options.userId);
+    return {
+      schemaVersion: options.storage.getCurrentSchemaVersion(),
+      profile: options.storage.getUserProfile(options.userId),
+      settings: options.storage.getSettings(options.userId),
+      practiceJournal: options.storage.getPracticeJournal(options.userId)
+    };
+  };
+  global.buildSparkDebugBundle = function() {
+    return { session: null };
+  };
+
+  global.eval(loadJS("js/desktop/bridge.js"));
+  var backup = buildFullLocalBackup({ userId: "smoke_user" });
+
+  assert.deepStrictEqual(exportedUserIds, ["smoke_user"]);
+  assert.strictEqual(backup.userData.profile.userId, "smoke_user");
+  assert.strictEqual(backup.integrity.profileUserId, "smoke_user");
+  assert.strictEqual(backup.integrity.selectedInstrument, "bass");
+  assert.strictEqual(backup.integrity.practiceJournalCount, 1);
 });
 
 test("exportFullBackupDesktopAware saves the canonical backup payload", async function() {
@@ -126,6 +165,7 @@ test("exportFullBackupDesktopAware saves the canonical backup payload", async fu
     assert.strictEqual(global.sparkDesktop.calls.length, 1);
     assert.strictEqual(global.sparkDesktop.calls[0].schemaVersion, 4);
     assert.strictEqual(global.sparkDesktop.calls[0].userData.profile.userId, "portable_user");
+    assert.strictEqual(global.sparkDesktop.calls[0].integrity.hasCanonicalUserData, true);
   });
 });
 

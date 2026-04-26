@@ -77,6 +77,36 @@ test("buildSmokePlan can build tauri smoke artifacts", function() {
   assert.strictEqual(plan.runtime, "tauri");
 });
 
+test("validatePackagedSmokePayload requires canonical full backup coverage", function() {
+  assert.strictEqual(runner.validatePackagedSmokePayload({
+    ok: true,
+    completed: true,
+    importedUserId: "smoke_user",
+    exportedUserId: "smoke_user",
+    debugBundleSessionId: "plan_1",
+    backupIntegrity: {
+      hasCanonicalUserData: true,
+      hasDebugBundle: true,
+      profileUserId: "smoke_user"
+    }
+  }), true);
+
+  assert.throws(function() {
+    runner.validatePackagedSmokePayload({
+      ok: true,
+      completed: true,
+      importedUserId: "smoke_user",
+      exportedUserId: "smoke_user",
+      debugBundleSessionId: "plan_1",
+      backupIntegrity: {
+        hasCanonicalUserData: true,
+        hasDebugBundle: false,
+        profileUserId: "smoke_user"
+      }
+    });
+  }, /complete full local backup/);
+});
+
 process.on("beforeExit", function() {
   console.log("\n" + passed + " passed, " + failed + " failed");
   if (failed > 0) process.exit(1);
