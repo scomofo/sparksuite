@@ -23,7 +23,9 @@
     }
 
     if (a === "setMidiDevice") {
-      S.activeMidiDeviceId = v;
+      applyUtilityFamilyRuntimeUpdate({ setFields: { activeMidiDeviceId: v } }, function() {
+        S.activeMidiDeviceId = v;
+      });
       syncMidiSettingsStateRequest();
       saveState();
       render();
@@ -54,7 +56,9 @@
     if (a === "openMidiSettings") {
       openUtilityScreenRequest("midi_settings");
       syncMidiSettingsStateRequest();
-      S.screen = SCR.MIDI_SETTINGS;
+      applyUtilityFamilyRuntimeUpdate({ setFields: { screen: SCR.MIDI_SETTINGS } }, function() {
+        S.screen = SCR.MIDI_SETTINGS;
+      });
       render();
       return true;
     }
@@ -62,7 +66,9 @@
     if (a === "openMidiImport") {
       openUtilityScreenRequest("midi_import");
       syncMidiImportStateRequest();
-      S.screen = SCR.MIDI_IMPORT;
+      applyUtilityFamilyRuntimeUpdate({ setFields: { screen: SCR.MIDI_IMPORT } }, function() {
+        S.screen = SCR.MIDI_IMPORT;
+      });
       render();
       return true;
     }
@@ -108,7 +114,9 @@
     if (a === "buildMidiSeedChart") {
       if (typeof buildSeedChartFromImportedMidi === "function") {
         var chart = buildSeedChartFromImportedMidi(S.importedMidi, S.importedMidiAssignments, v);
-        S.importedMidiSeedPreview = chart;
+        applyUtilityFamilyRuntimeUpdate({ setFields: { importedMidiSeedPreview: chart } }, function() {
+          S.importedMidiSeedPreview = chart;
+        });
         syncMidiImportStateRequest({ seedMode: v, seedChart: chart });
         if (chart && typeof openEditor === "function") openEditor("chart", chart);
         else render();
@@ -155,7 +163,9 @@
     if (a === "openCloudSettings") {
       openUtilityScreenRequest("cloud_settings");
       applyCloudWorkflowRequest("open");
-      S.screen = SCR.CLOUD_SETTINGS;
+      applyUtilityFamilyRuntimeUpdate({ setFields: { screen: SCR.CLOUD_SETTINGS } }, function() {
+        S.screen = SCR.CLOUD_SETTINGS;
+      });
       render();
       return true;
     }
@@ -176,8 +186,12 @@
     }
 
     if (a === "feedbackDraftText") {
-      if (!S.feedbackDraft || typeof S.feedbackDraft !== "object") S.feedbackDraft = {};
-      S.feedbackDraft.text = v;
+      applyUtilityFamilyRuntimeUpdate({
+        setFields: { feedbackDraft: Object.assign({}, (S.feedbackDraft && typeof S.feedbackDraft === "object") ? S.feedbackDraft : {}, { text: v }) }
+      }, function() {
+        if (!S.feedbackDraft || typeof S.feedbackDraft !== "object") S.feedbackDraft = {};
+        S.feedbackDraft.text = v;
+      });
       return true;
     }
 
