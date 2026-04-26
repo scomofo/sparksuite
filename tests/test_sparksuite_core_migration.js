@@ -2574,6 +2574,16 @@ test("system action family routes guided and career screen state through the sha
   }));
 });
 
+test("system action family routes live tuner detection state through the shared bridge", function() {
+  var source = loadJS("js/actions/system_family.js");
+
+  assert.strictEqual(source.indexOf("S.tunerNote ="), -1);
+  assert.strictEqual(source.indexOf("S.tunerFreq ="), -1);
+  assert.strictEqual(source.indexOf("S.tunerCents ="), -1);
+  assert.ok(/setLegacyFields\(\{\s*tunerNote: result\.note/.test(source));
+  assert.ok(/setLegacyFields\(\{\s*tunerNote: null/.test(source));
+});
+
 test("tools action family routes imported song and rhythm starts through the shared bridge", function() {
   var runtimeUpdates = [];
   var songRequests = [];
