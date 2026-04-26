@@ -2382,6 +2382,10 @@ test("utility action family routes curriculum and back navigation through the sh
   var runtimeUpdates = [];
   var utilityRequests = [];
   var curriculumSyncs = 0;
+  var midiSettingsSyncs = 0;
+  var midiImportSyncs = [];
+  var cloudRequests = [];
+  var editorOpens = [];
   var homeReturns = [];
   var utilityReturns = [];
   var songNavigations = [];
@@ -2412,6 +2416,23 @@ test("utility action family routes curriculum and back navigation through the sh
   global.syncCurriculumStateRequest = function() {
     curriculumSyncs += 1;
   };
+  global.syncMidiSettingsStateRequest = function() {
+    midiSettingsSyncs += 1;
+  };
+  global.syncMidiImportStateRequest = function(payload) {
+    midiImportSyncs.push(payload || {});
+    return payload;
+  };
+  global.applyCloudWorkflowRequest = function(action, payload) {
+    cloudRequests.push({ action: action, payload: payload });
+    return payload;
+  };
+  global.buildSeedChartFromImportedMidi = function(importedMidi, assignments, mode) {
+    return { id: "seed_" + mode, importedMidi: importedMidi, assignments: assignments };
+  };
+  global.openEditor = function(kind, chart) {
+    editorOpens.push({ kind: kind, chart: chart });
+  };
   global.returnFromHomeFamilyRequest = function(payload) {
     homeReturns.push(payload);
     return payload;
@@ -2428,10 +2449,15 @@ test("utility action family routes curriculum and back navigation through the sh
     stopTimerCalls += 1;
   };
   global.render = function() {};
+  global.saveState = function() {};
   global.S = {
     screen: "song_done",
     tab: "songs",
-    selectedVoicing: 2
+    selectedVoicing: 2,
+    activeMidiDeviceId: null,
+    importedMidi: { sourceName: "demo.mid" },
+    importedMidiAssignments: { track_1: "single_note" },
+    feedbackDraft: { category: "bug" }
   };
   global.SCR = global.SCR || {};
   global.TAB = global.TAB || {};
@@ -2453,23 +2479,56 @@ test("utility action family routes curriculum and back navigation through the sh
 
   eval(loadJS("js/actions/utility_family.js"));
 
+  assert.strictEqual(__actionFamilies.utilities("setMidiDevice", "device_1"), true);
+  assert.strictEqual(__actionFamilies.utilities("openMidiSettings"), true);
+  assert.strictEqual(__actionFamilies.utilities("openMidiImport"), true);
+  assert.strictEqual(__actionFamilies.utilities("buildMidiSeedChart", "practice"), true);
+  assert.strictEqual(__actionFamilies.utilities("openCloudSettings"), true);
+  assert.strictEqual(__actionFamilies.utilities("feedbackDraftText", "Something felt off"), true);
   assert.strictEqual(__actionFamilies.utilities("openCurriculum"), true);
   S.screen = SCR.SONG_DONE;
   assert.strictEqual(__actionFamilies.utilities("back"), true);
 
-  assert.deepStrictEqual(utilityRequests, ["curriculum"]);
+  assert.deepStrictEqual(utilityRequests, ["midi_settings", "midi_import", "cloud_settings", "curriculum"]);
   assert.strictEqual(curriculumSyncs, 1);
-  assert.deepStrictEqual(runtimeUpdates[0], {
+  assert.strictEqual(midiSettingsSyncs, 2);
+  assert.strictEqual(midiImportSyncs.length, 2);
+  assert.strictEqual(midiImportSyncs[1].seedMode, "practice");
+  assert.deepStrictEqual(cloudRequests, [{ action: "open", payload: undefined }]);
+  assert.strictEqual(editorOpens.length, 1);
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.activeMidiDeviceId === "device_1";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.screen === "midi_settings";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.screen === "midi_import";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedMidiSeedPreview && update.setFields.importedMidiSeedPreview.id === "seed_practice";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.screen === "cloud_settings";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.feedbackDraft && update.setFields.feedbackDraft.category === "bug" && update.setFields.feedbackDraft.text === "Something felt off";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
     setFields: { screen: "curriculum" }
-  });
+    });
+  }));
   assert.deepStrictEqual(songNavigations, ["songs_home"]);
   assert.strictEqual(homeReturns.length, 1);
   assert.deepStrictEqual(homeReturns[0], { currentScreen: "home" });
   assert.strictEqual(utilityReturns.length, 0);
   assert.strictEqual(stopTimerCalls, 1);
-  assert.deepStrictEqual(runtimeUpdates[1], {
-    setFields: { selectedVoicing: 0, screen: "home", tab: "songs" }
-  });
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: { selectedVoicing: 0, screen: "home", tab: "songs" }
+    });
+  }));
 });
 
 test("system action family routes guided and career screen state through the shared bridge", function() {
