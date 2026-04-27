@@ -1,0 +1,11 @@
+(function(){
+  window.SparkPianoCurriculum={
+    id:"piano_core",
+    tracks:[
+      {id:"pno_foundation",lessons:["lesson_pno_01","lesson_pno_02","lesson_pno_03"]},
+      {id:"pno_chords",lessons:["lesson_pno_04","lesson_pno_05","lesson_pno_06"]},
+      {id:"pno_lead",lessons:["lesson_pno_07","lesson_pno_08","lesson_pno_09"]},
+      {id:"pno_perf",lessons:["lesson_pno_10"]}
+    ]
+  };
+})();
