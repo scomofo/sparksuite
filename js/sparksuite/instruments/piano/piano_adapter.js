@@ -2,6 +2,7 @@
   function PianoAdapter() {}
 
   function getPianoModule() {
+    if (window.SparkPianoModule) return window.SparkPianoModule;
     var active;
     var candidate;
     var all;
@@ -26,6 +27,49 @@
     return active && active.instrument === "piano" ? active : null;
   }
 
+  function PianoRhythmAdapter() {
+    this.chartIO = typeof SparkChartIO !== "undefined" ? new SparkChartIO() : null;
+  }
+
+  PianoRhythmAdapter.prototype.getLaneCount = function() {
+    return 8;
+  };
+
+  PianoRhythmAdapter.prototype.getLaneLabels = function() {
+    return ["C", "D", "E", "F", "G", "A", "B", "C"];
+  };
+
+  PianoRhythmAdapter.prototype.getDefaultPreset = function() {
+    return "spark_learning";
+  };
+
+  PianoRhythmAdapter.prototype.createPayload = function(context) {
+    context = context || {};
+    var module = getPianoModule();
+    var chartId = module && typeof module.selectChartId === "function"
+      ? module.selectChartId(context)
+      : "pno_pulse_01";
+    var definition = window.SparkPianoChartLibrary && typeof window.SparkPianoChartLibrary.getChartDefinition === "function"
+      ? window.SparkPianoChartLibrary.getChartDefinition(chartId)
+      : { id: chartId, enginePreset: this.getDefaultPreset(), notes: [], phrases: [] };
+    return {
+      chartId: chartId,
+      adapterType: "piano",
+      enginePreset: definition.enginePreset || this.getDefaultPreset(),
+      laneCount: this.getLaneCount(),
+      laneLabels: this.getLaneLabels(),
+      noteSpeed: 1,
+      assistMode: {
+        showTimingText: true,
+        showChordNames: true,
+        failDisabled: true
+      },
+      songChart: this.chartIO && typeof this.chartIO.fromExerciseDefinition === "function"
+        ? this.chartIO.fromExerciseDefinition(definition, this)
+        : definition
+    };
+  };
+
   PianoAdapter.prototype.getId = function() {
     return "pianospark";
   };
@@ -34,7 +78,14 @@
     return "piano";
   };
 
+  PianoAdapter.prototype.getModule = function() {
+    return window.SparkPianoModule || null;
+  };
+
   PianoAdapter.prototype.getCurriculumMap = function() {
+    if (window.SparkPianoModule && typeof window.SparkPianoModule.getLessons === "function") {
+      return window.SparkPianoModule.getLessons();
+    }
     var module = getPianoModule();
     if (module && typeof module.getCurriculumMap === "function") {
       return module.getCurriculumMap();
@@ -52,5 +103,10 @@
       : [];
   };
 
+  PianoAdapter.prototype.getRhythmAdapter = function() {
+    return new PianoRhythmAdapter();
+  };
+
+  window.SparkPianoRhythmAdapter = PianoRhythmAdapter;
   window.SparkPianoAdapter = PianoAdapter;
 })();
