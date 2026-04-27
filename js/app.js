@@ -56,4 +56,25 @@ document.getElementById("header").style.display=S.activeInstrument?"flex":"none"
 document.getElementById("app").style.display="block";
 // Activate remembered instrument
 if(S.activeInstrument){try{SparkInstruments.activate(S.activeInstrument);}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
+
+function loadSparkUiAddon(globalName, src, done){
+  var script;
+  if(window[globalName]){ if(typeof done==="function") done(); return; }
+  script=document.createElement("script");
+  script.src=src;
+  script.onload=function(){ if(typeof done==="function") done(); };
+  script.onerror=function(){ console.error("SparkSuite: failed to load "+src); };
+  document.head.appendChild(script);
+}
+
+function bootLessonProductUi(){
+  loadSparkUiAddon("SparkLessonProductLayer", "js/sparksuite/ui/lesson_product_layer.js", function(){
+    loadSparkUiAddon("SparkLessonDashboardUI", "js/sparksuite/ui/lesson_dashboard_ui.js", function(){
+      if(typeof render==="function") render();
+    });
+  });
+}
+if(window.SparkBootLoader&&typeof SparkBootLoader.afterDeferredScripts==="function")SparkBootLoader.afterDeferredScripts(bootLessonProductUi);
+else setTimeout(bootLessonProductUi,0);
+
 // render() moved to index.html after all instrument pages register
