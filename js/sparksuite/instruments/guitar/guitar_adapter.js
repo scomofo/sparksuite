@@ -34,7 +34,14 @@
     return "guitar";
   };
 
+  GuitarAdapter.prototype.getModule = function() {
+    return window.SparkGuitarModule || null;
+  };
+
   GuitarAdapter.prototype.getCurriculumMap = function() {
+    if (window.SparkGuitarModule && typeof window.SparkGuitarModule.getLessons === "function") {
+      return window.SparkGuitarModule.getLessons();
+    }
     var module = getGuitarModule();
     if (module && typeof module.getCurriculumMap === "function") {
       return module.getCurriculumMap();
