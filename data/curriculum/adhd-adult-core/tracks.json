@@ -1,0 +1,10 @@
+[
+  {"id":"track-theory","title":"Core Theory","units":["unit-thr-1","unit-thr-2"]},
+  {"id":"track-guitar","title":"Guitar","units":["unit-gtr-1","unit-gtr-2"]},
+  {"id":"track-drums","title":"Drums","units":["unit-drm-1","unit-drm-2"]},
+  {"id":"track-piano","title":"Piano","units":["unit-pno-1","unit-pno-2"]},
+  {"id":"track-ukulele","title":"Ukulele","units":["unit-uku-1","unit-uku-2"]},
+  {"id":"track-bass","title":"Bass","units":["unit-bas-1"]},
+  {"id":"track-vocals","title":"Vocals","units":["unit-voc-1"]},
+  {"id":"track-keyboard","title":"Keyboard","units":["unit-key-1"]}
+]
