@@ -1,0 +1,15 @@
+[
+  {"id":"unit-thr-1","title":"Chord Basics","lessons":["thr-001","thr-002"]},
+  {"id":"unit-thr-2","title":"Progressions","lessons":["thr-003","thr-004"]},
+  {"id":"unit-gtr-1","title":"Strumming","lessons":["gtr-001","gtr-002"]},
+  {"id":"unit-gtr-2","title":"Chords","lessons":["gtr-003","gtr-004"]},
+  {"id":"unit-drm-1","title":"Time","lessons":["drm-001","drm-002"]},
+  {"id":"unit-drm-2","title":"Groove","lessons":["drm-003","drm-004"]},
+  {"id":"unit-pno-1","title":"Patterns","lessons":["pno-001","pno-002"]},
+  {"id":"unit-pno-2","title":"Harmony","lessons":["pno-003","pno-004"]},
+  {"id":"unit-uku-1","title":"First Songs","lessons":["uku-001","uku-002"]},
+  {"id":"unit-uku-2","title":"Rhythm","lessons":["uku-003","uku-004"]},
+  {"id":"unit-bas-1","title":"Foundations","lessons":["bas-001","bas-002"]},
+  {"id":"unit-voc-1","title":"Pitch","lessons":["voc-001","voc-002"]},
+  {"id":"unit-key-1","title":"Keys","lessons":["key-001","key-002"]}
+]
