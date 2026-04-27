@@ -1,0 +1,16 @@
+[
+  {
+    "id": "sparksuite-adhd-adult-core",
+    "title": "SparkSuite Adult ADHD Core Curriculum",
+    "tracks": [
+      "track-theory",
+      "track-guitar",
+      "track-drums",
+      "track-piano",
+      "track-ukulele",
+      "track-bass",
+      "track-vocals",
+      "track-keyboard"
+    ]
+  }
+]
