@@ -35,4 +35,14 @@ try{if(typeof choosePerformanceDailyChallenge==="function")choosePerformanceDail
   document.head.appendChild(script);
 })();
 
+// Bass curriculum integration. Loaded after the core bass module so it can
+// patch the existing implementation without replacing bass gameplay.
+(function(){
+  if (window.SparkBassCurriculumIntegration) return;
+  var script=document.createElement("script");
+  script.src="js/sparksuite/instruments/bass/bass_curriculum_integration.js";
+  script.defer=false;
+  document.head.appendChild(script);
+})();
+
 // render() moved to index.html after all instrument pages register
