@@ -115,6 +115,11 @@
     }
 
     var seenLessons = {};
+    var lessonIdSet = {};
+    map.forEach(function(lesson, index) {
+      var lid = lessonId(lesson, index);
+      if (lid) lessonIdSet[lid] = true;
+    });
     var lc = data.LC || {};
     var ln = data.LN || {};
     var hasLevelLabels = Object.keys(lc).length > 0 || Object.keys(ln).length > 0;
@@ -180,6 +185,9 @@
       }
 
       asArray(lesson && lesson.prerequisites).forEach(function(prereq) {
+        // Lesson prerequisites can be either lesson IDs (handoff schema)
+        // or skill IDs (legacy schema). Only flag when neither matches.
+        if (lessonIdSet[prereq]) return;
         if (skillIds.length && !skillSet[prereq]) {
           issues.push(issue({
             code: "PREREQ_NOT_IN_TREE",
@@ -187,8 +195,8 @@
             category: "skill",
             instrument: instrumentId,
             target: prereq,
-            message: "Lesson " + id + " prerequisite " + prereq + " is not in the skill tree",
-            fix: "Add prerequisite skill " + prereq + " to the skill tree or update lesson " + id,
+            message: "Lesson " + id + " prerequisite " + prereq + " is not a known lesson or skill",
+            fix: "Add lesson/skill " + prereq + " or update lesson " + id,
             nav: { screen: "skillTree", focus: "overview" }
           }));
         }

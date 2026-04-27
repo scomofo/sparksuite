@@ -5814,26 +5814,26 @@ test("createDefaultSparkCore registers ukulele and builds a ukulele-ready practi
 
   assert.strictEqual(context.instrumentType, "ukulele");
   assert.ok(context.adapter);
-  assert.strictEqual(context.curriculumMap[0].id, "uke_01");
+  assert.strictEqual(context.curriculumMap[0].id, "lesson_uke_orientation_01");
   assert.ok(context.rhythmAdapter);
   assert.strictEqual(context.rhythmAdapter.getLaneCount(), 4);
   assert.strictEqual(plan.segments.length, 2);
-  assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "uke_01");
+  assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "lesson_uke_orientation_01");
 });
 
 test("ukulele rhythm adapter selects richer chart variants as lessons progress", function() {
   var adapter = new SparkUkuleleRhythmAdapter();
   var switchingPayload = adapter.createPayload({
-    curriculum: { nextLessonId: "uke_03" }
+    curriculum: { nextLessonId: "lesson_uke_c_am_switch_01" }
   });
   var patternPayload = adapter.createPayload({
-    curriculum: { nextLessonId: "uke_04" }
+    curriculum: { nextLessonId: "lesson_uke_island_strum_01" }
   });
   var melodyPayload = adapter.createPayload({
-    curriculum: { nextLessonId: "uke_07" }
+    curriculum: { nextLessonId: "lesson_uke_simple_melody_01" }
   });
   var performancePayload = adapter.createPayload({
-    curriculum: { nextLessonId: "uke_08" }
+    curriculum: { nextLessonId: "lesson_uke_performance_set_01" }
   });
 
   assert.strictEqual(switchingPayload.chartId, "uke_switch_flow_01");

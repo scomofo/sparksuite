@@ -51,7 +51,8 @@ test("buildLearningQueue rehydrates an app-id-only active instrument through the
   SparkInstruments.getActive = originalGetActive;
   assert.ok(Array.isArray(queue));
   assert.ok(queue.some(function(item) {
-    return item && item.type === "lesson" && String(item.id || "").indexOf("uke_") === 0;
+    var s = String((item && item.id) || "");
+    return item && item.type === "lesson" && (s.indexOf("lesson_uke_") === 0 || s.indexOf("uke_") === 0);
   }), "Expected a ukulele lesson suggestion from the rehydrated active instrument");
 });
 

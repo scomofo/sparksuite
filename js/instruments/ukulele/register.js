@@ -1,34 +1,26 @@
 ﻿(function() {
-  // Level metadata covering all 12 lessons (uke_01 .. uke_12). LC/LN must
-  // have an entry for every lesson `num` returned by getCurriculumMap()
-  // — see tests/test_curriculum_guardrails.js#LC/LN cover all curriculum
-  // levels. Levels 5-12 inherit colors from the base 4-color palette
-  // (mod 4) so the chord-card swatches still cycle visually.
+  // Level metadata keyed by lesson `level` (1-8 on the SparkSuite content
+  // scale: beginner → expert). LC/LN must cover every level returned by
+  // getCurriculumMap() — see tests/test_curriculum_guardrails.js. Colors
+  // cycle through the 4-color palette (mod 4) so chord-card swatches
+  // stay visually distinct.
   function getUkuleleLevelColors() {
     return {
-      1: "#22c55e",  2: "#3b82f6",  3: "#f97316",  4: "#8b5cf6",
-      5: "#22c55e",  6: "#3b82f6",  7: "#f97316",  8: "#8b5cf6",
-      9: "#22c55e", 10: "#3b82f6", 11: "#f97316", 12: "#8b5cf6"
+      1: "#22c55e", 2: "#3b82f6", 3: "#f97316", 4: "#8b5cf6",
+      5: "#22c55e", 6: "#3b82f6", 7: "#f97316", 8: "#8b5cf6"
     };
   }
 
-  // Level names mirror the lesson `title` field for the same num in
-  // js/sparksuite/instruments/ukulele/ukulele_lessons.js — keep these in
-  // sync so the UI doesn't show conflicting labels for the same level.
   function getUkuleleLevelNames() {
     return {
-      1: "First Strum",
-      2: "Starter Chords",
-      3: "Smooth Changes",
-      4: "Pattern Flow",
-      5: "Play a Song",
-      6: "Fingerpicked Motion",
-      7: "Melody Notes",
-      8: "Campfire Performance",
-      9: "Barre Basics",
-      10: "Syncopated Strum",
-      11: "Fingerpick Patterns",
-      12: "Performance Ready"
+      1: "Beginner",
+      2: "Early Beginner",
+      3: "Beginner+",
+      4: "Early Intermediate",
+      5: "Intermediate",
+      6: "Intermediate+",
+      7: "Advanced",
+      8: "Expert"
     };
   }
 
@@ -37,7 +29,7 @@
     for (var i = 0; i < lessons.length; i++) {
       if (lessons[i].id === lessonId) return lessons[i].skill;
     }
-    return lessons.length ? lessons[0].skill : "down_strum";
+    return lessons.length ? lessons[0].skill : "uke_down_strum";
   }
 
   function getUkuleleNextLesson() {
@@ -89,7 +81,7 @@
       h += '<div class="card mb12">';
       h += '<div style="font-size:13px;font-weight:800;color:var(--text-muted)">Next Lesson</div>';
       h += '<div style="font-size:18px;font-weight:900;color:var(--text-primary)">' + escHTML(lesson.title) + '</div>';
-      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + escHTML(lesson.desc || "") + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + escHTML(lesson.desc || (Array.isArray(lesson.objectives) ? lesson.objectives.join(" • ") : "")) + '</div>';
       h += '<div style="font-size:11px;color:var(--text-muted);margin-top:8px">Target mastery: ' + Math.round((lesson.masteryRequired || 0) * 100) + '%</div>';
       h += '</div>';
     }
@@ -149,7 +141,8 @@
 
   function renderUkuleleStatsTab() {
     var lessonCount = Array.isArray(S.completedLessons) ? S.completedLessons.filter(function(id) {
-      return String(id || "").indexOf("uke_") === 0;
+      var s = String(id || "");
+      return s.indexOf("lesson_uke_") === 0 || s.indexOf("uke_") === 0;
     }).length : 0;
     var h = '<div class="card mb12"><div style="font-size:18px;font-weight:900;color:var(--text-primary)">Ukulele Progress</div>';
     h += '<div style="font-size:13px;color:var(--text-muted);margin-top:8px">Lessons completed: ' + lessonCount + '</div>';
@@ -169,7 +162,7 @@
     h += '<div class="card mb12"><div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Skill Tree</div>';
     for (var i = 0; i < skills.length; i++) {
       h += '<div style="padding:6px 0;border-top:' + (i ? '1px solid var(--border)' : '0') + '">';
-      h += '<div style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(skills[i].label || skills[i].id) + '</div>';
+      h += '<div style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(skills[i].name || skills[i].label || skills[i].id) + '</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(skills[i].category) + '</div>';
       h += '</div>';
     }
@@ -320,7 +313,7 @@
         if (!grouped[skills[i].category]) grouped[skills[i].category] = [];
         grouped[skills[i].category].push({
           id: skills[i].id,
-          label: skills[i].label,
+          label: skills[i].name || skills[i].label || skills[i].id,
           status: "available",
           progress: 0,
           meta: { category: skills[i].category }
