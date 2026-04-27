@@ -1,19 +1,19 @@
 (function() {
   var GUITAR_SKILL_CHART_MAP = {
-    gtr_down_strum: "power_chords_01",
-    gtr_open_strum: "power_chords_01",
-    gtr_chord_switching: "power_chords_01",
-    gtr_two_chord_song: "power_chords_01",
-    gtr_four_chord_loop: "power_chords_01",
-    gtr_eighth_strum: "power_chords_01",
-    gtr_down_up_strum: "power_chords_01",
-    gtr_accent_strum: "power_chords_01",
-    gtr_muting: "power_chords_01",
-    gtr_fingerpicking: "power_chords_01",
-    gtr_melody: "power_chords_01",
+    gtr_down_strum: "gtr_down_strum_01",
+    gtr_open_strum: "gtr_down_strum_01",
+    gtr_chord_switching: "gtr_switch_01",
+    gtr_two_chord_song: "gtr_switch_01",
+    gtr_four_chord_loop: "gtr_switch_01",
+    gtr_eighth_strum: "gtr_strum_pattern_01",
+    gtr_down_up_strum: "gtr_strum_pattern_01",
+    gtr_accent_strum: "gtr_strum_pattern_01",
+    gtr_muting: "gtr_strum_pattern_01",
+    gtr_fingerpicking: "gtr_fingerpick_01",
+    gtr_melody: "gtr_fingerpick_01",
     gtr_power_chords: "power_chords_01",
-    gtr_song: "power_chords_01",
-    gtr_phrase_retry: "power_chords_01",
+    gtr_song: "gtr_switch_01",
+    gtr_phrase_retry: "gtr_switch_01",
     gtr_performance_set: "power_chords_01"
   };
 
@@ -29,7 +29,7 @@
     context = context || {};
     var lessonId = context.curriculum && context.curriculum.nextLessonId;
     var skill = getLessonSkill(lessonId);
-    return GUITAR_SKILL_CHART_MAP[skill] || "power_chords_01";
+    return GUITAR_SKILL_CHART_MAP[skill] || "gtr_down_strum_01";
   }
 
   window.SparkGuitarModule = {
