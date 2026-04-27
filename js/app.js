@@ -24,4 +24,15 @@ document.getElementById("app").style.display="block";
 // Activate remembered instrument
 if(S.activeInstrument){try{SparkInstruments.activate(S.activeInstrument);}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
 try{if(typeof choosePerformanceDailyChallenge==="function")choosePerformanceDailyChallenge();}catch(e){}
+
+// Product-facing lesson helpers. Keep this as a safe bootstrap so the layer is
+// available even when index.html script ordering changes during migrations.
+(function(){
+  if (window.SparkLessonProductLayer) return;
+  var script=document.createElement("script");
+  script.src="js/sparksuite/ui/lesson_product_layer.js";
+  script.defer=false;
+  document.head.appendChild(script);
+})();
+
 // render() moved to index.html after all instrument pages register
