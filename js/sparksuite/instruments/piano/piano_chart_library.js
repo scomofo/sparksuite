@@ -1,0 +1,33 @@
+(function(){
+  var CHARTS={
+    pno_pulse_01:{id:"pno_pulse_01",bpm:60,enginePreset:"spark_learning",totalBeats:8,notes:[
+      {beat:0,laneMask:1,skillId:"pno_quarter_pulse"},
+      {beat:1,laneMask:2,skillId:"pno_quarter_pulse"},
+      {beat:2,laneMask:4,skillId:"pno_quarter_pulse"},
+      {beat:3,laneMask:8,skillId:"pno_quarter_pulse"}
+    ],phrases:[{id:0,startBeat:0,endBeat:4}]},
+    pno_chord_01:{id:"pno_chord_01",bpm:70,enginePreset:"spark_learning",totalBeats:8,notes:[
+      {beat:0,laneMask:1,skillId:"pno_c_major"},
+      {beat:2,laneMask:2,skillId:"pno_g_major"}
+    ],phrases:[{id:0,startBeat:0,endBeat:4}]},
+    pno_switch_01:{id:"pno_switch_01",bpm:75,enginePreset:"spark_learning",totalBeats:8,notes:[
+      {beat:0,laneMask:1,skillId:"pno_switch"},
+      {beat:2,laneMask:2,skillId:"pno_switch"},
+      {beat:4,laneMask:4,skillId:"pno_switch"}
+    ],phrases:[{id:0,startBeat:0,endBeat:8}]},
+    pno_arp_01:{id:"pno_arp_01",bpm:65,enginePreset:"spark_learning",totalBeats:8,notes:[
+      {beat:0,laneMask:1,skillId:"pno_arpeggio"},
+      {beat:1,laneMask:2,skillId:"pno_arpeggio"},
+      {beat:2,laneMask:4,skillId:"pno_arpeggio"}
+    ],phrases:[{id:0,startBeat:0,endBeat:4}]},
+    pno_melody_01:{id:"pno_melody_01",bpm:80,enginePreset:"spark_learning",totalBeats:8,notes:[
+      {beat:0,laneMask:1,skillId:"pno_melody"},
+      {beat:1,laneMask:2,skillId:"pno_melody"}
+    ],phrases:[{id:0,startBeat:0,endBeat:4}]},
+    pno_perf_01:{id:"pno_perf_01",bpm:90,enginePreset:"spark_challenge",totalBeats:8,notes:[
+      {beat:0,laneMask:1,skillId:"pno_performance"},
+      {beat:2,laneMask:2,skillId:"pno_performance"}
+    ],phrases:[{id:0,startBeat:0,endBeat:8}]}
+  };
+  window.SparkPianoChartLibrary={getChartDefinition:function(id){return CHARTS[id]||CHARTS.pno_pulse_01;},getAll:function(){return CHARTS;}};
+})();
