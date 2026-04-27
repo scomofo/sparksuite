@@ -1,0 +1,33 @@
+(function() {
+  window.SparkVocalsSkillTree = [
+    { id: "vocal_comfort_setup",   name: "Comfort Setup",        category: "fundamentals", prerequisites: [] },
+    { id: "vocal_posture",         name: "Posture",              category: "fundamentals", prerequisites: ["vocal_comfort_setup"] },
+    { id: "vocal_breath",          name: "Quiet Breath",         category: "breath",       prerequisites: ["vocal_posture"] },
+    { id: "pitch_matching",        name: "Pitch Matching",       category: "pitch",        prerequisites: ["vocal_breath"] },
+    { id: "call_response",         name: "Call and Response",    category: "pitch",        prerequisites: ["pitch_matching"] },
+    { id: "three_note_patterns",   name: "Three-Note Patterns",  category: "pitch",        prerequisites: ["call_response"] },
+    { id: "stepwise_melody",       name: "Stepwise Melody",      category: "melody",       prerequisites: ["three_note_patterns"] },
+    { id: "intervals_3rds",        name: "Thirds",               category: "ear_training", prerequisites: ["stepwise_melody"] },
+    { id: "major_scale_vocal",     name: "Major Scale",          category: "pitch",        prerequisites: ["stepwise_melody"] },
+    { id: "range_map",             name: "Range Map",            category: "fundamentals", prerequisites: ["pitch_matching"] },
+    { id: "entrances",             name: "Entrances",            category: "rhythm",       prerequisites: ["call_response"] },
+    { id: "phrase_timing",         name: "Phrase Timing",        category: "rhythm",       prerequisites: ["entrances"] },
+    { id: "syncopation_vocal",     name: "Syncopation Intro",    category: "rhythm",       prerequisites: ["phrase_timing"] },
+    { id: "vowels",                name: "Vowels",               category: "tone",         prerequisites: ["vocal_breath"] },
+    { id: "resonance",             name: "Forward Resonance",    category: "tone",         prerequisites: ["vowels"] },
+    { id: "dynamics",              name: "Dynamics",             category: "musicality",   prerequisites: ["resonance"] },
+    { id: "consonants",            name: "Consonants",           category: "diction",      prerequisites: ["vowels"] },
+    { id: "song_phrase",           name: "Short Song Phrase",    category: "song",         prerequisites: ["stepwise_melody", "phrase_timing"] },
+    { id: "verse_chorus",          name: "Verse and Chorus",     category: "song",         prerequisites: ["song_phrase"] },
+    { id: "record_listen",         name: "Record and Listen",    category: "feedback",     prerequisites: ["song_phrase"] },
+    { id: "harmony_drone",         name: "Drone Pitch",          category: "harmony",      prerequisites: ["pitch_matching"] },
+    { id: "harmony_third",         name: "Harmony Third",        category: "harmony",      prerequisites: ["intervals_3rds", "harmony_drone"] },
+    { id: "mic_technique",         name: "Mic Technique",        category: "performance",  prerequisites: ["verse_chorus"] },
+    { id: "confidence_take",       name: "Confidence Take",      category: "performance",  prerequisites: ["record_listen"] },
+    { id: "vocal_performance_set", name: "Performance Set",      category: "performance",  prerequisites: ["mic_technique", "confidence_take"] },
+    { id: "vocal_phrase_retry",    name: "Phrase Retry",         category: "performance",  prerequisites: [] },
+    { id: "call_response_improv",  name: "Call-Response Improv", category: "creative",     prerequisites: [] },
+    { id: "background_vocals",     name: "Background Vocals",    category: "harmony",      prerequisites: [] },
+    { id: "full_vocal_song",       name: "Full Vocal Song",      category: "performance",  prerequisites: [] }
+  ];
+})();

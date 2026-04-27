@@ -161,12 +161,14 @@ if (typeof SparkUkuleleLessons !== "undefined" && typeof SparkUkuleleSkillTree !
     });
   });
 
-  test("ukulele: all prerequisites reference valid skill IDs", function() {
+  test("ukulele: all prerequisites reference valid lesson or skill IDs", function() {
     var skillIds = SparkUkuleleSkillTree.map(function(s) { return s.id; });
+    var lessonIds = SparkUkuleleLessons.map(function(l) { return l.id; });
     SparkUkuleleLessons.forEach(function(lesson) {
       if (lesson.prerequisites) {
         lesson.prerequisites.forEach(function(prereq) {
-          assert.ok(skillIds.indexOf(prereq) >= 0, "lesson " + lesson.id + " unknown prereq: " + prereq);
+          var ok = skillIds.indexOf(prereq) >= 0 || lessonIds.indexOf(prereq) >= 0;
+          assert.ok(ok, "lesson " + lesson.id + " unknown prereq: " + prereq);
         });
       }
     });

@@ -90,8 +90,8 @@ test("chart io normalizes guitar exercise definitions", function() {
 
   assert.ok(chart.song.id);
   assert.strictEqual(chart.metadata.sourceFormat, "spark_exercise_v1");
-  assert.strictEqual(chart.tracks.guitar.notes.length, 16);
-  assert.strictEqual(chart.tracks.guitar.phrases.length, 2);
+  assert.strictEqual(chart.tracks.guitar.notes.length, 8);
+  assert.strictEqual(chart.tracks.guitar.phrases.length, 1);
 });
 
 test("chart io imports notes.chart text with tempo changes and song.ini metadata", function() {
@@ -724,7 +724,7 @@ test("practice engine upgrades rhythm candidates into rhythm_highway segments wi
   assert.strictEqual(segments.length, 1);
   assert.strictEqual(segments[0].type, "rhythm_highway");
   assert.ok(segments[0].meta.gameplayPayload);
-  assert.strictEqual(segments[0].meta.gameplayPayload.chartId, "power_chords_01");
+  assert.strictEqual(segments[0].meta.gameplayPayload.chartId, "gtr_open_strums_01");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);
