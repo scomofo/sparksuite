@@ -1,0 +1,8 @@
+{
+  "id": "sparksuite-adhd-adult-core",
+  "version": "2026.04.27",
+  "curriculums": "data/curriculum/adhd-adult-core/curriculums.json",
+  "tracks": "data/curriculum/adhd-adult-core/tracks.json",
+  "units": "data/curriculum/adhd-adult-core/units.json",
+  "lessons": "data/curriculum/adhd-adult-core/lessons.json"
+}
