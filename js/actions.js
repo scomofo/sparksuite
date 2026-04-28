@@ -540,7 +540,7 @@ window.act=function(a,v){
     render();return;
   }
   if(a==="openPracticePlan"){
-    openPracticePlanScreenRequest();
+    openPracticePlanScreenRequest(v ? { lessonId: v } : undefined);
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function")SparkProgressBridge.applyLegacyActivityRuntime({setFields:{screen:SCR.PLAN}});
     else S.screen=SCR.PLAN;
     render();return;
