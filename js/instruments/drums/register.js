@@ -66,7 +66,6 @@
       S.tab = "practice";
     }
 
-    // 🔥 FIX: trigger UI navigation instead of silent session start
     if (typeof act === "function") {
       act("openPracticePlan");
     }
@@ -108,6 +107,11 @@
     id: "drumspark",
     instrument: "drums",
     name: "Drums",
+
+    icon: "🥁",
+    iconImage: "resources/instruments/drums/card.png",
+    heroImage: "resources/instruments/drums/hero.jpg",
+
     available: true,
     getLessons: function() {
       ensureDrumRuntime();
