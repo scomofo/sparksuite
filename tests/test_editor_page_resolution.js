@@ -44,6 +44,9 @@ function resetEnvironment() {
   global.validateEditorObject = function() { return []; };
   global.renderVisualTimeline = function() { return "<div>timeline</div>"; };
   global.renderEditorInspector = function() { return "<div>inspector</div>"; };
+  delete global.getEditorTimelineRange;
+  delete global.getEditorBpm;
+  delete global.buildTimelineGridLines;
 }
 
 function test(name, fn) {
@@ -97,6 +100,20 @@ test("editorPage ignores malformed timeline numbers", function() {
   assert.ok(html.indexOf("Playhead: 0.00s") >= 0);
   assert.ok(html.indexOf("Beat 1 (0.00s)") >= 0);
   assert.ok(html.indexOf("NaNs") === -1);
+});
+
+test("editor surfaces expose keyboard handlers for selectable rows", function() {
+  var source = loadJS("js/pages/editor.js");
+  assert.ok(source.indexOf('role="button" tabindex="0" onclick="act(\\\'editorSelect\\\',') >= 0);
+});
+
+test("editorPage renders when optional validator is not loaded", function() {
+  delete global.validateEditorObject;
+
+  var html = editorPage();
+
+  assert.ok(html.indexOf("<h2>Editor</h2>") >= 0);
+  assert.ok(html.indexOf("Validation") === -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

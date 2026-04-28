@@ -86,5 +86,26 @@ test("performanceStatsPage ignores sentinel focus and song labels", function() {
   assert.strictEqual(html.indexOf("NaN"), -1);
 });
 
+test("performanceStatsPage can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return { runtimeState: { performanceStatsFocus: "top" } };
+    }
+  };
+  global.getPerformanceTopSongs = function() {
+    return [
+      { songId: "Night Drive", bestScore: 4200 }
+    ];
+  };
+
+  global.eval(loadJS("js/pages/performance_stats.js"));
+
+  var html = performanceStatsPage();
+  assert.ok(html.indexOf(">top<") >= 0 || html.indexOf(">top</button>") >= 0);
+  assert.ok(html.indexOf("Night Drive") >= 0);
+  assert.ok(html.indexOf("4200 pts") >= 0);
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

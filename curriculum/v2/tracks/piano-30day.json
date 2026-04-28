@@ -1,0 +1,1249 @@
+{
+  "version": "2026-04-24",
+  "instrument": "piano",
+  "title": "Piano 30-Day ADHD-First Track",
+  "session_count": 30,
+  "sessions": [
+    {
+      "id": "pno-d01",
+      "instrument": "piano",
+      "day": 1,
+      "title": "Find middle C",
+      "novelty_count": 1,
+      "new_elements": [
+        "keyboard-geography"
+      ],
+      "prerequisites": [],
+      "target_duration_min": 10,
+      "focus_song": "C 5-finger RH",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d01-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d01-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d01-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d01-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d02",
+      "instrument": "piano",
+      "day": 2,
+      "title": "\"Ode to Joy\" (first 4 bars, RH)",
+      "novelty_count": 1,
+      "new_elements": [
+        "rh-melody"
+      ],
+      "prerequisites": [
+        "pno-d01"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "Ode intro",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d02-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d02-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d02-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d02-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d03",
+      "instrument": "piano",
+      "day": 3,
+      "title": "Quarter, half, whole",
+      "novelty_count": 1,
+      "new_elements": [
+        "note-durations"
+      ],
+      "prerequisites": [
+        "pno-d02"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "same, with rhythm",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d03-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d03-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d03-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d03-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "pno-d04",
+      "instrument": "piano",
+      "day": 4,
+      "title": "LH 5-finger in C",
+      "novelty_count": 1,
+      "new_elements": [
+        "left-hand-alone"
+      ],
+      "prerequisites": [
+        "pno-d03"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "C-position LH",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d04-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d04-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d04-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d04-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d05",
+      "instrument": "piano",
+      "day": 5,
+      "title": "\"Ode to Joy\" hands-together",
+      "novelty_count": 1,
+      "new_elements": [
+        "coordinating-hands"
+      ],
+      "prerequisites": [
+        "pno-d04"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "Ode full A-section",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d05-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d05-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d05-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d05-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d06",
+      "instrument": "piano",
+      "day": 6,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "pno-d05"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d06-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d06-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d06-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d06-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d07",
+      "instrument": "piano",
+      "day": 7,
+      "title": "C-major triad (RH)",
+      "novelty_count": 1,
+      "new_elements": [
+        "chord-shape"
+      ],
+      "prerequisites": [
+        "pno-d06"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "C as a triad",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d07-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d07-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d07-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d07-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d08",
+      "instrument": "piano",
+      "day": 8,
+      "title": "\"Amazing Grace\" RH melody",
+      "novelty_count": 1,
+      "new_elements": [
+        "new-melody"
+      ],
+      "prerequisites": [
+        "pno-d07"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "Amazing Grace A",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d08-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d08-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d08-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d08-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d09",
+      "instrument": "piano",
+      "day": 9,
+      "title": "F-major triad (RH)",
+      "novelty_count": 1,
+      "new_elements": [
+        "second-chord"
+      ],
+      "prerequisites": [
+        "pno-d08"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "C to F switching",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d09-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d09-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d09-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d09-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "4 changes",
+        "prompt": "Hit the target: 4 changes."
+      }
+    },
+    {
+      "id": "pno-d10",
+      "instrument": "piano",
+      "day": 10,
+      "title": "G7 chord (RH)",
+      "novelty_count": 1,
+      "new_elements": [
+        "4-note-chord"
+      ],
+      "prerequisites": [
+        "pno-d09"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "C-F-G7 loop",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d10-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d10-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d10-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d10-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d11",
+      "instrument": "piano",
+      "day": 11,
+      "title": "I-IV-V7 in C",
+      "novelty_count": 1,
+      "new_elements": [
+        "full-progression"
+      ],
+      "prerequisites": [
+        "pno-d10"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "over drum loop",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d11-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d11-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d11-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d11-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "4 min",
+        "prompt": "Stay with it for 4 min."
+      }
+    },
+    {
+      "id": "pno-d12",
+      "instrument": "piano",
+      "day": 12,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "pno-d11"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d12-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d12-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d12-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d12-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d13",
+      "instrument": "piano",
+      "day": 13,
+      "title": "LH root-notes under chords",
+      "novelty_count": 1,
+      "new_elements": [
+        "bass-with-chords"
+      ],
+      "prerequisites": [
+        "pno-d12"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "same progression",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d13-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d13-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d13-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d13-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d14",
+      "instrument": "piano",
+      "day": 14,
+      "title": "Broken-chord LH pattern",
+      "novelty_count": 1,
+      "new_elements": [
+        "alberti-lite"
+      ],
+      "prerequisites": [
+        "pno-d13"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "\"Let It Be\" intro",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d14-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d14-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d14-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d14-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d15",
+      "instrument": "piano",
+      "day": 15,
+      "title": "\"Let It Be\" full intro",
+      "novelty_count": 1,
+      "new_elements": [
+        "application"
+      ],
+      "prerequisites": [
+        "pno-d14"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "LB intro",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d15-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d15-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d15-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d15-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d16",
+      "instrument": "piano",
+      "day": 16,
+      "title": "F sharp and the black keys",
+      "novelty_count": 1,
+      "new_elements": [
+        "first-accidental"
+      ],
+      "prerequisites": [
+        "pno-d15"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "G 5-finger position",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d16-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d16-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d16-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d16-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d17",
+      "instrument": "piano",
+      "day": 17,
+      "title": "Moving to G position",
+      "novelty_count": 1,
+      "new_elements": [
+        "key-change"
+      ],
+      "prerequisites": [
+        "pno-d16"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "G I-IV-V7",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d17-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d17-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d17-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d17-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d18",
+      "instrument": "piano",
+      "day": 18,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "pno-d17"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d18-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d18-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d18-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d18-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d19",
+      "instrument": "piano",
+      "day": 19,
+      "title": "Reading treble clef",
+      "novelty_count": 1,
+      "new_elements": [
+        "staff-reading-intro"
+      ],
+      "prerequisites": [
+        "pno-d18"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "sight-read 4 bars",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d19-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d19-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d19-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d19-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "4 min",
+        "prompt": "Stay with it for 4 min."
+      }
+    },
+    {
+      "id": "pno-d20",
+      "instrument": "piano",
+      "day": 20,
+      "title": "Reading bass clef",
+      "novelty_count": 1,
+      "new_elements": [
+        "lh-staff"
+      ],
+      "prerequisites": [
+        "pno-d19"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "sight-read 4 bars",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d20-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d20-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d20-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d20-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "4 min",
+        "prompt": "Stay with it for 4 min."
+      }
+    },
+    {
+      "id": "pno-d21",
+      "instrument": "piano",
+      "day": 21,
+      "title": "\"Imagine\" intro (RH)",
+      "novelty_count": 1,
+      "new_elements": [
+        "classic-pop"
+      ],
+      "prerequisites": [
+        "pno-d20"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "Imagine intro",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d21-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d21-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d21-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d21-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d22",
+      "instrument": "piano",
+      "day": 22,
+      "title": "\"Imagine\" hands-together",
+      "novelty_count": 1,
+      "new_elements": [
+        "application"
+      ],
+      "prerequisites": [
+        "pno-d21"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "same, H-T",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d22-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d22-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d22-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d22-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d23",
+      "instrument": "piano",
+      "day": 23,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "pno-d22"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d23-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d23-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d23-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d23-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d24",
+      "instrument": "piano",
+      "day": 24,
+      "title": "Dotted quarter-eighth",
+      "novelty_count": 1,
+      "new_elements": [
+        "new-rhythm"
+      ],
+      "prerequisites": [
+        "pno-d23"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "apply to known piece",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d24-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d24-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d24-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d24-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d25",
+      "instrument": "piano",
+      "day": 25,
+      "title": "Inversions of C and F",
+      "novelty_count": 1,
+      "new_elements": [
+        "voice-leading"
+      ],
+      "prerequisites": [
+        "pno-d24"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "smoother progression",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d25-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d25-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d25-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d25-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d26",
+      "instrument": "piano",
+      "day": 26,
+      "title": "Dynamics",
+      "novelty_count": 1,
+      "new_elements": [
+        "piano-vs-forte"
+      ],
+      "prerequisites": [
+        "pno-d25"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "apply to Ode or LB",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d26-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d26-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d26-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d26-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d27",
+      "instrument": "piano",
+      "day": 27,
+      "title": "Pedaling (sustain)",
+      "novelty_count": 1,
+      "new_elements": [
+        "right-foot-intro"
+      ],
+      "prerequisites": [
+        "pno-d26"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "apply to Imagine",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d27-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d27-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d27-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d27-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d28",
+      "instrument": "piano",
+      "day": 28,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "pno-d27"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d28-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d28-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d28-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d28-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d29",
+      "instrument": "piano",
+      "day": 29,
+      "title": "Showcase prep",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "pno-d28"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user's piece",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d29-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d29-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d29-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d29-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "pno-d30",
+      "instrument": "piano",
+      "day": 30,
+      "title": "Showcase day",
+      "novelty_count": 1,
+      "new_elements": [
+        "record-yourself"
+      ],
+      "prerequisites": [
+        "pno-d29"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user's piece",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "pno-d30-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "pno-d30-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "pno-d30-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "pno-d30-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "record_save",
+        "prompt": "Record a take you want to keep."
+      }
+    }
+  ],
+  "required_chords": [
+    "C-major",
+    "F-major",
+    "G7",
+    "Am",
+    "Dm",
+    "Em",
+    "C-major-first-inversion",
+    "F-major-first-inversion"
+  ],
+  "required_scales": [],
+  "required_notes_and_scales": [],
+  "required_songs": [],
+  "required_pieces": [
+    "Ode to Joy",
+    "Amazing Grace",
+    "Let It Be intro",
+    "Imagine intro",
+    "Twinkle Twinkle"
+  ]
+}

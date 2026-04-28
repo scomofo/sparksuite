@@ -1,0 +1,14 @@
+[
+  { "id": "down_strum", "name": "Down Strum", "category": "rhythm", "prerequisites": [] },
+  { "id": "basic_chords", "name": "Starter Chords", "category": "harmony", "prerequisites": ["down_strum"] },
+  { "id": "chord_switching", "name": "Smooth Chord Changes", "category": "harmony", "prerequisites": ["basic_chords"] },
+  { "id": "strumming_patterns", "name": "Island Strum Patterns", "category": "rhythm", "prerequisites": ["chord_switching"] },
+  { "id": "songs", "name": "Song Flow", "category": "performance", "prerequisites": ["strumming_patterns"] },
+  { "id": "fingerpicking", "name": "Fingerpicked Motion", "category": "technique", "prerequisites": ["songs"] },
+  { "id": "melody", "name": "Melody Notes", "category": "melody", "prerequisites": ["fingerpicking"] },
+  { "id": "performance", "name": "Campfire Performance", "category": "performance", "prerequisites": ["melody"] },
+  { "id": "barre_chords", "name": "Barre Chord Control", "category": "harmony", "prerequisites": ["performance"] },
+  { "id": "syncopation", "name": "Syncopated Strums", "category": "rhythm", "prerequisites": ["barre_chords"] },
+  { "id": "advanced_fingerpick", "name": "Advanced Fingerpicking", "category": "technique", "prerequisites": ["syncopation"] },
+  { "id": "full_performance", "name": "Full Performance Flow", "category": "performance", "prerequisites": ["advanced_fingerpick"] }
+]

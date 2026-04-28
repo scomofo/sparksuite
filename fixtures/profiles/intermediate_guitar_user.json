@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 3,
+  "userId": "intermediate_guitar_user",
+  "xp": 420,
+  "level": 4,
+  "selectedInstrument": "guitar",
+  "mastery": {
+    "gtr-d01": {
+      "mastery": 0.82
+    },
+    "gtr-d02": {
+      "mastery": 0.71
+    }
+  },
+  "streaks": {
+    "guitar": 5
+  },
+  "achievements": ["first_lesson"],
+  "settings": {
+    "gameplay": {
+      "inputLatencyOffsetMs": -18,
+      "hitWindowMs": 140,
+      "noteSpeed": 0.32
+    },
+    "accessibility": {
+      "reducedMotion": false,
+      "highContrast": false,
+      "noteSize": "normal",
+      "laneLabels": true,
+      "colorblindSafeLanes": false
+    }
+  }
+}

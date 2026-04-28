@@ -1,0 +1,25 @@
+{
+  "id": "come_as_you_are_bass_chords",
+  "title": "Come As You Are",
+  "artist": "Nirvana",
+  "bpm": 121,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Intro", "startSec": 0, "endSec": 5.95 },
+    { "id": 1, "name": "Verse", "startSec": 5.95, "endSec": 11.901 },
+    { "id": 2, "name": "Chorus", "startSec": 11.901, "endSec": 17.851 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.496, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 2, "t": 0.496, "dur": 0.496, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 3, "t": 0.992, "dur": 0.496, "type": "tap", "chord": "A", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 4, "t": 1.488, "dur": 0.496, "type": "tap", "chord": "C", "notes": ["C3"], "laneLabel": "C", "strum": "tap" },
+    { "id": 5, "t": 1.983, "dur": 0.496, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 6, "t": 2.479, "dur": 0.496, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 7, "t": 2.975, "dur": 0.496, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 8, "t": 3.471, "dur": 0.496, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" }
+  ]
+}

@@ -153,7 +153,7 @@ function renderEditorItemsList(obj){
       var item = entry.item;
       var itemId = pianoNormalizeEditorItemId(item.id);
       var selected = itemId && String(S.editorSelectedId)===String(itemId);
-      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'"'+(itemId?' onclick="act(\'editorSelect\',\''+itemId+'\')"':'')+'>';
+      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'"'+(itemId?' role="button" tabindex="0" onclick="act(\'editorSelect\',\''+itemId+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelect\',\''+itemId+'\')}"':'')+'>';
       h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(pianoFirstEditorTextToken(item.id, entry.kind))+'</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(getEditorItemSummary(entry.kind, item))+'</div>';
       h += '</div>';

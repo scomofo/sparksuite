@@ -1,3 +1,14 @@
+﻿/* SparkSuite merge guard: _renderLauncherOrShowroomOverride
+ * During the convergence/converged-clean merge, render.js may load before
+ * render_showroom.js. Keep boot from crashing; the correct implementation is
+ * still preferred when window._renderLauncherOrShowroomOverride is present.
+ */
+var _renderLauncherOrShowroomOverride =
+  (typeof window !== "undefined" && typeof window._renderLauncherOrShowroomOverride === "function")
+    ? window._renderLauncherOrShowroomOverride.bind(window)
+    : function _renderLauncherOrShowroomOverrideFallback() {
+        return false;
+      };
 // js/render.js
 // Suite render orchestration extracted from js/app.js.
 // Owns: theme application, the top-level render() entry point, the
@@ -11,7 +22,7 @@
 
 // Used as the controlled-input value for the onboarding overlay's text field.
 // IMPORTANT: returns the original `value` (not the trimmed one) so that
-// trailing whitespace is preserved during active typing — re-renders fire
+// trailing whitespace is preserved during active typing â€” re-renders fire
 // on every keystroke via `oninput` and the trimmed form would strip
 // user-typed spaces. The trimmed form is used only to detect meaningless
 // values (empty / "undefined" / "null" / "nan").
@@ -41,72 +52,57 @@ function _writeAppHtml(html){
 }
 
 var _lastScreen="";
-function render(){
+var _renderQueued = false;
+
+function _renderNow(){
   try{_renderInner();}catch(e){
     console.error("Render error:",e);
-    _writeAppHtml('<div class="card" style="margin:20px;text-align:center"><h2>Something went wrong</h2><p style="color:var(--text-muted);margin:8px 0">'+escHTML(String(e.message||e))+'</p><button class="btn" onclick="location.reload()" style="background:#FF6B6B;color:#fff;margin-top:12px">Reload</button></div>');
+    _writeAppHtml('<div class="card" style="margin:20px;text-align:center"><h2>Something went wrong</h2><p style="color:var(--text-muted);margin:8px 0">'+escHTML(String(e.message||e))+'</p><button class="btn" onclick="act(\'appReload\')" style="background:#FF6B6B;color:#fff;margin-top:12px">Reload</button></div>');
   }
 }
 
-// Build the suite-wide overlay HTML (confetti, XP/badge/break/undo toasts,
-// shortcut overlay). Returns a string and fires the SparkConfetti side
-// effect when applicable. Used by both the legacy in-instrument renderer
-// and the Showroom dispatch so overlays appear on every page.
-function _renderOverlays(){
-  var h = "";
-  // Cache `now` once so the four duration checks below stay consistent and
-  // we avoid four repeated Date.now() calls per render tick.
-  var now = Date.now();
-  if (S.showConfetti) {
-    // Generate the burst exactly once per S.showConfetti cycle. The inline
-    // fallback HTML must persist across re-renders for the duration of the
-    // animation (timer ticks fire render() every second), so we cache it on
-    // S._confettiHtml and re-append it on every render until the timeout
-    // clears both flags. SparkConfetti.burst() injects its own DOM, so its
-    // cached html is "" — only the guard is needed.
-    if (!S._confettiFired) {
-      S._confettiFired = true;
-      if (typeof SparkConfetti !== "undefined") {
-        SparkConfetti.burst();
-        S._confettiHtml = "";
-      } else {
-        var cols = ["#FF6B6B","#4ECDC4","#45B7D1","#FFE66D","#96CEB4","#FF8A5C"];
-        var ch = '<div style="position:fixed;inset:0;pointer-events:none;z-index:999">';
-        for (var i = 0; i < 40; i++)
-          ch += '<div style="position:absolute;left:'+Math.random()*100+'%;top:-20px;width:10px;height:10px;border-radius:'+(Math.random()>0.5?"50%":"2px")+';background:'+cols[i%6]+';animation:cF '+(1.5+Math.random())+'s ease-in forwards;animation-delay:'+Math.random()*0.5+'s"></div>';
-        ch += '</div>';
-        S._confettiHtml = ch;
-      }
-      setTimeout(function() { S._confettiFired = false; S._confettiHtml = ""; }, 2600);
-    }
-    if (S._confettiHtml) h += S._confettiHtml;
+function render(options){
+  if(options===true || (options && options.sync)){
+    _renderQueued = false;
+    _renderNow();
+    return;
   }
-  if (S.newBadge)
-    h += '<div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:16px 32px;box-shadow:0 8px 30px rgba(255,138,92,.4);animation:sD .5s ease;text-align:center"><div style="font-size:32px">'+S.newBadge.icon+'</div><div style="font-weight:800;font-size:16px;color:#333">'+S.newBadge.label+'</div><div style="font-size:12px;color:#555">'+S.newBadge.desc+'</div></div>';
-  if (S.showUndoToast)
-    h += '<div class="undo-toast"><span>Progress reset.</span><button onclick="act(\'undoReset\')">Undo</button><span class="countdown">'+S.undoTimer+'</span></div>';
-  if (S.xpToast && now - S.xpToast.time < 1500) {
-    if (S.xpToast.jackpot)
-      h += '<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:20px;padding:12px 28px;box-shadow:0 6px 24px rgba(255,138,92,.6);animation:sD .3s ease;font-weight:900;color:#fff;font-size:20px;text-align:center">&#127873; JACKPOT! +'+S.xpToast.amount+' XP!</div>';
-    else
-      h += '<div style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#4ECDC4,#45B7D1);border-radius:16px;padding:8px 20px;box-shadow:0 4px 15px rgba(78,205,196,.4);animation:sD .3s ease;font-weight:800;color:#fff;font-size:16px">+'+S.xpToast.amount+' XP!</div>';
+  if(_renderQueued) return;
+  _renderQueued = true;
+  var flush = function(){
+    _renderQueued = false;
+    _renderNow();
+  };
+  if(typeof window !== "undefined" && typeof window.requestAnimationFrame === "function"){
+    window.requestAnimationFrame(flush);
+    return;
   }
-  if (S.microToast && now - S.microToast.time < 2000)
-    h += '<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#FFE66D,#FF8A5C);border-radius:16px;padding:10px 24px;box-shadow:0 4px 15px rgba(255,138,92,.4);animation:sD .3s ease;text-align:center"><span style="font-size:20px;margin-right:6px">'+S.microToast.icon+'</span><span style="font-weight:800;color:#333;font-size:15px">'+S.microToast.msg+'</span></div>';
-  var _contMin = (now - S.sessionStartTime) / 60000;
-  if (S.sessionStartTime > 0 && _contMin >= 20 && !S.breakDismissed)
-    h += '<div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:1000;background:linear-gradient(135deg,#45B7D1,#4ECDC4);border-radius:16px;padding:12px 24px;box-shadow:0 4px 20px rgba(69,183,209,.4);animation:sD .5s ease;text-align:center;max-width:320px"><div style="font-size:20px;margin-bottom:4px">&#9749;</div><div style="font-weight:800;color:#fff;font-size:14px">Nice focus! Take a quick break?</div><div style="font-size:11px;color:rgba(255,255,255,.8);margin:4px 0">You\'ve been practicing for '+Math.floor(_contMin)+' min straight</div><button onclick="act(\'dismissBreak\')" style="margin-top:6px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:10px;padding:6px 16px;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Got it!</button></div>';
-  if (S.showShortcuts) h += shortcutOverlay();
-  return h;
+  setTimeout(flush,0);
 }
-
-// First-launch onboarding overlay. Returns a string (empty when not needed).
-// Rendered on top of the launcher; previously this lived inside _renderInner
-// after the launcher gate, which made it unreachable (the gate returned
-// early on `!S.activeInstrument`, the same condition this needs).
+// First-launch onboarding overlay. This stays in render.js because tests
+// assert against the exact normalized-input markup contract here.
 function _renderOnboardingOverlay(){
   if (S.onboardingDone || S.activeInstrument) return "";
   var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);
+  if (typeof SparkOnboardingWelcome !== "undefined" && SparkOnboardingWelcome && typeof SparkOnboardingWelcome.render === "function") {
+    var intentionCard = "";
+    intentionCard += '<section class="showroom-onboarding-intention-card" aria-label="Practice trigger">';
+    intentionCard += '<p class="showroom-onboarding-intention-kicker">Complete this sentence</p>';
+    intentionCard += '<p class="showroom-onboarding-intention-copy">&#8220;Every day, when I&nbsp;&hellip;</p>';
+    intentionCard += '<input type="text" id="intention-input" class="set-input showroom-onboarding-intention-input" placeholder="finish dinner, make coffee..." value="'+escHTML(onboardingPracticeIntention)+'" oninput="act(\'setIntention\',this.value)" aria-label="Practice trigger"/>';
+    intentionCard += '<p class="showroom-onboarding-intention-copy">&#8230;&nbsp;I will open SparkSuite.&#8221;</p>';
+    intentionCard += '</section>';
+    return SparkOnboardingWelcome.render({
+      title: "SparkSuite",
+      subtitle: "Welcome to your practice cockpit",
+      body: "Pick your instrument, set a tiny practice trigger, and we will keep the first run honest instead of pretending your profile already exists.",
+      ctaLabel: "Let's Go!",
+      ctaAction: "act('completeOnboarding')",
+      signInLabel: "Need a minute?",
+      signInAction: "act('completeOnboarding')",
+      afterBodyHtml: intentionCard
+    });
+  }
   var h = "";
   h += '<div style="position:fixed;inset:0;z-index:2000;background:var(--body-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow:auto">';
   h += '<div style="font-size:56px;margin-bottom:12px">&#127930;</div>';
@@ -125,90 +121,16 @@ function _renderOnboardingOverlay(){
 }
 
 function _renderInner(){
-  // Launcher gate — if no instrument active, show clean launcher.
-  // Onboarding overlay rides on top so first-launch users see it.
-  if (!S.activeInstrument) {
-    document.getElementById("header").style.display = "none";
-    _writeAppHtml(_renderOnboardingOverlay() + SparkInstruments.renderLauncher());
-    return;
-  }
+  if (_renderLauncherOrShowroomOverride()) return;
 
-  // NOTE: the Showroom modules in js/showroom/spark-showroom.js
-  // (SparkPracticeMetro, SparkSongLibrary, SparkSessionSummary,
-  // SparkSettings, SparkSongDetails, SparkPath, SparkTuner) are
-  // design-reference mocks — they render hardcoded content and ignore the
-  // active instrument. They MUST NOT be routed onto the live render path.
-  // If you want to revive them as real screens, first wire each renderer
-  // to SparkInstruments.getActive() + SparkStorage.load().
-
-  document.getElementById("header").style.display = "";
-  var backBtn = document.getElementById("launcher-back");
-  if (backBtn) backBtn.style.display = "";
-  var logoText = document.querySelector(".logo-text");
-  if (logoText) {
-    var _inst = SparkInstruments.getActive();
-    logoText.textContent = _inst ? _inst.name + "Spark" : "SparkSuite";
-  }
-  // Apply instrument theme (v2 neon system)
-  if (typeof SparkTheme !== "undefined" && _inst) {
-    SparkTheme.apply(_inst.instrument || "guitar");
-  }
-
-  document.getElementById("hdr-xp").textContent=S.xp;
-  document.getElementById("hdr-str").textContent=S.streak;
-  document.getElementById("snd-btn").textContent=S.soundOn?"\uD83D\uDD0A":"\uD83D\uDD07";
-  document.getElementById("snd-btn").style.opacity=S.soundOn?1:0.4;
-  document.getElementById("dark-btn").textContent=S.darkMode?"\uD83C\uDF19":"\u2600\uFE0F";
+  _syncHeaderChrome();
   var h = _renderOverlays();
 
   // (Onboarding overlay was previously here but is unreachable from this
-  // path — see _renderOnboardingOverlay(), now invoked from the launcher gate.)
+  // path â€” see _renderOnboardingOverlay(), now invoked from the launcher gate.)
 
   var screenKey=S.screen+S.tab;
-  var content="";
-
-  // Shared page registry — instrument pages can override any of these
-  var _sharedPages = {};
-  _sharedPages[SCR.HOME] = typeof homePage === "function" ? homePage : null;
-  _sharedPages[SCR.SESSION] = typeof sessionPage === "function" ? sessionPage : null;
-  _sharedPages[SCR.COMPLETE] = typeof completePage === "function" ? completePage : null;
-  _sharedPages[SCR.DRILL] = typeof drillPage === "function" ? drillPage : null;
-  _sharedPages[SCR.DRILL_DONE] = typeof drillDonePage === "function" ? drillDonePage : null;
-  _sharedPages[SCR.DAILY] = typeof dailyPage === "function" ? dailyPage : null;
-  _sharedPages[SCR.QUIZ] = typeof quizPage === "function" ? quizPage : null;
-  _sharedPages[SCR.STRUM] = typeof strumDetailPage === "function" ? strumDetailPage : null;
-  _sharedPages[SCR.SONG] = typeof songDetailPage === "function" ? songDetailPage : null;
-  _sharedPages[SCR.SONG_DONE] = typeof songDonePage === "function" ? songDonePage : null;
-  _sharedPages[SCR.STEMS] = typeof stemsPage === "function" ? stemsPage : null;
-  _sharedPages[SCR.GUIDED] = typeof guidedSessionPage === "function" ? guidedSessionPage : null;
-  _sharedPages[SCR.GUIDED_DONE] = typeof guidedDonePage === "function" ? guidedDonePage : null;
-  _sharedPages[SCR.PERFORM] = typeof performPage === "function" ? performPage : null;
-  _sharedPages[SCR.PERFORM_DONE] = typeof performDonePage === "function" ? performDonePage : null;
-  _sharedPages[SCR.RHYTHM_HIGHWAY] = typeof rhythmHighwayPage === "function" ? rhythmHighwayPage : null;
-  _sharedPages[SCR.PERFORM_SONG] = typeof performSongPage === "function" ? performSongPage : null;
-  _sharedPages[SCR.PERF_STATS] = typeof performanceStatsPage === "function" ? performanceStatsPage : null;
-  _sharedPages[SCR.PERF_EDITOR] = typeof performanceEditorPage === "function" ? performanceEditorPage : null;
-  _sharedPages[SCR.SKILL_TREE] = typeof skillTreePage === "function" ? skillTreePage : null;
-  _sharedPages[SCR.PERFORM_CALIBRATE] = typeof performCalibrationPage === "function" ? performCalibrationPage : null;
-  _sharedPages[SCR.PLAN] = typeof planPage === "function" ? planPage : null;
-  _sharedPages[SCR.RECOMMENDATIONS] = typeof recommendationsPage === "function" ? recommendationsPage : null;
-  _sharedPages[SCR.CAREER] = typeof careerPage === "function" ? careerPage : null;
-  _sharedPages[SCR.INSIGHTS] = typeof insightsDashboardPage === "function" ? insightsDashboardPage : null;
-  _sharedPages[SCR.CHALLENGES] = typeof challengeHubPage === "function" ? challengeHubPage : null;
-  _sharedPages[SCR.HOME_DASH] = typeof homeDashboardPage === "function" ? homeDashboardPage : null;
-  _sharedPages[SCR.SETTINGS] = typeof settingsPage === "function" ? settingsPage : null;
-  _sharedPages[SCR.ONBOARDING] = typeof onboardingPage === "function" ? onboardingPage : null;
-  _sharedPages[SCR.MIDI_SETTINGS] = typeof midiSettingsPage === "function" ? midiSettingsPage : null;
-  _sharedPages[SCR.MIDI_IMPORT] = typeof midiImportPage === "function" ? midiImportPage : null;
-  _sharedPages[SCR.CLOUD_SETTINGS] = typeof cloudSettingsPage === "function" ? cloudSettingsPage : null;
-  _sharedPages[SCR.CURRICULUM] = typeof curriculumPage === "function" ? curriculumPage : null;
-
-  // Instrument override: if active instrument provides a page for this screen, use it
-  var _instrumentPage = SparkInstruments.getPage(S.screen);
-  var _renderer = _instrumentPage || _sharedPages[S.screen] || null;
-  if (_renderer) {
-    content = _renderer();
-  }
+  var content=_renderActiveScreenContent();
 
   if(screenKey!==_lastScreen){
     h+='<div class="page-transition">'+content+'</div>';
@@ -220,3 +142,5 @@ function _renderInner(){
   // Focus management for modal overlays
   if(S.showShortcuts){var cb=document.getElementById("shortcut-close-btn");if(cb)cb.focus();}
 }
+
+

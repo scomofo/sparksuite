@@ -35,6 +35,18 @@ function resetEnv() {
   global.escHTML = function(value) { return String(value == null ? "" : value); };
   global.act = function() {};
   global.buildAnalyticsSummary = function() { return null; };
+  global.S = {
+    transitionStats: {},
+    performanceStats: {},
+    history: [],
+    streak: 0,
+    sessions: 0
+  };
+  delete global.createAnalyticsSummaryShell;
+  delete global.selectWeakTransitionCandidate;
+  delete global.selectWeakPerformanceCandidate;
+  delete global.selectRhythmCandidate;
+  delete global.selectFingerCandidate;
 }
 
 console.log("\n--- Analytics Page Resolution ---");
@@ -104,6 +116,25 @@ test("analyticsPage ignores malformed numeric metrics", function() {
   assert.ok(html.indexOf("Streak: 0") >= 0);
   assert.ok(html.indexOf("Sessions: 0") >= 0);
   assert.ok(html.indexOf("History Entries: 0") >= 0);
+});
+
+test("analyticsPage renders an empty state when summary builder is not loaded", function() {
+  delete global.buildAnalyticsSummary;
+  global.eval(loadJS("js/pages/analytics.js"));
+
+  var html = analyticsPage();
+
+  assert.ok(html.indexOf("No analytics available yet.") >= 0);
+});
+
+test("analytics engine tolerates missing optional recommendation helpers", function() {
+  global.eval(loadJS("js/analytics/engine.js"));
+
+  var summary = buildAnalyticsSummary();
+
+  assert.ok(summary);
+  assert.deepStrictEqual(summary.recommendations, []);
+  assert.deepStrictEqual(summary.weakestTransitions, []);
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");

@@ -140,11 +140,47 @@ eval(loadJS("js/instruments/bass/app.js"));
 console.log("\n--- Bass Runtime Core Migration ---");
 
 test("guidedStart delegates to shared guided session helper", function() {
-  bassAct("guidedStart", "2");
+  bassAct("start_guided_session", "2");
 
   assert.strictEqual(sparkCoreCalls.length, 1);
   assert.strictEqual(sparkCoreCalls[0].fn, "openGuidedSession");
   assert.strictEqual(sparkCoreCalls[0].payload.sessionNum, 2);
+  assert.strictEqual(S.screen, "guided");
+  assert.strictEqual(saveStateCalls, 1);
+});
+
+test("resume_guided_session reopens the active bass guided shell without restarting it", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "Bass Session 2",
+              bpm: 80,
+              spark: { text: "next" },
+              newMove: { chord: "A" }
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+
+  bassAct("resume_guided_session");
+
+  assert.strictEqual(sparkCoreCalls.length, 0);
+  assert.strictEqual(S.guidedPlan.title, "Bass Session 2");
+  assert.strictEqual(S.guidedSession, 2);
+  assert.strictEqual(S.guidedStep, "songSlice");
   assert.strictEqual(S.screen, "guided");
   assert.strictEqual(saveStateCalls, 1);
 });
@@ -188,6 +224,43 @@ test("legacy practice replay actions delegate to shared retry helpers", function
     { fn: "repeatLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } },
     { fn: "openLegacyPracticeDrill", payload: { durationSec: 60, chordNames: ["E", "A"] } }
   ]);
+});
+
+test("bass shell controls delegate to the shared session runtime for active daily practice", function() {
+  var runtimeCalls = [];
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "practice_1", type: "practice", durationSec: 120, exerciseIds: ["ex_1"] },
+            { id: "song_1", type: "song", durationSec: 240, exerciseIds: ["ex_2"] }
+          ]
+        },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          transport: { status: "running", positionMs: 400 }
+        }
+      };
+    },
+    syncSessionRuntime: function(plan, patch) {
+      sparkCoreCalls.push({ fn: "syncSessionRuntime", plan: plan, patch: patch });
+      return patch;
+    }
+  };
+  global.SparkSessionRuntime = {
+    pauseActiveSegment: function() { runtimeCalls.push("pause"); return true; },
+    resumeActiveSegment: function() { runtimeCalls.push("resume"); return true; },
+    skipActiveSegment: function() { runtimeCalls.push("skip"); return true; }
+  };
+
+  assert.strictEqual(bassAct("sessionPauseBlock"), true);
+  assert.strictEqual(bassAct("sessionResumeBlock"), true);
+  assert.strictEqual(bassAct("sessionSkipBlock"), true);
+  assert.deepStrictEqual(runtimeCalls, ["pause", "resume", "skip"]);
+  assert.strictEqual(sparkCoreCalls.filter(function(call) { return call.fn === "syncSessionRuntime"; }).length, 3);
+  assert.strictEqual(saveStateCalls, 3);
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

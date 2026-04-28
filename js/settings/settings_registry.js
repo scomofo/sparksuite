@@ -5,6 +5,7 @@
       { id: "general", title: "General" },
       { id: "audio", title: "Audio / MIDI" },
       { id: "practice", title: "Practice" },
+      { id: "accessibility", title: "Accessibility" },
       { id: "difficulty", title: "Difficulty" },
       { id: "notifications", title: "Notifications" },
       { id: "display", title: "Display / Theme" },

@@ -2,7 +2,7 @@ function prettyRecommendationUiToken(value){
   var text;
   var lower;
   if(value == null) return "";
-  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if(typeof value !== "string" && typeof value !== "number") return "";
   text = String(value || "").replace(/_/g, " ").trim();
   if(!text) return "";
   lower = text.toLowerCase();
@@ -10,9 +10,14 @@ function prettyRecommendationUiToken(value){
   return text;
 }
 
+function getRecommendationUiCore(){
+  return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+}
+
 function recommendationsPage(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
+  var core = getRecommendationUiCore();
+  var coreView = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var arr = runtimeState && runtimeState.dashboardRecommendations ? runtimeState.dashboardRecommendations : S.recommendations;
@@ -53,15 +58,16 @@ function renderRecommendationModuleProgress(recommendation){
 
 function launchRecommendationById(id){
   var arr = S.recommendations || [];
-  if (window.sparkCore && typeof window.sparkCore.launchDashboardRecommendation === "function") {
-    var coreRequest = window.sparkCore.launchDashboardRecommendation(id);
+  var core = getRecommendationUiCore();
+  if (core && typeof core.launchDashboardRecommendation === "function") {
+    var coreRequest = core.launchDashboardRecommendation(id);
     if (coreRequest && coreRequest.recommendation) {
       recordRecommendationUse(coreRequest.recommendation);
       if(typeof launchPracticeItem === "function") launchPracticeItem(coreRequest.recommendation);
       return;
     }
-  } else if (window.sparkCore && typeof window.sparkCore.getDashboardRecommendationById === "function") {
-    var coreRecommendation = window.sparkCore.getDashboardRecommendationById(id);
+  } else if (core && typeof core.getDashboardRecommendationById === "function") {
+    var coreRecommendation = core.getDashboardRecommendationById(id);
     if (coreRecommendation) {
       recordRecommendationUse(coreRecommendation);
       if(typeof launchPracticeItem === "function") launchPracticeItem(coreRecommendation);

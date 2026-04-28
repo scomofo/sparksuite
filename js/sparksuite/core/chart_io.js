@@ -1,171 +1,198 @@
 (function() {
-  function ChartIO() {}
+  function ChartIO(options) {
+    options = options || {};
+    this.performanceMonitor = options.performanceMonitor
+      || (typeof window !== "undefined" && window.sparkCore ? window.sparkCore.performanceMonitor : null)
+      || null;
+  }
+
+  ChartIO.prototype.setPerformanceMonitor = function(performanceMonitor) {
+    this.performanceMonitor = performanceMonitor || null;
+    return this;
+  };
+
+  ChartIO.prototype.measureChartLoad = function(label, fn) {
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure(label, "chartLoadMs", fn);
+    }
+    return fn();
+  };
 
   ChartIO.prototype.fromExerciseDefinition = function(definition, adapter) {
-    definition = definition || {};
-    var ppq = definition.ppq || 480;
-    var bpm = definition.bpm || 100;
-    var tempoMap = new SparkTempoMap({ ppq: ppq, bpm: bpm });
-    var notes = [];
-    var phrases = [];
+    var self = this;
+    return this.measureChartLoad("chart.load.exercise_definition", function() {
+      definition = definition || {};
+      var ppq = definition.ppq || 480;
+      var bpm = definition.bpm || 100;
+      var tempoMap = new SparkTempoMap({ ppq: ppq, bpm: bpm });
+      var notes = [];
+      var phrases = [];
 
-    var rawNotes = Array.isArray(definition.notes) ? definition.notes : [];
-    for (var i = 0; i < rawNotes.length; i++) {
-      var row = rawNotes[i];
-      notes.push(new SparkNoteEvent({
-        id: row.id || ("evt_" + (i + 1)),
-        tick: Math.round((row.beat || 0) * ppq),
-        tickLength: Math.round((row.lengthBeats || 0) * ppq),
-        laneMask: row.laneMask || 0,
-        flags: row.flags || {},
-        difficulty: definition.difficulty || "easy",
-        instrument: "guitar",
-        label: row.label || "",
-        skillId: row.skillId || null
-      }));
-    }
-
-    var rawPhrases = Array.isArray(definition.phrases) ? definition.phrases : [];
-    for (var j = 0; j < rawPhrases.length; j++) {
-      var phrase = rawPhrases[j];
-      phrases.push(new SparkPhrase({
-        id: phrase.id,
-        name: phrase.name,
-        startTick: Math.round((phrase.startBeat || 0) * ppq),
-        endTick: Math.round((phrase.endBeat || 0) * ppq),
-        flags: phrase.flags || {}
-      }));
-    }
-
-    return new SparkSongChart({
-      song: {
-        id: definition.id,
-        title: definition.title || definition.id || "Rhythm Exercise",
-        artist: definition.artist || "SparkSuite",
-        durationSec: definition.durationSec || ((definition.totalBeats || 16) * (60 / bpm))
-      },
-      tempoMap: tempoMap,
-      tracks: {
-        guitar: {
-          notes: notes,
-          phrases: phrases
-        }
-      },
-      metadata: {
-        sourceFormat: "spark_exercise_v1",
-        laneCount: adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5,
-        chartId: definition.id,
-        enginePreset: definition.enginePreset || "spark_learning"
+      var rawNotes = Array.isArray(definition.notes) ? definition.notes : [];
+      for (var i = 0; i < rawNotes.length; i++) {
+        var row = rawNotes[i];
+        notes.push(new SparkNoteEvent({
+          id: row.id || ("evt_" + (i + 1)),
+          tick: Math.round((row.beat || 0) * ppq),
+          tickLength: Math.round((row.lengthBeats || 0) * ppq),
+          laneMask: row.laneMask || 0,
+          flags: row.flags || {},
+          difficulty: definition.difficulty || "easy",
+          instrument: "guitar",
+          label: row.label || "",
+          skillId: row.skillId || null
+        }));
       }
+
+      var rawPhrases = Array.isArray(definition.phrases) ? definition.phrases : [];
+      for (var j = 0; j < rawPhrases.length; j++) {
+        var phrase = rawPhrases[j];
+        phrases.push(new SparkPhrase({
+          id: phrase.id,
+          name: phrase.name,
+          startTick: Math.round((phrase.startBeat || 0) * ppq),
+          endTick: Math.round((phrase.endBeat || 0) * ppq),
+          flags: phrase.flags || {}
+        }));
+      }
+
+      return new SparkSongChart({
+        song: {
+          id: definition.id,
+          title: definition.title || definition.id || "Rhythm Exercise",
+          artist: definition.artist || "SparkSuite",
+          durationSec: definition.durationSec || ((definition.totalBeats || 16) * (60 / bpm))
+        },
+        tempoMap: tempoMap,
+        tracks: {
+          guitar: {
+            notes: notes,
+            phrases: phrases
+          }
+        },
+        metadata: {
+          sourceFormat: "spark_exercise_v1",
+          laneCount: adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5,
+          chartId: definition.id,
+          enginePreset: definition.enginePreset || "spark_learning"
+        }
+      });
     });
   };
 
   ChartIO.prototype.fromNotesChart = function(chartText, adapter, options) {
-    options = options || {};
-    var sections = parseChartSections(chartText || "");
-    var iniMeta = parseSongIni(options.songIni || "");
-    var songMeta = parseSongSection(sections.Song || [], iniMeta);
-    var syncMeta = parseSyncTrack(sections.SyncTrack || [], songMeta.ppq);
-    var notesMeta = parseNoteTrack(selectNoteTrack(sections, options.trackName), songMeta.ppq);
-    var phrases = buildPhrases(notesMeta, songMeta.ppq);
-    var durationSec = syncMeta.tempoMap.tickToSeconds(notesMeta.lastTickEnd);
+    return this.measureChartLoad("chart.load.notes_chart", function() {
+      options = options || {};
+      var sections = parseChartSections(chartText || "");
+      var iniMeta = parseSongIni(options.songIni || "");
+      var songMeta = parseSongSection(sections.Song || [], iniMeta);
+      var syncMeta = parseSyncTrack(sections.SyncTrack || [], songMeta.ppq);
+      var notesMeta = parseNoteTrack(selectNoteTrack(sections, options.trackName), songMeta.ppq);
+      var phrases = buildPhrases(notesMeta, songMeta.ppq);
+      var durationSec = syncMeta.tempoMap.tickToSeconds(notesMeta.lastTickEnd);
 
-    return new SparkSongChart({
-      song: {
-        id: songMeta.id,
-        title: songMeta.title,
-        artist: songMeta.artist,
-        charter: songMeta.charter,
-        offsetSec: songMeta.offsetSec,
-        durationSec: Math.max(songMeta.durationSec || 0, durationSec + songMeta.offsetSec)
-      },
-      tempoMap: syncMeta.tempoMap,
-      tracks: {
-        guitar: {
-          notes: notesMeta.notes,
-          phrases: phrases
+      return new SparkSongChart({
+        song: {
+          id: songMeta.id,
+          title: songMeta.title,
+          artist: songMeta.artist,
+          charter: songMeta.charter,
+          offsetSec: songMeta.offsetSec,
+          durationSec: Math.max(songMeta.durationSec || 0, durationSec + songMeta.offsetSec)
+        },
+        tempoMap: syncMeta.tempoMap,
+        tracks: {
+          guitar: {
+            notes: notesMeta.notes,
+            phrases: phrases
+          }
+        },
+        metadata: {
+          sourceFormat: "notes_chart_v1",
+          laneCount: adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5,
+          chartId: songMeta.id,
+          enginePreset: options.enginePreset || "spark_learning",
+          trackName: notesMeta.trackName,
+          timeSignatures: syncMeta.timeSignatures
         }
-      },
-      metadata: {
-        sourceFormat: "notes_chart_v1",
-        laneCount: adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5,
-        chartId: songMeta.id,
-        enginePreset: options.enginePreset || "spark_learning",
-        trackName: notesMeta.trackName,
-        timeSignatures: syncMeta.timeSignatures
-      }
+      });
     });
   };
 
   ChartIO.prototype.fromMidiBuffer = function(buffer, adapter, options) {
-    options = options || {};
-    var laneCount = adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5;
-    var iniMeta = parseSongIni(options.songIni || "");
-    var midiMeta = parseMidiBuffer(buffer);
-    var selectedTrack = selectMidiTrack(midiMeta.tracks, options);
-    var selectedNotes = filterMidiTrackNotes(selectedTrack, options);
-    var tempoMap = new SparkTempoMap({
-      ppq: midiMeta.ppq,
-      segments: midiMeta.tempoSegments.length ? midiMeta.tempoSegments : [{ tick: 0, bpm: 120 }]
-    });
-    var noteEvents = buildMidiLaneEvents(selectedNotes, laneCount);
-    var lastTickEnd = getLastTickEnd(selectedNotes) || selectedTrack.lastTickEnd || midiMeta.lastTickEnd || 0;
-    var chartId = iniMeta.id || toChartId(options.title || selectedTrack.name || "imported_midi");
+    return this.measureChartLoad("chart.load.midi_buffer", function() {
+      options = options || {};
+      var laneCount = adapter && adapter.getLaneCount ? adapter.getLaneCount() : 5;
+      var iniMeta = parseSongIni(options.songIni || "");
+      var midiMeta = parseMidiBuffer(buffer);
+      var selectedTrack = selectMidiTrack(midiMeta.tracks, options);
+      var selectedNotes = filterMidiTrackNotes(selectedTrack, options);
+      var tempoMap = new SparkTempoMap({
+        ppq: midiMeta.ppq,
+        segments: midiMeta.tempoSegments.length ? midiMeta.tempoSegments : [{ tick: 0, bpm: 120 }]
+      });
+      var noteEvents = buildMidiLaneEvents(selectedNotes, laneCount);
+      var lastTickEnd = getLastTickEnd(selectedNotes) || selectedTrack.lastTickEnd || midiMeta.lastTickEnd || 0;
+      var chartId = iniMeta.id || toChartId(options.title || selectedTrack.name || "imported_midi");
 
-    return new SparkSongChart({
-      song: {
-        id: chartId,
-        title: iniMeta.name || options.title || selectedTrack.name || "Imported MIDI",
-        artist: iniMeta.artist || options.artist || "Unknown Artist",
-        charter: iniMeta.charter || "",
-        offsetSec: numberOr(iniMeta.offset, 0),
-        durationSec: Math.max(numberOr(iniMeta.duration, 0), tempoMap.tickToSeconds(lastTickEnd))
-      },
-      tempoMap: tempoMap,
-      tracks: {
-        guitar: {
-          notes: noteEvents,
-          phrases: buildMidiPhrases(selectedTrack.markers, lastTickEnd, midiMeta.ppq)
+      return new SparkSongChart({
+        song: {
+          id: chartId,
+          title: iniMeta.name || options.title || selectedTrack.name || "Imported MIDI",
+          artist: iniMeta.artist || options.artist || "Unknown Artist",
+          charter: iniMeta.charter || "",
+          offsetSec: numberOr(iniMeta.offset, 0),
+          durationSec: Math.max(numberOr(iniMeta.duration, 0), tempoMap.tickToSeconds(lastTickEnd))
+        },
+        tempoMap: tempoMap,
+        tracks: {
+          guitar: {
+            notes: noteEvents,
+            phrases: buildMidiPhrases(selectedTrack.markers, lastTickEnd, midiMeta.ppq)
+          }
+        },
+        metadata: {
+          sourceFormat: "notes_mid_v1",
+          laneCount: laneCount,
+          chartId: chartId,
+          enginePreset: options.enginePreset || "spark_learning",
+          trackName: selectedTrack.name || options.trackName || "midi",
+          trackIndex: selectedTrack.index,
+          selectedChannels: getAvailableChannels(selectedNotes),
+          availableChannels: selectedTrack.channels,
+          sourceTrackCount: midiMeta.tracks.length,
+          midiFormat: midiMeta.format,
+          timeSignatures: midiMeta.timeSignatures
         }
-      },
-      metadata: {
-        sourceFormat: "notes_mid_v1",
-        laneCount: laneCount,
-        chartId: chartId,
-        enginePreset: options.enginePreset || "spark_learning",
-        trackName: selectedTrack.name || options.trackName || "midi",
-        trackIndex: selectedTrack.index,
-        selectedChannels: getAvailableChannels(selectedNotes),
-        availableChannels: selectedTrack.channels,
-        sourceTrackCount: midiMeta.tracks.length,
-        midiFormat: midiMeta.format,
-        timeSignatures: midiMeta.timeSignatures
-      }
+      });
     });
   };
 
   ChartIO.prototype.fromPackage = function(pkg, adapter, options) {
-    options = mergeImportOptions(options, pkg && pkg.options);
-    var files = normalizePackageFiles(pkg);
-    var songIni = firstDefined(
-      options.songIni,
-      readPackageText(resolvePackageEntry(files, ["songIni", "song.ini", "ini"]))
-    );
-    var chartText = readPackageText(resolvePackageEntry(files, ["notesChart", "notes.chart", "chart"]));
-    if (chartText) {
-      return this.fromNotesChart(chartText, adapter, mergeImportOptions(options, {
-        songIni: songIni
-      }));
-    }
+    var self = this;
+    return this.measureChartLoad("chart.load.package", function() {
+      options = mergeImportOptions(options, pkg && pkg.options);
+      var files = normalizePackageFiles(pkg);
+      var songIni = firstDefined(
+        options.songIni,
+        readPackageText(resolvePackageEntry(files, ["songIni", "song.ini", "ini"]))
+      );
+      var chartText = readPackageText(resolvePackageEntry(files, ["notesChart", "notes.chart", "chart"]));
+      if (chartText) {
+        return self.fromNotesChart(chartText, adapter, mergeImportOptions(options, {
+          songIni: songIni
+        }));
+      }
 
-    var midiBuffer = readPackageBuffer(resolvePackageEntry(files, ["notesMid", "notes.mid", "notesmid", "midi"]));
-    if (midiBuffer) {
-      return this.fromMidiBuffer(midiBuffer, adapter, mergeImportOptions(options, {
-        songIni: songIni
-      }));
-    }
+      var midiBuffer = readPackageBuffer(resolvePackageEntry(files, ["notesMid", "notes.mid", "notesmid", "midi"]));
+      if (midiBuffer) {
+        return self.fromMidiBuffer(midiBuffer, adapter, mergeImportOptions(options, {
+          songIni: songIni
+        }));
+      }
 
-    throw new Error("Unsupported chart package: expected notes.chart or notes.mid");
+      throw new Error("Unsupported chart package: expected notes.chart or notes.mid");
+    });
   };
 
   ChartIO.prototype.parseSongIni = function(iniText) {
@@ -946,5 +973,13 @@
     return isNaN(parsed) ? fallback : parsed;
   }
 
-  window.SparkChartIO = ChartIO;
+  if (typeof window !== "undefined") {
+    window.SparkChartIO = ChartIO;
+  }
+
+  if (typeof module !== "undefined") {
+    module.exports = {
+      SparkChartIO: ChartIO
+    };
+  }
 })();

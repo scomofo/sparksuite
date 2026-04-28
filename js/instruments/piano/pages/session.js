@@ -30,28 +30,208 @@ function pianoNormalizeSessionBpm(value, fallback) {
   return numeric;
 }
 
+function pianoSessionStepBlockType(step) {
+  if (step === "spark") return "warm_engine";
+  if (step === "review" || step === "newMove") return "drill";
+  if (step === "songSlice") return "song";
+  if (step === "victoryLap") return "cooldown";
+  return null;
+}
+
+function pianoSessionStepActivity(plan, step) {
+  var blockType = pianoSessionStepBlockType(step);
+  return plan && plan.blockActivities && blockType ? plan.blockActivities[blockType] || null : null;
+}
+
+function pianoSessionStepBlock(plan, step) {
+  var blockType = pianoSessionStepBlockType(step);
+  var i;
+  var block;
+  if (!plan || !Array.isArray(plan.blocks) || !blockType) return null;
+  for (i = 0; i < plan.blocks.length; i++) {
+    block = plan.blocks[i];
+    if (block && block.type === blockType) return block;
+  }
+  return null;
+}
+
+function pianoGetSessionCoreView() {
+  var core = (typeof window !== "undefined" && window && window.sparkCore)
+    ? window.sparkCore
+    : (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
+function pianoGetSessionRuntimeState() {
+  var view = pianoGetSessionCoreView();
+  return view && view.runtimeState ? view.runtimeState : null;
+}
+
+function pianoGetSessionPlanView() {
+  var view = pianoGetSessionCoreView();
+  var plan = view && view.plan ? view.plan : null;
+  var context = plan && plan.context ? plan.context : null;
+  if (plan && plan.flow === "guided_session") {
+    if (context && context.guidedPlan) return context.guidedPlan;
+    if (plan._legacyPlan) return plan._legacyPlan;
+    if (Array.isArray(plan.blocks) && plan.blocks.length) return plan;
+  }
+  return S.sessionPlan;
+}
+
+function pianoGetSessionStepValue() {
+  var runtimeState = pianoGetSessionRuntimeState();
+  var runtimeStep = pianoSessionTextToken(runtimeState && runtimeState.guidedStep);
+  return runtimeStep || S.sessionStep;
+}
+
+function pianoGetSessionPausedValue() {
+  var runtimeState = pianoGetSessionRuntimeState();
+  var status = runtimeState && runtimeState.transport ? runtimeState.transport.status : null;
+  if (status === "paused") return true;
+  if (status === "running" || status === "ready" || status === "complete") return false;
+  return !!S.paused;
+}
+
+function pianoGetSessionTimerValue() {
+  var runtimeState = pianoGetSessionRuntimeState();
+  var durationMs = Number(runtimeState && runtimeState.transport && runtimeState.transport.durationMs);
+  var positionMs = Number(runtimeState && runtimeState.transport && runtimeState.transport.positionMs);
+  if (isFinite(durationMs) && durationMs > 0) {
+    if (!isFinite(positionMs) || positionMs < 0) positionMs = 0;
+    if (positionMs > durationMs) positionMs = durationMs;
+    return Math.max(0, Math.ceil((durationMs - positionMs) / 1000));
+  }
+  return typeof S.sessionTimer === "number" && S.sessionTimer > 0 ? S.sessionTimer : 0;
+}
+
+function pianoGetNewMovePhaseValue() {
+  var runtimeState = pianoGetSessionRuntimeState();
+  var runtimePhase = pianoSessionTextToken(runtimeState && runtimeState.guidedNewMovePhase);
+  return runtimePhase || S.newMovePhase;
+}
+
+function pianoGetSessionShellSummary(plan) {
+  var view = pianoGetSessionCoreView();
+  var runtimeState = pianoGetSessionRuntimeState();
+  var segments = view && view.plan && Array.isArray(view.plan.segments) ? view.plan.segments : [];
+  var activeSegment = view && view.activeSegment ? view.activeSegment : null;
+  var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
+  var sessionStep = pianoGetSessionStepValue();
+  var i;
+  var durationMs;
+  var positionMs;
+  var progressPct;
+  var remainingMs;
+  var totalDurationSec = 0;
+  var activeIndex = 0;
+  if (!Array.isArray(plan && plan.blocks) || !plan.blocks.length) return null;
+  if (!activeSegment && activeSegmentId) {
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === activeSegmentId) {
+        activeSegment = segments[i];
+        break;
+      }
+    }
+  }
+  if (!activeSegment) {
+    activeSegment = pianoSessionStepBlock(plan, sessionStep) || plan.blocks[0];
+  }
+  for (i = 0; i < plan.blocks.length; i++) {
+    totalDurationSec += Number(plan.blocks[i] && plan.blocks[i].duration_sec) || 0;
+    if (plan.blocks[i] === activeSegment || (plan.blocks[i] && activeSegment && plan.blocks[i].type === activeSegment.type)) {
+      activeIndex = i;
+    }
+  }
+  durationMs = Number(runtimeState && runtimeState.transport && runtimeState.transport.durationMs);
+  if (!isFinite(durationMs) || durationMs <= 0) durationMs = (Number(activeSegment && activeSegment.duration_sec) || 0) * 1000;
+  positionMs = Number(runtimeState && runtimeState.transport && runtimeState.transport.positionMs);
+  if (!isFinite(positionMs) || positionMs < 0) positionMs = 0;
+  if (durationMs > 0 && positionMs > durationMs) positionMs = durationMs;
+  progressPct = durationMs > 0 ? Math.max(0, Math.min(100, Math.round((positionMs / durationMs) * 100))) : 0;
+  remainingMs = durationMs > positionMs ? (durationMs - positionMs) : 0;
+  return {
+    title: pianoFirstSessionTextToken(plan && plan.title, "Guided session"),
+    activeIndex: activeIndex,
+    blockCount: plan.blocks.length,
+    status: runtimeState && runtimeState.transport && runtimeState.transport.status ? runtimeState.transport.status : "ready",
+    label: pianoFirstSessionTextToken(activeSegment && activeSegment.label, activeSegment && activeSegment.title, activeSegment && activeSegment.type, "Practice block"),
+    durationMin: Math.max(1, Math.round(totalDurationSec / 60)),
+    progressPct: progressPct,
+    statusLabel: (runtimeState && runtimeState.transport && runtimeState.transport.status === "paused" ? "Paused" : ((runtimeState && runtimeState.transport && runtimeState.transport.status === "running") ? "In progress" : "Ready")) + " - " + pianoFirstSessionTextToken(activeSegment && activeSegment.label, activeSegment && activeSegment.title, activeSegment && activeSegment.type, "Practice block"),
+    elapsedLabel: Math.floor(positionMs / 60000) + "m " + Math.floor((positionMs % 60000) / 1000) + "s in block",
+    remainingLabel: Math.floor(remainingMs / 60000) + "m " + Math.floor((remainingMs % 60000) / 1000) + "s left"
+  };
+}
+
+function pianoFormatSessionBlockDuration(durationSec) {
+  var numeric = Number(durationSec);
+  var minutes;
+  if (!isFinite(numeric) || numeric <= 0) return "";
+  minutes = Math.round(numeric / 60);
+  if (!minutes) return "";
+  return minutes + " min block";
+}
+
+function pianoRenderSessionBlockMeta(plan, step) {
+  var activity = pianoSessionStepActivity(plan, step);
+  var block = pianoSessionStepBlock(plan, step);
+  var bits = [];
+  var kind = activity && activity.kind ? pianoSessionTextToken(activity.kind) : "";
+  var duration = pianoFormatSessionBlockDuration(block && block.duration_sec);
+  var songFocus = step === "songSlice"
+    ? pianoFirstSessionTextToken(
+        activity && activity.copy && activity.copy.success,
+        plan && plan.songSlice && plan.songSlice.song,
+        plan && plan.focus_song
+      )
+    : "";
+  if (kind) bits.push(kind);
+  if (duration) bits.push(duration);
+  if (songFocus) bits.push(songFocus);
+  if (!bits.length) return "";
+  return '<div class="text-muted" style="margin:6px 0 10px;font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase">' + escHTML(bits.join(' • ')) + '</div>';
+}
+
 function pianoSessionPage() {
-  var plan = S.sessionPlan;
+  var plan = pianoGetSessionPlanView();
   var planBpm;
+  var shell;
+  var sessionStep = pianoGetSessionStepValue();
+  var sessionTimer = pianoGetSessionTimerValue();
+  var paused = pianoGetSessionPausedValue();
   if (!plan) return '<div class="card"><p>No session loaded.</p>' + backBtnHTML("go_home") + '</div>';
   planBpm = pianoNormalizeSessionBpm(plan.bpm, 80);
+  shell = pianoGetSessionShellSummary(plan);
 
   var html = '<div class="session-screen">';
 
   // Session header
   html += '<div class="session-title">Session ' + plan.num + ': ' + escHTML(pianoFirstSessionTextToken(plan.title, "Guided session")) + '</div>';
   html += '<div class="session-subtitle">Level ' + plan.level + ' \u2022 ' + planBpm + ' BPM</div>';
+  if (shell) {
+    html += typeof SparkSessionShellUI !== "undefined" && SparkSessionShellUI && typeof SparkSessionShellUI.renderLiveCard === "function"
+      ? SparkSessionShellUI.renderLiveCard(shell, {
+          label: "Guided Session Live",
+          accent: "#4ECDC4",
+          fill: "linear-gradient(90deg,#4ECDC4,#45B7D1)",
+          hideControls: true
+        })
+      : "";
+  }
 
   // Step indicator
-  html += sessionStepIndicator(S.sessionStep);
+  html += sessionStepIndicator(sessionStep);
 
   // Timer
-  if (S.sessionTimer > 0) {
-    html += '<div class="timer-display">' + pianoFormatTime(S.sessionTimer) + '</div>';
+  if (sessionTimer > 0) {
+    html += '<div class="timer-display">' + pianoFormatTime(sessionTimer) + '</div>';
   }
 
   // Render current step
-  switch (S.sessionStep) {
+  switch (sessionStep) {
     case "spark":
       html += renderSpark(plan);
       break;
@@ -76,9 +256,9 @@ function pianoSessionPage() {
   // to it is nonsensical (nothing to pause; ending isn't "early" anymore
   // when the session has reached its last step).
   html += '<div class="session-btns">';
-  if (S.sessionStep && S.sessionStep !== "victoryLap") {
-    html += '<button class="btn" onclick="act(\'pause\')">' + (S.paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
-    html += '<button class="btn btn-secondary" onclick="if(confirm(\'End session early?\'))act(\'stop_session\')">End Session</button>';
+  if (sessionStep && sessionStep !== "victoryLap") {
+    html += '<button class="btn" onclick="act(\'pause\')">' + (paused ? "\u25B6 Resume" : "\u23F8 Pause") + '</button>';
+    html += '<button class="btn btn-secondary" onclick="act(\'pianoConfirmStopSession\')">End Session</button>';
   }
   html += '</div>';
 
@@ -107,7 +287,12 @@ function renderSpark(plan) {
 
   html += '<div class="session-step-card spark-card">';
   html += '<h3>\u{2728} Spark</h3>';
-  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.spark.text, "Get started.")) + '</div>';
+  html += pianoRenderSessionBlockMeta(plan, "spark");
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+    pianoSessionStepActivity(plan, "spark") && pianoSessionStepActivity(plan, "spark").copy && pianoSessionStepActivity(plan, "spark").copy.setup,
+    plan.spark.text,
+    "Get started."
+  )) + '</div>';
   html += '<button class="btn btn-accent" onclick="act(\'next_step\')">Next \u2192</button>';
   html += '</div>';
   return html;
@@ -122,7 +307,12 @@ function renderReview(plan) {
 
   var html = '<div class="session-step-card review-card">';
   html += '<h3>\u{1F504} Review</h3>';
-  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.review.text, "Review your last move.")) + '</div>';
+  html += pianoRenderSessionBlockMeta(plan, "review");
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+    pianoSessionStepActivity(plan, "review") && pianoSessionStepActivity(plan, "review").copy && pianoSessionStepActivity(plan, "review").copy.success,
+    plan.review.text,
+    "Review your last move."
+  )) + '</div>';
 
   // Show interleaved review chords (stickiness #8)
   if (plan.review.chords && plan.review.chords.length) {
@@ -147,35 +337,70 @@ function renderReview(plan) {
 }
 
 function renderNewMove(plan) {
+  if (window._watchCleanup && window._watchCleanup.cleanup) { window._watchCleanup.cleanup(); window._watchCleanup = null; }
+  if (window._shadowCleanup && window._shadowCleanup.cleanup) { window._shadowCleanup.cleanup(); window._shadowCleanup = null; }
   if (!plan.newMove) return '';
 
   var html = '<div class="session-step-card newmove-card">';
   html += '<h3>\u{1F3AF} New Move</h3>';
+  html += pianoRenderSessionBlockMeta(plan, "newMove");
 
   // Phase indicator (Watch/Shadow/Try/Refine)
-  html += newMovePhaseIndicator(S.newMovePhase);
+  var newMovePhase = pianoGetNewMovePhaseValue();
+  html += newMovePhaseIndicator(newMovePhase);
 
   var chord = findChord(plan.newMove.chord);
 
-  switch (S.newMovePhase) {
+  switch (newMovePhase) {
     case "watch":
       html += '<div class="watch-overlay">';
-      html += '<div class="watch-label">\u{1F440} Watch \u2014 Hands Off!</div>';
-      html += '<div class="session-text">Observe the chord shape and finger placement. Don\'t play yet.</div>';
-      if (chord) html += pianoSVG(chord);
-      html += '<button class="btn btn-sm" onclick="act(\'play_watch_demo\',\'' + plan.newMove.chord + '\')">\u{1F50A} Demo</button>';
+      html += '<div class="watch-label">👀 Watch — Hands Off!</div>';
+      html += '<div class="session-text">Observe the chord shape and finger placement.</div>';
       html += '</div>';
-      html += '<button class="btn btn-accent" onclick="act(\'advance_phase\')">I\'ve Watched \u2192</button>';
+      if (chord && typeof PianoWatch !== "undefined") {
+        html += '<div id="watch-phase-container"></div>';
+      html += '<button class="btn btn-accent" style="margin-top:12px" onclick="act(\x27advance_phase\x27)">Next \u2192</button>';
+        setTimeout(function() {
+          try {
+            var el = document.getElementById("watch-phase-container");
+            if (el) window._watchCleanup = PianoWatch.watchAnimation(el, chord, {
+              onComplete: function() { act("advance_phase"); },
+              strumFn: function() { if (typeof strumChord === "function") strumChord(chord.name || ""); }
+            });
+          } catch(e) { console.error("Watch error:", e); }
+        }, 0);
+      } else if (chord) {
+        html += pianoSVG(chord);
+      html += '<button class="btn btn-accent" style="margin-top:12px" onclick="act(\x27advance_phase\x27)">Next \u2192</button>';
+      }
       break;
 
     case "shadow":
-      html += '<div class="session-text">\u{1F91A} Mirror slowly. Copy what you saw. No feedback yet.</div>';
-      if (chord) html += pianoSVG(chord);
-      html += '<button class="btn btn-accent" onclick="act(\'advance_phase\')">I\'ve Shadowed \u2192</button>';
+      html += '<div class="session-text">🤚 Tap where each finger goes on the keyboard below.</div>';
+      if (chord && typeof PianoWatch !== "undefined") {
+        html += '<div id="shadow-phase-container"></div>';
+      html += '<button class="btn btn-accent" style="margin-top:12px" onclick="act(\x27advance_phase\x27)">Next \u2192</button>';
+        setTimeout(function() {
+          try {
+            var el = document.getElementById("shadow-phase-container");
+            if (el) window._shadowCleanup = PianoWatch.shadowQuiz(el, chord, {
+              onComplete: function() { act("advance_phase"); },
+              strumFn: function() { if (typeof strumChord === "function") strumChord(chord.name || ""); }
+            });
+          } catch(e) { console.error("Shadow error:", e); }
+        }, 0);
+      } else if (chord) {
+        html += pianoSVG(chord);
+      html += '<button class="btn btn-accent" style="margin-top:12px" onclick="act(\x27advance_phase\x27)">Next \u2192</button>';
+      }
       break;
 
     case "try":
-      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.newMove.text, "Try the new move.")) + '</div>';
+      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+        pianoSessionStepActivity(plan, "newMove") && pianoSessionStepActivity(plan, "newMove").copy && pianoSessionStepActivity(plan, "newMove").copy.setup,
+        plan.newMove.text,
+        "Try the new move."
+      )) + '</div>';
       if (chord) {
         html += pianoSVG(chord);
         html += '<button class="btn btn-sm" onclick="act(\'play_chord\',\'' + chord.short + '\')">\u{1F50A} Play</button>';
@@ -221,7 +446,11 @@ function renderNewMove(plan) {
       break;
 
     default:
-      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.newMove.text, "Try the new move.")) + '</div>';
+      html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+        pianoSessionStepActivity(plan, "newMove") && pianoSessionStepActivity(plan, "newMove").copy && pianoSessionStepActivity(plan, "newMove").copy.setup,
+        plan.newMove.text,
+        "Try the new move."
+      )) + '</div>';
       if (chord) html += pianoSVG(chord);
       html += '<button class="btn btn-accent" onclick="act(\'next_step\')">Next \u2192</button>';
   }
@@ -235,7 +464,12 @@ function renderSongSlice(plan) {
 
   var html = '<div class="session-step-card songslice-card">';
   html += '<h3>\u{1F3B5} Song Slice</h3>';
-  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.songSlice.text, "Play a short song slice.")) + '</div>';
+  html += pianoRenderSessionBlockMeta(plan, "songSlice");
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+    pianoSessionStepActivity(plan, "songSlice") && pianoSessionStepActivity(plan, "songSlice").copy && pianoSessionStepActivity(plan, "songSlice").copy.setup,
+    plan.songSlice.text,
+    "Play a short song slice."
+  )) + '</div>';
 
   // Show the song name
   if (plan.songSlice.song) {
@@ -269,7 +503,12 @@ function renderVictoryLap(plan) {
 
   var html = '<div class="session-step-card victorylap-card">';
   html += '<h3>\u{1F3C6} Victory Lap</h3>';
-  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(plan.victoryLap.text, "Lock it in.")) + '</div>';
+  html += pianoRenderSessionBlockMeta(plan, "victoryLap");
+  html += '<div class="session-text">' + escHTML(pianoFirstSessionTextToken(
+    pianoSessionStepActivity(plan, "victoryLap") && pianoSessionStepActivity(plan, "victoryLap").copy && pianoSessionStepActivity(plan, "victoryLap").copy.setup,
+    plan.victoryLap.text,
+    "Lock it in."
+  )) + '</div>';
 
   var chord = findChord(plan.newMove ? plan.newMove.chord : "C");
   if (chord) {

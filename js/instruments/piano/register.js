@@ -25,7 +25,7 @@
       var d = typeof PIANO_DATA !== "undefined" ? PIANO_DATA : {};
       return {
         CHORDS: d.CHORDS || {},
-        ALL_CHORDS: d.ALL_CHORDS || [],
+        ALL_CHORDS: (typeof allChords === "function" ? allChords() : (d.ALL_CHORDS || [])),
         SESSIONS: typeof PIANO_SESSIONS !== "undefined" ? PIANO_SESSIONS : (d.SESSION_PLANS || []),
         SONGS: d.SONGS || (typeof PIANO_SONGS !== "undefined" ? PIANO_SONGS : []),
         LC: d.LC || {},
@@ -55,14 +55,17 @@
       chord: function(chordObj, size, label, animate) {
         return typeof pianoSVG === "function" ? pianoSVG(chordObj, { width: size, animate: animate }) : "";
       },
-      header: function() {
-        return typeof pianoHeaderHTML === "function" ? pianoHeaderHTML() : (typeof headerHTML === "function" ? headerHTML() : "");
+      watchAnimation: function(container, chordObj, options) {
+        if (typeof PianoWatch === "undefined" || !chordObj) return null;
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return PianoWatch.watchAnimation(container, chordObj, options);
       },
-      tabNav: function() {
-        return typeof pianoTabNavHTML === "function" ? pianoTabNavHTML() : (typeof tabNavHTML === "function" ? tabNavHTML() : "");
-      },
-      ring: function(pct, size, color) {
-        return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
+      shadowQuiz: function(container, chordObj, options) {
+        if (typeof PianoWatch === "undefined" || !chordObj) return null;
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return PianoWatch.shadowQuiz(container, chordObj, options);
       }
     },
 
@@ -178,6 +181,12 @@
     getCurriculumMap: function() {
       var D = this.getData();
       return D.CURRICULUM || [];
+    },
+
+    getCurriculumMapV2: function() {
+      return typeof SparkCurriculumV2LegacyAdapter !== "undefined"
+        ? SparkCurriculumV2LegacyAdapter.toLegacyLessons("piano")
+        : [];
     },
 
     getExercises: function() {

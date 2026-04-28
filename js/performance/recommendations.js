@@ -1,8 +1,19 @@
 (function(){
 
+  function getPerformanceRecommendationsCore(){
+    if(typeof window !== "undefined" && window.sparkCore){
+      return window.sparkCore;
+    }
+    if(typeof sparkCore !== "undefined"){
+      return sparkCore;
+    }
+    return null;
+  }
+
   function syncPerformanceDailyStateWithCore(challenge, isComplete){
-    if(!window.sparkCore||typeof window.sparkCore.syncPerformanceDailyChallengeState!=="function")return;
-    window.sparkCore.syncPerformanceDailyChallengeState(challenge||null, !!isComplete);
+    var core = getPerformanceRecommendationsCore();
+    if(!core || typeof core.syncPerformanceDailyChallengeState!=="function")return;
+    core.syncPerformanceDailyChallengeState(challenge||null, !!isComplete);
   }
 
   function getTechniqueAccuracy(bucket){
@@ -106,7 +117,9 @@
     var ids=[];
     for(var i=0;i<source.length;i++){
       if(source[i].progression&&source[i].progression.length>0)
-        ids.push((source[i].title||"song").toLowerCase().replace(/[^a-z0-9]+/g,"_"));
+        ids.push(typeof resolvePerformanceSongId === "function"
+          ? resolvePerformanceSongId(source[i], source[i].title || "song")
+          : (source[i].title||"song").toLowerCase().replace(/[^a-z0-9]+/g,"_"));
     }
     return ids;
   }

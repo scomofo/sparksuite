@@ -6,6 +6,245 @@
    *   Session -> segments -> exerciseIds -> exercises -> runExercise()
    */
 
+  var _handlers = {};
+  var _missingCounts = {};
+  var _defaultHandlersInstalled = false;
+  var _sparkCoreHandle = null;
+  var _strict = true;
+  var _lastAction = null;
+  var _lastResult = null;
+
+  function getSparkErrorApi() {
+    function SparkFallbackError(code, message, context) {
+      this.name = "SparkError";
+      this.code = code;
+      this.message = message || code;
+      this.context = context || {};
+    }
+    SparkFallbackError.prototype = Object.create(Error.prototype);
+    SparkFallbackError.prototype.constructor = SparkFallbackError;
+    SparkFallbackError.prototype.toString = function() {
+      return this.name + ": " + this.message;
+    };
+    if (typeof SparkError !== "undefined" && typeof SparkErrorCodes !== "undefined") {
+      return {
+        SparkError: SparkError,
+        SparkErrorCodes: SparkErrorCodes
+      };
+    }
+    if (typeof window !== "undefined" && window.SparkError && window.SparkErrorCodes) {
+      return {
+        SparkError: window.SparkError,
+        SparkErrorCodes: window.SparkErrorCodes
+      };
+    }
+    if (typeof require === "function") {
+      try {
+        return {
+          SparkError: require("./spark_error.js").SparkError,
+          SparkErrorCodes: require("./error_codes.js").SparkErrorCodes
+        };
+      } catch (error) {}
+    }
+    return {
+      SparkError: SparkFallbackError,
+      SparkErrorCodes: {
+        ACTION_UNKNOWN: "ACTION_UNKNOWN",
+        ACTION_HANDLER_MISSING: "ACTION_HANDLER_MISSING",
+        SESSION_INVALID: "SESSION_INVALID",
+        SESSION_INVALID_EXERCISE_REFERENCE: "SESSION_INVALID_EXERCISE_REFERENCE"
+      }
+    };
+  }
+
+  function createGatewayError(code, message, context) {
+    var api = getSparkErrorApi();
+    return new api.SparkError(code, message, context || {});
+  }
+
+  function getEventBusHandle() {
+    var core = getSparkCoreHandle();
+    if (core && typeof core.getEventBus === "function") return core.getEventBus();
+    if (typeof window !== "undefined" && window.sparkEventBus) return window.sparkEventBus;
+    return null;
+  }
+
+  function emitGatewayEvent(type, payload) {
+    var bus = getEventBusHandle();
+    if (bus && typeof bus.emit === "function") {
+      bus.emit(type, payload || {});
+    }
+  }
+
+  function getActionRegistryApi() {
+    if (typeof window !== "undefined" && typeof window.isKnownSparkAction === "function") {
+      return {
+        isKnownSparkAction: window.isKnownSparkAction,
+        listKnownSparkActions: typeof window.listKnownSparkActions === "function"
+          ? window.listKnownSparkActions
+          : function() { return []; }
+      };
+    }
+    if (typeof require === "function") {
+      try {
+        return require("./action_registry.js");
+      } catch (error) {}
+    }
+    return {
+      isKnownSparkAction: function() { return true; },
+      listKnownSparkActions: function() { return []; }
+    };
+  }
+
+  function isKnownSparkAction(name) {
+    return !!getActionRegistryApi().isKnownSparkAction(name);
+  }
+
+  function listKnownSparkActions() {
+    return getActionRegistryApi().listKnownSparkActions();
+  }
+
+  function register(name, handler) {
+    if (typeof name !== "string" || !name) {
+      throw createGatewayError(
+        getSparkErrorApi().SparkErrorCodes.ACTION_UNKNOWN,
+        "SparkExecutionGateway: handler name must be a non-empty string"
+      );
+    }
+    if (!isKnownSparkAction(name)) {
+      throw createGatewayError(
+        getSparkErrorApi().SparkErrorCodes.ACTION_UNKNOWN,
+        'SparkExecutionGateway: unknown action "' + name + '"',
+        { actionName: name }
+      );
+    }
+    if (typeof handler !== "function") {
+      throw createGatewayError(
+        getSparkErrorApi().SparkErrorCodes.ACTION_HANDLER_MISSING,
+        'SparkExecutionGateway: handler "' + name + '" must be a function',
+        { actionName: name }
+      );
+    }
+    _handlers[name] = handler;
+    return handler;
+  }
+
+  function unregister(name) {
+    if (name && Object.prototype.hasOwnProperty.call(_handlers, name)) {
+      delete _handlers[name];
+    }
+  }
+
+  function getRegisteredHandler(name) {
+    return name && Object.prototype.hasOwnProperty.call(_handlers, name) ? _handlers[name] : null;
+  }
+
+  function listRegisteredHandlers() {
+    return Object.keys(_handlers).sort();
+  }
+
+  function logMissingHandler(name) {
+    _missingCounts[name] = (_missingCounts[name] || 0) + 1;
+    if (typeof console !== "undefined" && console.warn) {
+      console.warn('SparkExecutionGateway: missing handler "' + name + '"');
+    }
+  }
+
+  function getMissingHandlerReport() {
+    var result = {};
+    var key;
+    for (key in _missingCounts) {
+      if (Object.prototype.hasOwnProperty.call(_missingCounts, key)) result[key] = _missingCounts[key];
+    }
+    return result;
+  }
+
+  function clearHandlers() {
+    _handlers = {};
+    _missingCounts = {};
+    _defaultHandlersInstalled = false;
+    _lastAction = null;
+    _lastResult = null;
+  }
+
+  function execute(name, payload, fallback) {
+    var actionPayload = payload || {};
+    _lastAction = {
+      actionName: name,
+      payload: actionPayload,
+      at: new Date().toISOString()
+    };
+    emitGatewayEvent("gateway.action.execute", {
+      actionName: name,
+      payload: actionPayload
+    });
+    if (!isKnownSparkAction(name)) {
+      return handleMissingAction(name, actionPayload, fallback, "unknown_action");
+    }
+    var handler = getRegisteredHandler(name);
+    if (handler) {
+      return recordExecutionResult(name, handler(actionPayload));
+    }
+    return handleMissingAction(name, actionPayload, fallback, "unregistered_handler");
+  }
+
+  function handleMissingAction(name, payload, fallback, reason) {
+    var codes = getSparkErrorApi().SparkErrorCodes;
+    logMissingHandler(name);
+    emitGatewayEvent("gateway.action.missing", {
+      actionName: name,
+      reason: reason,
+      payload: payload || {},
+      missingHandlers: getMissingHandlerReport()
+    });
+    if (typeof fallback === "function") {
+      return recordExecutionResult(name, fallback(payload || {}));
+    }
+    if (_strict) {
+      throw createGatewayError(
+        reason === "unknown_action" ? codes.ACTION_UNKNOWN : codes.ACTION_HANDLER_MISSING,
+        'SparkExecutionGateway: missing handler "' + name + '" (' + reason + ')',
+        {
+          actionName: name,
+          reason: reason,
+          payload: payload || {},
+          missingHandlers: getMissingHandlerReport()
+        }
+      );
+    }
+    return recordExecutionResult(name, false);
+  }
+
+  function recordExecutionResult(name, result) {
+    _lastResult = {
+      actionName: name,
+      result: result,
+      at: new Date().toISOString()
+    };
+    emitGatewayEvent("gateway.action.result", {
+      actionName: name,
+      result: result
+    });
+    return result;
+  }
+
+  function setStrict(value) {
+    _strict = value !== false;
+    return _strict;
+  }
+
+  function isStrict() {
+    return _strict;
+  }
+
+  function getLastAction() {
+    return _lastAction;
+  }
+
+  function getLastResult() {
+    return _lastResult;
+  }
+
   function normalizeToExercise(input) {
     if (input && input.id && input.data) return input;
 
@@ -54,6 +293,75 @@
     return "practice";
   }
 
+  function setSparkCoreHandle(core) {
+    _sparkCoreHandle = core || null;
+    return _sparkCoreHandle;
+  }
+
+  function getSparkCoreHandle() {
+    if (_sparkCoreHandle) return _sparkCoreHandle;
+    if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+    if (typeof sparkCore !== "undefined") return sparkCore;
+    return null;
+  }
+
+  function registerDefaultHandler(name, handler, options) {
+    if (options && options.force === true) unregister(name);
+    if (!getRegisteredHandler(name)) register(name, handler);
+  }
+
+  function runDefaultSegment(payload) {
+    if (!payload || !payload.exercise) return false;
+    return runExercise(payload.exercise, payload.options);
+  }
+
+  function startDefaultSong(payload) {
+    if (!payload || !payload.target || typeof startPerformance !== "function") return false;
+    startPerformance(payload.target, payload.options || {});
+    return true;
+  }
+
+  function startDefaultPractice(payload) {
+    if (!payload || !payload.payload || typeof startPlayableRhythmHighwayPayload !== "function") return false;
+    startPlayableRhythmHighwayPayload(payload.payload, payload.options || {});
+    return true;
+  }
+
+  function installDefaultHandlers(options) {
+    var segmentTypes;
+    var i;
+    options = options || {};
+
+    if (Object.prototype.hasOwnProperty.call(options, "sparkCore")) {
+      setSparkCoreHandle(options.sparkCore);
+    }
+    if (_defaultHandlersInstalled && options.force !== true) return false;
+
+    segmentTypes = [
+      "practice",
+      "song",
+      "challenge",
+      "warm_engine",
+      "drill",
+      "cooldown",
+      "review",
+      "newMove",
+      "songSlice",
+      "victoryLap"
+    ];
+
+    for (i = 0; i < segmentTypes.length; i++) {
+      registerDefaultHandler("session.segment." + segmentTypes[i], runDefaultSegment, options);
+    }
+    registerDefaultHandler("session.segment.start", runDefaultSegment, options);
+    registerDefaultHandler("song.start", startDefaultSong, options);
+    registerDefaultHandler("practice.start", startDefaultPractice, options);
+    registerDefaultHandler("challenge.start", startDefaultPractice, options);
+
+    _defaultHandlersInstalled = true;
+    return true;
+  }
+
   function findSegmentById(session, segmentId) {
     var segments = session && Array.isArray(session.segments) ? session.segments : [];
     for (var i = 0; i < segments.length; i++) {
@@ -88,11 +396,15 @@
     return exercises.length ? exercises[0] : null;
   }
 
-  function failExecution(message, detail) {
+  function failExecution(message, detail, code, context) {
     if (typeof console !== "undefined" && console.error) {
       console.error("SparkExecutionGateway: " + message, detail || null);
     }
-    throw new Error("SparkExecutionGateway: " + message);
+    throw createGatewayError(
+      code || getSparkErrorApi().SparkErrorCodes.SESSION_INVALID,
+      "SparkExecutionGateway: " + message,
+      Object.assign({ detail: detail || null }, context || {})
+    );
   }
 
   function normalizeInstrumentType(instrument) {
@@ -118,18 +430,47 @@
   function runSessionSegment(session, segment, options) {
     options = options || {};
     if (!session || !segment) return false;
-
-    var exercises = resolveSegmentExercises(session, segment);
-    if (!exercises.length) {
-      failExecution("segment requires resolved exercises", segment && segment.id ? segment.id : null);
+    if (typeof assertSessionPlan === "function") {
+      assertSessionPlan(session);
     }
 
-    return runExercise(exercises[0], mergeLaunchOptions(options, {
+    var exercises = resolveSegmentExercises(session, segment);
+    var primaryExercise;
+    var segmentType;
+    var segmentPayload;
+    if (!exercises.length) {
+      failExecution(
+        "segment requires resolved exercises",
+        segment && segment.id ? segment.id : null,
+        getSparkErrorApi().SparkErrorCodes.SESSION_INVALID_EXERCISE_REFERENCE,
+        {
+          segmentId: segment && segment.id ? segment.id : null,
+          sessionId: session && session.id ? session.id : null
+        }
+      );
+    }
+
+    primaryExercise = exercises[0];
+    segmentType = segment && segment.type ? String(segment.type) : "practice";
+    segmentPayload = {
       session: session,
       segment: segment,
-      exerciseIndex: 0,
-      exerciseCount: exercises.length
-    }));
+      exercise: primaryExercise,
+      exercises: exercises.slice(),
+      options: mergeLaunchOptions(options, {
+        session: session,
+        segment: segment,
+        exerciseIndex: 0,
+        exerciseCount: exercises.length
+      }),
+      source: options.source || "session_segment"
+    };
+
+    return execute("session.segment." + segmentType, segmentPayload, function(payload) {
+      return execute("session.segment.start", payload, function(fallbackPayload) {
+        return runExercise(fallbackPayload.exercise, fallbackPayload.options);
+      });
+    });
   }
 
   function runSessionSegmentById(session, segmentId, options) {
@@ -138,9 +479,10 @@
 
   function runPlanItem(item, options) {
     options = options || {};
+    var core = getSparkCoreHandle();
 
-    var activeView = (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function")
-      ? window.sparkCore.getActiveSessionView()
+    var activeView = (core && typeof core.getActiveSessionView === "function")
+      ? core.getActiveSessionView()
       : null;
     var session = activeView && activeView.plan ? activeView.plan : null;
     var segment = session && item && item.id ? findSegmentById(session, item.id) : null;
@@ -195,9 +537,10 @@
 
   function runRhythmHighwaySegment(segmentId, options) {
     options = options || {};
+    var core = getSparkCoreHandle();
 
-    var activeView = (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function")
-      ? window.sparkCore.getActiveSessionView()
+    var activeView = (core && typeof core.getActiveSessionView === "function")
+      ? core.getActiveSessionView()
       : null;
     var session = activeView && activeView.plan ? activeView.plan : null;
     var segment = session ? findSegmentById(session, segmentId) : null;
@@ -263,9 +606,17 @@
       }
     }
 
-    if (launchTarget && typeof startPerformance === "function") {
-      startPerformance(launchTarget, launchOptions);
-      return true;
+    if (launchTarget) {
+      return execute("song.start", {
+        exercise: exercise,
+        target: launchTarget,
+        options: launchOptions,
+        source: options.source || "exercise"
+      }, function(payload) {
+        if (typeof startPerformance !== "function") return false;
+        startPerformance(payload.target, payload.options);
+        return true;
+      });
     }
     return false;
   }
@@ -276,23 +627,38 @@
     var payload = gameplay.payload || null;
 
     if (!payload) {
-      failExecution("practice exercise missing gameplay payload", exercise && exercise.id ? exercise.id : null);
+      failExecution(
+        "practice exercise missing gameplay payload",
+        exercise && exercise.id ? exercise.id : null,
+        getSparkErrorApi().SparkErrorCodes.SESSION_INVALID,
+        {
+          exerciseId: exercise && exercise.id ? exercise.id : null
+        }
+      );
     }
 
-    if (payload && typeof startPlayableRhythmHighwayPayload === "function") {
+    if (payload) {
       var practiceInstrument = normalizeInstrumentType(options.instrument || core.instrument || (payload && payload.adapterType)) || "guitar";
-      startPlayableRhythmHighwayPayload(payload, {
-        source: options.source || "exercise",
-        label: options.label || core.skill || core.chartId || core.songId || "Practice",
-        instrument: practiceInstrument,
-        segmentId: options.segment ? options.segment.id : (options.segmentId || null),
-        exerciseId: exercise.id,
-        exerciseFocus: core.skill || null,
-        song: options.song || null,
-        playlist: Array.isArray(options.playlist) ? options.playlist.slice() : null,
-        options: mergeLaunchOptions(options.options || {}, buildPlayableLaunchOptions(core, gameplay, options))
+      return execute("practice.start", {
+        exercise: exercise,
+        payload: payload,
+        options: {
+          source: options.source || "exercise",
+          label: options.label || core.skill || core.chartId || core.songId || "Practice",
+          instrument: practiceInstrument,
+          segmentId: options.segment ? options.segment.id : (options.segmentId || null),
+          exerciseId: exercise.id,
+          exerciseFocus: core.skill || null,
+          song: options.song || null,
+          playlist: Array.isArray(options.playlist) ? options.playlist.slice() : null,
+          options: mergeLaunchOptions(options.options || {}, buildPlayableLaunchOptions(core, gameplay, options))
+        },
+        source: options.source || "exercise"
+      }, function(payloadOptions) {
+        if (typeof startPlayableRhythmHighwayPayload !== "function") return false;
+        startPlayableRhythmHighwayPayload(payloadOptions.payload, payloadOptions.options);
+        return true;
       });
-      return true;
     }
 
     return false;
@@ -326,6 +692,21 @@
   }
 
   var SparkExecutionGateway = {
+    register: register,
+    unregister: unregister,
+    execute: execute,
+    setStrict: setStrict,
+    isStrict: isStrict,
+    setSparkCoreHandle: setSparkCoreHandle,
+    installDefaultHandlers: installDefaultHandlers,
+    getMissingHandlerReport: getMissingHandlerReport,
+    getLastAction: getLastAction,
+    getLastResult: getLastResult,
+    getRegisteredHandler: getRegisteredHandler,
+    listRegisteredHandlers: listRegisteredHandlers,
+    isKnownSparkAction: isKnownSparkAction,
+    listKnownSparkActions: listKnownSparkActions,
+    clearHandlers: clearHandlers,
     normalizeToExercise: normalizeToExercise,
     resolveSegmentExercises: resolveSegmentExercises,
     resolvePrimaryExercise: resolvePrimaryExercise,

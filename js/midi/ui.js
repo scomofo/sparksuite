@@ -1,9 +1,15 @@
 (function(){
 
+  function getMidiUiRuntimeState(){
+    var core = (typeof window !== "undefined" && window && window.sparkCore)
+      ? window.sparkCore
+      : (typeof sparkCore !== "undefined" ? sparkCore : null);
+    if(!core || typeof core.getRuntimeState !== "function") return null;
+    return core.getRuntimeState();
+  }
+
   function midiSettingsPage(){
-    var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-      ? window.sparkCore.getRuntimeState()
-      : null;
+    var runtimeState = getMidiUiRuntimeState();
     var activeDeviceName = runtimeState && runtimeState.midiActiveDeviceName
       ? runtimeState.midiActiveDeviceName
       : ((getActiveMidiDevice() && getActiveMidiDevice().name) || "None");
@@ -24,7 +30,7 @@
     h += '<div><b>MIDI Settings</b></div>';
     h += '<div>Active Device: ' + escHTML(activeDeviceName) + '</div>';
     h += '<div>Active Profile: ' + escHTML(activeProfileName) + '</div>';
-    h += '<button onclick="refreshMidiDevices()">Refresh Devices</button> ';
+    h += '<button onclick="act(\'refreshMidiDevices\')">Refresh Devices</button> ';
     h += '<button onclick="act(\'createDefaultPianoProfile\')">New Piano Profile</button> ';
     h += '<button onclick="act(\'createDefaultGuitarProfile\')">New Guitar Profile</button>';
     h += '</div>';

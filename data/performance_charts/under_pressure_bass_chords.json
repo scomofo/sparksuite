@@ -1,0 +1,25 @@
+{
+  "id": "under_pressure_bass_chords",
+  "title": "Under Pressure",
+  "artist": "Queen & David Bowie",
+  "bpm": 114,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 8.421 },
+    { "id": 1, "name": "Chorus", "startSec": 8.421, "endSec": 16.842 },
+    { "id": 2, "name": "Outro", "startSec": 16.842, "endSec": 25.263 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.526, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 2, "t": 0.526, "dur": 0.527, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 3, "t": 1.053, "dur": 0.526, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 4, "t": 1.579, "dur": 0.526, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 5, "t": 2.105, "dur": 0.527, "type": "tap", "chord": "G", "notes": ["G1"], "laneLabel": "G", "strum": "tap" },
+    { "id": 6, "t": 2.632, "dur": 0.526, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 7, "t": 3.158, "dur": 0.526, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 8, "t": 3.684, "dur": 0.527, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" }
+  ]
+}

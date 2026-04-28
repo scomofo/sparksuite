@@ -1,0 +1,33 @@
+{
+  "id": "let_it_be_piano_chords",
+  "title": "Let It Be",
+  "artist": "The Beatles",
+  "bpm": 72,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "piano",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 26.667 },
+    { "id": 1, "name": "Chorus", "startSec": 26.667, "endSec": 53.333 },
+    { "id": 2, "name": "Outro", "startSec": 53.333, "endSec": 80 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.5, "type": "tap", "chord": "C_root", "notes": ["C3"], "laneLabel": "C", "strum": "tap" },
+    { "id": 2, "t": 0.5, "dur": 2.833, "type": "chord", "chord": "C", "notes": ["C4", "E4", "G4"], "laneLabel": "C", "strum": "down" },
+    { "id": 3, "t": 3.333, "dur": 0.5, "type": "tap", "chord": "G_root", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 4, "t": 3.833, "dur": 2.834, "type": "chord", "chord": "G", "notes": ["G3", "B3", "D4"], "laneLabel": "G", "strum": "down" },
+    { "id": 5, "t": 6.667, "dur": 0.5, "type": "tap", "chord": "Am_root", "notes": ["A2"], "laneLabel": "Am", "strum": "tap" },
+    { "id": 6, "t": 7.167, "dur": 2.833, "type": "chord", "chord": "Am", "notes": ["A3", "C4", "E4"], "laneLabel": "Am", "strum": "down" },
+    { "id": 7, "t": 10, "dur": 0.5, "type": "tap", "chord": "F_root", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 8, "t": 10.5, "dur": 2.833, "type": "chord", "chord": "F", "notes": ["F3", "A3", "C4"], "laneLabel": "F", "strum": "down" },
+    { "id": 9, "t": 13.333, "dur": 0.5, "type": "tap", "chord": "C_root", "notes": ["C3"], "laneLabel": "C", "strum": "tap" },
+    { "id": 10, "t": 13.833, "dur": 2.834, "type": "chord", "chord": "C", "notes": ["C4", "E4", "G4"], "laneLabel": "C", "strum": "down" },
+    { "id": 11, "t": 16.667, "dur": 0.5, "type": "tap", "chord": "G_root", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 12, "t": 17.167, "dur": 2.833, "type": "chord", "chord": "G", "notes": ["G3", "B3", "D4"], "laneLabel": "G", "strum": "down" },
+    { "id": 13, "t": 20, "dur": 0.5, "type": "tap", "chord": "F_root", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 14, "t": 20.5, "dur": 2.833, "type": "chord", "chord": "F", "notes": ["F3", "A3", "C4"], "laneLabel": "F", "strum": "down" },
+    { "id": 15, "t": 23.333, "dur": 0.5, "type": "tap", "chord": "C_root", "notes": ["C3"], "laneLabel": "C", "strum": "tap" },
+    { "id": 16, "t": 23.833, "dur": 2.834, "type": "chord", "chord": "C", "notes": ["C4", "E4", "G4"], "laneLabel": "C", "strum": "down" }
+  ]
+}

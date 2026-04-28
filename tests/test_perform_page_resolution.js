@@ -163,4 +163,55 @@ test("performPage ignores malformed calibration and offset values", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("perform pages can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          performanceTargetTechnique: "tap",
+          performanceDifficultyId: "pro",
+          performanceSpeed: 0.75,
+          performancePracticePreset: "guitar_solo",
+          performanceInputMode: "mic",
+          performanceLoop: null,
+          performanceResults: {
+            title: "Night Drive",
+            artist: "The Meteors",
+            stars: 4,
+            totalEvents: 12,
+            score: 2450,
+            accuracy: 96,
+            maxCombo: 9,
+            phraseStats: [
+              { name: "Launch", total: 3, scoreSum: 3, perfects: 3, goods: 0, oks: 0, misses: 0 },
+              { name: "Drift", total: 3, scoreSum: 2, perfects: 2, goods: 0, oks: 0, misses: 1 }
+            ],
+            importedTechniqueSummary: {
+              tap: { label: "Tap-note consistency", hits: 4, total: 5, accuracy: 80 }
+            },
+            unlocks: [{ label: "Turbo Mode", xp: 50 }]
+          },
+          performanceChartId: "night_drive_chart",
+          transport: { positionMs: 2500, status: "paused" }
+        }
+      };
+    }
+  };
+
+  global.eval(loadJS("js/pages/perform.js"));
+
+  var activeHtml = performPage();
+  var doneHtml = performDonePage();
+  assert.ok(activeHtml.indexOf("FOCUS: TAP-NOTE CONSISTENCY") >= 0);
+  assert.ok(activeHtml.indexOf('onclick="act(\'performMode\',\'mic\')"') >= 0);
+  assert.ok(activeHtml.indexOf('onclick="act(\'performDifficulty\',\'pro\')"') >= 0);
+  assert.ok(activeHtml.indexOf('onclick="act(\'performSpeed\',0.75)"') >= 0);
+  assert.ok(activeHtml.indexOf('onclick="act(\'resumePerform\')"') >= 0);
+  assert.ok(doneHtml.indexOf("Night Drive") >= 0);
+  assert.ok(doneHtml.indexOf("The Meteors") >= 0);
+  assert.ok(doneHtml.indexOf("Tap-note consistency") >= 0);
+  assert.ok(doneHtml.indexOf("Turbo Mode") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

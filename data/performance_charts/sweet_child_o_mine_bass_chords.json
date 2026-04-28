@@ -1,0 +1,25 @@
+{
+  "id": "sweet_child_o_mine_bass_chords",
+  "title": "Sweet Child O' Mine",
+  "artist": "Guns N' Roses",
+  "bpm": 125,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Intro", "startSec": 0, "endSec": 7.68 },
+    { "id": 1, "name": "Verse", "startSec": 7.68, "endSec": 15.36 },
+    { "id": 2, "name": "Pre-Chorus", "startSec": 15.36, "endSec": 23.04 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.48, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 2, "t": 0.48, "dur": 0.48, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" },
+    { "id": 3, "t": 0.96, "dur": 0.48, "type": "tap", "chord": "G", "notes": ["G1"], "laneLabel": "G", "strum": "tap" },
+    { "id": 4, "t": 1.44, "dur": 0.48, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 5, "t": 1.92, "dur": 0.48, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" },
+    { "id": 6, "t": 2.4, "dur": 0.48, "type": "tap", "chord": "G", "notes": ["G1"], "laneLabel": "G", "strum": "tap" },
+    { "id": 7, "t": 2.88, "dur": 0.48, "type": "tap", "chord": "Bb", "notes": ["Bb1"], "laneLabel": "Bb", "strum": "tap" },
+    { "id": 8, "t": 3.36, "dur": 0.48, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" }
+  ]
+}

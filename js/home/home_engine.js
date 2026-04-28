@@ -1,5 +1,11 @@
 (function(){
 
+  function getHomeEngineCoreView(){
+    var core = (typeof window !== "undefined" && window.sparkCore)
+      || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    return core && typeof core.getActiveSessionView === "function" ? core.getActiveSessionView() : null;
+  }
+
   function buildHomeDashboardData(){
     return {
       profile: buildHomeProfileSummary(),
@@ -30,17 +36,13 @@
   }
 
   function buildHomeRecommendationSummary(){
-    var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-      ? window.sparkCore.getActiveSessionView()
-      : null;
+    var coreView = getHomeEngineCoreView();
     var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
     return (runtimeState && runtimeState.dashboardRecommendations) || S.recommendations || [];
   }
 
   function buildHomeChallengeSummary(){
-    var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-      ? window.sparkCore.getActiveSessionView()
-      : null;
+    var coreView = getHomeEngineCoreView();
     var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
     if (runtimeState && runtimeState.dashboardChallenges) {
       return (runtimeState.dashboardChallenges || []).slice(0, 3);
@@ -59,9 +61,7 @@
   }
 
   function buildHomeInsightSummary(){
-    var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-      ? window.sparkCore.getActiveSessionView()
-      : null;
+    var coreView = getHomeEngineCoreView();
     var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
     return (runtimeState && runtimeState.dashboardInsights) || S.personalInsights || {};
   }

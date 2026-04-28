@@ -150,5 +150,91 @@ test("performSongPage ignores malformed detected BPM values", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("performSongPage requests stats with canonical song id", function() {
+  var capturedArgs = null;
+  global.getPerformanceStats = function(songId, arrangementType, difficultyId) {
+    capturedArgs = {
+      songId: songId,
+      arrangementType: arrangementType,
+      difficultyId: difficultyId
+    };
+    return {
+      mastery: "none",
+      runs: 0,
+      bestScore: 0,
+      bestAccuracy: 0,
+      bestStars: 0
+    };
+  };
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceDifficultyId: "pro"
+      },
+      plan: {
+        flow: "performance_song",
+        context: {
+          performanceSong: {
+            songId: "stand_by_me",
+            arrangementType: "rhythm_chords",
+            songData: {
+              title: "Stand By Me",
+              artist: "Ben E. King",
+              bpm: 120,
+              chords: [],
+              progression: []
+            }
+          }
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  performSongPage();
+  assert.deepStrictEqual(capturedArgs, {
+    songId: "stand_by_me",
+    arrangementType: "rhythm_chords",
+    difficultyId: "pro"
+  });
+});
+
+test("performSongPage can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          performanceSongData: {
+            title: "Night Drive",
+            artist: "The Meteors",
+            bpm: 132,
+            chords: ["Am", "F", "C"],
+            progression: ["Am", "F", "C", "G"],
+            audio: { src: "builtin.mp3" }
+          },
+          performanceArrangementType: "lead",
+          performanceDifficultyId: "easy",
+          performanceSpeed: 0.75,
+          performanceTargetTechnique: "tap"
+        }
+      };
+    }
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.ok(html.indexOf("Night Drive") >= 0);
+  assert.ok(html.indexOf("The Meteors") >= 0);
+  assert.ok(html.indexOf(">132<") >= 0);
+  assert.ok(html.indexOf(">3<") >= 0);
+  assert.ok(html.indexOf(">4<") >= 0);
+  assert.ok(html.indexOf("Tap-note consistency") >= 0);
+  assert.ok(html.indexOf('onclick="act(\'performArrangement\',\'lead\')"') >= 0);
+  assert.ok(html.indexOf('onclick="act(\'performDifficulty\',\'easy\')"') >= 0);
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

@@ -1,34 +1,26 @@
 ﻿(function() {
-  // Level metadata covering all 12 lessons (uke_01 .. uke_12). LC/LN must
-  // have an entry for every lesson `num` returned by getCurriculumMap()
-  // — see tests/test_curriculum_guardrails.js#LC/LN cover all curriculum
-  // levels. Levels 5-12 inherit colors from the base 4-color palette
-  // (mod 4) so the chord-card swatches still cycle visually.
+  // Level metadata keyed by lesson `level` (1-8 on the SparkSuite content
+  // scale: beginner → expert). LC/LN must cover every level returned by
+  // getCurriculumMap() — see tests/test_curriculum_guardrails.js. Colors
+  // cycle through the 4-color palette (mod 4) so chord-card swatches
+  // stay visually distinct.
   function getUkuleleLevelColors() {
     return {
-      1: "#22c55e",  2: "#3b82f6",  3: "#f97316",  4: "#8b5cf6",
-      5: "#22c55e",  6: "#3b82f6",  7: "#f97316",  8: "#8b5cf6",
-      9: "#22c55e", 10: "#3b82f6", 11: "#f97316", 12: "#8b5cf6"
+      1: "#22c55e", 2: "#3b82f6", 3: "#f97316", 4: "#8b5cf6",
+      5: "#22c55e", 6: "#3b82f6", 7: "#f97316", 8: "#8b5cf6"
     };
   }
 
-  // Level names mirror the lesson `title` field for the same num in
-  // js/sparksuite/instruments/ukulele/ukulele_lessons.js — keep these in
-  // sync so the UI doesn't show conflicting labels for the same level.
   function getUkuleleLevelNames() {
     return {
-      1: "First Strum",
-      2: "Starter Chords",
-      3: "Smooth Changes",
-      4: "Pattern Flow",
-      5: "Play a Song",
-      6: "Fingerpicked Motion",
-      7: "Melody Notes",
-      8: "Campfire Performance",
-      9: "Barre Basics",
-      10: "Syncopated Strum",
-      11: "Fingerpick Patterns",
-      12: "Performance Ready"
+      1: "Beginner",
+      2: "Early Beginner",
+      3: "Beginner+",
+      4: "Early Intermediate",
+      5: "Intermediate",
+      6: "Intermediate+",
+      7: "Advanced",
+      8: "Expert"
     };
   }
 
@@ -37,7 +29,7 @@
     for (var i = 0; i < lessons.length; i++) {
       if (lessons[i].id === lessonId) return lessons[i].skill;
     }
-    return lessons.length ? lessons[0].skill : "down_strum";
+    return lessons.length ? lessons[0].skill : "uke_down_strum";
   }
 
   function getUkuleleNextLesson() {
@@ -89,7 +81,7 @@
       h += '<div class="card mb12">';
       h += '<div style="font-size:13px;font-weight:800;color:var(--text-muted)">Next Lesson</div>';
       h += '<div style="font-size:18px;font-weight:900;color:var(--text-primary)">' + escHTML(lesson.title) + '</div>';
-      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + escHTML(lesson.desc || "") + '</div>';
+      h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + escHTML(lesson.desc || (Array.isArray(lesson.objectives) ? lesson.objectives.join(" • ") : "")) + '</div>';
       h += '<div style="font-size:11px;color:var(--text-muted);margin-top:8px">Target mastery: ' + Math.round((lesson.masteryRequired || 0) * 100) + '%</div>';
       h += '</div>';
     }
@@ -149,7 +141,8 @@
 
   function renderUkuleleStatsTab() {
     var lessonCount = Array.isArray(S.completedLessons) ? S.completedLessons.filter(function(id) {
-      return String(id || "").indexOf("uke_") === 0;
+      var s = String(id || "");
+      return s.indexOf("lesson_uke_") === 0 || s.indexOf("uke_") === 0;
     }).length : 0;
     var h = '<div class="card mb12"><div style="font-size:18px;font-weight:900;color:var(--text-primary)">Ukulele Progress</div>';
     h += '<div style="font-size:13px;color:var(--text-muted);margin-top:8px">Lessons completed: ' + lessonCount + '</div>';
@@ -169,7 +162,7 @@
     h += '<div class="card mb12"><div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Skill Tree</div>';
     for (var i = 0; i < skills.length; i++) {
       h += '<div style="padding:6px 0;border-top:' + (i ? '1px solid var(--border)' : '0') + '">';
-      h += '<div style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(skills[i].label || skills[i].id) + '</div>';
+      h += '<div style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(skills[i].name || skills[i].label || skills[i].id) + '</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(skills[i].category) + '</div>';
       h += '</div>';
     }
@@ -189,7 +182,7 @@
     iconImage: "resources/instruments/ukulele/card.png",
     heroImage: "resources/instruments/ukulele/hero.jpg",
     tagline: "Island strums and 4-string flow",
-    skin: { laneCount: 4, labels: ["G", "C", "E", "A"] },
+    skin: { laneCount: 4, noteShape: "circle", laneColors: [[255,50,50],[255,180,0],[50,180,255],[50,255,50]], laneIndicatorStyle: "buttons", laneSpacing: 100, backgroundColors: { top: [10,10,20], bottom: [30,30,50] } },
     available: true,
     capabilities: {
       stringCount: 4,
@@ -210,7 +203,14 @@
         LN: getUkuleleLevelNames(),
         CHORD_NOTES: window.SparkUkuleleChordNotes || {},
         STRINGS: window.SparkUkuleleTuning ? window.SparkUkuleleTuning.strings : [],
-        STRUM_PATTERNS: [{ name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U", "D", "U"] }],
+        STRUM_PATTERNS: [
+          { name: "Down Strum", level: 1, bpm: 70, pattern: ["D", "D", "D", "D"] },
+          { name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U", "D", "U"] },
+          { name: "Calypso", level: 2, bpm: 80, pattern: ["D", ".", "U", "U", ".", "U"] },
+          { name: "Reggae Chop", level: 2, bpm: 72, pattern: [".", "D", ".", "D"] },
+          { name: "Swing Strum", level: 3, bpm: 85, pattern: ["D", ".", "U", ".", "D", "U", ".", "U"] },
+          { name: "Fingerpick Roll", level: 3, bpm: 70, pattern: ["D", "U", "D", "U", "D", "U", "D", "U"] }
+        ],
         FINGER_EXERCISES: window.SparkUkuleleExercises ? window.SparkUkuleleExercises.fingerpicking || [] : [],
         CURRICULUM: window.SparkUkuleleLessons || [],
         SKILL_TREE: window.SparkUkuleleSkillTree || []
@@ -221,14 +221,39 @@
       chord: function(chordObj, size, label, animate) {
         return renderUkuleleChordSVG(chordObj, size, label, animate);
       },
-      header: function() {
-        return typeof headerHTML === "function" ? headerHTML() : "";
+      watchAnimation: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var normalized = typeof normalizeUkuleleChord === "function" ? normalizeUkuleleChord(chordObj) : chordObj;
+        var chart = {
+          name: normalized.name || "chord", instrument: "ukulele",
+          stringCount: 4,
+          stringLabels: ["G","C","E","A"],
+          fretCountVisible: 4, startFret: 0,
+          open: normalized.open || [],
+          muted: normalized.muted || [],
+          fingers: normalized.fingers || [],
+          barre: null
+        };
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedWatch(container, chart, options);
       },
-      tabNav: function() {
-        return typeof tabNavHTML === "function" ? tabNavHTML() : "";
-      },
-      ring: function(pct, size, color) {
-        return typeof ringHTML === "function" ? ringHTML(pct, size, 5, color) : "";
+      shadowQuiz: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var normalized = typeof normalizeUkuleleChord === "function" ? normalizeUkuleleChord(chordObj) : chordObj;
+        var chart = {
+          name: normalized.name || "chord", instrument: "ukulele",
+          stringCount: 4,
+          stringLabels: ["G","C","E","A"],
+          fretCountVisible: 4, startFret: 0,
+          open: normalized.open || [],
+          muted: normalized.muted || [],
+          fingers: normalized.fingers || [],
+          barre: null
+        };
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedShadow(container, chart, options);
       }
     },
 
@@ -243,9 +268,18 @@
 
     tabs: [
       { id: "practice", label: "Practice", icon: "&#127925;" },
-      { id: "songs", label: "Songs", icon: "&#127926;" },
-      { id: "stats", label: "Stats", icon: "&#128202;" },
-      { id: "guide", label: "Guide", icon: "&#128214;" }
+      { id: "drill",    label: "Drill",    icon: "&#9889;" },
+      { id: "daily",    label: "Daily",    icon: "&#127941;" },
+      { id: "quiz",     label: "Quiz",     icon: "&#129504;" },
+      { id: "ear",      label: "Ear",      icon: "&#128066;" },
+      { id: "strum",    label: "Strum",    icon: "&#127932;" },
+      { id: "songs",    label: "Songs",    icon: "&#127926;" },
+      { id: "rhythm",   label: "Rhythm",   icon: "&#129345;" },
+      { id: "runner",   label: "Runner",   icon: "&#127918;" },
+      { id: "build",    label: "Build",    icon: "&#128295;" },
+      { id: "tuner",    label: "Tuner",    icon: "&#127908;" },
+      { id: "stats",    label: "Stats",    icon: "&#128202;" },
+      { id: "guide",    label: "Guide",    icon: "&#128214;" }
     ],
 
     stemMutePreset: {
@@ -279,7 +313,7 @@
         if (!grouped[skills[i].category]) grouped[skills[i].category] = [];
         grouped[skills[i].category].push({
           id: skills[i].id,
-          label: skills[i].label,
+          label: skills[i].name || skills[i].label || skills[i].id,
           status: "available",
           progress: 0,
           meta: { category: skills[i].category }
@@ -299,6 +333,12 @@
 
     getCurriculumMap: function() {
       return window.SparkUkuleleLessons || [];
+    },
+
+    getCurriculumMapV2: function() {
+      return typeof SparkCurriculumV2LegacyAdapter !== "undefined"
+        ? SparkCurriculumV2LegacyAdapter.toLegacyLessons("ukulele")
+        : [];
     },
 
     getExercises: function() {
@@ -352,4 +392,3 @@
     }
   });
 })();
-

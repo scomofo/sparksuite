@@ -9,7 +9,27 @@
   }
   if (!enabled) return;
 
+  function getStructuredIssues() {
+    var inst = typeof SparkInstruments !== "undefined" ? SparkInstruments.getActive() : null;
+    if (!inst) return [];
+    if (typeof SparkCurriculumValidator !== "undefined" && SparkCurriculumValidator && typeof SparkCurriculumValidator.validateCurriculum === "function") {
+      return SparkCurriculumValidator.validateCurriculum(inst);
+    }
+    if (typeof validateCurriculum === "function") return validateCurriculum(inst);
+    return [];
+  }
+
   function getIssues() {
+    var structured = getStructuredIssues();
+    if (structured.length && typeof SparkCurriculumValidator !== "undefined" && SparkCurriculumValidator && typeof SparkCurriculumValidator.groupIssues === "function") {
+      var grouped = SparkCurriculumValidator.groupIssues(structured);
+      return {
+        skills: mapIssueMessages(grouped.skills),
+        lessons: mapIssueMessages(grouped.lessons),
+        levels: mapIssueMessages(grouped.levels)
+      };
+    }
+
     var issues = { skills: {}, lessons: {}, levels: {} };
     var inst = typeof SparkInstruments !== "undefined" ? SparkInstruments.getActive() : null;
     if (!inst) return issues;
@@ -55,6 +75,14 @@
       if (!exSkills[sid]) { issues.skills[sid] = issues.skills[sid] || []; issues.skills[sid].push("no exercises"); }
     });
     return issues;
+  }
+
+  function mapIssueMessages(group) {
+    var result = {};
+    for (var key in group) {
+      result[key] = group[key].map(function(item) { return item.message; });
+    }
+    return result;
   }
 
   var WARN = "outline:2px dashed #ef4444;outline-offset:-2px;";
@@ -209,7 +237,7 @@
       var lmsgs = issues.lessons[lid];
       // Try to extract level num from lesson id
       var lvlNum = null;
-      var numMatch = lid.match(/(d+)/);
+      var numMatch = lid.match(/(\d+)/);
       if (numMatch) lvlNum = parseInt(numMatch[1]);
       navList.appendChild(makeRow(
         "📖", lid, lmsgs.join("; "),

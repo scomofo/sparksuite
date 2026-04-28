@@ -21,6 +21,77 @@
     return "";
   }
 
+  function getSkillDashboardInstrument() {
+    var inst;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    inst = SparkInstruments.getActive();
+    if (!inst) return null;
+    if (typeof inst.getRhythmAdapter === "function" || typeof inst.getCapabilities === "function" || typeof inst.getData === "function") {
+      return inst;
+    }
+    candidate = inst.id || inst.appId || inst.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate || entry.instrumentId === candidate) return entry;
+    }
+    return inst;
+  }
+
+  function getSkillDashboardLaneLabels(inst) {
+    var adapter;
+    var capabilities;
+    var tuning;
+    var labels;
+    var count;
+    var i;
+    if (inst && typeof inst.getRhythmAdapter === "function") {
+      adapter = inst.getRhythmAdapter();
+      if (adapter && typeof adapter.getLaneLabels === "function") {
+        labels = adapter.getLaneLabels();
+        if (Array.isArray(labels) && labels.length) return labels.slice();
+      }
+    }
+    if (inst && typeof inst.getCapabilities === "function") {
+      capabilities = inst.getCapabilities() || {};
+      if (Array.isArray(capabilities.laneLabels) && capabilities.laneLabels.length) return capabilities.laneLabels.slice();
+      if (typeof capabilities.laneCount === "number" && capabilities.laneCount > 0) count = Math.floor(capabilities.laneCount);
+      if (!count && typeof capabilities.stringCount === "number" && capabilities.stringCount > 0) count = Math.floor(capabilities.stringCount);
+      if (!count && typeof capabilities.keyCount === "number" && capabilities.keyCount > 0) count = Math.min(12, Math.floor(capabilities.keyCount));
+    }
+    if (inst && typeof inst.getTuning === "function") {
+      tuning = inst.getTuning();
+      if (Array.isArray(tuning) && tuning.length) {
+        labels = [];
+        for (i = 0; i < tuning.length; i++) {
+          labels.push(firstSkillDashboardTextToken(tuning[i] && tuning[i].note, tuning[i], "Lane " + (i + 1)));
+        }
+        return labels;
+      }
+      if (tuning && Array.isArray(tuning.strings) && tuning.strings.length) {
+        return tuning.strings.map(function(note) { return firstSkillDashboardTextToken(note, "Lane"); });
+      }
+    }
+    labels = ["G", "R", "Y", "B", "O"];
+    if (count && count !== labels.length) {
+      labels = [];
+      for (i = 0; i < count; i++) labels.push("Lane " + (i + 1));
+    }
+    return labels;
+  }
+
+  function getSkillDashboardLaneColor(index) {
+    var laneColors = ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316", "#a855f7", "#14b8a6", "#f59e0b", "#ec4899", "#8b5cf6", "#22c55e", "#06b6d4"];
+    return laneColors[index % laneColors.length];
+  }
+
   function skillDashboardPage() {
     var sg = S.skillGraph;
     if (!sg) return '<div class="text-center"><p>No skill data yet. Play some sessions first!</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
@@ -52,15 +123,17 @@
     }
     h += '</div>';
 
+    var laneLabels = getSkillDashboardLaneLabels(getSkillDashboardInstrument());
+    var laneAccuracy = Array.isArray(sg.laneAccuracy) ? sg.laneAccuracy : [];
+
     h += '<div class="card mb16">';
     h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Lane Accuracy</div>';
-    var laneColors = ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316", "#a855f7"];
-    var laneLabels = ["G", "R", "Y", "B", "O", "P"];
     h += '<div style="display:flex;gap:8px;justify-content:center">';
-    for (var li = 0; li < 6; li++) {
-      var lv = Math.round((sg.laneAccuracy[li] || 0) * 100);
-      h += '<div style="text-align:center;flex:1"><div style="height:60px;display:flex;align-items:end;justify-content:center"><div style="width:100%;border-radius:4px 4px 0 0;background:' + laneColors[li] + ';height:' + Math.max(4, lv * 0.6) + 'px;opacity:.85"></div></div>';
-      h += '<div style="font-size:10px;font-weight:800;color:' + laneColors[li] + ';margin-top:4px">' + laneLabels[li] + '</div>';
+    for (var li = 0; li < laneLabels.length; li++) {
+      var lv = Math.round((laneAccuracy[li] || 0) * 100);
+      var laneColor = getSkillDashboardLaneColor(li);
+      h += '<div style="text-align:center;flex:1"><div style="height:60px;display:flex;align-items:end;justify-content:center"><div style="width:100%;border-radius:4px 4px 0 0;background:' + laneColor + ';height:' + Math.max(4, lv * 0.6) + 'px;opacity:.85"></div></div>';
+      h += '<div style="font-size:10px;font-weight:800;color:' + laneColor + ';margin-top:4px">' + escHTML(laneLabels[li]) + '</div>';
       h += '<div style="font-size:10px;color:var(--text-muted)">' + lv + '%</div></div>';
     }
     h += '</div></div>';
@@ -79,12 +152,12 @@
     if (typeof SparkSkillTracker !== "undefined") {
       var weakest = SparkSkillTracker.getWeakestSkill(sg);
       var weakLane = SparkSkillTracker.getWeakestLane(sg);
-      var weakLaneIndex = typeof weakLane === "number" && isFinite(weakLane) && weakLane >= 0 ? Math.floor(weakLane) : 0;
+      var weakLaneIndex = typeof weakLane === "number" && isFinite(weakLane) && weakLane >= 0 && weakLane < laneLabels.length ? Math.floor(weakLane) : 0;
       h += '<div class="card mb16" style="background:linear-gradient(180deg,rgba(255,138,92,.1),rgba(255,138,92,.04));border:1px solid rgba(255,138,92,.22)">';
       h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:6px">Focus Area</div>';
       var focusLabel = weakest === "timing" ? "Timing" : weakest === "rhythm" ? "Rhythm" : "Chord Accuracy";
       h += '<div style="font-size:12px;color:var(--text-secondary)">Weakest skill: <strong style="color:var(--text-primary)">' + escHTML(focusLabel) + '</strong> (' + Math.round((sg[weakest] || 0) * 100) + '%)</div>';
-      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Weakest lane: <strong style="color:var(--text-primary)">Lane ' + (weakLaneIndex + 1) + '</strong> (' + Math.round((sg.laneAccuracy[weakLaneIndex] || 0) * 100) + '%)</div>';
+      h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Weakest lane: <strong style="color:var(--text-primary)">' + escHTML(laneLabels[weakLaneIndex] || ("Lane " + (weakLaneIndex + 1))) + '</strong> (' + Math.round((laneAccuracy[weakLaneIndex] || 0) * 100) + '%)</div>';
       h += '</div>';
     }
 

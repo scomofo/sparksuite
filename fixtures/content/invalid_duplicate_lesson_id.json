@@ -1,0 +1,48 @@
+{
+  "instrument": {
+    "id": "bass",
+    "name": "Bass",
+    "tuning": {
+      "strings": ["E1", "A1", "D2", "G2"]
+    },
+    "capabilities": {
+      "preferredRenderer": "string-lane-highway"
+    }
+  },
+  "skills": [
+    {
+      "id": "pluck_open",
+      "name": "Pluck Open Strings",
+      "category": "technique",
+      "prerequisites": []
+    }
+  ],
+  "lessons": [
+    {
+      "id": "bass_01",
+      "skill": "pluck_open",
+      "title": "Open String Pulse",
+      "prerequisites": [],
+      "masteryRequired": 0.7,
+      "estimatedMinutes": 5
+    },
+    {
+      "id": "bass_01",
+      "skill": "pluck_open",
+      "title": "Open String Pulse Again",
+      "prerequisites": [],
+      "masteryRequired": 0.7,
+      "estimatedMinutes": 5
+    }
+  ],
+  "chords": [],
+  "exercises": [
+    {
+      "id": "bass_open_01",
+      "skillId": "pluck_open",
+      "type": "pluck",
+      "tempo": 80,
+      "difficulty": "easy"
+    }
+  ]
+}
