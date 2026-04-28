@@ -67,7 +67,9 @@ function bootLessonProductUi(){
   loadSparkUiAddon("SparkLessonProductLayer", "js/sparksuite/ui/lesson_product_layer.js", function(){
     loadSparkUiAddon("SparkLessonProgressService", "js/sparksuite/ui/lesson_progress_service.js", function(){
       loadSparkUiAddon("SparkLessonDashboardUI", "js/sparksuite/ui/lesson_dashboard_ui.js", function(){
-        if(typeof render==="function") render();
+        loadSparkUiAddon("SparkCoreLessonCompletionPatch", "js/sparksuite/core/spark_core_lesson_completion_patch.js", function(){
+          if(typeof render==="function") render();
+        });
       });
     });
   });
