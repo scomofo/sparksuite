@@ -45,15 +45,36 @@ function runDeferredBootTasks(){
 if(window.SparkBootLoader&&typeof SparkBootLoader.afterDeferredScripts==="function")SparkBootLoader.afterDeferredScripts(runDeferredBootTasks);
 else runDeferredBootTasks();
 applyTheme();
-// Always boot to the instrument showroom home instead of restoring the last
-// active instrument. This keeps app launches predictable and gives users a
-// consistent "choose your instrument" entry point on reload.
 S.activeInstrument=null;
 S._showroomOverride=null;
 S.launcherView="home";
 document.getElementById("no-js").style.display="none";
 document.getElementById("header").style.display=S.activeInstrument?"flex":"none";
 document.getElementById("app").style.display="block";
-// Activate remembered instrument
 if(S.activeInstrument){try{SparkInstruments.activate(S.activeInstrument);}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
+
+function loadSparkUiAddon(globalName, src, done){
+  var script;
+  if(window[globalName]){ if(typeof done==="function") done(); return; }
+  script=document.createElement("script");
+  script.src=src;
+  script.onload=function(){ if(typeof done==="function") done(); };
+  script.onerror=function(){ console.error("SparkSuite: failed to load "+src); };
+  document.head.appendChild(script);
+}
+
+function bootLessonProductUi(){
+  loadSparkUiAddon("SparkLessonProductLayer", "js/sparksuite/ui/lesson_product_layer.js", function(){
+    loadSparkUiAddon("SparkLessonProgressService", "js/sparksuite/ui/lesson_progress_service.js", function(){
+      loadSparkUiAddon("SparkLessonDashboardUI", "js/sparksuite/ui/lesson_dashboard_ui.js", function(){
+        loadSparkUiAddon("SparkCoreLessonCompletionPatch", "js/sparksuite/core/spark_core_lesson_completion_patch.js", function(){
+          if(typeof render==="function") render();
+        });
+      });
+    });
+  });
+}
+if(window.SparkBootLoader&&typeof SparkBootLoader.afterDeferredScripts==="function")SparkBootLoader.afterDeferredScripts(bootLessonProductUi);
+else setTimeout(bootLessonProductUi,0);
+
 // render() moved to index.html after all instrument pages register

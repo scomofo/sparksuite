@@ -61,6 +61,24 @@
     return Array.isArray(lessons) ? lessons : [];
   }
 
+  function findLessonById(lessons, lessonId) {
+    var i;
+    if (!lessonId) return null;
+    for (i = 0; i < lessons.length; i++) {
+      if (lessons[i] && lessons[i].id === lessonId) return lessons[i];
+    }
+    return null;
+  }
+
+  function getForcedLessonRequest(instrumentContext) {
+    var request = typeof S !== "undefined" && S ? S.__sparkForcedLessonRequest : null;
+    var instrumentType = instrumentContext && instrumentContext.instrumentType ? instrumentContext.instrumentType : null;
+    if (!request || !request.lessonId) return null;
+    if (request.instrumentType && instrumentType && request.instrumentType !== instrumentType) return null;
+    if (request.createdAt && Date.now() - request.createdAt > 30000) return null;
+    return request;
+  }
+
   function lessonIsUnlocked(lesson, completedIds) {
     var prerequisites = Array.isArray(lesson && lesson.prerequisites) ? lesson.prerequisites : [];
     var i;
@@ -129,26 +147,30 @@
   CurriculumEngine.prototype.getDailyPracticeContext = function(instrumentContext) {
     instrumentContext = instrumentContext || {};
     var lessons = normalizeLessons(instrumentContext);
-    var nextLesson = resolveNextLessonFromLessons(lessons, instrumentContext.instrumentType || null);
-    var nextLessonId = resolveNextLessonId(instrumentContext, nextLesson);
-    var reviewTargets = typeof SparkCurriculumService !== "undefined" && SparkCurriculumService && typeof SparkCurriculumService.getReviewTargets === "function"
-      ? SparkCurriculumService.getReviewTargets({
-          instrumentType: instrumentContext.instrumentType || null,
-          lessons: lessons
-        })
+    var forced = getForcedLessonRequest(instrumentContext);
+    var nextLesson = forced ? findLessonById(lessons, forced.lessonId) : null;
+    var nextLessonId = nextLesson ? nextLesson.id : null;
+    var reviewTargets;
+    var learningQueue;
+
+    if (!nextLesson) {
+      nextLesson = resolveNextLessonFromLessons(lessons, instrumentContext.instrumentType || null);
+      nextLessonId = resolveNextLessonId(instrumentContext, nextLesson);
+    }
+
+    reviewTargets = typeof SparkCurriculumService !== "undefined" && SparkCurriculumService && typeof SparkCurriculumService.getReviewTargets === "function"
+      ? SparkCurriculumService.getReviewTargets({ instrumentType: instrumentContext.instrumentType || null, lessons: lessons })
       : [];
-    var learningQueue = typeof SparkCurriculumService !== "undefined" && SparkCurriculumService && typeof SparkCurriculumService.buildLearningQueue === "function"
-      ? SparkCurriculumService.buildLearningQueue({
-          instrumentType: instrumentContext.instrumentType || null,
-          lessons: lessons
-        })
+    learningQueue = typeof SparkCurriculumService !== "undefined" && SparkCurriculumService && typeof SparkCurriculumService.buildLearningQueue === "function"
+      ? SparkCurriculumService.buildLearningQueue({ instrumentType: instrumentContext.instrumentType || null, lessons: lessons })
       : [];
     nextLesson = resolveNextLesson(nextLessonId, nextLesson, instrumentContext);
 
     return {
       nextLessonId: nextLessonId,
       nextLesson: nextLesson,
-      nextLessonUnlocked: nextLessonId ? SparkCurriculumBridge.isLessonUnlocked(nextLessonId, instrumentContext) : false,
+      nextLessonUnlocked: forced && nextLesson ? true : (nextLessonId ? SparkCurriculumBridge.isLessonUnlocked(nextLessonId, instrumentContext) : false),
+      forcedLesson: !!(forced && nextLesson),
       reviewTargets: reviewTargets,
       learningQueue: learningQueue,
       lessons: lessons
@@ -158,9 +180,7 @@
   CurriculumEngine.prototype.peekNextSkill = function(context) {
     context = context || {};
     var session = context.session || null;
-    var instrumentType = session && session.instrumentType
-      ? session.instrumentType
-      : (context.instrumentType || null);
+    var instrumentType = session && session.instrumentType ? session.instrumentType : (context.instrumentType || null);
     var instrumentContext = context.instrumentContext || { instrumentType: instrumentType };
     var dailyContext = this.getDailyPracticeContext(instrumentContext);
     var nextLesson = dailyContext && dailyContext.nextLesson ? dailyContext.nextLesson : null;

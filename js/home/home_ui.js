@@ -4,6 +4,11 @@ function homeDashboardPage(){
   cards.push(renderHomeProfileCard(data.profile));
   cards.push(renderHomePracticeCard(data.practice));
   cards.push(renderHomeRecommendationCard(data.recommendations));
+  if (window.SparkLessonDashboardUI && typeof SparkLessonDashboardUI.renderHomeCard === 'function') {
+    try {
+      cards.push(SparkLessonDashboardUI.renderHomeCard());
+    } catch (e) {}
+  }
   cards.push(renderHomeChallengeCard(data.challenges));
   cards.push(renderHomeCareerCard(data.career));
   cards.push(renderHomePackCard(data.packs));
