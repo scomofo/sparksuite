@@ -14,6 +14,21 @@
     return "sparksuite";
   }
 
+  function getSparkCoreHandle() {
+    if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+    if (typeof sparkCore !== "undefined") return sparkCore;
+    return null;
+  }
+
+  function resolveBackupStorage() {
+    var core = getSparkCoreHandle();
+    if (core && core.storage) return core.storage;
+    if (typeof SparkSuiteStorage === "function") {
+      return new SparkSuiteStorage();
+    }
+    return null;
+  }
+
   async function exportEditorObjectDesktopAware() {
     if (!S.performEditorChart) return false;
     if (isDesktopBuild()) {
@@ -52,17 +67,56 @@
     return true;
   }
 
-  function buildFullLocalBackup(){
-    return {
+  function buildFullLocalBackup(options){
+    options = options || {};
+    var storage = resolveBackupStorage();
+    var userId = options.userId || null;
+    var userData = null;
+    var debugBundle = null;
+    var payload;
+    if (storage && typeof exportSparkUserData === "function") {
+      userData = exportSparkUserData({
+        storage: storage,
+        userId: userId || undefined
+      });
+    }
+    if (typeof buildSparkDebugBundle === "function") {
+      debugBundle = buildSparkDebugBundle({
+        sparkCore: getSparkCoreHandle(),
+        storage: storage
+      });
+    }
+    payload = {
       exportedAt: Date.now(),
       app: resolveDesktopBackupAppId(),
       version: (S.releaseInfo && S.releaseInfo.version) || "dev",
-      state: S
+      schemaVersion: storage && typeof storage.getCurrentSchemaVersion === "function"
+        ? storage.getCurrentSchemaVersion()
+        : null,
+      userData: userData,
+      debugBundle: debugBundle
+    };
+    payload.integrity = summarizeFullLocalBackup(payload);
+    return payload;
+  }
+
+  function summarizeFullLocalBackup(payload) {
+    var userData = payload && payload.userData ? payload.userData : null;
+    var profile = userData && userData.profile ? userData.profile : null;
+    var journal = userData && Array.isArray(userData.practiceJournal) ? userData.practiceJournal : [];
+    var debugBundle = payload && payload.debugBundle ? payload.debugBundle : null;
+    return {
+      hasCanonicalUserData: !!(userData && profile),
+      hasDebugBundle: !!debugBundle,
+      profileUserId: profile && profile.userId ? profile.userId : null,
+      selectedInstrument: profile && profile.selectedInstrument ? profile.selectedInstrument : null,
+      practiceJournalCount: journal.length,
+      schemaVersion: userData && userData.schemaVersion ? userData.schemaVersion : payload.schemaVersion || null
     };
   }
 
-  async function exportFullBackupDesktopAware(){
-    var payload = buildFullLocalBackup();
+  async function exportFullBackupDesktopAware(options){
+    var payload = buildFullLocalBackup(options);
     if(isDesktopBuild()){
       var result = await window.sparkDesktop.saveJson(payload);
       if(result && result.ok){
@@ -81,5 +135,6 @@
   window.checkForDesktopUpdates = checkForDesktopUpdates;
   window.buildFullLocalBackup = buildFullLocalBackup;
   window.exportFullBackupDesktopAware = exportFullBackupDesktopAware;
+  window.summarizeFullLocalBackup = summarizeFullLocalBackup;
 
 })();

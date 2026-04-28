@@ -1,0 +1,25 @@
+{
+  "id": "feel_good_inc_bass_chords",
+  "title": "Feel Good Inc",
+  "artist": "Gorillaz",
+  "bpm": 138,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 6.957 },
+    { "id": 1, "name": "Chorus", "startSec": 6.957, "endSec": 13.913 },
+    { "id": 2, "name": "Outro", "startSec": 13.913, "endSec": 20.87 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.435, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 2, "t": 0.435, "dur": 0.435, "type": "tap", "chord": "F", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 3, "t": 0.87, "dur": 0.434, "type": "tap", "chord": "F#", "notes": ["F#2"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 4, "t": 1.304, "dur": 0.435, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 5, "t": 1.739, "dur": 0.435, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 6, "t": 2.174, "dur": 0.435, "type": "tap", "chord": "F", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 7, "t": 2.609, "dur": 0.434, "type": "tap", "chord": "F#", "notes": ["F#2"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 8, "t": 3.043, "dur": 0.435, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" }
+  ]
+}

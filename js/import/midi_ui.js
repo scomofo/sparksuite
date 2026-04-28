@@ -1,5 +1,11 @@
 (function(){
 
+  function getMidiImportRuntimeState(){
+    var core = (typeof window !== "undefined" && window.sparkCore)
+      || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    return core && typeof core.getRuntimeState === "function" ? core.getRuntimeState() : null;
+  }
+
   function inferMidiImportAppType() {
     if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
       var active = SparkInstruments.getActive();
@@ -20,9 +26,7 @@
   }
 
   function midiImportPage(){
-    var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-      ? window.sparkCore.getRuntimeState()
-      : null;
+    var runtimeState = getMidiImportRuntimeState();
     var importSummary = runtimeState && runtimeState.midiImportSummary
       ? runtimeState.midiImportSummary
       : null;
@@ -36,7 +40,7 @@
     h += '<div><b>MIDI Import</b></div>';
     h += '<input type="file" accept=".mid,.midi" onchange="act(\'importMidiFile\', this.files[0])" />';
     if(typeof isDesktopBuild === "function" && isDesktopBuild() && typeof openImportFileDesktopAware === "function"){
-      h += ' <button onclick="importMidiDesktopAware()">Import from Desktop</button>';
+      h += ' <button onclick="act(\'importMidiDesktop\')">Import from Desktop</button>';
     }
     h += '</div>';
 

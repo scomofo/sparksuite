@@ -1,6 +1,8 @@
 (function() {
   function ScoringEngine(preset) {
     this.preset = preset || SparkEnginePresetRegistry.get("spark_learning");
+    this.eventBus = null;
+    this.performanceMonitor = null;
     this.state = {
       score: 0,
       combo: 0,
@@ -15,7 +17,27 @@
     };
   }
 
+  ScoringEngine.prototype.setEventBus = function(eventBus) {
+    this.eventBus = eventBus || null;
+    return this.eventBus;
+  };
+
+  ScoringEngine.prototype.setPerformanceMonitor = function(performanceMonitor) {
+    this.performanceMonitor = performanceMonitor || null;
+    return this.performanceMonitor;
+  };
+
   ScoringEngine.prototype.apply = function(resolution) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("gameplay.hit_detection", "hitDetectionMs", function() {
+        return self._applyInternal(resolution);
+      });
+    }
+    return this._applyInternal(resolution);
+  };
+
+  ScoringEngine.prototype._applyInternal = function(resolution) {
     this.state.total++;
     var judgement = resolution.judgement;
     var note = resolution.note;
@@ -43,7 +65,17 @@
     var bonus = note.flags && note.flags.specialPhrase ? 25 : 0;
     this.state.score += (base * multiplier) + bonus;
     if (note.flags && note.flags.specialPhrase) this.state.specialPhraseHits++;
-    return { scoreDelta: (base * multiplier) + bonus, multiplier: multiplier, special: !!(note.flags && note.flags.specialPhrase) };
+    var applied = { scoreDelta: (base * multiplier) + bonus, multiplier: multiplier, special: !!(note.flags && note.flags.specialPhrase) };
+    if (this.eventBus && typeof this.eventBus.emit === "function") {
+      this.eventBus.emit("runtime.score.applied", {
+        judgement: judgement,
+        laneMask: note.laneMask,
+        scoreDelta: applied.scoreDelta,
+        combo: this.state.combo,
+        totalScore: this.state.score
+      });
+    }
+    return applied;
   };
 
   ScoringEngine.prototype.getMultiplier = function() {
@@ -77,4 +109,9 @@
   }
 
   window.SparkScoringEngine = ScoringEngine;
+  if (typeof module !== "undefined") {
+    module.exports = {
+      SparkScoringEngine: ScoringEngine
+    };
+  }
 })();

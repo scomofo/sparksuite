@@ -10,6 +10,7 @@
     this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine();
     this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine);
     this.currentPlan = null;
+    this.currentStateMachine = null;
     this.lastSessionOutcome = null;
     this.performanceEditorDocument = null;
     this.performanceEditorLibrary = [];
@@ -19,6 +20,76 @@
     this.playbackEngine = null;
     this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
+    this.eventBus = options.eventBus || (typeof SparkEventBus !== "undefined" ? new SparkEventBus({ maxEvents: 1000 }) : null);
+    this.performanceMonitor = options.performanceMonitor || (
+      typeof SparkPerformanceMonitor !== "undefined"
+        ? new SparkPerformanceMonitor({
+            eventBus: this.eventBus,
+            budgets: typeof SparkPerformanceBudgets !== "undefined" ? SparkPerformanceBudgets : {}
+          })
+        : null
+    );
+    this.lastRecoveryRequest = null;
+    this.errorBoundary = options.errorBoundary || this.createErrorBoundary();
+    if (this.progressEngine && typeof this.progressEngine.setEventBus === "function") {
+      this.progressEngine.setEventBus(this.eventBus);
+    }
+    if (this.storage && typeof this.storage.setPerformanceMonitor === "function") {
+      this.storage.setPerformanceMonitor(this.performanceMonitor);
+    }
+    if (this.sessionEngine && typeof this.sessionEngine.setPerformanceMonitor === "function") {
+      this.sessionEngine.setPerformanceMonitor(this.performanceMonitor);
+    }
+  }
+
+  function getSparkErrorApi() {
+    function SparkFallbackError(code, message, context) {
+      this.name = "SparkError";
+      this.code = code;
+      this.message = message || code;
+      this.context = context || {};
+    }
+    SparkFallbackError.prototype = Object.create(Error.prototype);
+    SparkFallbackError.prototype.constructor = SparkFallbackError;
+    SparkFallbackError.prototype.toString = function() {
+      return this.name + ": " + this.message;
+    };
+    if (typeof SparkError !== "undefined" && typeof SparkErrorCodes !== "undefined") {
+      return {
+        SparkError: SparkError,
+        SparkErrorCodes: SparkErrorCodes,
+        normalizeSparkError: typeof normalizeSparkError === "function" ? normalizeSparkError : null
+      };
+    }
+    if (typeof window !== "undefined" && window.SparkError && window.SparkErrorCodes) {
+      return {
+        SparkError: window.SparkError,
+        SparkErrorCodes: window.SparkErrorCodes,
+        normalizeSparkError: typeof window.normalizeSparkError === "function" ? window.normalizeSparkError : null
+      };
+    }
+    if (typeof require === "function") {
+      try {
+        return {
+          SparkError: require("./spark_error.js").SparkError,
+          SparkErrorCodes: require("./error_codes.js").SparkErrorCodes,
+          normalizeSparkError: require("./spark_error.js").normalizeSparkError
+        };
+      } catch (error) {}
+    }
+    return {
+      SparkError: SparkFallbackError,
+      SparkErrorCodes: {
+        UNEXPECTED_ERROR: "UNEXPECTED_ERROR",
+        SESSION_STATE_INVALID_TRANSITION: "SESSION_STATE_INVALID_TRANSITION"
+      },
+      normalizeSparkError: null
+    };
+  }
+
+  function createCoreError(code, message, context) {
+    var api = getSparkErrorApi();
+    return new api.SparkError(code, message, context || {});
   }
 
   SparkCore.prototype.cloneValue = function(value) {
@@ -26,7 +97,310 @@
     return JSON.parse(JSON.stringify(value));
   };
 
+  SparkCore.prototype.createErrorBoundary = function() {
+    var self = this;
+    if (typeof SparkErrorBoundary === "undefined") return null;
+    return new SparkErrorBoundary({
+      eventBus: this.eventBus || {
+        emit: function(eventName, payload) {
+          if (typeof SparkEventLogger !== "undefined" && SparkEventLogger && typeof SparkEventLogger.log === "function") {
+            SparkEventLogger.log(eventName, payload);
+          }
+        }
+      },
+      onError: function(payload) {
+        self.captureStructuredError(payload.error, payload.context);
+      }
+    });
+  };
+
+  SparkCore.prototype.getEventBus = function() {
+    return this.eventBus;
+  };
+
+  SparkCore.prototype.emitEvent = function(type, payload) {
+    if (this.eventBus && typeof this.eventBus.emit === "function") {
+      return this.eventBus.emit(type, payload || {});
+    }
+    if (typeof SparkEventLogger !== "undefined" && SparkEventLogger && typeof SparkEventLogger.log === "function") {
+      SparkEventLogger.log(type, payload || {});
+    }
+    return null;
+  };
+
+  SparkCore.prototype.normalizeStructuredError = function(error, fallbackCode, context) {
+    var api = getSparkErrorApi();
+    if (typeof api.normalizeSparkError === "function") {
+      return api.normalizeSparkError(error, fallbackCode || api.SparkErrorCodes.UNEXPECTED_ERROR, context || {});
+    }
+    if (error && typeof error.code === "string" && typeof error.message === "string") return error;
+    return createCoreError(
+      fallbackCode || api.SparkErrorCodes.UNEXPECTED_ERROR,
+      error && error.message ? error.message : String(error || "SparkSuite error"),
+      context || {}
+    );
+  };
+
+  SparkCore.prototype.buildRecoveryActions = function() {
+    return [
+      { id: "retry_current_action", label: "Retry current action" },
+      { id: "return_to_lesson_select", label: "Return to lesson select" },
+      { id: "return_to_instrument_select", label: "Return to instrument select" },
+      { id: "restart_session", label: "Restart session" },
+      { id: "export_debug_bundle", label: "Export debug bundle" }
+    ];
+  };
+
+  SparkCore.prototype.captureStructuredError = function(error, context) {
+    var normalized = this.normalizeStructuredError(error, getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR, context || {});
+    var serialized = typeof normalized.toJSON === "function"
+      ? normalized.toJSON()
+      : {
+          name: normalized.name || "Error",
+          code: normalized.code || getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR,
+          message: normalized.message || String(normalized),
+          context: normalized.context || {},
+          createdAt: normalized.createdAt || new Date().toISOString(),
+          stack: normalized.stack || null
+        };
+    this.updateRuntimeState({
+      activeScreen: "spark_error",
+      lastError: serialized,
+      recoveryActions: this.buildRecoveryActions(serialized),
+      recoveryContext: this.cloneValue(context || {}),
+      transport: { status: "error", positionMs: this.runtimeState.transport && this.runtimeState.transport.positionMs || 0 }
+    });
+    return serialized;
+  };
+
+  SparkCore.prototype.clearStructuredError = function() {
+    this.lastRecoveryRequest = null;
+    return this.updateRuntimeState({
+      lastError: null,
+      recoveryActions: [],
+      recoveryContext: null
+    });
+  };
+
+  SparkCore.prototype.runWithErrorRecovery = function(label, recoveryContext, fn) {
+    var normalized;
+    this.lastRecoveryRequest = {
+      label: label,
+      context: this.cloneValue(recoveryContext || {}),
+      retry: function() {
+        return fn();
+      }
+    };
+    try {
+      var result = fn();
+      this.clearStructuredError();
+      return result;
+    } catch (error) {
+      normalized = this.normalizeStructuredError(
+        error,
+        getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR,
+        Object.assign({ label: label }, recoveryContext || {})
+      );
+      if (this.errorBoundary && typeof this.errorBoundary.handle === "function") {
+        this.errorBoundary.handle(normalized, Object.assign({ label: label }, recoveryContext || {}));
+      } else {
+        this.captureStructuredError(normalized, Object.assign({ label: label }, recoveryContext || {}));
+      }
+      throw normalized;
+    }
+  };
+
+  SparkCore.prototype.getRecoveryState = function() {
+    return {
+      error: this.cloneValue(this.runtimeState.lastError),
+      actions: this.cloneValue(this.runtimeState.recoveryActions || []),
+      context: this.cloneValue(this.runtimeState.recoveryContext || null)
+    };
+  };
+
+  SparkCore.prototype.buildRecoveryDebugBundle = function() {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("debug.export_bundle", "debugBundleExportMs", function() {
+        return self._buildRecoveryDebugBundleInternal();
+      });
+    }
+    return this._buildRecoveryDebugBundleInternal();
+  };
+
+  SparkCore.prototype._buildRecoveryDebugBundleInternal = function() {
+    if (typeof buildSparkDebugBundle === "function") {
+      return buildSparkDebugBundle({
+        sparkCore: this,
+        gateway: typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null,
+        eventBus: this.eventBus,
+        storage: this.storage,
+        performanceMonitor: this.performanceMonitor
+      });
+    }
+    return {
+      exportedAt: new Date().toISOString(),
+      error: this.cloneValue(this.runtimeState.lastError),
+      recoveryContext: this.cloneValue(this.runtimeState.recoveryContext),
+      currentPlan: this.cloneValue(this.currentPlan),
+      runtimeState: this.cloneValue(this.runtimeState),
+      lastSessionOutcome: this.cloneValue(this.lastSessionOutcome),
+      missingHandlers: typeof SparkExecutionGateway !== "undefined" && SparkExecutionGateway && typeof SparkExecutionGateway.getMissingHandlerReport === "function"
+        ? SparkExecutionGateway.getMissingHandlerReport()
+        : {}
+    };
+  };
+
+  SparkCore.prototype.applyRecoveryAction = function(actionId) {
+    var request;
+    if (actionId === "retry_current_action") {
+      request = this.lastRecoveryRequest;
+      if (!request || typeof request.retry !== "function") return false;
+      return request.retry();
+    }
+    if (actionId === "return_to_lesson_select") {
+      this.clearStructuredError();
+      return this.updateRuntimeState({
+        activeScreen: "lesson_select",
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if (actionId === "return_to_instrument_select") {
+      this.clearStructuredError();
+      return this.updateRuntimeState({
+        activeScreen: "instrument_select",
+        activePlanId: null,
+        activeSegmentId: null,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if (actionId === "restart_session") {
+      if (!this.currentPlan) return false;
+      this.clearStructuredError();
+      return this.startSession({
+        flow: this.currentPlan.flow,
+        forceRebuild: true,
+        sessionNum: this.currentPlan.context && this.currentPlan.context.guidedSession
+          ? this.currentPlan.context.guidedSession
+          : null
+      });
+    }
+    if (actionId === "export_debug_bundle") {
+      return this.buildRecoveryDebugBundle();
+    }
+    return false;
+  };
+
+  SparkCore.prototype.getSessionRuntimeHandle = function() {
+    if (typeof window !== "undefined" && window.SparkSessionRuntime) return window.SparkSessionRuntime;
+    if (typeof SparkSessionRuntime !== "undefined") return SparkSessionRuntime;
+    return null;
+  };
+
+  SparkCore.prototype.getSessionStates = function() {
+    if (typeof SparkSessionStates !== "undefined") return SparkSessionStates;
+    return {
+      CREATED: "created",
+      READY: "ready",
+      RUNNING: "running",
+      SEGMENT_COMPLETE: "segment_complete",
+      COMPLETED: "completed",
+      FAILED: "failed",
+      CANCELLED: "cancelled"
+    };
+  };
+
+  SparkCore.prototype.createSessionStateMachine = function(plan) {
+    var sessionStates = this.getSessionStates();
+    if (typeof SparkSessionStateMachine === "undefined" || !plan || !plan.id) return null;
+    this.currentStateMachine = new SparkSessionStateMachine({
+      sessionId: plan.id
+    });
+    this.currentStateMachine.transition(sessionStates.READY, {
+      reason: "session_built",
+      flow: plan.flow || null
+    });
+    return this.currentStateMachine;
+  };
+
+  SparkCore.prototype.getSessionStateMachineSnapshot = function() {
+    if (!this.currentStateMachine || typeof this.currentStateMachine.snapshot !== "function") return null;
+    return this.currentStateMachine.snapshot();
+  };
+
+  SparkCore.prototype.transitionSessionState = function(nextState, meta) {
+    if (!this.currentStateMachine || typeof this.currentStateMachine.transition !== "function") return null;
+    return this.currentStateMachine.transition(nextState, meta || {});
+  };
+
+  SparkCore.prototype.ensureCompletionFlowState = function(meta) {
+    var sessionStates = this.getSessionStates();
+    var snapshot = this.getSessionStateMachineSnapshot();
+    if (!snapshot || !snapshot.state) return null;
+    if (snapshot.state === sessionStates.READY || snapshot.state === sessionStates.SEGMENT_COMPLETE) {
+      return this.transitionSessionState(sessionStates.RUNNING, Object.assign({
+        reason: "completion_flow_started"
+      }, meta || {}));
+    }
+    return snapshot.state;
+  };
+
+  SparkCore.prototype.assertCanCompleteSession = function() {
+    var sessionStates = this.getSessionStates();
+    var snapshot = this.getSessionStateMachineSnapshot();
+    if (!snapshot || !snapshot.state) return true;
+    if (snapshot.state !== sessionStates.READY
+      && snapshot.state !== sessionStates.RUNNING
+      && snapshot.state !== sessionStates.SEGMENT_COMPLETE) {
+      throw createCoreError(
+        getSparkErrorApi().SparkErrorCodes.SESSION_STATE_INVALID_TRANSITION,
+        "Cannot complete session from state " + snapshot.state,
+        {
+          state: snapshot.state,
+          sessionId: snapshot.sessionId || (this.currentPlan && this.currentPlan.id) || null
+        }
+      );
+    }
+    return true;
+  };
+
   SparkCore.prototype.createInitialRuntimeState = function() {
+    var gameplayTimingConfig = typeof SparkNormalizeTimingConfig === "function"
+      ? SparkNormalizeTimingConfig()
+      : {
+          hitWindowMs: 140,
+          perfectWindowMs: 50,
+          goodWindowMs: 90,
+          noteSpeed: 0.32,
+          inputLatencyOffsetMs: 0
+        };
+    var practiceAssistConfig = typeof SparkNormalizePracticeAssist === "function"
+      ? SparkNormalizePracticeAssist()
+      : {
+          speedMultiplier: 1,
+          loopRange: null,
+          showGhostNotes: false,
+          metronome: false,
+          noFailMode: true,
+          leftHanded: false,
+          noStrumMode: false
+        };
+    var accessibilitySettings = typeof SparkNormalizeAccessibilitySettings === "function"
+      ? SparkNormalizeAccessibilitySettings({})
+      : {
+          reducedMotion: false,
+          highContrast: false,
+          noteSize: "normal",
+          laneLabels: true,
+          colorblindSafeLanes: false,
+          metronomeVisualOnly: false,
+          disableFailureAnimations: false,
+          keyboardRemapping: {},
+          leftHandedLayout: false,
+          slowerDefaultSpeed: false,
+          audioCueVolume: 0.8,
+          metronomeVolume: 0.6
+        };
     return {
       activeFlow: null,
       activeInstrumentId: null,
@@ -87,6 +461,13 @@
       spotifyTrackId: null,
       spotifyPlaying: false,
       spotifyDifficulty: "easy",
+      spotifyPlaylistConnected: false,
+      spotifyPlaylistPlaylists: [],
+      spotifyPlaylistLastSyncAt: null,
+      spotifyPlaylistLastResult: null,
+      spotifyPlaylistUnresolvedTracks: [],
+      spotifyPlaylistSyncStatus: "idle",
+      spotifyPlaylistError: null,
       legacyRunnerLives: 0,
       legacyRunnerDistance: 0,
       legacyRunnerObstacles: [],
@@ -146,6 +527,9 @@
       contentLastLoadStatus: "idle",
       guidedStep: null,
       guidedNewMovePhase: null,
+      guidedActivityId: null,
+      guidedActivityKind: null,
+      guidedBlockType: null,
       performanceChartId: null,
       performanceSongData: null,
       performanceSongIndex: null,
@@ -182,11 +566,17 @@
       performanceTimingOffsetMs: 0,
       performanceMidiOffsetMs: 0,
       performanceMicOffsetMs: 0,
+      gameplayTimingConfig: gameplayTimingConfig,
+      practiceAssistConfig: practiceAssistConfig,
+      accessibilitySettings: accessibilitySettings,
       performanceResults: null,
       transport: {
         status: "idle",
         positionMs: 0
       },
+      lastError: null,
+      recoveryActions: [],
+      recoveryContext: null,
       lastCompletedSessionId: null,
       lastCompletedFlow: null,
       lastOutcomeSummary: null
@@ -232,6 +622,66 @@
     return this.runtimeState;
   };
 
+  SparkCore.prototype.getGameplayTimingConfig = function() {
+    var config = this.runtimeState && this.runtimeState.gameplayTimingConfig
+      ? this.runtimeState.gameplayTimingConfig
+      : null;
+    if (typeof SparkNormalizeTimingConfig === "function") {
+      return SparkNormalizeTimingConfig(config || {});
+    }
+    return this.cloneValue(config);
+  };
+
+  SparkCore.prototype.syncGameplayTimingConfig = function(patch) {
+    var next = typeof SparkNormalizeTimingConfig === "function"
+      ? SparkNormalizeTimingConfig(Object.assign({}, this.getGameplayTimingConfig() || {}, patch || {}))
+      : Object.assign({}, this.getGameplayTimingConfig() || {}, patch || {});
+    this.updateRuntimeState({ gameplayTimingConfig: next });
+    return next;
+  };
+
+  SparkCore.prototype.applyInputCalibrationOffset = function(offsetMs) {
+    return this.syncGameplayTimingConfig({
+      inputLatencyOffsetMs: Math.round(typeof offsetMs === "number" && isFinite(offsetMs) ? offsetMs : 0)
+    });
+  };
+
+  SparkCore.prototype.getPracticeAssistConfig = function() {
+    var config = this.runtimeState && this.runtimeState.practiceAssistConfig
+      ? this.runtimeState.practiceAssistConfig
+      : null;
+    if (typeof SparkNormalizePracticeAssist === "function") {
+      return SparkNormalizePracticeAssist(config || {});
+    }
+    return this.cloneValue(config);
+  };
+
+  SparkCore.prototype.syncPracticeAssistConfig = function(patch) {
+    var next = typeof SparkNormalizePracticeAssist === "function"
+      ? SparkNormalizePracticeAssist(Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {}))
+      : Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {});
+    this.updateRuntimeState({ practiceAssistConfig: next });
+    return next;
+  };
+
+  SparkCore.prototype.getAccessibilitySettings = function() {
+    var settings = this.runtimeState && this.runtimeState.accessibilitySettings
+      ? this.runtimeState.accessibilitySettings
+      : null;
+    if (typeof SparkNormalizeAccessibilitySettings === "function") {
+      return SparkNormalizeAccessibilitySettings(settings || {});
+    }
+    return this.cloneValue(settings);
+  };
+
+  SparkCore.prototype.syncAccessibilitySettings = function(patch) {
+    var next = typeof SparkNormalizeAccessibilitySettings === "function"
+      ? SparkNormalizeAccessibilitySettings(Object.assign({}, this.getAccessibilitySettings() || {}, patch || {}))
+      : Object.assign({}, this.getAccessibilitySettings() || {}, patch || {});
+    this.updateRuntimeState({ accessibilitySettings: next });
+    return next;
+  };
+
 
   function _normalizeSegType(type) {
     if (!type) return "practice";
@@ -247,6 +697,51 @@
     if (flow === "legacy_practice_session") return "session";
     if (flow === "legacy_practice_drill") return "drill";
     return flow || null;
+  };
+
+  SparkCore.prototype.resolveGuidedRuntimeActivity = function(step, plan) {
+    var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
+    var blockActivities = guidedPlan && guidedPlan.blockActivities ? guidedPlan.blockActivities : null;
+    var activity = null;
+    if (!blockActivities) {
+      return {
+        guidedActivityId: null,
+        guidedActivityKind: null,
+        guidedBlockType: null
+      };
+    }
+    if (step === "spark") activity = blockActivities.warm_engine || null;
+    else if (step === "review" || step === "newMove") activity = blockActivities.drill || null;
+    else if (step === "songSlice") activity = blockActivities.song || null;
+    else if (step === "victoryLap") activity = blockActivities.cooldown || null;
+    return {
+      guidedActivityId: activity && activity.id ? activity.id : null,
+      guidedActivityKind: activity && activity.kind ? activity.kind : null,
+      guidedBlockType: activity && activity.block_type ? activity.block_type : null
+    };
+  };
+
+  SparkCore.prototype.resolveGuidedRuntimeSegmentId = function(step, plan) {
+    var guidedActivity = this.resolveGuidedRuntimeActivity(step, plan);
+    var blockType = guidedActivity.guidedBlockType;
+    var segments;
+    var i;
+    if (!plan || !Array.isArray(plan.segments) || !blockType) return null;
+    segments = plan.segments;
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].meta && segments[i].meta.guidedBlockType === blockType) {
+        return segments[i].id;
+      }
+    }
+    return null;
+  };
+
+  SparkCore.prototype.getNextGuidedStep = function(step) {
+    var steps = ["spark", "review", "newMove", "songSlice", "victoryLap"];
+    var idx = steps.indexOf(step);
+    if (idx === -1) return steps[0];
+    if (idx >= steps.length - 1) return null;
+    return steps[idx + 1];
   };
 
   SparkCore.prototype.startSession = function(input) {
@@ -266,6 +761,9 @@
       || !this.currentPlan.instrumentType
       || this.currentPlan.instrumentType === currentInstrumentType;
     if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today && cacheInstrumentMatches) {
+      if (!this.currentStateMachine || this.currentStateMachine.sessionId !== this.currentPlan.id) {
+        this.createSessionStateMachine(this.currentPlan);
+      }
       this.updateRuntimeState({
         activeFlow: this.currentPlan.flow,
         activeInstrumentId: this.currentPlan.instrumentId || this.currentPlan.instrumentType || null,
@@ -314,6 +812,11 @@
       transport: { status: "ready", positionMs: 0 }
     });
       SparkProgressBridge.syncPlanToState(this.currentPlan);
+      this.syncSessionRuntime({
+        autoAdvance: this.currentPlan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION,
+        scheduleTick: false,
+        syncState: false
+      });
       return this.currentPlan;
     }
 
@@ -367,7 +870,11 @@
       });
     }
     this.currentPlan = plan;
+    this.createSessionStateMachine(plan);
     this.storage.setCurrentPlanId(plan.id);
+    var guidedRuntimeActivity = plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION
+      ? this.resolveGuidedRuntimeActivity("spark", plan)
+      : { guidedActivityId: null, guidedActivityKind: null, guidedBlockType: null };
     this.updateRuntimeState({
       activeFlow: plan.flow,
       activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
@@ -378,6 +885,9 @@
       activeTab: this.runtimeState.activeTab,
       guidedStep: plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION ? "spark" : null,
       guidedNewMovePhase: null,
+      guidedActivityId: guidedRuntimeActivity.guidedActivityId,
+      guidedActivityKind: guidedRuntimeActivity.guidedActivityKind,
+      guidedBlockType: guidedRuntimeActivity.guidedBlockType,
       performanceChartId: null,
       performanceSongData: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.songData || null) : null,
       performanceSongIndex: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.songIndex != null ? plan.context.performanceSong.songIndex : null) : null,
@@ -417,7 +927,36 @@
       transport: { status: "ready", positionMs: 0 }
     });
     SparkProgressBridge.syncPlanToState(plan);
+    this.syncSessionRuntime({
+      autoAdvance: plan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION,
+      scheduleTick: false,
+      syncState: false
+    });
     return plan;
+  };
+
+  SparkCore.prototype._unsafeStartSession = SparkCore.prototype.startSession;
+  SparkCore.prototype.startSession = function(input) {
+    var self = this;
+    input = input || {};
+    this.emitEvent("session.start.requested", {
+      flow: input.flow || null,
+      sessionNum: input.sessionNum || null,
+      songId: input.songId || null,
+      forceRebuild: !!input.forceRebuild
+    });
+    return this.runWithErrorRecovery("startSession", {
+      input: this.cloneValue(input)
+    }, function() {
+      var plan = self._unsafeStartSession(input);
+      self.emitEvent("session.start.completed", {
+        sessionId: plan && plan.id ? plan.id : null,
+        flow: plan && plan.flow ? plan.flow : null,
+        instrumentType: plan && plan.instrumentType ? plan.instrumentType : null,
+        segmentCount: plan && Array.isArray(plan.segments) ? plan.segments.length : 0
+      });
+      return plan;
+    });
   };
 
   SparkCore.prototype.startLegacyPracticeSession = function(input) {
@@ -438,6 +977,7 @@
     var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
 
     this.currentPlan = plan;
+    this.createSessionStateMachine(plan);
     this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
@@ -1633,22 +2173,206 @@
 
   SparkCore.prototype.completeGuidedSession = function(options) {
     options = options || {};
+    var activeSegmentId = Object.prototype.hasOwnProperty.call(options, "itemId")
+      ? options.itemId
+      : (this.runtimeState.activeSegmentId || this.resolveGuidedRuntimeSegmentId(this.runtimeState.guidedStep, this.currentPlan));
     var result = this.completeSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      itemId: activeSegmentId || undefined,
       markPlanComplete: true
     });
     this.applyGuidedNavigationRequest("guided_done");
     return result;
   };
 
+  SparkCore.prototype.advanceGuidedSession = function(options) {
+    options = options || {};
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var nextStep = Object.prototype.hasOwnProperty.call(options, "nextStep")
+      ? options.nextStep
+      : this.getNextGuidedStep(currentStep);
+    var nextPhase = Object.prototype.hasOwnProperty.call(options, "guidedNewMovePhase")
+      ? options.guidedNewMovePhase
+      : this.runtimeState.guidedNewMovePhase;
+    var currentActivity = this.resolveGuidedRuntimeActivity(currentStep, this.currentPlan);
+    var nextActivity = this.resolveGuidedRuntimeActivity(nextStep, this.currentPlan);
+    var currentSegmentId = this.resolveGuidedRuntimeSegmentId(currentStep, this.currentPlan) || this.runtimeState.activeSegmentId;
+    var shouldCompleteCurrentBlock = !!(
+      this.currentPlan
+      && this.currentPlan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION
+      && currentSegmentId
+      && currentActivity.guidedBlockType
+      && nextActivity.guidedBlockType
+      && currentActivity.guidedBlockType !== nextActivity.guidedBlockType
+    );
+    var completion = null;
+    var runtimeState;
+
+    if (!nextStep) {
+      completion = this.completeGuidedSession();
+      return {
+        runtimeState: this.getRuntimeState(),
+        completion: completion
+      };
+    }
+
+    if (shouldCompleteCurrentBlock) {
+      completion = this.completeSession({
+        flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+        itemId: currentSegmentId
+      });
+      if (completion && completion.planCompleted) {
+        this.applyGuidedNavigationRequest("guided_done");
+        return {
+          runtimeState: this.getRuntimeState(),
+          completion: completion
+        };
+      }
+    }
+
+    runtimeState = this.syncGuidedRuntimeState({
+      guidedStep: nextStep,
+      guidedNewMovePhase: nextPhase,
+      transport: shouldCompleteCurrentBlock
+        ? { status: "running", positionMs: 0 }
+        : this.runtimeState.transport
+    });
+    this.syncSessionRuntime({
+      autoAdvance: false,
+      scheduleTick: nextStep !== currentStep,
+      syncState: false
+    });
+
+    return {
+      runtimeState: runtimeState,
+      completion: completion
+    };
+  };
+
+  SparkCore.prototype.skipGuidedBlock = function(options) {
+    options = options || {};
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var targetStep = null;
+    if (currentStep === "spark") targetStep = "review";
+    else if (currentStep === "review" || currentStep === "newMove") targetStep = "songSlice";
+    else if (currentStep === "songSlice") targetStep = "victoryLap";
+    else if (currentStep === "victoryLap") {
+      return {
+        runtimeState: this.completeGuidedSession(options)
+      };
+    }
+    if (!targetStep) {
+      return {
+        runtimeState: this.getRuntimeState(),
+        completion: null
+      };
+    }
+    return this.advanceGuidedSession({
+      currentStep: currentStep,
+      nextStep: targetStep,
+      guidedNewMovePhase: null
+    });
+  };
+
+  SparkCore.prototype.extendGuidedBlock = function(options) {
+    options = options || {};
+    var extensionSec = Math.max(60, Math.round(options.extensionSec || 300));
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var segmentId = options.itemId
+      || this.runtimeState.activeSegmentId
+      || this.resolveGuidedRuntimeSegmentId(currentStep, this.currentPlan);
+    var segments;
+    var context;
+    var guidedPlan;
+    var blockActivities;
+    var activity;
+    var runtimeState;
+    var i;
+
+    if (!this.currentPlan || this.currentPlan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION || currentStep !== "victoryLap" || !segmentId) {
+      return {
+        runtimeState: this.getRuntimeState(),
+        extended: false
+      };
+    }
+
+    segments = Array.isArray(this.currentPlan.segments) ? this.currentPlan.segments : [];
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === segmentId) {
+        if (!segments[i].meta || typeof segments[i].meta !== "object") segments[i].meta = {};
+        segments[i].meta.guidedExtensionSec = Math.max(0, Math.round(segments[i].meta.guidedExtensionSec || 0)) + extensionSec;
+        segments[i].meta.guidedExtensionCount = Math.max(0, Math.round(segments[i].meta.guidedExtensionCount || 0)) + 1;
+        segments[i].durationSec = Math.max(0, Math.round(segments[i].durationSec || 0)) + extensionSec;
+        break;
+      }
+    }
+
+    context = this.currentPlan.context || {};
+    context.guidedShellExtensionSec = Math.max(0, Math.round(context.guidedShellExtensionSec || 0)) + extensionSec;
+    context.guidedShellExtensionCount = Math.max(0, Math.round(context.guidedShellExtensionCount || 0)) + 1;
+    context.guidedShellDurationSec = Math.max(0, Math.round(context.guidedShellDurationSec || 0)) + extensionSec;
+    guidedPlan = context.guidedPlan || null;
+    blockActivities = guidedPlan && guidedPlan.blockActivities ? guidedPlan.blockActivities : null;
+    activity = blockActivities && blockActivities.cooldown ? blockActivities.cooldown : null;
+    if (activity) {
+      activity.duration_sec = Math.max(0, Math.round(activity.duration_sec || 0)) + extensionSec;
+    }
+
+    runtimeState = this.syncGuidedRuntimeState({
+      guidedStep: "victoryLap",
+      guidedNewMovePhase: null,
+      transport: {
+        status: "running",
+        positionMs: 0
+      }
+    });
+    this.syncSessionRuntime({
+      autoAdvance: false,
+      scheduleTick: true,
+      syncState: false
+    });
+
+    return {
+      runtimeState: runtimeState,
+      extended: true,
+      extensionSec: extensionSec
+    };
+  };
+
   SparkCore.prototype.completeSession = function(payload) {
+    var sessionStates = this.getSessionStates();
     payload = payload || {};
     if (!this.currentPlan || (payload.sessionId && this.currentPlan.id !== payload.sessionId)) {
       this.startSession({ flow: payload.flow || SparkSessionTypes.FLOW_DAILY_PRACTICE });
     }
 
+    this.assertCanCompleteSession();
+    this.ensureCompletionFlowState({
+      itemId: payload.itemId || null,
+      flow: payload.flow || (this.currentPlan ? this.currentPlan.flow : null)
+    });
+
     var result = this.progressEngine.completeSession(this.currentPlan, payload);
+    var performance = payload.gameplayResult || payload.result || null;
+    var nextRecommendedSkill = this.curriculumEngine && typeof this.curriculumEngine.peekNextSkill === "function"
+      ? this.curriculumEngine.peekNextSkill({
+          session: this.currentPlan,
+          instrumentType: this.currentPlan ? this.currentPlan.instrumentType : null
+        })
+      : null;
+    if (this.aiEngine && typeof this.aiEngine.generateCoachingNote === "function") {
+      result.coaching = this.aiEngine.generateCoachingNote({
+        session: this.currentPlan,
+        performance: performance,
+        mastery: result.mastery || null,
+        nextRecommendedSkill: nextRecommendedSkill
+      });
+    }
     this.lastSessionOutcome = result;
+    this.transitionSessionState(result.planCompleted ? sessionStates.COMPLETED : sessionStates.SEGMENT_COMPLETE, {
+      reason: result.planCompleted ? "session_completed" : "segment_completed",
+      itemId: payload.itemId || null
+    });
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
       activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
@@ -1661,6 +2385,9 @@
       activeTab: this.runtimeState.activeTab,
       guidedStep: result.planCompleted ? null : this.runtimeState.guidedStep,
       guidedNewMovePhase: result.planCompleted ? null : this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: result.planCompleted ? null : this.runtimeState.guidedActivityId,
+      guidedActivityKind: result.planCompleted ? null : this.runtimeState.guidedActivityKind,
+      guidedBlockType: result.planCompleted ? null : this.runtimeState.guidedBlockType,
       performanceChartId: result.planCompleted ? this.runtimeState.performanceChartId : this.runtimeState.performanceChartId,
       performanceSongData: this.runtimeState.performanceSongData,
       performanceSongIndex: this.runtimeState.performanceSongIndex,
@@ -1704,6 +2431,29 @@
     return result;
   };
 
+  SparkCore.prototype._unsafeCompleteSession = SparkCore.prototype.completeSession;
+  SparkCore.prototype.completeSession = function(payload) {
+    var self = this;
+    payload = payload || {};
+    this.emitEvent("session.complete.requested", {
+      sessionId: payload.sessionId || (this.currentPlan && this.currentPlan.id) || null,
+      itemId: payload.itemId || null
+    });
+    return this.runWithErrorRecovery("completeSession", {
+      payload: this.cloneValue(payload),
+      sessionId: payload.sessionId || (this.currentPlan && this.currentPlan.id) || null
+    }, function() {
+      var result = self._unsafeCompleteSession(payload);
+      self.emitEvent("session.complete.completed", {
+        sessionId: self.currentPlan && self.currentPlan.id ? self.currentPlan.id : null,
+        completedItems: result && typeof result.completedItems === "number" ? result.completedItems : null,
+        planCompleted: !!(result && result.planCompleted),
+        xpAwarded: result && typeof result.xpAwarded === "number" ? result.xpAwarded : 0
+      });
+      return result;
+    });
+  };
+
   SparkCore.prototype.getCurrentPlan = function() {
     return this.currentPlan;
   };
@@ -1721,11 +2471,66 @@
   };
 
   SparkCore.prototype.getActiveSessionView = function() {
+    var segment = null;
+    var exercise = null;
+    var runtime = this.getSessionRuntimeHandle();
+    var segments;
+    var i;
+    if (runtime && typeof runtime.getActiveSession === "function" && runtime.getActiveSession() === this.currentPlan) {
+      if (typeof runtime.getActiveSegment === "function") segment = runtime.getActiveSegment();
+      if (typeof runtime.getActiveExercise === "function") exercise = runtime.getActiveExercise();
+    }
+    if (!segment && this.currentPlan && Array.isArray(this.currentPlan.segments)) {
+      segments = this.currentPlan.segments;
+      for (i = 0; i < segments.length; i++) {
+        if (segments[i] && segments[i].id === this.runtimeState.activeSegmentId) {
+          segment = segments[i];
+          break;
+        }
+      }
+    }
+    if (!exercise && segment && Array.isArray(segment.exerciseIds) && Array.isArray(this.currentPlan && this.currentPlan.exercises)) {
+      for (i = 0; i < this.currentPlan.exercises.length; i++) {
+        if (this.currentPlan.exercises[i] && this.currentPlan.exercises[i].id === segment.exerciseIds[0]) {
+          exercise = this.currentPlan.exercises[i];
+          break;
+        }
+      }
+    }
     return {
       plan: this.currentPlan,
+      activeSegment: segment,
+      activeExercise: exercise,
+      stateMachine: this.getSessionStateMachineSnapshot(),
       runtimeState: this.getRuntimeState(),
-      lastSessionOutcome: this.getLastSessionOutcome()
+      lastSessionOutcome: this.getLastSessionOutcome(),
+      recovery: this.getRecoveryState()
     };
+  };
+
+  SparkCore.prototype.syncSessionRuntime = function(options) {
+    var runtime = this.getSessionRuntimeHandle();
+    var view;
+    var runtimeState;
+    options = options || {};
+    if (!runtime || typeof runtime.attachSession !== "function" || !this.currentPlan) return false;
+    view = this.getActiveSessionView();
+    runtimeState = view && view.runtimeState ? view.runtimeState : this.runtimeState;
+    runtime.attachSession(this.currentPlan, {
+      segmentId: Object.prototype.hasOwnProperty.call(options, "segmentId")
+        ? options.segmentId
+        : (runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null),
+      status: Object.prototype.hasOwnProperty.call(options, "status")
+        ? options.status
+        : ((runtimeState && runtimeState.transport && runtimeState.transport.status) || "ready"),
+      positionMs: Object.prototype.hasOwnProperty.call(options, "positionMs")
+        ? options.positionMs
+        : ((runtimeState && runtimeState.transport && runtimeState.transport.positionMs) || 0),
+      autoAdvance: !!options.autoAdvance,
+      scheduleTick: options.scheduleTick !== false,
+      syncState: options.syncState === true
+    });
+    return true;
   };
 
   SparkCore.prototype.getPerformanceEditorDocumentView = function() {
@@ -2356,15 +3161,30 @@
 
   SparkCore.prototype.syncGuidedRuntimeState = function(patch) {
     patch = patch || {};
+    var nextGuidedStep = Object.prototype.hasOwnProperty.call(patch, "guidedStep")
+      ? patch.guidedStep
+      : this.runtimeState.guidedStep;
+    var guidedActivity = this.resolveGuidedRuntimeActivity(nextGuidedStep, this.currentPlan);
+    var guidedSegmentId = this.resolveGuidedRuntimeSegmentId(nextGuidedStep, this.currentPlan);
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
       activeScreen: patch.activeScreen || this.runtimeState.activeScreen || "guided_session",
-      guidedStep: Object.prototype.hasOwnProperty.call(patch, "guidedStep")
-        ? patch.guidedStep
-        : this.runtimeState.guidedStep,
+      activeSegmentId: Object.prototype.hasOwnProperty.call(patch, "activeSegmentId")
+        ? patch.activeSegmentId
+        : (guidedSegmentId || this.runtimeState.activeSegmentId),
+      guidedStep: nextGuidedStep,
       guidedNewMovePhase: Object.prototype.hasOwnProperty.call(patch, "guidedNewMovePhase")
         ? patch.guidedNewMovePhase
         : this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: Object.prototype.hasOwnProperty.call(patch, "guidedActivityId")
+        ? patch.guidedActivityId
+        : guidedActivity.guidedActivityId,
+      guidedActivityKind: Object.prototype.hasOwnProperty.call(patch, "guidedActivityKind")
+        ? patch.guidedActivityKind
+        : guidedActivity.guidedActivityKind,
+      guidedBlockType: Object.prototype.hasOwnProperty.call(patch, "guidedBlockType")
+        ? patch.guidedBlockType
+        : guidedActivity.guidedBlockType,
       transport: patch.transport || this.runtimeState.transport
     });
   };
@@ -2376,20 +3196,32 @@
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
       activeScreen: this.runtimeState.activeScreen || "guided_session",
       activeTab: this.runtimeState.activeTab || "practice",
+      activeSegmentId: this.runtimeState.activeSegmentId,
       guidedStep: this.runtimeState.guidedStep,
       guidedNewMovePhase: this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: this.runtimeState.guidedActivityId,
+      guidedActivityKind: this.runtimeState.guidedActivityKind,
+      guidedBlockType: this.runtimeState.guidedBlockType,
       transport: { status: "idle", positionMs: 0 }
     };
 
     if (request.target === "guided_home") {
       request.activeScreen = "home";
       request.activeTab = "practice";
+      request.activeSegmentId = null;
       request.guidedStep = null;
       request.guidedNewMovePhase = null;
+      request.guidedActivityId = null;
+      request.guidedActivityKind = null;
+      request.guidedBlockType = null;
     } else if (request.target === "guided_done") {
       request.activeScreen = "guided_done";
+      request.activeSegmentId = null;
       request.guidedStep = null;
       request.guidedNewMovePhase = null;
+      request.guidedActivityId = null;
+      request.guidedActivityKind = null;
+      request.guidedBlockType = null;
       request.transport.status = "completed";
     }
 
@@ -2408,8 +3240,12 @@
       activeFlow: request.activeFlow,
       activeScreen: request.activeScreen,
       activeTab: request.activeTab,
+      activeSegmentId: request.activeSegmentId,
       guidedStep: request.guidedStep,
       guidedNewMovePhase: request.guidedNewMovePhase,
+      guidedActivityId: request.guidedActivityId,
+      guidedActivityKind: request.guidedActivityKind,
+      guidedBlockType: request.guidedBlockType,
       transport: request.transport
     });
   };
@@ -2654,6 +3490,8 @@
 
   function createDefaultSparkCore() {
     var instrumentManager = new SparkInstrumentManager();
+    var gateway;
+    var core;
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.guitar) {
       instrumentManager.register("guitar", window.SparkSuiteInstrumentAdapters.guitar);
     }
@@ -2666,12 +3504,59 @@
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.ukulele) {
       instrumentManager.register("ukulele", window.SparkSuiteInstrumentAdapters.ukulele);
     }
-    return new SparkCore({
+    core = new SparkCore({
       instrumentManager: instrumentManager
     });
+    gateway = window.SparkExecutionGateway || (typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null);
+    if (gateway && typeof gateway.installDefaultHandlers === "function") {
+      gateway.installDefaultHandlers({
+        sparkCore: core,
+        force: true
+      });
+    } else if (gateway && typeof gateway.setSparkCoreHandle === "function") {
+      gateway.setSparkCoreHandle(core);
+    }
+    return core;
+  }
+
+  function shouldMountSparkDebugOverlay() {
+    if (window.SPARK_DEBUG === true) return true;
+    if (!window.location || typeof window.location.search !== "string") return false;
+    return window.location.search.indexOf("debug=true") >= 0;
+  }
+
+  function mountDefaultSparkDebugOverlay(core) {
+    var gateway;
+    var runtime;
+    var debugState;
+
+    if (!shouldMountSparkDebugOverlay()) return false;
+    if (typeof window.createSparkDebugState !== "function" || typeof window.mountSparkDebugOverlay !== "function") {
+      return false;
+    }
+
+    gateway = window.SparkExecutionGateway || (typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null);
+    runtime = window.SparkSessionRuntime || null;
+    debugState = window.createSparkDebugState({
+      sparkCore: core,
+      gateway: gateway,
+      runtime: runtime
+    });
+
+    if (typeof window.__unmountSparkDebugOverlay === "function") {
+      window.__unmountSparkDebugOverlay();
+    }
+
+    window.SparkDebug = debugState;
+    window.__unmountSparkDebugOverlay = window.mountSparkDebugOverlay(debugState);
+    return true;
   }
 
   window.SparkCoreRuntime = SparkCore;
   window.createDefaultSparkCore = createDefaultSparkCore;
   window.sparkCore = createDefaultSparkCore();
+  window.sparkEventBus = window.sparkCore && typeof window.sparkCore.getEventBus === "function"
+    ? window.sparkCore.getEventBus()
+    : null;
+  mountDefaultSparkDebugOverlay(window.sparkCore);
 })();

@@ -1,0 +1,5 @@
+[
+  { "id": "C", "name": "C", "notes": ["C", "E", "G"] },
+  { "id": "G", "name": "G", "notes": ["G", "B", "D"] },
+  { "id": "Am", "name": "Am", "notes": ["A", "C", "E"] }
+]

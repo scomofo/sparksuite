@@ -1,0 +1,1867 @@
+{
+  "version": "2026-04-24",
+  "instrument": "piano",
+  "activity_count": 120,
+  "activities": [
+    {
+      "id": "pno-d01-warm_engine",
+      "session_id": "pno-d01",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C 5-finger RH",
+      "copy": {
+        "setup": "Find middle C. warm engine block.",
+        "success": "Nice. Find middle C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d01-drill",
+      "session_id": "pno-d01",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C 5-finger RH",
+      "copy": {
+        "setup": "Find middle C. drill block.",
+        "success": "Nice. Find middle C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d01-song",
+      "session_id": "pno-d01",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C 5-finger RH",
+      "copy": {
+        "setup": "Find middle C. song block.",
+        "success": "Nice. Find middle C.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/c-5-finger-rh-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d01-cooldown",
+      "session_id": "pno-d01",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C 5-finger RH",
+      "copy": {
+        "setup": "Find middle C. cooldown block.",
+        "success": "Nice. Find middle C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d02-warm_engine",
+      "session_id": "pno-d02",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "Ode intro",
+      "copy": {
+        "setup": "\"Ode to Joy\" (first 4 bars, RH). warm engine block.",
+        "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d02-drill",
+      "session_id": "pno-d02",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "Ode intro",
+      "copy": {
+        "setup": "\"Ode to Joy\" (first 4 bars, RH). drill block.",
+        "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d02-song",
+      "session_id": "pno-d02",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "Ode intro",
+      "copy": {
+        "setup": "\"Ode to Joy\" (first 4 bars, RH). song block.",
+        "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/ode-intro-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d02-cooldown",
+      "session_id": "pno-d02",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "Ode intro",
+      "copy": {
+        "setup": "\"Ode to Joy\" (first 4 bars, RH). cooldown block.",
+        "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d03-warm_engine",
+      "session_id": "pno-d03",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "same, with rhythm",
+      "copy": {
+        "setup": "Quarter, half, whole. warm engine block.",
+        "success": "Nice. Quarter, half, whole.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d03-drill",
+      "session_id": "pno-d03",
+      "instrument": "piano",
+      "kind": "rhythm_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "same, with rhythm",
+      "copy": {
+        "setup": "Quarter, half, whole. drill block.",
+        "success": "Nice. Quarter, half, whole.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d03-song",
+      "session_id": "pno-d03",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "same, with rhythm",
+      "copy": {
+        "setup": "Quarter, half, whole. song block.",
+        "success": "Nice. Quarter, half, whole.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/same-with-rhythm-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d03-cooldown",
+      "session_id": "pno-d03",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "same, with rhythm",
+      "copy": {
+        "setup": "Quarter, half, whole. cooldown block.",
+        "success": "Nice. Quarter, half, whole.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d04-warm_engine",
+      "session_id": "pno-d04",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C-position LH",
+      "copy": {
+        "setup": "LH 5-finger in C. warm engine block.",
+        "success": "Nice. LH 5-finger in C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d04-drill",
+      "session_id": "pno-d04",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C-position LH",
+      "copy": {
+        "setup": "LH 5-finger in C. drill block.",
+        "success": "Nice. LH 5-finger in C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d04-song",
+      "session_id": "pno-d04",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C-position LH",
+      "copy": {
+        "setup": "LH 5-finger in C. song block.",
+        "success": "Nice. LH 5-finger in C.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/c-position-lh-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d04-cooldown",
+      "session_id": "pno-d04",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C-position LH",
+      "copy": {
+        "setup": "LH 5-finger in C. cooldown block.",
+        "success": "Nice. LH 5-finger in C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d05-warm_engine",
+      "session_id": "pno-d05",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "Ode full A-section",
+      "copy": {
+        "setup": "\"Ode to Joy\" hands-together. warm engine block.",
+        "success": "Nice. \"Ode to Joy\" hands-together.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d05-drill",
+      "session_id": "pno-d05",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "Ode full A-section",
+      "copy": {
+        "setup": "\"Ode to Joy\" hands-together. drill block.",
+        "success": "Nice. \"Ode to Joy\" hands-together.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d05-song",
+      "session_id": "pno-d05",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "Ode full A-section",
+      "copy": {
+        "setup": "\"Ode to Joy\" hands-together. song block.",
+        "success": "Nice. \"Ode to Joy\" hands-together.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/ode-full-a-section-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "A",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d05-cooldown",
+      "session_id": "pno-d05",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "Ode full A-section",
+      "copy": {
+        "setup": "\"Ode to Joy\" hands-together. cooldown block.",
+        "success": "Nice. \"Ode to Joy\" hands-together.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d06-warm_engine",
+      "session_id": "pno-d06",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d06-drill",
+      "session_id": "pno-d06",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d06-song",
+      "session_id": "pno-d06",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/user-picks-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d06-cooldown",
+      "session_id": "pno-d06",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d07-warm_engine",
+      "session_id": "pno-d07",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C as a triad",
+      "copy": {
+        "setup": "C-major triad (RH). warm engine block.",
+        "success": "Nice. C-major triad (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d07-drill",
+      "session_id": "pno-d07",
+      "instrument": "piano",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C as a triad",
+      "copy": {
+        "setup": "C-major triad (RH). drill block.",
+        "success": "Nice. C-major triad (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d07-song",
+      "session_id": "pno-d07",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C as a triad",
+      "copy": {
+        "setup": "C-major triad (RH). song block.",
+        "success": "Nice. C-major triad (RH).",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/c-as-a-triad-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d07-cooldown",
+      "session_id": "pno-d07",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C as a triad",
+      "copy": {
+        "setup": "C-major triad (RH). cooldown block.",
+        "success": "Nice. C-major triad (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d08-warm_engine",
+      "session_id": "pno-d08",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "Amazing Grace A",
+      "copy": {
+        "setup": "\"Amazing Grace\" RH melody. warm engine block.",
+        "success": "Nice. \"Amazing Grace\" RH melody.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d08-drill",
+      "session_id": "pno-d08",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "Amazing Grace A",
+      "copy": {
+        "setup": "\"Amazing Grace\" RH melody. drill block.",
+        "success": "Nice. \"Amazing Grace\" RH melody.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d08-song",
+      "session_id": "pno-d08",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "Amazing Grace A",
+      "copy": {
+        "setup": "\"Amazing Grace\" RH melody. song block.",
+        "success": "Nice. \"Amazing Grace\" RH melody.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/amazing-grace-a-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "A",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d08-cooldown",
+      "session_id": "pno-d08",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "Amazing Grace A",
+      "copy": {
+        "setup": "\"Amazing Grace\" RH melody. cooldown block.",
+        "success": "Nice. \"Amazing Grace\" RH melody.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d09-warm_engine",
+      "session_id": "pno-d09",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C to F switching",
+      "copy": {
+        "setup": "F-major triad (RH). warm engine block.",
+        "success": "Nice. F-major triad (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d09-drill",
+      "session_id": "pno-d09",
+      "instrument": "piano",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C to F switching",
+      "copy": {
+        "setup": "F-major triad (RH). drill block.",
+        "success": "Nice. F-major triad (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d09-song",
+      "session_id": "pno-d09",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C to F switching",
+      "copy": {
+        "setup": "F-major triad (RH). song block.",
+        "success": "Nice. F-major triad (RH).",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/c-to-f-switching-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d09-cooldown",
+      "session_id": "pno-d09",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C to F switching",
+      "copy": {
+        "setup": "F-major triad (RH). cooldown block.",
+        "success": "Nice. F-major triad (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d10-warm_engine",
+      "session_id": "pno-d10",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C-F-G7 loop",
+      "copy": {
+        "setup": "G7 chord (RH). warm engine block.",
+        "success": "Nice. G7 chord (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d10-drill",
+      "session_id": "pno-d10",
+      "instrument": "piano",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C-F-G7 loop",
+      "copy": {
+        "setup": "G7 chord (RH). drill block.",
+        "success": "Nice. G7 chord (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d10-song",
+      "session_id": "pno-d10",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C-F-G7 loop",
+      "copy": {
+        "setup": "G7 chord (RH). song block.",
+        "success": "Nice. G7 chord (RH).",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/c-f-g7-loop-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d10-cooldown",
+      "session_id": "pno-d10",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C-F-G7 loop",
+      "copy": {
+        "setup": "G7 chord (RH). cooldown block.",
+        "success": "Nice. G7 chord (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d11-warm_engine",
+      "session_id": "pno-d11",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "over drum loop",
+      "copy": {
+        "setup": "I-IV-V7 in C. warm engine block.",
+        "success": "Nice. I-IV-V7 in C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d11-drill",
+      "session_id": "pno-d11",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "over drum loop",
+      "copy": {
+        "setup": "I-IV-V7 in C. drill block.",
+        "success": "Nice. I-IV-V7 in C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d11-song",
+      "session_id": "pno-d11",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "over drum loop",
+      "copy": {
+        "setup": "I-IV-V7 in C. song block.",
+        "success": "Nice. I-IV-V7 in C.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/over-drum-loop-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d11-cooldown",
+      "session_id": "pno-d11",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "over drum loop",
+      "copy": {
+        "setup": "I-IV-V7 in C. cooldown block.",
+        "success": "Nice. I-IV-V7 in C.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d12-warm_engine",
+      "session_id": "pno-d12",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d12-drill",
+      "session_id": "pno-d12",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d12-song",
+      "session_id": "pno-d12",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/user-picks-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d12-cooldown",
+      "session_id": "pno-d12",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d13-warm_engine",
+      "session_id": "pno-d13",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "same progression",
+      "copy": {
+        "setup": "LH root-notes under chords. warm engine block.",
+        "success": "Nice. LH root-notes under chords.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d13-drill",
+      "session_id": "pno-d13",
+      "instrument": "piano",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "same progression",
+      "copy": {
+        "setup": "LH root-notes under chords. drill block.",
+        "success": "Nice. LH root-notes under chords.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d13-song",
+      "session_id": "pno-d13",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "same progression",
+      "copy": {
+        "setup": "LH root-notes under chords. song block.",
+        "success": "Nice. LH root-notes under chords.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/same-progression-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d13-cooldown",
+      "session_id": "pno-d13",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "same progression",
+      "copy": {
+        "setup": "LH root-notes under chords. cooldown block.",
+        "success": "Nice. LH root-notes under chords.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d14-warm_engine",
+      "session_id": "pno-d14",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Let It Be\" intro",
+      "copy": {
+        "setup": "Broken-chord LH pattern. warm engine block.",
+        "success": "Nice. Broken-chord LH pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d14-drill",
+      "session_id": "pno-d14",
+      "instrument": "piano",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Let It Be\" intro",
+      "copy": {
+        "setup": "Broken-chord LH pattern. drill block.",
+        "success": "Nice. Broken-chord LH pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d14-song",
+      "session_id": "pno-d14",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Let It Be\" intro",
+      "copy": {
+        "setup": "Broken-chord LH pattern. song block.",
+        "success": "Nice. Broken-chord LH pattern.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/let-it-be-intro-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d14-cooldown",
+      "session_id": "pno-d14",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Let It Be\" intro",
+      "copy": {
+        "setup": "Broken-chord LH pattern. cooldown block.",
+        "success": "Nice. Broken-chord LH pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d15-warm_engine",
+      "session_id": "pno-d15",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "LB intro",
+      "copy": {
+        "setup": "\"Let It Be\" full intro. warm engine block.",
+        "success": "Nice. \"Let It Be\" full intro.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d15-drill",
+      "session_id": "pno-d15",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "LB intro",
+      "copy": {
+        "setup": "\"Let It Be\" full intro. drill block.",
+        "success": "Nice. \"Let It Be\" full intro.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d15-song",
+      "session_id": "pno-d15",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "LB intro",
+      "copy": {
+        "setup": "\"Let It Be\" full intro. song block.",
+        "success": "Nice. \"Let It Be\" full intro.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/lb-intro-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d15-cooldown",
+      "session_id": "pno-d15",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "LB intro",
+      "copy": {
+        "setup": "\"Let It Be\" full intro. cooldown block.",
+        "success": "Nice. \"Let It Be\" full intro.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d16-warm_engine",
+      "session_id": "pno-d16",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "G 5-finger position",
+      "copy": {
+        "setup": "F sharp and the black keys. warm engine block.",
+        "success": "Nice. F sharp and the black keys.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d16-drill",
+      "session_id": "pno-d16",
+      "instrument": "piano",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "G 5-finger position",
+      "copy": {
+        "setup": "F sharp and the black keys. drill block.",
+        "success": "Nice. F sharp and the black keys.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d16-song",
+      "session_id": "pno-d16",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "G 5-finger position",
+      "copy": {
+        "setup": "F sharp and the black keys. song block.",
+        "success": "Nice. F sharp and the black keys.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/g-5-finger-position-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "G",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d16-cooldown",
+      "session_id": "pno-d16",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "G 5-finger position",
+      "copy": {
+        "setup": "F sharp and the black keys. cooldown block.",
+        "success": "Nice. F sharp and the black keys.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d17-warm_engine",
+      "session_id": "pno-d17",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "G I-IV-V7",
+      "copy": {
+        "setup": "Moving to G position. warm engine block.",
+        "success": "Nice. Moving to G position.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d17-drill",
+      "session_id": "pno-d17",
+      "instrument": "piano",
+      "kind": "chord_change_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "G I-IV-V7",
+      "copy": {
+        "setup": "Moving to G position. drill block.",
+        "success": "Nice. Moving to G position.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d17-song",
+      "session_id": "pno-d17",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "G I-IV-V7",
+      "copy": {
+        "setup": "Moving to G position. song block.",
+        "success": "Nice. Moving to G position.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/g-i-iv-v7-loop.mp3",
+        "tempo_bpm": 76,
+        "key": "G",
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d17-cooldown",
+      "session_id": "pno-d17",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "G I-IV-V7",
+      "copy": {
+        "setup": "Moving to G position. cooldown block.",
+        "success": "Nice. Moving to G position.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d18-warm_engine",
+      "session_id": "pno-d18",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d18-drill",
+      "session_id": "pno-d18",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d18-song",
+      "session_id": "pno-d18",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/user-picks-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d18-cooldown",
+      "session_id": "pno-d18",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d19-warm_engine",
+      "session_id": "pno-d19",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "sight-read 4 bars",
+      "copy": {
+        "setup": "Reading treble clef. warm engine block.",
+        "success": "Nice. Reading treble clef.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d19-drill",
+      "session_id": "pno-d19",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "sight-read 4 bars",
+      "copy": {
+        "setup": "Reading treble clef. drill block.",
+        "success": "Nice. Reading treble clef.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d19-song",
+      "session_id": "pno-d19",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "sight-read 4 bars",
+      "copy": {
+        "setup": "Reading treble clef. song block.",
+        "success": "Nice. Reading treble clef.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/sight-read-4-bars-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d19-cooldown",
+      "session_id": "pno-d19",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "sight-read 4 bars",
+      "copy": {
+        "setup": "Reading treble clef. cooldown block.",
+        "success": "Nice. Reading treble clef.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d20-warm_engine",
+      "session_id": "pno-d20",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "sight-read 4 bars",
+      "copy": {
+        "setup": "Reading bass clef. warm engine block.",
+        "success": "Nice. Reading bass clef.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d20-drill",
+      "session_id": "pno-d20",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "sight-read 4 bars",
+      "copy": {
+        "setup": "Reading bass clef. drill block.",
+        "success": "Nice. Reading bass clef.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d20-song",
+      "session_id": "pno-d20",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "sight-read 4 bars",
+      "copy": {
+        "setup": "Reading bass clef. song block.",
+        "success": "Nice. Reading bass clef.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/sight-read-4-bars-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d20-cooldown",
+      "session_id": "pno-d20",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "sight-read 4 bars",
+      "copy": {
+        "setup": "Reading bass clef. cooldown block.",
+        "success": "Nice. Reading bass clef.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d21-warm_engine",
+      "session_id": "pno-d21",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "Imagine intro",
+      "copy": {
+        "setup": "\"Imagine\" intro (RH). warm engine block.",
+        "success": "Nice. \"Imagine\" intro (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d21-drill",
+      "session_id": "pno-d21",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "Imagine intro",
+      "copy": {
+        "setup": "\"Imagine\" intro (RH). drill block.",
+        "success": "Nice. \"Imagine\" intro (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d21-song",
+      "session_id": "pno-d21",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "Imagine intro",
+      "copy": {
+        "setup": "\"Imagine\" intro (RH). song block.",
+        "success": "Nice. \"Imagine\" intro (RH).",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/imagine-intro-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d21-cooldown",
+      "session_id": "pno-d21",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "Imagine intro",
+      "copy": {
+        "setup": "\"Imagine\" intro (RH). cooldown block.",
+        "success": "Nice. \"Imagine\" intro (RH).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d22-warm_engine",
+      "session_id": "pno-d22",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "same, H-T",
+      "copy": {
+        "setup": "\"Imagine\" hands-together. warm engine block.",
+        "success": "Nice. \"Imagine\" hands-together.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d22-drill",
+      "session_id": "pno-d22",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "same, H-T",
+      "copy": {
+        "setup": "\"Imagine\" hands-together. drill block.",
+        "success": "Nice. \"Imagine\" hands-together.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d22-song",
+      "session_id": "pno-d22",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "same, H-T",
+      "copy": {
+        "setup": "\"Imagine\" hands-together. song block.",
+        "success": "Nice. \"Imagine\" hands-together.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/same-h-t-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d22-cooldown",
+      "session_id": "pno-d22",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "same, H-T",
+      "copy": {
+        "setup": "\"Imagine\" hands-together. cooldown block.",
+        "success": "Nice. \"Imagine\" hands-together.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d23-warm_engine",
+      "session_id": "pno-d23",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d23-drill",
+      "session_id": "pno-d23",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d23-song",
+      "session_id": "pno-d23",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/user-picks-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d23-cooldown",
+      "session_id": "pno-d23",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d24-warm_engine",
+      "session_id": "pno-d24",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "apply to known piece",
+      "copy": {
+        "setup": "Dotted quarter-eighth. warm engine block.",
+        "success": "Nice. Dotted quarter-eighth.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d24-drill",
+      "session_id": "pno-d24",
+      "instrument": "piano",
+      "kind": "rhythm_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "apply to known piece",
+      "copy": {
+        "setup": "Dotted quarter-eighth. drill block.",
+        "success": "Nice. Dotted quarter-eighth.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d24-song",
+      "session_id": "pno-d24",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "apply to known piece",
+      "copy": {
+        "setup": "Dotted quarter-eighth. song block.",
+        "success": "Nice. Dotted quarter-eighth.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/apply-to-known-piece-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d24-cooldown",
+      "session_id": "pno-d24",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "apply to known piece",
+      "copy": {
+        "setup": "Dotted quarter-eighth. cooldown block.",
+        "success": "Nice. Dotted quarter-eighth.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d25-warm_engine",
+      "session_id": "pno-d25",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "smoother progression",
+      "copy": {
+        "setup": "Inversions of C and F. warm engine block.",
+        "success": "Nice. Inversions of C and F.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d25-drill",
+      "session_id": "pno-d25",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "smoother progression",
+      "copy": {
+        "setup": "Inversions of C and F. drill block.",
+        "success": "Nice. Inversions of C and F.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d25-song",
+      "session_id": "pno-d25",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "smoother progression",
+      "copy": {
+        "setup": "Inversions of C and F. song block.",
+        "success": "Nice. Inversions of C and F.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/smoother-progression-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d25-cooldown",
+      "session_id": "pno-d25",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "smoother progression",
+      "copy": {
+        "setup": "Inversions of C and F. cooldown block.",
+        "success": "Nice. Inversions of C and F.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d26-warm_engine",
+      "session_id": "pno-d26",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "apply to Ode or LB",
+      "copy": {
+        "setup": "Dynamics. warm engine block.",
+        "success": "Nice. Dynamics.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d26-drill",
+      "session_id": "pno-d26",
+      "instrument": "piano",
+      "kind": "strum_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "apply to Ode or LB",
+      "copy": {
+        "setup": "Dynamics. drill block.",
+        "success": "Nice. Dynamics.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d26-song",
+      "session_id": "pno-d26",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "apply to Ode or LB",
+      "copy": {
+        "setup": "Dynamics. song block.",
+        "success": "Nice. Dynamics.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/apply-to-ode-or-lb-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d26-cooldown",
+      "session_id": "pno-d26",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "apply to Ode or LB",
+      "copy": {
+        "setup": "Dynamics. cooldown block.",
+        "success": "Nice. Dynamics.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d27-warm_engine",
+      "session_id": "pno-d27",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "apply to Imagine",
+      "copy": {
+        "setup": "Pedaling (sustain). warm engine block.",
+        "success": "Nice. Pedaling (sustain).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d27-drill",
+      "session_id": "pno-d27",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "apply to Imagine",
+      "copy": {
+        "setup": "Pedaling (sustain). drill block.",
+        "success": "Nice. Pedaling (sustain).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d27-song",
+      "session_id": "pno-d27",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "apply to Imagine",
+      "copy": {
+        "setup": "Pedaling (sustain). song block.",
+        "success": "Nice. Pedaling (sustain).",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/apply-to-imagine-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d27-cooldown",
+      "session_id": "pno-d27",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "apply to Imagine",
+      "copy": {
+        "setup": "Pedaling (sustain). cooldown block.",
+        "success": "Nice. Pedaling (sustain).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d28-warm_engine",
+      "session_id": "pno-d28",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d28-drill",
+      "session_id": "pno-d28",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d28-song",
+      "session_id": "pno-d28",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/user-picks-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d28-cooldown",
+      "session_id": "pno-d28",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d29-warm_engine",
+      "session_id": "pno-d29",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user's piece",
+      "copy": {
+        "setup": "Showcase prep. warm engine block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d29-drill",
+      "session_id": "pno-d29",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user's piece",
+      "copy": {
+        "setup": "Showcase prep. drill block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d29-song",
+      "session_id": "pno-d29",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user's piece",
+      "copy": {
+        "setup": "Showcase prep. song block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/user-s-piece-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d29-cooldown",
+      "session_id": "pno-d29",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user's piece",
+      "copy": {
+        "setup": "Showcase prep. cooldown block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d30-warm_engine",
+      "session_id": "pno-d30",
+      "instrument": "piano",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user's piece",
+      "copy": {
+        "setup": "Showcase day. warm engine block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d30-drill",
+      "session_id": "pno-d30",
+      "instrument": "piano",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user's piece",
+      "copy": {
+        "setup": "Showcase day. drill block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "pno-d30-song",
+      "session_id": "pno-d30",
+      "instrument": "piano",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user's piece",
+      "copy": {
+        "setup": "Showcase day. song block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/piano/backing/user-s-piece-loop.mp3",
+        "tempo_bpm": 76,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "pno-d30-cooldown",
+      "session_id": "pno-d30",
+      "instrument": "piano",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user's piece",
+      "copy": {
+        "setup": "Showcase day. cooldown block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    }
+  ]
+}

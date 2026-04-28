@@ -172,7 +172,7 @@ var ifThenCard = window.ifThenCard;
 // getChordMatch aliased from PianoAudio above
 var fireMicro = window.fireMicro;
 var escHTML = window.escHTML;
-var saveState = window.saveState;
+var saveState = function(immediate) { return window.saveState(immediate); };
 var showToast = window.showToast || function() {};
 var checkPracticeDate = window.checkPracticeDate || function() {};
 var getRewardPhase = window.getRewardPhase || function() { return null; };
@@ -187,7 +187,7 @@ var chordNoteNames = window.chordNoteNames || function() { return []; };
 var getAvailableExercises = window.getAvailableExercises || function() { return []; };
 var getSessionExercise = window.getSessionExercise || function() { return null; };
 var getWarmUpExercise = window.getWarmUpExercise || function() { return null; };
-var render = window.render;
+var render = function() { return window.render(); };
 
 // ── Utility ──
 function shuffleArray(arr) {
@@ -523,6 +523,41 @@ function startGuidedSession() {
   S.paused = false;
   S.fingerWarmUpDone = false;
 
+  checkPracticeDate();
+  playSound("start");
+  saveState();
+  render();
+}
+
+function getActivePianoGuidedView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var view = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+  return view &&
+    view.plan &&
+    view.plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION &&
+    view.runtimeState &&
+    view.runtimeState.activeScreen === "guided_session"
+    ? view
+    : null;
+}
+
+function resumeGuidedSession() {
+  var view = getActivePianoGuidedView();
+  var runtimeState = view && view.runtimeState ? view.runtimeState : {};
+  if (!view || !view.plan || !view.plan.context || !view.plan.context.guidedPlan) {
+    startGuidedSession();
+    return;
+  }
+  syncPianoGuidedPlanFromCore(view.plan);
+  if (runtimeState.guidedStep != null) {
+    S.sessionStep = runtimeState.guidedStep;
+    S.guidedStep = runtimeState.guidedStep;
+  }
+  if (runtimeState.guidedNewMovePhase !== undefined) S.newMovePhase = runtimeState.guidedNewMovePhase || null;
+  if (runtimeState.guidedPaused !== undefined) S.paused = !!runtimeState.guidedPaused;
+  if (runtimeState.transport && runtimeState.transport.status === "paused") S.paused = true;
   checkPracticeDate();
   playSound("start");
   saveState();
@@ -892,6 +927,18 @@ function act(action, param) {
       }
       break;
 
+    case "pianoGameTab":
+      S._gameTab = param;
+      break;
+
+    case "pianoSongTab":
+      S._songTab = param;
+      break;
+
+    case "pianoToolTab":
+      S._toolTab = param;
+      break;
+
     case "toggle_dark":
       S.darkMode = !S.darkMode;
       document.body.classList.toggle("dark", S.darkMode);
@@ -983,8 +1030,17 @@ function act(action, param) {
       return; // startGuidedSession calls render
 
     // ── Guided sessions ──
+    case "practiceStartItem":
+      if(typeof startPracticeItem==="function"){startPracticeItem(param);}
+      else if(typeof window.startPracticeItem==="function"){window.startPracticeItem(param);}
+      return;
+
     case "start_guided_session":
       startGuidedSession();
+      return;
+
+    case "resume_guided_session":
+      resumeGuidedSession();
       return;
 
     case "next_step":
@@ -1058,6 +1114,12 @@ function act(action, param) {
         S.active = false;
         if (S.detecting) stopDetection();
         stopMetronome();
+      }
+      break;
+
+    case "pianoConfirmStopSession":
+      if (typeof confirm !== "function" || confirm("End session early?")) {
+        act("stop_session");
       }
       break;
 
@@ -1764,6 +1826,12 @@ function act(action, param) {
       resetProgress();
       break;
 
+    case "pianoConfirmResetProgress":
+      if (typeof confirm !== "function" || confirm("Reset all progress?")) {
+        act("reset");
+      }
+      break;
+
     case "undo_reset":
       undoReset();
       break;
@@ -1878,9 +1946,21 @@ function act(action, param) {
       if(typeof pullSparkCloud === "function") pullSparkCloud();
       return;
 
+    case "cloudResolveConflict":
+      if(typeof resolveCloudConflict === "function") resolveCloudConflict(param);
+      return;
+
     case "cloudLogout":
       if(typeof logoutSpark === "function") logoutSpark();
       break;
+
+    case "refreshMidiDevices":
+      if (typeof refreshMidiDevices === "function") refreshMidiDevices();
+      return;
+
+    case "importMidiDesktop":
+      if (typeof importMidiDesktopAware === "function") importMidiDesktopAware();
+      return;
 
     case "cloudLoginPrompt": {
       var clEmail = prompt("Email:");

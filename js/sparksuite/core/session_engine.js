@@ -36,9 +36,25 @@
   function SessionEngine(practiceEngine, curriculumEngine) {
     this.practiceEngine = practiceEngine;
     this.curriculumEngine = curriculumEngine;
+    this.performanceMonitor = null;
   }
 
+  SessionEngine.prototype.setPerformanceMonitor = function(performanceMonitor) {
+    this.performanceMonitor = performanceMonitor || null;
+    return this.performanceMonitor;
+  };
+
   SessionEngine.prototype.buildSession = function(flow, context) {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("session.build_plan", "sessionPlanBuildMs", function() {
+        return self._buildSessionInternal(flow, context);
+      });
+    }
+    return this._buildSessionInternal(flow, context);
+  };
+
+  SessionEngine.prototype._buildSessionInternal = function(flow, context) {
     context = context || {};
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return this.buildGuidedSession(context);
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return this.buildPerformanceSongSession(context);
@@ -212,11 +228,17 @@
     var instrumentContext = context.instrumentContext || {};
     var sessions = Array.isArray(instrumentContext.sessions) ? instrumentContext.sessions : [];
     var sessionNum = parseInt(context.sessionNum, 10);
+    var guidedShell;
     if (isNaN(sessionNum) || sessionNum < 1) sessionNum = 1;
 
     var sessionIndex = Math.max(0, Math.min(sessions.length - 1, sessionNum - 1));
     var guidedPlan = sessions.length ? clone(sessions[sessionIndex]) : null;
+    if (guidedPlan && !guidedPlan.instrument && instrumentContext.instrumentType) {
+      guidedPlan.instrument = instrumentContext.instrumentType;
+    }
+    guidedPlan = normalizeGuidedPlan(guidedPlan);
     if (guidedPlan && guidedPlan.num != null) sessionNum = guidedPlan.num;
+    guidedShell = buildGuidedSessionShell(guidedPlan, sessionNum, instrumentContext.instrumentType);
 
     return new SessionPlan({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
@@ -225,13 +247,14 @@
       focus: "guided",
       lesson: guidedPlan,
       difficulty: guidedPlan ? guidedPlan.level || null : null,
-      segments: guidedPlan ? [normalizeSegment({id: "guided_session_" + sessionNum, type: "practice", durationSec: 300, meta: {guidedSession: sessionNum}}).segment] : [],
-      exercises: guidedPlan ? [normalizeSegment({id: "guided_session_" + sessionNum, type: "practice", durationSec: 300, meta: {guidedSession: sessionNum}}).exercise] : [],
+      segments: guidedShell.segments,
+      exercises: guidedShell.exercises,
       rewards: [{ type: "xp", amount: 30 }],
       context: {
         guidedPlan: guidedPlan,
         guidedSession: sessionNum,
-        totalGuidedSessions: sessions.length
+        totalGuidedSessions: sessions.length,
+        guidedShellDurationSec: guidedShell.totalDurationSec
       }
     });
   };
@@ -387,6 +410,9 @@
   }
 
   function toSongId(song) {
+    if (typeof resolvePerformanceSongId === "function") {
+      return resolvePerformanceSongId(song, song && song.title);
+    }
     return String(song && song.title || "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
@@ -395,6 +421,247 @@
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value || null));
+  }
+
+  function normalizeGuidedPlan(plan) {
+    var instrumentType;
+    var blockActivities;
+    var warmActivity;
+    var drillActivity;
+    var songActivity;
+    var cooldownActivity;
+    var newElement;
+    var focusSong;
+    var chordName;
+    var completionPrompt;
+    if (!plan) return null;
+    if (plan.spark || plan.review || plan.newMove || plan.songSlice || plan.victoryLap) return plan;
+    if (!Array.isArray(plan.blocks) || !plan.blocks.length) return plan;
+
+    instrumentType = plan.instrument || plan.instrumentType || null;
+    blockActivities = resolveGuidedBlockActivities(instrumentType, plan);
+    warmActivity = blockActivities.warm_engine;
+    drillActivity = blockActivities.drill;
+    songActivity = blockActivities.song;
+    cooldownActivity = blockActivities.cooldown;
+    newElement = Array.isArray(plan.new_elements) && plan.new_elements.length
+      ? plan.new_elements[0]
+      : (plan.skill || "");
+    focusSong = plan.focus_song || ((Array.isArray(plan.songs) && plan.songs.length) ? plan.songs[0] : "");
+    chordName = extractGuidedChordName(plan.title, newElement);
+    completionPrompt = plan.completion_criteria && plan.completion_criteria.prompt
+      ? String(plan.completion_criteria.prompt)
+      : (plan.completion && plan.completion.prompt ? String(plan.completion.prompt) : "");
+
+    return {
+      id: plan.id,
+      num: plan.day != null ? plan.day : plan.num,
+      day: plan.day != null ? plan.day : plan.num,
+      title: plan.title || "Guided session",
+      level: plan.level || 1,
+      bpm: normalizeGuidedTempo(plan.blocks),
+      spark: {
+        text: firstGuidedActivityText(warmActivity && warmActivity.copy && warmActivity.copy.setup,
+          plan.title ? (plan.title + ". Start with a quick, playable warm-up.") : "",
+          "Start with a quick, playable warm-up.")
+      },
+      review: plan.day > 1 ? {
+        text: firstGuidedActivityText(warmActivity && warmActivity.copy && warmActivity.copy.success,
+          "Take a quick review pass before the new move.")
+      } : null,
+      newMove: {
+        text: firstGuidedActivityText(drillActivity && drillActivity.copy && drillActivity.copy.setup,
+          buildNewMoveText(newElement, plan.title)),
+        chord: chordName,
+        strum: null
+      },
+      songSlice: {
+        text: firstGuidedActivityText(songActivity && songActivity.copy && songActivity.copy.setup,
+          focusSong ? ("Play the " + focusSong + " slice with relaxed timing.") : "",
+          "Play this short song slice with steady timing."),
+        song: focusSong || null
+      },
+      victoryLap: {
+        text: completionPrompt || firstGuidedActivityText(cooldownActivity && cooldownActivity.copy && cooldownActivity.copy.setup,
+          buildVictoryLapText(plan.title))
+      },
+      source: plan.source || null,
+      blocks: clone(plan.blocks),
+      blockActivities: clone(blockActivities),
+      new_elements: clone(plan.new_elements || (plan.skill ? [plan.skill] : [])),
+      prerequisites: clone(plan.prerequisites || []),
+      completion_criteria: clone(plan.completion_criteria || plan.completion || null),
+      focus_song: focusSong || null
+    };
+  }
+
+  function buildGuidedSessionShell(plan, sessionNum, instrumentType) {
+    var fallback = normalizeSegment({
+      id: "guided_session_" + sessionNum,
+      type: "practice",
+      durationSec: 300,
+      meta: {
+        guidedSession: sessionNum,
+        instrument: instrumentType || null
+      }
+    });
+    var shell = {
+      segments: plan ? [fallback.segment] : [],
+      exercises: plan ? [fallback.exercise] : [],
+      totalDurationSec: plan ? 300 : 0
+    };
+    var segments = [];
+    var exercises = [];
+    var totalDurationSec = 0;
+    var i;
+    var block;
+    var blockType;
+    var activity;
+    var normalized;
+    if (!plan || !Array.isArray(plan.blocks) || !plan.blocks.length) return shell;
+    for (i = 0; i < plan.blocks.length; i++) {
+      block = plan.blocks[i];
+      if (!block || !block.type) continue;
+      blockType = block.type;
+      activity = plan.blockActivities && plan.blockActivities[blockType]
+        ? plan.blockActivities[blockType]
+        : null;
+      normalized = normalizeSegment({
+        id: String(plan.id || ("guided_session_" + sessionNum)) + "_" + blockType,
+        type: normalizeGuidedBlockSegmentType(blockType),
+        label: buildGuidedBlockLabel(blockType, activity),
+        desc: buildGuidedBlockDescription(activity, blockType),
+        durationSec: parseGuidedBlockDurationSec(block, activity),
+        meta: {
+          guidedSession: sessionNum,
+          guidedBlockType: blockType,
+          activityId: block.activity_id || (activity && activity.id) || null,
+          activityKind: activity && activity.kind ? activity.kind : null,
+          instrument: instrumentType || plan.instrument || null
+        }
+      });
+      totalDurationSec += normalized.segment.durationSec || 0;
+      segments.push(normalized.segment);
+      exercises.push(normalized.exercise);
+    }
+    if (!segments.length) return shell;
+    return {
+      segments: segments,
+      exercises: exercises,
+      totalDurationSec: totalDurationSec
+    };
+  }
+
+  function resolveGuidedBlockActivities(instrumentType, plan) {
+    var resolved = {
+      warm_engine: null,
+      drill: null,
+      song: null,
+      cooldown: null
+    };
+    var activities;
+    var i;
+    var block;
+    if (!instrumentType || typeof SparkCurriculumV2 === "undefined" || !SparkCurriculumV2) return resolved;
+    activities = typeof SparkCurriculumV2.getSessionActivities === "function"
+      ? SparkCurriculumV2.getSessionActivities(instrumentType, plan.id)
+      : [];
+    for (i = 0; i < activities.length; i++) {
+      if (activities[i] && activities[i].block_type && resolved[activities[i].block_type] == null) {
+        resolved[activities[i].block_type] = clone(activities[i]);
+      }
+    }
+    if (!Array.isArray(plan.blocks)) return resolved;
+    for (i = 0; i < plan.blocks.length; i++) {
+      block = plan.blocks[i];
+      if (block && block.type && resolved[block.type] == null && typeof SparkCurriculumV2.getActivity === "function") {
+        resolved[block.type] = clone(SparkCurriculumV2.getActivity(instrumentType, block.activity_id));
+      }
+    }
+    return resolved;
+  }
+
+  function normalizeGuidedTempo(blocks) {
+    var i;
+    if (!Array.isArray(blocks)) return 80;
+    for (i = 0; i < blocks.length; i++) {
+      if (blocks[i] && blocks[i].tempo_bpm) return parseLevel(blocks[i].tempo_bpm);
+    }
+    return 80;
+  }
+
+  function normalizeGuidedBlockSegmentType(blockType) {
+    if (blockType === "song") return "song";
+    return "practice";
+  }
+
+  function parseGuidedBlockDurationSec(block, activity) {
+    var duration = parseInt(block && block.duration_sec, 10);
+    if (!isNaN(duration) && duration > 0) return duration;
+    duration = parseInt(activity && activity.duration_sec, 10);
+    if (!isNaN(duration) && duration > 0) return duration;
+    return 60;
+  }
+
+  function buildGuidedBlockLabel(blockType, activity) {
+    var labels = {
+      warm_engine: "Warm Engine",
+      drill: "Drill",
+      song: "Song Slice",
+      cooldown: "Cooldown"
+    };
+    var focusSong = humanizeGuidedToken(activity && activity.focus_song);
+    if (blockType === "song" && focusSong) return "Song Slice: " + focusSong;
+    return labels[blockType] || humanizeGuidedToken(blockType) || "Guided Block";
+  }
+
+  function buildGuidedBlockDescription(activity, blockType) {
+    return firstGuidedActivityText(
+      activity && activity.copy && activity.copy.setup,
+      activity && activity.copy && activity.copy.success,
+      humanizeGuidedToken(blockType)
+    );
+  }
+
+  function buildNewMoveText(newElement, title) {
+    var label = humanizeGuidedToken(newElement);
+    if (label) return "Focus on " + label + " for this session.";
+    if (title) return "Focus on the main move from " + title + ".";
+    return "Practice the new move slowly and cleanly.";
+  }
+
+  function buildVictoryLapText(title) {
+    if (title) return "Finish with one confident pass through " + title + ".";
+    return "Finish with one confident pass.";
+  }
+
+  function firstGuidedActivityText() {
+    var i;
+    var token;
+    for (i = 0; i < arguments.length; i++) {
+      token = humanizeGuidedToken(arguments[i]);
+      if (token) return token;
+    }
+    return "";
+  }
+
+  function humanizeGuidedToken(value) {
+    if (!value) return "";
+    return String(value)
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/^\s+|\s+$/g, "");
+  }
+
+  function extractGuidedChordName(title, newElement) {
+    var sources = [title, newElement];
+    var i;
+    var match;
+    for (i = 0; i < sources.length; i++) {
+      match = /(?:^|\s)(A|Am|A7|B|Bm|C|C7|D|Dm|D7|E|Em|E7|F|F#m|G|G7)(?:\s|$)/.exec(String(sources[i] || ""));
+      if (match && match[1]) return match[1];
+    }
+    return null;
   }
 
   function parseLevel(level) {
@@ -442,4 +709,9 @@
   }
 
   window.SparkSuiteSessionEngine = SessionEngine;
+  if (typeof module !== "undefined") {
+    module.exports = {
+      SparkSuiteSessionEngine: SessionEngine
+    };
+  }
 })();

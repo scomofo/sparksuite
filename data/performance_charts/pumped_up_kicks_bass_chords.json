@@ -1,0 +1,33 @@
+{
+  "id": "pumped_up_kicks_bass_chords",
+  "title": "Pumped Up Kicks",
+  "artist": "Foster the People",
+  "bpm": 128,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 15 },
+    { "id": 1, "name": "Chorus", "startSec": 15, "endSec": 30 },
+    { "id": 2, "name": "Outro", "startSec": 30, "endSec": 45 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.469, "type": "tap", "chord": "F#", "notes": ["F#1"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 2, "t": 0.469, "dur": 0.469, "type": "tap", "chord": "F#", "notes": ["F#1"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 3, "t": 0.938, "dur": 0.468, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 4, "t": 1.406, "dur": 0.469, "type": "tap", "chord": "C#", "notes": ["C#2"], "laneLabel": "C#", "strum": "tap" },
+    { "id": 5, "t": 1.875, "dur": 0.469, "type": "tap", "chord": "B", "notes": ["B1"], "laneLabel": "B", "strum": "tap" },
+    { "id": 6, "t": 2.344, "dur": 0.469, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 7, "t": 2.813, "dur": 0.468, "type": "tap", "chord": "F#", "notes": ["F#1"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 8, "t": 3.281, "dur": 0.469, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 9, "t": 3.75, "dur": 0.469, "type": "tap", "chord": "F#", "notes": ["F#1"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 10, "t": 4.219, "dur": 0.469, "type": "tap", "chord": "F#", "notes": ["F#1"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 11, "t": 4.688, "dur": 0.468, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 12, "t": 5.156, "dur": 0.469, "type": "tap", "chord": "C#", "notes": ["C#2"], "laneLabel": "C#", "strum": "tap" },
+    { "id": 13, "t": 5.625, "dur": 0.469, "type": "tap", "chord": "B", "notes": ["B1"], "laneLabel": "B", "strum": "tap" },
+    { "id": 14, "t": 6.094, "dur": 0.469, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 15, "t": 6.563, "dur": 0.468, "type": "tap", "chord": "F#", "notes": ["F#1"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 16, "t": 7.031, "dur": 0.469, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" }
+  ]
+}

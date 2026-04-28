@@ -57,11 +57,16 @@ function _normalizeGamesCount(value, fallback) {
   return Math.round(numeric);
 }
 
+function getGamesCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 // ===== RHYTHM GAME TAB =====
 function getLegacyRhythmRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getGamesCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   return {
     active: typeof S.rhythmActive === "boolean" ? S.rhythmActive : !!(runtime && runtime.legacyRhythmActive),
@@ -128,17 +133,15 @@ function rhythmResultsPage(){
   h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+rhythmAccuracy+'%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
   h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+rhythmMaxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
   h+='</div></div>';
-  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="S.rhythmResults=null;act(\'startRhythm\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
-  h+='<button class="btn" onclick="S.rhythmResults=null;render()" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
+  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'rhythmResultsReplay\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
+  h+='<button class="btn" onclick="act(\'rhythmResultsBack\')" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
   h+='</div>';
   return h;
 }
 
 // ===== CHORD RUNNER TAB =====
 function getLegacyRunnerRuntime(D){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getGamesCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   var target = S.runnerTarget || null;
   if(!target && runtime && runtime.legacyRunnerTargetName && D && Array.isArray(D.ALL_CHORDS)){
@@ -253,8 +256,8 @@ function runnerResultsPage(){
   h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+runnerMaxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
   h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+runnerDistance+'m</div><div style="font-size:11px;color:var(--text-muted)">Distance</div></div>';
   h+='</div></div>';
-  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="S.runnerResults=null;act(\'startRunner\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
-  h+='<button class="btn" onclick="S.runnerResults=null;render()" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
+  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'runnerResultsReplay\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
+  h+='<button class="btn" onclick="act(\'runnerResultsBack\')" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
   h+='</div>';
   return h;
 }
@@ -276,7 +279,7 @@ function buildTab(){
       var cn=S.progChords[i];
       var ch=null;for(var j=0;j<D.ALL_CHORDS.length;j++)if(D.ALL_CHORDS[j].name===cn)ch=D.ALL_CHORDS[j];
       var short=ch?ch.short:cn;
-      h+='<div class="prog-block'+(S.progPlaying&&S.progBeat===i?" active":"")+'"><div class="del-btn" onclick="act(\'progRemove\',\''+i+'\')">&times;</div>';
+      h+='<div class="prog-block'+(S.progPlaying&&S.progBeat===i?" active":"")+'"><button class="del-btn" onclick="act(\'progRemove\',\''+i+'\')" aria-label="Remove chord '+escHTML(String(short))+'">&times;</button>';
       h+='<div class="chord-label">'+short+'</div>';
       h+='<div class="move-btns">';
       if(i>0)h+='<button onclick="act(\'progMove\',\''+i+':left\')">&#8592;</button>';

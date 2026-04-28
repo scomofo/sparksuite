@@ -2,7 +2,10 @@
   function CalibrationEngine() {}
 
   CalibrationEngine.prototype.getOffsetMs = function(instrumentType) {
-    if (instrumentType === "guitar") return S.performAudioOffsetMs || 0;
+    if (instrumentType === "guitar") {
+      if (typeof S.performMicOffsetMs === "number" && isFinite(S.performMicOffsetMs)) return S.performMicOffsetMs;
+      return 0;
+    }
     return 0;
   };
 

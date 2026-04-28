@@ -33,6 +33,78 @@
     if (typeof tickD === "function") T.drill = setTimeout(tickD, 1000);
   }
 
+  function getBassActiveGuidedView() {
+    var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    return view &&
+      view.plan &&
+      view.plan.flow === "guided_session" &&
+      view.runtimeState &&
+      view.runtimeState.activeScreen === "guided_session"
+      ? view
+      : null;
+  }
+
+  function getBassActivePracticeShellView() {
+    var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    return view &&
+      view.plan &&
+      view.plan.flow === "daily_practice" &&
+      view.runtimeState &&
+      view.runtimeState.activeSegmentId
+      ? view
+      : null;
+  }
+
+  function syncBassPracticeShellRuntime(view) {
+    var runtime = typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : (window && window.SparkSessionRuntime ? window.SparkSessionRuntime : null);
+    var runtimeState = view && view.runtimeState ? view.runtimeState : null;
+    if (!runtime || !view || !view.plan) return null;
+    if (window.sparkCore && typeof window.sparkCore.syncSessionRuntime === "function") {
+      window.sparkCore.syncSessionRuntime(view.plan, {
+        activeSegmentId: runtimeState && runtimeState.activeSegmentId,
+        transport: runtimeState && runtimeState.transport ? {
+          status: runtimeState.transport.status,
+          positionMs: runtimeState.transport.positionMs
+        } : null
+      });
+    } else if (typeof runtime.attachSession === "function") {
+      runtime.attachSession(view.plan, {
+        activeSegmentId: runtimeState && runtimeState.activeSegmentId,
+        transport: runtimeState && runtimeState.transport ? {
+          status: runtimeState.transport.status,
+          positionMs: runtimeState.transport.positionMs
+        } : null
+      });
+    }
+    return runtime;
+  }
+
+  function syncBassGuidedViewToState(view) {
+    var guidedPlan = view && view.plan && view.plan.context ? view.plan.context.guidedPlan : null;
+    var runtimeState = view && view.runtimeState ? view.runtimeState : {};
+    if (!guidedPlan) return false;
+    if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
+      SparkProgressBridge.syncGuidedSessionToState(view.plan);
+    } else {
+      S.guidedPlan = guidedPlan;
+      S.guidedSession = view.plan.context.guidedSession || guidedPlan.num || S.guidedSession || 1;
+      S.guidedStep = "spark";
+      S.newMovePhase = null;
+      S.guidedPaused = false;
+    }
+    if (runtimeState.guidedStep != null) S.guidedStep = runtimeState.guidedStep;
+    if (runtimeState.guidedNewMovePhase !== undefined) S.newMovePhase = runtimeState.guidedNewMovePhase || null;
+    if (runtimeState.guidedPaused !== undefined) S.guidedPaused = !!runtimeState.guidedPaused;
+    if (runtimeState.transport && runtimeState.transport.status === "paused") S.guidedPaused = true;
+    return true;
+  }
+
   function bassAct(a, v) {
     var inst = getBassAppInstrument();
     var D = inst && inst.getData ? inst.getData() : {};
@@ -157,6 +229,39 @@
     }
 
     if (a === "guidedStart") {
+      a = "start_guided_session";
+    }
+
+    if (a === "resume_guided_session") {
+      if (syncBassGuidedViewToState(getBassActiveGuidedView())) {
+        S.screen = SCR.GUIDED;
+        snd("start");
+        render();
+        saveState();
+        return true;
+      }
+      return bassAct("start_guided_session", v);
+    }
+
+    if (a === "sessionPauseBlock" || a === "sessionResumeBlock" || a === "sessionSkipBlock") {
+      var shellView = getBassActivePracticeShellView();
+      var shellRuntime = shellView ? syncBassPracticeShellRuntime(shellView) : null;
+      if (!shellRuntime) return false;
+      if (a === "sessionPauseBlock") {
+        if (typeof shellRuntime.pauseActiveSegment === "function") shellRuntime.pauseActiveSegment({});
+        else if (typeof shellRuntime.syncSegmentTransport === "function") shellRuntime.syncSegmentTransport("pause", {});
+      } else if (a === "sessionResumeBlock") {
+        if (typeof shellRuntime.resumeActiveSegment === "function") shellRuntime.resumeActiveSegment({ scheduleTick: true });
+        else if (typeof shellRuntime.syncSegmentTransport === "function") shellRuntime.syncSegmentTransport("resume", { scheduleTick: true });
+      } else if (typeof shellRuntime.skipActiveSegment === "function") {
+        shellRuntime.skipActiveSegment({ autoAdvance: true });
+      }
+      render();
+      saveState();
+      return true;
+    }
+
+    if (a === "start_guided_session") {
       var sessionNum = parseInt(v, 10);
       if (typeof window.openGuidedSessionRequest === "function") {
         var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;

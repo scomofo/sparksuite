@@ -1,5 +1,15 @@
 # SparkSuite Architecture Map
 
+Related architecture guardrails:
+
+- [ADR index](../adr/README.md)
+- [ADR 001 - Engine-first architecture](../adr/001-engine-first-architecture.md)
+- [ADR 002 - SessionPlan is canonical](../adr/002-sessionplan-is-canonical.md)
+- [ADR 003 - Instruments are modules](../adr/003-instruments-are-modules.md)
+- [ADR 004 - UI does not own progression](../adr/004-ui-does-not-own-progression.md)
+- [ADR 005 - AI Coach is advisory](../adr/005-ai-coach-is-advisory.md)
+- [ADR 006 - No social, leaderboard, or store scope](../adr/006-no-social-leaderboard-store-scope.md)
+
 ## Boot Order (index.html)
 
 1. **Core Utilities** - spark-highway, contracts, time/math/ids utils, persistence, analytics, progression

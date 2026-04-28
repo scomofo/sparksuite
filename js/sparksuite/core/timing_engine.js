@@ -3,6 +3,28 @@
     this.calibrationEngine = calibrationEngine || new SparkCalibrationEngine();
   }
 
+  TimingEngine.prototype.createExerciseClock = function(now) {
+    if (typeof SparkExerciseClock !== "undefined") {
+      return new SparkExerciseClock(now);
+    }
+    return {
+      startedAt: null,
+      now: typeof now === "function" ? now : function() {
+        return typeof performance !== "undefined" && performance && typeof performance.now === "function"
+          ? performance.now()
+          : Date.now();
+      },
+      start: function() {
+        this.startedAt = this.now();
+        return this.startedAt;
+      },
+      elapsedMs: function() {
+        if (this.startedAt == null) throw new Error("ExerciseClock has not started");
+        return this.now() - this.startedAt;
+      }
+    };
+  };
+
   TimingEngine.prototype.createClock = function(instrumentType) {
     var calibrationEngine = this.calibrationEngine;
     var ctx = null;

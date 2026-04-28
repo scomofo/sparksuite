@@ -1,0 +1,4 @@
+[
+  { "id": "gtr_content_01", "skill": "strum_basics", "title": "First Strums", "prerequisites": [], "masteryRequired": 0.7, "estimatedMinutes": 5 },
+  { "id": "gtr_content_02", "skill": "open_chords", "title": "Open Chord Shapes", "prerequisites": ["strum_basics"], "masteryRequired": 0.75, "estimatedMinutes": 6 }
+]

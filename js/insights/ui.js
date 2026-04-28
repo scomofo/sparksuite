@@ -2,7 +2,7 @@ function prettyInsightUiToken(value){
   var text;
   var lower;
   if(value == null) return "";
-  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if(typeof value !== "string" && typeof value !== "number") return "";
   text = String(value || "").replace(/_/g, " ").trim();
   if(!text) return "";
   lower = text.toLowerCase();
@@ -18,8 +18,10 @@ function buildInsightSkillLabel(entry) {
 }
 
 function insightsDashboardPage(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
+  var core = (typeof window !== "undefined" && window.sparkCore)
+    || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var coreView = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var pi = runtimeState && runtimeState.dashboardInsights ? runtimeState.dashboardInsights : S.personalInsights;

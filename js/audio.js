@@ -4,6 +4,10 @@ var audioCtx=null;
 var tunerR={stream:null,analyser:null,ctx:null,anim:null};
 var chordR={stream:null,analyser:null,ctx:null,anim:null};
 
+function getAudioCore(){
+  return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+}
+
 // ===== GUITAR WAV AUDIO =====
 // Maps chord names (full) to WAV file stems for real guitar samples
 var CHORD_FILE_MAP={
@@ -191,8 +195,9 @@ var _metroNextTime=0;
 var _metroLookahead=0.1; // seconds to look ahead
 var _metroScheduleInterval=25; // ms between scheduler calls
 function startMetronome(){
-  if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
-    window.sparkCore.syncMetronomeRuntimeState({
+  var core=getAudioCore();
+  if(core&&typeof core.syncMetronomeRuntimeState==="function"){
+    core.syncMetronomeRuntimeState({
       active:true,
       bpm:S.metronomeBpm,
       beat:0,
@@ -212,12 +217,13 @@ function startMetronome(){
 function _metroSchedule(){
   if(!S.metronomeOn)return;
   if(audioCtx){
+    var core=getAudioCore();
     var secPerBeat=60/S.metronomeBpm;
     while(_metroNextTime<audioCtx.currentTime+_metroLookahead){
       metroClick(S._metroBeat===0);
       S._metroBeat=(S._metroBeat+1)%S._metroBeats;
-      if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
-        window.sparkCore.syncMetronomeRuntimeState({
+      if(core&&typeof core.syncMetronomeRuntimeState==="function"){
+        core.syncMetronomeRuntimeState({
           active:true,
           bpm:S.metronomeBpm,
           beat:S._metroBeat,
@@ -232,8 +238,9 @@ function _metroSchedule(){
 }
 
 function stopMetronome(){
-  if(window.sparkCore&&typeof window.sparkCore.syncMetronomeRuntimeState==="function"){
-    window.sparkCore.syncMetronomeRuntimeState({
+  var core=getAudioCore();
+  if(core&&typeof core.syncMetronomeRuntimeState==="function"){
+    core.syncMetronomeRuntimeState({
       active:false,
       bpm:S.metronomeBpm,
       beat:0,
@@ -472,9 +479,10 @@ function getStableChordNotes(rawNotes){
 }
 
 function startChordDetect(){
+  var core=getAudioCore();
   if(!AC){
-    if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
-      window.sparkCore.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:"Audio not supported"});
+    if(core&&typeof core.syncChordDetectRuntimeState==="function"){
+      core.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:"Audio not supported"});
     }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectErr:"Audio not supported"}});
@@ -491,8 +499,8 @@ function startChordDetect(){
     an.smoothingTimeConstant=0.4; // Balanced: less lag, JS-level history handles stability
     src.connect(an);
     chordR.ctx=ctx;chordR.analyser=an;
-    if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
-      window.sparkCore.syncChordDetectRuntimeState({active:true,notes:[],match:-1,error:null});
+    if(core&&typeof core.syncChordDetectRuntimeState==="function"){
+      core.syncChordDetectRuntimeState({active:true,notes:[],match:-1,error:null});
     }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectOn:true,chordDetectErr:null}});
@@ -518,8 +526,8 @@ function startChordDetect(){
           var penalty=wrong>0?wrong/(found.length+expected.length):0;
           S.chordMatch=Math.max(0,Math.round((accuracy-penalty)*100));
         }else{S.chordMatch=-1;}
-        if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
-          window.sparkCore.syncChordDetectRuntimeState({
+        if(core&&typeof core.syncChordDetectRuntimeState==="function"){
+          core.syncChordDetectRuntimeState({
             active:true,
             notes:found,
             match:S.chordMatch,
@@ -532,8 +540,8 @@ function startChordDetect(){
       chordR.anim=requestAnimationFrame(det);
     }det();
   }).catch(function(){
-    if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
-      window.sparkCore.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:"Microphone access denied"});
+    if(core&&typeof core.syncChordDetectRuntimeState==="function"){
+      core.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:"Microphone access denied"});
     }
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
       SparkProgressBridge.applyLegacyActivityRuntime({setFields:{chordDetectErr:"Microphone access denied"}});
@@ -545,8 +553,9 @@ function startChordDetect(){
 }
 
 function stopChordDetect(){
-  if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
-    window.sparkCore.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:null});
+  var core=getAudioCore();
+  if(core&&typeof core.syncChordDetectRuntimeState==="function"){
+    core.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:null});
   }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({
@@ -625,8 +634,9 @@ function refreshAudioInputs(){
         nextInputs.push({id:devices[i].deviceId,name:devices[i].label||"Input "+(nextInputs.length+1)});
       }
     }
-    if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
-      window.sparkCore.syncAudioInputRuntimeState({
+    var core=getAudioCore();
+    if(core&&typeof core.syncAudioInputRuntimeState==="function"){
+      core.syncAudioInputRuntimeState({
         devices: nextInputs,
         inputId: S.audioInputId || null,
         testingId: S.audioTestingId || null,
@@ -645,8 +655,9 @@ function refreshAudioInputs(){
 var _audioTestStream=null,_audioTestCtx=null,_audioTestAnim=null;
 function testAudioInput(deviceId){
   stopAudioTest();
-  if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
-    window.sparkCore.syncAudioInputRuntimeState({
+  var core=getAudioCore();
+  if(core&&typeof core.syncAudioInputRuntimeState==="function"){
+    core.syncAudioInputRuntimeState({
       devices: S.audioInputDevices || [],
       inputId: S.audioInputId || null,
       testingId: deviceId,
@@ -672,8 +683,8 @@ function testAudioInput(deviceId){
       var peak=0;
       for(var i=0;i<buf.length;i++){var v=Math.abs(buf[i]);if(v>peak)peak=v;}
       S.audioTestLevel=Math.round(Math.min(peak*200,100));
-      if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
-        window.sparkCore.syncAudioInputRuntimeState({
+      if(core&&typeof core.syncAudioInputRuntimeState==="function"){
+        core.syncAudioInputRuntimeState({
           devices: S.audioInputDevices || [],
           inputId: S.audioInputId || null,
           testingId: deviceId,
@@ -694,8 +705,8 @@ function testAudioInput(deviceId){
       _audioTestAnim=requestAnimationFrame(poll);
     }poll();
   }).catch(function(){
-    if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
-      window.sparkCore.syncAudioInputRuntimeState({
+    if(core&&typeof core.syncAudioInputRuntimeState==="function"){
+      core.syncAudioInputRuntimeState({
         devices: S.audioInputDevices || [],
         inputId: S.audioInputId || null,
         testingId: "",
@@ -711,8 +722,9 @@ function testAudioInput(deviceId){
   });
 }
 function stopAudioTest(){
-  if(window.sparkCore&&typeof window.sparkCore.syncAudioInputRuntimeState==="function"){
-    window.sparkCore.syncAudioInputRuntimeState({
+  var core=getAudioCore();
+  if(core&&typeof core.syncAudioInputRuntimeState==="function"){
+    core.syncAudioInputRuntimeState({
       devices: S.audioInputDevices || [],
       inputId: S.audioInputId || null,
       testingId: "",
@@ -821,8 +833,9 @@ function _processMIDIChord(){
       var penalty=wrong>0?wrong/(unique.length+expected.length):0;
       S.chordMatch=Math.max(0,Math.round((accuracy-penalty)*100));
     }
-    if(window.sparkCore&&typeof window.sparkCore.syncChordDetectRuntimeState==="function"){
-      window.sparkCore.syncChordDetectRuntimeState({
+    var core=getAudioCore();
+    if(core&&typeof core.syncChordDetectRuntimeState==="function"){
+      core.syncChordDetectRuntimeState({
         active:!!S.chordDetectOn,
         notes:unique,
         match:S.chordMatch,
@@ -906,8 +919,9 @@ function loadStemUrls(urlMap){
   var first=_stemAudios[keys[0]];
   if(first){
     first.addEventListener("loadedmetadata",function(){
-      if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
-        window.sparkCore.syncStemPlayerRuntimeState({duration:first.duration});
+      var core=getAudioCore();
+      if(core&&typeof core.syncStemPlayerRuntimeState==="function"){
+        core.syncStemPlayerRuntimeState({duration:first.duration});
       }
       if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
         SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemDuration:first.duration}});
@@ -925,8 +939,9 @@ function playStems(){
   for(var i=0;i<keys.length;i++){
     _stemAudios[keys[i]].play().catch(function(){});
   }
-  if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
-    window.sparkCore.syncStemPlayerRuntimeState({
+  var core=getAudioCore();
+  if(core&&typeof core.syncStemPlayerRuntimeState==="function"){
+    core.syncStemPlayerRuntimeState({
       playing:true,
       currentTime:S.stemCurrentTime||0,
       duration:S.stemDuration||0
@@ -942,8 +957,8 @@ function playStems(){
   _stemTimeUpdater=setInterval(function(){
     var first=_stemAudios[Object.keys(_stemAudios)[0]];
     if(first){
-      if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
-        window.sparkCore.syncStemPlayerRuntimeState({
+      if(core&&typeof core.syncStemPlayerRuntimeState==="function"){
+        core.syncStemPlayerRuntimeState({
           playing:!first.ended,
           currentTime:first.currentTime,
           duration:first.duration||S.stemDuration||0
@@ -973,8 +988,9 @@ function pauseStems(){
   for(var i=0;i<keys.length;i++){
     _stemAudios[keys[i]].pause();
   }
-  if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
-    window.sparkCore.syncStemPlayerRuntimeState({
+  var core=getAudioCore();
+  if(core&&typeof core.syncStemPlayerRuntimeState==="function"){
+    core.syncStemPlayerRuntimeState({
       playing:false,
       currentTime:S.stemCurrentTime||0,
       duration:S.stemDuration||0
@@ -994,8 +1010,9 @@ function seekStems(time){
   for(var i=0;i<keys.length;i++){
     _stemAudios[keys[i]].currentTime=time;
   }
-  if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
-    window.sparkCore.syncStemPlayerRuntimeState({
+  var core=getAudioCore();
+  if(core&&typeof core.syncStemPlayerRuntimeState==="function"){
+    core.syncStemPlayerRuntimeState({
       playing:!!S.stemPlaying,
       currentTime:time,
       duration:S.stemDuration||0
@@ -1041,8 +1058,9 @@ function cleanupStems(){
   }
   _stemAudios={};
   clearInterval(_stemTimeUpdater);
-  if(window.sparkCore&&typeof window.sparkCore.syncStemPlayerRuntimeState==="function"){
-    window.sparkCore.syncStemPlayerRuntimeState({playing:false,currentTime:0,duration:0});
+  var core=getAudioCore();
+  if(core&&typeof core.syncStemPlayerRuntimeState==="function"){
+    core.syncStemPlayerRuntimeState({playing:false,currentTime:0,duration:0});
   }
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({setFields:{stemPlaying:false,stemCurrentTime:0,stemDuration:0}});

@@ -1,0 +1,25 @@
+{
+  "id": "come_together_bass_chords",
+  "title": "Come Together",
+  "artist": "The Beatles",
+  "bpm": 83,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 11.566 },
+    { "id": 1, "name": "Chorus", "startSec": 11.566, "endSec": 23.133 },
+    { "id": 2, "name": "Outro", "startSec": 23.133, "endSec": 34.699 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.723, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 2, "t": 0.723, "dur": 0.723, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 3, "t": 1.446, "dur": 0.723, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 4, "t": 2.169, "dur": 0.723, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" },
+    { "id": 5, "t": 2.892, "dur": 0.723, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 6, "t": 3.614, "dur": 0.723, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 7, "t": 4.337, "dur": 0.723, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 8, "t": 5.06, "dur": 0.723, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" }
+  ]
+}

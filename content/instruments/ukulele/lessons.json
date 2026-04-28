@@ -1,0 +1,14 @@
+[
+  { "id": "uke_content_01", "skill": "down_strum", "title": "First Down Strums", "prerequisites": [], "masteryRequired": 0.65, "estimatedMinutes": 5 },
+  { "id": "uke_content_02", "skill": "basic_chords", "title": "Starter Chords", "prerequisites": ["down_strum"], "masteryRequired": 0.7, "estimatedMinutes": 6 },
+  { "id": "uke_content_03", "skill": "chord_switching", "title": "C-Am-F-G Changes", "prerequisites": ["basic_chords"], "masteryRequired": 0.72, "estimatedMinutes": 7 },
+  { "id": "uke_content_04", "skill": "strumming_patterns", "title": "Island Strum Pattern", "prerequisites": ["chord_switching"], "masteryRequired": 0.74, "estimatedMinutes": 7 },
+  { "id": "uke_content_05", "skill": "songs", "title": "First Song Loop", "prerequisites": ["strumming_patterns"], "masteryRequired": 0.76, "estimatedMinutes": 8 },
+  { "id": "uke_content_06", "skill": "fingerpicking", "title": "Fingerpicked Arpeggio", "prerequisites": ["songs"], "masteryRequired": 0.78, "estimatedMinutes": 8 },
+  { "id": "uke_content_07", "skill": "melody", "title": "Melody From Chords", "prerequisites": ["fingerpicking"], "masteryRequired": 0.8, "estimatedMinutes": 9 },
+  { "id": "uke_content_08", "skill": "performance", "title": "Campfire Performance", "prerequisites": ["melody"], "masteryRequired": 0.82, "estimatedMinutes": 10 },
+  { "id": "uke_content_09", "skill": "barre_chords", "title": "Compact Barre Shapes", "prerequisites": ["performance"], "masteryRequired": 0.84, "estimatedMinutes": 10 },
+  { "id": "uke_content_10", "skill": "syncopation", "title": "Offbeat Island Push", "prerequisites": ["barre_chords"], "masteryRequired": 0.85, "estimatedMinutes": 11 },
+  { "id": "uke_content_11", "skill": "advanced_fingerpick", "title": "Rolling Fingerstyle Patterns", "prerequisites": ["syncopation"], "masteryRequired": 0.86, "estimatedMinutes": 11 },
+  { "id": "uke_content_12", "skill": "full_performance", "title": "Full Song Performance", "prerequisites": ["advanced_fingerpick"], "masteryRequired": 0.88, "estimatedMinutes": 12 }
+]

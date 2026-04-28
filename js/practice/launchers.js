@@ -36,6 +36,13 @@
     if(type==="left_hand_pattern" && typeof launchLeftHandItem==="function"){
       return launchLeftHandItem(item);
     }
+    if(item.type==="strum") { if(typeof act==="function") act("tab","strum"); return true; }
+    if(item.type==="song") { if(typeof act==="function"){ if(item.meta&&item.meta.songId){act("selectSong",item.meta.songId);}else{act("tab","songs");} } return true; }
+    if(item.type==="daily") { if(typeof act==="function") act("tab","daily"); return true; }
+    if(item.type==="drill") { if(typeof act==="function") act("tab","drill"); return true; }
+    if(item.type==="quiz") { if(typeof act==="function") act("tab","quiz"); return true; }
+    if(item.type==="ear_training"||item.type==="ear") { if(typeof act==="function") act("tab","ear"); return true; }
+    if(item.type==="scale") { if(typeof act==="function") act("tab","tools"); return true; }
     console.warn("Spark: no launcher for item type", item.type);
     return false;
   }
@@ -214,15 +221,40 @@
     return null;
   }
 
+  function getActiveGuidedLauncherView() {
+    var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    var view = core && typeof core.getActiveSessionView === "function"
+      ? core.getActiveSessionView()
+      : null;
+    return view &&
+      view.plan &&
+      view.plan.flow === "guided_session" &&
+      view.runtimeState &&
+      view.runtimeState.activeScreen === "guided_session"
+      ? view
+      : null;
+  }
+
+  function getActiveGuidedLauncherSessionNum() {
+    var view = getActiveGuidedLauncherView();
+    var context = view && view.plan && view.plan.context ? view.plan.context : null;
+    if (!view) return null;
+    if (context && context.guidedSession != null) return parseInt(context.guidedSession, 10) || null;
+    if (view.plan.lesson && view.plan.lesson.num != null) return parseInt(view.plan.lesson.num, 10) || null;
+    return null;
+  }
+
   function launchGuidedSessionItem(item){
     if(typeof act!=="function") return false;
     var sessionNum = item && item.meta && item.meta.guidedSession || S.guidedSession || 1;
+    var activeSessionNum = getActiveGuidedLauncherSessionNum();
+    var shouldResume = activeSessionNum != null && activeSessionNum === sessionNum;
     if(getPracticeLauncherInstrumentType()==="piano"){
       act("tab", TAB.PRACTICE);
-      act("start_guided_session", sessionNum);
+      act(shouldResume ? "resume_guided_session" : "start_guided_session", shouldResume ? undefined : sessionNum);
       return true;
     }
-    act("guidedStart", sessionNum);
+    act(shouldResume ? "resume_guided_session" : "start_guided_session", shouldResume ? undefined : sessionNum);
     return true;
   }
 
