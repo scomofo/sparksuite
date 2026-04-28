@@ -9,3 +9,56 @@
     { id: "ukespark", instrument: "ukulele", scripts: ["js/sparksuite/instruments/ukulele/ukulele_skill_tree.js", "js/sparksuite/instruments/ukulele/ukulele_lessons.js", "js/sparksuite/instruments/ukulele/ukulele_chords.js", "js/sparksuite/instruments/ukulele/ukulele_scales.js", "js/sparksuite/instruments/ukulele/ukulele_tuning.js", "js/sparksuite/instruments/ukulele/ukulele_exercises.js", "js/sparksuite/instruments/ukulele/ukulele_progression.js", "js/sparksuite/instruments/ukulele/ukulele_module.js", "js/sparksuite/instruments/ukulele/ukulele_adapter.js", "js/sparksuite/instruments/ukulele/ukulele_runtime_adapter.js", "js/sparksuite/instruments/ukulele/index.js", "js/sparksuite/instruments/ukulele/ukulele_curriculum.js", "js/sparksuite/instruments/ukulele/ukulele_packs.js", "js/sparksuite/instruments/ukulele/ukulele_songs.js", "js/instruments/ukulele/chord_normalizer.js", "js/instruments/ukulele/validator.js", "js/instruments/ukulele/ukulele_svg.js", "js/instruments/ukulele/register.js"] }
   ];
 })();
+/* SparkSuite vocals showroom manifest bridge */
+(function () {
+  var W = typeof window !== "undefined" ? window : globalThis;
+
+  var item = W.SparkVocalsShowroomInstrument || {
+    id: "vocals",
+    key: "vocals",
+    slug: "vocals",
+    instrumentId: "vocals",
+    appId: "vocalspark",
+    name: "Vocals",
+    title: "VocalSpark",
+    displayName: "VocalSpark",
+    moduleName: "SparkVocalsModule",
+    icon: "🎤",
+    emoji: "🎤",
+    description: "Pitch, breath, rhythm, ear training, and vocal confidence.",
+    enabled: true,
+    isEnabled: true,
+    visible: true,
+    showroom: true,
+    selectable: true,
+    order: 65,
+    registerScript: "js/instruments/vocals/register.js",
+    script: "js/instruments/vocals/register.js"
+  };
+
+  function same(existing) {
+    return existing && String(existing.id || existing.key || existing.slug || existing.instrumentId || "").toLowerCase() === "vocals";
+  }
+
+  function addToArray(arr) {
+    if (!Array.isArray(arr)) return;
+
+    for (var i = 0; i < arr.length; i += 1) {
+      if (same(arr[i])) {
+        arr[i] = Object.assign({}, arr[i], item);
+        return;
+      }
+    }
+
+    arr.push(item);
+  }
+
+  [
+    W.INSTRUMENT_MANIFEST,
+    W.SparkInstrumentManifest,
+    W.instrumentManifest,
+    W.__instrumentManifest,
+    W.__SPARK_INSTRUMENT_MANIFEST,
+    W.SPARK_INSTRUMENT_MANIFEST
+  ].forEach(addToArray);
+})();
