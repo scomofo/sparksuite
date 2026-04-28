@@ -11,8 +11,23 @@
     iconImage: "resources/instruments/drums/card.png",
     heroImage: "resources/instruments/drums/hero.jpg",
     skin: null,
-    available: false,
+    available: true,
     getData: function() { return {}; },
+    getLessons: function() {
+      return window.SparkDrumsModule && typeof SparkDrumsModule.getLessons === "function"
+        ? SparkDrumsModule.getLessons()
+        : [];
+    },
+    getSkillTree: function() {
+      return window.SparkDrumsModule && typeof SparkDrumsModule.getSkillTree === "function"
+        ? SparkDrumsModule.getSkillTree()
+        : [];
+    },
+    getRhythmAdapter: function() {
+      return window.SparkDrumsModule && typeof SparkDrumsModule.getRhythmAdapter === "function"
+        ? SparkDrumsModule.getRhythmAdapter()
+        : null;
+    },
     pages: {},
     tabs: [],
     stemMutePreset: {},
