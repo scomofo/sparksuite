@@ -485,3 +485,301 @@
 
   console.info("[VocalSpark] late showroom registration active");
 })();
+
+/* SparkSuite VocalSpark final showroom + route fallback
+ * VocalSpark is loaded, but the showroom can render from a static/cached list.
+ * This keeps the module functional and adds a safe visible card if the renderer omits it.
+ */
+(function () {
+  "use strict";
+
+  var W = typeof window !== "undefined" ? window : globalThis;
+  var ID = "vocals";
+
+  function setSelectedVocalsFinal() {
+    W.currentInstrument = ID;
+    W.selectedInstrument = ID;
+    W.__activeInstrument = ID;
+    W.__sparkInstrumentId = ID;
+    W.__sparkSelectedInstrument = ID;
+    W.__sparkCurrentInstrument = ID;
+
+    try {
+      if (W.sparkCore && typeof W.sparkCore.setInstrument === "function") {
+        W.sparkCore.setInstrument(ID);
+      }
+    } catch (err) {}
+
+    try {
+      if (typeof W.setCurrentInstrument === "function") {
+        W.setCurrentInstrument(ID);
+      }
+    } catch (err) {}
+  }
+
+  function openVocalsFinal() {
+    setSelectedVocalsFinal();
+
+    try {
+      if (typeof W.act === "function") {
+        W.act("openPracticePlan");
+        return false;
+      }
+    } catch (err) {
+      console.warn("[VocalSpark] act(openPracticePlan) failed", err);
+    }
+
+    try {
+      if (typeof W.openPracticePlanScreenRequest === "function") {
+        W.openPracticePlanScreenRequest({
+          instrument: ID,
+          instrumentId: ID,
+          source: "vocals-final-fallback"
+        });
+        return false;
+      }
+    } catch (err) {
+      console.warn("[VocalSpark] openPracticePlanScreenRequest failed", err);
+    }
+
+    try {
+      if (typeof W.selectInstrument === "function") {
+        W.selectInstrument(ID);
+      }
+    } catch (err) {}
+
+    return false;
+  }
+
+  function startVocalsLessonFinal(lessonId) {
+    setSelectedVocalsFinal();
+
+    W.__sparkForcedLessonRequest = {
+      instrument: ID,
+      instrumentId: ID,
+      lessonId: lessonId,
+      source: "vocals-final-fallback"
+    };
+
+    return openVocalsFinal();
+  }
+
+  function sameId(item) {
+    return item && String(item.id || item.key || item.slug || item.instrumentId || "").toLowerCase() === ID;
+  }
+
+  function upsertArray(arr, instrument) {
+    if (!Array.isArray(arr)) return false;
+
+    for (var i = 0; i < arr.length; i += 1) {
+      if (sameId(arr[i])) {
+        arr[i] = Object.assign({}, arr[i], instrument);
+        return true;
+      }
+    }
+
+    arr.push(instrument);
+    return true;
+  }
+
+  function upsertObject(obj, instrument) {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
+    obj[ID] = Object.assign({}, obj[ID] || {}, instrument);
+    return true;
+  }
+
+  function getInstrument() {
+    var instrument = W.SparkVocalsShowroomInstrument || {};
+
+    instrument = Object.assign({
+      id: ID,
+      key: ID,
+      slug: ID,
+      instrumentId: ID,
+      appId: "vocalspark",
+      name: "Vocals",
+      title: "VocalSpark",
+      displayName: "VocalSpark",
+      shortName: "Vocals",
+      moduleName: "SparkVocalsModule",
+      adapterName: "SparkVocalsAdapter",
+      family: "voice",
+      type: "voice",
+      category: "voice",
+      icon: "🎤",
+      emoji: "🎤",
+      description: "Pitch, breath, rhythm, ear training, and vocal confidence.",
+      shortDescription: "Pitch, breath, rhythm, and ear training.",
+      enabled: true,
+      isEnabled: true,
+      visible: true,
+      showroom: true,
+      selectable: true,
+      order: 65
+    }, instrument);
+
+    instrument.open = openVocalsFinal;
+    instrument.launch = openVocalsFinal;
+    instrument.select = openVocalsFinal;
+    instrument.startLesson = startVocalsLessonFinal;
+
+    W.SparkVocalsShowroomInstrument = instrument;
+
+    return instrument;
+  }
+
+  function registerVocalsFinal() {
+    var instrument = getInstrument();
+
+    [
+      "SPARK_INSTRUMENTS",
+      "SparkInstruments",
+      "INSTRUMENTS",
+      "instruments",
+      "instrumentCatalog",
+      "INSTRUMENT_CATALOG",
+      "sparkInstrumentCatalog",
+      "__sparkInstrumentCatalog",
+      "__SPARK_INSTRUMENTS",
+      "INSTRUMENT_MANIFEST",
+      "SparkInstrumentManifest",
+      "instrumentManifest",
+      "__instrumentManifest",
+      "__SPARK_INSTRUMENT_MANIFEST",
+      "SPARK_INSTRUMENT_MANIFEST"
+    ].forEach(function (name) {
+      var value = W[name];
+
+      if (Array.isArray(value)) {
+        upsertArray(value, instrument);
+      } else {
+        upsertObject(value, instrument);
+      }
+    });
+
+    [
+      "registerInstrument",
+      "registerSparkInstrument",
+      "addInstrument",
+      "addSparkInstrument",
+      "registerInstrumentDefinition"
+    ].forEach(function (name) {
+      var fn = W[name];
+
+      if (typeof fn !== "function") return;
+
+      try {
+        fn(instrument);
+      } catch (err1) {
+        try {
+          fn(ID, instrument);
+        } catch (err2) {}
+      }
+    });
+
+    W.openVocalsSpark = openVocalsFinal;
+    W.selectVocalsSpark = openVocalsFinal;
+    W.startVocalsLesson = startVocalsLessonFinal;
+  }
+
+  function findShowroomContainer() {
+    var selectors = [
+      "[data-instrument-grid]",
+      "[data-showroom-grid]",
+      "#instrumentGrid",
+      "#instrument-grid",
+      "#showroomGrid",
+      "#showroom-grid",
+      ".instrument-grid",
+      ".showroom-grid",
+      ".instrument-showroom",
+      ".spark-showroom",
+      ".showroom",
+      "main"
+    ];
+
+    for (var i = 0; i < selectors.length; i += 1) {
+      var el = document.querySelector(selectors[i]);
+      if (el) return el;
+    }
+
+    return document.body;
+  }
+
+  function ensureVocalsCard() {
+    if (typeof document === "undefined" || !document.body) return;
+
+    var existing = document.querySelector('[data-instrument="vocals"], [data-instrument-id="vocals"], [data-spark-instrument="vocals"], #vocalspark-showroom-card');
+
+    if (existing) return;
+
+    var bodyText = String(document.body.innerText || "").toLowerCase();
+
+    if (bodyText.indexOf("vocals") !== -1 || bodyText.indexOf("vocalspark") !== -1) {
+      return;
+    }
+
+    var container = findShowroomContainer();
+
+    var card = document.createElement("button");
+    card.id = "vocalspark-showroom-card";
+    card.type = "button";
+    card.setAttribute("data-instrument", "vocals");
+    card.setAttribute("data-instrument-id", "vocals");
+    card.setAttribute("data-spark-instrument", "vocals");
+    card.className = "instrument-card showroom-card spark-card vocals-card";
+    card.style.cursor = "pointer";
+    card.style.textAlign = "left";
+    card.style.borderRadius = "18px";
+    card.style.padding = "18px";
+    card.style.margin = "12px";
+    card.style.border = "1px solid rgba(255,255,255,0.18)";
+    card.style.background = "rgba(255,255,255,0.06)";
+    card.style.color = "inherit";
+    card.style.minWidth = "220px";
+
+    card.innerHTML =
+      '<div style="font-size:34px;line-height:1;margin-bottom:10px;">🎤</div>' +
+      '<div style="font-size:20px;font-weight:800;margin-bottom:6px;">VocalSpark</div>' +
+      '<div style="font-size:14px;opacity:.78;">Pitch, breath, rhythm, and ear training.</div>' +
+      '<div style="font-size:13px;font-weight:700;margin-top:14px;opacity:.9;">Open vocals →</div>';
+
+    card.addEventListener("click", function (event) {
+      event.preventDefault();
+      openVocalsFinal();
+      return false;
+    });
+
+    container.appendChild(card);
+  }
+
+  function refreshVocalsFinal() {
+    registerVocalsFinal();
+
+    try {
+      W.dispatchEvent(new CustomEvent("spark:instrument-registered", { detail: getInstrument() }));
+      W.dispatchEvent(new CustomEvent("sparksuite:instrument-registered", { detail: getInstrument() }));
+      W.dispatchEvent(new CustomEvent("spark:showroom-refresh"));
+      W.dispatchEvent(new CustomEvent("sparksuite:showroom-refresh"));
+    } catch (err) {}
+
+    ensureVocalsCard();
+  }
+
+  refreshVocalsFinal();
+
+  if (typeof document !== "undefined" && document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", refreshVocalsFinal, { once: true });
+  }
+
+  if (W.addEventListener) {
+    W.addEventListener("load", refreshVocalsFinal, { once: true });
+  }
+
+  setTimeout(refreshVocalsFinal, 0);
+  setTimeout(refreshVocalsFinal, 250);
+  setTimeout(refreshVocalsFinal, 1000);
+  setTimeout(refreshVocalsFinal, 2000);
+
+  console.info("[VocalSpark] final showroom fallback active");
+})();
