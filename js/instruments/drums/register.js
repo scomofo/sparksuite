@@ -47,6 +47,13 @@
     ensureDrumRuntime();
     if (!lessonId) return false;
     console.log("Drum start:", lessonId);
+
+    try {
+      if (window.SparkInstruments && SparkInstruments.activate) {
+        SparkInstruments.activate("drumspark");
+      }
+    } catch (e) {}
+
     if (typeof S !== "undefined") {
       S.__sparkForcedLessonRequest = {
         lessonId: lessonId,
@@ -55,22 +62,18 @@
       };
       S.__activeLessonId = lessonId;
       S.activeInstrument = "drumspark";
+      S.screen = SCR.HOME;
       S.tab = "practice";
     }
-    try {
-      if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-        window.sparkCore.startSession({ flow: "daily_practice", forceRebuild: true });
-      } else if (typeof act === "function") {
-        act("openPracticePlan");
-      }
-    } catch (e) {
-      console.error("DrumSpark: failed to start lesson", e);
+
+    // 🔥 FIX: trigger UI navigation instead of silent session start
+    if (typeof act === "function") {
+      act("openPracticePlan");
     }
-    if (typeof render === "function") render();
+
     return false;
   }
 
-  // 🔥 GLOBAL EXPOSURE (THIS FIXES YOUR ERROR)
   window.startDrumLesson = startDrumLesson;
 
   function lessonButton(label, lessonId, className, style) {
