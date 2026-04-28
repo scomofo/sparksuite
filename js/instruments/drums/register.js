@@ -46,20 +46,53 @@
         createdAt: Date.now()
       };
       S.__activeLessonId = lessonId;
+      S.activeInstrument = "drumspark";
+      S.tab = "practice";
     }
     try {
       if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
         window.sparkCore.startSession({ flow: "daily_practice", forceRebuild: true });
       } else if (typeof act === "function") {
-        act("openPlan");
+        act("openPracticePlan");
       }
     } catch (e) {
       console.error("DrumSpark: failed to start lesson", e);
     }
   }
 
+  function installActionBridge() {
+    if (window.__sparkDrumActionBridgeInstalled) return;
+    window.__sparkDrumActionBridgeInstalled = true;
+    var tryInstall = function() {
+      if (typeof window.act !== "function") return false;
+      if (window.act.__sparkDrumWrapped) return true;
+      var originalAct = window.act;
+      var wrapped = function(action, value) {
+        if (action === "startDrumLesson") {
+          startDrumLesson(value);
+          return;
+        }
+        return originalAct.apply(this, arguments);
+      };
+      wrapped.__sparkDrumWrapped = true;
+      window.act = wrapped;
+      return true;
+    };
+    if (tryInstall()) return;
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+      if (tryInstall() || tries > 40) clearInterval(timer);
+    }, 100);
+  }
+
+  function lessonButton(label, lessonId, className, style) {
+    return '<button class="' + (className || 'btn') + '" style="' + (style || '') + '" onclick="act(\'startDrumLesson\',\'' + esc(lessonId) + '\')">' + esc(label) + '</button>';
+  }
+
   function drumPracticeTab() {
     ensureDrumRuntime();
+    installActionBridge();
     var lessons = window.SparkDrumsModule && typeof SparkDrumsModule.getLessons === "function" ? SparkDrumsModule.getLessons() : [];
     var next = getNextDrumLesson();
     var html = '<div class="card mb12" style="text-align:center">';
@@ -69,14 +102,14 @@
     if (next) {
       html += '<div style="margin-top:12px;font-weight:800">Next: ' + esc(next.title || next.id) + '</div>';
       html += '<div style="font-size:12px;color:var(--text-muted)">Skill: ' + esc(next.skill || "timing") + '</div>';
-      html += '<button class="btn" style="margin-top:12px;background:var(--accent);color:#fff" onclick="SparkDrumRegister.startLesson(\'' + esc(next.id) + '\')">Start Drum Lesson</button>';
+      html += lessonButton('Start Drum Lesson', next.id, 'btn', 'margin-top:12px;background:var(--accent);color:#fff');
     }
     html += '</div>';
     html += '<div class="card"><h3 style="margin-top:0">Foundations</h3>';
     for (var i = 0; i < lessons.length; i++) {
       html += '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--border);padding:8px 0">';
       html += '<div><b>' + esc(lessons[i].title || lessons[i].id) + '</b><div style="font-size:12px;color:var(--text-muted)">' + esc(lessons[i].skill || "") + '</div></div>';
-      html += '<button class="btn btn-sm" onclick="SparkDrumRegister.startLesson(\'' + esc(lessons[i].id) + '\')">Start</button>';
+      html += lessonButton('Start', lessons[i].id, 'btn btn-sm', '');
       html += '</div>';
     }
     html += '</div>';
@@ -84,6 +117,7 @@
   }
 
   ensureDrumRuntime();
+  installActionBridge();
 
   window.SparkDrumRegister = {
     ensureRuntime: ensureDrumRuntime,
@@ -113,14 +147,22 @@
       ensureDrumRuntime();
       return window.SparkDrumsModule && typeof SparkDrumsModule.getRhythmAdapter === "function" ? SparkDrumsModule.getRhythmAdapter() : null;
     },
+    act: function(action, value) {
+      if (action === "startDrumLesson") {
+        startDrumLesson(value);
+        return true;
+      }
+      return false;
+    },
     pages: {},
     tabs: [{ id: "practice", label: "Practice", icon: "&#129345;" }],
     tabRenderers: {
-      practice: drumPracticeTab
+      practice: function() { return drumPracticeTab(); }
     },
     stemMutePreset: {},
     init: function() {
       ensureDrumRuntime();
+      installActionBridge();
       if (typeof S !== "undefined") S.tab = "practice";
     }
   });
