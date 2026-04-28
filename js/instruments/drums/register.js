@@ -27,6 +27,12 @@
     });
   }
 
+  function attr(value) {
+    return String(value == null ? "" : value).replace(/[&<>\"']/g, function(c) {
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+
   function getNextDrumLesson() {
     ensureDrumRuntime();
     var lessons = window.SparkDrumsModule && typeof SparkDrumsModule.getLessons === "function" ? SparkDrumsModule.getLessons() : [];
@@ -39,6 +45,7 @@
 
   function startDrumLesson(lessonId) {
     ensureDrumRuntime();
+    if (!lessonId) return;
     if (typeof S !== "undefined") {
       S.__sparkForcedLessonRequest = {
         lessonId: lessonId,
@@ -60,9 +67,24 @@
     }
   }
 
+  function installDelegatedClicks() {
+    if (window.__sparkDrumDelegatedClicksInstalled) return;
+    window.__sparkDrumDelegatedClicksInstalled = true;
+    document.addEventListener("click", function(event) {
+      var target = event.target;
+      while (target && target !== document) {
+        if (target.getAttribute && target.getAttribute("data-drum-lesson-id")) {
+          event.preventDefault();
+          event.stopPropagation();
+          startDrumLesson(target.getAttribute("data-drum-lesson-id"));
+          return false;
+        }
+        target = target.parentNode;
+      }
+    }, true);
+  }
+
   function installActionBridge() {
-    if (window.__sparkDrumActionBridgeInstalled) return;
-    window.__sparkDrumActionBridgeInstalled = true;
     var tryInstall = function() {
       if (typeof window.act !== "function") return false;
       if (window.act.__sparkDrumWrapped) return true;
@@ -82,16 +104,17 @@
     var tries = 0;
     var timer = setInterval(function() {
       tries++;
-      if (tryInstall() || tries > 40) clearInterval(timer);
+      if (tryInstall() || tries > 120) clearInterval(timer);
     }, 100);
   }
 
   function lessonButton(label, lessonId, className, style) {
-    return '<button class="' + (className || 'btn') + '" style="' + (style || '') + '" onclick="act(\'startDrumLesson\',\'' + esc(lessonId) + '\')">' + esc(label) + '</button>';
+    return '<button type="button" class="' + (className || 'btn') + '" style="' + (style || '') + '" data-drum-lesson-id="' + attr(lessonId) + '">' + esc(label) + '</button>';
   }
 
   function drumPracticeTab() {
     ensureDrumRuntime();
+    installDelegatedClicks();
     installActionBridge();
     var lessons = window.SparkDrumsModule && typeof SparkDrumsModule.getLessons === "function" ? SparkDrumsModule.getLessons() : [];
     var next = getNextDrumLesson();
@@ -117,6 +140,7 @@
   }
 
   ensureDrumRuntime();
+  installDelegatedClicks();
   installActionBridge();
 
   window.SparkDrumRegister = {
@@ -162,6 +186,7 @@
     stemMutePreset: {},
     init: function() {
       ensureDrumRuntime();
+      installDelegatedClicks();
       installActionBridge();
       if (typeof S !== "undefined") S.tab = "practice";
     }
