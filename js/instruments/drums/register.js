@@ -20,7 +20,76 @@
     loadScriptOnce("js/sparksuite/instruments/drums/drums_module.js");
   }
 
+  function esc(value) {
+    if (typeof escHTML === "function") return escHTML(value == null ? "" : String(value));
+    return String(value == null ? "" : value).replace(/[&<>\"]/g, function(c) {
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+    });
+  }
+
+  function getNextDrumLesson() {
+    ensureDrumRuntime();
+    var lessons = window.SparkDrumsModule && typeof SparkDrumsModule.getLessons === "function" ? SparkDrumsModule.getLessons() : [];
+    var completed = typeof S !== "undefined" && Array.isArray(S.completedLessons) ? S.completedLessons : [];
+    for (var i = 0; i < lessons.length; i++) {
+      if (completed.indexOf(lessons[i].id) < 0) return lessons[i];
+    }
+    return lessons[0] || null;
+  }
+
+  function startDrumLesson(lessonId) {
+    ensureDrumRuntime();
+    if (typeof S !== "undefined") {
+      S.__sparkForcedLessonRequest = {
+        lessonId: lessonId,
+        instrumentType: "drumspark",
+        createdAt: Date.now()
+      };
+      S.__activeLessonId = lessonId;
+    }
+    try {
+      if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
+        window.sparkCore.startSession({ flow: "daily_practice", forceRebuild: true });
+      } else if (typeof act === "function") {
+        act("openPlan");
+      }
+    } catch (e) {
+      console.error("DrumSpark: failed to start lesson", e);
+    }
+  }
+
+  function drumPracticeTab() {
+    ensureDrumRuntime();
+    var lessons = window.SparkDrumsModule && typeof SparkDrumsModule.getLessons === "function" ? SparkDrumsModule.getLessons() : [];
+    var next = getNextDrumLesson();
+    var html = '<div class="card mb12" style="text-align:center">';
+    html += '<div style="font-size:32px;margin-bottom:6px">&#129345;</div>';
+    html += '<h2 style="margin:0 0 6px">DrumSpark</h2>';
+    html += '<div class="muted">Kick, snare, hat, and timing-first practice.</div>';
+    if (next) {
+      html += '<div style="margin-top:12px;font-weight:800">Next: ' + esc(next.title || next.id) + '</div>';
+      html += '<div style="font-size:12px;color:var(--text-muted)">Skill: ' + esc(next.skill || "timing") + '</div>';
+      html += '<button class="btn" style="margin-top:12px;background:var(--accent);color:#fff" onclick="SparkDrumRegister.startLesson(\'' + esc(next.id) + '\')">Start Drum Lesson</button>';
+    }
+    html += '</div>';
+    html += '<div class="card"><h3 style="margin-top:0">Foundations</h3>';
+    for (var i = 0; i < lessons.length; i++) {
+      html += '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;border-top:1px solid var(--border);padding:8px 0">';
+      html += '<div><b>' + esc(lessons[i].title || lessons[i].id) + '</b><div style="font-size:12px;color:var(--text-muted)">' + esc(lessons[i].skill || "") + '</div></div>';
+      html += '<button class="btn btn-sm" onclick="SparkDrumRegister.startLesson(\'' + esc(lessons[i].id) + '\')">Start</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   ensureDrumRuntime();
+
+  window.SparkDrumRegister = {
+    ensureRuntime: ensureDrumRuntime,
+    startLesson: startDrumLesson,
+    practiceTab: drumPracticeTab
+  };
 
   SparkInstruments.register({
     id: "drumspark",
@@ -45,10 +114,14 @@
       return window.SparkDrumsModule && typeof SparkDrumsModule.getRhythmAdapter === "function" ? SparkDrumsModule.getRhythmAdapter() : null;
     },
     pages: {},
-    tabs: [],
+    tabs: [{ id: "practice", label: "Practice", icon: "&#129345;" }],
+    tabRenderers: {
+      practice: drumPracticeTab
+    },
     stemMutePreset: {},
     init: function() {
       ensureDrumRuntime();
+      if (typeof S !== "undefined") S.tab = "practice";
     }
   });
 })();
