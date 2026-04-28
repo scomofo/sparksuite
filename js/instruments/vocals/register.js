@@ -1,52 +1,62 @@
-﻿(function () {
+(function () {
   "use strict";
 
   var W = typeof window !== "undefined" ? window : globalThis;
   var ID = "vocals";
 
-  function getSparkState() {
-    if (!W.S || typeof W.S !== "object") {
-      W.S = {};
-    }
+  function getState() {
+    if (!W.S || typeof W.S !== "object") W.S = {};
     return W.S;
   }
 
-  function getVocalsModule() {
-    return W.SparkVocalsModule || null;
-  }
-
   function getLessons() {
-    var mod = getVocalsModule();
-
-    if (mod && typeof mod.getLessons === "function") {
-      try {
-        return mod.getLessons() || [];
-      } catch (err) {
-        console.warn("[VocalSpark] getLessons failed", err);
+    try {
+      if (W.SparkVocalsModule && typeof W.SparkVocalsModule.getLessons === "function") {
+        return W.SparkVocalsModule.getLessons() || [];
       }
+    } catch (err) {
+      console.warn("[VocalSpark] getLessons failed", err);
     }
-
     return [];
   }
 
   function getSkillTree() {
-    var mod = getVocalsModule();
-
-    if (mod && typeof mod.getSkillTree === "function") {
-      try {
-        return mod.getSkillTree();
-      } catch (err) {
-        console.warn("[VocalSpark] getSkillTree failed", err);
+    try {
+      if (W.SparkVocalsModule && typeof W.SparkVocalsModule.getSkillTree === "function") {
+        return W.SparkVocalsModule.getSkillTree();
       }
+    } catch (err) {
+      console.warn("[VocalSpark] getSkillTree failed", err);
     }
-
     return null;
   }
 
-  function getInstrument() {
-    var existing = W.SparkVocalsShowroomInstrument || {};
+  function sameInstrument(item) {
+    return item && String(item.id || item.key || item.slug || item.instrumentId || "").toLowerCase() === ID;
+  }
 
-    var instrument = Object.assign({
+  function upsertArray(arr, item) {
+    if (!Array.isArray(arr)) return false;
+
+    for (var i = 0; i < arr.length; i += 1) {
+      if (sameInstrument(arr[i])) {
+        arr[i] = Object.assign({}, arr[i], item);
+        return true;
+      }
+    }
+
+    arr.push(item);
+    return true;
+  }
+
+  function upsertObject(obj, item) {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
+    obj[ID] = Object.assign({}, obj[ID] || {}, item);
+    return true;
+  }
+
+  function buildInstrument() {
+    return {
       id: ID,
       key: ID,
       slug: ID,
@@ -61,9 +71,9 @@
       family: "voice",
       type: "voice",
       category: "voice",
-      icon: "🎤",
-      emoji: "🎤",
-      description: "Pitch, breath, rhythm, ear training, and vocal confidence.",
+      icon: "V",
+      emoji: "V",
+      description: "Pitch, breath, rhythm, and ear training.",
       shortDescription: "Pitch, breath, rhythm, and ear training.",
       enabled: true,
       isEnabled: true,
@@ -73,54 +83,24 @@
       order: 65,
       getLessons: getLessons,
       lessons: getLessons,
-      getSkillTree: getSkillTree
-    }, existing);
-
-    instrument.open = openVocalsSpark;
-    instrument.launch = openVocalsSpark;
-    instrument.select = openVocalsSpark;
-    instrument.startLesson = startVocalsLesson;
-
-    W.SparkVocalsShowroomInstrument = instrument;
-
-    return instrument;
+      getSkillTree: getSkillTree,
+      open: openVocalsSpark,
+      launch: openVocalsSpark,
+      select: openVocalsSpark,
+      startLesson: startVocalsLesson
+    };
   }
 
-  function sameId(item) {
-    return item && String(item.id || item.key || item.slug || item.instrumentId || "").toLowerCase() === ID;
-  }
-
-  function upsertArray(arr, instrument) {
-    if (!Array.isArray(arr)) return false;
-
-    for (var i = 0; i < arr.length; i += 1) {
-      if (sameId(arr[i])) {
-        arr[i] = Object.assign({}, arr[i], instrument);
-        return true;
-      }
-    }
-
-    arr.push(instrument);
-    return true;
-  }
-
-  function upsertObject(obj, instrument) {
-    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return false;
-    obj[ID] = Object.assign({}, obj[ID] || {}, instrument);
-    return true;
-  }
-
-  function callRegisterFunction(name, instrument) {
+  function registerFunction(name, item) {
     var fn = W[name];
-
     if (typeof fn !== "function") return false;
 
     try {
-      fn(instrument);
+      fn(item);
       return true;
     } catch (err1) {
       try {
-        fn(ID, instrument);
+        fn(ID, item);
         return true;
       } catch (err2) {
         return false;
@@ -128,49 +108,44 @@
     }
   }
 
-  function registerIntoRegistry(name, instrument) {
+  function registerRegistry(name, item) {
     var registry = W[name];
-
     if (!registry) return false;
 
-    if (Array.isArray(registry)) {
-      return upsertArray(registry, instrument);
-    }
+    if (Array.isArray(registry)) return upsertArray(registry, item);
 
     if (typeof registry === "object") {
-      var methods = [
-        "register",
-        "add",
-        "set",
-        "upsert",
-        "registerInstrument",
-        "addInstrument"
-      ];
+      var methods = ["register", "add", "set", "upsert", "registerInstrument", "addInstrument"];
 
       for (var i = 0; i < methods.length; i += 1) {
         var method = methods[i];
 
         if (typeof registry[method] === "function") {
           try {
-            registry[method](instrument);
+            registry[method](item);
             return true;
           } catch (err1) {
             try {
-              registry[method](ID, instrument);
+              registry[method](ID, item);
               return true;
             } catch (err2) {}
           }
         }
       }
 
-      return upsertObject(registry, instrument);
+      return upsertObject(registry, item);
     }
 
     return false;
   }
 
   function registerVocals() {
-    var instrument = getInstrument();
+    var item = buildInstrument();
+
+    W.SparkVocalsShowroomInstrument = item;
+    W.openVocalsSpark = openVocalsSpark;
+    W.selectVocalsSpark = openVocalsSpark;
+    W.startVocalsLesson = startVocalsLesson;
 
     [
       "registerInstrument",
@@ -179,7 +154,7 @@
       "addSparkInstrument",
       "registerInstrumentDefinition"
     ].forEach(function (name) {
-      callRegisterFunction(name, instrument);
+      registerFunction(name, item);
     });
 
     [
@@ -190,7 +165,7 @@
       "__sparkInstrumentRegistry",
       "SparkSuiteInstrumentRegistry"
     ].forEach(function (name) {
-      registerIntoRegistry(name, instrument);
+      registerRegistry(name, item);
     });
 
     [
@@ -213,24 +188,24 @@
       var value = W[name];
 
       if (Array.isArray(value)) {
-        upsertArray(value, instrument);
+        upsertArray(value, item);
       } else {
-        upsertObject(value, instrument);
+        upsertObject(value, item);
       }
     });
 
     try {
-      W.dispatchEvent(new CustomEvent("spark:instrument-registered", { detail: instrument }));
-      W.dispatchEvent(new CustomEvent("sparksuite:instrument-registered", { detail: instrument }));
+      W.dispatchEvent(new CustomEvent("spark:instrument-registered", { detail: item }));
+      W.dispatchEvent(new CustomEvent("sparksuite:instrument-registered", { detail: item }));
     } catch (err) {}
 
-    return instrument;
+    return item;
   }
 
-  function setSelectedVocals(lessonId) {
-    var S = getSparkState();
+  function selectVocals(lessonId) {
+    var S = getState();
 
-    var forcedRequest = {
+    var request = {
       instrument: ID,
       instrumentId: ID,
       lessonId: lessonId || null,
@@ -244,7 +219,7 @@
     W.__sparkInstrumentId = ID;
     W.__sparkSelectedInstrument = ID;
     W.__sparkCurrentInstrument = ID;
-    W.__sparkForcedLessonRequest = forcedRequest;
+    W.__sparkForcedLessonRequest = request;
 
     S.currentInstrument = ID;
     S.selectedInstrument = ID;
@@ -254,7 +229,7 @@
     S.__sparkInstrumentId = ID;
     S.__sparkSelectedInstrument = ID;
     S.__sparkCurrentInstrument = ID;
-    S.__sparkForcedLessonRequest = forcedRequest;
+    S.__sparkForcedLessonRequest = request;
 
     try {
       sessionStorage.setItem("spark.currentInstrument", ID);
@@ -275,182 +250,123 @@
     } catch (err) {}
 
     try {
-      if (W.sparkCore && typeof W.sparkCore.selectInstrument === "function") {
-        W.sparkCore.selectInstrument(ID);
-      }
-    } catch (err) {}
-
-    try {
       if (typeof W.setCurrentInstrument === "function") {
         W.setCurrentInstrument(ID);
       }
     } catch (err) {}
 
-    return forcedRequest;
+    return request;
   }
 
-  function refreshShellSoon() {
-    function run() {
-      [
-        "render",
-        "renderApp",
-        "renderLauncher",
-        "renderShowroom",
-        "renderLauncherOrShowroom",
-        "_renderLauncherOrShowroomOverride"
-      ].forEach(function (name) {
-        try {
-          if (typeof W[name] === "function") {
-            W[name]();
-          }
-        } catch (err) {}
-      });
-    }
-
-    setTimeout(run, 0);
-    setTimeout(run, 100);
-    setTimeout(run, 350);
-  }
-
-  function openPracticeForVocals(lessonId) {
+  function openVocalsSpark() {
     registerVocals();
 
-    var payload = setSelectedVocals(lessonId);
-
-    W.__vocalSparkLastOpenPayload = payload;
-
-    var directOpened = false;
+    var request = selectVocals(null);
 
     try {
       if (typeof W.openPracticePlanScreenRequest === "function") {
-        W.openPracticePlanScreenRequest(payload);
-        directOpened = true;
+        W.openPracticePlanScreenRequest(request);
+        return false;
       }
     } catch (err) {
       console.warn("[VocalSpark] openPracticePlanScreenRequest failed", err);
     }
 
     try {
-      if (W.sparkCore && typeof W.sparkCore.openPracticePlanScreen === "function") {
-        W.sparkCore.openPracticePlanScreen(payload);
-        directOpened = true;
-      }
-    } catch (err) {
-      console.warn("[VocalSpark] sparkCore.openPracticePlanScreen failed", err);
-    }
-
-    try {
       if (typeof W.act === "function") {
         W.act("openPracticePlan");
-        directOpened = true;
+        return false;
       }
     } catch (err) {
       console.warn("[VocalSpark] act(openPracticePlan) failed", err);
     }
 
     try {
-      W.dispatchEvent(new CustomEvent("sparksuite:open-practice-plan", { detail: payload }));
-      W.dispatchEvent(new CustomEvent("spark:open-practice-plan", { detail: payload }));
+      if (typeof W.render === "function") W.render();
     } catch (err) {}
-
-    refreshShellSoon();
-
-    if (!directOpened) {
-      console.warn("[VocalSpark] No practice-plan route function was available.");
-    }
 
     return false;
   }
 
-  function openVocalsSpark() {
-    return openPracticeForVocals(null);
-  }
-
   function startVocalsLesson(lessonId) {
-    return openPracticeForVocals(lessonId);
+    registerVocals();
+    selectVocals(lessonId);
+
+    try {
+      if (typeof W.openPracticePlanScreenRequest === "function") {
+        W.openPracticePlanScreenRequest(W.__sparkForcedLessonRequest);
+        return false;
+      }
+    } catch (err) {}
+
+    try {
+      if (typeof W.act === "function") {
+        W.act("openPracticePlan");
+        return false;
+      }
+    } catch (err) {}
+
+    return false;
   }
 
-  function findShowroomContainer() {
+  function findContainer() {
     if (typeof document === "undefined" || !document.body) return null;
 
-    var selectors = [
-      "[data-instrument-grid]",
-      "[data-showroom-grid]",
-      "#instrumentGrid",
-      "#instrument-grid",
-      "#showroomGrid",
-      "#showroom-grid",
-      ".instrument-grid",
-      ".showroom-grid",
-      ".instrument-showroom",
-      ".spark-showroom",
-      ".showroom",
-      "main"
-    ];
-
-    for (var i = 0; i < selectors.length; i += 1) {
-      var el = document.querySelector(selectors[i]);
-      if (el) return el;
-    }
-
-    return document.body;
-  }
-
-  function hasVocalsCard() {
-    if (typeof document === "undefined") return true;
-
-    return !!document.querySelector(
-      '[data-instrument="vocals"], ' +
-      '[data-instrument-id="vocals"], ' +
-      '[data-spark-instrument="vocals"], ' +
-      '#vocalspark-showroom-card'
+    return (
+      document.querySelector("[data-instrument-grid]") ||
+      document.querySelector("[data-showroom-grid]") ||
+      document.querySelector("#instrumentGrid") ||
+      document.querySelector("#instrument-grid") ||
+      document.querySelector("#showroomGrid") ||
+      document.querySelector("#showroom-grid") ||
+      document.querySelector(".instrument-grid") ||
+      document.querySelector(".showroom-grid") ||
+      document.querySelector(".instrument-showroom") ||
+      document.querySelector(".spark-showroom") ||
+      document.querySelector(".showroom") ||
+      document.querySelector("main") ||
+      document.body
     );
   }
 
-  function bodyLooksLikeInstrumentSelect() {
-    if (typeof document === "undefined" || !document.body) return false;
+  function ensureCard() {
+    if (typeof document === "undefined" || !document.body) return;
+
+    var existing = document.querySelector(
+      '[data-instrument="vocals"], ' +
+      '[data-instrument-id="vocals"], ' +
+      '[data-spark-instrument="vocals"], ' +
+      "#vocalspark-showroom-card"
+    );
+
+    if (existing) return;
 
     var text = String(document.body.innerText || "").toLowerCase();
-
-    return (
+    var looksLikeSelect = (
       text.indexOf("instrument") !== -1 ||
       text.indexOf("showroom") !== -1 ||
       text.indexOf("choose") !== -1 ||
       text.indexOf("select") !== -1
     );
-  }
 
-  function ensureVocalsCard() {
-    if (typeof document === "undefined" || !document.body) return;
-    if (!bodyLooksLikeInstrumentSelect()) return;
-    if (hasVocalsCard()) return;
+    if (!looksLikeSelect) return;
 
-    var container = findShowroomContainer();
+    var container = findContainer();
     if (!container) return;
 
     var card = document.createElement("button");
-
     card.id = "vocalspark-showroom-card";
     card.type = "button";
     card.setAttribute("data-instrument", ID);
     card.setAttribute("data-instrument-id", ID);
     card.setAttribute("data-spark-instrument", ID);
     card.className = "instrument-card showroom-card spark-card vocals-card";
+    card.textContent = "VocalSpark - Pitch, breath, rhythm, and ear training";
     card.style.cursor = "pointer";
-    card.style.textAlign = "left";
-    card.style.borderRadius = "18px";
     card.style.padding = "18px";
     card.style.margin = "12px";
-    card.style.border = "1px solid rgba(255,255,255,0.18)";
-    card.style.background = "rgba(255,255,255,0.06)";
-    card.style.color = "inherit";
+    card.style.borderRadius = "18px";
     card.style.minWidth = "220px";
-
-    card.innerHTML =
-      '<div style="font-size:34px;line-height:1;margin-bottom:10px;">🎤</div>' +
-      '<div style="font-size:20px;font-weight:800;margin-bottom:6px;">VocalSpark</div>' +
-      '<div style="font-size:14px;opacity:.78;">Pitch, breath, rhythm, and ear training.</div>' +
-      '<div style="font-size:13px;font-weight:700;margin-top:14px;opacity:.9;">Open vocals →</div>';
 
     card.addEventListener("click", function (event) {
       event.preventDefault();
@@ -463,17 +379,7 @@
 
   function boot() {
     registerVocals();
-
-    W.openVocalsSpark = openVocalsSpark;
-    W.selectVocalsSpark = openVocalsSpark;
-    W.startVocalsLesson = startVocalsLesson;
-
-    ensureVocalsCard();
-
-    try {
-      W.dispatchEvent(new CustomEvent("spark:showroom-refresh"));
-      W.dispatchEvent(new CustomEvent("sparksuite:showroom-refresh"));
-    } catch (err) {}
+    ensureCard();
   }
 
   boot();
@@ -491,23 +397,5 @@
   setTimeout(boot, 1000);
   setTimeout(boot, 2000);
 
-  if (typeof MutationObserver !== "undefined" && typeof document !== "undefined") {
-    setTimeout(function () {
-      if (!document.body) return;
-
-      var observer = new MutationObserver(function () {
-        registerVocals();
-        ensureVocalsCard();
-      });
-
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
-
-      W.__vocalSparkShowroomObserver = observer;
-    }, 0);
-  }
-
-  console.info("[VocalSpark] clean bridge registered");
+  console.info("[VocalSpark] bridge registered");
 })();
