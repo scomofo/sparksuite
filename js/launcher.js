@@ -10,7 +10,8 @@
     bass:   "#7C3AED",
     ukulele:"#14B8A6",
     piano:  "#0EA5E9",
-    drums:  "#FFE66D"
+    drums:  "#FFE66D",
+    vocals: "#F472B6"
   };
 
   // Instrument -> fallback emoji glyph
@@ -19,7 +20,8 @@
     bass:   "\uD83C\uDFB8",
     ukulele:"\uD83C\uDFBB",
     piano:  "\uD83C\uDFB9",
-    drums:  "\uD83E\uDD41"
+    drums:  "\uD83E\uDD41",
+    vocals: "\uD83C\uDFA4"
   };
 
   // Instrument -> default subtitle shown under the card name
@@ -28,7 +30,8 @@
     bass:   "4-String Heavy",
     ukulele:"4-String Soprano",
     piano:  "88-Key Ivory",
-    drums:  "Acoustic Kit"
+    drums:  "Acoustic Kit",
+    vocals: "Pitch & Breath"
   };
 
   function instrumentType(inst) {
