@@ -1,0 +1,15 @@
+{
+  "sessionId": "session_fixture_1",
+  "exerciseId": "ex_1",
+  "hits": 0,
+  "misses": 48,
+  "total": 48,
+  "accuracy": 0,
+  "timing": {
+    "perfect": 0,
+    "good": 0,
+    "late": 21,
+    "early": 27
+  },
+  "maxCombo": 0
+}

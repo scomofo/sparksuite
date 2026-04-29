@@ -114,4 +114,24 @@ assert.strictEqual(plan.exercises[1].data.presentation.label, "C to Am");
 assert.deepStrictEqual(plan.rewards, { xp: 40, unlocks: [], achievements: [] });
 assert.strictEqual(SparkSessionV2.getExercise(plan.segments[0], plan).id, "ex_0");
 
+assert.throws(function() {
+  return new SessionPlan({
+    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+    lesson: { id: "uke_04", skill: "strumming_patterns" },
+    difficulty: "easy",
+    segments: [{ id: "seg_bad", type: "practice", exerciseIds: ["missing_ex"] }],
+    exercises: [{ id: "ex_real", type: "practice", data: { core: {} } }]
+  });
+}, /references missing exercise/);
+
+var inferredPlan = new SessionPlan({
+  flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+  lesson: { id: "uke_04", skill: "strumming_patterns" },
+  difficulty: "easy",
+  segments: [{ id: "seg_ok", type: "practice", exerciseIds: ["ex_ok"] }],
+  exercises: [{ id: "ex_ok", type: "practice", data: { core: {} } }]
+});
+assert.strictEqual(inferredPlan.lessonId, "uke_04");
+assert.strictEqual(inferredPlan.skillId, "strumming_patterns");
+
 console.log("PASS: Session engine v2 produces normalized lesson/segment/exercise contracts");

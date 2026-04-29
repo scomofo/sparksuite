@@ -1,0 +1,29 @@
+{
+  "id": "la_bamba_piano_chords",
+  "title": "La Bamba",
+  "artist": "Ritchie Valens",
+  "bpm": 156,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "piano",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 9.231 },
+    { "id": 1, "name": "Chorus", "startSec": 9.231, "endSec": 18.462 },
+    { "id": 2, "name": "Outro", "startSec": 18.462, "endSec": 27.692 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.3, "type": "tap", "chord": "C_root", "notes": ["C3"], "laneLabel": "C", "strum": "tap" },
+    { "id": 2, "t": 0.3, "dur": 1.238, "type": "chord", "chord": "C", "notes": ["C4", "E4", "G4"], "laneLabel": "C", "strum": "down" },
+    { "id": 3, "t": 1.538, "dur": 0.3, "type": "tap", "chord": "F_root", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 4, "t": 1.838, "dur": 1.239, "type": "chord", "chord": "F", "notes": ["F3", "A3", "C4"], "laneLabel": "F", "strum": "down" },
+    { "id": 5, "t": 3.077, "dur": 0.3, "type": "tap", "chord": "G_root", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 6, "t": 3.377, "dur": 1.238, "type": "chord", "chord": "G", "notes": ["G3", "B3", "D4"], "laneLabel": "G", "strum": "down" },
+    { "id": 7, "t": 4.615, "dur": 0.3, "type": "tap", "chord": "C_root", "notes": ["C3"], "laneLabel": "C", "strum": "tap" },
+    { "id": 8, "t": 4.915, "dur": 1.239, "type": "chord", "chord": "C", "notes": ["C4", "E4", "G4"], "laneLabel": "C", "strum": "down" },
+    { "id": 9, "t": 6.154, "dur": 0.3, "type": "tap", "chord": "F_root", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 10, "t": 6.454, "dur": 1.238, "type": "chord", "chord": "F", "notes": ["F3", "A3", "C4"], "laneLabel": "F", "strum": "down" },
+    { "id": 11, "t": 7.692, "dur": 0.3, "type": "tap", "chord": "G_root", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 12, "t": 7.992, "dur": 1.239, "type": "chord", "chord": "G", "notes": ["G3", "B3", "D4"], "laneLabel": "G", "strum": "down" }
+  ]
+}

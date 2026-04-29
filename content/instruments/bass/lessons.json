@@ -1,0 +1,14 @@
+[
+  { "id": "bas_content_01", "skill": "posture", "title": "Ready Hands, Relaxed Groove", "prerequisites": [], "masteryRequired": 0.65, "estimatedMinutes": 5 },
+  { "id": "bas_content_02", "skill": "plucking", "title": "Alternating Finger Pulse", "prerequisites": ["posture"], "masteryRequired": 0.7, "estimatedMinutes": 6 },
+  { "id": "bas_content_03", "skill": "root_notes", "title": "Root Notes in Time", "prerequisites": ["plucking"], "masteryRequired": 0.72, "estimatedMinutes": 6 },
+  { "id": "bas_content_04", "skill": "root_fifth", "title": "Root-Fifth Movement", "prerequisites": ["root_notes"], "masteryRequired": 0.74, "estimatedMinutes": 7 },
+  { "id": "bas_content_05", "skill": "walking_bass", "title": "Walking Line Steps", "prerequisites": ["root_fifth"], "masteryRequired": 0.76, "estimatedMinutes": 8 },
+  { "id": "bas_content_06", "skill": "ghost_notes", "title": "Ghost Note Pocket", "prerequisites": ["walking_bass"], "masteryRequired": 0.78, "estimatedMinutes": 8 },
+  { "id": "bas_content_07", "skill": "slap", "title": "Clean Slap Touch", "prerequisites": ["ghost_notes"], "masteryRequired": 0.8, "estimatedMinutes": 9 },
+  { "id": "bas_content_08", "skill": "funk_grooves", "title": "Funk Groove Flow", "prerequisites": ["slap"], "masteryRequired": 0.82, "estimatedMinutes": 10 },
+  { "id": "bas_content_09", "skill": "passing_notes", "title": "Connect The Chord Changes", "prerequisites": ["funk_grooves"], "masteryRequired": 0.84, "estimatedMinutes": 10 },
+  { "id": "bas_content_10", "skill": "arpeggios", "title": "Chord Tones Across The Bar", "prerequisites": ["passing_notes"], "masteryRequired": 0.85, "estimatedMinutes": 11 },
+  { "id": "bas_content_11", "skill": "groove_accents", "title": "Accented Pocket Control", "prerequisites": ["arpeggios"], "masteryRequired": 0.86, "estimatedMinutes": 11 },
+  { "id": "bas_content_12", "skill": "improvisation", "title": "Pocket Improvisation Run", "prerequisites": ["groove_accents"], "masteryRequired": 0.88, "estimatedMinutes": 12 }
+]

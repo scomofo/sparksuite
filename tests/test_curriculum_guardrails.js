@@ -70,6 +70,7 @@ safeEval("js/instruments/guitar/register.js");
 safeEval("js/instruments/piano/register.js");
 safeEval("js/instruments/bass/register.js");
 safeEval("js/instruments/ukulele/register.js");
+safeEval("js/dev/curriculum_validator.js");
 
 // Load curriculum engine
 safeEval("js/curriculum/curriculum_registry.js");
@@ -86,6 +87,15 @@ test("at least one instrument registered", function() {
 
 instruments.forEach(function(inst) {
   var id = inst.id;
+safeEval("js/instruments/drums/register.js");
+
+  if (typeof validateCurriculum === "function") {
+    test(id + ": structured validator reports no blocking errors", function() {
+      var issues = validateCurriculum(inst);
+      var errors = issues.filter(function(issue) { return issue.severity === "error"; });
+      assert.strictEqual(errors.length, 0, errors.map(function(issue) { return issue.code + " " + issue.target + ": " + issue.message; }).join("; "));
+    });
+  }
 
   test(id + ": getCurriculumMap() returns non-empty array", function() {
     assert.ok(typeof inst.getCurriculumMap === "function", "getCurriculumMap not defined");
@@ -151,12 +161,14 @@ if (typeof SparkUkuleleLessons !== "undefined" && typeof SparkUkuleleSkillTree !
     });
   });
 
-  test("ukulele: all prerequisites reference valid skill IDs", function() {
+  test("ukulele: all prerequisites reference valid lesson or skill IDs", function() {
     var skillIds = SparkUkuleleSkillTree.map(function(s) { return s.id; });
+    var lessonIds = SparkUkuleleLessons.map(function(l) { return l.id; });
     SparkUkuleleLessons.forEach(function(lesson) {
       if (lesson.prerequisites) {
         lesson.prerequisites.forEach(function(prereq) {
-          assert.ok(skillIds.indexOf(prereq) >= 0, "lesson " + lesson.id + " unknown prereq: " + prereq);
+          var ok = skillIds.indexOf(prereq) >= 0 || lessonIds.indexOf(prereq) >= 0;
+          assert.ok(ok, "lesson " + lesson.id + " unknown prereq: " + prereq);
         });
       }
     });

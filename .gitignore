@@ -1,6 +1,7 @@
 node_modules/
 dist/
 www/
+_dev_reload_signal.txt
 # Ignore all `resources/` contents (vendored binaries: demucs.exe, GGML
 # model, etc.) — but exempt the per-instrument design-asset directory
 # used by the Showroom. Use `resources/*` (not `resources/`) so git
@@ -15,3 +16,8 @@ nul
 nul
 *.zip
 .stitch-import/
+
+# Environment and tool-state files
+.env.local
+.env
+.superpowers/

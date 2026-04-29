@@ -1,0 +1,25 @@
+{
+  "id": "higher_ground_bass_chords",
+  "title": "Higher Ground",
+  "artist": "Stevie Wonder",
+  "bpm": 103,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Riff", "startSec": 0, "endSec": 7.01 },
+    { "id": 1, "name": "Verse", "startSec": 7.01, "endSec": 14.019 },
+    { "id": 2, "name": "Turnaround", "startSec": 14.019, "endSec": 21.029 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.583, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 2, "t": 0.583, "dur": 0.583, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 3, "t": 1.165, "dur": 0.583, "type": "tap", "chord": "A", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 4, "t": 1.748, "dur": 0.583, "type": "tap", "chord": "B", "notes": ["B2"], "laneLabel": "B", "strum": "tap" },
+    { "id": 5, "t": 2.33, "dur": 0.583, "type": "tap", "chord": "D", "notes": ["D3"], "laneLabel": "D", "strum": "tap" },
+    { "id": 6, "t": 2.913, "dur": 0.583, "type": "tap", "chord": "B", "notes": ["B2"], "laneLabel": "B", "strum": "tap" },
+    { "id": 7, "t": 3.495, "dur": 0.583, "type": "tap", "chord": "A", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 8, "t": 4.078, "dur": 0.583, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" }
+  ]
+}

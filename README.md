@@ -32,6 +32,13 @@ UI Rendering Layer  (PixiJS highway, React components)
 
 The UI is a **dumb renderer of session state** — all logic lives in the engines. See `CLAUDE.md` for the full architectural contract and `REFACTOR_PLAN.md` for migration status.
 
+Core architecture references:
+
+- [Architecture Map](./docs/engineering/architecture-map.md)
+- [ADR index](./docs/adr/README.md)
+- [Session Contracts](./docs/engineering/session-contracts.md)
+- [Instrument Module Contract](./docs/engineering/instrument-module-contract.md)
+
 ## 🎵 Features
 
 **Learn**

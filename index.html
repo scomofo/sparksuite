@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -55,6 +55,22 @@
 <script src="js/performance-core/spark-highway-adapter.js"></script>
 <script src="js/performance-core/performance-events.js"></script>
 <script src="js/performance-core/index.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_chart_library.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_curriculum.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_exercises.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_lessons.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_packs.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_progression.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_rhythm_curriculum.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_skill_tree.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_songs.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_rhythm_adapter.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_runtime_adapter.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_adapter.js"></script>
+  <script src="js/sparksuite/instruments/vocals/vocals_module.js"></script>
+  <script src="js/sparksuite/instruments/vocals/index.js"></script>
+  <script src="js/instruments/vocals/register.js"></script>
+  <script src="js/instruments/vocals/showroom_card.js"></script>
 <script src="js/launcher.js"></script>
 <script src="js/showroom/spark-showroom-svgs.js"></script>
 <script src="js/showroom/spark-showroom.js"></script>
@@ -62,44 +78,34 @@
 <script src="js/ui/theme.js"></script>
 <script src="js/ui/confetti.js"></script>
 <script src="js/ui/xp-float.js"></script>
-<script src="js/instruments/guitar/pages.js"></script>
-<script src="js/instruments/guitar/capo.js"></script>
-<script src="js/instruments/guitar/register.js"></script>
-<script src="js/instruments/guitar/app.js"></script>
-<script src="js/instruments/ukulele/chord_normalizer.js"></script>
-<script src="js/instruments/ukulele/validator.js"></script>
-<script src="js/instruments/ukulele/ukulele_svg.js"></script>
-<script src="js/instruments/ukulele/register.js"></script>
-<script src="js/instruments/piano/data.js"></script>
-<script src="js/instruments/piano/audio.js"></script>
-<script src="js/instruments/piano/ui.js"></script>
-<script src="js/instruments/piano/register.js"></script>
-<script src="js/instruments/piano/app.js"></script>
-<script src="js/instruments/bass/data.js"></script>
-<script src="js/instruments/bass/ui.js"></script>
-<script src="js/instruments/bass/register.js"></script>
-<script src="js/instruments/bass/app.js"></script>
-<script src="js/sparksuite/instruments/drums/drums_skill_tree.js"></script>
-<script src="js/sparksuite/instruments/drums/drums_lessons.js"></script>
-<script src="js/sparksuite/instruments/drums/drums_chart_library.js"></script>
-<script src="js/sparksuite/instruments/drums/drums_rhythm_adapter.js"></script>
-<script src="js/sparksuite/instruments/drums/drums_module.js"></script>
-<script src="js/instruments/drums/register.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_skill_tree.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_lessons.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_exercises.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_curriculum.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_chart_library.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_rhythm_curriculum.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_rhythm_adapter.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_runtime_adapter.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_module.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_adapter.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_packs.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_progression.js"></script>
-<script src="js/sparksuite/instruments/vocals/vocals_songs.js"></script>
-<script src="js/sparksuite/instruments/vocals/index.js"></script>
-<script src="js/instruments/vocals/register.js"></script>
+<!-- Instrument Modules -->
+<!-- bass -->
+<script data-deferred-src="js/instruments/bass/data.js"></script>
+<script data-deferred-src="js/instruments/bass/ui.js"></script>
+<script data-deferred-src="js/instruments/bass/register.js"></script>
+<script data-deferred-src="js/instruments/bass/app.js"></script>
+<!-- drums -->
+<script data-deferred-src="js/instruments/drums/register.js"></script>
+<!-- guitar -->
+<script data-deferred-src="js/instruments/guitar/pages.js"></script>
+<script data-deferred-src="js/instruments/guitar/capo.js"></script>
+<script data-deferred-src="js/instruments/guitar/register.js"></script>
+<script data-deferred-src="js/instruments/guitar/app.js"></script>
+<!-- piano -->
+<script data-deferred-src="js/instruments/piano/data.js"></script>
+<script data-deferred-src="js/instruments/piano/audio.js"></script>
+<script data-deferred-src="js/instruments/piano/ui.js"></script>
+<script data-deferred-src="js/instruments/piano/watch.js"></script>
+<script data-deferred-src="js/instruments/piano/register.js"></script>
+<script data-deferred-src="js/instruments/piano/app.js"></script>
+<!-- ukulele -->
+<script data-deferred-src="js/instruments/ukulele/chord_normalizer.js"></script>
+<script data-deferred-src="js/instruments/ukulele/validator.js"></script>
+<script data-deferred-src="js/instruments/ukulele/ukulele_svg.js"></script>
+<script data-deferred-src="js/instruments/ukulele/register.js"></script>
+<!-- vocals -->
+<script data-deferred-src="js/instruments/vocals/register.js"></script>
+<script data-deferred-src="js/instruments/vocals/showroom_card.js"></script>
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>
 <script src="js/audio.js"></script>
@@ -342,9 +348,28 @@
 <script src="js/onboarding/ui.js"></script>
 <script src="js/timers.js"></script>
 <script src="js/orchestrator-requests.js"></script>
+  <script src="js/render_registry.js"></script>
+  <script src="js/render_shell.js"></script>
+  <script src="js/render_showroom.js"></script>
+  <script src="js/render_overlays.js"></script>
 <script src="js/render.js"></script>
+  <script src="js/actions/families.js"></script>
+  <script src="js/actions/system_family.js"></script>
+  <script src="js/actions/shell_family.js"></script>
+  <script src="js/actions/practice_family.js"></script>
+  <script src="js/actions/performance_family.js"></script>
+  <script src="js/actions/media_family.js"></script>
+  <script src="js/actions/song_family.js"></script>
+  <script src="js/actions/studio_family.js"></script>
+  <script src="js/actions/tools_family.js"></script>
+  <script src="js/actions/utility_family.js"></script>
 <script src="js/actions.js"></script>
 <script src="js/shortcuts.js"></script>
+<script data-deferred-src="js/dev/curriculum_validator.js"></script>
+<script data-deferred-src="js/dev/dev_curriculum_highlighter.js"></script>
+<script data-deferred-src="js/dev/dev_overlay.js"></script>
+<script data-deferred-src="js/dev/dev_reload_client.js"></script>
+<script data-deferred-src="js/dev/dev_panel.js"></script>
 <script src="js/app.js"></script>
 <script src="js/instruments/piano/pages/shared.js"></script>
 <script src="js/instruments/piano/pages/practice.js"></script>
@@ -383,3 +408,9 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+

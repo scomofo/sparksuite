@@ -120,6 +120,46 @@ test("legacy practice engine prefers the rehydrated active instrument over a sta
   assert.strictEqual(config.laneType, "keys");
 });
 
+test("practice plan helpers can resolve sparkCore from the global binding", function() {
+  var calls = [];
+  global.window = {};
+  global.sparkCore = {
+    startSession: function(options) {
+      calls.push({ type: "start", options: options });
+      return {
+        toLegacyPracticePlan: function() {
+          return {
+            generatedDate: "2026-04-24",
+            focus: "Song mastery",
+            items: [{ id: "item_1", type: "performance_song" }]
+          };
+        }
+      };
+    },
+    completeSession: function(options) {
+      calls.push({ type: "complete", options: options });
+      return { ok: true };
+    }
+  };
+  global.SparkSessionTypes = {
+    FLOW_DAILY_PRACTICE: "daily_practice"
+  };
+  global.saveState = function() {};
+
+  eval(loadJS("js/practice/engine.js"));
+
+  var plan = global.window.ensurePracticePlan({ forceRebuild: true });
+  global.window.completePracticePlan();
+
+  assert.strictEqual(plan.focus, "Song mastery");
+  assert.strictEqual(plan.items.length, 1);
+  assert.strictEqual(calls[0].type, "start");
+  assert.strictEqual(calls[0].options.flow, SparkSessionTypes.FLOW_DAILY_PRACTICE);
+  assert.strictEqual(calls[0].options.forceRebuild, true);
+  assert.strictEqual(calls[1].type, "complete");
+  assert.strictEqual(calls[1].options.markPlanComplete, true);
+});
+
 test("legacy session engine preserves app-id-only ownership when processing results", function() {
   global.S.chordProgress = { "C Major": 100, "F Major": 100 };
   global.S.level = 1;

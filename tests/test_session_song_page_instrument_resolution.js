@@ -12,10 +12,12 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
+_testEval(loadJS("js/sparksuite/ui/session_shell.js"));
 
 
 function resetEnvironment() {
   global.window = global;
+  global.sparkCore = undefined;
   global.S = {
     currentChord: { name: "C" },
     timer: 45,
@@ -149,6 +151,152 @@ test("sessionPage rehydrates an app-id-only active instrument shell", function()
   assert.ok(html.indexOf("chord-svg") >= 0);
 });
 
+test("session family pages surface the live daily-practice shell from sparkCore", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
+            { id: "song_1", type: "song", label: "Song push", durationSec: 240 }
+          ]
+        },
+        activeSegment: { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          transport: { status: "paused", positionMs: 30000, durationMs: 120000 }
+        }
+      };
+    }
+  };
+  S.dailyChallenge = { id: "marathon", icon: "X", title: "Daily", desc: "Challenge", xp: 15 };
+
+  var sessionHtml = sessionPage();
+  var drillHtml = drillPage();
+  var dailyHtml = dailyPage();
+
+  assert.ok(sessionHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(sessionHtml.indexOf("Paused - Quick warmup") >= 0);
+  assert.ok(sessionHtml.indexOf("Resume Block") >= 0);
+  assert.ok(sessionHtml.indexOf("Skip Block") >= 0);
+  assert.ok(sessionHtml.indexOf("0m 30s in block") >= 0);
+  assert.ok(sessionHtml.indexOf("1m 30s left") >= 0);
+  assert.ok(drillHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(dailyHtml.indexOf("Practice Session Live") >= 0);
+});
+
+test("sessionPage prefers canonical runtime values over stale legacy session state", function() {
+  S.currentChord = { name: "C" };
+  S.timer = 45;
+  S.timerActive = false;
+  S.metronomeOn = false;
+  S.metronomeBpm = 80;
+  global.ringHTML = function(_pct, _size, _width, _color, inner) { return "<div>" + inner + "</div>"; };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 }
+          ]
+        },
+        activeSegment: { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          legacyPracticeChordName: "G",
+          legacyPracticeRemainingSec: 90,
+          legacyPracticeTimerActive: true,
+          metronomeActive: true,
+          metronomeBpm: 96,
+          metronomeBeat: 2,
+          metronomeBeatsPerBar: 4,
+          transport: { status: "running", positionMs: 30000, durationMs: 120000 }
+        }
+      };
+    }
+  };
+
+  var html = sessionPage();
+  assert.ok(html.indexOf(">G</h2>") >= 0);
+  assert.ok(html.indexOf(">1:30<") >= 0);
+  assert.ok(html.indexOf("&#9208; Pause") >= 0);
+  assert.ok(html.indexOf(">96<") >= 0);
+  assert.strictEqual(html.indexOf(">C</h2>"), -1);
+});
+
+test("session mini-game pages prefer canonical runtime over stale legacy quiz and strum state", function() {
+  global.S.quizQ = { name: "Legacy Quiz" };
+  global.S.quizOpts = [{ name: "Legacy Quiz" }];
+  global.S.quizScore = 1;
+  global.S.quizTotal = 1;
+  global.S.quizStreak = 1;
+  global.S.selectedStrum = { name: "Legacy Strum", desc: "Old", bpm: 60, pattern: ["D"] };
+  global.S.strumActive = false;
+  global.S._strumBeat = 0;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          legacyQuizQuestion: { name: "Core Quiz" },
+          legacyQuizOptions: [{ name: "Core Quiz" }, { name: "Runtime Choice" }],
+          legacyQuizAnswer: null,
+          legacyQuizScore: 4,
+          legacyQuizTotal: 6,
+          legacyQuizStreak: 2,
+          legacyStrumPattern: { name: "Core Strum", desc: "Runtime", bpm: 96, pattern: ["D", "U"] },
+          legacyStrumActive: true,
+          legacyStrumBeat: 1
+        }
+      };
+    }
+  };
+  global.window.sparkCore = global.sparkCore;
+
+  var quizHtml = quizPage();
+  var strumHtml = strumDetailPage();
+
+  assert.ok(quizHtml.indexOf("Core Quiz") >= 0);
+  assert.ok(quizHtml.indexOf("Runtime Choice") >= 0);
+  assert.strictEqual(quizHtml.indexOf("Legacy Quiz"), -1);
+  assert.ok(quizHtml.indexOf("4/6") >= 0);
+  assert.ok(strumHtml.indexOf("Core Strum") >= 0);
+  assert.ok(strumHtml.indexOf("96 BPM") >= 0);
+  assert.strictEqual(strumHtml.indexOf("Legacy Strum"), -1);
+});
+
+test("drillPage prefers canonical drill chords over stale legacy drill state", function() {
+  S.drillChords = [{ name: "C" }, { name: "G" }];
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 }
+          ]
+        },
+        activeSegment: { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120 },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          legacyDrillChordNames: ["G", "C"],
+          legacyPracticeRemainingSec: 90,
+          transport: { status: "running", positionMs: 30000, durationMs: 120000 }
+        }
+      };
+    }
+  };
+
+  var html = drillPage();
+
+  assert.ok(html.indexOf("chord-svg\">G<") >= 0);
+  assert.ok(html.indexOf("Next: <strong>C") >= 0);
+});
+
 test("sessionPage ignores stale practice intention text", function() {
   S.practiceIntention = "undefined";
   var html = sessionPage();
@@ -215,6 +363,14 @@ test("songDetailPage and songDonePage ignore stale song copy tokens", function()
   assert.ok(detailHtml.indexOf("NaN") === -1);
   assert.ok(doneHtml.indexOf("moonlight_sonata") >= 0);
   assert.ok(doneHtml.indexOf(">undefined<") === -1);
+});
+
+test("song library perform buttons rely on clickable card guards instead of inline propagation hacks", function() {
+  var songsSource = loadJS("js/pages/songs.js");
+  var uiSource = loadJS("js/ui.js");
+  assert.ok(songsSource.indexOf('onclick="act(\\\'openPerformSong\\\',') >= 0);
+  assert.strictEqual(songsSource.indexOf("event.stopPropagation();act('openPerformSong'"), -1);
+  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}') >= 0);
 });
 
 test("strumDetailPage ignores malformed BPM values", function() {

@@ -1,0 +1,25 @@
+{
+  "id": "zombie_bass_chords",
+  "title": "Zombie",
+  "artist": "The Cranberries",
+  "bpm": 84,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 11.429 },
+    { "id": 1, "name": "Chorus", "startSec": 11.429, "endSec": 22.857 },
+    { "id": 2, "name": "Outro", "startSec": 22.857, "endSec": 34.286 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 1.429, "type": "tap", "chord": "Em", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 2, "t": 1.429, "dur": 1.428, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" },
+    { "id": 3, "t": 2.857, "dur": 1.429, "type": "tap", "chord": "G", "notes": ["G1"], "laneLabel": "G", "strum": "tap" },
+    { "id": 4, "t": 4.286, "dur": 1.428, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 5, "t": 5.714, "dur": 1.429, "type": "tap", "chord": "Em", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 6, "t": 7.143, "dur": 1.428, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" },
+    { "id": 7, "t": 8.571, "dur": 1.429, "type": "tap", "chord": "G", "notes": ["G1"], "laneLabel": "G", "strum": "tap" },
+    { "id": 8, "t": 10, "dur": 1.429, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" }
+  ]
+}

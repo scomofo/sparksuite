@@ -1,0 +1,48 @@
+{
+  "version": "2026-04-24",
+  "format": "sparksuite-curriculum-v2",
+  "principles": {
+    "adhd_first": true,
+    "session_shell_blocks": [
+      "warm_engine",
+      "drill",
+      "song",
+      "cooldown"
+    ],
+    "make_sound_in_seconds": 5,
+    "novelty_cap_per_session": 1,
+    "rotate_micro_activities_minutes": "3-5",
+    "cumulative_progress_only": true,
+    "no_negative_failure_feedback": true
+  },
+  "tracks": [
+    {
+      "instrument": "guitar",
+      "title": "Guitar 30-Day ADHD-First Track",
+      "session_count": 30,
+      "track_file": "tracks/guitar-30day.json",
+      "activity_file": "activities/guitar-30day.activities.json"
+    },
+    {
+      "instrument": "bass",
+      "title": "Bass 30-Day ADHD-First Track",
+      "session_count": 30,
+      "track_file": "tracks/bass-30day.json",
+      "activity_file": "activities/bass-30day.activities.json"
+    },
+    {
+      "instrument": "piano",
+      "title": "Piano 30-Day ADHD-First Track",
+      "session_count": 30,
+      "track_file": "tracks/piano-30day.json",
+      "activity_file": "activities/piano-30day.activities.json"
+    },
+    {
+      "instrument": "ukulele",
+      "title": "Ukulele 30-Day ADHD-First Track",
+      "session_count": 30,
+      "track_file": "tracks/ukulele-30day.json",
+      "activity_file": "activities/ukulele-30day.activities.json"
+    }
+  ]
+}

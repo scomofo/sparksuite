@@ -155,6 +155,22 @@ test("registerContent replaces stale entries for a type", function() {
   assert.strictEqual(getContent("songs", "song_b").title, "Song B");
 });
 
+test("registerContent builds canonical song families", function() {
+  registerContent("songs", [
+    { id: "stand_by_me", title: "Stand By Me", artist: "Ben E. King", midi: "content/songs/midi/stand_by_me.mid" },
+    { id: "la_bamba", title: "La Bamba", artist: "Ritchie Valens", familyId: "la_bamba" }
+  ]);
+
+  var standByMeFamily = getSongFamily("stand_by_me");
+  assert.ok(standByMeFamily);
+  assert.strictEqual(standByMeFamily.id, "stand_by_me");
+  assert.strictEqual(standByMeFamily.canonicalSongId, "stand_by_me");
+  assert.strictEqual(standByMeFamily.songs[0], "stand_by_me");
+  assert.strictEqual(getSongFamilyVariants("stand_by_me").length, 1);
+  assert.strictEqual(getContent("songs", "stand_by_me").audio.type, "midi");
+  assert.strictEqual(getContent("songs", "stand_by_me").audio.src, "content/songs/midi/stand_by_me.mid");
+});
+
 test("loadAllContent treats each manifest section as authoritative", async function() {
   sparkCore.events = [];
   await loadAllContent("/content-manifest-a.json");
@@ -227,6 +243,22 @@ test("loadCurriculumManifest rejects failed section fetches without partially mu
     sparkCore.events.map(function(entry) { return entry.action; }),
     ["curriculum_load_start", "curriculum_load_error"]
   );
+});
+
+test("content and curriculum loaders resolve sparkCore from the global binding", async function() {
+  var originalWindow = global.window;
+  global.window = {};
+  sparkCore.events = [];
+
+  await loadAllContent("/content-manifest-a.json");
+  await loadCurriculumManifest("/curriculum-manifest-a.json");
+
+  assert.deepStrictEqual(
+    sparkCore.events.map(function(entry) { return entry.action; }),
+    ["content_load_start", "content_load_done", "curriculum_load_start", "curriculum_load_done"]
+  );
+
+  global.window = originalWindow;
 });
 
 async function run() {

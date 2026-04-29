@@ -1,0 +1,202 @@
+{
+  "id": "piano_gentle_walk",
+  "title": "Gentle Walk",
+  "artist": "SparkSuite Piano",
+  "bpm": 72,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "piano",
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Verse",
+      "startSec": 0,
+      "endSec": 13.33
+    },
+    {
+      "id": 1,
+      "name": "Chorus",
+      "startSec": 13.33,
+      "endSec": 26.67
+    },
+    {
+      "id": 2,
+      "name": "Outro",
+      "startSec": 26.67,
+      "endSec": 40
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C4",
+        "E4",
+        "G4"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 2,
+      "t": 3.33,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A3",
+        "C4",
+        "E4"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 6.66,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F3",
+        "A3",
+        "C4"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 4,
+      "t": 9.99,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G3",
+        "B3",
+        "D4"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 5,
+      "t": 13.32,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C4",
+        "E4",
+        "G4"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 6,
+      "t": 16.65,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A3",
+        "C4",
+        "E4"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 7,
+      "t": 19.98,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F3",
+        "A3",
+        "C4"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 8,
+      "t": 23.31,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G3",
+        "B3",
+        "D4"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 9,
+      "t": 26.64,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C4",
+        "E4",
+        "G4"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 10,
+      "t": 29.97,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A3",
+        "C4",
+        "E4"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 11,
+      "t": 33.3,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F3",
+        "A3",
+        "C4"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 12,
+      "t": 36.63,
+      "dur": 3.33,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G3",
+        "B3",
+        "D4"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    }
+  ]
+}

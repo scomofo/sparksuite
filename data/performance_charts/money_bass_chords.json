@@ -1,0 +1,24 @@
+{
+  "id": "money_bass_chords",
+  "title": "Money",
+  "artist": "Pink Floyd",
+  "bpm": 124,
+  "beatsPerBar": 7,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Main Riff", "startSec": 0, "endSec": 6.774 },
+    { "id": 1, "name": "Verse", "startSec": 6.774, "endSec": 13.548 },
+    { "id": 2, "name": "Turnaround", "startSec": 13.548, "endSec": 20.323 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.484, "type": "tap", "chord": "B", "notes": ["B1"], "laneLabel": "B", "strum": "tap" },
+    { "id": 2, "t": 0.484, "dur": 0.484, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 3, "t": 0.968, "dur": 0.484, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 4, "t": 1.452, "dur": 0.484, "type": "tap", "chord": "B", "notes": ["B1"], "laneLabel": "B", "strum": "tap" },
+    { "id": 5, "t": 1.935, "dur": 0.484, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 6, "t": 2.419, "dur": 0.484, "type": "tap", "chord": "F", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 7, "t": 2.903, "dur": 0.484, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" }
+  ]
+}

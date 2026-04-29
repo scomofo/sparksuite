@@ -180,6 +180,9 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/index.js"));
+eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+eval(loadJS("js/curriculum/curriculum_v2.js"));
+eval(loadJS("js/curriculum/curriculum_v2_legacy_adapter.js"));
 eval(loadJS("js/sparksuite/core/storage.js"));
 eval(loadJS("js/sparksuite/core/ai_engine.js"));
 eval(loadJS("js/sparksuite/core/instrument_manager.js"));
@@ -188,6 +191,7 @@ eval(loadJS("js/sparksuite/core/curriculum_engine.js"));
 eval(loadJS("js/sparksuite/core/practice_engine.js"));
 eval(loadJS("js/sparksuite/core/progress_engine.js"));
 eval(loadJS("js/sparksuite/core/session_engine.js"));
+eval(loadJS("js/sparksuite/core/execution_gateway.js"));
 eval(loadJS("js/sparksuite/core/spark_core.js"));
 
 console.log("\n--- SparkSuite Core Migration ---");
@@ -202,6 +206,47 @@ test("startSession returns a SessionPlan and syncs the legacy practice plan", fu
   assert.ok(S.practicePlan);
   assert.strictEqual(S.practicePlan.items.length, 2);
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "session_1");
+});
+
+test("createDefaultSparkCore installs explicit default execution gateway handlers", function() {
+  var practiceCaptured = null;
+  var songCaptured = null;
+  var core;
+
+  SparkExecutionGateway.clearHandlers();
+  global.startPlayableRhythmHighwayPayload = function(payload, options) {
+    practiceCaptured = { payload: payload, options: options };
+    return true;
+  };
+  global.startPerformance = function(target, options) {
+    songCaptured = { target: target, options: options };
+    return true;
+  };
+
+  core = createDefaultSparkCore();
+
+  assert.ok(core);
+  assert.strictEqual(
+    SparkExecutionGateway.runDirectExercise({
+      type: "practice",
+      gameplayPayload: { adapterType: "pianospark" },
+      instrument: "pianospark"
+    }, { source: "gateway_bootstrap_practice" }),
+    true
+  );
+  assert.ok(practiceCaptured);
+  assert.strictEqual(practiceCaptured.options.instrument, "pianospark");
+
+  assert.strictEqual(
+    SparkExecutionGateway.runDirectExercise("gateway_bootstrap_song", { source: "gateway_bootstrap_song" }),
+    true
+  );
+  assert.ok(songCaptured);
+  assert.strictEqual(songCaptured.target, "gateway_bootstrap_song");
+  assert.deepStrictEqual(SparkExecutionGateway.getMissingHandlerReport(), {});
+
+  delete global.startPlayableRhythmHighwayPayload;
+  delete global.startPerformance;
 });
 
 test("daily practice plans preserve segment labels when projected back to legacy state", function() {
@@ -1534,6 +1579,2580 @@ test("song detail page uses SparkCore song runtime for active playback rendering
   assert.ok(songHtml.indexOf("Pause") >= 0);
 });
 
+test("session family pages can resolve sparkCore from the global binding", function() {
+  var core = createDefaultSparkCore();
+  global.window = {};
+  global.sparkCore = core;
+  global.VOICINGS = {};
+  global._prevChordKey = "";
+  global.ringHTML = function(_pct, _size, _stroke, _color, inner) { return inner; };
+  global.getExpectedNotes = function() { return []; };
+  global._buildChordCheckInner = function() { return ""; };
+  global.getCoachFeedback = function() { return []; };
+  global.escHTML = function(value) { return String(value); };
+  global.tierBadgeHTML = function() { return ""; };
+  global.getTransitionTip = function() { return null; };
+  global.clickableDiv = function() { return ""; };
+  global.strumHandSVG = function(direction, active) { return "<div>" + direction + ":" + active + "</div>"; };
+  global.strumHTML = function(pattern, beat) { return "<div>" + pattern.join("-") + "|" + beat + "</div>"; };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        getData: function() {
+          return {
+            ALL_CHORDS: [{ name: "C", short: "C" }, { name: "G", short: "G" }],
+            LC: { 1: "#fff" }
+          };
+        },
+        ui: {
+          chord: function(chord) { return "<div>" + chord.name + "</div>"; }
+        }
+      };
+    }
+  };
+  S.selectedVoicing = 0;
+  S.level = 1;
+  S.currentChord = { name: "C", short: "C" };
+  S.metronomeOn = undefined;
+  S.metronomeBpm = undefined;
+  S._metroBeat = undefined;
+  S._metroBeats = undefined;
+  S.chordDetectOn = false;
+  S.chordDetectErr = "";
+  S.practiceIntention = "";
+  S.timer = undefined;
+  S.timerActive = undefined;
+  S.selectedSong = undefined;
+  S.songPlaying = undefined;
+  S.songBeat = undefined;
+  S.strumTone = "classic";
+
+  eval(loadJS("js/pages/session.js"));
+
+  core.openLegacyPracticeSession({ mode: "chord", chordName: "C", durationSec: 120 });
+  core.syncMetronomeRuntimeState({
+    active: true,
+    bpm: 92,
+    beat: 1,
+    beatsPerBar: 4
+  });
+  var sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf(">C<") >= 0);
+  assert.ok(sessionHtml.indexOf(">92<") >= 0);
+  assert.ok(sessionHtml.indexOf("Stop") >= 0);
+
+  core.openSongSession({
+    songData: {
+      title: "Fire Road",
+      artist: "Spark Suite",
+      bpm: 96,
+      chords: ["C", "G"],
+      progression: ["C", "G", "C", "G"],
+      pattern: ["D", "D", "U", "U"]
+    },
+    source: "builtin"
+  });
+  core.syncSongRuntimeState("play", { songBeat: 2 });
+  var songHtml = songDetailPage();
+  assert.ok(songHtml.indexOf("U:true") >= 0);
+  assert.ok(songHtml.indexOf("D-D-U-U|2") >= 0);
+  assert.ok(songHtml.indexOf("Pause") >= 0);
+});
+
+test("audio helpers can resolve sparkCore from the global binding", function() {
+  var originalSetTimeout = global.setTimeout;
+  var originalClearTimeout = global.clearTimeout;
+  var originalCancelAnimationFrame = global.cancelAnimationFrame;
+  var metronomeStates = [];
+  var chordStates = [];
+  var audioInputStates = [];
+  var stemStates = [];
+  global.window = {};
+  global.sparkCore = {
+    syncMetronomeRuntimeState: function(payload) {
+      metronomeStates.push(payload);
+      return payload;
+    },
+    syncChordDetectRuntimeState: function(payload) {
+      chordStates.push(payload);
+      return payload;
+    },
+    syncAudioInputRuntimeState: function(payload) {
+      audioInputStates.push(payload);
+      return payload;
+    },
+    syncStemPlayerRuntimeState: function(payload) {
+      stemStates.push(payload);
+      return payload;
+    }
+  };
+  global.T = {};
+  global.render = function() {};
+  global.updateChordCheckUI = function() {};
+  global.setTimeout = function() { return 1; };
+  global.clearTimeout = function() {};
+  global.cancelAnimationFrame = function() {};
+  global.NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  global.CHORD_NOTES = { "C Major": ["C", "E", "G"] };
+  global.SCR = { PERFORM: "perform" };
+  S.metronomeBpm = 88;
+  S._metroBeats = 4;
+  S.metronomeOn = false;
+  S.chordDetectOn = true;
+  S.currentChord = { name: "C Major" };
+  S.screen = "practice";
+  S.performMode = "listen";
+  S.audioInputDevices = [{ id: "mic_1", name: "Built-in Mic" }];
+  S.audioInputId = "mic_1";
+  S.audioTestingId = "mic_1";
+  S.audioTestLevel = 17;
+  S.stemCurrentTime = 5;
+  S.stemDuration = 42;
+  S.stemPlaying = true;
+
+  eval(loadJS("js/audio.js"));
+
+  startMetronome();
+  stopMetronome();
+
+  _midiInputNotes = { 60: true, 64: true, 67: true };
+  _processMIDIChord();
+
+  stopAudioTest();
+
+  _stemAudios = {
+    mix: {
+      currentTime: 0,
+      pause: function() {},
+      src: "",
+      ended: false
+    }
+  };
+  pauseStems();
+  seekStems(12);
+  cleanupStems();
+
+  assert.strictEqual(metronomeStates[0].active, true);
+  assert.strictEqual(metronomeStates[0].bpm, 88);
+  assert.strictEqual(metronomeStates[1].active, false);
+  assert.ok(chordStates.length >= 1);
+  assert.deepStrictEqual(chordStates[chordStates.length - 1].notes, ["C", "E", "G"]);
+  assert.strictEqual(chordStates[chordStates.length - 1].active, true);
+  assert.strictEqual(audioInputStates[0].testingId, "");
+  assert.strictEqual(audioInputStates[0].testLevel, 0);
+  assert.strictEqual(stemStates[0].playing, false);
+  assert.strictEqual(stemStates[1].currentTime, 12);
+  assert.strictEqual(stemStates[stemStates.length - 1].duration, 0);
+
+  global.setTimeout = originalSetTimeout;
+  global.clearTimeout = originalClearTimeout;
+  global.cancelAnimationFrame = originalCancelAnimationFrame;
+});
+
+test("timer helpers can resolve sparkCore from the global binding", function() {
+  var completedSession = null;
+  var completedDrill = null;
+  var syncedQuiz = null;
+  global.window = {};
+  global.sparkCore = {
+    completeLegacyPracticeSession: function(payload) {
+      completedSession = payload;
+      return payload;
+    },
+    completeLegacyPracticeDrill: function(payload) {
+      completedDrill = payload;
+      return payload;
+    },
+    syncLegacyQuizRuntimeState: function(payload) {
+      syncedQuiz = payload;
+      return payload;
+    }
+  };
+  global.SparkPsychology = { shouldReward: function() { return false; } };
+  global.snd = function() {};
+  global.addPracticeSecond = function() {};
+  global.render = function() {};
+  global.stopMetronome = function() {};
+  global.stopChordDetect = function() {};
+  global.trigC = function() {};
+  global.saveState = function() {};
+  global.logHistory = function() {};
+  global.checkBadges = function() {};
+  global._sparkEmit = function() {};
+  global.getActiveInstrumentIdentityForActivity = function() {
+    return { appId: "chordspark", instrumentType: "guitar" };
+  };
+  global.syncLegacyPracticeRuntimeRequest = function() {};
+  global.SparkSession = {
+    processResults: function() {
+      return { xpEarned: 20, jackpot: false, leveledUp: false };
+    }
+  };
+  global.updateDrillTimerUI = function() { return true; };
+  global.SCR = {
+    COMPLETE: "complete",
+    DRILL: "drill",
+    DRILL_DONE: "drill_done",
+    DAILY: "daily"
+  };
+  global.T = { session: null, drill: null };
+  global.clearTimeout = function() {};
+  global.setTimeout = function() { return 1; };
+  S.timerActive = true;
+  S.timer = 0;
+  S.metronomeOn = false;
+  S.chordDetectOn = false;
+  S.lastChordName = "C";
+  S.currentChord = { name: "C" };
+  S.screen = SCR.DRILL;
+  S.drillTimer = 0;
+  S.drillChords = [{ name: "C" }, { name: "G" }];
+  S.sessions = 0;
+
+  eval(loadJS("js/timers.js"));
+
+  tickS();
+  S.screen = SCR.DRILL;
+  tickD();
+  S.level = 1;
+  global.CHORDS = { 1: [{ name: "C Major", short: "C" }] };
+  global.ALL_CHORDS = [{ name: "C Major", short: "C" }, { name: "G Major", short: "G" }];
+  global.shuffle = function(items) { return items; };
+  genQ();
+
+  assert.ok(completedSession);
+  assert.strictEqual(completedSession.chordName, "C");
+  assert.ok(completedDrill);
+  assert.deepStrictEqual(completedDrill.chordNames, ["C", "G"]);
+  assert.ok(syncedQuiz);
+  assert.strictEqual(syncedQuiz.question.name, "C Major");
+  assert.strictEqual(syncedQuiz.answer, null);
+});
+
+test("action families can resolve sparkCore from the global binding", function() {
+  var strumOpened = null;
+  var strumSynced = [];
+  var returnedPractice = null;
+  var earTrainingSynced = null;
+  var shellUpdates = [];
+  var mediaRuntimeUpdates = [];
+  var shellRuntimeUpdates = [];
+  var activatedInstrument = null;
+  var deactivatedInstrument = false;
+  var existingBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    syncLegacyMediaRuntimeState: function(update) {
+      mediaRuntimeUpdates.push(update);
+      return update;
+    },
+    applyLegacyActivityRuntime: function(update) {
+      shellRuntimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window = {};
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.sparkCore = {
+    openLegacyStrumPattern: function(payload) {
+      strumOpened = payload;
+      return payload;
+    },
+    syncLegacyStrumRuntimeState: function(payload) {
+      strumSynced.push(payload);
+      return payload;
+    },
+    returnFromLegacyPracticeFamily: function(payload) {
+      returnedPractice = payload;
+      return payload;
+    },
+    syncLegacyEarTrainingRuntimeState: function(payload) {
+      earTrainingSynced = payload;
+      return payload;
+    },
+    updateRuntimeState: function(payload) {
+      shellUpdates.push(payload);
+      return payload;
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.saveState = function() {};
+  global.stopAllTimers = function() {};
+  global.fetchCommunity = function() {};
+  global.act = function() {};
+  global.snd = function() {};
+  global.strumChord = function() {};
+  global.setInterval = function() { return 1; };
+  global.clearInterval = function() {};
+  global.setTimeout = function() { return 1; };
+  global.T = { strum: null };
+  global.SCR = { HOME: "home", STRUM: "strum" };
+  global.TAB = { SONGS: "songs", PRACTICE: "practice" };
+  global.SparkInstruments = {
+    activate: function(id) {
+      activatedInstrument = id;
+    },
+    deactivate: function() {
+      deactivatedInstrument = true;
+    }
+  };
+  global.STRUM_PATTERNS = [
+    { name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U"] }
+  ];
+  S.level = 1;
+  S.strumActive = false;
+  S.selectedStrum = STRUM_PATTERNS[0];
+  S.currentChord = { name: "C Major" };
+  S.earTrainQ = "C Major";
+  S.earTrainOpts = ["C Major", "G Major", "A Minor"];
+  S.earTrainAns = null;
+  S.earTrainScore = 1;
+  S.earTrainTotal = 2;
+  S.earTrainStreak = 1;
+  S.tab = "practice";
+  S.songsSubTab = "library";
+
+  eval(loadJS("js/actions/media_family.js"));
+  eval(loadJS("js/actions/practice_family.js"));
+  eval(loadJS("js/actions/shell_family.js"));
+
+  __actionFamilies.media("openStrum", "Island Groove");
+  __actionFamilies.media("toggleStrum");
+  __actionFamilies.practice("completeSessionHome");
+  __actionFamilies.practice("answerEarTrain", "G Major");
+  __actionFamilies.shell("tab", "songs");
+  __actionFamilies.shell("switchInstrument", "pianospark");
+  __actionFamilies.shell("switchInstrumentBack");
+
+  assert.ok(strumOpened);
+  assert.strictEqual(strumOpened.pattern.name, "Island Groove");
+
+  assert.strictEqual(strumSynced[0].active, true);
+  assert.strictEqual(strumSynced[0].beat, 0);
+  assert.ok(returnedPractice);
+  assert.strictEqual(returnedPractice.activeTab, "practice");
+  assert.ok(earTrainingSynced);
+  assert.strictEqual(earTrainingSynced.answer, "G Major");
+  assert.strictEqual(earTrainingSynced.total, 3);
+  assert.strictEqual(shellUpdates[0].activeScreen, "home");
+  assert.strictEqual(shellUpdates[0].activeTab, "songs");
+  assert.strictEqual(activatedInstrument, "pianospark");
+  assert.strictEqual(deactivatedInstrument, true);
+  assert.ok(shellRuntimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: {
+        tab: "songs",
+        screen: "home",
+        earTrainQ: null,
+        earTrainAns: null,
+        selectedVoicing: 0
+      }
+    });
+  }));
+  assert.ok(shellRuntimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: { activeInstrument: "pianospark", screen: "home", tab: "practice" },
+      save: false
+    });
+  }));
+  assert.ok(shellRuntimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: { activeInstrument: null },
+      save: false
+    });
+  }));
+});
+
+test("media action family routes strum and stem state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var strumSyncs = [];
+  var stemMuteCalls = [];
+  var stemVolumeCalls = [];
+  var strumHits = [];
+  var saveCalls = 0;
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.sparkCore = {
+    syncLegacyStrumRuntimeState: function(payload) {
+      strumSyncs.push(payload);
+      return payload;
+    }
+  };
+  global.S = {
+    level: 1,
+    strumActive: false,
+    selectedStrum: { name: "Island Groove", level: 1, bpm: 76, pattern: ["D", "D", "U", "U"] },
+    currentChord: { name: "C Major" },
+    stemToggles: { vocals: true },
+    stemVolume: 0.8,
+    strumTone: "classic",
+    selectedScale: "Major"
+  };
+  global.T = { strum: 21 };
+  global.SCR = { STRUM: "strum" };
+  global.STRUM_PATTERNS = [S.selectedStrum];
+  global.STRUM_TONES = { electric: true };
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies = global.__actionFamilies || {};
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.snd = function() {};
+  global.strumChord = function(name) {
+    strumHits.push(name);
+  };
+  global.setInterval = function(fn) {
+    fn();
+    return 77;
+  };
+  global.clearInterval = function() {};
+  global.setStemMuted = function(stem, muted) {
+    stemMuteCalls.push({ stem: stem, muted: muted });
+  };
+  global.setStemVolume = function(value) {
+    stemVolumeCalls.push(value);
+  };
+  global.saveState = function() {
+    saveCalls += 1;
+  };
+
+  eval(loadJS("js/actions/media_family.js"));
+
+  assert.strictEqual(__actionFamilies.media("toggleStrum"), true);
+  assert.strictEqual(__actionFamilies.media("toggleStrum"), true);
+  assert.strictEqual(__actionFamilies.media("stemToggle", "vocals"), true);
+  assert.strictEqual(__actionFamilies.media("stemVolume", "0.65"), true);
+  assert.strictEqual(__actionFamilies.media("setTone", "electric"), true);
+  assert.strictEqual(__actionFamilies.media("selectScale", "Minor"), true);
+
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { strumActive: true, _strumBeat: 0 },
+    clearIntervals: [],
+    save: undefined
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: { _strumBeat: 1 },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
+    setFields: { strumActive: false, _strumBeat: -1 },
+    clearIntervals: ["strum"],
+    save: undefined
+  });
+  assert.deepStrictEqual(runtimeUpdates[3], {
+    setFields: { stemToggles: { vocals: false } },
+    clearIntervals: [],
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[4], {
+    setFields: { stemVolume: 0.65 },
+    clearIntervals: [],
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[5], {
+    setFields: { strumTone: "electric" },
+    clearIntervals: [],
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[6], {
+    setFields: { selectedScale: "Minor" },
+    clearIntervals: [],
+    save: false
+  });
+  assert.strictEqual(strumSyncs[0].beat, 0);
+  assert.strictEqual(strumSyncs[1].beat, 1);
+  assert.strictEqual(strumSyncs[2].beat, -1);
+  assert.deepStrictEqual(stemMuteCalls[0], { stem: "vocals", muted: true });
+  assert.strictEqual(stemVolumeCalls[0], 0.65);
+  assert.deepStrictEqual(strumHits, ["C Major", "C Major"]);
+  assert.strictEqual(saveCalls, 1);
+});
+
+test("practiceStartItem prefers the shared session runtime for active daily-practice segments", function() {
+  var syncCalls = [];
+  var launchedSegmentId = null;
+  var directStartItem = null;
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "practice_item_1", type: "practice", exerciseIds: ["ex_1"] }
+          ]
+        }
+      };
+    },
+    syncSessionRuntime: function(payload) {
+      syncCalls.push(payload);
+      return true;
+    }
+  };
+  global.SparkSessionRuntime = {
+    runSegmentById: function(segmentId) {
+      launchedSegmentId = segmentId;
+      return true;
+    }
+  };
+  global.startPracticeItem = function(itemId) {
+    directStartItem = itemId;
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.saveState = function() {};
+  global.act = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("practiceStartItem", "practice_item_1"), true);
+  assert.strictEqual(launchedSegmentId, "practice_item_1");
+  assert.strictEqual(directStartItem, null);
+  assert.strictEqual(syncCalls.length, 1);
+  assert.strictEqual(syncCalls[0].segmentId, "practice_item_1");
+  assert.strictEqual(syncCalls[0].status, "ready");
+});
+
+test("practice action family can pause, resume, and skip the shared daily-practice shell", function() {
+  var syncCalls = [];
+  var runtimeCalls = [];
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "practice_item_1", type: "practice", exerciseIds: ["ex_1"] },
+            { id: "practice_item_2", type: "song", exerciseIds: ["ex_2"] }
+          ]
+        },
+        runtimeState: {
+          activeSegmentId: "practice_item_1",
+          transport: {
+            status: "running",
+            positionMs: 400
+          }
+        }
+      };
+    },
+    syncSessionRuntime: function(payload) {
+      syncCalls.push(payload);
+      return true;
+    }
+  };
+  global.SparkSessionRuntime = {
+    pauseActiveSegment: function() {
+      runtimeCalls.push("pause");
+      return true;
+    },
+    resumeActiveSegment: function() {
+      runtimeCalls.push("resume");
+      return true;
+    },
+    skipActiveSegment: function() {
+      runtimeCalls.push("skip");
+      return { hasNext: true, nextIndex: 1 };
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.saveState = function() {};
+  global.act = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("sessionPauseBlock"), true);
+  assert.strictEqual(__actionFamilies.practice("sessionResumeBlock"), true);
+  assert.strictEqual(__actionFamilies.practice("sessionSkipBlock"), true);
+  assert.deepStrictEqual(runtimeCalls, ["pause", "resume", "skip"]);
+  assert.strictEqual(syncCalls.length, 3);
+  assert.strictEqual(syncCalls[0].segmentId, "practice_item_1");
+  assert.strictEqual(syncCalls[0].status, "running");
+});
+
+test("practice action family routes controls, ear-training, and daily progression through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var completionUpdates = [];
+  var dailyChallengeRequests = [];
+  var dailyCompleteRequests = [];
+  var acted = [];
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.sparkCore = {
+    syncLegacyEarTrainingRuntimeState: function(payload) {
+      acted.push({ type: "syncEar", payload: payload });
+      return true;
+    }
+  };
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      if (update && update.incrementFields) {
+        Object.keys(update.incrementFields).forEach(function(key) {
+          S[key] = (S[key] || 0) + update.incrementFields[key];
+        });
+      }
+      runtimeUpdates.push(update);
+      return update;
+    },
+    applyLegacyActivityCompletion: function(update) {
+      completionUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.S = {
+    level: 3,
+    selectedLevel: 1,
+    selectedVoicing: 0,
+    currentChord: { name: "C Major" },
+    earTrainQ: "C Major",
+    earTrainOpts: ["C Major", "G Major", "A Minor"],
+    earTrainAns: null,
+    earTrainScore: 1,
+    earTrainTotal: 2,
+    earTrainStreak: 1,
+    dailyChallenge: { id: "daily_1", title: "Chord Sprint", xp: 40 }
+  };
+  global.T = {};
+  global.SCR = { DAILY: "daily" };
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies = global.__actionFamilies || {};
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() {};
+  global.saveState = function() {};
+  global.snd = function() {};
+  global.trigC = function() {};
+  global.tickDy = function() {};
+  global.strumChord = function() {};
+  global.logHistory = function() {};
+  global.checkBadges = function() {};
+  global.openLegacyDailyChallengeRequest = function(payload) {
+    dailyChallengeRequests.push(payload);
+  };
+  global.completeLegacyDailyChallengeRequest = function(payload) {
+    dailyCompleteRequests.push(payload);
+  };
+  global.act = function(action) {
+    acted.push({ type: "act", action: action });
+  };
+  global.setTimeout = function(fn) {
+    fn();
+    return 1;
+  };
+  global.clearTimeout = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("selLevel", "2"), true);
+  assert.strictEqual(__actionFamilies.practice("selectVoicing", "1"), true);
+  assert.strictEqual(__actionFamilies.practice("answerEarTrain", "C Major"), true);
+  assert.strictEqual(__actionFamilies.practice("startDaily"), true);
+  assert.strictEqual(__actionFamilies.practice("completeDaily"), true);
+
+  assert.strictEqual(runtimeUpdates.length, 5);
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { selectedLevel: 2 }
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: { selectedVoicing: 1 }
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
+    setFields: { earTrainAns: "C Major" },
+    incrementFields: { earTrainTotal: 1 }
+  });
+  assert.deepStrictEqual(runtimeUpdates[3], {
+    setFields: { dailyTimer: 60, dailyComplete: false, screen: "daily" },
+    clearTimeouts: ["daily"]
+  });
+  assert.deepStrictEqual(runtimeUpdates[4], {
+    clearTimeouts: ["daily"]
+  });
+
+  assert.strictEqual(completionUpdates.length, 2);
+  assert.deepStrictEqual(completionUpdates[0], {
+    xpDelta: 15,
+    incrementFields: { earTrainScore: 1, earTrainStreak: 1 },
+    history: { type: "ear", detail: "C Major", xp: 15 },
+    checkBadges: true
+  });
+  assert.deepStrictEqual(completionUpdates[1], {
+    xpDelta: 40,
+    setFlags: { dailyComplete: true },
+    incrementFields: { dailyDone: 1 },
+    history: { type: "daily", detail: "Chord Sprint", xp: 40 },
+    checkBadges: true
+  });
+  assert.strictEqual(dailyChallengeRequests.length, 1);
+  assert.strictEqual(dailyChallengeRequests[0].durationSec, 60);
+  assert.strictEqual(dailyCompleteRequests.length, 1);
+  assert.strictEqual(dailyCompleteRequests[0].challengeId, "daily_1");
+});
+
+test("practice action family routes timer cleanup through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var syncRequests = [];
+  var tickCalls = 0;
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.S = {
+    timerActive: false,
+    timer: 45,
+    metronomeOn: false,
+    chordDetectOn: false,
+    lastChordName: "C",
+    currentChord: { name: "C" }
+  };
+  global.T = { session: 42 };
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies = global.__actionFamilies || {};
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.syncLegacyPracticeRuntimeRequest = function(kind, payload) {
+    syncRequests.push({ kind: kind, payload: payload });
+  };
+  global.render = function() {};
+  global.tickS = function() { tickCalls += 1; };
+  global.setTimeout = function() { return 99; };
+  global.clearTimeout = function() {};
+  global.stopMetronome = function() {};
+  global.stopChordDetect = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("toggleTimer"), true);
+  assert.strictEqual(__actionFamilies.practice("toggleTimer"), true);
+  assert.strictEqual(__actionFamilies.practice("doneSession"), true);
+
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { timerActive: true }
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: { timerActive: false },
+    clearTimeouts: ["session"]
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
+    clearTimeouts: ["session"]
+  });
+  assert.deepStrictEqual(runtimeUpdates[3], {
+    setFields: { timerActive: true, timer: 0 }
+  });
+  assert.strictEqual(syncRequests.length, 3);
+  assert.strictEqual(syncRequests[0].kind, "resume");
+  assert.strictEqual(syncRequests[1].kind, "pause");
+  assert.strictEqual(syncRequests[2].kind, "set_remaining");
+  assert.strictEqual(syncRequests[2].payload.remainingSec, 0);
+  assert.strictEqual(tickCalls, 1);
+});
+
+test("utility action family routes curriculum and back navigation through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var utilityRequests = [];
+  var curriculumSyncs = 0;
+  var midiSettingsSyncs = 0;
+  var midiImportSyncs = [];
+  var cloudRequests = [];
+  var editorOpens = [];
+  var homeReturns = [];
+  var utilityReturns = [];
+  var songNavigations = [];
+  var stopTimerCalls = 0;
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.openUtilityScreenRequest = function(screen) {
+    utilityRequests.push(screen);
+    return screen;
+  };
+  global.syncCurriculumStateRequest = function() {
+    curriculumSyncs += 1;
+  };
+  global.syncMidiSettingsStateRequest = function() {
+    midiSettingsSyncs += 1;
+  };
+  global.syncMidiImportStateRequest = function(payload) {
+    midiImportSyncs.push(payload || {});
+    return payload;
+  };
+  global.applyCloudWorkflowRequest = function(action, payload) {
+    cloudRequests.push({ action: action, payload: payload });
+    return payload;
+  };
+  global.buildSeedChartFromImportedMidi = function(importedMidi, assignments, mode) {
+    return { id: "seed_" + mode, importedMidi: importedMidi, assignments: assignments };
+  };
+  global.openEditor = function(kind, chart) {
+    editorOpens.push({ kind: kind, chart: chart });
+  };
+  global.returnFromHomeFamilyRequest = function(payload) {
+    homeReturns.push(payload);
+    return payload;
+  };
+  global.returnFromUtilityFamilyRequest = function(payload) {
+    utilityReturns.push(payload);
+    return payload;
+  };
+  global.applySongNavigationRequest = function(target) {
+    songNavigations.push(target);
+    return target;
+  };
+  global.stopAllTimers = function() {
+    stopTimerCalls += 1;
+  };
+  global.render = function() {};
+  global.saveState = function() {};
+  global.S = {
+    screen: "song_done",
+    tab: "songs",
+    selectedVoicing: 2,
+    activeMidiDeviceId: null,
+    importedMidi: { sourceName: "demo.mid" },
+    importedMidiAssignments: { track_1: "single_note" },
+    feedbackDraft: { category: "bug" }
+  };
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.SONG = "song";
+  global.SCR.SONG_DONE = "song_done";
+  global.SCR.CURRICULUM = "curriculum";
+  global.SCR.HOME = "home";
+  global.SCR.HOME_DASH = "home_dash";
+  global.SCR.SETTINGS = "settings";
+  global.SCR.CLOUD_SETTINGS = "cloud_settings";
+  global.SCR.MIDI_SETTINGS = "midi_settings";
+  global.SCR.MIDI_IMPORT = "midi_import";
+  global.SCR.DAILY = "daily";
+  global.SCR.RECOMMENDATIONS = "recommendations";
+  global.SCR.INSIGHTS = "insights";
+  global.SCR.CHALLENGES = "challenges";
+  global.SCR.CAREER = "career";
+  global.TAB.DAILY = "daily";
+
+  eval(loadJS("js/actions/utility_family.js"));
+
+  assert.strictEqual(__actionFamilies.utilities("setMidiDevice", "device_1"), true);
+  assert.strictEqual(__actionFamilies.utilities("openMidiSettings"), true);
+  assert.strictEqual(__actionFamilies.utilities("openMidiImport"), true);
+  assert.strictEqual(__actionFamilies.utilities("buildMidiSeedChart", "practice"), true);
+  assert.strictEqual(__actionFamilies.utilities("openCloudSettings"), true);
+  assert.strictEqual(__actionFamilies.utilities("feedbackDraftText", "Something felt off"), true);
+  assert.strictEqual(__actionFamilies.utilities("openCurriculum"), true);
+  S.screen = SCR.SONG_DONE;
+  assert.strictEqual(__actionFamilies.utilities("back"), true);
+
+  assert.deepStrictEqual(utilityRequests, ["midi_settings", "midi_import", "cloud_settings", "curriculum"]);
+  assert.strictEqual(curriculumSyncs, 1);
+  assert.strictEqual(midiSettingsSyncs, 2);
+  assert.strictEqual(midiImportSyncs.length, 2);
+  assert.strictEqual(midiImportSyncs[1].seedMode, "practice");
+  assert.deepStrictEqual(cloudRequests, [{ action: "open", payload: undefined }]);
+  assert.strictEqual(editorOpens.length, 1);
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.activeMidiDeviceId === "device_1";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.screen === "midi_settings";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.screen === "midi_import";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedMidiSeedPreview && update.setFields.importedMidiSeedPreview.id === "seed_practice";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.screen === "cloud_settings";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.feedbackDraft && update.setFields.feedbackDraft.category === "bug" && update.setFields.feedbackDraft.text === "Something felt off";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+    setFields: { screen: "curriculum" }
+    });
+  }));
+  assert.deepStrictEqual(songNavigations, ["songs_home"]);
+  assert.strictEqual(homeReturns.length, 1);
+  assert.deepStrictEqual(homeReturns[0], { currentScreen: "home" });
+  assert.strictEqual(utilityReturns.length, 0);
+  assert.strictEqual(stopTimerCalls, 1);
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: { selectedVoicing: 0, screen: "home", tab: "songs" }
+    });
+  }));
+});
+
+test("system action family routes guided and career screen state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var dashboardRequests = [];
+  var utilityRequests = [];
+  var settingsSyncs = [];
+  var careerSongRequests = [];
+  var songBrowserRequests = [];
+  var audioInputSyncs = [];
+  var midiSyncs = 0;
+  var audioStops = 0;
+  var midiInits = 0;
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: { flow: "guided_session" },
+        runtimeState: { activeScreen: "guided_session" }
+      };
+    },
+    getRuntimeState: function() {
+      return { guidedActivityId: "gtr-d02-song", guidedBlockType: "song" };
+    },
+    completeGuidedSession: function() {
+      return { guidedActivityId: null, guidedBlockType: null };
+    }
+  };
+  global.openDashboardSectionRequest = function(section) {
+    dashboardRequests.push(section);
+    return section;
+  };
+  global.openUtilityScreenRequest = function(screen) {
+    utilityRequests.push(screen);
+    return screen;
+  };
+  global.syncSettingsStateRequest = function(payload) {
+    settingsSyncs.push(payload || {});
+    return payload;
+  };
+  global.openCareerSongSelectionRequest = function(payload) {
+    careerSongRequests.push(payload);
+    return payload;
+  };
+  global.getCareerItem = function(kind, id) {
+    if (kind === "songs" && id === "career_anthem") {
+      return { title: "Career Anthem", artist: "Spark Career" };
+    }
+    return null;
+  };
+  global.applyGuidedNavigationRequest = function() {};
+  global.applySongBrowserRequest = function(type, payload) {
+    songBrowserRequests.push({ type: type, payload: payload });
+    return payload;
+  };
+  global.syncAudioInputRuntimeRequest = function(payload) {
+    audioInputSyncs.push(payload);
+    return payload;
+  };
+  global.syncMidiSettingsStateRequest = function() {
+    midiSyncs += 1;
+  };
+  global.stopAudioTest = function() {
+    audioStops += 1;
+  };
+  global.initMIDI = function() {
+    midiInits += 1;
+  };
+  global.applyThemeSetting = function() {};
+  global.clearTimeout = function() {};
+  global.clearInterval = function() {};
+  global.stopMetronome = function() {};
+  global.render = function() {};
+  global.saveState = function() {};
+  global.S = global.S || {};
+  global.T = {};
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.CAREER = "career";
+  global.SCR.PERFORM_SONG = "perform_song";
+  global.SCR.GUIDED_DONE = "guided_done";
+  global.SCR.HOME = "home";
+  global.TAB.PRACTICE = "practice";
+  global.S.performArrangementType = "lead";
+  global.S.performDifficulty = "hard";
+  global.S.metronomeOn = false;
+  global.S.practiceIntention = "";
+  global.S.settings = { theme: "dark", uiVolume: 0.5, practiceReminder: false, accessibility: {} };
+  global.S.songSort = "level";
+  global.S.songSortAsc = true;
+  global.S.songFilter = "";
+  global.S.focusMode = false;
+  global.S.tab = "songs";
+  global.S.breakDismissed = false;
+  global.S.sessionStartTime = 0;
+  global.S.showShortcuts = false;
+  global.S.audioInputDevices = [{ id: "usb-1", name: "USB Interface" }];
+  global.S.audioInputId = "";
+  global.S.midiEnabled = false;
+  global.S.midiOutput = { id: "old-midi" };
+  global.S.midiDevices = [{ id: "old-midi", name: "Old MIDI" }];
+
+  eval(loadJS("js/actions/system_family.js"));
+
+  assert.strictEqual(__actionFamilies.system("setIntention", "After coffee"), true);
+  assert.strictEqual(__actionFamilies.system("setTheme", "ember"), true);
+  assert.strictEqual(__actionFamilies.system("setUIVolume", "75"), true);
+  assert.strictEqual(__actionFamilies.system("togglePracticeReminder"), true);
+  assert.strictEqual(__actionFamilies.system("openSettings"), true);
+  assert.strictEqual(__actionFamilies.system("songSort", "level"), true);
+  assert.strictEqual(__actionFamilies.system("songFilter", "ballad"), true);
+  assert.strictEqual(__actionFamilies.system("toggleFocus"), true);
+  assert.strictEqual(__actionFamilies.system("dismissBreak"), true);
+  assert.strictEqual(__actionFamilies.system("toggleShortcuts"), true);
+  assert.strictEqual(__actionFamilies.system("selectAudioInput", "usb-1"), true);
+  assert.strictEqual(__actionFamilies.system("toggleMidi"), true);
+  assert.strictEqual(__actionFamilies.system("toggleMidi"), true);
+  assert.strictEqual(__actionFamilies.system("openCareer"), true);
+  assert.strictEqual(__actionFamilies.system("openCareerSong", "career_anthem"), true);
+  assert.strictEqual(__actionFamilies.system("guidedComplete"), true);
+
+  assert.deepStrictEqual(songBrowserRequests, [
+    { type: "song_sort", payload: { songSort: "level", songSortAsc: false } },
+    { type: "song_filter", payload: { songFilter: "ballad" } }
+  ]);
+  assert.deepStrictEqual(dashboardRequests, ["career"]);
+  assert.deepStrictEqual(utilityRequests, ["settings"]);
+  assert.strictEqual(settingsSyncs[0].theme, "ember");
+  assert.strictEqual(audioStops, 1);
+  assert.deepStrictEqual(audioInputSyncs, [{
+    devices: [{ id: "usb-1", name: "USB Interface" }],
+    inputId: "usb-1",
+    testingId: "",
+    testLevel: 0
+  }]);
+  assert.strictEqual(midiInits, 1);
+  assert.strictEqual(midiSyncs, 2);
+  assert.strictEqual(careerSongRequests.length, 1);
+  assert.strictEqual(careerSongRequests[0].songId, "career_anthem");
+  assert.strictEqual(careerSongRequests[0].difficultyId, "hard");
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({ setFields: { screen: "career" } });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: {
+        currentSong: { title: "Career Anthem", artist: "Spark Career" },
+        performSongData: { title: "Career Anthem", artist: "Spark Career" },
+        performSongId: "career_anthem",
+        screen: "perform_song"
+      },
+      save: false
+    });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: { screen: "guided_done" },
+      save: false
+    });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.practiceIntention === "After coffee";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.settings && update.setFields.settings.theme === "ember";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.settings && update.setFields.settings.uiVolume === 0.75;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.settings && update.setFields.settings.practiceReminder === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.screen === "settings" && update.setFields._showroomOverride === "settings";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.songSort === "level" && update.setFields.songSortAsc === false;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.songFilter === "ballad";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.focusMode === true && update.setFields.tab === "practice";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.breakDismissed === true && typeof update.setFields.sessionStartTime === "number";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.showShortcuts === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.audioInputId === "usb-1";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.midiEnabled === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.midiEnabled === false && update.setFields.midiOutput === null && Array.isArray(update.setFields.midiDevices);
+  }));
+});
+
+test("system action family routes live tuner detection state through the shared bridge", function() {
+  var source = loadJS("js/actions/system_family.js");
+
+  assert.strictEqual(source.indexOf("S.tunerNote ="), -1);
+  assert.strictEqual(source.indexOf("S.tunerFreq ="), -1);
+  assert.strictEqual(source.indexOf("S.tunerCents ="), -1);
+  assert.ok(/setLegacyFields\(\{\s*tunerNote: result\.note/.test(source));
+  assert.ok(/setLegacyFields\(\{\s*tunerNote: null/.test(source));
+});
+
+test("system action family routes metronome BPM changes through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var metronomeStates = [];
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      runtimeUpdates.push(update);
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.sparkCore = {
+    syncMetronomeRuntimeState: function(payload) {
+      metronomeStates.push(payload);
+      return payload;
+    }
+  };
+  global.syncMetronomeRuntimeRequest = function(payload) {
+    return global.sparkCore.syncMetronomeRuntimeState(payload);
+  };
+  global.S = global.S || {};
+  global.T = {};
+  global.S.metronomeOn = false;
+  global.S.metronomeBpm = 80;
+  global.S._metroBeat = 1;
+  global.S._metroBeats = 4;
+  global.clearTimeout = function() {};
+  global.startMetronome = function() {};
+  global.stopMetronome = function() {};
+  global.render = function() {};
+  global.saveState = function() {};
+  global.showMicroToast = function() {};
+  global.SCR = {};
+  global.TAB = {};
+
+  eval(loadJS("js/actions/system_family.js"));
+
+  assert.strictEqual(__actionFamilies.system("metroBpm", "112"), true);
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { metronomeBpm: 112 },
+    save: false
+  });
+  assert.deepStrictEqual(metronomeStates[0], {
+    active: false,
+    bpm: 112,
+    beat: 1,
+    beatsPerBar: 4
+  });
+  assert.strictEqual(S.metronomeBpm, 112);
+});
+
+test("tools action family routes imported song and rhythm starts through the shared bridge", function() {
+  var toolsSource = loadJS("js/actions/tools_family.js");
+  var runtimeUpdates = [];
+  var songRequests = [];
+  var rhythmRequests = [];
+  var rhythmSyncs = [];
+  var runnerSyncs = [];
+  var songBrowserRequests = [];
+  var communityFetches = 0;
+  var fetchCalls = [];
+  var existingBridge = global.SparkProgressBridge || {};
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = Object.assign({}, existingBridge, {
+    applyLegacyActivityRuntime: function(update) {
+      if (update && update.setFields) {
+        Object.keys(update.setFields).forEach(function(key) {
+          S[key] = update.setFields[key];
+        });
+      }
+      runtimeUpdates.push(update);
+      return update;
+    }
+  });
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.openSongSessionRequest = function(payload) {
+    songRequests.push(payload);
+    return payload;
+  };
+  global.openLegacyRhythmGameRequest = function(payload) {
+    rhythmRequests.push(payload);
+    return payload;
+  };
+  global.syncLegacyRhythmRuntimeRequest = function(payload) {
+    rhythmSyncs.push(payload);
+    return payload;
+  };
+  global.syncLegacyRunnerRuntimeRequest = function(payload) {
+    runnerSyncs.push(payload);
+    return payload;
+  };
+  global.applySongBrowserRequest = function(action, payload) {
+    songBrowserRequests.push({ action: action, payload: payload });
+    return payload;
+  };
+  global.fetchCommunity = function() {
+    communityFetches += 1;
+  };
+  global.fetch = function(url, options) {
+    fetchCalls.push({ url: url, options: options });
+    return {
+      then: function(fn) {
+        fn({ json: function() { return {}; } });
+        return {
+          then: function(next) {
+            next({});
+            return { catch: function() {} };
+          }
+        };
+      }
+    };
+  };
+  global.escHTML = function(value) { return String(value); };
+  global.parseChordSheet = function(text) {
+    if (text === "bad chart") return { error: "Could not parse chart" };
+    return {
+      chords: ["D Major", "A Major"],
+      progression: ["D Major", "A Major", "G Major", "A Major"]
+    };
+  };
+  global.render = function() {};
+  global.saveState = function() {};
+  global.snd = function() {};
+  global.strumChord = function() {};
+  global.rhythmTick = function() {};
+  global.changeRunnerTarget = function() {};
+  global.finishRunner = function() {};
+  global.setInterval = function(fn) {
+    fn();
+    return 123;
+  };
+  global.clearInterval = function() {};
+  global.requestAnimationFrame = function() { return 1; };
+  global.performance = { now: function() { return 2500; } };
+  global.S = global.S || {};
+  global.T = {};
+  global.SCR = global.SCR || {};
+  global.SCR.SONG = "song";
+  global.S.importedSongs = [{
+    title: "Imported Groove",
+    artist: "Spark User",
+    bpm: 96,
+    chords: ["Am", "F"],
+    progression: ["Am", "F", "C", "G"],
+    pattern: ["D", "U"]
+  }];
+  global.S.importText = "";
+  global.S.importedSong = null;
+  global.S.importError = null;
+  global.S.communityTab = "browse";
+  global.S.communitySearch = "";
+  global.S.communitySort = "popular";
+  global.S.submitSong = {
+    title: "Shared Song",
+    artist: "Spark Artist",
+    chords: ["C Major", "G Major"],
+    progression: ["C Major", "G Major"],
+    bpm: 102,
+    pattern: [],
+    submittedBy: "Tester"
+  };
+  global.S.rhythmBpm = 120;
+  global.S.rhythmActive = false;
+  global.S.dualChord = "C Major";
+  global.S.dualAnchorOn = false;
+  global.S.dailyGoalMinutes = 10;
+  global.S.customSets = [{ name: "Old Set", chords: ["C Major", "G Major"] }];
+  global.S.editingSet = false;
+  global.S.editingSetIdx = -1;
+  global.S.customSetName = "";
+  global.S.customSetChords = [];
+  global.S.rhythmResults = { score: 20 };
+  global.S.progPickerOpen = false;
+  global.S.progChords = ["C Major", "G Major"];
+  global.S.progBpm = 90;
+  global.S.progPlaying = false;
+  global.S.progBeat = 0;
+  global.S.runnerResults = { score: 50 };
+  global.S.runnerActive = true;
+  global.S.runnerTarget = { name: "C Major" };
+  global.S.runnerScore = 0;
+  global.S.runnerCombo = 0;
+  global.S.runnerMaxCombo = 0;
+  global.S.runnerLives = 3;
+  global.S.runnerDistance = 1200;
+  global.S.runnerObstacles = [{ id: 1, x: 62, isTarget: true, hit: false, result: null }];
+  global.COMMON_PROGRESSIONS = [
+    { name: "Axis", key: "C", chords: ["C Major", "G Major", "A Minor", "F Major"] }
+  ];
+  global.COMMUNITY_URL = "https://community.example";
+  global.CHORDS = { 1: [{ name: "C Major" }, { name: "G Major" }] };
+  global.S.level = 1;
+
+  assert.strictEqual(toolsSource.indexOf("S.importMsg ="), -1);
+
+  eval(toolsSource);
+
+  assert.strictEqual(__actionFamilies.tools("dualChord", "G Major"), true);
+  assert.strictEqual(__actionFamilies.tools("toggleAnchor"), true);
+  assert.strictEqual(__actionFamilies.tools("setGoal", "25"), true);
+  assert.strictEqual(__actionFamilies.tools("newSet"), true);
+  assert.strictEqual(__actionFamilies.tools("setName", "Bright Set"), true);
+  assert.strictEqual(__actionFamilies.tools("toggleSetChord", "C Major"), true);
+  assert.strictEqual(__actionFamilies.tools("toggleSetChord", "G Major"), true);
+  assert.strictEqual(__actionFamilies.tools("saveSet"), true);
+  assert.strictEqual(__actionFamilies.tools("deleteSet", "1"), true);
+  assert.strictEqual(__actionFamilies.tools("editSet", "0"), true);
+  assert.strictEqual(__actionFamilies.tools("cancelSet"), true);
+  assert.strictEqual(__actionFamilies.tools("rhythmBpm", "132"), true);
+  assert.strictEqual(__actionFamilies.tools("rhythmResultsBack"), true);
+  assert.strictEqual(__actionFamilies.tools("progPickerToggle"), true);
+  assert.strictEqual(__actionFamilies.tools("progAdd", "A Minor"), true);
+  assert.strictEqual(__actionFamilies.tools("progRemove", "1"), true);
+  assert.strictEqual(__actionFamilies.tools("progMove", "1:left"), true);
+  assert.strictEqual(__actionFamilies.tools("progTemplate", "0"), true);
+  assert.strictEqual(__actionFamilies.tools("progBpm", "112"), true);
+  assert.strictEqual(__actionFamilies.tools("progPlay"), true);
+  assert.strictEqual(__actionFamilies.tools("progPlay"), true);
+  assert.strictEqual(__actionFamilies.tools("progClear"), true);
+  assert.strictEqual(__actionFamilies.tools("importText", "D A G A"), true);
+  assert.strictEqual(__actionFamilies.tools("parseImport"), true);
+  assert.strictEqual(__actionFamilies.tools("importTitle", "Bridge Import"), true);
+  assert.strictEqual(__actionFamilies.tools("importArtist", "Core User"), true);
+  assert.strictEqual(__actionFamilies.tools("importBpm", "104"), true);
+  assert.strictEqual(__actionFamilies.tools("saveImport"), true);
+  assert.strictEqual(__actionFamilies.tools("communityTab", "latest"), true);
+  assert.strictEqual(__actionFamilies.tools("communitySearch", "groove"), true);
+  assert.strictEqual(__actionFamilies.tools("communitySort", "newest"), true);
+  assert.strictEqual(__actionFamilies.tools("submitField", "title:Shared Song Updated"), true);
+  assert.strictEqual(__actionFamilies.tools("submitToggleChord", "A Minor"), true);
+  assert.strictEqual(__actionFamilies.tools("submitSong"), true);
+  assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
+  assert.strictEqual(__actionFamilies.tools("deleteImport", "1"), true);
+  assert.strictEqual(__actionFamilies.tools("runnerResultsBack"), true);
+  assert.strictEqual(__actionFamilies.tools("startRhythm"), true);
+  assert.strictEqual(__actionFamilies.tools("rhythmTap"), true);
+  assert.strictEqual(__actionFamilies.tools("runnerStrum"), true);
+
+  assert.strictEqual(songRequests.length, 1);
+  assert.strictEqual(songRequests[0].source, "imported");
+  assert.strictEqual(songRequests[0].songData.title, "Imported Groove");
+  assert.strictEqual(rhythmRequests.length, 1);
+  assert.ok(Array.isArray(rhythmRequests[0].beats));
+  assert.ok(rhythmRequests[0].beats.length > 0);
+  assert.strictEqual(rhythmSyncs.length, 1);
+  assert.strictEqual(rhythmSyncs[0].score, 100);
+  assert.strictEqual(rhythmSyncs[0].combo, 1);
+  assert.strictEqual(runnerSyncs.length, 1);
+  assert.strictEqual(runnerSyncs[0].score, 100);
+  assert.strictEqual(runnerSyncs[0].combo, 1);
+  assert.ok(runtimeUpdates.some(function(update) {
+    return JSON.stringify(update) === JSON.stringify({
+      setFields: {
+        selectedSong: global.S.importedSongs[0],
+        songPlaying: false,
+        songBeat: 0,
+        screen: "song"
+      },
+      clearIntervals: ["song"],
+      save: undefined
+    });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update &&
+      update.setFields &&
+      update.setFields.rhythmActive === true &&
+      Array.isArray(update.setFields.rhythmBeats) &&
+      update.setFields.rhythmScore === 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update &&
+      update.setFields &&
+      Array.isArray(update.setFields.rhythmBeats) &&
+      update.setFields.rhythmBeats[0] &&
+      update.setFields.rhythmBeats[0].hit === true &&
+      update.setFields.rhythmScore === 100 &&
+      update.setFields.rhythmCombo === 1 &&
+      update.setFields.rhythmMaxCombo === 1;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update &&
+      update.setFields &&
+      Array.isArray(update.setFields.runnerObstacles) &&
+      update.setFields.runnerObstacles[0] &&
+      update.setFields.runnerObstacles[0].hit === true &&
+      update.setFields.runnerScore === 100 &&
+      update.setFields.runnerCombo === 1 &&
+      update.setFields.runnerMaxCombo === 1 &&
+      update.setFields.runnerLives === 3;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.dualChord === "G Major";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.dualAnchorOn === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.dailyGoalMinutes === 25;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.customSetName === "Bright Set";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.customSetChords) && update.setFields.customSetChords.indexOf("C Major") >= 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.customSets) && update.setFields.customSets.some(function(set) {
+      return set && set.name === "Bright Set";
+    });
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.rhythmBpm === 132;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Object.prototype.hasOwnProperty.call(update.setFields, "rhythmResults") && update.setFields.rhythmResults === null;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progPickerOpen === true;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.progChords) && update.setFields.progChords.indexOf("A Minor") >= 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progBpm === 112;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progPlaying === true && update.setFields.progBeat === 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progBeat === 1;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.progPlaying === false && Array.isArray(update.clearIntervals) && update.clearIntervals.indexOf("prog") >= 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.progChords) && update.setFields.progChords.length === 0;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importText === "D A G A";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedSong && update.setFields.importedSong.title === "Imported Song";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedSong && update.setFields.importedSong.title === "Bridge Import";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedSong && update.setFields.importedSong.artist === "Core User";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.importedSong && update.setFields.importedSong.bpm === 104;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.importedSongs) && update.setFields.importedSongs.length === 2;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.importedSongs) && update.setFields.importedSongs.length === 1;
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.communityTab === "latest";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.communitySearch === "groove";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.communitySort === "newest";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Object.prototype.hasOwnProperty.call(update.setFields, "runnerResults") && update.setFields.runnerResults === null;
+  }));
+  assert.deepStrictEqual(songBrowserRequests, [
+    { action: "community_tab", payload: { communityTab: "latest" } },
+    { action: "community_search", payload: { communitySearch: "groove" } },
+    { action: "community_sort", payload: { communitySort: "newest" } }
+  ]);
+  assert.strictEqual(communityFetches, 3);
+  assert.strictEqual(fetchCalls.length, 1);
+  assert.strictEqual(fetchCalls[0].url, "https://community.example/api/songs");
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.submitSong && update.setFields.submitSong.title === "" && update.setFields.communityTab === "browse";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.submitSong && update.setFields.submitSong.title === "Shared Song Updated";
+  }));
+  assert.ok(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.submitSong && Array.isArray(update.setFields.submitSong.chords) && update.setFields.submitSong.chords.indexOf("A Minor") >= 0;
+  }));
+  assert.strictEqual(S.dualChord, "G Major");
+  assert.strictEqual(S.dualAnchorOn, true);
+  assert.strictEqual(S.dailyGoalMinutes, 25);
+  assert.strictEqual(S.editingSet, false);
+  assert.deepStrictEqual(S.customSets, [{ name: "Old Set", chords: ["C Major", "G Major"] }]);
+  assert.strictEqual(S.rhythmBpm, 132);
+  assert.deepStrictEqual(S.progChords, []);
+  assert.strictEqual(S.progPlaying, false);
+  assert.strictEqual(S.importedSongs.length, 1);
+  assert.strictEqual(S.importedSong, null);
+  assert.strictEqual(S.importText, "");
+  assert.strictEqual(S.importError, null);
+  assert.strictEqual(S.communityTab, "browse");
+  assert.strictEqual(S.communitySearch, "groove");
+  assert.strictEqual(S.communitySort, "newest");
+  assert.strictEqual(S.submitSong.title, "");
+  assert.strictEqual(S.runnerResults, null);
+});
+
+test("practice planning helpers can resolve sparkCore from the global binding", function() {
+  var core = createDefaultSparkCore();
+  var syncedChallenge = null;
+  var syncedComplete = null;
+  global.window = {};
+  global.sparkCore = core;
+  eval(loadJS("js/performance/recommendations.js"));
+  eval(loadJS("js/performance/practice_engine.js"));
+  eval(loadJS("js/practice/plan.js"));
+  var legacyGenerateDailyPracticePlan = global.window.generateDailyPracticePlan;
+  var legacyCompletePracticeItem = global.window.completePracticeItem;
+  var performanceGeneratePracticePlan = global.window.generatePracticePlan;
+  var performanceMarkPracticePlanItem = global.window.markPracticePlanItem;
+  var chooseDailyChallenge = global.window.choosePerformanceDailyChallenge;
+  var completeDailyChallenge = global.window.markPerformanceDailyComplete;
+
+  var plan = legacyGenerateDailyPracticePlan();
+  assert.ok(plan);
+  assert.strictEqual(plan.items.length, 2);
+  assert.strictEqual(plan.curriculum.nextLessonId, "session_1");
+  assert.strictEqual(core.getRuntimeState().activeFlow, "daily_practice");
+
+  var completion = legacyCompletePracticeItem(plan.items[0].id, { accuracy: 0.82 });
+  assert.ok(completion);
+  assert.strictEqual(completion.planCompleted, false);
+
+  var performancePlan = performanceGeneratePracticePlan();
+  assert.ok(performancePlan);
+  assert.strictEqual(performancePlan.items.length, 2);
+
+  var performanceCompletion = performanceMarkPracticePlanItem(performancePlan.items[1].id);
+  assert.ok(performanceCompletion);
+  assert.strictEqual(typeof performanceCompletion.planCompleted, "boolean");
+
+  core.syncPerformanceDailyChallengeState = function(challenge, isComplete) {
+    syncedChallenge = challenge;
+    syncedComplete = isComplete;
+  };
+
+  var challenge = chooseDailyChallenge();
+  assert.ok(challenge);
+  assert.strictEqual(syncedChallenge.id, challenge.id);
+  assert.strictEqual(syncedComplete, false);
+
+  var xp = completeDailyChallenge();
+  assert.strictEqual(xp, challenge.xp || 0);
+  assert.strictEqual(syncedChallenge.id, challenge.id);
+  assert.strictEqual(syncedComplete, true);
+
+  delete global.sparkCore;
+});
+
+test("performance and studio action families can resolve sparkCore from the global binding", function() {
+  var syncCalls = [];
+  var editorSyncs = [];
+  var runtimeUpdates = [];
+  var performanceSelections = [];
+  var practicePlanRequests = [];
+  var segmentLookups = [];
+  var runtimeCompletions = [];
+  global.window = {};
+  global.sparkCore = {
+    startSession: function(payload) {
+      return payload;
+    },
+    syncPerformanceRuntimeState: function(action, payload) {
+      syncCalls.push({ action: action, payload: payload });
+      return payload;
+    },
+    getRuntimeState: function() {
+      return {
+        performanceSongIndex: 4,
+        performanceSongTitle: "Night Drive"
+      };
+    },
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "warmup_1", type: "practice", exerciseIds: ["ex_warmup"] }
+          ],
+          exercises: [
+            { id: "ex_warmup", type: "practice", data: { core: { skill: "timing" }, gameplay: {} } }
+          ]
+        },
+        runtimeState: {
+          performanceTargetTechnique: "tap"
+        }
+      };
+    },
+    getSegmentById: function(id) {
+      segmentLookups.push(id);
+      return {
+        meta: {
+          gameplayPayload: { chartId: "seg_chart" }
+        }
+      };
+    }
+  };
+  global.window.SparkSessionRuntime = {
+    completeSegmentById: function(id, result, options) {
+      runtimeCompletions.push({ id: id, result: result, options: options });
+      return { hasNext: false, nextIndex: -1 };
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    runtimeUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.openPerformanceSongSelectionRequest = function(payload) {
+    performanceSelections.push(payload);
+    return payload;
+  };
+  global.syncPerformanceEditorDocumentState = function(chart, options) {
+    editorSyncs.push({ chart: chart, options: options || {} });
+  };
+  global.applyPerformanceEditorCoreMutation = function(action, payload) {
+    if (action === "set_title") {
+      return {
+        chart: Object.assign({}, S.performEditorChart, { title: payload.title })
+      };
+    }
+    if (action === "set_bpm") {
+      return {
+        chart: Object.assign({}, S.performEditorChart, { bpm: payload.bpm })
+      };
+    }
+    return null;
+  };
+  global.openPracticePlanScreenRequest = function(payload) {
+    practicePlanRequests.push({ kind: "open", payload: payload || {} });
+    return payload || {};
+  };
+  global.completeDailyPracticePlanRequest = function(payload) {
+    practicePlanRequests.push({ kind: "complete", payload: payload || {} });
+    return payload || {};
+  };
+  global.openDailyPracticePlanRequest = function(payload) {
+    practicePlanRequests.push({ kind: "regenerate", payload: payload || {} });
+    return payload || {};
+  };
+  global.render = function() {};
+  global.saveState = function() {};
+  global.setTimeout = function(fn) { if (typeof fn === "function") fn(); return 1; };
+  global.performance = { now: function() { return 1000; } };
+  global.Blob = function(parts, opts) { this.parts = parts; this.opts = opts; };
+  global.URL = {
+    createObjectURL: function() { return "blob:mock"; },
+    revokeObjectURL: function() {}
+  };
+  global.document = {
+    body: {
+      appendChild: function() {},
+      removeChild: function() {}
+    },
+    createElement: function() {
+      return {
+        click: function() {}
+      };
+    }
+  };
+  global.resolveModuleExerciseLaunchOptions = function(v) { return v; };
+  global.buildModuleExerciseRhythmPayload = function() { return null; };
+  global.startRhythmHighwaySegment = function() { return true; };
+  global._createRhythmHighwayLoopSpec = function() { return { startSec: 0, endSec: 4 }; };
+  global.applyPerformanceDifficultyToState = function(v) {
+    S.performDifficulty = v || "normal";
+  };
+  global.applyPerformanceStemPreset = function(v) {
+    S.performPracticePreset = v;
+  };
+  global.PerformanceTransport = {
+    setSpeed: function(v) {
+      S.performSpeed = v;
+    }
+  };
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.PERFORM_SONG = "performSong";
+  global.SCR.PLAN = "plan";
+  global.S.screen = "home";
+  global.S.performArrangementType = "chords";
+  global.S.performDifficulty = "normal";
+  global.S.performSpeed = 1;
+  global.S.performPracticePreset = "full_mix";
+  global.S.performMode = "midi";
+  global.S.performTargetTechnique = null;
+  global.S.performEditorMode = "chords";
+  global.S.performEditorSnap = "1/8";
+  global.S.performEditorDirty = false;
+  global.S.performEditorChart = {
+    id: "custom_chart",
+    title: "Old Chart",
+    artist: "Custom",
+    bpm: 90,
+    events: [],
+    phrases: []
+  };
+  global.S.activeCoreSegmentId = "segment_7";
+  global.S.rhythmHighwaySnapshot = {};
+  global.S.performChart = { phrases: [], events: [] };
+  global.S.performResults = { phraseStats: [] };
+
+  eval(loadJS("js/actions/performance_family.js"));
+  eval(loadJS("js/actions/studio_family.js"));
+
+  __actionFamilies.performance("performArrangement", "rhythm_chords");
+  __actionFamilies.performance("performDifficulty", "hard");
+  __actionFamilies.performance("performSpeed", "0.8");
+  __actionFamilies.performance("performPracticePreset", "guitar_solo");
+  __actionFamilies.performance("performStatsFocus", "accuracy");
+  __actionFamilies.performance("editorMode", "lead");
+  __actionFamilies.performance("editorSnap", "1/16");
+  __actionFamilies.performance("editorTitle", "Bridge Chart");
+  __actionFamilies.performance("editorBpm", "128");
+  __actionFamilies.studio("openPlan");
+  __actionFamilies.studio("completePlanItem", "warmup_1");
+  __actionFamilies.studio("regeneratePlan");
+  __actionFamilies.studio("planStartPerformanceSong", "night_drive|rhythm_chords|hard");
+  __actionFamilies.studio("rhythmHighwayLoopWindow");
+
+  assert.deepStrictEqual(syncCalls.map(function(entry) { return entry.action; }), [
+    "configure",
+    "configure",
+    "configure",
+    "configure",
+    "configure_stats"
+  ]);
+  assert.strictEqual(syncCalls[0].payload.arrangementType, "rhythm_chords");
+  assert.strictEqual(syncCalls[1].payload.songIndex, 4);
+  assert.strictEqual(syncCalls[1].payload.songTitle, "Night Drive");
+  assert.strictEqual(syncCalls[2].payload.speed, 0.8);
+  assert.strictEqual(syncCalls[3].payload.preset, "guitar_solo");
+  assert.strictEqual(syncCalls[4].payload.focus, "accuracy");
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorMode === "lead";
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorSnap === "1/16";
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorChart && update.setFields.performEditorChart.title === "Bridge Chart";
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorChart && update.setFields.performEditorChart.bpm === 128;
+  }), true);
+  assert.strictEqual(S.performEditorMode, "lead");
+  assert.strictEqual(S.performEditorSnap, "1/16");
+  assert.strictEqual(S.performEditorChart.title, "Bridge Chart");
+  assert.strictEqual(S.performEditorChart.bpm, 128);
+  assert.strictEqual(S.performEditorDirty, true);
+  assert.strictEqual(editorSyncs.length, 4);
+  assert.deepStrictEqual(runtimeCompletions, [{
+    id: "warmup_1",
+    result: null,
+    options: { autoAdvance: false }
+  }]);
+  assert.deepStrictEqual(practicePlanRequests, [
+    { kind: "open", payload: {} },
+    { kind: "regenerate", payload: { forceRebuild: true } }
+  ]);
+  assert.strictEqual(performanceSelections.length, 1);
+  assert.strictEqual(performanceSelections[0].songId, "night_drive");
+  assert.strictEqual(performanceSelections[0].arrangementType, "rhythm_chords");
+  assert.strictEqual(performanceSelections[0].difficultyId, "hard");
+  assert.deepStrictEqual(segmentLookups, ["segment_7"]);
+
+  delete global.sparkCore;
+});
+
+test("studio action family routes plan launch state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var skillFocusRequests = [];
+  var planRequests = [];
+  var rhythmStarts = [];
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: { flow: "daily_practice" },
+        runtimeState: { activeScreen: "daily_practice" }
+      };
+    },
+    getSegmentById: function() {
+      return {
+        meta: {
+          gameplayPayload: { chartId: "loop_chart" }
+        }
+      };
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    runtimeUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.openPracticePlanScreenRequest = function(payload) {
+    planRequests.push(payload || {});
+    return payload || {};
+  };
+  global.setSkillTreeFocusRequest = function(focus) {
+    skillFocusRequests.push(focus);
+    return focus;
+  };
+  global.startRhythmHighwaySegment = function(segmentId, preset) {
+    rhythmStarts.push({ segmentId: segmentId, preset: preset, loop: arguments.length > 2 ? arguments[2] : undefined });
+    return true;
+  };
+  global._createRhythmHighwayLoopSpec = function(payload) {
+    return { chartId: payload.chartId, startSec: 1, endSec: 5 };
+  };
+  global.findChordByName = function(name) {
+    return { name: name };
+  };
+  global.render = function() {};
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.HOME = "home";
+  global.SCR.DRILL = "drill";
+  global.SCR.PLAN = "plan";
+  global.SCR.GUIDED = "guided";
+  global.TAB.PRACTICE = "practice";
+  global.S = global.S || {};
+  global.S.activeCoreSegmentId = "segment_7";
+  global.S.rhythmHighwayPreset = "spark_learning";
+  global.S.rhythmHighwayHeldMask = 0;
+  global.S.rhythmHighwaySnapshot = {};
+
+  eval(loadJS("js/actions/studio_family.js"));
+
+  __actionFamilies.studio("planStartWarmup");
+  __actionFamilies.studio("planStartTransition", "C Major|G Major");
+  __actionFamilies.studio("planStartRhythm", "110");
+  __actionFamilies.studio("rhythmHighwayPreset", "tight");
+  __actionFamilies.studio("rhythmHighwayLane", "2");
+  __actionFamilies.studio("rhythmHighwayLoopWindow");
+  __actionFamilies.studio("rhythmHighwayClearLoop");
+  __actionFamilies.studio("skillTreeFocus", "rhythm");
+  __actionFamilies.studio("openPlan");
+
+  assert.deepStrictEqual(runtimeUpdates[0], {
+    setFields: { screen: "home", tab: "practice" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[1], {
+    setFields: {
+      drillChords: [{ name: "C Major" }, { name: "G Major" }],
+      drillIdx: 0,
+      drillTimer: 60,
+      screen: "drill"
+    },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[2], {
+    setFields: { rhythmBpm: 110, rhythmActive: false, screen: "home", tab: "games" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[3], {
+    setFields: { rhythmHighwayPreset: "tight" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[4], {
+    setFields: { rhythmHighwayHeldMask: 4 },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[5], {
+    setFields: { rhythmHighwayLoop: { chartId: "loop_chart", startSec: 1, endSec: 5 } },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[6], {
+    setFields: { rhythmHighwayLoop: null },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[7], {
+    setFields: { skillTreeFocus: "rhythm" },
+    save: false
+  });
+  assert.deepStrictEqual(runtimeUpdates[8], {
+    setFields: { screen: "plan" },
+    save: false
+  });
+  assert.deepStrictEqual(skillFocusRequests, ["rhythm"]);
+  assert.deepStrictEqual(planRequests, [{}]);
+  assert.deepStrictEqual(rhythmStarts, [
+    { segmentId: "segment_7", preset: "tight", loop: undefined },
+    { segmentId: "segment_7", preset: "tight", loop: { chartId: "loop_chart", startSec: 1, endSec: 5 } },
+    { segmentId: "segment_7", preset: "tight", loop: null }
+  ]);
+  assert.strictEqual(S.screen, "plan");
+  assert.strictEqual(S.tab, "games");
+  assert.strictEqual(S.rhythmBpm, 110);
+  assert.strictEqual(S.rhythmHighwayPreset, "tight");
+  assert.strictEqual(S.rhythmHighwayHeldMask, 4);
+  assert.strictEqual(S.rhythmHighwayLoop, null);
+  assert.strictEqual(S.skillTreeFocus, "rhythm");
+});
+
+test("studio action family routes performance editor state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var editorSyncs = [];
+  var saveCalls = 0;
+  global.window = {};
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    runtimeUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.syncPerformanceEditorDocumentState = function(chart, options) {
+    editorSyncs.push({ chart: chart, options: options || {} });
+  };
+  global.applyPerformanceEditorCoreMutation = function(action, payload) {
+    var chart = JSON.parse(JSON.stringify(S.performEditorChart || {
+      id: "chart_1",
+      title: "Bridge Chart",
+      events: [],
+      phrases: []
+    }));
+    if (action === "select_event") return { chart: chart };
+    if (action === "add_event") {
+      chart.events.push({ id: 2, laneLabel: "G", t: 2, dur: 1 });
+      return { chart: chart };
+    }
+    if (action === "delete_event") {
+      chart.events = chart.events.filter(function(event) { return event.id !== payload.id; });
+      return { chart: chart };
+    }
+    if (action === "update_event") {
+      chart.events = chart.events.map(function(event) {
+        return event.id === payload.id ? Object.assign({}, event, { laneLabel: payload.val }) : event;
+      });
+      return { chart: chart };
+    }
+    if (action === "add_phrase") {
+      chart.phrases.push({ id: 1, name: "Chorus", startSec: 8, endSec: 16 });
+      return { chart: chart };
+    }
+    if (action === "select_phrase") return { chart: chart };
+    if (action === "update_phrase") {
+      chart.phrases = chart.phrases.map(function(phrase) {
+        return phrase.id === payload.id ? Object.assign({}, phrase, { name: payload.val }) : phrase;
+      });
+      return { chart: chart };
+    }
+    if (action === "delete_phrase") {
+      chart.phrases = chart.phrases.filter(function(phrase) { return phrase.id !== payload.id; });
+      return { chart: chart };
+    }
+    if (action === "save_to_library") return { library: [chart] };
+    if (action === "load_from_library") return { chart: S.performEditorLibrary[payload.index], library: S.performEditorLibrary };
+    if (action === "delete_from_library") return { library: [] };
+    return null;
+  };
+  global.render = function() {};
+  global.saveState = function() { saveCalls += 1; };
+  global.S = global.S || {};
+  global.S.performEditorMode = "chords";
+  global.S.performEditorDirty = false;
+  global.S.performEditorSelectedEventId = null;
+  global.S.performEditorSelectedPhraseId = null;
+  global.S.performEditorChart = {
+    id: "chart_1",
+    title: "Bridge Chart",
+    events: [{ id: 1, laneLabel: "C", t: 0, dur: 1 }],
+    phrases: [{ id: 0, name: "Verse", startSec: 0, endSec: 8 }]
+  };
+  global.S.performEditorLibrary = [];
+
+  eval(loadJS("js/actions/studio_family.js"));
+
+  __actionFamilies.studio("editorSelectEvent", "1");
+  __actionFamilies.studio("editorAddEvent");
+  __actionFamilies.studio("editorDeleteEvent", "1");
+  __actionFamilies.studio("editorEvt", JSON.stringify({ id: 2, prop: "label", val: "Am" }));
+  __actionFamilies.studio("editorAddPhrase");
+  __actionFamilies.studio("editorSelectPhrase", "1");
+  __actionFamilies.studio("editorPhrase", JSON.stringify({ id: 1, prop: "name", val: "Bridge" }));
+  __actionFamilies.studio("editorDeletePhrase", "1");
+  __actionFamilies.studio("editorSave");
+  __actionFamilies.studio("editorLoad", "0");
+  __actionFamilies.studio("editorDelete", "0");
+
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorSelectedEventId === 1;
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorChart && update.setFields.performEditorChart.events.length === 2;
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorSelectedEventId === null;
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && update.setFields.performEditorSelectedPhraseId === 1;
+  }), true);
+  assert.strictEqual(runtimeUpdates.some(function(update) {
+    return update && update.setFields && Array.isArray(update.setFields.performEditorLibrary);
+  }), true);
+  assert.strictEqual(S.performEditorLibrary.length, 0);
+  assert.strictEqual(S.performEditorDirty, false);
+  assert.strictEqual(saveCalls, 2);
+  assert.strictEqual(editorSyncs.length, 10);
+});
+
+test("performance action family routes showroom and config state through the shared bridge", function() {
+  var runtimeUpdates = [];
+  var performanceSyncs = [];
+  var activated = [];
+  var starts = [];
+  var dailyRequests = [];
+  var inputStarts = [];
+  var speedChanges = [];
+  var saveCalls = 0;
+  global.window = {};
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return {
+        performanceSongIndex: 2,
+        performanceSongTitle: "Night Drive"
+      };
+    },
+    syncPerformanceRuntimeState: function(action, payload) {
+      performanceSyncs.push({ action: action, payload: payload });
+      return payload;
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    runtimeUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.SparkInstruments = {
+    getActive: function() { return null; },
+    getAll: function() {
+      return [{
+        id: "bassspark",
+        appId: "bassspark",
+        instrument: "bass",
+        getData: function() {
+          return {
+            SONGS: [{ id: "night_drive", title: "Night Drive", bpm: 100 }]
+          };
+        }
+      }];
+    },
+    activate: function(appId) {
+      activated.push(appId);
+      S.activeInstrument = appId;
+    }
+  };
+  global.buildPerformanceChartFromSong = function(song) {
+    return { id: "chart_" + song.id, title: song.title, events: [] };
+  };
+  global.startPerformance = function(chart, options) {
+    starts.push({ chart: chart, options: options || null });
+    return true;
+  };
+  global.choosePerformanceDailyChallenge = function() {
+    return {
+      songId: "night_drive",
+      arrangementType: "rhythm_chords",
+      difficultyId: "hard",
+      techniqueKey: "tap"
+    };
+  };
+  global.openPerformanceDailyChallengeRequest = function(payload) {
+    dailyRequests.push(payload || {});
+    return payload || {};
+  };
+  global.resolvePerformanceSongId = function(song) {
+    return song.id || String(song.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  };
+  global.PerformanceInput = {
+    start: function(mode) {
+      inputStarts.push(mode);
+    }
+  };
+  global.PerformanceTransport = {
+    setSpeed: function(speed) {
+      speedChanges.push(speed);
+    }
+  };
+  global.saveState = function() {
+    saveCalls += 1;
+  };
+  global.render = function() {};
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.HOME = "home";
+  global.SCR.PERFORM_SONG = "performSong";
+  global.TAB.PRACTICE = "practice";
+  global.S = global.S || {};
+  global.S.activeInstrument = null;
+  global.S.launcherView = "performance";
+  global.S._showroomOverride = "bass";
+  global.S.performArrangementType = "chords";
+  global.S.performDifficulty = "normal";
+  global.S.performMode = "midi";
+  global.S.performInputSource = "midi";
+  global.S.performSpeed = 1;
+  global.S.performDebug = false;
+  global.SONGS = [{ id: "night_drive", title: "Night Drive", bpm: 100 }];
+
+  eval(loadJS("js/actions/performance_family.js"));
+
+  __actionFamilies.performance("showroomPlayLibrarySong", "night_drive|bass");
+  __actionFamilies.performance("openPerformanceDaily");
+  __actionFamilies.performance("performArrangement", "rhythm_chords");
+  __actionFamilies.performance("performMode", "mic");
+  __actionFamilies.performance("performSpeed", "0.75");
+  __actionFamilies.performance("performDebug");
+  S.selectedSong = null;
+  S.performChart = null;
+  __actionFamilies.performance("showroomStartPerf", "missing");
+
+  assert.deepStrictEqual(activated, ["bassspark"]);
+  assert.strictEqual(starts.length, 1);
+  assert.strictEqual(starts[0].chart.id, "chart_night_drive");
+  assert.strictEqual(dailyRequests.length, 1);
+  assert.strictEqual(dailyRequests[0].songId, "night_drive");
+  assert.strictEqual(dailyRequests[0].difficultyId, "hard");
+  assert.deepStrictEqual(performanceSyncs.map(function(entry) { return entry.action; }), [
+    "configure",
+    "configure",
+    "configure"
+  ]);
+  assert.deepStrictEqual(inputStarts, ["mic"]);
+  assert.deepStrictEqual(speedChanges, [0.75]);
+  assert.strictEqual(saveCalls, 3);
+  assert.deepStrictEqual(runtimeUpdates.map(function(update) { return update && update.setFields; }), [
+    { selectedSong: { id: "night_drive", title: "Night Drive", bpm: 100 } },
+    {
+      performSongData: { id: "night_drive", title: "Night Drive", bpm: 100 },
+      performSongId: "night_drive",
+      performArrangementType: "rhythm_chords",
+      performDifficulty: "hard",
+      screen: "performSong"
+    },
+    { performArrangementType: "rhythm_chords" },
+    { performMode: "mic", performInputSource: "mic" },
+    { performSpeed: 0.75 },
+    { performDebug: true },
+    { screen: "home", tab: "practice" }
+  ]);
+  assert.strictEqual(runtimeUpdates[0].setFields.selectedSong.title, "Night Drive");
+  assert.strictEqual(S.performSongId, "night_drive");
+  assert.strictEqual(S.performArrangementType, "rhythm_chords");
+  assert.strictEqual(S.performMode, "mic");
+  assert.strictEqual(S.performSpeed, 0.75);
+  assert.strictEqual(S.performDebug, true);
+  assert.strictEqual(S.screen, "home");
+  assert.strictEqual(S.tab, "practice");
+
+  delete global.sparkCore;
+});
+
+test("dashboard utility UI surfaces can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return {
+        cloudLoggedIn: true,
+        cloudEmail: "scott@example.com",
+        cloudLastSyncStatus: "ok",
+        cloudLastSyncAt: Date.now() - 60000,
+        curriculumLoading: false,
+        curriculumLastManifestPath: "curriculum/manifest.json",
+        curriculumLastLoadStatus: "ok",
+        curriculumSummaries: [{ id: "guitar", title: "Guitar", trackCount: 1 }],
+        contentLoading: false,
+        contentLastManifestPath: "content/manifest.json",
+        contentLastLoadStatus: "ok",
+        curriculumPackSummaries: [{ id: "starter-pack", title: "Starter Pack", type: "songs" }],
+        midiImportSummary: {
+          tracks: [{ id: "track_1", name: "Piano RH", noteCount: 42 }]
+        },
+        midiImportAssignments: {
+          track_1: "melody"
+        },
+        midiImportSeedMode: "piano_melody",
+        midiImportSeedTitle: "Demo Seed",
+        settingsTheme: "retro"
+      };
+    },
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardRecommendations: [{ id: "rec-1", title: "Recommendation" }],
+          dashboardChallenges: [{ id: "challenge-1", title: "Challenge" }],
+          dashboardInsights: {
+            strongestSkills: [{ bucket: "timing", id: "sixteenth_grid", value: 0.91 }],
+            weakestSkills: [{ bucket: "chords", id: "bm", value: 0.42 }],
+            masteryTrend: { chords: [0.2, 0.5, 0.8] },
+            practiceTrend: { minutes: [5, 10, 15] },
+            recommendationQuality: { totalAccepted: 3, focusedTechnique: { songId: "night_drive", techniqueLabel: "tap notes", accuracy: 78 } },
+            careerTrend: { clearedSongs: 4, averageStars: 3.5, completedStages: 2 }
+          }
+        }
+      };
+    }
+  };
+  global.escHTML = function(value) { return String(value); };
+  global.isLoggedInSpark = function() { return false; };
+  global.SparkCurriculum = { curriculums: {} };
+  global.SparkContent = { packs: {} };
+  global.S = global.S || {};
+  global.S.cloudAuth = { email: null };
+  global.S.cloudSync = { lastSyncStatus: "idle", lastSyncAt: null };
+  global.S.personalInsights = {};
+  global.S.lastInsightRun = Date.now();
+  global.S.importedMidi = null;
+  global.S.importedMidiAssignments = {};
+  global.S.settings = { theme: "dark", uiVolume: 0.5, practiceReminder: false };
+  global.S.releaseInfo = { version: "1.2.3", build: 7 };
+  global.getCurriculumItem = function() { return null; };
+  global.getSettingsCategories = function() {
+    return [
+      { id: "display", title: "Display" },
+      { id: "about", title: "About" }
+    ];
+  };
+  global.renderInsightLineChart = function(series) {
+    return "<chart>" + (series || []).length + "</chart>";
+  };
+  global.getRecommendedCareerSong = function() {
+    return { title: "Career Song" };
+  };
+  global.getActiveSeasonalEvent = function() {
+    return { id: "event-1" };
+  };
+
+  eval(loadJS("js/cloud/ui.js"));
+  eval(loadJS("js/curriculum/curriculum_ui.js"));
+  eval(loadJS("js/home/home_engine.js"));
+  eval(loadJS("js/import/midi_ui.js"));
+  eval(loadJS("js/insights/ui.js"));
+  eval(loadJS("js/settings/settings_ui.js"));
+
+  var cloudHtml = global.window.cloudSettingsPage();
+  var curriculumHtml = global.window.curriculumPage();
+  var dashboardData = global.window.buildHomeDashboardData();
+  var midiHtml = global.window.midiImportPage();
+  var insightsHtml = insightsDashboardPage();
+  var settingsHtml = settingsPage();
+
+  assert.ok(cloudHtml.indexOf("scott@example.com") >= 0);
+  assert.ok(curriculumHtml.indexOf("curriculum/manifest.json") >= 0);
+  assert.strictEqual(dashboardData.recommendations[0].id, "rec-1");
+  assert.strictEqual(dashboardData.challenges[0].id, "challenge-1");
+  assert.strictEqual(dashboardData.insights.careerTrend.completedStages, 2);
+  assert.ok(midiHtml.indexOf("Piano RH") >= 0);
+  assert.ok(midiHtml.indexOf("Demo Seed") >= 0);
+  assert.ok(insightsHtml.indexOf("tap notes is still at 78% in night drive") >= 0);
+  assert.ok(settingsHtml.indexOf("retro") >= 0);
+
+  delete global.sparkCore;
+});
+
+test("song family routes browser, playback, and completion state through the shared bridge", function() {
+  var songSyncs = [];
+  var songCompletions = [];
+  var songRuntimeUpdates = [];
+  var songCompletionUpdates = [];
+  var browserRequests = [];
+  var communityFetches = 0;
+  var strumHits = [];
+  var originalPracticeBridge = global.SparkPracticeBridge;
+  global.window = {};
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return {
+        songSessionSource: "community"
+      };
+    },
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          id: "plan_1"
+        }
+      };
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.applySongBrowserRequest = function(action, payload) {
+    browserRequests.push({ action: action, payload: payload });
+    return payload;
+  };
+  global.fetchCommunity = function() {
+    communityFetches += 1;
+  };
+  global.syncSongRuntimeRequest = function(action, payload) {
+    songSyncs.push({ action: action, payload: payload });
+    return payload;
+  };
+  global.completeSongSessionRequest = function(payload) {
+    songCompletions.push(payload);
+    return payload;
+  };
+  global.snd = function() {};
+  global.render = function() {};
+  global.strumChord = function(name) {
+    strumHits.push(name);
+  };
+  global.setInterval = function(fn) {
+    fn();
+    return 1;
+  };
+  global.clearInterval = function() {};
+  global.fireMicro = function() {};
+  global.trigC = function() {};
+  global.saveState = function() {};
+  global.logHistory = function() {};
+  global.checkBadges = function() {};
+  global._sparkEmit = function() {};
+  global.getActiveInstrumentIdentityForActivity = function() {
+    return { appId: "chordspark" };
+  };
+  global.SparkProgressBridge = global.SparkProgressBridge || {};
+  global.SparkProgressBridge.applyLegacyActivityRuntime = function(update) {
+    if (update && update.setFields) {
+      Object.keys(update.setFields).forEach(function(key) {
+        S[key] = update.setFields[key];
+      });
+    }
+    songRuntimeUpdates.push(update);
+    return update;
+  };
+  global.SparkProgressBridge.applyLegacyActivityCompletion = function(update) {
+    if (update && update.incrementFields) {
+      Object.keys(update.incrementFields).forEach(function(key) {
+        S[key] = (S[key] || 0) + update.incrementFields[key];
+      });
+    }
+    songCompletionUpdates.push(update);
+    return update;
+  };
+  global.window.SparkProgressBridge = global.SparkProgressBridge;
+  global.CHORD_NAME_MAP = {};
+  global.T = {};
+  global.SCR = global.SCR || {};
+  global.TAB = global.TAB || {};
+  global.SCR.SONG_DONE = "song_done";
+  global.SCR.HOME = "home";
+  global.TAB.SONGS = "songs";
+  global.S = global.S || {};
+  global.S.selectedSong = {
+    title: "Night Drive",
+    bpm: 120,
+    progression: ["C", "G", "Am"]
+  };
+  global.S.songsSubTab = "library";
+  global.S.songPlaying = false;
+  global.S.songBeat = 0;
+  global.S.songsPlayed = 0;
+
+  eval(loadJS("js/actions/song_family.js"));
+  var showroomSource = loadJS("js/showroom/spark-showroom.js");
+
+  __actionFamilies.songs("songsSubTab", "community");
+  __actionFamilies.songs("toggleSong");
+  __actionFamilies.songs("completeSong");
+  __actionFamilies.songs("songDoneHome");
+
+  assert.strictEqual(songSyncs[0].payload.source, "community");
+  assert.strictEqual(songSyncs[1].action, "tick");
+  assert.strictEqual(songSyncs[1].payload.songBeat, 1);
+  assert.strictEqual(songCompletions[0].source, "community");
+  assert.strictEqual(songRuntimeUpdates.length, 5);
+  assert.deepStrictEqual(songRuntimeUpdates[0], {
+    setFields: { songsSubTab: "community" }
+  });
+  assert.deepStrictEqual(songRuntimeUpdates[1], {
+    setFields: { songPlaying: true, songBeat: 0 },
+    clearIntervals: []
+  });
+  assert.deepStrictEqual(songRuntimeUpdates[2], {
+    setFields: { songBeat: 1 },
+    save: false
+  });
+  assert.deepStrictEqual(songRuntimeUpdates[3], {
+    setFields: { songPlaying: false, screen: "song_done" },
+    clearIntervals: ["song"]
+  });
+  assert.deepStrictEqual(songRuntimeUpdates[4], {
+    setFields: { screen: "home", tab: "songs" }
+  });
+  assert.strictEqual(songCompletionUpdates.length, 1);
+  assert.deepStrictEqual(songCompletionUpdates[0], {
+    xpDelta: 40,
+    incrementFields: { songsPlayed: 1 },
+    history: { type: "song", detail: "Night Drive", xp: 40 },
+    emit: { type: "lesson_completed", payload: { appId: "chordspark", lessonId: "song_Night Drive", xp: 40 } },
+    checkBadges: true
+  });
+  assert.deepStrictEqual(browserRequests[0], {
+    action: "songs_subtab",
+    payload: { songsSubTab: "community" }
+  });
+  assert.strictEqual(communityFetches, 1);
+  assert.deepStrictEqual(strumHits, ["C", "G"]);
+  assert.strictEqual(S.screen, "home");
+  assert.strictEqual(S.tab, "songs");
+  assert.strictEqual(S.songsSubTab, "community");
+  assert.strictEqual(S.songBeat, 1);
+  assert.strictEqual(S.songsPlayed, 1);
+  assert.ok(showroomSource.indexOf("function getShowroomCoreView()") >= 0);
+  assert.ok(showroomSource.indexOf("var view = getShowroomCoreView();") >= 0);
+
+  global.SparkPracticeBridge = originalPracticeBridge;
+  delete global.sparkCore;
+});
+
 test("SparkCore can open and complete guided sessions through explicit helpers", function() {
   var core = createDefaultSparkCore();
   var plan = core.openGuidedSession({ sessionNum: 2 });
@@ -1543,8 +4162,13 @@ test("SparkCore can open and complete guided sessions through explicit helpers",
   assert.strictEqual(core.getRuntimeState().activeScreen, "guided_session");
   assert.strictEqual(core.getRuntimeState().guidedStep, "spark");
 
+  core.syncGuidedRuntimeState({
+    guidedStep: "victoryLap"
+  });
   var result = core.completeGuidedSession();
   assert.strictEqual(result.planCompleted, true);
+  assert.strictEqual(result.completedItems, plan.segments.length);
+  assert.strictEqual(plan.segments[plan.segments.length - 1].completed, true);
   assert.strictEqual(core.getRuntimeState().activeScreen, "guided_done");
   assert.strictEqual(core.getRuntimeState().transport.status, "completed");
 });
@@ -1567,7 +4191,7 @@ test("SparkCore can apply guided navigation requests explicitly", function() {
 
 test("SparkCore can track guided runtime step and phase state explicitly", function() {
   var core = createDefaultSparkCore();
-  core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
 
   core.syncGuidedRuntimeState({
     guidedStep: "newMove",
@@ -1580,6 +4204,7 @@ test("SparkCore can track guided runtime step and phase state explicitly", funct
   assert.strictEqual(state.activeScreen, "guided_session");
   assert.strictEqual(state.guidedStep, "newMove");
   assert.strictEqual(state.guidedNewMovePhase, "shadow");
+  assert.strictEqual(state.activeSegmentId, plan.segments[0].id);
   assert.strictEqual(state.transport.status, "running");
   assert.strictEqual(state.transport.positionMs, 18000);
 });
@@ -2679,6 +5304,204 @@ test("SparkCore can build and apply calibration requests from runtime state", fu
   assert.strictEqual(core.getRuntimeState().transport.status, "idle");
 });
 
+test("orchestrator requests can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  var syncedCalibration = null;
+  var syncedSong = null;
+  var syncedCloud = null;
+  var syncedCurriculum = null;
+  var syncedGuided = null;
+  var calls = [];
+  global.sparkCore = {
+    openPerformanceEditor: function(chart, options) {
+      return {
+        type: "editor",
+        chart: chart,
+        options: options
+      };
+    },
+    syncPerformanceRuntimeState: function(action, payload) {
+      syncedCalibration = {
+        action: action,
+        payload: payload
+      };
+      return syncedCalibration;
+    },
+    startSession: function(options) {
+      return {
+        type: "session",
+        options: options
+      };
+    },
+    openLegacyPracticeSession: function(options) {
+      calls.push({ type: "legacy_session", options: options });
+      return { type: "legacy_session", options: options };
+    },
+    syncLegacyPracticeRuntimeState: function(action, options) {
+      calls.push({ type: "legacy_practice_sync", action: action, options: options });
+      return { type: "legacy_practice_sync", action: action, options: options };
+    },
+    openLegacyDailyChallenge: function(options) {
+      calls.push({ type: "daily_open", options: options });
+      return { type: "daily_open", options: options };
+    },
+    syncTunerRuntimeState: function(options) {
+      calls.push({ type: "tuner_sync", options: options });
+      return { type: "tuner_sync", options: options };
+    },
+    openLegacyRhythmGame: function(options) {
+      calls.push({ type: "rhythm_open", options: options });
+      return { type: "rhythm_open", options: options };
+    },
+    openGuidedSession: function(options) {
+      calls.push({ type: "guided_open", options: options });
+      return { type: "guided_open", options: options };
+    },
+    syncSongRuntimeState: function(action, options) {
+      syncedSong = { action: action, options: options };
+      calls.push({ type: "song_sync", action: action, options: options });
+      return syncedSong;
+    },
+    applyDashboardRequest: function(options) {
+      calls.push({ type: "dashboard_apply", options: options });
+      return { type: "dashboard_apply", options: options };
+    },
+    syncCloudSettingsState: function(payload) {
+      syncedCloud = payload;
+      calls.push({ type: "cloud_sync", payload: payload });
+      return payload;
+    },
+    syncCurriculumState: function(payload) {
+      syncedCurriculum = payload;
+      calls.push({ type: "curriculum_sync", payload: payload });
+      return payload;
+    },
+    openSkillTree: function() {
+      calls.push({ type: "skill_tree_open" });
+      return { type: "skill_tree_open" };
+    },
+    openStemPlayer: function() {
+      calls.push({ type: "stem_player_open" });
+      return { type: "stem_player_open" };
+    },
+    completeSession: function(options) {
+      calls.push({ type: "guided_complete", options: options });
+      return { type: "guided_complete", options: options };
+    },
+    syncGuidedRuntimeState: function(payload) {
+      syncedGuided = payload;
+      calls.push({ type: "guided_sync", payload: payload });
+      return payload;
+    }
+  };
+  global.eval(loadJS("js/orchestrator-requests.js"));
+
+  var editorRequest = openPerformanceEditorRequest({ id: "chart_1" }, { source: "blank" });
+  var calibrationRequest = applyPerformanceCalibrationRequest("calibration_apply", {
+    source: "mic",
+    globalOffsetMs: 14,
+    midiOffsetMs: -3,
+    micOffsetMs: 9
+  });
+  var practicePlanRequest = openPracticePlanScreenRequest({ forceRebuild: true });
+  var legacySessionRequest = openLegacyPracticeSessionRequest({ mode: "chord", chordName: "C" });
+  var practiceSyncRequest = syncLegacyPracticeRuntimeRequest("tick", { remainingSec: 42 });
+  var dailyRequest = openLegacyDailyChallengeRequest({ challengeId: "daily_1" });
+  var tunerRequest = syncTunerRuntimeRequest({ tunerNote: "E" });
+  var rhythmRequest = openLegacyRhythmGameRequest({ mode: "strum" });
+  var guidedRequest = openGuidedSessionRequest({ sessionNum: 3 });
+  var songSyncRequest = syncSongRuntimeRequest("play", { songData: { id: "stand-by-me" }, source: "library" });
+  var dashboardRequest = applyDashboardRequest({ recommendations: [{ id: "rec_1" }] });
+  var cloudRequest = syncCloudSettingsStateRequest({ loggedIn: true, email: "scott@example.com" });
+  var curriculumRequest = syncCurriculumStateRequest({ activeTrackId: "guitar-30day" });
+  var skillTreeRequest = openSkillTreeRequest();
+  var stemPlayerRequest = openStemPlayerRequest();
+  var guidedCompleteRequest = completeGuidedSessionRequest();
+
+  assert.strictEqual(editorRequest.type, "editor");
+  assert.strictEqual(editorRequest.chart.id, "chart_1");
+  assert.strictEqual(editorRequest.options.source, "blank");
+  assert.strictEqual(calibrationRequest.source, "mic");
+  assert.ok(syncedCalibration);
+  assert.strictEqual(syncedCalibration.action, "calibration_apply");
+  assert.strictEqual(syncedCalibration.payload.source, "mic");
+  assert.strictEqual(syncedCalibration.payload.globalOffsetMs, 14);
+  assert.strictEqual(practicePlanRequest.type, "session");
+  assert.strictEqual(practicePlanRequest.options.flow, SparkSessionTypes.FLOW_DAILY_PRACTICE);
+  assert.strictEqual(practicePlanRequest.options.forceRebuild, true);
+  assert.strictEqual(legacySessionRequest.type, "legacy_session");
+  assert.strictEqual(legacySessionRequest.options.chordName, "C");
+  assert.strictEqual(practiceSyncRequest.type, "legacy_practice_sync");
+  assert.strictEqual(practiceSyncRequest.action, "tick");
+  assert.strictEqual(practiceSyncRequest.options.remainingSec, 42);
+  assert.strictEqual(dailyRequest.type, "daily_open");
+  assert.strictEqual(dailyRequest.options.challengeId, "daily_1");
+  assert.strictEqual(tunerRequest.type, "tuner_sync");
+  assert.strictEqual(tunerRequest.options.tunerNote, "E");
+  assert.strictEqual(rhythmRequest.type, "rhythm_open");
+  assert.strictEqual(rhythmRequest.options.mode, "strum");
+  assert.strictEqual(guidedRequest.type, "guided_open");
+  assert.strictEqual(guidedRequest.options.sessionNum, 3);
+  assert.ok(syncedSong);
+  assert.strictEqual(songSyncRequest.action, "play");
+  assert.strictEqual(songSyncRequest.options.source, "library");
+  assert.strictEqual(songSyncRequest.options.songData.id, "stand-by-me");
+  assert.strictEqual(dashboardRequest.type, "dashboard_apply");
+  assert.strictEqual(dashboardRequest.options.recommendations[0].id, "rec_1");
+  assert.ok(syncedCloud);
+  assert.strictEqual(cloudRequest.email, "scott@example.com");
+  assert.strictEqual(cloudRequest.loggedIn, true);
+  assert.ok(syncedCurriculum);
+  assert.strictEqual(curriculumRequest.activeTrackId, "guitar-30day");
+  assert.strictEqual(skillTreeRequest.type, "skill_tree_open");
+  assert.strictEqual(stemPlayerRequest.type, "stem_player_open");
+  assert.strictEqual(guidedCompleteRequest.type, "guided_complete");
+  assert.strictEqual(guidedCompleteRequest.options.flow, SparkSessionTypes.FLOW_GUIDED_SESSION);
+  assert.ok(syncedGuided);
+  assert.strictEqual(syncedGuided.activeScreen, "guided_done");
+  assert.ok(calls.length >= 11);
+});
+
+test("studio openPlan resumes guided sessions instead of opening the plan screen when guided runtime is active", function() {
+  global.window = {};
+  global.__actionFamilies = global.__actionFamilies || {};
+  global.window.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.S = global.S || {};
+  global.S.screen = "home";
+  global.SCR = global.SCR || {};
+  global.SCR.PLAN = "plan";
+  global.SCR.GUIDED = "guided";
+  var practicePlanRequests = [];
+  global.openPracticePlanScreenRequest = function(payload) {
+    practicePlanRequests.push(payload || {});
+    return payload || {};
+  };
+  global.render = function() {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: { guidedPlan: { title: "How guitars get tuned" } }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+
+  eval(loadJS("js/actions/studio_family.js"));
+  var handled = __actionFamilies.studio("openPlan");
+
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.screen, "guided");
+  assert.deepStrictEqual(practicePlanRequests, []);
+});
+
 test("SparkCore can build performance completion requests from runtime state", function() {
   var core = createDefaultSparkCore();
   core.syncPerformanceRuntimeState("select_song", {
@@ -2991,26 +5814,26 @@ test("createDefaultSparkCore registers ukulele and builds a ukulele-ready practi
 
   assert.strictEqual(context.instrumentType, "ukulele");
   assert.ok(context.adapter);
-  assert.strictEqual(context.curriculumMap[0].id, "uke_01");
+  assert.strictEqual(context.curriculumMap[0].id, "lesson_uke_orientation_01");
   assert.ok(context.rhythmAdapter);
   assert.strictEqual(context.rhythmAdapter.getLaneCount(), 4);
   assert.strictEqual(plan.segments.length, 2);
-  assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "uke_01");
+  assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "lesson_uke_orientation_01");
 });
 
 test("ukulele rhythm adapter selects richer chart variants as lessons progress", function() {
   var adapter = new SparkUkuleleRhythmAdapter();
   var switchingPayload = adapter.createPayload({
-    curriculum: { nextLessonId: "uke_03" }
+    curriculum: { nextLessonId: "lesson_uke_c_am_switch_01" }
   });
   var patternPayload = adapter.createPayload({
-    curriculum: { nextLessonId: "uke_04" }
+    curriculum: { nextLessonId: "lesson_uke_island_strum_01" }
   });
   var melodyPayload = adapter.createPayload({
-    curriculum: { nextLessonId: "uke_07" }
+    curriculum: { nextLessonId: "lesson_uke_simple_melody_01" }
   });
   var performancePayload = adapter.createPayload({
-    curriculum: { nextLessonId: "uke_08" }
+    curriculum: { nextLessonId: "lesson_uke_performance_set_01" }
   });
 
   assert.strictEqual(switchingPayload.chartId, "uke_switch_flow_01");
@@ -3105,6 +5928,379 @@ test("createDefaultSparkCore prefers the rehydrated active instrument over a sta
   assert.strictEqual(context.songs[1].title, "River Walk");
 });
 
+test("createDefaultSparkCore keeps curriculum v2 maps from thin active instruments while using registered adapters", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return [{ num: 1, title: "Stale Guitar Lesson" }]; },
+    getCurriculum: function() { return { SESSIONS: [{ num: 1, title: "Stale Guitar Session" }] }; },
+    getSongs: function() { return [{ title: "Stale Guitar Song", artist: "Spark Suite" }]; }
+  };
+
+  var core = createDefaultSparkCore();
+  var context = core.instrumentManager.getActiveContext();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  assert.strictEqual(context.instrumentType, "guitar");
+  assert.strictEqual(context.curriculumMap[0].id, "gtr-d01");
+  assert.strictEqual(context.sessions[0].id, "gtr-d01");
+  assert.strictEqual(plan.context.curriculum.nextLessonId, "gtr-d01");
+  assert.strictEqual(plan.context.curriculum.nextLesson.id, "gtr-d01");
+  assert.strictEqual(plan.lesson.id, "gtr-d01");
+});
+
+test("guided sessions normalize curriculum v2 plans into the legacy guided flow shape", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 1 });
+  var guidedPlan = plan.context.guidedPlan;
+  var guidedState = core.getRuntimeState();
+
+  assert.strictEqual(guidedPlan.id, "gtr-d01");
+  assert.strictEqual(guidedPlan.num, 1);
+  assert.ok(guidedPlan.spark && guidedPlan.spark.text.indexOf("warm engine block") >= 0);
+  assert.strictEqual(guidedPlan.review, null);
+  assert.ok(guidedPlan.newMove && guidedPlan.newMove.text.indexOf("drill block") >= 0);
+  assert.ok(guidedPlan.songSlice && guidedPlan.songSlice.text.indexOf("song block") >= 0);
+  assert.ok(guidedPlan.songSlice && guidedPlan.songSlice.song.indexOf("\"Horse\" intro") >= 0);
+  assert.ok(guidedPlan.victoryLap && guidedPlan.victoryLap.text.length > 0);
+  assert.strictEqual(plan.segments.length, 4);
+  assert.strictEqual(plan.exercises.length, 4);
+  assert.strictEqual(plan.segments[0].id, "gtr-d01_warm_engine");
+  assert.strictEqual(plan.segments[0].label, "Warm Engine");
+  assert.strictEqual(plan.segments[0].durationSec, 90);
+  assert.strictEqual(plan.segments[0].meta.activityId, "gtr-d01-warm_engine");
+  assert.strictEqual(plan.segments[1].id, "gtr-d01_drill");
+  assert.strictEqual(plan.segments[1].label, "Drill");
+  assert.strictEqual(plan.segments[1].durationSec, 180);
+  assert.strictEqual(plan.segments[1].meta.activityKind, "review");
+  assert.strictEqual(plan.segments[2].id, "gtr-d01_song");
+  assert.ok(plan.segments[2].label.indexOf("\"Horse\" intro") >= 0);
+  assert.strictEqual(plan.segments[2].type, "song");
+  assert.strictEqual(plan.segments[2].durationSec, 240);
+  assert.strictEqual(plan.segments[3].id, "gtr-d01_cooldown");
+  assert.strictEqual(plan.segments[3].label, "Cooldown");
+  assert.strictEqual(plan.segments[3].durationSec, 90);
+  assert.strictEqual(plan.context.guidedShellDurationSec, 600);
+  assert.strictEqual(guidedState.activeSegmentId, "gtr-d01_warm_engine");
+  assert.strictEqual(guidedPlan.blockActivities.warm_engine.id, "gtr-d01-warm_engine");
+  assert.strictEqual(guidedPlan.blockActivities.drill.id, "gtr-d01-drill");
+  assert.strictEqual(guidedPlan.blockActivities.song.id, "gtr-d01-song");
+  assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-warm_engine");
+  assert.strictEqual(guidedState.guidedActivityKind, "warm_engine_play");
+  assert.strictEqual(guidedState.guidedBlockType, "warm_engine");
+
+  guidedState = core.syncGuidedRuntimeState({
+    guidedStep: "newMove",
+    guidedNewMovePhase: "watch"
+  });
+  assert.strictEqual(guidedState.activeSegmentId, "gtr-d01_drill");
+  assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-drill");
+  assert.strictEqual(guidedState.guidedActivityKind, "review");
+  assert.strictEqual(guidedState.guidedBlockType, "drill");
+
+  guidedState = core.syncGuidedRuntimeState({
+    guidedStep: "songSlice",
+    guidedNewMovePhase: null
+  });
+  assert.strictEqual(guidedState.activeSegmentId, "gtr-d01_song");
+  assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-song");
+  assert.strictEqual(guidedState.guidedBlockType, "song");
+
+  guidedState = core.syncGuidedRuntimeState({
+    guidedStep: "victoryLap"
+  });
+  assert.strictEqual(guidedState.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(guidedState.guidedActivityId, "gtr-d01-cooldown");
+  assert.strictEqual(guidedState.guidedBlockType, "cooldown");
+
+  guidedState = core.applyGuidedNavigationRequest("guided_done");
+  assert.strictEqual(guidedState.activeSegmentId, null);
+  assert.strictEqual(guidedState.guidedActivityId, null);
+  assert.strictEqual(guidedState.guidedActivityKind, null);
+  assert.strictEqual(guidedState.guidedBlockType, null);
+});
+
+test("advanceGuidedSession completes V2 blocks only when the step leaves them", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 1 });
+  var state = core.getRuntimeState();
+
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_warm_engine");
+  assert.strictEqual(plan.segments[0].completed, false);
+  assert.strictEqual(plan.segments[1].completed, false);
+
+  state = core.advanceGuidedSession({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "review");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_drill");
+  assert.strictEqual(plan.segments[0].completed, true);
+  assert.strictEqual(plan.segments[1].completed, false);
+
+  state = core.advanceGuidedSession({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "newMove");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_drill");
+  assert.strictEqual(plan.segments[1].completed, false);
+
+  state = core.advanceGuidedSession({ guidedNewMovePhase: null }).runtimeState;
+  assert.strictEqual(state.guidedStep, "songSlice");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_song");
+  assert.strictEqual(state.transport.status, "running");
+  assert.strictEqual(state.transport.positionMs, 0);
+  assert.strictEqual(plan.segments[1].completed, true);
+
+  state = core.advanceGuidedSession({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "victoryLap");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(state.transport.status, "running");
+  assert.strictEqual(state.transport.positionMs, 0);
+  assert.strictEqual(plan.segments[2].completed, true);
+});
+
+test("SparkCore can sync the shared session runtime and expose active segment/exercise in the session view", function() {
+  var originalWindow = global.window;
+  var attachCalls = [];
+  global.window = global.window || {};
+  global.window.SparkSessionRuntime = {
+    attachSession: function(plan, options) {
+      attachCalls.push({
+        plan: plan,
+        options: options
+      });
+      return true;
+    },
+    getActiveSession: function() {
+      return core.currentPlan;
+    },
+    getActiveSegment: function() {
+      return core.currentPlan && core.currentPlan.segments ? core.currentPlan.segments[0] : null;
+    },
+    getActiveExercise: function() {
+      return core.currentPlan && core.currentPlan.exercises ? core.currentPlan.exercises[0] : null;
+    }
+  };
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+  attachCalls.length = 0;
+  var synced = core.syncSessionRuntime({ scheduleTick: false });
+  var view = core.getActiveSessionView();
+
+  assert.strictEqual(synced, true);
+  assert.strictEqual(attachCalls.length, 1);
+  assert.strictEqual(attachCalls[0].plan, plan);
+  assert.strictEqual(attachCalls[0].options.segmentId, plan.segments[0].id);
+  assert.strictEqual(attachCalls[0].options.status, "ready");
+  assert.strictEqual(attachCalls[0].options.positionMs, 0);
+  assert.ok(view.activeSegment);
+  assert.ok(view.activeExercise);
+  assert.strictEqual(view.activeSegment.id, plan.segments[0].id);
+  assert.strictEqual(view.activeExercise.id, plan.exercises[0].id);
+
+  global.window = originalWindow;
+});
+
+test("SparkCore startSession automatically syncs the shared runtime for guided plans", function() {
+  var originalWindow = global.window;
+  var attachCalls = [];
+  global.window = global.window || {};
+  global.window.SparkSessionRuntime = {
+    attachSession: function(plan, options) {
+      attachCalls.push({ plan: plan, options: options });
+      return true;
+    }
+  };
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+
+  assert.strictEqual(attachCalls.length, 1);
+  assert.strictEqual(attachCalls[0].plan, plan);
+  assert.strictEqual(attachCalls[0].options.segmentId, plan.segments[0].id);
+  assert.strictEqual(attachCalls[0].options.status, "ready");
+  assert.strictEqual(attachCalls[0].options.scheduleTick, false);
+  assert.strictEqual(attachCalls[0].options.autoAdvance, false);
+
+  global.window = originalWindow;
+});
+
+test("skipGuidedBlock jumps to the next V2 shell block and completes the skipped block", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 1 });
+  var state = core.skipGuidedBlock({}).runtimeState;
+
+  assert.strictEqual(state.guidedStep, "review");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_drill");
+  assert.strictEqual(plan.segments[0].completed, true);
+  assert.strictEqual(plan.segments[1].completed, false);
+
+  core.syncGuidedRuntimeState({
+    guidedStep: "newMove",
+    guidedNewMovePhase: "shadow"
+  });
+  state = core.skipGuidedBlock({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "songSlice");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_song");
+  assert.strictEqual(plan.segments[1].completed, true);
+
+  state = core.skipGuidedBlock({}).runtimeState;
+  assert.strictEqual(state.guidedStep, "victoryLap");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(plan.segments[2].completed, true);
+});
+
+test("extendGuidedBlock keeps victory lap active and lengthens the cooldown shell", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() {
+          return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar");
+        }
+      };
+    },
+    getAll: function() {
+      return [{
+        id: "chordspark",
+        appId: "chordspark",
+        instrument: "guitar"
+      }];
+    }
+  };
+
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  var plan = core.openGuidedSession({ sessionNum: 1 });
+  var state;
+
+  core.syncGuidedRuntimeState({
+    guidedStep: "victoryLap",
+    guidedNewMovePhase: null,
+    status: "running",
+    positionMs: 45000
+  });
+  state = core.extendGuidedBlock({}).runtimeState;
+
+  assert.strictEqual(state.guidedStep, "victoryLap");
+  assert.strictEqual(state.activeSegmentId, "gtr-d01_cooldown");
+  assert.strictEqual(state.guidedActivityId, "gtr-d01-cooldown");
+  assert.strictEqual(state.guidedBlockType, "cooldown");
+  assert.strictEqual(state.transport.status, "running");
+  assert.strictEqual(state.transport.positionMs, 0);
+  assert.strictEqual(plan.segments[3].durationSec, 390);
+  assert.strictEqual(plan.segments[3].meta.guidedExtensionSec, 300);
+  assert.strictEqual(plan.segments[3].meta.guidedExtensionCount, 1);
+  assert.strictEqual(plan.context.guidedShellExtensionSec, 300);
+  assert.strictEqual(plan.context.guidedShellExtensionCount, 1);
+  assert.strictEqual(plan.context.guidedShellDurationSec, 900);
+  assert.strictEqual(plan.context.guidedPlan.blockActivities.cooldown.duration_sec, 390);
+});
+
+
 test("createDefaultSparkCore registers bass as a first-class instrument adapter", function() {
   SparkInstrumentAdapter = {
     getAppId: function() { return "bassspark"; },
@@ -3126,7 +6322,8 @@ test("createDefaultSparkCore registers bass as a first-class instrument adapter"
   assert.ok(context.adapter);
   assert.strictEqual(context.instrumentType, "bass");
   assert.strictEqual(context.adapter.getType(), "bass");
-  assert.strictEqual(context.curriculumMap[0].title, "First Groove");
+  assert.strictEqual(context.curriculumMap[0].skill, "posture");
+  assert.ok(context.curriculumMap.some(function(lesson) { return lesson.skill === "improvisation"; }));
   assert.strictEqual(context.songs[0].title, "Seven Nation Army");
   assert.ok(context.rhythmAdapter);
   assert.strictEqual(context.rhythmAdapter.getLaneCount(), 4);
@@ -3168,6 +6365,10 @@ test("SparkBassModule exposes authored advanced exercises for later-phase bass s
   var walking = SparkBassModule.getExercises("walking_bass");
   var slap = SparkBassModule.getExercises("slap");
   var ghost = SparkBassModule.getExercises("ghost_notes");
+  var passing = SparkBassModule.getExercises("passing_notes");
+  var arpeggios = SparkBassModule.getExercises("arpeggios");
+  var accents = SparkBassModule.getExercises("groove_accents");
+  var improv = SparkBassModule.getExercises("improvisation");
 
   assert.strictEqual(walking[0].id, "bass_walk_lines_01");
   assert.strictEqual(walking[0].focus, "walking_bass");
@@ -3175,6 +6376,59 @@ test("SparkBassModule exposes authored advanced exercises for later-phase bass s
   assert.strictEqual(slap[0].focus, "slap");
   assert.strictEqual(ghost[0].id, "bass_ghost_grid_02");
   assert.strictEqual(ghost[0].focus, "ghost_notes");
+  assert.strictEqual(passing[0].id, "bass_passing_notes_01");
+  assert.strictEqual(arpeggios[0].id, "bass_arpeggio_climb_01");
+  assert.strictEqual(accents[0].id, "bass_accent_lock_01");
+  assert.strictEqual(improv[0].id, "bass_improv_cells_01");
+});
+
+test("SparkBassModule exposes a peer-level authored bass lesson path", function() {
+  var lessons = SparkBassModule.getLessons();
+  var lastLesson = lessons[lessons.length - 1];
+
+  assert.ok(lessons.length >= 12);
+  assert.strictEqual(lessons[0].skill, "posture");
+  assert.strictEqual(lastLesson.skill, "improvisation");
+  assert.deepStrictEqual(lastLesson.prerequisites, ["groove_accents"]);
+  assert.strictEqual(SparkBassModule.getCurriculumMap().length, lessons.length);
+});
+
+test("InstrumentManager rejects adapter factories that return incomplete contracts", function() {
+  var manager = new SparkInstrumentManager();
+
+  assert.throws(function() {
+    manager.register("broken", function() {
+      return {
+        getId: function() { return "broken"; }
+      };
+    });
+  }, /missing required method/);
+});
+
+test("InstrumentManager getActiveContext fails fast for unregistered instrument types without module capabilities", function() {
+  var previousInstruments = global.SparkInstruments;
+  var previousAdapter = global.SparkInstrumentAdapter;
+  var manager = new SparkInstrumentManager();
+
+  global.SparkInstruments = {
+    getActive: function() {
+      return { id: "mysteryspark", appId: "mysteryspark", instrument: "mystery" };
+    },
+    getAll: function() {
+      return [];
+    }
+  };
+  global.SparkInstrumentAdapter = {
+    getAppId: function() { return "mysteryspark"; },
+    getInstrumentType: function() { return "mystery"; }
+  };
+
+  assert.throws(function() {
+    manager.getActiveContext();
+  }, /Instrument "mystery" is not registered/);
+
+  global.SparkInstruments = previousInstruments;
+  global.SparkInstrumentAdapter = previousAdapter;
 });
 
 test("completeSession routes performance completion rewards through core", function() {
@@ -3248,3 +6502,5 @@ test("completeSession can carry focused bass rhythm drill progress into bass ski
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);
+
+

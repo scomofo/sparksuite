@@ -190,6 +190,25 @@ test("piano surfaces rehydrate an app-id-only active instrument shell", function
   assert.deepStrictEqual(pianoCheckBadges(), ["starter"]);
 });
 
+test("piano interactive surface tiles expose keyboard handlers", function() {
+  var gamesSource = loadJS("js/instruments/piano/pages/games.js");
+  var onboardingSource = loadJS("js/instruments/piano/pages/onboarding.js");
+  var practiceSource = loadJS("js/instruments/piano/pages/practice.js");
+  var songsSource = loadJS("js/instruments/piano/pages/songs.js");
+  var toolsSource = loadJS("js/instruments/piano/pages/tools.js");
+
+  assert.ok(gamesSource.indexOf('role="button" tabindex="0"') >= 0);
+  assert.ok(gamesSource.indexOf("act(\\'pianoGameTab\\',") >= 0);
+  assert.ok(onboardingSource.indexOf('keyboard-size-btn') >= 0 && onboardingSource.indexOf('onkeydown="if(event.key===\\\'Enter\\\'||event.key===\\\' \\') >= 0);
+  assert.ok(practiceSource.indexOf('act(\\\'view_level\\\',') >= 0 && practiceSource.indexOf('role="button" tabindex="0"') >= 0);
+  assert.ok(songsSource.indexOf("act(\\'pianoSongTab\\',") >= 0);
+  assert.ok(songsSource.indexOf('style-header" role="button" tabindex="0"') >= 0);
+  assert.ok(toolsSource.indexOf("act(\\'pianoToolTab\\',") >= 0);
+  assert.ok(toolsSource.indexOf('role="button" tabindex="0"') >= 0);
+  assert.ok(toolsSource.indexOf('onclick="act(\\\'exportProgress\\\')"') >= 0);
+  assert.ok(toolsSource.indexOf('onclick="act(\\\'pianoConfirmResetProgress\\\')"') >= 0);
+});
+
 test("piano practice tab ignores stale curriculum and custom set labels", function() {
   resetEnvironment("pianospark");
   global.getPianoPageInstrument = function() {
@@ -221,6 +240,136 @@ test("piano practice tab ignores stale curriculum and custom set labels", functi
   assert.ok(html.indexOf("undefined") === -1);
   assert.ok(html.indexOf("null") === -1);
   assert.ok(html.indexOf("NaN") === -1);
+});
+
+test("piano practice quick start resumes an active guided shell when the session matches", function() {
+  resetEnvironment("pianospark");
+  global.getCurrentSessionPlan = function() {
+    return {
+      num: 1,
+      title: "Warmup",
+      level: 1
+    };
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 1,
+            guidedShellDurationSec: 600,
+            guidedPlan: {
+              num: 1,
+              title: "First sound in 2 minutes",
+              level: 1,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ],
+              focus_song: "Horse With No Name",
+              new_elements: ["open-string strum"]
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+  assert.ok(html.indexOf('onclick="act(\'resume_guided_session\')"') >= 0);
+  assert.strictEqual(html.indexOf('onclick="act(\'start_guided_session\')"'), -1);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("4 blocks") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: Horse With No Name") >= 0);
+  assert.ok(html.indexOf("New move: open-string strum") >= 0);
+});
+
+test("piano practice quick start shows V2 shell details for a fresh guided session", function() {
+  resetEnvironment("pianospark");
+  global.getCurrentSessionPlan = function() {
+    return {
+      num: 1,
+      title: "First sound in 2 minutes",
+      level: 1,
+      blocks: [
+        { type: "warm_engine", duration_sec: 90 },
+        { type: "drill", duration_sec: 180 },
+        { type: "song", duration_sec: 240 },
+        { type: "cooldown", duration_sec: 90 }
+      ],
+      focus_song: "Horse With No Name",
+      new_elements: ["open-string strum"]
+    };
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+  assert.ok(html.indexOf('onclick="act(\'start_guided_session\')"') >= 0);
+  assert.ok(html.indexOf("4 blocks") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: Horse With No Name") >= 0);
+  assert.ok(html.indexOf("New move: open-string strum") >= 0);
+});
+
+test("piano practice quick start stays honest when guided shell metadata is thin", function() {
+  resetEnvironment("pianospark");
+  global.getCurrentSessionPlan = function() {
+    return {
+      num: 1,
+      title: "How guitars get tuned",
+      level: 1
+    };
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 1,
+            guidedPlan: {
+              num: 1,
+              title: "How guitars get tuned",
+              level: 1
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  global.eval(loadJS("js/instruments/piano/ui.js"));
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = pianoPracticeTab();
+  assert.ok(html.indexOf('onclick="act(\'resume_guided_session\')"') >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("Guided shell") >= 0);
+  assert.strictEqual(html.indexOf("4 blocks"), -1);
+  assert.strictEqual(html.indexOf("10 min shell"), -1);
 });
 
 test("piano onboarding and tools ignore stale intention strings", function() {
@@ -383,6 +532,422 @@ test("bassAct rehydrates an app-id-only active instrument shell", function() {
   bassAct("guidedStart", "1");
   assert.strictEqual(S.guidedPlan.title, "Bass Basics");
   assert.strictEqual(S.screen, SCR.GUIDED);
+});
+
+test("practice guided session card falls back to curriculum v2 when legacy sessions are absent", function() {
+  resetEnvironment("chordspark");
+  global.sparkCore = undefined;
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeGuidedSessionCard({});
+  assert.ok(html.indexOf("Guided Session 1") >= 0);
+  assert.ok(html.indexOf("First sound in 2 minutes") >= 0);
+  assert.ok(html.indexOf("0/30 done") >= 0);
+  assert.ok(html.indexOf("4 blocks • 10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: \"Horse\" intro, open strings only") >= 0);
+  assert.ok(html.indexOf("New move: open-string-strum") >= 0);
+  assert.ok(html.indexOf("Start 10-Min Session") >= 0);
+});
+
+test("practice guided session card can resolve sparkCore from the global binding", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 1,
+              title: "First sound in 2 minutes",
+              level: 1,
+              target_duration_min: 10,
+              focus_song: "\"Horse\" intro, open strings only",
+              new_elements: ["open-string-strum"],
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30
+          }
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeGuidedSessionCard({});
+  assert.ok(html.indexOf("Guided Session 1") >= 0);
+  assert.ok(html.indexOf("First sound in 2 minutes") >= 0);
+  assert.ok(html.indexOf("0/30 done") >= 0);
+  assert.ok(html.indexOf("4 blocks • 10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: \"Horse\" intro, open strings only") >= 0);
+  assert.ok(html.indexOf("New move: open-string-strum") >= 0);
+  assert.ok(html.indexOf("Start 10-Min Session") >= 0);
+});
+
+test("practice guided session card shows resume state for an active guided runtime", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              level: 1,
+              target_duration_min: 10,
+              focus_song: "same",
+              new_elements: ["use-the-tuner"],
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "newMove",
+          guidedNewMovePhase: "shadow"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeGuidedSessionCard({});
+  assert.ok(html.indexOf("Guided Session 2") >= 0);
+  assert.ok(html.indexOf("1/30 done") >= 0);
+  assert.ok(html.indexOf("In progress - shadow") >= 0);
+  assert.ok(html.indexOf("Resume 10-Min Session") >= 0);
+  assert.ok(html.indexOf("act('resume_guided_session')") >= 0);
+});
+
+test("practice guided session and track cards do not invent shell details when metadata is missing", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              level: 1
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "newMove",
+          guidedNewMovePhase: "shadow"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var guidedHtml = renderPracticeGuidedSessionCard({});
+  var trackHtml = renderPracticeCurriculumV2Card({
+    instrument: "guitar"
+  });
+  var quickStartHtml = renderPracticeQuickStartCard();
+
+  assert.ok(guidedHtml.indexOf("Guided Session 2") >= 0);
+  assert.ok(guidedHtml.indexOf("In progress - shadow") >= 0);
+  assert.ok(guidedHtml.indexOf("Resume Session") >= 0);
+  assert.strictEqual(guidedHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(guidedHtml.indexOf("10 min shell"), -1);
+  assert.ok(trackHtml.indexOf("Track Rhythm") >= 0);
+  assert.ok(trackHtml.indexOf("shadow") >= 0);
+  assert.strictEqual(trackHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(trackHtml.indexOf("10 min shell"), -1);
+  assert.ok(quickStartHtml.indexOf("Guided Session Live") >= 0);
+  assert.ok(quickStartHtml.indexOf("In progress - shadow") >= 0);
+  assert.strictEqual(quickStartHtml.indexOf("4 blocks"), -1);
+});
+
+test("practice curriculum v2 card shows track progress instead of duplicating the launcher hook", function() {
+  resetEnvironment("chordspark");
+  global.sparkCore = undefined;
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeCurriculumV2Card({
+    instrument: "guitar"
+  });
+  assert.ok(html.indexOf("Phase 1 Track") >= 0);
+  assert.ok(html.indexOf("0 of 30 sessions completed") >= 0);
+  assert.ok(html.indexOf("Up Next") >= 0);
+  assert.ok(html.indexOf("Day 1: First sound in 2 minutes") >= 0);
+  assert.ok(html.indexOf("Track Rhythm") >= 0);
+  assert.ok(html.indexOf("4 blocks • 10 min shell") >= 0);
+  assert.ok(html.indexOf("Unlock Path") >= 0);
+  assert.ok(html.indexOf("Unlock path: ready now") >= 0);
+  assert.ok(html.indexOf("Fresh start") >= 0);
+  assert.ok(html.indexOf("Day 1 is ready when you are.") >= 0);
+  assert.ok(html.indexOf("After that: Day 2 - How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("Song focus:") === -1);
+  assert.ok(html.indexOf("New element:") === -1);
+});
+
+test("practice curriculum v2 card shows live guided runtime context when a session is already active", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              level: 1,
+              target_duration_min: 10,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1,
+            guidedShellDurationSec: 600
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "newMove",
+          guidedNewMovePhase: "shadow"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeCurriculumV2Card({
+    instrument: "guitar"
+  });
+  assert.ok(html.indexOf("Live now: Day 2: How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("Track Rhythm") >= 0);
+  assert.ok(html.indexOf("shadow • 4 blocks • 10 min shell") >= 0);
+  assert.ok(html.indexOf("Unlock path: Day 2 in motion") >= 0);
+  assert.ok(html.indexOf("Session in motion") >= 0);
+  assert.ok(html.indexOf("In progress - shadow. Resume when you're ready.") >= 0);
+  assert.ok(html.indexOf("After this: Day 3 - The D chord") >= 0);
+});
+
+test("practice curriculum v2 surfaces react to canonical completion state", function() {
+  resetEnvironment("chordspark");
+  global.S.curriculumV2CompletedSessions = {
+    guitar: ["gtr-d01"]
+  };
+  global.sparkCore = undefined;
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
+  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var guidedHtml = renderPracticeGuidedSessionCard({});
+  var trackHtml = renderPracticeCurriculumV2Card({
+    instrument: "guitar"
+  });
+  assert.ok(guidedHtml.indexOf("Guided Session 2") >= 0);
+  assert.ok(guidedHtml.indexOf("How guitars get tuned") >= 0);
+  assert.ok(guidedHtml.indexOf("1/30 done") >= 0);
+  assert.ok(trackHtml.indexOf("1 of 30 sessions completed") >= 0);
+  assert.ok(trackHtml.indexOf("Day 2: How guitars get tuned") >= 0);
+  assert.ok(trackHtml.indexOf("Unlock path: Day 1 already banked") >= 0);
+  assert.ok(trackHtml.indexOf("New move day") >= 0);
+  assert.ok(trackHtml.indexOf("You've banked 1 sessions. Day 2 is next.") >= 0);
+});
+
+test("practice quick start card favors an active guided runtime over stale chord resume state", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.S.lastChordName = "Em";
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              target_duration_min: 10,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1,
+            guidedShellDurationSec: 600
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/practice.js"));
+
+  var html = renderPracticeQuickStartCard();
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block • 4 blocks") >= 0);
+  assert.ok(html.indexOf("Resume Guided") >= 0);
+  assert.ok(html.indexOf("Quick Chord") >= 0);
+  assert.strictEqual(html.indexOf("Pick Up Where You Left Off"), -1);
+});
+
+test("shared session helpers can resolve sparkCore from the global binding", function() {
+  resetEnvironment("chordspark");
+  global.window = {};
+  global.FINGER_EXERCISES = [{
+    id: "spider",
+    name: "Spider Walk",
+    desc: "Warm up evenly",
+    tier: 1,
+    duration: 90,
+    frequency: "daily",
+    goal: "Stay relaxed"
+  }];
+  global.getExpectedNotes = function() { return ["C", "E", "G"]; };
+  global.getCoachFeedback = function() { return []; };
+  global.ringHTML = function(value) { return "<div class=\"ring\">" + String(value) + "</div>"; };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          chordDetectActive: true,
+          chordDetectNotes: ["C", "E"],
+          chordDetectMatch: 92,
+          chordDetectError: "",
+          legacyFingerExerciseActive: true,
+          legacyFingerExerciseId: "spider",
+          legacyPracticeRemainingSec: 45,
+          legacyFingerExerciseCount: 2
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/utils/normalize.js"));
+  global.eval(loadJS("js/pages/shared.js"));
+
+  var runtime = getLegacyChordDetectRuntime();
+  var fingerHtml = fingerExerciseCard();
+
+  assert.strictEqual(runtime.active, true);
+  assert.deepStrictEqual(runtime.notes, ["C", "E"]);
+  assert.strictEqual(runtime.match, 92);
+  assert.ok(fingerHtml.indexOf("Spider Walk") >= 0);
+  assert.ok(fingerHtml.indexOf("0:45") >= 0);
+  assert.ok(fingerHtml.indexOf("Completed 2x") >= 0);
+});
+
+test("songs surfaces can resolve sparkCore from the global binding", function() {
+  resetEnvironment("chordspark");
+  var connectedReturnTo = null;
+  global.window = {
+    location: { href: "https://sparksuite.local/app?songs=1" }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          stemPlaying: true,
+          stemCurrentTime: 12,
+          stemDuration: 48
+        }
+      };
+    },
+    getRuntimeState: function() {
+      return {
+        spotifyPlaylistConnected: true,
+        spotifyPlaylistPlaylists: [{
+          curriculum_key: "guitar_core",
+          playlist_name: "SparkSuite - Guitar"
+        }],
+        spotifyPlaylistLastSyncAt: "2026-04-22T20:00:00.000Z",
+        spotifyPlaylistLastResult: { addedCount: 2, resolvedCount: 3 },
+        spotifyPlaylistUnresolvedTracks: [{ title: "Missing Song", artist: "Unknown" }],
+        spotifyPlaylistSyncStatus: "idle",
+        spotifyPlaylistError: null
+      };
+    },
+    connectSpotifyPlaylist: function(options) {
+      connectedReturnTo = options && options.returnTo;
+    }
+  };
+  global.STEM_NAMES = ["vocals"];
+  global.STEM_COLORS = { vocals: "#4ECDC4" };
+  global.STEM_ICONS = { vocals: "V" };
+  global.formatTime = function(value) { return "0:" + String(value); };
+  global.eval(loadJS("js/pages/songs.js"));
+
+  var spotifyState = _getSpotifyPlaylistPanelState();
+  var stemsHtml = stemsPage();
+  sparkSpotifyPlaylistConnect();
+
+  assert.strictEqual(spotifyState.connected, true);
+  assert.strictEqual(spotifyState.playlists.length, 1);
+  assert.strictEqual(spotifyState.unresolvedTracks.length, 1);
+  assert.ok(stemsHtml.indexOf("0:12 / 0:48") >= 0);
+  assert.ok(stemsHtml.indexOf("Pause") >= 0);
+  assert.strictEqual(connectedReturnTo, "https://sparksuite.local/app?songs=1");
+});
+
+test("piano app confirms reset before dispatching reset", function() {
+  resetEnvironment("pianospark");
+  var resetCalls = 0;
+  global.document.addEventListener = function() {};
+  global.document.removeEventListener = function() {};
+  global.resetProgress = function() { resetCalls++; };
+  global.confirm = function() { return true; };
+  global.eval(loadJS("js/instruments/piano/app.js"));
+
+  pianoAct("pianoConfirmResetProgress");
+  assert.strictEqual(resetCalls, 1);
+
+  resetCalls = 0;
+  global.confirm = function() { return false; };
+  pianoAct("pianoConfirmResetProgress");
+  assert.strictEqual(resetCalls, 0);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

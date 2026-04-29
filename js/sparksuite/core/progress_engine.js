@@ -1,11 +1,129 @@
 (function() {
-  function ProgressEngine() {}
+  function ProgressEngine(storage) {
+    this.storage = storage || null;
+    this.eventBus = null;
+  }
+
+  ProgressEngine.prototype.setEventBus = function(eventBus) {
+    this.eventBus = eventBus || null;
+    return this.eventBus;
+  };
+
+  ProgressEngine.prototype.emit = function(type, payload) {
+    emitProgressEvent(this, type, payload);
+  };
+
+  ProgressEngine.prototype.calculatePerformanceScore = function(performance) {
+    performance = performance || {};
+    var accuracy = typeof performance.accuracy === "number" ? performance.accuracy : 0;
+    var timing = performance.timing && typeof performance.timing.score === "number"
+      ? performance.timing.score
+      : accuracy;
+    return accuracy * 0.7 + timing * 0.3;
+  };
+
+  ProgressEngine.prototype.smoothMastery = function(current, score) {
+    current = typeof current === "number" ? current : 0;
+    score = typeof score === "number" ? score : 0;
+    return Number((current * 0.75 + score * 0.25).toFixed(3));
+  };
+
+  ProgressEngine.prototype.calculateNextReview = function(mastery) {
+    mastery = typeof mastery === "number" ? mastery : 0;
+    var days = mastery > 0.85 ? 7 : mastery > 0.7 ? 3 : 1;
+    var date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString();
+  };
+
+  ProgressEngine.prototype.updateMastery = function(payload) {
+    payload = payload || {};
+    var userId = payload.userId || null;
+    var instrument = payload.instrument || null;
+    var skillId = payload.skillId || null;
+    var performance = payload.performance || {};
+    var performanceScore = this.calculatePerformanceScore(performance);
+    var profile;
+    var current;
+    var nextMastery;
+
+    if (!skillId) throw new Error("updateMastery requires skillId");
+
+    if (this.storage && typeof this.storage.getUserProfile === "function" && typeof this.storage.updateUserProfile === "function") {
+      profile = this.storage.getUserProfile(userId) || {};
+      current = profile.mastery && profile.mastery[skillId] && typeof profile.mastery[skillId].mastery === "number"
+        ? profile.mastery[skillId].mastery
+        : 0;
+      nextMastery = this.smoothMastery(current, performanceScore);
+      var updatedProfile = this.storage.updateUserProfile(userId, {
+        mastery: mergeNamedObjects(profile.mastery || {}, buildMasteryEntry(skillId, instrument, nextMastery, performance))
+      });
+      this.emit("progress.mastery.updated", {
+        userId: userId,
+        skillId: skillId,
+        instrument: instrument,
+        mastery: nextMastery
+      });
+      return updatedProfile;
+    }
+
+    if (typeof SparkMastery !== "undefined" && typeof SparkMastery.get === "function" && typeof SparkMastery.set === "function") {
+      current = SparkMastery.get("lessons", skillId) || 0;
+      nextMastery = this.smoothMastery(current, performanceScore);
+      SparkMastery.set("lessons", skillId, nextMastery);
+      this.emit("progress.mastery.updated", {
+        userId: userId,
+        skillId: skillId,
+        instrument: instrument,
+        mastery: nextMastery
+      });
+      return buildMasteryValue(skillId, instrument, nextMastery, performance);
+    }
+
+    if (typeof S !== "undefined") {
+      if (!S.mastery || typeof S.mastery !== "object") S.mastery = {};
+      if (!S.mastery.lessons || typeof S.mastery.lessons !== "object") S.mastery.lessons = {};
+      current = S.mastery.lessons[skillId] && typeof S.mastery.lessons[skillId].mastery === "number"
+        ? S.mastery.lessons[skillId].mastery
+        : 0;
+      nextMastery = this.smoothMastery(current, performanceScore);
+      S.mastery.lessons[skillId] = buildMasteryValue(skillId, instrument, nextMastery, performance);
+      if (typeof saveState === "function") saveState();
+      this.emit("progress.mastery.updated", {
+        userId: userId,
+        skillId: skillId,
+        instrument: instrument,
+        mastery: nextMastery
+      });
+      return S.mastery.lessons[skillId];
+    }
+
+    throw new Error("No mastery store available");
+  };
+
+  ProgressEngine.prototype.addXp = function(user, amount) {
+    amount = typeof amount === "number" ? amount : 0;
+    if (typeof SparkInstrumentProgress !== "undefined" && typeof SparkInstrumentProgress.addXp === "function") {
+      SparkInstrumentProgress.addXp(amount);
+      this.emit("progress.xp.awarded", {
+        amount: amount,
+        totalXp: typeof S !== "undefined" ? (S.xp || 0) : amount
+      });
+      return { xp: typeof S !== "undefined" ? (S.xp || 0) : amount };
+    }
+    var nextXp = Math.max(0, ((user && user.xp) || 0) + amount);
+    this.emit("progress.xp.awarded", {
+      amount: amount,
+      totalXp: nextXp
+    });
+    return { xp: nextXp };
+  };
 
   ProgressEngine.prototype.completeSession = function(plan, payload) {
     payload = payload || {};
     if (!plan) return { completedItems: 0, totalItems: 0, planCompleted: false, xpAwarded: 0 };
-    if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return completeGuidedSession(plan, payload);
-    if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return completePerformanceSong(plan, payload);
+    if (plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return completeGuidedSession(this, plan, payload);
+    if (plan.flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return completePerformanceSong(this, plan, payload);
 
     var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
@@ -49,6 +167,13 @@
       progress.xpAwarded = xpAwarded;
       progress.sessionStatePatch = sessionStatePatch;
       progress.completionSummary = completionSummary;
+      emitProgressEvent(this, "progress.session.completed", {
+        sessionId: plan.id,
+        flow: plan.flow,
+        xpAwarded: xpAwarded,
+        completedItems: progress.completedItems,
+        totalItems: progress.totalItems
+      });
     } else if (typeof saveState === "function") {
       saveState();
     }
@@ -56,7 +181,7 @@
     return progress;
   };
 
-  function completeGuidedSession(plan, payload) {
+  function completeGuidedSession(engine, plan, payload) {
     var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
       totalItems: plan.segments.length,
@@ -88,6 +213,14 @@
       }
     }
 
+    if (payload.markPlanComplete && Array.isArray(plan.segments)) {
+      for (var i = 0; i < plan.segments.length; i++) plan.segments[i].completed = true;
+      progress.completedItems = plan.segments.length;
+      progress.totalItems = plan.segments.length;
+      progress.planCompleted = true;
+      SparkProgressBridge.syncPlanToState(plan);
+    }
+
     if (outcome) {
       sessionStatePatch.xpToast = { amount: outcome.xpEarned, time: Date.now(), jackpot: outcome.jackpot };
       progress.xpAwarded = outcome.xpEarned || 0;
@@ -101,10 +234,17 @@
     SparkProgressBridge.applySessionStatePatch(sessionStatePatch);
     progress.sessionStatePatch = sessionStatePatch;
     if (typeof saveState === "function") saveState();
+    emitProgressEvent(engine, "progress.session.completed", {
+      sessionId: plan.id,
+      flow: plan.flow,
+      xpAwarded: progress.xpAwarded || 0,
+      completedItems: progress.completedItems,
+      totalItems: progress.totalItems
+    });
     return progress;
   }
 
-  function completePerformanceSong(plan, payload) {
+  function completePerformanceSong(engine, plan, payload) {
     var progress = payload.itemId ? SparkProgressBridge.completePlanItem(plan, payload.itemId, payload.result) : {
       completedItems: plan.segments.length,
       totalItems: plan.segments.length,
@@ -135,6 +275,13 @@
         }
       };
       progress.performanceSummary = buildPerformanceCompletionSummary(plan, performanceResults, xpAwarded);
+      emitProgressEvent(engine, "progress.session.completed", {
+        sessionId: plan.id,
+        flow: plan.flow,
+        xpAwarded: xpAwarded,
+        completedItems: progress.completedItems,
+        totalItems: progress.totalItems
+      });
     }
 
     if (typeof saveState === "function") saveState();
@@ -278,6 +425,51 @@
   function mergeNamedSkillPatch(target, incoming) {
     for (var skillId in incoming) {
       target[skillId] = incoming[skillId];
+    }
+  }
+
+  function mergeNamedObjects(target, incoming) {
+    var merged = clone(target || {});
+    var key;
+    for (key in incoming) {
+      if (Object.prototype.hasOwnProperty.call(incoming, key)) merged[key] = incoming[key];
+    }
+    return merged;
+  }
+
+  function buildMasteryEntry(skillId, instrument, mastery, performance) {
+    var entry = {};
+    entry[skillId] = buildMasteryValue(skillId, instrument, mastery, performance);
+    return entry;
+  }
+
+  function buildMasteryValue(skillId, instrument, mastery, performance) {
+    return {
+      instrument: instrument,
+      skillId: skillId,
+      mastery: mastery,
+      lastAccuracy: performance.accuracy,
+      lastTiming: performance.timing || null,
+      updatedAt: new Date().toISOString(),
+      nextReviewAt: calculateNextReviewAt(mastery)
+    };
+  }
+
+  function calculateNextReviewAt(mastery) {
+    mastery = typeof mastery === "number" ? mastery : 0;
+    var days = mastery > 0.85 ? 7 : mastery > 0.7 ? 3 : 1;
+    var date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString();
+  }
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value || {}));
+  }
+
+  function emitProgressEvent(engine, type, payload) {
+    if (engine && engine.eventBus && typeof engine.eventBus.emit === "function") {
+      engine.eventBus.emit(type, payload || {});
     }
   }
 

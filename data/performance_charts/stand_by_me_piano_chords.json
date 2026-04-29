@@ -1,0 +1,33 @@
+{
+  "id": "stand_by_me_piano_chords",
+  "title": "Stand By Me",
+  "artist": "Ben E. King",
+  "bpm": 118,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "piano",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 16.271 },
+    { "id": 1, "name": "Chorus", "startSec": 16.271, "endSec": 32.542 },
+    { "id": 2, "name": "Outro", "startSec": 32.542, "endSec": 48.814 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.45, "type": "tap", "chord": "A_root", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 2, "t": 0.45, "dur": 1.584, "type": "chord", "chord": "A", "notes": ["A3", "C#4", "E4"], "laneLabel": "A", "strum": "down" },
+    { "id": 3, "t": 2.034, "dur": 0.45, "type": "tap", "chord": "A_root", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 4, "t": 2.484, "dur": 1.584, "type": "chord", "chord": "A", "notes": ["A3", "C#4", "E4"], "laneLabel": "A", "strum": "down" },
+    { "id": 5, "t": 4.068, "dur": 0.45, "type": "tap", "chord": "D_root", "notes": ["D3"], "laneLabel": "D", "strum": "tap" },
+    { "id": 6, "t": 4.518, "dur": 1.584, "type": "chord", "chord": "D", "notes": ["D4", "F#4", "A4"], "laneLabel": "D", "strum": "down" },
+    { "id": 7, "t": 6.102, "dur": 0.45, "type": "tap", "chord": "E_root", "notes": ["E3"], "laneLabel": "E", "strum": "tap" },
+    { "id": 8, "t": 6.552, "dur": 1.584, "type": "chord", "chord": "E", "notes": ["E4", "G#4", "B4"], "laneLabel": "E", "strum": "down" },
+    { "id": 9, "t": 8.136, "dur": 0.45, "type": "tap", "chord": "A_root", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 10, "t": 8.586, "dur": 1.584, "type": "chord", "chord": "A", "notes": ["A3", "C#4", "E4"], "laneLabel": "A", "strum": "down" },
+    { "id": 11, "t": 10.169, "dur": 0.45, "type": "tap", "chord": "A_root", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 12, "t": 10.619, "dur": 1.584, "type": "chord", "chord": "A", "notes": ["A3", "C#4", "E4"], "laneLabel": "A", "strum": "down" },
+    { "id": 13, "t": 12.203, "dur": 0.45, "type": "tap", "chord": "D_root", "notes": ["D3"], "laneLabel": "D", "strum": "tap" },
+    { "id": 14, "t": 12.653, "dur": 1.584, "type": "chord", "chord": "D", "notes": ["D4", "F#4", "A4"], "laneLabel": "D", "strum": "down" },
+    { "id": 15, "t": 14.237, "dur": 0.45, "type": "tap", "chord": "E_root", "notes": ["E3"], "laneLabel": "E", "strum": "tap" },
+    { "id": 16, "t": 14.687, "dur": 1.584, "type": "chord", "chord": "E", "notes": ["E4", "G#4", "B4"], "laneLabel": "E", "strum": "down" }
+  ]
+}

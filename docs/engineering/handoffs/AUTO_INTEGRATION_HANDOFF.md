@@ -10,23 +10,23 @@ must be updated when adding a new instrument to SparkSuite.
 
 ### 1. index.html Script Tags
 
-All instrument files must be loaded via script tags in index.html.
+All runtime instrument files must be loaded via deferred script tags in index.html.
 Order matters: dependencies must load before dependents.
 
 Required load order for a new instrument:
 
     <!-- SparkSuite module layer (loads first) -->
-    <script src="js/sparksuite/instruments/NAME/NAME_skill_tree.js"></script>
-    <script src="js/sparksuite/instruments/NAME/NAME_lessons.js"></script>
-    <script src="js/sparksuite/instruments/NAME/NAME_exercises.js"></script>
-    <script src="js/sparksuite/instruments/NAME/NAME_chords.js"></script>
-    <script src="js/sparksuite/instruments/NAME/NAME_module.js"></script>
-    <script src="js/sparksuite/instruments/NAME/NAME_adapter.js"></script>
-    <script src="js/sparksuite/instruments/NAME/index.js"></script>
+    <script data-deferred-src="js/sparksuite/instruments/NAME/NAME_skill_tree.js"></script>
+    <script data-deferred-src="js/sparksuite/instruments/NAME/NAME_lessons.js"></script>
+    <script data-deferred-src="js/sparksuite/instruments/NAME/NAME_exercises.js"></script>
+    <script data-deferred-src="js/sparksuite/instruments/NAME/NAME_chords.js"></script>
+    <script data-deferred-src="js/sparksuite/instruments/NAME/NAME_module.js"></script>
+    <script data-deferred-src="js/sparksuite/instruments/NAME/NAME_adapter.js"></script>
+    <script data-deferred-src="js/sparksuite/instruments/NAME/index.js"></script>
 
     <!-- Runtime layer (loads after module layer) -->
-    <script src="js/instruments/NAME/app.js"></script>
-    <script src="js/instruments/NAME/register.js"></script>
+    <script data-deferred-src="js/instruments/NAME/register.js"></script>
+    <script data-deferred-src="js/instruments/NAME/app.js"></script>
 
 ### 2. Launcher Registration
 

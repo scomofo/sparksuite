@@ -17,6 +17,10 @@
 // (normalizeAppTextInputValue moved to js/render.js; it's only used by the
 // onboarding overlay which now lives there too.)
 
+function getTimerCore(){
+  return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+}
+
 function tickS(){
   if(S.timerActive&&S.timer>0){
     S.timer--;
@@ -36,8 +40,9 @@ function tickS(){
     S.timerActive=false;clearTimeout(T.session);
     if(S.metronomeOn)stopMetronome();
     if(S.chordDetectOn)stopChordDetect();
-    if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeSession === "function"){
-      window.sparkCore.completeLegacyPracticeSession({
+    var core=getTimerCore();
+    if(core && typeof core.completeLegacyPracticeSession === "function"){
+      core.completeLegacyPracticeSession({
         mode: S.lastChordName ? "chord" : "quickStart",
         chordName: S.currentChord ? S.currentChord.name : null,
         durationSec: 120
@@ -90,8 +95,9 @@ function tickD(){
     clearTimeout(T.drill);snd("complete");
     var detail=S.drillChords.map(function(c){return c.name;}).join(" / ");
     var activityInstrument = getActiveInstrumentIdentityForActivity();
-    if(window.sparkCore && typeof window.sparkCore.completeLegacyPracticeDrill === "function"){
-      window.sparkCore.completeLegacyPracticeDrill({
+    var core=getTimerCore();
+    if(core && typeof core.completeLegacyPracticeDrill === "function"){
+      core.completeLegacyPracticeDrill({
         durationSec: 60,
         chordNames: S.drillChords.map(function(c){return c.name;})
       });
@@ -190,8 +196,9 @@ function genQ(){
   }
   opts=shuffle(opts);
   S.quizQ=q;S.quizOpts=opts;S.quizAns=null;
-  if(window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function"){
-    window.sparkCore.syncLegacyQuizRuntimeState({
+  var core=getTimerCore();
+  if(core && typeof core.syncLegacyQuizRuntimeState === "function"){
+    core.syncLegacyQuizRuntimeState({
       question: q,
       options: opts,
       answer: null

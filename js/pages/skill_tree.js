@@ -1,8 +1,9 @@
 function skillTreePage(){
   var tree = buildSkillTree();
   var h = '';
-  var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-    ? window.sparkCore.getRuntimeState()
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var runtimeState = core && typeof core.getRuntimeState === "function"
+    ? core.getRuntimeState()
     : null;
   var focus = runtimeState && runtimeState.skillTreeFocus ? runtimeState.skillTreeFocus : (S.skillTreeFocus || "overview");
 

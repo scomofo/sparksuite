@@ -11,19 +11,23 @@
 // (Moved to js/shortcuts.js — global keydown listener.)
 
 // ===== INITIALIZATION =====
-S.dailyChallenge=DAILY_CHALLENGES[Math.floor(Date.now()/86400000)%DAILY_CHALLENGES.length];
-try{if(typeof generatePracticePlan==="function")generatePracticePlan();}catch(e){}
+function selectBootDailyChallenge(){
+  return DAILY_CHALLENGES[Math.floor(Date.now()/86400000)%DAILY_CHALLENGES.length];
+}
+S.dailyChallenge=selectBootDailyChallenge();
+try{if(typeof generatePracticePlan==="function")generatePracticePlan();}catch(e){console.error("ChordSpark: generatePracticePlan failed",e);}
 applyTheme();
 // Init MIDI if previously enabled
 if(S.midiEnabled){try{initMIDI();}catch(e){console.error("ChordSpark: MIDI init failed",e);}}
 // Preload guitar WAV samples
 try{preloadGuitarAudio();}catch(e){console.error("ChordSpark: guitar audio preload failed",e);}
 document.getElementById("no-js").style.display="none";
-document.getElementById("header").style.display=S.activeInstrument?"flex":"none";
+S.activeInstrument=null;
+S._showroomOverride=null;
+S.launcherView="home";
+document.getElementById("header").style.display="none";
 document.getElementById("app").style.display="block";
-// Activate remembered instrument
-if(S.activeInstrument){try{SparkInstruments.activate(S.activeInstrument);}catch(e){console.error("SparkSuite: instrument activate failed",e);}}
-try{if(typeof choosePerformanceDailyChallenge==="function")choosePerformanceDailyChallenge();}catch(e){}
+try{if(typeof choosePerformanceDailyChallenge==="function")choosePerformanceDailyChallenge();}catch(e){console.error("ChordSpark: choosePerformanceDailyChallenge failed",e);}
 
 // Product-facing lesson helpers. Keep this as a safe bootstrap so the layer is
 // available even when index.html script ordering changes during migrations.

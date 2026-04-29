@@ -4,12 +4,19 @@ function prettyPerformanceStatsToken(value){
   var text;
   var lower;
   if(value == null) return "";
-  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if(typeof value !== "string" && typeof value !== "number") return "";
   text = String(value || "").replace(/_/g, " ").trim();
   if(!text) return "";
   lower = text.toLowerCase();
   if(lower === "undefined" || lower === "null" || lower === "nan") return "";
   return text;
+}
+
+function getPerformanceStatsCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
 }
 
 function performanceStatsPage(){
@@ -18,8 +25,9 @@ function performanceStatsPage(){
   var h='<div class="perform-page">';
   h+='<div class="perform-header"><button class="back-btn" onclick="act(\'performStatsBack\')">&larr; Back</button>';
   h+='<div class="perform-title"><strong>Performance Stats</strong></div></div>';
-  h+='<div class="perform-controls">';
-  h+='<div class="perform-toggle-group"><span class="perform-toggle-label">View</span>';
+  h+='<div class="card mb20" style="padding:12px;border-radius:18px;border:1px solid rgba(69,183,209,.16);background:linear-gradient(180deg,rgba(15,19,30,.94),rgba(8,10,16,.94))">';
+  h+='<div style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">View</div>';
+  h+='<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">';
   var focuses=["overview","recent","top","weak","daily"];
   for(var fi=0;fi<focuses.length;fi++){
     var focusId=focuses[fi];
@@ -105,9 +113,7 @@ function performanceStatsPage(){
 }
 
 function getPerformanceStatsView(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getPerformanceStatsCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var focus = prettyPerformanceStatsToken(runtimeState && runtimeState.performanceStatsFocus);
   var allowedFocuses = { overview: true, recent: true, top: true, weak: true, daily: true };
