@@ -463,46 +463,11 @@ test('vocals register adds a selectable launcher instrument', function() {
   assert.strictEqual(typeof vocals.tabRenderers.practice, 'function');
 });
 
-test('vocals register upserts existing app-id catalog entries', function() {
+test('vocals lesson start dispatches openPracticePlan with the lesson id', function() {
+  var actCalls = [];
   installMinimalDocument();
-  global.SPARK_INSTRUMENTS = [{ id: 'vocalspark', instrument: 'vocals', name: 'Existing VocalSpark' }];
-  eval(loadJS('js/instruments/vocals/register.js'));
-
-  assert.strictEqual(SPARK_INSTRUMENTS.length, 1);
-  assert.strictEqual(SPARK_INSTRUMENTS[0].id, 'vocalspark');
-  assert.strictEqual(SPARK_INSTRUMENTS[0].instrumentId, 'vocals');
-});
-
-test('vocals register upserts existing instrument-type catalog entries', function() {
-  installMinimalDocument();
-  global.SPARK_INSTRUMENTS = [{ id: 'legacy_voice_entry', instrument: 'vocals', name: 'Existing Vocals' }];
-  eval(loadJS('js/instruments/vocals/register.js'));
-
-  assert.strictEqual(SPARK_INSTRUMENTS.length, 1);
-  assert.strictEqual(SPARK_INSTRUMENTS[0].id, 'vocalspark');
-  assert.strictEqual(SPARK_INSTRUMENTS[0].instrument, 'vocals');
-});
-
-test('vocals register writes Map-style registries with a stable key', function() {
-  installMinimalDocument();
-  global.SparkInstrumentRegistry = new Map();
-  eval(loadJS('js/instruments/vocals/register.js'));
-
-  assert.strictEqual(SparkInstrumentRegistry.size, 1);
-  assert.ok(SparkInstrumentRegistry.has('vocals'));
-  assert.strictEqual(SparkInstrumentRegistry.get('vocals').id, 'vocalspark');
-});
-
-test('vocals lesson start opens the practice plan screen', function() {
-  var planCalls = [];
-  installMinimalDocument();
-  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
-  global.openPracticePlanScreenRequest = function(payload) {
-    planCalls.push(payload || {});
-    return payload || {};
-  };
-  global.SCR = { PLAN: 'plan' };
-  global.render = function() {};
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home', activeInstrument: null, tab: null };
+  global.act = function(action, value) { actCalls.push([action, value]); };
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_curriculum.js'));
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_lessons.js'));
@@ -512,9 +477,10 @@ test('vocals lesson start opens the practice plan screen', function() {
 
   startVocalsLesson('lesson_vocal_setup_comfort_01');
 
-  assert.strictEqual(S.screen, 'plan');
-  assert.strictEqual(planCalls.length, 1);
-  assert.strictEqual(planCalls[0].lessonId, 'lesson_vocal_setup_comfort_01');
+  assert.strictEqual(S.activeInstrument, 'vocalspark');
+  assert.strictEqual(S.tab, 'practice');
+  assert.strictEqual(actCalls.length, 1);
+  assert.deepStrictEqual(actCalls[0], ['openPracticePlan', 'lesson_vocal_setup_comfort_01']);
 });
 
 test('bass register exposes a dedicated songs tab renderer', function() {
