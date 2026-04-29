@@ -387,10 +387,17 @@
       SparkEventLogger.log("session_start", { segmentId: segment.id, segmentType: segment.type, exerciseId: exercise ? exercise.id : null });
     }
 
+    if (segment && segment.meta && segment.meta.ukuleleMiniSessionId) {
+      startSegmentTransport(segment, options);
+      return true;
+    }
+
     if (gateway && typeof gateway.runSessionSegment === "function") {
       var launched = gateway.runSessionSegment(_activeSession, segment, buildSegmentLaunchOptions(segment, exercise));
-      if (launched) startSegmentTransport(segment, options);
-      return launched;
+      if (launched) {
+        startSegmentTransport(segment, options);
+        return launched;
+      }
     }
 
     // Dispatch to appropriate launcher based on segment type

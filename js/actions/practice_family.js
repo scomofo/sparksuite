@@ -85,6 +85,9 @@
     var plan = view && view.plan ? view.plan : null;
     var segments = plan && Array.isArray(plan.segments) ? plan.segments : [];
     var hasSegment = false;
+    var segment = null;
+    var previousScreen = typeof S !== "undefined" && S ? S.screen : null;
+    var launched;
     var i;
 
     if (!itemId || !core || !runtime || !plan || plan.flow !== "daily_practice" || typeof runtime.runSegmentById !== "function") {
@@ -94,6 +97,7 @@
     for (i = 0; i < segments.length; i++) {
       if (segments[i] && segments[i].id === itemId) {
         hasSegment = true;
+        segment = segments[i];
         break;
       }
     }
@@ -102,7 +106,7 @@
     if (typeof core.syncSessionRuntime === "function") {
       core.syncSessionRuntime({
         segmentId: itemId,
-        status: "ready",
+        status: segment && segment.meta && segment.meta.ukuleleMiniSessionId ? "running" : "ready",
         positionMs: 0,
         autoAdvance: true,
         scheduleTick: false,
@@ -110,9 +114,22 @@
       });
     }
 
-    return runtime.runSegmentById(itemId, {
+    if (segment && segment.meta && segment.meta.ukuleleMiniSessionId) {
+      if (typeof S !== "undefined" && S) {
+        S.screen = typeof SCR !== "undefined" && SCR && SCR.SESSION ? SCR.SESSION : "session";
+      }
+      if (typeof render === "function") render();
+      return true;
+    }
+
+    launched = runtime.runSegmentById(itemId, {
       autoAdvance: true
     }) !== false;
+    if (launched && typeof S !== "undefined" && S && S.screen === previousScreen) {
+      S.screen = typeof SCR !== "undefined" && SCR && SCR.SESSION ? SCR.SESSION : "session";
+      if (typeof render === "function") render();
+    }
+    return launched;
   }
 
   function handlePracticeAction(a, v) {

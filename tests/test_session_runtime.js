@@ -215,6 +215,44 @@ test("runSegment falls back to direct legacy launchers when SparkExecutionGatewa
   };
 });
 
+test("runSegment keeps shell-only ukulele mini-session blocks live when gateway declines launch", function() {
+  var gatewayCalls = 0;
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    gatewayCalls++;
+    return true;
+  };
+  global.window.sparkCore = {
+    updateRuntimeState: function() {
+      return true;
+    },
+    startSession: function() {
+      return {
+        flow: "daily_practice",
+        segments: [{
+          id: "uke_favorites_set_a_warmup",
+          type: "warmup",
+          label: "Warm-up Strum",
+          durationSec: 120,
+          meta: { ukuleleMiniSessionId: "uke_favorites_set_a" },
+          exerciseIds: []
+        }],
+        exercises: []
+      };
+    }
+  };
+
+  Runtime.startSessionLoop();
+  var launched = Runtime.runSegmentById("uke_favorites_set_a_warmup", { scheduleTick: false });
+
+  assert.strictEqual(launched, true);
+  assert.strictEqual(Runtime.getActiveSegment().id, "uke_favorites_set_a_warmup");
+  assert.strictEqual(Runtime.getSegmentTransport().status, "running");
+  assert.strictEqual(Runtime.getSegmentTransport().durationMs, 120000);
+  assert.strictEqual(gatewayCalls, 0);
+
+  delete global.window.sparkCore;
+});
+
 test("syncSegmentTransport updates transport progress and auto-advances timed segments", function() {
   var launches = [];
   var runtimePatches = [];

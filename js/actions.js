@@ -17,6 +17,7 @@
 
 // ===== ACTION DISPATCHER =====
 window.act=function(a,v){
+  if(a === "practiceStartItem" && window.runSparkActionFamilies && window.runSparkActionFamilies(a, v)) return;
   // Delegate to active instrument's handler first
   var _inst = SparkInstruments.getActive();
   if (_inst && _inst.act && _inst.act(a, v)) return;

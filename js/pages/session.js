@@ -74,10 +74,11 @@ function getPreferredSessionArray(preferCore, runtimeValue, legacyValue) {
 }
 
 function getSessionPageActiveShellSummary(){
+  var shell;
   if (typeof SparkSessionShellUI === "undefined" || !SparkSessionShellUI || typeof SparkSessionShellUI.buildDailyShellSummary !== "function") {
     return null;
   }
-  return SparkSessionShellUI.buildDailyShellSummary(getSessionCoreView(), {
+  shell = SparkSessionShellUI.buildDailyShellSummary(getSessionCoreView(), {
     focusFormatter: function(plan) {
       return _firstSessionSongTextToken(plan && plan.focus, plan && plan.title, "Practice Session");
     },
@@ -87,6 +88,30 @@ function getSessionPageActiveShellSummary(){
     fallbackTitle: "Practice Session",
     fallbackSegmentLabel: "Practice block"
   });
+  if (shell) return shell;
+  if (typeof S !== "undefined" && S && S.practicePlan && S.practicePlan.flow === "daily_practice" && Array.isArray(S.practicePlan.items)) {
+    return SparkSessionShellUI.buildDailyShellSummary({
+      plan: {
+        flow: "daily_practice",
+        focus: S.practicePlan.focus || "Practice Session",
+        segments: S.practicePlan.items
+      },
+      runtimeState: {
+        activeSegmentId: S.practicePlan.items[0] && S.practicePlan.items[0].id ? S.practicePlan.items[0].id : null,
+        transport: { status: "running", positionMs: 0 }
+      }
+    }, {
+      focusFormatter: function(plan) {
+        return _firstSessionSongTextToken(plan && plan.focus, plan && plan.title, "Practice Session");
+      },
+      segmentFormatter: function(segment) {
+        return _firstSessionSongTextToken(segment && segment.label, segment && segment.title, segment && segment.type, "Practice block");
+      },
+      fallbackTitle: "Practice Session",
+      fallbackSegmentLabel: "Practice block"
+    });
+  }
+  return null;
 }
 
 function findInstrumentChordByName(D, chordName){
@@ -330,6 +355,27 @@ function renderSessionShellCard(shell){
   });
 }
 
+function getSessionPageFallbackShell(){
+  return {
+    title: "Practice Session",
+    segmentLabel: "Practice block",
+    blockCount: 1,
+    activeIndex: 0,
+    completedCount: 0,
+    status: "running",
+    statusLabel: "In progress - Practice block",
+    targetDurationMin: 0,
+    durationMin: 0,
+    progressPct: 0,
+    elapsedLabel: "0m 0s in block",
+    remainingLabel: "0m 0s left",
+    primaryAction: "sessionPauseBlock",
+    primaryLabel: "Pause Block",
+    canSkip: false,
+    segments: []
+  };
+}
+
 function renderSessionActionButtons(runtime){
   return '<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div>';
 }
@@ -470,7 +516,7 @@ function sessionPage(){
   var runtime = getLegacySessionRuntime(D);
   var shell = getSessionPageActiveShellSummary();
   var c = runtime.chord;
-  if(!c)return '';
+  if(!c)return renderSessionShellCard(shell || getSessionPageFallbackShell());
   // Check if voicings are available
   var voicings=VOICINGS[c.name];
   var displayChord=c;

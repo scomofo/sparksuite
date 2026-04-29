@@ -1295,8 +1295,45 @@ function practicePage(){
 function startPracticeItem(id){
   var view = getPracticeCoreView();
   var plan = resolvePracticeCoreDailyPlan(view);
+  var runtime = typeof window !== "undefined" && window.SparkSessionRuntime ? window.SparkSessionRuntime : (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
+  var segments = plan && Array.isArray(plan.segments) ? plan.segments : [];
+  var previousScreen = typeof S !== "undefined" && S ? S.screen : null;
+  var launched;
+  var si;
   if(!plan) plan = S.practicePlan;
   if(!plan || !Array.isArray(plan.items)) return;
+  if(runtime && typeof runtime.runSegmentById === "function" && plan.flow === "daily_practice"){
+    for(si=0;si<segments.length;si++){
+      if(segments[si] && segments[si].id === id){
+        if(typeof sparkCore !== "undefined" && sparkCore && typeof sparkCore.syncSessionRuntime === "function"){
+          sparkCore.syncSessionRuntime({
+            segmentId: id,
+            status: segments[si].meta && segments[si].meta.ukuleleMiniSessionId ? "running" : "ready",
+            positionMs: 0,
+            autoAdvance: true,
+            scheduleTick: false,
+            syncState: false
+          });
+        }
+        if(segments[si].meta && segments[si].meta.ukuleleMiniSessionId){
+          if(typeof S !== "undefined" && S){
+            S.screen = typeof SCR !== "undefined" && SCR && SCR.SESSION ? SCR.SESSION : "session";
+          }
+          if(typeof render === "function") render();
+          return;
+        }
+        launched = runtime.runSegmentById(id, { autoAdvance: true }) !== false;
+        if(launched){
+          if(typeof S !== "undefined" && S && S.screen === previousScreen){
+            S.screen = typeof SCR !== "undefined" && SCR && SCR.SESSION ? SCR.SESSION : "session";
+          }
+          if(typeof render === "function") render();
+          return;
+        }
+        break;
+      }
+    }
+  }
   for(var i=0;i<plan.items.length;i++){
     var item = plan.items[i];
     var candidateId = normalizePracticeSummaryItemId(item ? item.id : null);

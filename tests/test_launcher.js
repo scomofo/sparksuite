@@ -118,6 +118,15 @@ test('activate sets active instrument', function() {
   assert.strictEqual(active.id, 'test_guitar');
 });
 
+test('getPage rehydrates active instrument from saved state before resolving pages', function() {
+  SparkInstruments.activate('test_piano');
+  S.activeInstrument = 'test_guitar';
+  var page = SparkInstruments.getPage('home');
+  assert.ok(page);
+  assert.strictEqual(page(), '<div>Guitar Home</div>');
+  assert.strictEqual(SparkInstruments.getActive().id, 'test_guitar');
+});
+
 test('deactivate clears active instrument', function() {
   S.screen = 'session';
   S.tab = 'songs';

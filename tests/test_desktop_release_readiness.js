@@ -35,9 +35,14 @@ assert.ok(electronMain.indexOf("path.isAbsolute(relativeStemPath)") >= 0, "stems
 assert.ok(indexHtml.indexOf("js/sparksuite/storage/export_user_data.js") >= 0, "packaged renderer should load user data export");
 assert.ok(indexHtml.indexOf("js/sparksuite/storage/import_user_data.js") >= 0, "packaged renderer should load user data import");
 assert.ok(indexHtml.indexOf("js/sparksuite/debug/debug_bundle.js") >= 0, "packaged renderer should load debug bundle export");
+assert.ok(indexHtml.indexOf("js/sparksuite/core/session_runtime.js") >= 0, "packaged renderer should load shared session runtime");
 assert.ok(
   indexHtml.indexOf("js/sparksuite/storage/export_user_data.js") < indexHtml.indexOf("js/desktop/bridge.js"),
   "user data export should load before desktop bridge"
+);
+assert.ok(
+  indexHtml.indexOf("js/sparksuite/core/session_runtime.js") < indexHtml.indexOf("js/sparksuite/core/spark_core.js"),
+  "shared session runtime should load before spark core"
 );
 assert.ok(
   indexHtml.indexOf("js/sparksuite/debug/debug_bundle.js") < indexHtml.indexOf("js/desktop/bridge.js"),

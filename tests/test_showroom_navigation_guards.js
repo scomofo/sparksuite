@@ -123,6 +123,37 @@ test("practice action family wires practiceStartItem to the runtime launcher", f
   assert.deepStrictEqual(global.startPracticeItemCalls, ["focus_01"]);
 });
 
+test("global act routes practiceStartItem through shared families before active instrument handlers", function() {
+  var familyCalls = [];
+  var instrumentCalls = [];
+  global.runSparkActionFamilies = function(action, value) {
+    familyCalls.push([action, value]);
+    return true;
+  };
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        act: function(action, value) {
+          instrumentCalls.push([action, value]);
+          return true;
+        }
+      };
+    }
+  };
+
+  global.eval(loadJS("js/actions.js"));
+  global.act("practiceStartItem", "focus_01");
+
+  assert.deepStrictEqual(familyCalls, [["practiceStartItem", "focus_01"]]);
+  assert.deepStrictEqual(instrumentCalls, []);
+});
+
+test("legacy piano dispatcher delegates practiceStartItem back to shared families", function() {
+  var pianoSource = loadJS("js/instruments/piano/app.js");
+  assert.ok(pianoSource.indexOf('case "practiceStartItem":') >= 0);
+  assert.ok(pianoSource.indexOf("window.runSparkActionFamilies(action, param)") >= 0);
+});
+
 test("showroom practice drills route start buttons through practiceStartItem", function() {
   var showroomSource = loadJS("js/showroom/spark-showroom.js");
   assert.ok(showroomSource.indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);

@@ -147,6 +147,12 @@ function test(name, fn) {
 
 console.log("\n--- Session/Song Page Instrument Resolution ---");
 
+test("render registry keeps session screens on the shared session shell", function() {
+  var source = loadJS("js/render_registry.js");
+  assert.ok(source.indexOf("S.screen === SCR.SESSION") >= 0);
+  assert.ok(source.indexOf("return sharedPages[S.screen]()") >= 0);
+});
+
 test("sessionPage rehydrates an app-id-only active instrument shell", function() {
   var html = sessionPage();
   assert.ok(html.indexOf("C") >= 0);
@@ -187,6 +193,66 @@ test("session family pages surface the live daily-practice shell from sparkCore"
   assert.ok(sessionHtml.indexOf("1m 30s left") >= 0);
   assert.ok(drillHtml.indexOf("Practice Session Live") >= 0);
   assert.ok(dailyHtml.indexOf("Practice Session Live") >= 0);
+});
+
+test("sessionPage can render a live daily-practice shell without a legacy chord", function() {
+  S.currentChord = null;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Set A - Strum Stability",
+          segments: [
+            { id: "uke_favorites_set_a_warmup", type: "warmup", label: "Warm-up Strum", durationSec: 120 }
+          ]
+        },
+        activeSegment: { id: "uke_favorites_set_a_warmup", type: "warmup", label: "Warm-up Strum", durationSec: 120 },
+        runtimeState: {
+          activeSegmentId: "uke_favorites_set_a_warmup",
+          transport: { status: "running", positionMs: 1000, durationMs: 120000 }
+        }
+      };
+    }
+  };
+
+  var sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(sessionHtml.indexOf("In progress - Warm-up Strum") >= 0);
+});
+
+test("sessionPage falls back to the projected legacy daily plan shell", function() {
+  S.currentChord = null;
+  S.practicePlan = {
+    flow: "daily_practice",
+    focus: "Set A - Strum Stability",
+    items: [
+      { id: "uke_favorites_set_a_warmup", type: "warmup", label: "Warm-up Strum", durationSec: 120 }
+    ]
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(sessionHtml.indexOf("In progress - Warm-up Strum") >= 0);
+});
+
+test("sessionPage renders a fallback shell instead of a blank session screen", function() {
+  S.currentChord = null;
+  S.practicePlan = null;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var sessionHtml = sessionPage();
+  assert.ok(sessionHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(sessionHtml.indexOf("In progress - Practice block") >= 0);
 });
 
 test("sessionPage prefers canonical runtime values over stale legacy session state", function() {
