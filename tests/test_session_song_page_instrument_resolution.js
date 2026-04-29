@@ -423,6 +423,27 @@ test("songsTab rehydrates an app-id-only active instrument shell", function() {
   assert.ok(html.indexOf("Lvl 1") >= 0);
 });
 
+test("songsTab tolerates instruments without a song library", function() {
+  global.SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "vocalspark",
+        instrument: "vocals",
+        getData: function() {
+          return { ALL_CHORDS: [] };
+        }
+      };
+    },
+    getAll: function() {
+      return [];
+    }
+  };
+
+  var html = songsTab();
+
+  assert.ok(html.indexOf("Song Library") >= 0);
+});
+
 test("songsTab ignores stale performance daily copy tokens", function() {
   S.performanceDailyChallenge = {
     label: "undefined",

@@ -398,6 +398,8 @@
     try {
       if (typeof W.openPracticePlanScreenRequest === "function") {
         W.openPracticePlanScreenRequest(W.__sparkForcedLessonRequest);
+        if (W.S) W.S.screen = W.SCR && W.SCR.PLAN ? W.SCR.PLAN : "plan";
+        if (typeof W.render === "function") W.render();
         return false;
       }
     } catch (err) {}

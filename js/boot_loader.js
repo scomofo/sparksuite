@@ -126,4 +126,10 @@
     loadDeferredScripts: loadDeferredScripts,
     scheduleDeferredScripts: scheduleDeferredScripts
   };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleDeferredScripts, { once: true });
+  } else {
+    scheduleDeferredScripts();
+  }
 })();

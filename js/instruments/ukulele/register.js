@@ -76,6 +76,17 @@
     h += '<div><div style="font-size:18px;font-weight:900;color:var(--text-primary)">Ukulele Practice</div>';
     h += '<div style="font-size:12px;color:var(--text-muted)">Island strums, clean chord changes, and 4-string rhythm flow.</div></div>';
     h += '<button class="btn" onclick="act(\'openPlan\')" style="background:var(--accent);color:#fff">Open Plan</button></div></div>';
+    h += '<div class="card mb12">';
+    h += '<div style="font-size:13px;font-weight:800;color:var(--text-muted);margin-bottom:8px">10-Minute Launchers</div>';
+    h += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    h += '<button class="btn" onclick="act(\'openPracticeTemplate\',\'quick_win\')">Quick Win 10</button>';
+    h += '<button class="btn" onclick="act(\'openPracticeTemplate\',\'low_energy\')">Low Energy 10</button>';
+    h += '<button class="btn" onclick="act(\'openPracticeTemplate\',\'reset_focus\')">Reset Focus 10</button>';
+    h += '</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">';
+    h += '<button class="btn" onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_a\')">Uke Set A</button>';
+    h += '<button class="btn" onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_b\')">Uke Set B</button>';
+    h += '<button class="btn" onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_c\')">Uke Set C</button>';
+    h += '</div></div>';
 
     if (lesson) {
       h += '<div class="card mb12">';

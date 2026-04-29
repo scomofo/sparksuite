@@ -87,13 +87,28 @@ test('register adds a second instrument', function() {
   assert.strictEqual(SparkInstruments.getAll().length, 2);
 });
 
+test('register refreshes the inactive launcher when instruments arrive late', function() {
+  var renderCalls = 0;
+  global.S = { activeInstrument: null, launcherView: 'home' };
+  global.render = function() { renderCalls++; };
+
+  SparkInstruments.register({
+    id: 'late_uke', instrument: 'ukulele', name: 'Late Uke', icon: 'U',
+    available: true, getData: function() { return {}; },
+    pages: {}, tabs: [], stemMutePreset: {}, init: function() {}
+  });
+
+  assert.strictEqual(renderCalls, 1);
+});
+
 test('register ignores duplicates', function() {
+  var before = SparkInstruments.getAll().length;
   SparkInstruments.register({
     id: 'test_guitar', instrument: 'guitar', name: 'Guitar2', icon: 'G2',
     skin: null, available: true, getData: function() { return {}; },
     pages: {}, tabs: [], stemMutePreset: {}, init: function() {}
   });
-  assert.strictEqual(SparkInstruments.getAll().length, 2);
+  assert.strictEqual(SparkInstruments.getAll().length, before);
 });
 
 test('activate sets active instrument', function() {
@@ -156,6 +171,28 @@ test('renderLauncher returns HTML with instrument cards', function() {
   assert.ok(html.indexOf('Guitar') >= 0);
   assert.ok(html.indexOf('Piano') >= 0);
   assert.ok(html.indexOf('SparkSuite') >= 0);
+});
+
+test('launcher home kicks deferred instrument registration loading', function() {
+  var loadCalls = 0;
+  global.S = { activeInstrument: null, launcherView: 'home' };
+  global.SparkBootLoader = {
+    hasDeferredScripts: function() { return true; },
+    hasFailures: function() { return false; },
+    loadDeferredScripts: function(callback) {
+      loadCalls++;
+      if (typeof callback === 'function') callback();
+    }
+  };
+  global.render = function() {};
+
+  SparkInstruments.renderLauncher();
+
+  assert.strictEqual(loadCalls, 1);
+  global.SparkBootLoader = {
+    hasDeferredScripts: function() { return false; },
+    hasFailures: function() { return false; }
+  };
 });
 
 test('renderLauncher wires hero and launcher utility actions', function() {
@@ -352,6 +389,7 @@ test('render_showroom routes performance overrides to SparkPerformance', functio
 });
 
 test('ukulele register adds a selectable launcher instrument', function() {
+  eval(loadJS('js/ui/stringed_chord_svg.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_chords.js'));
@@ -360,6 +398,9 @@ test('ukulele register adds a selectable launcher instrument', function() {
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_exercises.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_progression.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_module.js'));
+  eval(loadJS('js/instruments/ukulele/chord_normalizer.js'));
+  eval(loadJS('js/instruments/ukulele/validator.js'));
+  eval(loadJS('js/instruments/ukulele/ukulele_svg.js'));
   eval(loadJS('js/instruments/ukulele/register.js'));
 
   var all = SparkInstruments.getAll();
@@ -371,6 +412,12 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.ok(ukulele);
   assert.strictEqual(ukulele.instrument, 'ukulele');
   assert.strictEqual(typeof ukulele.tabRenderers.practice, 'function');
+  var practiceHtml = ukulele.tabRenderers.practice();
+  assert.ok(practiceHtml.indexOf("Quick Win 10") >= 0);
+  assert.ok(practiceHtml.indexOf("Low Energy 10") >= 0);
+  assert.ok(practiceHtml.indexOf("Reset Focus 10") >= 0);
+  assert.ok(practiceHtml.indexOf("Uke Set A") >= 0);
+  assert.ok(practiceHtml.indexOf("openUkuleleMiniSession") >= 0);
 });
 
 test('vocals register adds a selectable launcher instrument', function() {
@@ -421,6 +468,30 @@ test('vocals register writes Map-style registries with a stable key', function()
   assert.strictEqual(SparkInstrumentRegistry.size, 1);
   assert.ok(SparkInstrumentRegistry.has('vocals'));
   assert.strictEqual(SparkInstrumentRegistry.get('vocals').id, 'vocalspark');
+});
+
+test('vocals lesson start opens the practice plan screen', function() {
+  var planCalls = [];
+  installMinimalDocument();
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
+  global.openPracticePlanScreenRequest = function(payload) {
+    planCalls.push(payload || {});
+    return payload || {};
+  };
+  global.SCR = { PLAN: 'plan' };
+  global.render = function() {};
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_skill_tree.js'));
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_curriculum.js'));
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_lessons.js'));
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_exercises.js'));
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_module.js'));
+  eval(loadJS('js/instruments/vocals/register.js'));
+
+  startVocalsLesson('lesson_vocal_setup_comfort_01');
+
+  assert.strictEqual(S.screen, 'plan');
+  assert.strictEqual(planCalls.length, 1);
+  assert.strictEqual(planCalls[0].lessonId, 'lesson_vocal_setup_comfort_01');
 });
 
 test('bass register exposes a dedicated songs tab renderer', function() {
@@ -480,6 +551,21 @@ test('boot loader tracks deferred failures instead of silently reporting ready',
   assert.ok(bootLoaderSource.indexOf('hasFailures: function() { return _failed.length > 0; }') >= 0);
   assert.ok(bootLoaderSource.indexOf('document.documentElement.setAttribute("data-spark-deferred-failed", "true");') >= 0);
   assert.ok(bootLoaderSource.indexOf('if (_failed.length) return;') >= 0);
+});
+
+test('index loads boot loader before deferred instrument placeholders', function() {
+  var source = loadJS('index.html');
+  var bootIndex = source.indexOf('js/boot_loader.js');
+  var deferredIndex = source.indexOf('data-deferred-src="js/instruments/bass/data.js"');
+  assert.ok(bootIndex >= 0);
+  assert.ok(deferredIndex >= 0);
+  assert.ok(bootIndex < deferredIndex);
+});
+
+test('boot loader schedules deferred scripts after the page has parsed', function() {
+  var bootLoaderSource = loadJS('js/boot_loader.js');
+  assert.ok(bootLoaderSource.indexOf('document.addEventListener("DOMContentLoaded", scheduleDeferredScripts') >= 0);
+  assert.ok(bootLoaderSource.indexOf('scheduleDeferredScripts();') >= 0);
 });
 
 test('showroom source wires remaining library, tuner, and syllabus controls', function() {
