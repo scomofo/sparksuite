@@ -155,6 +155,8 @@
       category: "voice",
       icon: "V",
       emoji: "V",
+      iconImage: "resources/instruments/vocals/card.png",
+      heroImage: "resources/instruments/vocals/hero.jpg",
       description: "Pitch, breath, rhythm, and ear training.",
       shortDescription: "Pitch, breath, rhythm, and ear training.",
       enabled: true,

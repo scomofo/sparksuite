@@ -429,6 +429,17 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.ok(practiceHtml.indexOf("openUkuleleMiniSession") >= 0);
 });
 
+test('showroom svg provides a microphone silhouette for VocalSpark', function() {
+  eval(loadJS('js/showroom/spark-showroom-svgs.js'));
+  var cardSvg = SparkShowroomSVG.card('vocals');
+  var heroSvg = SparkShowroomSVG.hero('vocals');
+
+  assert.ok(cardSvg.indexOf('rx="12"') >= 0);
+  assert.ok(cardSvg.indexOf('M32 48 C32 62 40 72 50 72') >= 0);
+  assert.ok(cardSvg.indexOf('#F472B6') >= 0);
+  assert.ok(heroSvg.indexOf('rx="12"') >= 0);
+});
+
 test('vocals register adds a selectable launcher instrument', function() {
   installMinimalDocument();
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_skill_tree.js'));
@@ -446,6 +457,8 @@ test('vocals register adds a selectable launcher instrument', function() {
 
   assert.ok(vocals);
   assert.strictEqual(vocals.instrument, 'vocals');
+  assert.strictEqual(vocals.iconImage, 'resources/instruments/vocals/card.png');
+  assert.strictEqual(vocals.heroImage, 'resources/instruments/vocals/hero.jpg');
   assert.strictEqual(typeof vocals.tabRenderers.practice, 'function');
 });
 

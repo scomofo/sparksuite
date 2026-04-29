@@ -10,6 +10,7 @@ _dev_reload_signal.txt
 resources/*
 !resources/instruments/
 !resources/instruments/**
+resources/instruments/*/source-*
 .freesound_token.json
 .claude/
 nul
