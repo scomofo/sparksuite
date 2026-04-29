@@ -69,6 +69,7 @@
     var type = normalizeRhythmInstrumentType(instrumentType);
     var moduleMap = {
       bass: window.SparkBassModule,
+      drums: window.SparkDrumsModule,
       ukulele: window.SparkUkuleleModule,
       guitar: window.SparkGuitarModule,
       piano: window.SparkPianoModule
@@ -78,6 +79,7 @@
       return instrumentModule.getRhythmAdapter();
     }
     if (type === "bass" && typeof SparkBassRhythmAdapter === "function") return new SparkBassRhythmAdapter();
+    if (type === "drums" && typeof SparkDrumsRhythmAdapter === "function") return new SparkDrumsRhythmAdapter();
     if (type === "ukulele" && typeof SparkUkuleleRhythmAdapter === "function") return new SparkUkuleleRhythmAdapter();
     if (typeof SparkGuitarRhythmAdapter === "function") return new SparkGuitarRhythmAdapter();
     return {
