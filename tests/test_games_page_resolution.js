@@ -124,4 +124,80 @@ test("games pages ignore malformed cached score counters", function() {
   assert.ok(resultsHtml.indexOf("NaN") === -1);
 });
 
+test("progression builder uses a real remove button", function() {
+  var source = loadJS("js/pages/games.js");
+  assert.ok(source.indexOf('<button class="del-btn" onclick="act(\\\'progRemove\\\',') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'rhythmResultsReplay\\\')"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'rhythmResultsBack\\\')"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'runnerResultsReplay\\\')"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'runnerResultsBack\\\')"') >= 0);
+  var actionsSource = loadJS("js/actions/tools_family.js");
+  assert.ok(actionsSource.indexOf('if (a === "rhythmResultsReplay") {') >= 0);
+  assert.ok(actionsSource.indexOf('if (a === "rhythmResultsBack") {') >= 0);
+  assert.ok(actionsSource.indexOf('if (a === "runnerResultsReplay") {') >= 0);
+  assert.ok(actionsSource.indexOf('if (a === "runnerResultsBack") {') >= 0);
+});
+
+test("games pages can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  S.rhythmActive = undefined;
+  S.rhythmScore = undefined;
+  S.rhythmCombo = undefined;
+  S.rhythmMaxCombo = undefined;
+  S.rhythmStartTime = undefined;
+  S.rhythmBeats = undefined;
+  S.runnerActive = undefined;
+  S.runnerScore = undefined;
+  S.runnerCombo = undefined;
+  S.runnerMaxCombo = undefined;
+  S.runnerLives = undefined;
+  S.runnerDistance = undefined;
+  S.runnerTarget = null;
+  S.runnerObstacles = [];
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          legacyRhythmActive: true,
+          legacyRhythmBeats: [{ time: 500, type: "D" }],
+          legacyRhythmScore: 12,
+          legacyRhythmCombo: 3,
+          legacyRhythmMaxCombo: 5,
+          legacyRhythmStartTimeMs: 0,
+          legacyRunnerActive: true,
+          legacyRunnerScore: 22,
+          legacyRunnerCombo: 4,
+          legacyRunnerMaxCombo: 7,
+          legacyRunnerLives: 2,
+          legacyRunnerDistance: 18,
+          legacyRunnerTargetName: "C",
+          legacyRunnerObstacles: [{ x: 100, short: "C", name: "C", result: "normal" }]
+        }
+      };
+    }
+  };
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      getData: function() {
+        return {
+          ALL_CHORDS: [{ name: "C", short: "C" }]
+        };
+      },
+      ui: {
+        chord: function() { return "<div>chord</div>"; }
+      }
+    };
+  };
+
+  var rhythmHtml = rhythmTab();
+  var runnerHtml = runnerGamePage();
+
+  assert.ok(rhythmHtml.indexOf("TAP!") >= 0 || rhythmHtml.indexOf("Start!") >= 0);
+  assert.ok(rhythmHtml.indexOf(">12</div>") >= 0);
+  assert.ok(rhythmHtml.indexOf(">3x</div>") >= 0);
+  assert.ok(runnerHtml.indexOf(">22</div>") >= 0);
+  assert.ok(runnerHtml.indexOf(">C</div>") >= 0);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

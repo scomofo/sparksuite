@@ -58,7 +58,7 @@ function pianoOnboardingPage() {
       html += '<div class="keyboard-sizes">';
       KEYBOARD_SIZES.forEach(function(ks) {
         var selected = S.keyboardSize === ks.keys ? " selected" : "";
-        html += '<div class="keyboard-size-btn' + selected + '" onclick="act(\'set_keyboard\',' + ks.keys + ')">';
+        html += '<div class="keyboard-size-btn' + selected + '" role="button" tabindex="0" onclick="act(\'set_keyboard\',' + ks.keys + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'set_keyboard\',' + ks.keys + ')}">';
         html += '<strong>' + ks.label + '</strong>';
         if (!ks.lhAvailable) html += '<br><span class="text-muted">RH only \u2014 LH bass not available</span>';
         else if (ks.lhLimited) html += '<br><span class="text-muted">LH limited \u2014 some patterns adjusted</span>';
@@ -75,7 +75,7 @@ function pianoOnboardingPage() {
       html += '<div class="style-chips">';
       STYLE_PREFS.forEach(function(sp) {
         var selected = S.stylePrefs.indexOf(sp) >= 0 ? " selected" : "";
-        html += '<div class="style-chip' + selected + '" onclick="act(\'toggle_style_pref\',\'' + sp + '\')">' + sp + '</div>';
+        html += '<div class="style-chip' + selected + '" role="button" tabindex="0" onclick="act(\'toggle_style_pref\',\'' + sp + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'toggle_style_pref\',\'' + sp + '\')}">' + sp + '</div>';
       });
       html += '</div>';
       html += '<div style="margin-top:16px"><button class="btn btn-accent" onclick="act(\'onboard_next\')">Next</button></div>';

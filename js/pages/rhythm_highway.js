@@ -85,9 +85,39 @@
     };
   }
 
+  function getRhythmHighwayCore() {
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
+  function getRhythmHighwayAccessibilitySettings() {
+    var core = getRhythmHighwayCore();
+    var settings = core && typeof core.getAccessibilitySettings === "function"
+      ? core.getAccessibilitySettings()
+      : (S.settings && S.settings.accessibility ? S.settings.accessibility : null);
+    if (typeof SparkNormalizeAccessibilitySettings === "function") {
+      return SparkNormalizeAccessibilitySettings(settings || {});
+    }
+    settings = settings && typeof settings === "object" ? settings : {};
+    return {
+      reducedMotion: !!settings.reducedMotion,
+      highContrast: !!settings.highContrast,
+      noteSize: settings.noteSize || "normal",
+      laneLabels: settings.laneLabels !== false,
+      colorblindSafeLanes: !!settings.colorblindSafeLanes,
+      metronomeVisualOnly: !!settings.metronomeVisualOnly,
+      disableFailureAnimations: !!settings.disableFailureAnimations,
+      keyboardRemapping: settings.keyboardRemapping || {},
+      leftHandedLayout: !!settings.leftHandedLayout,
+      slowerDefaultSpeed: !!settings.slowerDefaultSpeed,
+      audioCueVolume: typeof settings.audioCueVolume === "number" ? settings.audioCueVolume : 0.8,
+      metronomeVolume: typeof settings.metronomeVolume === "number" ? settings.metronomeVolume : 0.6
+    };
+  }
+
   function startRhythmHighwaySegment(segmentId, presetName, loopSpec) {
-    if (!window.sparkCore || typeof window.sparkCore.getSegmentById !== "function") return false;
-    var segment = window.sparkCore.getSegmentById(segmentId);
+    var core = getRhythmHighwayCore();
+    if (!core || typeof core.getSegmentById !== "function") return false;
+    var segment = core.getSegmentById(segmentId);
     if (!segment || !segment.meta || !segment.meta.gameplayPayload) return false;
     return startRhythmHighwayPayload(segment.meta.gameplayPayload, presetName, {
       segmentId: segmentId,
@@ -165,10 +195,11 @@
   function finalizeRhythmHighway() {
     if (!runtime.engine) return;
     var result = runtime.engine.finalize();
+    var core = getRhythmHighwayCore();
     S.rhythmHighwayResult = result;
     S.rhythmHighwayFeedback = buildFeedback(result);
-    if (runtime.segmentId && window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-      window.sparkCore.completeSession({
+    if (runtime.segmentId && core && typeof core.completeSession === "function") {
+      core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         itemId: runtime.segmentId,
         result: result,
@@ -197,9 +228,11 @@
     var snapshot = S.rhythmHighwaySnapshot;
     if (!snapshot) return '<div class="text-center"><p>No rhythm session active.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
-    var labels = getRhythmHighwayLaneLabels();
+    var accessibility = getRhythmHighwayAccessibilitySettings();
+    var labels = getRhythmHighwayLaneLabels(accessibility);
     var laneCount = labels.length;
     var activePreset = getCurrentAssistPreset();
+    var noteHeight = accessibility.noteSize === "large" ? 24 : (accessibility.noteSize === "compact" ? 14 : 18);
     var h = '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Highway</h2>';
     h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">Hold frets 1-5 and strum on time. Audio clock drives the run; this page only renders snapshots.</p>';
     h += '<div style="margin-bottom:14px">';
@@ -226,12 +259,14 @@
     for (var lane = 0; lane < laneCount; lane++) {
       h += '<div style="position:relative;height:320px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border)">';
       h += '<div style="position:absolute;left:6px;right:6px;bottom:72px;height:4px;background:#FFE66D;border-radius:999px"></div>';
-      h += '<div style="position:absolute;left:0;right:0;bottom:12px;font-size:12px;font-weight:900;color:' + laneColor(lane) + '">' + labels[lane] + '</div>';
+      if (accessibility.laneLabels) {
+        h += '<div style="position:absolute;left:0;right:0;bottom:12px;font-size:12px;font-weight:900;color:' + laneColor(lane, accessibility) + '">' + labels[lane] + '</div>';
+      }
       for (var i = 0; i < snapshot.notes.length; i++) {
         var note = snapshot.notes[i];
         if (!maskHasLane(note.laneMask, lane)) continue;
         var bottom = Math.max(86, Math.min(286, 86 + ((3 - (note.timeSec - snapshot.songTimeSec)) * 66)));
-        h += '<div style="position:absolute;left:8px;right:8px;bottom:' + bottom + 'px;height:18px;border-radius:8px;background:' + laneColor(lane) + ';opacity:' + (note.hit ? 0.35 : 0.95) + ';box-shadow:0 8px 18px rgba(0,0,0,.24)" title="' + escHTML(firstRhythmHighwayTextToken(note.label)) + '"></div>';
+        h += '<div style="position:absolute;left:8px;right:8px;bottom:' + bottom + 'px;height:' + noteHeight + 'px;border-radius:8px;background:' + laneColor(lane, accessibility) + ';opacity:' + (note.hit ? 0.35 : 0.95) + ';box-shadow:' + (accessibility.reducedMotion ? "none" : "0 8px 18px rgba(0,0,0,.24)") + '" title="' + escHTML(firstRhythmHighwayTextToken(note.label)) + '"></div>';
       }
       h += '</div>';
     }
@@ -240,7 +275,7 @@
     h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
     for (var fi = 0; fi < laneCount; fi++) {
       var active = maskHasLane(S.rhythmHighwayHeldMask, fi);
-      h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + labels[fi] + '</button>';
+      h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi, accessibility) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + (accessibility.laneLabels ? labels[fi] : (fi + 1)) + '</button>';
     }
     h += '</div>';
     h += '<div style="display:flex;justify-content:center;gap:10px">';
@@ -260,11 +295,12 @@
 
   function rhythmHighwayResultsPage() {
     var result = S.rhythmHighwayResult;
+    var accessibility = getRhythmHighwayAccessibilitySettings();
     var gameplay = result.gameplay || {};
     var learning = result.learning || {};
     var activePreset = getCurrentAssistPreset();
     var moduleGuidance = getRhythmHighwayModuleGuidance(result);
-    var h = '<div class="text-center" style="padding-top:16px"><div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
+    var h = '<div class="text-center" style="padding-top:16px"><div style="font-size:56px;' + (accessibility.reducedMotion ? "" : "animation:bn .6s ease") + '">&#127928;</div>';
     h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Rhythm Highway Complete</h2>';
     if (activePreset) {
       h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Assist Mode: <span style="color:var(--text-primary);font-weight:800">' + escHTML(activePreset.label) + "</span></div>";
@@ -369,18 +405,22 @@
     return ASSIST_PRESETS[0];
   }
 
-  function getRhythmHighwayLaneLabels() {
+  function getRhythmHighwayLaneLabels(accessibility) {
+    accessibility = accessibility || getRhythmHighwayAccessibilitySettings();
     var payload = runtime.activePayload || runtime.sourcePayload || null;
+    var labels;
     if (payload && Array.isArray(payload.laneLabels) && payload.laneLabels.length) {
-      return payload.laneLabels.slice();
+      labels = payload.laneLabels.slice();
+      return accessibility.leftHandedLayout ? labels.reverse() : labels;
     }
     var laneCount = payload && payload.laneCount ? payload.laneCount : 5;
     var instrumentType = normalizeRhythmInstrumentType(
       (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.instrument) || (payload && payload.adapterType) || null
     );
-    if (laneCount === 4 && instrumentType === "bass") return ["E", "A", "D", "G"];
-    if (laneCount === 4) return ["G", "C", "E", "A"];
-    return ["G", "R", "Y", "B", "O"];
+    if (laneCount === 4 && instrumentType === "bass") labels = ["E", "A", "D", "G"];
+    else if (laneCount === 4) labels = ["G", "C", "E", "A"];
+    else labels = ["G", "R", "Y", "B", "O"];
+    return accessibility.leftHandedLayout ? labels.reverse() : labels;
   }
 
   function buildRhythmHighwayLoopPayload(payload, loopSpec) {
@@ -515,8 +555,12 @@
     return out;
   }
 
-  function laneColor(index) {
-    return ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316"][index] || "#999";
+  function laneColor(index, accessibility) {
+    accessibility = accessibility || getRhythmHighwayAccessibilitySettings();
+    var palette = accessibility.colorblindSafeLanes
+      ? ["#117733", "#882255", "#DDCC77", "#332288", "#CC6677"]
+      : ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316"];
+    return palette[index] || "#999";
   }
 
   window.startRhythmHighwaySegment = startRhythmHighwaySegment;

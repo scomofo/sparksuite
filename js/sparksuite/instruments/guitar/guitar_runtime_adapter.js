@@ -1,17 +1,11 @@
 (function() {
-  function GuitarRuntimeAdapter() {}
-
-  GuitarRuntimeAdapter.prototype.getLaneCount = function() {
-    return 5;
+  window.SparkGuitarRuntimeAdapter = {
+    instrument: "guitar",
+    createPlayableEvents: function(exercise) {
+      return (exercise && exercise.events) || [];
+    },
+    getDefaultInputMode: function() {
+      return "midi_guitar_or_mic";
+    }
   };
-
-  GuitarRuntimeAdapter.prototype.getLaneLabels = function() {
-    return ["G", "R", "Y", "B", "O"];
-  };
-
-  GuitarRuntimeAdapter.prototype.getDefaultInputMode = function() {
-    return "midi_or_keyboard";
-  };
-
-  window.SparkGuitarRuntimeAdapter = GuitarRuntimeAdapter;
 })();

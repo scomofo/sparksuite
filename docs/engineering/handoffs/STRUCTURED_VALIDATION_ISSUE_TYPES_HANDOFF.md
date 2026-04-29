@@ -1,5 +1,16 @@
 # Structured Validation Issue Types Handoff
 
+## Status
+
+Implemented. `js/dev/curriculum_validator.js` is the shared structured issue source for browser dev tooling, CI guardrails, and `scripts/suggest_curriculum_fixes.js`.
+
+Current consumers:
+
+- `dev_curriculum_highlighter.js` groups structured issues for inline highlighting and legacy navigation compatibility.
+- `test_curriculum_guardrails.js` asserts registered instruments have no blocking structured validation errors.
+- `suggest_curriculum_fixes.js` prints validator-backed fix suggestions.
+- `dev_panel.js` filters structured issues by category and severity.
+
 ## Goal
 
 Define a formal issue type schema so that the validator, fix suggester,

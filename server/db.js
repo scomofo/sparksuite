@@ -24,6 +24,35 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS spotify_accounts (
+    account_key TEXT PRIMARY KEY,
+    spotify_user_id TEXT,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT,
+    token_type TEXT DEFAULT 'Bearer',
+    scopes TEXT,
+    expires_at INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS spotify_playlists (
+    curriculum_key TEXT PRIMARY KEY,
+    playlist_id TEXT NOT NULL,
+    playlist_name TEXT,
+    sync_mode TEXT DEFAULT 'append_missing',
+    last_snapshot_id TEXT,
+    last_sync_status TEXT DEFAULT 'idle',
+    last_sync_at DATETIME,
+    last_error TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 // Seed with initial community songs if table is empty
 const count = db.prepare('SELECT COUNT(*) as n FROM songs').get();
 if (count.n === 0) {

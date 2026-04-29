@@ -308,7 +308,7 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "performMode","performDifficulty","performSpeed","performPracticePreset","performAssistHints","performCountIn",
   "performPracticeMode","performSongStats","performArrangementType",
   "performanceStats","performanceUnlocks","performanceBadges",
-  "performMidiOffsetMs","performAudioOffsetMs","performCalibrated",
+  "performMidiOffsetMs","performMicOffsetMs","performCalibrated",
   "performanceDailyHistory",
   "performEditorLibrary",
   "practicePlan","practicePlanDate","practicePlanHistory",
@@ -365,6 +365,13 @@ function loadState(){
     var data=safeJsonParse(raw,null);
     if(!data)return;
     applyPersistedStateSnapshot(S,data,PERSIST_FIELDS);
+    if ((!isFinite(S.performMicOffsetMs) || S.performMicOffsetMs == null) && isFinite(data.performAudioOffsetMs)) {
+      S.performMicOffsetMs = Number(data.performAudioOffsetMs);
+    }
+    if (!isFinite(S.performMicOffsetMs) || S.performMicOffsetMs == null) {
+      S.performMicOffsetMs = 0;
+    }
+    S.performAudioOffsetMs = 0;
     // Ensure arrays
     if(!Array.isArray(S.history))S.history=[];
     if(!Array.isArray(S.customSets))S.customSets=[];
@@ -433,6 +440,13 @@ function recoverFromCrash(){
         return;
       }
       applyPersistedStateSnapshot(S,data,PERSIST_FIELDS);
+      if ((!isFinite(S.performMicOffsetMs) || S.performMicOffsetMs == null) && isFinite(data.performAudioOffsetMs)) {
+        S.performMicOffsetMs = Number(data.performAudioOffsetMs);
+      }
+      if (!isFinite(S.performMicOffsetMs) || S.performMicOffsetMs == null) {
+        S.performMicOffsetMs = 0;
+      }
+      S.performAudioOffsetMs = 0;
       removePersistedBackup(SAVE_KEY+"_backup");
       saveState(true);
     }

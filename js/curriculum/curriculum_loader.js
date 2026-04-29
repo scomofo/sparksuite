@@ -1,5 +1,10 @@
 (function(){
 
+  function getCurriculumLoaderCore(){
+    return (typeof window !== "undefined" && window.sparkCore)
+      || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
   async function fetchCurriculumJson(path){
     var res = await fetch(path);
     if(!res.ok){
@@ -9,8 +14,9 @@
   }
 
   async function loadCurriculumManifest(path){
-    if(typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.applyCurriculumWorkflowRequest === "function"){
-      window.sparkCore.applyCurriculumWorkflowRequest("curriculum_load_start", { manifestPath: path });
+    var core = getCurriculumLoaderCore();
+    if(core && typeof core.applyCurriculumWorkflowRequest === "function"){
+      core.applyCurriculumWorkflowRequest("curriculum_load_start", { manifestPath: path });
     }
     try{
       var manifest = await fetchCurriculumJson(path);
@@ -32,13 +38,13 @@
           registerCurriculum(type, pending[type]);
         }
       }
-      if(typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.applyCurriculumWorkflowRequest === "function"){
-        window.sparkCore.applyCurriculumWorkflowRequest("curriculum_load_done", { manifestPath: path, status: "ok" });
+      if(core && typeof core.applyCurriculumWorkflowRequest === "function"){
+        core.applyCurriculumWorkflowRequest("curriculum_load_done", { manifestPath: path, status: "ok" });
       }
       return manifest;
     }catch(err){
-      if(typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.applyCurriculumWorkflowRequest === "function"){
-        window.sparkCore.applyCurriculumWorkflowRequest("curriculum_load_error", { manifestPath: path, status: "error" });
+      if(core && typeof core.applyCurriculumWorkflowRequest === "function"){
+        core.applyCurriculumWorkflowRequest("curriculum_load_error", { manifestPath: path, status: "error" });
       }
       throw err;
     }

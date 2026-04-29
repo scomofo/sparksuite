@@ -1,0 +1,77 @@
+{
+  "id": "session_fixture_uke_1",
+  "flow": "daily_practice",
+  "generatedDate": "2026-04-24",
+  "instrumentId": "ukespark",
+  "instrumentType": "ukulele",
+  "focus": "Down-strum comfort",
+  "lesson": {
+    "id": "uke-d01",
+    "skill": "down_strum",
+    "title": "Down Strum"
+  },
+  "lessonId": "uke-d01",
+  "skillId": "down_strum",
+  "difficulty": "easy",
+  "segments": [
+    {
+      "id": "seg_uke_1",
+      "type": "practice",
+      "exerciseIds": ["ex_uke_1"]
+    },
+    {
+      "id": "seg_uke_2",
+      "type": "song",
+      "exerciseIds": ["ex_uke_2"]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_uke_1",
+      "type": "strum",
+      "difficulty": "easy",
+      "data": {
+        "presentation": {
+          "label": "Down-strum pulse",
+          "reason": "Lock in a relaxed island pulse."
+        },
+        "core": {
+          "skill": "down_strum",
+          "instrument": "ukulele",
+          "durationSec": 90,
+          "lessonId": "uke-d01"
+        },
+        "gameplay": {
+          "payload": null
+        }
+      }
+    },
+    {
+      "id": "ex_uke_2",
+      "type": "song",
+      "difficulty": "easy",
+      "data": {
+        "presentation": {
+          "label": "Island groove",
+          "reason": "Carry the down-strum through a short groove."
+        },
+        "core": {
+          "skill": "down_strum",
+          "songId": "island-groove",
+          "instrument": "ukulele",
+          "durationSec": 150,
+          "lessonId": "uke-d01"
+        },
+        "gameplay": {
+          "payload": null
+        }
+      }
+    }
+  ],
+  "rewards": {
+    "xp": 40,
+    "unlocks": [],
+    "achievements": []
+  },
+  "context": {}
+}

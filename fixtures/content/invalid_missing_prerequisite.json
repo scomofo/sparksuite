@@ -1,0 +1,40 @@
+{
+  "instrument": {
+    "id": "ukulele",
+    "name": "Ukulele",
+    "tuning": {
+      "strings": ["G4", "C4", "E4", "A4"]
+    },
+    "capabilities": {
+      "preferredRenderer": "string-lane-highway"
+    }
+  },
+  "skills": [
+    {
+      "id": "down_strum",
+      "name": "Down Strum",
+      "category": "rhythm",
+      "prerequisites": []
+    }
+  ],
+  "lessons": [
+    {
+      "id": "uke_01",
+      "skill": "down_strum",
+      "title": "First Down Strums",
+      "prerequisites": ["missing_skill"],
+      "masteryRequired": 0.7,
+      "estimatedMinutes": 5
+    }
+  ],
+  "chords": [],
+  "exercises": [
+    {
+      "id": "uke_down_strum_01",
+      "skillId": "down_strum",
+      "type": "strum",
+      "tempo": 70,
+      "difficulty": "easy"
+    }
+  ]
+}

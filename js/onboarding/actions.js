@@ -82,20 +82,20 @@
     if(instrument === "ukulele"){
       if(level === "beginner"){
         unlockStarterIds([
-          "uke_01",
-          "uke_02"
+          "lesson_uke_orientation_01",
+          "lesson_uke_tuning_01"
         ]);
       }else if(level === "early_intermediate"){
         unlockStarterIds([
-          "uke_02",
-          "uke_03",
-          "uke_04"
+          "lesson_uke_c_chord_01",
+          "lesson_uke_am_chord_01",
+          "lesson_uke_first_two_chord_song_01"
         ]);
       }else{
         unlockStarterIds([
-          "uke_03",
-          "uke_04",
-          "uke_05"
+          "lesson_uke_four_chord_loop_01",
+          "lesson_uke_island_strum_01",
+          "lesson_uke_song_4_chord_01"
         ]);
       }
     }

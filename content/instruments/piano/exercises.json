@@ -1,0 +1,4 @@
+[
+  { "id": "pno_ex_01", "skillId": "c_position", "type": "melody", "lanes": [0, 1, 2], "tempo": 72, "difficulty": "easy" },
+  { "id": "pno_ex_02", "skillId": "basic_rhythm", "type": "rhythm", "pattern": "1 2 3 4", "tempo": 80, "difficulty": "easy" }
+]

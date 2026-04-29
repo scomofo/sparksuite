@@ -22,12 +22,16 @@ function getSharedPageInstrument(){
   return inst;
 }
 
+function getSharedCoreView(){
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  if (!core || typeof core.getActiveSessionView !== "function") return null;
+  return core.getActiveSessionView();
+}
+
 function getLegacyChordDetectRuntime(){
   var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
-  }
+  var view = getSharedCoreView();
+  runtime = view && view.runtimeState ? view.runtimeState : null;
   return {
     active: typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : !!(runtime && runtime.chordDetectActive),
     notes: Array.isArray(S.detectedNotes) ? S.detectedNotes : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
@@ -159,10 +163,8 @@ function updateDailyTimerUI(){
 // ===== FINGER EXERCISES CARD =====
 function fingerExerciseCard(){
   var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
-  }
+  var view = getSharedCoreView();
+  runtime = view && view.runtimeState ? view.runtimeState : null;
   var fingerExActive = typeof S.fingerExActive === "boolean" ? S.fingerExActive : !!(runtime && runtime.legacyFingerExerciseActive);
   var fingerExId = typeof S.fingerExId === "string" ? S.fingerExId : (runtime ? runtime.legacyFingerExerciseId : null);
   var fingerExTimer = typeof S.fingerExTimer === "number" ? S.fingerExTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : 0);
@@ -290,7 +292,7 @@ function shortcutOverlay(){
     ["1-9","Quick tab switch"],
     ["0","Stats tab"]
   ];
-  var h='<div class="shortcut-overlay" onclick="act(\'toggleShortcuts\')" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">';
+  var h='<div class="shortcut-overlay" onclick="act(\'toggleShortcuts\')" onkeydown="if(event.key===\'Escape\'){event.preventDefault();act(\'toggleShortcuts\')}" role="dialog" tabindex="0" aria-modal="true" aria-label="Keyboard shortcuts">';
   h+='<div class="shortcut-modal" onclick="event.stopPropagation()">';
   h+='<h3 style="margin:0 0 16px;font-size:18px;font-weight:800;color:var(--text-primary)">&#9000; Keyboard Shortcuts</h3>';
   for(var i=0;i<shortcuts.length;i++){

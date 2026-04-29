@@ -1,0 +1,25 @@
+{
+  "id": "longview_bass_chords",
+  "title": "Longview",
+  "artist": "Green Day",
+  "bpm": 112,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 8.571 },
+    { "id": 1, "name": "Chorus", "startSec": 8.571, "endSec": 17.143 },
+    { "id": 2, "name": "Outro", "startSec": 17.143, "endSec": 25.714 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.536, "type": "tap", "chord": "E", "notes": ["E1"], "laneLabel": "E", "strum": "tap" },
+    { "id": 2, "t": 0.536, "dur": 0.536, "type": "tap", "chord": "G", "notes": ["G1"], "laneLabel": "G", "strum": "tap" },
+    { "id": 3, "t": 1.071, "dur": 0.536, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 4, "t": 1.607, "dur": 0.536, "type": "tap", "chord": "B", "notes": ["B1"], "laneLabel": "B", "strum": "tap" },
+    { "id": 5, "t": 2.143, "dur": 0.536, "type": "tap", "chord": "E", "notes": ["E1"], "laneLabel": "E", "strum": "tap" },
+    { "id": 6, "t": 2.679, "dur": 0.535, "type": "tap", "chord": "G", "notes": ["G1"], "laneLabel": "G", "strum": "tap" },
+    { "id": 7, "t": 3.214, "dur": 0.536, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 8, "t": 3.75, "dur": 0.536, "type": "tap", "chord": "B", "notes": ["B1"], "laneLabel": "B", "strum": "tap" }
+  ]
+}

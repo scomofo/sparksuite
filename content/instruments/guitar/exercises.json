@@ -1,0 +1,4 @@
+[
+  { "id": "gtr_ex_01", "skillId": "strum_basics", "type": "strum", "pattern": "D D D D", "tempo": 72, "difficulty": "easy" },
+  { "id": "gtr_ex_02", "skillId": "open_chords", "type": "chord", "chordIds": ["C", "G", "Am"], "tempo": 68, "difficulty": "easy" }
+]

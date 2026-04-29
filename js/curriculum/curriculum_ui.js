@@ -1,9 +1,13 @@
 (function(){
 
+  function getCurriculumUiRuntimeState(){
+    var core = (typeof window !== "undefined" && window.sparkCore)
+      || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    return core && typeof core.getRuntimeState === "function" ? core.getRuntimeState() : null;
+  }
+
   function curriculumPage(){
-    var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-      ? window.sparkCore.getRuntimeState()
-      : null;
+    var runtimeState = getCurriculumUiRuntimeState();
     var h = '<div class="card">';
     h += '<div><b>Curriculum</b></div>';
     if(runtimeState && runtimeState.curriculumLoading){

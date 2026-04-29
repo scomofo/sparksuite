@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const { spawn } = require('child_process');
 const { registerDialogs } = require('./desktop/dialogs');
 const { registerUpdater } = require('./desktop/updater');
+const { runPackagedSmokeForWindow } = require('./desktop/packaged_smoke');
 
 let mainWindow;
 let demucsProcess = null;
@@ -44,6 +45,18 @@ function createWindow() {
       nodeIntegration: false
     }
   });
+
+  if (process.env.SPARKSUITE_SMOKE_OUTPUT) {
+    runPackagedSmokeForWindow(mainWindow, {
+      outputPath: process.env.SPARKSUITE_SMOKE_OUTPUT,
+      userId: process.env.SPARKSUITE_SMOKE_USER_ID || 'smoke_user',
+      onComplete: function(result, error) {
+        setTimeout(function() {
+          app.exit(error ? 1 : 0);
+        }, 50);
+      }
+    });
+  }
 
   mainWindow.loadFile('index.html');
 

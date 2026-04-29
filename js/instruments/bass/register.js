@@ -36,7 +36,7 @@
     // the inline SVG silhouette so the reference never renders as a broken icon.
     iconImage: "resources/instruments/bass/card.png",
     heroImage: "resources/instruments/bass/hero.jpg",
-    skin: typeof SparkHighway !== "undefined" ? SparkHighway.GUITAR_SKIN : null,
+    skin: { laneCount: 4, noteShape: "circle", laneColors: [[255,50,50],[255,180,0],[50,180,255],[50,255,50]], laneIndicatorStyle: "buttons", laneSpacing: 100, backgroundColors: { top: [10,10,20], bottom: [30,30,50] } },
     available: true,
     capabilities: {
       stringCount: 4,
@@ -57,7 +57,13 @@
         LN: typeof BASS_LN !== "undefined" ? BASS_LN : {},
         CHORD_NOTES: {},
         STRINGS: typeof BASS_STRINGS !== "undefined" ? BASS_STRINGS : [],
-        STRUM_PATTERNS: [],
+        STRUM_PATTERNS: [
+          { name: "Root Pulse", level: 1, bpm: 70, pattern: ["D", ".", "D", "."] },
+          { name: "Root-Fifth", level: 2, bpm: 75, pattern: ["D", ".", "D", "U"] },
+          { name: "Walking Line", level: 3, bpm: 80, pattern: ["D", "D", "D", "D"] },
+          { name: "Shuffle", level: 4, bpm: 85, pattern: ["D", ".", "U", "D", ".", "U"] },
+          { name: "Syncopated", level: 5, bpm: 90, pattern: ["D", "U", ".", "D", "U", ".", "D", "U"] }
+        ],
         FINGER_EXERCISES: typeof BASS_EXERCISES !== "undefined" ? BASS_EXERCISES : [],
         CURRICULUM: typeof BASS_CURRICULUM !== "undefined" ? BASS_CURRICULUM : [],
         SKILL_TREE: typeof BASS_SKILL_TREE !== "undefined" ? BASS_SKILL_TREE : {}
@@ -89,14 +95,47 @@
         }
         return typeof bassSVG === "function" ? bassSVG(chordObj, size, label, animate) : "";
       },
-      header: function() {
-        return typeof headerHTML === "function" ? headerHTML() : "";
+      watchAnimation: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var chart = {
+          name: chordObj.name || "chord", instrument: "bass",
+          stringCount: 4,
+          stringLabels: ["E","A","D","G"],
+          fretCountVisible: 5, startFret: 0,
+          open: [false, false, false, false],
+          muted: [],
+          fingers: chordObj.fingers || [],
+          barre: null
+        };
+        if (chordObj.frets) {
+          for (var i = 0; i < 4 && i < chordObj.frets.length; i++) {
+            chart.open[i] = chordObj.frets[i] === 0;
+          }
+        }
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedWatch(container, chart, options);
       },
-      tabNav: function() {
-        return typeof tabNavHTML === "function" ? tabNavHTML() : "";
-      },
-      ring: function(pct, size, color) {
-        return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
+      shadowQuiz: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var chart = {
+          name: chordObj.name || "chord", instrument: "bass",
+          stringCount: 4,
+          stringLabels: ["E","A","D","G"],
+          fretCountVisible: 5, startFret: 0,
+          open: [false, false, false, false],
+          muted: [],
+          fingers: chordObj.fingers || [],
+          barre: null
+        };
+        if (chordObj.frets) {
+          for (var i = 0; i < 4 && i < chordObj.frets.length; i++) {
+            chart.open[i] = chordObj.frets[i] === 0;
+          }
+        }
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedShadow(container, chart, options);
       }
     },
 
@@ -168,6 +207,12 @@
 
     getCurriculumMap: function() {
       return this.getData().CURRICULUM || [];
+    },
+
+    getCurriculumMapV2: function() {
+      return typeof SparkCurriculumV2LegacyAdapter !== "undefined"
+        ? SparkCurriculumV2LegacyAdapter.toLegacyLessons("bass")
+        : [];
     },
 
     getExercises: function() {

@@ -9,6 +9,13 @@ function normalizePerformCalibrationSource(value){
   return "midi";
 }
 
+function getPerformanceCalibrationCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 function performCalibrationPage(){
   var calibrationView = getPerformanceCalibrationView();
   var source = calibrationView.source;
@@ -64,9 +71,7 @@ function performCalibrationPage(){
 }
 
 function getPerformanceCalibrationView(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getPerformanceCalibrationCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   return {
     source: normalizePerformCalibrationSource(

@@ -1,5 +1,9 @@
 # Hot Reload + Dev Mode Overlay Handoff
 
+## Status
+
+Implemented. The watch script calls the canonical apply script, `_dev_reload_signal.txt` is ignored, and `index.html` loads the dev overlay, reload client, curriculum highlighter, structured validator, and unified dev panel behind the existing `?dev=1` / `spark_dev_overlay=true` activation gate.
+
 ## Goal
 
 Add developer-experience tooling so newly generated instruments can be
@@ -33,7 +37,7 @@ Target loop:
 ### Watch Script
 
 1. If instrument does not exist, generates scaffold via pipeline
-2. Runs apply_generated_instrument_final.js (manifest + index.html + tests)
+2. Runs apply_generated_instrument.js (manifest + index.html + tests)
 3. Writes timestamp to _dev_reload_signal.txt
 4. Watches js/instruments/<name>/ and js/sparksuite/instruments/<name>/
 5. On file change (debounced 800ms), re-runs apply and writes signal
