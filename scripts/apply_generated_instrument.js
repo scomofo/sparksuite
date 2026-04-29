@@ -41,6 +41,11 @@ function sortByKnownOrder(a, b, order) {
   return a.localeCompare(b);
 }
 
+function isRuntimeInstrumentFile(file) {
+  if (!file.endsWith(".js")) return false;
+  return file !== "showroom_card.js";
+}
+
 var dirs = fs.readdirSync(rtDir).filter(function(d) {
   var full = path.join(rtDir, d);
   return fs.statSync(full).isDirectory() && fs.existsSync(path.join(full, "register.js"));
@@ -61,7 +66,7 @@ dirs.forEach(function(dir) {
     ssFiles.forEach(function(f) { scripts.push(ssDir + "/" + dir + "/" + f); });
   }
 
-  var rtFiles = fs.readdirSync(path.join(rtDir, dir)).filter(function(f) { return f.endsWith(".js"); });
+  var rtFiles = fs.readdirSync(path.join(rtDir, dir)).filter(isRuntimeInstrumentFile);
   rtFiles.sort(function(a, b) { return sortByKnownOrder(a, b, runtimeOrder); });
   rtFiles.forEach(function(f) { scripts.push(rtDir + "/" + dir + "/" + f); });
   instruments.push({ id: id, instrument: inst, dir: dir, scripts: scripts });
