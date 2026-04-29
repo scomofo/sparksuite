@@ -37,6 +37,25 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 }
 
+function installMinimalDocument() {
+  global.document = {
+    readyState: 'complete',
+    body: { innerText: '' },
+    addEventListener: function() {},
+    querySelector: function() { return null; },
+    querySelectorAll: function() { return []; },
+    createElement: function() {
+      return {
+        style: {},
+        setAttribute: function() {},
+        addEventListener: function() {}
+      };
+    }
+  };
+  global.CustomEvent = function(name, options) { return { name: name, detail: options && options.detail }; };
+  global.dispatchEvent = function() {};
+}
+
 eval(loadJS('js/launcher.js'));
 
 console.log('\n--- SparkSuite: Launcher ---');
@@ -352,6 +371,56 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.ok(ukulele);
   assert.strictEqual(ukulele.instrument, 'ukulele');
   assert.strictEqual(typeof ukulele.tabRenderers.practice, 'function');
+});
+
+test('vocals register adds a selectable launcher instrument', function() {
+  installMinimalDocument();
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_skill_tree.js'));
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_curriculum.js'));
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_lessons.js'));
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_exercises.js'));
+  eval(loadJS('js/sparksuite/instruments/vocals/vocals_module.js'));
+  eval(loadJS('js/instruments/vocals/register.js'));
+
+  var all = SparkInstruments.getAll();
+  var vocals = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === 'vocalspark') vocals = all[i];
+  }
+
+  assert.ok(vocals);
+  assert.strictEqual(vocals.instrument, 'vocals');
+  assert.strictEqual(typeof vocals.tabRenderers.practice, 'function');
+});
+
+test('vocals register upserts existing app-id catalog entries', function() {
+  installMinimalDocument();
+  global.SPARK_INSTRUMENTS = [{ id: 'vocalspark', instrument: 'vocals', name: 'Existing VocalSpark' }];
+  eval(loadJS('js/instruments/vocals/register.js'));
+
+  assert.strictEqual(SPARK_INSTRUMENTS.length, 1);
+  assert.strictEqual(SPARK_INSTRUMENTS[0].id, 'vocalspark');
+  assert.strictEqual(SPARK_INSTRUMENTS[0].instrumentId, 'vocals');
+});
+
+test('vocals register upserts existing instrument-type catalog entries', function() {
+  installMinimalDocument();
+  global.SPARK_INSTRUMENTS = [{ id: 'legacy_voice_entry', instrument: 'vocals', name: 'Existing Vocals' }];
+  eval(loadJS('js/instruments/vocals/register.js'));
+
+  assert.strictEqual(SPARK_INSTRUMENTS.length, 1);
+  assert.strictEqual(SPARK_INSTRUMENTS[0].id, 'vocalspark');
+  assert.strictEqual(SPARK_INSTRUMENTS[0].instrument, 'vocals');
+});
+
+test('vocals register writes Map-style registries with a stable key', function() {
+  installMinimalDocument();
+  global.SparkInstrumentRegistry = new Map();
+  eval(loadJS('js/instruments/vocals/register.js'));
+
+  assert.strictEqual(SparkInstrumentRegistry.size, 1);
+  assert.ok(SparkInstrumentRegistry.has('vocals'));
+  assert.strictEqual(SparkInstrumentRegistry.get('vocals').id, 'vocalspark');
 });
 
 test('bass register exposes a dedicated songs tab renderer', function() {

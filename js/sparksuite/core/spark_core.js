@@ -829,7 +829,10 @@
       songId: input.songId,
       arrangementType: input.arrangementType,
       difficultyId: input.difficultyId,
-      lessonId: input.lessonId || null
+      lessonId: input.lessonId || null,
+      practiceTemplateId: input.practiceTemplateId || null,
+      ukuleleMiniSessionId: input.ukuleleMiniSessionId || null,
+      favoriteSongs: input.favoriteSongs || []
     });
     // Validate session plan contract
     if (plan && !plan.exercises) {
@@ -1003,8 +1006,11 @@
     options = options || {};
     return this.startSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-      forceRebuild: !!(options.forceRebuild || options.lessonId),
-      lessonId: options.lessonId || null
+      forceRebuild: !!(options.forceRebuild || options.lessonId || options.practiceTemplateId || options.ukuleleMiniSessionId),
+      lessonId: options.lessonId || null,
+      practiceTemplateId: options.practiceTemplateId || null,
+      ukuleleMiniSessionId: options.ukuleleMiniSessionId || null,
+      favoriteSongs: options.favoriteSongs || []
     });
   };
 

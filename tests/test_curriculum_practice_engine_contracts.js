@@ -73,6 +73,9 @@ function resetState() {
 
 resetState();
 loadJS("js/sparksuite/core/curriculum_engine.js");
+loadJS("js/sparksuite/instruments/ukulele/ukulele_songs.js");
+loadJS("js/sparksuite/instruments/ukulele/ukulele_mini_sessions.js");
+loadJS("js/sparksuite/core/practice_templates.js");
 loadJS("js/sparksuite/core/practice_engine.js");
 
 var curriculumEngine = new SparkSuiteCurriculumEngine();
@@ -150,5 +153,111 @@ assert.strictEqual(practicePlan.exercises[0].data.core.skill, "strumming_pattern
 assert.strictEqual(practicePlan.exercises[0].data.core.lessonId, "uke_04");
 assert.strictEqual(practicePlan.exercises[0].data.presentation.label, "Island timing");
 assert.strictEqual(practicePlan.rewards[0].amount, 40);
+
+var templatedPracticePlan = practiceEngine.buildDailyPracticePlan({
+  practiceTemplateId: "quick_win",
+  curriculum: {
+    nextLessonId: "uke_04",
+    nextLesson: { id: "uke_04", title: "Island Pattern", skill: "strumming_patterns" }
+  },
+  instrumentContext: { instrumentType: "ukulele" }
+});
+var templatedDuration = templatedPracticePlan.segments.reduce(function(total, segment) {
+  return total + segment.durationSec;
+}, 0);
+assert.strictEqual(templatedPracticePlan.source, "practice_template");
+assert.strictEqual(templatedPracticePlan.practiceTemplate.id, "quick_win");
+assert.strictEqual(templatedPracticePlan.segments.length, 5);
+assert.strictEqual(templatedPracticePlan.exercises.length, 5);
+assert.strictEqual(templatedDuration, 600);
+assert.strictEqual(templatedPracticePlan.segments[0].meta.practiceTemplateId, "quick_win");
+assert.strictEqual(templatedPracticePlan.segments[1].meta.skill, "strumming_patterns");
+assert.strictEqual(templatedPracticePlan.segments[1].meta.instrumentType, "ukulele");
+
+var ukuleleMiniSessionPlan = practiceEngine.buildDailyPracticePlan({
+  ukuleleMiniSessionId: "uke_favorites_set_a",
+  favoriteSongs: ["Riptide", "I'm Yours"],
+  instrumentContext: { instrumentType: "ukulele" }
+});
+assert.strictEqual(ukuleleMiniSessionPlan.source, "ukulele_favorite_mini_session");
+assert.strictEqual(ukuleleMiniSessionPlan.miniSession.id, "uke_favorites_set_a");
+assert.strictEqual(ukuleleMiniSessionPlan.segments.length, 5);
+assert.strictEqual(ukuleleMiniSessionPlan.exercises.length, 5);
+assert.strictEqual(ukuleleMiniSessionPlan.segments[1].meta.songTitle, "Riptide");
+
+loadJS("js/spark-core/instrument-adapter.js");
+loadJS("js/spark-core/practice-engine.js");
+global.SparkInstruments = {
+  getActive: function() {
+    return {
+      getExercises: function(skill) {
+        assert.strictEqual(skill, "vocal_comfort_setup");
+        return [{ id: "ex_vocal_setup_comfort_01" }];
+      }
+    };
+  }
+};
+
+var legacyExercises = SparkPracticeEngine.buildExerciseSet({
+  skill: "vocal_comfort_setup"
+});
+
+assert.deepStrictEqual(legacyExercises, [{ id: "ex_vocal_setup_comfort_01" }]);
+
+global.SparkInstruments = {
+  getActive: function() {
+    return {
+      getExercises: function(skillOrLessonId) {
+        assert.strictEqual(skillOrLessonId, "lesson_vocal_setup_comfort_01");
+        return [{ id: "ex_vocal_setup_comfort_01" }];
+      }
+    };
+  }
+};
+
+assert.deepStrictEqual(
+  SparkPracticeEngine.buildExerciseSet({ lessonId: "lesson_vocal_setup_comfort_01" }),
+  [{ id: "ex_vocal_setup_comfort_01" }]
+);
+
+global.SparkInstruments = {
+  getActive: function() {
+    return { id: "thin-vocals" };
+  },
+  getAll: function() {
+    return [{
+      id: "thin-vocals",
+      getExercises: function(skill) {
+        assert.strictEqual(skill, "pitch_matching");
+        return [{ id: "ex_vocal_pitch_matching_01" }];
+      }
+    }];
+  }
+};
+
+assert.deepStrictEqual(
+  SparkInstrumentAdapter.getExercises("pitch_matching"),
+  [{ id: "ex_vocal_pitch_matching_01" }]
+);
+
+global.SparkInstruments = {
+  getActive: function() {
+    return { id: "thin-vocals" };
+  },
+  getAll: function() {
+    return [{
+      id: "thin-vocals",
+      getExercises: function(skillOrLessonId) {
+        assert.strictEqual(skillOrLessonId, "lesson_vocal_pitch_matching_01");
+        return [{ id: "ex_vocal_pitch_matching_01" }];
+      }
+    }];
+  }
+};
+
+assert.deepStrictEqual(
+  SparkInstrumentAdapter.getExercisesForLesson("lesson_vocal_pitch_matching_01"),
+  [{ id: "ex_vocal_pitch_matching_01" }]
+);
 
 console.log("PASS: curriculum and practice engines expose richer mainline contracts");

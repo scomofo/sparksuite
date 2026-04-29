@@ -44,6 +44,18 @@ function renderHomePracticeCard(data){
     h += '<div>'+escHTML(itemLabel)+'</div>';
   }
   h += '<button onclick="act(\'openPracticePlan\')">Open Plan</button>';
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">';
+  h += '<button onclick="act(\'openPracticeTemplate\',\'quick_win\')">Quick Win 10</button>';
+  h += '<button onclick="act(\'openPracticeTemplate\',\'low_energy\')">Low Energy 10</button>';
+  h += '<button onclick="act(\'openPracticeTemplate\',\'reset_focus\')">Reset Focus 10</button>';
+  h += '</div>';
+  if(String(data.activeInstrumentType || "").toLowerCase() === "ukulele" || String(data.activeInstrumentType || "").toLowerCase() === "ukespark"){
+    h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">';
+    h += '<button onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_a\')">Uke Set A</button>';
+    h += '<button onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_b\')">Uke Set B</button>';
+    h += '<button onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_c\')">Uke Set C</button>';
+    h += '</div>';
+  }
   h += '</div>';
   return h;
 }

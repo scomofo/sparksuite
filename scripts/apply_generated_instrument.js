@@ -24,7 +24,7 @@ function extractField(code, field) {
   return m ? m[1] : null;
 }
 
-var sparkSuiteOrder = ["skill_tree","curriculum","lessons","chords","scales","tuning","exercises","patterns","songs","kits","mapping","notation","progression","packs","bass_module","bass_adapter","piano_adapter","guitar_adapter","chart_library","rhythm_curriculum","runtime_adapter","rhythm_adapter","module","adapter","index"];
+var sparkSuiteOrder = ["skill_tree","bass_module","bass_curriculum_integration","curriculum","lessons","chords","scales","tuning","exercises","patterns","songs","kits","mapping","notation","progression","packs","bass_adapter","piano_adapter","guitar_adapter","chart_library","rhythm_curriculum","runtime_adapter","rhythm_adapter","module","adapter","index"];
 var runtimeOrder = ["data","audio","ui","watch","pages","capo","chord_normalizer","validator","ukulele_svg","register","app"];
 
 function orderIndex(file, order) {

@@ -12,6 +12,7 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
+_testEval(loadJS("js/sparksuite/core/capo_mode.js"));
 _testEval(loadJS("js/sparksuite/ui/session_shell.js"));
 
 
@@ -68,6 +69,7 @@ function resetEnvironment() {
     },
     songPlaying: false,
     songBeat: 0,
+    capoModeFret: 0,
     strumTone: "classic",
     performDifficulty: "normal"
   };
@@ -363,6 +365,26 @@ test("songDetailPage and songDonePage ignore stale song copy tokens", function()
   assert.ok(detailHtml.indexOf("NaN") === -1);
   assert.ok(doneHtml.indexOf("moonlight_sonata") >= 0);
   assert.ok(doneHtml.indexOf(">undefined<") === -1);
+});
+
+test("song detail applies capo mode to displayed chord shapes without changing sounding chords", function() {
+  S.capoModeFret = 2;
+  S.selectedSong = {
+    title: "Capo Song",
+    artist: "Player",
+    bpm: 90,
+    chords: ["A", "E", "F#m", "D"],
+    progression: ["A", "E", "F#m", "D"],
+    pattern: ["D", "U"]
+  };
+
+  var html = songDetailPage();
+
+  assert.ok(html.indexOf("Capo 2") >= 0);
+  assert.ok(html.indexOf("G (sounds A)") >= 0);
+  assert.ok(html.indexOf("D (sounds E)") >= 0);
+  assert.ok(html.indexOf("Em (sounds F#m)") >= 0);
+  assert.ok(html.indexOf("C (sounds D)") >= 0);
 });
 
 test("song library perform buttons rely on clickable card guards instead of inline propagation hacks", function() {

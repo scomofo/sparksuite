@@ -31,8 +31,18 @@
   function buildHomePracticeSummary(){
     return {
       todayPlan: S.dailyPracticePlan || [],
-      totalMinutes: S.totalPracticeMinutes || 0
+      totalMinutes: S.totalPracticeMinutes || 0,
+      activeInstrumentType: getHomeActiveInstrumentType()
     };
+  }
+
+  function getHomeActiveInstrumentType(){
+    var active;
+    if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
+      active = SparkInstruments.getActive();
+      if (active) return String(active.instrument || active.instrumentType || active.id || active.appId || "").toLowerCase();
+    }
+    return String(S.activeInstrument || (S.profile && S.profile.instrumentPrimary) || "").toLowerCase();
   }
 
   function buildHomeRecommendationSummary(){

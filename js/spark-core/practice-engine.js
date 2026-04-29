@@ -81,13 +81,14 @@
     buildExerciseSet: function(opts) {
       opts = opts || {};
       var activeInstrument = getLegacyPracticeActiveInstrument();
+      var exerciseSelector = opts.skill || opts.lessonId;
 
       if (opts.lessonId && activeInstrument && typeof activeInstrument.getExercisesForLesson === "function") {
         return activeInstrument.getExercisesForLesson(opts.lessonId);
       }
 
       if (activeInstrument && typeof activeInstrument.getExercises === "function") {
-        return activeInstrument.getExercises();
+        return activeInstrument.getExercises(exerciseSelector);
       }
 
       if (opts.lessonId && typeof SparkInstrumentAdapter !== "undefined") {
@@ -95,7 +96,7 @@
       }
 
       if (typeof SparkInstrumentAdapter !== "undefined") {
-        return SparkInstrumentAdapter.getExercises();
+        return SparkInstrumentAdapter.getExercises(exerciseSelector);
       }
 
       return [];

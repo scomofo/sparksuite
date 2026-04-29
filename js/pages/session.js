@@ -376,18 +376,22 @@ function renderQuizOptions(quizOptions, quizQuestion, quizAnswer, UI){
 
 function renderSongChordChips(chords){
   var h='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">';
+  var capoFret = getSessionCapoModeFret();
+  var mapped = mapSessionCapoChords(chords, capoFret);
   for(var i=0;i<chords.length;i++){
-    h+='<span style="background:var(--chip-bg);padding:4px 12px;border-radius:10px;font-size:13px;font-weight:700;color:var(--chip-color)">'+escHTML(chords[i])+'</span>';
+    h+='<span style="background:var(--chip-bg);padding:4px 12px;border-radius:10px;font-size:13px;font-weight:700;color:var(--chip-color)">'+escHTML(mapped[i].label)+'</span>';
   }
   h+='</div>';
   return h;
 }
 
 function renderSongProgressionCard(progression, songPlaying, songBeat){
+  var capoFret = getSessionCapoModeFret();
+  var mapped = mapSessionCapoChords(progression, capoFret);
   var h='<div class="card mb16"><h4 style="margin:0 0 10px;font-size:14px;color:var(--text-primary)">Chord Progression</h4><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">';
   for(var i=0;i<progression.length;i++){
-    var c=progression[i],isA=songPlaying&&i===songBeat;
-    h+='<div style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:'+(isA?"#FF6B6B":"var(--chip-bg)")+';color:'+(isA?"#fff":"var(--chip-color)")+';font-size:16px;font-weight:800;border:2px solid '+(isA?"#FF6B6B":"var(--border)")+';transition:all .15s;transform:'+(isA?"scale(1.15)":"scale(1)")+'">'+escHTML(c)+'</div>';
+    var c=mapped[i],isA=songPlaying&&i===songBeat;
+    h+='<div title="'+escHTML(c.label)+'" style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:'+(isA?"#FF6B6B":"var(--chip-bg)")+';color:'+(isA?"#fff":"var(--chip-color)")+';font-size:16px;font-weight:800;border:2px solid '+(isA?"#FF6B6B":"var(--border)")+';transition:all .15s;transform:'+(isA?"scale(1.15)":"scale(1)")+'">'+escHTML(c.display)+'</div>';
   }
   h+='</div></div>';
   return h;
@@ -396,10 +400,47 @@ function renderSongProgressionCard(progression, songPlaying, songBeat){
 function renderSongCurrentChordCard(songData, songBeat, D, UI){
   var ch=null;
   var currentName = songData.progression[songBeat];
+  var capoChord = getSessionCapoDisplayChord(currentName);
+  var displayName = capoChord.display;
   if(!currentName) return '';
-  for(var i=0;i<D.ALL_CHORDS.length;i++) if(D.ALL_CHORDS[i].short===currentName||D.ALL_CHORDS[i].name===currentName) ch=D.ALL_CHORDS[i];
+  for(var i=0;i<D.ALL_CHORDS.length;i++) if(D.ALL_CHORDS[i].short===displayName||D.ALL_CHORDS[i].name===displayName||D.ALL_CHORDS[i].short===currentName||D.ALL_CHORDS[i].name===currentName) ch=D.ALL_CHORDS[i];
   if(!ch) return '';
-  return '<div class="card mb16"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
+  return '<div class="card mb16"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+escHTML(capoChord.label)+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
+}
+
+function getSessionCapoModeFret(){
+  if(typeof SparkCapoMode !== "undefined" && SparkCapoMode && typeof SparkCapoMode.normalizeCapoFret === "function") {
+    return SparkCapoMode.normalizeCapoFret(S.capoModeFret);
+  }
+  return 0;
+}
+
+function getSessionCapoDisplayChord(chordName){
+  if(typeof SparkCapoMode !== "undefined" && SparkCapoMode && typeof SparkCapoMode.getDisplayChord === "function") {
+    return SparkCapoMode.getDisplayChord(chordName, getSessionCapoModeFret());
+  }
+  return { original: chordName, sounding: chordName, display: chordName, capoFret: 0, label: chordName };
+}
+
+function mapSessionCapoChords(chords, capoFret){
+  if(typeof SparkCapoMode !== "undefined" && SparkCapoMode && typeof SparkCapoMode.mapProgression === "function") {
+    return SparkCapoMode.mapProgression(chords, capoFret);
+  }
+  var mapped = [];
+  chords = Array.isArray(chords) ? chords : [];
+  for(var i=0;i<chords.length;i++) mapped.push({ original: chords[i], sounding: chords[i], display: chords[i], capoFret: 0, label: chords[i] });
+  return mapped;
+}
+
+function renderCapoModeControl(capoFret){
+  var h='<div class="card mb16" style="padding:12px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">';
+  h+='<div style="text-align:left"><div style="font-size:12px;font-weight:900;color:var(--text-primary)">Capo '+capoFret+'</div><div style="font-size:11px;color:var(--text-muted)">Shows playable shapes while keeping song chords sounding original.</div></div>';
+  h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">';
+  for(var i=0;i<=5;i++){
+    h+='<button onclick="act(\'setCapoMode\',\''+i+'\')" style="min-width:34px;padding:6px 8px;border-radius:9px;font-size:12px;font-weight:800;background:'+(capoFret===i?"#4ECDC4":"var(--input-bg)")+';color:'+(capoFret===i?"#fff":"var(--text-muted)")+';border:1px solid '+(capoFret===i?"#4ECDC4":"var(--border)")+'">'+i+'</button>';
+  }
+  h+='</div></div></div>';
+  return h;
 }
 
 function renderSongPlaybackButtons(songPlaying){
@@ -589,7 +630,9 @@ function songDetailPage(){
   var songBeat = songRuntime && typeof songRuntime.songBeat === "number" ? songRuntime.songBeat : S.songBeat;
   var patBeat=songPlaying?(songBeat%sg.pattern.length):-1;
   var curDir=patBeat>=0?sg.pattern[patBeat]:"x";
+  var capoFret = getSessionCapoModeFret();
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'songBack\')">&#8592; Back</button><h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">'+escHTML(songTitle)+'</h2><p style="color:var(--text-muted);font-size:13px;margin-bottom:16px">'+escHTML(songArtist)+' &#8226; '+songBpm+' BPM</p>';
+  h+=renderCapoModeControl(capoFret);
   h+=renderSongChordChips(sg.chords);
   h+=renderSongProgressionCard(sg.progression, songPlaying, songBeat);
   if(songPlaying) h+=renderSongCurrentChordCard(sg, songBeat, D, UI);

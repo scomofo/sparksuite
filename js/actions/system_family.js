@@ -55,6 +55,26 @@
     return (S.settings && S.settings.accessibility) || {};
   }
 
+  function getActiveSystemInstrumentType() {
+    var active;
+    if (typeof SparkInstruments !== "undefined" && typeof SparkInstruments.getActive === "function") {
+      active = SparkInstruments.getActive();
+      if (active) return String(active.instrument || active.instrumentType || active.id || active.appId || "").toLowerCase();
+    }
+    return String(S.activeInstrument || (S.profile && S.profile.instrumentPrimary) || "").toLowerCase();
+  }
+
+  function getUserFavoriteSongTitles() {
+    var profileFavorites = S.profile && Array.isArray(S.profile.favoriteSongs) ? S.profile.favoriteSongs : [];
+    var settingsFavorites = S.settings && Array.isArray(S.settings.favoriteSongs) ? S.settings.favoriteSongs : [];
+    var source = profileFavorites.length ? profileFavorites : settingsFavorites;
+    return source.map(function(song) {
+      return typeof song === "string" ? song : (song && (song.title || song.name || song.id)) || "";
+    }).filter(function(title) {
+      return !!String(title || "").trim();
+    });
+  }
+
   function persistAccessibilitySettings(patch) {
     var core = getSparkCoreHandle();
     var current = getAccessibilitySettingsHandle();
@@ -541,6 +561,33 @@
         openPracticePlanScreenRequest();
         openScreen(SCR.PLAN);
       }
+      render();
+      return true;
+    }
+
+    if (a === "openPracticeTemplate" && v) {
+      openPracticePlanScreenRequest({
+        practiceTemplateId: v,
+        forceRebuild: true
+      });
+      openScreen(typeof SCR !== "undefined" && SCR.PLAN ? SCR.PLAN : "plan");
+      render();
+      return true;
+    }
+
+    if (a === "openUkuleleMiniSession" && v) {
+      var activeSystemInstrumentType = getActiveSystemInstrumentType();
+      if (activeSystemInstrumentType !== "ukulele" && activeSystemInstrumentType !== "ukespark") {
+        showMicroToast("Choose Ukulele before opening a uke mini-session.", "&#127926;");
+        render();
+        return true;
+      }
+      openPracticePlanScreenRequest({
+        ukuleleMiniSessionId: v,
+        favoriteSongs: getUserFavoriteSongTitles(),
+        forceRebuild: true
+      });
+      openScreen(typeof SCR !== "undefined" && SCR.PLAN ? SCR.PLAN : "plan");
       render();
       return true;
     }

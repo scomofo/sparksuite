@@ -118,7 +118,11 @@
     // 3. Merge practice plan segments
     var practicePlan = this.practiceEngine.buildDailyPracticePlan({
       curriculum: curriculumContext,
-      instrumentContext: context.instrumentContext || {}
+      instrumentContext: context.instrumentContext || {},
+      practiceTemplateId: context.practiceTemplateId || null,
+      ukuleleMiniSessionId: context.ukuleleMiniSessionId || null,
+      favoriteSongs: context.favoriteSongs || [],
+      difficulty: difficulty
     });
     if (practicePlan.segments) { for (var pi = 0; pi < practicePlan.segments.length; pi++) segments.push(practicePlan.segments[pi]); }
     if (practicePlan.exercises) { for (var pe = 0; pe < practicePlan.exercises.length; pe++) exercises.push(practicePlan.exercises[pe]); }
@@ -154,6 +158,8 @@
       rewards: practicePlan.rewards || [{ type: "xp", amount: 40 }],
       context: {
         curriculum: curriculumContext,
+        practiceTemplate: practicePlan.practiceTemplate || null,
+        ukuleleMiniSession: practicePlan.miniSession || null,
         brainAnalysis: brainAnalysis,
         smartCoach: brainAnalysis ? {
           message: brainAnalysis.coachMessage,
