@@ -63,5 +63,9 @@ for (const src of expectedOrder) {
 const manifest = fs.readFileSync("js/instruments/instrument_manifest.generated.js", "utf8");
 assert(manifest.includes("Regenerate with: node scripts/apply_generated_instrument.js"), "manifest header must reference canonical apply script");
 assert(manifest.includes("js/instruments/piano/watch.js"), "manifest must include piano watch runtime module");
+assert(
+  manifest.indexOf("js/sparksuite/instruments/bass/bass_module.js") < manifest.indexOf("js/sparksuite/instruments/bass/bass_curriculum_integration.js"),
+  "manifest must load bass module before bass curriculum integration"
+);
 
 console.log("test_instrument_pipeline_cleanup passed");

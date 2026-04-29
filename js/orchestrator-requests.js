@@ -224,8 +224,11 @@ function openDailyPracticePlanRequest(options) {
   if (core && typeof core.startSession === "function") {
     return core.startSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-      forceRebuild: !!(options && (options.forceRebuild || options.lessonId)),
-      lessonId: options && options.lessonId ? options.lessonId : null
+      forceRebuild: !!(options && (options.forceRebuild || options.lessonId || options.practiceTemplateId || options.ukuleleMiniSessionId)),
+      lessonId: options && options.lessonId ? options.lessonId : null,
+      practiceTemplateId: options && options.practiceTemplateId ? options.practiceTemplateId : null,
+      ukuleleMiniSessionId: options && options.ukuleleMiniSessionId ? options.ukuleleMiniSessionId : null,
+      favoriteSongs: options && options.favoriteSongs ? options.favoriteSongs : []
     });
   }
   return null;

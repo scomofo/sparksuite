@@ -14,6 +14,8 @@
     ["ex_uke_first_two_chord_song_01",  "lesson_uke_first_two_chord_song_01",  "uke_two_chord_song",    "song",        "First Two-Chord Song Practice",     2, "early_beginner",    ["song"]],
     ["ex_uke_c_am_switch_01",            "lesson_uke_c_am_switch_01",            "uke_chord_switching",   "transition",  "C-Am Switch Practice",              2, "early_beginner",    ["transition"]],
     ["ex_uke_am_f_switch_01",            "lesson_uke_am_f_switch_01",            "uke_chord_switching",   "transition",  "Am-F Switch Practice",              2, "early_beginner",    ["transition"]],
+    ["ex_uke_chord_choreography_simple_01","lesson_uke_c_am_switch_01",          "uke_chord_switching",   "transition",  "One-Finger Chord Choreography",     2, "early_beginner",    ["transition","chord_choreography","no_look"]],
+    ["ex_uke_chord_choreography_blind_01","lesson_uke_f_g7_switch_01",           "uke_chord_switching",   "transition",  "No-Look Chord Choreography",        3, "beginner_plus",     ["transition","chord_choreography","no_look"]],
     ["ex_uke_f_g7_switch_01",            "lesson_uke_f_g7_switch_01",            "uke_chord_switching",   "transition",  "F-G7 Switch Practice",              3, "beginner_plus",     ["transition"]],
     ["ex_uke_four_chord_loop_01",        "lesson_uke_four_chord_loop_01",        "uke_four_chord_loop",   "progression", "Four-Chord Uke Loop Practice",      3, "beginner_plus",     ["progression"]],
     ["ex_uke_eighth_strum_01",           "lesson_uke_eighth_strum_01",           "uke_eighth_strum",      "rhythm",      "Eighth Strum Practice",             2, "early_beginner",    ["rhythm"]],
@@ -33,18 +35,65 @@
   ];
 
   var library = {};
+  var allExercises = [];
+  var DETAILS = {
+    ex_uke_chord_choreography_simple_01: {
+      durationSec: 90,
+      tempo: 56,
+      from: "C",
+      to: "Am",
+      progression: ["C", "Am", "A7", "Am", "C"],
+      choreography: {
+        chordPath: ["C", "Am", "A7", "Am", "C"],
+        noLook: true,
+        reversePath: true,
+        instruction: "Switch through the path without looking at the fretting hand, then return backwards."
+      },
+      recommendation: {
+        reason: "Practice a small one-finger path until the left hand can move without visual checking."
+      }
+    },
+    ex_uke_chord_choreography_blind_01: {
+      durationSec: 120,
+      tempo: 52,
+      from: "G7",
+      to: "Dm",
+      progression: ["G7", "C", "F", "F#m", "F", "Dm"],
+      choreography: {
+        chordPath: ["G7", "C", "F", "F#m", "F", "Dm"],
+        noLook: true,
+        reversePath: true,
+        instruction: "Start at G7, switch without looking at the fretting hand, then walk the path back from Dm."
+      },
+      recommendation: {
+        reason: "Build reliable ukulele chord-switch choreography away from song context."
+      }
+    }
+  };
   function push(key, ex) {
     if (!library[key]) library[key] = [];
     library[key].push(ex);
   }
+  function enrich(ex) {
+    var details = DETAILS[ex.id];
+    var out = {};
+    var key;
+    for (key in ex) if (Object.prototype.hasOwnProperty.call(ex, key)) out[key] = ex[key];
+    if (details) {
+      for (key in details) if (Object.prototype.hasOwnProperty.call(details, key)) out[key] = details[key];
+    }
+    return out;
+  }
   for (var i = 0; i < EXERCISES.length; i++) {
     var t = EXERCISES[i];
-    var ex = {
+    var ex = enrich({
       id: t[0], lessonId: t[1], skill: t[2], type: t[3],
       title: t[4], level: t[5], difficulty: t[6], tags: t[7]
-    };
+    });
+    allExercises.push(ex);
     push(ex.lessonId, ex);
     push(ex.skill, ex);
   }
+  library.__all = allExercises;
   window.SparkUkuleleExercises = library;
 })();

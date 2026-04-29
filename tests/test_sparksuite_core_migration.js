@@ -188,6 +188,7 @@ eval(loadJS("js/sparksuite/core/ai_engine.js"));
 eval(loadJS("js/sparksuite/core/instrument_manager.js"));
 eval(loadJS("js/sparksuite/core/psychology_engine.js"));
 eval(loadJS("js/sparksuite/core/curriculum_engine.js"));
+eval(loadJS("js/sparksuite/core/practice_templates.js"));
 eval(loadJS("js/sparksuite/core/practice_engine.js"));
 eval(loadJS("js/sparksuite/core/progress_engine.js"));
 eval(loadJS("js/sparksuite/core/session_engine.js"));
@@ -206,6 +207,25 @@ test("startSession returns a SessionPlan and syncs the legacy practice plan", fu
   assert.ok(S.practicePlan);
   assert.strictEqual(S.practicePlan.items.length, 2);
   assert.strictEqual(S.practicePlan.curriculum.nextLessonId, "session_1");
+});
+
+test("startSession can build an ADHD-friendly 10-minute practice template", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({
+    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+    practiceTemplateId: "quick_win",
+    forceRebuild: true
+  });
+  var totalDuration = plan.segments.reduce(function(total, segment) {
+    return total + segment.durationSec;
+  }, 0);
+
+  assert.strictEqual(plan.context.practiceTemplate.id, "quick_win");
+  assert.strictEqual(plan.segments.length, 5);
+  assert.strictEqual(totalDuration, 600);
+  assert.strictEqual(plan.segments[0].meta.practiceTemplateId, "quick_win");
+  assert.ok(S.practicePlan);
+  assert.strictEqual(S.practicePlan.items.length, 5);
 });
 
 test("createDefaultSparkCore installs explicit default execution gateway handlers", function() {
@@ -374,6 +394,21 @@ test("SparkCore can open the practice plan screen through an explicit helper", f
   assert.strictEqual(plan.flow, "daily_practice");
   assert.strictEqual(core.getRuntimeState().activeScreen, "practice_plan");
   assert.strictEqual(core.getRuntimeState().activeTab, "practice");
+});
+
+test("SparkCore practice plan screen can open a 10-minute template", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.openPracticePlanScreen({
+    practiceTemplateId: "low_energy",
+    forceRebuild: true
+  });
+  var totalDuration = plan.segments.reduce(function(total, segment) {
+    return total + segment.durationSec;
+  }, 0);
+
+  assert.strictEqual(plan.context.practiceTemplate.id, "low_energy");
+  assert.strictEqual(totalDuration, 600);
+  assert.strictEqual(core.getRuntimeState().activeScreen, "practice_plan");
 });
 
 test("SparkCore can open legacy practice session and drill runtime explicitly", function() {

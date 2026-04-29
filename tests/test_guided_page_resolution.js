@@ -1104,6 +1104,24 @@ test("openPracticePlan resumes the guided screen when a guided session is alread
   assert.deepStrictEqual(planOpenCalls, []);
 });
 
+test("openPracticeTemplate opens a selected 10-minute practice plan", function() {
+  var planOpenCalls = [];
+  global.openPracticePlanScreenRequest = function(payload) {
+    planOpenCalls.push(payload || {});
+    return payload || {};
+  };
+  global.sparkCore = null;
+  global.eval(loadJS("js/actions/system_family.js"));
+
+  var handled = global.runSparkActionFamilies("openPracticeTemplate", "quick_win");
+  assert.strictEqual(handled, true);
+  assert.strictEqual(S.screen, "plan");
+  assert.deepStrictEqual(planOpenCalls, [{
+    practiceTemplateId: "quick_win",
+    forceRebuild: true
+  }]);
+});
+
 test("start_guided_session resumes the active guided shell when no new session is requested", function() {
   var startCalls = [];
   S.guidedSession = 1;

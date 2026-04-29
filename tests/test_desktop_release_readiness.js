@@ -6,6 +6,7 @@ var root = path.join(__dirname, "..");
 var checklistPath = path.join(root, "docs", "release", "desktop_release_checklist.md");
 var runbookPath = path.join(root, "docs", "release", "release_runbook.md");
 var tauriConfigPath = path.join(root, "src-tauri", "tauri.conf.json");
+var electronMainPath = path.join(root, "main.js");
 
 assert.ok(fs.existsSync(checklistPath), "desktop release checklist should exist");
 assert.ok(fs.existsSync(runbookPath), "release runbook should exist");
@@ -14,6 +15,7 @@ assert.ok(fs.existsSync(tauriConfigPath), "tauri.conf.json should exist");
 var checklist = fs.readFileSync(checklistPath, "utf8");
 var runbook = fs.readFileSync(runbookPath, "utf8");
 var tauriConfig = JSON.parse(fs.readFileSync(tauriConfigPath, "utf8"));
+var electronMain = fs.readFileSync(electronMainPath, "utf8");
 
 assert.ok(checklist.indexOf("User data export works.") >= 0, "checklist should cover export");
 assert.ok(checklist.indexOf("User data import works on a clean profile.") >= 0, "checklist should cover import");
@@ -26,5 +28,7 @@ assert.ok(runbook.indexOf("build packaged app") >= 0 || runbook.indexOf("tauri b
 assert.ok(runbook.indexOf("npm run smoke:desktop") >= 0, "runbook should cover packaged smoke");
 assert.ok(runbook.indexOf("export a debug bundle") >= 0 || runbook.indexOf("debug bundle") >= 0, "runbook should cover debug export");
 assert.strictEqual(tauriConfig.productName, "SparkSuite");
+assert.ok(electronMain.indexOf("path.relative(stemsDir, normalized)") >= 0, "stems file URLs should use path-relative containment checks");
+assert.ok(electronMain.indexOf("path.isAbsolute(relativeStemPath)") >= 0, "stems file URLs should reject absolute relative paths");
 
 console.log("PASS: desktop release docs and tauri config support the release readiness checklist");

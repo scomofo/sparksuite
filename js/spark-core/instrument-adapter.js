@@ -83,12 +83,16 @@ window.SparkInstrumentAdapter = (function () {
     return _proxy("getCurriculumMapV2") || [];
   }
   function getCurriculumMapV2()           { return _proxy("getCurriculumMapV2") || []; }
-  function getExercises()                 { return _proxy("getExercises") || []; }
+  function getExercises(skillOrLessonId)  { return _proxy("getExercises", skillOrLessonId) || []; }
   function getSongs()                     { return _proxy("getSongs") || []; }
   function getDifficultyRules(context)    { return _proxy("getDifficultyRules", context) || { difficultyAction: "keep" }; }
   function analyzePerformance(sessionData){ return _proxy("analyzePerformance", sessionData) || { accuracy: 0 }; }
   function generateDrills(skill, level)   { return _proxy("generateDrills", skill, level) || []; }
-  function getExercisesForLesson(lessonId) { return _proxy("getExercisesForLesson", lessonId) || []; }
+  function getExercisesForLesson(lessonId) {
+    var exercises = _proxy("getExercisesForLesson", lessonId);
+    if (exercises && exercises.length) return exercises;
+    return _proxy("getExercises", lessonId) || [];
+  }
   function getPerformanceConfig()           { return _proxy("getPerformanceConfig") || {}; }
 
   // -----------------------------------------------------------------------

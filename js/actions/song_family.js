@@ -89,6 +89,17 @@
       return true;
     }
 
+    if (a === "setCapoMode") {
+      var capoFret = typeof SparkCapoMode !== "undefined" && SparkCapoMode && typeof SparkCapoMode.normalizeCapoFret === "function"
+        ? SparkCapoMode.normalizeCapoFret(v)
+        : Math.max(0, Math.min(12, Math.round(Number(v) || 0)));
+      applySongFamilyRuntimeUpdate({ setFields: { capoModeFret: capoFret } }, function() {
+        S.capoModeFret = capoFret;
+      });
+      render();
+      return true;
+    }
+
     if (a === "completeSong") {
       var songActivityInstrument;
       var completionRuntimeState;

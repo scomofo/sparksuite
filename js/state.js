@@ -10,6 +10,7 @@ var S={
   quizQ:null,quizOpts:[],quizAns:null,quizScore:0,quizTotal:0,quizStreak:0,
   strumActive:false,selectedStrum:null,_strumBeat:-1,
   selectedSong:null,songBeat:0,songPlaying:false,
+  capoModeFret:0,
   tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0,tunerErr:null,
   lastSessionDate:null,
   metronomeOn:false,metronomeBpm:80,_metroBeat:0,_metroBeats:4,

@@ -340,6 +340,7 @@
 
     getExercises: function(skillOrLessonId) {
       var lib = window.SparkUkuleleExercises || {};
+      if (!skillOrLessonId) return lib.__all || [];
       return lib[skillOrLessonId] || [];
     },
 
@@ -349,6 +350,10 @@
 
     getPacks: function() {
       return window.SparkUkulelePacks || [];
+    },
+
+    getCurriculumPackSpecs: function() {
+      return window.SparkUkuleleCurriculumPackSpecs || [];
     },
 
     getProgressionRules: function() {
@@ -386,6 +391,20 @@
 
     getSongs: function() {
       return window.SparkUkuleleRepertoire || [];
+    },
+
+    getMiniSessions: function(options) {
+      if (window.SparkUkuleleMiniSessions && typeof SparkUkuleleMiniSessions.buildFromFavorites === "function") {
+        return SparkUkuleleMiniSessions.buildFromFavorites(options || {});
+      }
+      return [];
+    },
+
+    getMiniSessionPrintables: function() {
+      if (window.SparkUkuleleMiniSessions && typeof SparkUkuleleMiniSessions.getPrintableOnePagers === "function") {
+        return SparkUkuleleMiniSessions.getPrintableOnePagers();
+      }
+      return [];
     },
 
     getSongLibrary: function() {

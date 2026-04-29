@@ -104,7 +104,16 @@
   }
 
   function sameInstrument(item) {
-    return item && String(item.id || item.key || item.slug || item.instrumentId || "").toLowerCase() === ID;
+    var values;
+    var i;
+    var value;
+    if (!item) return false;
+    values = [item.id, item.key, item.slug, item.instrumentId, item.appId, item.instrument];
+    for (i = 0; i < values.length; i += 1) {
+      value = String(values[i] || "").toLowerCase();
+      if (value === ID || value === "vocalspark") return true;
+    }
+    return false;
   }
 
   function upsertArray(arr, item) {
@@ -203,6 +212,12 @@
         var method = methods[i];
 
         if (typeof registry[method] === "function") {
+          if (method === "set" && typeof registry.has === "function" && typeof registry.get === "function") {
+            try {
+              registry[method](ID, item);
+              return true;
+            } catch (err0) {}
+          }
           try {
             registry[method](item);
             return true;
@@ -249,6 +264,12 @@
     ].forEach(function (name) {
       registerRegistry(name, item);
     });
+
+    try {
+      if (W.SparkInstruments && typeof W.SparkInstruments.register === "function") {
+        W.SparkInstruments.register(item);
+      }
+    } catch (err) {}
 
     [
       "SPARK_INSTRUMENTS",

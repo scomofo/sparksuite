@@ -219,7 +219,8 @@ ipcMain.handle('stems:getFileUrl', async (event, stemPath) => {
   // Validate path is within stems directory (prevent path traversal)
   var normalized = path.resolve(stemPath);
   var stemsDir = path.resolve(app.getPath('userData'), 'stems');
-  if (!normalized.startsWith(stemsDir)) {
+  var relativeStemPath = path.relative(stemsDir, normalized);
+  if (!relativeStemPath || relativeStemPath.startsWith('..') || path.isAbsolute(relativeStemPath)) {
     throw new Error('Access denied: path outside stems directory');
   }
   return 'file://' + normalized.replace(/\\/g, '/');

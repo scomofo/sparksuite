@@ -5,6 +5,10 @@
 
   PracticeEngine.prototype.buildDailyPracticePlan = function(context) {
     context = context || {};
+    var miniSession = buildUkuleleMiniSessionPracticePlan(context);
+    if (miniSession) return miniSession;
+    var templated = buildTemplatePracticePlan(context);
+    if (templated) return templated;
     var generated = this.generateExercises(context);
     return {
       segments: generated.segments,
@@ -14,6 +18,40 @@
       source: generated.source
     };
   };
+
+  function buildUkuleleMiniSessionPracticePlan(context) {
+    if (!context.ukuleleMiniSessionId || typeof SparkUkuleleMiniSessions === "undefined" || !SparkUkuleleMiniSessions || typeof SparkUkuleleMiniSessions.buildPracticePlan !== "function") {
+      return null;
+    }
+    return SparkUkuleleMiniSessions.buildPracticePlan({
+      miniSessionId: context.ukuleleMiniSessionId,
+      favorites: context.favoriteSongs || []
+    });
+  }
+
+  function buildTemplatePracticePlan(context) {
+    var lesson;
+    var templatePlan;
+    if (!context.practiceTemplateId || typeof SparkPracticeTemplates === "undefined" || !SparkPracticeTemplates || typeof SparkPracticeTemplates.buildPlan !== "function") {
+      return null;
+    }
+    lesson = context.curriculum && context.curriculum.nextLesson ? context.curriculum.nextLesson : null;
+    templatePlan = SparkPracticeTemplates.buildPlan({
+      templateId: context.practiceTemplateId,
+      instrumentType: context.instrumentContext ? context.instrumentContext.instrumentType : null,
+      skill: lesson ? (lesson.skill || lesson.skillId || null) : null,
+      lessonId: lesson ? lesson.id : (context.curriculum && context.curriculum.nextLessonId ? context.curriculum.nextLessonId : null),
+      difficulty: context.difficulty || "easy"
+    });
+    return {
+      segments: templatePlan.segments,
+      exercises: templatePlan.exercises,
+      focus: templatePlan.template.label,
+      rewards: [{ type: "xp", amount: 40 }],
+      source: "practice_template",
+      practiceTemplate: templatePlan.template
+    };
+  }
 
   PracticeEngine.prototype.generateExercises = function(context) {
     context = context || {};
