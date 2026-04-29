@@ -206,7 +206,8 @@ test('launcher home kicks deferred instrument registration loading', function() 
 
 test('renderLauncher wires hero and launcher utility actions', function() {
   var html = SparkInstruments.renderLauncher();
-  assert.ok(html.indexOf("act('launcherLaunchPerformance','test_guitar')") >= 0);
+  assert.ok(html.indexOf("act('launcherSelectInstrument','test_guitar')") >= 0);
+  assert.ok(html.indexOf('Open Instrument') >= 0);
   assert.ok(html.indexOf("act('openLauncherView','profile')") >= 0);
   assert.ok(html.indexOf("act('openLauncherView','instruments')") >= 0);
   assert.ok(html.indexOf("onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();act('launcherSelectInstrument','test_guitar')}\"") >= 0);
@@ -615,11 +616,12 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('act(\\\'showroomOpenTrendingScores\\\')') >= 0);
   assert.ok(showroomSource.indexOf('Continue Learning</h3><span class="link"') >= 0);
   assert.ok(showroomSource.indexOf('nav("curriculum")') >= 0);
-  assert.ok(showroomSource.indexOf('nav("leaderboard")') >= 0);
+  assert.ok(showroomSource.indexOf('function launcherBottomNavItems()') >= 0);
+  assert.ok(showroomSource.indexOf('{ id:"learn",    label:"Learn",    icon:"school",        onClick: nav("learn") }') >= 0);
   assert.ok(showroomSource.indexOf('nav("tools")') >= 0);
   assert.ok(showroomSource.indexOf('nav("insights")') >= 0);
-  assert.ok(showroomSource.indexOf('label:"Practice",    icon:"music_note", onClick: nav("practice")') >= 0);
-  assert.ok(showroomSource.indexOf('label:"Practice", icon:"music_note", onClick: nav("practice")') >= 0);
+  assert.ok(showroomSource.indexOf('{ id:"home",     label:"Home",     icon:"home_app_logo", onClick: nav("home") }') >= 0);
+  assert.ok(showroomSource.indexOf('{ id:"settings", label:"Settings", icon:"settings",      onClick: nav("settings") }') >= 0);
   assert.ok(showroomSource.indexOf('label:"Instruments", icon:"piano",       onClick: nav("instruments")') >= 0);
   assert.ok(showroomSource.indexOf('"instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; S.launcherView = "instruments"; }') >= 0);
 assert.ok(showroomSource.indexOf('"curriculum":      function(){ S._showroomOverride = "curriculum"; }') >= 0);

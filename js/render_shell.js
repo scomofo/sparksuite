@@ -5,7 +5,12 @@
 function _renderLauncherOrShowroomOverride(){
   if (!S.activeInstrument) {
     document.getElementById("header").style.display = "none";
-    _writeAppHtml(_renderOnboardingOverlay() + SparkInstruments.renderLauncher());
+    var onboarding = _renderOnboardingOverlay();
+    if (onboarding) {
+      _writeAppHtml(onboarding);
+      return true;
+    }
+    _writeAppHtml(SparkInstruments.renderLauncher());
     return true;
   }
 

@@ -561,6 +561,15 @@
          + '<div class="showroom-bottomnav-inner">' + inner + '</div></nav>';
   }
 
+  function launcherBottomNavItems() {
+    return [
+      { id:"home",     label:"Home",     icon:"home_app_logo", onClick: nav("home") },
+      { id:"library",  label:"Library",  icon:"library_music", onClick: nav("library") },
+      { id:"learn",    label:"Learn",    icon:"school",        onClick: nav("learn") },
+      { id:"settings", label:"Settings", icon:"settings",      onClick: nav("settings") }
+    ];
+  }
+
   // Load setting flags from localStorage with safe fallback
   function loadFlags() {
     try {
@@ -724,12 +733,7 @@
     }
     html += '<div class="showroom-version"><span class="showroom-version-label">System Core</span><span class="showroom-version-num">v' + escHtml(releaseVersion + releaseBuild) + '</span></div>';
 
-    var navItems = [
-      { id:"flow",     label:"Flow",     icon:"waves",       onClick: nav("home") },
-      { id:"library",  label:"Library",  icon:"music_note",  onClick: nav("library") },
-      { id:"insights", label:"Insights", icon:"insights",    onClick: nav("insights") },
-      { id:"settings", label:"Settings", icon:"settings" }
-    ];
+    var navItems = launcherBottomNavItems();
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar"><div class="showroom-appbar-left">'
@@ -813,12 +817,7 @@
       }
     }
 
-    var navItems = [
-      { id:"home",     label:"Practice",    icon:"music_note", onClick: nav("practice") },
-      { id:"journey",  label:"Journey",     icon:"explore",    onClick: nav("path") },
-      { id:"leaderboard", label:"Leaderboard", icon:"military_tech", onClick: nav("leaderboard") },
-      { id:"profile",  label:"Profile",     icon:"person" }
-    ];
+    var navItems = launcherBottomNavItems();
 
     // Stitch 2026-04 "Profile" redesign — glass cards, inset-carved
     // progress tracks, ember-glow featured badge, centered "Profile"
@@ -826,7 +825,7 @@
     return '<div class="showroom-root with-bg showroom-profile-ember">'
          + '<div class="showroom-profile-ember-wash" aria-hidden="true"></div>'
          + '<header class="showroom-appbar showroom-profile-ember-appbar">'
-         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button></div>'
+         + '<div class="showroom-appbar-left"><button class="showroom-iconbtn accent" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></button></div>'
          + '<h1 class="showroom-appbar-title centered showroom-profile-ember-title">Profile</h1>'
          + '<div class="showroom-appbar-right"><button class="showroom-iconbtn showroom-profile-ember-settings" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
          + '</header>'
@@ -859,7 +858,7 @@
                + '<button type="button" class="showroom-profile-ember-viewall" onclick="' + nav("path") + '">View All</button></div>'
              + '<div class="showroom-badges showroom-profile-ember-badges">' + badgesHtml + '</div></section>'
          + '</div>'
-         + bottomNav(navItems, "profile")
+         + bottomNav(navItems, "")
          + '</div>';
   }
 
@@ -1216,12 +1215,7 @@
               + '</div>';
     }
 
-    var navItems = [
-      { id:"home",    label:"Home",     icon:"home",          onClick: nav("home") },
-      { id:"library", label:"Library",  icon:"library_music" },
-      { id:"practice",label:"Practice", icon:"music_note",    onClick: nav("practice") },
-      { id:"profile", label:"Profile",  icon:"person",        onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
 
     return '<div class="showroom-root woodgrain-bg showroom-library-2026">'
          + '<header class="showroom-library-bar">'

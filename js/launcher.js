@@ -50,6 +50,23 @@
     return (inst && inst.tagline) || INSTRUMENT_SUBTITLE[instrumentType(inst)] || "";
   }
 
+  function canLaunchPerformance(inst) {
+    var data;
+    if (!inst || typeof inst.getData !== "function") return false;
+    try { data = inst.getData() || {}; }
+    catch (e) { return false; }
+    return Array.isArray(data.SONGS) && data.SONGS.length > 0;
+  }
+
+  function scrollLauncherTopSoon() {
+    if (typeof window === "undefined" || typeof window.scrollTo !== "function") return;
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(function(){ window.scrollTo(0, 0); });
+      return;
+    }
+    setTimeout(function(){ window.scrollTo(0, 0); }, 0);
+  }
+
   function deferredAssetsPending() {
     return typeof SparkBootLoader !== "undefined"
       && SparkBootLoader
@@ -246,7 +263,7 @@
           '<div class="showroom-hero showroom-glass">' +
             '<div class="showroom-hero-bg"><div class="showroom-hero-bg-fallback" aria-hidden="true">\uD83C\uDFB5</div></div>' +
             '<div class="showroom-hero-content">' +
-              '<span class="showroom-hero-badge">Get Started</span>' +
+              '<span class="showroom-hero-badge">Studio Ready</span>' +
               '<h2 class="showroom-hero-title">Pick an Instrument</h2>' +
               '<p class="showroom-hero-meta">Choose from your collection below</p>' +
             '</div>' +
@@ -273,7 +290,11 @@
       bg = '<div class="showroom-hero-bg-fallback" aria-hidden="true">' + glyphFor(featured) + '</div>';
     }
 
-    var onClick = 'act(\'launcherLaunchPerformance\',\'' + safeEsc(featured.id) + '\')';
+    var performanceReady = canLaunchPerformance(featured);
+    var onClick = performanceReady
+      ? 'act(\'launcherLaunchPerformance\',\'' + safeEsc(featured.id) + '\')'
+      : 'act(\'launcherSelectInstrument\',\'' + safeEsc(featured.id) + '\')';
+    var ctaLabel = performanceReady ? 'Launch Performance' : 'Open Instrument';
 
     return '' +
       '<section class="showroom-hero-wrap">' +
@@ -283,7 +304,10 @@
             '<span class="showroom-hero-badge">' + safeEsc(badge) + '</span>' +
             '<h2 class="showroom-hero-title">' + safeEsc(name) + '</h2>' +
             (subtitle ? '<p class="showroom-hero-meta">' + safeEsc(subtitle) + '</p>' : '') +
-            '<button class="showroom-cta" onclick="' + onClick + '">Launch Performance</button>' +
+            '<button class="showroom-cta" onclick="' + onClick + '">' +
+              '<span class="material-symbols-outlined fill" aria-hidden="true">play_arrow</span>' +
+              '<span>' + ctaLabel + '</span>' +
+            '</button>' +
           '</div>' +
         '</div>' +
       '</section>';
@@ -299,6 +323,7 @@
         + ' onkeydown="' + onKeyDown + '"'
         + ' role="button" tabindex="0"'
         + ' aria-label="Launch ' + safeEsc(inst.name || type) + '">' +
+        '<span class="showroom-card-accent" style="background:' + safeEsc(accentFor(inst)) + '" aria-hidden="true"></span>' +
         renderCardThumb(inst) +
         '<div class="showroom-card-text">' +
           '<h4 class="showroom-card-name">' + safeEsc(inst.name || type) + '</h4>' +
@@ -343,12 +368,12 @@
           deltaHtml +
         '</div>' +
         '<div class="showroom-stat-tile showroom-glass">' +
-          '<span class="material-symbols-outlined fill showroom-stat-tile-icon">local_fire_department</span>' +
+          '<span class="material-symbols-outlined fill showroom-stat-tile-icon" aria-hidden="true">local_fire_department</span>' +
           '<span class="showroom-stat-tile-num">' + (summary.maxStreak || 0) + '</span>' +
           '<span class="showroom-stat-tile-label">Day Streak</span>' +
         '</div>' +
         '<div class="showroom-stat-tile showroom-glass">' +
-          '<span class="material-symbols-outlined fill showroom-stat-tile-icon">album</span>' +
+          '<span class="material-symbols-outlined fill showroom-stat-tile-icon" aria-hidden="true">album</span>' +
           '<span class="showroom-stat-tile-num">' + (summary.mastered || 0) + '</span>' +
           '<span class="showroom-stat-tile-label">Mastered</span>' +
         '</div>' +
@@ -385,7 +410,10 @@
         '<div class="showroom-topbar-inner">' +
           '<div class="showroom-topbar-left">' +
             renderAvatar(profile) +
-            '<span class="showroom-brand">SparkSuite</span>' +
+            '<div class="showroom-brand-stack">' +
+              '<span class="showroom-brand-kicker">Practice Console</span>' +
+              '<span class="showroom-brand">SparkSuite</span>' +
+            '</div>' +
           '</div>' +
           '<div class="showroom-xp-pill" role="status" aria-label="Total experience points">' +
             '<span class="material-symbols-outlined fill">workspace_premium</span>' +
@@ -417,7 +445,7 @@
       : '';
 
     return '' +
-      '<div class="showroom-root">' +
+      '<div class="showroom-root showroom-instruments-root">' +
         '<div class="showroom-woodgrain" aria-hidden="true"></div>' +
         renderTopbar(profile, summary.totalXp) +
         '<div class="showroom-content">' +
@@ -432,7 +460,7 @@
           renderStats(summary) +
         '</div>' +
         '<button class="showroom-fab" aria-label="Quick launch" onclick="' + fabOnClick + '">' +
-          '<span class="material-symbols-outlined">add</span>' +
+          '<span class="material-symbols-outlined fill">play_arrow</span>' +
         '</button>' +
         renderBottomNav("home") +
       '</div>';
@@ -644,6 +672,7 @@
       }
       if (typeof saveState === "function") saveState();
       if (typeof render === "function") render();
+      scrollLauncherTopSoon();
     },
 
     // Switch the launcher to a named view (settings/library/learn)
@@ -655,6 +684,7 @@
       S.launcherView = view || "home";
       if (typeof saveState === "function") saveState();
       if (typeof render === "function") render();
+      scrollLauncherTopSoon();
     },
 
     renderLauncher: function() {
