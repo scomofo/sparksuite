@@ -376,9 +376,12 @@
     }
 
     if (a === "completeOnboarding") {
-      setLegacyFields({ onboardingDone: true }, false);
+      setLegacyFields({ onboardingDone: true, launcherView: "home" }, false);
       saveState();
       render();
+      if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+        window.requestAnimationFrame(function(){ window.scrollTo(0, 0); });
+      }
       return true;
     }
 
@@ -443,6 +446,10 @@
     }
 
     if (a === "openOnboarding") {
+      if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.deactivate === "function") {
+        SparkInstruments.deactivate({ render: false });
+      }
+      setLegacyFields({ onboardingDone: false, activeInstrument: null, launcherView: null, _showroomOverride: null }, false);
       if (typeof startOnboarding === "function") startOnboarding();
       return true;
     }

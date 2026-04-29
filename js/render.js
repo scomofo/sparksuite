@@ -86,7 +86,7 @@ function _renderOnboardingOverlay(){
   var onboardingPracticeIntention = normalizeAppTextInputValue(S.practiceIntention);
   if (typeof SparkOnboardingWelcome !== "undefined" && SparkOnboardingWelcome && typeof SparkOnboardingWelcome.render === "function") {
     var intentionCard = "";
-    intentionCard += '<section class="showroom-onboarding-intention-card" aria-label="Practice trigger">';
+    intentionCard += '<section class="showroom-onboarding-intention-card" aria-label="Practice trigger setup">';
     intentionCard += '<p class="showroom-onboarding-intention-kicker">Complete this sentence</p>';
     intentionCard += '<p class="showroom-onboarding-intention-copy">&#8220;Every day, when I&nbsp;&hellip;</p>';
     intentionCard += '<input type="text" id="intention-input" class="set-input showroom-onboarding-intention-input" placeholder="finish dinner, make coffee..." value="'+escHTML(onboardingPracticeIntention)+'" oninput="act(\'setIntention\',this.value)" aria-label="Practice trigger"/>';
