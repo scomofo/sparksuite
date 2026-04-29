@@ -1,19 +1,41 @@
 // js/instruments/drums/register.js
 (function() {
+  function loadScriptOnce(src) {
+    if (typeof document === "undefined" || !document.head) return;
+    if (document.querySelector('script[src="' + src + '"]')) return;
+    var script = document.createElement("script");
+    script.src = src;
+    script.defer = false;
+    script.onerror = function() {
+      console.error("DrumSpark: failed to load", src);
+    };
+    document.head.appendChild(script);
+  }
+
+  function ensureDrumRuntime() {
+    if (window.SparkDrumsModule) return;
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_skill_tree.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_lessons.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_chart_library.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_rhythm_adapter.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_module.js");
+  }
+
   function esc(value) {
     if (typeof escHTML === "function") return escHTML(value == null ? "" : String(value));
-    return String(value == null ? "" : value).replace(/[&<>\"]/g, function(c) {
-      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+    return String(value == null ? "" : value).replace(/[&<>"]/g, function(c) {
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
     });
   }
 
   function attr(value) {
-    return String(value == null ? "" : value).replace(/[&<>\"']/g, function(c) {
-      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function(c) {
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
     });
   }
 
   function getDrumLessons() {
+    ensureDrumRuntime();
     return window.SparkDrumsModule && typeof SparkDrumsModule.getLessons === "function"
       ? SparkDrumsModule.getLessons()
       : [];
@@ -30,6 +52,7 @@
 
   function startDrumLesson(lessonId) {
     if (!lessonId) return false;
+    ensureDrumRuntime();
 
     try {
       if (window.SparkInstruments && SparkInstruments.activate) {
@@ -52,47 +75,57 @@
   window.startDrumLesson = startDrumLesson;
 
   function lessonButton(label, lessonId, className, style) {
-    return '<button class="' + (className || 'btn') + '" style="' + (style || '') + '" onclick="return startDrumLesson(\'' + attr(lessonId) + '\')">' + esc(label) + '</button>';
+    return '<button class="' + (className || "btn") + '" style="' + (style || "") + '" onclick="return startDrumLesson(\'' + attr(lessonId) + '\')">' + esc(label) + "</button>";
   }
 
   function drumPracticeTab() {
     var lessons = getDrumLessons();
     var next = getNextDrumLesson();
     var html = '<div class="card mb12" style="text-align:center">';
-    html += '<h2>DrumSpark</h2>';
+    html += "<h2>DrumSpark</h2>";
     if (next) {
-      html += '<div>Next: ' + esc(next.title || next.id) + '</div>';
-      html += lessonButton('Start Drum Lesson', next.id, 'btn', 'margin-top:10px');
+      html += "<div>Next: " + esc(next.title || next.id) + "</div>";
+      html += lessonButton("Start Drum Lesson", next.id, "btn", "margin-top:10px");
     }
-    html += '</div>';
+    html += "</div>";
     html += '<div class="card">';
     for (var i = 0; i < lessons.length; i++) {
       html += '<div style="margin:6px 0">';
       html += esc(lessons[i].title || lessons[i].id);
-      html += lessonButton('Start', lessons[i].id, 'btn btn-sm', 'margin-left:10px');
-      html += '</div>';
+      html += lessonButton("Start", lessons[i].id, "btn btn-sm", "margin-left:10px");
+      html += "</div>";
     }
-    html += '</div>';
+    html += "</div>";
     return html;
   }
+
+  ensureDrumRuntime();
 
   SparkInstruments.register({
     id: "drumspark",
     instrument: "drums",
     name: "Drums",
-
-    icon: "🥁",
+    icon: "\uD83E\uDD41",
     iconImage: "resources/instruments/drums/card.png",
     heroImage: "resources/instruments/drums/hero.jpg",
-
+    skin: null,
     available: true,
+    getData: function() { return {}; },
     getLessons: getDrumLessons,
-    getRhythmAdapter: function() {
-      return window.SparkDrumsModule ? window.SparkDrumsModule.getRhythmAdapter() : null;
+    getSkillTree: function() {
+      ensureDrumRuntime();
+      return window.SparkDrumsModule && typeof SparkDrumsModule.getSkillTree === "function" ? SparkDrumsModule.getSkillTree() : [];
     },
+    getRhythmAdapter: function() {
+      ensureDrumRuntime();
+      return window.SparkDrumsModule && typeof SparkDrumsModule.getRhythmAdapter === "function" ? SparkDrumsModule.getRhythmAdapter() : null;
+    },
+    pages: {},
     tabs: [{ id: "practice", label: "Practice" }],
     tabRenderers: { practice: drumPracticeTab },
+    stemMutePreset: {},
     init: function() {
+      ensureDrumRuntime();
       if (typeof S !== "undefined") S.tab = "practice";
     }
   });
