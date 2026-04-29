@@ -744,10 +744,11 @@ function songsTab(){
   if(songsSubTab==="stems") return h+stemsSection();
   if(songsSubTab==="perform") return h+performSubTab();
 
-  h += _renderSpotifyPlaylistPanel(inst, D.SONGS);
+  var songList = Array.isArray(D.SONGS) ? D.SONGS : [];
+  h += _renderSpotifyPlaylistPanel(inst, songList);
   h += _renderPerformanceDailyCard(performanceDailyChallenge, performanceDailyComplete);
   searchAndSort = _renderSongsSearchAndSort(songFilter, songSort, songSortAsc);
-  filtered = _getFilteredSongs(D.SONGS, songFilter, songSort, songSortAsc);
+  filtered = _getFilteredSongs(songList, songFilter, songSort, songSortAsc);
   h += searchAndSort.html;
   h += _renderSongsList(filtered, D, searchAndSort.safeSongFilter);
   return h;

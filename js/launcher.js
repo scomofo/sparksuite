@@ -534,6 +534,12 @@
     };
     var renderer = route[view] || route.home;
     if (deferredAssetsFailed()) return renderLauncherLoadFailure(view);
+    if ((view === "home" || view === "instruments") && deferredAssetsPending()) {
+      ensureDeferredAssets(function() {
+        if (typeof render === "function") render();
+      });
+      if (view === "instruments") return renderLauncherLoading(view);
+    }
     if (!route[view] && deferredAssetsPending()) {
       ensureDeferredAssets(function() {
         if (typeof render === "function") render();
@@ -549,6 +555,9 @@
         if (_instruments[i].id === config.id) return;
       }
       _instruments.push(config);
+      if (typeof S !== "undefined" && !S.activeInstrument && typeof render === "function") {
+        render();
+      }
     },
 
     selectInstrument: selectInstrument,
