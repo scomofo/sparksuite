@@ -42,6 +42,7 @@ function _buildSharedPageRegistry(){
 
 function _renderActiveScreenContent(){
   var sharedPages = _buildSharedPageRegistry();
+  if (S.screen === SCR.SESSION && sharedPages[S.screen]) return sharedPages[S.screen]();
   var instrumentPage = SparkInstruments.getPage(S.screen);
   var renderer = instrumentPage || sharedPages[S.screen] || null;
   if (renderer) return renderer();

@@ -622,6 +622,14 @@
     getAll: function() { return _instruments.slice(); },
 
     getPage: function(screenId) {
+      if (typeof S !== "undefined" && S.activeInstrument && (!_active || _active.id !== S.activeInstrument)) {
+        for (var i = 0; i < _instruments.length; i++) {
+          if (_instruments[i] && _instruments[i].id === S.activeInstrument) {
+            _active = _instruments[i];
+            break;
+          }
+        }
+      }
       if (!_active || !_active.pages) return null;
       return _active.pages[screenId] || null;
     },

@@ -1853,6 +1853,55 @@ test("startPracticeItem skips null cached plan rows when launching by id", funct
   assert.deepStrictEqual(launched, ["practice_1"]);
 });
 
+test("startPracticeItem opens shared shell blocks before legacy item launch", function() {
+  var launched = [];
+  var renderCalls = 0;
+  var runtimeCalls = [];
+  global.SCR = { SESSION: "session" };
+  global.S = {
+    screen: "plan",
+    practicePlan: {
+      flow: "daily_practice",
+      items: [
+        { id: "uke_favorites_set_a_warmup", type: "warmup", completed: false }
+      ],
+      segments: [
+        { id: "uke_favorites_set_a_warmup", type: "warmup", meta: { ukuleleMiniSessionId: "uke_favorites_set_a" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return { plan: global.S.practicePlan };
+    },
+    syncSessionRuntime: function(options) {
+      runtimeCalls.push(options);
+      return true;
+    }
+  };
+  global.SparkSessionRuntime = {
+    runSegmentById: function(id) {
+      runtimeCalls.push({ id: id });
+      return true;
+    }
+  };
+  global.launchPracticeItem = function(item) {
+    launched.push(item && item.id);
+  };
+  global.render = function() {
+    renderCalls++;
+  };
+
+  startPracticeItem("uke_favorites_set_a_warmup");
+
+  assert.deepStrictEqual(launched, []);
+  assert.strictEqual(global.S.screen, "session");
+  assert.strictEqual(renderCalls, 1);
+  assert.strictEqual(runtimeCalls[0].segmentId, "uke_favorites_set_a_warmup");
+  assert.strictEqual(runtimeCalls[0].status, "running");
+  assert.strictEqual(runtimeCalls.length, 1);
+});
+
 test("startPracticeItem fails safely when a cached plan shell omits items", function() {
   var launched = [];
   global.getPracticeStats = function() {

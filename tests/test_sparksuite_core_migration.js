@@ -2169,6 +2169,99 @@ test("practiceStartItem prefers the shared session runtime for active daily-prac
   assert.strictEqual(syncCalls[0].status, "ready");
 });
 
+test("practiceStartItem opens the session shell when runtime launch keeps the current screen", function() {
+  var renderCalls = 0;
+  global.window = {};
+  global.SCR = { PLAN: "plan", SESSION: "session" };
+  global.S = { screen: "plan", tab: "practice" };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "uke_favorites_set_a_warmup", type: "warmup", exerciseIds: ["ex_1"] }
+          ]
+        }
+      };
+    },
+    syncSessionRuntime: function() {
+      return true;
+    }
+  };
+  global.SparkSessionRuntime = {
+    runSegmentById: function() {
+      return true;
+    }
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() { renderCalls++; };
+  global.saveState = function() {};
+  global.act = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("practiceStartItem", "uke_favorites_set_a_warmup"), true);
+  assert.strictEqual(S.screen, "session");
+  assert.strictEqual(renderCalls, 1);
+});
+
+test("practiceStartItem opens ukulele mini-session shell blocks without legacy fallback", function() {
+  var renderCalls = 0;
+  var syncCalls = [];
+  var runtimeLaunchCalls = [];
+  var directStartItem = null;
+  global.window = {};
+  global.SCR = { PLAN: "plan", SESSION: "session" };
+  global.S = { screen: "plan", tab: "practice" };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          segments: [
+            { id: "uke_favorites_set_a_warmup", type: "warmup", meta: { ukuleleMiniSessionId: "uke_favorites_set_a" } }
+          ]
+        }
+      };
+    },
+    syncSessionRuntime: function(options) {
+      syncCalls.push(options);
+      return true;
+    }
+  };
+  global.SparkSessionRuntime = {
+    runSegmentById: function(id) {
+      runtimeLaunchCalls.push(id);
+      return true;
+    }
+  };
+  global.startPracticeItem = function(itemId) {
+    directStartItem = itemId;
+  };
+  global.__actionFamilies = {};
+  global.registerSparkActionFamily = function(name, handler) {
+    global.__actionFamilies[name] = handler;
+  };
+  global.window.registerSparkActionFamily = global.registerSparkActionFamily;
+  global.render = function() { renderCalls++; };
+  global.saveState = function() {};
+  global.act = function() {};
+
+  eval(loadJS("js/actions/practice_family.js"));
+
+  assert.strictEqual(__actionFamilies.practice("practiceStartItem", "uke_favorites_set_a_warmup"), true);
+  assert.strictEqual(S.screen, "session");
+  assert.strictEqual(renderCalls, 1);
+  assert.strictEqual(syncCalls[0].status, "running");
+  assert.deepStrictEqual(runtimeLaunchCalls, []);
+  assert.strictEqual(directStartItem, null);
+});
+
 test("practice action family can pause, resume, and skip the shared daily-practice shell", function() {
   var syncCalls = [];
   var runtimeCalls = [];

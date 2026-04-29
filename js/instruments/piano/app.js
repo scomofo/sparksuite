@@ -1031,6 +1031,7 @@ function act(action, param) {
 
     // ── Guided sessions ──
     case "practiceStartItem":
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return;
       if(typeof startPracticeItem==="function"){startPracticeItem(param);}
       else if(typeof window.startPracticeItem==="function"){window.startPracticeItem(param);}
       return;
