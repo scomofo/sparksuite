@@ -68,6 +68,21 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/bass/bass_module.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_skill_tree.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_curriculum.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_lessons.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_exercises.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_patterns.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_songs.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_kits.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_mapping.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_notation.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_progression.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_packs.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_chart_library.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_runtime_adapter.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_rhythm_adapter.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_module.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_lessons.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_chords.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_scales.js"));
@@ -393,6 +408,7 @@ test("rhythm highway loop tooling can build a normalized loop payload", function
 test("instrument rhythm adapters expose lane metadata for non-guitar highway layouts", function() {
   var bassPayload = new SparkBassRhythmAdapter().createPayload({});
   var ukulelePayload = new SparkUkuleleRhythmAdapter().createPayload({});
+  var drumsPayload = new SparkDrumsRhythmAdapter().createPayload({});
 
   assert.strictEqual(bassPayload.adapterType, "bass");
   assert.strictEqual(bassPayload.laneCount, 4);
@@ -400,6 +416,67 @@ test("instrument rhythm adapters expose lane metadata for non-guitar highway lay
   assert.strictEqual(ukulelePayload.adapterType, "ukulele");
   assert.strictEqual(ukulelePayload.laneCount, 4);
   assert.deepStrictEqual(ukulelePayload.laneLabels, ["G", "C", "E", "A"]);
+  assert.strictEqual(drumsPayload.adapterType, "drums");
+  assert.strictEqual(drumsPayload.laneCount, 4);
+  assert.deepStrictEqual(drumsPayload.laneLabels, ["Kick", "Snare", "Hat", "Aux"]);
+});
+
+test("rhythm highway can launch directly from an authored drum module payload", function() {
+  global.SparkInstruments = {
+    getAll: function() {
+      return [
+        { id: "drumspark", appId: "drumspark", instrument: "drums" }
+      ];
+    }
+  };
+
+  var capturedClockInstrument = null;
+  var capturedAdapter = null;
+  var OriginalTimingEngine = global.SparkTimingEngine;
+  var OriginalGameplayEngine = global.SparkRhythmGameplayEngine;
+
+  global.SparkTimingEngine = function() {};
+  SparkTimingEngine.prototype.createClock = function(instrument) {
+    capturedClockInstrument = instrument;
+    return { getSongTime: function() { return 0; }, close: function() {} };
+  };
+  SparkTimingEngine.prototype.tickToSeconds = function(tempoMap, tick) {
+    return tempoMap && typeof tempoMap.tickToSeconds === "function" ? tempoMap.tickToSeconds(tick) : 0;
+  };
+
+  global.SparkRhythmGameplayEngine = function(options) {
+    capturedAdapter = options.adapter;
+    this.update = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+    this.getSnapshot = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+  };
+
+  try {
+    var payload = new SparkDrumsRhythmAdapter().createPayload({
+      curriculum: { nextLessonId: "lesson_drums_basic_backbeat_01" }
+    });
+
+    var started = startRhythmHighwayPayload(payload, "spark_balanced", {
+      source: "module_exercise",
+      label: "First Backbeat",
+      instrument: "drums",
+      exerciseId: "ex_drums_basic_backbeat_01",
+      exerciseFocus: "basic_backbeat"
+    });
+
+    assert.strictEqual(started, true);
+    assert.strictEqual(capturedClockInstrument, "drums");
+    assert.ok(capturedAdapter instanceof SparkDrumsRhythmAdapter);
+    assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "drums");
+    assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["Kick", "Snare", "Hat", "Aux"]);
+  } finally {
+    global.SparkTimingEngine = OriginalTimingEngine;
+    global.SparkRhythmGameplayEngine = OriginalGameplayEngine;
+    delete global.SparkInstruments;
+  }
 });
 
 test("rhythm highway can launch directly from an authored bass module payload", function() {

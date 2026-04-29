@@ -62,14 +62,37 @@ safeEval("js/launcher.js");
 safeEval("js/data.js");
 safeEval("js/instruments/piano/data.js");
 safeEval("js/instruments/bass/data.js");
+safeEval("js/sparksuite/instruments/guitar/guitar_lessons.js");
+safeEval("js/sparksuite/instruments/guitar/guitar_skill_tree.js");
+safeEval("js/sparksuite/instruments/piano/piano_lessons.js");
+safeEval("js/sparksuite/instruments/piano/piano_skill_tree.js");
 safeEval("js/sparksuite/instruments/ukulele/ukulele_lessons.js");
 safeEval("js/sparksuite/instruments/ukulele/ukulele_skill_tree.js");
+safeEval("js/sparksuite/instruments/vocals/vocals_lessons.js");
+safeEval("js/sparksuite/instruments/vocals/vocals_skill_tree.js");
+safeEval("js/sparksuite/instruments/drums/drums_skill_tree.js");
+safeEval("js/sparksuite/instruments/drums/drums_curriculum.js");
+safeEval("js/sparksuite/instruments/drums/drums_lessons.js");
+safeEval("js/sparksuite/instruments/drums/drums_exercises.js");
+safeEval("js/sparksuite/instruments/drums/drums_patterns.js");
+safeEval("js/sparksuite/instruments/drums/drums_songs.js");
+safeEval("js/sparksuite/instruments/drums/drums_kits.js");
+safeEval("js/sparksuite/instruments/drums/drums_mapping.js");
+safeEval("js/sparksuite/instruments/drums/drums_notation.js");
+safeEval("js/sparksuite/instruments/drums/drums_progression.js");
+safeEval("js/sparksuite/instruments/drums/drums_packs.js");
+safeEval("js/sparksuite/instruments/drums/drums_chart_library.js");
+safeEval("js/sparksuite/instruments/drums/drums_runtime_adapter.js");
+safeEval("js/sparksuite/instruments/drums/drums_rhythm_adapter.js");
+safeEval("js/sparksuite/instruments/drums/drums_module.js");
 
 // Load instrument registrations
 safeEval("js/instruments/guitar/register.js");
 safeEval("js/instruments/piano/register.js");
 safeEval("js/instruments/bass/register.js");
 safeEval("js/instruments/ukulele/register.js");
+safeEval("js/instruments/drums/register.js");
+safeEval("js/instruments/vocals/register.js");
 safeEval("js/dev/curriculum_validator.js");
 
 // Load curriculum engine
@@ -87,7 +110,6 @@ test("at least one instrument registered", function() {
 
 instruments.forEach(function(inst) {
   var id = inst.id;
-safeEval("js/instruments/drums/register.js");
 
   if (typeof validateCurriculum === "function") {
     test(id + ": structured validator reports no blocking errors", function() {
@@ -150,6 +172,35 @@ safeEval("js/instruments/drums/register.js");
     });
   }
 });
+
+if (typeof SparkDrumsModule !== "undefined") {
+  test("drums: handoff curriculum IDs are represented and internally linked", function() {
+    var lessonIds = SparkDrumsModule.getLessons().map(function(lesson) { return lesson.id; });
+    var exerciseIds = SparkDrumsModule.getExercises().map(function(exercise) { return exercise.id; });
+    var patterns = SparkDrumsModule.getPatterns();
+    var songs = SparkDrumsModule.getSongs().map(function(song) { return song.id; });
+    [
+      "lesson_drums_basic_backbeat_01",
+      "lesson_drums_hat_eighths_01",
+      "lesson_drums_one_bar_fill_01",
+      "lesson_drums_performance_set_01"
+    ].forEach(function(id) {
+      assert.ok(lessonIds.indexOf(id) >= 0, "missing lesson " + id);
+    });
+    [
+      "ex_drums_basic_backbeat_01",
+      "ex_drums_fill_quarters_01",
+      "ex_drums_verse_chorus_01",
+      "drill_drums_backbeat_4bar_01",
+      "drill_drums_section_switch_01"
+    ].forEach(function(id) {
+      assert.ok(exerciseIds.indexOf(id) >= 0, "missing exercise " + id);
+    });
+    assert.ok(patterns.pattern_drums_basic_backbeat_01, "missing basic backbeat pattern");
+    assert.ok(patterns.pattern_drums_fill_quarters_01, "missing fill pattern");
+    assert.ok(songs.indexOf("song_drums_first_rock_beat_01") >= 0, "missing starter song");
+  });
+}
 // Ukulele-specific: prerequisites reference valid skill IDs
 if (typeof SparkUkuleleLessons !== "undefined" && typeof SparkUkuleleSkillTree !== "undefined") {
   test("ukulele: all lesson skills exist in skill tree", function() {

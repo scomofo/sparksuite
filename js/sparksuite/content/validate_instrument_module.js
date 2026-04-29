@@ -104,7 +104,7 @@
 
       prereqs = Array.isArray(lesson.prerequisites) ? lesson.prerequisites : [];
       for (j = 0; j < prereqs.length; j++) {
-        if (!skillIds[prereqs[j]]) {
+        if (!skillIds[prereqs[j]] && !lessonIds[prereqs[j]]) {
           throw new Error(moduleId + ': lesson "' + lessonId + '" references missing prerequisite "' + prereqs[j] + '"');
         }
       }

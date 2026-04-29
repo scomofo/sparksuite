@@ -15,8 +15,18 @@
   function ensureDrumRuntime() {
     if (window.SparkDrumsModule) return;
     loadScriptOnce("js/sparksuite/instruments/drums/drums_skill_tree.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_curriculum.js");
     loadScriptOnce("js/sparksuite/instruments/drums/drums_lessons.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_exercises.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_patterns.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_songs.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_kits.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_mapping.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_notation.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_progression.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_packs.js");
     loadScriptOnce("js/sparksuite/instruments/drums/drums_chart_library.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_runtime_adapter.js");
     loadScriptOnce("js/sparksuite/instruments/drums/drums_rhythm_adapter.js");
     loadScriptOnce("js/sparksuite/instruments/drums/drums_module.js");
   }
@@ -110,8 +120,30 @@
     heroImage: "resources/instruments/drums/hero.jpg",
     skin: null,
     available: true,
-    getData: function() { return {}; },
+    getData: function() {
+      ensureDrumRuntime();
+      var curriculum = window.SparkDrumsCurriculum || {};
+      return {
+        CHORDS: {},
+        ALL_CHORDS: {},
+        CURRICULUM: window.SparkDrumsLessons || [],
+        SKILL_TREE: window.SparkDrumsSkillTree || [],
+        LC: curriculum.LC || {},
+        LN: curriculum.LN || {},
+        SESSIONS: [],
+        SONGS: window.SparkDrumsSongs || []
+      };
+    },
     getLessons: getDrumLessons,
+    getCurriculumMap: getDrumLessons,
+    getExercises: function(skillOrLessonId) {
+      ensureDrumRuntime();
+      return window.SparkDrumsModule && typeof SparkDrumsModule.getExercises === "function" ? SparkDrumsModule.getExercises(skillOrLessonId) : [];
+    },
+    getSongs: function() {
+      ensureDrumRuntime();
+      return window.SparkDrumsModule && typeof SparkDrumsModule.getSongs === "function" ? SparkDrumsModule.getSongs() : [];
+    },
     getSkillTree: function() {
       ensureDrumRuntime();
       return window.SparkDrumsModule && typeof SparkDrumsModule.getSkillTree === "function" ? SparkDrumsModule.getSkillTree() : [];
@@ -119,6 +151,10 @@
     getRhythmAdapter: function() {
       ensureDrumRuntime();
       return window.SparkDrumsModule && typeof SparkDrumsModule.getRhythmAdapter === "function" ? SparkDrumsModule.getRhythmAdapter() : null;
+    },
+    getRuntimeAdapter: function() {
+      ensureDrumRuntime();
+      return window.SparkDrumsModule && typeof SparkDrumsModule.getRuntimeAdapter === "function" ? SparkDrumsModule.getRuntimeAdapter() : null;
     },
     pages: {},
     tabs: [{ id: "practice", label: "Practice" }],
