@@ -439,6 +439,14 @@ test('render_showroom routes performance overrides to SparkPerformance', functio
 });
 
 test('ukulele register adds a selectable launcher instrument', function() {
+  var planCalls = [];
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
+  global.SCR = { PLAN: 'plan' };
+  global.openPracticePlanScreenRequest = function(payload) {
+    planCalls.push(payload || {});
+    return payload || {};
+  };
+  global.render = function() {};
   eval(loadJS('js/ui/stringed_chord_svg.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));
@@ -461,6 +469,7 @@ test('ukulele register adds a selectable launcher instrument', function() {
 
   assert.ok(ukulele);
   assert.strictEqual(ukulele.instrument, 'ukulele');
+  assert.strictEqual(typeof ukulele.act, 'function');
   assert.strictEqual(typeof ukulele.tabRenderers.practice, 'function');
   var practiceHtml = ukulele.tabRenderers.practice();
   assert.ok(practiceHtml.indexOf("Quick Win 10") >= 0);
@@ -468,6 +477,14 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.ok(practiceHtml.indexOf("Reset Focus 10") >= 0);
   assert.ok(practiceHtml.indexOf("Uke Set A") >= 0);
   assert.ok(practiceHtml.indexOf("openUkuleleMiniSession") >= 0);
+
+  assert.strictEqual(ukulele.act("quickStart"), true);
+  assert.strictEqual(S.screen, "plan");
+  assert.strictEqual(S.activeInstrument, "ukespark");
+  assert.strictEqual(planCalls.length, 1);
+  assert.strictEqual(planCalls[0].instrumentId, "ukespark");
+  assert.strictEqual(planCalls[0].instrumentType, "ukulele");
+  assert.ok(planCalls[0].lessonId);
 });
 
 test('showroom svg provides a microphone silhouette for VocalSpark', function() {
@@ -482,7 +499,15 @@ test('showroom svg provides a microphone silhouette for VocalSpark', function() 
 });
 
 test('vocals register adds a selectable launcher instrument', function() {
+  var planCalls = [];
   installMinimalDocument();
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
+  global.SCR = { PLAN: 'plan' };
+  global.openPracticePlanScreenRequest = function(payload) {
+    planCalls.push(payload || {});
+    return payload || {};
+  };
+  global.render = function() {};
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_curriculum.js'));
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_lessons.js'));
@@ -501,7 +526,16 @@ test('vocals register adds a selectable launcher instrument', function() {
   assert.strictEqual(vocals.iconImage, 'resources/instruments/vocals/card.png');
   assert.strictEqual(vocals.heroImage, 'resources/instruments/vocals/hero.jpg');
   assert.strictEqual(typeof vocals.getExercises, 'function');
+  assert.strictEqual(typeof vocals.act, 'function');
   assert.strictEqual(typeof vocals.tabRenderers.practice, 'function');
+
+  assert.strictEqual(vocals.act("quickStart"), true);
+  assert.strictEqual(S.screen, "plan");
+  assert.strictEqual(S.activeInstrument, "vocalspark");
+  assert.strictEqual(planCalls.length, 1);
+  assert.strictEqual(planCalls[0].instrumentId, "vocalspark");
+  assert.strictEqual(planCalls[0].instrumentType, "vocals");
+  assert.ok(planCalls[0].lessonId);
 });
 
 test('vocals register upserts existing app-id catalog entries', function() {

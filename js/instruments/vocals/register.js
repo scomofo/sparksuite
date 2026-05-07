@@ -199,6 +199,28 @@
         { id: "stats", label: "Stats" }
       ],
       tabRenderers: { practice: vocalsPracticeTab },
+      act: function (action) {
+        var lessons;
+        var completed;
+        var next;
+        var i;
+        if (action !== "quickStart") return false;
+        lessons = getLessons();
+        completed = Array.isArray(getState().completedLessons) ? getState().completedLessons : [];
+        for (i = 0; i < lessons.length; i += 1) {
+          if (completed.indexOf(lessons[i].id) < 0) {
+            next = lessons[i];
+            break;
+          }
+        }
+        if (!next) next = lessons[0] || null;
+        if (next && next.id) {
+          startVocalsLesson(next.id);
+        } else {
+          openVocalsSpark();
+        }
+        return true;
+      },
       open: openVocalsSpark,
       launch: openVocalsSpark,
       select: openVocalsSpark,
