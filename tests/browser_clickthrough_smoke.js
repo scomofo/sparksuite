@@ -178,6 +178,52 @@ async function assertMobileInstrumentScrollResets(page) {
   }
 }
 
+async function visibleControlLayoutIssues(page) {
+  return page.evaluate(function() {
+    function isVisible(el) {
+      var s = window.getComputedStyle(el);
+      var r = el.getBoundingClientRect();
+      return s.display !== "none"
+        && s.visibility !== "hidden"
+        && r.width > 0
+        && r.height > 0
+        && r.bottom > 0
+        && r.top < window.innerHeight
+        && r.right > 0
+        && r.left < window.innerWidth;
+    }
+    var controls = Array.prototype.slice.call(document.querySelectorAll("#app button,#app a,#app input,#app select"))
+      .filter(isVisible)
+      .filter(function(el) { return !el.closest(".showroom-bottomnav"); });
+    return controls.reduce(function(issues, el) {
+      var r = el.getBoundingClientRect();
+      var label = (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().replace(/\s+/g, " ").slice(0, 80);
+      if (!label) return issues;
+      if (r.width < 28 || r.height < 24) issues.push("tiny control: " + label);
+      if (el.scrollWidth > el.clientWidth + 2) issues.push("clipped control text: " + label);
+      return issues;
+    }, []);
+  });
+}
+
+async function assertMobileActionControlsFit(page) {
+  var cases = [
+    { instrument: "Guitar", tab: "dual" },
+    { instrument: "Bass", tab: "songs" },
+    { instrument: "Ukulele", tab: "songs" }
+  ];
+  for (var i = 0; i < cases.length; i++) {
+    await openLauncherView(page, "instruments");
+    await launchInstrument(page, cases[i].instrument);
+    await openTab(page, cases[i].tab);
+    await page.evaluate(function() { window.scrollTo(0, 0); });
+    await settle(page, 100);
+    assert.deepStrictEqual(await visibleControlLayoutIssues(page), [], cases[i].instrument + " " + cases[i].tab + " has crowded visible controls");
+    await page.getByLabel("Back to launcher").click();
+    await settle(page, 500);
+  }
+}
+
 async function main() {
   var browser = await chromium.launch({ headless: true });
   var page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -230,6 +276,7 @@ async function main() {
   await settle(mobilePage, 500);
   await dismissFirstRun(mobilePage);
   await assertMobileInstrumentScrollResets(mobilePage);
+  await assertMobileActionControlsFit(mobilePage);
   var launcherViews = ["home", "library", "learn", "settings", "profile", "instruments", "tools", "practice", "lesson", "performance"];
   for (var j = 0; j < launcherViews.length; j++) {
     await assertLauncherViewScrollsCleanly(mobilePage, launcherViews[j]);

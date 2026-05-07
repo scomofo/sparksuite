@@ -167,7 +167,7 @@ function dualTab(){
 
   // Listen button
   if(guitarChord){
-    h+='<button onclick="act(\'dualPreview\',\''+chordName+'\')" style="margin-bottom:16px;background:none;font-size:14px;color:var(--text-muted)">&#128264; Listen</button>';
+    h+='<button class="dual-listen-btn" onclick="act(\'dualPreview\',\''+chordName+'\')">&#128264; Listen</button>';
   }
 
   // Two cards side by side

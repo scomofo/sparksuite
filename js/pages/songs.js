@@ -452,7 +452,7 @@ function _renderSongsList(filtered, D, safeSongFilter){
     }
     h += '</div>';
     if(s.progression&&s.progression.length>0&&!lk){
-      h += '<div class="song-controls action-row" style="margin-top:6px"><button class="btn btn-sm" onclick="act(\'openPerformSong\','+D.SONGS.indexOf(s)+')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:11px;padding:4px 10px">&#127918; Perform</button></div>';
+      h += '<div class="song-controls action-row" style="margin-top:6px"><button class="btn btn-sm song-perform-btn" onclick="act(\'openPerformSong\','+D.SONGS.indexOf(s)+')">&#127918; Perform</button></div>';
     }
     h += '</div>';
   }
