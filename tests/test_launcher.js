@@ -440,13 +440,22 @@ test('render_showroom routes performance overrides to SparkPerformance', functio
 
 test('ukulele register adds a selectable launcher instrument', function() {
   var planCalls = [];
-  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
-  global.SCR = { PLAN: 'plan' };
+  var quizSyncCalls = [];
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home', level: 1 };
+  global.SCR = { PLAN: 'plan', DRILL: 'drill', QUIZ: 'quiz' };
   global.openPracticePlanScreenRequest = function(payload) {
     planCalls.push(payload || {});
     return payload || {};
   };
   global.render = function() {};
+  global.T = {};
+  global.tickD = function() {};
+  global.sparkCore = {
+    syncLegacyQuizRuntimeState: function(payload) {
+      quizSyncCalls.push(payload || {});
+      return payload || {};
+    }
+  };
   eval(loadJS('js/ui/stringed_chord_svg.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));
@@ -485,6 +494,27 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.strictEqual(planCalls[0].instrumentId, "ukespark");
   assert.strictEqual(planCalls[0].instrumentType, "ukulele");
   assert.ok(planCalls[0].lessonId);
+
+  S.screen = 'home';
+  assert.strictEqual(ukulele.act("startDrill"), true);
+  assert.strictEqual(S.screen, "drill");
+  assert.strictEqual(S.activeInstrument, "ukespark");
+  assert.ok(Array.isArray(S.drillChords));
+  assert.ok(S.drillChords.length >= 2);
+
+  S.screen = 'home';
+  assert.strictEqual(ukulele.act("startQuiz"), true);
+  assert.strictEqual(S.screen, "quiz");
+  assert.ok(S.quizQ);
+  assert.ok(Array.isArray(S.quizOpts));
+  assert.ok(S.quizOpts.length >= 2);
+
+  assert.strictEqual(ukulele.act("answerQuiz", S.quizQ.name), true);
+  assert.strictEqual(S.quizTotal, 1);
+  assert.strictEqual(S.quizScore, 1);
+  assert.strictEqual(quizSyncCalls.length >= 2, true);
+  assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].answer, S.quizQ.name);
+  assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].total, 1);
 });
 
 test('showroom svg provides a microphone silhouette for VocalSpark', function() {
