@@ -333,7 +333,8 @@ function buildTab(){
       }
       h+='</div>';
       var positions=getScaleFrets(scaleKey,S.selectedScale);
-      h+='<div class="flex-center">'+scaleSVG(positions,scaleKey,SCALE_NAMES[S.selectedScale])+'</div>';
+      var renderScale = typeof stringedScaleSVG === "function" ? stringedScaleSVG : scaleSVG;
+      h+='<div class="flex-center">'+renderScale(positions,scaleKey,SCALE_NAMES[S.selectedScale])+'</div>';
       h+='</div>';
     }
   }

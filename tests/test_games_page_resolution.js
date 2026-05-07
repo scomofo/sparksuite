@@ -189,6 +189,37 @@ test("active progression chord card does not use the generic card entrance anima
   assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
 });
 
+test("progression scale explorer uses the stringed scale renderer when piano overwrites scaleSVG", function() {
+  S.progChords = ["E Major", "A Major"];
+  S.selectedScale = "pentatonic";
+  global.SCALES = { E: { pentatonic: [0] } };
+  global.SCALE_NAMES = { pentatonic: "Pentatonic" };
+  global.getScaleFrets = function() { return [{ string: 0, fret: 0, note: "E", isRoot: true }]; };
+  global.scaleSVG = function() { return '<svg width="E" viewBox="0 0 E NaN"></svg>'; };
+  global.stringedScaleSVG = function(positions, keyName, scaleName) {
+    return '<svg width="320" viewBox="0 0 320 160" data-key="' + keyName + '" data-scale="' + scaleName + '"></svg>';
+  };
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      getData: function() {
+        return {
+          ALL_CHORDS: [{ name: "E Major", short: "E" }, { name: "A Major", short: "A" }],
+          CHORDS: { 1: [{ name: "E Major", short: "E" }, { name: "A Major", short: "A" }] }
+        };
+      },
+      ui: {
+        chord: function() { return "<div>chord</div>"; }
+      }
+    };
+  };
+
+  var html = buildTab();
+
+  assert.ok(html.indexOf('data-key="E"') >= 0);
+  assert.ok(html.indexOf('viewBox="0 0 E NaN"') === -1);
+});
+
 test("shared drill launch buttons are handled by the guitar runtime", function() {
   var gamesSource = loadJS("js/instruments/piano/pages/games.js");
   var guitarSource = loadJS("js/instruments/guitar/app.js");
