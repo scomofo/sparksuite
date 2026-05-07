@@ -206,7 +206,7 @@ async function visibleControlLayoutIssues(page) {
       .filter(function(el) { return !el.closest(".showroom-bottomnav"); });
     return controls.reduce(function(issues, el) {
       var r = el.getBoundingClientRect();
-      var label = (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().replace(/\s+/g, " ").slice(0, 80);
+      var label = (el.innerText || el.value || el.getAttribute("aria-label") || el.getAttribute("placeholder") || "").trim().replace(/\s+/g, " ").slice(0, 80);
       if (!label) return issues;
       if (r.width < 28 || r.height < 24) issues.push("tiny control: " + label);
       if (el.scrollWidth > el.clientWidth + 2) issues.push("clipped control text: " + label);
@@ -268,6 +268,19 @@ async function visibleLauncherActionTargetIssues(page) {
       return issues;
     }, []);
   });
+}
+
+async function assertCompactMobileInstrumentControlsFit(browser, consoleProblems) {
+  var compactPage = await browser.newPage({ viewport: { width: 320, height: 568 } });
+  trackConsoleProblems(compactPage, consoleProblems);
+  await compactPage.goto(appUrl("browserCompactMobileSmoke"));
+  await compactPage.waitForLoadState("domcontentloaded");
+  await settle(compactPage, 500);
+  await dismissFirstRun(compactPage);
+  await launchInstrument(compactPage, "Piano");
+  await openTab(compactPage, "songs");
+  assert.deepStrictEqual(await visibleControlLayoutIssues(compactPage), [], "compact Piano songs has crowded visible controls");
+  await compactPage.close();
 }
 
 async function assertNoMobilePageHorizontalOverflow(page) {
@@ -361,6 +374,7 @@ async function main() {
   await assertMobileActionControlsFit(mobilePage);
   await assertNoMobilePageHorizontalOverflow(mobilePage);
   await assertLauncherActionTargetsFit(mobilePage);
+  await assertCompactMobileInstrumentControlsFit(browser, consoleProblems);
   var launcherViews = ["home", "library", "learn", "settings", "profile", "instruments", "tools", "practice", "lesson", "performance"];
   for (var j = 0; j < launcherViews.length; j++) {
     await assertLauncherViewScrollsCleanly(mobilePage, launcherViews[j]);

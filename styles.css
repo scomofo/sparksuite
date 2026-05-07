@@ -359,13 +359,17 @@ body.light .stat-str{background:rgba(176,64,48,.08);color:#8a3020;border:none}
 }
 .chord-chip.selected{border-color:var(--success);background:rgba(106,158,90,.1);color:var(--success)}
 .chord-chip:not(.selected){background:var(--chip-bg);color:var(--chip-color)}
-.set-input{
+.set-input,
+.intention-input{
   background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);
   padding:10px 14px;font-size:14px;font-weight:600;color:var(--text-primary);
+  min-height:40px;
   font-family:inherit;width:100%;outline:none;transition:border-color .2s;
 }
-.set-input:focus{border-color:var(--accent)}
-.set-input::placeholder{color:var(--text-muted)}
+.set-input:focus,
+.intention-input:focus{border-color:var(--accent)}
+.set-input::placeholder,
+.intention-input::placeholder{color:var(--text-muted)}
 
 /* ===== Stats ===== */
 .stat-card{background:var(--card-bg);border-radius:var(--radius-lg);padding:16px;border:1px solid var(--border);text-align:center;transition:background .3s}
