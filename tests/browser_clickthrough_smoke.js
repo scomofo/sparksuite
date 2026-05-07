@@ -233,6 +233,43 @@ async function assertMobileActionControlsFit(page) {
   }
 }
 
+async function assertLauncherActionTargetsFit(page) {
+  var launcherViews = ["learn", "profile", "performance"];
+  for (var i = 0; i < launcherViews.length; i++) {
+    await openLauncherView(page, launcherViews[i]);
+    await page.evaluate(function() { window.scrollTo(0, document.documentElement.scrollHeight); });
+    await settle(page, 100);
+    assert.deepStrictEqual(await visibleLauncherActionTargetIssues(page), [], "launcher " + launcherViews[i] + " has undersized action targets");
+  }
+}
+
+async function visibleLauncherActionTargetIssues(page) {
+  return page.evaluate(function() {
+    function isVisible(el) {
+      var s = window.getComputedStyle(el);
+      var r = el.getBoundingClientRect();
+      return s.display !== "none"
+        && s.visibility !== "hidden"
+        && r.width > 0
+        && r.height > 0
+        && r.bottom > 0
+        && r.top < window.innerHeight
+        && r.right > 0
+        && r.left < window.innerWidth;
+    }
+    var controls = Array.prototype.slice.call(document.querySelectorAll("#app button,#app a,#app input,#app select,#app [role=\"button\"]"))
+      .filter(isVisible)
+      .filter(function(el) { return !el.closest(".showroom-bottomnav"); });
+    return controls.reduce(function(issues, el) {
+      var r = el.getBoundingClientRect();
+      var label = (el.innerText || el.value || el.getAttribute("aria-label") || "").trim().replace(/\s+/g, " ").slice(0, 80);
+      if (!label) return issues;
+      if (r.width < 28 || r.height < 24) issues.push("tiny launcher target: " + label);
+      return issues;
+    }, []);
+  });
+}
+
 async function assertNoMobilePageHorizontalOverflow(page) {
   var cases = [
     { instrument: "Piano", tabs: ["practice", "games"] },
@@ -323,6 +360,7 @@ async function main() {
   await assertMobileInstrumentScrollResets(mobilePage);
   await assertMobileActionControlsFit(mobilePage);
   await assertNoMobilePageHorizontalOverflow(mobilePage);
+  await assertLauncherActionTargetsFit(mobilePage);
   var launcherViews = ["home", "library", "learn", "settings", "profile", "instruments", "tools", "practice", "lesson", "performance"];
   for (var j = 0; j < launcherViews.length; j++) {
     await assertLauncherViewScrollsCleanly(mobilePage, launcherViews[j]);
