@@ -1515,6 +1515,7 @@ function act(action, param) {
       S.stemVolume = parseFloat(param); setStemVolume(S.stemVolume); break;
 
     // ── Practice Plan ──
+    case "quickStart":
     case "openPlan":
       if (typeof openPracticePlanScreenRequest === "function") {
         openPracticePlanScreenRequest();

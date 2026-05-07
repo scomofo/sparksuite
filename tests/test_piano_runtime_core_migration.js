@@ -624,6 +624,14 @@ test("openPlan delegates piano dashboard practice entry to the shared helper", f
   assert.strictEqual(S.screen, "practicePlan");
 });
 
+test("quickStart from the shared hero opens the piano practice plan", function() {
+  pianoAct("quickStart");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].fn, "openPracticePlanScreen");
+  assert.strictEqual(S.screen, "practicePlan");
+});
+
 test("openCareerSong delegates to shared performance selection helper and syncs piano aliases", function() {
   global.getCareerItem = function(type, id) {
     if (type !== "songs" || id !== "career_river") return null;
