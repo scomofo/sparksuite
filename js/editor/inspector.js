@@ -50,7 +50,7 @@
     var item = getSelectedEditorItem();
     var kind = getSelectedEditorItemKind();
     var h = '<div class="card mb16">';
-    h += '<div class="mb8"><b>Inspector</b></div>';
+    h += '<div class="card-section-heading mb8">Inspector</div>';
     if(!item || !kind){
       h += '<div class="muted">Select an item to edit.</div>';
       h += '</div>';

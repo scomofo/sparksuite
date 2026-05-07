@@ -294,8 +294,8 @@ function _renderSpotifyPlaylistPanel(inst, songList){
   var unresolvedLabel;
   var syncBusy = state.syncStatus === "syncing";
   var h = '<div class="card mb16" style="border:2px solid #1DB95422">';
-  h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px">';
-  h += '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">Spotify Curriculum Playlist</h3>';
+  h += '<div class="split-row" style="gap:12px;margin-bottom:10px">';
+  h += '<div><h3 class="card-section-heading">Spotify Curriculum Playlist</h3>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">';
   h += state.connected ? 'Connected' : 'Not connected';
   if(linkedPlaylist && linkedPlaylist.playlist_name) h += ' | ' + escHTML(linkedPlaylist.playlist_name);
@@ -312,7 +312,7 @@ function _renderSpotifyPlaylistPanel(inst, songList){
   }
   if(state.lastResult && typeof state.lastResult.addedCount === "number"){
     h += '<div class="card mb12" style="padding:10px;background:#1DB95410;border:1px solid #1DB95433">';
-    h += '<div style="font-size:12px;color:var(--text-primary);font-weight:800;margin-bottom:4px">Last sync summary</div>';
+    h += '<div class="card-micro-heading" style="margin-bottom:4px">Last sync summary</div>';
     h += '<div style="font-size:12px;color:var(--text-muted)">';
     h += 'Resolved ' + escHTML(String(state.lastResult.resolvedCount || 0));
     h += ' | Added ' + escHTML(String(state.lastResult.addedCount || 0));
@@ -325,7 +325,7 @@ function _renderSpotifyPlaylistPanel(inst, songList){
   if(unresolvedTracks.length){
     unresolvedLabel = unresolvedTracks.length === 1 ? '1 song still needs an exact Spotify match.' : (String(unresolvedTracks.length) + ' songs still need exact Spotify matches.');
     h += '<div class="card mb12" style="padding:10px;border:1px solid #FFB84D;background:#FFB84D10">';
-    h += '<div style="font-size:12px;color:var(--text-primary);font-weight:800;margin-bottom:4px">Needs catalog cleanup</div>';
+    h += '<div class="card-micro-heading" style="margin-bottom:4px">Needs catalog cleanup</div>';
     h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">' + escHTML(unresolvedLabel) + '</div>';
     for(i=0;i<unresolvedPreview.length;i++){
       h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">';
@@ -361,8 +361,8 @@ function _renderPerformanceDailyCard(performanceDailyChallenge, performanceDaily
   performanceDailyReason = _firstSongsTextToken(performanceDailyChallenge.reason);
   dailyTechniqueLabel = performanceDailyChallenge.techniqueKey ? _formatPerformanceTechniqueLabel(performanceDailyChallenge.techniqueKey) : "";
   h += '<div class="card mb20" style="border:2px solid '+(performanceDailyComplete?"#4ECDC4":"#FFE66D")+'">';
-  h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
-  h += '<div><h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+(performanceDailyComplete?'&#9989;':'&#127919;')+' Performance Daily</h3>';
+  h += '<div class="split-row" style="gap:12px">';
+  h += '<div><h3 class="card-section-heading">'+(performanceDailyComplete?'&#9989;':'&#127919;')+' Performance Daily</h3>';
   h += '<p style="margin:3px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(performanceDailyLabel)+'</p>';
   if(dailyTechniqueLabel){
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">';
@@ -427,7 +427,7 @@ function _getFilteredSongs(songList, songFilter, songSort, songSortAsc){
 }
 
 function _renderSongsList(filtered, D, safeSongFilter){
-  var h = '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(safeSongFilter?" matching &ldquo;"+escHTML(safeSongFilter)+"&rdquo;":"")+'</div>';
+  var h = '<div class="metric-label" style="margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(safeSongFilter?" matching &ldquo;"+escHTML(safeSongFilter)+"&rdquo;":"")+'</div>';
   h += '<div class="flex-col">';
   for(var i=0;i<filtered.length;i++){
     var s=filtered[i],lk=s.level>S.level;
@@ -435,14 +435,14 @@ function _renderSongsList(filtered, D, safeSongFilter){
     var songArtist = _firstSongsTextToken(s.artist, "Unknown Artist");
     var songLibraryIndex = D.SONGS.indexOf(s);
     h += '<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+songLibraryIndex+")"))+'">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(songTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+_formatSongsBpm(s.bpm, "--")+' BPM &bull; '+s.chords.length+' chords</div>';
+    h += '<div class="split-row" style="gap:12px"><div><h3 class="card-section-heading">'+escHTML(songTitle)+'</h3><p class="metric-label" style="margin:2px 0 0">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div class="metric-value" style="color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div class="metric-label">'+_formatSongsBpm(s.bpm, "--")+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
       var _songStatsId = typeof resolvePerformanceSongId === "function"
         ? resolvePerformanceSongId(s, songTitle)
         : s.title.toLowerCase().replace(/[^a-z0-9]+/g,"_");
       var _ps=getPerformanceStats(_songStatsId+"_perf","chords",S.performDifficulty);
       if(_ps.mastery!=="none"){
-        h += '<div style="font-size:11px;font-weight:700;color:'+getMasteryColor(_ps.mastery)+'">'+getMasteryIcon(_ps.mastery)+' '+_ps.mastery+'</div>';
+      h += '<div class="metric-value" style="color:'+getMasteryColor(_ps.mastery)+'">'+getMasteryIcon(_ps.mastery)+' '+_ps.mastery+'</div>';
       }
     }
     h += '</div></div>';
@@ -452,7 +452,7 @@ function _renderSongsList(filtered, D, safeSongFilter){
     }
     h += '</div>';
     if(s.progression&&s.progression.length>0&&!lk){
-      h += '<div style="margin-top:6px"><button class="btn btn-sm" onclick="act(\'openPerformSong\','+D.SONGS.indexOf(s)+')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:11px;padding:4px 10px">&#127918; Perform</button></div>';
+      h += '<div class="song-controls action-row" style="margin-top:6px"><button class="btn btn-sm" onclick="act(\'openPerformSong\','+D.SONGS.indexOf(s)+')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:11px;padding:4px 10px">&#127918; Perform</button></div>';
     }
     h += '</div>';
   }
@@ -504,7 +504,7 @@ function _renderCommunityBrowseContent(){
 }
 
 function _renderPerformIntro(){
-  return '<div style="font-size:48px;margin-bottom:12px">&#127928;</div><h3 style="font-size:18px;font-weight:900;color:var(--text-primary);margin:0 0 8px">Performance Mode</h3><p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Play along with a scrolling chord highway. MIDI guitar or mic input.</p>';
+  return '<div style="font-size:48px;margin-bottom:12px">&#127928;</div><h3 class="card-section-heading" style="font-size:18px;margin-bottom:8px">Performance Mode</h3><p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Play along with a scrolling chord highway. MIDI guitar or mic input.</p>';
 }
 
 function _renderPerformFooter(){
@@ -515,7 +515,7 @@ function _renderCommunitySongCard(cs){
   var chords=[];
   var communityTitle = _firstSongsTextToken(cs.title, cs.songTitle, cs.id, "Community song");
   var communityArtist = _firstSongsTextToken(cs.artist, "Unknown Artist");
-  var h='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(communityTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(communityArtist)+' | '+escHTML(_formatSongsBpm(cs.bpm, "--"))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
+  var h='<div class="card"><div class="split-row" style="gap:12px"><div><h3 class="card-section-heading">'+escHTML(communityTitle)+'</h3><p class="metric-label" style="margin:2px 0 0">'+escHTML(communityArtist)+' | '+escHTML(_formatSongsBpm(cs.bpm, "--"))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
   try{chords=JSON.parse(cs.chords);}catch(e){console.error("ChordSpark: failed to parse community song chords",e);}
   if(chords.length){
     h+='<div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">';
@@ -534,11 +534,11 @@ function _renderPerformChartCard(chart){
   var chartArtist = _firstSongsTextToken(chart.artist, "Unknown Artist");
   var chartBadgeText = _firstSongsTextToken(chart.badge);
   var chartDescription = _firstSongsTextToken(chart.description);
-  var badge=chartBadgeText?'<span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:'+accent+'">'+escHTML(chartBadgeText)+'</span>':'';
+  var badge=chartBadgeText?'<span class="metric-label" style="text-transform:uppercase;letter-spacing:.08em;color:'+accent+'">'+escHTML(chartBadgeText)+'</span>':'';
   var h='<div class="card" style="cursor:pointer;border:2px solid '+accent+';margin-bottom:12px"'+clickableDiv("act(\'openPerform\',\'"+chart.id+"\')")+'>';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">';
-  h+='<div style="text-align:left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(chartTitle)+'</h4>'+badge+'</div>';
-  h+='<p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(chartArtist)+' &bull; '+escHTML(_formatSongsBpm(chart.bpm, "--"))+' BPM</p>';
+  h+='<div class="split-row" style="gap:12px">';
+  h+='<div style="text-align:left"><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><h4 class="card-section-heading">'+escHTML(chartTitle)+'</h4>'+badge+'</div>';
+  h+='<p class="metric-label" style="margin:2px 0 0">'+escHTML(chartArtist)+' &bull; '+escHTML(_formatSongsBpm(chart.bpm, "--"))+' BPM</p>';
   if(chartDescription)h+='<p style="margin:4px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(chartDescription)+'</p>';
   h+='</div>';
   h+='<div style="font-size:24px">'+icon+'</div></div></div>';
@@ -557,7 +557,7 @@ function _renderCommunitySubmitProgression(progression){
 
 function _renderImportSourceCard(){
   var h='<div class="card mb16">';
-  h+='<h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128196; Import Chord Sheet</h3>';
+  h+='<h3 class="card-section-heading" style="margin-bottom:12px">&#128196; Import Chord Sheet</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Paste a chord sheet using [Am] [G] bracket notation or chord names on their own lines.</p>';
   h+='<textarea class="import-textarea" id="import-textarea" rows="8" placeholder="[Am]   [G]   [C]   [F]\nVerse lyrics here...\n[Am]   [G]   [C]   [F]\nMore lyrics..." oninput="act(\'importText\',this.value)">'+escHTML(_normalizeSongsInputValue(S.importText))+'</textarea>';
   h+='<button class="btn" onclick="act(\'parseImport\')" style="width:100%;padding:10px;font-size:14px;margin-top:10px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">&#128270; Parse Chords</button>';
@@ -570,11 +570,11 @@ function _renderImportedSongPreviewCard(importedSong, D){
   var importedFormArtist = _firstSongsTextToken(importedSong.artist);
   var importedFormBpm = _normalizeSongsTempoInput(importedSong.bpm, 90);
   var h='<div class="card mb16">';
-  h+='<h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#9989; Parsed Successfully</h4>';
-  h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Title:</label><input class="set-input" type="text" value="'+escHTML(importedFormTitle)+'" oninput="act(\'importTitle\',this.value)"/></div>';
-  h+='<div style="margin-bottom:10px"><label style="font-size:12px;color:var(--text-muted);font-weight:600">Artist:</label><input class="set-input" type="text" value="'+escHTML(importedFormArtist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
-  h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label style="font-size:12px;color:var(--text-muted);font-weight:600">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+importedFormBpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Chords found ('+importedSong.chords.length+'):</div>';
+  h+='<h4 class="card-micro-heading" style="margin-bottom:10px">&#9989; Parsed Successfully</h4>';
+  h+='<div style="margin-bottom:10px"><label class="metric-label">Title:</label><input class="set-input" type="text" value="'+escHTML(importedFormTitle)+'" oninput="act(\'importTitle\',this.value)"/></div>';
+  h+='<div style="margin-bottom:10px"><label class="metric-label">Artist:</label><input class="set-input" type="text" value="'+escHTML(importedFormArtist)+'" oninput="act(\'importArtist\',this.value)"/></div>';
+  h+='<div style="margin-bottom:10px;display:flex;gap:8px;align-items:center"><label class="metric-label">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+importedFormBpm+'" oninput="act(\'importBpm\',this.value)" min="40" max="200"/></div>';
+  h+='<div class="card-micro-heading" style="margin-bottom:6px">Chords found ('+importedSong.chords.length+'):</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">';
   for(var i=0;i<importedSong.chords.length;i++){
     var cn=importedSong.chords[i];
@@ -583,7 +583,7 @@ function _renderImportedSongPreviewCard(importedSong, D){
     h+='<span style="padding:4px 10px;border-radius:10px;font-size:12px;font-weight:700;background:'+(known?"#4ECDC422":"#FF6B6B22")+';color:'+(known?"#4ECDC4":"#FF6B6B")+';border:1px solid '+(known?"#4ECDC4":"#FF6B6B")+'">'+escHTML(cn)+'</span>';
   }
   h+='</div>';
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600">Progression ('+importedSong.progression.length+' chords):</div>';
+  h+='<div class="card-micro-heading" style="margin-bottom:6px">Progression ('+importedSong.progression.length+' chords):</div>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;background:var(--input-bg);border-radius:10px;padding:8px">';
   for(var k=0;k<Math.min(importedSong.progression.length,32);k++){
     h+='<span style="background:var(--card-bg);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:var(--text-primary)">'+escHTML(importedSong.progression[k])+'</span>';
@@ -596,16 +596,16 @@ function _renderImportedSongPreviewCard(importedSong, D){
 }
 
 function _renderSavedImportedSongs(importedSongs){
-  var h='<div class="card"><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)">&#127925; My Imported Songs</h4>';
+  var h='<div class="card"><h4 class="card-section-heading" style="margin-bottom:10px">&#127925; My Imported Songs</h4>';
   h+='<div class="flex-col">';
   for(var i=0;i<importedSongs.length;i++){
     var sg=importedSongs[i];
     var importedTitle = _firstSongsTextToken(sg.title, sg.songTitle, sg.id, "Imported song");
     var importedArtist = _firstSongsTextToken(sg.artist, "Unknown Artist");
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--input-bg);border-radius:12px">';
-    h+='<div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+escHTML(importedTitle)+'</div>';
-    h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(importedArtist)+' | '+sg.chords.length+' chords | '+_formatSongsBpm(sg.bpm, "--")+' BPM</div></div>';
-    h+='<div style="display:flex;gap:6px">';
+    h+='<div class="split-row" style="gap:12px;padding:10px;background:var(--input-bg);border-radius:12px">';
+    h+='<div><div class="metric-value">'+escHTML(importedTitle)+'</div>';
+    h+='<div class="metric-label">'+escHTML(importedArtist)+' | '+sg.chords.length+' chords | '+_formatSongsBpm(sg.bpm, "--")+' BPM</div></div>';
+    h+='<div class="action-row" style="gap:6px">';
     h+='<button onclick="act(\'playImport\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700">&#9654; Play</button>';
     h+='<button onclick="act(\'deleteImport\',\''+i+'\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid var(--border)">&#128465;</button>';
     h+='</div></div>';
@@ -617,7 +617,7 @@ function _renderSavedImportedSongs(importedSongs){
 function _renderStemSectionHeader(){
   var h='<div class="card mb16" style="text-align:center">';
   h+='<div style="font-size:32px;margin-bottom:8px">&#127911;</div>';
-  h+='<h3 style="margin:0 0 6px;font-size:18px;font-weight:900;color:var(--text-primary)">Stem Separator</h3>';
+  h+='<h3 class="card-section-heading" style="font-size:18px;margin-bottom:6px">Stem Separator</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin:0 0 16px">Import a song to isolate vocals, drums, bass, guitar & piano</p>';
   if(!window.electron){
     h+='<p style="color:#FF6B6B;font-size:13px">Stem separation requires the desktop app (Electron).</p>';
@@ -635,11 +635,11 @@ function _renderStemProgressCard(){
   var h='<div class="card mb16">';
   h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
   h+='<div style="width:24px;height:24px;border:3px solid var(--border);border-top-color:#4ECDC4;border-radius:50%;animation:spin 1s linear infinite"></div>';
-  h+='<div><div style="font-size:14px;font-weight:800;color:var(--text-primary)">Separating stems...</div>';
+  h+='<div><div class="card-micro-heading">Separating stems...</div>';
   h+='<div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div></div>';
   h+='<div style="background:var(--input-bg);border-radius:8px;height:8px;overflow:hidden;margin-bottom:8px">';
   h+='<div style="background:linear-gradient(90deg,#4ECDC4,#45B7D1);height:100%;border-radius:8px;width:'+S.stemProgress+'%;transition:width .3s ease"></div></div>';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center">';
+  h+='<div class="split-row" style="gap:12px">';
   h+='<span style="font-size:12px;color:var(--text-muted)">This may take 5-10 minutes</span>';
   h+='<button onclick="act(\'stemCancel\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid var(--border);cursor:pointer">Cancel</button>';
   h+='</div></div>';
@@ -650,7 +650,7 @@ function _renderStemReadyCard(){
   var h='<div class="card mb16" style="background:linear-gradient(135deg,#4ECDC422,#45B7D122);border:1px solid #4ECDC4">';
   h+='<div style="display:flex;align-items:center;gap:12px">';
   h+='<div style="font-size:28px">&#9989;</div>';
-  h+='<div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--text-primary)">Stems Ready!</div>';
+  h+='<div style="flex:1"><div class="card-micro-heading">Stems Ready!</div>';
   h+='<div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div>';
   h+='<button onclick="act(\'stemOpen\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;border:none">&#127911; Open Player</button>';
   h+='</div></div>';
@@ -662,7 +662,7 @@ function _renderStemInfoCard(){
 }
 
 function _renderStemPlayerHeader(){
-  return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><button onclick="act(\'stemBack\')" style="background:var(--input-bg);border:none;width:36px;height:36px;border-radius:12px;font-size:18px;cursor:pointer;color:var(--text-primary)">&#8592;</button><div style="flex:1"><div style="font-size:16px;font-weight:900;color:var(--text-primary)">&#127911; Stem Player</div><div style="font-size:11px;color:var(--text-muted)">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div></div>';
+  return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><button onclick="act(\'stemBack\')" style="background:var(--input-bg);border:none;width:36px;height:36px;border-radius:12px;font-size:18px;cursor:pointer;color:var(--text-primary)">&#8592;</button><div style="flex:1"><div class="card-section-heading">&#127911; Stem Player</div><div class="metric-label">'+(S.stemFile?escHTML(S.stemFile.fileName):"")+'</div></div></div>';
 }
 
 function _renderStemToggleRows(){
@@ -676,7 +676,7 @@ function _renderStemToggleRows(){
     var on=S.stemToggles[name];
     var color=STEM_COLORS[name];
     var icon=STEM_ICONS[name];
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;'+(i>0?"border-top:1px solid var(--border);":"")+'">';
+    h+='<div class="split-row" style="gap:12px;padding:10px 0;'+(i>0?"border-top:1px solid var(--border);":"")+'">';
     h+='<div style="display:flex;align-items:center;gap:10px">';
     h+='<span style="font-size:20px">'+icon+'</span>';
     h+='<span style="font-size:14px;font-weight:700;color:var(--text-primary)">'+name.charAt(0).toUpperCase()+name.slice(1)+'</span>';
@@ -714,7 +714,7 @@ function strumTab(){
   for(var i=0;i<STRUM_PATTERNS.length;i++){
     var sp=STRUM_PATTERNS[i],lk=sp.level>S.level;
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openStrum\',\'"+sp.name+"\')"))+'">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+sp.name+'</h3><p style="margin:4px 0 0;font-size:12px;color:var(--text-dim)">'+sp.desc+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[sp.level] || '#999')+'">Lvl '+sp.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+_formatSongsBpm(sp.bpm, "--")+' BPM</div></div></div>';
+    h+='<div class="split-row" style="gap:12px"><div><h3 class="card-section-heading">'+sp.name+'</h3><p class="metric-label" style="margin:4px 0 0">'+sp.desc+'</p></div><div style="text-align:right"><div class="metric-value" style="color:'+(D.LC && D.LC[sp.level] || '#999')+'">Lvl '+sp.level+'</div><div class="metric-label">'+_formatSongsBpm(sp.bpm, "--")+' BPM</div></div></div>';
     h+='<div style="display:flex;gap:4px;margin-top:10px">';
     for(var j=0;j<sp.pattern.length;j++){
       var p=sp.pattern[j],isD=p==="D",isU=p==="U";
@@ -782,7 +782,7 @@ function communitySubmitForm(){
   var submitTitle = _firstSongsTextToken(ss.title);
   var submitArtist = _firstSongsTextToken(ss.artist);
   var submitterName = _firstSongsTextToken(ss.submittedBy);
-  var h='<div class="card"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">Submit a Song</h3>';
+  var h='<div class="card"><h3 class="card-section-heading" style="margin-bottom:12px">Submit a Song</h3>';
   h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(submitTitle)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
   h+='<input class="set-input mb12" type="text" placeholder="Artist" value="'+escHTML(submitArtist)+'" oninput="act(\'submitField\',\'artist:\'+this.value)" aria-label="Artist name"/>';
   h+='<input class="set-input mb12" type="text" placeholder="Your name (optional)" value="'+escHTML(submitterName)+'" oninput="act(\'submitField\',\'submittedBy:\'+this.value)" aria-label="Your name"/>';

@@ -57,7 +57,7 @@
     var title = summary && summary.nextTitle ? summary.nextTitle : "No lesson";
     var skill = summary && summary.nextSkill ? summary.nextSkill : "";
     return '<section class="card">'
-      + '<b>' + info.name + '</b>'
+      + '<div class="card-section-heading">' + info.name + '</div>'
       + '<div style="margin-top:8px">' + title + '</div>'
       + '<div style="font-size:12px;color:var(--text-muted)">Skill: ' + skill + '</div>'
       + '<button onclick="SparkLessonDashboardUI.start(\'' + info.moduleName + '\',\'' + info.appId + '\')">Start Exact Lesson</button>'

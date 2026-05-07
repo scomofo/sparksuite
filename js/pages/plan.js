@@ -174,12 +174,12 @@ function planPage(){
   var h = '';
 
   h += '<div class="card mb16">';
-  h += '<h2>' + escHTML(activeGuided && !hasPlanItems ? 'Guided Session Flow' : 'Today\'s Practice Plan') + '</h2>';
+  h += '<h2 class="card-section-heading">' + escHTML(activeGuided && !hasPlanItems ? 'Guided Session Flow' : 'Today\'s Practice Plan') + '</h2>';
   h += '<div class="muted">'+escHTML(headerFocusLabel)+'</div>';
   if(activeGuided){
     h += '<div style="margin-top:8px;padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);color:var(--text-primary)">';
-    h += '<div style="font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2f8f89">Guided Session Live</div>';
-    h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
+    h += '<div class="metric-label" style="color:#2f8f89">Guided Session Live</div>';
+    h += '<div class="card-micro-heading" style="margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
       h += '<div style="font-size:12px;color:var(--text-muted);margin-top:3px">' + escHTML(activeGuided.statusLabel) + '</div>';
       h += '</div>';
   } else if(activeShell){
@@ -230,7 +230,7 @@ function planPage(){
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPlanDisplayType(item))+'">';
     h += '<div class="plan-item-row">';
     h += '<div class="plan-item-copy">';
-    h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPlanItemLabel(item))+'</div>';
+    h += '<div class="card-micro-heading"'+done+'>'+escHTML(getPlanItemLabel(item))+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(durationMinutes != null ? ' \u2022 '+durationMinutes+'m' : '')+'</div>';
     h += '</div>';
     h += actionHtml;
@@ -239,12 +239,12 @@ function planPage(){
   }
 
   if(!planCompleted){
-    h += '<div class="card mb16"><div class="plan-actions">';
+    h += '<div class="card mb16"><div class="plan-actions action-row">';
     h += '<button class="btn btn-primary" onclick="act(\'completePlan\')">Mark Plan Complete</button>';
     h += '</div></div>';
   }
 
-  h += '<div class="card mb16"><div class="plan-actions">';
+  h += '<div class="card mb16"><div class="plan-actions action-row">';
   h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button>';
   h += '<button class="btn" onclick="act(\'back\')">Back</button>';
   h += '</div></div>';

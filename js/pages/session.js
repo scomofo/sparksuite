@@ -381,13 +381,13 @@ function getSessionPageFallbackShell(){
 }
 
 function renderSessionActionButtons(runtime){
-  return '<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div>';
+  return '<div class="action-row" style="justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div>';
 }
 
 function renderStrumTonePicker(selectedTone){
   var tones=["classic","nylon","steel","electric","guitar"];
   var toneLabels={"classic":"&#127928; Classic","nylon":"&#127931; Nylon","steel":"&#129529; Steel","electric":"&#9889; Electric","guitar":"&#127930; Guitar"};
-  var h='<div class="card mb16"><h4 style="margin:0 0 8px;font-size:13px;font-weight:800;color:var(--text-primary)">&#127928; Strum Tone</h4><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
+  var h='<div class="card mb16"><h4 class="card-micro-heading" style="margin-bottom:8px">&#127928; Strum Tone</h4><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
   for(var i=0;i<tones.length;i++){
     var t=tones[i],sel=selectedTone===t;
     h+='<button onclick="act(\'setTone\',\''+t+'\')" style="padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;background:'+(sel?"#4ECDC4":"var(--input-bg)")+';color:'+(sel?"#fff":"var(--text-muted)")+';border:2px solid '+(sel?"#4ECDC4":"var(--border)")+';transition:all .2s">'+toneLabels[t]+'</button>';
@@ -520,7 +520,7 @@ function mapSessionCapoChords(chords, capoFret){
 
 function renderCapoModeControl(capoFret){
   var h='<div class="card mb16" style="padding:12px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">';
-  h+='<div style="text-align:left"><div style="font-size:12px;font-weight:900;color:var(--text-primary)">Capo '+capoFret+'</div><div style="font-size:11px;color:var(--text-muted)">Shows playable shapes while keeping song chords sounding original.</div></div>';
+  h+='<div style="text-align:left"><div class="card-micro-heading" style="font-size:12px">Capo '+capoFret+'</div><div style="font-size:11px;color:var(--text-muted)">Shows playable shapes while keeping song chords sounding original.</div></div>';
   h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">';
   for(var i=0;i<=5;i++){
     h+='<button onclick="act(\'setCapoMode\',\''+i+'\')" style="min-width:34px;padding:6px 8px;border-radius:9px;font-size:12px;font-weight:800;background:'+(capoFret===i?"#4ECDC4":"var(--input-bg)")+';color:'+(capoFret===i?"#fff":"var(--text-muted)")+';border:1px solid '+(capoFret===i?"#4ECDC4":"var(--border)")+'">'+i+'</button>';
@@ -545,7 +545,7 @@ function renderDailyChallengeTimer(timer, maxTimer){
 }
 
 function renderDailyChallengeComplete(dc){
-  return '<div style="font-size:56px;animation:bn .6s ease">&#127941;</div><h3 style="color:#4ECDC4;font-size:20px;font-weight:800;margin:12px 0">Challenge Complete!</h3><div class="card" style="margin:16px 0"><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+dc.xp+' XP</div></div><button class="btn" onclick="act(\'dailyDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button>';
+  return '<div style="font-size:56px;animation:bn .6s ease">&#127941;</div><h3 class="card-section-heading" style="color:#4ECDC4;font-size:20px;margin:12px 0">Challenge Complete!</h3><div class="card" style="margin:16px 0"><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+dc.xp+' XP</div></div><button class="btn" onclick="act(\'dailyDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button>';
 }
 
 // ===== SESSION PAGES =====
@@ -600,7 +600,7 @@ function completePage(){
   var p=getSessionChordProgressValue(n);
   var xpAmount = normalizeSessionNumber(S.xpToast && S.xpToast.amount, 10);
   var streak = normalizeSessionNumber(S.streak, 0);
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+xpAmount+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="flex-col"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+xpAmount+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="result-actions"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
 }
 
 function drillPage(){

@@ -192,4 +192,12 @@ test("rhythm tab ignores malformed BPM values", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
+test("piano games use classed visible labels instead of inline strong headings", function() {
+  var source = loadJS("js/instruments/piano/pages/games.js");
+  assert.ok(source.indexOf('class="card-section-heading"') >= 0);
+  assert.ok(source.indexOf('class="card-micro-heading"') >= 0);
+  assert.strictEqual(source.indexOf("'<strong>' + escHTML(exerciseName)"), -1);
+  assert.strictEqual(source.indexOf("<strong>Injury Prevention:</strong>"), -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

@@ -122,25 +122,25 @@ function renderTunerStatus(runtime){
     else if(inT)h+="&#9989; In Tune!";
     else if(runtime.cents>0)h+="&#11015; Too sharp (+"+runtime.cents+"&#162;) &#8595;";
     else h+="&#11014; Too flat ("+runtime.cents+"&#162;) &#8593;";
-    h+='</div><button class="btn" onclick="act(\'stopTuner\')" style="background:#FF6B6B;color:#fff">Stop Tuner</button>';
+    h+='</div><div class="action-row" style="justify-content:center"><button class="btn" onclick="act(\'stopTuner\')" style="background:#FF6B6B;color:#fff">Stop Tuner</button></div>';
     return h;
   }
   h+='<div style="font-size:64px;margin-bottom:12px;opacity:.3">&#127908;</div>';
   if(runtime.error)h+='<p style="color:#FF6B6B;font-size:13px;margin-bottom:12px">'+runtime.error+'</p>';
-  h+='<button class="btn" onclick="act(\'startTuner\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">&#127908; Start Tuner</button>';
+  h+='<div class="action-row" style="justify-content:center"><button class="btn" onclick="act(\'startTuner\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">&#127908; Start Tuner</button></div>';
   return h;
 }
 
 function renderAudioInputCard(audioRuntime){
-  var h='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127911; Audio Input</h3>';
+  var h='<div class="card mb16" style="text-align:left"><h3 class="card-section-heading" style="margin-bottom:12px">&#127911; Audio Input</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Select your audio input device for the Tuner and Chord Check. Use this to pick your USB instrument cable or audio interface instead of the default microphone.</p>';
-  h+='<button onclick="act(\'refreshAudioInputs\')" class="btn" style="margin-bottom:12px;padding:8px 16px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;border:none;border-radius:10px">&#128260; Refresh Devices</button>';
+  h+='<div class="action-row" style="margin-bottom:12px"><button onclick="act(\'refreshAudioInputs\')" class="btn" style="padding:8px 16px;font-size:13px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;border:none;border-radius:10px">&#128260; Refresh Devices</button></div>';
   if(audioRuntime.devices.length>0){
     h+='<div style="display:flex;flex-direction:column;gap:8px">';
     for(var ai=0;ai<audioRuntime.devices.length;ai++){
       var ad=audioRuntime.devices[ai],isAI=audioRuntime.inputId===ad.id,isTesting=audioRuntime.testingId===ad.id;
       h+='<div style="border-radius:10px;border:2px solid '+(isAI?"#4ECDC4":"var(--border)")+';background:'+(isAI?"#4ECDC422":"var(--input-bg)")+';overflow:hidden">';
-      h+='<div style="display:flex;align-items:center;gap:8px;padding:10px 14px">';
+      h+='<div class="action-row" style="padding:10px 14px">';
       h+='<button onclick="act(\'selectAudioInput\',\''+ad.id+'\')" style="flex:1;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:'+(isAI?"#4ECDC4":"var(--text-primary)")+';background:none;border:none;text-align:left;padding:0;cursor:pointer">'+(isAI?"&#9654; ":"&#9675; ")+escHTML(ad.name)+'</button>';
       if(isTesting){
         h+='<button onclick="act(\'stopAudioTest\')" style="padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;background:#FF6B6B;color:#fff;border:none;cursor:pointer">Stop</button>';
@@ -158,7 +158,7 @@ function renderAudioInputCard(audioRuntime){
     }
     h+='</div>';
     if(audioRuntime.inputId){
-      h+='<button onclick="act(\'selectAudioInput\',\'\')" style="margin-top:8px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:var(--input-bg);color:var(--text-muted);border:1px solid var(--border)">Reset to Default</button>';
+      h+='<div class="action-row" style="margin-top:8px"><button onclick="act(\'selectAudioInput\',\'\')" style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:var(--input-bg);color:var(--text-muted);border:1px solid var(--border)">Reset to Default</button></div>';
     }
   } else {
     h+='<div style="font-size:12px;color:var(--text-muted);padding:10px;background:var(--input-bg);border-radius:10px;text-align:center">Click Refresh to scan for audio input devices.</div>';
@@ -185,16 +185,16 @@ function getToolsHistorySummary(hist){
 
 function renderStatsSummaryCards(summary){
   var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">';
-  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FF6B6B">'+normalizeToolsCount(S.xp,0)+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Total XP</div></div>';
-  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+summary.totalSessions+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Activities</div></div>';
-  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#45B7D1">'+summary.dayCount+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Practice Days</div></div>';
-  h+='<div class="stat-card"><div style="font-size:28px;font-weight:900;color:#FFE66D">'+summary.avgXP+'</div><div style="font-size:11px;color:var(--text-muted);font-weight:600">Avg XP/Day</div></div>';
+  h+='<div class="stat-card"><div class="metric-value" style="font-size:28px;font-weight:900;color:#FF6B6B">'+normalizeToolsCount(S.xp,0)+'</div><div class="metric-label">Total XP</div></div>';
+  h+='<div class="stat-card"><div class="metric-value" style="font-size:28px;font-weight:900;color:#4ECDC4">'+summary.totalSessions+'</div><div class="metric-label">Activities</div></div>';
+  h+='<div class="stat-card"><div class="metric-value" style="font-size:28px;font-weight:900;color:#45B7D1">'+summary.dayCount+'</div><div class="metric-label">Practice Days</div></div>';
+  h+='<div class="stat-card"><div class="metric-value" style="font-size:28px;font-weight:900;color:#FFE66D">'+summary.avgXP+'</div><div class="metric-label">Avg XP/Day</div></div>';
   h+='</div>';
   return h;
 }
 
 function renderStatsCalendar(practiceDays){
-  var h='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128197; Last 30 Days</h3>';
+  var h='<div class="card mb16"><h3 class="card-section-heading" style="margin-bottom:12px">&#128197; Last 30 Days</h3>';
   h+='<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">';
   var today=new Date();
   for(var d=29;d>=0;d--){
@@ -209,7 +209,7 @@ function renderStatsCalendar(practiceDays){
 }
 
 function renderStatsWeekXpChart(hist){
-  var h='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#9889; XP This Week</h3>';
+  var h='<div class="card mb16"><h3 class="card-section-heading" style="margin-bottom:12px">&#9889; XP This Week</h3>';
   var today=new Date();
   var dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   var weekXP=[];var maxXP=1;
@@ -248,11 +248,11 @@ function getToolsMasteryTierSummary(allChords){
 function renderStatsMasteryTiersCard(allChords){
   var tiers = getToolsMasteryTierSummary(allChords);
   if(tiers.gold+tiers.silver+tiers.bronze===0) return '';
-  var h='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127942; Mastery Tiers</h3>';
+  var h='<div class="card mb16"><h3 class="card-section-heading" style="margin-bottom:12px">&#127942; Mastery Tiers</h3>';
   h+='<div style="display:flex;justify-content:space-around;text-align:center">';
-  h+='<div><div style="font-size:24px">&#129351;</div><div style="font-size:20px;font-weight:900;color:#FFD700">'+tiers.gold+'</div><div style="font-size:10px;color:var(--text-muted)">Gold</div></div>';
-  h+='<div><div style="font-size:24px">&#129352;</div><div style="font-size:20px;font-weight:900;color:#C0C0C0">'+tiers.silver+'</div><div style="font-size:10px;color:var(--text-muted)">Silver</div></div>';
-  h+='<div><div style="font-size:24px">&#129353;</div><div style="font-size:20px;font-weight:900;color:#CD7F32">'+tiers.bronze+'</div><div style="font-size:10px;color:var(--text-muted)">Bronze</div></div>';
+  h+='<div><div style="font-size:24px">&#129351;</div><div class="metric-value" style="color:#FFD700">'+tiers.gold+'</div><div class="metric-label" style="font-size:10px">Gold</div></div>';
+  h+='<div><div style="font-size:24px">&#129352;</div><div class="metric-value" style="color:#C0C0C0">'+tiers.silver+'</div><div class="metric-label" style="font-size:10px">Silver</div></div>';
+  h+='<div><div style="font-size:24px">&#129353;</div><div class="metric-value" style="color:#CD7F32">'+tiers.bronze+'</div><div class="metric-label" style="font-size:10px">Bronze</div></div>';
   h+='</div></div>';
   return h;
 }
@@ -280,7 +280,7 @@ function renderStatsTransitionsCard(){
   var transitions = getToolsTransitionRows();
   var h = '';
   if(transitions.length===0) return h;
-  h+='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128260; Chord Transitions</h3>';
+  h+='<div class="card mb16"><h3 class="card-section-heading" style="margin-bottom:12px">&#128260; Chord Transitions</h3>';
   for(var i=0;i<Math.min(transitions.length,5);i++){
     var t=transitions[i],parts=t.key.split("->");
     var clr=t.avg<2?"#4ECDC4":t.avg<3?"#FFE66D":"#FF6B6B";
@@ -307,7 +307,7 @@ function getToolsMostPracticedChords(hist){
 
 function renderStatsMostPracticedCard(hist){
   var sorted = getToolsMostPracticedChords(hist);
-  var h='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127928; Most Practiced</h3>';
+  var h='<div class="card mb16"><h3 class="card-section-heading" style="margin-bottom:12px">&#127928; Most Practiced</h3>';
   if(sorted.length===0){
     h+='<p style="font-size:13px;color:var(--text-muted)">No practice data yet. Start a session!</p>';
   } else {
@@ -333,14 +333,14 @@ function renderStatsQuizAccuracyCard(hist){
     }
   }
   var acc=qTotal>0?Math.round((qCorrect/qTotal)*100):0;
-  h+='<div class="card mb16"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:var(--text-primary)">&#129504; Quiz Accuracy</h3>';
+  h+='<div class="card mb16"><h3 class="card-section-heading" style="margin-bottom:12px">&#129504; Quiz Accuracy</h3>';
   h+='<div class="flex-center">'+ringHTML(acc,80,6,"#4ECDC4",'<div style="font-size:20px;font-weight:900;color:var(--text-primary)">'+acc+'%</div>',"Quiz accuracy")+'</div>';
   h+='<div style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:8px">'+S.quizCorrect+' correct answers</div></div>';
   return h;
 }
 
 function renderStatsLearningPathButton(){
-  return '<div style="text-align:center;margin-bottom:12px"><button class="btn" onclick="act(\'openLearningPath\')" style="background:var(--accent);color:#fff">&#127795; Learning Path</button></div>';
+  return '<div class="action-row" style="justify-content:center;margin-bottom:12px"><button class="btn" onclick="act(\'openLearningPath\')" style="background:var(--accent);color:#fff">&#127795; Learning Path</button></div>';
 }
 
 function tunerTab(){
@@ -350,7 +350,7 @@ function tunerTab(){
   var tunerTitle = instrumentName ? instrumentName + " Tuner" : "Tuner";
   var tuningLabel = getToolsTuningLabel(D.STRINGS);
   var runtime = getLegacyTunerRuntime();
-  var h='<div class="card"><div class="text-center"><h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px">&#127925; ' + escHTML(tunerTitle) + '</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">' + escHTML(tuningLabel) + '</p>';
+  var h='<div class="card"><div class="text-center"><h3 class="card-section-heading" style="font-size:20px;margin-bottom:8px">&#127925; ' + escHTML(tunerTitle) + '</h3><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">' + escHTML(tuningLabel) + '</p>';
   h+=renderTunerStrings(D.STRINGS, runtime);
   h+=renderTunerStatus(runtime);
   h+='</div></div>';
@@ -362,7 +362,7 @@ function tunerTab(){
 function statsTab(){
   var inst = getToolsPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
-  var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats</h2></div>';
+  var h='<div class="text-center mb16"><h2 class="card-section-heading" style="font-size:22px">&#128202; Practice Stats</h2></div>';
   var hist=Array.isArray(S.history) ? S.history : [];
   var summary=getToolsHistorySummary(hist);
   h+=renderStatsLearningPathButton();
@@ -381,8 +381,8 @@ function statsTab(){
 function renderCrossAppInstrumentStatCard(icon, name, xp, level){
   var h='<div style="flex:1;background:var(--input-bg);border-radius:12px;padding:12px;text-align:center">';
   h+='<div style="font-size:20px;margin-bottom:4px">' + icon + '</div>';
-  h+='<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">' + escHTML(name) + '</div>';
-  h+='<div style="font-size:22px;font-weight:900;color:#FF6B6B">'+xp+'</div><div style="font-size:10px;color:var(--text-muted)">XP</div>';
+  h+='<div class="metric-label" style="font-size:11px;margin-bottom:6px">' + escHTML(name) + '</div>';
+  h+='<div class="metric-value" style="font-size:22px;font-weight:900;color:#FF6B6B">'+xp+'</div><div class="metric-label" style="font-size:10px">XP</div>';
   h+='<div style="font-size:16px;font-weight:800;color:#4ECDC4;margin-top:4px">Lvl '+level+'</div>';
   h+='</div>';
   return h;
@@ -390,9 +390,9 @@ function renderCrossAppInstrumentStatCard(icon, name, xp, level){
 
 function renderCrossAppCombinedStats(totalXP, totalSessions, combinedStreak){
   var h='<div style="display:flex;justify-content:space-around;text-align:center">';
-  h+='<div><div style="font-size:20px;font-weight:900;color:#FFE66D">'+totalXP+'</div><div style="font-size:10px;color:var(--text-muted)">Combined XP</div></div>';
-  h+='<div><div style="font-size:20px;font-weight:900;color:#4ECDC4">'+totalSessions+'</div><div style="font-size:10px;color:var(--text-muted)">Total Sessions</div></div>';
-  h+='<div><div style="font-size:20px;font-weight:900;color:#FF6B6B">&#128293;'+combinedStreak+'</div><div style="font-size:10px;color:var(--text-muted)">Best Streak</div></div>';
+  h+='<div><div class="metric-value" style="color:#FFE66D">'+totalXP+'</div><div class="metric-label" style="font-size:10px">Combined XP</div></div>';
+  h+='<div><div class="metric-value" style="color:#4ECDC4">'+totalSessions+'</div><div class="metric-label" style="font-size:10px">Total Sessions</div></div>';
+  h+='<div><div class="metric-value" style="color:#FF6B6B">&#128293;'+combinedStreak+'</div><div class="metric-label" style="font-size:10px">Best Streak</div></div>';
   h+='</div>';
   return h;
 }
@@ -410,7 +410,7 @@ function crossAppProgressCard(){
     var inst = getToolsPageInstrument();
     var activeInstrumentName = getToolsInstrumentName(inst) || "Current";
     var activeInstrumentIcon = getToolsInstrumentIcon(inst);
-    h+='<div class="card mb16" style="border:1px solid #45B7D1"><h3 style="margin:0 0 12px;font-size:15px;font-weight:800;color:#45B7D1">&#127929; My Music Journey</h3>';
+    h+='<div class="card mb16" style="border:1px solid #45B7D1"><h3 class="card-section-heading" style="margin-bottom:12px;color:#45B7D1">&#127929; My Music Journey</h3>';
     h+='<div style="display:flex;gap:12px;margin-bottom:12px">';
     h+=renderCrossAppInstrumentStatCard(activeInstrumentIcon, activeInstrumentName, normalizeToolsCount(S.xp,0), normalizeToolsCount(S.level,1));
     h+=renderCrossAppInstrumentStatCard('&#127929;', 'Piano', pianoXp, pianoLevel);
@@ -439,12 +439,12 @@ function renderGuideLegendCard(){
     ['1', '#FF6B6B', '#fff', '14px', 'Colored Dots = Finger Placement', 'Place your finger between the frets where the dot appears. The number tells you which finger to use.'],
     ['X', 'var(--input-bg)', '#FF6B6B', '18px', 'X = Don\'t Play', 'This string should be muted or not strummed.']
   ];
-  var h='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127912; Chart Legend</h3>';
+  var h='<div class="card mb16" style="text-align:left"><h3 class="card-section-heading" style="margin-bottom:12px">&#127912; Chart Legend</h3>';
   h+='<div style="display:flex;flex-direction:column;gap:12px">';
   for(var i=0;i<items.length;i++){
-    h+='<div style="display:flex;align-items:flex-start;gap:12px"><div style="min-width:36px;height:36px;border-radius:10px;background:'+items[i][1]+';display:flex;align-items:center;justify-content:center;font-size:'+items[i][3]+';font-weight:800;color:'+items[i][2]+'">'+items[i][0]+'</div><div><div style="font-weight:700;color:var(--text-primary);font-size:14px">'+items[i][4]+'</div><div style="font-size:12px;color:var(--text-dim);line-height:1.5">'+items[i][5]+'</div></div></div>';
+    h+='<div style="display:flex;align-items:flex-start;gap:12px"><div style="min-width:36px;height:36px;border-radius:10px;background:'+items[i][1]+';display:flex;align-items:center;justify-content:center;font-size:'+items[i][3]+';font-weight:800;color:'+items[i][2]+'">'+items[i][0]+'</div><div><div class="card-micro-heading">'+items[i][4]+'</div><div style="font-size:12px;color:var(--text-dim);line-height:1.5">'+items[i][5]+'</div></div></div>';
   }
-  h+='<div style="display:flex;align-items:flex-start;gap:12px"><div style="min-width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24"><circle cx="12" cy="12" r="8" fill="none" stroke="#4ECDC4" stroke-width="2.5"/></svg></div><div><div style="font-weight:700;color:var(--text-primary);font-size:14px">O = Play Open</div><div style="font-size:12px;color:var(--text-dim);line-height:1.5">Strum this string without pressing any fret.</div></div></div>';
+  h+='<div style="display:flex;align-items:flex-start;gap:12px"><div style="min-width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="24" height="24"><circle cx="12" cy="12" r="8" fill="none" stroke="#4ECDC4" stroke-width="2.5"/></svg></div><div><div class="card-micro-heading">O = Play Open</div><div style="font-size:12px;color:var(--text-dim);line-height:1.5">Strum this string without pressing any fret.</div></div></div>';
   h+='</div></div>';
   return h;
 }
@@ -456,10 +456,10 @@ function renderGuideFingerNumbersCard(){
     ['3', '#45B7D1', '#fff', 'Ring'],
     ['4', '#FFE66D', 'var(--text-primary)', 'Pinky']
   ];
-  var h='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#9995; Finger Numbers</h3>';
+  var h='<div class="card mb16" style="text-align:left"><h3 class="card-section-heading" style="margin-bottom:12px">&#9995; Finger Numbers</h3>';
   h+='<div style="display:flex;justify-content:space-around;text-align:center">';
   for(var i=0;i<fingers.length;i++){
-    h+='<div><div style="width:40px;height:40px;border-radius:50%;background:'+fingers[i][1]+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:'+fingers[i][2]+';margin:0 auto 4px">'+fingers[i][0]+'</div><div style="font-size:11px;color:var(--text-label);font-weight:600">'+fingers[i][3]+'</div></div>';
+    h+='<div><div style="width:40px;height:40px;border-radius:50%;background:'+fingers[i][1]+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:'+fingers[i][2]+';margin:0 auto 4px">'+fingers[i][0]+'</div><div class="metric-label" style="font-size:11px;color:var(--text-label)">'+fingers[i][3]+'</div></div>';
   }
   h+='</div><p style="font-size:12px;color:var(--text-muted);margin-top:12px;text-align:center">Thumb stays behind the neck - it\'s never numbered on the chart.</p></div>';
   return h;
@@ -474,7 +474,7 @@ function renderGuidePracticeTipsCard(){
     'Use <strong>Chord Check</strong> to hear if your chord sounds right.',
     'Try <strong>Drills</strong> to practice switching between chords quickly.'
   ];
-  var h='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127919; How to Practice</h3>';
+  var h='<div class="card mb16" style="text-align:left"><h3 class="card-section-heading" style="margin-bottom:12px">&#127919; How to Practice</h3>';
   h+='<div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text-secondary);line-height:1.6">';
   for(var i=0;i<steps.length;i++){
     h+='<div><span style="font-weight:700;color:#FF6B6B">'+(i+1)+'.</span> '+steps[i]+'</div>';
@@ -497,31 +497,31 @@ function renderGuideFeaturesCard(){
     ["\uD83C\uDFA4","Tuner","Tune your instrument with the built-in mic tuner"],
     ["\uD83D\uDCCA","Stats","Track your practice history and view analytics"]
   ];
-  var h='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128640; App Features</h3>';
+  var h='<div class="card mb16" style="text-align:left"><h3 class="card-section-heading" style="margin-bottom:12px">&#128640; App Features</h3>';
   h+='<div style="display:flex;flex-direction:column;gap:10px">';
   for(var i=0;i<feats.length;i++){
-    h+='<div style="display:flex;align-items:flex-start;gap:10px"><div style="font-size:18px;min-width:28px;text-align:center">'+feats[i][0]+'</div><div><div style="font-weight:700;color:var(--text-primary);font-size:13px">'+feats[i][1]+'</div><div style="font-size:12px;color:var(--text-dim)">'+feats[i][2]+'</div></div></div>';
+    h+='<div style="display:flex;align-items:flex-start;gap:10px"><div style="font-size:18px;min-width:28px;text-align:center">'+feats[i][0]+'</div><div><div class="card-micro-heading">'+feats[i][1]+'</div><div style="font-size:12px;color:var(--text-dim)">'+feats[i][2]+'</div></div></div>';
   }
   h+='</div></div>';
   return h;
 }
 
 function renderGuideLevelingCard(){
-  return '<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 10px;font-size:16px;font-weight:800;color:var(--text-primary)">&#11088; Leveling Up</h3><p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin:0">Master all chords at your current level to unlock the next. Each practice session builds your mastery percentage. Complete sessions, drills, and challenges to earn <strong>XP</strong> and <strong>badges</strong>. Keep a daily streak going for bonus rewards!</p></div>';
+  return '<div class="card mb16" style="text-align:left"><h3 class="card-section-heading" style="margin-bottom:10px">&#11088; Leveling Up</h3><p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin:0">Master all chords at your current level to unlock the next. Each practice session builds your mastery percentage. Complete sessions, drills, and challenges to earn <strong>XP</strong> and <strong>badges</strong>. Keep a daily streak going for bonus rewards!</p></div>';
 }
 
 function renderGuideFocusModeCard(){
   var enabled = !!S.focusMode;
-  return '<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 8px;font-size:16px;font-weight:800;color:var(--text-primary)">&#128065; Focus Mode</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Simplify the interface &mdash; show only core practice tabs to reduce distractions.</p><div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:var(--text-primary)">Focus Mode</span><button onclick="act(\'toggleFocus\')" style="padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;background:'+(enabled?"#4ECDC4":"var(--input-bg)")+';color:'+(enabled?"#fff":"var(--text-muted)")+';border:2px solid '+(enabled?"#4ECDC4":"var(--border)")+';transition:all .2s">'+(enabled?"&#9989; On":"Off")+'</button></div></div>';
+  return '<div class="card mb16" style="text-align:left"><h3 class="card-section-heading" style="margin-bottom:8px">&#128065; Focus Mode</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Simplify the interface &mdash; show only core practice tabs to reduce distractions.</p><div class="split-row"><span class="card-micro-heading">Focus Mode</span><button onclick="act(\'toggleFocus\')" style="padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;background:'+(enabled?"#4ECDC4":"var(--input-bg)")+';color:'+(enabled?"#fff":"var(--text-muted)")+';border:2px solid '+(enabled?"#4ECDC4":"var(--border)")+';transition:all .2s">'+(enabled?"&#9989; On":"Off")+'</button></div></div>';
 }
 
 function renderGuideMidiOutputCard(){
-  var h='<div class="card mb16" style="text-align:left"><h3 style="margin:0 0 12px;font-size:16px;font-weight:800;color:var(--text-primary)">&#127929; MIDI Output</h3>';
+  var h='<div class="card mb16" style="text-align:left"><h3 class="card-section-heading" style="margin-bottom:12px">&#127929; MIDI Output</h3>';
   h+='<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5">Send chord notes to your DAW or virtual instrument via Web MIDI. Connect a MIDI device, enable below, then play any chord.</p>';
-  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:var(--text-primary)">Enable MIDI</span>';
+  h+='<div class="split-row" style="margin-bottom:12px"><span class="card-micro-heading">Enable MIDI</span>';
   h+='<button onclick="act(\'toggleMidi\')" style="padding:8px 20px;border-radius:10px;font-size:13px;font-weight:700;background:'+(S.midiEnabled?"#4ECDC4":"var(--input-bg)")+';color:'+(S.midiEnabled?"#fff":"var(--text-muted)")+';border:2px solid '+(S.midiEnabled?"#4ECDC4":"var(--border)")+';transition:all .2s">'+(S.midiEnabled?"&#9989; On":"Off")+'</button></div>';
   if(S.midiEnabled){
-    h+='<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px">MIDI Devices:</div>';
+    h+='<div class="metric-label" style="margin-bottom:6px">MIDI Devices:</div>';
     if(S.midiDevices.length===0){
       h+='<div style="font-size:12px;color:var(--text-muted);padding:10px;background:var(--input-bg);border-radius:10px;text-align:center">No MIDI output devices found. Connect a device and reload.</div>';
     } else {
@@ -542,7 +542,7 @@ function guideTab(){
   var inst = getToolsPageInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
-  var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">&#128214; How to Read Chord Charts</h2></div>';
+  var h='<div class="text-center mb16"><h2 class="card-section-heading" style="font-size:22px">&#128214; How to Read Chord Charts</h2></div>';
   h+=renderGuideExampleCard(D, UI);
   h+=renderGuideLegendCard();
   h+=renderGuideFingerNumbersCard();

@@ -712,6 +712,48 @@ h1, h2, h3, [style*="font-weight:900"], [style*="font-weight:800"] {
   font-size:11px;
   line-height:1.2;
 }
+.card-section-heading{
+  margin:0;
+  font-family:var(--font-body);
+  font-size:14px;
+  font-weight:650;
+  letter-spacing:0;
+  color:var(--text-primary);
+}
+.card-micro-heading{
+  margin:0;
+  font-family:var(--font-body);
+  font-size:13px;
+  font-weight:650;
+  letter-spacing:0;
+  color:var(--text-primary);
+}
+.metric-label{
+  font-family:var(--font-body);
+  font-size:12px;
+  font-weight:650;
+  letter-spacing:0;
+  color:var(--text-muted);
+}
+.metric-value{
+  font-family:var(--font-body);
+  font-size:20px;
+  font-weight:760;
+  letter-spacing:0;
+  color:var(--text-primary);
+}
+.split-row,
+.action-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.split-row{
+  justify-content:space-between;
+}
+.action-row{
+  flex-wrap:wrap;
+}
 
 /* ===== Responsive ===== */
 @media(min-width:600px){

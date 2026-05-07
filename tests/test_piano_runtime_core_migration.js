@@ -537,6 +537,37 @@ test("resume_guided_session reopens the active piano guided shell without restar
   assert.strictEqual(saveStateCalls, 1);
 });
 
+test("resume_guided_session clears any stale guided stop confirmation", function() {
+  S.guidedStopConfirm = true;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "Session 2",
+              bpm: 84,
+              spark: { text: "next" },
+              newMove: { chord: "G" }
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "spark"
+        }
+      };
+    }
+  };
+
+  pianoAct("resume_guided_session");
+
+  assert.strictEqual(S.guidedStopConfirm, false);
+  assert.strictEqual(S.screen, "session");
+});
 test("complete_victory_lap delegates to sparkCore and syncs piano completion aliases", function() {
   S.sessionPlan = {
     num: 2,

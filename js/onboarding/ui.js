@@ -12,7 +12,7 @@ function onboardingPage(){
     });
   }
   var h = '<div class="card mb16">';
-  h += '<div><b>Setup</b></div>';
+  h += '<div class="card-section-heading">Setup</div>';
   h += '<div class="muted">Let\'s get Spark ready for you.</div>';
   h += '</div>';
   if(step === "welcome") h += renderOnboardingWelcome();
@@ -31,7 +31,7 @@ function onboardingPage(){
 
 function renderOnboardingWelcome(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Welcome to Spark</b></div>';
+  h += '<div class="card-section-heading">Welcome to Spark</div>';
   h += '<div>We\'ll set up your instrument, goals, and first practice path.</div>';
   h += '</div>';
   return h;
@@ -39,7 +39,7 @@ function renderOnboardingWelcome(){
 
 function renderOnboardingInstrument(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Choose Your Instrument</b></div>';
+  h += '<div class="card-section-heading">Choose Your Instrument</div>';
   h += '<button onclick="act(\'onboardingSetInstrument\',\'guitar\')">Guitar</button> ';
   h += '<button onclick="act(\'onboardingSetInstrument\',\'piano\')">Piano</button> ';
   h += '<button onclick="act(\'onboardingSetInstrument\',\'ukulele\')">Ukulele</button>';
@@ -50,7 +50,7 @@ function renderOnboardingInstrument(){
 
 function renderOnboardingSkillLevel(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Choose Your Level</b></div>';
+  h += '<div class="card-section-heading">Choose Your Level</div>';
   h += '<button onclick="act(\'onboardingSetSkillLevel\',\'beginner\')">Beginner</button> ';
   h += '<button onclick="act(\'onboardingSetSkillLevel\',\'early_intermediate\')">Early Intermediate</button> ';
   h += '<button onclick="act(\'onboardingSetSkillLevel\',\'intermediate\')">Intermediate+</button>';
@@ -63,7 +63,7 @@ function renderOnboardingGoals(){
   var goals = S.onboarding.goals || [];
   var opts = ["chords","rhythm","lead","left_hand","melody","songs","technique"];
   var h = '<div class="card mb16">';
-  h += '<div><b>What do you want to focus on?</b></div>';
+  h += '<div class="card-section-heading">What do you want to focus on?</div>';
   for(var i=0;i<opts.length;i++){
     var selected = goals.indexOf(opts[i]) >= 0;
     h += '<button onclick="act(\'onboardingToggleGoal\',\''+opts[i]+'\')" style="margin:4px;opacity:'+(selected?1:0.6)+'">'+escHTML(opts[i])+'</button>';
@@ -74,7 +74,7 @@ function renderOnboardingGoals(){
 
 function renderOnboardingMidiSetup(){
   var h = '<div class="card mb16">';
-  h += '<div><b>MIDI Setup</b></div>';
+  h += '<div class="card-section-heading">MIDI Setup</div>';
   h += '<div>Connect your MIDI device and choose a profile.</div>';
   h += '<button onclick="act(\'openMidiSettings\')">Open MIDI Settings</button> ';
   h += '<button onclick="act(\'onboardingMidiSetupDone\')">Mark Done</button>';
@@ -84,7 +84,7 @@ function renderOnboardingMidiSetup(){
 
 function renderOnboardingCalibration(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Latency Calibration</b></div>';
+  h += '<div class="card-section-heading">Latency Calibration</div>';
   h += '<div>Calibrate your timing so scoring feels accurate.</div>';
   h += '<button onclick="act(\'openCalibration\')">Open Calibration</button> ';
   h += '<button onclick="act(\'onboardingCalibrationDone\')">Mark Done</button>';
@@ -94,7 +94,7 @@ function renderOnboardingCalibration(){
 
 function renderOnboardingStarterUnlocks(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Starter Content</b></div>';
+  h += '<div class="card-section-heading">Starter Content</div>';
   h += '<div>We\'ll unlock your starter lessons and packs now.</div>';
   h += '<button onclick="act(\'onboardingUnlockStarterContent\')">Unlock Starter Content</button>';
   h += '</div>';
@@ -103,7 +103,7 @@ function renderOnboardingStarterUnlocks(){
 
 function renderOnboardingFirstPlan(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Your First Practice Plan</b></div>';
+  h += '<div class="card-section-heading">Your First Practice Plan</div>';
   h += '<button onclick="act(\'onboardingGeneratePlan\')">Generate Plan</button>';
   h += '</div>';
   return h;
@@ -111,7 +111,7 @@ function renderOnboardingFirstPlan(){
 
 function renderOnboardingFirstRecommendations(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Your First Recommendations</b></div>';
+  h += '<div class="card-section-heading">Your First Recommendations</div>';
   h += '<button onclick="act(\'onboardingGenerateRecommendations\')">Generate Recommendations</button>';
   h += '</div>';
   return h;
@@ -119,7 +119,7 @@ function renderOnboardingFirstRecommendations(){
 
 function renderOnboardingFinish(){
   var h = '<div class="card mb16">';
-  h += '<div><b>You\'re Ready</b></div>';
+  h += '<div class="card-section-heading">You\'re Ready</div>';
   h += '<div>Your setup is complete. Let\'s head to your dashboard.</div>';
   h += '<button onclick="act(\'onboardingFinish\')">Go to Home</button>';
   h += '</div>';

@@ -56,7 +56,7 @@ console.log("\n--- Piano Editor Page Resolution ---");
 test("pianoEditorPage ignores stale metadata and item labels", function() {
   var html = pianoEditorPage();
   assert.ok(html.indexOf("song chart 1") >= 0);
-  assert.ok(html.indexOf("Mode:</b> chart") >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Mode:</span> <span class="metric-value" style="font-size:13px">chart</span>') >= 0);
   assert.ok(html.indexOf("value=\"song chart 1\"") >= 0);
   assert.ok(html.indexOf("value=\"null\"") === -1);
   assert.ok(html.indexOf("undefined @ 1.5") === -1);
@@ -91,6 +91,19 @@ test("pianoEditorPage ignores malformed BPM values", function() {
 
   assert.ok(html.indexOf('type="number" value="80"') >= 0);
   assert.ok(html.indexOf("NaN") === -1);
+});
+
+test("pianoEditorPage uses shared visual contract classes", function() {
+  var html = pianoEditorPage();
+  var source = loadJS("js/instruments/piano/pages/editor.js");
+
+  assert.strictEqual(html.indexOf("<b>"), -1);
+  assert.strictEqual(source.indexOf("<b>"), -1);
+  assert.ok(html.indexOf('class="card-section-heading mb8"') >= 0);
+  assert.ok(html.indexOf('class="card-micro-heading"') >= 0);
+  assert.ok(html.indexOf('class="metric-label"') >= 0);
+  assert.ok(html.indexOf('class="metric-value"') >= 0);
+  assert.ok(html.indexOf('class="action-row"') >= 0);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

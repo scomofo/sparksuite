@@ -144,7 +144,7 @@ function dualTab(){
   }
 
   var h='<div class="text-center">';
-  h+='<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:8px 0">&#127929; Dual View</h2>';
+  h+='<h2 class="card-section-heading">&#127929; Dual View</h2>';
   h+='<p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Piano + Guitar &mdash; same chord, both instruments</p>';
 
   // Chord selector chips
@@ -159,9 +159,9 @@ function dualTab(){
 
   // Current chord header
   h+='<div style="margin-bottom:12px">';
-  h+='<span style="font-size:28px;font-weight:900;color:var(--text-primary)">'+chordName+'</span>';
+  h+='<span class="metric-value" style="font-size:28px">'+chordName+'</span>';
   if(pianoChord){
-    h+=' <span style="font-size:12px;padding:3px 10px;border-radius:10px;background:'+(pianoChord.quality==="Minor"?"#FF6B6B22":"#4ECDC422")+';color:'+(pianoChord.quality==="Minor"?"#FF6B6B":"#4ECDC4")+';font-weight:700">'+pianoChord.quality+'</span>';
+    h+=' <span class="metric-label" style="padding:3px 10px;border-radius:10px;background:'+(pianoChord.quality==="Minor"?"#FF6B6B22":"#4ECDC422")+';color:'+(pianoChord.quality==="Minor"?"#FF6B6B":"#4ECDC4")+'">'+pianoChord.quality+'</span>';
   }
   h+='</div>';
 
@@ -175,7 +175,7 @@ function dualTab(){
 
   // Piano card
   h+='<div class="card" style="flex:1;min-width:260px;max-width:360px;text-align:center">';
-  h+='<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127929; Piano</h3>';
+  h+='<h3 class="card-micro-heading">&#127929; Piano</h3>';
   if(pianoChord){
     h+='<div class="flex-center" style="overflow-x:auto">'+dualPianoSVG(pianoChord,300)+'</div>';
     h+='<div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
@@ -190,7 +190,7 @@ function dualTab(){
 
   // Guitar card
   h+='<div class="card" style="flex:1;min-width:200px;max-width:280px;text-align:center">';
-  h+='<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127930; Guitar</h3>';
+  h+='<h3 class="card-micro-heading">&#127930; Guitar</h3>';
   if(guitarChord){
     h+='<div class="flex-center">'+dualGuitarSVG(guitarChord,200,S.dualAnchorOn)+'</div>';
   }else{
@@ -203,8 +203,8 @@ function dualTab(){
   // Anchor mode toggle
   var isAnchorChord=GUITAR_ANCHOR.activeChords.indexOf(chordName)!==-1;
   h+='<div class="card" style="margin-bottom:16px">';
-  h+='<div style="display:flex;align-items:center;justify-content:space-between">';
-  h+='<div><h4 style="margin:0;font-size:14px;font-weight:800;color:var(--text-primary)">&#128204; Sticky Anchor</h4>';
+  h+='<div class="split-row">';
+  h+='<div><h4 class="card-micro-heading">&#128204; Sticky Anchor</h4>';
   h+='<p style="margin:4px 0 0;font-size:11px;color:var(--text-muted)">'+GUITAR_ANCHOR.instruction+'</p></div>';
   h+='<button onclick="act(\'toggleAnchor\')" style="padding:8px 16px;border-radius:12px;font-size:12px;font-weight:700;background:'+(S.dualAnchorOn?"#FFE66D":"var(--input-bg)")+';color:'+(S.dualAnchorOn?"#333":"var(--text-muted)")+';border:2px solid '+(S.dualAnchorOn?"#FFE66D":"var(--border)")+'">'+(S.dualAnchorOn?"ON":"OFF")+'</button>';
   h+='</div>';
@@ -219,7 +219,7 @@ function dualTab(){
   if(pianoChord){
     var quality=pianoChord.quality||"Major";
     var ivs=ChordEngine.intervals[quality];
-    h+='<div class="card"><h4 style="margin:0 0 6px;font-size:14px;font-weight:800;color:var(--text-primary)">&#127911; How it\'s built</h4>';
+    h+='<div class="card"><h4 class="card-micro-heading">&#127911; How it\'s built</h4>';
     h+='<p style="margin:0;font-size:12px;color:var(--text-muted);line-height:1.6">'+quality+' triad = intervals <strong>'+ivs.join(', ')+'</strong> semitones from root. ';
     var root=pianoChord.notes[0].replace(/[0-9]/g,"");
     var builtNotes=ChordEngine.get(root,quality);

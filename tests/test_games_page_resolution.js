@@ -149,6 +149,20 @@ test("progression builder uses a real remove button", function() {
   assert.ok(actionsSource.indexOf('if (a === "runnerResultsBack") {') >= 0);
 });
 
+test("shared games use classed non-gameplay labels while preserving strong gameplay controls", function() {
+  var source = loadJS("js/pages/games.js");
+  var rhythmHtml = rhythmTab();
+  var runnerHtml = runnerGamePage();
+
+  assert.ok(rhythmHtml.indexOf('class="card-section-heading"') >= 0);
+  assert.ok(source.indexOf('class="card-micro-heading"') >= 0);
+  assert.ok(source.indexOf('class="metric-label"') >= 0);
+  assert.ok(runnerHtml.indexOf('class="metric-label">Target Chord</div>') >= 0);
+  assert.ok(runnerHtml.indexOf('font-weight:900;color:#FFE66D') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'runnerStrum\\\')"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'rhythmTap\\\')"') >= 0);
+});
+
 test("active progression chord card does not use the generic card entrance animation", function() {
   S.progChords = ["C Major", "G Major"];
   S.progPlaying = true;

@@ -239,6 +239,33 @@ test("drill completion actions use a wrapped result row instead of inline margin
   assert.strictEqual(html.indexOf("</button> <button"), -1);
 });
 
+test("session shell and legacy session controls use shared visual classes", function() {
+  var shell = {
+    title: "Focused warmup",
+    activeIndex: 0,
+    blockCount: 2,
+    statusLabel: "In progress - Focused warmup",
+    progressPct: 25,
+    elapsedLabel: "0m 30s in block",
+    remainingLabel: "1m 30s left",
+    primaryAction: "sessionPauseBlock",
+    primaryLabel: "Pause Block",
+    canSkip: true
+  };
+  var compact = SparkSessionShellUI.renderCompactSummary(shell);
+  var live = SparkSessionShellUI.renderLiveCard(shell);
+  var controls = renderSessionActionButtons({ timerActive: true });
+  var source = loadJS("js/pages/session.js");
+
+  assert.ok(compact.indexOf("card-micro-heading") >= 0);
+  assert.ok(compact.indexOf("metric-label") >= 0);
+  assert.ok(live.indexOf("split-row") >= 0);
+  assert.ok(live.indexOf("card-section-heading") >= 0);
+  assert.ok(controls.indexOf("action-row") >= 0);
+  assert.ok(source.indexOf("card-micro-heading") >= 0);
+  assert.ok(source.indexOf("result-actions") >= 0);
+});
+
 test("piano legacy chord sessions do not leak guitar voicings or copy", function() {
   global.VOICINGS = {
     C: [

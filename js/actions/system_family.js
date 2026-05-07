@@ -41,6 +41,7 @@
 
   function setGuidedLegacyState(setFields, save) {
     setLegacyFields(Object.assign({
+      guidedStopConfirm: false,
       _showroomOverride: null,
       _showroomLessonId: null,
       launcherView: null

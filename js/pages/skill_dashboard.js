@@ -97,7 +97,7 @@
     if (!sg) return '<div class="text-center"><p>No skill data yet. Play some sessions first!</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
     var h = '<div style="max-width:480px;margin:0 auto;padding:16px">';
-    h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">';
+    h += '<div class="split-row" style="margin-bottom:16px">';
     h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">&larr; Back</button>';
     h += '<h2 style="font-size:22px;font-weight:900;color:var(--text-primary);margin:0">Skill Dashboard</h2>';
     h += '<div style="width:60px"></div>';
@@ -110,14 +110,14 @@
     ];
 
     h += '<div class="card mb16">';
-    h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Current Levels</div>';
+    h += '<div class="card-section-heading" style="margin-bottom:12px">Current Levels</div>';
     for (var i = 0; i < skills.length; i++) {
       var sk = skills[i];
       var val = Math.round((sg[sk.key] || 0) * 100);
       var mastery = val >= 80 ? "Gold" : val >= 60 ? "Silver" : val >= 40 ? "Bronze" : "\u2014";
       var masteryColor = val >= 80 ? "#FFE66D" : val >= 60 ? "#C0C0C0" : val >= 40 ? "#CD7F32" : "var(--text-muted)";
       h += '<div style="margin-bottom:10px">';
-      h += '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text-secondary);font-weight:700">' + escHTML(sk.label) + '</span><span style="color:' + masteryColor + ';font-weight:800">' + mastery + ' \u00b7 ' + val + '%</span></div>';
+      h += '<div class="split-row" style="margin-bottom:4px"><span class="metric-label">' + escHTML(sk.label) + '</span><span class="metric-value" style="color:' + masteryColor + '">' + mastery + ' \u00b7 ' + val + '%</span></div>';
       h += '<div style="height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden"><div style="height:100%;width:' + val + '%;border-radius:4px;background:' + sk.color + ';transition:width .3s"></div></div>';
       h += '</div>';
     }
@@ -127,23 +127,23 @@
     var laneAccuracy = Array.isArray(sg.laneAccuracy) ? sg.laneAccuracy : [];
 
     h += '<div class="card mb16">';
-    h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Lane Accuracy</div>';
+    h += '<div class="card-section-heading" style="margin-bottom:12px">Lane Accuracy</div>';
     h += '<div style="display:flex;gap:8px;justify-content:center">';
     for (var li = 0; li < laneLabels.length; li++) {
       var lv = Math.round((laneAccuracy[li] || 0) * 100);
       var laneColor = getSkillDashboardLaneColor(li);
       h += '<div style="text-align:center;flex:1"><div style="height:60px;display:flex;align-items:end;justify-content:center"><div style="width:100%;border-radius:4px 4px 0 0;background:' + laneColor + ';height:' + Math.max(4, lv * 0.6) + 'px;opacity:.85"></div></div>';
-      h += '<div style="font-size:10px;font-weight:800;color:' + laneColor + ';margin-top:4px">' + escHTML(laneLabels[li]) + '</div>';
-      h += '<div style="font-size:10px;color:var(--text-muted)">' + lv + '%</div></div>';
+      h += '<div class="metric-label" style="color:' + laneColor + ';margin-top:4px">' + escHTML(laneLabels[li]) + '</div>';
+      h += '<div class="metric-value" style="font-size:10px;color:var(--text-muted)">' + lv + '%</div></div>';
     }
     h += '</div></div>';
 
     if (sg.history && sg.history.length >= 2) {
       h += '<div class="card mb16">';
-      h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:12px">Trends (Last ' + sg.history.length + ' Sessions)</div>';
+      h += '<div class="card-section-heading" style="margin-bottom:12px">Trends (Last ' + sg.history.length + ' Sessions)</div>';
       for (var si = 0; si < skills.length; si++) {
         var sk2 = skills[si];
-        h += '<div style="margin-bottom:12px"><div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">' + escHTML(sk2.label) + '</div>';
+        h += '<div style="margin-bottom:12px"><div class="card-micro-heading" style="color:var(--text-secondary);margin-bottom:4px">' + escHTML(sk2.label) + '</div>';
         h += '<canvas id="skill-chart-' + sk2.key + '" width="400" height="80" style="width:100%;height:80px;border-radius:8px;background:rgba(255,255,255,.03)"></canvas></div>';
       }
       h += '</div>';
@@ -154,9 +154,9 @@
       var weakLane = SparkSkillTracker.getWeakestLane(sg);
       var weakLaneIndex = typeof weakLane === "number" && isFinite(weakLane) && weakLane >= 0 && weakLane < laneLabels.length ? Math.floor(weakLane) : 0;
       h += '<div class="card mb16" style="background:linear-gradient(180deg,rgba(255,138,92,.1),rgba(255,138,92,.04));border:1px solid rgba(255,138,92,.22)">';
-      h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:6px">Focus Area</div>';
+      h += '<div class="card-section-heading" style="margin-bottom:6px">Focus Area</div>';
       var focusLabel = weakest === "timing" ? "Timing" : weakest === "rhythm" ? "Rhythm" : "Chord Accuracy";
-      h += '<div style="font-size:12px;color:var(--text-secondary)">Weakest skill: <strong style="color:var(--text-primary)">' + escHTML(focusLabel) + '</strong> (' + Math.round((sg[weakest] || 0) * 100) + '%)</div>';
+      h += '<div class="card-micro-heading" style="color:var(--text-secondary)">Weakest skill: <strong style="color:var(--text-primary)">' + escHTML(focusLabel) + '</strong> (' + Math.round((sg[weakest] || 0) * 100) + '%)</div>';
       h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Weakest lane: <strong style="color:var(--text-primary)">' + escHTML(laneLabels[weakLaneIndex] || ("Lane " + (weakLaneIndex + 1))) + '</strong> (' + Math.round((laneAccuracy[weakLaneIndex] || 0) * 100) + '%)</div>';
       h += '</div>';
     }
@@ -165,7 +165,7 @@
       var unlocks = SparkMasteryEngine.getUnlocks(sg);
       if (unlocks.length > 0) {
         h += '<div class="card mb16">';
-        h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:8px">Unlocked</div>';
+        h += '<div class="card-section-heading" style="margin-bottom:8px">Unlocked</div>';
         for (var ui = 0; ui < unlocks.length; ui++) {
           var unlockLabel = firstSkillDashboardTextToken(unlocks[ui].label, unlocks[ui].id, "Unlock");
           h += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px"><span style="color:#4ECDC4">&#10003;</span><span style="color:var(--text-secondary)">' + escHTML(unlockLabel) + '</span></div>';
