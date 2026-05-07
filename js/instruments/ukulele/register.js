@@ -60,6 +60,34 @@
     return lessons[0] || null;
   }
 
+  function openUkuleleQuickStart() {
+    var lessonId = getUkuleleNextLesson();
+    var request = {
+      instrument: "ukulele",
+      instrumentId: "ukespark",
+      instrumentType: "ukulele",
+      appId: "ukespark",
+      lessonId: lessonId || null,
+      forceRebuild: true,
+      source: "ukulele-quick-start"
+    };
+
+    if (typeof S !== "undefined" && S) {
+      S.activeInstrument = "ukespark";
+      S.instrument = "ukulele";
+      S.instrumentId = "ukespark";
+      S.currentInstrument = "ukulele";
+      S.selectedInstrument = "ukespark";
+      S.__sparkForcedLessonRequest = request;
+      S.screen = typeof SCR !== "undefined" && SCR && SCR.PLAN ? SCR.PLAN : "plan";
+    }
+    if (typeof openPracticePlanScreenRequest === "function") {
+      openPracticePlanScreenRequest(request);
+    }
+    if (typeof render === "function") render();
+    return true;
+  }
+
   function renderUkuleleChordSVG(chordObj, size, label, animate) {
     // Delegate to the new pipeline: normalizer -> validator -> generic renderer
     return ukuleleSVG(chordObj, { width: size, label: label, animate: !!animate });
@@ -276,6 +304,11 @@
     },
 
     pages: {},
+
+    act: function(a) {
+      if (a === "quickStart") return openUkuleleQuickStart();
+      return false;
+    },
 
     tabs: [
       { id: "practice", label: "Practice", icon: "&#127925;" },
