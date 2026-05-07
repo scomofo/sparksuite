@@ -480,6 +480,7 @@ test('vocals register adds a selectable launcher instrument', function() {
   assert.strictEqual(vocals.instrument, 'vocals');
   assert.strictEqual(vocals.iconImage, 'resources/instruments/vocals/card.png');
   assert.strictEqual(vocals.heroImage, 'resources/instruments/vocals/hero.jpg');
+  assert.strictEqual(typeof vocals.getExercises, 'function');
   assert.strictEqual(typeof vocals.tabRenderers.practice, 'function');
 });
 
@@ -533,8 +534,13 @@ test('vocals lesson start opens the practice plan screen', function() {
   startVocalsLesson('lesson_vocal_setup_comfort_01');
 
   assert.strictEqual(S.screen, 'plan');
+  assert.strictEqual(S.activeInstrument, 'vocalspark');
+  assert.strictEqual(S.instrument, 'vocals');
   assert.strictEqual(planCalls.length, 1);
   assert.strictEqual(planCalls[0].lessonId, 'lesson_vocal_setup_comfort_01');
+  assert.strictEqual(planCalls[0].instrumentId, 'vocalspark');
+  assert.strictEqual(planCalls[0].instrumentType, 'vocals');
+  assert.strictEqual(planCalls[0].appId, 'vocalspark');
 });
 
 test('bass register exposes a dedicated songs tab renderer', function() {
