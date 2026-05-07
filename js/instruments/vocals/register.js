@@ -3,6 +3,7 @@
 
   var W = typeof window !== "undefined" ? window : globalThis;
   var ID = "vocals";
+  var APP_ID = "vocalspark";
 
   function getState() {
     if (!W.S || typeof W.S !== "object") W.S = {};
@@ -49,6 +50,17 @@
       }
     } catch (err) {
       console.warn("[VocalSpark] getCurriculumMap failed", err);
+    }
+    return [];
+  }
+
+  function getExercises(skillOrLessonId) {
+    try {
+      if (W.SparkVocalsModule && typeof W.SparkVocalsModule.getExercises === "function") {
+        return W.SparkVocalsModule.getExercises(skillOrLessonId) || [];
+      }
+    } catch (err) {
+      console.warn("[VocalSpark] getExercises failed", err);
     }
     return [];
   }
@@ -138,12 +150,12 @@
 
   function buildInstrument() {
     return {
-      id: "vocalspark",
+      id: APP_ID,
       key: ID,
       slug: ID,
       instrument: "vocals",
       instrumentId: ID,
-      appId: "vocalspark",
+      appId: APP_ID,
       name: "Vocals",
       title: "VocalSpark",
       displayName: "VocalSpark",
@@ -179,6 +191,7 @@
         };
       },
       getSkillTree: getSkillTree,
+      getExercises: getExercises,
       getRhythmAdapter: getRhythmAdapter,
       getCurriculumMap: getCurriculumMap,
       tabs: [
@@ -251,6 +264,34 @@
     return false;
   }
 
+  function upsertSparkInstruments(item) {
+    var registry = W.SparkInstruments;
+    var all;
+    var i;
+    if (!registry) return false;
+
+    try {
+      if (typeof registry.getAll === "function") {
+        all = registry.getAll() || [];
+        for (i = 0; i < all.length; i += 1) {
+          if (sameInstrument(all[i])) {
+            Object.assign(all[i], item);
+            return true;
+          }
+        }
+      }
+    } catch (err) {}
+
+    try {
+      if (typeof registry.register === "function") {
+        registry.register(item);
+        return true;
+      }
+    } catch (err) {}
+
+    return false;
+  }
+
   function registerVocals() {
     var item = buildInstrument();
 
@@ -280,11 +321,7 @@
       registerRegistry(name, item);
     });
 
-    try {
-      if (W.SparkInstruments && typeof W.SparkInstruments.register === "function") {
-        W.SparkInstruments.register(item);
-      }
-    } catch (err) {}
+    upsertSparkInstruments(item);
 
     [
       "SPARK_INSTRUMENTS",
@@ -325,40 +362,50 @@
 
     var request = {
       instrument: ID,
-      instrumentId: ID,
+      instrumentId: APP_ID,
+      instrumentType: ID,
+      appId: APP_ID,
       lessonId: lessonId || null,
       forceRebuild: true,
+      createdAt: Date.now(),
       source: "vocals-register"
     };
 
     W.currentInstrument = ID;
-    W.selectedInstrument = ID;
-    W.__activeInstrument = ID;
-    W.__sparkInstrumentId = ID;
-    W.__sparkSelectedInstrument = ID;
+    W.selectedInstrument = APP_ID;
+    W.__activeInstrument = APP_ID;
+    W.__sparkInstrumentId = APP_ID;
+    W.__sparkSelectedInstrument = APP_ID;
     W.__sparkCurrentInstrument = ID;
     W.__sparkForcedLessonRequest = request;
 
     S.currentInstrument = ID;
-    S.selectedInstrument = ID;
+    S.selectedInstrument = APP_ID;
     S.instrument = ID;
-    S.instrumentId = ID;
-    S.__activeInstrument = ID;
-    S.__sparkInstrumentId = ID;
-    S.__sparkSelectedInstrument = ID;
+    S.instrumentId = APP_ID;
+    S.activeInstrument = APP_ID;
+    S.__activeInstrument = APP_ID;
+    S.__sparkInstrumentId = APP_ID;
+    S.__sparkSelectedInstrument = APP_ID;
     S.__sparkCurrentInstrument = ID;
     S.__sparkForcedLessonRequest = request;
 
     try {
       sessionStorage.setItem("spark.currentInstrument", ID);
-      sessionStorage.setItem("spark.selectedInstrument", ID);
-      sessionStorage.setItem("spark.instrumentId", ID);
+      sessionStorage.setItem("spark.selectedInstrument", APP_ID);
+      sessionStorage.setItem("spark.instrumentId", APP_ID);
     } catch (err) {}
 
     try {
       localStorage.setItem("spark.currentInstrument", ID);
-      localStorage.setItem("spark.selectedInstrument", ID);
-      localStorage.setItem("spark.instrumentId", ID);
+      localStorage.setItem("spark.selectedInstrument", APP_ID);
+      localStorage.setItem("spark.instrumentId", APP_ID);
+    } catch (err) {}
+
+    try {
+      if (W.SparkInstruments && typeof W.SparkInstruments.activate === "function") {
+        W.SparkInstruments.activate(APP_ID);
+      }
     } catch (err) {}
 
     try {

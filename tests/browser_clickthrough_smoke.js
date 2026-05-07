@@ -74,6 +74,17 @@ async function scanInstrumentTabs(page, label, tabs) {
   await settle(page, 500);
 }
 
+async function assertVocalsLessonLaunch(page) {
+  await launchInstrument(page, "Vocals");
+  await page.getByText("START VOCAL LESSON", { exact: false }).first().click();
+  await settle(page, 900);
+  var text = (await page.locator("#app").innerText()).trim();
+  assert.ok(text.indexOf("Voice Setup Without Judgment") >= 0 || text.indexOf("Voice Setup Practice") >= 0, "vocal lesson launch did not include the selected lesson");
+  assert.ok(text.indexOf("Quick warmup") >= 0, "vocal lesson plan did not keep the supporting warmup");
+  await page.getByLabel("Back to launcher").click();
+  await settle(page, 500);
+}
+
 async function openLauncherView(page, view) {
   await page.evaluate(function(nextView) {
     if (!window.act) return;
@@ -166,6 +177,7 @@ async function main() {
   await scanInstrumentTabs(page, "Drums", ["practice", "stats"]);
   await scanInstrumentTabs(page, "Ukulele", ["practice", "drill", "daily", "quiz", "ear", "strum", "songs", "rhythm", "runner", "build", "tuner", "stats", "guide"]);
   await scanInstrumentTabs(page, "Vocals", ["practice", "stats"]);
+  await assertVocalsLessonLaunch(page);
 
   var mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
   trackConsoleProblems(mobilePage, consoleProblems);
