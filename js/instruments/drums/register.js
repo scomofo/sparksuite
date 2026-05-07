@@ -157,7 +157,10 @@
       return window.SparkDrumsModule && typeof SparkDrumsModule.getRuntimeAdapter === "function" ? SparkDrumsModule.getRuntimeAdapter() : null;
     },
     pages: {},
-    tabs: [{ id: "practice", label: "Practice" }],
+    tabs: [
+      { id: "practice", label: "Practice" },
+      { id: "stats", label: "Stats" }
+    ],
     tabRenderers: { practice: drumPracticeTab },
     stemMutePreset: {},
     init: function() {

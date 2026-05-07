@@ -251,7 +251,54 @@ function hasRenderablePracticeSummaryItems(plan) {
   return !!(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePracticeSummaryItem));
 }
 
-function renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, masteredCount, chordCount) {
+function getPracticeHeroProgress(inst, data) {
+  var instrumentType = getPracticePageInstrumentType(inst);
+  var allChords = data && data.ALL_CHORDS;
+  var lessons;
+  var count = 0;
+  var mastered = 0;
+  var label = "chords";
+
+  if (Array.isArray(allChords) && allChords.length) {
+    return {
+      mastered: getPracticeMasteredChordCount(allChords),
+      count: allChords.length,
+      label: "chords"
+    };
+  }
+
+  if (allChords && typeof allChords === "object") {
+    count = Object.keys(allChords).length;
+    if (count > 0) {
+      return {
+        mastered: getPracticeMasteredChordCount(Object.keys(allChords)),
+        count: count,
+        label: "chords"
+      };
+    }
+  }
+
+  if (inst && typeof inst.getLessons === "function") {
+    try { lessons = inst.getLessons() || []; } catch (e) { lessons = []; }
+  }
+  if ((!lessons || !lessons.length) && data && Array.isArray(data.CURRICULUM)) {
+    lessons = data.CURRICULUM;
+  }
+
+  if (Array.isArray(lessons) && lessons.length) {
+    for (var i = 0; i < lessons.length; i++) {
+      if (lessons[i] && S.completedLessons && S.completedLessons.indexOf(lessons[i].id) >= 0) mastered++;
+    }
+    if (instrumentType === "drums") label = "lessons";
+    else if (instrumentType === "vocals") label = "lessons";
+    else label = "items";
+    return { mastered: mastered, count: lessons.length, label: label };
+  }
+
+  return { mastered: 0, count: 0, label: "items" };
+}
+
+function renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, progress) {
   var instTabs = inst.tabs || [];
   var hasSongs = false;
   var hasDrill = false;
@@ -266,7 +313,7 @@ function renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStre
   h += '<div class="sv2-home-hero__badges">';
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + currentXp + ' XP</span>';
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + currentStreak + '</span>';
-  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + masteredCount + '/' + chordCount + ' chords</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + progress.mastered + '/' + progress.count + ' ' + escHTML(progress.label) + '</span>';
   h += '</div></div></div>';
   for (ti = 0; ti < instTabs.length; ti++) {
     tabId = typeof instTabs[ti] === "string" ? instTabs[ti] : instTabs[ti].id;
@@ -383,12 +430,11 @@ function sv2HomeDashboard() {
   var currentXp = normalizePracticeDisplayCount(S.xp, 0);
   var currentStreak = normalizePracticeDisplayCount(S.streak, 0);
   var levelName = levelNames[currentLevel] || ("Level " + currentLevel);
-  var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
-  var masteredCount = getPracticeMasteredChordCount(D.ALL_CHORDS);
+  var heroProgress = getPracticeHeroProgress(inst, D);
 
   var goalMetrics = getPracticeGoalMetrics();
   var h = '';
-  h += renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, masteredCount, chordCount);
+  h += renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, heroProgress);
   h += renderSv2InstrumentRow(inst.id, allInstruments);
   h += renderSv2DailyGoal(goalMetrics);
 

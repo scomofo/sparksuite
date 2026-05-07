@@ -168,10 +168,23 @@
       available: true,
       getLessons: getLessons,
       lessons: getLessons,
+      getData: function () {
+        return {
+          CHORDS: {},
+          ALL_CHORDS: {},
+          CURRICULUM: getLessons(),
+          SKILL_TREE: getSkillTree() || [],
+          SESSIONS: [],
+          SONGS: []
+        };
+      },
       getSkillTree: getSkillTree,
       getRhythmAdapter: getRhythmAdapter,
       getCurriculumMap: getCurriculumMap,
-      tabs: [{ id: "practice", label: "Practice" }],
+      tabs: [
+        { id: "practice", label: "Practice" },
+        { id: "stats", label: "Stats" }
+      ],
       tabRenderers: { practice: vocalsPracticeTab },
       open: openVocalsSpark,
       launch: openVocalsSpark,
