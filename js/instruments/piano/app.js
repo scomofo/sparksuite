@@ -928,11 +928,22 @@ function checkFingerBadges() {
 }
 
 // ── Action dispatcher ──
+function scrollPianoTopSoon() {
+  if (typeof window === "undefined" || typeof window.scrollTo !== "function") return;
+  if (typeof window.requestAnimationFrame === "function") {
+    window.requestAnimationFrame(function() { window.scrollTo(0, 0); });
+    return;
+  }
+  setTimeout(function() { window.scrollTo(0, 0); }, 0);
+}
+
 function act(action, param) {
   var _handled = true;
+  var _scrollTopAfterRender = false;
   switch (action) {
     case "tab":
       S.tab = param;
+      _scrollTopAfterRender = true;
       if (S.songPlaying) {
         S.songPlaying = false;
         if (T.song) { clearInterval(T.song); T.song = null; }
@@ -2150,6 +2161,7 @@ function act(action, param) {
 
   // Call SparkSuite's global render, not piano's local render
   if (typeof window.render === "function") window.render();
+  if (_scrollTopAfterRender) scrollPianoTopSoon();
   return _handled;
 }
 

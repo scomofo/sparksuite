@@ -136,6 +136,27 @@ async function assertLauncherViewScrollsCleanly(page, view) {
   await page.evaluate(function() { window.scrollTo(0, 0); });
 }
 
+async function assertMobileInstrumentScrollResets(page) {
+  var cases = [
+    { instrument: "Ukulele", tab: "practice" },
+    { instrument: "Piano", tab: "tools" }
+  ];
+  for (var i = 0; i < cases.length; i++) {
+    await openLauncherView(page, "instruments");
+    await page.evaluate(function() { window.scrollTo(0, document.documentElement.scrollHeight); });
+    await settle(page, 100);
+    await launchInstrument(page, cases[i].instrument);
+    await settle(page, 100);
+    assert.ok(await page.evaluate(function() { return window.scrollY <= 2; }), cases[i].instrument + " launch did not reset mobile scroll");
+    await page.evaluate(function() { window.scrollTo(0, document.documentElement.scrollHeight); });
+    await settle(page, 100);
+    await openTab(page, cases[i].tab);
+    assert.ok(await page.evaluate(function() { return window.scrollY <= 2; }), cases[i].instrument + " tab switch did not reset mobile scroll");
+    await page.getByLabel("Back to launcher").click();
+    await settle(page, 500);
+  }
+}
+
 async function main() {
   var browser = await chromium.launch({ headless: true });
   var page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -185,6 +206,7 @@ async function main() {
   await mobilePage.waitForLoadState("domcontentloaded");
   await settle(mobilePage, 500);
   await dismissFirstRun(mobilePage);
+  await assertMobileInstrumentScrollResets(mobilePage);
   var launcherViews = ["home", "library", "learn", "settings", "profile", "instruments", "tools", "practice", "lesson", "performance"];
   for (var j = 0; j < launcherViews.length; j++) {
     await assertLauncherViewScrollsCleanly(mobilePage, launcherViews[j]);
