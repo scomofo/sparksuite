@@ -115,6 +115,51 @@ async function assertInstrumentPerformanceLaunch(page, label) {
   assert.ok(/performance|pause|stop|combo|accuracy/i.test(text), label + " performance button did not open a performance session");
 }
 
+async function assertSharedPracticeToolLaunches(page) {
+  await page.goto(appUrl("browserSharedPracticeTools"));
+  await page.waitForLoadState("domcontentloaded");
+  await settle(page, 500);
+  await dismissFirstRun(page);
+
+  await launchInstrument(page, "Ukulele");
+  await openTab(page, "ear");
+  await page.locator("#app button").filter({ hasText: /Start Listening/i }).first().click();
+  await settle(page, 350);
+  var earState = await page.evaluate(function() {
+    return {
+      question: S.earTrainQ,
+      options: Array.isArray(S.earTrainOpts) ? S.earTrainOpts.slice() : []
+    };
+  });
+  assert.ok(earState.question, "Ukulele shared ear training did not create a question");
+  assert.ok(earState.options.indexOf(earState.question) >= 0, "Ukulele shared ear training options omitted the question");
+
+  await openTab(page, "build");
+  await page.locator("#app button").filter({ hasText: "I-IV-V (Blues) (E)" }).first().click();
+  await settle(page, 250);
+  await page.locator("#app button").filter({ hasText: "Play" }).last().click();
+  await settle(page, 250);
+  var ukeBuildState = await page.evaluate(function() {
+    return { chords: S.progChords.slice(), playing: !!S.progPlaying };
+  });
+  assert.ok(ukeBuildState.chords.length >= 2, "Ukulele progression template did not populate chords");
+  assert.strictEqual(ukeBuildState.playing, true, "Ukulele progression play did not start");
+
+  await page.getByLabel("Back to launcher").click();
+  await settle(page, 500);
+  await launchInstrument(page, "Guitar");
+  await openTab(page, "build");
+  await page.locator("#app button").filter({ hasText: "I-IV-V (Blues) (E)" }).first().click();
+  await settle(page, 250);
+  await page.locator("#app button").filter({ hasText: "Play" }).last().click();
+  await settle(page, 250);
+  var guitarBuildState = await page.evaluate(function() {
+    return { chords: S.progChords.slice(), playing: !!S.progPlaying };
+  });
+  assert.ok(guitarBuildState.chords.length >= 2, "Guitar progression template did not populate chords");
+  assert.strictEqual(guitarBuildState.playing, true, "Guitar progression play did not start");
+}
+
 async function openLauncherView(page, view) {
   await page.evaluate(function(nextView) {
     if (!window.act) return;
@@ -363,6 +408,7 @@ async function main() {
   await assertVocalsLessonLaunch(page);
   await assertInstrumentPerformanceLaunch(page, "Bass");
   await assertInstrumentPerformanceLaunch(page, "Ukulele");
+  await assertSharedPracticeToolLaunches(page);
 
   var mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
   trackConsoleProblems(mobilePage, consoleProblems);

@@ -25,6 +25,50 @@
     return window.SparkSessionRuntime || (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
   }
 
+  function getActivePracticeInstrumentData() {
+    var active = (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function")
+      ? SparkInstruments.getActive()
+      : null;
+    if (active && typeof active.getData === "function") return active.getData() || {};
+    return {
+      CHORDS: typeof CHORDS !== "undefined" ? CHORDS : {},
+      ALL_CHORDS: typeof ALL_CHORDS !== "undefined" ? ALL_CHORDS : []
+    };
+  }
+
+  function buildEarTrainingQuestion() {
+    var data = getActivePracticeInstrumentData();
+    var level = parseInt(S.level, 10);
+    var pool = [];
+    var all = Array.isArray(data.ALL_CHORDS) ? data.ALL_CHORDS : [];
+    var levelChords = data.CHORDS || {};
+    var l;
+    var i;
+    if (isNaN(level) || level < 1) level = 1;
+    for (l = 1; l <= level; l++) {
+      if (Array.isArray(levelChords[l])) pool = pool.concat(levelChords[l]);
+    }
+    if (!pool.length && Array.isArray(levelChords[1])) pool = levelChords[1].slice();
+    if (!pool.length) pool = all.slice();
+    if (!pool.length) return null;
+
+    var questionChord = pool[Math.floor(Math.random() * pool.length)];
+    var options = [questionChord.name];
+    var attempts = 0;
+    while (options.length < 4 && attempts < 100) {
+      var candidate = all[Math.floor(Math.random() * all.length)] || pool[Math.floor(Math.random() * pool.length)];
+      if (candidate && candidate.name && options.indexOf(candidate.name) === -1) options.push(candidate.name);
+      attempts++;
+    }
+    for (i = options.length - 1; i > 0; i--) {
+      var swapIdx = Math.floor(Math.random() * (i + 1));
+      var tmp = options[i];
+      options[i] = options[swapIdx];
+      options[swapIdx] = tmp;
+    }
+    return { question: questionChord.name, options: options };
+  }
+
   function clearPracticeFamilyTimeout(timeoutKey, fallback) {
     return applyPracticeFamilyRuntimeUpdate({
       clearTimeouts: timeoutKey ? [timeoutKey] : []
@@ -314,6 +358,52 @@
     if (a === "dailyDoneHome") {
       returnFromLegacyDailyChallengeRequest({ activeTab: "daily" });
       act("tab", "daily");
+      return true;
+    }
+
+    if (a === "startEarTrain") {
+      var earTrainingQuestion = buildEarTrainingQuestion();
+      if (!earTrainingQuestion) return true;
+      var nextEarTrainState = {
+        earTrainQ: earTrainingQuestion.question,
+        earTrainOpts: earTrainingQuestion.options,
+        earTrainAns: null,
+        earTrainScore: S.earTrainScore || 0,
+        earTrainTotal: S.earTrainTotal || 0,
+        earTrainStreak: S.earTrainStreak || 0
+      };
+      applyPracticeFamilyRuntimeUpdate({
+        setFields: nextEarTrainState
+      }, function() {
+        S.earTrainQ = nextEarTrainState.earTrainQ;
+        S.earTrainOpts = nextEarTrainState.earTrainOpts;
+        S.earTrainAns = nextEarTrainState.earTrainAns;
+        S.earTrainScore = nextEarTrainState.earTrainScore;
+        S.earTrainTotal = nextEarTrainState.earTrainTotal;
+        S.earTrainStreak = nextEarTrainState.earTrainStreak;
+      });
+      var earCore = getPracticeActionCore();
+      if (earCore && typeof earCore.openLegacyEarTraining === "function") {
+        earCore.openLegacyEarTraining({
+          question: nextEarTrainState.earTrainQ,
+          options: nextEarTrainState.earTrainOpts,
+          answer: null,
+          score: nextEarTrainState.earTrainScore,
+          total: nextEarTrainState.earTrainTotal,
+          streak: nextEarTrainState.earTrainStreak
+        });
+      } else if (earCore && typeof earCore.syncLegacyEarTrainingRuntimeState === "function") {
+        earCore.syncLegacyEarTrainingRuntimeState({
+          question: nextEarTrainState.earTrainQ,
+          options: nextEarTrainState.earTrainOpts,
+          answer: null,
+          score: nextEarTrainState.earTrainScore,
+          total: nextEarTrainState.earTrainTotal,
+          streak: nextEarTrainState.earTrainStreak
+        });
+      }
+      strumChord(nextEarTrainState.earTrainQ);
+      render();
       return true;
     }
 

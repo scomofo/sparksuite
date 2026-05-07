@@ -128,11 +128,20 @@ function makeDistortionCurve(amount){
 }
 
 // ===== CHORD SOUND PREVIEW =====
+function resolveStrumChordNotes(chordName){
+  var active = (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function")
+    ? SparkInstruments.getActive()
+    : null;
+  var activeData = active && typeof active.getData === "function" ? active.getData() : null;
+  if (activeData && activeData.CHORD_NOTES && activeData.CHORD_NOTES[chordName]) return activeData.CHORD_NOTES[chordName];
+  return CHORD_NOTES[chordName];
+}
+
 function strumChord(chordName){
   try{
     if(!audioCtx&&AC)audioCtx=new AC();
     if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();
-    var notes=CHORD_NOTES[chordName];
+    var notes=resolveStrumChordNotes(chordName);
     if(!notes||notes.length===0){console.warn("ChordSpark: No notes for chord:",chordName);return;}
     sendMIDINotes(chordName);
     // Use real guitar WAV when "guitar" tone is selected

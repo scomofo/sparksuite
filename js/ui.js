@@ -194,6 +194,7 @@ function scaleSVG(positions,keyName,scaleName){
     s+='<text x="'+(pL+(f-0.5)*fW)+'" y="'+(h-2)+'" text-anchor="middle" font-size="8" fill="var(--text-muted)">'+f+'</text>';
   return s+'</svg>';
 }
+if(typeof window!=="undefined")window.stringedScaleSVG=scaleSVG;
 
 // ===== ANIMATED STRUM HAND =====
 function strumHandSVG(direction,active){
