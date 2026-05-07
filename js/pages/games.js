@@ -196,7 +196,7 @@ function runnerGamePage(){
   h+='</div>';
 
   // Target chord card
-  h+='<div class="card mb12" style="padding:10px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(69,183,209,.12));border:2px solid rgba(78,205,196,.3)">';
+  h+='<div class="card live-timer-surface mb12" style="padding:10px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(69,183,209,.12));border:2px solid rgba(78,205,196,.3)">';
   if(runtime.target){
     var targetShort = _firstGamesTextToken(runtime.target.short, runtime.target.name, "?");
     var targetName = _firstGamesTextToken(runtime.target.name, runtime.target.short, "Target chord");
@@ -343,7 +343,7 @@ function buildTab(){
     var cn=S.progChords[S.progBeat];
     var ch=null;for(var i=0;i<D.ALL_CHORDS.length;i++)if(D.ALL_CHORDS[i].name===cn)ch=D.ALL_CHORDS[i];
     if(ch){
-      h+='<div class="card mb12 text-center"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
+      h+='<div class="card live-timer-surface mb12 text-center"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
     }
   }
 
@@ -359,3 +359,12 @@ function buildTab(){
   h+='</div></div>';
   return h;
 }
+
+(function(root){
+  if(!root)return;
+  root.SparkSharedGameRenderers = {
+    rhythmTab: rhythmTab,
+    runnerTab: runnerTab,
+    buildTab: buildTab
+  };
+})(typeof window !== "undefined" ? window : (typeof global !== "undefined" ? global : null));

@@ -159,6 +159,10 @@ function guitarAct(a, v) {
     return true;
   }
 
+  if (a === "start_drill") {
+    return guitarAct("startDrill", v);
+  }
+
   if (a === "startDrill") {
     var session;
     if (typeof SparkCore !== "undefined" && typeof SparkCore.startSession === "function") {

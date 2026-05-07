@@ -124,7 +124,8 @@ function pianoPlanPage(){
         cardClass: "card mb16",
         cardStyle: "border:2px solid var(--accent)",
         mutedClass: "muted",
-        summaryTitleStyle: "font-size:14px;font-weight:800;margin-top:4px"
+        summaryTitleClass: "guided-status-line",
+        summaryTitleStyle: "font-size:14px;margin-top:4px"
       });
       h += '<div class="card mb16" style="text-align:center">';
       h += '<button class="btn" onclick="act(\'back\')">Back</button>';
@@ -132,10 +133,10 @@ function pianoPlanPage(){
       return h;
     }
     h += '<div class="card mb16"><div class="muted">No practice plan yet.</div></div>';
-    h += '<div class="card mb16" style="text-align:center">';
+    h += '<div class="card mb16"><div class="plan-actions">';
     h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
     h += '<button class="btn" onclick="act(\'back\')">Back</button>';
-    h += '</div>';
+    h += '</div></div>';
     return h;
   }
 
@@ -153,8 +154,8 @@ function pianoPlanPage(){
         ? '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))" style="background:var(--accent);color:#fff">Go</button>'
         : '<span class="text-muted">Unavailable</span>');
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPianoPlanDisplayType(item))+'">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center">';
-    h += '<div>';
+    h += '<div class="plan-item-row">';
+    h += '<div class="plan-item-copy">';
     h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPianoPlanItemLabel(item))+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPianoPlanItemSubtitle(item))+(durationMinutes != null ? ' \u2022 '+durationMinutes+'m' : '')+'</div>';
     h += '</div>';
@@ -164,15 +165,15 @@ function pianoPlanPage(){
   }
 
   if(!planCompleted){
-    h += '<div class="card mb16" style="text-align:center">';
+    h += '<div class="card mb16"><div class="plan-actions">';
     h += '<button class="btn btn-primary" onclick="act(\'completePlan\')">Mark Plan Complete</button>';
-    h += '</div>';
+    h += '</div></div>';
   }
 
-  h += '<div class="card mb16" style="text-align:center">';
-  h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
+  h += '<div class="card mb16"><div class="plan-actions">';
+  h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button>';
   h += '<button class="btn" onclick="act(\'back\')">Back</button>';
-  h += '</div>';
+  h += '</div></div>';
 
   return h;
 }

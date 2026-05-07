@@ -159,6 +159,104 @@ test("sessionPage rehydrates an app-id-only active instrument shell", function()
   assert.ok(html.indexOf("chord-svg") >= 0);
 });
 
+test("sessionPage can render piano legacy sessions stored on S.chord", function() {
+  S.currentChord = null;
+  S.chord = "C";
+
+  var html = sessionPage();
+  assert.ok(html.indexOf("C") >= 0);
+  assert.ok(html.indexOf("chord-svg") >= 0);
+});
+
+test("legacy chord sessions suppress card entrance animations during timer ticks", function() {
+  var html = sessionPage();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("legacy-session-live") >= 0);
+  assert.ok(styles.indexOf(".legacy-session-live .card") >= 0);
+  assert.ok(styles.indexOf("animation:none") >= 0);
+});
+
+test("legacy drill sessions suppress card entrance animations during timer ticks", function() {
+  var html = drillPage();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("live-timer-surface") >= 0);
+  assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
+  assert.ok(styles.indexOf("animation:none") >= 0);
+});
+
+test("legacy strum playback suppresses card entrance animations during beat ticks", function() {
+  S.selectedStrum = "Groove";
+  S.strumActive = true;
+  S.strumBeat = 1;
+
+  var html = strumDetailPage();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("live-timer-surface") >= 0);
+  assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
+});
+
+test("legacy song playback suppresses card entrance animations during beat ticks", function() {
+  S.songPlaying = true;
+  S.songBeat = 1;
+
+  var html = songDetailPage();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("live-timer-surface") >= 0);
+  assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
+});
+
+test("song controls wrap with deliberate spacing so adjacent action buttons do not crowd", function() {
+  var styles = loadJS("styles.css");
+
+  assert.ok(styles.indexOf(".song-controls") >= 0);
+  assert.ok(styles.indexOf(".style-controls") >= 0);
+  assert.ok(styles.indexOf(".build-controls") >= 0);
+  assert.ok(styles.indexOf("flex-wrap:wrap") >= 0);
+  assert.ok(styles.indexOf("gap:10px") >= 0);
+  assert.ok(styles.indexOf(".song-controls .btn") >= 0);
+  assert.ok(styles.indexOf(".style-controls .btn") >= 0);
+  assert.ok(styles.indexOf(".build-controls .btn") >= 0);
+  assert.ok(styles.indexOf("min-width:128px") >= 0);
+  assert.ok(styles.indexOf(".build-palette") >= 0);
+  assert.ok(styles.indexOf(".plan-actions") >= 0);
+  assert.ok(styles.indexOf(".plan-item-row") >= 0);
+  assert.ok(styles.indexOf(".plan-actions .btn") >= 0);
+  assert.ok(styles.indexOf(".result-actions") >= 0);
+  assert.ok(styles.indexOf(".result-actions .btn") >= 0);
+  assert.ok(styles.indexOf("gap:12px") >= 0);
+});
+
+test("drill completion actions use a wrapped result row instead of inline margins", function() {
+  var html = drillDonePage();
+
+  assert.ok(html.indexOf("Drill Complete!") >= 0);
+  assert.ok(html.indexOf("result-actions") >= 0);
+  assert.strictEqual(html.indexOf("margin-left"), -1);
+  assert.strictEqual(html.indexOf("</button> <button"), -1);
+});
+
+test("piano legacy chord sessions do not leak guitar voicings or copy", function() {
+  global.VOICINGS = {
+    C: [
+      { label: "Open (Standard)" },
+      { label: "Barre (3rd fret)" }
+    ]
+  };
+  S.practiceIntention = "make coffee";
+
+  var html = sessionPage();
+
+  assert.strictEqual(html.indexOf("Barre (3rd fret)"), -1);
+  assert.strictEqual(html.indexOf("behind the fret"), -1);
+  assert.strictEqual(html.indexOf("Strum each string"), -1);
+  assert.strictEqual(html.indexOf("ChordSpark"), -1);
+  assert.ok(html.indexOf("PianoSpark") >= 0);
+});
+
 test("session family pages surface the live daily-practice shell from sparkCore", function() {
   global.sparkCore = {
     getActiveSessionView: function() {
@@ -458,7 +556,14 @@ test("song library perform buttons rely on clickable card guards instead of inli
   var uiSource = loadJS("js/ui.js");
   assert.ok(songsSource.indexOf('onclick="act(\\\'openPerformSong\\\',') >= 0);
   assert.strictEqual(songsSource.indexOf("event.stopPropagation();act('openPerformSong'"), -1);
-  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}') >= 0);
+  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest(&quot;button,input,select,textarea,a&quot;)){return;}') >= 0);
+});
+
+test("song library cards open songs by canonical library index after sorting", function() {
+  var songsSource = loadJS("js/pages/songs.js");
+  assert.ok(songsSource.indexOf("var songLibraryIndex = D.SONGS.indexOf(s);") >= 0);
+  assert.ok(songsSource.indexOf("act(\\'openSong\\',\"+songLibraryIndex+\")") >= 0);
+  assert.strictEqual(songsSource.indexOf("act(\\'openSong\\',\"+i+\")"), -1);
 });
 
 test("strumDetailPage ignores malformed BPM values", function() {
@@ -487,6 +592,29 @@ test("songsTab rehydrates an app-id-only active instrument shell", function() {
   assert.ok(html.indexOf("Song Library") >= 0);
   assert.ok(html.indexOf("Nocturne") >= 0);
   assert.ok(html.indexOf("Lvl 1") >= 0);
+});
+
+test("songsTab prefers full core browser runtime over stale active session view state", function() {
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return { songsSubTab: "perform" };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: { songsSubTab: "builtin" } };
+    }
+  };
+
+  var html = songsTab();
+
+  assert.ok(html.indexOf("Performance Mode") >= 0);
+  assert.strictEqual(html.indexOf("Nocturne"), -1);
+});
+
+test("perform songs subtab uses a real button handler instead of clickable card guard", function() {
+  var songsSource = loadJS("js/pages/songs.js");
+
+  assert.ok(songsSource.indexOf('onclick="act(\\\'songsSubTab\\\',\\\'perform\\\')"') >= 0);
+  assert.strictEqual(songsSource.indexOf('songs-subtab\'+(songsSubTab==="perform"?" active":"")+\'"\'+clickableDiv'), -1);
 });
 
 test("songsTab tolerates instruments without a song library", function() {

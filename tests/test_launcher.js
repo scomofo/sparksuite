@@ -253,6 +253,26 @@ test('piano bootstrap preserves existing pages while adding deferred registratio
   assert.strictEqual(typeof piano.pages.session, 'function');
 });
 
+test('piano bootstrap routes legacy active chord sessions to the legacy renderer', function() {
+  SparkInstruments.register({
+    id: 'pianospark', instrument: 'piano', name: 'PianoSpark', icon: 'P',
+    skin: SparkHighway.PIANO_SKIN, available: true,
+    getData: function() { return {}; },
+    pages: {},
+    tabs: ['practice'], stemMutePreset: {}, init: function() {}
+  });
+  global.SCR = { SESSION: 'session' };
+  global.S = { active: true, chord: 'C', sessionPlan: null };
+  global.pianoSessionPage = function() { return '<div>Guided Session</div>'; };
+  global.legacySessionHTML = function() { return '<div>Legacy Chord Session</div>'; };
+  eval(loadJS('js/piano-registration-bootstrap.js'));
+  SparkInstruments.activate('pianospark');
+
+  assert.strictEqual(SparkInstruments.getPage('session')(), '<div>Legacy Chord Session</div>');
+  S.active = false;
+  assert.strictEqual(SparkInstruments.getPage('session')(), '<div>Guided Session</div>');
+});
+
 test('renderLauncher respects launcherView showroom routes', function() {
   global.SparkProfileScreen = { render: function() { return '<div>Profile View</div>'; } };
   global.SparkSongLibrary = { render: function() { return '<div>Library View</div>'; } };
@@ -583,6 +603,15 @@ test('index loads boot loader before deferred instrument placeholders', function
   assert.ok(bootIndex >= 0);
   assert.ok(deferredIndex >= 0);
   assert.ok(bootIndex < deferredIndex);
+});
+
+test('index loads shared watch helpers before deferred piano watch runtime', function() {
+  var source = loadJS('index.html');
+  var commonIndex = source.indexOf('src="js/core/watch_common.js"');
+  var pianoWatchIndex = source.indexOf('data-deferred-src="js/instruments/piano/watch.js"');
+  assert.ok(commonIndex >= 0);
+  assert.ok(pianoWatchIndex >= 0);
+  assert.ok(commonIndex < pianoWatchIndex);
 });
 
 test('boot loader schedules deferred scripts after the page has parsed', function() {

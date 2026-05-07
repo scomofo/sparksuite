@@ -451,8 +451,8 @@ test("piano guided actions let the shared action family own showroom lesson laun
     return true;
   };
 
-  pianoAct("start_guided_session", "1");
-  pianoAct("resume_guided_session");
+  assert.strictEqual(pianoAct("start_guided_session", "1"), true);
+  assert.strictEqual(pianoAct("resume_guided_session"), true);
 
   assert.deepStrictEqual(familyCalls, [
     ["start_guided_session", "1"],
@@ -473,6 +473,31 @@ test("start_guided_session legacy fallback honors requested piano lesson number"
   assert.strictEqual(S.sessionPlan.title, "Session 1");
   assert.strictEqual(S.sessionStep, "spark");
   assert.strictEqual(S.screen, "session");
+});
+
+test("start_session opens the piano chord practice session screen", function() {
+  var originalSetInterval = global.setInterval;
+  var originalClearInterval = global.clearInterval;
+  var intervalCalls = [];
+  global.setInterval = function(fn, ms) {
+    intervalCalls.push({ fn: fn, ms: ms });
+    return 123;
+  };
+  global.clearInterval = function() {};
+  S.practiceLen = 90;
+
+  try {
+    pianoAct("start_session", "C");
+  } finally {
+    global.setInterval = originalSetInterval;
+    global.clearInterval = originalClearInterval;
+  }
+
+  assert.strictEqual(S.chord, "C");
+  assert.strictEqual(S.screen, "session");
+  assert.strictEqual(S.timer, 90);
+  assert.strictEqual(S.active, true);
+  assert.strictEqual(intervalCalls.length, 1);
 });
 
 test("resume_guided_session reopens the active piano guided shell without restarting it", function() {
@@ -549,6 +574,17 @@ test("open_perform_song delegates to sparkCore and syncs piano performance alias
   assert.strictEqual(S.screen, "performSong");
 });
 
+test("open_perform_song does not depend on the legacy song id helper", function() {
+  delete global.normalizeSongId;
+
+  pianoAct("open_perform_song", "1");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].payload.songId, "river_walk");
+  assert.strictEqual(S.performSongId, "river_walk");
+  assert.strictEqual(S.screen, "performSong");
+});
+
 test("openPlan delegates piano dashboard practice entry to the shared helper", function() {
   pianoAct("openPlan");
 
@@ -591,6 +627,29 @@ test("performStart delegates launch request construction to sparkCore helpers", 
   assert.strictEqual(performanceStarts[0].options.difficulty, "hard");
   assert.strictEqual(performanceStarts[0].options.speed, 0.8);
   assert.strictEqual(performanceStarts[0].options.mode, "mic");
+});
+
+test("piano performance controls let the shared action family own shared run actions", function() {
+  var familyCalls = [];
+  global.runSparkActionFamilies = function(action, value) {
+    familyCalls.push([action, value]);
+    return true;
+  };
+
+  assert.strictEqual(pianoAct("performStart"), true);
+  assert.strictEqual(pianoAct("pausePerform"), true);
+  assert.strictEqual(pianoAct("resumePerform"), true);
+  assert.strictEqual(pianoAct("performRetry"), true);
+  assert.strictEqual(pianoAct("stopPerform"), true);
+
+  assert.deepStrictEqual(familyCalls, [
+    ["performStartFromSong", undefined],
+    ["pausePerform", undefined],
+    ["resumePerform", undefined],
+    ["performRetry", undefined],
+    ["stopPerform", undefined]
+  ]);
+  assert.strictEqual(performanceStarts.length, 0);
 });
 
 test("select_song mirrors piano song detail selection into song-session core helpers", function() {

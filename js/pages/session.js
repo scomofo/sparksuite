@@ -148,7 +148,7 @@ function getLegacySessionRuntime(D){
   var runtime = getSparkCoreRuntimeState();
   var preferCore = shouldPreferSessionCoreRuntime();
   var runtimeChord = findInstrumentChordByName(D, runtime && runtime.legacyPracticeChordName);
-  var legacyChord = S.currentChord || null;
+  var legacyChord = S.currentChord || findInstrumentChordByName(D, S && S.chord) || null;
   return {
     chord: preferCore ? (runtimeChord || legacyChord) : (legacyChord || runtimeChord),
     timer: getPreferredSessionNumber(
@@ -335,13 +335,17 @@ function renderSessionChordCheckCard(chordName){
   return h;
 }
 
-function renderSessionTipsCard(){
-  return '<div class="card mb16" style="text-align:left"><h4 style="margin:0 0 6px;color:var(--text-primary);font-size:14px">&#128161; Tips</h4><p style="margin:0;font-size:13px;color:var(--text-label);line-height:1.5">Press firmly behind the fret. Strum each string to check for buzz. Keep your thumb relaxed!</p></div>';
+function renderSessionTipsCard(inst){
+  var text = isPianoSessionInstrument(inst)
+    ? "Curve your fingers, keep your wrist loose, and press the highlighted keys together with an even sound."
+    : "Press firmly behind the fret. Strum each string to check for buzz. Keep your thumb relaxed!";
+  return '<div class="card mb16" style="text-align:left"><h4 style="margin:0 0 6px;color:var(--text-primary);font-size:14px">&#128161; Tips</h4><p style="margin:0;font-size:13px;color:var(--text-label);line-height:1.5">'+escHTML(text)+'</p></div>';
 }
 
-function renderPracticeIntentionCard(practiceIntention){
+function renderPracticeIntentionCard(practiceIntention, inst){
+  var appName = isPianoSessionInstrument(inst) ? "PianoSpark" : "ChordSpark";
   if(!practiceIntention) return '';
-  return '<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(practiceIntention)+', I open ChordSpark.&#8221;</div>';
+  return '<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(practiceIntention)+', I open '+appName+'.&#8221;</div>';
 }
 
 function renderSessionShellCard(shell){
@@ -431,6 +435,42 @@ function renderSongChordChips(chords){
   return h;
 }
 
+function isPianoSessionInstrument(inst){
+  var id = inst && (inst.instrument || inst.id || inst.appId || inst.instrumentId || "");
+  id = String(id).toLowerCase();
+  return id === "piano" || id === "pianospark";
+}
+
+function buildPianoSessionVoicings(chord){
+  var defs = [
+    ["rootPosition", "Root Position"],
+    ["firstInversion", "1st Inversion"],
+    ["secondInversion", "2nd Inversion"],
+    ["thirdInversion", "3rd Inversion"]
+  ];
+  var voicings = [];
+  var part;
+  var v;
+  if (!chord) return voicings;
+  for (var i = 0; i < defs.length; i++) {
+    part = chord[defs[i][0]];
+    if (!part || !Array.isArray(part.midi)) continue;
+    v = {};
+    for (var key in chord) v[key] = chord[key];
+    v.rootPosition = part;
+    v.label = defs[i][1];
+    voicings.push(v);
+  }
+  return voicings;
+}
+
+function getSessionChordVoicings(inst, D, chord){
+  var source;
+  if (isPianoSessionInstrument(inst)) return buildPianoSessionVoicings(chord);
+  source = D && D.VOICINGS ? D.VOICINGS : (typeof VOICINGS !== "undefined" ? VOICINGS : null);
+  return source && chord && Array.isArray(source[chord.name]) ? source[chord.name] : null;
+}
+
 function renderSongProgressionCard(progression, songPlaying, songBeat){
   var capoFret = getSessionCapoModeFret();
   var mapped = mapSessionCapoChords(progression, capoFret);
@@ -518,14 +558,14 @@ function sessionPage(){
   var c = runtime.chord;
   if(!c)return renderSessionShellCard(shell || getSessionPageFallbackShell());
   // Check if voicings are available
-  var voicings=VOICINGS[c.name];
+  var voicings=getSessionChordVoicings(inst, D, c);
   var displayChord=c;
   if(voicings&&S.selectedVoicing>0&&S.selectedVoicing<voicings.length){
     displayChord=voicings[S.selectedVoicing];
   }
   var timer = runtime.timer;
   var m=Math.floor(timer/60),s=timer%60;
-  var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button><h2 style="font-size:26px;font-weight:900;color:var(--text-primary);margin:8px 0">'+c.name+'</h2>';
+  var h='<div class="text-center legacy-session-live"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button><h2 style="font-size:26px;font-weight:900;color:var(--text-primary);margin:8px 0">'+c.name+'</h2>';
 
   // Voicing selector
   if(voicings&&voicings.length>1){
@@ -544,9 +584,9 @@ function sessionPage(){
   h+='<button onclick="act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:8px" aria-label="Preview chord sound">&#128264; Listen to this chord</button>';
   h+=renderSessionMetronomeCard(getSessionMetronomeRuntime());
   h+=renderSessionChordCheckCard(c.name);
-  h+=renderSessionTipsCard();
+  h+=renderSessionTipsCard(inst);
   var practiceIntention = _firstSessionSongTextToken(S.practiceIntention);
-  h+=renderPracticeIntentionCard(practiceIntention);
+  h+=renderPracticeIntentionCard(practiceIntention, inst);
   h+=renderSessionActionButtons(runtime);
   h+='</div>';
   return h;
@@ -578,7 +618,7 @@ function drillPage(){
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button>';
   if(shell) h+=renderSessionShellCard(shell);
   h+=renderDrillHeader(drillTimer);
-  h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
+  h+='<div class="card live-timer-surface'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
   h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+D.LC[S.level]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+UI.chord(c,180,null,drillChanged)+'</div>';
   _prevChordKey=c.name;
   h+=renderDrillTransitionTip(c, nx);
@@ -588,7 +628,7 @@ function drillPage(){
 }
 
 function drillDonePage(){
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#9889;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Drill Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px"><strong>'+S.drillSwitches+'</strong> switches in 60s</p><button class="btn" onclick="act(\'repeatLegacyPracticeDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9889; Again</button> <button class="btn" onclick="act(\'drillDoneHome\')" style="background:#4ECDC4;color:#fff;margin-left:10px">&#127968; Home</button></div>';
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#9889;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Drill Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px"><strong>'+S.drillSwitches+'</strong> switches in 60s</p><div class="result-actions"><button class="btn" onclick="act(\'repeatLegacyPracticeDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9889; Again</button><button class="btn" onclick="act(\'drillDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
 }
 
 function dailyPage(){
@@ -655,7 +695,7 @@ function strumDetailPage(){
   h+='<div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:20px">'+strumBpm+' BPM</div>';
   // Strum hand animation
   h+='<div class="flex-center mb12">'+strumHandSVG(curDir,strumActive)+'</div>';
-  h+='<div class="card mb20" style="padding:24px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sp.pattern,curBeat)+'</div></div>';
+  h+='<div class="card mb20'+(strumActive?' live-timer-surface':'')+'" style="padding:24px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sp.pattern,curBeat)+'</div></div>';
   h+=renderStrumTonePicker(S.strumTone);
   h+='<button class="btn" onclick="act(\'toggleStrum\')" style="background:'+(strumActive?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(strumActive?"var(--text-primary)":"#fff")+'">'+(strumActive?"&#9208; Stop":"&#9654; Play Pattern")+'</button></div>';
   return h;
@@ -683,7 +723,7 @@ function songDetailPage(){
   h+=renderSongProgressionCard(sg.progression, songPlaying, songBeat);
   if(songPlaying) h+=renderSongCurrentChordCard(sg, songBeat, D, UI);
   // Strum hand + pattern
-  h+='<div class="card mb16" style="padding:16px"><h4 style="margin:0 0 8px;font-size:14px;color:var(--text-primary)">Strum Pattern</h4>';
+  h+='<div class="card mb16'+(songPlaying?' live-timer-surface':'')+'" style="padding:16px"><h4 style="margin:0 0 8px;font-size:14px;color:var(--text-primary)">Strum Pattern</h4>';
   h+='<div class="flex-center mb12">'+strumHandSVG(curDir,songPlaying)+'</div>';
   h+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sg.pattern,patBeat)+'</div></div>';
   h+=renderStrumTonePicker(S.strumTone);

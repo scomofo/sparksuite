@@ -853,13 +853,19 @@
     }
 
     if (a === "guidedConfirmStop") {
-      if (typeof confirm !== "function" || confirm("End session early?")) {
-        act("guidedStop");
-      }
+      setLegacyFields({ guidedStopConfirm: true }, false);
+      render();
+      return true;
+    }
+
+    if (a === "guidedCancelStop") {
+      setLegacyFields({ guidedStopConfirm: false }, false);
+      render();
       return true;
     }
 
     if (a === "guidedStop") {
+      setLegacyFields({ guidedStopConfirm: false }, false);
       clearTimeout(T.session);
       clearTimeout(T.drill);
       clearTimeout(T.daily);

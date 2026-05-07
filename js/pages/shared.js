@@ -171,7 +171,7 @@ function fingerExerciseCard(){
   var fingerExCount = typeof S.fingerExCount === "number"
     ? S.fingerExCount
     : (runtime && typeof runtime.legacyFingerExerciseCount === "number" ? runtime.legacyFingerExerciseCount : 0);
-  var h='<div class="card" style="margin-top:12px">';
+  var h='<div class="card'+(fingerExActive&&fingerExId?' live-timer-surface':'')+'" style="margin-top:12px">';
   h+='<h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#9995; Finger Exercises</h3>';
 
   // Active exercise

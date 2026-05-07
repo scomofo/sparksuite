@@ -82,6 +82,21 @@ test("guided pages ignore stale plan titles", function() {
   assert.ok(doneHtml.indexOf(">undefined<") === -1);
 });
 
+test("guided session micro-headings use lighter session typography", function() {
+  var sessionHtml = guidedSessionPage();
+  var styles = loadJS("styles.css");
+
+  assert.ok(sessionHtml.indexOf("guided-session-title") >= 0);
+  assert.ok(sessionHtml.indexOf("guided-card-heading") >= 0);
+  assert.ok(sessionHtml.indexOf("guided-pill") >= 0);
+  assert.ok(styles.indexOf(".guided-session-title") >= 0);
+  assert.ok(styles.indexOf(".guided-card-heading") >= 0);
+  assert.ok(styles.indexOf(".guided-pill") >= 0);
+  assert.ok(styles.indexOf("font-weight:700") >= 0);
+  assert.strictEqual(sessionHtml.indexOf("font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0"), -1);
+  assert.strictEqual(sessionHtml.indexOf("font-size:16px;color:"), -1);
+});
+
 test("guided page prefers block-aware curriculum v2 copy when present", function() {
   S.guidedPlan = {
     id: "gtr-d01",
@@ -447,6 +462,46 @@ test("guided page shows drill subphase progress on the active block card", funct
   assert.ok(shadowHtml.indexOf("About 1m 30s left in this block.") >= 0);
   assert.ok(shadowHtml.indexOf("onclick=\"act('guidedAdvancePhase')\"") >= 0);
   assert.ok(shadowHtml.indexOf("onclick=\"act('guidedSkipBlock')\"") >= 0);
+});
+
+test("guided page derives the active block from guided step when segment state is stale", function() {
+  S.guidedStep = "review";
+  S.guidedPlan = {
+    id: "gtr-d02",
+    num: 2,
+    title: "The D chord",
+    level: 1,
+    bpm: 80,
+    spark: { text: "Wake up." },
+    newMove: { text: "Try the shape.", chord: "D" }
+  };
+  sparkCore.getActiveSessionView = function() {
+    return {
+      plan: {
+        flow: "guided_session",
+        context: {
+          guidedPlan: S.guidedPlan,
+          guidedShellDurationSec: 600
+        },
+        segments: [
+          { id: "gtr-d02_warm_engine", label: "Warm Engine", durationSec: 90, completed: false, meta: { guidedBlockType: "warm_engine" } },
+          { id: "gtr-d02_drill", label: "Drill", durationSec: 180, completed: false, meta: { guidedBlockType: "drill" } },
+          { id: "gtr-d02_song", label: "Song Slice", durationSec: 240, completed: false, meta: { guidedBlockType: "song" } },
+          { id: "gtr-d02_cooldown", label: "Cooldown", durationSec: 90, completed: false, meta: { guidedBlockType: "cooldown" } }
+        ]
+      },
+      runtimeState: {
+        guidedActivityId: "gtr-d02-drill"
+      },
+      lastSessionOutcome: { xpAwarded: 30 }
+    };
+  };
+
+  var html = guidedSessionPage();
+  assert.ok(html.indexOf("Block 2 of 4") >= 0);
+  assert.ok(html.indexOf(">done<") >= 0);
+  assert.ok(html.indexOf(">now<") >= 0);
+  assert.ok(html.indexOf("Drill In Progress") >= 0);
 });
 
 test("guided page header reflects non-drill block themes", function() {
@@ -885,27 +940,50 @@ test("guided exit routes through a confirmation action", function() {
   assert.strictEqual(source.indexOf("if(confirm('End session early?'))act('guidedStop')"), -1);
 });
 
-test("guided confirmation action delegates to guidedStop only after confirm", function() {
+test("guided confirmation action opens an in-app confirmation without native confirm", function() {
   var handled;
   var acted = [];
+  var renderCalls = 0;
   global.window = global;
   global.S = {};
   global.T = {};
-  global.confirm = function() { return true; };
+  global.confirm = function() { throw new Error("native confirm should not be used"); };
   global.act = function(name) { acted.push(name); };
+  global.render = function() { renderCalls++; };
   global.registerSparkActionFamily = function(name, handler) {
     global.runSparkActionFamilies = handler;
   };
   global.eval(loadJS("js/actions/system_family.js"));
   handled = global.runSparkActionFamilies("guidedConfirmStop");
   assert.strictEqual(handled, true);
-  assert.deepStrictEqual(acted, ["guidedStop"]);
-
-  acted = [];
-  global.confirm = function() { return false; };
-  handled = global.runSparkActionFamilies("guidedConfirmStop");
-  assert.strictEqual(handled, true);
   assert.deepStrictEqual(acted, []);
+  assert.strictEqual(global.S.guidedStopConfirm, true);
+  assert.strictEqual(renderCalls, 1);
+});
+
+test("guided cancel stop closes the in-app confirmation", function() {
+  var handled;
+  var renderCalls = 0;
+  global.window = global;
+  global.S = { guidedStopConfirm: true };
+  global.T = {};
+  global.render = function() { renderCalls++; };
+  global.registerSparkActionFamily = function(name, handler) {
+    global.runSparkActionFamilies = handler;
+  };
+  global.eval(loadJS("js/actions/system_family.js"));
+  handled = global.runSparkActionFamilies("guidedCancelStop");
+  assert.strictEqual(handled, true);
+  assert.strictEqual(global.S.guidedStopConfirm, false);
+  assert.strictEqual(renderCalls, 1);
+});
+
+test("guided page renders in-app stop confirmation actions", function() {
+  S.guidedStopConfirm = true;
+  var html = guidedSessionPage();
+  assert.ok(html.indexOf("End this session?") >= 0);
+  assert.ok(html.indexOf("act('guidedCancelStop')") >= 0);
+  assert.ok(html.indexOf("act('guidedStop')") >= 0);
 });
 
 test("guided actions can resolve sparkCore from the global binding", function() {

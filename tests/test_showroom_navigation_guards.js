@@ -187,6 +187,31 @@ test("session registry prefers instrument guided session page over generic shell
   assert.deepStrictEqual(rendered, ["instrument"]);
 });
 
+test("session registry prefers instrument legacy session page for active chord practice", function() {
+  var rendered = [];
+  global.S.screen = "session";
+  global.S.sessionPlan = null;
+  global.S.sessionStep = null;
+  global.S.active = true;
+  global.S.chord = "C";
+  global.sessionPage = function() {
+    rendered.push("shared");
+    return "shared";
+  };
+  global.SparkInstruments.getPage = function(screen) {
+    assert.strictEqual(screen, "session");
+    return function() {
+      rendered.push("instrument");
+      return "instrument";
+    };
+  };
+
+  global.eval(loadJS("js/render_registry.js"));
+
+  assert.strictEqual(global._renderActiveScreenContent(), "instrument");
+  assert.deepStrictEqual(rendered, ["instrument"]);
+});
+
 test("showroom practice drills route start buttons through practiceStartItem", function() {
   var showroomSource = loadJS("js/showroom/spark-showroom.js");
   assert.ok(showroomSource.indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);

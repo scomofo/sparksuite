@@ -55,6 +55,18 @@ function getPerformanceSongCoreView() {
     : null;
 }
 
+function hasPerformSongWeakestPhraseTarget() {
+  return !!(
+    S &&
+    S.performChart &&
+    Array.isArray(S.performChart.phrases) &&
+    S.performChart.phrases.length &&
+    S.performResults &&
+    Array.isArray(S.performResults.phraseStats) &&
+    S.performResults.phraseStats.length
+  );
+}
+
 function performSongPage() {
   var performanceSongView = getPerformanceSongView();
   var song = performanceSongView.song;
@@ -214,9 +226,13 @@ function performSongPage() {
   h += '<div class="card" style="padding:14px;border-radius:18px;border:1px solid rgba(255,138,92,.18);background:linear-gradient(180deg,rgba(28,17,18,.88),rgba(13,11,15,.92));box-shadow:0 18px 36px rgba(0,0,0,.24)">';
   h += '<div style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Play</div>';
   h += '<div class="flex-col" style="gap:10px">';
-  h += '<button class="btn" onclick="act(\'performStartFromSong\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:15px 16px;font-size:16px;font-weight:800;box-shadow:0 14px 28px rgba(255,107,107,.22)">&#127918; Start Performance</button>';
-  h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#37d6c8,#4ECDC4);color:#083232">&#128170; Practice Weakest Phrase</button>';
-  h += '<button class="btn btn-sm" onclick="act(\'openPerformCalibration\')" style="background:var(--input-bg);color:var(--text-secondary)">&#9881; Calibrate Timing</button>';
+  h += '<button class="btn perform-song-play-btn perform-song-play-btn-primary" onclick="act(\'performStartFromSong\')">&#127918; Start Performance</button>';
+  if (hasPerformSongWeakestPhraseTarget()) {
+    h += '<button class="btn perform-song-play-btn perform-song-play-btn-secondary" onclick="act(\'performRetryPhrase\')">&#128170; Practice Weakest Phrase</button>';
+  } else {
+    h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--text-muted);font-size:12px;font-weight:700">Finish a run to unlock weakest-phrase practice.</div>';
+  }
+  h += '<button class="btn btn-sm perform-song-play-btn perform-song-play-btn-utility" onclick="act(\'openPerformCalibration\')">&#9881; Calibrate Timing</button>';
   h += '</div>';
   h += '</div>';
 

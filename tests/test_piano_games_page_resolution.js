@@ -160,6 +160,28 @@ test("drill tab ignores stale transition tip text", function() {
   assert.ok(html.indexOf("💡") === -1 || html.indexOf("undefined") === -1);
 });
 
+test("active timed piano game cards suppress entrance animations during timer ticks", function() {
+  S.drillActive = true;
+  S.drillChords = ["C", "G"];
+  S.drillIdx = 0;
+  S.drillTimer = 29;
+  var drillHtml = drillTab();
+
+  S.dailyActive = true;
+  S.dailyType = "daily";
+  S.dailyTimer = 28;
+  S.dailyScore = 1;
+  S.chord = "C";
+  pianoGamesTab();
+  var dailyHtml = dailyTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(drillHtml.indexOf("live-timer-surface") >= 0);
+  assert.ok(dailyHtml.indexOf("live-timer-surface") >= 0);
+  assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
+  assert.ok(styles.indexOf("animation:none") >= 0);
+});
+
 test("rhythm tab ignores malformed BPM values", function() {
   S._gameTab = "rhythm";
   S.rhythmActive = false;

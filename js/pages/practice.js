@@ -340,21 +340,24 @@ function renderHomeTabBar(instTabs) {
 }
 
 function getSharedHomeTabRenderers() {
+  var sharedPractice = typeof SparkSharedPracticeRenderers !== "undefined" ? SparkSharedPracticeRenderers : null;
+  var sharedGames = typeof SparkSharedGameRenderers !== "undefined" ? SparkSharedGameRenderers : null;
+  var sharedTools = typeof SparkSharedToolRenderers !== "undefined" ? SparkSharedToolRenderers : null;
   return {
     practice: typeof practiceTab === "function" ? practiceTab : null,
-    drill: typeof drillTab === "function" ? drillTab : null,
-    daily: typeof dailyTab === "function" ? dailyTab : null,
-    quiz: typeof quizTab === "function" ? quizTab : null,
-    ear: typeof earTrainTab === "function" ? earTrainTab : null,
+    drill: sharedPractice && typeof sharedPractice.drillTab === "function" ? sharedPractice.drillTab : (typeof drillTab === "function" ? drillTab : null),
+    daily: sharedPractice && typeof sharedPractice.dailyTab === "function" ? sharedPractice.dailyTab : (typeof dailyTab === "function" ? dailyTab : null),
+    quiz: sharedPractice && typeof sharedPractice.quizTab === "function" ? sharedPractice.quizTab : (typeof quizTab === "function" ? quizTab : null),
+    ear: sharedPractice && typeof sharedPractice.earTrainTab === "function" ? sharedPractice.earTrainTab : (typeof earTrainTab === "function" ? earTrainTab : null),
     strum: typeof strumTab === "function" ? strumTab : null,
     songs: typeof songsTab === "function" ? songsTab : null,
-    rhythm: typeof rhythmTab === "function" ? rhythmTab : null,
-    runner: typeof runnerTab === "function" ? runnerTab : null,
-    build: typeof buildTab === "function" ? buildTab : null,
-    tuner: typeof tunerTab === "function" ? tunerTab : null,
+    rhythm: sharedGames && typeof sharedGames.rhythmTab === "function" ? sharedGames.rhythmTab : (typeof rhythmTab === "function" ? rhythmTab : null),
+    runner: sharedGames && typeof sharedGames.runnerTab === "function" ? sharedGames.runnerTab : (typeof runnerTab === "function" ? runnerTab : null),
+    build: sharedGames && typeof sharedGames.buildTab === "function" ? sharedGames.buildTab : (typeof buildTab === "function" ? buildTab : null),
+    tuner: sharedTools && typeof sharedTools.tunerTab === "function" ? sharedTools.tunerTab : (typeof tunerTab === "function" ? tunerTab : null),
     dual: typeof dualTab === "function" ? dualTab : null,
-    stats: typeof statsTab === "function" ? statsTab : null,
-    guide: typeof guideTab === "function" ? guideTab : null,
+    stats: sharedTools && typeof sharedTools.statsTab === "function" ? sharedTools.statsTab : (typeof statsTab === "function" ? statsTab : null),
+    guide: sharedTools && typeof sharedTools.guideTab === "function" ? sharedTools.guideTab : (typeof guideTab === "function" ? guideTab : null),
     games: typeof gamesTab === "function" ? gamesTab : null,
     tools: typeof toolsTab === "function" ? toolsTab : null
   };
@@ -765,7 +768,7 @@ function renderPracticePlanSummaryCard(plan) {
     planProgress = getPracticeSummaryProgress(plan);
     h += '<div class="card mb20" style="border:2px solid '+(planProgress.completedItems>=planProgress.totalItems?"#4ECDC4":"#45B7D1")+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
+    h += '<h3 class="practice-card-heading">&#128221; Today\'s Practice Plan</h3>';
     h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+planProgress.completedItems+'/'+planProgress.totalItems+'</span>';
     h += '</div>';
     if (activeGuided) {
@@ -787,9 +790,9 @@ function renderPracticePlanSummaryCard(plan) {
       item = plan.items[pi];
       if(!isRenderablePracticeSummaryItem(item)) continue;
       isCompleted = isCompletedPracticeSummaryItem(item);
-      h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
+      h += '<div class="practice-summary-item">';
       h += '<span style="font-size:16px">'+(isCompleted?"&#9989;":"&#9744;")+'</span>';
-      h += '<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(isCompleted?"var(--text-muted)":"var(--text-primary)")+';'+(isCompleted?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
+      h += '<div class="practice-summary-copy"><div style="font-size:13px;font-weight:700;color:'+(isCompleted?"var(--text-muted)":"var(--text-primary)")+';'+(isCompleted?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
       h += '<div style="font-size:11px;color:var(--text-dim)">'+escHTML(getPracticeSummaryItemDesc(item))+'</div></div>';
       if(!isCompleted){
         itemId = normalizePracticeSummaryItemId(item ? item.id : null);
@@ -807,7 +810,7 @@ function renderPracticePlanSummaryCard(plan) {
   if (activeGuided) {
     h += '<div class="card mb20" style="border:2px solid #4ECDC4">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Guided Session Flow</h3>';
+    h += '<h3 class="practice-card-heading">&#128221; Guided Session Flow</h3>';
     h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML(getPracticeGuidedShellLabel(activeGuided, "Guided shell")) + '</span>';
     h += '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Your live guided shell is the plan right now.</div>';
@@ -823,7 +826,7 @@ function renderPracticePlanSummaryCard(plan) {
   if (activeShell) {
     h += '<div class="card mb20" style="border:2px solid #45B7D1">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Practice Session Live</h3>';
+    h += '<h3 class="practice-card-heading">&#128221; Practice Session Live</h3>';
     h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML("Block " + (activeShell.activeIndex + 1) + "/" + activeShell.blockCount) + '</span>';
     h += '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">The shared session shell is already in motion.</div>';
@@ -840,7 +843,7 @@ function renderPracticePlanSummaryCard(plan) {
     return h;
   }
   h += '<div class="card mb20">';
-  h += '<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
+  h += '<h3 class="practice-card-heading" style="margin-bottom:8px">&#128221; Today\'s Practice Plan</h3>';
   h += '<div style="font-size:12px;color:var(--text-dim)">No practice plan yet.</div>';
   h += '</div>';
   return h;
@@ -852,7 +855,7 @@ function renderPracticeQuickStartCard() {
   var h = '<div class="card mb12" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);border:none;text-align:center;padding:20px">';
   h += '<div style="font-size:28px;margin-bottom:4px">&#9889;</div>';
   if (activeGuided) {
-    h += '<div style="font-size:16px;font-weight:900;color:#fff">Guided Session Live</div>';
+    h += '<div class="practice-quick-title">Guided Session Live</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.88);margin:4px 0 6px">' + escHTML(activeGuided.title) + '</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(getPracticeGuidedStatusWithShell(activeGuided, { shellFallback: "" })) + '</div>';
     h += '<div style="display:flex;gap:8px;justify-content:center">';
@@ -860,7 +863,7 @@ function renderPracticeQuickStartCard() {
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Quick Chord</button>';
     h += '</div>';
   } else if (activeShell) {
-    h += '<div style="font-size:16px;font-weight:900;color:#fff">Practice Session Live</div>';
+    h += '<div class="practice-quick-title">Practice Session Live</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.88);margin:4px 0 6px">' + escHTML(activeShell.title) + '</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(activeShell.statusLabel + " • Block " + (activeShell.activeIndex + 1) + " of " + activeShell.blockCount) + '</div>';
     h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
@@ -868,14 +871,14 @@ function renderPracticeQuickStartCard() {
     h += '<button onclick="act(\'openPlan\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Open Plan</button>';
     h += '</div>';
   } else if(S.lastChordName){
-    h += '<div style="font-size:16px;font-weight:900;color:#fff">Pick Up Where You Left Off</div>';
+    h += '<div class="practice-quick-title">Pick Up Where You Left Off</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 12px">Continue practicing: <strong>'+escHTML(S.lastChordName)+'</strong></div>';
     h += '<div style="display:flex;gap:8px;justify-content:center">';
     h += '<button onclick="act(\'resumeSession\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Continue</button>';
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Random</button>';
     h += '</div>';
   } else {
-    h += '<div style="font-size:16px;font-weight:900;color:#fff">Quick Start</div>';
+    h += '<div class="practice-quick-title">Quick Start</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 12px">Jump right in &mdash; we\'ll pick a chord for you!</div>';
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.5);border-radius:14px;padding:10px 32px;font-size:16px;font-weight:800;color:#fff;cursor:pointer">Let\'s Go!</button>';
   }
@@ -1343,3 +1346,13 @@ function startPracticeItem(id){
     }
   }
 }
+
+(function(root){
+  if(!root)return;
+  root.SparkSharedPracticeRenderers = {
+    drillTab: drillTab,
+    dailyTab: dailyTab,
+    quizTab: quizTab,
+    earTrainTab: earTrainTab
+  };
+})(typeof window !== "undefined" ? window : (typeof global !== "undefined" ? global : null));

@@ -7,7 +7,12 @@
   if (!piano) return;
 
   var pages = piano.pages || {};
-  if (typeof pianoSessionPage === "function") pages[SCR.SESSION] = pianoSessionPage;
+  if (typeof pianoSessionPage === "function") pages[SCR.SESSION] = function() {
+    if (typeof S !== "undefined" && S && S.active && S.chord && !S.sessionPlan && typeof legacySessionHTML === "function") {
+      return legacySessionHTML();
+    }
+    return pianoSessionPage();
+  };
   if (typeof pianoPerformPage === "function") pages[SCR.PERFORM] = pianoPerformPage;
   if (typeof pianoPerformDonePage === "function") pages[SCR.PERFORM_DONE] = pianoPerformDonePage;
   if (typeof pianoPerformSongPage === "function") pages[SCR.PERFORM_SONG] = pianoPerformSongPage;
