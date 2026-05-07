@@ -134,10 +134,10 @@
     if (charts.length) {
       h += '<div class="card mb12"><div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Performance Charts</div>';
       for (var c = 0; c < charts.length; c++) {
-        h += '<div style="padding:8px 0;border-top:' + (c ? '1px solid var(--border)' : '0') + ';display:flex;justify-content:space-between;align-items:center;gap:10px">';
-        h += '<div><div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(charts[c].title) + '</div>';
+        h += '<div class="instrument-performance-row" style="border-top:' + (c ? '1px solid var(--border)' : '0') + '">';
+        h += '<div class="instrument-performance-copy"><div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(charts[c].title) + '</div>';
         h += '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(charts[c].artist || "") + ' | ' + escHTML(String(charts[c].bpm || "--")) + ' BPM</div></div>';
-        h += '<button class="btn btn-sm" onclick="act(\'openPerform\',\'' + charts[c].id + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff">Perform</button>';
+        h += '<button class="btn btn-sm instrument-performance-btn instrument-performance-btn-ukulele" onclick="act(\'openPerform\',\'' + charts[c].id + '\')">Perform</button>';
         h += '</div>';
       }
       h += '</div>';
