@@ -88,6 +88,115 @@
     return true;
   }
 
+  function getUkuleleChordPool() {
+    var pool = [];
+    var levels = window.SparkUkuleleLevelChords || {};
+    var maxLevel = typeof S !== "undefined" && S && S.level ? S.level : 1;
+    var level;
+    var i;
+    if (Array.isArray(window.SparkUkuleleAllChords) && window.SparkUkuleleAllChords.length) {
+      for (level = 1; level <= maxLevel; level++) {
+        if (!Array.isArray(levels[level])) continue;
+        for (i = 0; i < levels[level].length; i++) pool.push(levels[level][i]);
+      }
+      if (pool.length < 3) pool = window.SparkUkuleleAllChords.slice(0, Math.max(3, Math.min(window.SparkUkuleleAllChords.length, 6)));
+    }
+    return pool;
+  }
+
+  function startUkuleleDrill() {
+    var pool = getUkuleleChordPool();
+    if (pool.length < 2) return true;
+    if (typeof S !== "undefined" && S) {
+      S.activeInstrument = "ukespark";
+      S.instrument = "ukulele";
+      S.instrumentId = "ukespark";
+      S.currentInstrument = "ukulele";
+      S.selectedInstrument = "ukespark";
+      S.drillChords = pool.slice(0, Math.min(4, pool.length));
+      S.drillIdx = 0;
+      S.drillTimer = 60;
+      S.drillSwitches = 0;
+      S.drillActive = true;
+      S.screen = typeof SCR !== "undefined" && SCR && SCR.DRILL ? SCR.DRILL : "drill";
+    }
+    if (typeof window !== "undefined" && typeof window.openLegacyPracticeDrillRequest === "function") {
+      window.openLegacyPracticeDrillRequest({
+        durationSec: 60,
+        chordNames: pool.slice(0, Math.min(4, pool.length)).map(function(chord) { return chord.name; }),
+        instrument: "ukulele",
+        instrumentId: "ukespark"
+      });
+    }
+    if (typeof T !== "undefined" && T && typeof tickD === "function") {
+      if (T.drill) clearTimeout(T.drill);
+      T.drill = setTimeout(tickD, 1000);
+    }
+    if (typeof render === "function") render();
+    return true;
+  }
+
+  function startUkuleleQuiz() {
+    var pool = getUkuleleChordPool();
+    var q;
+    if (!pool.length) return true;
+    q = pool[0];
+    if (typeof S !== "undefined" && S) {
+      S.activeInstrument = "ukespark";
+      S.instrument = "ukulele";
+      S.instrumentId = "ukespark";
+      S.currentInstrument = "ukulele";
+      S.selectedInstrument = "ukespark";
+      S.quizScore = 0;
+      S.quizTotal = 0;
+      S.quizStreak = 0;
+      S.quizQ = q;
+      S.quizOpts = pool.slice(0, Math.min(3, pool.length));
+      S.quizAns = null;
+      S.screen = typeof SCR !== "undefined" && SCR && SCR.QUIZ ? SCR.QUIZ : "quiz";
+    }
+    if (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
+      window.sparkCore.syncLegacyQuizRuntimeState({
+        question: q,
+        options: pool.slice(0, Math.min(3, pool.length)),
+        answer: null,
+        score: 0,
+        total: 0,
+        streak: 0
+      });
+    }
+    if (typeof render === "function") render();
+    return true;
+  }
+
+  function answerUkuleleQuiz(chordName) {
+    var ok;
+    var nextScore;
+    var nextTotal;
+    var nextStreak;
+    if (typeof S === "undefined" || !S || !S.quizQ) return true;
+    ok = chordName === S.quizQ.name;
+    nextScore = (S.quizScore || 0) + (ok ? 1 : 0);
+    nextTotal = (S.quizTotal || 0) + 1;
+    nextStreak = ok ? ((S.quizStreak || 0) + 1) : 0;
+    S.quizAns = chordName;
+    S.quizScore = nextScore;
+    S.quizTotal = nextTotal;
+    S.quizStreak = nextStreak;
+    if (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
+      window.sparkCore.syncLegacyQuizRuntimeState({
+        question: S.quizQ,
+        options: S.quizOpts || [],
+        answer: chordName,
+        score: nextScore,
+        total: nextTotal,
+        streak: nextStreak
+      });
+    }
+    if (typeof render === "function") render();
+    return true;
+  }
+
   function renderUkuleleChordSVG(chordObj, size, label, animate) {
     // Delegate to the new pipeline: normalizer -> validator -> generic renderer
     return ukuleleSVG(chordObj, { width: size, label: label, animate: !!animate });
@@ -305,8 +414,19 @@
 
     pages: {},
 
-    act: function(a) {
+    act: function(a, v) {
       if (a === "quickStart") return openUkuleleQuickStart();
+      if (a === "startDrill") return startUkuleleDrill();
+      if (a === "drillSwitch") {
+        if (typeof S !== "undefined" && S && Array.isArray(S.drillChords) && S.drillChords.length) {
+          S.drillIdx = ((S.drillIdx || 0) + 1) % S.drillChords.length;
+          S.drillSwitches = (S.drillSwitches || 0) + 1;
+          if (typeof render === "function") render();
+        }
+        return true;
+      }
+      if (a === "startQuiz") return startUkuleleQuiz();
+      if (a === "answerQuiz") return answerUkuleleQuiz(v);
       return false;
     },
 
