@@ -150,6 +150,12 @@ function loadPerformanceChart(chartId) {
   if (meta && meta.sourceType === "generated_catalog") {
     return loadGeneratedCatalogPerformanceChart(meta);
   }
+  if (window.PERFORMANCE_CHART_DATA && window.PERFORMANCE_CHART_DATA[chartId]) {
+    return Promise.resolve(window.PERFORMANCE_CHART_DATA[chartId])
+      .then(function(chartDefinition) {
+        return applyCanonicalPerformanceChartAudio(normalizePerformanceChartDefinition(chartDefinition), meta && meta.songId);
+      });
+  }
   return fetch("data/performance_charts/" + chartId + ".json")
     .then(function(r) {
       if (!r.ok) throw new Error("Chart not found: " + chartId);

@@ -65,7 +65,7 @@ function createWindow() {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
+        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' data: http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
       }
     });
   });

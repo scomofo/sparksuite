@@ -12,11 +12,17 @@ function summarizeConsoleMessage(msg) {
   return msg.type() + ": " + msg.text();
 }
 
+function isIgnorableConsoleMessage(msg) {
+  var text = msg.text();
+  return msg.type() === "warning" && text.indexOf("GL Driver Message") >= 0 && text.indexOf("ReadPixels") >= 0;
+}
+
 function trackConsoleProblems(page, consoleProblems) {
   page.on("pageerror", function(err) {
     consoleProblems.push("pageerror: " + err.message);
   });
   page.on("console", function(msg) {
+    if (isIgnorableConsoleMessage(msg)) return;
     if (msg.type() === "error" || msg.type() === "warning") {
       consoleProblems.push(summarizeConsoleMessage(msg));
     }
@@ -83,6 +89,21 @@ async function assertVocalsLessonLaunch(page) {
   assert.ok(text.indexOf("Quick warmup") >= 0, "vocal lesson plan did not keep the supporting warmup");
   await page.getByLabel("Back to launcher").click();
   await settle(page, 500);
+}
+
+async function assertInstrumentPerformanceLaunch(page, label) {
+  await page.goto(appUrl("browserPerformanceSmoke" + label));
+  await page.waitForLoadState("domcontentloaded");
+  await settle(page, 500);
+  await dismissFirstRun(page);
+  await launchInstrument(page, label);
+  await openTab(page, "songs");
+  var performButtons = page.locator("#app button").filter({ hasText: "PERFORM" });
+  assert.ok(await performButtons.count() >= 1, label + " songs tab did not expose performance buttons");
+  await performButtons.first().click();
+  await settle(page, 900);
+  var text = (await page.locator("#app").innerText()).trim();
+  assert.ok(/performance|pause|stop|combo|accuracy/i.test(text), label + " performance button did not open a performance session");
 }
 
 async function openLauncherView(page, view) {
@@ -199,6 +220,8 @@ async function main() {
   await scanInstrumentTabs(page, "Ukulele", ["practice", "drill", "daily", "quiz", "ear", "strum", "songs", "rhythm", "runner", "build", "tuner", "stats", "guide"]);
   await scanInstrumentTabs(page, "Vocals", ["practice", "stats"]);
   await assertVocalsLessonLaunch(page);
+  await assertInstrumentPerformanceLaunch(page, "Bass");
+  await assertInstrumentPerformanceLaunch(page, "Ukulele");
 
   var mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
   trackConsoleProblems(mobilePage, consoleProblems);
