@@ -60,7 +60,8 @@
     return lessons[0] || null;
   }
 
-  function startDrumLesson(lessonId) {
+  function openDrumPracticePlan(lessonId) {
+    var request;
     if (!lessonId) return false;
     ensureDrumRuntime();
 
@@ -70,15 +71,39 @@
       }
     } catch (e) {}
 
+    request = {
+      instrument: "drums",
+      instrumentId: "drumspark",
+      instrumentType: "drums",
+      appId: "drumspark",
+      lessonId: lessonId,
+      forceRebuild: true,
+      source: "drums-quick-start"
+    };
+
     if (typeof S !== "undefined") {
       S.activeInstrument = "drumspark";
+      S.instrument = "drums";
+      S.instrumentId = "drumspark";
+      S.currentInstrument = "drums";
+      S.selectedInstrument = "drumspark";
+      S.__sparkForcedLessonRequest = request;
       S.tab = "practice";
+      S.screen = typeof SCR !== "undefined" && SCR && SCR.PLAN ? SCR.PLAN : "plan";
     }
 
-    if (typeof act === "function") {
+    if (typeof openPracticePlanScreenRequest === "function") {
+      openPracticePlanScreenRequest(request);
+    } else if (typeof act === "function") {
       act("openPracticePlan", lessonId);
     }
 
+    if (typeof render === "function") render();
+    return true;
+  }
+
+  function startDrumLesson(lessonId) {
+    openDrumPracticePlan(lessonId);
     return false;
   }
 
@@ -162,6 +187,12 @@
       { id: "stats", label: "Stats" }
     ],
     tabRenderers: { practice: drumPracticeTab },
+    act: function(action) {
+      var next;
+      if (action !== "quickStart") return false;
+      next = getNextDrumLesson();
+      return openDrumPracticePlan(next && next.id);
+    },
     stemMutePreset: {},
     init: function() {
       ensureDrumRuntime();

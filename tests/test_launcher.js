@@ -597,6 +597,50 @@ test('vocals lesson start opens the practice plan screen', function() {
   assert.strictEqual(planCalls[0].appId, 'vocalspark');
 });
 
+test('drums register routes hero quick start into the practice plan', function() {
+  var planCalls = [];
+  installMinimalDocument();
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
+  global.SCR = { PLAN: 'plan' };
+  global.openPracticePlanScreenRequest = function(payload) {
+    planCalls.push(payload || {});
+    return payload || {};
+  };
+  global.render = function() {};
+  eval(loadJS('js/sparksuite/instruments/drums/drums_skill_tree.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_curriculum.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_lessons.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_exercises.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_patterns.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_songs.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_kits.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_mapping.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_notation.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_progression.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_packs.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_chart_library.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_runtime_adapter.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_rhythm_adapter.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_module.js'));
+  eval(loadJS('js/instruments/drums/register.js'));
+
+  var all = SparkInstruments.getAll();
+  var drums = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === 'drumspark') drums = all[i];
+  }
+
+  assert.ok(drums);
+  assert.strictEqual(typeof drums.act, 'function');
+  assert.strictEqual(drums.act('quickStart'), true);
+  assert.strictEqual(S.screen, 'plan');
+  assert.strictEqual(S.activeInstrument, 'drumspark');
+  assert.strictEqual(planCalls.length, 1);
+  assert.strictEqual(planCalls[0].instrumentId, 'drumspark');
+  assert.strictEqual(planCalls[0].instrumentType, 'drums');
+  assert.ok(planCalls[0].lessonId);
+});
+
 test('bass register exposes a dedicated songs tab renderer', function() {
   global.getPerformanceChartLibrary = function(options) {
     if (options && options.instrument === 'bass') {
