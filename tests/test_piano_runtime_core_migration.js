@@ -49,6 +49,9 @@ function resetState() {
     sessionPlan: null,
     sessionStep: null,
     screen: "home",
+    _showroomOverride: null,
+    _showroomLessonId: null,
+    launcherView: null,
     fingerWarmUpDone: false,
     paused: false,
     performDifficulty: "normal",
@@ -109,6 +112,7 @@ function resetState() {
   global.dashboardRefreshCalls = [];
   global.dashboardInitCalls = [];
   global.dashboardChallengeRewardCalls = [];
+  delete global.runSparkActionFamilies;
 
   global.saveState = function() { saveStateCalls++; };
   global.render = function() { renderCalls++; };
@@ -423,6 +427,52 @@ test("start_guided_session delegates to sparkCore and syncs piano session aliase
   assert.strictEqual(S.sessionStep, "spark");
   assert.strictEqual(S.screen, "session");
   assert.strictEqual(S.adaptiveBpm, 84);
+});
+
+test("start_guided_session honors requested session and clears showroom override", function() {
+  S._showroomOverride = "lesson";
+  S._showroomLessonId = "1";
+  S.launcherView = "path";
+
+  pianoAct("start_guided_session", "1");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].payload.sessionNum, 1);
+  assert.strictEqual(S._showroomOverride, null);
+  assert.strictEqual(S._showroomLessonId, null);
+  assert.strictEqual(S.launcherView, null);
+  assert.strictEqual(S.screen, "session");
+});
+
+test("piano guided actions let the shared action family own showroom lesson launches", function() {
+  var familyCalls = [];
+  global.runSparkActionFamilies = function(action, value) {
+    familyCalls.push([action, value]);
+    return true;
+  };
+
+  pianoAct("start_guided_session", "1");
+  pianoAct("resume_guided_session");
+
+  assert.deepStrictEqual(familyCalls, [
+    ["start_guided_session", "1"],
+    ["resume_guided_session", undefined]
+  ]);
+  assert.deepStrictEqual(sparkCoreCalls, []);
+  assert.strictEqual(S.screen, "home");
+});
+
+test("start_guided_session legacy fallback honors requested piano lesson number", function() {
+  delete global.openGuidedSessionRequest;
+  global.sparkCore = null;
+  S.currentSession = 2;
+
+  pianoAct("start_guided_session", "1");
+
+  assert.strictEqual(S.currentSession, 1);
+  assert.strictEqual(S.sessionPlan.title, "Session 1");
+  assert.strictEqual(S.sessionStep, "spark");
+  assert.strictEqual(S.screen, "session");
 });
 
 test("resume_guided_session reopens the active piano guided shell without restarting it", function() {

@@ -37,10 +37,17 @@ function getGuitarActiveGuidedView() {
     : null;
 }
 
+function clearGuitarShowroomRoute() {
+  S._showroomOverride = null;
+  S._showroomLessonId = null;
+  S.launcherView = null;
+}
+
 function syncGuitarGuidedViewToState(view) {
   var guidedPlan = view && view.plan && view.plan.context ? view.plan.context.guidedPlan : null;
   var runtimeState = view && view.runtimeState ? view.runtimeState : {};
   if (!guidedPlan) return false;
+  clearGuitarShowroomRoute();
   if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
     SparkProgressBridge.syncGuidedSessionToState(view.plan);
   } else {
@@ -378,6 +385,7 @@ function guitarAct(a, v) {
         sessionNum: guidedSession
       });
       if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+        clearGuitarShowroomRoute();
         S.screen = SCR.GUIDED; snd("start"); render(); saveState();
         return true;
       }
@@ -388,6 +396,7 @@ function guitarAct(a, v) {
         sessionNum: guidedSession
       });
       if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+        clearGuitarShowroomRoute();
         S.screen = SCR.GUIDED; snd("start"); render(); saveState();
         return true;
       }
@@ -404,6 +413,7 @@ function guitarAct(a, v) {
     } else {
       S.guidedPlan = plan; S.guidedStep = "spark"; S.newMovePhase = null; S.guidedPaused = false;
     }
+    clearGuitarShowroomRoute();
     S.screen = SCR.GUIDED; snd("start"); render();
     return true;
   }

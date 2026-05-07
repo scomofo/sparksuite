@@ -27,6 +27,9 @@ function resetState() {
   global.S = {
     guidedSession: 2,
     screen: "home",
+    _showroomOverride: null,
+    _showroomLessonId: null,
+    launcherView: null,
     metronomeOn: false,
     completedGuidedSessions: [],
     xpToast: null
@@ -140,11 +143,18 @@ eval(loadJS("js/instruments/bass/app.js"));
 console.log("\n--- Bass Runtime Core Migration ---");
 
 test("guidedStart delegates to shared guided session helper", function() {
+  S._showroomOverride = "lesson";
+  S._showroomLessonId = "2";
+  S.launcherView = "path";
+
   bassAct("start_guided_session", "2");
 
   assert.strictEqual(sparkCoreCalls.length, 1);
   assert.strictEqual(sparkCoreCalls[0].fn, "openGuidedSession");
   assert.strictEqual(sparkCoreCalls[0].payload.sessionNum, 2);
+  assert.strictEqual(S._showroomOverride, null);
+  assert.strictEqual(S._showroomLessonId, null);
+  assert.strictEqual(S.launcherView, null);
   assert.strictEqual(S.screen, "guided");
   assert.strictEqual(saveStateCalls, 1);
 });

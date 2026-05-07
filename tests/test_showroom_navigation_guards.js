@@ -39,6 +39,7 @@ function resetEnvironment() {
   };
   global.SCR = {
     HOME: "home",
+    SESSION: "session",
     SETTINGS: "settings",
     SONG: "song",
     COMPLETE: "complete"
@@ -152,6 +153,38 @@ test("legacy piano dispatcher delegates practiceStartItem back to shared familie
   var pianoSource = loadJS("js/instruments/piano/app.js");
   assert.ok(pianoSource.indexOf('case "practiceStartItem":') >= 0);
   assert.ok(pianoSource.indexOf("window.runSparkActionFamilies(action, param)") >= 0);
+});
+
+test("instrument guided handlers clear stale showroom routing", function() {
+  var guitarSource = loadJS("js/instruments/guitar/app.js");
+  var bassSource = loadJS("js/instruments/bass/app.js");
+  assert.ok(guitarSource.indexOf("function clearGuitarShowroomRoute()") >= 0);
+  assert.ok(guitarSource.indexOf("clearGuitarShowroomRoute();") >= 0);
+  assert.ok(bassSource.indexOf("function clearBassShowroomRoute()") >= 0);
+  assert.ok(bassSource.indexOf("clearBassShowroomRoute();") >= 0);
+});
+
+test("session registry prefers instrument guided session page over generic shell", function() {
+  var rendered = [];
+  global.S.screen = "session";
+  global.S.sessionPlan = { title: "Guided" };
+  global.S.sessionStep = "spark";
+  global.sessionPage = function() {
+    rendered.push("shared");
+    return "shared";
+  };
+  global.SparkInstruments.getPage = function(screen) {
+    assert.strictEqual(screen, "session");
+    return function() {
+      rendered.push("instrument");
+      return "instrument";
+    };
+  };
+
+  global.eval(loadJS("js/render_registry.js"));
+
+  assert.strictEqual(global._renderActiveScreenContent(), "instrument");
+  assert.deepStrictEqual(rendered, ["instrument"]);
 });
 
 test("showroom practice drills route start buttons through practiceStartItem", function() {

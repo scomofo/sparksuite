@@ -14,7 +14,7 @@ window.addHistory = function(t, d) { return addHistory(t, d); };
 window.recordTransition = function(a, b) { return recordTransition(a, b); };
 window.genQuiz = function() { return genQuiz(); };
 window.shuffleArray = function(arr) { return shuffleArray(arr); };
-window.startGuidedSession = function() { return startGuidedSession(); };
+window.startGuidedSession = function(requestedSession) { return startGuidedSession(requestedSession); };
 window.advanceSessionStep = function() { return advanceSessionStep(); };
 window.adaptBpm = function() { return adaptBpm(); };
 window.checkLevelUp = function() { return checkLevelUp(); };
@@ -479,10 +479,12 @@ function buildTick() {
 }
 
 // ── Guided session flow ──
-function startGuidedSession() {
+function startGuidedSession(requestedSession) {
+  var guidedSession = parseInt(requestedSession, 10);
+  if (isNaN(guidedSession) || guidedSession < 1) guidedSession = parseInt(S.currentSession, 10);
+  if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
+
   if (typeof window.openGuidedSessionRequest === "function") {
-    var guidedSession = parseInt(S.currentSession, 10);
-    if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
     var corePlan = window.openGuidedSessionRequest({
       sessionNum: guidedSession
     });
@@ -495,8 +497,6 @@ function startGuidedSession() {
       return;
     }
   } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-    var guidedSession = parseInt(S.currentSession, 10);
-    if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
     var corePlan = window.sparkCore.startSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       sessionNum: guidedSession
@@ -511,6 +511,7 @@ function startGuidedSession() {
     }
   }
 
+  S.currentSession = guidedSession;
   var plan = getCurrentSessionPlan();
   if (!plan) { showToast("No more sessions!"); render(); return; }
 
@@ -573,6 +574,9 @@ function syncPianoGuidedPlanFromCore(plan) {
   S.guidedSession = guidedSession;
   S.currentSession = guidedSession;
   S.sessionPlan = guidedPlan;
+  S._showroomOverride = null;
+  S._showroomLessonId = null;
+  S.launcherView = null;
   S.screen = SCR.SESSION;
   S.sessionStep = "spark";
   S.guidedStep = "spark";
@@ -1037,10 +1041,12 @@ function act(action, param) {
       return;
 
     case "start_guided_session":
-      startGuidedSession();
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return;
+      startGuidedSession(param);
       return;
 
     case "resume_guided_session":
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return;
       resumeGuidedSession();
       return;
 

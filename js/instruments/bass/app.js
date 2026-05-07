@@ -61,6 +61,12 @@
       : null;
   }
 
+  function clearBassShowroomRoute() {
+    S._showroomOverride = null;
+    S._showroomLessonId = null;
+    S.launcherView = null;
+  }
+
   function syncBassPracticeShellRuntime(view) {
     var runtime = typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : (window && window.SparkSessionRuntime ? window.SparkSessionRuntime : null);
     var runtimeState = view && view.runtimeState ? view.runtimeState : null;
@@ -89,6 +95,7 @@
     var guidedPlan = view && view.plan && view.plan.context ? view.plan.context.guidedPlan : null;
     var runtimeState = view && view.runtimeState ? view.runtimeState : {};
     if (!guidedPlan) return false;
+    clearBassShowroomRoute();
     if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
       SparkProgressBridge.syncGuidedSessionToState(view.plan);
     } else {
@@ -269,6 +276,7 @@
           sessionNum: guidedSession
         });
         if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+          clearBassShowroomRoute();
           S.screen = SCR.GUIDED;
           snd("start");
           render();
@@ -282,6 +290,7 @@
           sessionNum: guidedSession
         });
         if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+          clearBassShowroomRoute();
           S.screen = SCR.GUIDED;
           snd("start");
           render();
@@ -304,6 +313,7 @@
         S.newMovePhase = null;
         S.guidedPaused = false;
       }
+      clearBassShowroomRoute();
       S.screen = SCR.GUIDED;
       snd("start");
       render();
