@@ -20,7 +20,16 @@ function extractField(code, field) {
   var idx = code.indexOf(field);
   if (idx < 0) return null;
   var rest = code.substring(idx + field.length);
-  var m = rest.match(/["']([^"']+)/);
+  var m = rest.match(/^\s*["']([^"']+)/);
+  var ident;
+  var constant;
+  if (m) return m[1];
+  ident = rest.match(/^\s*([A-Za-z_$][A-Za-z0-9_$]*)/);
+  if (ident) {
+    constant = new RegExp("\\b(?:var|let|const)\\s+" + ident[1] + "\\s*=\\s*[\"']([^\"']+)[\"']").exec(code);
+    if (constant) return constant[1];
+  }
+  m = rest.match(/["']([^"']+)/);
   return m ? m[1] : null;
 }
 
