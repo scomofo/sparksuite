@@ -239,6 +239,7 @@
     }
     if (typeof saveState === "function") saveState();
     if (typeof render === "function") render();
+    scrollLauncherTopSoon();
   }
 
   function launchInstrumentPerformance(appId) {
@@ -254,6 +255,7 @@
     }
     if (typeof saveState === "function") saveState();
     if (typeof render === "function") render();
+    scrollLauncherTopSoon();
   }
 
   function renderHero(featured, stats) {

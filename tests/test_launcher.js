@@ -213,6 +213,26 @@ test('renderLauncher wires hero and launcher utility actions', function() {
   assert.ok(html.indexOf("onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();act('launcherSelectInstrument','test_guitar')}\"") >= 0);
 });
 
+test('selectInstrument resets scroll after launching an instrument', function() {
+  var calls = [];
+  global.window.scrollTo = function(x, y) { calls.push([x, y]); };
+  global.window.requestAnimationFrame = function(fn) { fn(); };
+  global.S = { activeInstrument: null, launcherView: 'home', _showroomOverride: null };
+  global.SCR = { HOME: 'home' };
+  global.TAB = { PRACTICE: 'practice' };
+  global.render = function() {};
+  global.saveState = function() {};
+
+  SparkInstruments.register({
+    id: 'scroll_test_inst', instrument: 'guitar', name: 'Scroll Test', icon: 'S',
+    available: true, getData: function() { return {}; },
+    pages: {}, tabs: [], stemMutePreset: {}, init: function() {}
+  });
+  SparkInstruments.selectInstrument('scroll_test_inst');
+
+  assert.deepStrictEqual(calls[calls.length - 1], [0, 0]);
+});
+
 test('piano songs build helper stays namespaced so shared build tab is not shadowed', function() {
   var source = loadJS('js/instruments/piano/pages/songs.js');
   assert.ok(source.indexOf('case "build":   html += pianoBuildTab(); break;') >= 0);

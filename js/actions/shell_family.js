@@ -21,6 +21,15 @@
     });
   }
 
+  function scrollTopSoon() {
+    if (typeof window === "undefined" || typeof window.scrollTo !== "function") return;
+    if (typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(function() { window.scrollTo(0, 0); });
+      return;
+    }
+    setTimeout(function() { window.scrollTo(0, 0); }, 0);
+  }
+
   function handleShellAction(a, v) {
     if (a === "openLauncherView") {
       if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.openLauncherView === "function") {
@@ -91,6 +100,7 @@
       stopAllTimers();
       if (v === TAB.SONGS && S.songsSubTab === "community") fetchCommunity();
       render();
+      scrollTopSoon();
       return true;
     }
 
