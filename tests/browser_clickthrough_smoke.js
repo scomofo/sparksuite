@@ -234,7 +234,7 @@ async function assertMobileActionControlsFit(page) {
 }
 
 async function assertLauncherActionTargetsFit(page) {
-  var launcherViews = ["learn", "profile", "performance"];
+  var launcherViews = ["library", "learn", "tools", "practice", "profile", "performance"];
   for (var i = 0; i < launcherViews.length; i++) {
     await openLauncherView(page, launcherViews[i]);
     await page.evaluate(function() { window.scrollTo(0, document.documentElement.scrollHeight); });
