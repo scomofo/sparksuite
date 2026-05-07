@@ -9,11 +9,20 @@ function appUrl(label) {
 }
 
 function summarizeConsoleMessage(msg) {
-  return msg.type() + ": " + msg.text();
+  var location = msg.location && msg.location();
+  var source = location && location.url ? " (" + location.url + ")" : "";
+  return msg.type() + ": " + msg.text() + source;
 }
 
 function isIgnorableConsoleMessage(msg) {
   var text = msg.text();
+  var location = msg.location && msg.location();
+  var url = location && location.url ? location.url : "";
+  if (
+    msg.type() === "error"
+    && text.indexOf("Failed to load resource: net::ERR_CONNECTION_TIMED_OUT") >= 0
+    && url.indexOf("https://fonts.gstatic.com/") === 0
+  ) return true;
   return msg.type() === "warning" && text.indexOf("GL Driver Message") >= 0 && text.indexOf("ReadPixels") >= 0;
 }
 
@@ -224,6 +233,42 @@ async function assertMobileActionControlsFit(page) {
   }
 }
 
+async function assertNoMobilePageHorizontalOverflow(page) {
+  var cases = [
+    { instrument: "Piano", tabs: ["practice", "games"] },
+    { instrument: "Guitar", tabs: ["practice", "songs"] },
+    { instrument: "Bass", tabs: ["practice", "songs"] },
+    { instrument: "Drums", tabs: ["practice"] },
+    { instrument: "Ukulele", tabs: ["practice", "songs"] },
+    { instrument: "Vocals", tabs: ["practice"] }
+  ];
+  for (var i = 0; i < cases.length; i++) {
+    await openLauncherView(page, "instruments");
+    await launchInstrument(page, cases[i].instrument);
+    await assertViewportHasNoHorizontalOverflow(page, cases[i].instrument + " home");
+    for (var t = 0; t < cases[i].tabs.length; t++) {
+      await openTab(page, cases[i].tabs[t]);
+      await assertViewportHasNoHorizontalOverflow(page, cases[i].instrument + " " + cases[i].tabs[t]);
+    }
+    await page.getByLabel("Back to launcher").click();
+    await settle(page, 500);
+  }
+}
+
+async function assertViewportHasNoHorizontalOverflow(page, context) {
+  var overflow = await page.evaluate(function() {
+    var doc = document.documentElement;
+    var body = document.body;
+    var scrollWidth = Math.max(doc.scrollWidth, body ? body.scrollWidth : 0);
+    var clientWidth = doc.clientWidth;
+    return { scrollWidth: scrollWidth, clientWidth: clientWidth };
+  });
+  assert.ok(
+    overflow.scrollWidth <= overflow.clientWidth + 2,
+    context + " creates horizontal page overflow: " + overflow.scrollWidth + " > " + overflow.clientWidth
+  );
+}
+
 async function main() {
   var browser = await chromium.launch({ headless: true });
   var page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -277,6 +322,7 @@ async function main() {
   await dismissFirstRun(mobilePage);
   await assertMobileInstrumentScrollResets(mobilePage);
   await assertMobileActionControlsFit(mobilePage);
+  await assertNoMobilePageHorizontalOverflow(mobilePage);
   var launcherViews = ["home", "library", "learn", "settings", "profile", "instruments", "tools", "practice", "lesson", "performance"];
   for (var j = 0; j < launcherViews.length; j++) {
     await assertLauncherViewScrollsCleanly(mobilePage, launcherViews[j]);

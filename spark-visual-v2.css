@@ -273,6 +273,18 @@ body.sv2 {
   width: 28px; height: 28px; font-size: 14px; border-radius: 8px;
 }
 
+@media (max-width: 599px) {
+  .sv2-inst-row {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sv2-inst-row::-webkit-scrollbar { display: none; }
+  .sv2-inst-row__item { flex: 0 0 auto; }
+}
+
 /* Daily goal card */
 .sv2-daily-goal {
   display: flex;
