@@ -1062,6 +1062,9 @@ test("guided actions can resolve sparkCore from the global binding", function() 
     flow: "guided_session",
     sessionNum: 1
   }]);
+  assert.strictEqual(S._showroomOverride, null);
+  assert.strictEqual(S._showroomLessonId, null);
+  assert.strictEqual(S.launcherView, null);
   assert.strictEqual(S.screen, "guided");
   assert.strictEqual(S.guidedActivityId, "gtr-d01-warm_engine");
   assert.strictEqual(S.guidedActivityKind, "warm_engine_play");

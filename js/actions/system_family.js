@@ -40,7 +40,11 @@
   }
 
   function setGuidedLegacyState(setFields, save) {
-    setLegacyFields(setFields || {}, save);
+    setLegacyFields(Object.assign({
+      _showroomOverride: null,
+      _showroomLessonId: null,
+      launcherView: null
+    }, setFields || {}), save);
   }
 
   function getSparkCoreHandle() {
