@@ -67,7 +67,7 @@ function dualPianoSVG(pianoChord,sz){
     var x=i*wW,active=!!noteFingerMap[wKeys[i]];
     var fill=active?"#4ECDC4":"#fff";
     var stroke="#999";
-    s+='<rect x="'+x+'" y="0" width="'+(wW-1)+'" height="'+wH+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1" rx="0 0 3 3"/>';
+    s+='<rect x="'+x+'" y="0" width="'+(wW-1)+'" height="'+wH+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1" rx="3" ry="3"/>';
     if(active){
       // Finger number
       s+='<circle cx="'+(x+wW/2)+'" cy="'+(wH-16)+'" r="10" fill="#fff" stroke="#4ECDC4" stroke-width="2"/>';
@@ -84,7 +84,7 @@ function dualPianoSVG(pianoChord,sz){
   for(var i=0;i<bKeys.length;i++){
     var bk=bKeys[i],active=!!noteFingerMap[bk.name];
     var fill=active?"#FF6B6B":"#333";
-    s+='<rect x="'+bk.x+'" y="0" width="'+bW+'" height="'+bH+'" fill="'+fill+'" stroke="#222" stroke-width="1" rx="0 0 3 3"/>';
+    s+='<rect x="'+bk.x+'" y="0" width="'+bW+'" height="'+bH+'" fill="'+fill+'" stroke="#222" stroke-width="1" rx="3" ry="3"/>';
     if(active){
       s+='<circle cx="'+(bk.x+bW/2)+'" cy="'+(bH-14)+'" r="8" fill="#fff" stroke="#FF6B6B" stroke-width="2"/>';
       s+='<text x="'+(bk.x+bW/2)+'" y="'+(bH-10)+'" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">'+noteFingerMap[bk.name]+'</text>';
