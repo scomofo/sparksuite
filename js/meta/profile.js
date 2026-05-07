@@ -97,7 +97,7 @@ function profilePage(){
   var bestStreak = getLegacyProfileStatNumber(totals.streakBest, ps.streakBest, typeof S !== "undefined" ? S.practiceStreak : null, 0);
   var instrumentName = getLegacyProfilePrimaryInstrument(profile);
   var h = '<div class="card">';
-  h += '<div><b>Player Profile</b></div>';
+  h += '<div class="card-section-heading">Player Profile</div>';
   h += '<div>Name: ' + escHTML(name) + '</div>';
   h += '<div>Primary Instrument: ' + escHTML(instrumentName) + '</div>';
   h += '<div>Level: ' + level + '</div>';

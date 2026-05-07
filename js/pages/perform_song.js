@@ -43,7 +43,7 @@ function ensureCanonicalPerformSongAudio(songId) {
 function renderPerformSongSection(title, body, accentColor) {
   var borderColor = accentColor || "rgba(255,255,255,.08)";
   return '<div class="card mb20" style="padding:14px;border-radius:18px;border:1px solid ' + borderColor + ';background:linear-gradient(180deg,rgba(18,22,33,.94),rgba(9,12,19,.94));box-shadow:0 16px 30px rgba(0,0,0,.2)">' +
-    '<div style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">' + escHTML(title) + '</div>' +
+    '<div class="card-section-heading" style="margin-bottom:10px">' + escHTML(title) + '</div>' +
     body +
     '</div>';
 }
@@ -114,15 +114,15 @@ function performSongPage() {
   if (typeof getPerformanceStats === "function") {
     var pStats = getPerformanceStats(sid, arrType, diff);
     if (pStats.mastery !== "none") {
-      h += '<div style="margin-bottom:8px"><span style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + ';padding:6px 16px;border-radius:12px;font-size:14px;font-weight:800">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
+      h += '<div style="margin-bottom:8px"><span class="guided-pill" style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + '">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
     }
     if (pStats.runs > 0) {
       h += '<div style="display:flex;justify-content:space-around;text-align:center;margin-top:8px;gap:12px;flex-wrap:wrap">';
-      h += '<div><div style="font-size:20px;font-weight:900;color:#FFE66D">' + pStats.bestScore + '</div><div style="font-size:10px;color:var(--text-muted)">Best Score</div></div>';
-      h += '<div><div style="font-size:20px;font-weight:900;color:#4ECDC4">' + pStats.bestAccuracy + '%</div><div style="font-size:10px;color:var(--text-muted)">Best Accuracy</div></div>';
-      h += '<div><div style="font-size:20px;font-weight:900">';
+      h += '<div><div class="metric-value" style="color:#FFE66D">' + pStats.bestScore + '</div><div class="metric-label">Best Score</div></div>';
+      h += '<div><div class="metric-value" style="color:#4ECDC4">' + pStats.bestAccuracy + '%</div><div class="metric-label">Best Accuracy</div></div>';
+      h += '<div><div class="metric-value">';
       for (var si = 0; si < 5; si++) h += si < pStats.bestStars ? '&#11088;' : '&#9734;';
-      h += '</div><div style="font-size:10px;color:var(--text-muted)">Best Stars</div></div>';
+      h += '</div><div class="metric-label">Best Stars</div></div>';
       h += '</div>';
     } else {
       h += '<div style="font-size:13px;color:var(--text-muted)">Not yet played with these settings</div>';
@@ -131,20 +131,20 @@ function performSongPage() {
   h += '</div>';
 
   h += '<div class="card mb20" style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap;gap:12px;padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(15,18,28,.92),rgba(8,10,16,.92))">';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + (displayBpm != null ? displayBpm : "?") + '</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + displayChordCount + '</div><div style="font-size:10px;color:var(--text-muted)">Chords</div></div>';
-  h += '<div><div style="font-size:16px;font-weight:800;color:var(--text-primary)">' + displayBarCount + '</div><div style="font-size:10px;color:var(--text-muted)">Bars</div></div>';
+  h += '<div><div class="metric-value" style="font-size:16px;color:var(--text-primary)">' + (displayBpm != null ? displayBpm : "?") + '</div><div class="metric-label">BPM</div></div>';
+  h += '<div><div class="metric-value" style="font-size:16px;color:var(--text-primary)">' + displayChordCount + '</div><div class="metric-label">Chords</div></div>';
+  h += '<div><div class="metric-value" style="font-size:16px;color:var(--text-primary)">' + displayBarCount + '</div><div class="metric-label">Bars</div></div>';
   h += '</div>';
 
   settingsGrid = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">';
-  arrangementBody = '<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">';
+  arrangementBody = '<div class="perform-toggle-group action-row" style="justify-content:flex-start;gap:6px;margin:0">';
   arrangementBody += '<button class="btn btn-sm' + (arrType === "chords" ? " active" : "") + '" onclick="act(\'performArrangement\',\'chords\')">&#127928; Chords</button>';
   arrangementBody += '<button class="btn btn-sm' + (arrType === "rhythm_chords" ? " active" : "") + '" onclick="act(\'performArrangement\',\'rhythm_chords\')">&#127925; Rhythm</button>';
   arrangementBody += '<button class="btn btn-sm' + (arrType === "lead" ? " active" : "") + '" onclick="act(\'performArrangement\',\'lead\')">&#127925; Lead</button>';
   arrangementBody += '</div>';
   settingsGrid += renderPerformSongSection("Arrangement", arrangementBody, "rgba(69,183,209,.22)");
 
-  difficultyBody = '<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">';
+  difficultyBody = '<div class="perform-toggle-group action-row" style="justify-content:flex-start;gap:6px;margin:0">';
   var diffs = ["easy", "normal", "pro"];
   for (var d = 0; d < diffs.length; d++) {
     difficultyBody += '<button class="btn btn-sm' + (diff === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
@@ -152,7 +152,7 @@ function performSongPage() {
   difficultyBody += '</div>';
   settingsGrid += renderPerformSongSection("Difficulty", difficultyBody, "rgba(255,138,92,.22)");
 
-  speedBody = '<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">';
+  speedBody = '<div class="perform-toggle-group action-row" style="justify-content:flex-start;gap:6px;margin:0">';
   var speeds = [0.5, 0.75, 1.0];
   for (var sp = 0; sp < speeds.length; sp++) {
     speedBody += '<button class="btn btn-sm' + (speed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
@@ -170,7 +170,7 @@ function performSongPage() {
         var recLabel = prettyPerformSongToken(recs[ri] && recs[ri].label) || "Recommendation";
         var recReason = prettyPerformSongToken(recs[ri] && recs[ri].reason);
         recommendedBody += '<div style="padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.05);margin-bottom:8px">';
-        recommendedBody += '<div style="font-size:13px;color:var(--text-primary);margin-bottom:4px;font-weight:800">' + escHTML(recLabel) + '</div>';
+        recommendedBody += '<div class="card-micro-heading" style="margin-bottom:4px">' + escHTML(recLabel) + '</div>';
         if (recReason) {
           recommendedBody += '<div style="font-size:11px;color:var(--text-dim)">' + escHTML(recReason) + '</div>';
         }
@@ -183,7 +183,7 @@ function performSongPage() {
   if (targetTechnique) {
     h += renderPerformSongSection(
       "Technique Focus",
-      '<div style="font-size:14px;color:var(--text-primary);font-weight:800">' + escHTML(formatTechniqueLabel(targetTechnique)) + '</div>' +
+      '<div class="card-micro-heading">' + escHTML(formatTechniqueLabel(targetTechnique)) + '</div>' +
       '<div style="font-size:12px;color:var(--text-dim);margin-top:6px">This practice launch came from an imported-chart weak spot. Keep that technique in focus during the run.</div>',
       "rgba(255,230,109,.18)"
     );
@@ -193,7 +193,7 @@ function performSongPage() {
   audioBody = '';
   if (audioData && audioData.stemPaths) {
     audioBody += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
-    audioBody += '<span style="color:#4ECDC4;font-weight:700">&#9989; Audio loaded</span>';
+    audioBody += '<span class="card-micro-heading" style="color:#4ECDC4">&#9989; Audio loaded</span>';
     if (detectedSongBpm != null) {
       audioBody += '<span style="font-size:11px;color:var(--text-muted)">Detected BPM: ' + Math.round(detectedSongBpm) + '</span>';
       var authored = normalizePerformSongNumber(song.bpm, 100);
@@ -206,7 +206,7 @@ function performSongPage() {
     audioBody += '<button class="btn btn-sm" onclick="act(\'removeSongAudio\',\'' + songId + '\')" style="background:var(--input-bg);color:var(--text-secondary)">Remove Audio</button>';
   } else if (canonicalAudio && canonicalAudio.src) {
     audioBody += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
-    audioBody += '<span style="color:#4ECDC4;font-weight:700">&#9989; Built-in backing ready</span>';
+    audioBody += '<span class="card-micro-heading" style="color:#4ECDC4">&#9989; Built-in backing ready</span>';
     audioBody += '<span style="font-size:11px;color:var(--text-muted)">' + escHTML(canonicalAudio.label || (canonicalAudio.type === "midi" ? "Built-in MIDI Backing" : "Built-in Backing Track")) + '</span>';
     audioBody += '</div>';
     audioBody += '<p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">This song includes a curated local backing track and will auto-play during performance. You can still import your own audio if you want stems instead.</p>';
@@ -224,13 +224,13 @@ function performSongPage() {
   h += renderPerformSongSection("Song Audio", audioBody, "rgba(69,183,209,.22)");
 
   h += '<div class="card" style="padding:14px;border-radius:18px;border:1px solid rgba(255,138,92,.18);background:linear-gradient(180deg,rgba(28,17,18,.88),rgba(13,11,15,.92));box-shadow:0 18px 36px rgba(0,0,0,.24)">';
-  h += '<div style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Play</div>';
-  h += '<div class="flex-col" style="gap:10px">';
+  h += '<div class="card-section-heading" style="margin-bottom:10px">Play</div>';
+  h += '<div class="flex-col action-row" style="gap:10px">';
   h += '<button class="btn perform-song-play-btn perform-song-play-btn-primary" onclick="act(\'performStartFromSong\')">&#127918; Start Performance</button>';
   if (hasPerformSongWeakestPhraseTarget()) {
     h += '<button class="btn perform-song-play-btn perform-song-play-btn-secondary" onclick="act(\'performRetryPhrase\')">&#128170; Practice Weakest Phrase</button>';
   } else {
-    h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--text-muted);font-size:12px;font-weight:700">Finish a run to unlock weakest-phrase practice.</div>';
+    h += '<div class="metric-label" style="padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">Finish a run to unlock weakest-phrase practice.</div>';
   }
   h += '<button class="btn btn-sm perform-song-play-btn perform-song-play-btn-utility" onclick="act(\'openPerformCalibration\')">&#9881; Calibrate Timing</button>';
   h += '</div>';

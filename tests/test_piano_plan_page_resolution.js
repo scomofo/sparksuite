@@ -86,6 +86,18 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
   assert.ok(html.indexOf("piano - left hand - finger") >= 0);
 });
 
+test("shared plan page render uses shared heading and action row classes", function() {
+  var source = loadJS("js/pages/plan.js");
+  global.eval(source);
+
+  var html = planPage();
+
+  assert.ok(html.indexOf("card-section-heading") >= 0);
+  assert.ok(html.indexOf("card-micro-heading") >= 0);
+  assert.ok(html.indexOf("action-row") >= 0);
+  assert.strictEqual(html.indexOf('style="font-weight:700;font-size:14px"'), -1);
+});
+
 test("pianoPlanPage pivots into guided resume mode with V2 shell details when a guided session is active and no daily plan exists", function() {
   global.S = {
     practicePlanComplete: false,

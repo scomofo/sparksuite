@@ -156,7 +156,7 @@ function getPerformPageMicOffsetMs() {
 function renderPerformControlSection(label, body, accentColor) {
   var borderColor = accentColor || "rgba(255,255,255,.08)";
   return '<div style="display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px;border-radius:16px;border:1px solid ' + borderColor + ';background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.03)">' +
-    '<div style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted)">' + escHTML(label) + '</div>' +
+    '<div class="card-section-heading">' + escHTML(label) + '</div>' +
     '<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">' + body + '</div>' +
     '</div>';
 }
@@ -370,11 +370,11 @@ function performPage() {
     var calibCurrentBeat = normalizePerformPageNumber(S._calibCurrentBeat, 0);
     var calibTotalBeats = normalizePerformPageNumber(S._calibTotalBeats, 8);
     h += '<div class="card" style="margin:8px 12px;text-align:center">';
-    h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Calibrating...</div>';
+    h += '<div class="card-micro-heading" style="margin-bottom:8px">Calibrating...</div>';
     h += '<div style="font-size:48px;font-weight:900;color:#FFE66D;animation:bn .3s ease">' + calibCurrentBeat + '/' + calibTotalBeats + '</div>';
     h += '<p style="font-size:12px;color:var(--text-muted)">Tap spacebar or click when you hear the beat</p>';
-    h += '<button class="btn" onclick="act(\'performCalibrationTap\')" style="background:#4ECDC4;color:#fff;padding:16px 32px;font-size:16px">TAP</button>';
-    h += ' <button class="btn btn-sm" onclick="act(\'performCalibrationCancel\')" style="margin-left:8px">Cancel</button>';
+    h += '<div class="action-row" style="justify-content:center"><button class="btn" onclick="act(\'performCalibrationTap\')" style="background:#4ECDC4;color:#fff;padding:16px 32px;font-size:16px">TAP</button>';
+    h += '<button class="btn btn-sm" onclick="act(\'performCalibrationCancel\')">Cancel</button></div>';
     h += '</div>';
   }
 
@@ -423,7 +423,7 @@ function performDonePage() {
     var difficultyId = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
     var pStats = getPerformanceStats(songKey, arrType, difficultyId);
     if (pStats.mastery !== "none") {
-      h += '<div style="margin-bottom:12px"><span style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + ';padding:6px 16px;border-radius:12px;font-size:13px;font-weight:800">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
+      h += '<div style="margin-bottom:12px"><span class="guided-pill" style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + '">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
     }
   }
 
@@ -436,37 +436,37 @@ function performDonePage() {
   }
 
   // Stats cards
-  h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap">';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">' + r.score + '</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + r.accuracy + '%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">' + r.maxCombo + 'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
+  h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap;gap:12px">';
+  h += '<div><div class="metric-value" style="color:#FFE66D">' + r.score + '</div><div class="metric-label">Score</div></div>';
+  h += '<div><div class="metric-value" style="color:#4ECDC4">' + r.accuracy + '%</div><div class="metric-label">Accuracy</div></div>';
+  h += '<div><div class="metric-value" style="color:#FF6B6B">' + r.maxCombo + 'x</div><div class="metric-label">Max Combo</div></div>';
   h += '</div></div>';
 
   // Phrase breakdown
   if (r.phraseStats && r.phraseStats.length > 0) {
-    h += '<div class="card mb20" style="text-align:left"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Phrase Breakdown</h3>';
+    h += '<div class="card mb20" style="text-align:left"><div class="card-section-heading" style="margin-bottom:10px">Phrase Breakdown</div>';
     for (var pi = 0; pi < r.phraseStats.length; pi++) {
       var ps = r.phraseStats[pi];
       var pct = ps.total > 0 ? Math.round(ps.scoreSum / ps.total * 100) : 0;
       var phraseLabel = firstPerformPageTextToken(ps.name, "Phrase " + (pi + 1));
-      h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
-      h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(phraseLabel) + '</span>';
-      h += '<span style="font-size:12px;color:var(--text-muted)">' + ps.perfects + 'P / ' + ps.goods + 'G / ' + ps.oks + 'O / ' + ps.misses + 'M &mdash; ' + pct + '%</span>';
+      h += '<div class="split-row" style="align-items:center;padding:4px 0;border-bottom:1px solid var(--border);gap:12px">';
+      h += '<span class="card-micro-heading">' + escHTML(phraseLabel) + '</span>';
+      h += '<span class="metric-label">' + ps.perfects + 'P / ' + ps.goods + 'G / ' + ps.oks + 'O / ' + ps.misses + 'M &mdash; ' + pct + '%</span>';
       h += '</div>';
     }
     h += '</div>';
   }
 
   if (r.importedTechniqueSummary && hasImportedTechniqueResultData(r.importedTechniqueSummary)) {
-    h += '<div class="card mb20" style="text-align:left"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Technique Summary</h3>';
+    h += '<div class="card mb20" style="text-align:left"><div class="card-section-heading" style="margin-bottom:10px">Technique Summary</div>';
     h += renderImportedTechniqueSummaryRows(r.importedTechniqueSummary);
     h += '</div>';
   }
 
   if (targetTechnique) {
     h += '<div class="card mb20" style="text-align:left;border:1px solid #FF8A5C44;background:linear-gradient(135deg,#FF8A5C12,#FFE66D12)">';
-    h += '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Technique Focus</div>';
-    h += '<div style="font-size:14px;color:var(--text-primary);font-weight:800">' + escHTML(formatTechniqueFocusLabel(targetTechnique)) + '</div>';
+    h += '<div class="card-section-heading" style="margin-bottom:6px">Technique Focus</div>';
+    h += '<div class="card-micro-heading">' + escHTML(formatTechniqueFocusLabel(targetTechnique)) + '</div>';
     h += '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">Keep this same focus on retry so the next run stays aimed at the weak spot.</div>';
     h += '</div>';
   }
@@ -482,13 +482,13 @@ function performDonePage() {
       if (bAvg < worstAvg) worstIdx = bi;
     }
     h += '<div style="display:flex;gap:10px;margin-bottom:16px">';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Best Phrase</div><div style="font-size:14px;font-weight:800;color:#4ECDC4">' + escHTML(firstPerformPageTextToken(r.phraseStats[bestIdx].name, "Phrase " + (bestIdx + 1))) + '</div></div>';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Weakest Phrase</div><div style="font-size:14px;font-weight:800;color:#FF6B6B">' + escHTML(firstPerformPageTextToken(r.phraseStats[worstIdx].name, "Phrase " + (worstIdx + 1))) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div class="metric-label">Best Phrase</div><div class="card-micro-heading" style="color:#4ECDC4">' + escHTML(firstPerformPageTextToken(r.phraseStats[bestIdx].name, "Phrase " + (bestIdx + 1))) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div class="metric-label">Weakest Phrase</div><div class="card-micro-heading" style="color:#FF6B6B">' + escHTML(firstPerformPageTextToken(r.phraseStats[worstIdx].name, "Phrase " + (worstIdx + 1))) + '</div></div>';
     h += '</div>';
   }
 
   // Buttons
-  h += '<div class="flex-col">';
+  h += '<div class="flex-col action-row">';
   h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; ' + escHTML(targetTechnique ? ("Retry " + formatTechniqueFocusLabel(targetTechnique)) : "Retry") + '</button>';
   if (hasPerformDoneWeakestPhraseTarget(r)) {
     h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; ' + escHTML(targetTechnique ? ("Retry Weakest " + formatTechniqueFocusLabel(targetTechnique)) : "Retry Weakest") + '</button>';
@@ -501,7 +501,7 @@ function performDonePage() {
   // Next step recommendation
   var focusedTechniqueRow = targetTechnique ? getTechniqueSummaryRow(r.importedTechniqueSummary, targetTechnique) : null;
   if (focusedTechniqueRow) {
-    h += '<div class="card" style="margin-top:12px;text-align:left"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Next Step</div>';
+    h += '<div class="card" style="margin-top:12px;text-align:left"><div class="card-section-heading" style="margin-bottom:6px">Next Step</div>';
     h += '<div style="font-size:13px;color:var(--text-primary)">' + escHTML("Stay on " + formatTechniqueFocusLabel(targetTechnique)) + '</div>';
     h += '<div style="font-size:11px;color:var(--text-dim)">' + escHTML("You hit " + focusedTechniqueRow.hits + " of " + focusedTechniqueRow.total + " focused notes. Retry this same target to lock it in.") + '</div></div>';
   } else if(typeof buildPerformanceRecommendationsForSong==="function"&&r.title){
@@ -512,7 +512,7 @@ function performDonePage() {
     if(nextRecs&&nextRecs.length){
       var nextStepLabel = firstPerformPageTextToken(nextRecs[0].label, "Recommendation");
       var nextStepReason = firstPerformPageTextToken(nextRecs[0].reason);
-      h+='<div class="card" style="margin-top:12px;text-align:left"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Next Step</div>';
+      h+='<div class="card" style="margin-top:12px;text-align:left"><div class="card-section-heading" style="margin-bottom:6px">Next Step</div>';
       h+='<div style="font-size:13px;color:var(--text-primary)">'+escHTML(nextStepLabel)+'</div>';
       h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(nextStepReason)+'</div></div>';
     }
@@ -559,9 +559,9 @@ function renderImportedTechniqueSummaryRows(summary) {
     var row = summary[order[i]];
     if (!row || !row.total) continue;
     var rowLabel = firstPerformPageTextToken(row.label, formatTechniqueFocusLabel(order[i]), "Technique");
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
-    h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(rowLabel) + '</span>';
-    h += '<span style="font-size:12px;color:var(--text-muted)">' + row.hits + '/' + row.total + ' hit &mdash; ' + row.accuracy + '%</span>';
+    h += '<div class="split-row" style="align-items:center;padding:4px 0;border-bottom:1px solid var(--border);gap:12px">';
+    h += '<span class="card-micro-heading">' + escHTML(rowLabel) + '</span>';
+    h += '<span class="metric-label">' + row.hits + '/' + row.total + ' hit &mdash; ' + row.accuracy + '%</span>';
     h += '</div>';
   }
   return h;

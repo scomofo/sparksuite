@@ -37,15 +37,16 @@ function performCalibrationPage(){
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<div class="mb12"><b>Source</b></div>';
-  h += '<button class="btn'+(source==="midi"?" btn-primary":"")+'" onclick="act(\'performCalibrateSource\',\'midi\')">MIDI</button> ';
+  h += '<div class="card-section-heading mb12">Source</div>';
+  h += '<div class="action-row"><button class="btn'+(source==="midi"?" btn-primary":"")+'" onclick="act(\'performCalibrateSource\',\'midi\')">MIDI</button>';
   h += '<button class="btn'+(source==="mic"?" btn-primary":"")+'" onclick="act(\'performCalibrateSource\',\'mic\')">Mic</button>';
+  h += '</div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<div>Global Offset: '+globalOffsetMs+' ms</div>';
-  h += '<div>MIDI Offset: '+midiOffsetMs+' ms</div>';
-  h += '<div>Mic Offset: '+micOffsetMs+' ms</div>';
+  h += '<div><span class="metric-label">Global Offset:</span> <span class="metric-value" style="font-size:13px">'+globalOffsetMs+' ms</span></div>';
+  h += '<div><span class="metric-label">MIDI Offset:</span> <span class="metric-value" style="font-size:13px">'+midiOffsetMs+' ms</span></div>';
+  h += '<div><span class="metric-label">Mic Offset:</span> <span class="metric-value" style="font-size:13px">'+micOffsetMs+' ms</span></div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
@@ -55,15 +56,16 @@ function performCalibrationPage(){
     h += '<button class="btn" onclick="act(\'performCalibrateTap\')" style="width:100%;padding:16px;margin:12px 0;background:var(--accent);color:#fff;font-size:18px;font-weight:700">TAP</button>';
     h += '<button class="btn" onclick="act(\'performCalibrationStop\')">Stop</button>';
   } else {
-    h += '<button class="btn btn-primary" onclick="act(\'performCalibrationStart\')">Start Calibration</button> ';
-    h += '<button class="btn" onclick="act(\'performCalibrationApply\')">Apply Result</button> ';
+    h += '<div class="action-row"><button class="btn btn-primary" onclick="act(\'performCalibrationStart\')">Start Calibration</button>';
+    h += '<button class="btn" onclick="act(\'performCalibrationApply\')">Apply Result</button>';
     h += '<button class="btn" onclick="act(\'performCalibrationReset\')">Reset</button>';
+    h += '</div>';
   }
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<div><b>Captured Hits:</b> '+capturedHits.length+'</div>';
-  h += '<div>Suggested Offset: '+suggestedOffsetMs+' ms</div>';
+  h += '<div><span class="metric-label">Captured Hits:</span> <span class="metric-value">'+capturedHits.length+'</span></div>';
+  h += '<div><span class="metric-label">Suggested Offset:</span> <span class="metric-value" style="font-size:13px">'+suggestedOffsetMs+' ms</span></div>';
   h += '</div>';
 
   h += '<button class="btn" onclick="act(\'performCalibrationBack\')">Back</button>';

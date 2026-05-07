@@ -77,7 +77,7 @@ function drillTab() {
   if (S.drillActive) {
     var c = S.drillChords[S.drillIdx];
     var chordObj = findChord(c);
-    html += '<h2>Drill: ' + escHTML(c) + '</h2>';
+    html += '<h2 class="card-section-heading">Drill: ' + escHTML(c) + '</h2>';
     html += '<div class="timer-display">' + pianoFormatTime(S.drillTimer) + '</div>';
     html += '<div class="drill-progress">' + (S.drillIdx + 1) + ' / ' + S.drillChords.length + '</div>';
     if (chordObj) html += pianoSVG(chordObj);
@@ -100,7 +100,7 @@ function drillTab() {
       }
     }
   } else {
-    html += '<h2>Chord Drill</h2>';
+    html += '<h2 class="card-section-heading">Chord Drill</h2>';
     html += '<p>Rapidly switch between chords to build muscle memory.</p>';
     html += '<button class="btn" onclick="act(\'start_drill\',\'level\')">Level ' + S.level + ' Chords</button>';
     html += '<button class="btn" onclick="act(\'start_drill\',\'all\')">All Learned</button>';
@@ -116,7 +116,7 @@ function dailyTab() {
   var html = '<div class="card' + (S.dailyActive && S.dailyType ? ' live-timer-surface' : '') + '">';
   if (S.dailyActive && S.dailyType) {
     var dt = DAILY_TYPES.find(function(d) { return d.id === S.dailyType; });
-    html += '<h2>' + (dt ? dt.name : "Challenge") + '</h2>';
+    html += '<h2 class="card-section-heading">' + (dt ? dt.name : "Challenge") + '</h2>';
     html += '<div class="timer-display">' + pianoFormatTime(S.dailyTimer) + '</div>';
     html += '<div class="daily-score">Score: ' + S.dailyScore + '</div>';
     if (S.dailyType === "blind") {
@@ -127,12 +127,12 @@ function dailyTab() {
     html += '<button class="btn" onclick="act(\'daily_action\')">Next</button>';
     html += '<button class="btn btn-secondary" onclick="act(\'stop_daily\')">Stop</button>';
   } else {
-    html += '<h2>Daily Challenges</h2><p>Push yourself with special missions!</p>';
+    html += '<h2 class="card-section-heading">Daily Challenges</h2><p>Push yourself with special missions!</p>';
     DAILY_TYPES.forEach(function(dt) {
       var dailyName = pianoFirstGameTextToken(dt && dt.name, "Challenge");
       var dailyDesc = pianoFirstGameTextToken(dt && dt.desc, "Practice mission");
       html += pianoClickableDiv("act('start_daily','" + dt.id + "')",
-        '<strong>' + escHTML(dailyName) + '</strong><br><span class="text-muted">' + escHTML(dailyDesc) + '</span>', "daily-card");
+        '<span class="card-micro-heading">' + escHTML(dailyName) + '</span><br><span class="text-muted">' + escHTML(dailyDesc) + '</span>', "daily-card");
     });
     html += '<div class="text-muted">Completed: ' + ((typeof S.dailiesDone === "number" && isFinite(S.dailiesDone)) ? S.dailiesDone : 0) + '</div>';
   }
@@ -142,7 +142,7 @@ function dailyTab() {
 
 // ── Quiz (with delayed feedback - stickiness #5) ──
 function quizTab() {
-  var html = '<div class="card"><h2>Chord Quiz</h2>';
+  var html = '<div class="card"><h2 class="card-section-heading">Chord Quiz</h2>';
   if (S.quizQ) {
     var quizAnswerLabel = pianoFirstGameTextToken(S.quizQ.answer, "Chord");
     html += '<p>Which chord is shown below?</p>';
@@ -175,7 +175,7 @@ function quizTab() {
 
 // ── Ear Training ──
 function earTrainTab() {
-  var html = '<div class="card"><h2>Ear Training</h2>';
+  var html = '<div class="card"><h2 class="card-section-heading">Ear Training</h2>';
   if (S.earChord) {
     var earChordLabel = pianoFirstGameTextToken(S.earChord, "Chord");
     html += '<p>Listen and identify the chord:</p>';
@@ -204,7 +204,7 @@ function earTrainTab() {
 // ── Rhythm Game ──
 function rhythmTab() {
   var rhythmBpm = pianoNormalizeGameBpm(S.bpm, 90);
-  var html = '<div class="card"><h2>Rhythm Game</h2>';
+  var html = '<div class="card"><h2 class="card-section-heading">Rhythm Game</h2>';
   if (S.rhythmActive) {
     html += '<div class="rhythm-display">';
     html += '<div class="rhythm-score">Score: ' + S.rhythmScore + ' | Combo: ' + S.rhythmCombo + 'x</div>';
@@ -228,7 +228,7 @@ function rhythmTab() {
 
 // ── Runner Game ──
 function runnerTab() {
-  var html = '<div class="card"><h2>Chord Runner</h2>';
+  var html = '<div class="card"><h2 class="card-section-heading">Chord Runner</h2>';
   if (S.runnerActive) {
     var runnerTargetLabel = pianoFirstGameTextToken(S.runnerTarget, "Target chord");
     html += '<div class="runner-display">';
@@ -258,7 +258,7 @@ function fingersTab() {
 
   // 60-Second Chord Change Challenge
   if (S.chordChangeActive) {
-    html += '<h2>60-Second Challenge</h2>';
+    html += '<h2 class="card-section-heading">60-Second Challenge</h2>';
     html += '<div class="timer-display">' + pianoFormatTime(S.chordChangeTimer) + '</div>';
     html += '<div style="font-size:2rem;font-weight:800;color:var(--accent);margin:8px 0">' + S.chordChangeCount + '</div>';
     html += '<div class="text-muted">clean changes</div>';
@@ -271,7 +271,7 @@ function fingersTab() {
     return html;
   }
 
-  html += '<h2>\u{270B} Finger Exercises</h2>';
+  html += '<h2 class="card-section-heading">\u{270B} Finger Exercises</h2>';
   html += '<p>Build finger independence, strength, and speed.</p>';
 
   // Stats summary
@@ -283,7 +283,7 @@ function fingersTab() {
 
   // 60-Second Challenge launcher
   html += '<div class="card" style="background:linear-gradient(135deg,var(--accent-bg),rgba(236,72,153,0.08));margin-bottom:12px">';
-  html += '<h3>\u{23F1} 60-Second Chord Change Challenge</h3>';
+  html += '<h3 class="card-micro-heading">\u{23F1} 60-Second Chord Change Challenge</h3>';
   html += '<p>Switch between two chords as many times as possible. 30 = competent, 60 = fluent.</p>';
   var chordPairs = _getChordChangePairs();
   html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">';
@@ -306,7 +306,7 @@ function fingersTab() {
 
     var tierNames = ["","Off-Instrument","On-Instrument","Chord-Specific","Advanced"];
     var tierIcons = ["","\u{1F4A1}","\u{1F3B9}","\u{1F3AF}","\u{1F525}"];
-    html += '<h3>' + tierIcons[tier] + ' Tier ' + tier + ': ' + tierNames[tier] + '</h3>';
+    html += '<h3 class="card-micro-heading">' + tierIcons[tier] + ' Tier ' + tier + ': ' + tierNames[tier] + '</h3>';
 
     tierExercises.forEach(function(ex) {
       var stats = (typeof SparkFingerStats !== "undefined" ? SparkFingerStats.get(ex.id) : (S.fingerStats && S.fingerStats[ex.id])) || { completions: 0, lastDone: null };
@@ -317,7 +317,7 @@ function fingersTab() {
       var exerciseFrequency = pianoFirstGameTextToken(ex && ex.frequency, "daily");
       html += '<div class="finger-exercise-card' + (doneToday ? ' done' : '') + '">';
       html += '<div class="finger-exercise-header">';
-      html += '<strong>' + escHTML(exerciseName) + '</strong>';
+      html += '<span class="card-micro-heading">' + escHTML(exerciseName) + '</span>';
       if (ex.offInstrument) html += ' <span class="level-tag">No keyboard</span>';
       if (doneToday) html += ' <span style="color:var(--success)">\u2705</span>';
       html += '</div>';
@@ -354,11 +354,11 @@ function fingersTab() {
     : ["Relax your shoulders and stop if anything hurts."];
   var tipIdx = Math.floor(Date.now() / 86400000) % injuryTips.length;
   html += '<div class="intention-card" style="margin-top:16px">';
-  html += '<span class="intention-icon">\u{26A0}</span> <strong>Injury Prevention:</strong> ' + escHTML(injuryTips[tipIdx]);
+  html += '<span class="intention-icon">\u{26A0}</span> <span class="card-micro-heading">Injury Prevention:</span> ' + escHTML(injuryTips[tipIdx]);
   html += '</div>';
 
   // Finger badges
-  html += '<h3 style="margin-top:16px">Finger Badges</h3>';
+  html += '<h3 class="card-micro-heading" style="margin-top:16px">Finger Badges</h3>';
   html += '<div class="badges-row">';
   FINGER_BADGES.forEach(function(b) {
     var earned = S.fingerBadges.indexOf(b.id) >= 0;

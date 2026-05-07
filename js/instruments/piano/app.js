@@ -518,6 +518,7 @@ function startGuidedSession(requestedSession) {
   S.sessionPlan = plan;
   S.screen = SCR.SESSION;
   S.sessionStep = "spark";
+  S.guidedStopConfirm = false;
   S.newMovePhase = null;
   S.feedbackMessage = "";
   S.adaptiveBpm = plan.bpm;
@@ -577,6 +578,7 @@ function syncPianoGuidedPlanFromCore(plan) {
   S._showroomOverride = null;
   S._showroomLessonId = null;
   S.launcherView = null;
+  S.guidedStopConfirm = false;
   S.screen = SCR.SESSION;
   S.sessionStep = "spark";
   S.guidedStep = "spark";

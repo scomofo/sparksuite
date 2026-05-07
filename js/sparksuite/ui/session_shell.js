@@ -158,8 +158,8 @@
     var extraButtons = typeof opts.renderExtraButtons === "function" ? opts.renderExtraButtons(shell) : "";
     var h = "";
     h += '<div style="margin-top:' + esc(opts.marginTop || "0") + ';padding:10px 12px;border-radius:14px;background:' + background + ';color:var(--text-primary)">';
-    h += '<div style="font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:' + accent + '">' + esc(label) + '</div>';
-    h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + esc(shell.title) + '</div>';
+    h += '<div class="metric-label" style="font-size:11px;text-transform:uppercase;color:' + accent + '">' + esc(label) + '</div>';
+    h += '<div class="card-micro-heading" style="margin-top:4px">' + esc(shell.title) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + esc(shell.statusLabel) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + esc(metaLabel) + '</div>';
     h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">';
@@ -179,8 +179,8 @@
     var fill = opts.fill || "linear-gradient(90deg,#4ECDC4,#45B7D1)";
     var secondaryButton = typeof opts.renderSecondaryButton === "function" ? opts.renderSecondaryButton(shell) : "";
     var h = '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(78,205,196,.12),rgba(69,183,209,.08));border:1px solid rgba(78,205,196,.35)">';
-    h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px"><div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:' + accent + '">' + esc(label) + '</div><div style="font-size:11px;color:var(--text-muted)">Block ' + esc(shell.activeIndex + 1) + ' of ' + esc(shell.blockCount) + '</div></div>';
-    h += '<div style="font-size:18px;font-weight:900;color:var(--text-primary);margin-bottom:4px">' + esc(shell.title) + '</div>';
+    h += '<div class="split-row" style="margin-bottom:6px"><div class="metric-label" style="font-size:12px;text-transform:uppercase;color:' + accent + '">' + esc(label) + '</div><div style="font-size:11px;color:var(--text-muted)">Block ' + esc(shell.activeIndex + 1) + ' of ' + esc(shell.blockCount) + '</div></div>';
+    h += '<div class="card-section-heading" style="font-size:18px;margin-bottom:4px">' + esc(shell.title) + '</div>';
     h += '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px">' + esc(shell.statusLabel) + '</div>';
     h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">' + esc(getShellDurationText(shell, "Shell details loading")) + '</div>';
     h += '<div style="height:8px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden;margin-bottom:8px"><div style="height:100%;width:' + esc(shell.progressPct) + '%;background:' + fill + '"></div></div>';

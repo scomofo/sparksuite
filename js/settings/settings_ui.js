@@ -1,6 +1,6 @@
 function settingsPage(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Settings</b></div>';
+  h += '<div class="card-section-heading">Settings</div>';
   h += '</div>';
   // Switch Instrument — clears S.activeInstrument via SparkInstruments.deactivate()
   // so the launcher (instrument picker) reappears on the next render.
@@ -11,7 +11,7 @@ function settingsPage(){
     var _ai = SparkInstruments.getActive();
     if (_ai && _ai.name) activeName = " (currently " + escHTML(_ai.name) + ")";
   }
-  h += '<div class="card mb16"><div><b>Instrument</b></div>';
+  h += '<div class="card mb16"><div class="card-section-heading">Instrument</div>';
   h += '<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">Return to the launcher to pick a different instrument' + activeName + '.</div>';
   h += '<div style="margin-top:8px"><button onclick="act(\'switchInstrumentBack\')">\u21A9 Switch Instrument</button></div>';
   h += '</div>';
@@ -35,7 +35,7 @@ function renderSettingsCategory(cat){
     ? core.getAccessibilitySettings()
     : ((S.settings && S.settings.accessibility) || {});
   var h = '<div class="card mb16">';
-  h += '<div><b>'+escHTML(cat.title)+'</b></div>';
+  h += '<div class="card-section-heading">'+escHTML(cat.title)+'</div>';
   if(cat.id === "display"){
     h += '<div style="margin-top:8px">Theme: ';
     var themes = ["dark","light","blue","highcontrast","retro"];

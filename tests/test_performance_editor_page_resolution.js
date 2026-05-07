@@ -223,10 +223,48 @@ test("performance editor event rows expose keyboard handlers", function() {
   var source = loadJS("js/pages/performance_editor.js");
   assert.ok(source.indexOf('role="button" tabindex="0" onclick="if(event.target&&event.target.closest&&event.target.closest(\\\'button,input,select,textarea,a\\\')){return;}act(\\\'editorSelectEvent\\\',') >= 0);
   assert.ok(source.indexOf('role="button" tabindex="0" style="cursor:pointer;margin-top:8px" onclick="if(event.target&&event.target.closest&&event.target.closest(\\\'button,input,select,textarea,a\\\')){return;}act(\\\'editorLoad\\\',') >= 0);
-  assert.ok(source.indexOf('role="button" tabindex="0" style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:') >= 0);
+  assert.ok(source.indexOf('class="split-row" role="button" tabindex="0" style="padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:') >= 0);
   assert.ok(source.indexOf('onclick="act(\\\'editorSelectPhrase\\\',') >= 0);
   assert.strictEqual(source.indexOf("event.stopPropagation();act('editorDelete'"), -1);
   assert.strictEqual(source.indexOf("event.stopPropagation();act('editorDeleteEvent'"), -1);
+});
+
+test("performanceEditorPage uses shared visual contract classes", function() {
+  global.S.performEditorChart = {
+    id: "editor_chart_3",
+    title: "Chart",
+    bpm: 112,
+    events: [{ id: 11, laneLabel: "C", t: 1, dur: 0.5 }],
+    phrases: [{ id: 5, name: "Intro", startSec: 0, endSec: 2 }]
+  };
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: global.S.performEditorChart,
+        library: [],
+        source: "existing",
+        dirty: true,
+        mode: "chords",
+        snap: "1/8",
+        selectedEventId: 11,
+        selectedPhraseId: 5
+      };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: {} };
+    }
+  };
+
+  var html = performanceEditorPage();
+  var source = loadJS("js/pages/performance_editor.js");
+
+  assert.ok(html.indexOf('class="card-section-heading"') >= 0);
+  assert.ok(html.indexOf('class="card-micro-heading"') >= 0);
+  assert.ok(html.indexOf('class="metric-label"') >= 0);
+  assert.ok(html.indexOf('class="metric-value"') >= 0);
+  assert.ok(html.indexOf('class="split-row"') >= 0);
+  assert.ok(html.indexOf('class="action-row"') >= 0);
+  assert.strictEqual(source.indexOf("display:flex;justify-content:space-between;align-items:center"), -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

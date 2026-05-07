@@ -179,8 +179,8 @@ test("practice surfaces ignore malformed legacy progress counters", function() {
   var quizHtml = quizTab();
   var earHtml = earTrainTab();
 
-  assert.ok(practiceHtml.indexOf(">0</div><div style=\"font-size:10px;color:var(--text-muted)\">Sessions</div>") >= 0);
-  assert.ok(practiceHtml.indexOf(">1</div><div style=\"font-size:10px;color:var(--text-muted)\">Mastered</div>") >= 0);
+  assert.ok(practiceHtml.indexOf(">0</div><div class=\"metric-label\" style=\"font-size:10px\">Sessions</div>") >= 0);
+  assert.ok(practiceHtml.indexOf(">1</div><div class=\"metric-label\" style=\"font-size:10px\">Mastered</div>") >= 0);
   assert.ok(practiceHtml.indexOf("Lvl 1") >= 0);
   assert.ok(drillHtml.indexOf("Completed: <strong>0</strong>") >= 0);
   assert.ok(quizHtml.indexOf("Correct: <strong>0</strong>") >= 0);
@@ -295,6 +295,63 @@ test("shared tool tab renderers survive piano page globals for guitar tabs", fun
   assert.ok(typeof SparkSharedToolRenderers.statsTab === "function");
   assert.strictEqual(renderers.stats, SparkSharedToolRenderers.statsTab);
   assert.strictEqual(renderers.guide, SparkSharedToolRenderers.guideTab);
+});
+
+test("shared tool renderers use shared card and metric typography classes", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.getChordTier = function(name) {
+    return name === "C" ? { tier: "gold" } : { tier: "none" };
+  };
+  global.tierBadgeHTML = function() { return ""; };
+  global.SparkTransitionStats = {
+    all: function() {
+      return { "C->G": { attempts: 3, avgTime: 1.8, best: 1.2 } };
+    }
+  };
+  global.localStorage = {
+    getItem: function() {
+      return JSON.stringify({ xp: 8, level: 2, sessions: 1, streak: 2 });
+    }
+  };
+  global.S.history = [
+    { date: new Date().toISOString().split("T")[0], type: "session", detail: "C", xp: 5 },
+    { date: new Date().toISOString().split("T")[0], type: "quiz", detail: "C", xp: 3 }
+  ];
+  global.S.quizCorrect = 1;
+  global.S.quizTotal = 1;
+  global.S.midiEnabled = true;
+  global.S.midiDevices = [{ id: "midi_1", name: "Virtual Synth" }];
+  global.S.midiOutput = true;
+  global.S.midiOutputId = "midi_1";
+
+  var tunerHtml = SparkSharedToolRenderers.tunerTab();
+  var statsHtml = SparkSharedToolRenderers.statsTab();
+  var guideHtml = SparkSharedToolRenderers.guideTab();
+
+  assert.ok(tunerHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(tunerHtml.indexOf("action-row") >= 0);
+  assert.ok(statsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(statsHtml.indexOf("metric-value") >= 0);
+  assert.ok(statsHtml.indexOf("metric-label") >= 0);
+  assert.ok(statsHtml.indexOf("action-row") >= 0);
+  assert.ok(guideHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(guideHtml.indexOf("card-micro-heading") >= 0);
+  assert.ok(guideHtml.indexOf("split-row") >= 0);
+});
+
+test("shared tool renderers avoid representative raw heavy heading strings", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.S.midiEnabled = false;
+
+  var tunerHtml = SparkSharedToolRenderers.tunerTab();
+  var statsHtml = SparkSharedToolRenderers.statsTab();
+  var guideHtml = SparkSharedToolRenderers.guideTab();
+
+  assert.strictEqual(tunerHtml.indexOf('font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px'), -1);
+  assert.strictEqual(statsHtml.indexOf('font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats'), -1);
+  assert.strictEqual(statsHtml.indexOf('font-size:15px;font-weight:800;color:var(--text-primary)">&#128197; Last 30 Days'), -1);
+  assert.strictEqual(guideHtml.indexOf('font-size:16px;font-weight:800;color:var(--text-primary)">&#127912; Chart Legend'), -1);
+  assert.strictEqual(guideHtml.indexOf('font-size:22px;font-weight:900;color:var(--text-primary)">&#128214; How to Read Chord Charts'), -1);
 });
 
 test("practice instrument switcher rows expose keyboard handlers", function() {
@@ -2451,6 +2508,27 @@ test("practiceTab card micro-headings use lighter dashboard typography", functio
   assert.ok(styles.indexOf("font-weight:700") >= 0);
   assert.strictEqual(html.indexOf("font-size:16px;font-weight:900;color:#fff\">Pick Up Where You Left Off"), -1);
   assert.strictEqual(html.indexOf("font-size:15px;font-weight:800;color:var(--text-primary)\">&#128221; Today"), -1);
+});
+
+test("legacy practice helper cards use shared visual contract classes", function() {
+  var statsHtml = renderPracticeStatsCard({
+    streak: 3,
+    todayMinutes: 12,
+    totalMinutes: 90
+  });
+  var rowsHtml = renderPracticePlanRows({
+    items: [
+      { id: "plan_1", label: "Warmup", desc: "Start light", completed: false }
+    ]
+  });
+
+  assert.ok(statsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(statsHtml.indexOf("metric-label") >= 0);
+  assert.ok(statsHtml.indexOf("metric-value") >= 0);
+  assert.ok(rowsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(rowsHtml.indexOf("split-row") >= 0);
+  assert.strictEqual(statsHtml.indexOf("<b>Practice Stats</b>"), -1);
+  assert.strictEqual(rowsHtml.indexOf("<b>Today's Practice Plan</b>"), -1);
 });
 
 test("practiceTab treats malformed cached plan shells without array items as empty state", function() {

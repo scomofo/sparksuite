@@ -39,17 +39,17 @@ function _pianoPerformResultsInner(){
   var h = '<div class="card mb16">';
   h += '<h2>Performance Results</h2>';
   h += '<div class="muted">' + escHTML(resultTitle) + '</div>';
-  h += '<div style="margin-top:8px">Accuracy: <b>' + (r.accuracy || 0) + '%</b></div>';
-  h += '<div>Score: <b>' + (r.score || 0) + '</b></div>';
-  h += '<div>Stars: <b>' + (r.stars || 0) + '</b></div>';
-  h += '<div>Max Combo: <b>' + (r.maxCombo || 0) + '</b></div>';
-  h += '<div>Mastery: <b>' + escHTML(mastery) + '</b></div>';
+  h += '<div class="split-row" style="margin-top:8px;gap:12px"><span class="metric-label">Accuracy</span><span class="metric-value">' + (r.accuracy || 0) + '%</span></div>';
+  h += '<div class="split-row" style="gap:12px"><span class="metric-label">Score</span><span class="metric-value">' + (r.score || 0) + '</span></div>';
+  h += '<div class="split-row" style="gap:12px"><span class="metric-label">Stars</span><span class="metric-value">' + (r.stars || 0) + '</span></div>';
+  h += '<div class="split-row" style="gap:12px"><span class="metric-label">Max Combo</span><span class="metric-value">' + (r.maxCombo || 0) + '</span></div>';
+  h += '<div class="split-row" style="gap:12px"><span class="metric-label">Mastery</span><span class="metric-value">' + escHTML(mastery) + '</span></div>';
   h += '</div>';
 
   // Phrase breakdown
   if(Array.isArray(r.phrases) && r.phrases.length){
     h += '<div class="card mb16">';
-    h += '<div><b>Phrase Breakdown</b></div>';
+    h += '<div class="card-section-heading">Phrase Breakdown</div>';
     var weakestId = null;
     var weakestAcc = 999;
     for(var i=0;i<r.phrases.length;i++){
@@ -58,9 +58,9 @@ function _pianoPerformResultsInner(){
       var pAcc = p.total ? Math.round((p.hits / p.total) * 100) : 0;
       if(pAcc < weakestAcc){ weakestAcc = pAcc; weakestId = p.phraseId; }
       var color = pAcc >= 90 ? '#5a9e6a' : pAcc >= 70 ? '#d4a843' : '#c44';
-      h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--bg-input)">';
-      h += '<span>' + escHTML(pianoFirstPerformanceResultTextToken(p.name, "Phrase " + (i+1))) + '</span>';
-      h += '<span style="color:' + color + ';font-weight:600">' + pAcc + '%</span>';
+      h += '<div class="split-row" style="align-items:center;padding:4px 0;border-bottom:1px solid var(--bg-input);gap:12px">';
+      h += '<span class="card-micro-heading">' + escHTML(pianoFirstPerformanceResultTextToken(p.name, "Phrase " + (i+1))) + '</span>';
+      h += '<span class="metric-value" style="font-size:13px;color:' + color + '">' + pAcc + '%</span>';
       h += '</div>';
     }
     if(weakestId != null){
@@ -72,8 +72,10 @@ function _pianoPerformResultsInner(){
   }
 
   h += '<div class="card mb16">';
+  h += '<div class="action-row">';
   h += '<button class="btn btn-primary" onclick="act(\'performRetry\')">Retry Song</button> ';
   h += '<button class="btn" onclick="act(\'stopPerform\')">Back to Songs</button>';
+  h += '</div>';
   h += '</div>';
 
   return h;

@@ -13,7 +13,7 @@
     var syncStatus=runtimeState&&runtimeState.cloudLastSyncStatus?runtimeState.cloudLastSyncStatus:((S.cloudSync&&S.cloudSync.lastSyncStatus)||"idle");
     var syncAt=runtimeState&&Object.prototype.hasOwnProperty.call(runtimeState,"cloudLastSyncAt")?runtimeState.cloudLastSyncAt:(S.cloudSync?(S.cloudSync.lastSyncAt||null):null);
     var h="<div class=\"card\">";
-    h+="<div><b>Cloud Sync</b></div>";
+    h+="<div class=\"card-section-heading\">Cloud Sync</div>";
     if(loggedIn){
       h+="<div>Signed in as: "+escHTML(email||"")+"</div>";
       if(syncStatus==="syncing")h+="<div style=\"color:#3b82f6\"><span class=\"spinner-inline\"></span> Syncing...</div>";

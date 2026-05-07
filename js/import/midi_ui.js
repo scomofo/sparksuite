@@ -37,7 +37,7 @@
       ? runtimeState.midiImportAssignments
       : S.importedMidiAssignments;
     var h = '<div class="card">';
-    h += '<div><b>MIDI Import</b></div>';
+    h += '<div class="card-section-heading">MIDI Import</div>';
     h += '<input type="file" accept=".mid,.midi" onchange="act(\'importMidiFile\', this.files[0])" />';
     if(typeof isDesktopBuild === "function" && isDesktopBuild() && typeof openImportFileDesktopAware === "function"){
       h += ' <button onclick="act(\'importMidiDesktop\')">Import from Desktop</button>';
@@ -46,7 +46,7 @@
 
     if((runtimeTracks && runtimeTracks.length) || S.importedMidi){
       h += '<div class="card">';
-      h += '<div><b>Imported Tracks</b></div>';
+      h += '<div class="card-section-heading">Imported Tracks</div>';
       var tracks = runtimeTracks || (S.importedMidi.tracks || []);
       for(var i=0;i<tracks.length;i++){
         var assignment = (assignments && assignments[tracks[i].id]) || "unassigned";
@@ -70,7 +70,7 @@
 
       if(runtimeState && runtimeState.midiImportSeedMode){
         h += '<div class="card">';
-        h += '<div><b>Latest Seed</b></div>';
+        h += '<div class="card-section-heading">Latest Seed</div>';
         h += '<div>Mode: ' + escHTML(runtimeState.midiImportSeedMode) + '</div>';
         if(runtimeState.midiImportSeedTitle){
           h += '<div>Title: ' + escHTML(runtimeState.midiImportSeedTitle) + '</div>';
