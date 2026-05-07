@@ -47,11 +47,31 @@ async function assertAppHasContent(page, context) {
   assert.ok(text.length > 80, context + " rendered too little content");
 }
 
+async function assertNoRawUiTokens(page, context) {
+  var text = (await page.locator("#app").innerText()).trim();
+  assert.strictEqual(text.indexOf("undefined"), -1, context + " rendered raw undefined text");
+  assert.strictEqual(text.indexOf("NaN"), -1, context + " rendered raw NaN text");
+  assert.strictEqual(text.indexOf("0/0 chords"), -1, context + " rendered an empty chord counter");
+}
+
 async function openTab(page, tab) {
   await page.evaluate(function(nextTab) {
     if (window.act) window.act("tab", nextTab);
   }, tab);
   await settle(page, 300);
+}
+
+async function scanInstrumentTabs(page, label, tabs) {
+  await launchInstrument(page, label);
+  await assertAppHasContent(page, label + " home");
+  await assertNoRawUiTokens(page, label + " home");
+  for (var i = 0; i < tabs.length; i++) {
+    await openTab(page, tabs[i]);
+    await assertAppHasContent(page, label + " " + tabs[i] + " tab");
+    await assertNoRawUiTokens(page, label + " " + tabs[i] + " tab");
+  }
+  await page.getByLabel("Back to launcher").click();
+  await settle(page, 500);
 }
 
 async function openLauncherView(page, view) {
@@ -119,12 +139,16 @@ async function main() {
 
   await launchInstrument(page, "Piano");
   await assertAppHasContent(page, "Piano home");
+  await assertNoRawUiTokens(page, "Piano home");
   await openTab(page, "games");
   await assertAppHasContent(page, "Piano games tab");
+  await assertNoRawUiTokens(page, "Piano games tab");
   await openTab(page, "songs");
   await assertAppHasContent(page, "Piano songs tab");
+  await assertNoRawUiTokens(page, "Piano songs tab");
   await openTab(page, "tools");
   await assertAppHasContent(page, "Piano tools tab");
+  await assertNoRawUiTokens(page, "Piano tools tab");
   await openTab(page, "practice");
 
   var cMajorCard = page.locator(".chord-card").filter({ hasText: "C" });
@@ -135,14 +159,13 @@ async function main() {
 
   await page.getByLabel("Back to launcher").click();
   await settle(page, 500);
-  await launchInstrument(page, "Guitar");
-  await assertAppHasContent(page, "Guitar home");
 
   var guitarTabs = ["practice", "drill", "daily", "quiz", "ear", "strum", "songs", "rhythm", "runner", "build", "tuner", "dual", "stats", "guide"];
-  for (var i = 0; i < guitarTabs.length; i++) {
-    await openTab(page, guitarTabs[i]);
-    await assertAppHasContent(page, "Guitar " + guitarTabs[i] + " tab");
-  }
+  await scanInstrumentTabs(page, "Guitar", guitarTabs);
+  await scanInstrumentTabs(page, "Bass", ["practice", "drill", "songs", "stats", "guide"]);
+  await scanInstrumentTabs(page, "Drums", ["practice", "stats"]);
+  await scanInstrumentTabs(page, "Ukulele", ["practice", "drill", "daily", "quiz", "ear", "strum", "songs", "rhythm", "runner", "build", "tuner", "stats", "guide"]);
+  await scanInstrumentTabs(page, "Vocals", ["practice", "stats"]);
 
   var mobilePage = await browser.newPage({ viewport: { width: 390, height: 844 } });
   trackConsoleProblems(mobilePage, consoleProblems);
