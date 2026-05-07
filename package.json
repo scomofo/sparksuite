@@ -23,6 +23,7 @@
     "curriculum:validate": "node scripts/lint/validate-curriculum.js",
     "curriculum:check-novelty": "node scripts/lint/check-novelty-counts.js",
     "audio:generate-loop-metadata": "node scripts/audio/generate-loop-metadata.js",
+    "performance:generate-chart-data": "node scripts/generate-chart-data.js",
     "handoff:phase-gate": "node scripts/lint/check-handoff-phase-gate.js",
     "check:ui-logic": "node scripts/check_ui_business_logic.js",
     "lint:content": "node scripts/check_content_contracts.js",
