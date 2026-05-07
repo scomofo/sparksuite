@@ -3123,7 +3123,7 @@
     };
 
     if (request.target === "return_after_stop") {
-      if (runtimeState.performanceChartId || runtimeState.performanceSongTitle || runtimeState.performanceSongIndex != null) {
+      if (runtimeState.performanceSongData || runtimeState.performanceSongTitle || runtimeState.performanceSongIndex != null) {
         request.target = "song_detail";
       } else {
         request.target = "songs_home";

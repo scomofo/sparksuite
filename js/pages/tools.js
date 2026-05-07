@@ -554,3 +554,12 @@ function guideTab(){
   h+='<div style="text-align:center;margin-top:16px;font-size:12px;color:var(--text-muted)">Press <strong>?</strong> for keyboard shortcuts</div>';
   return h;
 }
+
+(function(root){
+  if(!root)return;
+  root.SparkSharedToolRenderers = {
+    tunerTab: tunerTab,
+    statsTab: statsTab,
+    guideTab: guideTab
+  };
+})(typeof window !== "undefined" ? window : (typeof global !== "undefined" ? global : null));

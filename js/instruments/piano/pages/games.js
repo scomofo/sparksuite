@@ -73,7 +73,7 @@ function pianoGamesTab() {
 
 // ── Drill ──
 function drillTab() {
-  var html = '<div class="card">';
+  var html = '<div class="card' + (S.drillActive ? ' live-timer-surface' : '') + '">';
   if (S.drillActive) {
     var c = S.drillChords[S.drillIdx];
     var chordObj = findChord(c);
@@ -113,7 +113,7 @@ function drillTab() {
 // ── Daily ──
 function dailyTab() {
   var DAILY_TYPES = _pianoDailyTypes || [];
-  var html = '<div class="card">';
+  var html = '<div class="card' + (S.dailyActive && S.dailyType ? ' live-timer-surface' : '') + '">';
   if (S.dailyActive && S.dailyType) {
     var dt = DAILY_TYPES.find(function(d) { return d.id === S.dailyType; });
     html += '<h2>' + (dt ? dt.name : "Challenge") + '</h2>';

@@ -141,18 +141,19 @@ function pianoRenderGuidedFlowCard(summary, options) {
   var cardClass = opts.cardClass || "card mb16";
   var cardStyle = opts.cardStyle || "border:2px solid var(--accent)";
   var mutedClass = opts.mutedClass || "muted";
-  var summaryTitleStyle = opts.summaryTitleStyle || "font-size:14px;font-weight:800;margin-top:4px";
+  var summaryTitleClass = opts.summaryTitleClass || "guided-status-line";
+  var summaryTitleStyle = opts.summaryTitleStyle || "font-size:14px;margin-top:4px";
   var h = '';
   if (!summary) return h;
   h += '<div class="' + cardClass + '" style="' + cardStyle + '">';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">';
-  h += '<div style="font-size:15px;font-weight:800">Guided Session Flow</div>';
+  h += '<div class="practice-card-heading">Guided Session Flow</div>';
   h += '<div class="' + mutedClass + '">' + escHTML(pianoGetGuidedShellBadge(summary)) + '</div>';
   h += '</div>';
   h += '<div class="' + mutedClass + '" style="margin-bottom:10px">Your live guided shell is the plan right now.</div>';
   h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
-  h += '<div style="font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)">Guided Session Live</div>';
-  h += '<div style="' + summaryTitleStyle + '">' + escHTML(summary.title) + '</div>';
+  h += '<div class="guided-status-line" style="font-size:11px;text-transform:uppercase;color:var(--accent)">Guided Session Live</div>';
+  h += '<div class="' + summaryTitleClass + '" style="' + summaryTitleStyle + '">' + escHTML(summary.title) + '</div>';
   h += pianoRenderGuidedSummaryMeta(summary, { mutedClass: mutedClass, marginStyle: "margin-top:4px", shellFallbackText: "Shell details loading" });
   h += '</div>';
   h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:var(--accent);color:#fff;font-weight:700">Resume Guided Session</button>';
@@ -360,7 +361,7 @@ function practicePlanSection(){
   if(typeof getPracticeStats === "function"){
     var stats = getPracticeStats();
     h += '<div class="card" style="margin-top:12px">';
-    h += '<div><b>Practice Stats</b></div>';
+    h += '<div class="practice-card-heading">Practice Stats</div>';
     h += '<div>Streak: '+stats.streak+' days</div>';
     h += '<div>Today: '+stats.todayMinutes+' min</div>';
     h += '<div>Total: '+stats.totalMinutes+' min</div>';
@@ -376,7 +377,7 @@ function practicePlanSection(){
   if(!plan) plan = S.practicePlan;
   if(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePlanItem)){
     h += '<div class="card" style="margin-top:12px">';
-    h += '<div><b>Today\'s Practice Plan</b></div>';
+    h += '<div class="practice-card-heading">Today\'s Practice Plan</div>';
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
       if(!isRenderablePlanItem(item)) continue;
@@ -404,11 +405,12 @@ function practicePlanSection(){
         cardClass: "card",
         cardStyle: "margin-top:12px;border:2px solid var(--accent)",
         mutedClass: "text-muted",
-        summaryTitleStyle: "font-size:13px;font-weight:800;margin-top:4px"
+        summaryTitleClass: "guided-status-line",
+        summaryTitleStyle: "font-size:13px;margin-top:4px"
       });
     } else {
       h += '<div class="card" style="margin-top:12px">';
-      h += '<div><b>Today\'s Practice Plan</b></div>';
+      h += '<div class="practice-card-heading">Today\'s Practice Plan</div>';
       h += '<div class="text-muted">No practice plan yet.</div>';
       h += '</div>';
     }
@@ -421,7 +423,7 @@ function practicePlanSection(){
     var transitionsMastery = pianoNormalizePracticeNumber(getAverageMastery("transitions"), 0);
     var scalesMastery = pianoNormalizePracticeNumber(getAverageMastery("scales"), 0);
     h += '<div class="card" style="margin-top:12px">';
-    h += '<div><b>Mastery</b></div>';
+    h += '<div class="practice-card-heading">Mastery</div>';
     h += '<div>Chords: '+Math.round(chordsMastery*100)+'%</div>';
     h += '<div>Rhythm: '+Math.round(rhythmMastery*100)+'%</div>';
     h += '<div>Transitions: '+Math.round(transitionsMastery*100)+'%</div>';

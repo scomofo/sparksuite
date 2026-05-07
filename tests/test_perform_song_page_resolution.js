@@ -236,5 +236,85 @@ test("performSongPage can resolve sparkCore from the global binding", function()
   assert.ok(html.indexOf('onclick="act(\'performDifficulty\',\'easy\')"') >= 0);
 });
 
+test("performSongPage does not render dead weakest-phrase action before results exist", function() {
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceSongData: {
+          title: "The Beat Goes On",
+          artist: "Sonny & Cher",
+          bpm: 130,
+          chords: ["Em"],
+          progression: ["Em", "Em"]
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.strictEqual(html.indexOf("performRetryPhrase"), -1);
+  assert.ok(html.indexOf("Finish a run to unlock weakest-phrase practice") >= 0);
+});
+
+test("performSongPage renders weakest-phrase action when phrase results exist", function() {
+  global.S.performChart = {
+    phrases: [{ id: "p1", startSec: 0, endSec: 8 }]
+  };
+  global.S.performResults = {
+    phraseStats: [{ total: 1, scoreSum: 60 }]
+  };
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceSongData: {
+          title: "The Beat Goes On",
+          artist: "Sonny & Cher",
+          bpm: 130,
+          chords: ["Em"],
+          progression: ["Em", "Em"]
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.ok(html.indexOf("performRetryPhrase") >= 0);
+  assert.ok(html.indexOf("Practice Weakest Phrase") >= 0);
+});
+
+test("performSongPage play actions share the calmer play-button typography class", function() {
+  global.S.performChart = {
+    phrases: [{ id: "p1", startSec: 0, endSec: 8 }]
+  };
+  global.S.performResults = {
+    phraseStats: [{ total: 1, scoreSum: 60 }]
+  };
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceSongData: {
+          title: "The Beat Goes On",
+          artist: "Sonny & Cher",
+          bpm: 130,
+          chords: ["Em"],
+          progression: ["Em", "Em"]
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.ok(html.indexOf("perform-song-play-btn-primary") >= 0);
+  assert.ok(html.indexOf("perform-song-play-btn-secondary") >= 0);
+  assert.ok(html.indexOf("perform-song-play-btn-utility") >= 0);
+  assert.strictEqual(html.indexOf("box-shadow:0 14px 28px rgba(255,107,107,.22)\">&#127918; Start Performance"), -1);
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

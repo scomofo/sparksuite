@@ -214,4 +214,43 @@ test("perform pages can resolve sparkCore from the global binding", function() {
   assert.ok(doneHtml.indexOf("Turbo Mode") >= 0);
 });
 
+test("performDonePage hides weakest retry when no phrase target exists", function() {
+  S.performChart.phrases = [];
+  S.performResults.phraseStats = [
+    { name: "Only Phrase", total: 2, scoreSum: 1, perfects: 1, goods: 0, oks: 0, misses: 1 }
+  ];
+
+  var html = performDonePage();
+
+  assert.strictEqual(html.indexOf("performRetryPhrase"), -1);
+  assert.ok(html.indexOf("Finish a phrase-tracked run") >= 0);
+});
+
+test("performDonePage keeps weakest retry when phrase target exists", function() {
+  S.performChart.phrases = [{ id: "phrase-a", name: "Phrase A", startSec: 0, endSec: 4 }];
+  S.performResults.phraseStats = [
+    { name: "Phrase A", total: 2, scoreSum: 1, perfects: 1, goods: 0, oks: 0, misses: 1 }
+  ];
+
+  var html = performDonePage();
+
+  assert.ok(html.indexOf("performRetryPhrase") >= 0);
+  assert.strictEqual(html.indexOf("Finish a phrase-tracked run"), -1);
+});
+
+test("performDonePage no-results fallback exits through the performance song list action", function() {
+  S.performResults = null;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return { runtimeState: { performanceResults: null } };
+    }
+  };
+
+  var html = performDonePage();
+
+  assert.ok(html.indexOf("No results.") >= 0);
+  assert.ok(html.indexOf("performDoneSongs") >= 0);
+  assert.strictEqual(html.indexOf("act('back')"), -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

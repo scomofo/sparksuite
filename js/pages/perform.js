@@ -112,6 +112,15 @@ function cancelCalibration() {
 }
 
 // Wrapper — see js/utils/normalize.js for the canonical implementation.
+(function(root){
+  if(!root)return;
+  root.SparkPerformanceRunCalibration = {
+    start: startCalibration,
+    tap: recordCalibrationTap,
+    cancel: cancelCalibration
+  };
+})(typeof window !== "undefined" ? window : (typeof global !== "undefined" ? global : null));
+
 function normalizePerformPageTextToken(value) { return SparkNormalize.textToken(value); }
 
 function firstPerformPageTextToken() {
@@ -380,7 +389,7 @@ function performDonePage() {
   var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
     ? runtimeState.performanceTargetTechnique
     : S.performTargetTechnique;
-  if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
+  if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'performDoneSongs\')">Songs</button></div>';
   var resultTitle = firstPerformPageTextToken(r.title, r.songTitle, runtimeState && runtimeState.performanceChartId, S.performChartId, "Performance");
   var resultArtist = firstPerformPageTextToken(r.artist, "Unknown Artist");
 
@@ -481,7 +490,11 @@ function performDonePage() {
   // Buttons
   h += '<div class="flex-col">';
   h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; ' + escHTML(targetTechnique ? ("Retry " + formatTechniqueFocusLabel(targetTechnique)) : "Retry") + '</button>';
-  h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; ' + escHTML(targetTechnique ? ("Retry Weakest " + formatTechniqueFocusLabel(targetTechnique)) : "Retry Weakest") + '</button>';
+  if (hasPerformDoneWeakestPhraseTarget(r)) {
+    h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; ' + escHTML(targetTechnique ? ("Retry Weakest " + formatTechniqueFocusLabel(targetTechnique)) : "Retry Weakest") + '</button>';
+  } else {
+    h += '<div style="font-size:12px;color:var(--text-muted);padding:8px 10px;text-align:center">Finish a phrase-tracked run to unlock weakest-phrase retry.</div>';
+  }
   h += '<button class="btn" onclick="act(\'performDoneSongs\')" style="background:#4ECDC4;color:#fff">&#127968; Songs</button>';
   h += '</div>';
 
@@ -507,6 +520,16 @@ function performDonePage() {
 
   h += '</div>';
   return h;
+}
+
+function hasPerformDoneWeakestPhraseTarget(results) {
+  var phraseStats = results && results.phraseStats;
+  var phrases = S.performChart && S.performChart.phrases;
+  if (!phraseStats || !phraseStats.length || !phrases || !phrases.length) return false;
+  for (var i = 0; i < phraseStats.length; i++) {
+    if (phrases[i] && phraseStats[i] && phraseStats[i].total > 0) return true;
+  }
+  return false;
 }
 
 function getNextPerformEvent(chart, nowSec) {

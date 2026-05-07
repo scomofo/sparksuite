@@ -878,6 +878,7 @@ test("shared session helpers can resolve sparkCore from the global binding", fun
   assert.ok(fingerHtml.indexOf("Spider Walk") >= 0);
   assert.ok(fingerHtml.indexOf("0:45") >= 0);
   assert.ok(fingerHtml.indexOf("Completed 2x") >= 0);
+  assert.ok(fingerHtml.indexOf("card live-timer-surface") >= 0);
 });
 
 test("songs surfaces can resolve sparkCore from the global binding", function() {

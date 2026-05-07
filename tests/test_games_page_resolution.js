@@ -48,6 +48,10 @@ function resetEnv() {
   };
   global.performance = { now: function() { return 0; } };
   global.COMMON_PROGRESSIONS = [];
+  global.SCALES = {};
+  global.SCALE_NAMES = {};
+  global.getScaleFrets = function() { return []; };
+  global.scaleSVG = function() { return "<div>scale</div>"; };
   global.SparkInstruments = {
     getActive: function() {
       return {
@@ -93,6 +97,13 @@ test("runnerGamePage ignores stale target and obstacle labels", function() {
   assert.ok(html.indexOf(">null<") === -1);
 });
 
+test("active runner target card does not use the generic card entrance animation", function() {
+  var html = runnerGamePage();
+  var styles = loadJS("styles.css");
+  assert.ok(html.indexOf("card live-timer-surface mb12") >= 0);
+  assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
+});
+
 test("games pages ignore malformed cached BPM values", function() {
   S.rhythmBpm = "NaN";
   S.progBpm = { bpm: 1 };
@@ -136,6 +147,39 @@ test("progression builder uses a real remove button", function() {
   assert.ok(actionsSource.indexOf('if (a === "rhythmResultsBack") {') >= 0);
   assert.ok(actionsSource.indexOf('if (a === "runnerResultsReplay") {') >= 0);
   assert.ok(actionsSource.indexOf('if (a === "runnerResultsBack") {') >= 0);
+});
+
+test("active progression chord card does not use the generic card entrance animation", function() {
+  S.progChords = ["C Major", "G Major"];
+  S.progPlaying = true;
+  S.progBeat = 0;
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      getData: function() {
+        return {
+          ALL_CHORDS: [{ name: "C Major", short: "C" }, { name: "G Major", short: "G" }],
+          CHORDS: { 1: [{ name: "C Major", short: "C" }, { name: "G Major", short: "G" }] }
+        };
+      },
+      ui: {
+        chord: function() { return "<div>chord</div>"; }
+      }
+    };
+  };
+
+  var html = buildTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("card live-timer-surface mb12 text-center") >= 0);
+  assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
+});
+
+test("shared drill launch buttons are handled by the guitar runtime", function() {
+  var gamesSource = loadJS("js/instruments/piano/pages/games.js");
+  var guitarSource = loadJS("js/instruments/guitar/app.js");
+  assert.ok(gamesSource.indexOf("act(\\'start_drill\\'") >= 0);
+  assert.ok(guitarSource.indexOf('a === "start_drill"') >= 0);
 });
 
 test("games pages can resolve sparkCore from the global binding", function() {
@@ -198,6 +242,16 @@ test("games pages can resolve sparkCore from the global binding", function() {
   assert.ok(rhythmHtml.indexOf(">3x</div>") >= 0);
   assert.ok(runnerHtml.indexOf(">22</div>") >= 0);
   assert.ok(runnerHtml.indexOf(">C</div>") >= 0);
+});
+
+test("shared game renderers survive piano page globals for guitar tabs", function() {
+  S.runnerActive = false;
+  global.eval(loadJS("js/instruments/piano/pages/games.js"));
+
+  assert.ok(typeof SparkSharedGameRenderers.runnerTab === "function");
+  assert.ok(runnerTab().indexOf("Start Game") >= 0);
+  assert.ok(SparkSharedGameRenderers.runnerTab().indexOf("STRUM!") >= 0 || SparkSharedGameRenderers.runnerTab().indexOf("Chord names scroll") >= 0);
+  assert.strictEqual(SparkSharedGameRenderers.runnerTab().indexOf("Start Game"), -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

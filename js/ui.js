@@ -134,8 +134,8 @@ function shuffle(arr){
 
 // Helper for accessible clickable divs
 function clickableDiv(onclick,extra){
-  var guard='if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}';
-  var k='if(event.key==="Enter"||event.key===" "){event.preventDefault();'+onclick+'}';
+  var guard='if(event.target&&event.target.closest&&event.target.closest(&quot;button,input,select,textarea,a&quot;)){return;}';
+  var k="if(event.key==='Enter'||event.key===' '){event.preventDefault();"+onclick+"}";
   return ' tabindex="0" role="button" onclick="'+guard+onclick+'" onkeydown="'+k+'"'+(extra?' '+extra:'');
 }
 

@@ -261,6 +261,42 @@ test("homePage games and tools tabs render real loaded sections instead of stub 
   assert.strictEqual(toolsHtml.indexOf("Tuner, metronome, and utilities."), -1);
 });
 
+test("shared practice tab renderers survive piano page globals for guitar tabs", function() {
+  global.sparkCore = null;
+  global.window.sparkCore = null;
+  global.S.quizQ = null;
+  global.S.earTrainQ = null;
+  global.S.dailyChallenge = { id: "switch", icon: "D", title: "Daily Switch", desc: "Move cleanly", xp: 10 };
+  global.eval(loadJS("js/instruments/piano/pages/games.js"));
+
+  var renderers = getSharedHomeTabRenderers();
+
+  assert.ok(typeof SparkSharedPracticeRenderers.drillTab === "function");
+  assert.ok(drillTab().indexOf("Chord Drill") >= 0);
+  assert.ok(renderers.drill().indexOf("Chord Switching") >= 0);
+  assert.strictEqual(renderers.drill().indexOf("Chord Drill"), -1);
+  assert.ok(dailyTab().indexOf("Daily Challenges") >= 0);
+  assert.ok(renderers.daily().indexOf("Daily Challenge") >= 0);
+  assert.strictEqual(renderers.daily().indexOf("Daily Challenges"), -1);
+  assert.ok(quizTab().indexOf("start_quiz") >= 0);
+  assert.ok(renderers.quiz().indexOf("startQuiz") >= 0);
+  assert.strictEqual(renderers.quiz().indexOf("start_quiz"), -1);
+  assert.ok(earTrainTab().indexOf("start_ear") >= 0);
+  assert.ok(renderers.ear().indexOf("startEarTrain") >= 0);
+  assert.strictEqual(renderers.ear().indexOf("start_ear"), -1);
+});
+
+test("shared tool tab renderers survive piano page globals for guitar tabs", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+
+  var renderers = getSharedHomeTabRenderers();
+
+  assert.ok(typeof SparkSharedToolRenderers.statsTab === "function");
+  assert.strictEqual(renderers.stats, SparkSharedToolRenderers.statsTab);
+  assert.strictEqual(renderers.guide, SparkSharedToolRenderers.guideTab);
+});
+
 test("practice instrument switcher rows expose keyboard handlers", function() {
   var source = loadJS("js/pages/practice.js");
   var uiSource = loadJS("js/ui.js");
@@ -268,7 +304,9 @@ test("practice instrument switcher rows expose keyboard handlers", function() {
   assert.ok(source.indexOf('onclick="act(\\\'reset\\\')"') >= 0);
   assert.ok(source.indexOf('onclick="act(\\\'previewChord\\\',\\\'') >= 0);
   assert.strictEqual(source.indexOf("event.stopPropagation();act('previewChord'"), -1);
-  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}') >= 0);
+  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest(&quot;button,input,select,textarea,a&quot;)){return;}') >= 0);
+  assert.strictEqual(uiSource.indexOf('onclick="'+
+    'if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}'), -1);
   assert.ok(loadJS("js/pages/plan.js").indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
 });
 
@@ -2368,6 +2406,51 @@ test("practiceTab prefers the active core plan when the practice bridge is unava
   var html = practiceTab();
   assert.ok(html.indexOf("Core Warmup") >= 0);
   assert.strictEqual(html.indexOf("Cached Warmup"), -1);
+});
+
+test("practiceTab embedded plan rows keep action buttons from crowding item copy", function() {
+  global.S.practicePlan = {
+    focus: "Long labels",
+    completedItems: 0,
+    totalItems: 1,
+    items: [{
+      id: "long_1",
+      label: "Replay the performance phrase with an unusually long title",
+      desc: "Low recent performance accuracy",
+      completed: false
+    }]
+  };
+
+  var html = practiceTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("practice-summary-item") >= 0);
+  assert.ok(html.indexOf("practice-summary-copy") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-item") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-copy") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-item .btn") >= 0);
+  assert.ok(styles.indexOf("flex-wrap:wrap") >= 0);
+});
+
+test("practiceTab card micro-headings use lighter dashboard typography", function() {
+  global.S.lastChordName = "Em";
+  global.S.practicePlan = {
+    focus: "Song mastery",
+    completedItems: 0,
+    totalItems: 1,
+    items: [{ id: "plan_1", label: "Warmup", desc: "Start light", completed: false }]
+  };
+
+  var html = practiceTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("practice-card-heading") >= 0);
+  assert.ok(html.indexOf("practice-quick-title") >= 0);
+  assert.ok(styles.indexOf(".practice-card-heading") >= 0);
+  assert.ok(styles.indexOf(".practice-quick-title") >= 0);
+  assert.ok(styles.indexOf("font-weight:700") >= 0);
+  assert.strictEqual(html.indexOf("font-size:16px;font-weight:900;color:#fff\">Pick Up Where You Left Off"), -1);
+  assert.strictEqual(html.indexOf("font-size:15px;font-weight:800;color:var(--text-primary)\">&#128221; Today"), -1);
 });
 
 test("practiceTab treats malformed cached plan shells without array items as empty state", function() {

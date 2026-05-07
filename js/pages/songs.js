@@ -98,10 +98,13 @@ function _getSongsCore(){
 
 function _resolveSongsRuntimeState(){
   var core = _getSongsCore();
+  var runtimeState = core && typeof core.getRuntimeState === "function"
+    ? core.getRuntimeState()
+    : null;
   var coreView = core && typeof core.getActiveSessionView === "function"
     ? core.getActiveSessionView()
     : null;
-  return coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  return runtimeState || (coreView && coreView.runtimeState ? coreView.runtimeState : null);
 }
 
 function _getSongsBrowserState(){
@@ -126,7 +129,7 @@ function _renderSongsSubTabs(songsSubTab){
   h += '<button class="community-tab'+(songsSubTab==="community"?" active":"")+'" onclick="act(\'songsSubTab\',\'community\')">&#127760; Community</button>';
   h += '<button class="community-tab'+(songsSubTab==="import"?" active":"")+'" onclick="act(\'songsSubTab\',\'import\')">&#128196; Import</button>';
   h += '<button class="community-tab'+(songsSubTab==="stems"?" active":"")+'" onclick="act(\'songsSubTab\',\'stems\')">&#127911; Stems</button>';
-  h += '<button class="songs-subtab'+(songsSubTab==="perform"?" active":"")+'"'+clickableDiv("act(\'songsSubTab\',\'perform\')")+'>&#127918; Perform</button>';
+  h += '<button class="songs-subtab'+(songsSubTab==="perform"?" active":"")+'" onclick="act(\'songsSubTab\',\'perform\')">&#127918; Perform</button>';
   h += '</div>';
   return h;
 }
@@ -430,7 +433,8 @@ function _renderSongsList(filtered, D, safeSongFilter){
     var s=filtered[i],lk=s.level>S.level;
     var songTitle = _firstSongsTextToken(s.title, s.songTitle, s.id, "Song");
     var songArtist = _firstSongsTextToken(s.artist, "Unknown Artist");
-    h += '<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+i+")"))+'">';
+    var songLibraryIndex = D.SONGS.indexOf(s);
+    h += '<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+songLibraryIndex+")"))+'">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center"><div><h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)">'+escHTML(songTitle)+'</h3><p style="margin:2px 0 0;font-size:12px;color:var(--text-muted)">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div style="font-size:11px;color:var(--text-muted)">'+_formatSongsBpm(s.bpm, "--")+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
       var _songStatsId = typeof resolvePerformanceSongId === "function"

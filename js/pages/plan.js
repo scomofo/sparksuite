@@ -203,14 +203,14 @@ function planPage(){
     } else {
       h += '<div class="card mb16"><div class="muted">No practice plan yet.</div></div>';
     }
-    h += '<div class="card mb16" style="text-align:center">';
+    h += '<div class="card mb16"><div class="plan-actions">';
     h += activeGuided
-      ? '<button class="btn" onclick="act(\'resume_guided_session\')">Resume Guided Session</button> '
+      ? '<button class="btn" onclick="act(\'resume_guided_session\')">Resume Guided Session</button>'
       : activeShell
-        ? '<button class="btn" onclick="act(\'' + activeShell.primaryAction + '\')">' + escHTML(activeShell.primaryLabel) + '</button> '
-      : '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
+        ? '<button class="btn" onclick="act(\'' + activeShell.primaryAction + '\')">' + escHTML(activeShell.primaryLabel) + '</button>'
+      : '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button>';
     h += '<button class="btn" onclick="act(\'back\')">Back</button>';
-    h += '</div>';
+    h += '</div></div>';
     return h;
   }
 
@@ -228,8 +228,8 @@ function planPage(){
         ? '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))" style="background:var(--accent);color:#fff">Go</button>'
         : '<span class="text-muted">Unavailable</span>');
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPlanDisplayType(item))+'">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center">';
-    h += '<div>';
+    h += '<div class="plan-item-row">';
+    h += '<div class="plan-item-copy">';
     h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPlanItemLabel(item))+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(durationMinutes != null ? ' \u2022 '+durationMinutes+'m' : '')+'</div>';
     h += '</div>';
@@ -239,15 +239,15 @@ function planPage(){
   }
 
   if(!planCompleted){
-    h += '<div class="card mb16" style="text-align:center">';
+    h += '<div class="card mb16"><div class="plan-actions">';
     h += '<button class="btn btn-primary" onclick="act(\'completePlan\')">Mark Plan Complete</button>';
-    h += '</div>';
+    h += '</div></div>';
   }
 
-  h += '<div class="card mb16" style="text-align:center">';
-  h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
+  h += '<div class="card mb16"><div class="plan-actions">';
+  h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button>';
   h += '<button class="btn" onclick="act(\'back\')">Back</button>';
-  h += '</div>';
+  h += '</div></div>';
 
   return h;
 }

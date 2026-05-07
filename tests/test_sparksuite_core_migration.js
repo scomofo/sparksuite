@@ -5698,6 +5698,20 @@ test("SparkCore can build and apply performance navigation requests", function()
   assert.strictEqual(stopReturnState.activeTab, "songs");
 });
 
+test("SparkCore returns chart-only performance exits to the songs home", function() {
+  var core = createDefaultSparkCore();
+  core.syncPerformanceRuntimeState("start", {
+    chartId: "demo_progression",
+    difficulty: "normal",
+    arrangementType: "chords",
+    speed: 1
+  });
+
+  var stopReturnState = core.applyPerformanceNavigationRequest("return_after_stop");
+  assert.strictEqual(stopReturnState.activeScreen, "home");
+  assert.strictEqual(stopReturnState.activeTab, "songs");
+});
+
 test("SparkCore can mirror performance song selection state explicitly", function() {
   var core = createDefaultSparkCore();
   core.syncPerformanceRuntimeState("select_song", {

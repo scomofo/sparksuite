@@ -363,9 +363,20 @@ function renderGuidedActiveBlockBadge(blockType, shellSummary) {
   var badgeLabel = focusStretchLabel || (theme && theme.label ? theme.label : "");
   if (!theme || !theme.label) return "";
   return '<div style="display:flex;justify-content:center;margin:0 0 12px">' +
-    '<span style="padding:7px 12px;border-radius:999px;background:' + theme.background + ';color:' + theme.textColor + ';font-size:12px;font-weight:900;letter-spacing:.02em">' +
+    '<span class="guided-pill" style="background:' + theme.background + ';color:' + theme.textColor + '">' +
       escHTML(badgeLabel) +
     '</span>' +
+    '</div>';
+}
+
+function renderGuidedStopConfirmation() {
+  return '<div class="card" style="border:2px solid #FF6B6B33;background:#FF6B6B12;text-align:left;margin:8px 0 14px">' +
+    '<div class="guided-card-heading" style="color:var(--text-primary);margin-bottom:6px">End this session?</div>' +
+    '<p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">You can stop now and return to practice, or keep this guided session open.</p>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn" onclick="act(\'guidedCancelStop\')" style="background:var(--input-bg);color:var(--text-primary);font-weight:800">Keep Playing</button>' +
+      '<button class="btn" onclick="act(\'guidedStop\')" style="background:#FF6B6B;color:#fff;font-weight:800">End Session</button>' +
+    '</div>' +
     '</div>';
 }
 
@@ -429,8 +440,21 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
   var blockOrder = ["warm_engine", "drill", "song", "cooldown"];
   var segments = corePlan && Array.isArray(corePlan.segments) ? corePlan.segments : [];
   var activeSegmentId = runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null;
-  var guidedStep = runtimeState && runtimeState.guidedStep ? runtimeState.guidedStep : null;
+  var guidedStep = runtimeState && runtimeState.guidedStep
+    ? runtimeState.guidedStep
+    : (typeof S !== "undefined" && S.guidedStep ? S.guidedStep : null);
   var guidedNewMovePhase = runtimeState && runtimeState.guidedNewMovePhase ? runtimeState.guidedNewMovePhase : null;
+  var stepBlockTypeMap = {
+    spark: "warm_engine",
+    review: "drill",
+    newMove: "drill",
+    songSlice: "song",
+    victoryLap: "cooldown"
+  };
+  var activeBlockType = runtimeState && runtimeState.guidedBlockType
+    ? runtimeState.guidedBlockType
+    : (guidedStep && stepBlockTypeMap[guidedStep] ? stepBlockTypeMap[guidedStep] : null);
+  var activeBlockIndex = activeBlockType ? blockOrder.indexOf(activeBlockType) : -1;
   var progress = [];
   var nextPendingAssigned = false;
   var i;
@@ -455,7 +479,11 @@ function getGuidedBlockProgress(plan, corePlan, runtimeState) {
       humanizeGuidedLabel(blockType)
     );
     state = "";
-    if (segment && segment.completed) {
+    if (activeBlockIndex >= 0 && i < activeBlockIndex) {
+      state = "done";
+    } else if (activeBlockIndex >= 0 && i === activeBlockIndex) {
+      state = "now";
+    } else if (segment && segment.completed) {
       state = "done";
     } else if (segment && activeSegmentId && segment.id === activeSegmentId) {
       state = "now";
@@ -633,8 +661,8 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
       var stateText = block.state ? block.state : "&nbsp;";
       return '<div style="padding:10px 12px;border-radius:12px;background:' + cardBackground + ';border:' + cardBorder + ';text-align:left">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">' +
-          '<span style="font-size:12px;font-weight:800;color:var(--text-primary)">' + escHTML(block.label) + '</span>' +
-          '<span style="font-size:11px;font-weight:800;color:' + stateColor + ';text-transform:uppercase">' + escHTML(stateText) + '</span>' +
+          '<span class="guided-block-title">' + escHTML(block.label) + '</span>' +
+          '<span class="guided-pill" style="color:' + stateColor + ';text-transform:uppercase;padding:0;background:transparent">' + escHTML(stateText) + '</span>' +
         '</div>' +
         '<div style="font-size:11px;font-weight:700;color:' + (block.state === "now" ? "#FF8A5C" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(block.detail || " ") +
@@ -648,13 +676,13 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
         '<div style="font-size:11px;color:' + (extensionLabel ? stateColor : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(extensionLabel || " ") +
         '</div>' +
-        '<div style="font-size:11px;font-weight:800;color:' + (extensionThemeLabel ? "#A78BFA" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+        '<div class="guided-status-line" style="font-size:11px;color:' + (extensionThemeLabel ? "#A78BFA" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(extensionThemeLabel || " ") +
         '</div>' +
-        '<div style="font-size:11px;font-weight:800;color:' + (focusStretchLabel ? "#6E56B3" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+        '<div class="guided-status-line" style="font-size:11px;color:' + (focusStretchLabel ? "#6E56B3" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(focusStretchLabel || " ") +
         '</div>' +
-        '<div style="font-size:11px;font-weight:800;color:' + (deepFocusLabel ? "#5B46A3" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
+        '<div class="guided-status-line" style="font-size:11px;color:' + (deepFocusLabel ? "#5B46A3" : "var(--text-muted)") + ';min-height:14px;margin-bottom:2px">' +
           escHTML(deepFocusLabel || " ") +
         '</div>' +
         '<div style="font-size:11px;color:var(--text-muted)">' + escHTML(durationLabel || " ") + '</div>' +
@@ -802,7 +830,7 @@ function renderGuidedShellSummary(shellSummary) {
   if (blockMinutes > 0) detail.push(blockMinutes + " min block");
   if (shellMinutes > 0) detail.push(shellMinutes + " min shell");
   return '<div style="margin:0 0 14px;padding:12px 14px;border-radius:14px;background:' + summaryBackground + ';border:' + summaryBorder + ';text-align:left">' +
-    '<div style="font-size:12px;font-weight:900;color:var(--text-primary);text-transform:uppercase;letter-spacing:.04em">Block ' +
+    '<div class="guided-status-line" style="color:var(--text-primary);text-transform:uppercase">Block ' +
       shellSummary.activeBlockIndex + ' of ' + shellSummary.totalBlocks + '</div>' +
     '<div style="height:8px;border-radius:999px;background:#FFFFFF88;overflow:hidden;margin-top:8px">' +
       '<div style="height:100%;width:' + progressPercent + '%;background:' + progressFill + ';border-radius:999px"></div>' +
@@ -810,10 +838,10 @@ function renderGuidedShellSummary(shellSummary) {
     '<div style="font-size:12px;color:var(--text-muted);margin-top:4px">' + escHTML(detail.join(" • ")) + '</div>' +
     '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">' + escHTML(getGuidedShellElapsedLabel(shellSummary, elapsedMinutes, shellMinutes)) + '</div>' +
     '<div style="font-size:11px;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionLabel || " ") + '</div>' +
-    '<div style="font-size:11px;font-weight:800;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionThemeLabel || " ") + '</div>' +
-    '<div style="font-size:11px;font-weight:800;color:#6E56B3;margin-top:2px;min-height:14px">' + escHTML(focusStretchLabel || " ") + '</div>' +
-    '<div style="font-size:11px;font-weight:800;color:#5B46A3;margin-top:2px;min-height:14px">' + escHTML(deepFocusLabel || " ") + '</div>' +
-    '<div style="font-size:11px;font-weight:800;color:#8B5CF6;margin-top:2px;min-height:14px">' + escHTML(extendedModeLabel || " ") + '</div>' +
+    '<div class="guided-status-line" style="font-size:11px;color:#A78BFA;margin-top:2px;min-height:14px">' + escHTML(extensionThemeLabel || " ") + '</div>' +
+    '<div class="guided-status-line" style="font-size:11px;color:#6E56B3;margin-top:2px;min-height:14px">' + escHTML(focusStretchLabel || " ") + '</div>' +
+    '<div class="guided-status-line" style="font-size:11px;color:#5B46A3;margin-top:2px;min-height:14px">' + escHTML(deepFocusLabel || " ") + '</div>' +
+    '<div class="guided-status-line" style="font-size:11px;color:#8B5CF6;margin-top:2px;min-height:14px">' + escHTML(extendedModeLabel || " ") + '</div>' +
     '<div style="font-size:11px;color:#FF8A5C;margin-top:2px">' + escHTML(remainingLabel) + '</div>' +
     '</div>';
 }
@@ -867,14 +895,17 @@ function guidedSessionPage() {
 
   var h = '<div class="text-center">';
   h += '<button class="back-btn" onclick="act(\'guidedConfirmStop\')">&#8592; Exit</button>';
-  h += '<h2 style="font-size:20px;font-weight:900;color:var(--text-primary);margin:8px 0">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
+  h += '<h2 class="guided-session-title">Session ' + plan.num + ': ' + escHTML(guidedTitle) + '</h2>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Level ' + plan.level + ' &bull; ' + guidedBpm + ' BPM</div>';
   if (guidedView.shellSummary && guidedView.shellSummary.extensionCount > 0) {
     h += '<div style="display:flex;justify-content:center;margin:-4px 0 12px">' +
-      '<span style="padding:6px 10px;border-radius:999px;background:#A78BFA22;border:1px solid #A78BFA44;color:#6E56B3;font-size:11px;font-weight:900;letter-spacing:.03em">' +
+      '<span class="guided-pill" style="background:#A78BFA22;border:1px solid #A78BFA44;color:#6E56B3">' +
         escHTML(getGuidedExtendedModeLabel(guidedView.shellSummary.extensionCount)) +
       '</span>' +
       '</div>';
+  }
+  if (S.guidedStopConfirm) {
+    h += renderGuidedStopConfirmation();
   }
   h += renderGuidedActiveBlockBadge(guidedView.activeBlockType, guidedView.shellSummary);
 
@@ -1034,8 +1065,8 @@ function getGuidedCardTheme(blockType) {
 function renderGuidedCardHeader(title, icon, theme) {
   var resolvedTheme = theme || getGuidedCardTheme(null);
   return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:0 0 8px">' +
-    '<h3 style="margin:0;font-size:16px;color:' + resolvedTheme.titleColor + ';font-weight:800">' + icon + " " + escHTML(title) + '</h3>' +
-    '<span style="padding:6px 10px;border-radius:999px;background:' + resolvedTheme.badgeBackground + ';color:' + resolvedTheme.badgeTextColor + ';font-size:11px;font-weight:900;letter-spacing:.02em">' +
+    '<h3 class="guided-card-heading" style="color:' + resolvedTheme.titleColor + '">' + icon + " " + escHTML(title) + '</h3>' +
+    '<span class="guided-pill" style="background:' + resolvedTheme.badgeBackground + ';color:' + resolvedTheme.badgeTextColor + '">' +
       escHTML(resolvedTheme.badge) +
     '</span>' +
     '</div>';
@@ -1094,7 +1125,7 @@ function renderGuidedActionStatus(guidedView, accentColor) {
     statusText = activeBlock.detail + " is live now.";
   }
   if (!statusText) return "";
-  return '<div style="margin:0 0 12px;font-size:12px;font-weight:800;color:' + statusColor + '">' +
+  return '<div class="guided-status-line" style="margin:0 0 12px;color:' + statusColor + '">' +
     escHTML(statusText) +
     '</div>';
 }
@@ -1184,7 +1215,7 @@ function _guidedNewMove(plan) {
   switch (guidedView.newMovePhase) {
     case "watch":
       h += '<div style="background:#FF6B6B11;border-radius:12px;padding:12px;margin-bottom:12px">';
-      h += '<div style="font-size:14px;font-weight:800;color:#FF6B6B;margin-bottom:6px">&#128064; Watch \u2014 Hands Off!</div>';
+      h += '<div class="guided-phase-title" style="color:#FF6B6B">&#128064; Watch \u2014 Hands Off!</div>';
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">' + escHTML(buildGuidedPhasePrompt(newMoveActivity, "watch")) + '</p>';
       h += '</div>';
       if (ch && UI.watchAnimation) {
@@ -1205,7 +1236,7 @@ function _guidedNewMove(plan) {
 
     case "shadow":
       h += '<div style="background:#45B7D111;border-radius:12px;padding:12px;margin-bottom:12px">';
-      h += '<div style="font-size:14px;font-weight:800;color:#45B7D1;margin-bottom:6px">&#129306; Shadow \u2014 Place the Fingers</div>';
+      h += '<div class="guided-phase-title" style="color:#45B7D1">&#129306; Shadow \u2014 Place the Fingers</div>';
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">' + escHTML(buildGuidedPhasePrompt(newMoveActivity, "shadow")) + '</p>';
       h += '</div>';
       if (ch && UI.shadowQuiz) {
@@ -1239,7 +1270,7 @@ function _guidedNewMove(plan) {
 
     case "refine":
       h += '<div style="background:#A78BFA11;border-radius:12px;padding:12px;margin-bottom:12px">';
-      h += '<div style="font-size:14px;font-weight:800;color:#A78BFA;margin-bottom:6px">&#128161; Refine</div>';
+      h += '<div class="guided-phase-title" style="color:#A78BFA">&#128161; Refine</div>';
       h += '<p style="margin:0;font-size:13px;color:var(--text-secondary)">' + escHTML(buildGuidedPhasePrompt(newMoveActivity, "refine")) + '</p>';
       h += '</div>';
       if (ch) h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 160) + '</div>';
@@ -1270,7 +1301,7 @@ function _guidedSongSlice(plan) {
   h += renderGuidedActivityMeta(songActivity, songSliceTitle || plan.focus_song);
   h += '<p style="margin:0 0 12px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(songSliceText) + '</p>';
   if (songSliceTitle) {
-    h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:12px">&#127926; ' + escHTML(songSliceTitle) + '</div>';
+    h += '<div class="guided-phase-title" style="color:var(--text-primary);margin-bottom:12px">&#127926; ' + escHTML(songSliceTitle) + '</div>';
   }
   h += '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">';
   h += '<button class="btn" onclick="act(\'toggleMetro\')" style="padding:8px 16px;font-size:13px;background:' + (S.metronomeOn ? '#FFE66D' : '#4ECDC4') + ';color:' + (S.metronomeOn ? '#333' : '#fff') + '">' + (S.metronomeOn ? '&#9632; Metro' : '&#9654; Metro') + '</button>';
@@ -1302,13 +1333,13 @@ function _guidedVictoryLap(plan) {
   h += renderGuidedCardHeader(victoryTitle, "&#127942;", cardTheme);
   h += renderGuidedActivityMeta(victoryActivity, plan.focus_song);
   if (extensionThemeLabel) {
-    h += '<div style="display:flex;justify-content:center;margin:0 0 12px"><span style="padding:7px 12px;border-radius:999px;background:#A78BFA22;color:#6E56B3;font-size:12px;font-weight:900;letter-spacing:.02em">' + escHTML(extensionThemeLabel) + '</span></div>';
+    h += '<div style="display:flex;justify-content:center;margin:0 0 12px"><span class="guided-pill" style="background:#A78BFA22;color:#6E56B3">' + escHTML(extensionThemeLabel) + '</span></div>';
   }
   if (focusStretchLabel) {
-    h += '<div style="display:flex;justify-content:center;margin:0 0 12px"><span style="padding:7px 12px;border-radius:999px;background:#6E56B311;color:#6E56B3;font-size:12px;font-weight:900;letter-spacing:.02em">' + escHTML(focusStretchLabel) + '</span></div>';
+    h += '<div style="display:flex;justify-content:center;margin:0 0 12px"><span class="guided-pill" style="background:#6E56B311;color:#6E56B3">' + escHTML(focusStretchLabel) + '</span></div>';
   }
   if (victorySupportLabel) {
-    h += '<div style="display:flex;justify-content:center;margin:-4px 0 12px"><span style="padding:6px 10px;border-radius:999px;background:#FFFFFFAA;color:#6E56B3;font-size:11px;font-weight:800;letter-spacing:.02em">' + escHTML(victorySupportLabel) + '</span></div>';
+    h += '<div style="display:flex;justify-content:center;margin:-4px 0 12px"><span class="guided-pill" style="background:#FFFFFFAA;color:#6E56B3">' + escHTML(victorySupportLabel) + '</span></div>';
   }
   h += '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary);line-height:1.6">' + escHTML(victoryCopy) + '</p>';
   // Show the session's main chord
@@ -1352,17 +1383,17 @@ function guidedDonePage() {
   h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">' + escHTML(getGuidedDoneTitle(extensionCount, num)) + '</h2>';
   h += '<p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">' + escHTML(getGuidedDoneSummaryLine(extensionCount, title)) + '</p>';
   if (doneSupportLabel) {
-    h += '<div style="display:flex;justify-content:center;margin:-8px 0 18px"><span style="padding:7px 12px;border-radius:999px;background:#6E56B311;color:#6E56B3;font-size:12px;font-weight:800;letter-spacing:.02em">' + escHTML(doneSupportLabel) + '</span></div>';
+    h += '<div style="display:flex;justify-content:center;margin:-8px 0 18px"><span class="guided-pill" style="background:#6E56B311;color:#6E56B3">' + escHTML(doneSupportLabel) + '</span></div>';
   }
   if (!hasNextSession) {
     h += '<div class="card mb16" style="max-width:560px;margin:0 auto 16px;border:1px solid #45B7D122;background:linear-gradient(135deg,#45B7D10A,#4ECDC40F);text-align:left">';
-    h += '<div style="font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2F8F89;margin-bottom:8px">' + escHTML(getGuidedDoneTrackCompleteLabel(extensionCount)) + '</div>';
+    h += '<div class="guided-status-line" style="text-transform:uppercase;color:#2F8F89;margin-bottom:8px">' + escHTML(getGuidedDoneTrackCompleteLabel(extensionCount)) + '</div>';
     h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDoneTrackCompleteCopy(extensionCount)) + '</div>';
     h += '</div>';
   }
   if (extensionCount >= 2) {
     h += '<div class="card mb16" style="max-width:520px;margin:0 auto 16px;border:1px solid #6E56B322;background:linear-gradient(135deg,#6E56B30D,#FF8A5C12);text-align:left">';
-    h += '<div style="font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#6E56B3;margin-bottom:8px">' + escHTML(getGuidedDoneRecoveryTitle(extensionCount)) + '</div>';
+    h += '<div class="guided-status-line" style="text-transform:uppercase;color:#6E56B3;margin-bottom:8px">' + escHTML(getGuidedDoneRecoveryTitle(extensionCount)) + '</div>';
     h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDoneRecoveryCopy(extensionCount)) + '</div>';
     h += '</div>';
   }
@@ -1373,7 +1404,7 @@ function guidedDonePage() {
   h += '</div></div>';
   if (extensionCount >= 2) {
     h += '<div class="card mb16" style="max-width:520px;margin:0 auto 16px;border:1px solid #D8D2EA;background:#FAF7FF;text-align:left">';
-    h += '<div style="font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#6E56B3;margin-bottom:8px">' + escHTML(getGuidedDonePauseTitle(extensionCount)) + '</div>';
+    h += '<div class="guided-status-line" style="text-transform:uppercase;color:#6E56B3;margin-bottom:8px">' + escHTML(getGuidedDonePauseTitle(extensionCount)) + '</div>';
     h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDonePauseCopy(extensionCount)) + '</div>';
     h += '</div>';
   }
