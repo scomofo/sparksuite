@@ -22,6 +22,7 @@
     "cap:sync": "npx cap sync",
     "cap:android": "npx cap open android",
     "cap:ios": "npx cap open ios",
+    "test:av": "node ci/smoke-av.js",
     "test": "node tests/test_catalog_reload.js && node tests/test_core.js && node tests/test_desktop_dialogs.js && node tests/test_midi_import.js && node tests/test_preload_bridge.js && node tests/test_release_metadata.js && node tests/test_spark_core.js && node tests/test_curriculum_guardrails.js && node tests/test_feel_system.js && node tests/test_learning_brain.js && node tests/test_lesson_generator.js && node tests/test_mastery_engine.js && node tests/test_performance_core.js && node tests/test_performance_manifest.js && node tests/test_stem_loader.js && node tests/test_launcher.js && node tests/test_practice_selectors.js && node tests/test_practice_launchers.js && node tests/test_recommendations.js && node tests/test_insights.js && node tests/test_daily_plan_generator.js && node tests/test_dynamic_timing.js && node tests/test_event_logger.js && node tests/test_execution_gateway.js && node tests/test_flow_engine.js && node tests/test_payload_validator.js && node tests/test_session_engine_v2.js && node tests/test_session_runtime.js && node tests/test_skill_tracker.js && node tests/test_sparksuite_core_migration.js && node tests/test_sparksuite_rhythm_core.js && node tests/test_sparksuite_legacy_bridge_cleanup.js && node tests/test_piano_runtime_core_migration.js && node tests/test_bass_runtime_core_migration.js"
   },
   "author": "SparkSuite",
@@ -32,7 +33,11 @@
     "@tauri-apps/cli": "^2.0.0",
     "electron": "^33.4.11",
     "electron-builder": "^25.0.0",
-    "electron-packager": "^17.1.2"
+    "electron-packager": "^17.1.2",
+    "execa": "^9.6.0",
+    "ffprobe-static": "^3.1.0",
+    "music-metadata": "^11.8.3",
+    "pdfjs-dist": "^5.1.91"
   },
   "build": {
     "appId": "com.sparksuite.app",
