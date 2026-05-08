@@ -55,16 +55,23 @@ function getPerformanceSongCoreView() {
     : null;
 }
 
-function hasPerformSongWeakestPhraseTarget() {
-  return !!(
-    S &&
-    S.performChart &&
-    Array.isArray(S.performChart.phrases) &&
-    S.performChart.phrases.length &&
-    S.performResults &&
-    Array.isArray(S.performResults.phraseStats) &&
-    S.performResults.phraseStats.length
-  );
+function getPerformanceSongProgressEngine() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  if (core && core.progressEngine && typeof core.progressEngine.canPracticeWeakestPhrase === "function") {
+    return core.progressEngine;
+  }
+  if (typeof SparkSuiteProgressEngine !== "undefined") return new SparkSuiteProgressEngine();
+  return null;
+}
+
+function hasPerformSongWeakestPhraseTarget(performanceSongView) {
+  var engine = getPerformanceSongProgressEngine();
+  performanceSongView = performanceSongView || getPerformanceSongView();
+  if (typeof performanceSongView.showWeakestPhraseAction === "boolean") return performanceSongView.showWeakestPhraseAction;
+  return !!(engine && typeof engine.canPracticeWeakestPhrase === "function" && engine.canPracticeWeakestPhrase(
+    performanceSongView.performChart,
+    performanceSongView.performResults
+  ));
 }
 
 function performSongPage() {
@@ -88,6 +95,7 @@ function performSongPage() {
   var audioData = S.songAudioData[normalizedSongId];
   var canonicalAudio;
   var detectedSongBpm;
+  var canPracticeWeakestPhrase;
   var settingsGrid;
   var arrangementBody;
   var difficultyBody;
@@ -100,6 +108,7 @@ function performSongPage() {
 
   ensureCanonicalPerformSongAudio(normalizedSongId);
   canonicalAudio = getCanonicalPerformSongAudio(normalizedSongId);
+  canPracticeWeakestPhrase = hasPerformSongWeakestPhraseTarget(performanceSongView);
   detectedSongBpm = audioData && audioData.stemPaths
     ? normalizePerformSongNumber(audioData.detectedBpm, null)
     : null;
@@ -227,7 +236,7 @@ function performSongPage() {
   h += '<div class="card-section-heading" style="margin-bottom:10px">Play</div>';
   h += '<div class="flex-col action-row" style="gap:10px">';
   h += '<button class="btn perform-song-play-btn perform-song-play-btn-primary" onclick="act(\'performStartFromSong\')">&#127918; Start Performance</button>';
-  if (hasPerformSongWeakestPhraseTarget()) {
+  if (canPracticeWeakestPhrase) {
     h += '<button class="btn perform-song-play-btn perform-song-play-btn-secondary" onclick="act(\'performRetryPhrase\')">&#128170; Practice Weakest Phrase</button>';
   } else {
     h += '<div class="metric-label" style="padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06)">Finish a run to unlock weakest-phrase practice.</div>';
@@ -266,7 +275,12 @@ function getPerformanceSongView() {
       : (performanceSong && performanceSong.speed ? performanceSong.speed : S.performSpeed),
     targetTechnique: runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
       ? runtimeState.performanceTargetTechnique
-      : S.performTargetTechnique
+      : S.performTargetTechnique,
+    performChart: runtimeState && runtimeState.performanceChart ? runtimeState.performanceChart : S.performChart,
+    performResults: runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults,
+    showWeakestPhraseAction: coreView && typeof coreView.showWeakestPhraseAction === "boolean"
+      ? coreView.showWeakestPhraseAction
+      : (runtimeState && typeof runtimeState.showWeakestPhraseAction === "boolean" ? runtimeState.showWeakestPhraseAction : null)
   };
 }
 

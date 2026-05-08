@@ -137,10 +137,8 @@
   }
 
   function startUkuleleQuiz() {
-    var pool = getUkuleleChordPool();
-    var q;
-    if (!pool.length) return true;
-    q = pool[0];
+    var q = nextUkuleleQuizQuestion();
+    if (!q) return true;
     if (typeof S !== "undefined" && S) {
       S.activeInstrument = "ukespark";
       S.instrument = "ukulele";
@@ -150,15 +148,13 @@
       S.quizScore = 0;
       S.quizTotal = 0;
       S.quizStreak = 0;
-      S.quizQ = q;
-      S.quizOpts = pool.slice(0, Math.min(3, pool.length));
       S.quizAns = null;
       S.screen = typeof SCR !== "undefined" && SCR && SCR.QUIZ ? SCR.QUIZ : "quiz";
     }
     if (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
       window.sparkCore.syncLegacyQuizRuntimeState({
         question: q,
-        options: pool.slice(0, Math.min(3, pool.length)),
+        options: S.quizOpts || [],
         answer: null,
         score: 0,
         total: 0,
@@ -169,13 +165,50 @@
     return true;
   }
 
+  function shuffleUkuleleQuizPool(pool) {
+    var copy = pool.slice();
+    for (var i = copy.length - 1; i > 0; i--) {
+      var swapIdx = Math.floor(Math.random() * (i + 1));
+      var tmp = copy[i];
+      copy[i] = copy[swapIdx];
+      copy[swapIdx] = tmp;
+    }
+    return copy;
+  }
+
+  function nextUkuleleQuizQuestion(previousName) {
+    var pool = getUkuleleChordPool();
+    var shuffled;
+    var q = null;
+    var options = [];
+    var i;
+    if (!pool.length || typeof S === "undefined" || !S) return null;
+    shuffled = shuffleUkuleleQuizPool(pool);
+    for (i = 0; i < shuffled.length; i++) {
+      if (!previousName || shuffled[i].name !== previousName || shuffled.length === 1) {
+        q = shuffled[i];
+        break;
+      }
+    }
+    q = q || shuffled[0];
+    options.push(q);
+    for (i = 0; i < shuffled.length && options.length < Math.min(3, pool.length); i++) {
+      if (shuffled[i].name !== q.name) options.push(shuffled[i]);
+    }
+    S.quizQ = q;
+    S.quizOpts = shuffleUkuleleQuizPool(options);
+    return q;
+  }
+
   function answerUkuleleQuiz(chordName) {
     var ok;
     var nextScore;
     var nextTotal;
     var nextStreak;
+    var previousName;
     if (typeof S === "undefined" || !S || !S.quizQ) return true;
-    ok = chordName === S.quizQ.name;
+    previousName = S.quizQ.name;
+    ok = chordName === previousName;
     nextScore = (S.quizScore || 0) + (ok ? 1 : 0);
     nextTotal = (S.quizTotal || 0) + 1;
     nextStreak = ok ? ((S.quizStreak || 0) + 1) : 0;
@@ -183,6 +216,7 @@
     S.quizScore = nextScore;
     S.quizTotal = nextTotal;
     S.quizStreak = nextStreak;
+    nextUkuleleQuizQuestion(previousName);
     if (typeof window !== "undefined" && window.sparkCore && typeof window.sparkCore.syncLegacyQuizRuntimeState === "function") {
       window.sparkCore.syncLegacyQuizRuntimeState({
         question: S.quizQ,
@@ -363,6 +397,12 @@
         CURRICULUM: window.SparkUkuleleLessons || [],
         SKILL_TREE: window.SparkUkuleleSkillTree || []
       };
+    },
+
+    getScaleRenderer: function() {
+      return typeof stringedScaleSVG === "function"
+        ? stringedScaleSVG
+        : (typeof scaleSVG === "function" ? scaleSVG : null);
     },
 
     ui: {

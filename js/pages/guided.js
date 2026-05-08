@@ -1444,8 +1444,12 @@ function getGuidedSessionView() {
     : (S.guidedStep || "spark");
   resolvedPlan = plan || S.guidedPlan || null;
   blockProgress = getGuidedBlockProgress(resolvedPlan, currentPlan, runtimeState);
-  activeActivity = resolveGuidedViewActivity(resolvedPlan, guidedStep, runtimeState);
-  activeBlockType = resolveGuidedActiveBlockType(resolvedPlan, guidedStep, runtimeState, currentPlan, activeActivity);
+  activeActivity = coreView && coreView.activeActivity
+    ? coreView.activeActivity
+    : resolveGuidedViewActivity(resolvedPlan, guidedStep, runtimeState);
+  activeBlockType = coreView && coreView.activeBlockType
+    ? coreView.activeBlockType
+    : resolveGuidedActiveBlockType(resolvedPlan, guidedStep, runtimeState, currentPlan, activeActivity);
 
   return {
     plan: resolvedPlan,

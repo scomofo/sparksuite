@@ -44,6 +44,12 @@
       return guitarAct(a, v);
     },
 
+    getScaleRenderer: function() {
+      return typeof stringedScaleSVG === "function"
+        ? stringedScaleSVG
+        : (typeof scaleSVG === "function" ? scaleSVG : null);
+    },
+
     ui: {
       chord: function(chordObj, size, label, animate) {
         if (typeof stringedChordSVG === "function" && chordObj) {

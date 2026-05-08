@@ -37,36 +37,15 @@
   }
 
   function buildEarTrainingQuestion() {
-    var data = getActivePracticeInstrumentData();
-    var level = parseInt(S.level, 10);
-    var pool = [];
-    var all = Array.isArray(data.ALL_CHORDS) ? data.ALL_CHORDS : [];
-    var levelChords = data.CHORDS || {};
-    var l;
-    var i;
-    if (isNaN(level) || level < 1) level = 1;
-    for (l = 1; l <= level; l++) {
-      if (Array.isArray(levelChords[l])) pool = pool.concat(levelChords[l]);
-    }
-    if (!pool.length && Array.isArray(levelChords[1])) pool = levelChords[1].slice();
-    if (!pool.length) pool = all.slice();
-    if (!pool.length) return null;
-
-    var questionChord = pool[Math.floor(Math.random() * pool.length)];
-    var options = [questionChord.name];
-    var attempts = 0;
-    while (options.length < 4 && attempts < 100) {
-      var candidate = all[Math.floor(Math.random() * all.length)] || pool[Math.floor(Math.random() * pool.length)];
-      if (candidate && candidate.name && options.indexOf(candidate.name) === -1) options.push(candidate.name);
-      attempts++;
-    }
-    for (i = options.length - 1; i > 0; i--) {
-      var swapIdx = Math.floor(Math.random() * (i + 1));
-      var tmp = options[i];
-      options[i] = options[swapIdx];
-      options[swapIdx] = tmp;
-    }
-    return { question: questionChord.name, options: options };
+    var core = getPracticeActionCore();
+    var engine = core && core.practiceEngine && typeof core.practiceEngine.generateEarTrainingQuestion === "function"
+      ? core.practiceEngine
+      : (typeof SparkSuitePracticeEngine !== "undefined" ? new SparkSuitePracticeEngine(null) : null);
+    if (!engine || typeof engine.generateEarTrainingQuestion !== "function") return null;
+    return engine.generateEarTrainingQuestion({
+      level: S.level,
+      instrumentData: getActivePracticeInstrumentData()
+    });
   }
 
   function clearPracticeFamilyTimeout(timeoutKey, fallback) {
@@ -363,7 +342,10 @@
 
     if (a === "startEarTrain") {
       var earTrainingQuestion = buildEarTrainingQuestion();
-      if (!earTrainingQuestion) return true;
+      if (!earTrainingQuestion) {
+        render();
+        return true;
+      }
       var nextEarTrainState = {
         earTrainQ: earTrainingQuestion.question,
         earTrainOpts: earTrainingQuestion.options,

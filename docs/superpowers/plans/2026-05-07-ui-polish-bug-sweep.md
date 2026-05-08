@@ -186,7 +186,7 @@ Largest remaining clusters:
 .metric-label {
   font-size: 12px;
   font-weight: 650;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .metric-value {
@@ -417,3 +417,8 @@ Acceptance criteria:
 - No raw `<b>` labels in visible app renderers outside the allowlist.
 - No no-gap `space-between` rows in action/result/card rows.
 - Full `npm test` passes.
+
+### Stale CodeRabbit Findings Closed By Evidence
+
+- Ukulele quiz advancement: current `answerUkuleleQuiz()` calls `nextUkuleleQuizQuestion(previousName)` before syncing runtime state, so the visible quiz advances after an answer. Verified with `Select-String` and launcher coverage.
+- Drums practice/stats renderers: current module registration includes `tabRenderers: { practice: drumPracticeTab, stats: drumStatsTab }`, and `startDrumLesson()` returns `openDrumPracticePlan(lessonId)`. Verified with `Select-String` and launcher/core migration coverage.

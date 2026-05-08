@@ -27,6 +27,8 @@ function test(name, fn) {
         };
       }
     };
+    global.eval(loadJS("js/sparksuite/core/practice_engine.js"));
+    global.sparkCore = { practiceEngine: new SparkSuitePracticeEngine(null) };
     global.eval(loadJS("js/audio.js"));
     fn();
     console.log("  PASS: " + name);
@@ -40,5 +42,9 @@ function test(name, fn) {
 console.log("\n--- Audio Instrument Chord Notes ---");
 
 test("strum preview resolves active instrument chord-note aliases before global guitar names", function() {
+  assert.deepStrictEqual(sparkCore.practiceEngine.resolveStrumChordNotes("Am", {
+    activeInstrumentData: SparkInstruments.getActive().getData(),
+    chordNotes: CHORD_NOTES
+  }), ["A", "C", "E"]);
   assert.deepStrictEqual(resolveStrumChordNotes("Am"), ["A", "C", "E"]);
 });

@@ -814,7 +814,7 @@
         applySongBrowserRequest("songs_subtab", { songsSubTab: "perform" });
       }
       goHomeSongs(SCR.HOME);
-      if (typeof render === "function") render();
+      render();
       return true;
     }
 

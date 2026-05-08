@@ -260,6 +260,7 @@ test('piano bootstrap preserves existing pages while adding deferred registratio
     STEMS: 'stems'
   };
   global.pianoSessionPage = function() { return '<div>Session</div>'; };
+  eval(loadJS('js/sparksuite/core/session_engine.js'));
   eval(loadJS('js/piano-registration-bootstrap.js'));
 
   var all = SparkInstruments.getAll();
@@ -285,6 +286,7 @@ test('piano bootstrap routes legacy active chord sessions to the legacy renderer
   global.S = { active: true, chord: 'C', sessionPlan: null };
   global.pianoSessionPage = function() { return '<div>Guided Session</div>'; };
   global.legacySessionHTML = function() { return '<div>Legacy Chord Session</div>'; };
+  eval(loadJS('js/sparksuite/core/session_engine.js'));
   eval(loadJS('js/piano-registration-bootstrap.js'));
   SparkInstruments.activate('pianospark');
 
@@ -509,11 +511,15 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.ok(Array.isArray(S.quizOpts));
   assert.ok(S.quizOpts.length >= 2);
 
-  assert.strictEqual(ukulele.act("answerQuiz", S.quizQ.name), true);
+  var answeredQuizName = S.quizQ.name;
+  assert.strictEqual(ukulele.act("answerQuiz", answeredQuizName), true);
   assert.strictEqual(S.quizTotal, 1);
   assert.strictEqual(S.quizScore, 1);
+  assert.ok(S.quizQ);
+  if (S.quizOpts.length > 1) assert.notStrictEqual(S.quizQ.name, answeredQuizName);
   assert.strictEqual(quizSyncCalls.length >= 2, true);
-  assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].answer, S.quizQ.name);
+  assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].answer, answeredQuizName);
+  assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].question, S.quizQ);
   assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].total, 1);
 });
 

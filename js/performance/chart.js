@@ -26,6 +26,47 @@ var PERFORMANCE_CHART_LIBRARY_FALLBACK = [
 ];
 var PERFORMANCE_AUDIO_EXTENSION_CANDIDATES = [".mp3", ".wav", ".ogg", ".m4a"];
 
+function getPerformanceChartEngine() {
+  if (typeof window === "undefined") return null;
+  if (!window.SparkPerformanceChartEngine) {
+    window.SparkPerformanceChartEngine = createPerformanceChartEngine();
+  }
+  hydrateGeneratedPerformanceCharts(window.SparkPerformanceChartEngine);
+  return window.SparkPerformanceChartEngine;
+}
+
+function createPerformanceChartEngine() {
+  var preloaded = {};
+  return {
+    _generatedHydrated: false,
+    preloadChart: function(chartId, definition) {
+      if (!chartId || !definition) return false;
+      preloaded[chartId] = clonePerformanceChart(definition);
+      return true;
+    },
+    preloadCharts: function(registry) {
+      var chartId;
+      var count = 0;
+      if (!registry || typeof registry !== "object") return 0;
+      for (chartId in registry) {
+        if (Object.prototype.hasOwnProperty.call(registry, chartId) && this.preloadChart(chartId, registry[chartId])) count++;
+      }
+      return count;
+    },
+    getPreloadedChart: function(chartId) {
+      return preloaded[chartId] ? clonePerformanceChart(preloaded[chartId]) : null;
+    }
+  };
+}
+
+function hydrateGeneratedPerformanceCharts(engine) {
+  if (!engine || engine._generatedHydrated) return;
+  if (window.__SPARK_PERFORMANCE_CHART_PRELOAD__) {
+    engine.preloadCharts(window.__SPARK_PERFORMANCE_CHART_PRELOAD__);
+  }
+  engine._generatedHydrated = true;
+}
+
 function normalizePerformanceInstrument(instrument) {
   var candidate = instrument || null;
   if (!candidate) return null;
@@ -147,11 +188,15 @@ function applyCanonicalPerformanceChartAudio(chart, songId) {
 
 function loadPerformanceChart(chartId) {
   var meta = getPerformanceChartMeta(chartId);
+  var chartEngine = getPerformanceChartEngine();
+  var preloadedChart = chartEngine && typeof chartEngine.getPreloadedChart === "function"
+    ? chartEngine.getPreloadedChart(chartId)
+    : null;
   if (meta && meta.sourceType === "generated_catalog") {
     return loadGeneratedCatalogPerformanceChart(meta);
   }
-  if (window.PERFORMANCE_CHART_DATA && window.PERFORMANCE_CHART_DATA[chartId]) {
-    return Promise.resolve(window.PERFORMANCE_CHART_DATA[chartId])
+  if (preloadedChart) {
+    return Promise.resolve(preloadedChart)
       .then(function(chartDefinition) {
         return applyCanonicalPerformanceChartAudio(normalizePerformanceChartDefinition(chartDefinition), meta && meta.songId);
       });

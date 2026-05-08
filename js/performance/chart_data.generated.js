@@ -1,7 +1,7 @@
 // AUTO-GENERATED from data/performance_charts/*.json
 // Regenerate with: node scripts/generate-chart-data.js
 (function() {
-  window.PERFORMANCE_CHART_DATA = {
+  var generated = {
   "achy_breaky_heart_chords": {
     "id": "achy_breaky_heart_chords",
     "title": "Achy Breaky Heart",
@@ -25324,4 +25324,19 @@
     ]
   }
 };
+  var charts = {};
+  for (var chartId in generated) {
+    if (Object.prototype.hasOwnProperty.call(generated, chartId)) charts[chartId] = generated[chartId];
+  }
+  var registry = Object.freeze(charts);
+  window.__SPARK_PERFORMANCE_CHART_PRELOAD__ = registry;
+  if (window.SparkPerformanceChartEngine && typeof window.SparkPerformanceChartEngine.preloadCharts === "function") {
+    window.SparkPerformanceChartEngine.preloadCharts(registry);
+    window.SparkPerformanceChartEngine._generatedHydrated = true;
+  }
+  Object.defineProperty(window, "PERFORMANCE_CHART_DATA", {
+    get: function() { return registry; },
+    enumerable: true,
+    configurable: true
+  });
 })();

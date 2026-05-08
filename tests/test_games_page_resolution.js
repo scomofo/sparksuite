@@ -59,6 +59,9 @@ function resetEnv() {
         getData: function() {
           return { ALL_CHORDS: [] };
         },
+        getScaleRenderer: function() {
+          return scaleSVG;
+        },
         ui: {
           chord: function() { return "<div>chord</div>"; }
         }
@@ -176,6 +179,9 @@ test("active progression chord card does not use the generic card entrance anima
           CHORDS: { 1: [{ name: "C Major", short: "C" }, { name: "G Major", short: "G" }] }
         };
       },
+      getScaleRenderer: function() {
+        return stringedScaleSVG;
+      },
       ui: {
         chord: function() { return "<div>chord</div>"; }
       }
@@ -208,6 +214,9 @@ test("progression scale explorer uses the stringed scale renderer when piano ove
           CHORDS: { 1: [{ name: "E Major", short: "E" }, { name: "A Major", short: "A" }] }
         };
       },
+      getScaleRenderer: function() {
+        return stringedScaleSVG;
+      },
       ui: {
         chord: function() { return "<div>chord</div>"; }
       }
@@ -218,6 +227,37 @@ test("progression scale explorer uses the stringed scale renderer when piano ove
 
   assert.ok(html.indexOf('data-key="E"') >= 0);
   assert.ok(html.indexOf('viewBox="0 0 E NaN"') === -1);
+});
+
+test("progression scale explorer survives when no scale renderer is loaded", function() {
+  S.progChords = ["E Major", "A Major"];
+  S.selectedScale = "pentatonic";
+  global.SCALES = { E: { pentatonic: [0] } };
+  global.SCALE_NAMES = { pentatonic: "Pentatonic" };
+  global.getScaleFrets = function() { return [{ string: 0, fret: 0, note: "E", isRoot: true }]; };
+  global.scaleSVG = undefined;
+  global.stringedScaleSVG = undefined;
+  SparkInstruments.getActive = function() {
+    return {
+      appId: "chordspark",
+      getData: function() {
+        return {
+          ALL_CHORDS: [{ name: "E Major", short: "E" }, { name: "A Major", short: "A" }],
+          CHORDS: { 1: [{ name: "E Major", short: "E" }, { name: "A Major", short: "A" }] }
+        };
+      },
+      getScaleRenderer: function() {
+        return null;
+      },
+      ui: {
+        chord: function() { return "<div>chord</div>"; }
+      }
+    };
+  };
+
+  var html = buildTab();
+
+  assert.ok(html.indexOf("Scale Explorer") >= 0);
 });
 
 test("shared drill launch buttons are handled by the guitar runtime", function() {

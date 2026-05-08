@@ -8,15 +8,32 @@ function read(relPath) {
   return fs.readFileSync(path.join(repoRoot, relPath), "utf8");
 }
 
-function walk(dir, files) {
+function walk(dir, files, visited = new Set()) {
   if (!fs.existsSync(dir)) return files;
+  const stat = fs.lstatSync(dir);
+  if (stat.isSymbolicLink()) return files;
+  const realDir = fs.realpathSync(dir);
+  if (visited.has(realDir)) return files;
+  visited.add(realDir);
   for (const entry of fs.readdirSync(dir)) {
     const full = path.join(dir, entry);
-    const stat = fs.statSync(full);
-    if (stat.isDirectory()) walk(full, files);
+    const entryStat = fs.lstatSync(full);
+    if (entryStat.isSymbolicLink()) continue;
+    if (entryStat.isDirectory()) walk(full, files, visited);
     else if (/\.js$/.test(entry)) files.push(full);
   }
   return files;
+}
+
+function loadVisualContractsAllowlist(roots) {
+  const entries = [];
+  for (const relRoot of roots) {
+    const configPath = path.join(repoRoot, relRoot, ".visual-contracts.json");
+    if (!fs.existsSync(configPath)) continue;
+    const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    for (const pattern of config.allowed || []) entries.push(new RegExp(pattern));
+  }
+  return entries;
 }
 
 const css = read("styles.css");
@@ -71,36 +88,7 @@ const patterns = [
   }
 ];
 
-const allowed = [
-  /js[\\/]pages[\\/]games\.js\|.*font-size:2[0246]px;font-weight:900/,
-  /js[\\/]pages[\\/]games\.js\|.*score|combo|BPM|Tap on the beat|High Score|STRUM|TAP|New High Score|targetShort/i,
-  /js[\\/]pages[\\/]practice\.js\|.*<button/,
-  /js[\\/]pages[\\/]practice\.js\|.*font-size:22px;font-weight:900/,
-  /js[\\/]pages[\\/]guided\.js\|.*font-size:2[0246]px;font-weight:900/,
-  /js[\\/]pages[\\/]guided\.js\|.*font-size:28px;font-weight:900/,
-  /js[\\/]pages[\\/]guided\.js\|.*font-size:16px;font-weight:900/,
-  /js[\\/]pages[\\/]guided\.js\|.*<button/,
-  /js[\\/]pages[\\/]session\.js\|.*font-size:2[02468]px;font-weight:900/,
-  /js[\\/]pages[\\/]session\.js\|.*font-size:3[26]px;font-weight:900/,
-  /js[\\/]pages[\\/]session\.js\|.*font-size:18px;font-weight:900/,
-  /js[\\/]pages[\\/]session\.js\|.*font-size:16px;font-weight:800/,
-  /js[\\/]pages[\\/]tools\.js\|.*font-size:72px;font-weight:900/,
-  /js[\\/]pages[\\/]tools\.js\|.*font-size:28px;font-weight:900/,
-  /js[\\/]pages[\\/]tools\.js\|.*font-size:2[02]px;font-weight:900/,
-  /js[\\/]pages[\\/]tools\.js\|.*font-size:16px;font-weight:800/,
-  /js[\\/]pages[\\/]perform\.js\|.*font-size:28px;font-weight:900/,
-  /js[\\/]pages[\\/]perform\.js\|.*font-size:26px;font-weight:900/,
-  /js[\\/]pages[\\/]perform_song\.js\|.*font-size:20px;font-weight:900/,
-  /js[\\/]pages[\\/]performance_stats\.js\|.*font-size:22px;font-weight:900/,
-  /js[\\/]pages[\\/]rhythm_highway\.js\|.*font-size:2[246]px;font-weight:900/,
-  /js[\\/]pages[\\/]shared\.js\|.*font-size:16px;font-weight:900/,
-  /js[\\/]pages[\\/]shared\.js\|.*font-size:20px;font-weight:900/,
-  /js[\\/]pages[\\/]shared\.js\|.*font-size:13px;font-weight:800/,
-  /js[\\/]pages[\\/]skill_dashboard\.js\|.*font-size:22px;font-weight:900/,
-  /js[\\/]pages[\\/]songs\.js\|.*font-size:22px;font-weight:900/,
-  /js[\\/]pages[\\/]songs\.js\|.*<button/,
-  /js[\\/]instruments[\\/]piano[\\/]pages[\\/]games\.js\|.*font-size:2[0246]px;font-weight:900/
-];
+const allowed = loadVisualContractsAllowlist(scanRoots);
 
 const violations = [];
 

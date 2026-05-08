@@ -141,7 +141,7 @@
       progressPct: progressPct,
       elapsedLabel: formatDurationLabel(positionMs, "in block"),
       remainingLabel: formatDurationLabel(remainingMs, "left"),
-      primaryAction: status === "paused" ? "sessionResumeBlock" : "sessionPauseBlock",
+      primaryAction: firstText(coreView && coreView.shellPrimaryAction, status === "paused" ? "sessionResumeBlock" : "sessionPauseBlock"),
       primaryLabel: status === "paused" ? "Resume Block" : "Pause Block",
       canSkip: activeIndex < segments.length - 1,
       activeSegment: activeSegment,
@@ -156,6 +156,7 @@
     var background = opts.background || "rgba(69,183,209,.12)";
     var metaLabel = opts.metaLabel || getCompactMetaLabel(shell, "Shell details loading");
     var extraButtons = typeof opts.renderExtraButtons === "function" ? opts.renderExtraButtons(shell) : "";
+    var primaryAction = firstText(shell && shell.primaryAction, "openPracticePlan");
     var h = "";
     h += '<div style="margin-top:' + esc(opts.marginTop || "0") + ';padding:10px 12px;border-radius:14px;background:' + background + ';color:var(--text-primary)">';
     h += '<div class="metric-label" style="font-size:11px;text-transform:uppercase;color:' + accent + '">' + esc(label) + '</div>';
@@ -163,7 +164,7 @@
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + esc(shell.statusLabel) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim);margin-top:4px">' + esc(metaLabel) + '</div>';
     h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">';
-    h += '<button class="btn btn-sm" onclick="act(\'' + shell.primaryAction + '\')" style="background:' + accent + ';color:#fff;font-size:11px;padding:4px 8px">' + esc(shell.primaryLabel) + '</button>';
+    h += '<button class="btn btn-sm" data-action="' + esc(primaryAction) + '" onclick="act(this.getAttribute(\'data-action\'))" style="background:' + accent + ';color:#fff;font-size:11px;padding:4px 8px">' + esc(shell.primaryLabel) + '</button>';
     if (shell.canSkip) {
       h += '<button class="btn btn-sm" onclick="act(\'sessionSkipBlock\')" style="background:#FF8A5C;color:#fff;font-size:11px;padding:4px 8px">Skip Block</button>';
     }
@@ -178,6 +179,7 @@
     var accent = opts.accent || "#4ECDC4";
     var fill = opts.fill || "linear-gradient(90deg,#4ECDC4,#45B7D1)";
     var secondaryButton = typeof opts.renderSecondaryButton === "function" ? opts.renderSecondaryButton(shell) : "";
+    var primaryAction = firstText(shell && shell.primaryAction, "openPracticePlan");
     var h = '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(78,205,196,.12),rgba(69,183,209,.08));border:1px solid rgba(78,205,196,.35)">';
     h += '<div class="split-row" style="margin-bottom:6px"><div class="metric-label" style="font-size:12px;text-transform:uppercase;color:' + accent + '">' + esc(label) + '</div><div style="font-size:11px;color:var(--text-muted)">Block ' + esc(shell.activeIndex + 1) + ' of ' + esc(shell.blockCount) + '</div></div>';
     h += '<div class="card-section-heading" style="font-size:18px;margin-bottom:4px">' + esc(shell.title) + '</div>';
@@ -186,7 +188,7 @@
     h += '<div style="height:8px;border-radius:999px;background:rgba(255,255,255,.6);overflow:hidden;margin-bottom:8px"><div style="height:100%;width:' + esc(shell.progressPct) + '%;background:' + fill + '"></div></div>';
     h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;color:var(--text-muted);margin-bottom:10px"><span>' + esc(shell.elapsedLabel) + '</span><span>' + esc(shell.remainingLabel) + '</span></div>';
     if (!opts.hideControls) {
-      h += '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" onclick="act(\'' + shell.primaryAction + '\')" style="background:' + accent + ';color:#fff">' + esc(shell.primaryLabel) + '</button>';
+      h += '<div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" data-action="' + esc(primaryAction) + '" onclick="act(this.getAttribute(\'data-action\'))" style="background:' + accent + ';color:#fff">' + esc(shell.primaryLabel) + '</button>';
       if (shell.canSkip) {
         h += '<button class="btn" onclick="act(\'sessionSkipBlock\')" style="background:var(--input-bg);color:var(--text-primary)">Skip Block</button>';
       }

@@ -51,12 +51,18 @@ function test(name, fn) {
   }
 }
 
+function sourceStringLiterals(source) {
+  var matches = source.match(/(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/g) || [];
+  return matches.map(function(match) { return match.slice(1, -1); });
+}
+
 console.log("\n--- Piano Editor Page Resolution ---");
 
 test("pianoEditorPage ignores stale metadata and item labels", function() {
   var html = pianoEditorPage();
   assert.ok(html.indexOf("song chart 1") >= 0);
-  assert.ok(html.indexOf('<span class="metric-label">Mode:</span> <span class="metric-value" style="font-size:13px">chart</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Mode:</span>') >= 0);
+  assert.ok(/class="metric-value"[^>]*>chart<\/span>/.test(html));
   assert.ok(html.indexOf("value=\"song chart 1\"") >= 0);
   assert.ok(html.indexOf("value=\"null\"") === -1);
   assert.ok(html.indexOf("undefined @ 1.5") === -1);
@@ -98,7 +104,7 @@ test("pianoEditorPage uses shared visual contract classes", function() {
   var source = loadJS("js/instruments/piano/pages/editor.js");
 
   assert.strictEqual(html.indexOf("<b>"), -1);
-  assert.strictEqual(source.indexOf("<b>"), -1);
+  assert.strictEqual(sourceStringLiterals(source).some(function(value) { return value.indexOf("<b>") >= 0; }), false);
   assert.ok(html.indexOf('class="card-section-heading mb8"') >= 0);
   assert.ok(html.indexOf('class="card-micro-heading"') >= 0);
   assert.ok(html.indexOf('class="metric-label"') >= 0);

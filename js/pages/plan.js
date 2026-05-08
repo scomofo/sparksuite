@@ -95,6 +95,16 @@ function getPlanPageShellLabel(summary, fallbackLabel) {
   return bits.length ? bits.join(" - ") : fallback;
 }
 
+function getAllowedPlanShellAction(action) {
+  var allowed = {
+    sessionPauseBlock: true,
+    sessionResumeBlock: true,
+    sessionSkipBlock: true,
+    openPracticePlan: true
+  };
+  return allowed[action] ? action : "openPracticePlan";
+}
+
 function planPage(){
   function isCompletedPlanItem(item){
     var value = item ? item.completed : null;
@@ -160,6 +170,7 @@ function planPage(){
   if(!plan) plan = S.practicePlan;
   var activeGuided = getPlanPageActiveGuidedSummary();
   var activeShell = activeGuided ? null : getPlanPageActiveShellSummary();
+  var shellPrimaryAction = activeShell ? getAllowedPlanShellAction(activeShell.primaryAction) : "";
   var renderableItems = getRenderablePlanItems(plan);
   var hasPlanItems = hasRenderablePlanItems(plan);
   var planCompleted = isPlanCompleteFlag(coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted)
@@ -207,7 +218,7 @@ function planPage(){
     h += activeGuided
       ? '<button class="btn" onclick="act(\'resume_guided_session\')">Resume Guided Session</button>'
       : activeShell
-        ? '<button class="btn" onclick="act(\'' + activeShell.primaryAction + '\')">' + escHTML(activeShell.primaryLabel) + '</button>'
+        ? '<button class="btn" data-action="' + escHTML(shellPrimaryAction) + '" onclick="act(this.getAttribute(\'data-action\'))">' + escHTML(activeShell.primaryLabel) + '</button>'
       : '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button>';
     h += '<button class="btn" onclick="act(\'back\')">Back</button>';
     h += '</div></div>';

@@ -12,6 +12,7 @@ function startCalibration() {
   var totalBeats = (typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.latency.calibrationTaps : 8;
 
   S._calibrating = true;
+  S.calibrationRunning = true;
   S._calibBeatMs = beatMs;
   S._calibTotalBeats = totalBeats;
   S._calibCurrentBeat = 0;
@@ -80,6 +81,7 @@ function recordCalibrationTap() {
 
 function finishCalibration() {
   S._calibrating = false;
+  S.calibrationRunning = false;
   if (_calibTaps.length < 3) {
     render();
     return;
@@ -107,6 +109,7 @@ function finishCalibration() {
 
 function cancelCalibration() {
   S._calibrating = false;
+  S.calibrationRunning = false;
   if (_calibInterval) { clearInterval(_calibInterval); _calibInterval = null; }
   render();
 }
@@ -385,13 +388,19 @@ function performPage() {
 function performDonePage() {
   var coreView = getPerformPageCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var r = runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults;
-  var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+  var doneState = coreView && coreView.performanceDoneState ? coreView.performanceDoneState : null;
+  var r = doneState && doneState.hasResults ? doneState.rawResults : (runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults);
+  var targetTechnique = doneState && doneState.hasResults
+    ? doneState.targetTechnique
+    : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
     ? runtimeState.performanceTargetTechnique
-    : S.performTargetTechnique;
+    : S.performTargetTechnique);
+  if (doneState && !doneState.hasResults) {
+    return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'' + doneState.action + '\')">' + escHTML(doneState.label) + '</button></div>';
+  }
   if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'performDoneSongs\')">Songs</button></div>';
-  var resultTitle = firstPerformPageTextToken(r.title, r.songTitle, runtimeState && runtimeState.performanceChartId, S.performChartId, "Performance");
-  var resultArtist = firstPerformPageTextToken(r.artist, "Unknown Artist");
+  var resultTitle = doneState && doneState.hasResults ? doneState.title : firstPerformPageTextToken(r.title, r.songTitle, runtimeState && runtimeState.performanceChartId, S.performChartId, "Performance");
+  var resultArtist = doneState && doneState.hasResults ? doneState.artist : firstPerformPageTextToken(r.artist, "Unknown Artist");
 
   var h = '<div class="perform-page text-center" style="padding-top:20px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
@@ -472,25 +481,18 @@ function performDonePage() {
   }
 
   // Best and weakest phrases
-  if (r.phraseStats && r.phraseStats.length > 1) {
-    var bestIdx = 0, worstIdx = 0;
-    for (var bi = 1; bi < r.phraseStats.length; bi++) {
-      var bAvg = r.phraseStats[bi].total > 0 ? r.phraseStats[bi].scoreSum / r.phraseStats[bi].total : 0;
-      var bestAvg = r.phraseStats[bestIdx].total > 0 ? r.phraseStats[bestIdx].scoreSum / r.phraseStats[bestIdx].total : 0;
-      var worstAvg = r.phraseStats[worstIdx].total > 0 ? r.phraseStats[worstIdx].scoreSum / r.phraseStats[worstIdx].total : 0;
-      if (bAvg > bestAvg) bestIdx = bi;
-      if (bAvg < worstAvg) worstIdx = bi;
-    }
+  if (doneState && doneState.bestPhrase && doneState.weakestPhrase) {
     h += '<div style="display:flex;gap:10px;margin-bottom:16px">';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div class="metric-label">Best Phrase</div><div class="card-micro-heading" style="color:#4ECDC4">' + escHTML(firstPerformPageTextToken(r.phraseStats[bestIdx].name, "Phrase " + (bestIdx + 1))) + '</div></div>';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div class="metric-label">Weakest Phrase</div><div class="card-micro-heading" style="color:#FF6B6B">' + escHTML(firstPerformPageTextToken(r.phraseStats[worstIdx].name, "Phrase " + (worstIdx + 1))) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div class="metric-label">Best Phrase</div><div class="card-micro-heading" style="color:#4ECDC4">' + escHTML(doneState.bestPhrase.name) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div class="metric-label">Weakest Phrase</div><div class="card-micro-heading" style="color:#FF6B6B">' + escHTML(doneState.weakestPhrase.name) + '</div></div>';
     h += '</div>';
   }
 
   // Buttons
   h += '<div class="flex-col action-row">';
   h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; ' + escHTML(targetTechnique ? ("Retry " + formatTechniqueFocusLabel(targetTechnique)) : "Retry") + '</button>';
-  if (hasPerformDoneWeakestPhraseTarget(r)) {
+  var doneChart = runtimeState && runtimeState.performanceChart ? runtimeState.performanceChart : S.performChart;
+  if (doneState ? doneState.showWeakestPhraseAction : hasPerformDoneWeakestPhraseTarget(r, doneChart)) {
     h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; ' + escHTML(targetTechnique ? ("Retry Weakest " + formatTechniqueFocusLabel(targetTechnique)) : "Retry Weakest") + '</button>';
   } else {
     h += '<div style="font-size:12px;color:var(--text-muted);padding:8px 10px;text-align:center">Finish a phrase-tracked run to unlock weakest-phrase retry.</div>';
@@ -522,14 +524,15 @@ function performDonePage() {
   return h;
 }
 
-function hasPerformDoneWeakestPhraseTarget(results) {
-  var phraseStats = results && results.phraseStats;
-  var phrases = S.performChart && S.performChart.phrases;
-  if (!phraseStats || !phraseStats.length || !phrases || !phrases.length) return false;
-  for (var i = 0; i < phraseStats.length; i++) {
-    if (phrases[i] && phraseStats[i] && phraseStats[i].total > 0) return true;
-  }
-  return false;
+function getPerformPageProgressEngine() {
+  var core = typeof sparkCore !== "undefined" ? sparkCore : (typeof window !== "undefined" ? window.sparkCore : null);
+  if (core && core.progressEngine && typeof core.progressEngine.hasPerformedAnyPhrase === "function") return core.progressEngine;
+  return null;
+}
+
+function hasPerformDoneWeakestPhraseTarget(results, chart) {
+  var engine = getPerformPageProgressEngine();
+  return !!(engine && engine.hasPerformedAnyPhrase(results, chart));
 }
 
 function getNextPerformEvent(chart, nowSec) {

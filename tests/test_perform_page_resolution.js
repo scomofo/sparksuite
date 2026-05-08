@@ -12,6 +12,8 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
+_testEval(loadJS("js/sparksuite/core/psychology_engine.js"));
+_testEval(loadJS("js/sparksuite/core/progress_engine.js"));
 
 
 function resetEnv() {
@@ -89,6 +91,7 @@ function resetEnv() {
   };
   global.S.performChart.phrases = [{ id: 2, name: "undefined" }];
   global.sparkCore = {
+    progressEngine: new SparkSuiteProgressEngine(null, new SparkSuitePsychologyEngine()),
     getActiveSessionView: function() {
       return {
         runtimeState: {
@@ -242,7 +245,19 @@ test("performDonePage no-results fallback exits through the performance song lis
   S.performResults = null;
   global.sparkCore = {
     getActiveSessionView: function() {
-      return { runtimeState: { performanceResults: null } };
+      return {
+        runtimeState: {
+          performanceResults: null,
+          performanceChartId: null,
+          performanceTargetTechnique: null,
+          performanceDifficultyId: null,
+          performanceSpeed: null,
+          performancePracticePreset: null,
+          performanceInputMode: null,
+          performanceLoop: null,
+          transport: { positionMs: 0, status: "stopped" }
+        }
+      };
     }
   };
 

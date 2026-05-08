@@ -666,6 +666,8 @@ test("planPage keeps daily shell metadata honest when duration is missing from t
   var html = planPage();
   assert.ok(html.indexOf("Practice Session Live") >= 0);
   assert.ok(html.indexOf("2 blocks") >= 0);
+  assert.ok(html.indexOf('data-action="sessionResumeBlock"') >= 0);
+  assert.strictEqual(html.indexOf("onclick=\"act('sessionResumeBlock')\""), -1);
   assert.strictEqual(html.indexOf("10 min shell"), -1);
   assert.strictEqual(html.indexOf("0 min shell"), -1);
 });

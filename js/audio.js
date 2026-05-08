@@ -8,6 +8,16 @@ function getAudioCore(){
   return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
 }
 
+function getAudioPracticeEngine(){
+  var core = getAudioCore();
+  if (core && core.practiceEngine && typeof core.practiceEngine.resolveStrumChordNotes === "function") return core.practiceEngine;
+  if (typeof SparkSuitePracticeEngine !== "undefined") {
+    if (!window.__sparkAudioPracticeEngine) window.__sparkAudioPracticeEngine = new SparkSuitePracticeEngine(null);
+    return window.__sparkAudioPracticeEngine;
+  }
+  return null;
+}
+
 // ===== GUITAR WAV AUDIO =====
 // Maps chord names (full) to WAV file stems for real guitar samples
 var CHORD_FILE_MAP={
@@ -133,8 +143,13 @@ function resolveStrumChordNotes(chordName){
     ? SparkInstruments.getActive()
     : null;
   var activeData = active && typeof active.getData === "function" ? active.getData() : null;
-  if (activeData && activeData.CHORD_NOTES && activeData.CHORD_NOTES[chordName]) return activeData.CHORD_NOTES[chordName];
-  return CHORD_NOTES[chordName];
+  var engine = getAudioPracticeEngine();
+  return engine && typeof engine.resolveStrumChordNotes === "function"
+    ? engine.resolveStrumChordNotes(chordName, {
+      activeInstrumentData: activeData,
+      chordNotes: typeof CHORD_NOTES !== "undefined" ? CHORD_NOTES : null
+    })
+    : null;
 }
 
 function strumChord(chordName){

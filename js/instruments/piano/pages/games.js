@@ -33,6 +33,16 @@ function pianoNormalizeGameBpm(value, fallback) {
   return numeric;
 }
 
+function pianoShouldSuppressGameAnimation(sessionState) {
+  var psychologyEngine = window.sparkCore && window.sparkCore.psychologyEngine
+    ? window.sparkCore.psychologyEngine
+    : (typeof SparkSuitePsychologyEngine !== "undefined" ? new SparkSuitePsychologyEngine() : null);
+  return !!(sessionState && sessionState.active === true
+    && psychologyEngine
+    && typeof psychologyEngine.isIntenseFlowState === "function"
+    && psychologyEngine.isIntenseFlowState(sessionState));
+}
+
 function pianoGamesTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -73,7 +83,7 @@ function pianoGamesTab() {
 
 // ── Drill ──
 function drillTab() {
-  var html = '<div class="card' + (S.drillActive ? ' live-timer-surface' : '') + '">';
+  var html = '<div class="card' + (pianoShouldSuppressGameAnimation({ mode: "drill", active: S.drillActive }) ? ' live-timer-surface' : '') + '">';
   if (S.drillActive) {
     var c = S.drillChords[S.drillIdx];
     var chordObj = findChord(c);
@@ -113,7 +123,7 @@ function drillTab() {
 // ── Daily ──
 function dailyTab() {
   var DAILY_TYPES = _pianoDailyTypes || [];
-  var html = '<div class="card' + (S.dailyActive && S.dailyType ? ' live-timer-surface' : '') + '">';
+  var html = '<div class="card' + (pianoShouldSuppressGameAnimation({ mode: "daily", active: S.dailyActive, type: S.dailyType }) ? ' live-timer-surface' : '') + '">';
   if (S.dailyActive && S.dailyType) {
     var dt = DAILY_TYPES.find(function(d) { return d.id === S.dailyType; });
     html += '<h2 class="card-section-heading">' + (dt ? dt.name : "Challenge") + '</h2>';

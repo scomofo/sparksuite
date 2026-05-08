@@ -15,6 +15,8 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
+_testEval(loadJS("js/sparksuite/core/psychology_engine.js"));
+_testEval(loadJS("js/sparksuite/core/progress_engine.js"));
 
 
 function test(name, fn) {
@@ -43,6 +45,7 @@ function resetEnv() {
     songAudioData: {}
   };
   global.sparkCore = {
+    progressEngine: new SparkSuiteProgressEngine(null, new SparkSuitePsychologyEngine()),
     getActiveSessionView: function() {
       return null;
     }
@@ -259,15 +262,10 @@ test("performSongPage does not render dead weakest-phrase action before results 
 });
 
 test("performSongPage renders weakest-phrase action when phrase results exist", function() {
-  global.S.performChart = {
-    phrases: [{ id: "p1", startSec: 0, endSec: 8 }]
-  };
-  global.S.performResults = {
-    phraseStats: [{ total: 1, scoreSum: 60 }]
-  };
   global.sparkCore.getActiveSessionView = function() {
     return {
       runtimeState: {
+        showWeakestPhraseAction: true,
         performanceSongData: {
           title: "The Beat Goes On",
           artist: "Sonny & Cher",

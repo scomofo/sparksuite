@@ -265,6 +265,21 @@ test('getPerformanceChartLibrary includes package-backed entries for the perform
   assert.strictEqual(getPerformanceChartMeta('demo_progression').sourceType, 'built_in');
 });
 
+test('performance chart engine accepts generated preloads without loader reading registry globals', function() {
+  var engine = createPerformanceChartEngine();
+  engine.preloadChart('generated_song', {
+    id: 'generated_song',
+    title: 'Generated Song',
+    artist: 'Spark',
+    events: [{ t: 0, type: 'chord', chord: 'C' }]
+  });
+
+  var loaded = engine.getPreloadedChart('generated_song');
+
+  assert.strictEqual(loaded.id, 'generated_song');
+  assert.notStrictEqual(loaded, engine.getPreloadedChart('generated_song'));
+});
+
 test('getPerformanceChartLibrary synthesizes catalog-backed chart entries that are not hand-authored in the manifest', function() {
   var library = getPerformanceChartLibrary({ instrument: 'guitar' });
   assert.ok(library.some(function(chart) { return chart.id === 'wonderful_tonight_chords'; }));
