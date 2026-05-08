@@ -224,7 +224,8 @@ function openDailyPracticePlanRequest(options) {
   if (core && typeof core.startSession === "function") {
     return core.startSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-      forceRebuild: !!(options && options.forceRebuild)
+      forceRebuild: !!(options && (options.forceRebuild || options.lessonId)),
+      lessonId: options && options.lessonId ? options.lessonId : null
     });
   }
   return null;

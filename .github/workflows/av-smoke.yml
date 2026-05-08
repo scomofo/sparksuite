@@ -1,0 +1,33 @@
+name: Lesson A/V Smoke Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/convergence
+      - feature/**
+      - main
+
+jobs:
+  av-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install FFmpeg + MuseScore
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg musescore3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run lesson A/V smoke tests
+        run: npm run test:av

@@ -828,7 +828,8 @@
       songIndex: input.songIndex,
       songId: input.songId,
       arrangementType: input.arrangementType,
-      difficultyId: input.difficultyId
+      difficultyId: input.difficultyId,
+      lessonId: input.lessonId || null
     });
     // Validate session plan contract
     if (plan && !plan.exercises) {
@@ -1002,7 +1003,8 @@
     options = options || {};
     return this.startSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-      forceRebuild: !!options.forceRebuild
+      forceRebuild: !!(options.forceRebuild || options.lessonId),
+      lessonId: options.lessonId || null
     });
   };
 

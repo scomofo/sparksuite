@@ -31,8 +31,81 @@
     return null;
   }
 
+  function getRhythmAdapter() {
+    try {
+      if (W.SparkVocalsModule && typeof W.SparkVocalsModule.getRhythmAdapter === "function") {
+        return W.SparkVocalsModule.getRhythmAdapter();
+      }
+    } catch (err) {
+      console.warn("[VocalSpark] getRhythmAdapter failed", err);
+    }
+    return null;
+  }
+
+  function getCurriculumMap() {
+    try {
+      if (W.SparkVocalsModule && typeof W.SparkVocalsModule.getCurriculumMap === "function") {
+        return W.SparkVocalsModule.getCurriculumMap();
+      }
+    } catch (err) {
+      console.warn("[VocalSpark] getCurriculumMap failed", err);
+    }
+    return [];
+  }
+
+  function esc(value) {
+    if (typeof W.escHTML === "function") return W.escHTML(value == null ? "" : String(value));
+    return String(value == null ? "" : value).replace(/[&<>\"]/g, function(c) {
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];
+    });
+  }
+
+  function attr(value) {
+    return String(value == null ? "" : value).replace(/[&<>\"']/g, function(c) {
+      return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function getNextLesson() {
+    var lessons = getLessons();
+    var S = getState();
+    var completed = Array.isArray(S.completedLessons) ? S.completedLessons : [];
+    for (var i = 0; i < lessons.length; i += 1) {
+      if (completed.indexOf(lessons[i].id) < 0) return lessons[i];
+    }
+    return lessons[0] || null;
+  }
+
+  function lessonButton(label, lessonId, className, style) {
+    return '<button class="' + (className || "btn") + '" style="' + (style || "") + '" onclick="return startVocalsLesson(\'' + attr(lessonId) + '\')">' + esc(label) + '</button>';
+  }
+
+  function vocalsPracticeTab() {
+    var lessons = getLessons();
+    var next = getNextLesson();
+    var html = '<div class="card mb12" style="text-align:center">';
+    var i;
+
+    html += "<h2>VocalSpark</h2>";
+    if (next) {
+      html += "<div>Next: " + esc(next.title || next.id) + "</div>";
+      html += lessonButton("Start Vocal Lesson", next.id, "btn", "margin-top:10px");
+    }
+    html += "</div>";
+    html += '<div class="card">';
+    for (i = 0; i < lessons.length; i += 1) {
+      html += '<div style="margin:6px 0">';
+      html += esc(lessons[i].title || lessons[i].id);
+      html += lessonButton("Start", lessons[i].id, "btn btn-sm", "margin-left:10px");
+      html += "</div>";
+    }
+    html += "</div>";
+    return html;
+  }
+
   function sameInstrument(item) {
-    return item && String(item.id || item.key || item.slug || item.instrumentId || "").toLowerCase() === ID;
+    var key = item && String(item.id || item.key || item.slug || item.instrumentId || item.appId || "").toLowerCase();
+    return key === ID || key === "vocalspark";
   }
 
   function upsertArray(arr, item) {
@@ -57,11 +130,13 @@
 
   function buildInstrument() {
     return {
-      id: ID,
+      id: "vocalspark",
       key: ID,
       slug: ID,
       instrumentId: ID,
       appId: "vocalspark",
+      instrument: ID,
+      instrumentType: ID,
       name: "Vocals",
       title: "VocalSpark",
       displayName: "VocalSpark",
@@ -84,6 +159,13 @@
       getLessons: getLessons,
       lessons: getLessons,
       getSkillTree: getSkillTree,
+      getRhythmAdapter: getRhythmAdapter,
+      getCurriculumMap: getCurriculumMap,
+      tabs: [{ id: "practice", label: "Practice" }],
+      tabRenderers: { practice: vocalsPracticeTab },
+      init: function() {
+        getState().tab = "practice";
+      },
       open: openVocalsSpark,
       launch: openVocalsSpark,
       select: openVocalsSpark,
