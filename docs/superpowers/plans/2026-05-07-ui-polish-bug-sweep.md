@@ -10,6 +10,133 @@
 
 ---
 
+## Handoff Update - May 7, 2026
+
+Current branch: `codex/ui-polish-sweep`
+
+Latest clean checkpoint: `bced23f Fix shared ear and progression tool launches`
+
+### What Changed Today
+
+Today's sweep moved from visual-only polish into browser-proven runtime fixes. The working pattern was:
+
+1. Reproduce with Playwright or targeted file-url browser probes.
+2. Identify the root cause, usually a shared renderer/action surface.
+3. Add or extend regression coverage.
+4. Verify with focused tests, `npm run test:browser`, and full `npm test`.
+5. Commit each clean checkpoint.
+
+Commits made today, newest first:
+
+- `bced23f` Fix shared ear and progression tool launches
+- `c5f7c88` Fix Ukulele shared drill and quiz actions
+- `e54166b` Fix remaining hero practice launches
+- `2140323` Fix Ukulele and Vocal quick starts
+- `489b234` Fix compact mobile intention inputs
+- `e9c089b` Fix showroom secondary action hit areas
+- `6e82c18` Fix showroom mobile action targets
+- `2e12697` Fix mobile instrument row overflow
+- `8915cbb` Preserve constant instrument ids in generator
+- `754c94d` Fix crowded mobile action controls
+- `477d06e` Fix file launch performance chart loading
+- `00d13d7` Reset mobile scroll on instrument navigation
+- `07b5627` Fix VocalSpark lesson plan launch
+- `c029c7c` Extend browser sweep across instruments
+- `7a93d16` Fix mobile showroom scrollability
+- `428f71d` Add browser clickthrough smoke sweep
+- `77585e6` Install Playwright test tooling
+- `d410729` Implement UI polish sweep
+
+### Main Fix Areas
+
+- Browser smoke coverage now exists through Playwright and runs via `npm run test:browser`.
+- Launcher/showroom mobile views were tightened: scrollability, bottom-nav coverage, mobile action targets, row overflow, secondary action hit areas, and compact onboarding/intention inputs.
+- Instrument navigation now resets bad mobile scroll positions between instrument/tab changes.
+- VocalSpark quick start and lesson-plan launch now enter the intended lesson/session flow.
+- Ukulele and Vocal quick starts route through the intended shared practice entry points.
+- Guitar/Piano/Ukulele/Bass hero practice launch controls were aligned with real runtime handlers.
+- Ukulele shared Drill, Quiz, and Ear tab controls now work when Ukulele inherits shared tabs instead of defining local handlers.
+- Guitar/Ukulele progression builder template/play controls are covered by browser clickthrough and no longer trigger the Piano `scaleSVG` global collision that produced invalid SVG like `viewBox="0 0 E NaN"`.
+- Ukulele ear-training preview now resolves active-instrument chord-note aliases instead of warning through guitar/global chord-note data.
+- Bass and Ukulele performance mode now launches under direct `file://` use by avoiding local JSON `fetch()` failures.
+- Mobile action-control fit regressions are now covered for crowded controls such as Guitar Dual `Listen` and Bass/Ukulele `PERFORM`.
+- The instrument manifest generator now preserves constant instrument IDs so `npm test` no longer dirties `js/instruments/instrument_manifest.generated.js`.
+
+### Test Coverage Added Or Extended
+
+- `tests/browser_clickthrough_smoke.js`
+  - Console/page-error tracking across file-url browser smoke.
+  - Tab rendering and raw UI token checks.
+  - Mobile scroll reset and bottom-nav coverage checks.
+  - Selected lesson launch checks.
+  - Bass/Ukulele performance launch checks.
+  - Mobile action-control fit checks.
+  - Shared Ukulele Ear launch and Guitar/Ukulele progression template/play clickthrough.
+- `tests/test_practice_action_family.js`
+  - Shared `startEarTrain` works for instruments without local handlers.
+- `tests/test_audio_instrument_chord_notes.js`
+  - Strum preview prefers active-instrument chord-note maps before global guitar note names.
+- `tests/test_games_page_resolution.js`
+  - Progression scale explorer uses the stringed scale renderer even if Piano overwrites the global `scaleSVG`.
+- Existing visual/runtime contract tests were extended where fixes touched shared visual or launch behavior.
+
+### Verified At Latest Checkpoint
+
+For `bced23f`:
+
+```powershell
+node tests\browser_clickthrough_smoke.js
+npm run test:browser
+npm test
+git diff --check
+```
+
+Results:
+
+- Browser clickthrough smoke passed and stayed console-clean.
+- Full `npm test` passed.
+- `git diff --check` reported no whitespace errors, only the repo's normal CRLF warnings.
+- Working tree was clean after commit.
+
+### Further Refinements For Handoff
+
+Prioritize these next:
+
+1. Expand shared-tool clickthrough coverage to every instrument that inherits shared tabs:
+   - Bass/Ukulele/Guitar: Ear, Rhythm, Runner, Build, Tuner.
+   - Confirm actual state changes, not just visible text changes.
+   - Treat tuner separately because browser microphone permission can make assertions environment-sensitive.
+2. Audit global function collisions introduced by multi-instrument script loading:
+   - Known fixed case: stringed `scaleSVG` versus Piano `scaleSVG`.
+   - Search likely globals such as `songsTab`, `gamesTab`, `toolsTab`, `scaleSVG`, `CHORDS`, `CHORD_NOTES`, and instrument-specific renderer helpers.
+   - Prefer namespaced aliases for shared renderers and active-instrument lookups over bare globals.
+3. Strengthen audio preview routing:
+   - `strumChord()` now uses active instrument `CHORD_NOTES`; follow up by checking Bass, Ukulele, and Guitar aliases for complete note coverage.
+   - Add a data integrity test that every active instrument chord name in `getData().ALL_CHORDS` has a note entry in its own `CHORD_NOTES` when audio preview is expected.
+4. Continue mobile layout sweeps beyond action-button fit:
+   - Check all shared tab groups at 390px and 320px widths.
+   - Include long labels, wrapped buttons, sticky nav overlap, and horizontal overflow.
+   - Add permanent browser assertions only after a bug is reproduced.
+5. Finish the original visual-contract plan below:
+   - Reduce remaining heavy in-card labels and raw `<b>` labels.
+   - Replace no-gap `space-between` rows on high-traffic surfaces.
+   - Keep gameplay HUD and primary CTAs intentionally strong.
+6. Add a focused fixture for direct `file://` data loading:
+   - Bass/Ukulele performance launch is covered, but a smaller unit-level guard around local chart loading would make failures easier to diagnose.
+7. Keep watching generated files after full tests:
+   - `npm test` should not dirty `js/instruments/instrument_manifest.generated.js`.
+   - If it does, inspect the generator/ID constants rather than restoring generated output manually.
+8. Review Tuner behavior intentionally:
+   - The Tuner tab can appear unchanged because microphone permission/state is not deterministic in headless browser tests.
+   - Decide whether to expose a testable "requested tuner start" state separate from live audio permission success.
+9. Add browser screenshots for the most visual mobile fixes:
+   - The current smoke catches geometry and errors, but a small screenshot set for launcher/showroom/actions would make regressions easier to triage.
+10. Consider splitting `npm test` into named phase scripts:
+   - The main script is now broad and effective, but long single-line command maintenance is getting brittle.
+   - Candidate scripts: `test:unit`, `test:ui-contracts`, `test:runtime-contracts`, `test:e2e`, then keep `npm test` as the aggregate.
+
+---
+
 ## Scan Summary
 
 The scan looked for the bug families that have already shown up during clickthrough:
