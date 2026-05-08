@@ -180,6 +180,29 @@ Current state:
 - deleting major compatibility pathways
 - deeper platform/editor/content polish beyond handoff compliance
 
+## Follow-ups From 2026-05-07 Master Review
+
+Surfaced while reviewing commits `b987ee1..b14174e` (UI polish sweep + new `PracticeEngine`/`PsychologyEngine`).
+
+### Engine migration retirement plan
+
+- `js/sparksuite/core/psychology_engine.js` `getSessionStructure` and `shouldReward` fall back to global `SparkPsychology.*` if defined. Same dual-path shape in `practice_engine.js` `buildDailyPracticePlan`, which short-circuits to `SparkUkuleleMiniSessions` and `SparkPracticeTemplates` globals before the engine's own `generateExercises` runs. Functional today, but if the legacy globals drift the new engine silently inherits divergent behavior by load order. Track each fallback's retirement criterion alongside the broader `S.*` reduction work.
+
+### `practice_engine.js` robustness
+
+- `clone()` is `JSON.parse(JSON.stringify(v))` — drops functions/`undefined`/`Date`, throws on cycles. Currently safe because callers clone plain segment/exercise/meta data, but `meta.gameplayPayload` comes from `rhythmAdapter.createPayload` and is one refactor away from carrying non-JSON values. Either swap to a structured-clone shim or document the plain-data constraint at the call sites.
+- `generateEarTrainingQuestion` does pool build → question pick → distractor fill (with attempts cap) → Fisher-Yates in one function. Logic is correct, but the empty-string padding on the `while (options.length < 4)` branch will surface blank quiz options to users rather than failing loudly. Split into helpers and add boundary tests for "<4 unique chords across all pools" and "fallbackPool exhausts."
+
+### Browser smoke durability
+
+- `tests/browser_clickthrough_smoke.js` leans on text selectors for CTAs (`"LET'S GO!"`, `"START VOCAL LESSON"`, `"PERFORM"`). Copy edits will silently break smoke without changing app behavior. Migrate CTA assertions to `data-testid` or aria-labels (the launcher's `getByLabel("Launch <name>")` is the right pattern).
+- Fixed `await page.waitForTimeout(250..900)` is used throughout. Replace with `waitFor` on target locator/state where possible — the suite is slow today and will get racier as load characteristics shift.
+- Confirm `npm run test:browser` is in the CI matrix. Headless Playwright + `file://` on Windows is fragile and will rot quickly if it only runs locally.
+
+### Repo hygiene
+
+- `js/performance/chart_data.generated.js` is 25,342 lines committed (necessary for `file://` use without a build step). Add `.gitattributes` entry `js/performance/chart_data.generated.js linguist-generated=true` (and consider `merge=ours`) so it stops dominating diffs and `git blame` and gets collapsed in PR views.
+
 ## Honest Status
 
 The app is now credibly on the roadmap and no longer just "inspired by" it.
